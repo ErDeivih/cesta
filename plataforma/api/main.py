@@ -402,6 +402,15 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
 @app.post("/api/listas/{lista_id}/lineas", status_code=201)
 def anadir(lista_id: str, linea: NuevaLinea, usuario: dict = Depends(usuario_actual)):
     _acceso(lista_id, usuario, hace_falta_escribir=True)
+    # Una linea sin destino no se puede comparar con nada, y la base lo rechaza
+    # con una restriccion (`linea_con_destino`). Sin esta comprobacion, ese
+    # rechazo llegaba como un **500** "el servidor ha fallado", que es mentira y
+    # ademas manda a mirar los registros: es una peticion mal formada, o sea un
+    # 422. La interfaz siempre manda uno de los dos, asi que esto no se ve desde
+    # la pantalla; se ve desde `curl`, que es donde se prueba una API.
+    if linea.grupo_id is None and linea.producto_id is None:
+        raise HTTPException(
+            422, "Una linea necesita el grupo o el producto al que se refiere.")
     return almacen.anade_linea(lista_id, usuario["id"], linea.id, linea.nombre,
                                linea.grupo_id, linea.producto_id,
                                linea.cantidad, linea.nota)
