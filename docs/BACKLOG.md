@@ -38,20 +38,22 @@ especializado y arreglar el matching, **sin ninguna validacion humana**. El plan
 maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 `docs/DIAGNOSTICO-MATCHING.md`.
 
-### Lo que falta para poder usar la interfaz nueva (mirar esto primero)
+### La interfaz nueva: donde esta, y que le queda (mirar esto primero)
 
-0. **LA INTERFAZ NUEVA NO TIENE PARIDAD, y por tanto NO SE DESPLIEGA TODAVIA.**
-   El `app.js` viejo tiene cinco vistas: `buscar`, `lista` (la lista de la
-   compra), `favoritos`, `panel` y `ajustes`, con login. La nueva tiene buscador,
-   grupo, ficha, escaner, cesta, favoritos, ajustes, panel y panel de matching.
-   Las pantallas ya estan todas, y esa es justo la trampa: **una pantalla no es
-   una funcion.** Auditado el 23 de septiembre leyendo `app.js` entero (1.758
-   lineas) contra todo `app/src`, la interfaz nueva tiene **5 operaciones de
-   escritura** (entrar, salir, favoritos, preferencias y las de la cesta que se
-   anadan) contra **14** de la vieja. La diferencia no se ve mirando las
-   pantallas: se ve contando lo que se puede escribir.
+0. **LA INTERFAZ NUEVA YA SE PUEDE SERVIR, y aun le falta cola.** El `app.js`
+   viejo tiene cinco vistas: `buscar`, `lista` (la lista de la compra),
+   `favoritos`, `panel` y `ajustes`, con login. La nueva tiene buscador, grupo,
+   ficha, escaner, cesta, favoritos, ajustes, panel y panel de matching. Las
+   pantallas ya estan todas, y esa fue justo la trampa: **una pantalla no es una
+   funcion.** Auditado el 23 de septiembre leyendo `app.js` entero (1.758 lineas)
+   contra todo `app/src`, y **vuelto a contar al cerrar el dia**: la interfaz
+   nueva tiene **13 operaciones de escritura** contra **14** de la vieja. Los tres
+   bloqueantes que salieron de aquella auditoria -- escribir en la lista, el
+   registro y compartirla -- estan resueltos. Lo que queda escrito abajo, al
+   final de esta seccion, se puede escalonar.
 
-   Servir `web/dist` hoy **quita funciones del producto**. Por eso
+   Servir `web/dist` hoy **todavia quita funciones** (los avisos de precio, la
+   escritura sin cobertura, tres pantallas del panel y darme de baja). Por eso
    `plataforma/docker-compose.yml` trae la linea puesta (`./web/dist:/srv:ro`) con
    un aviso encima: es el destino, pero cambiarla en produccion es una decision
    del dueno y no un paso automatico. Volver atras mientras tanto es poner
@@ -107,11 +109,14 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       la persona, repetir el alta da 409 y un usuario de dos letras da 422. La
       cuenta de prueba se borro despues (0 usuarios de prueba). Las reglas no se
       duplican en el front: se ensena el texto de la API.
-   5. **Compartir la lista**: enlace de invitacion, copiar, quien esta dentro,
-      anular (`POST/DELETE /listas/{id}/invitacion`, `POST /invitacion/{codigo}`,
-      `POST /listas/{id}/compartir`). Cero coincidencias de `invitacion` en
-      `app/src`. El viejo lo tiene (`app.js:1358-1395`). **Es el bloqueante que
-      queda**: sin esto, una lista es de una sola persona.
+   5. ~~**Compartir la lista**~~ — **hecho** (23 sep): el enlace de invitacion,
+      quien esta dentro, compartir por nombre de usuario y anular, en la seccion
+      **Compartir** de `src/paginas/Cesta.tsx` (solo la ve quien creo la lista), y
+      la ruta `/unirme/:codigo` en `src/paginas/Unirse.tsx`, que es la que devuelve
+      la propia API. El codigo **no se guarda**: vive en la barra de direcciones,
+      porque un enlace caducado guardado se aplicaria solo la proxima vez que
+      alguien abra la aplicacion. Con esto **los tres bloqueantes estan
+      resueltos** y lo que queda se puede escalonar.
    6. **Escribir sin cobertura**: cola local + `POST /listas/{id}/sincronizar`, y
       leer la lista sin red. El viejo funcionaba con el PC de casa apagado
       (`app.js:39-47, 63-80, 476-484`); el nuevo depende de `GET /listas/{id}` y
