@@ -27,3 +27,7 @@ def sin_vectores_en_disco(monkeypatch):
     from core import embeddings
 
     monkeypatch.setattr(embeddings, "carga", lambda *a, **k: {})
+    # `disponible()` es la otra puerta, y la que de verdad se usa desde que el
+    # canal de vectores lee el parquet **en SQL** en vez de traerlo a Python.
+    # Apagando solo `carga()` las pruebas volverian a leer `data/gold/` de verdad.
+    monkeypatch.setattr(embeddings, "disponible", lambda *a, **k: None)

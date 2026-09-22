@@ -135,6 +135,22 @@ def camino(salida: Path | None = None) -> Path:
     return salida or (config.GOLD / NOMBRE_CACHE)
 
 
+def disponible() -> Path | None:
+    """El fichero de vectores, **si lo hay**. No lo lee: solo mira si esta.
+
+    Existe por dos motivos, y los dos importan:
+
+    - El canal de vectores lee los vectores **en SQL**, dentro de su propia
+      consulta, en vez de traerlos a Python. Mira si estan, y los lee DuckDB.
+    - Las pruebas tienen que poder apagarlo **de un sitio**. Antes se apagaba
+      parcheando `carga()`, y con el camino nuevo `carga()` ya no se usa: si esto
+      no existiera, las pruebas volverian a leer el disco de verdad y el mismo
+      test pasaria o fallaria segun lo que hubiera en `data/gold/` ese dia.
+    """
+    p = camino()
+    return p if p.exists() else None
+
+
 def calcula(filas: list[dict], modelo: str = MODELO_POR_DEFECTO,
             salida: Path | None = None, lote: int = LOTE,
             cada: int = 1000, rehacer: bool = False) -> Path:
@@ -201,63 +217,101 @@ def carga(salida: Path | None = None) -> dict[str, list[float]]:
     return dict(zip(d["producto_id"].to_list(), d["e"].to_list(), strict=True))
 
 
-def candidatos(filas: list[dict], vectores: dict[str, list[float]],
+def candidatos(filas: list[dict], vectores: dict[str, list[float]] | None = None,
                umbral: float = UMBRAL, tope_por_producto: int = 25) -> list[tuple]:
     """Pares candidatos por parecido de significado, dentro del bloque canonico.
 
-    Devuelve `(i, j, parecido)` con `i < j`, listo para la asignacion.
+    Devuelve `(i, j, parecido)` con `i < j`, indices de posicion en `filas`.
 
     **El coseno se calcula en SQL, no en Python.** Comparar 52.000 vectores de
     1.024 dimensiones entre si en Python son 17.000 millones de multiplicaciones y
-    no termina nunca; DuckDB lo hace vectorizado en segundos. Y no hace falta
-    FAISS ni hnswlib: la busqueda se limita al bloque canonico (seccion + formato),
-    que es donde el plan la pone, y ahi cada consulta mira decenas o cientos de
-    productos, no 52.000. Una dependencia menos.
+    no termina nunca; DuckDB lo hace vectorizado. Y no hace falta FAISS ni
+    hnswlib: la busqueda se limita al bloque canonico (seccion + formato), que es
+    donde el plan la pone, y ahi cada bloque mira cientos de productos, no 52.000.
+    Una dependencia menos.
+
+    **Y los vectores no pasan por Python, que era el problema de verdad.** Antes
+    se traian con `carga()` -- 52.567 listas de 1.024 numeros, alrededor de 1,7 GB
+    de objetos -- y se devolvian a DuckDB con `executemany` fila a fila. Medido el
+    23 de septiembre de 2026, eso era **toda** la hora que tardaba el canal:
+    ahora los vectores se leen del parquet **dentro de la misma consulta**, y el
+    SQL con los 1,7 millones de pares que hay de verdad son **segundos** (un
+    bloque de 788 productos, 213.730 pares, 0,94 s medidos; la tabla entera de
+    43.965 vectores, 2,1 s).
+
+    `vectores` se sigue aceptando para las pruebas y los trozos pequeños, donde no
+    hay parquet que leer: si viene un diccionario, se usa ese y no se toca el
+    disco. En produccion va vacio y manda el parquet.
 
     `tope_por_producto` recorta los vecinos de cada producto, que es lo que evita
     que un bloque gordo meta decenas de miles de pares en la asignacion. Se queda
     con los mas parecidos.
     """
-    if not vectores:
+    ruta = None if vectores is not None else disponible()
+    if vectores is None and ruta is None:
         return []
-    import duckdb
 
-    filas_utiles = []
+    util: list[tuple[int, str, str, str]] = []
     for i, f in enumerate(filas):
         clave = f"{f['fuente']}:{f['id_fuente']}"
-        v = vectores.get(clave)
         cantidad, unidad = f.get("cantidad"), f.get("unidad_canon")
-        if v is None or cantidad is None or not unidad:
+        if cantidad is None or not unidad:
             continue
-        filas_utiles.append({
-            "i": i, "cadena": f["fuente"], "e": list(v),
-            "bloque": f"{(f.get('seccion') or '?')}|{unidad}|{round(float(cantidad), 3)}",
-        })
-    if not filas_utiles:
+        # Con el diccionario delante si se puede descartar aqui al que no tiene
+        # vector. Leyendo el parquet no: de eso se encarga el JOIN.
+        if vectores is not None and vectores.get(clave) is None:
+            continue
+        util.append((i, clave, f["fuente"],
+                     f"{(f.get('seccion') or '?')}|{unidad}|{round(float(cantidad), 3)}"))
+    if not util:
         return []
+
+    import duckdb
+
     con = duckdb.connect()
-    con.execute("CREATE TABLE v(i INTEGER, cadena VARCHAR, bloque VARCHAR, "
-                "e FLOAT[])")
-    con.executemany("INSERT INTO v VALUES (?, ?, ?, ?)",
-                    [(x["i"], x["cadena"], x["bloque"], x["e"]) for x in filas_utiles])
-    pares = con.execute(f"""
-        WITH parecidos AS (
-            SELECT a.i AS i, b.i AS j,
-                   list_cosine_similarity(a.e, b.e) AS s
-              FROM v a JOIN v b
-                ON a.bloque = b.bloque AND a.cadena <> b.cadena AND a.i < b.i
-             WHERE list_cosine_similarity(a.e, b.e) >= {umbral}
-        ), con_puesto AS (
-            SELECT i, j, s,
-                   row_number() OVER (PARTITION BY i ORDER BY s DESC) AS puesto_i,
-                   row_number() OVER (PARTITION BY j ORDER BY s DESC) AS puesto_j
-              FROM parecidos
-        )
-        SELECT i, j, s FROM con_puesto
-         WHERE puesto_i <= {tope_por_producto} AND puesto_j <= {tope_por_producto}
-    """).fetchall()
-    con.close()
-    return [(i, j, float(s)) for i, j, s in pares]
+    try:
+        con.execute("CREATE TABLE mios(i INTEGER, pid VARCHAR, cadena VARCHAR, "
+                    "bloque VARCHAR)")
+        con.executemany("INSERT INTO mios VALUES (?, ?, ?, ?)", util)
+        if vectores is None:
+            # El camino de produccion: los vectores van del parquet a la tabla,
+            # dentro de DuckDB, sin pisar Python.
+            con.execute(f"""
+                CREATE TABLE v AS
+                SELECT m.i AS i, m.cadena AS cadena, m.bloque AS bloque, e.e AS e
+                  FROM mios m
+                  JOIN read_parquet('{ruta.as_posix()}') e
+                    ON e.producto_id = m.pid
+            """)
+        else:
+            con.execute("CREATE TABLE v(i INTEGER, cadena VARCHAR, bloque VARCHAR, "
+                        "e FLOAT[])")
+            con.executemany("INSERT INTO v VALUES (?, ?, ?, ?)",
+                            [(i, cadena, bloque, list(vectores[pid]))
+                             for i, pid, cadena, bloque in util])
+        pares = con.execute(f"""
+            WITH parecidos AS (
+                SELECT a.i AS i, b.i AS j,
+                       list_cosine_similarity(a.e, b.e) AS s
+                  FROM v a JOIN v b
+                    ON a.bloque = b.bloque AND a.cadena <> b.cadena AND a.i < b.i
+            ), pasan AS (
+                -- El filtro va sobre el alias `s`. La primera version volvia a
+                -- llamar a `list_cosine_similarity` aqui, asi que **cada par se
+                -- calculaba dos veces**.
+                SELECT * FROM parecidos WHERE s >= {umbral}
+            ), con_puesto AS (
+                SELECT i, j, s,
+                       row_number() OVER (PARTITION BY i ORDER BY s DESC) AS puesto_i,
+                       row_number() OVER (PARTITION BY j ORDER BY s DESC) AS puesto_j
+                  FROM pasan
+            )
+            SELECT i, j, s FROM con_puesto
+             WHERE puesto_i <= {tope_por_producto} AND puesto_j <= {tope_por_producto}
+        """).fetchall()
+    finally:
+        con.close()
+    return [(int(i), int(j), float(s)) for i, j, s in pares]
 
 
 if __name__ == "__main__":

@@ -597,17 +597,19 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     if usar_vectores:
         from core import embeddings
 
-        vectores = embeddings.carga()
-        if vectores:
-            for i, j, s in embeddings.candidatos(filas_completas, vectores):
-                x, y = i, j
-                if filas[x]["fuente"] > filas[y]["fuente"]:
-                    x, y = y, x
-                if precio_imposible(filas[x], filas[y]):
-                    continue
-                clave = bloque(filas[x].get("cantidad"), filas[x].get("unidad_canon"))
-                canales["vector"][(clave, filas[x]["fuente"],
-                                   filas[y]["fuente"])].append((x, y, s))
+        # `candidatos` mira por su cuenta si hay vectores y los lee **en SQL**.
+        # Antes se traian aqui con `carga()` (52.567 listas de 1.024 numeros,
+        # ~1,7 GB de objetos de Python) para devolverlos acto seguido a DuckDB:
+        # eso era toda la hora que tardaba el canal. Ver `candidatos`.
+        for i, j, s in embeddings.candidatos(filas_completas):
+            x, y = i, j
+            if filas[x]["fuente"] > filas[y]["fuente"]:
+                x, y = y, x
+            if precio_imposible(filas[x], filas[y]):
+                continue
+            clave = bloque(filas[x].get("cantidad"), filas[x].get("unidad_canon"))
+            canales["vector"][(clave, filas[x]["fuente"],
+                               filas[y]["fuente"])].append((x, y, s))
 
     emitidos: set[tuple[int, int]] = set()
     ocupados_todos: set[tuple[int, str]] = set()

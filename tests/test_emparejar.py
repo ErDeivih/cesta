@@ -48,27 +48,32 @@ def test_el_defecto_de_enlaces_no_enciende_los_vectores():
 
 
 def test_una_llamada_normal_no_toca_los_vectores(monkeypatch):
-    """La comprobacion de verdad: que no los cargue, no que lo diga la firma."""
+    """La comprobacion de verdad: que no los mire, no que lo diga la firma.
+
+    Desde el 23 de septiembre `enlaces()` no llama a `carga()`: le pide los
+    candidatos a `candidatos()`, que los lee **en SQL**. Asi que lo que hay que
+    espiar es esa puerta, no la vieja.
+    """
     def revienta(*_a, **_k):
         raise AssertionError(
-            "`enlaces()` ha cargado los vectores sin que se lo pidieran")
+            "`enlaces()` ha mirado los vectores sin que se lo pidieran")
 
-    monkeypatch.setattr(embeddings, "carga", revienta)
+    monkeypatch.setattr(embeddings, "candidatos", revienta)
     # Asi es como llama la pasada diaria: sin decir nada de vectores.
     enlaces(_filas(), umbral=0.55, usar_ean=False)
 
 
-def test_pidiendolos_si_los_carga(monkeypatch):
+def test_pidiendolos_si_los_pide(monkeypatch):
     """El otro lado, para que la prueba anterior no pase por no hacer nada."""
     llamadas = []
 
     def falsa(*_a, **_k):
         llamadas.append(True)
-        return {}
+        return []
 
-    monkeypatch.setattr(embeddings, "carga", falsa)
+    monkeypatch.setattr(embeddings, "candidatos", falsa)
     enlaces(_filas(), umbral=0.55, usar_ean=False, usar_vectores=True)
-    assert llamadas, "pidiendo los vectores, `enlaces()` no los ha pedido"
+    assert llamadas, "pidiendo los vectores, `enlaces()` no ha pedido los candidatos"
 
 
 def test_la_pasada_diaria_lleva_los_vectores_apagados():

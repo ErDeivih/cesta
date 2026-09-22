@@ -204,21 +204,26 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    emparejador con 34 pruebas y la tarea diaria de las 06:00 detras: no se hace a
    la carrera al final de una sesion. El detalle, en
    `docs/DIAGNOSTICO-MATCHING.md` (§22).
-6. **`core.embeddings.candidatos` no cabe en la pasada diaria, y hay que
-   arreglarlo antes de encender el canal de vectores.** Medido el 23 sep con la
-   cache completa: `--medir` con vectores **no termino en 62 minutos** (sin
-   vectores, recalcular los enlaces son 90 s; la pasada diaria entera, 355 s).
-   El canal se ha dejado **opt-in** (`usar_vectores=False` por defecto y
-   `USAR_VECTORES = False` en `emparejar.py`, con siete pruebas que lo guardan),
-   asi que hoy no estorba. `--medir` **mide la configuracion de hoy** (369 s,
-   1.170 de 1.809, el 65 %) y la comparacion de la Fase 3 se pide con
-   `--medir --comparar-vectores`, que es la que no termina. El arreglo esta
-   acotado y localizado: (a) filtrar por el alias `s` en vez de recalcular el
-   coseno en el `WHERE` (`core/embeddings.py:246` y `:249`), (b) trocear la
-   consulta por bloque como dice su propia docstring, en vez de una sola sobre
-   toda la tabla, y (c) no volver a copiar los vectores con `list(v)`. Despues
-   hay que **medir con y sin** otra vez, que es la parte que no se puede saltar.
-   Detalle y numeros en `docs/DIAGNOSTICO-MATCHING.md` (§22).
+6. **Encender el canal de vectores en la pasada diaria — ya se puede, y ya se sabe
+   que sube el recall.** El 23 de septiembre se arreglo lo que lo hacia imposible:
+   `candidatos()` lee los vectores **en SQL** en vez de traerlos a Python (antes
+   `carga()` construia ~1,7 GB de objetos y `executemany` los devolvia fila a
+   fila; eso era toda la hora que tardaba). Medido:
+
+       candidatos()          no terminaba en 62 min  ->  46.308 pares en 239,9 s
+       memoria residente     3,0 - 4,9 GB            ->  270 MB
+       --medir --comparar-vectores:
+         sin vectores        20.944 enlaces  1.170 (65 %)
+         con vectores        24.943 enlaces  1.324 (73 %)
+
+   **Los vectores suben el recall 8 puntos** y la proporcion de enlaces que
+   comparten codigo no baja (20 % en las dos). Lo que queda es encenderlo
+   (`USAR_VECTORES = True` en `projects/cesta/emparejar.py`) **y volver a medir
+   todo lo de abajo con el canal puesto**, porque el canal mueve los grupos: no se
+   hereda la calidad del grupo de una medida de recall. La pasada diaria pasaria
+   de 355 s a unos 600-900 s, que cabe. El orden: `emparejar` ->
+   `diagnostico_matching` -> `cifras` -> `verificar_docs`, y comparar grupos
+   comparables, productos comparables, grupos anchos y conflictos de asignacion.
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el

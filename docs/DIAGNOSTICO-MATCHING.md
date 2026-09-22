@@ -1314,19 +1314,60 @@ sesion**. Queda anotado en `docs/BACKLOG.md` con estos numeros.
 explicacion de un grupo puede decir `"ean+equivalente+identico"`: se dicen todos
 los valores que hay en el grupo en vez de elegir uno.
 
-### El canal de vectores no cabe en la pasada diaria **todavia** (23 sep)
+### El canal de vectores: primero no cupo, y ahora **si**, y sube el recall (23 sep)
 
 Al completar la cache (52.567 vectores, el catalogo entero, 3.220 s de GPU) se
-intento la medida que faltaba: `--medir`, que empareja dos veces, sin el canal de
-vectores y con el. **No termino en 62 minutos** y hubo que pararlo. El proceso no
-estaba colgado: consumia CPU de forma sostenida (615 s, 1.216, 1.859, 2.474,
-3.079, 3.693 s de CPU, un nucleo al 100 % y 3 GB de RAM) hasta que se mato.
+intento la medida que faltaba: `--medir --comparar-vectores`, que empareja dos
+veces, sin el canal de vectores y con el. **No termino en 62 minutos** y hubo que
+pararlo. El proceso no estaba colgado: consumia CPU de forma sostenida (615 s,
+1.216, 1.859, 2.474, 3.079, 3.693 s de CPU, un nucleo al 100 % y 3 GB de RAM)
+hasta que se mato.
 
-Para poner esa cifra en su sitio: recalcular los enlaces **sin** vectores son 16,7
-millones de pares candidatos y **90 segundos**, y la pasada diaria entera
-(emparejar de punta a punta, con la calidad y la escritura) tardo **355 s**
-medidos hoy. O sea: el canal de vectores multiplica por mas de 40 el coste de la
-fase, y no se sabe cuanto mas porque no llego al final.
+### La causa eran los 1,7 GB de Python, no los cosenos
+
+El primer impulso -- que el JOIN fuera un bucle anidado sobre 1.900 millones de
+filas -- **se midio y era falso**: el plan es `HASH_JOIN`. Y el SQL de verdad, con
+los pares reales, es de **segundos**:
+
+    bloques distintos                                        3.427
+    bloques de mas de 100 productos                             71
+    pares dentro de bloque (todo con todo)              1.699.357
+    un bloque de 788 productos -> 213.730 pares            0,94 s
+    la tabla con los 43.965 vectores, leida del parquet    2,10 s
+
+Lo que costaba la hora era el **ida y vuelta de los vectores por Python**:
+`carga()` construia 52.567 listas de 1.024 numeros (**~1,7 GB de objetos**, 3 a
+4,9 GB de residente medidos) y `executemany` los devolvia a DuckDB **fila a fila**.
+
+El arreglo es no dejar que los vectores entren en Python: se leen del parquet
+**dentro de la misma consulta**, con un `JOIN` por `producto_id`, y el coseno se
+filtra por el alias en vez de calcularlo dos veces por par (estaba en el `SELECT`
+y otra vez en el `WHERE`).
+
+    candidatos(), catalogo entero     antes: no termino en 62 min (3.720 s CPU)
+                                      ahora: 46.308 pares en 239,9 s
+    memoria residente                 antes: 3,0 - 4,9 GB
+                                      ahora: 270 MB
+
+### Y con eso, la medida que faltaba
+
+    --medir --comparar-vectores                        992 s las dos pasadas
+      sin vectores   20.944 enlaces   encuentra 1.170 (65 %)
+      con vectores   24.943 enlaces   encuentra 1.324 (73 %)
+
+**Los vectores suben el recall 8 puntos**, y la proporcion de enlaces comprobables
+que comparten codigo se queda igual (20 % en las dos), o sea que el canal nuevo no
+compra recall a costa de precision en ese subconjunto. Es el resultado que la Fase
+3 estaba esperando desde el principio, y coincide con lo que ya decia la medida
+del banco de pares (precision 0,90 y recall 0,89 contra los negativos dificiles).
+
+**Lo que falta para encenderlo en la pasada diaria**, y por que no se enciende en
+el mismo commit que la medida: el canal mueve los grupos, asi que hay que volver a
+medir **todo lo de abajo** -- grupos comparables, productos comparables, grupos
+anchos, conflictos de asignacion -- con el canal puesto. La pasada diaria pasaria
+de 355 s a unos 600-900 s, que cabe. Los numeros de esta medida son de matching;
+la calidad del grupo es otra cosa y no se hereda. Los comandos, en
+`docs/BACKLOG.md`.
 
 Donde esta el coste, leyendo `core/embeddings.candidatos`:
 
