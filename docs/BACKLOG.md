@@ -38,6 +38,24 @@ especializado y arreglar el matching, **sin ninguna validacion humana**. El plan
 maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 `docs/DIAGNOSTICO-MATCHING.md`.
 
+### Lo que falta para poder usar la interfaz nueva (mirar esto primero)
+
+1. **Reconstruir la imagen de la API.** El contenedor que corre hoy no tiene
+   `/api/ean` ni `/api/panel/matching`, aunque el codigo del repositorio si:
+   `cd plataforma; docker compose up -d --build api`.
+2. **`/api/buscar` no devuelve `marca`**, asi que la tabla del buscador no puede
+   tener columna de marca (inventarla seria mentir). Es anadir un campo a la
+   respuesta.
+3. **`serie` del grupo va por (cadena, fecha) sin decir de que producto es cada
+   punto**, asi que la chispa de historico no se puede pintar cuando una cadena
+   tiene mas de un producto en el grupo. Se arregla anadiendo `producto_id` a los
+   puntos.
+4. **El boton de camara del escaner no esta probado en un movil real.** Lo
+   verificado es que se esconde solo cuando no hay `BarcodeDetector`.
+
+Estos tres primeros son de `plataforma/api/` y son pequeños; el front ya esta
+escrito esperandolos.
+
 **Lo que ya esta hecho (22 sep 2026).**
 
     docs/DIAGNOSTICO-MATCHING.md            el informe, con todos los numeros
@@ -52,6 +70,14 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
     core/equivalencias.py                   Fase 1: producto_id estable y cada
                                             pasada versionada, con su motivo
     tests/test_equivalencias.py             10 pruebas
+    plataforma/web/app/                     LA INTERFAZ NUEVA: Vite + React +
+                                            TypeScript + Tailwind + TanStack +
+                                            uPlot. Compila a web/dist y Caddy
+                                            sirve eso (docker-compose.yml:61).
+                                            Los ficheros viejos siguen ahi
+                                            como plan B.
+    tests/test_interfaz.py                  que el sitio donde compila y el que
+                                            se sirve sean el mismo
     projects/cesta/collectors/carrefour.py  cat11729677 en ROTAS_EN_ORIGEN
     git                                     el proyecto YA tiene control de
                                             versiones; no tenia .git
