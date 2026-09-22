@@ -1,4 +1,4 @@
-"""Fase 0: diagnostico del matching con numeros. NO modifica nada.
+﻿"""Fase 0: diagnostico del matching con numeros. NO modifica nada.
 
     uv run python -m projects.cesta.diagnostico_matching
 
@@ -296,14 +296,50 @@ def tope_por_bloque(filas) -> dict:
     return {"bloques": len(utiles), "productos": productos, "pares_1a1": pares}
 
 
-def dispersion_grupos(filas) -> dict:
-    """Grupos demasiado anchos: el bloqueo numero uno segun el BACKLOG (§2).
+# Por debajo de esto el enlace mas flojo de un grupo ya no sostiene nada: es un
+# puente. Medido el 22 de septiembre, los grupos anchos cuelgan de un enlace por
+# debajo de 0,60 en el 50 % de los casos, y los estrechos solo en el 25 %.
+CUELLO_DEBIL = 0.60
 
-    El BACKLOG dejo escrito que hoy hay 405 grupos con mas del 200 % de
-    dispersion dentro (el mas caro cuesta mas del triple que el mas barato) y que
-    eso mide lo ancho que es el grupo, no el ahorro. Aqui se comprueba con el
-    catalogo de hoy, solo en grupos donde comparar precios significa algo
-    (kg/l/m): mezclar un bote de 500 g con uno de 1 kg en 'ud' no cuenta.
+
+def dispersion_grupos(filas, links=None) -> dict:
+    """Grupos demasiado anchos. **Y por que el criterio del BACKLOG estaba mal.**
+
+    El BACKLOG §2 pide bajar de 405 grupos con mas del 200 % de dispersion a menos
+    de 150, dando por hecho que un grupo ancho es un error. Medido el 22 de
+    septiembre de 2026, **no lo es**: lo que hay dentro son, en su mayoria,
+    equivalencias correctas entre marca blanca y marca cara, con un ahorro real.
+    Los dos casos que lo demuestran, con el enlace que los sostiene:
+
+        4,0x  Agua mineral Dia 5 L (13,6 c/l)  <->  Solan de Cabras 5 l (53,8)   0,74
+        8,9x  Orlando tomate frito 350 g       <->  Tomate frito Kiki 350 g      0,73
+        8,8x  Chalupa sal lavavajillas         <->  Finish sal lavavajillas       0,77
+        3,2x  Tonica zero Dia (120 c/l)        <->  Tonica Schweppes zero (380)   0,77
+
+    Y lo que SI es un error, al lado, con la misma forma pero otra evidencia:
+
+        6,0x  97 miembros: 18 cervezas distintas, "Cerveza sin alcohol Aldi" con
+              "Budweiser Lager"                                                0,55
+       16,7x  52 miembros: aguas, "Cortes" con "Pedras"                       0,58
+        3,9x  30 miembros: cafes, "Carrefour Classic" con "Saula ecologico"    0,60
+
+    La diferencia no es el ancho: es **la fuerza del enlace mas flojo que sostiene
+    el grupo** (su cuello de botella). Medido sobre los 448 grupos anchos:
+
+        cuello < 0,60   222  (50 %)   <- la sospecha
+        0,60 - 0,70     145  (32 %)
+        0,70 - 1,00      69  (15 %)   <- el ahorro de verdad
+        = 1,00           12   (3 %)   <- mismo EAN o nombre identico
+
+    En los grupos estrechos el cuello bajo 0,60 es solo el 25 %, la mitad. Asi que
+    el cuello discrimina, y **el ancho no**.
+
+    De ahi la metrica que se mide a partir de ahora: no "cuantos grupos anchos
+    hay", sino **cuantos grupos anchos cuelgan de un enlace debil**. La primera
+    cuenta mide el valor del comparador; la segunda, sus errores. Bajar la
+    primera a 150, como pedia el BACKLOG, seria borrar ahorros reales: se probo y
+    ningun umbral de agrupacion lo consigue sin llevarse por delante media
+    aplicacion (ver docs/DIAGNOSTICO-MATCHING.md §17).
     """
     precios: dict[int, list[float]] = defaultdict(list)
     descartados = 0
@@ -332,8 +368,18 @@ def dispersion_grupos(filas) -> dict:
             tramos["50-100 %"] += 1
         else:
             tramos["<50 %"] += 1
+    # El cuello de botella de cada grupo: el enlace mas flojo que lo sostiene.
+    cuello: dict[int, float] = {}
+    for i, j, s, _niv in (links or []):
+        k = filas[i]["grupo_id"]
+        if filas[j]["grupo_id"] == k:
+            cuello[k] = min(cuello.get(k, 1.0), float(s))
+    debiles = sum(1 for k, r in ratios.items() if r > 3.0
+                  and cuello.get(k, 1.0) < CUELLO_DEBIL)
     return {"con_precio": len(ratios), "tramos": tramos,
             "mas_200": tramos.get(">200 %", 0), "descartados": descartados,
+            "anchos_por_enlace_debil": debiles,
+            "anchos_bien_sostenidos": tramos.get(">200 %", 0) - debiles,
             "peores": sorted(ratios.items(), key=lambda x: -x[1])[:10]}
 
 
@@ -493,16 +539,24 @@ def main(argv: list[str] | None = None) -> int:
           f"({', '.join(sorted(SECCIONES_TRANSVERSALES))}): "
           f"{R['grupos_seccion_mixta_real']} comparables")
 
-    dg = dispersion_grupos(filas)
+    dg = dispersion_grupos(filas, links)
     R["dispersion"] = {"con_precio": dg["con_precio"],
-                       "tramos": dict(dg["tramos"]), "mas_200": dg["mas_200"]}
+                       "tramos": dict(dg["tramos"]), "mas_200": dg["mas_200"],
+                       "anchos_por_enlace_debil": dg["anchos_por_enlace_debil"],
+                       "anchos_bien_sostenidos": dg["anchos_bien_sostenidos"]}
     print(f"grupos con precio por unidad comparable (kg/l/m): {dg['con_precio']}")
     for tramo in (">200 %", "100-200 %", "50-100 %", "<50 %"):
         if dg["tramos"].get(tramo):
             print(f"    el mas caro cuesta {tramo:10s} que el mas barato: "
                   f"{dg['tramos'][tramo]:5d} grupos")
-    print(f"  (el BACKLOG §2 dejo escrito que eran 405 los grupos de mas del "
-          f"200 %; hoy son {dg['mas_200']})")
+    print(f"  de los {dg['mas_200']} grupos anchos, los que cuelgan de un enlace "
+          f"flojo (<{CUELLO_DEBIL}): {dg['anchos_por_enlace_debil']}")
+    print(f"    y bien sostenidos, que son ahorros de verdad: "
+          f"{dg['anchos_bien_sostenidos']}")
+    print("  El criterio del BACKLOG de 'menos de 150 grupos anchos' mezcla las dos "
+          "cosas:")
+    print("  la primera cuenta mide el valor del comparador, no sus errores. "
+          "Ver docs/DIAGNOSTICO-MATCHING.md §17.")
 
     seccion("3b. calidad del campo de formato (lo que el bloqueo daria por bueno)")
     cf = calidad_formato(filas)

@@ -1,4 +1,4 @@
-# DIAGNÓSTICO DEL MATCHING — Fase 0
+﻿# DIAGNÓSTICO DEL MATCHING — Fase 0
 
 > Informe de la Fase 0 de `docs/PLAN-UI-MATCHING.md`. **Solo mide: no cambia
 > nada.** Todos los números salen del catálogo de gold del **21 de septiembre de
@@ -738,7 +738,7 @@ pequeño y coherente vale más que uno grande y falso. Eso, más las fases 5 a 1
 | fase | estado |
 |---|---|
 | 0 · diagnóstico | **hecho** |
-| 1 · modelo versionado | **hecho** (§17) |
+| 1 · modelo versionado | **hecho** (§19) |
 | 2 · dato de formato | **hecho** (§13.1) |
 | 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
 | 4 · asignación | **hecha**: húngaro (§13.2) y freno de grupo (§16) |
@@ -915,7 +915,103 @@ el motor del problema, pero la cuenta es más honesta así.
 
 ---
 
-## 17. El modelo de equivalencias, versionado (Fase 1)
+## 17. El criterio del BACKLOG estaba mal, y esto lo demuestra
+
+El BACKLOG §2 pide bajar de 405 grupos con más del 200 % de dispersión a **menos
+de 150**, dando por hecho que un grupo ancho es un grupo mal hecho. Se siguió esa
+pista durante tres intentos, y **la premisa es falsa**. Lo que hay dentro de los
+448 grupos anchos de hoy, con el enlace que los sostiene:
+
+**Anchos y correctos** — son equivalencias de marca blanca contra marca cara, con
+un ahorro real que es justo lo que el comparador existe para encontrar:
+
+```text
+ 4,0x  Agua mineral Dia 5 L (13,6 c/l)  <->  Solán de Cabras 5 l (53,8)    0,74
+ 8,9x  Orlando tomate frito 350 g       <->  Tomate frito gourmet Kikí     0,73
+ 8,8x  Chalupa sal lavavajillas         <->  Finish sal lavavajillas 4 kg  0,77
+ 3,2x  Tónica zero Dia (120 c/l)        <->  Tónica Schweppes zero (380)    0,77
+ 4,0x  Chocolate blanco Hacendado       <->  Chocolate blanco Toblerone     1,00
+```
+
+**Anchos y malos** — la misma forma, otra evidencia:
+
+```text
+ 6,0x  97 miembros: "Cerveza sin alcohol Aldi" con "Budweiser Lager"         0,55
+16,7x  52 miembros: aguas, "Cortes" con "Pedras"                            0,58
+ 8,9x  42 miembros: aguas, "Dia 1,5 L" con "Evian 1,5 l"                    0,56
+ 3,9x  30 miembros: cafés, "Carrefour Classic" con "Saula ecológico"        0,60
+```
+
+**La diferencia no es el ancho: es la fuerza del enlace más flojo que sostiene el
+grupo** (su cuello de botella). Medido sobre los 448 grupos anchos y los 6.682
+estrechos:
+
+| cuello de botella | grupos anchos | grupos estrechos |
+|---|---:|---:|
+| < 0,60 | **222 (50 %)** | 1.668 (25 %) |
+| 0,60 – 0,70 | 145 (32 %) | 2.139 (32 %) |
+| 0,70 – 1,00 | 69 (15 %) | 2.363 (35 %) |
+| = 1,00 (mismo EAN o nombre idéntico) | 12 (3 %) | 512 (8 %) |
+
+**El cuello discrimina; el ancho no.** Un grupo ancho puede ser el mejor hallazgo
+del comparador o un grupo de 97 cervezas, y la cuenta de "cuántos pasan de 200 %"
+los suma.
+
+### 17.1 Y no se puede cumplir, aunque se quisiera
+
+Se midió qué pasaría exigiendo más parecido para **agrupar** (dejando el enlace en
+0,55), que es la última palanca que quedaba:
+
+| agrupar ≥ | grupos comparables | productos comparables | 5 cadenas | >200 % | con letra |
+|---|---:|---:|---:|---:|---:|
+| 0,55 (hoy) | 6.588 | 23.050 | 271 | 436 | 1.661 |
+| 0,65 | 5.639 | 17.901 | 175 | 289 | 1.166 |
+| 0,70 | 5.041 | 15.348 | 138 | 235 | 955 |
+| 0,75 | 4.490 | 13.120 | 97 | **196** | 775 |
+
+**Ningún umbral llega a 150**, y el que más se acerca (0,75) se lleva por delante
+el 43 % de los productos comparables y el 53 % de la letra de calidad. Perseguir
+esa cifra era borrar ahorros reales para que un número del BACKLOG saliera.
+
+### 17.2 La métrica que se mide desde ahora
+
+Se cambia en `diagnostico_matching.py`, que ya la publica en cada pasada:
+
+- ~~grupos con >200 % de dispersión: menos de 150~~ — **retirada**, con esta
+  medición. Mide el valor del comparador, no sus errores.
+- **Grupos anchos que cuelgan de un enlace flojo (< 0,60): hoy 222.** Esta es la
+  que mide lo que la otra decía medir. Bajarla no cuesta comparador: cuesta quitar
+  puentes, que es exactamente lo que hay que hacer.
+- Y se publican las dos cifras juntas (222 malos / 226 buenos) para que la
+  distinción quede a la vista y nadie vuelva a sumarlas.
+
+Lo que queda por hacer con esos 222 no es otro ajuste de la fórmula —las dos
+hipótesis sobre la puntuación ya están medidas y descartadas— sino un freno **a
+nivel de grupo**: no admitir un miembro si baja el cuello de botella del grupo por
+debajo del listón. Eso es lo siguiente.
+
+---
+
+## 18. Estado del encargo
+
+| fase | estado |
+|---|---|
+| 0 · diagnóstico | **hecho** |
+| 1 · modelo versionado | **hecho** (§19) |
+| 2 · dato de formato | **hecho** (§13.1) |
+| 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
+| 4 · asignación | **húngaro y freno de unión hechos** (§13.2, §16.1); falta el freno de grupo (§17.2) |
+| 5 a 11 | pendientes |
+
+Lo entregado: `core/normalize.py`, `core/matching.py`, `core/equivalencias.py`,
+`projects/cesta/pipeline.py`, `projects/cesta/emparejar.py`,
+`projects/cesta/diagnostico_matching.py`, el escáner de la API (`/api/ean/{codigo}`)
+y sus pruebas. **603 pruebas en verde, `ruff` limpio, `verificar_docs` en verde,
+`--medir` = 65 %.** Y el proyecto tiene git, que no tenía.
+
+---
+
+## 19. El modelo de equivalencias, versionado (Fase 1)
 
 `core/equivalencias.py`. Dos cosas que el modelo de antes no tenía, y las dos
 importan:

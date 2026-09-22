@@ -65,7 +65,8 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
     grupo mayor                         329    ->  97
     etiqueta identico que dice verdad   70 %   ->  100 %
     fallos por "otra unidad"            172    ->  39
-    grupos con el mas caro >200 %       369    ->  448     (tasa 6,5 % -> 6,3 %)
+    grupos con el mas caro >200 %       369    ->  448     de los cuales 222 malos
+                                            y 226 ahorros de verdad (ver abajo)
 
 **Lo que queda mal, con las dos causas ya identificadas y medidas.**
 
@@ -106,8 +107,32 @@ veto de precio de 30x. Vienen de dos sitios distintos:
    litros": el dato de cantidad de lo que se vende al peso.
 
 El criterio del BACKLOG (**menos de 150 grupos con mas del 200 %**, hoy 448) no se
-cumple y no se va a cumplir con frenos. **Esto sustituye a la tarea 2**, con las
-dos pistas medidas en `docs/DIAGNOSTICO-MATCHING.md` §16.
+cumple **y se retira, con la medicion hecha**: se siguio esa pista durante tres
+intentos y la premisa es falsa. La mayoria de los grupos anchos son equivalencias
+correctas de marca blanca contra marca cara, con un ahorro real
+(`Agua Dia 5 L` a 13,6 c/l contra `Solan de Cabras` a 53,8, sostenidas por un
+enlace de 0,74; `Chocolate blanco Hacendado` contra `Toblerone`, enlace de 1,00).
+Lo que distingue un grupo ancho bueno de uno malo **no es el ancho, es la fuerza
+del enlace mas flojo que lo sostiene**:
+
+    cuello < 0,60        222 grupos anchos (50 %)   <- la sospecha
+    cuello 0,60 - 0,70   145                (32 %)
+    cuello 0,70 - 1,00    69                (15 %)   <- el ahorro de verdad
+    cuello = 1,00         12                 (3 %)
+
+Y no se puede cumplir aunque se quisiera: exigiendo mas parecido para agrupar,
+0,75 deja 196 grupos anchos (todavia mas de 150) y se lleva el 43 % de los
+productos comparables y el 53 % de la letra de calidad.
+
+**La metrica que se mide desde ahora** (ya la publica el diagnostico en cada
+pasada): **grupos anchos que cuelgan de un enlace flojo (< 0,60): hoy 222.**
+Bajarla no cuesta comparador, cuesta quitar puentes, que es lo que hay que hacer.
+
+Lo que queda por hacer con esos 222 no es otro ajuste de la formula —las dos
+hipotesis sobre la puntuacion (IDF por pasillo y peso de trigramas) estan medidas
+y descartadas— sino un **freno a nivel de grupo**: no admitir un miembro si baja
+el cuello de botella del grupo por debajo del liston. Esta en
+`docs/DIAGNOSTICO-MATCHING.md` §17.
 
 Y una cosa que ya no cuesta nada: `uv sync --extra plataforma` esta hecho, asi
 que `pytest` completo pasa de 545 a **585 en verde** (los 30 de mas son las

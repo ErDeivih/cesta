@@ -1,0 +1,329 @@
+/** Los contratos de la API, copiados de `docs/API.md` y de `plataforma/api`.
+ *
+ *  Tres reglas que se ven en los tipos y no son casualidad:
+ *
+ *  1. Casi todo es `| null`. Un dato que no tenemos es `null`, nunca cero ni
+ *     cadena vacia. Si aqui un campo fuera `number`, alguien acabaria pintando
+ *     un 0,00 EUR que no es un precio.
+ *  2. El dinero va en centimos y en enteros. Los euros se calculan al pintar,
+ *     no se guardan.
+ *  3. `calidad` y `gama` son excluyentes: la API manda una o la otra, nunca las
+ *     dos. Se tipan por separado a proposito, para que sumarlas no sea comodo.
+ */
+
+/** La letra de `core/calidad.py`: terciles A/B/C dentro del grupo. */
+export type Letra = 'A' | 'B' | 'C'
+
+export type Nutriscore = 'a' | 'b' | 'c' | 'd' | 'e' | string | null
+
+export interface Nutricion {
+  energia_kcal?: number | null
+  grasas?: number | null
+  proteinas?: number | null
+  sal?: number | null
+  [clave: string]: number | null | undefined
+}
+
+/** Una fila de `GET /api/buscar`. Un grupo, con su precio mas bajo. */
+export interface ResultadoBusqueda {
+  /** El emparejador se lo pone a todo, incluso a grupos de un solo producto,
+   *  asi que puede venir null en gold viejo. Lo que hace comparable a un grupo
+   *  es `comparable` (dos cadenas o mas), no tener id. */
+  grupo_id: number | null
+  nombre: string
+  cadena_mas_barata: string | null
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  precio_unidad_max_cent: number | null
+  unidad: string | null
+  cadenas: number
+  productos: number
+  nutriscore: Nutriscore
+  imagen: string | null
+  con_oferta: boolean
+  /** Oferta que solo existe con la tarjeta: no baja lo que pagas en caja. */
+  con_oferta_club: boolean
+  /** Retirada del mercado. Manda sobre cualquier otra cosa de la fila. */
+  con_retirada: boolean
+  comparable: boolean
+  /** La comparacion no se sostiene (un miembro vale mas del doble que otro en
+   *  la misma unidad). Sigue saliendo, pero sin numero de ahorro. */
+  dudoso: boolean
+  /** 0.0 significa "no comparable" o "dudoso", no "no hay ahorro". */
+  ahorro_pct: number
+}
+
+/** Un miembro de un grupo, tal como lo manda `GET /api/grupo/{id}`. */
+export interface Producto {
+  producto_id: string
+  fuente: string
+  id_fuente: string
+  nombre: string
+  marca: string | null
+  cantidad: number | null
+  unidad: string | null
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  comparable: boolean
+  /** Solo si sale de LEER ingredientes. */
+  calidad: Letra | null
+  /** Solo si sale de ORDENAR por precio. No es calidad, y la interfaz no la
+   *  puede llamar asi. */
+  gama: Letra | null
+  nutriscore: Nutriscore
+  nova: number | null
+  ean: string | null
+  imagen: string | null
+  alergenos: string | null
+  ingredientes: string | null
+  origen: string | null
+  promo: string | null
+  url: string | null
+  sellos: string[]
+  /** `certificado` | `etiqueta` | `nombre` | `mixto`. Un certificado auditado y
+   *  una palabra en el nombre no valen lo mismo, y se dice en pantalla. */
+  sellos_origen: string | null
+  certificados: string[]
+  conservacion: string | null
+  es_marca_propia: boolean | null
+  nutricion: Nutricion | null
+  nutricion_por: string | null
+  envase: string | null
+  descripcion: string | null
+  tipo_producto: string | null
+  dias_caducidad: number | null
+  peso_neto_g: number | null
+  grado_alcohol: number | null
+  promo_hasta: string | null
+  promo_club: boolean | null
+  es_alcohol: boolean | null
+  es_recall: boolean | null
+  peso_variacion_pct: number | null
+  distintivo: string | null
+  advertencias: string[]
+  unidades_pack: number | null
+}
+
+export interface PuntoSerie {
+  fuente: string
+  fecha: string
+  precio_unidad_cent: number | null
+}
+
+/** Opcional y todavia NO implementado por la API: si algun dia manda la
+ *  explicacion del emparejamiento, sale aqui sin tocar nada mas. */
+export interface ExplicacionEmparejamiento {
+  metodo?: string | null
+  motivo?: string | null
+  regla?: string | null
+  parecido?: number | null
+  por?: string | null
+  [clave: string]: unknown
+}
+
+export interface Grupo {
+  grupo_id: number
+  nombre: string
+  imagen: string | null
+  unidad: string | null
+  cadenas: number
+  ahorro_pct: number
+  ahorro_cent: number
+  productos: Producto[]
+  serie: PuntoSerie[]
+  fecha_datos?: string
+  /** Campos que la API todavia no manda. Se leen si aparecen. */
+  matching?: ExplicacionEmparejamiento | null
+  explicacion?: ExplicacionEmparejamiento | string | null
+  emparejado_por?: string | null
+}
+
+export interface RespuestaBuscar {
+  fecha_datos: string
+  resultados: ResultadoBusqueda[]
+}
+
+export interface Seccion {
+  seccion: string
+  nombre: string
+  productos: number
+  cadenas: number
+  grupos: number
+  comparable: boolean
+}
+
+export interface RespuestaSecciones {
+  fecha_datos: string
+  secciones: Seccion[]
+}
+
+export interface CadenaEstado {
+  cadena: string
+  productos: number
+  ultimo_dia: string | null
+  al_dia: boolean
+}
+
+export interface RespuestaEstado {
+  fecha_datos: string
+  /** Cuantos dias aguanta un precio sin dejar de decidir donde comprar. Hoy 3. */
+  dias_precio_valido: number
+  cadenas: CadenaEstado[]
+}
+
+export interface ComparacionEan {
+  fuente: string
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  diferencia_pct: number | null
+}
+
+export interface ProductoEan {
+  producto_id: string
+  fuente: string
+  id_fuente: string
+  nombre: string
+  marca: string | null
+  cantidad: number | null
+  unidad: string | null
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  comparable: boolean
+  nutriscore: Nutriscore
+}
+
+export interface EanEncontrado {
+  encontrado: true
+  producto: ProductoEan
+  grupo_id: number | null
+  /** null = no puedo comparar (el producto solo esta en una cadena). Lista
+   *  vacia se leeria como "he mirado y no hay nada mas barato", que no es lo
+   *  mismo. */
+  comparacion: ComparacionEan[] | null
+  nota?: unknown
+  fecha_datos: string
+}
+
+export interface EanDesconocido {
+  encontrado: false
+  /** `desconocido` | `sin_ean_en_esa_cadena`. El segundo todavia no se da. */
+  motivo: string
+  sugerencia: string | null
+  fecha_datos: string
+}
+
+export type RespuestaEan = EanEncontrado | EanDesconocido
+
+export interface ProductoSuelto {
+  producto_id: string
+  fuente: string
+  grupo_id: number | null
+  nombre: string
+  marca: string | null
+  cantidad: number | null
+  unidad: string | null
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  comparable: boolean
+  nutriscore: Nutriscore
+}
+
+export interface RespuestaProducto {
+  fecha_datos: string
+  producto: ProductoSuelto
+  /** null cuando el producto no tiene grupo: 32.486 de 51.781 son asi. */
+  grupo: Grupo | null
+}
+
+export interface Baja {
+  grupo_id: number | null
+  nombre: string
+  marca: string | null
+  cadena: string
+  imagen: string | null
+  unidad: string | null
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  precio_unidad_antes_cent: number | null
+  desde: string | null
+  variacion_pct: number
+  promo_txt: string | null
+  /** La bajada solo existe si tienes la tarjeta. Se ensena, marcada. */
+  solo_con_tarjeta: boolean
+  precio_antes_cent: number | null
+}
+
+export interface RespuestaBajadas {
+  fecha_datos: string
+  dias: number
+  sentido: 'bajadas' | 'subidas'
+  resultados: Baja[]
+}
+
+// ------------------------------------------------------------------ panel ---
+
+export interface PanelHoy {
+  fecha_datos: string
+  cadenas: {
+    cadena: string
+    productos: number
+    comparables: number
+    con_nutriscore: number
+    con_ean: number
+  }[]
+  movidos: { cadena: string; bajadas: number; subidas: number }[]
+  /** Una cadena que entra con muchos menos productos de lo normal. */
+  alarmas: { cadena: string; hoy: number; lo_normal: number; caida_pct: number }[]
+}
+
+export interface PanelCadenas {
+  fecha_datos: string
+  mas_barata: { cadena: string; compite_en: number; gana: number; pct: number }[]
+  movimiento: {
+    cadena: string
+    observaciones: number
+    movidos: number
+    pct: number
+    mediana_cent: number
+  }[]
+  dispersion: {
+    grupos: number
+    mediana_pct: number
+    p90_pct: number
+    sospechosos: number
+  }
+}
+
+export interface PanelMarcas {
+  fecha_datos: string
+  grupos_con_ambas: number
+  media_propia_cent: number
+  media_marca_cent: number
+  ahorro_pct: number
+  calidad_origen: { origen: string; productos: number }[]
+  /** Hay que ensenarlo SIEMPRE: sin el, el estudio se lee al reves. */
+  aviso: string
+  duelo: { grupos: number; gana_propia: number; empatan: number; gana_marca: number }
+  marcas_propias: { cadena: string; marca: string; productos: number }[]
+}
+
+export interface PanelHistorico {
+  fecha_datos: string
+  dias: number
+  serie: { fecha: string; observaciones: number; cadenas: number }[]
+  pendientes: { que: string; necesita: number; faltan: number; para: string }[]
+}
+
+export interface PanelMovidos {
+  fecha_datos: string
+  movidos: {
+    cadena: string
+    nombre: string
+    marca: string | null
+    unidad: string | null
+    grupo_id: number | null
+    precio_unidad_cent: number | null
+    variacion_cent: number
+    baja: boolean
+  }[]
+}

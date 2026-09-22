@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lo poco que no se resuelve con utilidades de Tailwind, y por que. */
+
+@layer base {
+  html {
+    /* En el movil, 16 px en un input evita el zoom automatico de Safari al
+       enfocar el buscador. El zoom deja la pagina descolocada y hay que
+       pellizcar para volver. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Un dedo, un carro en la otra mano: la barra de abajo tapa el final de la
+       pagina si no se reserva su alto. */
+    @apply antialiased;
+  }
+
+  /* Los numeros de una tabla de precios se leen en columna. Con ancho variable,
+     cada fila baila y comparar dos precios de un vistazo cuesta mas. */
+  .cifra {
+    @apply tabular-nums;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-sky-600 ring-offset-neutral-100 dark:ring-sky-400 dark:ring-offset-neutral-900;
+  }
+}
+
+@layer components {
+  .tabla-scroll {
+    /* Scroll horizontal con aviso, en vez de una tabla que se sale de la
+       pantalla y no se puede recorrer. El role y el tabindex los pone el
+       componente, que es quien sabe si hay tabla. */
+    @apply -mx-4 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:px-0;
+  }
+}

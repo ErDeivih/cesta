@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#f1f2f3" media="(prefers-color-scheme:light)" />
+    <meta name="theme-color" content="#141618" media="(prefers-color-scheme:dark)" />
+    <title>Cesta</title>
+    <!-- Nada de scripts ni estilos en linea: la CSP que pone Caddy es
+         script-src 'self' y style-src 'self', asi que un <script> incrustado no
+         se ejecutaria. Vite saca el JS y el CSS a /assets, que si entran. -->
+  </head>
+  <body class="bg-neutral-100 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+    <div id="raiz"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
