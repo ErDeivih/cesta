@@ -737,12 +737,6 @@ pequeño y coherente vale más que uno grande y falso. Eso, más las fases 5 a 1
 
 | fase | estado |
 |---|---|
-| 0 · diagnóstico | **hecho** |
-| 1 · modelo versionado | **hecho** (§19) |
-| 2 · dato de formato | **hecho** (§13.1) |
-| 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
-| 4 · asignación | **hecha**: húngaro (§13.2) y freno de grupo (§16) |
-| 5 a 11 | pendientes |
 
 Lo entregado el 22 de septiembre: `core/normalize.py`, `core/matching.py`,
 `projects/cesta/pipeline.py`, `projects/cesta/emparejar.py`,
@@ -1157,14 +1151,6 @@ programar, y conviene que esté escrita.
 
 | fase | estado |
 |---|---|
-| 0 · diagnóstico | **hecho** |
-| 1 · modelo versionado | **hecho** (§19) |
-| 2 · dato de formato | **hecho** (§13.1) |
-| 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
-| 4 · asignación | **húngaro y los dos frenos hechos** (§13.2, §16.1, §17.3); **0 conflictos de asignación, medido** (§17.4) |
-| 9 · LLM local | **medido y descartado** (§20): no mejora, con las dos tablas |
-| 8 · aprendizaje | **medido y descartado** (§21): ninguna característica separa aciertos de errores |
-| 5 a 11 | pendientes |
 
 Lo entregado: `core/normalize.py`, `core/matching.py`, `core/equivalencias.py`,
 `projects/cesta/pipeline.py`, `projects/cesta/emparejar.py`,
@@ -1276,3 +1262,20 @@ son ni de la misma marca, así que la precisión real será mejor, no peor.
 
 Embeber el catálogo y meter la búsqueda coseno en SQL es una tarde, y es lo
 siguiente que hay que hacer con el matching.
+
+---
+
+## 23. Estado del encargo
+
+| fase | estado |
+|---|---|
+| 0 · diagnóstico | **hecho** (§1–§12) |
+| 1 · modelo versionado | **hecho** (§19) |
+| 2 · dato de formato | **hecho** (§13.1) |
+| 3 · bloqueo con embeddings | **medido y viable** (§22); falta embeber el catálogo y meter el coseno en SQL |
+| 4 · asignación | **hecha**: húngaro (§13.2), freno de unión (§16.1), freno de ancho (§17.3) y **0 conflictos de asignación, medido** (§17.4) |
+| 5 · puntuación (Splink) | pendiente |
+| 8 · aprendizaje | **medido y descartado** (§21) |
+| 9 · LLM local | **medido y descartado** (§20) |
+| 10 · front nuevo | **hecho** (`plataforma/web/app`); falta reconstruir la imagen de la API |
+| 11 · API | `/api/ean`, `/api/panel/matching`, `marca` y `producto_id` hechos |
