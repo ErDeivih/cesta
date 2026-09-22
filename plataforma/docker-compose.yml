@@ -60,8 +60,19 @@ services:
     volumes:
       # La interfaz nueva. Vite compila a `web/dist` (ver `web/app/vite.config.ts`)
       # y Caddy sirve eso; antes se servia la carpeta entera, con el `index.html`
-      # y el `app.js` escritos a mano. Aquellos dos ficheros siguen en el
-      # repositorio sin tocar: volver atras es cambiar esta linea.
+      # y el `app.js` escritos a mano.
+      #
+      # **ANTES DE DESPLEGAR ESTO, LEER.** La interfaz nueva NO TIENE PARIDAD
+      # todavia: le faltan la lista de la compra, los favoritos, los ajustes y el
+      # login. El `app.js` viejo SI los tiene (sus vistas son buscar, lista,
+      # favoritos, panel y ajustes; el nuevo solo tiene buscar, grupo, ficha,
+      # escaner y panel). Servir `dist` hoy **quita funciones del producto**.
+      #
+      # La linea es la de destino y se queda puesta porque es a donde va esto,
+      # pero cambiarla en produccion es una decision del dueno, no un paso
+      # automatico. El detalle, en `docs/BACKLOG.md` (§0, paridad de la interfaz).
+      #
+      # Volver atras mientras tanto es cambiar esta linea por `./web:/srv:ro`.
       # Si los dos lados se separan, lo dice `tests/test_interfaz.py`.
       - ./web/dist:/srv:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

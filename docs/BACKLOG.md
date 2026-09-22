@@ -40,6 +40,31 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 
 ### Lo que falta para poder usar la interfaz nueva (mirar esto primero)
 
+0. **LA INTERFAZ NUEVA NO TIENE PARIDAD, y por tanto NO SE DESPLIEGA TODAVIA.**
+   El `app.js` viejo tiene cinco vistas: `buscar`, `lista` (la lista de la
+   compra), `favoritos`, `panel` y `ajustes`, con login. La nueva tiene buscador,
+   grupo, ficha, escaner, panel y panel de matching... **y no tiene la lista de la
+   compra, ni favoritos, ni ajustes, ni login**.
+
+   Servir `web/dist` hoy **quita funciones del producto**. Por eso
+   `plataforma/docker-compose.yml` trae la linea puesta (`./web/dist:/srv:ro`) con
+   un aviso encima: es el destino, pero cambiarla en produccion es una decision
+   del dueno y no un paso automatico. Volver atras mientras tanto es poner
+   `./web:/srv:ro`.
+
+   Lo que falta, por orden de valor:
+
+   1. **La lista de la compra**, que es media aplicacion. Necesita las rutas
+      `/api/listas*` y `/api/listas/{id}/donde`, que ya existen y ya estan
+      probadas; lo que falta es la pantalla.
+   2. **El login**, porque las listas y los favoritos son de cada uno: la API usa
+      sesion por cookie (`usuario_actual`).
+   3. **Favoritos**, que se apoyan en lo mismo.
+   4. **Ajustes**: preferencias y cadenas de cerca.
+
+   Los cuatro van juntos: sin login no hay lista, y sin lista la aplicacion pierde
+   lo que la hace util en el pasillo.
+
 1. **Reconstruir la imagen de la API.** El contenedor que corre hoy no tiene
    `/api/ean`, ni `/api/panel/matching`, ni `marca` en la busqueda, ni
    `producto_id` en la serie, aunque el codigo del repositorio si:

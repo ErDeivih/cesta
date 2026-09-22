@@ -1,8 +1,23 @@
 # Cesta — la interfaz nueva
 
 Vite + React + TypeScript + Tailwind. Sustituye a `../index.html` + `../app.js`
-(80 KB escritos a mano). Aquellos dos ficheros **siguen ahí, sin tocar**, hasta
-que esta tenga paridad; entonces se borran.
+(80 KB escritos a mano). Aquellos dos ficheros **siguen ahí, sin tocar**, y
+**todavía no se pueden borrar**.
+
+## Lo que le falta para tener paridad (leer antes de desplegar)
+
+Esta interfaz **no sustituye todavía a la vieja**. El `app.js` tiene cinco vistas
+—`buscar`, `lista`, `favoritos`, `panel`, `ajustes`— con login; aquí están el
+buscador, la ficha de grupo, la ficha de producto, el escáner, el panel y el panel
+de matching.
+
+**Falta: la lista de la compra, los favoritos, los ajustes y el login.** Servir
+`web/dist` hoy **quita funciones del producto**. La línea de
+`plataforma/docker-compose.yml` está puesta y es el destino, pero cambiarla en
+producción es una decisión del dueño, no un paso automático. Para volver atrás
+mientras tanto: `./web:/srv:ro`.
+
+El detalle y el orden, en `docs/BACKLOG.md` (§0, punto 0).
 
 La interfaz está en español, como el resto del repositorio.
 
