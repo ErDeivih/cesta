@@ -124,21 +124,27 @@ def test_el_limite_de_un_campo_se_ve():
     """
     fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
     import re
-    # Anclado al campo de verdad (`min-h-[44px]`), no a cualquier borde de la
-    # pantalla: la primera version cogia el de una tarjeta y pedia `neutral-200`.
-    claro = re.search(r"min-h-\[44px\] rounded-lg border border-neutral-(\d+)", fuente)
-    assert claro, "no he sabido leer el borde claro de un campo"
-    ESCALA = {"300": "#d4d4d4", "400": "#a3a3a3", "500": "#737373", "600": "#525252"}
-    r = contraste(ESCALA[claro.group(1)], "#ffffff")
+    # Los dos bordes se leen **de la misma cadena de clase**, la del campo, y no de
+    # dos buscas sueltas por el fichero: la primera version cogia el borde de una
+    # tarjeta (`border-neutral-200` en claro, `dark:border-neutral-700` en oscuro)
+    # y medía el color equivocado. Se noto porque la prueba fallaba, que es lo que
+    # tiene que hacer una prueba mal escrita.
+    campo = re.search(
+        r'min-h-\[44px\][^"]*border-neutral-(\d+)[^"]*dark:border-neutral-(\d+)',
+        fuente)
+    assert campo, "no he sabido leer la cadena de clase de un campo"
+    ESCALA = {"300": "#d4d4d4", "400": "#a3a3a3", "500": "#737373",
+              "600": "#525252", "700": "#404040"}
+
+    r = contraste(ESCALA[campo.group(1)], "#ffffff")
     assert r >= 3.0, (
-        f"el borde de un campo da {r}:1 sobre blanco (neutral-{claro.group(1)}) y "
+        f"el borde de un campo da {r}:1 sobre blanco (neutral-{campo.group(1)}) y "
         f"el minimo para un limite de control es 3")
 
-    oscuro = re.search(r"dark:border-neutral-(\d+)", fuente)
-    if oscuro:
-        r_oscuro = contraste(ESCALA[oscuro.group(1)], "#262626")
-        assert r_oscuro >= 3.0, (
-            f"el borde de un campo da {r_oscuro}:1 en el tema oscuro")
+    r_oscuro = contraste(ESCALA[campo.group(2)], "#262626")
+    assert r_oscuro >= 3.0, (
+        f"el borde de un campo da {r_oscuro}:1 en el tema oscuro "
+        f"(neutral-{campo.group(2)}) y el minimo es 3")
 
 
 @sin_interfaz
