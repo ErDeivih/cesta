@@ -124,27 +124,28 @@ def test_el_limite_de_un_campo_se_ve():
     """
     fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
     import re
-    # Los dos bordes se leen **de la misma cadena de clase**, la del campo, y no de
-    # dos buscas sueltas por el fichero: la primera version cogia el borde de una
-    # tarjeta (`border-neutral-200` en claro, `dark:border-neutral-700` en oscuro)
-    # y medía el color equivocado. Se noto porque la prueba fallaba, que es lo que
-    # tiene que hacer una prueba mal escrita.
-    campo = re.search(
-        r'min-h-\[44px\][^"]*border-neutral-(\d+)[^"]*dark:border-neutral-(\d+)',
-        fuente)
-    assert campo, "no he sabido leer la cadena de clase de un campo"
+    # Se busca por la **firma del campo** (`px-3 py-2` con su borde claro y su borde
+    # oscuro en la misma cadena de clase), no por el nombre del componente ni por un
+    # patron suelto. Las tres versiones anteriores de esta prueba fallaron por
+    # adivinar: la primera cogia el borde de una tarjeta y medía `neutral-200`, y la
+    # segunda no encontraba los componentes. La firma no se puede confundir.
     ESCALA = {"300": "#d4d4d4", "400": "#a3a3a3", "500": "#737373",
               "600": "#525252", "700": "#404040"}
+    campos = re.findall(
+        r"border-neutral-(\d+) bg-white px-3 py-2 dark:border-neutral-(\d+)", fuente)
+    assert campos, (
+        "no he sabido leer la firma de un campo en `ui.tsx`: si has cambiado esas "
+        "clases, cambia tambien esta prueba a proposito")
 
-    r = contraste(ESCALA[campo.group(1)], "#ffffff")
-    assert r >= 3.0, (
-        f"el borde de un campo da {r}:1 sobre blanco (neutral-{campo.group(1)}) y "
-        f"el minimo para un limite de control es 3")
-
-    r_oscuro = contraste(ESCALA[campo.group(2)], "#262626")
-    assert r_oscuro >= 3.0, (
-        f"el borde de un campo da {r_oscuro}:1 en el tema oscuro "
-        f"(neutral-{campo.group(2)}) y el minimo es 3")
+    for claro, oscuro in campos:
+        r = contraste(ESCALA[claro], "#ffffff")
+        assert r >= 3.0, (
+            f"el borde de un campo da {r}:1 sobre blanco (neutral-{claro}) y el "
+            f"minimo para un limite de control es 3")
+        r_oscuro = contraste(ESCALA[oscuro], "#262626")
+        assert r_oscuro >= 3.0, (
+            f"el borde de un campo da {r_oscuro}:1 en el tema oscuro "
+            f"(neutral-{oscuro}) y el minimo es 3")
 
 
 @sin_interfaz
