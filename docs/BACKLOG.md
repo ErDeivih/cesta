@@ -333,9 +333,13 @@ el cuello de botella del grupo por debajo del liston. Esta en
 
 Y una cosa que ya no cuesta nada: `uv sync --extra plataforma` esta hecho, asi
 que `pytest` completo pasa de 545 a **585 en verde** (los 30 de mas son las
-pruebas de la API, que no corrian por falta de fastapi). Quedan 2 fallos, los dos
-de `test_verificar_precios`, que van de contar bien el caso "no hubo conexion" y
-"la pagina no trae precio" — no tienen que ver con el matching.
+pruebas de la API, que no corrian por falta de fastapi).
+
+Los **2 fallos** que quedaban en `test_verificar_precios` **estan arreglados**
+(23 sep), y eran un defecto de verdad, no ruido: `informe()` contaba como fallo
+todo lo que no coincidia, asi que un dia de red mala daba el mismo aviso que un
+dia de precios malos. Ahora solo `no aparece` y `404` cuentan. La suite entera:
+**642 pasan, 0 fallan, 1 saltada.**
 
 **Las decisiones que se tomaron, y por que.**
 
