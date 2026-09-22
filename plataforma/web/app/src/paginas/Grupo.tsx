@@ -1,4 +1,4 @@
-﻿/** La pantalla del grupo: el mismo producto en cada cadena, en columnas.
+/** La pantalla del grupo: el mismo producto en cada cadena, en columnas.
  *
  *  Es la pantalla clave del encargo y la que mas facil es hacer mal. Lo que
  *  decide si sirve o no:
@@ -237,7 +237,7 @@ export function Grupo() {
               {ganadora ? (
                 <>
                   {nombreCadena(ganadora.producto.fuente)}
-                  <span className="block text-xs font-normal text-neutral-500 dark:text-neutral-400">
+                  <span className="block text-xs font-normal text-tinta-suave">
                     {eurosUnidad(ganadora.producto.precio_unidad_cent, ganadora.producto.unidad)}
                   </span>
                 </>
@@ -252,7 +252,7 @@ export function Grupo() {
             </Dato>
             <Dato etiqueta="Precios que deciden">
               {decidientes.length} de {alternativas.length}
-              <span className="block text-xs font-normal text-neutral-500 dark:text-neutral-400">
+              <span className="block text-xs font-normal text-tinta-suave">
                 los de más de {diasValidos} días no cuentan
               </span>
             </Dato>
@@ -515,7 +515,7 @@ function FichaAlternativa({
             !alternativa.decide
               ? 'text-amber-800 dark:text-amber-400'
               : alternativa.diferenciaPct === null
-                ? 'text-neutral-500 dark:text-neutral-400'
+                ? 'text-tinta-suave'
                 : alternativa.diferenciaPct <= 0
                   ? 'text-emerald-800 dark:text-emerald-400'
                   : 'text-neutral-800 dark:text-neutral-200',
@@ -585,7 +585,7 @@ function FichaAlternativa({
             </li>
           ))}
         </ul>
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-xs text-tinta-suave">
           La nota reparte los pesos solo entre los componentes con dato: lo que no sabemos no
           resta. Las alternativas sin precio por unidad no sacan un cero por eso.
         </p>
@@ -593,7 +593,7 @@ function FichaAlternativa({
 
       <div className="mt-2">
         {chispaBloqueada ? (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-tinta-suave">
             No pinto el histórico: esta cadena tiene más de un producto en el grupo y la serie de
             `/api/grupo` no dice de cuál es cada punto.
           </p>
@@ -627,7 +627,7 @@ function FichaAlternativa({
       </div>
 
       {fechaDatos && !alternativa.decide && (
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-xs text-tinta-suave">
           Datos del grupo: {fechaTexto(fechaDatos)}.
         </p>
       )}

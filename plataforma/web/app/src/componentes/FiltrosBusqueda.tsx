@@ -68,7 +68,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
       <summary className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm font-medium">
         Filtros
         {cuantosPuestos > 0 && <Etiqueta tono="info">{cuantosPuestos}</Etiqueta>}
-        <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400">
+        <span className="text-xs font-normal text-tinta-suave">
           cadena, pasillo, dieta, ofertas…
         </span>
       </summary>
@@ -80,7 +80,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
           </legend>
           <div className="flex flex-wrap gap-2">
             {cadenasDisponibles.length === 0 && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-tinta-suave">
                 No sé qué cadenas hay: `/api/estado` no ha contestado.
               </p>
             )}
@@ -93,7 +93,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 className={cx(
                   'min-h-[44px] rounded-lg border px-3 py-1 text-sm font-medium',
                   filtros.cadenas.includes(c)
-                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-600'
+                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
                     : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700',
                 )}
               >
@@ -102,7 +102,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
             ))}
           </div>
           {filtros.cadenas.length === 0 && cadenasDisponibles.length > 0 && (
-            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mt-1 text-xs text-tinta-suave">
               Sin ninguna marcada se usan todas, o tus cadenas de casa si las tienes guardadas.
             </p>
           )}
@@ -130,7 +130,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               ))}
             </select>
             {secciones.data && secciones.data.secciones.length === 0 && (
-              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="mt-1 text-xs text-tinta-suave">
                 Todavía no hay pasillos en gold: falta que el scraper escriba la columna `seccion`.
                 Explorar un pasillo se hace sin texto, así que en cuanto estén, esto funciona.
               </p>
@@ -175,7 +175,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 className={cx(
                   'min-h-[44px] rounded-lg border px-3 py-1 text-sm',
                   filtros.sellos.includes(s)
-                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-600'
+                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
                     : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700',
                 )}
               >
@@ -183,7 +183,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               </button>
             ))}
           </div>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 text-xs text-tinta-suave">
             Los sellos se comprueban en cada producto que se enseña, no en el grupo: si un miembro
             del grupo no lo cumple, no sale.
           </p>
@@ -220,7 +220,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
           />
         </fieldset>
 
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="text-xs text-tinta-suave">
           «Solo ofertas de hoy» deja fuera las de tarjeta y las de solo internet: ninguna de las dos
           baja lo que pagas en caja.
         </p>

@@ -214,7 +214,7 @@ export function Producto() {
                 palabra en el nombre del producto, y decir "sin gluten" igual en
                 los dos casos seria mentir sin decir ninguna mentira. */}
             {origenDeSellos && (
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              <span className="text-xs text-tinta-suave">
                 ({origenDeSellos})
               </span>
             )}
@@ -276,7 +276,7 @@ export function Producto() {
                   <Dato etiqueta="Último dato">{eurosUnidad(resumen.ultimo, grupo.unidad)}</Dato>
                   <Dato etiqueta="Evolución">{porcentajeConSigno(evolucion)}</Dato>
                 </dl>
-                <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="mt-2 text-xs text-tinta-suave">
                   {resumen.n} {resumen.n === 1 ? 'día' : 'días'} de histórico, del{' '}
                   {fechaTexto(historico.puntos[0]?.fecha ?? null)} al{' '}
                   {fechaTexto(historico.puntos[historico.puntos.length - 1]?.fecha ?? null)}. La
@@ -319,7 +319,7 @@ export function Producto() {
                             {p.nombre}
                           </Link>
                           {p.marca && (
-                            <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                            <span className="block text-xs text-tinta-suave">
                               {p.marca}
                             </span>
                           )}

@@ -186,7 +186,7 @@ export function Escaner() {
         )}
       </form>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className="text-xs text-tinta-suave">
         Se acepta el código como lo lea el lector: con espacios, con guiones y con ceros de más
         (EAN-13 y UPC-12 son el mismo número escrito distinto).
         {!hayDetector && (
@@ -269,7 +269,7 @@ export function Escaner() {
             {hallado.grupo_id !== null ? (
               <Link
                 to={`/grupo/${hallado.grupo_id}`}
-                className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-4 font-medium text-white hover:bg-sky-800 dark:bg-sky-600"
+                className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-4 font-medium text-white hover:bg-sky-800 dark:bg-sky-700"
               >
                 Ver el grupo y las otras cadenas
               </Link>
@@ -321,7 +321,7 @@ export function Escaner() {
                 </table>
               </TablaScroll>
             )}
-            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mt-1 text-xs text-tinta-suave">
               La diferencia se mide contra el precio por unidad más bajo de la comparación, no
               contra el precio del envase.
             </p>

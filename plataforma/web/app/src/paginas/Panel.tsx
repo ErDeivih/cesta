@@ -65,7 +65,7 @@ export function Panel() {
             className={
               'min-h-[44px] rounded-lg border px-3 py-1 text-sm font-medium ' +
               (activa === p.clave
-                ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-600'
+                ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
                 : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
             }
           >
@@ -258,7 +258,7 @@ function Cadenas() {
                 {numero(d.dispersion.sospechosos, 0)}
               </Dato>
             </dl>
-            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mt-2 text-xs text-tinta-suave">
               «Sospechosos» es donde la más cara vale más del triple que la más barata. Ahí casi
               siempre hay un problema de unidades o de emparejamiento, no una oferta.
             </p>
@@ -307,7 +307,7 @@ function Marcas() {
               <Dato etiqueta="Gana la marca">{numero(d.duelo.gana_marca, 0)}</Dato>
             </dl>
             {d.duelo.grupos < 100 && (
-              <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="mt-2 text-xs text-tinta-suave">
                 Con tan pocos grupos, esto es una pista y no una conclusión. La muestra es pequeña
                 porque son pocas las cadenas que publican ingredientes.
               </p>
@@ -341,7 +341,7 @@ function Marcas() {
                 <li key={`${m.cadena}-${m.marca}`} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
                   <span>
                     <span className="font-medium">{m.marca}</span>{' '}
-                    <span className="text-neutral-500 dark:text-neutral-400">({m.cadena})</span>
+                    <span className="text-tinta-suave">({m.cadena})</span>
                   </span>
                   <span className="cifra">{numero(m.productos, 0)}</span>
                 </li>
@@ -451,7 +451,7 @@ function Movidos() {
                           </Link>
                         )}
                         {m.marca && (
-                          <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                          <span className="block text-xs text-tinta-suave">
                             {m.marca}
                           </span>
                         )}

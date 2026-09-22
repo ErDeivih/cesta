@@ -93,7 +93,7 @@ export function PanelMatching() {
               <Dato etiqueta="Pasadas guardadas">{d.ejecuciones.length}</Dato>
             </dl>
             {d.ultima.huella_catalogo && (
-              <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="mt-2 text-xs text-tinta-suave">
                 Huella del catálogo: <code>{d.ultima.huella_catalogo}</code>. Dos pasadas con la
                 misma huella se hicieron sobre el mismo catálogo y se pueden comparar.
               </p>
@@ -313,11 +313,11 @@ function Nivel({ nivel }: { nivel: string | null }) {
           {nombre}
         </Link>
       ) : (
-        <span className="text-neutral-500 dark:text-neutral-400">
+        <span className="text-tinta-suave">
           {clave} (ya no está en el catálogo)
         </span>
       )}
-      <span className="block text-xs text-neutral-500 dark:text-neutral-400">{clave}</span>
+      <span className="block text-xs text-tinta-suave">{clave}</span>
     </>
   )
 }

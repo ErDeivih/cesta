@@ -143,7 +143,7 @@ export function SelloLetra({ producto }: { producto: Pick<Producto, 'calidad' | 
 
 /** Una letra suelta, para las tablas. */
 export function LetraSuelta({ letra, tipo }: { letra: Letra | null; tipo: 'calidad' | 'gama' }) {
-  if (!letra) return <span className="text-neutral-500 dark:text-neutral-400">sin letra</span>
+  if (!letra) return <span className="text-tinta-suave">sin letra</span>
   if (tipo === 'calidad') {
     return (
       <Etiqueta tono="info" titulo="Leída de los ingredientes">

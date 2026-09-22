@@ -107,7 +107,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             <span className="cifra">
               {texto}
               {hayAbanico && (
-                <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                <span className="block text-xs text-tinta-suave">
                   hasta {eurosUnidad(precio_unidad_max_cent, unidad)}
                 </span>
               )}
@@ -123,7 +123,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         cell: ({ row }) => (
           <span className="cifra">
             {row.original.cadenas} {row.original.cadenas === 1 ? 'cadena' : 'cadenas'}
-            <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+            <span className="block text-xs text-tinta-suave">
               {row.original.productos} {row.original.productos === 1 ? 'producto' : 'productos'}
             </span>
           </span>

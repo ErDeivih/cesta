@@ -25,7 +25,7 @@ type VarianteBoton = 'principal' | 'normal' | 'sutil' | 'peligro'
 
 const ESTILO_BOTON: Record<VarianteBoton, string> = {
   principal:
-    'bg-sky-700 text-white hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 border-transparent',
+    'bg-sky-700 text-white hover:bg-sky-800 dark:bg-sky-700 dark:hover:bg-sky-800 border-transparent',
   normal:
     'bg-white text-neutral-800 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700 border-neutral-300 dark:border-neutral-600',
   sutil:
@@ -170,7 +170,7 @@ export function Dato({
 }) {
   return (
     <div className={className}>
-      <dt className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+      <dt className="text-xs uppercase tracking-wide text-tinta-suave">
         {etiqueta}
       </dt>
       <dd className="cifra mt-0.5 text-sm font-medium">{children}</dd>

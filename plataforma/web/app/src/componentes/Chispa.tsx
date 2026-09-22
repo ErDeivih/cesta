@@ -104,7 +104,7 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
 
   if (puntos.length === 0) {
     return (
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className="text-xs text-tinta-suave">
         Sin histórico: solo tenemos un día de este precio.
       </p>
     )
