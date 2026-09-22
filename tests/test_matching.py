@@ -458,3 +458,96 @@ def test_los_pares_no_se_tocan_aunque_sean_anchos():
 
     grupos = agrupar_enlaces([(0, 1, 0.56)], 2, precios=[("l", 20.0), ("l", 160.0)])
     assert grupos[0] == grupos[1]
+
+
+# ---------------------------------------------------------------------------
+# Cero conflictos de asignacion
+# ---------------------------------------------------------------------------
+# El criterio de aceptacion del plan. Un conflicto es que un producto quede
+# emparejado con mas de dos productos de la MISMA otra cadena por el reparto: el
+# tope son dos, una por canal (el que lleva la marca dentro y el que compara
+# marcas blancas).
+#
+# Medido sobre el catalogo real el 22 de septiembre de 2026: 31.660 repartos de
+# una pareja, 5.114 de dos, y **ninguno de tres**. Los pares por codigo de
+# barras no cuentan: no pasan por el reparto.
+
+
+def _reparto(ls, filas):
+    cuenta = {}
+    for i, j, _s, niv in ls:
+        if niv == "ean":
+            continue
+        for a, b in ((i, j), (j, i)):
+            clave = (a, filas[b]["fuente"])
+            cuenta[clave] = cuenta.get(clave, 0) + 1
+    return cuenta
+
+
+def test_ningun_producto_se_lleva_tres_parejas_de_la_misma_cadena():
+    """Se estresa a proposito: diez productos del mismo formato y mismo nombre.
+
+    Es el peor caso posible -- todos quieren a todos -- y el reparto optimo tiene
+    que seguir sin darle a nadie mas de dos parejas por cadena.
+    """
+    from core.matching import enlaces
+
+    filas = []
+    for n in range(5):
+        filas.append({"fuente": "a", "nombre": "Leche entera brik 1 L",
+                      "marca": f"marca{n}", "cantidad": 1.0, "unidad_canon": "l",
+                      "ean": None})
+    for n in range(5):
+        filas.append({"fuente": "b", "nombre": "Leche entera brik 1 L",
+                      "marca": f"otra{n}", "cantidad": 1.0, "unidad_canon": "l",
+                      "ean": None})
+    ls = enlaces(filas, umbral=0.55, usar_ean=False)
+    cuenta = _reparto(ls, filas)
+    assert cuenta, "el caso de prueba deberia producir enlaces"
+    assert max(cuenta.values()) <= 2, sorted(cuenta.items(), key=lambda x: -x[1])[:5]
+
+
+def test_el_reparto_es_uno_a_uno_cuando_todos_se_parecen_igual():
+    """Cinco contra cinco, todos igual de parecidos: cinco parejas y ninguno repetido.
+
+    Es donde se ve para que esta el hungaro. Eligiendo cada uno "al mejor" por su
+    cuenta, los cinco de 'a' podrian apuntar al mismo de 'b' y quedarse cuatro sin
+    pareja; con el reparto optimo salen cinco parejas y ningun producto repetido.
+    """
+    from core.matching import enlaces
+
+    filas = [{"fuente": "a" if n < 5 else "b", "nombre": "Leche entera brik 1 L",
+              "marca": f"m{n}", "cantidad": 1.0, "unidad_canon": "l", "ean": None}
+             for n in range(10)]
+    ls = [x for x in enlaces(filas, umbral=0.55, usar_ean=False) if x[3] != "ean"]
+    assert len(ls) == 5, ls
+    usados = [i for x in ls for i in (x[0], x[1])]
+    assert len(set(usados)) == 10, "cada producto sale una sola vez"
+    # Y cada pareja es de una cadena distinta.
+    assert all(filas[i]["fuente"] != filas[j]["fuente"] for i, j, _s, _n in ls)
+
+
+def test_los_pares_por_ean_no_cuentan_como_conflicto():
+    """Tres productos con el mismo codigo son el mismo producto, y punto.
+
+    La primera version de la cuenta de conflictos los incluia y daba 642 sobre el
+    catalogo real. Separandolos: cero. No es un fallo del reparto, es que el
+    codigo de barras no reparte nada: afirma.
+    """
+    from core.matching import enlaces
+
+    filas = [
+        {"fuente": "a", "nombre": "Agua Font Vella 1,5 l", "marca": "Font Vella",
+         "cantidad": 1.5, "unidad_canon": "l", "ean": "8412345678901"},
+        {"fuente": "b", "nombre": "Agua Font Vella 1,5 l", "marca": "Font Vella",
+         "cantidad": 1.5, "unidad_canon": "l", "ean": "8412345678901"},
+        {"fuente": "b", "nombre": "Font Vella agua 1,5 L", "marca": "Font Vella",
+         "cantidad": 1.5, "unidad_canon": "l", "ean": "8412345678901"},
+        {"fuente": "b", "nombre": "Agua mineral Font Vella", "marca": "Font Vella",
+         "cantidad": 1.5, "unidad_canon": "l", "ean": "8412345678901"},
+    ]
+    ls = enlaces(filas, umbral=0.55)
+    # El producto 0 tiene tres parejas con la cadena 'b'... y las tres valen, por
+    # el mismo codigo de barras.
+    assert len([x for x in ls if 0 in (x[0], x[1]) and x[3] == "ean"]) == 3
+    assert max(_reparto(ls, filas).values()) <= 2

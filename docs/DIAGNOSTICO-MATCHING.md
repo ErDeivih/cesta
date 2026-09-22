@@ -1013,6 +1013,36 @@ Vive en `core.matching.agrupar_enlaces` y lo vigilan cuatro pruebas: que el anch
 se mide por unidad, que un enlace flojo no crea un grupo ancho, que uno fuerte sí
 puede, y que **los pares no se tocan**.
 
+### 17.4 Cero conflictos de asignación, medido — y una cuenta que estaba mal hecha
+
+El plan pide **cero conflictos de asignación**. Ahora se mide en cada pasada, en
+`diagnostico_matching.py` §3c, y sale **0**:
+
+```text
+reparto de parejas por (producto, otra cadena): {1: 31.660, 2: 5.114}
+conflictos (más de dos parejas en la misma cadena): 0
+(los 3.502 pares por código de barras no cuentan: no pasan por el reparto)
+```
+
+Dos por cadena es el tope y es correcto: son los dos canales, el que lleva la
+marca dentro y el que compara marcas blancas.
+
+**La primera versión de esta cuenta daba 642 conflictos**, y era la cuenta la que
+estaba mal: incluía los enlaces por código de barras, que **no pasan por el
+reparto**. Si una cadena tiene tres productos con el mismo EAN, los tres son el
+mismo producto y punto; el código de barras no reparte, afirma. Separándolos, cero.
+
+Y conviene no confundir esto con **«grupos con la misma cadena repetida»**
+(1.384 grupos). Que un grupo tenga dos productos de Alcampo **puede ser correcto**:
+Alcampo aporta su marca blanca *y* el producto de marca que es equivalente a los de
+las demás. Es una textura del grupo que hay que mirar, no un fallo del algoritmo.
+Se publican las dos cifras por separado justo para eso.
+
+Tres pruebas nuevas estresan el reparto: cinco contra cinco con el mismo nombre
+(todos quieren a todos) tiene que dar cinco parejas sin repetir a nadie; nadie se
+lleva tres parejas de la misma cadena; y tres productos con el mismo código de
+barras no cuentan como conflicto.
+
 ---
 
 ## 18. Estado del encargo
@@ -1023,7 +1053,7 @@ puede, y que **los pares no se tocan**.
 | 1 · modelo versionado | **hecho** (§19) |
 | 2 · dato de formato | **hecho** (§13.1) |
 | 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
-| 4 · asignación | **húngaro y freno de unión hechos** (§13.2, §16.1); falta el freno de grupo (§17.2) |
+| 4 · asignación | **húngaro y los dos frenos hechos** (§13.2, §16.1, §17.3); **0 conflictos de asignación, medido** (§17.4) |
 | 5 a 11 | pendientes |
 
 Lo entregado: `core/normalize.py`, `core/matching.py`, `core/equivalencias.py`,

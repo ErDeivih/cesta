@@ -1,4 +1,4 @@
-﻿"""Fase 0: diagnostico del matching con numeros. NO modifica nada.
+"""Fase 0: diagnostico del matching con numeros. NO modifica nada.
 
     uv run python -m projects.cesta.diagnostico_matching
 
@@ -383,6 +383,46 @@ def dispersion_grupos(filas, links=None) -> dict:
             "peores": sorted(ratios.items(), key=lambda x: -x[1])[:10]}
 
 
+def conflictos_de_asignacion(filas, links) -> dict:
+    """¿Le roba un producto la pareja a otro? El encargo pide **cero**.
+
+    Un conflicto de asignacion es esto: un producto que queda emparejado con mas
+    de dos productos de la MISMA otra cadena **por el reparto**. El tope son dos,
+    una por canal: el que lleva la marca dentro y el que compara marcas blancas.
+
+    Los enlaces por **codigo de barras no cuentan y se excluyen**: no pasan por
+    el reparto, los pone el EAN directamente, y si una cadena tiene tres
+    productos con el mismo codigo, los tres son el mismo producto y punto. La
+    primera version de esta cuenta los incluia y daba 642 conflictos; separandolos
+    se ve que la mayoria no eran del algoritmo.
+
+    **Y no es lo mismo que "un grupo con la misma cadena repetida"**, que suena
+    parecido y no lo es. Que un grupo tenga dos productos de Alcampo puede ser
+    correcto -- Alcampo aporta su marca blanca Y el producto de marca que es
+    equivalente a los de las demas -- y ademas puede venir del transito de
+    terceros, no de un reparto mal hecho. Se miden las dos cosas por separado
+    justo para no confundirlas: una es un fallo del algoritmo, la otra una
+    textura del grupo que hay que mirar, no un fallo.
+    """
+    def cuenta(solo_esto):
+        parejas: dict[tuple[int, str], list[int]] = defaultdict(list)
+        for i, j, _s, niv in links:
+            if not solo_esto(niv):
+                continue
+            parejas[(i, filas[j]["fuente"])].append(j)
+            parejas[(j, filas[i]["fuente"])].append(i)
+        return parejas
+
+    por_ean = cuenta(lambda niv: niv == "ean")
+    por_reparto = cuenta(lambda niv: niv != "ean")
+    reparto = Counter(len(v) for v in por_reparto.values())
+    exceso = {k: v for k, v in por_reparto.items() if len(v) > 2}
+    return {"productos_con_pareja": len(por_reparto), "reparto": reparto,
+            "conflictos": len(exceso),
+            "pares_por_ean": len(por_ean),
+            "ejemplos": [(k[0], k[1], len(v)) for k, v in list(exceso.items())[:5]]}
+
+
 def por_que_falla(filas, verdad, ls_sin_ean) -> dict:
     """Descompone los pares ciertos que el emparejador por nombre NO encuentra.
 
@@ -568,6 +608,26 @@ def main(argv: list[str] | None = None) -> int:
               f"{c['ud_cantidad_1']:6d} {c['absurdo']:8d}")
     print("  absurdo = cantidad imposible para esa unidad ("
           + ", ".join(f"{k}>{v:g}" for k, v in ABSURDOS.items()) + ")")
+
+    # El criterio del plan: "0 conflictos de asignacion". Se mide, no se supone.
+    seccion("3c. conflictos de asignacion (el encargo pide cero)")
+    ca = conflictos_de_asignacion(filas, links)
+    R["conflictos_asignacion"] = ca["conflictos"]
+    R["reparto_parejas"] = dict(ca["reparto"])
+    print(f"  reparto de parejas por (producto, otra cadena): "
+          f"{dict(sorted(ca['reparto'].items()))}")
+    print(f"  conflictos (mas de dos parejas en la misma cadena): {ca['conflictos']}")
+    print(f"  (los {ca['pares_por_ean']} pares por codigo de barras no cuentan: no "
+          f"pasan por el reparto)")
+    for i, fuente, n in ca["ejemplos"]:
+        print(f"    {filas[i]['nombre'][:50]} -> {n} parejas en {fuente}")
+    print(f"  ojo: esto NO es 'grupos con la misma cadena repetida' "
+          f"({R.get('grupos_cadena_repetida', 0)} grupos). Que un grupo tenga dos")
+    print("  productos de Alcampo puede ser correcto: Alcampo aporta su marca "
+          "blanca Y")
+    print("  el producto de marca equivalente. Son dos cosas distintas y aqui se "
+          "miden")
+    print("  por separado para no confundirlas.")
 
     # Fase 0, punto 3: por que falla. Se recalcula el emparejamiento por nombre
     # con el EAN escondido (lo mismo que hace `emparejar --medir`) y se mira
