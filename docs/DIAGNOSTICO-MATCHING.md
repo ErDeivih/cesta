@@ -842,11 +842,33 @@ total=0.52   palabra=0.33   trigrama*0.85=0.42
 ```
 
 `parejo()` es `max(palabras, 0,85 × trigramas)`. **Quitarle peso a las palabras no
-cierra un puente que abre el trigrama.** El número a tocar es el **0,85**, y eso
-queda como la siguiente medida a probar — con cuidado, porque los trigramas se
-añadieron por un motivo medido (`Galleta chocowafer Milka` contra `Galletas choco
-wafer chocolate con leche Milka`, y `Tosta Rica` contra `Tostarica`), y bajarlos
-puede llevarse esos aciertos por delante. Hay que medirlo, no suponerlo.
+cierra un puente que abre el trigrama.** El número que gobierna el canal de letras
+es `PESO_TRIGRAMAS`, así que se probó a bajarlo… **y tampoco**:
+
+| | aciertos `--medir` | enlaces | tasa >200 % | productos comparables |
+|---|---:|---:|---:|---:|
+| 0,85 (lo que vale) | **65 %** | 22.702 | 448 | 23.047 |
+| 0,80 (probado) | 64 % | 22.679 | 449 | 23.039 |
+
+Un punto de acierto y 23 enlaces, para nada. Y el motivo es aritmético, así que
+conviene dejarlo escrito para no repetir el error: con el listón en 0,55, para que
+un puente lo sostenga el trigrama su Dice tiene que llegar a `0,55 / 0,85 = 0,647`;
+bajando el peso a 0,80 el corte pasa a `0,55 / 0,80 = 0,6875`, así que solo caen
+los puentes que están en esa banda estrecha. **Bajar el peso no apaga el canal,
+solo lo desplaza un poco**, y de paso se lleva aciertos que sí dependían de él.
+
+Las dos hipótesis sobre la *puntuación* están por tanto medidas y descartadas. Lo
+que cierra los puentes es la **asignación y la unión**, que es donde ya se actuó
+(§13.2 y §16.1), y lo que queda por hacer es un freno **a nivel de grupo**, no
+otro ajuste de la fórmula.
+
+Los dos números (`UMBRAL_UNION` y `PESO_TRIGRAMAS`) se quedan escritos en
+`core/matching.py` con estas tablas al lado, para que nadie tenga que volver a
+descubrir que no funcionan.
+
+El `0,85` estaba antes como número suelto dentro de la función; ahora es una
+constante con nombre y con su medición. Ese es el cambio que se queda de esta
+prueba: la fórmula no ha cambiado, pero ya no hay un número mágico.
 
 El código de `pesos_por_pasillo` se queda en `core/matching.py` con sus pruebas y
 con este resultado escrito al lado: la idea es buena, el sitio donde falla está
@@ -858,10 +880,18 @@ Persiguiendo lo anterior salió esto: dos ejecuciones del **mismo día con el mi
 código** daban **22.702** y **22.704** enlaces. No es ruido de datos. El reparto
 1-a-1 va marcando qué producto queda ocupado, y el orden en que se recorrían los
 grupos de candidatos salía de un diccionario cuyas claves llevan texto: eso
-depende del *hash seed* del proceso, que Python sortea en cada arranque. Se
-arregla con un `sorted`, y no es cosmético: el plan pide medir la **estabilidad
-entre ejecuciones** ("menos del 2 % de grupos cambian de composición"), y no se
-puede medir lo que no es reproducible.
+depende del *hash seed* del proceso, que Python sortea en cada arranque.
+
+Se recorren ordenados y **mejoró, pero no se cerró**: medido después, con el
+`sorted` puesto, dos procesos siguen dando **22.702** y **22.705** (3 de 22.700, un
+0,013 %). Ni los grupos ni las métricas cambian (7.923 contra 7.925), así que no se
+ha seguido cazando — pero **queda anotado**, porque el plan pide medir la
+estabilidad entre ejecuciones («menos del 2 % de grupos cambian de composición») y,
+mientras quede baile, esa medida tiene un suelo de ruido que hay que conocer antes
+de creerse cualquier mejora pequeña.
+
+Lo que sí se aprendió y se queda: escribir la afirmación «es reproducible» antes de
+comprobarlo dos veces es exactamente el error que este proyecto paga caro.
 
 Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes de
 dorada de "300 g aprox". Es el mismo tipo de roto que los 33 detergentes "de 61

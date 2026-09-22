@@ -11,6 +11,7 @@ de ver resultados mezclados.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import unicodedata
 from pathlib import Path
@@ -485,3 +486,77 @@ def producto(producto_id: str) -> dict | None:
             "unidad": fila[4], "precio_cent": fila[5],
             "precio_unidad_cent": fila[6], "comparable": bool(fila[7]),
             "nutriscore": fila[8]}
+
+
+# El escaner de codigo de barras (docs/API.md, tarea 8).
+#
+# Es la funcion que mas se usa en el pasillo y la que mas rapido contesta la
+# pregunta util: *esto que tengo en la mano, esta mas barato en otro sitio?*.
+# Se acepta el codigo como lo lea el lector: con espacios, con guiones o con
+# ceros a la izquierda (EAN-13 y UPC-12 son el mismo numero escrito distinto).
+_MIN_DIGITOS = 8
+_MAX_DIGITOS = 14
+
+
+def normaliza_ean(codigo: str | None) -> str | None:
+    """Lo que el lector haya leido -> digitos sin ceros a la izquierda, o None.
+
+    Los ceros de delante se quitan porque la misma caja es ``8410655002410`` en
+    EAN-13 y ``08410655002410`` segun como venga; y en la base se guardan del
+    mismo modo, para que las dos formas encuentren lo mismo.
+    """
+    digitos = re.sub(r"\D", "", str(codigo or ""))
+    if not (_MIN_DIGITOS <= len(digitos) <= _MAX_DIGITOS):
+        return None
+    limpio = digitos.lstrip("0")
+    return limpio if len(limpio) >= _MIN_DIGITOS else None
+
+
+def por_ean(codigo: str) -> dict:
+    """La ficha de un producto por su codigo de barras, y su comparacion.
+
+    `codigo` tiene que venir ya normalizado con `normaliza_ean`; el 400 por un
+    codigo mal formado lo da la ruta, que es donde toca.
+    """
+    fila = conexion().execute("""
+        SELECT grupo_id, fuente, id_fuente, nombre, marca, cantidad, unidad_canon,
+               precio_cent, precio_unidad_cent, comparacion_fiable, nutriscore
+          FROM grupos
+         WHERE ltrim(regexp_replace(ean, '[^0-9]', '', 'g'), '0') = ?
+         ORDER BY precio_unidad_cent
+         LIMIT 1
+    """, [codigo]).fetchone()
+    comun = {"fecha_datos": fecha_de_gold()}
+    if not fila:
+        return comun | {
+            "encontrado": False, "motivo": "desconocido",
+            "sugerencia": "Puede ser marca propia de Alcampo o Aldi, que no "
+                          "publican codigo de barras.",
+        }
+    grupo_id = fila[0]
+    g = grupo(grupo_id) if grupo_id is not None else None
+    # `comparacion` es null, no una lista vacia, cuando el producto solo esta en
+    # una cadena. Vacia se lee como "he mirado y no hay nada mas barato"; null se
+    # lee como "no puedo comparar". No es lo mismo.
+    comparacion = None
+    if g and len(g["productos"]) > 1:
+        barato = min(p["precio_unidad_cent"] for p in g["productos"])
+        comparacion = [
+            {"fuente": p["fuente"], "precio_cent": p["precio_cent"],
+             "precio_unidad_cent": p["precio_unidad_cent"],
+             "diferencia_pct": round(100 * (p["precio_unidad_cent"] - barato)
+                                     / barato, 1) if barato else None}
+            for p in g["productos"]
+        ]
+    return comun | {
+        "encontrado": True,
+        "producto": {
+            "producto_id": f"{fila[1]}:{fila[2]}", "fuente": fila[1],
+            "id_fuente": fila[2], "nombre": fila[3], "marca": fila[4],
+            "cantidad": fila[5], "unidad": fila[6], "precio_cent": fila[7],
+            "precio_unidad_cent": fila[8], "comparable": bool(fila[9]),
+            "nutriscore": fila[10],
+        },
+        "grupo_id": grupo_id,
+        "comparacion": comparacion,
+    }

@@ -243,6 +243,22 @@ def ficha(grupo_id: int):
     return g | {"fecha_datos": catalogo.fecha_de_gold()}
 
 
+@app.get("/api/ean/{codigo}")
+def por_codigo_de_barras(codigo: str):
+    """El escaner: lo que tengo en la mano, por su codigo de barras.
+
+    Acepta el codigo como lo lea el lector (con espacios, con guiones, con ceros
+    de mas). Un codigo que no sea un codigo es un 400; un codigo bueno que no
+    conocemos es un 200 con `encontrado: false` y una explicacion, porque "no lo
+    tengo" y "me lo has dado mal" son cosas distintas.
+    """
+    limpio = catalogo.normaliza_ean(codigo)
+    if limpio is None:
+        raise HTTPException(400, "Eso no es un codigo de barras: tienen entre 8 "
+                                 "y 14 digitos.")
+    return catalogo.por_ean(limpio)
+
+
 @app.get("/api/producto/{cadena}/{id_fuente}")
 def ficha_de_producto(cadena: str, id_fuente: str):
     """Un producto por su identificador **en la cadena**, no por el nuestro.

@@ -117,3 +117,71 @@ def test_dos_cadenas_en_el_mismo_grupo_si_son_comparables(gold):
     assert r["cadenas"] == 2
     assert r["comparable"] is True
     assert r["ahorro_pct"] == 25.0        # de 0,80 a 1,00 es un 25 % mas
+
+
+# --- el escaner de codigo de barras (docs/API.md, tarea 8) --------------
+# La funcion que mas se usa en el pasillo: lo que tengo en la mano, ¿esta mas
+# barato en otro sitio?
+
+
+@pytest.mark.parametrize("leido,esperado", [
+    ("84000001", "84000001"),
+    (" 84000001 ", "84000001"),          # el lector deja espacios
+    ("840-000-01", "84000001"),          # o guiones
+    ("084000001", "84000001"),           # UPC-12 y EAN-13 son el mismo numero
+    ("00000084000001", "84000001"),
+])
+def test_el_codigo_se_acepta_como_lo_lea_el_lector(leido, esperado):
+    from plataforma.api import catalogo
+    assert catalogo.normaliza_ean(leido) == esperado
+
+
+@pytest.mark.parametrize("malo", ["", None, "123", "abcdefgh", "1" * 15,
+                                  "00000000"])
+def test_un_codigo_que_no_es_un_codigo(malo):
+    """Un codigo mal formado es un 400; uno bueno que no conocemos, no."""
+    from plataforma.api import catalogo
+    assert catalogo.normaliza_ean(malo) is None
+
+
+def test_el_escaner_encuentra_el_producto(gold):
+    from plataforma.api import catalogo
+    r = catalogo.por_ean("84000001")
+    assert r["encontrado"] is True
+    assert r["producto"]["producto_id"] == "dia:1"
+    assert r["grupo_id"] == 1
+    assert r["fecha_datos"] == "2026-09-17"
+
+
+def test_solo_en_una_cadena_la_comparacion_es_null_no_vacia(gold):
+    """`null` se lee "no puedo comparar"; `[]` se lee "no hay nada mas barato".
+
+    No es lo mismo, y el contrato de `docs/API.md` lo pide asi a proposito.
+    """
+    from plataforma.api import catalogo
+    assert catalogo.por_ean("84000001")["comparacion"] is None
+
+
+def test_con_dos_cadenas_la_comparacion_lleva_la_diferencia(gold):
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    dos = uno + (",('alcampo','9','Leche entera','ALCAMPO',1.0,'l','84000002',80,"
+                 "80,80,'l',NULL,NULL,NULL,NULL,NULL,'lacteos','http://z',1,NULL,"
+                 "NULL,NULL,NULL,true,NULL)")
+    time.sleep(0.02)
+    escribe(dos)
+    os.utime(tmp / "grupos.parquet", None)
+    r = catalogo.por_ean("84000001")
+    assert [c["fuente"] for c in r["comparacion"]] == ["alcampo", "dia"]
+    # De 0,80 a 1,00 hay un 25 % mas caro.
+    assert r["comparacion"][0]["diferencia_pct"] == 0.0
+    assert r["comparacion"][1]["diferencia_pct"] == 25.0
+
+
+def test_un_codigo_que_no_tenemos_lo_dice_con_una_pista(gold):
+    """Sin excusas: no lo tengo, y por que puede ser."""
+    from plataforma.api import catalogo
+    r = catalogo.por_ean("99999999")
+    assert r["encontrado"] is False
+    assert r["motivo"] == "desconocido"
+    assert "Alcampo" in r["sugerencia"] and "Aldi" in r["sugerencia"]

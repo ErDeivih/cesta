@@ -90,10 +90,17 @@ veto de precio de 30x. Vienen de dos sitios distintos:
    medido**: de los 137 enlaces internos del grupo mayor, en 50 manda el TRIGRAMA,
    y son justo los puentes. `parejo()` es `max(palabras, 0,85 x trigramas)`, asi
    que quitarle peso a las palabras no cierra un puente que abre el trigrama.
-   **El numero a tocar es el 0,85**, con cuidado: los trigramas se anadieron por
-   casos medidos ("chocowafer" contra "choco wafer", "Tosta Rica" contra
-   "Tostarica") y bajarlos puede llevarselos por delante. El codigo de
-   `pesos_por_pasillo` se queda en `core/matching.py` con sus pruebas.
+   **El numero a tocar era el 0,85** (`PESO_TRIGRAMAS`), y **tambien se probo y
+   tampoco**: 0,80 da 64 % en vez de 65 %, quita 23 enlaces y deja la tasa de
+   grupos anchos igual. El motivo es aritmetico: con el liston en 0,55, un puente
+   sostenido por trigramas necesita un Dice de 0,55/0,85 = 0,647, y con 0,80 el
+   corte sube a 0,6875, asi que solo caen los puentes de esa banda estrecha.
+   Bajar el peso no apaga el canal, lo desplaza.
+   **Las dos hipotesis sobre la puntuacion estan medidas y descartadas.** Lo que
+   cierra los puentes es la asignacion y la union (hecho) y, mas alla, un freno a
+   nivel de grupo. El codigo de `pesos_por_pasillo` se queda en `core/matching.py`
+   con sus pruebas, y `PESO_TRIGRAMAS` ya no es un numero suelto dentro de una
+   funcion: es una constante con su tabla de medicion al lado.
 3. Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes
    de dorada de "300 g aprox". Es el mismo roto que los 33 detergentes "de 61
    litros": el dato de cantidad de lo que se vende al peso.

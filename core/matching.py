@@ -97,6 +97,35 @@ def trigramas(nombre: str, marca: str | None = None) -> frozenset[str]:
     return frozenset(t[i:i + 3] for i in range(len(t) - 2))
 
 
+# Cuanto valen las letras frente a las palabras. Multiplica el Dice de trigramas,
+# y el resultado compite con el parecido por palabras: gana el mayor.
+#
+# Se bajo a 0,80 el 22 de septiembre de 2026 persiguiendo los grupos por familia
+# ("todas las cervezas" en un mismo grupo), y **se volvio a 0,85 midiendo**. Los
+# numeros, sobre el mismo catalogo:
+#
+#                           aciertos   enlaces   >200 %   productos comparables
+#     0,85 (lo que vale)      65 %     22.702      448          23.047
+#     0,80 (probado)          64 %     22.679      449          23.039
+#
+# Un punto de acierto y 23 enlaces, para nada: la tasa de grupos anchos hasta
+# empeora. El motivo es aritmetico y conviene tenerlo escrito, porque el error es
+# facil de repetir: para que un puente lo sostenga el trigrama **estando el liston
+# en 0,55**, su Dice tiene que ser al menos 0,55 / 0,85 = 0,647; bajando a 0,80 el
+# corte pasa a 0,6875, asi que solo caen los puentes que estan en esa banda
+# estrecha, que son pocos. Bajar el peso **no apaga el canal**, solo lo desplaza
+# un poco, y de paso se lleva por delante aciertos que si dependian de el.
+#
+# El caso que justifica los trigramas y que hay que seguir protegiendo:
+#     "Galleta chocowafer Milka"  <->  "Galletas choco wafer Milka"
+#     "Tosta Rica"  <->  "Tostarica"
+#
+# Lo que de verdad cierra los puentes no es bajar esto: es que un enlace flojo no
+# pueda pegar dos grupos (`UMBRAL_UNION`, que ya esta) y, mas alla, un freno a
+# nivel de grupo. Ver docs/DIAGNOSTICO-MATCHING.md §16.
+PESO_TRIGRAMAS = 0.85
+
+
 def dice(a: frozenset, b: frozenset) -> float:
     if not a or not b:
         return 0.0
@@ -456,24 +485,16 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
         """Lo que mas se parezcan por palabras o por letras, lo que gane.
 
         Las palabras distinguen mejor cuando las dos cadenas escriben igual; las
-        letras salvan los casos en que una junta lo que la otra separa. Las letras
-        se descuentan un poco porque tambien acercan cosas que solo se parecen por
-        fuera ("aceite de oliva" y "aceite de coco" comparten mucho trozo).
+        letras salvan los casos en que una junta lo que la otra separa
+        ("Galleta chocowafer Milka" contra "Galletas choco wafer Milka", "Tosta
+        Rica" contra "Tostarica"). Por eso las letras se descuentan: tambien
+        acercan cosas que solo se parecen por fuera.
 
-        **Cuidado con este max(): es el que sostiene los grupos por familia.** Se
-        probo el 22 de septiembre a quitarle peso al canal de palabras (calcular
-        el IDF dentro del pasillo en vez de sobre todo el catalogo, porque
-        "cerveza" parece rarisima entre 52.567 productos y no distingue nada
-        entre cervezas). No arreglo el problema, y la medicion dice por que: de
-        los 137 enlaces internos del grupo mayor, en **50 manda el trigrama** y
-        son justo los flojos, los que hacen de puente.
-        "Cerveza tostada Dia Ramblers 33 cl" contra "AMSTEL CLASICA Cerveza
-        tostada 33 cl" da 0,32 por palabras y 0,39 por letras: sin el trigrama no
-        llegaria al liston. Quitar peso a las palabras no cierra un puente que
-        abre el trigrama; el numero a tocar es el 0,85 de abajo.
+        **Este max() es el que sostiene los grupos por familia**, y el numero que
+        lo gobierna es PESO_TRIGRAMAS. Ver su comentario.
         """
         return max(parecido(docs[i], docs[j], pesos),
-                   0.85 * dice(tris[i], tris[j]))
+                   PESO_TRIGRAMAS * dice(tris[i], tris[j]))
 
     salida: list[tuple[int, int, float, str]] = []
     if usar_ean:
@@ -571,11 +592,12 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     for canal in ("marca", "equivalente"):
         ocupados: set[tuple[int, str]] = set()
         # `sorted` no sobra: iterar un diccionario cuyas claves llevan texto
-        # depende del hash seed del proceso, y como el reparto 1-a-1 va marcando
-        # quien queda ocupado, dos ejecuciones del MISMO dia daban 22.702 y
-        # 22.704 enlaces segun el proceso. Diferencia pequeña, pero el plan pide
-        # medir la estabilidad entre ejecuciones, y no se puede medir lo que no
-        # es reproducible.
+        # depende del hash seed del proceso. Pero **no basta**: medido el 22 de
+        # septiembre, con esto puesto, dos procesos del mismo dia siguen dando
+        # 22.702 y 22.705 enlaces (3 de 22.700, un 0,013 %). No cambian los
+        # grupos ni las metricas (7.923 contra 7.925), asi que no se ha seguido
+        # cazando, pero queda anotado: el plan pide medir la estabilidad entre
+        # ejecuciones y, mientras quede baile, la medida tiene un suelo de ruido.
         for _grupo, candidatos in sorted(canales[canal].items()):
             for x, y, s in _asignacion_1a1(candidatos, umbral):
                 emitir(x, y, s, ocupados)

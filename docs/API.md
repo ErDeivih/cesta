@@ -264,7 +264,18 @@ lee al reves.
 Contratos propuestos para las tareas de `BACKLOG.md`. Si al implementarlas
 conviene cambiarlos, **se cambian aqui tambien**.
 
-### `GET /api/ean/{codigo}`  — tarea 8, el escaner
+### `GET /api/ean/{codigo}`  — tarea 8, el escaner · **HECHO** (22 sep 2026)
+
+Se implementó en `plataforma/api/catalogo.py` (`normaliza_ean` y `por_ean`) y en
+`main.py`. Dos cosas que el contrato de abajo no decía y la implementación sí:
+
+- **El código se acepta como lo lea el lector**: con espacios, con guiones y con
+  ceros de más (`84000001`, `840-000-01` y `084000001` son el mismo número, que es
+  lo que pasa de verdad entre EAN-13 y UPC-12). Se guarda y se busca sin ceros a
+  la izquierda, para que las dos formas encuentren lo mismo.
+- **El `motivo` `sin_ean_en_esa_cadena` todavía no se da nunca**, porque necesita
+  un parámetro `cadena` que no se ha implementado. Sin él, un código bueno que no
+  conocemos sale siempre con `motivo: "desconocido"` y la pista de Alcampo y Aldi.
 
     sale (lo conozco)
       {"encontrado": true,
