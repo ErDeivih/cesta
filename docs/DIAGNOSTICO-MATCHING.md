@@ -1,4 +1,4 @@
-﻿# DIAGNÓSTICO DEL MATCHING — Fase 0
+# DIAGNÓSTICO DEL MATCHING — Fase 0
 
 > Informe de la Fase 0 de `docs/PLAN-UI-MATCHING.md`. **Solo mide: no cambia
 > nada.** Todos los números salen del catálogo de gold del **21 de septiembre de
@@ -1281,6 +1281,38 @@ son ni de la misma marca, así que la precisión real será mejor, no peor.
 
 Embeber el catálogo y meter la búsqueda coseno en SQL es una tarde, y es lo
 siguiente que hay que hacer con el matching.
+
+### Lo que la columna `metodo` **no** dice, y hay que saberlo (23 sep)
+
+Contado al abrir la explicabilidad del emparejamiento en la API. Leyendo
+`equivalencia.parquet` entero de la última pasada:
+
+    22.705 filas  =  21.625 pares distintos
+     1.080 pares repetidos: siempre el mismo par, una vez por EAN (nivel
+           "ean", confianza 1,0) y otra por nombre ("identico"/"equivalente").
+           Son dos pruebas del mismo hecho, no dos pares.
+    nivel   ean 1.761 | identico y equivalente el resto
+    metodo  ean 1.761 | nombre 20.944 | vector 0
+
+**`metodo` nunca vale `vector`, y no es un fallo de los datos: es que la
+informacion se pierde antes.** `enlaces()` recorre los tres canales (`marca`,
+`equivalente`, `vector`) pero devuelve `(i, j, puntuacion, nivel)`
+(`core/matching.py:632-678`), sin el canal; `core/equivalencias.py:105` rellena
+entonces `metodo = "ean" if nivel == "ean" else "nombre"`. Asi que un par que
+solo encontro el canal de vectores se guarda como si lo hubiera encontrado el
+nombre.
+
+Consecuencia practica: **hoy no se puede mirar en gold que pares aporto el canal
+de vectores**, que es justo la pregunta de esta fase. Se sabe por la medida de
+`--medir` (el recall sube), pero no par a par. Arreglarlo pide devolver el canal
+desde `enlaces()` y arrastrarlo por `filas_de_equivalencia`: toca la firma del
+nucleo del emparejador, con las 34 pruebas de `test_matching.py` y la tarea diaria
+de las 06:00 de por medio, asi que **no se hace a la carrera al final de una
+sesion**. Queda anotado en `docs/BACKLOG.md` con estos numeros.
+
+**`nivel` tambien vale `ean`**, ademas de `identico` y `equivalente`. Por eso la
+explicacion de un grupo puede decir `"ean+equivalente+identico"`: se dicen todos
+los valores que hay en el grupo en vez de elegir uno.
 
 ---
 

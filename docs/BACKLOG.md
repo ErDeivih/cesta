@@ -173,6 +173,19 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    front ya pinta la chispa del historico siempre.
 4. **El boton de camara del escaner no esta probado en un movil real.** Lo
    verificado es que se esconde solo cuando no hay `BarcodeDetector`.
+5. **`metodo` no sabe decir `vector`, y el canal de vectores se pierde.** Medido
+   el 23 sep sobre la ultima pasada: 22.705 filas = 21.625 pares distintos (1.080
+   repetidos: el mismo par por EAN y por nombre), `metodo` vale `ean` 1.761 veces
+   y `nombre` 20.944, **`vector` ninguna**. No es un fallo de los datos:
+   `enlaces()` recorre los tres canales pero devuelve `(i, j, puntuacion, nivel)`
+   sin el canal (`core/matching.py:632-678`), y `core/equivalencias.py:105`
+   rellena `metodo` a partir de `nivel`. Asi que hoy **no se puede ver en gold
+   que pares aporto el canal de vectores**, que es la pregunta de la Fase 3: se
+   sabe por la medida de `--medir`, pero no par a par. Arreglarlo es devolver el
+   canal desde `enlaces()` y arrastrarlo, o sea tocar la firma del nucleo del
+   emparejador con 34 pruebas y la tarea diaria de las 06:00 detras: no se hace a
+   la carrera al final de una sesion. El detalle, en
+   `docs/DIAGNOSTICO-MATCHING.md` (§22).
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
