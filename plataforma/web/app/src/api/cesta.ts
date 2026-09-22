@@ -9,7 +9,8 @@
  *  origenes habria que pelear con `SameSite` y esto no funcionaria.
  *
  *  `pide()` solo sabe de GET. Lo que escribe (anadir y cambiar lineas, crear la
- *  lista de casa) pasa por `escribe()`, que es la misma puerta con metodo y
+ *  lista de casa, invitar, compartir con alguien, anular los enlaces) pasa por
+ *  `escribe()`, que es la misma puerta con metodo y
  *  cuerpo, y el mismo trato del error: `ErrorApi` con el `detail` de la API para
  *  que la pantalla pueda decir QUE ha fallado y no solo que fallo.
  */
@@ -101,11 +102,21 @@ export async function crearLista(nombre: string, esDeCasa = false): Promise<List
   return await escribe<Lista>('/listas', 'POST', { nombre, es_de_casa: esDeCasa })
 }
 
+/** Alguien que esta dentro de una lista. Lo manda `GET /listas/{id}`. */
+export interface Persona {
+  usuario: string
+  /** El nombre de pila. `null` si quien se dio de alta no lo puso. */
+  nombre: string | null
+  /** `dueno` | `escribe` | `mira`. */
+  papel: string
+  aceptado_en: string
+}
+
 export interface DetalleLista {
   papel: string
   lineas: Linea[]
   estimacion: Estimacion
-  personas: unknown[]
+  personas: Persona[]
   fecha_datos: string
 }
 
@@ -129,14 +140,26 @@ export async function donde(id: string,
  *  `cliente.ts` en este encargo porque alli vive la funcion que usan todas las
  *  pantallas, y mover eso por dos llamadas es un cambio que hay que revisar en
  *  sitios que no tienen nada que ver con la cesta.
+ *
+ *  `DELETE` entra aqui en lugar de tener su propio ayudante: la unica llamada
+ *  que lo usa -- anular los enlaces de una lista -- necesita exactamente lo
+ *  mismo que las demas (la cookie, la misma puerta y el `detail` de la API
+ *  subido tal cual). Copiar estas lineas para una sola llamada seria dos sitios
+ *  donde arreglar el mismo fallo. El cuerpo es **opcional** por lo mismo:
+ *  `DELETE /listas/{id}/invitacion` y `POST /invitacion/{codigo}` no llevan
+ *  nada, y mandarles un `{}` seria decir que la peticion trae datos que nadie
+ *  lee; sin cuerpo tampoco se pone `Content-Type`, que es lo mismo dicho al
+ *  reves.
  */
-async function escribe<T>(ruta: string, metodo: 'POST' | 'PATCH',
-                          cuerpo: unknown): Promise<T> {
+async function escribe<T>(ruta: string, metodo: 'POST' | 'PATCH' | 'DELETE',
+                          cuerpo?: unknown): Promise<T> {
   const respuesta = await fetch(`/api${ruta}`, {
     method: metodo,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: cuerpo === undefined
+      ? { Accept: 'application/json' }
+      : { 'Content-Type': 'application/json', Accept: 'application/json' },
     credentials: 'same-origin',
-    body: JSON.stringify(cuerpo),
+    body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   })
   let dato: unknown = null
   let detalle: string | null = null
@@ -216,4 +239,84 @@ export async function cambiarLinea(listaId: string, lineaId: string,
       momento: new Date().toISOString(),
       ...cambio,
     })
+}
+
+/* ------------------------------------------------- invitaciones y gente -- */
+
+/** Un enlace de invitacion recien creado. `ruta` es relativa a proposito
+ *  (`/unirme/<codigo>`): el origen lo pone el navegador al construir el enlace
+ *  que se manda, y asi el mismo codigo vale igual por `localhost` que por la IP
+ *  de Tailscale, que es como se abre esto de verdad. */
+export interface Invitacion {
+  codigo: string
+  papel: string
+  expira_en: string
+  ruta: string
+}
+
+/** Crea un enlace para mandar por WhatsApp. Solo quien creo la lista (403).
+ *
+ *  Tres usos y siete dias, que es lo que pedia la interfaz vieja (`app.js:1376`)
+ *  y lo que dice su frase: "caduca en 7 dias y sirve para 3 personas". Un enlace
+ *  de un solo uso se queda muerto al reenviarlo a la segunda persona, y uno sin
+ *  caducar acaba en un grupo que no era (`almacen.py:455`). Con tres enlaces
+ *  vivos a la vez, la API contesta 409 y su frase se enseña tal cual.
+ */
+export async function crearInvitacion(listaId: string, papel = 'escribe',
+                                      usos = 3, dias = 7): Promise<Invitacion> {
+  return await escribe<Invitacion>(`/listas/${encodeURIComponent(listaId)}/invitacion`,
+    'POST', { papel, usos, dias })
+}
+
+/** Anula los enlaces vivos de esa lista y devuelve cuantos eran. */
+export async function revocarInvitaciones(listaId: string): Promise<number> {
+  const r = await escribe<{ revocadas: number }>(
+    `/listas/${encodeURIComponent(listaId)}/invitacion`, 'DELETE')
+  return r?.revocadas ?? 0
+}
+
+/** Lo que contesta la API cuando el enlace valia. */
+export interface InvitacionAceptada {
+  lista_id: string
+  nombre: string
+  papel: string
+  /** Ya estabas dentro: el enlace no ha gastado un uso. */
+  ya_estabas: boolean
+}
+
+/** Aplica el enlace. **Necesita sesion**: sin ella la API contesta 401.
+ *
+ *  Ese 401 es la razon de que la pantalla `/unirme/:codigo` ensene la puerta de
+ *  entrada en vez de llamar aqui: quien llega por un enlace casi nunca tiene
+ *  cuenta, y un error no es una forma de pedirle que se registre.
+ */
+export async function aceptarInvitacion(codigo: string): Promise<InvitacionAceptada> {
+  return await escribe<InvitacionAceptada>(
+    `/invitacion/${encodeURIComponent(codigo)}`, 'POST')
+}
+
+/** Mete en la lista a alguien que **ya tiene cuenta**, por su usuario.
+ *
+ *  El usuario se manda en minusculas y sin espacios porque es como lo guarda la
+ *  API (`almacen.py:250`): mandarlo tal cual se escribio convertiria un
+ *  "Marta " en un 404 que parece un error de la otra persona.
+ *
+ *  Devuelve el nombre de verdad y no lo que se tecleo: es lo que confirma que
+ *  la persona que ha entrado es la que se queria, y no otra con un usuario
+ *  parecido.
+ */
+export async function compartirCon(listaId: string, usuario: string,
+                                   papel = 'escribe'): Promise<Compartido> {
+  return await escribe<Compartido>(`/listas/${encodeURIComponent(listaId)}/compartir`,
+    'POST', {
+      usuario: usuario.trim().toLowerCase(),
+      papel,
+    })
+}
+
+/** Quien acaba de entrar en la lista. */
+export interface Compartido {
+  usuario: string
+  nombre: string | null
+  papel: string
 }

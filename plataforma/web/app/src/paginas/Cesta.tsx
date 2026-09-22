@@ -20,16 +20,27 @@
  *  si falla, se dice. Sin esa cola, pintar el cambio antes de que conteste el
  *  servidor seria ensenar una lista que no existe, y la lista de la compra es
  *  justo lo que no puede mentir.
+ *
+ *  Y **reparte la lista**: quien la creo manda un enlace o mete a alguien por su
+ *  usuario, y todo el mundo ve quien esta dentro. Sin esto una lista compartida
+ *  es un sitio donde aparecen cosas que no has puesto tu.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocation } from 'react-router-dom'
 
-import { cambiarLinea, entrar, misListas, registrarse, salir, verLista, donde, yo } from '../api/cesta'
-import type { CambioLinea } from '../api/cesta'
+import {
+  cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
+  revocarInvitaciones, salir, verLista, donde, yo,
+} from '../api/cesta'
+import type { CambioLinea, Invitacion, Persona } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
-import { euros } from '../api/formato'
-import { Aviso, Boton, Cargando, Casilla, Etiqueta, Tarjeta, Vacio, cx } from '../componentes/ui'
+import { euros, hace } from '../api/formato'
+import {
+  Aviso, Boton, CampoTexto, Cargando, Casilla, Etiqueta, Selector, Tarjeta,
+  Vacio, cx,
+} from '../componentes/ui'
 import type { Linea } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
@@ -184,8 +195,15 @@ function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
   )
 }
 
-/** La puerta, con los dos formularios y cual se esta viendo. */
-function Introducir({ alEntrar }: { alEntrar: () => void }) {
+/** La puerta, con los dos formularios y cual se esta viendo.
+ *
+ *  Se exporta porque la pantalla del enlace de invitacion (`/unirme/<codigo>`)
+ *  enseña **esta misma**, y no una copia: quien llega por un enlace casi nunca
+ *  tiene cuenta, y dos juegos de formularios serian dos sitios donde arreglar lo
+ *  mismo el dia que cambie el alta. Aqui no se sabe de invitaciones: entra quien
+ *  sea, y la pantalla que la usa decide que hacer despues.
+ */
+export function Introducir({ alEntrar }: { alEntrar: () => void }) {
   const [creando, setCreando] = useState(false)
 
   return (
@@ -318,9 +336,305 @@ function UnaLinea({ linea, guardando, cambiar }: {
   )
 }
 
+/* ------------------------------------------------ compartir la lista ------ *
+ *
+ *  Lo unico que hacia falta para que una lista deje de ser de una sola persona:
+ *  mandar un enlace, meter a alguien por su usuario, ver quien esta dentro y
+ *  anular lo que ya no vale.
+ *
+ *  Dos cosas de la interfaz vieja que se mantienen a proposito:
+ *
+ *  - **Quien esta dentro lo ve todo el mundo**, tambien quien no creo la lista
+ *    (`app.js:1365`). Saber con quien compartes la compra no es una herramienta
+ *    de administracion; lo que es solo de quien la creo es invitar y anular.
+ *  - **El papel se dice con palabras.** `mira` a secas se lee como una orden, y
+ *    `dueno` dice que eres, no lo que hiciste.
+ */
+
+/** `dueno` | `escribe` | `mira`, dichos en castellano. */
+function nombreDelPapel(papel: string): string {
+  if (papel === 'dueno') return 'creó la lista'
+  if (papel === 'mira') return 'solo mira'
+  return 'puede escribir'
+}
+
+function QuienEstaDentro({ personas }: { personas: Persona[] }) {
+  return (
+    <ul className="grid gap-1">
+      {personas.map((q) => (
+        <li key={q.usuario} className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="font-medium">{q.nombre || q.usuario}</span>
+          {q.nombre && <span className="text-tinta-suave">@{q.usuario}</span>}
+          <Etiqueta tono={q.papel === 'dueno' ? 'dato' : 'info'}>
+            {nombreDelPapel(q.papel)}
+          </Etiqueta>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Tres usos y siete dias: lo que pedia la interfaz vieja (`app.js:1376`) y lo
+ *  que dice la frase que se enseña junto al enlace. Los dos numeros viven aqui
+ *  para que la frase no pueda decir una cosa y la peticion otra. */
+const USOS_DEL_ENLACE = 3
+const DIAS_DEL_ENLACE = 7
+
+/** Compartir: el enlace, quien esta dentro, quien entra por su usuario y anular.
+ *
+ *  Solo se pinta para quien creo la lista. La API contesta 403 a cualquier otro
+ *  (`main.py:489`) y un boton que no puede funcionar es una promesa que no se
+ *  puede cumplir: mejor decir quien puede, que es lo que hace la tarjeta de
+ *  abajo.
+ *
+ *  Tres decisiones que se ven en la pantalla:
+ *
+ *  - **El enlace no se crea solo al abrir.** La interfaz vieja lo pedia nada mas
+ *    abrir la hoja (`app.js:1375`). Aqui hay un boton, porque la API admite tres
+ *    enlaces vivos a la vez y contesta 409 al cuarto: abrir la cesta tres veces
+ *    dejaria la lista sin poder invitar a nadie, y sin haber querido invitar.
+ *  - **El portapapeles se comprueba antes de usarlo.** `navigator.clipboard`
+ *    solo existe en contexto seguro (https o `localhost`) y esto se sirve por
+ *    http en el 8080, tambien por la IP de Tailscale: lo normal es que no este.
+ *    Sin la comprobacion, un `try` no bastaria: el boton diria "Copiado" sin
+ *    haber copiado nada y el enlace se perderia sin que nadie se entere. Cuando
+ *    no hay portapapeles se hace lo de la interfaz vieja (`app.js:1550`): dejar
+ *    el enlace seleccionado y decir que se copie a mano.
+ *  - **Un solo papel para las dos vias.** El enlace y el usuario comparten el
+ *    selector de arriba: dos selectores acabarian diciendo cosas distintas sin
+ *    que nadie lo hubiera pretendido.
+ */
+function Compartir({ listaId, personas }: { listaId: string; personas: Persona[] }) {
+  const cliente = useQueryClient()
+  const [papel, setPapel] = useState('escribe')
+  const [enlace, setEnlace] = useState<Invitacion | null>(null)
+  const [copiado, setCopiado] = useState<string | null>(null)
+  const [sinPortapapeles, setSinPortapapeles] = useState(false)
+  const [revocadas, setRevocadas] = useState<number | null>(null)
+  const [usuario, setUsuario] = useState('')
+  const campo = useRef<HTMLInputElement>(null)
+
+  const invita = useMutation({
+    mutationFn: () => crearInvitacion(listaId, papel, USOS_DEL_ENLACE, DIAS_DEL_ENLACE),
+    onSuccess: (nueva) => {
+      setEnlace(nueva)
+      setCopiado(null)
+      setSinPortapapeles(false)
+    },
+  })
+
+  const revoca = useMutation({
+    mutationFn: () => revocarInvitaciones(listaId),
+    onSuccess: (cuantas) => {
+      // El enlace que estaba en pantalla acaba de morir: dejarlo ahi seria
+      // mandarle a alguien uno que ya no vale.
+      setRevocadas(cuantas)
+      setEnlace(null)
+      setCopiado(null)
+    },
+  })
+
+  const comparte = useMutation({
+    mutationFn: () => compartirCon(listaId, usuario, papel),
+    onSuccess: () => {
+      setUsuario('')
+      // La lista de dentro cambia con esto, y esa la lleva el servidor.
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+    },
+  })
+
+  const url = enlace ? `${window.location.origin}${enlace.ruta}` : ''
+
+  async function copia() {
+    // Se selecciona siempre, tambien cuando el portapapeles funciona: es lo que
+    // deja el respaldo listo y lo que confirma de un vistazo que el boton ha
+    // hecho algo.
+    campo.current?.select()
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url)
+        setCopiado('Copiado')
+        setSinPortapapeles(false)
+        return
+      } catch {
+        // Existe y aun asi lo ha negado (permiso denegado, ventana sin foco).
+        // Se cae al respaldo, que es lo mismo que si no estuviera.
+      }
+    }
+    setCopiado('Cópialo')
+    setSinPortapapeles(true)
+  }
+
+  return (
+    <Tarjeta
+      titulo="Compartir"
+      sub="La lista es de quien la creó y de quien entre por aquí. Quien entre puede escribir en ella o solo mirarla, y eso se elige aquí abajo."
+    >
+      <Selector
+        etiqueta="Quien entre podrá"
+        value={papel}
+        onChange={(e) => setPapel(e.target.value)}
+        className="max-w-xs"
+      >
+        <option value="escribe">Escribir en la lista</option>
+        <option value="mira">Solo mirarla</option>
+      </Selector>
+
+      <h3 className="mt-4 text-sm font-semibold">Mandar un enlace</h3>
+      <p className="mt-1 text-sm text-tinta-suave">
+        Pedirle a alguien su nombre de usuario es pedirle que se equivoque. El
+        enlace se lo lleva puesto.
+      </p>
+      <div className="mt-2">
+        <Boton
+          variante="principal"
+          disabled={invita.isPending}
+          onClick={() => invita.mutate()}
+        >
+          {invita.isPending ? 'Creando…' : enlace ? 'Crear otro enlace' : 'Crear un enlace'}
+        </Boton>
+      </div>
+      {/* El 403 (no eres quien la creo) y el 409 (ya hay tres enlaces vivos)
+          traen su frase escrita por la API: se enseña tal cual, sin resumirla. */}
+      {invita.isError && (
+        <div className="mt-2">
+          <Aviso tono="mal" titulo="No he podido crear el enlace">
+            <p>{textoDeError(invita.error)}</p>
+          </Aviso>
+        </div>
+      )}
+
+      {enlace && (
+        <>
+          <p className="mt-3 text-sm text-tinta-suave">
+            Mándale este enlace. Caduca {hace(enlace.expira_en)} y vale para las{' '}
+            {USOS_DEL_ENLACE} primeras personas que lo abran.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              ref={campo}
+              readOnly
+              value={url}
+              aria-label="Enlace de invitación"
+              // Al enfocarlo se selecciona entero: el dedo en el movil no acierta
+              // a seleccionar 60 caracteres de codigo.
+              onFocus={(e) => e.target.select()}
+              className="min-h-[44px] min-w-[12rem] flex-1 rounded-lg border border-borde bg-fondo px-3 py-2 text-sm"
+            />
+            <Boton variante="principal" onClick={copia}>
+              {copiado ?? 'Copiar'}
+            </Boton>
+          </div>
+          {sinPortapapeles && (
+            <p className="mt-2 text-sm text-aviso">
+              Este navegador no deja copiar solo (el portapapeles necesita https,
+              y esto va por http). El enlace ya está seleccionado: cópialo a mano.
+            </p>
+          )}
+        </>
+      )}
+
+      <h3 className="mt-4 text-sm font-semibold">Compartir con quien ya tiene cuenta</h3>
+      <p className="mt-1 text-sm text-tinta-suave">
+        Si ya usa esta Cesta, con su usuario entra sin enlace. Un nombre de
+        usuario se escribe mal con una facilidad pasmosa, así que si no existe
+        nadie con ese, la API lo dice y aquí se enseña.
+      </p>
+      <form
+        className="mt-2 flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (usuario.trim()) comparte.mutate()
+        }}
+      >
+        <CampoTexto
+          etiqueta="Su usuario"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="sin la arroba"
+          className="min-w-[12rem] flex-1"
+        />
+        <Boton type="submit" disabled={!usuario.trim() || comparte.isPending}>
+          {comparte.isPending ? 'Compartiendo…' : 'Compartir'}
+        </Boton>
+      </form>
+      {comparte.data && (
+        <p className="mt-2 text-sm">
+          <Etiqueta tono="bien">
+            Ya está dentro {comparte.data.nombre || `@${comparte.data.usuario}`}
+          </Etiqueta>
+        </p>
+      )}
+      {comparte.isError && (
+        <div className="mt-2">
+          <Aviso tono="mal" titulo="No he podido compartirla">
+            <p>{textoDeError(comparte.error)}</p>
+          </Aviso>
+        </div>
+      )}
+
+      <h3 className="mt-4 text-sm font-semibold">Quién está dentro</h3>
+      <div className="mt-1">
+        <QuienEstaDentro personas={personas} />
+      </div>
+
+      <div className="mt-4">
+        <Boton
+          // No es rojo: anular enlaces no borra nada de la lista ni echa a
+          // nadie, solo mata los que aun no se han usado. El rojo se guarda para
+          // quitar una linea, que si borra.
+          disabled={revoca.isPending}
+          onClick={() => revoca.mutate()}
+        >
+          Anular los enlaces que haya dado
+        </Boton>
+      </div>
+      {revocadas !== null && (
+        <p className="mt-2 text-sm text-tinta-suave">
+          {revocadas ? `Anulados ${revocadas}.` : 'No había ninguno.'} A quien ya
+          entró no le afecta: sigue en la lista.
+        </p>
+      )}
+      {revoca.isError && (
+        <p className="mt-2 text-sm text-aviso">{textoDeError(revoca.error)}</p>
+      )}
+    </Tarjeta>
+  )
+}
+
+/* ------------------------------------------- llegar desde una invitacion --- */
+
+/** Lo que deja `Unirse` al llegar a la cesta. */
+interface VenidaDeInvitacion {
+  listaId: string
+  aviso: string
+}
+
+/** Lo que `Unirse` puso en el `state` de la ruta, si es que viene de ahi.
+ *
+ *  Se comprueba el tipo en vez de fiarse: `state` es `any` en react-router y
+ *  cualquiera puede abrir `/cesta` desde cualquier sitio. Un `listaId` que no
+ *  sea texto se ignora y la cesta abre su lista de siempre. */
+function venidaDeInvitacion(estado: unknown): VenidaDeInvitacion | null {
+  if (typeof estado !== 'object' || estado === null) return null
+  const { listaId, aviso } = estado as { listaId?: unknown; aviso?: unknown }
+  if (typeof listaId !== 'string') return null
+  return { listaId, aviso: typeof aviso === 'string' ? aviso : '' }
+}
+
 export function Cesta() {
   const cliente = useQueryClient()
-  const [elegida, setElegida] = useState<string | null>(null)
+  const ubicacion = useLocation()
+  // Al aceptar una invitacion se llega aqui con esa lista en el `state` de la
+  // ruta. Hace falta porque la lista que se acaba de aceptar casi nunca es la
+  // primera del desplegable: las de casa van delante (`almacen.py:219`), y
+  // entrar por un enlace para acabar viendo otra lista parece que el enlace no
+  // ha hecho nada.
+  const venida = venidaDeInvitacion(ubicacion.state)
+  const [elegida, setElegida] = useState<string | null>(venida?.listaId ?? null)
 
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
   const listas = useQuery({
@@ -418,6 +732,15 @@ export function Cesta() {
         </button>
       </header>
 
+      {/* De donde viene esta pantalla. Se dice una vez, al llegar del enlace:
+          aterrizar en una lista que no has abierto tu, sin explicacion, parece
+          un error de la aplicacion y no una invitacion aceptada. */}
+      {venida?.aviso && (
+        <Aviso tono="bien">
+          <p>{venida.aviso}</p>
+        </Aviso>
+      )}
+
       {detalle.isLoading && <Cargando que="la lista" />}
       {cambia.isError && (
         <Aviso tono="mal" titulo="No he podido guardar el cambio">
@@ -460,6 +783,21 @@ export function Cesta() {
             titulo="Lo que hay que coger"
             sub="Marca lo que ya llevas en el carro. Lo tachado sigue contando en el total, pero sale de la cuenta de dónde comprarla."
           >
+            {/* Con una invitacion de "solo mirar" los controles se apagan: la
+                API contesta 403 a cualquier cambio (`main.py:369`), y dejar los
+                botones puestos para que fallen uno a uno es peor que decir de
+                entrada por que no se pueden pulsar. */}
+            {detalle.data.papel === 'mira' && (
+              <div className="mb-3">
+                <Aviso tono="aviso">
+                  <p>
+                    Esta lista te la compartieron para mirar, así que no puedes
+                    cambiarla: los botones están apagados por eso. Quien la creó
+                    puede darte el papel de escribir cuando quiera.
+                  </p>
+                </Aviso>
+              </div>
+            )}
             {detalle.data.lineas.length === 0 ? (
               <Vacio titulo="La lista está vacía">
                 <p>
@@ -477,7 +815,7 @@ export function Cesta() {
                     <UnaLinea
                       key={l.id}
                       linea={l}
-                      guardando={cambia.isPending}
+                      guardando={cambia.isPending || detalle.data.papel === 'mira'}
                       cambiar={(lineaId, cambio) => cambia.mutate({ lineaId, cambio })}
                     />
                   ))}
@@ -498,6 +836,21 @@ export function Cesta() {
             )}
           </Tarjeta>
         </>
+      )}
+
+      {/* Compartir va antes de los precios a proposito: la comparacion entre
+          cadenas son seis tarjetas largas, y lo que se hace una vez (mandar el
+          enlace) no puede quedar debajo de lo que se mira cien veces. */}
+      {detalle.data && detalle.data.papel === 'dueno' && (
+        <Compartir listaId={listaId as string} personas={detalle.data.personas} />
+      )}
+      {detalle.data && detalle.data.papel !== 'dueno' && (
+        <Tarjeta
+          titulo="Quién está dentro"
+          sub="Esta lista la creó otra persona, así que solo quien la creó puede invitar y anular enlaces."
+        >
+          <QuienEstaDentro personas={detalle.data.personas} />
+        </Tarjeta>
       )}
 
       {compra.isLoading && <Cargando que="dónde comprarla" />}

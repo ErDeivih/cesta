@@ -1,4 +1,4 @@
-﻿import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 
 import { Cabecera } from './componentes/Cabecera'
 import { NavAbajo } from './componentes/Nav'
@@ -12,6 +12,7 @@ import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
 import { PanelMatching } from './paginas/PanelMatching'
 import { Producto } from './paginas/Producto'
+import { Unirse } from './paginas/Unirse'
 
 /** El armazon de la app: cabecera pegada arriba, contenido y barra abajo.
  *
@@ -29,6 +30,12 @@ export function App() {
           <Route path="/producto/:fuente/:idFuente" element={<Producto />} />
           <Route path="/escaner" element={<Escaner />} />
           <Route path="/cesta" element={<Cesta />} />
+          {/* La ruta que devuelve la API al crear una invitacion
+              (`/unirme/<codigo>`, main.py:500). Caddy sirve `index.html` para
+              cualquier ruta que no sea un fichero (`try_files {path}`,
+              Caddyfile), asi que este enlace funciona tambien si se pega tal
+              cual en el navegador, sin pasar por el buscador. */}
+          <Route path="/unirme/:codigo" element={<Unirse />} />
           <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/ajustes" element={<Ajustes />} />
           <Route path="/panel" element={<Panel />} />
