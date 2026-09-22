@@ -88,3 +88,54 @@ def test_lo_que_el_resumen_dice_de_los_vectores_es_lo_que_se_uso():
     assert "USAR_VECTORES and emb.camino().exists()" in fuente, (
         "el resumen ha vuelto a deducir si se usaron los vectores mirando si el "
         "fichero existe, en vez de mirar si la pasada los uso")
+
+
+def _dos_con_el_mismo_ean():
+    """Dos productos de cadenas distintas con el mismo codigo: la verdad que
+    `medir` necesita para tener algo que contar."""
+    return [
+        {"fuente": "a", "nombre": "Leche semidesnatada Asturiana 1 L",
+         "marca": "Asturiana", "cantidad": 1.0, "unidad_canon": "l",
+         "ean": "8412345678905"},
+        {"fuente": "b", "nombre": "Leche semidesnatada Central Lechera",
+         "marca": "Asturiana", "cantidad": 1.0, "unidad_canon": "l",
+         "ean": "8412345678905"},
+    ]
+
+
+def test_la_medicion_mide_la_configuracion_de_hoy(monkeypatch):
+    """`--medir` tiene que medir lo que se usa de verdad, no otra cosa.
+
+    El numero que sale de ahi es el que se compara con el 65 % del encargo. Si
+    midiera una configuracion que no es la que corre, contestaria a otra pregunta.
+
+    Y es la barra de aceptacion entera: cuando `--medir` encendia los vectores
+    siempre, no terminaba (mas de 62 minutos), asi que **no se podia comprobar
+    nada**. Medir la configuracion de hoy tarda 369 s, medidos.
+    """
+    visto = []
+
+    def falso(*_a, **k):
+        visto.append(k.get("usar_vectores"))
+        return []
+
+    monkeypatch.setattr(emparejar, "enlaces", falso)
+    emparejar.medir(_dos_con_el_mismo_ean(), 0.55)
+    assert visto == [emparejar.USAR_VECTORES], (
+        f"`--medir` ha emparejado con {visto} en vez de con la configuracion de "
+        f"hoy (USAR_VECTORES={emparejar.USAR_VECTORES})")
+
+
+def test_la_comparacion_con_vectores_se_pide(monkeypatch):
+    """El otro lado: pedirla tiene que medir las dos, y en ese orden."""
+    visto = []
+
+    def falso(*_a, **k):
+        visto.append(k.get("usar_vectores"))
+        return []
+
+    monkeypatch.setattr(emparejar, "enlaces", falso)
+    emparejar.medir(_dos_con_el_mismo_ean(), 0.55, comparar_vectores=True)
+    assert visto == [False, True], (
+        "la comparacion de la Fase 3 tiene que medir sin vectores y con vectores, "
+        "en ese orden, para poder restar los dos numeros")

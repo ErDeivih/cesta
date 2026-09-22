@@ -99,14 +99,19 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    3. **Crear la lista "Casa" si no existe.** `Cesta.tsx:155-164` dice "se crean
       desde el movil o con la interfaz antigua": manda a la interfaz vieja. El
       viejo la crea sola (`app.js:448-455`) con `POST /listas`.
-   4. **El registro** (`POST /api/registrarse`, `main.py:83`). Cero
-      coincidencias de `registrarse` en `app/src`: **quien llega nuevo no puede
-      crearse cuenta**, y sin cuenta no hay cesta ni favoritos. El viejo lo tiene
-      (`app.js:128-152`).
+   4. ~~**El registro**~~ — **hecho** (23 sep): `registrarse()` en
+      `src/api/cesta.ts` y el formulario de alta en `src/paginas/Cesta.tsx`, que
+      alterna con el de entrar (`POST /api/registrarse`, `main.py:83`, que ya
+      existia y **entra sola** en la misma respuesta). Comprobado contra la API
+      viva por Caddy: 201 con `Set-Cookie`, `GET /api/yo` con esa cookie devuelve
+      la persona, repetir el alta da 409 y un usuario de dos letras da 422. La
+      cuenta de prueba se borro despues (0 usuarios de prueba). Las reglas no se
+      duplican en el front: se ensena el texto de la API.
    5. **Compartir la lista**: enlace de invitacion, copiar, quien esta dentro,
       anular (`POST/DELETE /listas/{id}/invitacion`, `POST /invitacion/{codigo}`,
       `POST /listas/{id}/compartir`). Cero coincidencias de `invitacion` en
-      `app/src`. El viejo lo tiene (`app.js:1358-1395`).
+      `app/src`. El viejo lo tiene (`app.js:1358-1395`). **Es el bloqueante que
+      queda**: sin esto, una lista es de una sola persona.
    6. **Escribir sin cobertura**: cola local + `POST /listas/{id}/sincronizar`, y
       leer la lista sin red. El viejo funcionaba con el PC de casa apagado
       (`app.js:39-47, 63-80, 476-484`); el nuevo depende de `GET /listas/{id}` y
@@ -189,16 +194,18 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 6. **`core.embeddings.candidatos` no cabe en la pasada diaria, y hay que
    arreglarlo antes de encender el canal de vectores.** Medido el 23 sep con la
    cache completa: `--medir` con vectores **no termino en 62 minutos** (sin
-   vectores, recalcular los enlaces son 90 s; la pasada diaria entera, 355 s). El
-   canal se ha dejado **opt-in** (`usar_vectores=False` por defecto y
-   `USAR_VECTORES = False` en `emparejar.py`, con cinco pruebas que lo guardan),
-   asi que hoy no estorba. El arreglo esta acotado y localizado: (a) filtrar por
-   el alias `s` en vez de recalcular el coseno en el `WHERE`
-   (`core/embeddings.py:246` y `:249`), (b) trocear la consulta por bloque como
-   dice su propia docstring, en vez de una sola sobre toda la tabla, y (c)
-   no volver a copiar los vectores con `list(v)`. Despues hay que **medir con y
-   sin** otra vez, que es la parte que no se puede saltar. Detalle y numeros en
-   `docs/DIAGNOSTICO-MATCHING.md` (§22).
+   vectores, recalcular los enlaces son 90 s; la pasada diaria entera, 355 s).
+   El canal se ha dejado **opt-in** (`usar_vectores=False` por defecto y
+   `USAR_VECTORES = False` en `emparejar.py`, con siete pruebas que lo guardan),
+   asi que hoy no estorba. `--medir` **mide la configuracion de hoy** (369 s,
+   1.170 de 1.809, el 65 %) y la comparacion de la Fase 3 se pide con
+   `--medir --comparar-vectores`, que es la que no termina. El arreglo esta
+   acotado y localizado: (a) filtrar por el alias `s` en vez de recalcular el
+   coseno en el `WHERE` (`core/embeddings.py:246` y `:249`), (b) trocear la
+   consulta por bloque como dice su propia docstring, en vez de una sola sobre
+   toda la tabla, y (c) no volver a copiar los vectores con `list(v)`. Despues
+   hay que **medir con y sin** otra vez, que es la parte que no se puede saltar.
+   Detalle y numeros en `docs/DIAGNOSTICO-MATCHING.md` (§22).
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el

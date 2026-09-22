@@ -37,6 +37,41 @@ export async function entrar(usuario: string, clave: string,
   }
 }
 
+/** Crea la cuenta y entra con ella, todo en la misma respuesta.
+ *
+ *  Va escrita a mano como `entrar()` y no con `escribe()`, que ya sabe hacer
+ *  esto: son las dos unicas rutas que **abren sesion**, y tienen que leerse
+ *  igual -- mismo `credentials`, mismo trato del error, mismo `detail` -- porque
+ *  lo que se rompe si una se escribe distinto es justo lo que sostiene todo lo
+ *  demas. `escribe()` se queda para lo que se escribe dentro de la cesta.
+ *
+ *  No devuelve quien eres aunque la API lo mande (`{"usuario": ...}`): el unico
+ *  sitio donde vive ese dato es la consulta `yo()`, y copiarlo aqui seria un
+ *  segundo sitio que puede quedar desfasado. Quien llama recarga `yo()` y ya.
+ */
+export async function registrarse(usuario: string, nombre: string, clave: string,
+                                  dispositivo = 'web'): Promise<void> {
+  const respuesta = await fetch('/api/registrarse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ usuario, nombre, clave, dispositivo }),
+  })
+  if (!respuesta.ok) {
+    let detalle: string | null = null
+    try {
+      const cuerpo = await respuesta.json()
+      if (typeof cuerpo?.detail === 'string') detalle = cuerpo.detail
+    } catch {
+      // Un 502 de Caddy no es JSON: el detalle se queda en null.
+    }
+    // El 403 (registro cerrado), el 409 (usuario cogido), el 422 (una regla) y
+    // el 429 ya vienen con la frase escrita por la API. Aqui no se traducen ni
+    // se resumen: se suben tal cual para que la pantalla las ensene.
+    throw new ErrorApi(respuesta.status, detalle)
+  }
+}
+
 /** Sale: borra la cookie. */
 export async function salir(): Promise<void> {
   await fetch('/api/salir', {

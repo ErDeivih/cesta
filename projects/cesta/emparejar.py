@@ -262,13 +262,19 @@ def calidad_de_grupos(filas: list[dict], grupo: list[int],
     return letra, origen
 
 
-def medir(filas: list[dict], umbral: float) -> None:
+def medir(filas: list[dict], umbral: float, comparar_vectores: bool = False) -> None:
     """Esconde el EAN, empareja por nombre y cuenta aciertos.
 
-    Y lo hace **dos veces: sin el canal de embeddings y con el**. Es la unica
-    forma de contestar la pregunta que importa de la Fase 3 -- ¿sube el recall o
-    no? --, y por eso `enlaces` tiene un interruptor aparte para los vectores en
-    vez de ir pegado al del EAN.
+    Mide **la configuracion que se usa de verdad**, la que dice `USAR_VECTORES`.
+    El numero que sale de aqui es el que se compara con el 65 % del encargo, y
+    medir otra cosa seria contestar a otra pregunta.
+
+    Con `comparar_vectores=True` mide ademas la pasada **con** el canal de
+    vectores. Esa es la pregunta de la Fase 3 -- ¿sube el recall o no? --, y por
+    eso `enlaces` tiene un interruptor aparte para los vectores en vez de ir
+    pegado al del EAN. Va apagado por defecto porque hoy esa pasada **no
+    termina** (mas de 62 minutos, ver el comentario de `USAR_VECTORES`): hay que
+    pedirla a proposito y con el rato por delante.
     """
     por_ean: dict[str, list[int]] = {}
     for i, f in enumerate(filas):
@@ -283,7 +289,13 @@ def medir(filas: list[dict], umbral: float) -> None:
         print("  no hay pares con el mismo EAN en cadenas distintas: nada que medir")
         return
     print(f"  verdad: {len(verdad)} pares entre cadenas con el mismo EAN", flush=True)
-    for etiqueta, vectores in (("sin vectores", False), ("con vectores", True)):
+    pasadas = [("sin vectores", False), ("con vectores", True)]
+    if not comparar_vectores:
+        pasadas = [(("con vectores" if USAR_VECTORES else "sin vectores"),
+                    USAR_VECTORES)]
+        print(f"  (la configuracion de hoy es USAR_VECTORES={USAR_VECTORES}; para "
+              f"medir las dos, --comparar-vectores)", flush=True)
+    for etiqueta, vectores in pasadas:
         ls = enlaces(filas, umbral=umbral, usar_ean=False,
                      usar_vectores=vectores)
         pares = {(min(i, j), max(i, j)) for i, j, _s, _n in ls}
@@ -368,6 +380,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--umbral", type=float, default=UMBRAL)
     ap.add_argument("--medir", action="store_true",
                     help="mide contra los pares ya ciertos por EAN y no escribe")
+    ap.add_argument("--comparar-vectores", action="store_true",
+                    help="mide tambien con el canal de vectores. Hoy esa pasada "
+                         "no termina (ver USAR_VECTORES), asi que va aparte")
     ap.add_argument("--reusar-enlaces", action="store_true",
                     help="no recalcula los enlaces: reutiliza data/gold/enlaces.parquet")
     a = ap.parse_args(argv)
@@ -392,7 +407,7 @@ def main(argv: list[str] | None = None) -> int:
           + (f" ({recuperadas} cantidades deducidas del nombre)" if recuperadas else ""))
 
     if a.medir:
-        medir(filas, a.umbral)
+        medir(filas, a.umbral, comparar_vectores=a.comparar_vectores)
         print(f"emparejar: medicion en {time.monotonic() - t0:.0f}s")
         return 0
 

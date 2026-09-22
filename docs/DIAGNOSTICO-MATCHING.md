@@ -1357,6 +1357,14 @@ integracion. El arreglo es acotado -- filtrar por el alias y trocear la consulta
 por bloque --, pero **no se hace aqui**: toca el canal que mueve los grupos y hay
 que volver a medir con y sin despues, y eso es otra sesion, no el final de esta.
 
+Y `--medir` se arregla para que siga sirviendo de barra de aceptacion, porque
+aquel cambio la dejo inservible sin querer: medía **siempre** las dos pasadas, asi
+que el numero del encargo (el 65 %) solo salia al final de la que no termina. A
+partir de ahora mide **la configuracion que corre** -- que es lo que hay que
+comparar con el 65 % -- y la comparacion de la Fase 3 se pide a proposito con
+`--medir --comparar-vectores`. Medido hoy con esa forma: **20.948 enlaces, 1.170
+de 1.809 pares ciertos, 369 s**.
+
 ### La pasada de las 17:08 y la de las 20:30 dan numeros distintos, y no es un fallo
 
     20260922-170833   7.997 grupos comparables   6.604 identicos   12.322 de calidad

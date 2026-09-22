@@ -25,14 +25,30 @@ import { useState } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { cambiarLinea, entrar, misListas, salir, verLista, donde, yo } from '../api/cesta'
+import { cambiarLinea, entrar, misListas, registrarse, salir, verLista, donde, yo } from '../api/cesta'
 import type { CambioLinea } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { euros } from '../api/formato'
 import { Aviso, Boton, Cargando, Casilla, Etiqueta, Tarjeta, Vacio, cx } from '../componentes/ui'
 import type { Linea } from '../tipos'
 
-function Introducir({ alEntrar }: { alEntrar: () => void }) {
+/* ------------------------------------------------------ entrar, o crear ---
+ *
+ *  Entrar y crear la cuenta son la misma tarjeta con dos formularios, como en
+ *  la interfaz vieja (`modoEntrar`, app.js:114). El motivo esta escrito en
+ *  `api/registro.py`: quien llega con un enlace de lista casi nunca tiene
+ *  cuenta, asi que el camino de crearla no puede estar escondido detras de una
+ *  palabra pequena en una esquina. Aqui esta a un toque, debajo del otro.
+ *
+ *  Los campos de los dos formularios llevan `autocomplete` de verdad
+ *  (`username`, `current-password`, `new-password`) para que el gestor de
+ *  claves del movil sepa cuando guarda una nueva y cuando rellena la de
+ *  siempre. Y ninguno lleva tamano de letra menor de 16 px: por debajo de eso
+ *  Safari hace zoom al enfocar y deja la pantalla descolocada (estilos.css:35).
+ */
+
+/** El camino de quien ya tiene cuenta. */
+function FormularioEntrar({ alEntrar }: { alEntrar: () => void }) {
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
   const entrar_ = useMutation({
@@ -41,45 +57,156 @@ function Introducir({ alEntrar }: { alEntrar: () => void }) {
   })
 
   return (
+    <form
+      className="grid gap-3 sm:max-w-sm"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (usuario.trim() && clave) entrar_.mutate()
+      }}
+    >
+      <label className="grid gap-1">
+        <span className="text-sm font-medium">Usuario</span>
+        <input
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          autoComplete="username"
+          // El usuario se guarda en minusculas y sin tildes: la mayuscula
+          // automatica del movil y el corrector solo escriben lo que la API va
+          // a rechazar.
+          autoCapitalize="none"
+          spellCheck={false}
+          className="rounded-md border border-borde bg-fondo px-3 py-2"
+        />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm font-medium">Clave</span>
+        <input
+          type="password"
+          value={clave}
+          onChange={(e) => setClave(e.target.value)}
+          autoComplete="current-password"
+          className="rounded-md border border-borde bg-fondo px-3 py-2"
+        />
+      </label>
+      <Boton type="submit" disabled={entrar_.isPending}>
+        {entrar_.isPending ? 'Entrando…' : 'Entrar'}
+      </Boton>
+      {entrar_.isError && (
+        <Aviso tono="mal">
+          <p>{textoDeError(entrar_.error)}</p>
+        </Aviso>
+      )}
+    </form>
+  )
+}
+
+/** El camino de quien llega nuevo.
+ *
+ *  Tres cosas que se ven y estan decididas:
+ *
+ *  - **El nombre va antes que el usuario.** Es lo que se enseña en una lista
+ *    compartida y la pregunta facil; el usuario es el que tiene reglas y puede
+ *    estar cogido, asi que se pregunta despues. Mismo orden que la interfaz
+ *    vieja (`index.html:32-41`) y por el mismo motivo.
+ *  - **No hay paso intermedio.** La API entra sola al crear la cuenta: deja la
+ *    cookie puesta en la misma respuesta (`main.py:112`), asi que esta pantalla
+ *    NO dice "cuenta creada, ahora entra". Seria pedir dos veces lo mismo y una
+ *    pantalla de mas. Si el alta sale bien se llama a `alEntrar`, exactamente
+ *    igual que si se hubiera entrado.
+ *  - **Las reglas viven en la API.** `minLength` es solo la pista del navegador
+ *    para no escribir tres caracteres y enterarse despues; la verdad la dice
+ *    `api/registro.py` y su 422 se enseña tal cual. Copiar aqui el minimo de la
+ *    clave seria una segunda copia que se queda vieja el dia que cambie.
+ */
+function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
+  const [nombre, setNombre] = useState('')
+  const [usuario, setUsuario] = useState('')
+  const [clave, setClave] = useState('')
+  const alta = useMutation({
+    mutationFn: () => registrarse(usuario.trim(), nombre.trim(), clave),
+    onSuccess: alEntrar,
+  })
+
+  return (
+    <form
+      className="grid gap-3 sm:max-w-sm"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (nombre.trim() && usuario.trim() && clave) alta.mutate()
+      }}
+    >
+      <label className="grid gap-1">
+        <span className="text-sm font-medium">Tu nombre</span>
+        <input
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          autoComplete="name"
+          placeholder="Como quieres que te vean"
+          className="rounded-md border border-borde bg-fondo px-3 py-2"
+        />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm font-medium">Usuario</span>
+        <input
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="sin tildes ni espacios"
+          className="rounded-md border border-borde bg-fondo px-3 py-2"
+        />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm font-medium">Contraseña</span>
+        <input
+          type="password"
+          value={clave}
+          onChange={(e) => setClave(e.target.value)}
+          autoComplete="new-password"
+          minLength={8}
+          placeholder="ocho caracteres o más"
+          className="rounded-md border border-borde bg-fondo px-3 py-2"
+        />
+      </label>
+      <Boton type="submit" disabled={alta.isPending}>
+        {alta.isPending ? 'Creando…' : 'Crear cuenta'}
+      </Boton>
+      {/* El 403 (registro cerrado), el 409 (usuario cogido), el 422 (una regla
+          que no se cumple) y el 429 traen su frase escrita por la API. Aqui no
+          se traducen ni se resumen: se enseña lo que ha contestado. */}
+      {alta.isError && (
+        <Aviso tono="mal">
+          <p>{textoDeError(alta.error)}</p>
+        </Aviso>
+      )}
+    </form>
+  )
+}
+
+/** La puerta, con los dos formularios y cual se esta viendo. */
+function Introducir({ alEntrar }: { alEntrar: () => void }) {
+  const [creando, setCreando] = useState(false)
+
+  return (
     <Tarjeta>
-      <h2 className="mb-1 text-lg font-semibold">Entra para ver tu lista</h2>
+      <h2 className="mb-1 text-lg font-semibold">
+        {creando ? 'Crea tu cuenta' : 'Entra para ver tu lista'}
+      </h2>
       <p className="mb-4 text-sm text-tinta-suave">
-        La lista de la compra es tuya y de quien la compartas. Por eso hay que
-        entrar: una lista sin dueño no se puede compartir ni recuperar.
+        {creando
+          ? 'La cuenta es lo que hace que la lista tenga dueño: sin ella no se guarda ni se puede compartir. Se queda en casa, en esta Cesta, y al crearla ya entras.'
+          : 'La lista de la compra es tuya y de quien la compartas. Por eso hay que entrar: una lista sin dueño no se puede compartir ni recuperar.'}
       </p>
-      <form
-        className="grid gap-3 sm:max-w-sm"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (usuario.trim() && clave) entrar_.mutate()
-        }}
-      >
-        <label className="grid gap-1">
-          <span className="text-sm font-medium">Usuario</span>
-          <input
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
-            autoComplete="username"
-            className="rounded-md border border-borde bg-fondo px-3 py-2"
-          />
-        </label>
-        <label className="grid gap-1">
-          <span className="text-sm font-medium">Clave</span>
-          <input
-            type="password"
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
-            autoComplete="current-password"
-            className="rounded-md border border-borde bg-fondo px-3 py-2"
-          />
-        </label>
-        <Boton type="submit" disabled={entrar_.isPending}>
-          {entrar_.isPending ? 'Entrando…' : 'Entrar'}
+      {creando
+        ? <FormularioAlta alEntrar={alEntrar} />
+        : <FormularioEntrar alEntrar={alEntrar} />}
+      <div className="mt-2 flex flex-wrap items-center gap-1 text-sm text-tinta-suave">
+        <span>{creando ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}</span>
+        <Boton variante="sutil" compacto className="px-2" onClick={() => setCreando(!creando)}>
+          {creando ? 'Entra' : 'Créala'}
         </Boton>
-        {entrar_.isError && (
-          <p className="text-sm text-aviso">{textoDeError(entrar_.error)}</p>
-        )}
-      </form>
+      </div>
     </Tarjeta>
   )
 }
