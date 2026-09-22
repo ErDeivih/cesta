@@ -41,20 +41,17 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 ### Lo que falta para poder usar la interfaz nueva (mirar esto primero)
 
 1. **Reconstruir la imagen de la API.** El contenedor que corre hoy no tiene
-   `/api/ean` ni `/api/panel/matching`, aunque el codigo del repositorio si:
+   `/api/ean`, ni `/api/panel/matching`, ni `marca` en la busqueda, ni
+   `producto_id` en la serie, aunque el codigo del repositorio si:
    `cd plataforma; docker compose up -d --build api`.
-2. **`/api/buscar` no devuelve `marca`**, asi que la tabla del buscador no puede
-   tener columna de marca (inventarla seria mentir). Es anadir un campo a la
-   respuesta.
-3. **`serie` del grupo va por (cadena, fecha) sin decir de que producto es cada
-   punto**, asi que la chispa de historico no se puede pintar cuando una cadena
-   tiene mas de un producto en el grupo. Se arregla anadiendo `producto_id` a los
-   puntos.
+2. ~~`/api/buscar` no devuelve `marca`~~ — **hecho** (22 sep).
+3. ~~`serie` no dice de que producto es cada punto~~ — **hecho** (22 sep); el
+   front ya pinta la chispa del historico siempre.
 4. **El boton de camara del escaner no esta probado en un movil real.** Lo
    verificado es que se esconde solo cuando no hay `BarcodeDetector`.
 
-Estos tres primeros son de `plataforma/api/` y son pequeños; el front ya esta
-escrito esperandolos.
+Con los puntos 2 y 3 hechos, lo unico que queda para poder usarla es el 1: es un
+comando.
 
 **Lo que ya esta hecho (22 sep 2026).**
 
