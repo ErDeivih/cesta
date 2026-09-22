@@ -31,6 +31,10 @@ export interface ResultadoBusqueda {
    *  es `comparable` (dos cadenas o mas), no tener id. */
   grupo_id: number | null
   nombre: string
+  /** La marca del miembro **mas barato** del grupo, que es el que la fila
+   *  ensena. La API empezo a mandarla el 22 de septiembre de 2026; antes no
+   *  estaba y sacarla del nombre seria adivinarla. */
+  marca: string | null
   cadena_mas_barata: string | null
   precio_cent: number | null
   precio_unidad_cent: number | null
@@ -105,6 +109,13 @@ export interface Producto {
 }
 
 export interface PuntoSerie {
+  /** De que producto del grupo es este punto.
+   *
+   *  La API lo añadio el 22 de septiembre de 2026 y hace falta de verdad: antes
+   *  iba solo `(fuente, fecha)`, y un grupo con dos productos de la misma cadena
+   *  daba dos series que empezaban igual y ninguna se podia pintar. Medido ese
+   *  dia, hay grupos con 8 productos de 2 cadenas, 6 de ellos de la misma. */
+  producto_id: string
   fuente: string
   fecha: string
   precio_unidad_cent: number | null

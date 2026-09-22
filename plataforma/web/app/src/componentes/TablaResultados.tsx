@@ -68,6 +68,18 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         ),
       },
       {
+        id: 'marca',
+        header: 'Marca',
+        // La marca del miembro más barato, que es el que la fila enseña. La API
+        // no la mandaba y esta columna no existía: sacarla del nombre sería
+        // adivinarla, y en un catálogo donde media tienda es marca propia,
+        // adivinarla mal se nota mucho.
+        accessorFn: (f) => f.marca ?? '',
+        cell: ({ getValue }) => (
+          <span className="text-tinta-suave">{getValue<string>() || '—'}</span>
+        ),
+      },
+      {
         id: 'precio',
         header: 'Precio',
         accessorFn: (f) => f.precio_cent,

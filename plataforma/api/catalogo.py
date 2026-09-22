@@ -276,6 +276,10 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
                    min(precio_unidad_cent) AS min_unidad,
                    max(precio_unidad_cent) AS max_unidad,
                    arg_min(nombre, precio_unidad_cent) AS nombre,
+                   -- La marca del miembro mas barato. La tabla del buscador la
+                   -- pedia y no la tenia: la unica forma de sacarla era
+                   -- inventarla a partir del nombre, y eso es mentir.
+                   arg_min(marca, precio_unidad_cent) AS marca,
                    arg_min(fuente, precio_unidad_cent) AS fuente_barata,
                    arg_min(precio_cent, precio_unidad_cent) AS precio_cent,
                    any_value(unidad_canon) AS unidad,
@@ -296,9 +300,9 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
         -- el emparejador se lo pone a todo, y 32.486 grupos son de un solo
         -- producto. Durante unos dias la interfaz pinto "1 cadenas · 1
         -- productos" para esos, con el sello de comparable puesto.
-        SELECT grupo_id, nombre, fuente_barata, precio_cent, min_unidad, max_unidad,
-               unidad, cadenas, productos, nutriscore, imagen, con_oferta,
-               con_oferta_club, con_retirada,
+        SELECT grupo_id, nombre, marca, fuente_barata, precio_cent, min_unidad,
+               max_unidad, unidad, cadenas, productos, nutriscore, imagen,
+               con_oferta, con_oferta_club, con_retirada,
                cadenas >= 2 AS comparable,
                min_unidad > 0 AND max_unidad / min_unidad > {FACTOR_INCREIBLE} AS dudoso
           FROM porgrupo
@@ -307,18 +311,18 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
     """, args).fetchall()
 
     return [{
-        "grupo_id": f[0], "nombre": f[1], "cadena_mas_barata": f[2],
-        "precio_cent": f[3], "precio_unidad_cent": f[4],
-        "precio_unidad_max_cent": f[5], "unidad": f[6],
-        "cadenas": f[7], "productos": f[8], "nutriscore": f[9],
-        "imagen": f[10], "con_oferta": bool(f[11]),
-        "con_oferta_club": bool(f[12]), "con_retirada": bool(f[13]),
-        "comparable": bool(f[14]),
+        "grupo_id": f[0], "nombre": f[1], "marca": f[2], "cadena_mas_barata": f[3],
+        "precio_cent": f[4], "precio_unidad_cent": f[5],
+        "precio_unidad_max_cent": f[6], "unidad": f[7],
+        "cadenas": f[8], "productos": f[9], "nutriscore": f[10],
+        "imagen": f[11], "con_oferta": bool(f[12]),
+        "con_oferta_club": bool(f[13]), "con_retirada": bool(f[14]),
+        "comparable": bool(f[15]),
         # Un grupo dudoso sigue saliendo, y sigue diciendo donde esta mas barato.
         # Lo que no hace es poner un numero de ahorro que no se sostiene.
-        "dudoso": bool(f[15]),
-        "ahorro_pct": (round(100 * (f[5] - f[4]) / f[4], 1)
-                       if f[14] and f[4] and not f[15] else 0.0),
+        "dudoso": bool(f[16]),
+        "ahorro_pct": (round(100 * (f[6] - f[5]) / f[5], 1)
+                       if f[15] and f[5] and not f[16] else 0.0),
     } for f in filas]
 
 
@@ -473,8 +477,13 @@ def grupo(grupo_id: int) -> dict | None:
         }
 
     productos = [prod(f) for f in miembros]
+    # `producto_id` viaja en cada punto del historico. Sin el, un grupo con dos
+    # productos de la misma cadena da dos series que empiezan por el mismo
+    # (cadena, fecha) y ninguna se puede pintar: no se sabe de cual de los dos
+    # es cada precio. La interfaz lo decia en pantalla en vez de dibujar algo
+    # que podria estar mezclando dos productos distintos.
     serie = con.execute("""
-        SELECT fuente, fecha::VARCHAR, precio_unidad_cent
+        SELECT producto_id, fuente, fecha::VARCHAR, precio_unidad_cent
           FROM diario
          WHERE producto_id IN (SELECT fuente || ':' || id_fuente FROM grupos WHERE grupo_id = ?)
          ORDER BY fecha
@@ -491,7 +500,8 @@ def grupo(grupo_id: int) -> dict | None:
         "cadenas": len({p["fuente"] for p in productos}),
         "ahorro_pct": round(100 * (caro - barato) / barato, 1) if barato else 0.0,
         "ahorro_cent": caro - barato,
-        "serie": [{"fuente": s[0], "fecha": s[1], "precio_unidad_cent": s[2]} for s in serie],
+        "serie": [{"producto_id": s[0], "fuente": s[1], "fecha": s[2],
+                   "precio_unidad_cent": s[3]} for s in serie],
     }
 
 

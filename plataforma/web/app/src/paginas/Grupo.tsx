@@ -11,9 +11,11 @@
  *     precio del envase: un bote de 1 kg y otro de 500 g no se restan.
  *   - **Un precio de mas de `dias_precio_valido` dias no decide.** Se enseña,
  *     con su fecha, y queda fuera del orden y de la referencia del "mejor".
- *   - **La chispa no se pinta cuando la cadena tiene mas de un producto en el
- *     grupo**: `/api/grupo` devuelve `serie` por cadena y fecha, sin decir de
- *     que producto es cada punto. Pintar esa linea mezclada seria inventar un
+ *   - **La chispa se pinta por producto, no por cadena.** `/api/grupo` manda
+ *     `producto_id` en cada punto de la serie desde el 22 de septiembre de 2026;
+ *     antes no lo mandaba y habia que callarse cuando la cadena tenia dos
+ *     productos en el grupo, porque la serie mezclaba los dos y no se sabia de
+ *     cual era cada precio. Pintar esa linea mezclada seria inventar un
  *     historico.
  */
 import { useCallback, useMemo, useState } from 'react'
@@ -302,16 +304,18 @@ export function Grupo() {
                         alternativa={a}
                         pesos={pesos}
                         puntosSerie={
-                          // Con dos productos de la misma cadena en el grupo, la
-                          // serie mezcla los dos y no se puede pintar.
-                          lista.length === 1
-                            ? grupo.serie
-                                .filter((s) => s.fuente === cadena)
-                                .map<PuntoChispa>((s) => ({
-                                  fecha: s.fecha,
-                                  valor: s.precio_unidad_cent,
-                                }))
-                            : []
+                          // Se filtra por `producto_id`, no por cadena: es lo que
+                          // permite pintar la chispa aunque la cadena tenga dos
+                          // productos en el grupo. Sin ese campo la serie mezcla
+                          // los dos y no hay forma de saber de cual es cada
+                          // precio, que es por lo que antes solo se pintaba
+                          // cuando la cadena tenia un producto.
+                          grupo.serie
+                            .filter((s) => s.producto_id === a.producto.producto_id)
+                            .map<PuntoChispa>((s) => ({
+                              fecha: s.fecha,
+                              valor: s.precio_unidad_cent,
+                            }))
                         }
                         chispaBloqueada={lista.length > 1}
                         fechaDatos={grupo.fecha_datos ?? null}

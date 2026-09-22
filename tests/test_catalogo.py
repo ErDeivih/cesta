@@ -63,6 +63,32 @@ def test_encuentra_lo_que_hay(gold):
     assert len(catalogo.buscar("leche")) == 1
 
 
+def test_la_busqueda_trae_la_marca(gold):
+    """La tabla del buscador la pedia y no la tenia.
+
+    La unica forma de sacarla sin este campo era adivinarla a partir del nombre,
+    y eso es inventarse un dato. Es la marca del miembro **mas barato** del
+    grupo, que es el que la fila ensena.
+    """
+    from plataforma.api import catalogo
+    assert catalogo.buscar("leche")[0]["marca"] == "Dia"
+
+
+def test_el_historico_dice_de_que_producto_es_cada_punto(gold):
+    """Sin esto, dos productos de la misma cadena dan series indistinguibles.
+
+    El grupo de la prueba tiene un solo producto, asi que lo que se comprueba es
+    que el campo viaja; el caso que lo justifica de verdad se vio en el catalogo
+    real: un grupo con 8 productos de 2 cadenas, 6 de ellos de la misma, donde
+    sin `producto_id` no se sabe de cual es cada precio.
+    """
+    from plataforma.api import catalogo
+    serie = catalogo.grupo(1)["serie"]
+    assert serie, "el grupo deberia tener historico en el gold de mentira"
+    assert serie[0]["producto_id"] == "dia:1"
+    assert serie[0]["fecha"] == "2026-09-17"
+
+
 def test_se_entera_de_que_el_pipeline_ha_reescrito_gold(gold):
     """El fallo que esto cierra: la app servia el catalogo de ayer para siempre."""
     tmp, escribe, uno = gold

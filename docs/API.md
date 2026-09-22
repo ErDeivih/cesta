@@ -114,13 +114,18 @@ existiendo para el registro cerrado:
 
     sale  {"fecha_datos": "2026-09-17", "resultados": [{
              "grupo_id": 4125 | null,      null = producto suelto, sin comparar
-             "nombre", "cadena_mas_barata", "precio_cent",
+             "nombre", "marca", "cadena_mas_barata", "precio_cent",
              "precio_unidad_cent", "precio_unidad_max_cent", "unidad",
              "cadenas", "productos", "nutriscore", "imagen", "con_oferta",
              "comparable", "ahorro_pct"}]}
 
 **Los productos sin grupo salen igual, marcados.** Son 32.486 de 51.781: el 63 % del
 catalogo. Esconderlos seria esconder casi todo.
+
+**`marca` se añadió el 22 de septiembre de 2026** y es la del miembro **más
+barato** del grupo, que es el que la fila enseña. No estaba, y la tabla del
+buscador la pedía: la única forma de sacarla sin el campo era adivinarla a partir
+del nombre, y eso es inventarse un dato.
 
 **Ojo**: `grupo_id` NUNCA es null. El emparejador se lo pone a todo, aunque el
 grupo sea de un solo producto. Lo que hace comparable a un grupo es tener
@@ -138,7 +143,14 @@ grupo sea de un solo producto. Lo que hace comparable a un grupo es tener
               "gama",        <- SOLO si sale de ordenar por precio
               "nutriscore", "nova", "ean", "imagen", "alergenos",
               "ingredientes", "origen", "promo", "url"}],
-           "serie": [{"fuente", "fecha", "precio_unidad_cent"}]}
+           "serie": [{"producto_id", "fuente", "fecha", "precio_unidad_cent"}]}
+
+**`producto_id` en cada punto de la serie se añadió el 22 de septiembre de 2026.**
+Antes iba solo `(fuente, fecha)`, y eso hace que un grupo con dos productos de la
+misma cadena dé dos series que empiezan igual y **ninguna se pueda pintar**: no se
+sabe de cuál de los dos es cada precio. No es un caso raro: medido ese día, hay
+grupos con 8 productos de 2 cadenas, 6 de ellos de la misma. La interfaz decía
+"no lo puedo dibujar" en pantalla en vez de mezclar dos productos.
 
 **`calidad` y `gama` nunca vienen los dos.** Es la regla mas importante de toda
 la API: una letra sacada del precio no se llama calidad. El 77 % de ellas lo son.
