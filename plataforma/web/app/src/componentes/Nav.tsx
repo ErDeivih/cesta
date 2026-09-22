@@ -12,7 +12,7 @@
  *
  *  Una barra de ocho iconos no se lee, se busca a tientas.
  */
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 import { IconoCodigoBarras, IconoLupa, IconoPanel, IconoGrafica } from './iconos'
 import { cx } from './ui'
@@ -25,9 +25,23 @@ const ITEMS = [
 ] as const
 
 function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { compacto?: boolean }) {
+  const { pathname, search } = useLocation()
+
+  /* Pulsar "Buscar" **estando ya en el buscador** no puede borrar la busqueda.
+   *
+   * El texto y los filtros viven en la direccion (`?q=leche&cadenas=dia,...`),
+   * asi que un enlace a `/` a secas los tira: para volver a ver lo mismo hay que
+   * escribirlo otra vez, de pie en el pasillo. La interfaz vieja no lo hacia
+   * porque no volvia a pintar la pantalla; aqui hay que decirlo a proposito.
+   *
+   * Desde otra pantalla si se entra limpio, y eso tambien es a proposito: lo que
+   * se va a hacer es empezar a buscar. Y la flecha de atras sigue devolviendo la
+   * busqueda anterior, que es como se busca "lo de antes" sin pensarlo. */
+  const destino = a === '/' && pathname === '/' ? { pathname: '/', search } : a
+
   return (
     <NavLink
-      to={a}
+      to={destino}
       end={exacto}
       className={({ isActive }) =>
         cx(
