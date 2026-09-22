@@ -20,6 +20,16 @@ export default {
       },
       colors: {
         tinta: { claro: '#141618', oscuro: '#f1f2f3' },
+        // Los nombres con significado. Los valores viven en estilos.css, porque
+        // tienen que cambiar con el tema y estas clases se escriben sin `dark:`.
+        // Si se anade uno aqui, hay que anadirlo tambien alli en los dos temas:
+        // el test `test_interfaz.py::test_colores_conocidos` lo comprueba.
+        'tinta-suave': 'var(--tinta-suave)',
+        fondo: 'var(--fondo)',
+        borde: 'var(--borde)',
+        aviso: 'var(--aviso)',
+        bien: 'var(--bien)',
+        'bien-suave': 'var(--bien-suave)',
       },
       maxWidth: {
         // El ancho de la app: mas alla de esto, una fila de tabla obliga a

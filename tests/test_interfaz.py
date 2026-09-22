@@ -114,6 +114,167 @@ def test_la_interfaz_pide_la_api_por_rutas_relativas():
         f"vite.config.ts, que es el unico sitio donde esa direccion vale.")
 
 
+# --------------------------------------------------------------- colores ---
+#
+# Esta prueba existe por un fallo real, no por gusto. La interfaz usaba 27 veces
+# seis colores con nombre (`text-tinta-suave`, `border-borde`, `bg-fondo`...) que
+# NO estaban definidos en `tailwind.config.js`. Tailwind, cuando no reconoce una
+# clase, no avisa: la omite. Asi que no habia error de compilacion, no habia
+# aviso en el navegador, y media interfaz salia sin su color. Se descubrio
+# buscando `tinta-suave` en el CSS construido y encontrando cero resultados.
+#
+# `tsc` y `vite build` no pueden ver esto: una clase desconocida es una cadena de
+# texto perfectamente valida. Solo se ve comparando lo que se escribe con lo que
+# el tema define, que es lo que hace esta prueba.
+
+PALETAS = {
+    "slate", "gray", "zinc", "neutral", "stone", "red", "orange", "amber",
+    "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue",
+    "indigo", "violet", "purple", "fuchsia", "pink", "rose",
+}
+CLAVES = {"transparent", "current", "inherit", "black", "white", "none", "auto"}
+UTILIDADES = (
+    "text", "bg", "border", "ring", "divide", "outline", "decoration", "fill",
+    "stroke", "placeholder", "accent", "caret", "shadow", "from", "via", "to",
+)
+# Lo que no es un color aunque empiece como una utilidad de color: lados del
+# borde, grosores, tamanos de letra, alineaciones, estilos de linea.
+NO_ES_COLOR = {
+    "x", "y", "t", "r", "b", "l", "s", "e",
+    "solid", "dashed", "dotted", "double", "hidden", "collapse", "separate", "wavy",
+    "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "inner",
+    "left", "center", "right", "justify", "start", "end",
+    "wrap", "nowrap", "balance", "pretty", "ellipsis", "clip",
+    "inset", "offset", "opacity", "gradient", "cover", "contain",
+    "fixed", "local", "scroll", "repeat", "no-repeat", "auto",
+}
+
+
+def _bloque_de_colores(texto: str) -> str:
+    """El contenido de `colors: { ... }`, contando llaves para no cortar mal."""
+    inicio = texto.find("colors:")
+    if inicio == -1:
+        return ""
+    abre = texto.find("{", inicio)
+    if abre == -1:
+        return ""
+    nivel = 0
+    for i in range(abre, len(texto)):
+        if texto[i] == "{":
+            nivel += 1
+        elif texto[i] == "}":
+            nivel -= 1
+            if nivel == 0:
+                return texto[abre + 1:i]
+    return ""
+
+
+def _nombres_del_tema(texto_config: str) -> set[str]:
+    """Los colores que el tema define, con los anidados como `padre-hijo`."""
+    bloque = _bloque_de_colores(texto_config)
+    nombres: set[str] = set()
+    for padre, dentro in re.findall(r"([\w-]+)\s*:\s*\{([^}]*)\}", bloque):
+        nombres.add(padre)
+        for hijo in re.findall(r"([\w-]+)\s*:", dentro):
+            nombres.add(f"{padre}-{hijo}")
+    # Lo que queda fuera de los objetos anidados son colores planos.
+    plano = re.sub(r"[\w-]+\s*:\s*\{[^}]*\}", " ", bloque)
+    for nombre in re.findall(r"['\"]?([\w-]+)['\"]?\s*:", plano):
+        nombres.add(nombre)
+    return nombres
+
+
+def _clases_de_color(fichero: Path) -> list[tuple[int, str]]:
+    """Las clases que usan una utilidad de color, con su numero de linea."""
+    salida = []
+    for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+        for palabra in re.findall(r"[A-Za-z0-9_\-:\[\]\./%#]+", linea):
+            # `dark:hover:bg-neutral-700` -> `bg-neutral-700`.
+            tras_variantes = palabra.rsplit(":", 1)[-1]
+            for utilidad in UTILIDADES:
+                if tras_variantes.startswith(f"{utilidad}-"):
+                    salida.append((numero, tras_variantes[len(utilidad) + 1:]))
+                    break
+    return salida
+
+
+def _motivo(resto: str, nombres: set[str], con_variable: set[str]) -> str | None:
+    """Por que esta clase no es un color valido, o `None` si lo es."""
+    # `bg-white/95` es blanco al 95 %: la opacidad se pega con una barra.
+    base = re.sub(r"/(?:\d+|\[[^\]]*\])$", "", resto)
+    if base != resto:
+        if base in con_variable:
+            # Tailwind resuelve la opacidad escribiendo `rgb(255 255 255 / 0.95)`,
+            # y una variable con un `#rrggbb` dentro no vale ahi: saldria un color
+            # invalido que el navegador ignora. Es el mismo fallo silencioso.
+            return (f"`{resto}` pide opacidad sobre `{base}`, que es una variable "
+                    f"de CSS: no se puede")
+        return _motivo(base, nombres, con_variable)
+    if base in CLAVES or base in nombres:
+        return None
+    primero = base.split("-")[0]
+    if primero in PALETAS:
+        return None
+    if primero in NO_ES_COLOR or primero.isdigit() or primero.endswith("%"):
+        return None
+    if base.startswith("["):
+        return None
+    return f"`{base}` no esta en el tema"
+
+
+def _nombres_con_variable(texto_config: str) -> set[str]:
+    """Los colores del tema cuyo valor es una variable de CSS."""
+    return set(re.findall(r"['\"]?([\w-]+)['\"]?\s*:\s*'var\(--[\w-]+\)'", texto_config)) | set(
+        re.findall(r"([\w-]+)\s*:\s*'var\(--[\w-]+\)'", texto_config))
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_colores_conocidos():
+    """Toda clase de color que se escribe tiene que existir en el tema.
+
+    Un color sin definir no da error: Tailwind lo omite y el estilo desaparece.
+    """
+    config = (APP / "tailwind.config.js").read_text(encoding="utf-8")
+    nombres = _nombres_del_tema(config)
+    con_variable = _nombres_con_variable(config)
+    assert "tinta-suave" in nombres, (
+        f"no he sabido leer los colores con nombre del tema: {sorted(nombres)}")
+    assert "tinta-suave" in con_variable, (
+        f"no he sabido leer que colores usan variable: {sorted(con_variable)}")
+
+    fallos = []
+    for fichero in sorted((APP / "src").rglob("*.tsx")) + sorted((APP / "src").rglob("*.ts")):
+        if fichero.name.endswith(".d.ts"):
+            continue
+        for numero, resto in _clases_de_color(fichero):
+            if (motivo := _motivo(resto, nombres, con_variable)) is not None:
+                fallos.append(f"{fichero.name}:{numero}: {motivo}")
+    assert not fallos, (
+        "hay clases de color que el tema no define, asi que Tailwind las omite "
+        "en silencio y el estilo no se aplica:\n  " + "\n  ".join(fallos) +
+        "\nAnadelas a `theme.extend.colors` en tailwind.config.js (y sus valores "
+        "en estilos.css, en los dos temas).")
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_los_colores_del_tema_tienen_valor_en_los_dos_temas():
+    """Un color definido a medias es un color que no se ve de noche.
+
+    Los nombres con significado se usan sin el prefijo `dark:` a proposito, asi
+    que su valor tiene que cambiar solo. Si estan en el tema pero no en el CSS,
+    la variable no existe y el color se cae: mismo fallo silencioso que arriba.
+    """
+    config = (APP / "tailwind.config.js").read_text(encoding="utf-8")
+    css = (APP / "src" / "estilos.css").read_text(encoding="utf-8")
+    variables = re.findall(r"['\"]?[\w-]+['\"]?\s*:\s*'var\((--[\w-]+)\)'", config)
+    assert variables, "el tema no usa variables: revisa esta prueba"
+    for variable in variables:
+        definiciones = len(re.findall(rf"{variable}\s*:", css))
+        assert definiciones >= 2, (
+            f"`{variable}` tiene {definiciones} valor(es) en estilos.css: hace "
+            f"falta uno para el tema claro y otro para el oscuro.")
+
+
 @pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
 def test_la_interfaz_no_tiene_botones_de_validacion_humana():
     """La ley del encargo: no hay validacion humana, nunca.

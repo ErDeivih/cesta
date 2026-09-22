@@ -5,6 +5,32 @@
 /* Lo poco que no se resuelve con utilidades de Tailwind, y por que. */
 
 @layer base {
+  /* Los colores con significado, en un solo sitio.
+   *
+   * Son variables y no valores fijos porque estas clases se usan sin el prefijo
+   * `dark:`, y en modo oscuro un gris de texto claro sobre fondo oscuro no se
+   * lee. Con la variable, el mismo `text-tinta-suave` vale en los dos temas y
+   * nadie tiene que acordarse de escribir el par. */
+  :root {
+    --tinta-suave: #525252; /* texto secundario */
+    --fondo: #fafafa; /* superficie dentro de una tarjeta */
+    --borde: #e5e5e5;
+    --aviso: #b45309; /* texto de aviso, legible sobre blanco */
+    --bien: #059669; /* borde de lo que ha salido bien */
+    --bien-suave: #ecfdf5; /* fondo de lo que ha salido bien */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --tinta-suave: #a3a3a3;
+      --fondo: #262626;
+      --borde: #404040;
+      --aviso: #fcd34d;
+      --bien: #10b981;
+      --bien-suave: #022c22;
+    }
+  }
+
   html {
     /* En el movil, 16 px en un input evita el zoom automatico de Safari al
        enfocar el buscador. El zoom deja la pagina descolocada y hay que

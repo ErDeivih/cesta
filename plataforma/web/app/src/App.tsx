@@ -3,6 +3,7 @@
 import { Cabecera } from './componentes/Cabecera'
 import { NavAbajo } from './componentes/Nav'
 import { Vacio } from './componentes/ui'
+import { Ajustes } from './paginas/Ajustes'
 import { Buscar } from './paginas/Buscar'
 import { Cesta } from './paginas/Cesta'
 import { Escaner } from './paginas/Escaner'
@@ -29,6 +30,7 @@ export function App() {
           <Route path="/escaner" element={<Escaner />} />
           <Route path="/cesta" element={<Cesta />} />
           <Route path="/favoritos" element={<Favoritos />} />
+          <Route path="/ajustes" element={<Ajustes />} />
           <Route path="/panel" element={<Panel />} />
           <Route path="/panel/matching" element={<PanelMatching />} />
           <Route
