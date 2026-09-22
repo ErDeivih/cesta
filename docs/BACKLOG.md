@@ -53,48 +53,96 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 Con los puntos 2 y 3 hechos, lo unico que queda para poder usarla es el 1: es un
 comando.
 
-**Lo que ya esta hecho (22 sep 2026).**
+**Lo que ya esta hecho (22 sep 2026).** Todo esto esta en git, con sus pruebas.
 
-    docs/DIAGNOSTICO-MATCHING.md            el informe, con todos los numeros
+    docs/DIAGNOSTICO-MATCHING.md            el informe, con TODOS los numeros y
+                                            las mediciones que descartaron ideas
     projects/cesta/diagnostico_matching.py  lo reproduce en un comando
-    tests/test_diagnostico_matching.py      11 pruebas, en verde
     core/normalize.py                       la etiqueta de 100 g/ml, por cadena
     projects/cesta/pipeline.py              cantidad_fiable, la unidad que se
-                                            contradice, respaldo por el nombre
-    core/matching.py                        asignacion hungara 1-a-1, la
-                                            etiqueta identico veraz, veto de
-                                            precio y freno de grupo
+                                            contradice, y el formato que el
+                                            propio precio de la cadena desmiente
+    core/matching.py                        asignacion hungara 1-a-1, etiqueta
+                                            identico veraz, veto de precio,
+                                            freno de union y freno de ancho
     core/equivalencias.py                   Fase 1: producto_id estable y cada
                                             pasada versionada, con su motivo
-    tests/test_equivalencias.py             10 pruebas
+    core/embeddings.py                      Fase 3: bge-m3 por Ollama, cache
+                                            incremental, y el coseno EN SQL
+    projects/cesta/banco_de_pares.py        el banco de pares con verdad del EAN
+                                            (1.809 positivos, 63.049 negativos)
+    projects/cesta/embeddings.py            la medida de si los vectores ayudan
+    plataforma/api/                         /api/ean y /api/panel/matching, mas
+                                            marca en la busqueda y producto_id en
+                                            la serie
     plataforma/web/app/                     LA INTERFAZ NUEVA: Vite + React +
                                             TypeScript + Tailwind + TanStack +
                                             uPlot. Compila a web/dist y Caddy
                                             sirve eso (docker-compose.yml:61).
-                                            Los ficheros viejos siguen ahi
-                                            como plan B.
-    tests/test_interfaz.py                  que el sitio donde compila y el que
-                                            se sirve sean el mismo
+                                            Los ficheros viejos siguen ahi como
+                                            plan B.
+    tests/                                  638 pruebas. Las que guardan cosas
+                                            que se rompen solas: test_interfaz
+                                            (el sitio donde compila y el que se
+                                            sirve), test_imagen_api (la API no
+                                            arrastra polars), conftest (las
+                                            pruebas no leen el disco)
     projects/cesta/collectors/carrefour.py  cat11729677 en ROTAS_EN_ORIGEN
     git                                     el proyecto YA tiene control de
                                             versiones; no tenia .git
 
+**Tres fases de "algoritmos complejos" se midieron, y dos se descartaron.** Esta
+es la parte del BACKLOG que mas tiempo ahorra a quien venga detras:
+
+    3 · embeddings (bge-m3)      PASA. Precision 0,90 con recall 0,89 en el
+                                 umbral 0,76, medido contra los negativos
+                                 dificiles. Integrado como generador de
+                                 candidatos, apagado por defecto si no hay cache.
+    8 · clasificador aprendido   NO. Ninguna caracteristica separa un acierto de
+                                 un error: el parecido del nombre es incluso
+                                 MAYOR en los pares equivocados (0,848 contra
+                                 0,814). No hay nada que aprender.
+    9 · LLM local (JSON forzado) NO. Con el enunciado estricto acierta 20 de 20
+                                 negativos y 1 de 20 positivos: es un esceptico.
+
+**Y la conclusion que apunta a traer datos en vez de a programar**: los errores que
+quedan no se arreglan con un modelo. Dos productos de la misma marca con codigos
+distintos son, por construccion, casi identicos en todo el texto. **Lo que los
+separaria es mas codigo de barras**, y hoy solo lo trae el 48,5 % del catalogo:
+son exactamente Alcampo (0 de 23.776) y Aldi (0 de 2.123), que no publican
+ninguno. Comprobado ademas que no se pierde ni uno entre capas: 25.517 en bronze,
+25.517 en silver y 25.517 en gold.
+
 **Los numeros, antes y despues, medidos sobre el mismo bronze.**
 
     aciertos de emparejar --medir       57 %   ->  65 %    (el liston es 57 %)
-    productos comparables               19.834 ->  23.047  (+16 %)
-    grupos comparables                  6.431  ->  7.925   (+23 %)
-    enlaces aceptados                   18.001 ->  22.702
+    productos comparables               19.834 ->  22.696  (+14 %)
+    grupos comparables                  6.431  ->  7.997   (+24 %)
     grupo mayor                         329    ->  97
     etiqueta identico que dice verdad   70 %   ->  100 %
+    conflictos de asignacion            ?      ->  0        (medido)
     fallos por "otra unidad"            172    ->  39
-    grupos con el mas caro >200 %       369    ->  448     de los cuales 222 malos
-                                            y 226 ahorros de verdad (ver abajo)
+    filas en disputa (no se comparan)   85     ->  45
+    grupos anchos (>200 %)              369    ->  261
+      de esos, los que cuelgan de un enlace flojo  222 -> 66
 
-**Lo que queda mal, con las dos causas ya identificadas y medidas.**
+Las cifras mas recientes de cada cosa estan en `docs/CIFRAS.md` y en el informe;
+aqui van las que resumen el encargo. **Todo lo de esta tabla se midio corriendo el
+codigo de antes y el de despues sobre el mismo bronze**, guardando la salida de
+cada version: comparar dos dias distintos no mide el codigo, mide el calendario.
 
-Los grupos anchos NO vienen de un par malo: de los 22.702 enlaces, **0** violan el
-veto de precio de 30x. Vienen de dos sitios distintos:
+**Lo que queda mal, con las causas ya identificadas y medidas.**
+
+Los grupos anchos NO vienen de un par malo: de los enlaces aceptados, **0** violan
+el veto de precio de 30x. Y el criterio viejo del BACKLOG ("bajar de 405 grupos
+anchos a menos de 150") **se retiro con la medicion hecha**: la mayoria de esos
+grupos son equivalencias correctas de marca blanca contra marca cara, con un
+ahorro real. Lo que distingue un grupo ancho bueno de uno malo no es el ancho,
+es **la fuerza del enlace mas flojo que lo sostiene**. Ver el informe §17.
+
+Y el freno que si funciona es ese: **un enlace flojo puede unir, mientras no haga
+que el grupo se vuelva ancho**. Los intentos que NO funcionaron, con su medicion,
+para que nadie los repita:
 
 1. **Un grupo es lo que queda conectado, y eso se propaga.** Y no por muchos
    enlaces flojos, sino por **uno solo**: dentro del grupo 92 (97 productos, 181
