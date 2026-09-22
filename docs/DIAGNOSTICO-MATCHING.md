@@ -656,6 +656,25 @@ y corriendo los dos. No es una comparación entre dos días distintos.
    detergente en un bote de tres— y su propia referencia de precio en `lavado`.
    33 productos así, con cantidades de 30 a 69 "litros". El precio lo confirma:
    7,14 / 61 = 0,117 y su etiqueta dice 0,12 € por lavado.
+4. **La cadena que publica un formato que su propio precio desmiente.** DIA vende
+   fruta, verdura, carne y pescado **al peso** y publica ormato_txt = "1 kg"
+   como relleno, con el tamaño real en el nombre. "Filete 1º de vacuno Selección
+   de Dia 450 g aprox." quedaba como un kilo a 8,64 EUR, o sea 8,64 EUR/kg,
+   cuando su etiqueta dice 19,19 EUR/kg — y el nombre lo confirma al céntimo:
+   8,64 / 0,45 = 19,20. Son **109 productos**, y de aquí salía el peor grupo ancho
+   del §14 ("unos filetes de dorada de 300 g aprox. como 1 g").
+
+   El arreglo es el mismo mecanismo que el del punto 1, aplicado al revés: cuando
+   la referencia de la cadena **no** confirma el formato que trae y **sí**
+   confirma el tamaño del nombre, manda el nombre. Se exigen las dos condiciones
+   a la vez; con una sola, cualquier producto con el precio redondeado cambiaría
+   de tamaño.
+
+   Medido en la misma pasada: **las filas "en disputa" bajan de 85 a 45** y las
+   que se quedan sin precio por unidad utilizable, de 242 a 202. Y sigue habiendo
+   casos que no se pueden decidir (Aldi publica 0,03 EUR/kg de una barrita
+   proteica y ahí el bueno es el nuestro): esos se siguen apartando, con una
+   prueba que lo fija.
 3. **`cantidad_fiable`.** Hay ahora una columna que distingue un `1 ud` que
    declara la cadena de un `1 ud` que pusimos nosotros porque no sabemos el
    tamaño. Los dos valen 1, pero solo el primero sirve para bloquear. Carrefour

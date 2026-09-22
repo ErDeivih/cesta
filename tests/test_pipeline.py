@@ -241,19 +241,41 @@ def _fila_ref(cantidad, unidad, precio_cent, ref_cent, ref_unidad, nombre="X"):
     return pl.DataFrame([r], schema_overrides=ESQUEMA_BRONZE)
 
 
-def test_si_los_dos_precios_por_unidad_se_contradicen_no_se_compara():
+def test_un_formato_que_su_propio_precio_desmiente_se_corrige_por_el_nombre():
     """DIA publica '0,095 g' para unas conchitas de 95 g: 15.263 EUR/kg.
 
-    Su propia etiqueta dice 15,26 EUR/kg. Uno de los dos esta mal y no hay forma
-    fiable de saber cual: hay casos reales en las dos direcciones (Aldi dice
-    0,03 EUR/kg de una barrita proteica, y ahi el bueno es el nuestro). Asi que
-    la fila se aparta de las comparaciones en vez de elegir ganador.
+    Su propia etiqueta dice 15,26 EUR/kg, y el nombre dice 95 g: 1,45 / 0,095 =
+    15,26. **La cadena se contradice, y su propio precio dice cual de las dos
+    lecturas vale.** Desde el 22 de septiembre de 2026 se corrige en vez de
+    apartar la fila, porque decidir aqui no es adivinar: es leer el dato que la
+    propia cadena publica.
+
+    Antes quedaba en `en_disputa` y no se comparaba, que era lo correcto mientras
+    no hubiera con que decidir.
     """
     from projects.cesta.pipeline import a_silver
     s = a_silver(_fila_ref("0.095", "g", 145, 1526, "kilo", "Conchitas 95 g"))
+    assert s["proc_precio_unidad"][0] == "derivado"
+    assert s["cantidad"][0] == 0.095           # 95 g, no 0,095 g
+    # 1,45 / 0,095 = 15,263 EUR/kg, que es lo que dice su etiqueta (15,26).
+    assert round(s["precio_unidad_cent"][0]) == 1526
+    # El precio total se conserva: sirve para la lista de la compra.
+    assert s["precio_cent"][0] == 145
+
+
+def test_si_ninguna_lectura_cuadra_con_la_etiqueta_la_fila_se_aparta():
+    """El caso que NO se puede decidir sigue apartandose, y eso importa.
+
+    Hay casos reales en las dos direcciones: Aldi publica 0,03 EUR/kg de una
+    barrita proteica y ahi el bueno es el nuestro. Asi que cuando ni el formato
+    que trae la cadena ni el tamano del nombre cuadran con su referencia, no se
+    elige ganador: la fila se aparta de las comparaciones.
+    """
+    from projects.cesta.pipeline import a_silver
+    # La etiqueta dice 0,30 EUR/kg y ni 0,095 g ni 95 g dan eso.
+    s = a_silver(_fila_ref("0.095", "g", 145, 30, "kilo", "Conchitas 95 g"))
     assert s["proc_precio_unidad"][0] == "en_disputa"
     assert s["precio_comparable"][0] is False
-    # Pero el precio total se conserva: sirve para la lista de la compra.
     assert s["precio_cent"][0] == 145
 
 

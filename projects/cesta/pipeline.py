@@ -127,7 +127,25 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
         # "100ml": un desodorante de 50 ml a 2,49 EUR publica 4,98, que es el
         # precio del litro, pero leido como si fuera por litro no cuadra con
         # nada. Con las dos lecturas (ver `lecturas_referencia`) si cuadra.
-        if cant is None:
+        # El nombre como ultimo recurso, en dos casos: cuando la cadena no
+        # publica formato, y cuando publica uno que **su propio precio no
+        # confirma** mientras el nombre si.
+        #
+        # El segundo caso se midio el 22 de septiembre de 2026: DIA vende fruta,
+        # verdura, carne y pescado **al peso** y publica formato_txt "1 kg" como
+        # relleno, con la cantidad real en el nombre. "Filete 1o de vacuno
+        # Seleccion de Dia 450 g aprox." quedaba como un kilo a 8,64 EUR, o sea
+        # 8,64 EUR/kg, cuando su propia etiqueta dice 19,19 EUR/kg -- y el nombre
+        # lo confirma al centimo: 8,64 / 0,45 = 19,20. Son 109 productos, y de
+        # aqui salia el peor grupo ancho del diagnostico (§14: "unos filetes de
+        # dorada de 300 g aprox. como 1 g").
+        #
+        # Se exigen las dos condiciones a la vez: la referencia de la cadena NO
+        # confirma el formato que trae, y SI confirma el del nombre. Con una sola,
+        # cualquier producto con el precio redondeado cambiaria de tamano.
+        if (cant is None
+                or (precio and uni and lecturas
+                    and not _referencia_que_cuadra(lecturas, precio, cant, uni))):
             cant_n, uni_n, pack_n = parse_formato(nom)
             if _referencia_que_cuadra(lecturas, precio, cant_n, uni_n):
                 cant, uni, pack = cant_n, uni_n, pack_n
