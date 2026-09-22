@@ -81,14 +81,21 @@ def embebe(textos: list[str], modelo: str = MODELO_POR_DEFECTO,
 
     **Y si un lote falla, no se cae el trabajo entero.** Medido el 22 de septiembre
     de 2026: a los 9.024 vectores la API contesto `HTTP 400` y el proceso murio,
-    que en un trabajo de una hora es la peor forma de perderlo. No se supo por que
-    -- ni el texto vacio ni el larguisimo, que era lo primero que se miro: la
-    mediana son 74 caracteres y el mas largo 482. Como la causa no esta
-    identificada, lo que se hace es no depender de ella: el lote se reintenta
-    **texto a texto**, y al que sigue fallando se le guarda un vector de ceros y
-    se le cuenta. Un vector de ceros no se parece a nada, asi que ese producto
-    simplemente no tendra candidatos por significado, que es exactamente lo que
-    pasaria si no estuviera calculado.
+    que en un trabajo de una hora es la peor forma de perderlo.
+
+    **La causa NO esta identificada, y conviene decirlo asi.** Se comprobo lo que
+    parecia obvio y no era: no hay textos vacios (0 de 52.567), ni larguisimos (la
+    mediana son 74 caracteres y el mas largo 482), y el lote exacto que fallo
+    **vuelve a funcionar si se le manda a mano**, con los 64 textos y sus 5.577
+    caracteres. Tambien falla en el primer lote despues de reanudar, lo que apunta
+    a algo del arranque y no del contenido.
+
+    Como la causa no esta identificada, lo que se hace es no depender de ella: el
+    lote se reintenta **texto a texto**, y al que sigue fallando se le guarda un
+    vector de ceros y se cuenta. Un vector de ceros no se parece a nada, asi que
+    ese producto simplemente no tendra candidatos por significado, que es
+    exactamente lo que pasaria si no estuviera calculado. Y el error se registra
+    **con el cuerpo de la respuesta**, que es lo que faltaba para poder mirarlo.
     """
     salida: list[list[float]] = []
     for pos in range(0, len(textos), lote):
@@ -97,8 +104,14 @@ def embebe(textos: list[str], modelo: str = MODELO_POR_DEFECTO,
             salida.extend(_pide(trozo, modelo))
             continue
         except urllib.error.HTTPError as e:
-            print(f"  lote en {pos} fallo ({e}); se reintenta texto a texto",
-                  flush=True)
+            # El cuerpo de la respuesta es lo que dice POR QUE. Sin el, un 400
+            # solo dice "Bad Request" y no hay por donde mirarlo.
+            try:
+                detalle = e.read().decode("utf-8", errors="replace")[:300]
+            except Exception:                       # noqa: BLE001
+                detalle = "(sin cuerpo)"
+            print(f"  lote en {pos} fallo ({e}): {detalle}; se reintenta texto a "
+                  f"texto", flush=True)
         for t in trozo:
             try:
                 salida.extend(_pide([t], modelo))
