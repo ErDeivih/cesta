@@ -113,3 +113,50 @@ def test_la_formula_da_los_numeros_conocidos():
     assert contraste("#767676", "#ffffff") == pytest.approx(4.54, abs=0.02)
     assert contraste("#ffffff", "#000000") == pytest.approx(21.0, abs=0.1)
     assert contraste("#737373", "#f5f5f5") == pytest.approx(4.35, abs=0.02)
+
+
+@sin_interfaz
+def test_el_limite_de_un_campo_se_ve():
+    """El borde de un campo estaba a 1,48:1, y el minimo de WCAG 1.4.11 es 3.
+
+    Sin limite visible, un campo de texto parece un trozo de la pagina: no se sabe
+    donde se puede escribir.
+    """
+    fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
+    import re
+    # Anclado al campo de verdad (`min-h-[44px]`), no a cualquier borde de la
+    # pantalla: la primera version cogia el de una tarjeta y pedia `neutral-200`.
+    claro = re.search(r"min-h-\[44px\] rounded-lg border border-neutral-(\d+)", fuente)
+    assert claro, "no he sabido leer el borde claro de un campo"
+    ESCALA = {"300": "#d4d4d4", "400": "#a3a3a3", "500": "#737373", "600": "#525252"}
+    r = contraste(ESCALA[claro.group(1)], "#ffffff")
+    assert r >= 3.0, (
+        f"el borde de un campo da {r}:1 sobre blanco (neutral-{claro.group(1)}) y "
+        f"el minimo para un limite de control es 3")
+
+    oscuro = re.search(r"dark:border-neutral-(\d+)", fuente)
+    if oscuro:
+        r_oscuro = contraste(ESCALA[oscuro.group(1)], "#262626")
+        assert r_oscuro >= 3.0, (
+            f"el borde de un campo da {r_oscuro}:1 en el tema oscuro")
+
+
+@sin_interfaz
+def test_el_marcador_de_un_campo_se_lee():
+    """En el buscador es **la unica etiqueta visible**: el `<label>` es `sr-only`.
+
+    El que trae Tailwind de serie da 2,54:1, asi que el campo no dice que se
+    escribe en el. Se le pone el gris de la letra secundaria, y con `opacity: 1`
+    porque Firefox aplica la suya propia al marcador.
+    """
+    css = CSS.read_text(encoding="utf-8")
+    assert "::placeholder" in css, (
+        "no hay regla para el marcador: vuelve el gris de Tailwind, que da 2,54:1")
+    bloque = css.split("::placeholder", 1)[1].split("}", 1)[0]
+    assert "var(--tinta-suave)" in bloque, (
+        "el marcador ya no usa el gris de la letra secundaria")
+    assert "opacity" in bloque, (
+        "sin `opacity: 1`, Firefox aclara el marcador con su propia opacidad")
+
+    r = contraste(_valor_del_token("--tinta-suave"), "#ffffff")
+    assert r >= MINIMO_TEXTO, f"el marcador daria {r}:1 sobre blanco"
