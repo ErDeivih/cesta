@@ -1116,6 +1116,7 @@ uv run python -m projects.cesta.banco_de_pares --llm    # y mide al modelo
 | 2 · dato de formato | **hecho** (§13.1) |
 | 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
 | 4 · asignación | **húngaro y los dos frenos hechos** (§13.2, §16.1, §17.3); **0 conflictos de asignación, medido** (§17.4) |
+| 9 · LLM local | **medido y descartado** (§20): no mejora, con las dos tablas |
 | 5 a 11 | pendientes |
 
 Lo entregado: `core/normalize.py`, `core/matching.py`, `core/equivalencias.py`,
