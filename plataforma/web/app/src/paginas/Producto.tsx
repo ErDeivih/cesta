@@ -26,6 +26,8 @@ import {
   nombreCadena,
   porcentaje,
   porcentajeConSigno,
+  selloLegible,
+  textoOrigenSello,
 } from '../api/formato'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
@@ -55,6 +57,12 @@ export function Producto() {
         : null,
     [producto, grupo, idFuente],
   )
+
+  /** De donde salen los sellos, en palabras. `null` si este producto no tiene.
+   *
+   *  Se calcula aqui y no dentro del `map` a proposito: es un dato por ficha,
+   *  no uno por sello, y dentro del `map` se repetiria en cada etiqueta. */
+  const origenDeSellos = textoOrigenSello(miembro?.sellos_origen)
 
   const historico = useMemo(() => {
     if (!grupo) return { puntos: [] as PuntoChispa[], bloqueado: false, filas: 0 }
@@ -180,15 +188,35 @@ export function Producto() {
             {miembro && <SelloLetra producto={miembro} />}
             <SelloOferta texto={miembro?.promo ?? null} club={miembro?.promo_club ?? null} />
             <SelloRetirada retirado={miembro?.es_recall ?? null} />
+            {/* Los sellos con su nombre legible: `sin-gluten` en crudo se lee
+                regular, y el dato viene de la API en codigo. */}
             {miembro?.sellos.map((s) => (
               <Etiqueta key={s} tono="dato">
-                {s}
+                {selloLegible(s)}
               </Etiqueta>
             ))}
-            {miembro?.sellos_origen && (
+            {/* Y detras, **de donde salen**, que es lo que no se puede
+                disimular: un certificado auditado no vale lo mismo que una
+                palabra en el nombre del producto, y decir "sin gluten" igual en
+                los dos casos seria mentir sin decir ninguna mentira. */}
+            {origenDeSellos && (
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                (sellos: {miembro.sellos_origen})
+                ({origenDeSellos})
               </span>
+            )}
+            {/* Los certificados van aparte y en verde, porque son la prueba
+                fuerte: no los dice el nombre, los audita un tercero. */}
+            {miembro?.certificados.map((c) => (
+              <Etiqueta key={c} tono="bien" titulo="Certificado: lo audita un tercero, no lo dice el nombre">
+                {selloLegible(c)}
+              </Etiqueta>
+            ))}
+            {/* Y esto lo dice la cadena, no nosotros. Ponerlo como si fuera
+                nuestro seria vender su marketing como dato. */}
+            {miembro?.distintivo && (
+              <Etiqueta tono="neutro" titulo="Es lo que dice la cadena, no lo que decimos nosotros">
+                la cadena dice: {selloLegible(miembro.distintivo)}
+              </Etiqueta>
             )}
           </div>
         </div>

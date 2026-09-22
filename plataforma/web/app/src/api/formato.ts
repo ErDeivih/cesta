@@ -133,6 +133,19 @@ export const SELLOS_LEGIBLES: Record<string, string> = {
   'sin-azucar': 'sin azúcar',
   'sin-sal': 'sin sal',
   'sin-aceite-palma': 'sin aceite de palma',
+  // Los certificados. No son "sellos" del mismo tipo que los de arriba: estos
+  // los audita un tercero, y son la prueba fuerte de lo que dice el envase. Los
+  // nueve de abajo salen hoy en los datos (comprobado sobre el catalogo: 21
+  // codigos distintos) y sin traducir se leian como `origen espana`, sin la ene.
+  'origen-espana': 'Origen España',
+  'rainforest-alliance': 'Rainforest Alliance',
+  'comercio-justo': 'Comercio justo',
+  msc: 'MSC (pesca sostenible)',
+  asc: 'ASC (acuicultura sostenible)',
+  'bienestar-animal': 'Bienestar animal',
+  dop: 'DOP (denominación de origen)',
+  igp: 'IGP (indicación geográfica)',
+  etg: 'ETG (especialidad tradicional)',
 }
 
 export function selloLegible(s: string): string {
