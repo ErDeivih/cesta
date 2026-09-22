@@ -224,10 +224,16 @@ export function Selector({
           {etiqueta}
         </label>
       )}
+      {/* Sin `text-sm`, y a proposito: el tamano se hereda del `html`, que son
+          16 px. Por debajo de 16, Safari del movil hace zoom al enfocar el campo,
+          la pagina se queda descuadrada y hay que pellizcar para volver. Estaba
+          puesto en este componente y en `CampoTexto`, o sea en **todos** los
+          campos de la aplicacion: el buscador, el login, los ajustes y las
+          cantidades. Lo vigila `tests/test_ui_movil.py`. */}
       <select
         id={mio}
         {...resto}
-        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
       >
         {children}
       </select>
@@ -250,10 +256,12 @@ export function CampoTexto({
           {etiqueta}
         </label>
       )}
+      {/* Igual que el `select` de arriba: sin `text-sm`. El tamano sale del
+          `html` (16 px) porque por debajo Safari hace zoom al enfocar. */}
       <input
         id={mio}
         {...resto}
-        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
       />
     </div>
   )
