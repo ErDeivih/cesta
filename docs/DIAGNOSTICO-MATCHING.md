@@ -1045,6 +1045,68 @@ barras no cuentan como conflicto.
 
 ---
 
+## 20. El LLM local: medido, y no entra (Fase 9)
+
+El plan proponía usar el modelo local para los pares ambiguos, con salida
+estructurada forzada, «opcional si mejora». Se ha medido, y no mejora.
+
+### 20.1 El banco de pares, que faltaba
+
+`projects/cesta/banco_de_pares.py`. El proyecto llevaba meses midiéndose con
+`emparejar --medir`, que da **el recall** sobre los pares ciertos por EAN y nada
+más. Aquí están las dos clases, que es lo que hace falta para poder hablar de
+precisión:
+
+| | pares | qué es |
+|---|---:|---|
+| **positivos** | **1.809** | mismo código de barras en dos cadenas: el mismo producto, sin discusión |
+| **negativos** | **63.049** | misma marca y misma unidad, **código distinto** en dos cadenas: dos productos distintos, y el par que el emparejador por nombre confunde |
+
+Los negativos se buscan con marca y unidad iguales a propósito: negativos al azar
+serían pares fáciles y la medida no valdría para nada.
+
+### 20.2 El modelo, con el esquema forzado
+
+`gemma-3-4b-it` (3,88B, Q4) en la GTX 1660, con `format` = esquema JSON en la API
+de Ollama: **la salida estructurada forzada funciona** y las respuestas traen
+`mismo_producto`, `motivo` y `confianza` con razones reales. Sobre 40 pares, 20 de
+cada clase, y dos enunciados:
+
+| enunciado | aciertos | mismo EAN | misma marca, EAN distinto |
+|---|---:|---:|---:|
+| «¿son comparables?» | 31/40 (78 %) | 75 % | 80 % |
+| «¿son **exactamente** el mismo producto?» | 21/40 (52 %) | **5 %** | **100 %** |
+
+**No se integra, y el motivo está medido.** Con el enunciado estricto el modelo
+acierta los 20 negativos y falla **19 de los 20** positivos: es un **escéptico**,
+encuentra una diferencia en cualquier texto y dice que no. Filtra errores de
+maravilla y destrozaría el recall. Con el enunciado amplio se queda en un 78 % que
+no aporta nada: el emparejador ya encuentra el 65 % de los pares ciertos por nombre,
+y el EAN los encuentra todos.
+
+### 20.3 Lo que sí se aprendió, y que vale más que el resultado
+
+**Varios de sus «fallos» eran aciertos sobre datos rotos.** Dijo «no, porque uno
+dice 1,75 **cl** y el otro 1,75 L», y tenía razón: la ficha de origen está mal. Lo
+mismo con «4 × 110 g» contra «4 × 120 g» en un par con el mismo código de barras.
+Es el mismo tipo de error que los 33 detergentes «de 61 litros» del §13.1.
+
+**Y alguna de sus respuestas «malas» avisaba de que la verdad del EAN tiene
+excepción**: las «Pipas Piponazo Grefusa 195 g» existen con dos códigos de barras
+distintos. Marca y nombre idénticos, precio por unidad idéntico, y dos EAN.
+
+La conclusión honesta: **el LLM local sirve para encontrar diferencias y
+explicarlas, no para decidir pares.** Queda el banco, que hacía falta igual, y
+queda escrito en el código — `projects/cesta/banco_de_pares.py` — para que nadie
+tenga que volver a descubrirlo.
+
+```powershell
+uv run python -m projects.cesta.banco_de_pares          # cuantos pares hay
+uv run python -m projects.cesta.banco_de_pares --llm    # y mide al modelo
+```
+
+---
+
 ## 18. Estado del encargo
 
 | fase | estado |

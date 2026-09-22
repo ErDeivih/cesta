@@ -1,0 +1,230 @@
+"""Un banco de pares con respuesta conocida. La verdad la da el codigo de barras.
+
+Este proyecto lleva meses midiendose con `emparejar --medir`, que da **el recall**
+sobre los pares ciertos por EAN y nada mas. Aqui esta el banco completo, con las
+dos clases, que es lo que hace falta para hablar de precision y no solo de
+cobertura:
+
+  POSITIVO   dos productos de cadenas distintas con el MISMO codigo de barras.
+             Son el mismo producto, sin discusion.
+  NEGATIVO   dos productos con la MISMA marca y codigos DISTINTOS. Dos codigos de
+             barras distintos son dos productos distintos -- San Miguel normal y
+             San Miguel sin gluten --, aunque el texto se parezca mucho. Es justo
+             el par que el emparejador por nombre confunde.
+
+    uv run python -m projects.cesta.banco_de_pares             # cuantos hay
+    uv run python -m projects.cesta.banco_de_pares --llm       # y mide al LLM
+
+Sobre el LLM local (Fase 9 del plan, `docs/PLAN-UI-MATCHING.md` §5). Se le pregunto
+con **salida estructurada forzada** (esquema JSON en `format`, que Ollama soporta)
+sobre 40 pares, 20 de cada clase, con `gemma-3-4b-it` en la GTX 1660. Dos
+enunciados, dos resultados:
+
+  enunciado "¿son comparables?"      31/40 (78 %)   75 % positivos, 80 % negativos
+  enunciado "¿son EXACTAMENTE el     21/40 (52 %)    5 % positivos, 100 % negativos
+   mismo producto?"
+
+**No se integra, y el motivo esta medido.** Con el enunciado estricto el modelo
+acierta los 20 negativos y falla 19 de los 20 positivos: es un esceptico, encuentra
+una diferencia en cualquier texto y dice que no. Filtra errores de maravilla y
+destrozaria el recall. Con el enunciado amplio se equilibra en un 78 %, que no
+mejora nada de lo que ya hay: el emparejador encuentra el 65 % de los pares ciertos
+por nombre y el EAN los encuentra todos.
+
+Lo que si se aprende, y por eso el banco se queda: **varios de sus "fallos" eran
+aciertos sobre datos rotos**. Cuando decia "no, porque uno dice 1,75 cl y el otro
+1,75 L", tenia razon y el roto era la ficha de origen -- el mismo tipo de error que
+los 33 detergentes "de 61 litros" de `docs/DIAGNOSTICO-MATCHING.md` §13.1. Y varias
+de sus respuestas "malas" avisaban de que la propia verdad del EAN tiene excepcion:
+las "Pipas Piponazo Grefusa 195 g" existen con dos codigos de barras distintos.
+
+Conclusion honesta: **el LLM local sirve para encontrar diferencias y explicarlas,
+no para decidir pares.** La Fase 9 del plan decia "opcional si mejora", y medido no
+mejora. Queda el banco, que hacia falta igual.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import random
+import time
+import urllib.request
+
+import polars as pl
+
+from core import config
+from core.matching import _ean, _marca
+
+MODELO_POR_DEFECTO = "hf.co/bartowski/google_gemma-3-4b-it-GGUF:Q4_K_M"
+OLLAMA = "http://127.0.0.1:11434/api/chat"
+
+# El esquema que se le exige al modelo. Con esto no puede contestar prosa ni
+# inventarse campos: o sale el JSON, o no sale nada.
+ESQUEMA = {
+    "type": "object",
+    "properties": {
+        "mismo_producto": {"type": "boolean"},
+        "motivo": {"type": "string"},
+        "confianza": {"type": "number"},
+    },
+    "required": ["mismo_producto", "motivo", "confianza"],
+}
+
+ENUNCIADO = (
+    "Eres un experto en productos de supermercado en Espania. Te doy dos fichas y "
+    "tienes que decir si son EXACTAMENTE EL MISMO PRODUCTO: el mismo articulo, del "
+    "mismo fabricante, con el mismo contenido. NO preguntes si son comparables ni "
+    "equivalentes: dos marcas distintas del mismo tipo de producto NO son el mismo "
+    "producto, aunque se puedan comparar. Fijate sobre todo en la variedad (entera "
+    "o desnatada, con gas o sin gas, zero o normal, sin gluten o normal) y en el "
+    "tamano exacto. Si dos fichas dicen tamanos distintos, dilo y contesta que no. "
+    "Responde solo con el JSON del esquema."
+)
+
+
+def fichas(gold=None) -> list[dict]:
+    """El catalogo con las tres claves que hacen falta para comparar."""
+    g = pl.read_parquet((gold or config.GOLD) / "grupos.parquet")
+    filas = g.select(["fuente", "nombre", "marca", "cantidad", "unidad_canon",
+                      "ean"]).to_dicts()
+    for f in filas:
+        f["ean_n"] = _ean(f["ean"])
+        f["marca_n"] = _marca(f["marca"])
+    return filas
+
+
+def pares_positivos(filas) -> list[tuple[int, int]]:
+    """Mismo codigo de barras, cadenas distintas: el mismo producto, sin discusion."""
+    por_ean: dict[str, list[int]] = {}
+    for i, f in enumerate(filas):
+        if f["ean_n"]:
+            por_ean.setdefault(f["ean_n"], []).append(i)
+    salida = []
+    for ids in por_ean.values():
+        for a in range(len(ids)):
+            for b in range(a + 1, len(ids)):
+                i, j = ids[a], ids[b]
+                if filas[i]["fuente"] != filas[j]["fuente"]:
+                    salida.append((i, j))
+    return salida
+
+
+def pares_negativos(filas) -> list[tuple[int, int]]:
+    """Misma marca, misma unidad y codigos distintos: dos productos distintos.
+
+    La marca y la unidad se piden iguales a proposito: es el par dificil, el que
+    se parece tanto que el emparejador por nombre lo junta. Buscar negativos al
+    azar daria pares faciles y la medida no valdria para nada.
+    """
+    por_marca: dict[tuple, list[int]] = {}
+    for i, f in enumerate(filas):
+        if f["ean_n"] and f["marca_n"] and f["unidad_canon"]:
+            por_marca.setdefault((f["marca_n"], f["unidad_canon"]), []).append(i)
+    salida = []
+    for ids in por_marca.values():
+        for a in range(len(ids)):
+            for b in range(a + 1, len(ids)):
+                i, j = ids[a], ids[b]
+                if (filas[i]["ean_n"] != filas[j]["ean_n"]
+                        and filas[i]["fuente"] != filas[j]["fuente"]):
+                    salida.append((i, j))
+    return salida
+
+
+def banco(filas, cuantos: int = 20, semilla: int = 7) -> list[tuple[tuple, bool]]:
+    """`cuantos` pares de cada clase, mezclados. `True` = son el mismo producto."""
+    rng = random.Random(semilla)
+    positivos = pares_positivos(filas)
+    negativos = pares_negativos(filas)
+    rng.shuffle(positivos)
+    rng.shuffle(negativos)
+    mezcla = ([(p, True) for p in positivos[:cuantos]]
+              + [(p, False) for p in negativos[:cuantos]])
+    rng.shuffle(mezcla)
+    return mezcla
+
+
+def _ficha(f: dict) -> str:
+    cant = f"{f['cantidad']}{f['unidad_canon'] or ''}" if f["cantidad"] else "?"
+    return (f"[{f['fuente']}] nombre: {f['nombre']} | marca: "
+            f"{f['marca'] or 'sin marca'} | formato: {cant}")
+
+
+def pregunta(filas, i: int, j: int, modelo: str = MODELO_POR_DEFECTO) -> dict:
+    """Una consulta al modelo local, con el esquema forzado."""
+    cuerpo = {
+        "model": modelo,
+        "stream": False,
+        "format": ESQUEMA,
+        "options": {"temperature": 0},
+        "messages": [
+            {"role": "system", "content": ENUNCIADO},
+            {"role": "user", "content": f"A:\n{_ficha(filas[i])}\n\nB:\n"
+                                        f"{_ficha(filas[j])}"},
+        ],
+    }
+    peticion = urllib.request.Request(
+        OLLAMA, data=json.dumps(cuerpo).encode("utf-8"),
+        headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(peticion, timeout=120) as r:
+        return json.loads(json.loads(r.read().decode("utf-8"))["message"]["content"])
+
+
+def evalua_llm(filas, banco_: list, modelo: str = MODELO_POR_DEFECTO,
+               verboso: bool = False) -> dict:
+    aciertos = {True: 0, False: 0}
+    total = {True: 0, False: 0}
+    t0 = time.monotonic()
+    for (i, j), verdad in banco_:
+        try:
+            r = pregunta(filas, i, j, modelo)
+        except Exception as e:                      # noqa: BLE001
+            return {"error": f"{type(e).__name__}: {e}"}
+        ok = bool(r["mismo_producto"]) == verdad
+        aciertos[verdad] += ok
+        total[verdad] += 1
+        if verboso and not ok:
+            print(f"  fallo esperado={verdad}: {filas[i]['nombre'][:44]}")
+            print(f"        contra: {filas[j]['nombre'][:44]}")
+            print(f"        dijo: {r['motivo'][:110]}")
+    n = sum(total.values())
+    return {"pares": n, "aciertos": sum(aciertos.values()),
+            "positivos": aciertos[True], "positivos_total": total[True],
+            "negativos": aciertos[False], "negativos_total": total[False],
+            "segundos": round(time.monotonic() - t0, 1)}
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="banco_de_pares")
+    ap.add_argument("--llm", action="store_true",
+                    help="mide tambien al modelo local (tarda y usa la GPU)")
+    ap.add_argument("--modelo", default=MODELO_POR_DEFECTO)
+    ap.add_argument("--cuantos", type=int, default=20, help="pares de cada clase")
+    a = ap.parse_args(argv)
+
+    filas = fichas()
+    positivos = pares_positivos(filas)
+    negativos = pares_negativos(filas)
+    print(f"catalogo: {len(filas)} productos")
+    print(f"  pares ciertos por EAN entre cadenas: {len(positivos)}")
+    print(f"  pares de la misma marca con EAN distinto: {len(negativos)}")
+    print("  (el primero es el techo alcanzable; el segundo es lo que hay que NO")
+    print("   juntar, y el emparejador por nombre los confunde)")
+    if not a.llm:
+        return 0
+    banco_ = banco(filas, a.cuantos)
+    print(f"\nmidiendo al modelo {a.modelo} sobre {len(banco_)} pares...")
+    r = evalua_llm(filas, banco_, a.modelo, verboso=True)
+    if "error" in r:
+        print(f"  no se pudo: {r['error']}")
+        return 1
+    print(f"\n  aciertos {r['aciertos']}/{r['pares']} "
+          f"({100 * r['aciertos'] / max(r['pares'], 1):.0f} %)")
+    print(f"  mismo EAN:                {r['positivos']}/{r['positivos_total']}")
+    print(f"  misma marca, EAN distinto: {r['negativos']}/{r['negativos_total']}")
+    print(f"  en {r['segundos']}s")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
