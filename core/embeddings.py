@@ -16,8 +16,16 @@ paso su prueba:
 
 **Se usa bge-m3 servido por Ollama**, que es el modelo que nombra el plan, y asi
 no hay que instalar `sentence-transformers` ni `torch`: 2,5 GB de dependencias
-para esto no se pagan. A 45 productos por segundo, el catalogo entero (52.567)
-son unos 20 minutos, y se guarda en un parquet para no repetirlo cada dia.
+para esto no se pagan.
+
+**Y tarda mas de lo que parece.** La primera estimacion salio de medir con lotes
+de texto repetido y corto: 45 productos por segundo. Con los nombres de verdad
+son **14 por segundo**, o sea **62 minutos** para los 52.567. La leccion es la de
+siempre en este proyecto y va escrita aqui para no repetirla: medir con datos de
+verdad, no con una muestra comoda.
+
+De ahi que `calcula` sea **incremental**: en la tarea diaria solo entran los
+productos nuevos (unos cientos, segundos), no los 52.000 otra vez.
 
 **Los vectores son para PROPONER candidatos, no para decidir.** Los candidatos que
 salen de aqui pasan despues por la asignacion hungara y por los dos frenos de
@@ -63,8 +71,8 @@ def embebe(textos: list[str], modelo: str = MODELO_POR_DEFECTO,
            lote: int = LOTE) -> list[list[float]]:
     """Los vectores de una lista de textos, por lotes.
 
-    Lote de 64 y no de 16: medido, 45 productos por segundo contra 39. Por encima
-    de 64 no mejora.
+    Lote de 64 y no de 16 -- medido, 49 contra 39 productos por segundo --, y
+    tampoco mas: con 128 no mejora.
     """
     salida: list[list[float]] = []
     for pos in range(0, len(textos), lote):
@@ -83,8 +91,17 @@ def camino(salida: Path | None = None) -> Path:
 
 def calcula(filas: list[dict], modelo: str = MODELO_POR_DEFECTO,
             salida: Path | None = None, lote: int = LOTE,
-            cada: int = 1000) -> Path:
-    """Embebe el catalogo entero y lo deja en un parquet. Devuelve donde.
+            cada: int = 1000, rehacer: bool = False) -> Path:
+    """Embebe **lo que falte** del catalogo y devuelve donde quedo.
+
+    Es incremental a proposito, por dos motivos:
+
+    - Un catalogo de 52.567 productos son **62 minutos** de GPU medidos (14 por
+      segundo con los nombres de verdad). Si el proceso se corta a la mitad, sin
+      esto se pierde entero; con esto se retoma donde iba.
+    - En la **tarea diaria** solo entran los productos nuevos, que son unos
+      cientos. Volver a embeber los 52.000 cada manana seria absurdo, y es lo que
+      pasaria con un calculo de una sola pasada.
 
     Se guarda con `producto_id` y no con la posicion en la lista: los vectores
     tienen que sobrevivir a que el catalogo se reordene manana, igual que las
@@ -93,23 +110,39 @@ def calcula(filas: list[dict], modelo: str = MODELO_POR_DEFECTO,
     from core.storage import write_parquet_file
 
     destino = camino(salida)
-    textos = [texto_de(f) for f in filas]
+    previos = {} if rehacer else carga(destino)
     claves = [f"{f['fuente']}:{f['id_fuente']}" for f in filas]
+    pendientes = [(k, texto_de(f)) for k, f in zip(claves, filas, strict=True)
+                  if k not in previos]
+    print(f"  {len(previos)} vectores ya calculados, {len(pendientes)} por hacer",
+          flush=True)
+    if not pendientes:
+        return destino
+
+    def guarda(hechos: list[tuple[str, list[float]]]):
+        juntos = dict(previos)
+        juntos.update(dict(hechos))
+        write_parquet_file(
+            pl.DataFrame({"producto_id": list(juntos), "e": list(juntos.values())},
+                         schema={"producto_id": pl.Utf8,
+                                 "e": pl.List(pl.Float32)}),
+            destino)
+
     t0 = time.monotonic()
-    vectores: list[list[float]] = []
-    for pos in range(0, len(textos), lote):
-        vectores.extend(embebe(textos[pos:pos + lote], modelo, lote))
-        hechos = len(vectores)
-        if cada and hechos % cada < lote:
-            ritmo = hechos / max(time.monotonic() - t0, 1e-9)
-            falta = (len(textos) - hechos) / max(ritmo, 1e-9)
-            print(f"  {hechos}/{len(textos)} vectores  {ritmo:.0f}/s  "
+    hechos: list[tuple[str, list[float]]] = []
+    for pos in range(0, len(pendientes), lote):
+        trozo = pendientes[pos:pos + lote]
+        vectores = embebe([t for _k, t in trozo], modelo, lote)
+        hechos.extend(zip((k for k, _t in trozo), vectores, strict=True))
+        if cada and len(hechos) % cada < lote:
+            guarda(hechos)          # por si se corta: no se pierde lo hecho
+            ritmo = len(hechos) / max(time.monotonic() - t0, 1e-9)
+            falta = (len(pendientes) - len(hechos)) / max(ritmo, 1e-9)
+            print(f"  {len(hechos)}/{len(pendientes)} vectores  {ritmo:.0f}/s  "
                   f"faltan {falta / 60:.0f} min", flush=True)
-    write_parquet_file(
-        pl.DataFrame({"producto_id": claves, "e": vectores},
-                     schema={"producto_id": pl.Utf8, "e": pl.List(pl.Float32)}),
-        destino)
-    print(f"  {len(vectores)} vectores en {time.monotonic() - t0:.0f}s -> {destino}")
+    guarda(hechos)
+    print(f"  {len(hechos)} vectores en {time.monotonic() - t0:.0f}s -> {destino}",
+          flush=True)
     return destino
 
 
