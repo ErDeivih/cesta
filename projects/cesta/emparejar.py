@@ -449,6 +449,10 @@ def main(argv: list[str] | None = None) -> int:
     # con el motivo de cada par, y no se toca nunca mas.
     ejecucion_id = eq.id_de_ejecucion()
     equivalencias = eq.filas_de_equivalencia(filas, ls, ejecucion_id)
+    # Si hay vectores cacheados, la pasada los ha usado: `enlaces` los mete como
+    # un canal mas. Se mira el fichero y no se recalcula nada.
+    from core import embeddings as emb
+    embed_cache = emb.camino().exists()
     metricas = {
         "enlaces": float(len(ls)),
         "identicos": float(sum(1 for x in ls if x[3] == "identico")),
@@ -461,9 +465,14 @@ def main(argv: list[str] | None = None) -> int:
     carpeta = eq.escribe_ejecucion(
         ejecucion_id, equivalencias, metricas,
         {"productos": len(filas), "huella_catalogo": eq.huella_catalogo(filas),
-         "umbral": a.umbral})
+         "umbral": a.umbral,
+         # Si esta pasada uso los embeddings o no. Sin esto, dos ejecuciones con
+         # numeros distintos pareceran iguales y no se sabra por que.
+         "embeddings": bool(embed_cache)})
     print(f"  equivalencias versionadas en {carpeta.name} "
           f"({len(equivalencias)} pares con su motivo)")
+    print(f"  embeddings: {'si, canal de vectores activo' if embed_cache else 'no'}"
+          f"{'' if embed_cache else ' (calculalos con: uv run python -m core.embeddings)'}")
     print(f"emparejar: hecho en {time.monotonic() - t0:.0f}s")
     return 0
 

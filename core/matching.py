@@ -511,7 +511,8 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # justo la unidad sobre la que se resuelve la asignacion: un reparto 1-a-1
     # por cada par de cadenas dentro de cada formato.
     canales: dict[str, dict[tuple, list[tuple[int, int, float]]]] = {
-        "marca": defaultdict(list), "equivalente": defaultdict(list)}
+        "marca": defaultdict(list), "equivalente": defaultdict(list),
+        "vector": defaultdict(list)}
     por_bloque: dict[tuple, list[int]] = defaultdict(list)
     for i, f in enumerate(filas):
         if docs[i]:
@@ -561,6 +562,29 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                         if e >= umbral:
                             canales["equivalente"][grupo].append((x, y, e))
 
+    # Canal 3: los embeddings (Fase 3). **Proponen, no deciden.** Un par que solo
+    # los vectores acercan entra por el mismo reparto 1-a-1 y pasa por los mismos
+    # frenos que los demas; va el ultimo, asi que lo que el nombre ya sostiene
+    # manda. Medido en `docs/DIAGNOSTICO-MATCHING.md` §22: precision 0,90 con
+    # recall 0,89 en el umbral 0,76, contra los negativos dificiles.
+    #
+    # Si no hay vectores cacheados, esto no hace nada y el emparejador funciona
+    # igual que antes: la Fase 3 es una mejora, no un requisito.
+    if usar_ean:
+        from core import embeddings
+
+        vectores = embeddings.carga()
+        if vectores:
+            for i, j, s in embeddings.candidatos(filas_completas, vectores):
+                x, y = i, j
+                if filas[x]["fuente"] > filas[y]["fuente"]:
+                    x, y = y, x
+                if precio_imposible(filas[x], filas[y]):
+                    continue
+                clave = bloque(filas[x].get("cantidad"), filas[x].get("unidad_canon"))
+                canales["vector"][(clave, filas[x]["fuente"],
+                                   filas[y]["fuente"])].append((x, y, s))
+
     emitidos: set[tuple[int, int]] = set()
     ocupados_todos: set[tuple[int, str]] = set()
 
@@ -589,7 +613,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # Canal 1 (con la marca dentro) y canal 2 (sin la marca, entre marcas
     # distintas). Cada canal reparte por su cuenta; lo que ya esta emitido no se
     # repite, pero un producto si puede salir en los dos.
-    for canal in ("marca", "equivalente"):
+    for canal in ("marca", "equivalente", "vector"):
         ocupados: set[tuple[int, str]] = set()
         # `sorted` no sobra: iterar un diccionario cuyas claves llevan texto
         # depende del hash seed del proceso. Pero **no basta**: medido el 22 de
