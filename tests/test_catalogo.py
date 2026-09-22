@@ -185,3 +185,88 @@ def test_un_codigo_que_no_tenemos_lo_dice_con_una_pista(gold):
     assert r["encontrado"] is False
     assert r["motivo"] == "desconocido"
     assert "Alcampo" in r["sugerencia"] and "Aldi" in r["sugerencia"]
+
+
+# --- el panel de auditoria del matching ---------------------------------
+# Explicabilidad sin validacion humana: cada par con su motivo, y ni un endpoint
+# de escritura. El encargo lo dice asi: nadie va a aprobar nada, nunca.
+
+
+def _pasada(gold, eid, enlaces, metricas):
+    from core import equivalencias as equiv
+    filas = [
+        {"fuente": "dia", "id_fuente": "1", "nombre": "Leche entera",
+         "marca": "Dia", "cantidad": 1.0, "unidad_canon": "l", "ean": "84000001",
+         "precio_unidad_cent": 100, "seccion": "lacteos"},
+        {"fuente": "alcampo", "id_fuente": "9", "nombre": "Leche entera",
+         "marca": "ALCAMPO", "cantidad": 1.0, "unidad_canon": "l", "ean": None,
+         "precio_unidad_cent": 80, "seccion": "lacteos"},
+    ]
+    equiv.escribe_ejecucion(eid, equiv.filas_de_equivalencia(filas, enlaces, eid),
+                            metricas, {"productos": 2, "umbral": 0.55},
+                            gold=gold)
+
+
+def test_el_panel_sin_ninguna_pasada_no_revienta(gold):
+    from plataforma.api import catalogo
+    r = catalogo.matching()
+    assert r["ultima"] is None
+    assert r["pares"] == []
+    assert r["ejecuciones"] == []
+    assert r["fecha_datos"] == "2026-09-17"
+
+
+def test_el_panel_ensena_el_motivo_de_cada_par(gold):
+    tmp, _escribe, _uno = gold
+    from plataforma.api import catalogo
+    _pasada(tmp, "20260922-090000", [(0, 1, 0.72, "equivalente")],
+            {"enlaces": 1.0, "grupos_comparables": 1.0})
+    r = catalogo.matching()
+    assert r["ultima"]["ejecucion_id"] == "20260922-090000"
+    assert r["ultima"]["umbral"] == 0.55
+    assert r["metricas"] == [{"metrica": "enlaces", "valor": 1.0},
+                             {"metrica": "grupos_comparables", "valor": 1.0}]
+    p = r["pares"][0]
+    # Los nombres se piden al catalogo: en la equivalencia solo hay claves
+    # estables. El segundo producto no esta en este catalogo de mentira (solo
+    # tiene `dia:1`), y eso **no puede tumbar la respuesta**: pasa de verdad
+    # cuando una cadena no captura ese dia, y el par se sigue pudiendo auditar
+    # aunque falte un lado.
+    assert p["nombre_a"] == "Leche entera"
+    assert p["nombre_b"] is None
+    assert p["producto_b"] == "alcampo:9"
+    assert p["metodo"] == "nombre"
+    # Y el motivo, que es lo que hace auditable el resultado.
+    assert p["features"]["unidad_igual"] is True
+    assert p["features"]["seccion_igual"] is True
+    assert p["features"]["ean_en_los_dos"] is False
+
+
+def test_el_panel_compara_con_la_pasada_anterior(gold):
+    """La estabilidad entre ejecuciones, que es una metrica del plan."""
+    tmp, _escribe, _uno = gold
+    from plataforma.api import catalogo
+    _pasada(tmp, "20260922-090000", [(0, 1, 0.9, "x")], {"enlaces": 10.0})
+    _pasada(tmp, "20260922-140000", [(0, 1, 0.8, "x")], {"enlaces": 12.0})
+    r = catalogo.matching()
+    assert r["ejecuciones"] == ["20260922-090000", "20260922-140000"]
+    assert r["ultima"]["ejecucion_id"] == "20260922-140000"
+    assert r["anterior"]["ejecucion_id"] == "20260922-090000"
+    assert r["cambios"] == [{"metrica": "enlaces", "antes": 10.0, "ahora": 12.0,
+                             "delta": 2.0}]
+
+
+def test_el_panel_solo_lee(gold):
+    """No hay validacion humana: mirar el panel no puede cambiar nada.
+
+    Es la prueba que guarda la ley del encargo. Si algun dia alguien anade aqui
+    un boton de aprobar, esto es lo que tiene que saltar.
+    """
+    tmp, _escribe, _uno = gold
+    from plataforma.api import catalogo
+    _pasada(tmp, "20260922-090000", [(0, 1, 0.9, "x")], {"enlaces": 1.0})
+    antes = sorted(p.name for p in (tmp / "matching").rglob("*"))
+    catalogo.matching()
+    catalogo.matching(5)
+    despues = sorted(p.name for p in (tmp / "matching").rglob("*"))
+    assert antes == despues

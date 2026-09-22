@@ -321,6 +321,26 @@ export function Grupo() {
   )
 }
 
+/** La frase de la diferencia, que depende de si ese precio puede decidir.
+ *
+ *  El caso que obliga a separarlo: una alternativa con el precio MÁS BAJO pero
+ *  de hace dos semanas tiene una diferencia negativa contra el mejor que sí
+ *  decide. Pintarla como "el más barato por unidad" sería enseñar un precio
+ *  viejo como si fuera una ganga de hoy, que es justo lo que la regla de
+ *  `dias_precio_valido` existe para evitar.
+ */
+function textoDiferencia(a: Alternativa): string {
+  const { diferenciaPct, decide } = a
+  if (diferenciaPct === null) return 'sin precio por unidad'
+  if (!decide) {
+    return diferenciaPct < 0
+      ? `${porcentaje(Math.abs(diferenciaPct))} por debajo del mejor que decide`
+      : `+${porcentaje(diferenciaPct)} frente al mejor que decide`
+  }
+  if (diferenciaPct <= 0) return 'el más barato por unidad'
+  return `+${porcentaje(diferenciaPct)} frente al más barato`
+}
+
 /** Una alternativa, con su nota y su desglose.
  *
  *  El desglose no es un adorno: sin el, mover un peso cambia el orden y no se
@@ -399,18 +419,16 @@ function FichaAlternativa({
         <span
           className={cx(
             'cifra text-sm font-semibold',
-            alternativa.diferenciaPct === null
-              ? 'text-neutral-500 dark:text-neutral-400'
-              : alternativa.diferenciaPct <= 0
-                ? 'text-emerald-800 dark:text-emerald-400'
-                : 'text-neutral-800 dark:text-neutral-200',
+            !alternativa.decide
+              ? 'text-amber-800 dark:text-amber-400'
+              : alternativa.diferenciaPct === null
+                ? 'text-neutral-500 dark:text-neutral-400'
+                : alternativa.diferenciaPct <= 0
+                  ? 'text-emerald-800 dark:text-emerald-400'
+                  : 'text-neutral-800 dark:text-neutral-200',
           )}
         >
-          {alternativa.diferenciaPct === null
-            ? 'sin precio por unidad'
-            : alternativa.diferenciaPct <= 0
-              ? 'el más barato por unidad'
-              : `+${porcentaje(alternativa.diferenciaPct)} frente al más barato`}
+          {textoDiferencia(alternativa)}
         </span>
       </div>
 
@@ -446,7 +464,9 @@ function FichaAlternativa({
 
       {alternativa.motivoNoDecide && (
         <p className="mt-1 text-xs font-medium text-amber-800 dark:text-amber-400">
-          {alternativa.motivoNoDecide}
+          {/* Se dice también que va al final, porque si no la nota de abajo
+              (que puede ser la más alta) no cuadra con la posición. */}
+          Va la última de su columna. {alternativa.motivoNoDecide}
         </p>
       )}
 

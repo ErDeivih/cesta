@@ -34,8 +34,8 @@ export function Cabecera() {
           )}
           {data && (
             <>
-              Datos del <strong className="font-semibold">{fecha(data.fecha_datos)}</strong>
-              <span className="ml-1 text-neutral-500 dark:text-neutral-500">
+              Datos del <strong className="font-semibold">{fecha(data.fecha_datos)}</strong>{' '}
+              <span className="text-neutral-500 dark:text-neutral-500">
                 ({hace(data.fecha_datos)})
               </span>
             </>

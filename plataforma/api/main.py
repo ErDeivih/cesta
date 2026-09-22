@@ -16,7 +16,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -241,6 +241,18 @@ def ficha(grupo_id: int):
     if g is None:
         raise HTTPException(404, "No tengo ese producto. Puede que ya no lo vendan.")
     return g | {"fecha_datos": catalogo.fecha_de_gold()}
+
+
+@app.get("/api/panel/matching")
+def panel_de_matching(limite: int = Query(20, ge=1, le=200)):
+    """El panel de auditoria del matching.
+
+    Ensenia las metricas de la ultima pasada, la comparacion con la anterior y
+    una muestra de pares con **por que** se aceptaron. **No hay botones de
+    aprobar ni rechazar**, y no los va a haber: el encargo dice que no hay
+    validacion humana nunca, asi que aqui no hay ningun endpoint de escritura.
+    """
+    return catalogo.matching(limite)
 
 
 @app.get("/api/ean/{codigo}")

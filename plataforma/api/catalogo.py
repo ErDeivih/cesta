@@ -22,6 +22,16 @@ from core import comparacion
 
 from .ajustes import AJUSTES
 
+# La carpeta de las pasadas versionadas del matching.
+#
+# Se escribe aqui en vez de importarla de `core.equivalencias`, y no es un
+# descuido: ese modulo vive de polars (lo escribe el pipeline, que trabaja con
+# dataframes) y **la API no puede arrastrar polars**. El 21 de septiembre de 2026
+# ese mismo cruce tumbo el contenedor en un bucle de reinicios que no decia por
+# que. Aqui se lee con SQL, que es lo que la API sabe hacer. Lo vigila
+# `tests/test_imagen_api.py`.
+CARPETA_MATCHING = "matching"
+
 _local = threading.local()
 
 
@@ -559,4 +569,103 @@ def por_ean(codigo: str) -> dict:
         },
         "grupo_id": grupo_id,
         "comparacion": comparacion,
+    }
+
+
+# --- El panel de auditoria del matching -------------------------------------
+#
+# Lo que el encargo pide y lo que NO pide. Pide **explicabilidad**: que cada par
+# aceptado pueda auditarse y se vea por que se acepto. NO pide botones de
+# aprobar ni de rechazar: en este proyecto no hay validacion humana, nunca, y por
+# eso aqui no hay ni un endpoint de escritura. Esto solo lee.
+#
+# Lee de `data/gold/matching/`, que es el modelo versionado de la Fase 1: cada
+# pasada en su carpeta, con sus metricas y sus pares con `features`. Nada se
+# sobrescribe, asi que se puede comparar una pasada con la anterior, que es la
+# metrica de estabilidad que pide el plan.
+
+
+def _ejecuciones(gold: Path) -> list[str]:
+    raiz = gold / CARPETA_MATCHING
+    return sorted(p.name.split("=")[1] for p in raiz.glob("ejecucion=*") if p.is_dir())
+
+
+def _metricas_de(ejecucion_id: str, gold: Path) -> dict[str, float]:
+    ruta = gold / CARPETA_MATCHING / f"ejecucion={ejecucion_id}" / "metrica.parquet"
+    if not ruta.exists():
+        return {}
+    filas = conexion().execute(
+        f"SELECT metrica, valor FROM read_parquet('{_p(ruta)}')").fetchall()
+    return {m: v for m, v in filas}
+
+
+def matching(limite: int = 20) -> dict:
+    """Las metricas de la ultima pasada y una muestra de pares con su motivo."""
+    gold = AJUSTES.gold
+    eids = _ejecuciones(gold)
+    if not eids:
+        return {"fecha_datos": fecha_de_gold(), "ultima": None, "metricas": [],
+                "anterior": None, "cambios": None, "pares": [], "ejecuciones": []}
+    eid = eids[-1]
+    carpeta = gold / CARPETA_MATCHING / f"ejecucion={eid}"
+    resumen = {}
+    ficha = carpeta / "resumen.json"
+    if ficha.exists():
+        try:
+            resumen = json.loads(ficha.read_text(encoding="utf-8"))
+        except ValueError:
+            resumen = {}
+    metricas = _metricas_de(eid, gold)
+    anterior = eids[-2] if len(eids) > 1 else None
+    cambios = None
+    if anterior:
+        previas = _metricas_de(anterior, gold)
+        cambios = [
+            {"metrica": m, "antes": previas.get(m), "ahora": v,
+             "delta": round(v - previas.get(m, 0.0), 4)}
+            for m, v in metricas.items()
+        ]
+
+    pares = []
+    ruta = carpeta / "equivalencia.parquet"
+    if ruta.exists():
+        filas = conexion().execute(
+            f"SELECT producto_a, producto_b, fuente_a, fuente_b, nivel, metodo, "
+            f"       confianza, features "
+            f"  FROM read_parquet('{_p(ruta)}') LIMIT {int(limite)}").fetchall()
+        # Los nombres no viajan en la equivalencia (alli solo hay claves
+        # estables), asi que se piden al catalogo de una vez.
+        claves = [f[0] for f in filas] + [f[1] for f in filas]
+        nombres = {}
+        if claves:
+            marcadores = ",".join("?" * len(claves))
+            nombres = {
+                f"{f[0]}:{f[1]}": f[2]
+                for f in conexion().execute(
+                    f"SELECT fuente, id_fuente, nombre FROM grupos "
+                    f"WHERE fuente || ':' || id_fuente IN ({marcadores})",
+                    claves).fetchall()
+            }
+        for f in filas:
+            try:
+                rasgos = json.loads(f[7])
+            except (TypeError, ValueError):
+                rasgos = {}
+            pares.append({
+                "producto_a": f[0], "producto_b": f[1],
+                "nombre_a": nombres.get(f[0]), "nombre_b": nombres.get(f[1]),
+                "fuente_a": f[2], "fuente_b": f[3], "nivel": f[4],
+                "metodo": f[5], "confianza": f[6], "features": rasgos,
+            })
+    return {
+        "fecha_datos": fecha_de_gold(),
+        "ultima": {"ejecucion_id": eid, "version_modelo": resumen.get("version_modelo"),
+                   "productos": resumen.get("productos"),
+                   "umbral": resumen.get("umbral"),
+                   "huella_catalogo": resumen.get("huella_catalogo")},
+        "metricas": [{"metrica": m, "valor": v} for m, v in metricas.items()],
+        "anterior": {"ejecucion_id": anterior} if anterior else None,
+        "cambios": cambios,
+        "pares": pares,
+        "ejecuciones": eids,
     }

@@ -109,7 +109,7 @@ export function Buscar() {
               </strong>{' '}
               {resultados.data.resultados.length === 1 ? 'resultado' : 'resultados'}
               {filtros.seccion && <> en el pasillo elegido</>}
-              <span className="ml-1">· datos del {fecha(resultados.data.fecha_datos)}</span>
+              <span> · datos del {fecha(resultados.data.fecha_datos)}</span>
             </p>
             {resultados.isFetching && <Etiqueta tono="dato">actualizando…</Etiqueta>}
           </div>

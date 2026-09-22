@@ -264,6 +264,43 @@ lee al reves.
 Contratos propuestos para las tareas de `BACKLOG.md`. Si al implementarlas
 conviene cambiarlos, **se cambian aqui tambien**.
 
+### `GET /api/panel/matching` — el panel de auditoría · **HECHO** (22 sep 2026)
+
+    ?limite=20                      cuantos pares de muestra (1 a 200)
+
+    {"fecha_datos",
+     "ultima": {"ejecucion_id", "version_modelo", "productos", "umbral",
+                "huella_catalogo"},
+     "metricas": [{"metrica", "valor"}],
+     "anterior": {"ejecucion_id"} | null,
+     "cambios": [{"metrica", "antes", "ahora", "delta"}] | null,
+     "pares": [{"producto_a", "producto_b", "nombre_a", "nombre_b",
+                "fuente_a", "fuente_b", "nivel", "metodo", "confianza",
+                "features": {...}}],
+     "ejecuciones": ["20260922-150351", ...]}
+
+Lee de `data/gold/matching/`, el modelo versionado de la Fase 1: cada pasada en su
+carpeta, con sus métricas y sus pares con `features`, y nada sobrescrito. Por eso
+`cambios` puede existir: se compara la última pasada con la anterior, que es la
+medida de **estabilidad** que pide el plan.
+
+`features` es lo que hace auditable un par sin que nadie apruebe nada: si el EAN
+coincide y si está en los dos lados, si coinciden marca, cantidad, unidad y
+sección, el parecido y el **ratio de precio por unidad**. Y se ve cosas reales:
+en un par de Milka con el mismo EAN aparece `cantidad_igual: false` con un ratio
+de 1,5, que es una diferencia de dato que merece mirarse; y `seccion_igual: false`
+sale a menudo entre productos idénticos, porque **la sección es el pasillo de cada
+cadena, no una taxonomía del producto**.
+
+`nombre_a` o `nombre_b` pueden ser `null`: la equivalencia guarda claves estables
+y el nombre se pide al catálogo, así que si una cadena no capturó ese día, el par
+se sigue pudiendo auditar aunque falte un lado.
+
+**Este endpoint no escribe nada, y no hay ninguno que lo haga.** No hay botones de
+aprobar ni rechazar: el encargo dice que no hay validación humana, nunca. Hay una
+prueba (`test_el_panel_solo_lee`) que comprueba que mirar el panel no cambia ni un
+fichero.
+
 ### `GET /api/ean/{codigo}`  — tarea 8, el escaner · **HECHO** (22 sep 2026)
 
 Se implementó en `plataforma/api/catalogo.py` (`normaliza_ean` y `por_ean`) y en
