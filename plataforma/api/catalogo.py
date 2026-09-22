@@ -505,6 +505,111 @@ def grupo(grupo_id: int) -> dict | None:
     }
 
 
+def explicacion(grupo_id: int) -> dict | None:
+    """Por que los productos de este grupo acabaron juntos, o None si no se sabe.
+
+    El dato ya esta calculado: sale de `equivalencia.parquet` de la ultima pasada
+    del matching, que trae un par aceptado por fila con su metodo, su confianza y
+    sus `features`. No se recalcula el parecido aqui: el emparejador ya decidio
+    los grupos, y deducirlos otra vez daria una segunda version de la misma
+    verdad -- la que ensena la ficha no seria la que formo el grupo.
+
+    Devuelve **None** cuando no hay nada que contar: un grupo de un solo
+    producto, uno que no tiene ningun par entre sus miembros, o un gold sin
+    ninguna pasada de matching. La ruta omite el campo en ese caso. Un
+    `{"pares": 0}` se leeria como "se emparejaron por nada", y eso no es lo mismo
+    que "no lo sabemos".
+
+    Los grupos se forman por transitividad, asi que un miembro puede no tener
+    ningun par directo con otro. Eso no es un error, y se dice en
+    `productos_sin_par`.
+    """
+    gold = AJUSTES.gold
+    eids = _ejecuciones(gold)
+    if not eids:
+        return None
+    # La misma pasada que usa el panel de auditoria, y a proposito: si la ficha y
+    # el panel pudieran estar mirando pasadas distintas, ninguno de los dos
+    # explicaria el grupo que se esta viendo.
+    eid = eids[-1]
+    ruta = gold / CARPETA_MATCHING / f"ejecucion={eid}" / "equivalencia.parquet"
+    if not ruta.exists():
+        return None
+
+    con = conexion()
+    # `mios` son los productos que ENSENA la ficha: `grupo()` solo lista los que
+    # tienen precio, y la explicacion tiene que hablar de los mismos productos
+    # que se ven en la pantalla, no de otros que esten en el grupo sin precio que
+    # comparar. El `DISTINCT` no sobra: una clave repetida multiplicaria los
+    # pares por el JOIN.
+    total = con.execute(
+        "SELECT count(DISTINCT fuente || ':' || id_fuente) FROM grupos "
+        "WHERE grupo_id = ? AND precio_unidad_cent > 0", [grupo_id]).fetchone()[0]
+    filas = con.execute(f"""
+        WITH mios AS (
+            SELECT DISTINCT fuente || ':' || id_fuente AS producto_id
+              FROM grupos WHERE grupo_id = ? AND precio_unidad_cent > 0
+        )
+        SELECT e.producto_a, e.producto_b, e.nivel, e.metodo, e.confianza, e.features
+          FROM read_parquet('{_p(ruta)}') e
+          JOIN mios a ON e.producto_a = a.producto_id
+          JOIN mios b ON e.producto_b = b.producto_id
+    """, [grupo_id]).fetchall()
+    if not filas:
+        return None
+
+    # Un par puede venir DOS veces en el fichero -- una por EAN y otra por nombre
+    # -- y son dos pruebas del mismo hecho, no dos pares: contar filas diria que
+    # el grupo 11580 tiene 44 pares cuando tiene 42. De cada par se guarda su
+    # prueba mas fuerte, que es la que lo acepto.
+    fuerza: dict[tuple[str, str], float] = {}
+    rasgos: dict[tuple[str, str], str] = {}
+    for a, b, _nivel, _metodo, confianza, features in filas:
+        # El fichero no promete el orden de los dos lados: se ordena la clave
+        # para que (a, b) y (b, a) sean el mismo par.
+        clave = (a, b) if a <= b else (b, a)
+        if clave not in fuerza or confianza > fuerza[clave]:
+            fuerza[clave] = confianza
+            rasgos[clave] = features
+
+    valores = list(fuerza.values())
+    niveles = sorted({f[2] for f in filas if f[2]})
+    metodos = sorted({f[3] for f in filas if f[3]})
+    # A igualdad de confianza, el primero por clave: el par mas flojo de un grupo
+    # no puede salir distinto segun en que orden vengan las filas del parquet.
+    flojo = min(fuerza, key=lambda p: (fuerza[p], p))
+
+    salida: dict = {"ejecucion": eid, "pares": len(fuerza)}
+    # Los niveles y los metodos que haya, TODOS. Si el grupo se junto por varios
+    # caminos, elegir uno seria contar la mitad de la historia, y esto es
+    # justamente la historia. Nada viaja vacio: si la columna no dijera nada, el
+    # campo no se manda.
+    if niveles:
+        salida["nivel"] = "+".join(niveles)
+    if metodos:
+        salida["metodo"] = "+".join(metodos)
+    salida["confianza_minima"] = round(min(valores), 4)
+    salida["confianza_media"] = round(sum(valores) / len(valores), 4)
+    # El par mas flojo es el que sostiene el grupo con menos evidencia, o sea el
+    # que hay que poder auditar. Se dice cual es para que `features` no sea un
+    # JSON sin dueno: son las suyas, tal y como las escribio el pipeline.
+    salida["par_mas_flojo"] = f"{flojo[0]} · {flojo[1]}"
+    if rasgos.get(flojo):
+        salida["features"] = rasgos[flojo]
+    # Las filas del fichero solo se dicen cuando no coinciden con los pares, que
+    # es cuando un par se encontro por dos caminos. Cuando son iguales, repetir
+    # el mismo numero seria ruido en una tabla de dos columnas.
+    if len(filas) != len(fuerza):
+        salida["enlaces"] = len(filas)
+    # La transitividad: miembros del grupo sin ningun par directo con otro. Solo
+    # se dice si hay alguno; un cero aqui no es un dato, es la ausencia del
+    # problema, y los campos vacios no se mandan.
+    sin_par = total - len({p for clave in fuerza for p in clave})
+    if sin_par > 0:
+        salida["productos_sin_par"] = sin_par
+    return salida
+
+
 def producto(producto_id: str) -> dict | None:
     fuente, _, id_fuente = producto_id.partition(":")
     fila = conexion().execute("""

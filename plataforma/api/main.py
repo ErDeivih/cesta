@@ -237,10 +237,22 @@ def ofertas_dudosas(limite: int = 60, cadenas: str | None = None,
 
 @app.get("/api/grupo/{grupo_id}")
 def ficha(grupo_id: int):
+    """El grupo entero, y el por que de que esos productos esten juntos.
+
+    `explicacion` **solo viaja si hay algo que decir**: un grupo de un solo
+    producto, o uno sin ningun par directo entre sus miembros, no tiene
+    explicacion, y el campo se omite en vez de mandarse vacio. La pantalla sabe
+    decir que ahi no hay nada que ensenar; un objeto vacio diria que se emparejo
+    por nada, que es distinto de no saberlo.
+    """
     g = catalogo.grupo(grupo_id)
     if g is None:
         raise HTTPException(404, "No tengo ese producto. Puede que ya no lo vendan.")
-    return g | {"fecha_datos": catalogo.fecha_de_gold()}
+    respuesta = g | {"fecha_datos": catalogo.fecha_de_gold()}
+    explicacion = catalogo.explicacion(grupo_id)
+    if explicacion:
+        respuesta["explicacion"] = explicacion
+    return respuesta
 
 
 @app.get("/api/panel/matching")

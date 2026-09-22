@@ -7,6 +7,7 @@ seguia sirviendo el catalogo de ayer hasta que alguien reiniciase el
 contenedor, y la cache del panel tampoco se refrescaba. La app se quedaba
 congelada en silencio, que es la peor forma de quedarse congelada.
 """
+import json
 import os
 import time
 
@@ -338,3 +339,165 @@ def test_la_ficha_del_grupo_no_necesita_pytz(gold, monkeypatch):
     g = catalogo.grupo(1)
     assert g is not None
     assert g["productos"][0]["promo_hasta"] == "2026-09-25"
+
+
+# --- el por que de un grupo: la explicacion de la ficha ------------------
+# El encargo pide explicabilidad, y el dato **ya estaba calculado**: cada pasada
+# del matching deja en `data/gold/matching/ejecucion=<id>/equivalencia.parquet`
+# un par aceptado por fila, con su metodo, su confianza y sus `features`. Lo que
+# faltaba era que viajara en `/api/grupo`, que es lo que el front busca por su
+# nombre (`ExplicacionEmparejamiento.tsx`).
+#
+# Dos reglas que estas pruebas guardan y que son las faciles de romper sin
+# querer: un par no es una fila (el mismo par sale por EAN y por nombre), y sin
+# pares **no se manda el campo**, porque un objeto vacio se lee como "se
+# emparejaron por nada" cuando lo que pasa es que no hay nada que contar.
+
+
+def _fila(fuente, id_fuente, precio, nombre="Leche entera", marca="ALCAMPO",
+          ean="NULL"):
+    """Una fila del gold de mentira del fixture, en el grupo 1 y con precio."""
+    return (f"('{fuente}','{id_fuente}','{nombre}','{marca}',1.0,'l',{ean},"
+            f"{precio},{precio},{precio},'l',NULL,NULL,NULL,NULL,NULL,'lacteos',"
+            f"'http://{fuente}',1,NULL,NULL,NULL,NULL,true,NULL)")
+
+
+def _dos_en_el_grupo(tmp, escribe, uno, enlaces=None, extra="",
+                     eid="20260922-090000"):
+    """Dos productos en el grupo 1, y encima una pasada del matching.
+
+    Con `enlaces` se escribe la pasada; sin el, no hay ninguna carpeta. La
+    equivalencia se escribe con el ayudante `_pasada` que ya usa el panel: sus
+    dos productos son `dia:1` y `alcampo:9`, los mismos que se ponen aqui.
+    """
+    time.sleep(0.02)
+    escribe(uno + "," + _fila("alcampo", "9", 80) + extra)
+    os.utime(tmp / "grupos.parquet", None)
+    if enlaces is not None:
+        _pasada(tmp, eid, enlaces, {"enlaces": float(len(enlaces))})
+
+
+def test_la_ficha_dice_por_que_estan_juntos(gold):
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    _dos_en_el_grupo(tmp, escribe, uno, [(0, 1, 0.72, "equivalente")])
+    e = catalogo.explicacion(1)
+    assert e["ejecucion"] == "20260922-090000"
+    assert e["pares"] == 1
+    assert e["nivel"] == "equivalente"
+    assert e["metodo"] == "nombre"
+    assert e["confianza_minima"] == 0.72
+    assert e["confianza_media"] == 0.72
+    # El par mas flojo se nombra para que las `features` tengan dueno: son las
+    # suyas, no un resumen de todo el grupo.
+    assert "dia:1" in e["par_mas_flojo"] and "alcampo:9" in e["par_mas_flojo"]
+    assert json.loads(e["features"])["unidad_igual"] is True
+    # Los dos miembros tienen par: no hay nada que decir de los que faltan.
+    assert "productos_sin_par" not in e
+
+
+def test_un_par_encontrado_por_dos_caminos_cuenta_una_vez(gold):
+    """El mismo par sale dos veces en el fichero: por EAN y por nombre.
+
+    Son dos pruebas del mismo hecho, no dos pares. Contando filas, el grupo
+    11580 del catalogo de verdad diria 44 pares teniendo 42. Y los dos caminos
+    se dicen: quedarse con uno seria contar la mitad de la historia.
+    """
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    # El tercero es el mismo par al reves: el fichero no promete el orden.
+    _dos_en_el_grupo(tmp, escribe, uno,
+                     [(0, 1, 1.0, "ean"), (0, 1, 0.72, "equivalente"),
+                      (1, 0, 0.9, "equivalente")])
+    e = catalogo.explicacion(1)
+    assert e["pares"] == 1
+    assert e["enlaces"] == 3
+    assert e["nivel"] == "ean+equivalente"
+    assert e["metodo"] == "ean+nombre"
+    assert e["confianza_minima"] == 1.0      # la prueba mas fuerte del par
+    assert e["confianza_media"] == 1.0
+
+
+def test_las_filas_solo_se_dicen_cuando_no_coinciden_con_los_pares(gold):
+    """`enlaces` solo se manda si algun par ocupa mas de una fila.
+
+    Cuando los dos numeros coinciden, repetir el mismo valor en una tabla de dos
+    columnas es ruido, y el campo no aporta nada.
+    """
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    _dos_en_el_grupo(tmp, escribe, uno, [(0, 1, 0.72, "equivalente")])
+    assert "enlaces" not in catalogo.explicacion(1)
+
+
+def test_un_miembro_sin_par_directo_se_dice(gold):
+    """Los grupos se forman por transitividad: un miembro puede no tener ningun
+    par directo con otro, y eso no es un error. Se dice, en vez de dejar al
+    lector cuadrando a mano 3 productos con 1 par."""
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    _dos_en_el_grupo(tmp, escribe, uno, [(0, 1, 0.72, "equivalente")],
+                     extra="," + _fila("aldi", "5", 70, marca="ALDI"))
+    e = catalogo.explicacion(1)
+    assert e["pares"] == 1
+    assert e["productos_sin_par"] == 1       # aldi:5, que esta en el grupo
+
+
+def test_un_grupo_sin_pares_no_lleva_explicacion(gold):
+    """La pasada existe y tiene un par, pero no entre los miembros del grupo.
+
+    El unico producto del grupo es `dia:1` y el par es `dia:1`-`alcampo:9`, asi
+    que del grupo no sale nada. Se devuelve None, no un objeto a medias.
+    """
+    tmp, _escribe, _uno = gold
+    from plataforma.api import catalogo
+    _pasada(tmp, "20260922-090000", [(0, 1, 0.72, "equivalente")],
+            {"enlaces": 1.0})
+    assert catalogo.explicacion(1) is None
+
+
+def test_sin_pasada_de_matching_no_hay_explicacion(gold):
+    """Un gold sin carpeta de matching no puede tumbar la ficha."""
+    from plataforma.api import catalogo
+    assert catalogo.explicacion(1) is None
+
+
+def test_lo_que_no_esta_no_se_manda_vacio(gold):
+    """Todos los valores son escalares y ninguno esta vacio.
+
+    El front pinta clave y valor en una tabla y **descarta lo que no sea
+    escalar**, asi que una lista o un objeto aqui desapareceran de la pantalla
+    sin decir nada. Y un `null`, un `""` o un `0` de relleno son la forma de
+    ensenar un dato que no tenemos como si lo tuvieramos.
+    """
+    tmp, escribe, uno = gold
+    from plataforma.api import catalogo
+    _dos_en_el_grupo(tmp, escribe, uno, [(0, 1, 0.72, "equivalente")])
+    e = catalogo.explicacion(1)
+    assert all(isinstance(v, (str, int, float, bool)) for v in e.values())
+    assert all(v != "" for v in e.values() if isinstance(v, str))
+    assert all(v is not None for v in e.values())
+
+
+def test_la_ruta_del_grupo_manda_la_explicacion(gold):
+    """Por HTTP y con ese nombre, que es lo que busca el front."""
+    tmp, escribe, uno = gold
+    from fastapi.testclient import TestClient
+
+    from plataforma.api import main
+    _dos_en_el_grupo(tmp, escribe, uno, [(0, 1, 0.72, "equivalente")])
+    r = TestClient(main.app).get("/api/grupo/1")
+    assert r.status_code == 200
+    assert r.json()["explicacion"]["pares"] == 1
+    assert r.json()["explicacion"]["ejecucion"] == "20260922-090000"
+
+
+def test_la_ruta_no_manda_una_explicacion_vacia(gold):
+    """Sin pares, el campo no viaja... y la ficha sigue entera."""
+    from fastapi.testclient import TestClient
+
+    from plataforma.api import main
+    r = TestClient(main.app).get("/api/grupo/1")
+    assert r.status_code == 200
+    assert "explicacion" not in r.json()
+    assert r.json()["productos"] and r.json()["fecha_datos"] == "2026-09-17"

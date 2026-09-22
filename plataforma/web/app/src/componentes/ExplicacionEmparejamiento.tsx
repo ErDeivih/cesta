@@ -9,6 +9,7 @@
  *  proyecto evita: un dato que no tenemos presentado como si lo tuvieramos.
  */
 import type { Grupo } from '../tipos'
+import { numero } from '../api/formato'
 import { Aviso, Etiqueta } from './ui'
 
 /** Los nombres que podria tener el campo el dia que se implemente. */
@@ -31,14 +32,52 @@ function busca(grupo: Grupo): { campo: string; valor: unknown } | null {
   return null
 }
 
+/** Un valor suelto, en texto. Los booleanos en castellano: la explicacion se lee
+ *  para decidir si el emparejamiento es de fiar, y `false` no es una palabra. */
+function textoDe(valor: unknown): string | null {
+  if (typeof valor === 'boolean') return valor ? 'sí' : 'no'
+  // Los numeros con la coma decimal de aqui: la confianza es 0,59, no 0.59.
+  if (typeof valor === 'number') return numero(valor, 2)
+  if (typeof valor === 'string') return valor
+  return null
+}
+
+/** Los pares de dentro de un texto que lleva un objeto JSON, o `null`.
+ *
+ *  `features` llega asi: `{"parecido": 0.58, "marca_igual": false}`. Ensenarlo
+ *  tal cual es esconder el dato detras de su formato, y esta seccion existe justo
+ *  para lo contrario: poder ver que ese 0,58 viene de que la marca no coincide y
+ *  la cantidad si. */
+function dentroDelTexto(texto: string): [string, string][] | null {
+  const limpio = texto.trim()
+  if (!limpio.startsWith('{') || !limpio.endsWith('}')) return null
+  try {
+    const salida: [string, string][] = []
+    for (const [clave, valor] of Object.entries(JSON.parse(limpio) as Record<string, unknown>)) {
+      const texto2 = textoDe(valor)
+      if (texto2 !== null) salida.push([clave, texto2])
+    }
+    return salida.length > 0 ? salida : null
+  } catch {
+    // Un texto que empieza por `{` y no es JSON se ensena como lo que es: texto.
+    return null
+  }
+}
+
 function escalares(valor: unknown): [string, string][] {
   if (typeof valor !== 'object' || valor === null) return []
   const salida: [string, string][] = []
   for (const [k, v] of Object.entries(valor as Record<string, unknown>)) {
     if (v === null || v === undefined) continue
-    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      salida.push([k, String(v)])
+    const dentro = typeof v === 'string' ? dentroDelTexto(v) : null
+    if (dentro) {
+      // Las claves de dentro llevan delante de donde salen (`features.parecido`),
+      // para que no se confundan con las de fuera.
+      for (const [k2, v2] of dentro) salida.push([`${k}.${k2}`, v2])
+      continue
     }
+    const texto = textoDe(v)
+    if (texto !== null) salida.push([k, texto])
   }
   return salida
 }

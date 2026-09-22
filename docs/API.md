@@ -143,7 +143,36 @@ grupo sea de un solo producto. Lo que hace comparable a un grupo es tener
               "gama",        <- SOLO si sale de ordenar por precio
               "nutriscore", "nova", "ean", "imagen", "alergenos",
               "ingredientes", "origen", "promo", "url"}],
-           "serie": [{"producto_id", "fuente", "fecha", "precio_unidad_cent"}]}
+           "serie": [{"producto_id", "fuente", "fecha", "precio_unidad_cent"}],
+           "explicacion": {              <- SOLO si hay algo que explicar
+              "ejecucion", "nivel", "metodo", "pares",
+              "confianza_minima", "confianza_media", "par_mas_flojo", "features"}}
+
+**`explicacion`: por que esos productos acabaron juntos.** Se añadió el 23 de
+septiembre de 2026 y **no se recalcula nada**: sale de `equivalencia.parquet` de
+la última pasada del matching, que ya trae un par aceptado por fila con su
+método, su confianza y sus `features`. Deducir el parecido otra vez aquí daría
+una segunda versión de la misma verdad, y la ficha enseñaría una que no es la que
+formó el grupo.
+
+**El campo se omite cuando no hay nada que decir**: un grupo de un solo producto,
+uno sin ningún par directo entre sus miembros (los grupos se forman por
+transitividad, así que eso es normal), o un gold sin ninguna pasada. Un
+`{"pares": 0}` se leería como "se emparejaron por nada", que no es lo mismo que
+"no lo sabemos". La pantalla sabe decir que ahí no hay nada que enseñar.
+
+Ejemplo real (grupo 11580, 22 productos):
+
+    "explicacion": {"ejecucion": "20260922-170833", "pares": 42,
+                    "nivel": "ean+equivalente+identico", "metodo": "ean+nombre",
+                    "confianza_minima": 0.5877, "confianza_media": 0.8738,
+                    "par_mas_flojo": "alcampo:99238 · dia:1917",
+                    "features": "{\"parecido\": 0.5877, \"ean_igual\": false, ...}"}
+
+`nivel` y `metodo` llevan los valores separados por `+` cuando en un mismo grupo
+no son los mismos en todos los pares. `par_mas_flojo` es el par con la confianza
+más baja, que es lo primero que hay que mirar para decidir si el grupo es de
+fiar. `features` es JSON en texto; la pantalla lo abre y lo enseña como filas.
 
 **`producto_id` en cada punto de la serie se añadió el 22 de septiembre de 2026.**
 Antes iba solo `(fuente, fecha)`, y eso hace que un grupo con dos productos de la
