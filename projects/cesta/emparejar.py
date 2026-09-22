@@ -35,6 +35,30 @@ from core.normalize import parse_formato
 # la precision del nivel identico apenas se mueve (68 % frente a 66 %). Con 0,50
 # se llega al 55 %, pero ya empieza a juntar cosas que solo se parecen de nombre.
 UMBRAL = 0.55
+
+# El canal de vectores **se queda apagado en la pasada diaria**, y no por gusto.
+#
+# Medido el 23 de septiembre de 2026, con la cache de los 52.567 vectores ya
+# completa: el emparejamiento con vectores **no termino en 62 minutos** y hubo que
+# pararlo. Sin ellos, recalcular los enlaces son 16,7 millones de pares
+# candidatos, o sea **90 segundos** (esta medido y escrito mas abajo). La causa
+# esta en `core.embeddings.candidatos`: hace **una sola consulta con el JOIN por
+# bloque sobre toda la tabla**, y calcula el coseno dos veces por par (en el
+# `SELECT` de `parecidos` y otra vez en el `WHERE`, lineas 246 y 249 de ese
+# fichero). Su propia docstring dice que la idea era "cada consulta mira decenas
+# o cientos de productos, no 52.000", que es la busqueda por bloque: lo que hay
+# escrito es una consulta unica.
+#
+# Lo que **no** esta en duda es la calidad de los vectores: esta medida en
+# `docs/DIAGNOSTICO-MATCHING.md` (§22) contra el peor caso, con precision 0,90 y
+# recall 0,89. Lo que no esta listo es la integracion. Y una tarea que corre sola
+# a las 06:00 no puede quedarse colgada: eso no es un dato peor, es no tener dato.
+#
+# El dia que `candidatos` este arreglado, esto pasa a `True` y ya esta. El
+# interruptor vive en **un solo sitio** para que lo que hace la pasada y lo que
+# se escribe en el resumen no puedan contradecirse (antes el resumen decia "si"
+# solo porque el fichero de vectores existia, aunque la pasada no lo mirara).
+USAR_VECTORES = False
 COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon",
             "ean", "precio_cent", "precio_unidad_cent", "precio_ref_canon_cent",
             "unidad_ref_canon",
@@ -258,7 +282,7 @@ def medir(filas: list[dict], umbral: float) -> None:
     if not verdad:
         print("  no hay pares con el mismo EAN en cadenas distintas: nada que medir")
         return
-    print(f"  verdad: {len(verdad)} pares entre cadenas con el mismo EAN")
+    print(f"  verdad: {len(verdad)} pares entre cadenas con el mismo EAN", flush=True)
     for etiqueta, vectores in (("sin vectores", False), ("con vectores", True)):
         ls = enlaces(filas, umbral=umbral, usar_ean=False,
                      usar_vectores=vectores)
@@ -274,10 +298,14 @@ def medir(filas: list[dict], umbral: float) -> None:
             if ea and eb:
                 con_ean += 1
                 iguales += ea == eb
+        # `flush`: la pasada con vectores puede tardar mas de una hora (ver
+        # `USAR_VECTORES`), y sin esto, con la salida redirigida a un fichero, la
+        # linea de "sin vectores" -- que es la que contesta la pregunta y la que
+        # tarda 90 segundos -- no se ve hasta que termina la otra.
         print(f"  {etiqueta:14s} {len(ls):6d} enlaces  "
               f"encuentra {acertados} ({100 * acertados / len(verdad):.0f}%)  "
               f"de los {con_ean} comprobables comparten codigo {iguales} "
-              f"({100 * iguales / max(con_ean, 1):.0f}%)")
+              f"({100 * iguales / max(con_ean, 1):.0f}%)", flush=True)
     print("  ojo: un enlace 'equivalente' con EAN distinto NO es un fallo, es el")
     print("       objetivo. Comparar marcas blancas es imposible por codigo.")
 
@@ -386,7 +414,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"  {len(ls)} enlaces reutilizados de data/gold/enlaces.parquet")
     if ls is None:
-        ls = enlaces(filas, umbral=a.umbral)
+        ls = enlaces(filas, umbral=a.umbral, usar_vectores=USAR_VECTORES)
     grupo = grupos_de(ls, filas)
     ingredientes = ingredientes_por_producto()
     externo = externo_por_ean()
@@ -454,10 +482,13 @@ def main(argv: list[str] | None = None) -> int:
     # con el motivo de cada par, y no se toca nunca mas.
     ejecucion_id = eq.id_de_ejecucion()
     equivalencias = eq.filas_de_equivalencia(filas, ls, ejecucion_id)
-    # Si hay vectores cacheados, la pasada los ha usado: `enlaces` los mete como
-    # un canal mas. Se mira el fichero y no se recalcula nada.
+    # Si esta pasada uso los embeddings o no: lo que manda es `USAR_VECTORES`, no
+    # lo que haya en disco. El fichero puede estar entero y la pasada no haberlo
+    # mirado, y entonces el resumen diria "si" de una pasada que no los uso. Sin
+    # esto, dos ejecuciones con numeros distintos pareceran iguales y no se sabra
+    # por que.
     from core import embeddings as emb
-    embed_cache = emb.camino().exists()
+    embed_cache = USAR_VECTORES and emb.camino().exists()
     metricas = {
         "enlaces": float(len(ls)),
         "identicos": float(sum(1 for x in ls if x[3] == "identico")),
@@ -477,7 +508,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  equivalencias versionadas en {carpeta.name} "
           f"({len(equivalencias)} pares con su motivo)")
     print(f"  embeddings: {'si, canal de vectores activo' if embed_cache else 'no'}"
-          f"{'' if embed_cache else ' (calculalos con: uv run python -m core.embeddings)'}")
+          f"{'' if embed_cache else f' (USAR_VECTORES={USAR_VECTORES}: ver por que arriba)'}")
     print(f"emparejar: hecho en {time.monotonic() - t0:.0f}s")
     return 0
 

@@ -1314,6 +1314,65 @@ sesion**. Queda anotado en `docs/BACKLOG.md` con estos numeros.
 explicacion de un grupo puede decir `"ean+equivalente+identico"`: se dicen todos
 los valores que hay en el grupo en vez de elegir uno.
 
+### El canal de vectores no cabe en la pasada diaria **todavia** (23 sep)
+
+Al completar la cache (52.567 vectores, el catalogo entero, 3.220 s de GPU) se
+intento la medida que faltaba: `--medir`, que empareja dos veces, sin el canal de
+vectores y con el. **No termino en 62 minutos** y hubo que pararlo. El proceso no
+estaba colgado: consumia CPU de forma sostenida (615 s, 1.216, 1.859, 2.474,
+3.079, 3.693 s de CPU, un nucleo al 100 % y 3 GB de RAM) hasta que se mato.
+
+Para poner esa cifra en su sitio: recalcular los enlaces **sin** vectores son 16,7
+millones de pares candidatos y **90 segundos**, y la pasada diaria entera
+(emparejar de punta a punta, con la calidad y la escritura) tardo **355 s**
+medidos hoy. O sea: el canal de vectores multiplica por mas de 40 el coste de la
+fase, y no se sabe cuanto mas porque no llego al final.
+
+Donde esta el coste, leyendo `core/embeddings.candidatos`:
+
+1. Hace **una sola consulta con el JOIN por bloque sobre toda la tabla**, no una
+   consulta por bloque. Su propia docstring dice que la idea era lo segundo
+   ("ahi cada consulta mira decenas o cientos de productos, no 52.000").
+2. La similitud se **calcula dos veces por par candidato**: una en el `SELECT` de
+   `parecidos` y otra en el `WHERE` (lineas 246 y 249 del fichero). Filtrar por
+   el alias `s` hace el mismo trabajo una vez.
+3. `carga()` devuelve `dict[str, list[float]]`: 52.567 × 1.024 numeros de Python,
+   alrededor de 1,7 GB de objetos, y `candidatos` los **vuelve a copiar** con
+   `list(v)`. La memoria residente medida fue de 3 a 4,9 GB.
+
+**Lo que esto cambia en el codigo.** `enlaces()` traia `usar_vectores=True` por
+defecto, con el razonamiento de que si no habia vectores cacheados no pasaba
+nada. Era verdad mientras la cache estaba a medias. Ahora la cache esta entera, y
+ese razonamiento se da la vuelta: con el defecto en `True`, **cualquier** sitio
+que llame a `enlaces()` se mete en un camino de horas sin decirlo -- la tarea
+diaria de las 06:00, el diagnostico y el medidor de la Fase 3. Asi que el defecto
+pasa a `False` y el canal es **opt-in**: quien lo quiera medir, que lo pida con
+`usar_vectores=True`. Hay cinco pruebas en `tests/test_emparejar.py` que lo
+guardan, incluida una que espia `embeddings.carga` para comprobar que una llamada
+normal **no lo toca**.
+
+La calidad de los vectores sigue medida y sin discusion (§ mas arriba: precision
+0,90 y recall 0,89 contra los negativos dificiles). Lo que no esta listo es la
+integracion. El arreglo es acotado -- filtrar por el alias y trocear la consulta
+por bloque --, pero **no se hace aqui**: toca el canal que mueve los grupos y hay
+que volver a medir con y sin despues, y eso es otra sesion, no el final de esta.
+
+### La pasada de las 17:08 y la de las 20:30 dan numeros distintos, y no es un fallo
+
+    20260922-170833   7.997 grupos comparables   6.604 identicos   12.322 de calidad
+    20260922-203025   7.992 grupos comparables   6.605 identicos   12.338 de calidad
+
+Mismos 22.705 enlaces y **la misma huella de catalogo**. La explicacion esta en el
+reloj del disco: `data/silver` se reescribio a las **17:41:39**, despues de la
+pasada de las 17:08 y a la vez que el arreglo del formato que el propio precio de
+la cadena desmiente. La huella no lo vio porque `huella_catalogo` firma
+`(fuente, id_fuente)`, o sea **que productos hay y en que orden, no lo que dicen**
+-- que es justo lo que tiene que firmar para que los indices de posicion no
+emparejen cosas al azar, pero no detecta un cambio de contenido.
+
+Conclusion: los dos numeros son correctos, cada uno con el silver de su hora, y el
+de hoy es 7.992. No hay nada que arreglar; hay algo que saber.
+
 ---
 
 ## 23. Estado del encargo

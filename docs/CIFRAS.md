@@ -19,7 +19,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 | | |
 |---|---:|
 | productos del catalogo | **52.567** |
-| grupos comparables | **7.997** |
+| grupos comparables | **7.992** |
 | productos comparables por kg/l/m | **42.353** |
 | productos con codigo de barras | **25.517** |
 
@@ -35,7 +35,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 ## Historico
 
-    763.002 filas, 17 dias acumulados
+    763.042 filas, 17 dias acumulados
 
 ## Por cadena, la ultima captura de cada una
 

@@ -445,7 +445,7 @@ def _asignacion_1a1(candidatos: list[tuple[int, int, float]],
 
 def enlaces(filas_completas: list[dict], umbral: float = 0.55,
             usar_ean: bool = True,
-            usar_vectores: bool = True) -> list[tuple[int, int, float, str]]:
+            usar_vectores: bool = False) -> list[tuple[int, int, float, str]]:
     """Pares (i, j, parecido, motivo) del mismo producto en cadenas distintas.
 
     Dos pasos, y los dos importan:
@@ -575,8 +575,25 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # canal nuevo**, y no habria forma de contestar la unica pregunta que importa:
     # ¿sube o no sube el recall? Con el interruptor aparte, se mide con y sin.
     #
-    # Si no hay vectores cacheados, esto no hace nada y el emparejador funciona
-    # igual que antes: la Fase 3 es una mejora, no un requisito.
+    # **El valor por defecto es `False`, y desde el 23 de septiembre de 2026 es a
+    # proposito.** Antes era `True`, con el razonamiento de que si no habia
+    # vectores cacheados no pasaba nada; el problema es que ahora **si** los hay
+    # (52.567, el catalogo entero) y ese dia se midio lo que cuesta el canal: el
+    # emparejamiento con vectores **no termino en 62 minutos** y hubo que pararlo,
+    # contra 90 segundos sin ellos. La causa esta en
+    # `core.embeddings.candidatos` (una consulta con el JOIN por bloque sobre toda
+    # la tabla, y el coseno calculado dos veces por par).
+    #
+    # Con el defecto en `True`, cualquier sitio que llame a `enlaces()` se metia en
+    # ese camino **sin decirlo**: la tarea diaria, el diagnostico y el medidor de
+    # la Fase 3. Un canal que no esta listo tiene que ser opt-in, no opt-out.
+    # Quien lo quiera medir, que lo pida: `usar_vectores=True`.
+    #
+    # La calidad de los vectores no esta en duda (§22: precision 0,90 y recall
+    # 0,89); lo que no esta listo es la integracion.
+    #
+    # Y si no hay vectores cacheados, esto no hace nada igualmente: la Fase 3 es
+    # una mejora, no un requisito.
     if usar_vectores:
         from core import embeddings
 
