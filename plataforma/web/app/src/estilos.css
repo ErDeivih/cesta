@@ -53,6 +53,21 @@
   :focus-visible {
     @apply outline-none ring-2 ring-offset-2 ring-sky-600 ring-offset-neutral-100 dark:ring-sky-400 dark:ring-offset-neutral-900;
   }
+
+  /* El marcador de un campo, legible.
+   *
+   * El que trae Tailwind de serie es `#9ca3af`, y sobre blanco son **2,54:1**: no
+   * se lee. Y en el buscador el marcador es **la unica etiqueta visible** -- el
+   * `<label>` existe, pero es `sr-only`, para lectores de pantalla --, asi que un
+   * marcador ilegible deja el campo sin decir que se escribe en el.
+   *
+   * Se le pone el mismo gris que la letra secundaria, que da 7,17:1. `opacity: 1`
+   * no sobra: Firefox aplica su propia opacidad al marcador, y sin esto el color
+   * saldria aclarado y el arreglo no serviria de nada alli. */
+  ::placeholder {
+    color: var(--tinta-suave);
+    opacity: 1;
+  }
 }
 
 @layer components {

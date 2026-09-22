@@ -233,7 +233,7 @@ export function Selector({
       <select
         id={mio}
         {...resto}
-        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-lg border border-neutral-500 bg-white px-3 py-2 dark:border-neutral-400 dark:bg-neutral-800"
       >
         {children}
       </select>
@@ -261,7 +261,7 @@ export function CampoTexto({
       <input
         id={mio}
         {...resto}
-        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-lg border border-neutral-500 bg-white px-3 py-2 dark:border-neutral-400 dark:bg-neutral-800"
       />
     </div>
   )
