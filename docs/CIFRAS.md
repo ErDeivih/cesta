@@ -1,6 +1,6 @@
 # Las cifras de la ultima ejecucion
 
-**Ejecucion del 22 de septiembre de 2026.** Este documento tiene un solo trabajo:
+**Ejecucion del 23 de septiembre de 2026.** Este documento tiene un solo trabajo:
 llevar los numeros de **hoy**. Lo reescribe entero
 `projects/cesta/cifras.py` al final de cada pasada.
 
@@ -19,7 +19,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 | | |
 |---|---:|
 | productos del catalogo | **52.567** |
-| grupos comparables | **8.394** |
+| grupos comparables | **7.992** |
 | productos comparables por kg/l/m | **42.353** |
 | productos con codigo de barras | **25.517** |
 

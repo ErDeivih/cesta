@@ -36,27 +36,44 @@ from core.normalize import parse_formato
 # se llega al 55 %, pero ya empieza a juntar cosas que solo se parecen de nombre.
 UMBRAL = 0.55
 
-# El canal de vectores **encendido en la pasada diaria desde el 23 de septiembre de
-# 2026**, y ahora si esta medido que merece la pena:
+# El canal de vectores **apagado en la pasada diaria**, y esta vez no por el coste
+# -- que ya no lo es -- sino porque **rompe una garantia del encargo**.
 #
-#     --medir --comparar-vectores                 992 s las dos pasadas
-#       sin vectores   20.944 enlaces   encuentra 1.170 (65 %)
-#       con vectores   24.943 enlaces   encuentra 1.324 (73 %)
+# Lo que se gana, medido sobre el mismo catalogo (misma huella) el 23 de septiembre
+# de 2026:
 #
-# Ocho puntos de recall, y la proporcion de enlaces comprobables que comparten
-# codigo se queda igual (20 % en las dos): no se compra recall a costa de
-# precision en ese subconjunto.
+#     metrica                    sin vectores   con vectores   diferencia
+#     enlaces                          22.705         26.703   +3.998 (+18 %)
+#     grupos comparables                7.992          8.394     +402 (+5 %)
+#     productos comparables            22.693         24.823   +2.130 (+9,4 %)
+#     calidad asignada                 12.338         14.153   +1.815 (+14,7 %)
+#     recall de --medir                 65 %           73 %
 #
-# Antes de esto el canal **no se podia encender**: `candidatos()` no terminaba en
-# 62 minutos, porque `carga()` construia ~1,7 GB de objetos de Python y los
-# devolvia a DuckDB fila a fila. Ahora los lee el propio DuckDB del parquet, dentro
-# de la misma consulta: **239,9 s y 270 MB** para el catalogo entero. La pasada
-# diaria pasa de 355 s a unos 600-900 s, que cabe.
+# Y lo que se rompe, medido igual:
 #
-# El dia que haga falta apagarlo, esto es un `False` y ya esta. El interruptor vive
-# en **un solo sitio** para que lo que hace la pasada y lo que se escribe en el
-# resumen no puedan contradecirse.
-USAR_VECTORES = True
+#     conflictos de asignacion              0            861
+#     peor caso (parejas de un producto
+#       en la misma cadena)                 2              3
+#
+# El encargo pide **cero conflictos de asignacion**, y con el canal puesto hay 861
+# productos emparejados con **tres** productos de la misma cadena. Contado sobre el
+# `equivalencia.parquet` de las dos pasadas.
+#
+# La causa esta en como entra el canal: `enlaces()` le da su propio reparto hungaro
+# y su propio juego de `ocupados` (`core/matching.py`, `for canal in ("marca",
+# "equivalente", "vector")`), asi que el 1-a-1 se respeta **dentro del canal** y no
+# entre canales. Los dos del nombre nunca produjeron un conflicto; el tercero si.
+#
+# **Lo que hay que hacer antes de encenderlo**: que los candidatos del canal de
+# vectores pasen por el mismo reparto y el mismo `ocupados` que los otros dos. Se
+# vuelve a medir esto entero -- recall **y** conflictos -- y entonces se enciende.
+# Un canal que sube el recall rompiendo la asignacion no es una mejora: es otro
+# emparejador.
+#
+# (El coste, que era el otro obstaculo, ya esta resuelto: `candidatos()` lee los
+# vectores en SQL en vez de traerlos a Python, y el catalogo entero son 239,9 s y
+# 270 MB, donde antes no terminaba en 62 minutos.)
+USAR_VECTORES = False
 COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon",
             "ean", "precio_cent", "precio_unidad_cent", "precio_ref_canon_cent",
             "unidad_ref_canon",

@@ -204,9 +204,12 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    emparejador con 34 pruebas y la tarea diaria de las 06:00 detras: no se hace a
    la carrera al final de una sesion. El detalle, en
    `docs/DIAGNOSTICO-MATCHING.md` (§22).
-6. ~~**Encender el canal de vectores en la pasada diaria**~~ — **hecho** (23 sep), y
-   con el antes/despues medido sobre el mismo catalogo (misma huella,
-   `d1848334bb48...`):
+6. **El canal de vectores: medido entero, y **apagado** porque rompe la asignacion.**
+   (23 sep.) El coste, que era el primer obstaculo, esta resuelto: `candidatos()` lee
+   los vectores en SQL en vez de traerlos a Python (antes no terminaba en 62
+   minutos; ahora el catalogo entero son **239,9 s y 270 MB**). Y se encendio, se
+   midio, y se volvio a apagar. Los dos lados, sobre el mismo catalogo (misma
+   huella):
 
        metrica                    sin vectores   con vectores   diferencia
        enlaces                          22.705         26.703        +3.998 (+18 %)
@@ -214,24 +217,28 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
        productos comparables            22.693         24.823        +2.130 (+9,4 %)
        calidad asignada                 12.338         14.153        +1.815 (+14,7 %)
        identicos                         6.605          8.328        +1.723
-       grupos dudosos ud                   845            877           +32
-       duracion de la pasada              355 s          627 s
+       recall de --medir                 65 %           73 %
+       ---------------------------------------------------------------- lo que rompe
+       conflictos de asignacion              0            861
+       peor caso (parejas de un producto
+         en la misma cadena)                 2              3
 
-   Todo sube, y lo que sube es lo que se usa: mas grupos con los que comparar, mas
-   productos con letra y mas `identico` -- que desde el 22 de septiembre solo se
-   pone si coincide el codigo de barras, o sea que ademas de subir el numero sube
-   su veracidad. El canal cuesta **272 s mas** de reloj en la tarea de las 06:00.
+   **El encargo pide cero conflictos de asignacion y con el canal puesto hay 861**,
+   con productos emparejados con tres productos de la misma cadena. Contado sobre el
+   `equivalencia.parquet` de las dos pasadas.
 
-   Antes no se podia encender: `candidatos()` no terminaba en 62 minutos. El coste
-   era el ida y vuelta de los vectores por Python (`carga()` + `executemany`, ~1,7
-   GB de objetos); ahora los lee DuckDB del parquet dentro de la misma consulta:
-   **239,9 s y 270 MB** para el catalogo entero. Y la calidad del matching medida
-   aparte: **recall 65 % -> 73 %**, con la precision del subconjunto comprobable
-   intacta (20 % en las dos).
+   La causa: `enlaces()` da al canal de vectores **su propio reparto hungaro y su
+   propio juego de `ocupados`** (`core/matching.py`, `for canal in ("marca",
+   "equivalente", "vector")`), asi que el 1-a-1 se respeta dentro del canal y no
+   entre canales. Los dos del nombre nunca produjeron un conflicto; el tercero si.
 
-   **Falta medir, y es lo unico que puede decir si los 402 grupos nuevos son de
-   fiar**: los grupos anchos y los conflictos de asignacion, con el diagnostico
-   completo (`diagnostico_matching`), que en esta sesion no llego a terminar.
+   **Que hay que hacer antes de encenderlo**: que sus candidatos pasen por el mismo
+   reparto y el mismo `ocupados` que los otros dos. Y despues volver a medir **las
+   dos columnas**, no solo la de arriba: un canal que sube el recall rompiendo la
+   asignacion no es una mejora, es otro emparejador. Todo el material para
+   comprobarlo esta ya: `data/debug/_conflictos.py` cuenta los conflictos de una
+   pasada a partir de su `equivalencia.parquet`, y `--medir --comparar-vectores`
+   (992 s) da el recall.
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
