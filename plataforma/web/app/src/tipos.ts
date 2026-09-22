@@ -453,3 +453,18 @@ export interface Donde {
   lineas: number
   fecha_datos: string
 }
+/** Un favorito. La lista viene mezclada: los guardados por GRUPO traen el
+ *  resumen del grupo, y los guardados por PRODUCTO traen la ficha del producto.
+ *  Por eso casi todo es opcional: se pinta lo que venga, sin inventar el resto. */
+export interface Favorito {
+  grupo_id: number | null
+  producto_id?: string | null
+  nombre: string
+  /** En los de grupo, la cadena mas barata de hoy. */
+  cadena?: string
+  fuente?: string
+  unidad?: string | null
+  precio_unidad_cent?: number | null
+  ahorro_pct?: number
+  marca?: string | null
+}

@@ -6,6 +6,7 @@ import { Vacio } from './componentes/ui'
 import { Buscar } from './paginas/Buscar'
 import { Cesta } from './paginas/Cesta'
 import { Escaner } from './paginas/Escaner'
+import { Favoritos } from './paginas/Favoritos'
 import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
 import { PanelMatching } from './paginas/PanelMatching'
@@ -27,6 +28,7 @@ export function App() {
           <Route path="/producto/:fuente/:idFuente" element={<Producto />} />
           <Route path="/escaner" element={<Escaner />} />
           <Route path="/cesta" element={<Cesta />} />
+          <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/panel" element={<Panel />} />
           <Route path="/panel/matching" element={<PanelMatching />} />
           <Route

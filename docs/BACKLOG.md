@@ -54,16 +54,18 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 
    Lo que falta, por orden de valor:
 
-   1. **La lista de la compra**, que es media aplicacion. Necesita las rutas
-      `/api/listas*` y `/api/listas/{id}/donde`, que ya existen y ya estan
-      probadas; lo que falta es la pantalla.
-   2. **El login**, porque las listas y los favoritos son de cada uno: la API usa
-      sesion por cookie (`usuario_actual`).
-   3. **Favoritos**, que se apoyan en lo mismo.
+   1. ~~**La lista de la compra**~~ — **hecha** (22 sep): login, lista y donde
+      comprarla, en `src/paginas/Cesta.tsx`. Las rutas de la API ya existian.
+   2. ~~**El login**~~ — **hecho** (22 sep), va con la cesta: la API usa sesion
+      por cookie y un solo origen, asi que funciona sin tocar CORS.
+   3. **Favoritos** — la pantalla esta (`src/paginas/Favoritos.tsx`: ver y
+      quitar), pero **falta poder anadir desde la ficha**. Hoy se anaden con la
+      interfaz antigua o el movil. Es un boton en la ficha del grupo.
    4. **Ajustes**: preferencias y cadenas de cerca.
 
-   Los cuatro van juntos: sin login no hay lista, y sin lista la aplicacion pierde
-   lo que la hace util en el pasillo.
+   La barra de abajo del movil tiene cuatro sitios — buscar, cesta, escaner y
+   panel — y el matching paso a estar dentro del panel: la lista de la compra es
+   a lo que se va en la tienda, y el matching se mira en casa.
 
 1. **Reconstruir la imagen de la API.** El contenedor que corre hoy no tiene
    `/api/ean`, ni `/api/panel/matching`, ni `marca` en la busqueda, ni

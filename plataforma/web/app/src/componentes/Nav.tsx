@@ -4,9 +4,13 @@
  *  el pulgar llega al borde inferior de la pantalla y no a la esquina de arriba.
  *  En el escritorio la barra de arriba no molesta a nadie.
  *
- *  Cuatro destinos y no cinco: el buscador es la pantalla de entrada y las
- *  otras tres son sitios donde se esta un rato. Una barra de ocho iconos no se
- *  lee, se busca a tientas.
+ *  **Cuatro destinos, y son los cuatro de estar un rato en la tienda**: buscar,
+ *  la cesta, el escaner y el panel. Antes estaba el panel de matching en lugar de
+ *  la cesta; se ha cambiado porque la lista de la compra es a lo que se va, y el
+ *  matching es una pantalla de auditoria que se mira en casa. Sigue accesible
+ *  desde el panel (`/panel/matching`), que es donde se busca.
+ *
+ *  Una barra de ocho iconos no se lee, se busca a tientas.
  */
 import { NavLink } from 'react-router-dom'
 
@@ -15,9 +19,9 @@ import { cx } from './ui'
 
 const ITEMS = [
   { a: '/', texto: 'Buscar', Icono: IconoLupa, exacto: true },
+  { a: '/cesta', texto: 'Cesta', Icono: IconoGrafica, exacto: false },
   { a: '/escaner', texto: 'Escáner', Icono: IconoCodigoBarras, exacto: false },
   { a: '/panel', texto: 'Panel', Icono: IconoPanel, exacto: true },
-  { a: '/panel/matching', texto: 'Matching', Icono: IconoGrafica, exacto: false },
 ] as const
 
 function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { compacto?: boolean }) {
