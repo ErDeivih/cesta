@@ -8,6 +8,7 @@
  *  El dinero llega en centimos enteros y se pasa a euros solo al pintar. No se
  *  redondea antes de tiempo: 0,1 + 0,2 no da 0,3.
  */
+import type { Nutricion } from '../tipos'
 
 const EUROS = new Intl.NumberFormat('es-ES', {
   style: 'currency',
@@ -151,4 +152,52 @@ export const ORIGEN_SELLO: Record<string, string> = {
 export function textoOrigenSello(origen: string | null | undefined): string | null {
   if (!origen) return null
   return ORIGEN_SELLO[origen] ?? origen
+}
+
+/** La tabla de la etiqueta, con el nombre que pone el envase.
+ *
+ *  Las claves llegan de la cadena tal cual (`energia_kj`, `saturadas`) y en
+ *  crudo no dicen nada: `saturadas` sin el "de las cuales" delante se lee como
+ *  si fueran todas las grasas del producto, y un numero sin unidad no se puede
+ *  comparar con el de la fila de al lado.
+ *
+ *  El orden es el del envase, no el del objeto de la API: primero la energia y
+ *  detras los grupos que la componen. Y una clave que aqui no este **sale
+ *  igualmente**, detras y en crudo: en esta casa un dato que no sabemos leer es
+ *  mejor que un dato que no ensenamos. */
+const NUTRIENTES: [string, string, string][] = [
+  // `energia_kcal` no aparece en los datos de hoy (la cadena publica el kJ),
+  // pero se busca lo mismo, por si un dia llega.
+  ['energia_kj', 'Energía', 'kJ'],
+  ['energia_kcal', 'Energía', 'kcal'],
+  ['grasas', 'Grasas', 'g'],
+  ['saturadas', 'de las cuales saturadas', 'g'],
+  ['hidratos', 'Hidratos', 'g'],
+  ['azucares', 'de los cuales azúcares', 'g'],
+  ['fibra', 'Fibra', 'g'],
+  ['proteinas', 'Proteínas', 'g'],
+  ['sal', 'Sal', 'g'],
+]
+
+export interface FilaNutricion {
+  clave: string
+  texto: string
+  /** Vacio en las claves que no conocemos: inventarla seria peor que no ponerla. */
+  unidad: string
+  valor: number | null
+}
+
+export function filasNutricion(nutricion: Nutricion): FilaNutricion[] {
+  const puestas = new Set<string>()
+  const filas: FilaNutricion[] = []
+  for (const [clave, texto, unidad] of NUTRIENTES) {
+    if (!(clave in nutricion)) continue
+    puestas.add(clave)
+    filas.push({ clave, texto, unidad, valor: nutricion[clave] ?? null })
+  }
+  for (const clave of Object.keys(nutricion).sort()) {
+    if (puestas.has(clave)) continue
+    filas.push({ clave, texto: clave, unidad: '', valor: nutricion[clave] ?? null })
+  }
+  return filas
 }

@@ -1,4 +1,4 @@
-﻿/** Los contratos de la API, copiados de `docs/API.md` y de `plataforma/api`.
+/** Los contratos de la API, copiados de `docs/API.md` y de `plataforma/api`.
  *
  *  Tres reglas que se ven en los tipos y no son casualidad:
  *
@@ -17,8 +17,15 @@ export type Letra = 'A' | 'B' | 'C'
 export type Nutriscore = 'a' | 'b' | 'c' | 'd' | 'e' | string | null
 
 export interface Nutricion {
+  /** La cadena publica el kJ, no el kcal: en los datos de hoy `energia_kcal` no
+   *  aparece nunca. Se deja escrito porque la tabla de la etiqueta lo busca. */
+  energia_kj?: number | null
   energia_kcal?: number | null
   grasas?: number | null
+  saturadas?: number | null
+  hidratos?: number | null
+  azucares?: number | null
+  fibra?: number | null
   proteinas?: number | null
   sal?: number | null
   [clave: string]: number | null | undefined

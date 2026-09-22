@@ -20,7 +20,9 @@ import {
   euros,
   eurosUnidad,
   fecha as fechaTexto,
+  filasNutricion,
   ms,
+  NO_LO_SE,
   nombreCadena,
   porcentaje,
   porcentajeConSigno,
@@ -355,10 +357,14 @@ export function Producto() {
                 Nutrición {miembro.nutricion_por ? `(por ${miembro.nutricion_por})` : ''}
               </h3>
               <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
-                {Object.entries(miembro.nutricion).map(([k, v]) => (
-                  <li key={k} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
-                    <span className="text-neutral-600 dark:text-neutral-400">{k}</span>
-                    <span className="cifra font-medium">{v ?? 'no lo sé'}</span>
+                {filasNutricion(miembro.nutricion).map((f) => (
+                  <li key={f.clave} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
+                    <span className="text-neutral-600 dark:text-neutral-400">{f.texto}</span>
+                    <span className="cifra font-medium">
+                      {f.valor === null
+                        ? NO_LO_SE
+                        : `${f.valor}${f.unidad ? ` ${f.unidad}` : ''}`}
+                    </span>
                   </li>
                 ))}
               </ul>
