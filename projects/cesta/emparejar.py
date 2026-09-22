@@ -239,7 +239,13 @@ def calidad_de_grupos(filas: list[dict], grupo: list[int],
 
 
 def medir(filas: list[dict], umbral: float) -> None:
-    """Esconde el EAN, empareja por nombre y cuenta aciertos."""
+    """Esconde el EAN, empareja por nombre y cuenta aciertos.
+
+    Y lo hace **dos veces: sin el canal de embeddings y con el**. Es la unica
+    forma de contestar la pregunta que importa de la Fase 3 -- ¿sube el recall o
+    no? --, y por eso `enlaces` tiene un interruptor aparte para los vectores en
+    vez de ir pegado al del EAN.
+    """
     por_ean: dict[str, list[int]] = {}
     for i, f in enumerate(filas):
         e = _ean(f.get("ean"))
@@ -252,27 +258,26 @@ def medir(filas: list[dict], umbral: float) -> None:
     if not verdad:
         print("  no hay pares con el mismo EAN en cadenas distintas: nada que medir")
         return
-    ls = enlaces(filas, umbral=umbral, usar_ean=False)
-    pares = {(min(i, j), max(i, j)) for i, j, _, _ in ls}
-    acertados = len(pares & verdad)
-    # Cuantos enlaces comprobables (con codigo en los dos lados) comparten codigo.
-    # Antes se imprimia "de los marcados identico, cuantos comparten codigo", y
-    # desde el 22 de septiembre eso es una tautologia: `nivel()` ya no llama
-    # identico a dos productos con codigos distintos. Esta proporcion si informa:
-    # dice cuanta de la cobertura es de fiar.
-    con_ean = iguales = 0
-    for i, j, _, _ in ls:
-        ea, eb = _ean(filas[i].get("ean")), _ean(filas[j].get("ean"))
-        if ea and eb:
-            con_ean += 1
-            iguales += ea == eb
     print(f"  verdad: {len(verdad)} pares entre cadenas con el mismo EAN")
-    print(f"  el emparejador por nombre encuentra {acertados} "
-          f"({100 * acertados / len(verdad):.0f}%)")
-    if con_ean:
-        print(f"  de los {con_ean} enlaces con codigo en los dos lados, {iguales} "
-              f"comparten codigo ({100 * iguales / con_ean:.0f} %); el resto son "
-              f"equivalencias entre marcas, que es lo que el proyecto busca")
+    for etiqueta, vectores in (("sin vectores", False), ("con vectores", True)):
+        ls = enlaces(filas, umbral=umbral, usar_ean=False,
+                     usar_vectores=vectores)
+        pares = {(min(i, j), max(i, j)) for i, j, _s, _n in ls}
+        acertados = len(pares & verdad)
+        # Cuantos enlaces comprobables comparten codigo. Antes se imprimia "de los
+        # marcados identico, cuantos comparten codigo", y desde el 22 de septiembre
+        # eso es una tautologia: `nivel()` ya no llama identico a dos productos con
+        # codigos distintos. Esta proporcion si informa.
+        con_ean = iguales = 0
+        for i, j, _s, _n in ls:
+            ea, eb = _ean(filas[i].get("ean")), _ean(filas[j].get("ean"))
+            if ea and eb:
+                con_ean += 1
+                iguales += ea == eb
+        print(f"  {etiqueta:14s} {len(ls):6d} enlaces  "
+              f"encuentra {acertados} ({100 * acertados / len(verdad):.0f}%)  "
+              f"de los {con_ean} comprobables comparten codigo {iguales} "
+              f"({100 * iguales / max(con_ean, 1):.0f}%)")
     print("  ojo: un enlace 'equivalente' con EAN distinto NO es un fallo, es el")
     print("       objetivo. Comparar marcas blancas es imposible por codigo.")
 

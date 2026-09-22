@@ -444,7 +444,8 @@ def _asignacion_1a1(candidatos: list[tuple[int, int, float]],
 
 
 def enlaces(filas_completas: list[dict], umbral: float = 0.55,
-            usar_ean: bool = True) -> list[tuple[int, int, float, str]]:
+            usar_ean: bool = True,
+            usar_vectores: bool = True) -> list[tuple[int, int, float, str]]:
     """Pares (i, j, parecido, motivo) del mismo producto en cadenas distintas.
 
     Dos pasos, y los dos importan:
@@ -568,9 +569,15 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # manda. Medido en `docs/DIAGNOSTICO-MATCHING.md` §22: precision 0,90 con
     # recall 0,89 en el umbral 0,76, contra los negativos dificiles.
     #
+    # Se apaga con `usar_vectores=False`, y ese interruptor existe por un motivo
+    # concreto: `--medir` llama con `usar_ean=False` para medir el emparejador por
+    # nombre, asi que si esto fuera con `usar_ean` **la medida nunca podria ver el
+    # canal nuevo**, y no habria forma de contestar la unica pregunta que importa:
+    # ¿sube o no sube el recall? Con el interruptor aparte, se mide con y sin.
+    #
     # Si no hay vectores cacheados, esto no hace nada y el emparejador funciona
     # igual que antes: la Fase 3 es una mejora, no un requisito.
-    if usar_ean:
+    if usar_vectores:
         from core import embeddings
 
         vectores = embeddings.carga()

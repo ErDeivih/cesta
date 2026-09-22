@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -51,6 +52,10 @@ LOTE = 64
 # dificiles, que son el peor caso. Mas alto se pierde recall; mas bajo se cuelan
 # productos distintos. Ver `docs/DIAGNOSTICO-MATCHING.md` §22.
 UMBRAL = 0.76
+
+# Lo que mide bge-m3. Se escribe para poder guardar un vector de ceros cuando un
+# texto no se puede embeber, sin que se descuadre la tabla.
+DIMENSION = 1024
 
 
 def texto_de(f: dict) -> str:
@@ -73,16 +78,44 @@ def embebe(textos: list[str], modelo: str = MODELO_POR_DEFECTO,
 
     Lote de 64 y no de 16 -- medido, 49 contra 39 productos por segundo --, y
     tampoco mas: con 128 no mejora.
+
+    **Y si un lote falla, no se cae el trabajo entero.** Medido el 22 de septiembre
+    de 2026: a los 9.024 vectores la API contesto `HTTP 400` y el proceso murio,
+    que en un trabajo de una hora es la peor forma de perderlo. No se supo por que
+    -- ni el texto vacio ni el larguisimo, que era lo primero que se miro: la
+    mediana son 74 caracteres y el mas largo 482. Como la causa no esta
+    identificada, lo que se hace es no depender de ella: el lote se reintenta
+    **texto a texto**, y al que sigue fallando se le guarda un vector de ceros y
+    se le cuenta. Un vector de ceros no se parece a nada, asi que ese producto
+    simplemente no tendra candidatos por significado, que es exactamente lo que
+    pasaria si no estuviera calculado.
     """
     salida: list[list[float]] = []
     for pos in range(0, len(textos), lote):
-        cuerpo = {"model": modelo, "input": textos[pos:pos + lote]}
-        peticion = urllib.request.Request(
-            OLLAMA, data=json.dumps(cuerpo).encode("utf-8"),
-            headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(peticion, timeout=900) as r:
-            salida.extend(json.loads(r.read().decode("utf-8"))["embeddings"])
+        trozo = textos[pos:pos + lote]
+        try:
+            salida.extend(_pide(trozo, modelo))
+            continue
+        except urllib.error.HTTPError as e:
+            print(f"  lote en {pos} fallo ({e}); se reintenta texto a texto",
+                  flush=True)
+        for t in trozo:
+            try:
+                salida.extend(_pide([t], modelo))
+            except Exception as e:                  # noqa: BLE001
+                print(f"  no se pudo embeber ({type(e).__name__}): {t[:60]!r}",
+                      flush=True)
+                salida.append([0.0] * DIMENSION)
     return salida
+
+
+def _pide(textos: list[str], modelo: str) -> list[list[float]]:
+    cuerpo = {"model": modelo, "input": textos}
+    peticion = urllib.request.Request(
+        OLLAMA, data=json.dumps(cuerpo).encode("utf-8"),
+        headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(peticion, timeout=900) as r:
+        return json.loads(r.read().decode("utf-8"))["embeddings"]
 
 
 def camino(salida: Path | None = None) -> Path:
