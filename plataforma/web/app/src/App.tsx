@@ -1,9 +1,10 @@
-import { Link, Route, Routes } from 'react-router-dom'
+﻿import { Link, Route, Routes } from 'react-router-dom'
 
 import { Cabecera } from './componentes/Cabecera'
 import { NavAbajo } from './componentes/Nav'
 import { Vacio } from './componentes/ui'
 import { Buscar } from './paginas/Buscar'
+import { Cesta } from './paginas/Cesta'
 import { Escaner } from './paginas/Escaner'
 import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
@@ -25,6 +26,7 @@ export function App() {
           <Route path="/grupo/:grupoId" element={<Grupo />} />
           <Route path="/producto/:fuente/:idFuente" element={<Producto />} />
           <Route path="/escaner" element={<Escaner />} />
+          <Route path="/cesta" element={<Cesta />} />
           <Route path="/panel" element={<Panel />} />
           <Route path="/panel/matching" element={<PanelMatching />} />
           <Route

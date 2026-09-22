@@ -1,4 +1,4 @@
-/** Los contratos de la API, copiados de `docs/API.md` y de `plataforma/api`.
+﻿/** Los contratos de la API, copiados de `docs/API.md` y de `plataforma/api`.
  *
  *  Tres reglas que se ven en los tipos y no son casualidad:
  *
@@ -388,4 +388,68 @@ export interface PanelMatching {
   cambios: CambioMatching[] | null
   pares: ParMatching[]
   ejecuciones: string[]
+}
+
+/* ------------------------------------------------------------ la cesta --- */
+
+/** Quien ha entrado. `null` = nadie. */
+export interface Sesion {
+  usuario: { id: string; usuario: string; nombre: string | null } | null
+  preferencias: Record<string, unknown>
+}
+
+/** Una lista de la compra. */
+export interface Lista {
+  id: string
+  nombre: string
+  es_de_casa: boolean
+  papel?: string
+  lineas?: number
+  actualizada?: string
+}
+
+/** Una linea de la lista: lo que se quiere comprar. */
+export interface Linea {
+  id: string
+  nombre_visto: string
+  cantidad: number
+  grupo_id: number | null
+  producto_id: string | null
+  tachado_en: string | null
+}
+
+/** Lo que cuesta la lista ahora mismo, en la cadena mas barata de cada cosa. */
+export interface Estimacion {
+  total_cent: number
+  en_carrito_cent: number
+  por_recoger_cent: number
+  lineas: number
+  sin_precio: number
+}
+
+/** Lo que costaria la lista entera en UNA cadena. */
+export interface OpcionTienda {
+  cadena: string
+  total_cent: number
+  total_sin_ofertas_cent: number
+  encontrados: number
+  /** Los que no tiene, POR SU NOMBRE. Un numero no dice cual falta. */
+  faltan: string[]
+}
+
+/** Repartir la compra entre varias tiendas. */
+export interface Reparto {
+  cadenas: string[]
+  total_cent: number
+  faltan: string[]
+  ahorro_cent?: number
+  /** Con ahorros de menos de 1,50 EUR no compensa la segunda parada. */
+  merece_la_pena?: boolean
+}
+
+export interface Donde {
+  una_tienda: OpcionTienda[]
+  repartido: Reparto | null
+  lineas: number
+  fecha_datos: string
 }
