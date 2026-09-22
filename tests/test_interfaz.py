@@ -295,14 +295,25 @@ def test_los_colores_del_tema_tienen_valor_en_los_dos_temas():
 def _rutas_de_la_interfaz() -> list[tuple[str, str, int]]:
     """Las rutas que pide el front, con el fichero y la linea de cada una.
 
-    Solo cuenta las llamadas con la ruta escrita a mano: `pide('/yo')`,
-    `pide<X>(\\`/listas/${id}\\`)` y `fetch('/api/entrar')`. Las que se construyen
-    en una variable no se pueden comprobar leyendo, y no se inventan.
+    Solo cuenta las llamadas con la ruta escrita a mano. Las que se construyen en
+    una variable no se pueden comprobar leyendo, y no se inventan.
+
+    Se miran los tres ayudantes que tiene el front, no solo el primero: `pide`
+    (GET), `conCuerpo` (los favoritos) y `escribe` (la cesta). Los tres llevan la
+    ruta en el primer argumento y los tres le pegan `/api` delante. Mirar solo
+    `pide` dejaba fuera **todas** las escrituras, que son justo las que mas
+    duelen si la ruta no existe: una pantalla que no puede leer algo se ve vacia,
+    pero una que no puede guardar pierde lo que el usuario acaba de escribir.
+    Las definiciones no cuelan: su primer argumento es `ruta: string`, sin
+    comillas.
     """
+    patrones = [rf"\b{ayudante}\b[^(]*\(\s*['\"`]"
+                for ayudante in ("pide", "conCuerpo", "escribe")]
+    patrones.append(r"\bfetch\(\s*['\"`]")
     salida: list[tuple[str, str, int]] = []
     for fichero in sorted((APP / "src").rglob("*.ts")):
         limpio = _sin_comentarios(fichero.read_text(encoding="utf-8"))
-        for patron in (r"\bpide\b[^(]*\(\s*['\"`]", r"\bfetch\(\s*['\"`]"):
+        for patron in patrones:
             for trozo in re.finditer(patron, limpio):
                 resto = limpio[trozo.end() - 1:]
                 m = re.match(r"(['\"`])(.*?)\1", resto, re.S)
