@@ -1,4 +1,4 @@
-/* Cesta. Una interfaz para usar con una mano en el pasillo del supermercado. */
+﻿/* Cesta. Una interfaz para usar con una mano en el pasillo del supermercado. */
 :root{
   --papel:#f1f2f3; --panel:#fff; --panel2:#f8f9fa; --tinta:#16181a;
   --tinta-2:#4a4f54; --tinta-3:#71787e; --linea:#d6d9dc; --linea-f:#b4b9be;
@@ -19,9 +19,9 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--papel);color:var(--tinta);
-  font:15px/1.5 Archivo,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  font:15px/1.5 system-ui,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;
   padding-top:env(safe-area-inset-top,0);padding-bottom:calc(var(--alto) + env(safe-area-inset-bottom,0))}
-.num{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.num{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
 [hidden]{display:none!important}
 button{font:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
@@ -254,7 +254,7 @@ figcaption{font-size:12.5px;color:var(--tinta-2);margin-top:12px;padding-top:10p
 
 /* compartir */
 .enlace-caja{display:flex;gap:8px;margin-top:10px}
-.enlace-caja input{flex:1;font-size:13px;font-family:"JetBrains Mono",monospace}
+.enlace-caja input{flex:1;font-size:13px;font-family:ui-monospace,monospace}
 .persona{display:flex;justify-content:space-between;align-items:center;padding:9px 0;
   border-bottom:1px solid var(--linea);font-size:14px}
 .persona .papel{font-size:11px;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.06em}
@@ -407,11 +407,11 @@ table.nutricion tr:last-child td { border-bottom: 0; }
 .gr .rej{stroke:var(--rejilla);stroke-width:1}
 .gr .base{stroke:var(--tinta-3);stroke-width:1;stroke-dasharray:3 3}
 .gr .ejeY,.gr .ejeX{font-size:10px;fill:var(--tinta-3);
-  font-family:'JetBrains Mono',ui-monospace,monospace}
+  font-family:ui-monospace,monospace}
 .gr .ejeY{text-anchor:end}
 .gr .ejeX{text-anchor:middle}
 .gr .dir{font-size:11px;font-weight:700;fill:var(--tinta-2);
-  font-family:'JetBrains Mono',ui-monospace,monospace}
+  font-family:ui-monospace,monospace}
 .leyenda-gr{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0 0;font-size:12px;
   color:var(--tinta-2)}
 .leyenda-gr span{display:inline-flex;align-items:center;gap:6px}
