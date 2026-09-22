@@ -58,10 +58,12 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       comprarla, en `src/paginas/Cesta.tsx`. Las rutas de la API ya existian.
    2. ~~**El login**~~ — **hecho** (22 sep), va con la cesta: la API usa sesion
       por cookie y un solo origen, asi que funciona sin tocar CORS.
-   3. **Favoritos** — la pantalla esta (`src/paginas/Favoritos.tsx`: ver y
-      quitar), pero **falta poder anadir desde la ficha**. Hoy se anaden con la
-      interfaz antigua o el movil. Es un boton en la ficha del grupo.
-   4. **Ajustes**: preferencias y cadenas de cerca.
+   3. ~~**Favoritos**~~ — **hecho** (22 sep): la pantalla
+      (`src/paginas/Favoritos.tsx`) y el boton de guardar en la ficha del grupo
+      (`src/componentes/BotonFavorito.tsx`). El boton **no se pinta si no hay
+      sesion**: uno que al pulsarlo pida entrar es una promesa que no se puede
+      cumplir en el pasillo, con una mano.
+   4. **Ajustes**: preferencias y cadenas de cerca. Es lo unico que queda.
 
    La barra de abajo del movil tiene cuatro sitios — buscar, cesta, escaner y
    panel — y el matching paso a estar dentro del panel: la lista de la compra es

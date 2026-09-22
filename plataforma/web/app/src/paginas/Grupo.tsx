@@ -1,4 +1,4 @@
-/** La pantalla del grupo: el mismo producto en cada cadena, en columnas.
+﻿/** La pantalla del grupo: el mismo producto en cada cadena, en columnas.
  *
  *  Es la pantalla clave del encargo y la que mas facil es hacer mal. Lo que
  *  decide si sirve o no:
@@ -32,6 +32,7 @@ import {
   nombreCadena,
   porcentaje,
 } from '../api/formato'
+import { BotonFavorito } from '../componentes/BotonFavorito'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { ControlPesos } from '../componentes/ControlPesos'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
@@ -204,7 +205,10 @@ export function Grupo() {
           />
         )}
         <div className="min-w-[16rem] flex-1">
-          <h1 className="text-xl font-bold leading-tight">{grupo.nombre}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h1 className="text-xl font-bold leading-tight">{grupo.nombre}</h1>
+            <BotonFavorito grupoId={id} />
+          </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
             <span>{grupo.productos.length} productos</span>
             <span>·</span>
