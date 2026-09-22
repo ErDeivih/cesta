@@ -56,10 +56,14 @@ export function ExplicacionEmparejamiento({ grupo }: { grupo: Grupo }) {
         </p>
         <p className="mt-1">
           Esta sección se rellena sola el día que la respuesta traiga uno de estos campos:{' '}
+          {/* Cada nombre va en su propio `inline-block`: JSX se come el espacio
+              entre elementos y siete `<code>` pegados son una sola palabra
+              impartible de 800 px que revienta el ancho de la página en un
+              móvil. Con `inline-block` vuelven a poder partirse de línea. */}
           {POSIBLES_CAMPOS.map((c) => (
-            <code key={c} className="mr-1">
-              {c}
-            </code>
+            <span key={c} className="mr-1 inline-block">
+              <code>{c}</code>
+            </span>
           ))}
         </p>
       </Aviso>
@@ -70,14 +74,14 @@ export function ExplicacionEmparejamiento({ grupo }: { grupo: Grupo }) {
   const pares = escalares(valor)
 
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <p className="text-sm">
         <Etiqueta tono="info">{campo}</Etiqueta>
       </p>
       {typeof valor === 'string' ? (
         <p className="text-sm">{valor}</p>
       ) : pares.length > 0 ? (
-        <dl className="grid gap-1 text-sm sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
           {pares.map(([k, v]) => (
             <div key={k} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
               <dt className="text-neutral-600 dark:text-neutral-400">{k}</dt>

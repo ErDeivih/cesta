@@ -327,3 +327,54 @@ export interface PanelMovidos {
     baja: boolean
   }[]
 }
+
+// ------------------------------------------------- el panel de matching ---
+
+/** Una metrica de la pasada: nombre y valor. Los nombres los pone
+ *  `core/matching.py` y la interfaz los enseña tal cual, sin traducirlos: si
+ *  se renombra una metrica, se entera quien la lee. */
+export interface MetricaMatching {
+  metrica: string
+  valor: number
+}
+
+/** Lo que ha cambiado respecto a la pasada anterior. `antes` es null si la
+ *  metrica es nueva, y eso **no es un cero**: significa que antes no se medía. */
+export interface CambioMatching {
+  metrica: string
+  antes: number | null
+  ahora: number | null
+  delta: number
+}
+
+export interface ParMatching {
+  producto_a: string
+  producto_b: string
+  nombre_a: string | null
+  nombre_b: string | null
+  fuente_a: string
+  fuente_b: string
+  /** `identico` (mismo EAN), `equivalente` (mismo tipo y formato, otra marca). */
+  nivel: string | null
+  metodo: string | null
+  confianza: number | null
+  /** Los rasgos que hicieron aceptar el par. Es la explicabilidad del encargo. */
+  features: Record<string, unknown>
+}
+
+export interface PanelMatching {
+  fecha_datos: string
+  /** null cuando todavía no hay ninguna pasada guardada en gold. */
+  ultima: {
+    ejecucion_id: string
+    version_modelo?: string | null
+    productos?: number | null
+    umbral?: number | null
+    huella_catalogo?: string | null
+  } | null
+  metricas: MetricaMatching[]
+  anterior: { ejecucion_id: string } | null
+  cambios: CambioMatching[] | null
+  pares: ParMatching[]
+  ejecuciones: string[]
+}

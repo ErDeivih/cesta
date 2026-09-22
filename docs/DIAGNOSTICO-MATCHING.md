@@ -1,4 +1,4 @@
-﻿# DIAGNÓSTICO DEL MATCHING — Fase 0
+# DIAGNÓSTICO DEL MATCHING — Fase 0
 
 > Informe de la Fase 0 de `docs/PLAN-UI-MATCHING.md`. **Solo mide: no cambia
 > nada.** Todos los números salen del catálogo de gold del **21 de septiembre de
@@ -979,16 +979,39 @@ Se cambia en `diagnostico_matching.py`, que ya la publica en cada pasada:
 
 - ~~grupos con >200 % de dispersión: menos de 150~~ — **retirada**, con esta
   medición. Mide el valor del comparador, no sus errores.
-- **Grupos anchos que cuelgan de un enlace flojo (< 0,60): hoy 222.** Esta es la
-  que mide lo que la otra decía medir. Bajarla no cuesta comparador: cuesta quitar
-  puentes, que es exactamente lo que hay que hacer.
-- Y se publican las dos cifras juntas (222 malos / 226 buenos) para que la
-  distinción quede a la vista y nadie vuelva a sumarlas.
+- **Grupos anchos que cuelgan de un enlace flojo (< 0,60).** Esta es la que mide
+  lo que la otra decía medir.
+- Y se publican las dos cifras juntas para que la distinción quede a la vista y
+  nadie vuelva a sumarlas.
 
-Lo que queda por hacer con esos 222 no es otro ajuste de la fórmula —las dos
-hipótesis sobre la puntuación ya están medidas y descartadas— sino un freno **a
-nivel de grupo**: no admitir un miembro si baja el cuello de botella del grupo por
-debajo del listón. Eso es lo siguiente.
+### 17.3 Y el freno que sí funciona: un enlace flojo no crea un grupo ancho
+
+Con esa distinción en la mano, la regla se escribe sola: **un enlace flojo puede
+unir, mientras no haga que el grupo se vuelva ancho.** Si el grupo que resultaría
+pasa de que el más caro cueste el triple que el más barato —medido **por unidad**,
+porque mezclar €/kg con €/l no dice nada—, ese enlace no une.
+
+Es exactamente la regla que separa las dos cosas que el criterio viejo sumaba: deja
+pasar los ahorros de verdad (que cuelgan de enlaces fuertes) y corta los puentes
+flojos. Los pares de dos no se tocan: ahí no hay nada que juzgar todavía, y hay
+tantos aciertos como errores.
+
+| | grupos comparables | productos comparables | grupos anchos | **sospechosos** | ahorros reales | con letra |
+|---|---:|---:|---:|---:|---:|---:|
+| sin el freno | 7.924 | 23.048 | 448 | **222** | 226 | 12.997 |
+| **con el freno** | **7.997** | 22.696 | **261** | **66** | 195 | 12.322 |
+
+**Los sospechosos caen de 222 a 66, un 70 %**, conservando 195 de los 226 ahorros
+reales. Cuesta un 1,5 % de productos comparables y un 5 % de la letra de calidad.
+Es la **primera palanca de toda esta investigación que mueve el número que hay que
+mover**, y sale de la medición, no de una corazonada.
+
+Los 66 que quedan son el siguiente objetivo; el freno se puede apretar bajando
+`ANCHO_MAXIMO` de 3,0, y eso hay que medirlo antes de tocarlo.
+
+Vive en `core.matching.agrupar_enlaces` y lo vigilan cuatro pruebas: que el ancho
+se mide por unidad, que un enlace flojo no crea un grupo ancho, que uno fuerte sí
+puede, y que **los pares no se tocan**.
 
 ---
 

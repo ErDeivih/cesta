@@ -68,7 +68,7 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
         </div>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {CAMPOS.map((c) => (
           <div key={c.clave}>
             <div className="flex items-baseline justify-between gap-2">

@@ -163,14 +163,21 @@ def externo_por_ean() -> dict[str, dict]:
             for k, ing, ns, nova in filas if k and len(k) >= 8}
 
 
-def grupos_de(enlaces_: list[tuple[int, int, float, str]], n: int) -> list[int]:
+def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) -> list[int]:
     """Id de grupo por producto. El freno contra el grupo monstruo vive en `core`.
 
     Aqui habia un union-find a pelo, y era el que juntaba "Cerveza Dia Ramblers"
     con "Guinness" en un grupo de 329 productos: un grupo es lo que queda
     conectado, y eso se propaga. Ver `core.matching.agrupar_enlaces`.
+
+    Se le pasan los precios por unidad porque el freno necesita saber si un
+    enlace flojo esta a punto de crear un grupo ANCHO, y ancho solo lo puede
+    decir el precio.
     """
-    return agrupar_enlaces(enlaces_, n)
+    return agrupar_enlaces(
+        enlaces_, len(filas),
+        precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
+                 for f in filas])
 
 
 def composicion(filas: list[dict], ingredientes: dict,
@@ -375,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {len(ls)} enlaces reutilizados de data/gold/enlaces.parquet")
     if ls is None:
         ls = enlaces(filas, umbral=a.umbral)
-    grupo = grupos_de(ls, len(filas))
+    grupo = grupos_de(ls, filas)
     ingredientes = ingredientes_por_producto()
     externo = externo_por_ean()
     if not externo:

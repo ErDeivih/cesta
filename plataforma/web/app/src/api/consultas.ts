@@ -23,6 +23,7 @@ import type {
   PanelHistorico,
   PanelHoy,
   PanelMarcas,
+  PanelMatching,
   PanelMovidos,
 } from '../tipos'
 
@@ -195,17 +196,21 @@ export function usePanelMovidos() {
   })
 }
 
-/** `GET /api/panel/matching` **todavia no existe**.
+/** `GET /api/panel/matching` — el panel de auditoria del matching.
  *
- *  Se pide como si existiera, porque el dia que se implemente esta pantalla ya
- *  funciona. Mientras tanto el 404 no se reintenta (no va a aparecer solo) y no
- *  se pinta como un fallo: es "esa ruta aun no esta", que es otra cosa.
+ *  Existe en `plataforma/api/panel.py` desde el 22 de septiembre, pero la imagen
+ *  de la API que corre puede ser anterior y contestar 404. Ese 404 **no se
+ *  reintenta** (repetirlo no lo va a crear) y no se pinta como un fallo: es
+ *  "esa ruta no está en el servidor que me atiende", que es otra cosa.
+ *
+ *  Lo que esta pantalla NO hace, y no va a hacer: aprobar ni rechazar pares.
+ *  El endpoint es de solo lectura y aqui no hay un solo boton de escritura.
  */
-export function usePanelMatching() {
+export function usePanelMatching(limite = 20) {
   return useQuery({
-    queryKey: ['panel', 'matching'],
+    queryKey: ['panel', 'matching', limite],
     queryFn: ({ signal }) =>
-      pide<Record<string, unknown>>('/panel/matching', undefined, signal),
+      pide<PanelMatching>('/panel/matching', { limite }, signal),
     staleTime: CINCO_MIN,
     retry: (intento, error) => {
       if (error instanceof ErrorApi && error.estado < 500) return false

@@ -412,3 +412,49 @@ def test_parecido_de_par_coge_el_peso_menor():
     c = {"cerveza": 5.0, "leffe": 4.0}
     assert parecido_de_par(a, c, sum(a.values()), sum(c.values())) == 1.0
     assert parecido_de_par({}, c, 0.0, 9.0) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Un enlace flojo no puede crear un grupo ancho
+# ---------------------------------------------------------------------------
+# Es el freno que salio de medir los 448 grupos anchos: los sostenidos por un
+# enlace fuerte son ahorros de verdad (Agua Dia contra Solan de Cabras, 0,74) y
+# los sostenidos por uno flojo son los errores (cervezas a 0,55, aguas a 0,58).
+# El ancho no discrimina; el cuello de botella si.
+
+
+def test_el_ancho_se_mide_por_unidad():
+    from core.matching import _se_hace_ancho
+
+    assert _se_hace_ancho({"kg": (100.0, 100.0)}, {"kg": (400.0, 400.0)})
+    assert not _se_hace_ancho({"kg": (100.0, 100.0)}, {"kg": (250.0, 250.0)})
+    # Un kilo contra un litro no se compara: no es "ancho", es otra magnitud, y
+    # tratarlo como ancho romperia cualquier grupo que mezcle peso y volumen.
+    assert not _se_hace_ancho({"kg": (100.0, 100.0)}, {"l": (900.0, 900.0)})
+    assert not _se_hace_ancho({}, {"kg": (1.0, 900.0)})
+
+
+def test_un_enlace_flojo_no_crea_un_grupo_ancho():
+    from core.matching import agrupar_enlaces
+
+    # 0 y 1 ya son grupo. El 2 se une por un enlace flojo y su precio esta a 5x:
+    # eso es "todas las aguas", y no se admite.
+    precios = [("l", 100.0), ("l", 120.0), ("l", 500.0)]
+    grupos = agrupar_enlaces([(0, 1, 1.00), (1, 2, 0.55)], 3, precios=precios)
+    assert grupos[0] == grupos[1]
+    assert grupos[2] != grupos[0]
+    # Con un enlace fuerte, si entra: ahi el ancho es un ahorro, no un error.
+    grupos = agrupar_enlaces([(0, 1, 1.00), (1, 2, 0.90)], 3, precios=precios)
+    assert grupos[0] == grupos[2]
+
+
+def test_los_pares_no_se_tocan_aunque_sean_anchos():
+    """Un par no es "un grupo ancho": es justo lo que el comparador viene a enseñar.
+
+    Y de los pares no se puede decir cual es acierto y cual error: hay tantos de
+    cada. Quitarlos costaria la mitad del comparador.
+    """
+    from core.matching import agrupar_enlaces
+
+    grupos = agrupar_enlaces([(0, 1, 0.56)], 2, precios=[("l", 20.0), ("l", 160.0)])
+    assert grupos[0] == grupos[1]

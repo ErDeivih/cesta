@@ -88,7 +88,7 @@ export function Producto() {
   if (consulta.isPending) return <Cargando que="la ficha" />
   if (consulta.isError) {
     return (
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <Boton variante="sutil" onClick={() => navega(-1)} className="justify-self-start">
           ← Volver
         </Boton>
@@ -123,7 +123,7 @@ export function Producto() {
   })()
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Boton variante="sutil" onClick={() => navega(-1)}>
           ← Volver
@@ -312,7 +312,7 @@ export function Producto() {
 
       {miembro && (
         <Tarjeta titulo="Ficha del producto en la cadena">
-          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Dato etiqueta="Tipo">{miembro.tipo_producto ?? 'no lo sé'}</Dato>
             <Dato etiqueta="Envase">{miembro.envase ?? 'no lo sé'}</Dato>
             <Dato etiqueta="Conservación">{miembro.conservacion ?? 'no lo sé'}</Dato>

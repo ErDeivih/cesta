@@ -140,7 +140,7 @@ export function Grupo() {
   if (consulta.isPending) return <Cargando que="el grupo" />
   if (consulta.isError) {
     return (
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <Boton variante="sutil" onClick={() => navega(-1)} className="justify-self-start">
           ← Volver
         </Boton>
@@ -171,7 +171,7 @@ export function Grupo() {
   const sinFecha = alternativas.filter((a) => a.decide && ultimoDiaDe(a.producto.fuente) === null)
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Boton variante="sutil" onClick={() => navega(-1)}>
           ← Volver
@@ -193,6 +193,11 @@ export function Grupo() {
             loading="lazy"
             width={96}
             height={96}
+            // Si el CDN de la cadena no contesta, el hueco queda limpio: un
+            // icono de imagen rota en medio de la ficha no aporta nada.
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
             className="h-24 w-24 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
           />
         )}
@@ -267,8 +272,10 @@ export function Grupo() {
         <div className="sm:overflow-x-auto">
           {/* En el movil las columnas se apilan; a partir de tablet se ponen en
               fila y se deslizan en horizontal, que es la unica forma de que
-              cinco cadenas se puedan comparar de un vistazo. */}
-          <div className="grid gap-3 sm:grid-flow-col sm:auto-cols-[minmax(17rem,21rem)]">
+              cinco cadenas se puedan comparar de un vistazo. `grid-cols-none`
+              limpia la plantilla de una columna antes de pasar a flujo por
+              columnas: si no, `grid-cols-1` ganaria y apilaria todo otra vez. */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-[minmax(17rem,21rem)]">
             {columnas.map(([cadena, lista], indice) => {
               const ultimo = ultimoDiaDe(cadena)
               const alDia = lista.some((a) => a.decide)
@@ -288,7 +295,7 @@ export function Grupo() {
                     )}
                   </header>
 
-                  <div className="grid gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     {lista.map((a) => (
                       <FichaAlternativa
                         key={a.producto.producto_id}

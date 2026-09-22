@@ -684,16 +684,90 @@ def _marca(valor) -> str:
 UMBRAL_UNION = 0.80
 
 
+# Un enlace flojo tampoco puede **crear un grupo ancho**.
+#
+# Es el freno que sale de la medicion del 22 de septiembre, no de una intuicion:
+# mirando los 448 grupos con mas del 200 % de dispersion, resulta que
+#
+#   - los sostenidos por un enlace FUERTE son ahorros de verdad, y son la razon
+#     de ser del comparador: "Agua Dia 5 L" a 13,6 c/l contra "Solan de Cabras"
+#     a 53,8 (enlace 0,74), "Chocolate blanco Hacendado" contra "Toblerone"
+#     (enlace 1,00), "Chalupa sal lavavajillas" contra "Finish" (0,77);
+#   - los sostenidos por un enlace FLOJO son los errores: "Cerveza sin alcohol
+#     Aldi" con "Budweiser" (0,55, 97 productos), aguas "Cortes" con "Pedras"
+#     (0,58), cafes "Carrefour Classic" con "Saula" (0,60).
+#
+# Medido: de los 448 anchos, 222 cuelgan de un enlace por debajo de 0,60, y en
+# los estrechos eso solo pasa en el 25 %. El ancho no discrimina; el cuello de
+# botella si. De ahi esta regla, que es la unica que separa las dos cosas: **un
+# enlace flojo puede unir, mientras no haga que el grupo se vuelva ancho.**
+#
+# No se aplica a los pares de dos: los dos casos posibles (un acierto con un
+# ahorro grande, o un error) son igual de frecuentes ahi, y quitar los pares
+# costaria la mitad del comparador.
+#
+# Medido el 22 de septiembre sobre los 22.705 enlaces (grupos comparables /
+# productos comparables / grupos anchos / de esos, los que cuelgan de un enlace
+# flojo / bien sostenidos / productos con letra de calidad):
+#
+#     sin este freno   7.924 / 23.048 / 448 / 222 / 226 / 12.997
+#     con el freno     7.997 / 22.696 / 261 /  66 / 195 / 12.322
+#
+# Los grupos anchos bajan de 448 a 261, pero lo que importa es la cuarta columna:
+# **los sospechosos caen de 222 a 66, un 70 %**, y se conservan 195 de los 226
+# ahorros de verdad. Cuesta un 1,5 % de productos comparables y un 5 % de la
+# letra de calidad, y a cambio quita dos tercios de los errores que la propia
+# medicion habia senalado. Es la primera palanca de toda esta investigacion que
+# mueve el numero que hay que mover.
+ANCHO_MAXIMO = 3.0
+
+
+def _rango_de(precios, i):
+    """(unidad, precio) de un producto, si su precio sirve para comparar."""
+    if not precios:
+        return None
+    u, p = precios[i]
+    return (u, p) if u and p and u in UNIDADES_FIABLES else None
+
+
+def _se_hace_ancho(a: dict, b: dict) -> bool:
+    """¿Unir estos dos rangos deja un grupo con el mas caro a mas del triple?
+
+    Se mide **por unidad**: mezclar los euros por kilo de uno con los euros por
+    litro de otro no dice nada, y hacerlo convertiria en "ancho" cualquier grupo
+    que mezcle peso y volumen.
+    """
+    for unidad, (lo_a, hi_a) in a.items():
+        if unidad not in b:
+            continue
+        lo_b, hi_b = b[unidad]
+        lo, hi = min(lo_a, lo_b), max(hi_a, hi_b)
+        if lo > 0 and hi / lo > ANCHO_MAXIMO:
+            return True
+    return False
+
+
 def agrupar_enlaces(enlaces_: list[tuple], n: int,
-                    umbral_union: float = UMBRAL_UNION) -> list[int]:
+                    umbral_union: float = UMBRAL_UNION,
+                    precios: list | None = None) -> list[int]:
     """Id de grupo por producto, con el freno contra el grupo monstruo.
 
     Los enlaces se recorren de mas parecido a menos, que es lo que hace que el
     nucleo bueno de cada grupo se forme primero y los puentes flojos se queden
     fuera: cuando un enlace de 0,55 llega, los dos racimos que uniria ya existen.
+
+    `precios` es, por producto, `(unidad_canon, precio_unidad_cent)`; con eso se
+    aplica ademas el freno de ANCHO_MAXIMO. Sin el, solo se aplica el de union.
     """
     padre = list(range(n))
     tamano = [1] * n
+    # Rango de precio por unidad de cada componente, por unidad de medida.
+    rango: list[dict] = [{} for _ in range(n)]
+    if precios:
+        for i in range(n):
+            par = _rango_de(precios, i)
+            if par:
+                rango[i][par[0]] = (par[1], par[1])
 
     def raiz(x: int) -> int:
         while padre[x] != x:
@@ -706,10 +780,23 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
         ri, rj = raiz(i), raiz(j)
         if ri == rj:
             continue
-        if s < umbral_union and tamano[ri] > 1 and tamano[rj] > 1:
-            continue
+        if s < umbral_union:
+            if tamano[ri] > 1 and tamano[rj] > 1:
+                continue
+            # Un enlace flojo puede unir, mientras no haga el grupo ancho. Los
+            # pares de dos no se tocan: ahi no hay nada que juzgar todavia.
+            if (precios and tamano[ri] + tamano[rj] > 2
+                    and _se_hace_ancho(rango[ri], rango[rj])):
+                continue
         padre[rj] = ri
         tamano[ri] += tamano[rj]
+        if precios:
+            for unidad, (lo, hi) in rango[rj].items():
+                if unidad in rango[ri]:
+                    lo0, hi0 = rango[ri][unidad]
+                    rango[ri][unidad] = (min(lo, lo0), max(hi, hi0))
+                else:
+                    rango[ri][unidad] = (lo, hi)
 
     renombre: dict[int, int] = {}
     salida = []
@@ -721,5 +808,7 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
 def agrupar(filas: list[dict], umbral: float = 0.55,
             usar_ean: bool = True) -> list[int]:
     """Id de grupo por fila, a partir de los enlaces ya repartidos 1-a-1."""
-    return agrupar_enlaces(enlaces(filas, umbral=umbral, usar_ean=usar_ean),
-                           len(filas))
+    return agrupar_enlaces(
+        enlaces(filas, umbral=umbral, usar_ean=usar_ean), len(filas),
+        precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
+                 for f in filas])

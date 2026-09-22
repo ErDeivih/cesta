@@ -43,7 +43,7 @@ export function Panel() {
   const activa: Clave = (PESTANAS.find((p) => p.clave === crudo)?.clave ?? 'hoy') as Clave
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-xl font-bold">Panel</h1>
         <Link
@@ -111,7 +111,7 @@ function Hoy() {
   return (
     <Bloque consulta={consulta} titulo="el estado del día">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">La ingesta de hoy</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
@@ -159,7 +159,7 @@ function Hoy() {
           </Tarjeta>
 
           <Tarjeta titulo="Precios movidos hoy">
-            <ul className="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {d.movidos.map((m) => (
                 <li key={m.cadena} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
                   <span className="font-medium">{m.cadena}</span>
@@ -185,7 +185,7 @@ function Cadenas() {
   return (
     <Bloque consulta={consulta} titulo="las cadenas">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Quién gana y cuánto se mueve</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
@@ -250,7 +250,7 @@ function Cadenas() {
           </Tarjeta>
 
           <Tarjeta titulo="Dispersión dentro del mismo grupo">
-            <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Dato etiqueta="Grupos comparables">{numero(d.dispersion.grupos, 0)}</Dato>
               <Dato etiqueta="Diferencia mediana">{porcentaje(d.dispersion.mediana_pct)}</Dato>
               <Dato etiqueta="Percentil 90">{porcentaje(d.dispersion.p90_pct)}</Dato>
@@ -274,7 +274,7 @@ function Marcas() {
   return (
     <Bloque consulta={consulta} titulo="las marcas">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Marca propia contra marca</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
@@ -289,7 +289,7 @@ function Marcas() {
             titulo="Precio por unidad"
             sub={`Sobre ${numero(d.grupos_con_ambas, 0)} grupos que tienen a la vez marca propia y de marca`}
           >
-            <dl className="grid gap-3 sm:grid-cols-3">
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Dato etiqueta="Media, marca propia">{euros(d.media_propia_cent)}</Dato>
               <Dato etiqueta="Media, marca">{euros(d.media_marca_cent)}</Dato>
               <Dato etiqueta="Diferencia">{porcentaje(d.ahorro_pct)}</Dato>
@@ -300,7 +300,7 @@ function Marcas() {
             titulo="El duelo cara a cara"
             sub="Solo con letras leídas de una etiqueta de verdad, nunca con las que salen del precio"
           >
-            <dl className="grid gap-3 sm:grid-cols-4">
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <Dato etiqueta="Grupos">{numero(d.duelo.grupos, 0)}</Dato>
               <Dato etiqueta="Gana la propia">{numero(d.duelo.gana_propia, 0)}</Dato>
               <Dato etiqueta="Empatan">{numero(d.duelo.empatan, 0)}</Dato>
@@ -336,7 +336,7 @@ function Marcas() {
           </Tarjeta>
 
           <Tarjeta titulo="Marcas propias con más productos">
-            <ul className="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {d.marcas_propias.map((m) => (
                 <li key={`${m.cadena}-${m.marca}`} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
                   <span>
@@ -359,7 +359,7 @@ function Historico() {
   return (
     <Bloque consulta={consulta} titulo="el histórico">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">
               {numero(d.dias, 0)} {d.dias === 1 ? 'día guardado' : 'días guardados'}
@@ -368,7 +368,7 @@ function Historico() {
           </div>
 
           <Tarjeta titulo="Lo que se desbloquea cuando haya más días">
-            <ul className="grid gap-2 text-sm">
+            <ul className="grid grid-cols-1 gap-2 text-sm">
               {d.pendientes.map((p) => (
                 <li key={p.que} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
                   <span>
@@ -421,7 +421,7 @@ function Movidos() {
   return (
     <Bloque consulta={consulta} titulo="lo que se ha movido">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Lo que se ha movido hoy</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
@@ -490,7 +490,7 @@ function Bajadas() {
   return (
     <Bloque consulta={consulta} titulo="las bajadas">
       {(d) => (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-end gap-3">
             <h2 className="text-base font-semibold">
               Lo que más ha {subidas ? 'subido' : 'bajado'} en {numero(d.dias, 0)} días

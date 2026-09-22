@@ -19,7 +19,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 | | |
 |---|---:|
 | productos del catalogo | **52.567** |
-| grupos comparables | **7.924** |
+| grupos comparables | **7.997** |
 | productos comparables por kg/l/m | **42.353** |
 | productos con codigo de barras | **25.517** |
 

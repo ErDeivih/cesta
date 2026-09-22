@@ -130,18 +130,29 @@ export function Escaner() {
   const hallado = consulta.data?.encontrado ? consulta.data : null
   const perdido = consulta.data && !consulta.data.encontrado ? consulta.data : null
 
+  // La comparación marca como "el más barato" SOLO al de la diferencia mínima.
+  // Con `<= 0` a secas, un empate o un negativo del servidor pintarían dos
+  // cadenas como la más barata a la vez.
+  const masBarato = hallado?.comparacion
+    ? Math.min(...hallado.comparacion.map((c) => c.precio_unidad_cent ?? Infinity))
+    : null
+
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <h1 className="text-xl font-bold">Escáner</h1>
 
       <form
-        className="flex flex-wrap items-end gap-2"
+        className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-end"
         onSubmit={(e) => {
           e.preventDefault()
           setBuscado(codigo.trim() || null)
         }}
       >
-        <div className="flex flex-1 flex-col gap-1">
+        {/* `min-w-0` en la columna y `w-full` en el campo: un `<input>` tiene un
+            ancho intrínseco (el `size` por defecto, 20 caracteres) y, sin esto,
+            en un móvil estira el formulario 200 px más allá de la pantalla y
+            aparece scroll horizontal en toda la página. */}
+        <div className="flex min-w-0 flex-col gap-1 sm:flex-1">
           <label htmlFor="ean" className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
             Código de barras
           </label>
@@ -156,7 +167,7 @@ export function Escaner() {
             autoFocus
             enterKeyHint="search"
             placeholder="8410655002410"
-            className="min-h-[48px] rounded-xl border border-neutral-300 bg-white px-4 py-2 font-mono text-lg tracking-wider dark:border-neutral-600 dark:bg-neutral-800"
+            className="w-full min-h-[48px] rounded-xl border border-neutral-300 bg-white px-4 py-2 font-mono text-lg tracking-wider dark:border-neutral-600 dark:bg-neutral-800"
           />
         </div>
         <Boton type="submit" variante="principal" disabled={!codigo.trim()}>
@@ -300,7 +311,7 @@ export function Escaner() {
                         <Td className="cifra">
                           {c.diferencia_pct === null
                             ? 'no lo sé'
-                            : c.diferencia_pct <= 0
+                            : c.precio_unidad_cent !== null && c.precio_unidad_cent === masBarato
                               ? 'aquí es donde más barato está'
                               : porcentajeConSigno(c.diferencia_pct)}
                         </Td>

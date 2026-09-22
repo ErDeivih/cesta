@@ -48,8 +48,8 @@ export function Buscar() {
   const busca = consultaUtil(filtros)
 
   return (
-    <div className="grid gap-4">
-      <section aria-label="Buscar" className="grid gap-3">
+    <div className="grid grid-cols-1 gap-4">
+      <section aria-label="Buscar" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="q" className="sr-only">
             Buscar producto
