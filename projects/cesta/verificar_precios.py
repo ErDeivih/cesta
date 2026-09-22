@@ -39,9 +39,18 @@ Que puede contestar cada producto
     sin precio    la pagina no ensena ningun precio (login, agotado, region)
     no se pudo    la peticion fallo; no dice nada del dato, solo de la red
 
-**No hay umbral de aprobado.** Cada producto que no coincide sale con su nombre,
-su URL y las dos cifras, para que se pueda mirar uno por uno. Un porcentaje
-"aceptable" de precios mal es exactamente lo que no queremos poder decir.
+**No hay umbral de aprobado.** Cada producto cuyo precio no cuadre con el de su
+pagina (`no aparece`, `404`) sale con su nombre, su URL y las dos cifras, para
+que se pueda mirar uno por uno, y el codigo de salida es cuantos son. Un
+porcentaje "aceptable" de precios mal es exactamente lo que no queremos poder
+decir.
+
+Los otros dos estados **no cuentan como fallo y no salen uno a uno**, porque no
+dicen nada del dato: `sin precio` (la pagina no ensena ninguno: agotado, login,
+otra region) y `no se pudo` (la peticion fallo: eso es la red). Salen en el
+recuento de su cadena, y los de red en una sola linea. Si contaran, un dia de
+red mala daria el mismo aviso que un dia de precios malos, y el aviso dejaria de
+significar nada.
 
     uv run python -m projects.cesta.verificar_precios --por-cadena 8
 """
@@ -190,7 +199,19 @@ def informe(veredictos: list[Veredicto]) -> int:
         cola = f"  ({', '.join(resto)})" if resto else ""
         print(f"    {fuente:<10} {bien}/{len(vs)} coinciden{cola}")
 
-    malos = [v for v in veredictos if not v.bien]
+    # No todo lo que no coincide acusa al dato, y mezclarlo es lo que entierra el
+    # aviso de verdad. Una peticion que fallo habla de la red; una pagina sin
+    # precio (agotado, login, otra region) habla de la pagina. Quince productos
+    # diciendo "no hubo red" tapan el dia siguiente, que si tiene algo que
+    # contar. Asi que solo `no aparece` y `404` cuentan como fallo y salen uno a
+    # uno: son los dos unicos estados en los que el numero guardado y el
+    # publicado no cuadran.
+    #
+    # El recuento de los demas no se pierde: sale en la linea de cada cadena.
+    malos = [v for v in veredictos if v.estado in ("no aparece", "404")]
+    sin_red = [v for v in veredictos if v.estado == "no se pudo"]
+    if sin_red:
+        print(f"  {len(sin_red)} sin comprobar: es la conexion, no el dato.")
     if malos:
         print("  los que no coinciden, uno por uno:")
         for v in malos:
