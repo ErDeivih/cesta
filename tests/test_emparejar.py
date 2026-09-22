@@ -76,12 +76,25 @@ def test_pidiendolos_si_los_pide(monkeypatch):
     assert llamadas, "pidiendo los vectores, `enlaces()` no ha pedido los candidatos"
 
 
-def test_la_pasada_diaria_lleva_los_vectores_apagados():
-    """El interruptor de la tarea de las 06:00, en un solo sitio."""
-    assert emparejar.USAR_VECTORES is False, (
-        "la pasada diaria ha vuelto a encender el canal de vectores, que hoy "
-        "tarda mas de una hora: lee el comentario de `USAR_VECTORES` en "
-        "`projects/cesta/emparejar.py` antes de cambiarlo")
+def test_la_pasada_diaria_dice_a_proposito_si_usa_vectores():
+    """El interruptor de la tarea de las 06:00, en un solo sitio y **escrito**.
+
+    Por aqui paso el 23 de septiembre: el canal de vectores no terminaba en 62
+    minutos y estaba encendido **por defecto**, asi que cualquier llamada se metia
+    en el sin decirlo -- la tarea diaria incluida. Ahora esta medido que los
+    vectores suben el recall ocho puntos (65 % -> 73 %) y que cuestan 239,9 s, asi
+    que van encendidos; pero encendidos **a proposito**, en `emparejar.py`.
+
+    Lo que se guarda aqui no es el valor: es que la decision este escrita y viva en
+    un solo sitio. Un dia toca `True` y otro dia puede tocar `False`, y en los dos
+    casos la pasada tiene que decirlo, no heredarlo.
+    """
+    fuente = inspect.getsource(emparejar.main)
+    assert "usar_vectores=USAR_VECTORES" in fuente, (
+        "la pasada diaria ya no dice a proposito si usa los vectores: la decision "
+        "tiene que estar escrita en `emparejar.py`, no heredada de un defecto "
+        "ajeno que alguien puede cambiar sin mirar aqui")
+    assert isinstance(emparejar.USAR_VECTORES, bool)
 
 
 def test_lo_que_el_resumen_dice_de_los_vectores_es_lo_que_se_uso():

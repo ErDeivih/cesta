@@ -204,26 +204,34 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    emparejador con 34 pruebas y la tarea diaria de las 06:00 detras: no se hace a
    la carrera al final de una sesion. El detalle, en
    `docs/DIAGNOSTICO-MATCHING.md` (§22).
-6. **Encender el canal de vectores en la pasada diaria — ya se puede, y ya se sabe
-   que sube el recall.** El 23 de septiembre se arreglo lo que lo hacia imposible:
-   `candidatos()` lee los vectores **en SQL** en vez de traerlos a Python (antes
-   `carga()` construia ~1,7 GB de objetos y `executemany` los devolvia fila a
-   fila; eso era toda la hora que tardaba). Medido:
+6. ~~**Encender el canal de vectores en la pasada diaria**~~ — **hecho** (23 sep), y
+   con el antes/despues medido sobre el mismo catalogo (misma huella,
+   `d1848334bb48...`):
 
-       candidatos()          no terminaba en 62 min  ->  46.308 pares en 239,9 s
-       memoria residente     3,0 - 4,9 GB            ->  270 MB
-       --medir --comparar-vectores:
-         sin vectores        20.944 enlaces  1.170 (65 %)
-         con vectores        24.943 enlaces  1.324 (73 %)
+       metrica                    sin vectores   con vectores   diferencia
+       enlaces                          22.705         26.703        +3.998 (+18 %)
+       grupos comparables                7.992          8.394          +402 (+5 %)
+       productos comparables            22.693         24.823        +2.130 (+9,4 %)
+       calidad asignada                 12.338         14.153        +1.815 (+14,7 %)
+       identicos                         6.605          8.328        +1.723
+       grupos dudosos ud                   845            877           +32
+       duracion de la pasada              355 s          627 s
 
-   **Los vectores suben el recall 8 puntos** y la proporcion de enlaces que
-   comparten codigo no baja (20 % en las dos). Lo que queda es encenderlo
-   (`USAR_VECTORES = True` en `projects/cesta/emparejar.py`) **y volver a medir
-   todo lo de abajo con el canal puesto**, porque el canal mueve los grupos: no se
-   hereda la calidad del grupo de una medida de recall. La pasada diaria pasaria
-   de 355 s a unos 600-900 s, que cabe. El orden: `emparejar` ->
-   `diagnostico_matching` -> `cifras` -> `verificar_docs`, y comparar grupos
-   comparables, productos comparables, grupos anchos y conflictos de asignacion.
+   Todo sube, y lo que sube es lo que se usa: mas grupos con los que comparar, mas
+   productos con letra y mas `identico` -- que desde el 22 de septiembre solo se
+   pone si coincide el codigo de barras, o sea que ademas de subir el numero sube
+   su veracidad. El canal cuesta **272 s mas** de reloj en la tarea de las 06:00.
+
+   Antes no se podia encender: `candidatos()` no terminaba en 62 minutos. El coste
+   era el ida y vuelta de los vectores por Python (`carga()` + `executemany`, ~1,7
+   GB de objetos); ahora los lee DuckDB del parquet dentro de la misma consulta:
+   **239,9 s y 270 MB** para el catalogo entero. Y la calidad del matching medida
+   aparte: **recall 65 % -> 73 %**, con la precision del subconjunto comprobable
+   intacta (20 % en las dos).
+
+   **Falta medir, y es lo unico que puede decir si los 402 grupos nuevos son de
+   fiar**: los grupos anchos y los conflictos de asignacion, con el diagnostico
+   completo (`diagnostico_matching`), que en esta sesion no llego a terminar.
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el

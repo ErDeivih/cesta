@@ -36,29 +36,27 @@ from core.normalize import parse_formato
 # se llega al 55 %, pero ya empieza a juntar cosas que solo se parecen de nombre.
 UMBRAL = 0.55
 
-# El canal de vectores **se queda apagado en la pasada diaria**, y no por gusto.
+# El canal de vectores **encendido en la pasada diaria desde el 23 de septiembre de
+# 2026**, y ahora si esta medido que merece la pena:
 #
-# Medido el 23 de septiembre de 2026, con la cache de los 52.567 vectores ya
-# completa: el emparejamiento con vectores **no termino en 62 minutos** y hubo que
-# pararlo. Sin ellos, recalcular los enlaces son 16,7 millones de pares
-# candidatos, o sea **90 segundos** (esta medido y escrito mas abajo). La causa
-# esta en `core.embeddings.candidatos`: hace **una sola consulta con el JOIN por
-# bloque sobre toda la tabla**, y calcula el coseno dos veces por par (en el
-# `SELECT` de `parecidos` y otra vez en el `WHERE`, lineas 246 y 249 de ese
-# fichero). Su propia docstring dice que la idea era "cada consulta mira decenas
-# o cientos de productos, no 52.000", que es la busqueda por bloque: lo que hay
-# escrito es una consulta unica.
+#     --medir --comparar-vectores                 992 s las dos pasadas
+#       sin vectores   20.944 enlaces   encuentra 1.170 (65 %)
+#       con vectores   24.943 enlaces   encuentra 1.324 (73 %)
 #
-# Lo que **no** esta en duda es la calidad de los vectores: esta medida en
-# `docs/DIAGNOSTICO-MATCHING.md` (§22) contra el peor caso, con precision 0,90 y
-# recall 0,89. Lo que no esta listo es la integracion. Y una tarea que corre sola
-# a las 06:00 no puede quedarse colgada: eso no es un dato peor, es no tener dato.
+# Ocho puntos de recall, y la proporcion de enlaces comprobables que comparten
+# codigo se queda igual (20 % en las dos): no se compra recall a costa de
+# precision en ese subconjunto.
 #
-# El dia que `candidatos` este arreglado, esto pasa a `True` y ya esta. El
-# interruptor vive en **un solo sitio** para que lo que hace la pasada y lo que
-# se escribe en el resumen no puedan contradecirse (antes el resumen decia "si"
-# solo porque el fichero de vectores existia, aunque la pasada no lo mirara).
-USAR_VECTORES = False
+# Antes de esto el canal **no se podia encender**: `candidatos()` no terminaba en
+# 62 minutos, porque `carga()` construia ~1,7 GB de objetos de Python y los
+# devolvia a DuckDB fila a fila. Ahora los lee el propio DuckDB del parquet, dentro
+# de la misma consulta: **239,9 s y 270 MB** para el catalogo entero. La pasada
+# diaria pasa de 355 s a unos 600-900 s, que cabe.
+#
+# El dia que haga falta apagarlo, esto es un `False` y ya esta. El interruptor vive
+# en **un solo sitio** para que lo que hace la pasada y lo que se escribe en el
+# resumen no puedan contradecirse.
+USAR_VECTORES = True
 COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon",
             "ean", "precio_cent", "precio_unidad_cent", "precio_ref_canon_cent",
             "unidad_ref_canon",
