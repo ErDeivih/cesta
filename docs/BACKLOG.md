@@ -240,6 +240,45 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    pasada a partir de su `equivalencia.parquet`, y `--medir --comparar-vectores`
    (992 s) da el recall.
 
+7. **Los ejes contradictorios: el instrumento ya existe, y el catalogo saca 54.**
+   (Encargo del 22 sep, bloque 1.) Lo pidio la revision de Claude y es lo primero
+   por valor: el reparto hungaro es 1-a-1 **por par de cadenas**, pero `agrupar()`
+   une por **componentes conexas**, asi que basta que en un par se una *entera* con
+   *sin lactosa* y en otro *sin lactosa* con *desnatada* para acabar con las dos
+   juntas **sin que ningun enlace individual este mal**.
+
+       grupos                                    37.681
+       con algun eje contradictorio                  54    <- la barra pide CERO
+       grupos de 11 o mas productos                  74    <- la barra pide < 30
+       de esos, con eje contradictorio                5
+
+   Los peores, hoy: el 2532 (43 productos, `virgen` con `virgen extra`), el 294 (34,
+   `oliva suave` con `orujo`), el 8087 (13, con y sin azucar), el 3684 (13, blanco
+   con integral) y el 1116 (11, tres valores de aceite).
+
+   El instrumento es `core/atributos.py` (los ejes que **el nombre declara**) y se
+   mide con `uv run python -m projects.cesta.ejes [--peores N]`. Dos reglas que no
+   se pueden cambiar sin romperlo:
+
+   - **El margen de precio NO es el cuchillo.** `core/comparacion.py` documenta
+     ahorros reales de 28x entre marca blanca y marca (preservativos, cerveza,
+     tampones): cortar por margen borraria justo los hallazgos que esto existe para
+     encontrar. El margen detecta; **el atributo declarado en el nombre** corta.
+   - **Si uno de los dos no declara nada, no bloquea.** No es tolerancia: es
+     ausencia de prueba. Un nombre que calla no afirma que sea igual.
+
+   Consecuencia de esa segunda regla, y hay que tenerlo dicho: **el grupo de las 84
+   cervezas no lo caza esto**. Nadie escribe "con alcohol" en una cerveza, asi que
+   el eje del alcohol solo ve a los que dicen "sin alcohol" y nunca hay dos valores.
+   Para ese caso hace falta la **comprobacion de cohesion contra el medoide**, que
+   es el mismo bloque del encargo.
+
+   Queda hecho aqui lo que se puede hacer sin tocar el emparejador: medir. **Partir
+   los grupos** (por eje, y descartando los que no declaran) y **la cohesion contra
+   el medoide** son el paso siguiente. El trinquete esta en
+   `tests/test_atributos.py`: techo 54 y 74, y si bajan se baja el techo en el mismo
+   commit.
+
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
 montaje de `docker-compose.yml:77` es la paridad de la interfaz, que es el punto
