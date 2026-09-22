@@ -135,8 +135,16 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       (`app.js:1110-1156`), mas el **filtro del panel por cadenas cercanas**:
       `Panel.tsx:488` llama `useBajadas(dias, subidas, [])` con la lista vacia y
       ninguna pestana lee `cadenas_cerca`.
-   9. **"Darme de baja"** (`DELETE /api/yo`, `main.py:609`). El viejo lo tiene con
-      confirmacion por usuario (`app.js:1571-1603`).
+   9. **"Darme de baja"**: falta el boton en Ajustes (`DELETE /api/yo`,
+      `main.py:617`; el viejo lo tiene con confirmacion por usuario,
+      `app.js:1571-1603`). **La API ya funciona**: hasta el 23 de septiembre
+      respondia **500** para quien hubiera anadido una linea a una lista suya,
+      porque `lista_linea.anadido_por` era la unica clave ajena del esquema con
+      `ON DELETE RESTRICT` y PostgreSQL la comprueba antes de que actue el
+      CASCADE. Arreglado en `plataforma/sql/005_borrarse_del_todo.sql` (la clave
+      pasa a `SET NULL`, como ya estaba `tachado_por`) y comprobado contra la API
+      viva: 500 -> 200. Sin eso, poner el boton habria sido poner un boton que
+      revienta.
    10. **Interruptor "repartir entre dos tiendas"** en Ajustes (`max_tiendas=1`;
       el viejo en `app.js:1413-1418`), y el desglose "N en CADENA" del reparto
       (`app.js:718-719`).
