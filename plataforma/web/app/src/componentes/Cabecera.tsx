@@ -21,7 +21,9 @@ export function Cabecera() {
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-neutral-700 dark:bg-neutral-900/95 dark:supports-[backdrop-filter]:bg-neutral-900/80">
       <div className="mx-auto flex max-w-app flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
-        <Link to="/" className="text-lg font-bold tracking-tight">
+        {/* 44 px de alto: medido antes, el enlace media **43x28** y se pulsa en
+            todas las pantallas. Es el mismo minimo que el resto de lo pulsable. */}
+        <Link to="/" className="inline-flex min-h-[44px] items-center text-lg font-bold tracking-tight">
           Cesta
         </Link>
 
@@ -35,7 +37,10 @@ export function Cabecera() {
           {data && (
             <>
               Datos del <strong className="font-semibold">{fecha(data.fecha_datos)}</strong>{' '}
-              <span className="text-neutral-500 dark:text-neutral-500">
+              {/* Sin `dark:` propio: `neutral-500` sobre el fondo oscuro de esta
+                  cabecera da **3,78:1**, y lo que dice esta linea es la edad del
+                  dato, que es justo lo que no puede quedar a medias. */}
+              <span className="text-tinta-suave">
                 ({hace(data.fecha_datos)})
               </span>
             </>
