@@ -363,7 +363,7 @@ def por_que_falla(filas, verdad, ls_sin_ean) -> dict:
         elif abs(float(ca) - float(cb)) > 1e-6:
             clase = "misma unidad, cantidad distinta (pack frente a unidad)"
         elif s >= 0.55:
-            clase = "puntua por encima del umbral: perdio la eleccion mutua"
+            clase = "puntua sobre el umbral y otro se lleva la pareja"
         else:
             clase = "mismo formato y por debajo del umbral"
         motivos[clase] += 1

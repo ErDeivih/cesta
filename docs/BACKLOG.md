@@ -35,38 +35,65 @@ descartado y por que, para no volver a discutirlo.
 
 **Por que.** Hay un encargo nuevo del dueno: migrar la interfaz a un stack
 especializado y arreglar el matching, **sin ninguna validacion humana**. El plan
-maestro es `docs/PLAN-UI-MATCHING.md` y su Fase 0 ya esta hecha.
+maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
+`docs/DIAGNOSTICO-MATCHING.md`.
 
-**Lo que ya esta hecho (Fase 0, 22 sep 2026).**
+**Lo que ya esta hecho (22 sep 2026).**
 
     docs/DIAGNOSTICO-MATCHING.md            el informe, con todos los numeros
     projects/cesta/diagnostico_matching.py  lo reproduce en un comando
     tests/test_diagnostico_matching.py      11 pruebas, en verde
-    data/gold/diagnostico_matching.json     los mismos numeros en crudo
+    core/normalize.py                       la etiqueta de 100 g/ml, por cadena
+    projects/cesta/pipeline.py              cantidad_fiable, la unidad que se
+                                            contradice, respaldo por el nombre
+    core/matching.py                        asignacion hungara 1-a-1, la
+                                            etiqueta identico veraz, veto de precio
+    projects/cesta/collectors/carrefour.py  cat11729677 en ROTAS_EN_ORIGEN
+    git                                     el proyecto YA tiene control de
+                                            versiones; no tenia .git
 
-**Los cuatro numeros que cambian lo que hay que hacer.** Medidos, no estimados:
+**Los numeros, antes y despues, medidos sobre el mismo bronze.**
 
-    57 %    aciertos de `emparejar --medir` sobre los 1.821 pares ciertos por EAN
-    784     pares que se escapan: 287 formato ilegible, 172 otra unidad,
-            45 otra cantidad, 158 por umbral y 122 por perder la eleccion mutua
-    266     enlaces con unidad distinta, y los 266 son el MISMO producto:
-            el veto duro de unidad borra aciertos y ningun error
-    50 %    de los 19.902 productos comparables que hay, sobre los 40.183 que
-            caben en un bloque canonico con >=2 cadenas
+    aciertos de emparejar --medir       57 %   ->  65 %    (el liston es 57 %)
+    productos comparables               19.834 ->  23.049  (+16 %)
+    enlaces aceptados                   18.001 ->  22.702
+    etiqueta identico que dice verdad   70 %   ->  100 %
+    fallos por "otra unidad"            172    ->  39
+    grupos con el mas caro >200 %       369    ->  443     EMPEORO: ver abajo
+
+**Lo que queda mal, con la causa ya medida.** Los grupos anchos NO vienen de un
+par imposible: de los 22.702 enlaces, **0** violan el veto de precio de 30x.
+Vienen de la **transitividad del union-find**: A-B razonable, B-C razonable, y A y
+C a 125 veces. El grupo 92 tiene 329 productos. Arreglarlo no es otro veto de par
+(no hay ningun par que vetar), es un freno a nivel de grupo o *correlation
+clustering*. **Esto sustituye a la tarea 2**, con su mismo criterio de aceptacion.
+
+**Las decisiones que se tomaron, y por que.**
+
+1. **git**: hecho. Habia dos agentes escribiendo en los mismos ficheros sin red.
+2. **El front se rehace con Vite + React + TS, y Caddy lo sigue sirviendo.** Nada
+   de FastAPI sirviendo HTML: `docs/API.md:336` sigue valiendo. Se actualizo
+   `docs/APP.md:318`. Cambio pendiente para el dia del front: en
+   `docker-compose.yml:61`, `./web:/srv:ro` pasa a `./web/dist:/srv:ro`.
+3. **Ningun veto duro por unidad ni por categoria.** Medido: los 266 enlaces con
+   unidad distinta eran, los 266, el mismo producto (mismo EAN). Y
+   `docs/MODELO.md:42-45` ya decia que en un grupo manda una unidad pero a nadie
+   se le expulsa.
+4. **El umbral de precio es 30x, no el 60 % del plan.** Con el 60 % habria marcado
+   3.191 de 17.789 enlaces; con 30x, 13.
+5. **Hay dos topes de referencia, no uno**: la sonda del EAN (precision) y el
+   bloque canonico (40.303 productos, 32.873 pares). "El tope del EAN" sale hoy
+   100 % por construccion y no mide nada.
 
 **Consecuencia para este BACKLOG.**
 
-1. La tarea 2 ("Grupos demasiado anchos") **no se descarta**: es la misma que la
-   Fase 2 del plan, con sus criterios (>= 57 % de aciertos, de 405 grupos >200 %
-   a menos de 150). Sigue siendo el bloqueo numero uno.
+1. La tarea 2 ("Grupos demasiado anchos") **sigue siendo el bloqueo numero uno**,
+   con el diagnostico afinado: freno de grupo, no de par. Sus criterios siguen
+   valiendo (>= 57 % de aciertos, de 405 grupos >200 % a menos de 150).
 2. **N8 ("el boton *esto no es lo mismo*") queda anulado**: es validacion humana,
    que el encargo nuevo prohibe. Las colas de revision a mano de la tarea 2 y de
    `docs/FASES.md` tambien. Se sustituyen por un panel de auditoria que explica
-   cada par sin que nadie apruebe nada. Pendiente del OK del dueno para marcarlo.
-3. Antes de empezar la Fase 1 hay cuatro decisiones esperando en el apartado 10 de
-   `docs/DIAGNOSTICO-MATCHING.md`: **control de versiones (no hay `.git`)**,
-   el choque del front con `docs/APP.md:320-331` y `docs/API.md:336`, tocar el
-   dato de formato del pipeline de las 06:00, y cambiar el tope de referencia.
+   cada par sin que nadie apruebe nada.
 
 ---
 

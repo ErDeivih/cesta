@@ -153,8 +153,7 @@ Una sola puerta, en `cesta-api`. Responde JSON y nunca HTML.
 
     POST  /entrar                     usuario y clave -> token
     GET   /buscar?q=&filtros=         los resultados
-    GET   /grupo/{id}                 la ficha completa
-    GET   /grupo/{id}/serie?dias=90   la curva
+    GET   /grupo/{id}                 la ficha completa, **con la curva dentro**
     GET   /listas                     las mias y las compartidas conmigo
     POST  /listas                     crear
     POST  /listas/{id}/lineas         anadir un grupo

@@ -92,13 +92,26 @@ UMBRAL_BLOQUEO_TOTAL = 25
 # Categorias que el propio Carrefour sirve rotas, con su nombre y desde cuando.
 #
 # No es una tolerancia disfrazada: una tolerancia perdona "hasta N fallos,
-# cualesquiera", y esto perdona **estas tres y ninguna mas**. Si manana falla
-# una cuarta, la captura sale incompleta aunque sigan siendo pocas.
+# cualesquiera", y esto perdona **estas cuatro y ninguna mas**. Si manana falla
+# una quinta, la captura sale incompleta aunque sigan siendo pocas.
 #
 # Cada una lleva la fecha en que empezo a fallar para que se vea cuanto lleva
 # aqui, y el recorrido avisa cuando alguna vuelve a funcionar: una lista de
 # excepciones donde las cosas entran y no salen nunca acaba siendo una excusa.
 ROTAS_EN_ORIGEN = {
+    # Anadida el 22 de septiembre de 2026. Ese dia la regla estricta tiro la
+    # captura ENTERA de Carrefour -- 16.525 productos buenos y 47 minutos de
+    # recorrido -- por culpa de esta sola categoria, que el servidor devuelve con
+    # HTTP 500. Comprobado antes de anadirla, en `data/ejecuciones.log`: aparece
+    # fallando en 10 ejecuciones distintas y la primera es del **8 de septiembre**,
+    # dos semanas antes. Es hermana de dos de las de abajo: misma rama de
+    # papeleria, misma averia.
+    #
+    # Ponerla aqui no es tapar el fallo: es que un dia entero de catalogo no puede
+    # depender de que Carrefour arregle una pagina de cuadernos de colorear. El dia
+    # que la arreglen, la entrada sobra y el propio recorrido lo dice (ver
+    # `revividas` mas abajo), asi que se quita.
+    "cat11729677": "papeleria/colorear, HTTP 500 desde el 8 sep 2026",
     "cat11729678": "papeleria/pequeno-accesorio, HTTP 500 desde el 20 sep 2026",
     "cat11729673": "papeleria/archivadores, HTTP 500 desde el 20 sep 2026",
     "cat32482101": "congelados/comidas-del-mundo/resto-del-mundo, "

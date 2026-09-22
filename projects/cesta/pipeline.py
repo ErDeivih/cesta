@@ -19,6 +19,7 @@ from core import alcohol, config, derive, promos, secciones, sellos
 from core.normalize import (
     CANONICAS,
     _sin_tildes,
+    lecturas_referencia,
     nombre_limpio,
     normaliza_referencia,
     parse_formato,
@@ -27,6 +28,21 @@ from core.storage import write_parquet, write_parquet_file
 
 # "pack 6 x 1 L", "pack 24 x 33 cl": cuantas unidades van dentro.
 _PACK_EN_NOMBRE = re.compile(r"pack\s*(\d+)\s*[x\u00d7]", re.IGNORECASE)
+
+
+def _referencia_que_cuadra(lecturas, precio, cantidad, unidad):
+    """¿Alguna lectura de la referencia de la cadena confirma este formato?
+
+    Es el freno que impide que el nombre decida solo: "lavadora 9 kg" no cuadra
+    con su propio precio por kilo ni de lejos, asi que se cae sola. Devuelve la
+    lectura que cuadra, o None.
+    """
+    if not cantidad or not unidad or not precio:
+        return None
+    for cand, u in lecturas:
+        if u == unidad and cand > 0 and abs(precio / cantidad - cand) / cand < 0.05:
+            return (cand, u)
+    return None
 
 
 def _cargar_bronze() -> pl.DataFrame | None:
@@ -77,6 +93,11 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
 
     cantidades, unidades, packs, limpios, formatos_validos = [], [], [], [], []
     refs_cent, refs_unidad = [], []
+    # De donde salio el formato de cada producto. Es lo que permite que el
+    # emparejador distinga un "1 ud" que la cadena declara de un "1 ud" que
+    # pusimos nosotros porque no sabemos el tamano: los dos valen 1, pero uno es
+    # un dato y el otro es una ausencia disfrazada. Ver docs/DIAGNOSTICO-MATCHING.md §6.
+    fiables: list[bool] = []
     # strict: las siete listas salen del mismo DataFrame. Si alguna vez no
     # midieran lo mismo, seria un fallo grave y silencioso (cada producto con el
     # precio del siguiente). Mejor que reviente.
@@ -87,22 +108,52 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
         # "5G" no son 5 gramos y "lavadora 9 kg" no pesa 9 kg. Por eso se analiza
         # primero el campo de formato.
         cant, uni, pack = parse_formato(fmt)
-        ref_cent, ref_uni = normaliza_referencia(fuente, precio_ref, unidad_ref)
+        lecturas = lecturas_referencia(fuente, precio_ref, unidad_ref)
+        ref_cent, ref_uni = lecturas[0] if lecturas else (None, None)
+        # La etiqueta de la referencia segun la cadena, para poder decir si la
+        # contradiccion viene de ahi.
+        ref_uni_nativa = None
+        if ref_cent is not None and unidad_ref:
+            ref_uni_nativa = normaliza_referencia(fuente, precio_ref, unidad_ref)[1]
 
-        # Carrefour no publica campo de formato en NINGUNO de sus 16.433
+        # Carrefour no publica campo de formato en NINGUNO de sus 16.560
         # productos: el tamano solo esta en el nombre. Dejarlo asi significaba
-        # 14.833 productos sin cantidad, y sin cantidad no hay bloque de
-        # comparacion ni emparejamiento posible.
+        # 4.032 productos sin cantidad (3.921 medidos antes de arreglar las
+        # lecturas de la referencia), y sin cantidad no hay bloque de comparacion
+        # ni emparejamiento posible.
         # Se recurre al nombre solo como ultimo recurso y solo si la propia
-        # cadena lo confirma: precio / cantidad tiene que coincidir con el precio
-        # por unidad que ella misma publica. Una "lavadora 9 kg" no cuadra ni de
-        # lejos, asi que se descarta sola. Recupera 11.004 de los 14.833.
+        # cadena lo confirma. Antes exigia que la unidad del nombre coincidiera
+        # con la etiqueta de la cadena, y eso dejaba fuera todo lo que trae
+        # "100ml": un desodorante de 50 ml a 2,49 EUR publica 4,98, que es el
+        # precio del litro, pero leido como si fuera por litro no cuadra con
+        # nada. Con las dos lecturas (ver `lecturas_referencia`) si cuadra.
         if cant is None:
             cant_n, uni_n, pack_n = parse_formato(nom)
-            if (cant_n and uni_n and precio and ref_cent
-                    and uni_n == ref_uni
-                    and abs(precio / cant_n - ref_cent) / ref_cent < 0.05):
+            if _referencia_que_cuadra(lecturas, precio, cant_n, uni_n):
                 cant, uni, pack = cant_n, uni_n, pack_n
+        # La cadena se contradice consigo misma. DIA publica "Detergente liquido
+        # Dia Super Paco 61 lavados" con formato_txt "61 l" -- 61 litros de
+        # detergente en un bote de tres -- y su propia referencia de precio en
+        # "lavado". Medido el 22 de septiembre: 33 productos asi (lavados, dosis,
+        # capsulas) con cantidades de 30 a 69 "litros" que envenenaban el precio
+        # por unidad y el bloque de comparacion. El precio lo confirma: 7,14 EUR
+        # / 61 = 0,117 y su etiqueta dice 0,12 EUR por lavado. Se cambia la
+        # unidad SOLO cuando el nombre dice el mismo numero en unidades y la
+        # referencia de la cadena es por unidad.
+        if (cant and uni in ("kg", "l") and precio and ref_uni_nativa == "ud"
+                and ref_cent):
+            cant_n, uni_n, _pack_n = parse_formato(nom)
+            if (uni_n == "ud" and cant_n is not None
+                    and abs(cant_n - cant) < 1e-6
+                    and abs(precio / cant - ref_cent) / ref_cent < 0.05):
+                uni = "ud"
+
+        # Ya con el formato resuelto, se elige la lectura de la referencia que
+        # cuadra con el. Si no cuadra ninguna se queda la primera, que para una
+        # etiqueta de 100 es la de por 100 (154 de 173 medidas en Aldi).
+        con_formato = _referencia_que_cuadra(lecturas, precio, cant, uni)
+        if con_formato:
+            ref_cent, ref_uni = con_formato
 
         # El formato dice el tamano de UNA unidad y el nombre dice cuantas van
         # dentro. DIA publica "Cerveza El Aguila pack 24 x 33 cl" con
@@ -121,21 +172,13 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
                     if abs(candidato - ref_cent) / ref_cent < 0.05:
                         cant, pack = round(cant * n, 6), n
 
-        # La etiqueta de Aldi no dice siempre lo mismo. Medido el 7 sep sobre sus
-        # 173 productos con "100-g"/"100-ml": en 154 el valor es de verdad por
-        # 100 g (hay que multiplicar por diez) y en 16 ya viene por kilo o litro.
-        # Aplicar la regla a ciegas dejaba esos 16 con una referencia diez veces
-        # mayor que su precio real. Se elige la lectura que cuadra con el precio
-        # y la cantidad del propio producto; si no cuadra ninguna, se deja la
-        # mayoritaria y la discrepancia sale luego en el aviso del pipeline.
-        if (fuente == "aldi" and ref_cent and cant and cant > 0 and precio
-                and (unidad_ref or "").lower().replace("_", "-")
-                in {"100-g", "100-ml"}):
-            real = precio / cant
-            sin_factor = ref_cent / 10.0        # lo que publico Aldi, tal cual
-            if (abs(real - sin_factor) < abs(real - ref_cent)
-                    and abs(real - sin_factor) / real < 0.2):
-                ref_cent = sin_factor
+        # La etiqueta de Aldi no dice siempre lo mismo: su "100-g"/"100-ml" es de
+        # verdad por 100 en 154 de 173 productos, pero en 16 ya viene por kilo o
+        # litro. Aqui habia un apaño solo para Aldi; ahora lo resuelve
+        # `lecturas_referencia` + `cuadra` para las cinco cadenas, que es donde
+        # estaba el error de verdad (Carrefour 1.816 productos, DIA 532,
+        # Mercadona 504). No se borra el conocimiento: se cita en
+        # `core/normalize.lecturas_referencia`.
 
         # Error real observado en Aldi: "350 kg" para un bizcocho de 350 g. Solo
         # se corrige cuando la referencia nativa confirma exactamente el factor 1000.
@@ -144,6 +187,11 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
             candidato = precio / (cant / 1000)
             if abs(candidato - ref_cent) / ref_cent < 0.1:
                 cant /= 1000
+        # Fiable = sabemos el tamano de verdad: lo publica la cadena o su propia
+        # referencia de precio lo confirma. Lo que no llega aqui es lo que luego
+        # se rellena con un "1 ud" de relleno, y ese no se puede usar ni para
+        # bloquear ni para comparar precios por unidad.
+        fiables.append(cant is not None and cant > 0 and uni is not None)
         cantidades.append(cant)
         unidades.append(uni)
         packs.append(pack)
@@ -212,6 +260,7 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
         pl.Series("precio_ref_canon_cent", refs_cent, dtype=pl.Float64),
         pl.Series("unidad_ref_canon", refs_unidad, dtype=pl.Utf8),
         pl.Series("formato_parseado", formatos_validos, dtype=pl.Boolean),
+        pl.Series("cantidad_fiable", fiables, dtype=pl.Boolean),
     ])
 
     if "unidades_envase" in out.columns:

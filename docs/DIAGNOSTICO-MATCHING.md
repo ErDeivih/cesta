@@ -614,3 +614,139 @@ El cerrojo de GPU en `%TEMP%`, los modelos de embeddings concretos
 Ollama y Outlines/Guidance. No es que estén mal: es que **son nuevos**, y por
 tanto cada uno hay que justificarlo con una medición antes/después, como pide el
 encargo. Ninguna de esas piezas se apoya en una decisión previa del proyecto.
+
+---
+
+## 13. Lo que se arregló el 22 de septiembre, con números
+
+Las decisiones del §10 se tomaron y se ejecutaron. Todo lo de esta tabla está
+medido **sobre el mismo bronze** —las cinco cadenas del 21/22 de septiembre—, con
+el código de antes y el de después, guardando el `grupos.parquet` de cada versión
+y corriendo los dos. No es una comparación entre dos días distintos.
+
+| | antes | después | |
+|---|---:|---:|---|
+| **aciertos de `emparejar --medir`** | **57 %** | **65 %** | +8 puntos; el listón era 57 % |
+| enlaces aceptados | 18.001 | **22.702** | +26 % |
+| grupos comparables entre cadenas | 6.439 | **6.589** | |
+| **productos comparables** | 19.834 (37,7 %) | **23.049 (43,8 %)** | +16 % |
+| grupos con las cinco cadenas | 268 | **271** | |
+| pares ciertos encontrados por el nombre (de 1.809) | 1.028 | **1.169** | |
+| etiqueta `identico` que dice la verdad | 70 % | **100 %** | ver §3.2 |
+| enlaces con unidad canónica distinta | 266 | **132** | |
+| grupos comparables con unidad mixta | 239 | **109** | |
+| fallos por "una cadena lo vende en otra unidad" | 172 | **39** | −77 % |
+| cantidades imposibles en DIA | 35 | **16** | |
+| Carrefour con un `1 ud` de relleno | 2.076 | **468** | |
+| enlaces con un par de precio imposible (>30×) | — | **0** | veto nuevo |
+| **grupos con el más caro a más del 200 %** | 369 (6,5 %) | **443 (7,5 %)** | **empeoró: ver §14** |
+
+### 13.1 Los tres arreglos de dato
+
+1. **La etiqueta de 100 gramos no vale lo mismo en todas las cadenas.** Miles de
+   productos traían el precio por unidad mal por un factor de diez. Medido
+   producto a producto contra el precio real de cada uno: DIA multiplica por diez
+   en **529 de 529**, Aldi en **202 de 223**, y **Mercadona no multiplica en 488
+   de 488**. Antes se aplicaba la convención de una cadena a las demás. Ahora la
+   convención es de cada cadena, y cuando el propio producto permite comprobarlo,
+   manda el producto. La prueba de que hacía falta: un desodorante de 50 ml a
+   2,49 EUR trae `4,98` con etiqueta `100ml`, que es exactamente 2,49 / 0,05 × 10.
+2. **La cadena que se contradice consigo misma.** DIA publicaba "Detergente
+   líquido Dia Super Paco **61 lavados**" con formato `61 l` —61 litros de
+   detergente en un bote de tres— y su propia referencia de precio en `lavado`.
+   33 productos así, con cantidades de 30 a 69 "litros". El precio lo confirma:
+   7,14 / 61 = 0,117 y su etiqueta dice 0,12 € por lavado.
+3. **`cantidad_fiable`.** Hay ahora una columna que distingue un `1 ud` que
+   declara la cadena de un `1 ud` que pusimos nosotros porque no sabemos el
+   tamaño. Los dos valen 1, pero solo el primero sirve para bloquear. Carrefour
+   pasa de 2.076 falsos a 468, y 1.608 productos dejan de fingir un formato: se
+   quedan con la unidad y el precio por unidad **que sí publica la cadena**.
+
+### 13.2 Los dos arreglos de algoritmo
+
+1. **La etiqueta `identico` ya no miente.** `nivel()` llamaba idéntico a dos
+   productos con códigos de barras distintos solo por compartir marca, y medido
+   acertaba el 70 %. Ahora, con dos códigos, decide el código. Resultado: **100 %**,
+   y la etiqueta pasa a ser utilizable para decidir algo.
+2. **La asignación 1-a-1 (algoritmo húngaro).** Cada bloque y cada par de cadenas
+   reparten sus parejas maximizando la **ganancia por encima del listón**, no el
+   parecido a secas. Escrito a mano en `core/matching.py`: sin numpy ni scipy, que
+   son dos dependencias de decenas de megas para noventa líneas de algoritmo.
+   - Con el parecido a secas salió **peor**: 23 % más de enlaces y 694 grupos
+     comparables menos, porque dos parejas mediocres (0,56 + 0,56) le ganan a una
+     buena (0,90). Con la ganancia, un 0,90 vale 0,35 y un 0,56 vale 0,01.
+   - Se conservan los dos canales separados (con marca y sin marca) porque el
+     proyecto ya había medido que con uno solo el acierto caía del 53 % al 43 %;
+     hay una prueba que lo fija.
+
+### 13.3 El veto de precio, condicional
+
+`precio_imposible()`: dos productos cuyo precio por unidad se lleva más de **30
+veces** no son el mismo producto. El 30 no es inventado: es `FACTOR_INCREIBLE`
+(`core/comparacion.py`), el umbral con el que el proyecto ya marca un grupo como
+dudoso. Por debajo hay ahorros **reales** de 28×. Solo actúa con la misma unidad,
+con precio en los dos lados, con `precio_comparable`, y **nunca** sobre un par con
+el mismo EAN.
+
+Comprobado después: **0 de los 22.702 enlaces** lo viola.
+
+### 13.4 Y un arreglo que no era del emparejador
+
+`projects/cesta/collectors/carrefour.py`: la categoría `cat11729677`
+(papelería/colorear) lleva **desde el 8 de septiembre** devolviendo HTTP 500
+—comprobado en `data/ejecuciones.log`, donde falla en 10 ejecuciones distintas—.
+Con la regla estricta, ese día el recorrido **tiró la captura entera de
+Carrefour**: 16.525 productos buenos y 47 minutos de recorrido, por unos cuadernos
+de colorear. Ahora está en `ROTAS_EN_ORIGEN`, la lista de categorías que el propio
+Carrefour sirve rotas, que el recorrido revisa cada día para avisar cuando alguna
+revive.
+
+---
+
+## 14. Lo que queda mal, y ahora se sabe exactamente por qué
+
+**Los grupos anchos siguen ahí: 443 con más del 200 % de dispersión, y la tasa
+subió del 6,5 % al 7,5 %.** Pero la causa ya no es una hipótesis:
+
+```text
+enlaces que violan el veto de precio (>30x):        0 de 22.702
+grupos con el mas caro a mas de 3x el mas barato:   443
+los peores:   grupo 30054  x316    3 productos
+              grupo 92     x125  329 productos
+              grupo 434     x64   83 productos
+              grupo 252     x42  145 productos
+              grupo 52      x36  208 productos
+```
+
+**Ningún par aceptado es imposible: la anchura viene de la transitividad.** A–B es
+razonable, B–C es razonable, y A y C están a 125 veces. El union-find los mete en
+el mismo grupo porque para él un grupo es "lo que está conectado", no "lo que se
+parece". Es exactamente el problema que el BACKLOG ya había escrito al hablar del
+botón humano: *"un rechazo parte el grupo, pero el union-find los puede volver a
+unir por un tercer producto"*.
+
+Arreglarlo **no** es otro veto de par, porque no hay ningún par que vetar. Es un
+freno **a nivel de grupo** —no admitir un miembro si el grupo pasa de una
+dispersión máxima— o *correlation clustering* de verdad, aceptando que un grupo
+pequeño y coherente vale más que uno grande y falso. Eso, más las fases 5 a 11 del
+§9, es lo que queda.
+
+---
+
+## 15. Estado del encargo
+
+| fase | estado |
+|---|---|
+| 0 · diagnóstico | **hecho** |
+| 1 · modelo versionado | pendiente (propuesto en el §8) |
+| 2 · dato de formato | **hecho** (§13.1) |
+| 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
+| 4 · asignación | **la mitad**: húngaro hecho (§13.2); freno de grupo, no (§14) |
+| 5 a 11 | pendientes |
+
+Lo entregado el 22 de septiembre: `core/normalize.py`, `core/matching.py`,
+`projects/cesta/pipeline.py`, `projects/cesta/emparejar.py`,
+`projects/cesta/collectors/carrefour.py`,
+`projects/cesta/diagnostico_matching.py` y sus pruebas. **545 pruebas en verde,
+`ruff` limpio, `verificar_docs` en verde, `--medir` = 65 %** (el listón del
+proyecto es 57 %). Y el proyecto ya tiene git.

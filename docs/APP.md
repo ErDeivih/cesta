@@ -317,18 +317,47 @@ Por orden de lo que mas bloquea:
 
 ## 10. Como se construye
 
-**Nada de framework pesado.** La logica es buscar, filtrar y ordenar, y eso pide
-HTML, CSS y JavaScript, y poco mas. Lo que cambia respecto a la version anterior
-es que el peso esta en el servidor, no en el movil.
+**La interfaz se rehace con un stack especializado** (decision del dueno, 22 de
+septiembre de 2026, en `docs/PLAN-UI-MATCHING.md`). Esto **sustituye** a lo que
+decia antes esta seccion ("nada de framework pesado", "sin framework", "grafica
+SVG a mano"), y se cambia aqui a la vez que en el codigo para que los documentos
+no cuenten dos historias distintas.
+
+Por que cambio: la interfaz actual **no son 6 KB de HTML**. Son `index.html`
+6.663 B + **`app.js` 79.656 B** escritos a mano + `estilo.css` 29.063 B. Lo que
+viene pide tablas con filtros combinables, columnas virtualizadas, un producto
+comparado entre cinco cadenas y series de precio por fila; a mano eso son miles
+de lineas mas y sin pruebas.
 
     api         FastAPI en Docker. Autentica y responde JSON. No sirve HTML.
     consultas   DuckDB sobre los parquet de gold, sin copiarlos.
     usuarios    PostgreSQL. Cuentas, listas, favoritos, alertas.
-    cliente     una web servida por Caddy. Sin framework. Lo unico que
-                guarda es la lista de la compra abierta.
+    cliente     Vite + React + TypeScript + Tailwind, servido por Caddy.
+                Sin servidor nuevo: el build sale a plataforma/web/dist y Caddy
+                lo sirve igual que servia la carpeta entera.
+    tablas      TanStack Table: filtros, orden, agrupacion, virtualizacion.
+    datos       TanStack Query: cache y estados de carga sin inventarlos.
+    grafica     uPlot para las series de precio. SVG a mano solo donde no haya
+                libreria que aporte nada.
     voz         SpeechRecognition del navegador. Cero dependencias.
-    grafica     SVG a mano. Una serie temporal no necesita una libreria.
     entrada     Tailscale. Ver DESPLIEGUE.md punto 4.
+
+Se mantiene lo que ya estaba decidido y no cambia:
+
+- **Caddy sigue sirviendo la interfaz** y la API sigue sin servir HTML
+  (`docs/API.md:336`). El `Caddyfile` ya hace `try_files {path} /index.html`, que
+  es exactamente lo que necesita una aplicacion de una sola pagina.
+- **Un solo origen** en `:8080`: sin CORS y sin cookies que se pierden.
+- Lo que **no** debe haber sigue igual: ni tutorial, ni pantalla de actividad, ni
+  valoraciones, ni publicidad (`docs/PANTALLAS.md:314-324`).
+- **Calidad no es gama**: se devuelve `calidad` si sale de ingredientes y `gama`
+  si sale del precio, **nunca las dos** (`docs/BACKLOG.md:46-49`).
+- Movil desde el principio (`docs/UX-MOVIL.md`), y la barra de abajo no se toca
+  (`docs/USABILIDAD.md:89-107`).
+
+Cambio pendiente, para el dia que se toque el front y no antes: en
+`plataforma/docker-compose.yml:61`, `- ./web:/srv:ro` pasa a
+`- ./web/dist:/srv:ro`.
 
 El orden de construccion, y cada paso sirve para algo por si solo:
 

@@ -20,7 +20,13 @@ import polars as pl
 
 from core import config
 from core.calidad import letras, por_precio, puntua
-from core.matching import CAMPOS_PARA_EMPAREJAR, Union, _ean, enlaces
+from core.matching import (
+    CAMPOS_PARA_EMPAREJAR,
+    UNIDADES_FIABLES,
+    Union,
+    _ean,
+    enlaces,
+)
 from core.normalize import parse_formato
 
 # Medido el 8 sep escondiendo el EAN a 65.155 productos, contra los 1.767 pares
@@ -28,19 +34,15 @@ from core.normalize import parse_formato
 # la precision del nivel identico apenas se mueve (68 % frente a 66 %). Con 0,50
 # se llega al 55 %, pero ya empieza a juntar cosas que solo se parecen de nombre.
 UMBRAL = 0.55
-
-# Unidades en las que comparar precios entre cadenas significa algo. "ud" no
-# esta, y no por descuido: cada cadena cuenta una cosa distinta con esa palabra.
-# Mercadona vende un paquete de seis rollos como "1 ud" y publica su precio por
-# rollo; otra cadena vende el rollo suelto. Medido el 7 sep sobre 4.780 grupos:
-# en kg y litro la diferencia mediana entre la mas barata y la mas cara es del
-# 12 %, con pocos disparates; en "ud" es del 24 %, y 128 de sus 550 grupos dan
-# diferencias imposibles (>200 %). Los grupos en "ud" se conservan, pero marcados,
-# porque un dato dudoso etiquetado como dudoso se puede usar y disfrazado no.
-UNIDADES_FIABLES = ("kg", "l", "m")
 COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon",
             "ean", "precio_cent", "precio_unidad_cent", "precio_ref_canon_cent",
             "unidad_ref_canon",
+            # Si el tamano lo publica la cadena o lo confirma su propio precio de
+            # referencia, o si es un "1 ud" de relleno. Sin esta columna el
+            # emparejador trata igual un dato y una ausencia disfrazada: los dos
+            # valen 1, pero uno sirve para bloquear y el otro no.
+            # Ver docs/DIAGNOSTICO-MATCHING.md §6.
+            "cantidad_fiable",
             # Lo que necesita la ficha del producto en el movil. Estaba en silver
             # y no llegaba a gold, asi que la app no podia ensenar una foto ni
             # decir si algo lleva gluten: dos cosas que se miran en el pasillo
@@ -245,18 +247,24 @@ def medir(filas: list[dict], umbral: float) -> None:
     ls = enlaces(filas, umbral=umbral, usar_ean=False)
     pares = {(min(i, j), max(i, j)) for i, j, _, _ in ls}
     acertados = len(pares & verdad)
-    bien = mal = 0
-    for i, j, _, niv in ls:
+    # Cuantos enlaces comprobables (con codigo en los dos lados) comparten codigo.
+    # Antes se imprimia "de los marcados identico, cuantos comparten codigo", y
+    # desde el 22 de septiembre eso es una tautologia: `nivel()` ya no llama
+    # identico a dos productos con codigos distintos. Esta proporcion si informa:
+    # dice cuanta de la cobertura es de fiar.
+    con_ean = iguales = 0
+    for i, j, _, _ in ls:
         ea, eb = _ean(filas[i].get("ean")), _ean(filas[j].get("ean"))
-        if niv == "identico" and ea and eb:
-            bien += ea == eb
-            mal += ea != eb
+        if ea and eb:
+            con_ean += 1
+            iguales += ea == eb
     print(f"  verdad: {len(verdad)} pares entre cadenas con el mismo EAN")
     print(f"  el emparejador por nombre encuentra {acertados} "
           f"({100 * acertados / len(verdad):.0f}%)")
-    if bien + mal:
-        print(f"  de los enlaces marcados 'identico' con EAN en ambos lados, "
-              f"{bien} de {bien + mal} comparten codigo ({100 * bien / (bien + mal):.0f}%)")
+    if con_ean:
+        print(f"  de los {con_ean} enlaces con codigo en los dos lados, {iguales} "
+              f"comparten codigo ({100 * iguales / con_ean:.0f} %); el resto son "
+              f"equivalencias entre marcas, que es lo que el proyecto busca")
     print("  ojo: un enlace 'equivalente' con EAN distinto NO es un fallo, es el")
     print("       objetivo. Comparar marcas blancas es imposible por codigo.")
 

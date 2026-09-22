@@ -96,6 +96,38 @@ def parse_formato(texto: str | None) -> tuple[float | None, str | None, int]:
     return None, None, 1
 
 
+def _etiqueta_limpia(etiqueta: str | None) -> str:
+    """Etiqueta de unidad comparable: sin tildes, sin puntos, sin guiones sueltos."""
+    e = _sin_tildes(str(etiqueta or "").strip().lower()).replace("_", "-")
+    e = re.sub(r"[.\s]+", " ", e)
+    return re.sub(r"\s*-\s*", "-", e).strip()
+
+
+# Etiquetas que significan "el precio es de 100 gramos" o "de 100 mililitros".
+_POR_100 = re.compile(r"^100\s*-?\s*(g|gr|grs|gramo|gramos|ml|mls|mililitro|mililitros|cc)$")
+
+# Cadenas cuya etiqueta de 100 es de verdad "por 100" y hay que multiplicar por
+# diez. La medicion esta en `lecturas_referencia`; el resto de cadenas publica el
+# valor ya por kilo o por litro, o no tiene con que comprobarlo.
+_POR_100_X10 = frozenset({"dia", "aldi"})
+
+
+def unidad_por_100(etiqueta: str | None) -> str | None:
+    """'100 ml' -> 'l'.  '100 gr.' -> 'kg'.  None si no es una referencia por 100.
+
+    Hace falta porque una etiqueta de 100 no vale lo mismo en todas las cadenas, y
+    tratarla como si fuera por kilo metia un error de diez veces que nadie ve.
+    Carrefour lo deja claro: un desodorante de 50 ml a 2,49 EUR trae ``4,98`` con
+    etiqueta ``100ml``, que es 2,49 / 0,05 * 10, o sea el precio del litro. Las
+    cinco cadenas la usan (Carrefour 1.816 productos, DIA 532, Mercadona 504,
+    Aldi 230), asi que el error no era de una cadena: era nuestro.
+    """
+    m = _POR_100.match(_etiqueta_limpia(etiqueta))
+    if not m:
+        return None
+    return "kg" if m.group(1).startswith("g") else "l"
+
+
 def canonizar_unidad(etiqueta: str | None) -> str | None:
     """Cualquier etiqueta de unidad -> kg / l / ud / m, o None si no se reconoce.
 
@@ -129,24 +161,28 @@ def normaliza_referencia(fuente: str, precio_cent: int | None,
     """Convierte una referencia nativa a EUR/kg, EUR/L, EUR/ud o EUR/m.
 
     Algunas APIs describen la etiqueta mostrada, no la magnitud matematica. Aldi,
-    por ejemplo, devuelve 1,88 EUR con ``100-ml`` para un envase de 200 ml: para
-    comparar hay que convertirlo a 18,80 EUR/L. Su valor con etiqueta ``g``, en
-    cambio, ya viene expresado por kg. Esta peculiaridad es propia de esa fuente.
+    por ejemplo, devuelve 1,88 EUR con ``100-ml`` para un envase de 200 ml: su
+    valor **no** es el del litro. Su valor con etiqueta ``g``, en cambio, ya viene
+    expresado por kg. Esta peculiaridad es propia de esa fuente.
+
+    Ojo con las etiquetas de 100: aqui se devuelven **como las publica la cadena**,
+    sin multiplicar por diez. Cual de las dos lecturas vale lo decide
+    ``_lecturas_referencia`` en el pipeline, mirando el precio del propio
+    producto; ver ``unidad_por_100``.
     """
     if precio_cent is None or not unidad:
         return None, None
-    u = _sin_tildes(str(unidad).lower()).strip().replace("_", "-")
-    u = re.sub(r"\s+", " ", u)
+    u = _etiqueta_limpia(unidad)
 
-    if fuente == "aldi":
-        if u in {"100-ml", "100 ml", "100ml"}:
-            return float(precio_cent) * 10, "l"
-        if u in {"100-g", "100 g", "100g"}:
-            return float(precio_cent) * 10, "kg"
-        if u == "g":
-            return float(precio_cent), "kg"
+    if fuente == "aldi" and u == "g":
+        # Aldi etiqueta 'g' pero ya publica el precio por kilo.
+        return float(precio_cent), "kg"
 
-    if u in {"kg", "kilo", "kilos", "100 g", "100-g", "100g"}:
+    por100 = unidad_por_100(unidad)
+    if por100:
+        return float(precio_cent), por100
+
+    if u in {"kg", "kilo", "kilos"}:
         return float(precio_cent), "kg"
     if u in {"l", "lt", "litro", "litros", "litre", "litres"}:
         return float(precio_cent), "l"
@@ -155,6 +191,38 @@ def normaliza_referencia(fuente: str, precio_cent: int | None,
     if u in _REFERENCIAS_UD:
         return float(precio_cent), "ud"
     return float(precio_cent), None
+
+
+def lecturas_referencia(fuente: str, precio_cent: int | None,
+                        unidad: str | None) -> tuple[tuple[float, str | None], ...]:
+    """Las lecturas posibles de una referencia nativa, de la mas probable a la menos.
+
+    Con una etiqueta normal hay una sola. Con una de 100 hay dos, porque ``100 g``
+    puede querer decir que el precio es de 100 gramos -- hay que multiplicar por
+    diez para tener el kilo -- o que ya viene por kilo con la etiqueta escrita de
+    otra manera. **Las dos convenciones conviven, y no es cosa de estilo: son dos
+    cadenas diciendo cosas distintas con el mismo texto.** Medido el 22 de
+    septiembre sobre los productos que SI tienen formato (sin formato no hay con
+    que comprobarlo), comparando el precio del producto con su referencia:
+
+        dia        529 de 529 por 100           -> por diez
+        aldi       202 de 223 por 100           -> por diez
+        mercadona  488 de 488 ya por kilo/litro -> tal cual
+        carrefour    0 comprobables (no publica formato) -> tal cual, y se
+                     corrige producto a producto cuando el nombre lo confirma
+
+    Cual vale lo decide el precio del propio producto (``_referencia_que_cuadra``,
+    en el pipeline) y, si no hay con que comprobarlo, la convencion de su cadena.
+    """
+    ref_cent, ref_uni = normaliza_referencia(fuente, precio_cent, unidad)
+    if ref_cent is None:
+        return ()
+    valor = float(ref_cent)
+    if unidad_por_100(unidad):
+        if fuente in _POR_100_X10:
+            return ((valor * 10, ref_uni), (valor, ref_uni))
+        return ((valor, ref_uni), (valor * 10, ref_uni))
+    return ((valor, ref_uni),)
 
 
 def nombre_limpio(nombre: str, marca: str | None = None) -> str:

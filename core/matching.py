@@ -189,7 +189,47 @@ MAX_CANDIDATOS_POR_PALABRA = 200
 # una linea del algoritmo: diccionarios mas grandes, peor localidad de cache.
 # Quedarse con lo justo devuelve el tiempo y, sobre todo, deja de empeorar cada
 # vez que se conquista un dato nuevo a una cadena.
-CAMPOS_PARA_EMPAREJAR = ("fuente", "nombre", "marca", "cantidad", "unidad_canon", "ean")
+# Unidades cuyo precio por unidad significa lo mismo en dos cadenas. "ud" no
+# esta, y no por descuido: cada cadena cuenta una cosa distinta con esa palabra
+# (Mercadona llama "1 ud" a un paquete de seis rollos y publica el precio por
+# rollo). Medido el 7 de septiembre sobre 4.780 grupos: en kg y litro la
+# diferencia mediana entre la mas barata y la mas cara es del 12 %; en "ud", del
+# 24 %, con 128 de sus 550 grupos dando diferencias imposibles.
+UNIDADES_FIABLES = ("kg", "l", "m")
+
+CAMPOS_PARA_EMPAREJAR = ("fuente", "nombre", "marca", "cantidad", "unidad_canon", "ean",
+                         "precio_unidad_cent", "precio_comparable")
+
+# Un par cuyo precio por unidad se lleva mas de 30 veces no es el mismo producto,
+# ni siquiera entre marcas. El 30 no es inventado: es `FACTOR_INCREIBLE`, el
+# umbral con el que el proyecto YA marca un grupo como dudoso y se niega a dar
+# cifra de ahorro (core/comparacion.py, docs/PRECIO-POR-UNIDAD.md:114-141). Por
+# debajo de 30 el ahorro es real -- hay 28x comprobados -- asi que vetar antes
+# seria borrar aciertos: el plan nuevo proponia cortar al 60 %, y medido el 22 de
+# septiembre eso habria marcado 3.191 de 17.789 enlaces, o sea la mitad del valor
+# del comparador. Este veto es **condicional**: solo actua cuando los dos precios
+# son comparables y el formato es de fiar, y nunca sobre un par con el mismo EAN.
+FACTOR_PRECIO_IMPOSIBLE = 30.0
+PRECIO_MINIMO_CENT = 5
+
+
+def precio_imposible(a: dict, b: dict) -> bool:
+    """¿Los dos precios por unidad se llevan tanto que no pueden ser el mismo producto?
+
+    Todo lo que hace falta para que esta pregunta tenga sentido se comprueba
+    antes de contestarla: misma unidad (comparar EUR/kg con EUR/lavado no dice
+    nada), precio en los dos lados, que la cadena no lo haya marcado como no
+    comparable, y que el formato no sea un relleno.
+    """
+    ua, ub = a.get("unidad_canon"), b.get("unidad_canon")
+    if not ua or ua != ub or ua not in UNIDADES_FIABLES:
+        return False
+    if a.get("precio_comparable") is False or b.get("precio_comparable") is False:
+        return False
+    pa, pb = a.get("precio_unidad_cent"), b.get("precio_unidad_cent")
+    if not pa or not pb or min(pa, pb) < PRECIO_MINIMO_CENT:
+        return False
+    return max(pa, pb) / min(pa, pb) > FACTOR_PRECIO_IMPOSIBLE
 
 
 def adelgaza(filas: list[dict]) -> list[dict]:
@@ -197,15 +237,139 @@ def adelgaza(filas: list[dict]) -> list[dict]:
     return [{c: f.get(c) for c in CAMPOS_PARA_EMPAREJAR} for f in filas]
 
 
+def nivel(a: dict, b: dict) -> str:
+    """identico | equivalente. La distincion que pedia el proyecto.
+
+    Mismo EAN es el mismo producto y no se discute. Distinta marca con el mismo
+    formato es el equivalente de otra marca, que es justo lo que hay que comparar
+    cuando las cadenas venden marca blanca y no comparten codigo de barras.
+
+    La marca decide **solo cuando no hay codigos que comparar**. Antes decidia
+    siempre, y eso hacia que el propio codigo llamara "identico" a dos productos
+    con codigos de barras distintos por el hecho de compartir marca: medido el 22
+    de septiembre, de los 1.475 enlaces marcados 'identico' con EAN en los dos
+    lados, solo 1.033 (el 70 %) compartian codigo. La etiqueta mentia en el 30 %
+    de los casos comprobables, y quien la leyera para decidir se equivocaba.
+    """
+    ea, eb = _ean(a.get("ean")), _ean(b.get("ean"))
+    if ea and eb:
+        return "identico" if ea == eb else "equivalente"
+    ma, mb = _marca(a.get("marca")), _marca(b.get("marca"))
+    return "identico" if ma and ma == mb else "equivalente"
+
+
+def _asignacion_1a1(candidatos: list[tuple[int, int, float]],
+                    umbral: float) -> list[tuple[int, int, float]]:
+    """Asignacion optima 1-a-1 entre dos listas de productos (algoritmo hungaro).
+
+    `candidatos` son (izquierda, derecha, puntuacion) de DOS cadenas distintas
+    dentro de un mismo bloque. Devuelve el subconjunto que maximiza la suma de
+    puntuaciones sin repetir ningun producto de ningun lado.
+
+    Es el cambio que mas arregla del emparejador, y por una razon tonta: con "el
+    mejor de cada uno" (lo que habia hasta el 22 de septiembre) cada producto
+    elige por su cuenta, asi que dos productos de Mercadona pueden elegir al
+    mismo de Lidl y uno de los dos se queda sin pareja **teniendo una igual de
+    buena al lado**. Medido ese dia: 137 de los 701 pares ciertos que se
+    escapaban se perdian exactamente asi, el 20 %. Con componentes conexas el
+    problema es el contrario (todo se junta en un grupo enorme); con eleccion
+    mutua, este. La asignacion optima resuelve los dos: nadie roba la pareja de
+    nadie y nadie se queda con dos.
+
+    El hungaro es O(n^3) y aqui n es el tamano de un bloque por par de cadenas,
+    casi siempre menos de cien, asi que no hace falta ni numpy ni scipy -- dos
+    dependencias de decenas de megas para esto -- y se escribe a mano y se prueba
+    con casos de respuesta conocida (ver `tests/test_matching.py`).
+    """
+    izquierda = sorted({i for i, _j, _s in candidatos})
+    derecha = sorted({j for _i, j, _s in candidatos})
+    if not izquierda or not derecha:
+        return []
+    # El algoritmo pide filas <= columnas; si no, se da la vuelta.
+    vuelta = len(izquierda) > len(derecha)
+    if vuelta:
+        izquierda, derecha = derecha, izquierda
+        candidatos = [(j, i, s) for i, j, s in candidatos]
+
+    fila = {x: k for k, x in enumerate(izquierda)}
+    columna = {x: k for k, x in enumerate(derecha)}
+    n, m = len(izquierda), len(derecha)
+    # Lo que se maximiza es la **ganancia por encima del liston**, no el parecido
+    # a secas. Con el parecido a secas el reparto prefiere dos parejas mediocres
+    # (0,56 + 0,56 = 1,12) a una buena y un hueco (0,90). Medido el 22 de
+    # septiembre al probarlo: 23 % mas de enlaces y 694 grupos comparables menos,
+    # porque los pares flojos desplazaban a los buenos y ademas fundian grupos
+    # entre si. Con la ganancia, un par de 0,90 vale 0,35 y dos de 0,56 valen
+    # 0,02: gana el bueno, que es lo que se quiere.
+    score = [[0.0] * m for _ in range(n)]
+    for i, j, s in candidatos:
+        score[fila[i]][columna[j]] = max(0.0, s - umbral)
+    bruto = {(fila[i], columna[j]): s for i, j, s in candidatos}
+
+    # Hungaro con potenciales (Kuhn-Munkres). Se maximiza, asi que el coste es
+    # -score, y un hueco sin candidato vale 0: nunca compensa ocupar con un cero
+    # una columna que otro podia usar con nota.
+    u = [0.0] * (n + 1)
+    v = [0.0] * (m + 1)
+    pareja = [0] * (m + 1)          # que fila ocupa cada columna (1-based)
+    camino = [0] * (m + 1)
+    for i in range(1, n + 1):
+        pareja[0] = i
+        j0 = 0
+        minv = [float("inf")] * (m + 1)
+        usado = [False] * (m + 1)
+        while True:
+            usado[j0] = True
+            i0 = pareja[j0]
+            delta = float("inf")
+            j1 = 0
+            for j in range(1, m + 1):
+                if usado[j]:
+                    continue
+                cur = -score[i0 - 1][j - 1] - u[i0] - v[j]
+                if cur < minv[j]:
+                    minv[j] = cur
+                    camino[j] = j0
+                if minv[j] < delta:
+                    delta = minv[j]
+                    j1 = j
+            for j in range(m + 1):
+                if usado[j]:
+                    u[pareja[j]] += delta
+                    v[j] -= delta
+                else:
+                    minv[j] -= delta
+            j0 = j1
+            if pareja[j0] == 0:
+                break
+        while j0:
+            j1 = camino[j0]
+            pareja[j0] = pareja[j1]
+            j0 = j1
+
+    salida = []
+    for j in range(1, m + 1):
+        if pareja[j] == 0:
+            continue
+        a, b = izquierda[pareja[j] - 1], derecha[j - 1]
+        s = bruto.get((pareja[j] - 1, j - 1))
+        if s is not None and s >= umbral:
+            salida.append((b, a, s) if vuelta else (a, b, s))
+    return salida
+
+
 def enlaces(filas_completas: list[dict], umbral: float = 0.55,
             usar_ean: bool = True) -> list[tuple[int, int, float, str]]:
     """Pares (i, j, parecido, motivo) del mismo producto en cadenas distintas.
 
-    Se exige **eleccion mutua**: j tiene que ser el mejor candidato de i en su
-    cadena, y i el mejor de j en la suya. Sin esa condicion el emparejamiento se
-    propaga en cadena -- A se parece a B, B a C, C a D -- y acaba metiendo tres
-    mil productos en el mismo grupo. Medido: con componentes conexas la precision
-    caia por debajo del 1%; con eleccion mutua sube a dos digitos altos.
+    Dos pasos, y los dos importan:
+
+    1. **Quien puede ser pareja de quien** (bloqueo): mismo formato y alguna
+       palabra en comun. Comparar los 52.000 productos entre si serian 1.400
+       millones de pares.
+    2. **Quien se queda con quien** (asignacion): dentro de cada bloque y de cada
+       par de cadenas, el reparto 1-a-1 que maximiza la suma de parecidos, con el
+       algoritmo hungaro. Ver `_asignacion_1a1`.
 
     `filas` necesita: fuente, nombre, marca, cantidad, unidad_canon, ean.
     Con `usar_ean=False` se ignora el codigo de barras. Es el modo con el que se
@@ -254,9 +418,11 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
             for j in indices[1:]:
                 salida.append((indices[0], j, 1.0, "ean"))
 
-    # Mejor candidato de cada producto en cada otra cadena, dentro de su bloque.
-    mejor: dict[tuple[int, str], tuple[float, int]] = {}
-    mejor_eq: dict[tuple[int, str], tuple[float, int]] = {}
+    # Candidatos agrupados por (bloque, cadena A, cadena B) con A < B, que es
+    # justo la unidad sobre la que se resuelve la asignacion: un reparto 1-a-1
+    # por cada par de cadenas dentro de cada formato.
+    canales: dict[str, dict[tuple, list[tuple[int, int, float]]]] = {
+        "marca": defaultdict(list), "equivalente": defaultdict(list)}
     por_bloque: dict[tuple, list[int]] = defaultdict(list)
     for i, f in enumerate(filas):
         if docs[i]:
@@ -281,33 +447,76 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                     if par in vistos:
                         continue
                     vistos.add(par)
-                    # Dos elecciones separadas, no una. Con una sola, el mejor
+                    # Se guarda el candidato, no la decision: la decision la
+                    # toma la asignacion optima, junta y por pares de cadenas.
+                    # Dos canales separados, no uno. Con uno solo, el mejor
                     # candidato de un Hacendado pasaba a ser el Carrefour
                     # equivalente y se perdia el Hacendado identico de la otra
-                    # cadena: medido, el acierto caia del 53 % al 43 %. Cada
-                    # producto elige lo mejor de cada clase.
-                    s = parejo(i, j)
+                    # cadena: medido el 7 de septiembre, el acierto caia del
+                    # 53 % al 43 %. Cada canal reparte por su cuenta.
+                    x, y = i, j
+                    if filas[x]["fuente"] > filas[y]["fuente"]:
+                        x, y = y, x
+                    # Veto de precio, condicional (ver `precio_imposible`): un
+                    # bote de 1 L a 2 EUR no es el de 400 mL a 3, ni pareciendose
+                    # el nombre. Nunca se aplica a los pares con el mismo EAN: ahi
+                    # el codigo manda y la diferencia de precio es un hallazgo.
+                    if precio_imposible(filas[x], filas[y]):
+                        continue
+                    grupo = (clave, filas[x]["fuente"], filas[y]["fuente"])
+                    s = parejo(x, y)
                     if s >= umbral:
-                        for a, b in ((i, j), (j, i)):
-                            clave_a = (a, filas[b]["fuente"])
-                            if s > mejor.get(clave_a, (0.0, -1))[0]:
-                                mejor[clave_a] = (s, b)
-                    if _marca(filas[i].get("marca")) != _marca(filas[j].get("marca")):
-                        e = equivalente(i, j)
+                        canales["marca"][grupo].append((x, y, s))
+                    if _marca(filas[x].get("marca")) != _marca(filas[y].get("marca")):
+                        e = equivalente(x, y)
                         if e >= umbral:
-                            for a, b in ((i, j), (j, i)):
-                                clave_a = (a, filas[b]["fuente"])
-                                if e > mejor_eq.get(clave_a, (0.0, -1))[0]:
-                                    mejor_eq[clave_a] = (e, b)
+                            canales["equivalente"][grupo].append((x, y, e))
 
-    # Segunda pasada: mismo procedimiento, pero sin bloque y con el liston alto.
-    # Solo se miran productos que comparten alguna palabra rara, y solo si las
-    # unidades no se contradicen: comparar un kilo con un litro no lleva a nada.
+    emitidos: set[tuple[int, int]] = set()
+    ocupados_todos: set[tuple[int, str]] = set()
+
+    def emitir(x, y, s, ocupados):
+        """Acepta un par si ninguno de los dos ya tiene pareja en esa cadena.
+
+        `ocupados` es **por canal**, no global, y eso es a proposito: un producto
+        puede tener a la vez su identico en la otra cadena y su equivalente de
+        otra marca. Es lo que el proyecto midio el 7 de septiembre -- con una
+        sola eleccion el acierto caia del 53 % al 43 % -- y lo que fija
+        `test_un_equivalente_no_puede_robarle_el_sitio_al_identico`.
+        """
+        if (x, y) in emitidos:
+            return
+        if (x, filas[y]["fuente"]) in ocupados or (y, filas[x]["fuente"]) in ocupados:
+            return
+        emitidos.add((x, y))
+        ocupados.add((x, filas[y]["fuente"]))
+        ocupados.add((y, filas[x]["fuente"]))
+        ocupados_todos.add((x, filas[y]["fuente"]))
+        ocupados_todos.add((y, filas[x]["fuente"]))
+        if x > y:
+            x, y = y, x
+        salida.append((x, y, s, nivel(filas[x], filas[y])))
+
+    # Canal 1 (con la marca dentro) y canal 2 (sin la marca, entre marcas
+    # distintas). Cada canal reparte por su cuenta; lo que ya esta emitido no se
+    # repite, pero un producto si puede salir en los dos.
+    for canal in ("marca", "equivalente"):
+        ocupados: set[tuple[int, str]] = set()
+        for _grupo, candidatos in canales[canal].items():
+            for x, y, s in _asignacion_1a1(candidatos, umbral):
+                emitir(x, y, s, ocupados)
+
+    # Segunda pasada: sin bloque y con el liston alto, para lo que el formato no
+    # puede juntar (un pack frente a la pieza suelta, una cadena que no publica
+    # tamano). Solo se miran productos que comparten alguna palabra rara, y solo
+    # si las unidades no se contradicen: comparar un kilo con un litro no lleva
+    # a nada.
     ancla: dict[str, list[int]] = defaultdict(list)
     for i, doc in enumerate(docs):
         for p in doc:
             if pesos.get(p, 0.0) >= MIN_IDF_ANCLA:
                 ancla[p].append(i)
+    sueltos: dict[tuple, list[tuple[int, int, float]]] = defaultdict(list)
     vistos_sueltos: set[tuple[int, int]] = set()
     for lista in ancla.values():
         if len(lista) > MAX_CANDIDATOS_POR_PALABRA:
@@ -326,22 +535,19 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                 s = parejo(i, j)
                 if s < UMBRAL_SIN_FORMATO:
                     continue
-                for a, b in ((i, j), (j, i)):
-                    clave_a = (a, filas[b]["fuente"])
-                    # Un enlace con formato comprobado siempre gana a uno sin
-                    # comprobar, aunque el nombre del segundo se parezca mas.
-                    if clave_a not in mejor:
-                        mejor[clave_a] = (s, b)
-
-    emitidos: set[tuple[int, int]] = set()
-    for (i, _cadena), (s, j) in mejor.items():
-        if mejor.get((j, filas[i]["fuente"]), (0.0, -1))[1] == i and i < j:
-            emitidos.add((i, j))
-            salida.append((i, j, s, nivel(filas[i], filas[j])))
-    for (i, _cadena), (e, j) in mejor_eq.items():
-        if (mejor_eq.get((j, filas[i]["fuente"]), (0.0, -1))[1] == i and i < j
-                and (i, j) not in emitidos):
-            salida.append((i, j, e, "equivalente"))
+                x, y = i, j
+                if filas[x]["fuente"] > filas[y]["fuente"]:
+                    x, y = y, x
+                if precio_imposible(filas[x], filas[y]):
+                    continue
+                sueltos[(None, filas[x]["fuente"], filas[y]["fuente"])].append(
+                    (x, y, s))
+    for _grupo, candidatos in sueltos.items():
+        # Un enlace con formato comprobado siempre gana a uno sin comprobar,
+        # aunque el nombre del segundo se parezca mas: por eso esta pasada va
+        # despues y respeta lo que ya esta ocupado.
+        for x, y, s in _asignacion_1a1(candidatos, UMBRAL_SIN_FORMATO):
+            emitir(x, y, s, ocupados_todos)
     return salida
 
 
@@ -349,23 +555,9 @@ def _marca(valor) -> str:
     return nombre_limpio(str(valor or ""), None).strip()
 
 
-def nivel(a: dict, b: dict) -> str:
-    """identico | equivalente. La distincion que pedia el proyecto.
-
-    Misma marca y mismo formato es el mismo producto; distinta marca y mismo
-    formato es el equivalente de otra marca, que es justo lo que hay que comparar
-    cuando las cadenas venden marca blanca y no comparten codigo de barras.
-    """
-    ea, eb = _ean(a.get("ean")), _ean(b.get("ean"))
-    if ea and eb and ea == eb:
-        return "identico"
-    ma, mb = _marca(a.get("marca")), _marca(b.get("marca"))
-    return "identico" if ma and ma == mb else "equivalente"
-
-
 def agrupar(filas: list[dict], umbral: float = 0.55,
             usar_ean: bool = True) -> list[int]:
-    """Id de grupo por fila, a partir de los enlaces mutuos."""
+    """Id de grupo por fila, a partir de los enlaces ya repartidos 1-a-1."""
     u = Union()
     for i in range(len(filas)):
         u.raiz_de(i)
