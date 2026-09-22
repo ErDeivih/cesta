@@ -275,6 +275,83 @@ def test_los_colores_del_tema_tienen_valor_en_los_dos_temas():
             f"falta uno para el tema claro y otro para el oscuro.")
 
 
+# ------------------------------------------------- la interfaz y la API ---
+#
+# La prueba que compara lo que la interfaz PIDE con lo que la API OFRECE. Es la
+# misma familia que las de arriba: el fallo no esta en el codigo, esta en dos
+# sitios que tienen que decir lo mismo y que nadie compara.
+#
+# Una pantalla que llama a un endpoint que no existe **compila, arranca y se
+# pinta**: TypeScript no sabe de rutas HTTP. El fallo aparece cuando alguien abre
+# esa pantalla, que es la peor manera de enterarse. Y ha pasado: `/api/ean` y
+# `/api/panel/matching` estaban escritos en el front antes de existir en la API.
+#
+# Ojo con lo que esta prueba NO comprueba: compara el front con el **codigo** de
+# la API, no con la imagen que corre en Docker. Que el contenedor tenga la
+# version vieja no lo ve esto, porque necesita importar la app. Eso se mira a
+# mano con el contenedor levantado, y en `docs/BACKLOG.md` esta el comando y la
+# matriz de rutas.
+
+def _rutas_de_la_interfaz() -> list[tuple[str, str, int]]:
+    """Las rutas que pide el front, con el fichero y la linea de cada una.
+
+    Solo cuenta las llamadas con la ruta escrita a mano: `pide('/yo')`,
+    `pide<X>(\\`/listas/${id}\\`)` y `fetch('/api/entrar')`. Las que se construyen
+    en una variable no se pueden comprobar leyendo, y no se inventan.
+    """
+    salida: list[tuple[str, str, int]] = []
+    for fichero in sorted((APP / "src").rglob("*.ts")):
+        limpio = _sin_comentarios(fichero.read_text(encoding="utf-8"))
+        for patron in (r"\bpide\b[^(]*\(\s*['\"`]", r"\bfetch\(\s*['\"`]"):
+            for trozo in re.finditer(patron, limpio):
+                resto = limpio[trozo.end() - 1:]
+                m = re.match(r"(['\"`])(.*?)\1", resto, re.S)
+                if not m:
+                    continue
+                linea = limpio[:trozo.start()].count("\n") + 1
+                salida.append((m.group(2), fichero.name, linea))
+    return salida
+
+
+def _normaliza(ruta: str) -> str:
+    """Una ruta comparable: sin query y con los parametros como `{}`."""
+    ruta = ruta.split("?")[0]
+    ruta = re.sub(r"\$\{[^}]*\}", "{}", ruta)   # un parametro del front
+    ruta = re.sub(r"\{[^}]*\}", "{}", ruta)     # un parametro de FastAPI
+    return ruta.rstrip("/") or "/"
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_la_interfaz_solo_llama_a_rutas_que_la_api_tiene():
+    """Ni una ruta inventada: cada una que pide el front tiene que existir."""
+    pytest.importorskip("fastapi", reason="falta el extra `plataforma`")
+    from plataforma.api.main import app
+
+    # Por el esquema y no por `app.routes`: la app monta sub-routers
+    # (`plataforma.api.cesta`, `ajustes`...), y esos no tienen `.path`. El
+    # esquema es lo que FastAPI publica de verdad, con las rutas ya resueltas.
+    de_la_api = {_normaliza(ruta) for ruta in app.openapi().get("paths", {})}
+    assert len(de_la_api) >= 20, (
+        f"solo he sabido leer {len(de_la_api)} rutas de la API: revisa esta prueba")
+
+    pedidas = _rutas_de_la_interfaz()
+    assert len(pedidas) >= 10, (
+        f"solo he sabido leer {len(pedidas)} rutas del front: revisa esta prueba")
+
+    inventadas = []
+    for ruta, fichero, linea in pedidas:
+        # `new URL(`/api${ruta}`)`: eso es el ayudante que arma la ruta a partir
+        # de un parametro, no una ruta. Esas se comprueban donde se llaman.
+        if ruta.startswith("/api$") or "${" in ruta.split("/")[1]:
+            continue
+        completa = ruta if ruta.startswith("/api/") else f"/api{ruta}"
+        if _normaliza(completa) not in de_la_api:
+            inventadas.append(f"{fichero}:{linea}: {ruta}")
+    assert not inventadas, (
+        "la interfaz pide rutas que la API no tiene, y eso no se nota hasta que "
+        "alguien abre esa pantalla:\n  " + "\n  ".join(sorted(set(inventadas))))
+
+
 @pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
 def test_la_interfaz_no_tiene_botones_de_validacion_humana():
     """La ley del encargo: no hay validacion humana, nunca.
