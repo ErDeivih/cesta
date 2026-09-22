@@ -555,14 +555,74 @@ def _marca(valor) -> str:
     return nombre_limpio(str(valor or ""), None).strip()
 
 
+# Un enlace por debajo de esto todavia puede meter a un producto suelto en un
+# grupo, pero **no puede pegar dos grupos que ya existen**. Es el freno contra el
+# grupo monstruo.
+#
+# Por que hace falta. Un grupo es lo que queda conectado, y eso se propaga: A-B
+# razonable, B-C razonable, y A y C a 125 veces. Medido el 22 de septiembre sobre
+# los 22.702 enlaces: el grupo 92 tenia **329 productos** y metia "Cerveza sin
+# alcohol Dia Ramblers" con "Cerveza Leffe Brune negra" y "Guinness"; el 252, 145
+# aguas; el 434, 83 desodorantes. Con el freno, el mayor baja de 329 a 97 (0,80)
+# o a 52 (0,85), y los productos comparables no bajan (23.047): no se pierde
+# cobertura, se deja de juntar lo que no era lo mismo.
+#
+# El numero se eligio midiendo, no a ojo (union exigida / grupo mayor /
+# grupos comparables / grupos de 5 cadenas / grupos con dos productos de la misma
+# cadena y EAN distinto):
+#
+#     sin freno   329 / 6.589 / 271 / 935
+#     0,70        217 / 7.565 / 224 / 882
+#     0,75        166 / 7.770 / 208 / 895
+#     0,80         97 / 7.925 / 201 / 900
+#     0,85         52 / 8.050 / 184 / 893
+#     0,90         43 / 8.149 / 174 / 879
+#
+# 0,80 es donde el monstruo deja de serlo sin quedarse sin grupos de cinco
+# cadenas: por encima, cada punto rompe mas grupos buenos que malos.
+#
+# OJO: esto **no** arregla del todo los grupos por familia ("todas las cervezas").
+# Ver docs/DIAGNOSTICO-MATCHING.md §16: la causa de fondo es que el IDF se calcula
+# sobre el catalogo entero, y ahi "cerveza" parece una palabra rarisima.
+UMBRAL_UNION = 0.80
+
+
+def agrupar_enlaces(enlaces_: list[tuple], n: int,
+                    umbral_union: float = UMBRAL_UNION) -> list[int]:
+    """Id de grupo por producto, con el freno contra el grupo monstruo.
+
+    Los enlaces se recorre de mas parecido a menos, que es lo que hace que el
+    nucleo bueno de cada grupo se forme primero y el enlace flojo que llegaba a
+    pegarlo con otra cosa se quede fuera.
+    """
+    padre = list(range(n))
+    tamano = [1] * n
+
+    def raiz(x: int) -> int:
+        while padre[x] != x:
+            padre[x] = padre[padre[x]]
+            x = padre[x]
+        return x
+
+    for e in sorted(enlaces_, key=lambda x: -x[2]):
+        i, j, s = e[0], e[1], e[2]
+        ri, rj = raiz(i), raiz(j)
+        if ri == rj:
+            continue
+        if s < umbral_union and tamano[ri] > 1 and tamano[rj] > 1:
+            continue
+        padre[rj] = ri
+        tamano[ri] += tamano[rj]
+
+    renombre: dict[int, int] = {}
+    salida = []
+    for i in range(n):
+        salida.append(renombre.setdefault(raiz(i), len(renombre)))
+    return salida
+
+
 def agrupar(filas: list[dict], umbral: float = 0.55,
             usar_ean: bool = True) -> list[int]:
     """Id de grupo por fila, a partir de los enlaces ya repartidos 1-a-1."""
-    u = Union()
-    for i in range(len(filas)):
-        u.raiz_de(i)
-    for i, j, _, _ in enlaces(filas, umbral=umbral, usar_ean=usar_ean):
-        u.une(i, j)
-    renombre: dict[int, int] = {}
-    return [renombre.setdefault(u.raiz_de(i), len(renombre))
-            for i in range(len(filas))]
+    return agrupar_enlaces(enlaces(filas, umbral=umbral, usar_ean=usar_ean),
+                           len(filas))

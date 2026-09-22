@@ -55,18 +55,34 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 **Los numeros, antes y despues, medidos sobre el mismo bronze.**
 
     aciertos de emparejar --medir       57 %   ->  65 %    (el liston es 57 %)
-    productos comparables               19.834 ->  23.049  (+16 %)
+    productos comparables               19.834 ->  23.047  (+16 %)
+    grupos comparables                  6.431  ->  7.925   (+23 %)
     enlaces aceptados                   18.001 ->  22.702
+    grupo mayor                         329    ->  97
     etiqueta identico que dice verdad   70 %   ->  100 %
     fallos por "otra unidad"            172    ->  39
-    grupos con el mas caro >200 %       369    ->  443     EMPEORO: ver abajo
+    grupos con el mas caro >200 %       369    ->  458     (tasa 6,5 % -> 6,4 %)
 
-**Lo que queda mal, con la causa ya medida.** Los grupos anchos NO vienen de un
-par imposible: de los 22.702 enlaces, **0** violan el veto de precio de 30x.
-Vienen de la **transitividad del union-find**: A-B razonable, B-C razonable, y A y
-C a 125 veces. El grupo 92 tiene 329 productos. Arreglarlo no es otro veto de par
-(no hay ningun par que vetar), es un freno a nivel de grupo o *correlation
-clustering*. **Esto sustituye a la tarea 2**, con su mismo criterio de aceptacion.
+**Lo que queda mal, con las dos causas ya identificadas y medidas.**
+
+Los grupos anchos NO vienen de un par malo: de los 22.702 enlaces, **0** violan el
+veto de precio de 30x. Vienen de dos sitios distintos:
+
+1. **Un grupo es lo que queda conectado, y eso se propaga.** A-B razonable, B-C
+   razonable, A y C a 125 veces. El grupo 92 llego a tener 329 productos: todas
+   las cervezas. Ya hay un freno (`core.matching.agrupar_enlaces`, union 0,80) que
+   lo baja a 97, pero **no lo arregla del todo**.
+2. **El IDF se calcula sobre el catalogo entero**, y ahi "cerveza" parece una
+   palabra rarisima (600 cervezas entre 52.567 productos) cuando entre cervezas no
+   distingue nada. El arreglo es calcular los pesos **dentro de la seccion**, y
+   obliga a recalibrar el umbral 0,55 entero contra `--medir`. Es la tarea 2.
+3. Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes
+   de dorada de "300 g aprox". Es el mismo roto que los 33 detergentes "de 61
+   litros": el dato de cantidad de lo que se vende al peso.
+
+El criterio del BACKLOG (**menos de 150 grupos con mas del 200 %**, hoy 458) no se
+cumple y no se va a cumplir con frenos. **Esto sustituye a la tarea 2**, con las
+dos pistas medidas en `docs/DIAGNOSTICO-MATCHING.md` §16.
 
 **Las decisiones que se tomaron, y por que.**
 

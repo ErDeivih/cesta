@@ -750,3 +750,83 @@ Lo entregado el 22 de septiembre: `core/normalize.py`, `core/matching.py`,
 `projects/cesta/diagnostico_matching.py` y sus pruebas. **545 pruebas en verde,
 `ruff` limpio, `verificar_docs` en verde, `--medir` = 65 %** (el listón del
 proyecto es 57 %). Y el proyecto ya tiene git.
+
+---
+
+## 16. El freno de grupo, y lo que **no** arregla
+
+Mirando los peores grupos en vez de suponerlos, la causa cambió de sitio otra vez:
+
+```text
+grupo  92  329 productos  "Cerveza sin alcohol Dia Ramblers" + "Leffe Brune negra"
+                          + "Guinness" + "Gulden Draak"...  -> TODAS las cervezas
+grupo 252  145 productos  Cortes, Fuente Primavera, Vichy Catalan -> TODAS las aguas
+grupo 434   83 productos  Sanex, Axe, Vichy, Happy -> TODOS los desodorantes
+grupo 30054  3 productos  Filetes de dorada: Mercadona 2.250, Carrefour 3.645
+                          y DIA **712.000** c/kg -> aqui el roto es el DATO
+```
+
+Y sólo 4 de los 329 miembros del grupo 92 están a más de 3× de la mediana: **la
+dispersión no era el problema, era el síntoma**. Un freno por precio no lo habría
+tocado.
+
+### 16.1 Lo que sí se arregló: el freno de unión
+
+`core.matching.agrupar_enlaces`: los enlaces se recorren de más parecido a menos,
+y un enlace por debajo de **0,80** todavía puede meter a un producto suelto en un
+grupo, pero **no puede pegar dos grupos que ya existen**. Es la regla que corta el
+mecanismo del grupo monstruo, que es la propagación, no el par.
+
+El número salió de medir, no de elegir (`grupo mayor / grupos comparables /
+grupos de 5 cadenas / grupos con dos productos de la misma cadena y EAN distinto`):
+
+| unión exige | grupo mayor | comparables | de 5 cadenas | con error demostrable |
+|---|---:|---:|---:|---:|
+| sin freno | **329** | 6.589 | 271 | 935 |
+| 0,70 | 217 | 7.565 | 224 | 882 |
+| 0,75 | 166 | 7.770 | 208 | 895 |
+| **0,80** | **97** | **7.925** | 201 | 900 |
+| 0,85 | 52 | 8.050 | 184 | 893 |
+| 0,90 | 43 | 8.149 | 174 | 879 |
+
+Se eligió 0,80: por encima, cada punto rompe más grupos buenos que malos.
+
+Consecuencia: **los productos comparables no bajan (23.047)**, los grupos
+comparables suben de 6.589 a **7.925** (+20 %, o sea más productos con alternativa
+visible) y el grupo mayor cae de 329 a **97**.
+
+### 16.2 Lo que **no** arregla: las familias temáticas
+
+97 productos de cervezas siguen siendo demasiadas cervezas juntas. Y la causa de
+fondo está identificada:
+
+**El IDF se calcula sobre el catálogo entero.** De 52.567 productos habrá unos 600
+que sean cerveza, así que para la fórmula `cerveza` es una palabra **rara**
+(`log(52567/601) ≈ 4,4`) y por tanto distintiva, cuando entre cervezas no
+distingue absolutamente nada. En un pasillo de 600 cervezas, "cerveza" aparece en
+todas y no debería pesar; "leffe" o "ramblers" sí.
+
+La segunda pieza es el canal de trigramas: `cervezasinalcohol...` y
+`cervezaleffebrune...` comparten los trozos `cer`, `erv`, `rve`, `vez`, `eza`, y
+la cuenta de trigramas los acerca por el prefijo.
+
+**Arreglo propuesto, para la siguiente pasada**: calcular los pesos **dentro de la
+sección** en vez de sobre el catálogo. Es un cambio de tres líneas
+(`CAMPOS_PARA_EMPAREJAR` necesita `seccion`, y `pesos` pasa a ser un diccionario
+por sección) pero cambia el parecido de todos los pares, así que hay que **volver
+a calibrar el 0,55** y comprobarlo contra `--medir`, que hoy está en 65 %. No se
+hizo en esta pasada por eso: no se toca la escala sin poder remedirla entera.
+
+Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes de
+dorada de "300 g aprox". Es el mismo tipo de roto que los 33 detergentes "de 61
+litros" del §13.1: **el dato de cantidad de los productos que se venden al peso**.
+DIA y Mercadona venden pescado fresco así y Mercadona sí lo marca `peso_variable`;
+DIA lo publica como si fuera un peso fijo.
+
+### 16.3 El criterio del BACKLOG sigue sin cumplirse
+
+El BACKLOG §2 pide **menos de 150 grupos con más del 200 % de dispersión**. Hoy
+hay **458** (6,4 % de los 7.142 con precio comparable, contra el 7,5 % de antes:
+la tasa sí mejora). No se cumple, y no se va a cumplir con frenos: hace falta el
+IDF por sección del §16.2 y arreglar la cantidad de los productos al peso. Queda
+en el BACKLOG como tarea 2, con estas dos pistas en vez de con una corazonada.

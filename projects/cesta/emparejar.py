@@ -23,8 +23,8 @@ from core.calidad import letras, por_precio, puntua
 from core.matching import (
     CAMPOS_PARA_EMPAREJAR,
     UNIDADES_FIABLES,
-    Union,
     _ean,
+    agrupar_enlaces,
     enlaces,
 )
 from core.normalize import parse_formato
@@ -163,13 +163,13 @@ def externo_por_ean() -> dict[str, dict]:
 
 
 def grupos_de(enlaces_: list[tuple[int, int, float, str]], n: int) -> list[int]:
-    u = Union()
-    for i in range(n):
-        u.raiz_de(i)
-    for i, j, _, _ in enlaces_:
-        u.une(i, j)
-    renombre: dict[int, int] = {}
-    return [renombre.setdefault(u.raiz_de(i), len(renombre)) for i in range(n)]
+    """Id de grupo por producto. El freno contra el grupo monstruo vive en `core`.
+
+    Aqui habia un union-find a pelo, y era el que juntaba "Cerveza Dia Ramblers"
+    con "Guinness" en un grupo de 329 productos: un grupo es lo que queda
+    conectado, y eso se propaga. Ver `core.matching.agrupar_enlaces`.
+    """
+    return agrupar_enlaces(enlaces_, n)
 
 
 def composicion(filas: list[dict], ingredientes: dict,
