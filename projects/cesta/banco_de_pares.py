@@ -47,13 +47,23 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import statistics
 import time
 import urllib.request
 
 import polars as pl
 
 from core import config
-from core.matching import _ean, _marca
+from core.matching import (
+    _ean,
+    _marca,
+    dice,
+    idf,
+    parecido,
+    tokens,
+    tokens_sin_marca,
+    trigramas,
+)
 
 MODELO_POR_DEFECTO = "hf.co/bartowski/google_gemma-3-4b-it-GGUF:Q4_K_M"
 OLLAMA = "http://127.0.0.1:11434/api/chat"
@@ -86,7 +96,7 @@ def fichas(gold=None) -> list[dict]:
     """El catalogo con las tres claves que hacen falta para comparar."""
     g = pl.read_parquet((gold or config.GOLD) / "grupos.parquet")
     filas = g.select(["fuente", "nombre", "marca", "cantidad", "unidad_canon",
-                      "ean"]).to_dicts()
+                      "ean", "seccion", "precio_unidad_cent"]).to_dicts()
     for f in filas:
         f["ean_n"] = _ean(f["ean"])
         f["marca_n"] = _marca(f["marca"])
@@ -194,10 +204,115 @@ def evalua_llm(filas, banco_: list, modelo: str = MODELO_POR_DEFECTO,
             "segundos": round(time.monotonic() - t0, 1)}
 
 
+def _rasgos(filas, docs, sindocs, tris, pesos, pesos_sm, i, j) -> dict:
+    """Lo que el emparejador sabe de un par, en numeros."""
+    a, b = filas[i], filas[j]
+    pa, pb = a.get("precio_unidad_cent"), b.get("precio_unidad_cent")
+    ratio = None
+    if pa and pb and min(pa, pb) > 0:
+        ratio = max(pa, pb) / min(pa, pb)
+    return {
+        "palabras": parecido(docs[i], docs[j], pesos),
+        "sin_marca": parecido(sindocs[i], sindocs[j], pesos_sm),
+        "trigramas": dice(tris[i], tris[j]),
+        "marca_igual": float(bool(a["marca_n"]) and a["marca_n"] == b["marca_n"]),
+        "cantidad_igual": float(a["cantidad"] is not None
+                                and a["cantidad"] == b["cantidad"]),
+        "unidad_igual": float(bool(a["unidad_canon"])
+                              and a["unidad_canon"] == b["unidad_canon"]),
+        "seccion_igual": float(bool(a["seccion"]) and a["seccion"] == b["seccion"]),
+        "ratio_precio": ratio,
+    }
+
+
+def separacion(filas, enlaces_) -> dict:
+    """¿Separa alguna caracteristica un acierto de un error? **No, ninguna.**
+
+    Esta es la medida que decide si la Fase 8 del plan (entrenar un clasificador
+    con las caracteristicas del par) puede funcionar. Se comparan los dos grupos
+    de enlaces aceptados de los que sabemos la verdad:
+
+      ACIERTOS  mismo codigo de barras. Son el mismo producto.
+      ERRORES   la misma marca y codigo distinto. Son dos productos distintos, y
+                el emparejador los junto.
+
+    Medido el 22 de septiembre de 2026 sobre 2.930 aciertos y 612 errores, con la
+    mediana de cada caracteristica y la separacion en desviaciones estandar:
+
+        caracteristica        aciertos    errores   separa
+        parecido del enlace      1.000      0.848     1.17
+        palabras                 0.814      0.848     0.20   <- al reves
+        sin la marca             0.703      0.758     0.23   <- al reves
+        trigramas                0.696      0.688     0.04
+        marca igual              1.000      1.000     0.00
+        cantidad igual           1.000      1.000     0.00
+        unidad igual             1.000      1.000     0.00
+        seccion igual            1.000      1.000     0.00
+        ratio de precio          1.000      1.127     0.00
+
+    **Todo es igual o peor en los errores.** El parecido del nombre es incluso
+    MAYOR en los pares equivocados (0,848 contra 0,814), y tiene su logica: "San
+    Miguel" y "San Miguel sin gluten" se parecen mas que el mismo producto escrito
+    de dos maneras por dos cadenas distintas.
+
+    La consecuencia es dura y util: **estos errores no se pueden aprender con
+    estas caracteristicas, porque no hay nada que aprender.** Dos productos de la
+    misma marca con codigos distintos son, por construccion, casi identicos en
+    todo el texto. Lo unico que los separa es el codigo de barras, que es la
+    verdad que estamos usando para medir: no se puede usar tambien como
+    caracteristica.
+
+    Lo que de verdad bajaria estos errores no es un clasificador: es **mas
+    codigo de barras**. Hoy solo el 48,5 % del catalogo lo trae, y Alcampo y Aldi
+    no publican ninguno. Cada punto de cobertura de EAN quita errores de esta
+    clase sin tocar el algoritmo.
+    """
+    docs = [tokens(f["nombre"] or "", f["marca"]) for f in filas]
+    sindocs = [tokens_sin_marca(f["nombre"] or "", f["marca"]) for f in filas]
+    tris = [trigramas(f["nombre"] or "", f["marca"]) for f in filas]
+    pesos = idf(docs)
+    pesos_sm = idf(sindocs)
+    buenos, malos = [], []
+    for i, j, s, _niv in enlaces_:
+        a, b = filas[i], filas[j]
+        if not (a["ean_n"] and b["ean_n"]):
+            continue
+        if a["ean_n"] == b["ean_n"]:
+            buenos.append((i, j, s))
+        elif a["marca_n"] and a["marca_n"] == b["marca_n"]:
+            malos.append((i, j, s))
+    claves = ("palabras", "sin_marca", "trigramas", "marca_igual", "cantidad_igual",
+              "unidad_igual", "seccion_igual", "ratio_precio")
+    tabla = {}
+    for clave in (*claves, "parecido_enlace"):
+        fila = {}
+        for nombre, grupo in (("aciertos", buenos), ("errores", malos)):
+            valores = []
+            for i, j, s in grupo:
+                v = s if clave == "parecido_enlace" else _rasgos(
+                    filas, docs, sindocs, tris, pesos, pesos_sm, i, j)[clave]
+                if v is not None:
+                    valores.append(float(v))
+            fila[nombre] = statistics.median(valores) if valores else None
+        if fila["aciertos"] is not None and fila["errores"] is not None:
+            todos = []
+            for i, j, s in buenos + malos:
+                v = s if clave == "parecido_enlace" else _rasgos(
+                    filas, docs, sindocs, tris, pesos, pesos_sm, i, j)[clave]
+                if v is not None:
+                    todos.append(float(v))
+            sd = statistics.pstdev(todos) or 1e-9
+            fila["separa"] = abs(fila["aciertos"] - fila["errores"]) / sd
+        tabla[clave] = fila
+    return {"aciertos": len(buenos), "errores": len(malos), "tabla": tabla}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="banco_de_pares")
     ap.add_argument("--llm", action="store_true",
                     help="mide tambien al modelo local (tarda y usa la GPU)")
+    ap.add_argument("--separacion", action="store_true",
+                    help="mide si alguna caracteristica separa aciertos de errores")
     ap.add_argument("--modelo", default=MODELO_POR_DEFECTO)
     ap.add_argument("--cuantos", type=int, default=20, help="pares de cada clase")
     a = ap.parse_args(argv)
@@ -210,6 +325,27 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  pares de la misma marca con EAN distinto: {len(negativos)}")
     print("  (el primero es el techo alcanzable; el segundo es lo que hay que NO")
     print("   juntar, y el emparejador por nombre los confunde)")
+
+    if a.separacion:
+        enlaces_gold = pl.read_parquet(config.GOLD / "enlaces.parquet")
+        ls = list(zip(enlaces_gold["i"].to_list(), enlaces_gold["j"].to_list(),
+                      enlaces_gold["parecido"].to_list(),
+                      enlaces_gold["nivel"].to_list(), strict=True))
+        r = separacion(filas, ls)
+        print(f"\n  enlaces aceptados con verdad conocida: {r['aciertos']} aciertos, "
+              f"{r['errores']} errores")
+        print(f"  {'caracteristica':18s} {'aciertos':>9s} {'errores':>9s} "
+              f"{'separa':>8s}")
+        for clave, fila in r["tabla"].items():
+            sep = fila.get("separa")
+            print(f"  {clave:18s} {fila['aciertos']:9.3f} {fila['errores']:9.3f} "
+                  f"{sep:8.2f}" if sep is not None else
+                  f"  {clave:18s} {fila['aciertos']:9.3f} {fila['errores']:9.3f} "
+                  f"{'-':>8s}")
+        print("  Conclusion: ninguna separa. No hay nada que aprender con estas")
+        print("  caracteristicas. Ver el docstring de `separacion`.")
+        return 0
+
     if not a.llm:
         return 0
     banco_ = banco(filas, a.cuantos)

@@ -1107,6 +1107,52 @@ uv run python -m projects.cesta.banco_de_pares --llm    # y mide al modelo
 
 ---
 
+## 21. Fase 8: no hay nada que aprender (y eso también es un resultado)
+
+El plan propone auto-etiquetar con el EAN y entrenar un clasificador con las
+características del par (etapa 2 de §5). Con el banco de pares ya se puede
+comprobar **si esas características separan un acierto de un error**, antes de
+entrenar nada:
+
+```powershell
+uv run python -m projects.cesta.banco_de_pares --separacion
+```
+
+Sobre los enlaces aceptados de los que sabemos la verdad —**2.930 aciertos** (mismo
+EAN) y **612 errores** (misma marca, código distinto)— la mediana de cada
+característica:
+
+| característica | aciertos | errores | separa (σ) |
+|---|---:|---:|---:|
+| parecido del enlace | 1,000 | 0,848 | 1,17 |
+| palabras | 0,814 | **0,848** | 0,20 ← al revés |
+| sin la marca | 0,703 | **0,758** | 0,23 ← al revés |
+| trigramas | 0,696 | 0,688 | 0,04 |
+| marca igual | 1,000 | 1,000 | 0,00 |
+| cantidad igual | 1,000 | 1,000 | 0,00 |
+| unidad igual | 1,000 | 1,000 | 0,00 |
+| sección igual | 1,000 | 1,000 | 0,00 |
+| ratio de precio | 1,000 | 1,127 | 0,00 |
+
+**Todo es igual o peor en los errores.** El parecido del nombre es incluso *mayor*
+en los pares equivocados (0,848 contra 0,814), y tiene su lógica: «San Miguel» y
+«San Miguel sin gluten» se parecen más entre sí que el mismo producto escrito de
+dos maneras por dos cadenas distintas.
+
+La consecuencia es dura y útil: **estos errores no se pueden aprender con estas
+características, porque no hay nada que aprender.** Dos productos de la misma marca
+con códigos distintos son, por construcción, casi idénticos en todo el texto. Lo
+único que los separa es el código de barras, que es la verdad con la que se mide:
+no se puede usar además como característica.
+
+**Lo que bajaría estos errores no es un clasificador: es más código de barras.**
+Hoy solo lo trae el 48,5 % del catálogo, y Alcampo y Aldi no publican ninguno. Cada
+punto de cobertura de EAN quita errores de esta clase sin tocar el algoritmo. Es la
+primera conclusión de esta investigación que apunta a **traer datos** en vez de a
+programar, y conviene que esté escrita.
+
+---
+
 ## 18. Estado del encargo
 
 | fase | estado |
@@ -1117,6 +1163,7 @@ uv run python -m projects.cesta.banco_de_pares --llm    # y mide al modelo
 | 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
 | 4 · asignación | **húngaro y los dos frenos hechos** (§13.2, §16.1, §17.3); **0 conflictos de asignación, medido** (§17.4) |
 | 9 · LLM local | **medido y descartado** (§20): no mejora, con las dos tablas |
+| 8 · aprendizaje | **medido y descartado** (§21): ninguna característica separa aciertos de errores |
 | 5 a 11 | pendientes |
 
 Lo entregado: `core/normalize.py`, `core/matching.py`, `core/equivalencias.py`,
