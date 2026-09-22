@@ -452,6 +452,19 @@ export interface Reparto {
   ahorro_cent?: number
   /** Con ahorros de menos de 1,50 EUR no compensa la segunda parada. */
   merece_la_pena?: boolean
+  /** Cuantas lineas de la lista se compran en cada cadena, por nombre:
+   *  `{ alcampo: 7, dia: 3 }`. Son LINEAS, no unidades: "3 en dia" son tres
+   *  cosas que coger, aunque una sea "2 botes".
+   *
+   *  Es lo que hace planificable el reparto: con el total y el ahorro solos no
+   *  se sabe si la segunda parada es por una cosa o por veinte. La API lo manda
+   *  desde siempre (`plataforma/api/cesta.py:195`) y la interfaz vieja lo
+   *  enseñaba (`app.js:718`).
+   *
+   *  Opcional a proposito: la interfaz no puede dar por hecho que la API que le
+   *  contesta traiga el campo, y un reparto sin desglose se enseña sin cuentas
+   *  en vez de inventarselas. */
+  reparto?: Record<string, number>
 }
 
 export interface Donde {

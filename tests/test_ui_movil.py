@@ -51,6 +51,36 @@ def test_el_boton_nunca_baja_de_44_px():
         "solo una de las dos variantes del boton conserva los 44 px")
 
 
+def _etiqueta_completa(texto: str, inicio: int) -> str:
+    """El texto de una etiqueta JSX, desde `<x` hasta su `>` de cierre.
+
+    **No vale cortar en el primer `>`**, y esto se aprendio midiendo: el
+    `<select>` de `FiltrosBusqueda.tsx` lleva `onChange={(e) => ...}`, o sea un `>`
+    dentro de una llave, y cortando ahi el `className` -- que va despues -- se
+    quedaba fuera del trozo mirado. La prueba pasaba sin haber mirado nada: el
+    mismo fallo silencioso que persigue, cometido por la prueba.
+
+    Se recorre contando llaves y comillas, y el `>` que cierra es el que esta fuera
+    de las dos y no forma parte de un `=>`.
+    """
+    i, comillas, llaves = inicio, None, 0
+    while i < len(texto):
+        c = texto[i]
+        if comillas:
+            if c == comillas:
+                comillas = None
+        elif c in "\"'`":
+            comillas = c
+        elif c == "{":
+            llaves += 1
+        elif c == "}":
+            llaves -= 1
+        elif c == ">" and llaves == 0 and texto[i - 1] != "=":
+            return texto[inicio:i + 1]
+        i += 1
+    return texto[inicio:]
+
+
 @sin_interfaz
 def test_ningun_campo_de_texto_baja_de_16_px():
     """16 px o Safari hace zoom al enfocar, que descuadra la pagina entera."""
@@ -59,14 +89,7 @@ def test_ningun_campo_de_texto_baja_de_16_px():
         texto = fichero.read_text(encoding="utf-8")
         for etiqueta in ("<input", "<select", "<textarea"):
             for trozo in re.finditer(re.escape(etiqueta), texto):
-                # Hasta el cierre de la etiqueta: lo que se mira es su propio
-                # `className`, no el del envoltorio.
-                resto = texto[trozo.start():]
-                fin = min((p for p in (resto.find("/>"), resto.find(">"))
-                           if p != -1), default=-1)
-                if fin == -1:
-                    continue
-                etiqueta_completa = resto[:fin]
+                etiqueta_completa = _etiqueta_completa(texto, trozo.start())
                 if re.search(r"text-(xs|sm|\[1[0-5]px\])", etiqueta_completa):
                     linea = texto[:trozo.start()].count("\n") + 1
                     diminutos.append(f"{fichero.name}:{linea}")

@@ -120,7 +120,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               id={idSeccion}
               value={filtros.seccion}
               onChange={(e) => onCambio({ ...filtros, seccion: e.target.value })}
-              className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800"
+              className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
             >
               <option value="">Todos</option>
               {secciones.data?.secciones.map((s) => (

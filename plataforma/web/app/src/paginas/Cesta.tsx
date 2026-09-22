@@ -41,7 +41,7 @@ import {
   Aviso, Boton, CampoTexto, Cargando, Casilla, Etiqueta, Selector, Tarjeta,
   Vacio, cx,
 } from '../componentes/ui'
-import type { Linea } from '../tipos'
+import type { Linea, Reparto } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
  *
@@ -257,6 +257,75 @@ function UnaTienda({ opcion, mejor }: {
           <p className="text-sm font-medium">No lo tiene:</p>
           <p className="text-sm text-tinta-suave">{opcion.faltan.join(' · ')}</p>
         </div>
+      )}
+    </Tarjeta>
+  )
+}
+
+/** El reparto entre varias tiendas, con **cuantas cosas se compran en cada una**.
+ *
+ *  El desglose ("7 en alcampo, 3 en dia") es lo que hace planificable el
+ *  reparto: con el total y el ahorro solos no se sabe si la segunda parada es
+ *  por una cosa o por veinte, y esa es justo la cuenta que se hace de pie en la
+ *  tienda con el carro al lado. La interfaz vieja ya lo decia (`app.js:718`) y
+ *  se perdio al reescribir la pantalla.
+ *
+ *  Las cuentas que se pintan son LINEAS de la lista, no unidades: "3 en dia"
+ *  son tres cosas que coger. Es lo que cuenta `reparto`
+ *  (`plataforma/api/cesta.py:195`: una entrada por linea resuelta), y decir
+ *  "unidades" seria prometer una precision que el dato no tiene.
+ *
+ *  Una cadena que venga sin su cuenta **no se pinta**. Un "0 en dia" inventado
+ *  se leeria como "no compras nada alli", que es exactamente lo contrario de lo
+ *  que significa estar en la lista de cadenas del reparto.
+ */
+function Repartido({ reparto }: { reparto: Reparto }) {
+  const cuantas = reparto.reparto
+  const desglose: { cadena: string; lineas: number }[] = []
+  if (cuantas) {
+    for (const cadena of reparto.cadenas) {
+      const n = cuantas[cadena]
+      if (typeof n === 'number') desglose.push({ cadena, lineas: n })
+    }
+  }
+
+  return (
+    <Tarjeta>
+      <header className="mb-1 flex flex-wrap items-center gap-2">
+        <h3 className="text-base font-semibold">
+          Repartido entre {reparto.cadenas.length} tiendas
+        </h3>
+        {reparto.merece_la_pena === false && (
+          <Etiqueta tono="aviso">no compensa</Etiqueta>
+        )}
+      </header>
+      <p className="cifra text-2xl font-semibold">{euros(reparto.total_cent)}</p>
+      <p className="mt-1 text-sm text-tinta-suave">
+        {reparto.cadenas.join(' y ')}
+        {reparto.ahorro_cent ? ` · ahorras ${euros(reparto.ahorro_cent)}` : ''}
+      </p>
+      {/* El desglose va en su propia linea y con la tinta normal, no en gris
+          como las cadenas: es el dato que se mira al decidir el viaje, no un
+          detalle al lado del total. */}
+      {desglose.length > 0 && (
+        <p className="mt-1 flex flex-wrap gap-x-3 text-sm">
+          {desglose.map((d) => (
+            <span key={d.cadena}>
+              <span className="cifra font-medium">{d.lineas}</span> en {d.cadena}
+            </span>
+          ))}
+        </p>
+      )}
+      {reparto.merece_la_pena === false && (
+        <p className="mt-2 text-sm text-tinta-suave">
+          Una segunda parada por menos de 1,50 € no es un ahorro: es una
+          molestia con un número delante.
+        </p>
+      )}
+      {reparto.faltan.length > 0 && (
+        <p className="mt-2 text-sm text-tinta-suave">
+          Sin encontrar: {reparto.faltan.join(' · ')}
+        </p>
       )}
     </Tarjeta>
   )
@@ -519,7 +588,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
               // Al enfocarlo se selecciona entero: el dedo en el movil no acierta
               // a seleccionar 60 caracteres de codigo.
               onFocus={(e) => e.target.select()}
-              className="min-h-[44px] min-w-[12rem] flex-1 rounded-lg border border-borde bg-fondo px-3 py-2 text-sm"
+              className="min-h-[44px] min-w-[12rem] flex-1 rounded-lg border border-borde bg-fondo px-3 py-2"
             />
             <Boton variante="principal" onClick={copia}>
               {copiado ?? 'Copiar'}
@@ -871,38 +940,7 @@ export function Cesta() {
             ))}
           </div>
 
-          {compra.data.repartido && (
-            <Tarjeta>
-              <header className="mb-1 flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold">
-                  Repartido entre {compra.data.repartido.cadenas.length} tiendas
-                </h3>
-                {compra.data.repartido.merece_la_pena === false && (
-                  <Etiqueta tono="aviso">no compensa</Etiqueta>
-                )}
-              </header>
-              <p className="cifra text-2xl font-semibold">
-                {euros(compra.data.repartido.total_cent)}
-              </p>
-              <p className="mt-1 text-sm text-tinta-suave">
-                {compra.data.repartido.cadenas.join(' y ')}
-                {compra.data.repartido.ahorro_cent
-                  ? ` · ahorras ${euros(compra.data.repartido.ahorro_cent)}`
-                  : ''}
-              </p>
-              {compra.data.repartido.merece_la_pena === false && (
-                <p className="mt-2 text-sm text-tinta-suave">
-                  Una segunda parada por menos de 1,50 € no es un ahorro: es una
-                  molestia con un número delante.
-                </p>
-              )}
-              {compra.data.repartido.faltan.length > 0 && (
-                <p className="mt-2 text-sm text-tinta-suave">
-                  Sin encontrar: {compra.data.repartido.faltan.join(' · ')}
-                </p>
-              )}
-            </Tarjeta>
-          )}
+          {compra.data.repartido && <Repartido reparto={compra.data.repartido} />}
         </>
       )}
     </div>
