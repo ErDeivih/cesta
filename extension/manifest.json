@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Cesta — la curva de precios donde se decide",
+  "version": "1.0.0",
+  "description": "Dibuja el histórico de precios y dónde está más barato encima de la web del supermercado. Lee sólo de tu propia Cesta.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost:8080/*",
+    "http://cesta:8080/*"
+  ],
+  "background": { "service_worker": "fondo.js" },
+  "options_page": "opciones.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.carrefour.es/supermercado/*",
+        "https://www.dia.es/*",
+        "https://www.aldi.es/p/*",
+        "https://tienda.mercadona.es/product/*",
+        "https://www.compraonline.alcampo.es/products/*"
+      ],
+      "js": ["contenido.js"],
+      "css": ["estilo.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

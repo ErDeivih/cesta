@@ -1,0 +1,487 @@
+/* Cesta. Una interfaz para usar con una mano en el pasillo del supermercado. */
+:root{
+  --papel:#f1f2f3; --panel:#fff; --panel2:#f8f9fa; --tinta:#16181a;
+  --tinta-2:#4a4f54; --tinta-3:#71787e; --linea:#d6d9dc; --linea-f:#b4b9be;
+  --rejilla:#e6e8ea; --ambar:#d4881a; --ambar-s:#fbf0dc;
+  --bien:#2c6f52; --mal:#b8332a;
+  --alcampo:#2a78d6; --aldi:#eb6834; --carrefour:#1baf7a;
+  --dia:#eda100; --mercadona:#e87ba4;
+  --alto:56px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --papel:#141618; --panel:#1c1f22; --panel2:#202428; --tinta:#e8eaec;
+  --tinta-2:#9aa1a8; --tinta-3:#7d858c; --linea:#2e3338; --linea-f:#454c53;
+  --rejilla:#262b2f; --ambar:#e5a541; --ambar-s:#2b2418;
+  --bien:#5fa384; --mal:#e0685d;
+  --alcampo:#3987e5; --aldi:#d95926; --carrefour:#199e70;
+  --dia:#c98500; --mercadona:#d55181;
+}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font:15px/1.5 Archivo,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:calc(var(--alto) + env(safe-area-inset-bottom,0))}
+.num{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+
+.envoltorio{max-width:820px;margin:0 auto;padding:0 16px 32px}
+
+/* barra inferior: el pulgar llega */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:var(--panel);
+  border-top:1px solid var(--linea);padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;border:0;background:none;color:var(--tinta-3);padding:9px 4px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;
+  letter-spacing:.02em;border-top:2px solid transparent;margin-top:-1px}
+nav button[aria-current=page]{color:var(--tinta);border-top-color:var(--ambar)}
+nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+nav .pin{position:absolute;top:5px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;
+  border-radius:8px;background:var(--ambar);color:#fff;font-size:10px;line-height:16px;font-weight:700}
+
+/* cabeceras */
+header.pantalla{padding:20px 0 12px}
+header.pantalla h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.025em}
+header.pantalla p{margin:4px 0 0;color:var(--tinta-3);font-size:13px}
+
+/* aviso de datos viejos o sin conexion */
+.tira{display:flex;gap:9px;align-items:center;padding:9px 13px;border-radius:3px;margin:12px 0;
+  font-size:13.5px;background:var(--ambar-s);border-left:3px solid var(--ambar)}
+.tira.rojo{background:color-mix(in srgb,var(--mal) 12%,transparent);border-left-color:var(--mal)}
+
+/* buscador */
+.caja-buscar{position:sticky;top:env(safe-area-inset-top,0);z-index:20;background:var(--papel);
+  padding:12px 0 10px;margin:0 -16px;padding-inline:16px}
+input[type=search],input[type=text],input[type=password]{width:100%;font:inherit;font-size:16px;
+  padding:11px 13px;border:1px solid var(--linea-f);border-radius:3px;background:var(--panel);color:var(--tinta)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;border:1px solid var(--linea-f);
+  background:var(--panel);color:var(--tinta-2)}
+.chip[aria-pressed=true]{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.chip.cad[aria-pressed=true]{color:#fff}
+.chip.alcampo[aria-pressed=true]{background:var(--alcampo);border-color:var(--alcampo)}
+.chip.aldi[aria-pressed=true]{background:var(--aldi);border-color:var(--aldi)}
+.chip.carrefour[aria-pressed=true]{background:var(--carrefour);border-color:var(--carrefour)}
+.chip.dia[aria-pressed=true]{background:var(--dia);border-color:var(--dia)}
+.chip.mercadona[aria-pressed=true]{background:var(--mercadona);border-color:var(--mercadona)}
+
+/* tarjetas */
+.tarjeta{background:var(--panel);border:1px solid var(--linea);border-radius:3px;margin-bottom:9px;overflow:hidden}
+.cab{width:100%;text-align:left;background:none;border:0;padding:13px 15px;color:inherit;
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.cab:hover{background:var(--panel2)}
+.tit{font-size:15px;font-weight:600;line-height:1.35}
+.meta{font-size:11.5px;color:var(--tinta-3);margin-top:3px}
+.der{text-align:right;white-space:nowrap}
+.der .eti{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-3);font-weight:600}
+.der .precio{display:block;font-size:17px;font-weight:700}
+.der .unit{display:block;font-size:11.5px;color:var(--tinta-3)}
+.cuerpo{border-top:1px solid var(--linea);background:var(--panel2);padding:4px 0 8px}
+
+/* filas de producto */
+.prod{display:grid;grid-template-columns:76px 1fr auto;gap:11px;align-items:center;padding:9px 15px}
+.prod+.prod{border-top:1px solid var(--rejilla)}
+.cadena{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:right}
+.cadena.alcampo{color:var(--alcampo)} .cadena.aldi{color:var(--aldi)}
+.cadena.carrefour{color:var(--carrefour)} .cadena.dia{color:var(--dia)}
+.cadena.mercadona{color:var(--mercadona)}
+.prod .n{font-size:13.5px;line-height:1.38}
+.prod .f{font-size:11px;color:var(--tinta-3);margin-top:2px}
+.prod .p{text-align:right}
+.prod .p b{display:block;font-size:14px;font-weight:700}
+.prod .p span{display:block;font-size:11px;color:var(--tinta-3)}
+.barra{grid-column:1/-1;height:4px;background:var(--rejilla);border-radius:2px}
+.barra i{display:block;height:100%;border-radius:2px}
+.sello{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:1px 5px;
+  border-radius:2px;margin-left:5px;border:1px solid var(--linea-f);color:var(--tinta-2);vertical-align:1px}
+.sello.a,.sello.b{background:var(--bien);border-color:var(--bien);color:#fff}
+.sello.d,.sello.e{background:var(--mal);border-color:var(--mal);color:#fff}
+.sello.suave{background:none;font-weight:400;color:var(--tinta-3)}
+.sello.oferta{background:var(--mal);border-color:var(--mal);color:#fff}
+.fecha-vieja{color:var(--ambar);font-size:11px;font-weight:600}
+
+/* acciones */
+.acciones{display:flex;gap:8px;padding:10px 15px 4px}
+.bt{flex:1;padding:10px;border-radius:3px;border:1px solid var(--linea-f);background:var(--panel);
+  color:var(--tinta);font-size:13.5px;font-weight:600}
+.bt.principal{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.bt.activo{background:var(--ambar-s);border-color:var(--ambar);color:var(--tinta)}
+
+/* lista de la compra */
+.linea{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  background:var(--panel);border:1px solid var(--linea);border-radius:3px;margin-bottom:6px;padding:12px 14px}
+.linea.tachada{opacity:.5}
+.linea.tachada .lt{text-decoration:line-through}
+.marca-check{width:24px;height:24px;border-radius:4px;border:2px solid var(--linea-f);background:none;
+  display:grid;place-items:center;padding:0;flex:none}
+.linea.tachada .marca-check{background:var(--bien);border-color:var(--bien)}
+.marca-check svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
+.linea.tachada .marca-check svg{opacity:1}
+.lt{font-size:14.5px;font-weight:600;line-height:1.3}
+.lm{font-size:11.5px;color:var(--tinta-3);margin-top:2px}
+.cant{display:flex;align-items:center;gap:2px}
+.cant button{width:30px;height:30px;border-radius:3px;border:1px solid var(--linea-f);
+  background:var(--panel);color:var(--tinta);font-size:16px;line-height:1;padding:0}
+.cant span{min-width:26px;text-align:center;font-size:14px;font-weight:700}
+
+/* donde comprar */
+.opcion{background:var(--panel);border:1px solid var(--linea);border-radius:3px;padding:14px 15px;margin-bottom:8px}
+.opcion.mejor{border-color:var(--bien);box-shadow:0 0 0 2px color-mix(in srgb,var(--bien) 18%,transparent)}
+.opcion .fila{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.opcion .cn{font-size:15px;font-weight:700;text-transform:capitalize}
+.opcion .tot{font-size:19px;font-weight:700}
+.opcion .det{font-size:12.5px;color:var(--tinta-3);margin-top:5px}
+.opcion .det.falta{color:var(--mal)}
+.opcion .ahorro{color:var(--bien);font-size:13px;font-weight:700;margin-top:5px}
+
+/* panel */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px;margin:14px 0 22px}
+.tile{background:var(--panel);border:1px solid var(--linea);border-left:4px solid var(--ambar);
+  padding:12px 14px;border-radius:2px}
+.tile .q{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-2)}
+.tile .v{display:block;font-size:24px;font-weight:700;margin-top:5px}
+.tile .s{display:block;font-size:12px;color:var(--tinta-2);margin-top:2px;line-height:1.38}
+figure{margin:0 0 22px;background:var(--panel);border:1px solid var(--linea);border-radius:3px;padding:16px}
+figure h2{margin:0 0 2px;font-size:14px;font-weight:600}
+figure .sub{font-size:12px;color:var(--tinta-3);margin-bottom:14px}
+figcaption{font-size:12.5px;color:var(--tinta-2);margin-top:12px;padding-top:10px;border-top:1px solid var(--linea);line-height:1.5}
+.bh{display:flex;flex-direction:column;gap:7px}
+.bh .r{display:grid;grid-template-columns:74px 1fr;gap:10px;align-items:center}
+.bh .n{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;text-align:right;color:var(--tinta-2)}
+.bh .t{position:relative;height:22px;background:var(--rejilla);border-radius:2px}
+.bh .b{height:100%;border-radius:0 4px 4px 0;display:flex;align-items:center;justify-content:flex-end;
+  padding-right:7px;min-width:40px;font-size:11.5px;font-weight:700;color:#fff}
+.bh .s{position:absolute;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--tinta-3);white-space:nowrap}
+
+/* estados */
+.vacio{padding:36px 18px;text-align:center;color:var(--tinta-3);font-size:14px;
+  background:var(--panel);border:1px dashed var(--linea-f);border-radius:3px;line-height:1.6}
+.cargando{padding:32px;text-align:center;color:var(--tinta-3);font-size:13.5px}
+
+/* entrar */
+.entrar{max-width:320px;margin:14vh auto;padding:0 16px}
+.entrar h1{font-size:30px;font-weight:800;margin:0 0 6px;letter-spacing:-.03em}
+.entrar p{color:var(--tinta-3);font-size:13.5px;margin:0 0 22px}
+.entrar label{display:block;font-size:12px;font-weight:600;color:var(--tinta-2);margin:12px 0 5px}
+.entrar .error{color:var(--mal);font-size:13px;margin-top:12px}
+.entrar .cambiar{font-size:13px;color:var(--tinta-3);margin:18px 0 0;text-align:center}
+/* Un boton que parece un enlace. Es un <button> y no un <a> porque no lleva a
+   ninguna parte: cambia el formulario de esta misma pantalla. Un <a href="#">
+   se lo lee un lector de pantalla como un enlace que no va a ningun sitio. */
+.entrar .enlace{background:none;border:0;padding:0;font:inherit;font-weight:700;
+  color:var(--tinta);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.entrar .enlace:hover{color:var(--acento,var(--tinta))}
+
+/* aviso flotante */
+.aviso-flota{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--alto) + 14px + env(safe-area-inset-bottom,0));
+  background:var(--tinta);color:var(--papel);padding:10px 16px;border-radius:99px;font-size:13.5px;
+  font-weight:600;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (min-width:700px){ .prod{grid-template-columns:92px 1fr auto} }
+
+
+/* ===================================================================== */
+/*  Modo pasillo: lo que se usa de verdad con el carro y una mano ocupada */
+/* ===================================================================== */
+
+/* El total, siempre a la vista. Es lo primero que se mira al anadir cosas,
+   mucho antes de calcular donde comprar la lista entera. */
+.marcador{position:sticky;top:env(safe-area-inset-top,0);z-index:22;background:var(--panel);
+  border:1px solid var(--linea);border-radius:3px;padding:12px 15px;margin:10px 0 14px;
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.marcador .izq .q{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--tinta-3)}
+.marcador .izq .v{font-size:27px;font-weight:800;line-height:1.1;letter-spacing:-.02em}
+.marcador .der2{text-align:right;font-size:12px;color:var(--tinta-3);line-height:1.5}
+.marcador .der2 b{color:var(--tinta);font-weight:700}
+.marcador .aprox{font-size:11px;color:var(--tinta-3);margin-top:1px}
+.progreso{grid-column:1/-1;height:5px;background:var(--rejilla);border-radius:3px;overflow:hidden}
+.progreso i{display:block;height:100%;background:var(--bien);border-radius:3px;
+  transition:width .25s ease}
+@media (prefers-reduced-motion:reduce){.progreso i{transition:none}}
+
+/* Dos secciones, no una lista tachada: por recoger y en el carro */
+.seccion{margin:20px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.seccion h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3)}
+.seccion .cuenta2{font-size:12px;color:var(--tinta-3)}
+
+/* La linea, con foto y area de pulsacion grande */
+.linea{display:grid;grid-template-columns:auto 44px 1fr auto;gap:11px;align-items:center;
+  background:var(--panel);border:1px solid var(--linea);border-radius:3px;margin-bottom:6px;
+  padding:10px 13px;min-height:62px}
+.linea.en-carro{opacity:.62;background:var(--panel2)}
+.linea.en-carro .lt{text-decoration:line-through;text-decoration-thickness:1.5px}
+.linea .foto{width:44px;height:44px;border-radius:3px;object-fit:contain;background:#fff;flex:none}
+.linea .sinfoto{width:44px;height:44px;border-radius:3px;background:var(--rejilla);flex:none}
+.marca-check{width:30px;height:30px;border-radius:15px;border:2px solid var(--linea-f);background:none;
+  display:grid;place-items:center;padding:0;flex:none}
+.linea.en-carro .marca-check{background:var(--bien);border-color:var(--bien)}
+.linea .precio-l{font-size:13px;font-weight:700;white-space:nowrap}
+.linea .precio-l small{display:block;font-size:10.5px;font-weight:400;color:var(--tinta-3)}
+
+/* Ficha del producto: media pantalla que sube desde abajo */
+.hoja{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;
+  background:rgba(0,0,0,.45)}
+.hoja .panel-hoja{background:var(--papel);width:100%;max-height:88vh;overflow-y:auto;
+  border-radius:14px 14px 0 0;padding:0 0 calc(24px + env(safe-area-inset-bottom,0))}
+.hoja .asa{width:38px;height:4px;border-radius:2px;background:var(--linea-f);margin:9px auto 4px}
+.hoja .cabh{position:sticky;top:0;background:var(--papel);padding:4px 18px 12px;z-index:2}
+.hoja h2{margin:6px 0 2px;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.hoja .sub2{font-size:12.5px;color:var(--tinta-3)}
+.hoja .contenido{padding:0 18px}
+.hoja .cerrar{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:16px;
+  border:1px solid var(--linea);background:var(--panel);color:var(--tinta);font-size:17px;line-height:1;padding:0}
+.retrato{width:100%;max-width:190px;aspect-ratio:1;object-fit:contain;background:#fff;
+  border:1px solid var(--linea);border-radius:4px;margin:0 auto 14px;display:block}
+.dato{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--linea);font-size:13.5px}
+.dato dt{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-3);padding-top:3px}
+.dato dd{margin:0;line-height:1.5}
+.oferta-caja{background:color-mix(in srgb,var(--mal) 10%,transparent);border-left:3px solid var(--mal);
+  padding:10px 13px;border-radius:0 3px 3px 0;margin:12px 0;font-size:13.5px}
+.oferta-caja b{color:var(--mal)}
+
+/* miniaturas en los resultados */
+.cab{grid-template-columns:auto 1fr auto}
+.mini{width:46px;height:46px;border-radius:3px;object-fit:contain;background:#fff;flex:none}
+.sinmini{width:46px;height:46px;border-radius:3px;background:var(--rejilla);flex:none}
+.prod{grid-template-columns:auto 72px 1fr auto}
+.prod .minip{width:34px;height:34px;border-radius:3px;object-fit:contain;background:#fff}
+
+/* boton grande de anadir, para el pulgar */
+.anadir-rapido{width:38px;height:38px;border-radius:19px;border:1px solid var(--linea-f);
+  background:var(--panel);color:var(--tinta);font-size:21px;line-height:1;padding:0;flex:none}
+.anadir-rapido.puesto{background:var(--bien);border-color:var(--bien);color:#fff}
+
+/* compartir */
+.enlace-caja{display:flex;gap:8px;margin-top:10px}
+.enlace-caja input{flex:1;font-size:13px;font-family:"JetBrains Mono",monospace}
+.persona{display:flex;justify-content:space-between;align-items:center;padding:9px 0;
+  border-bottom:1px solid var(--linea);font-size:14px}
+.persona .papel{font-size:11px;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.06em}
+
+/* novedades */
+.novedad{display:flex;gap:9px;align-items:baseline;font-size:13px;padding:5px 0;color:var(--tinta-2)}
+.novedad b{color:var(--tinta)}
+
+/* ajustes */
+.ajuste{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;
+  border-bottom:1px solid var(--linea)}
+.ajuste .et2{font-size:14.5px;font-weight:600}
+.ajuste .ex{font-size:12.5px;color:var(--tinta-3);margin-top:2px}
+.interruptor{width:46px;height:27px;border-radius:14px;border:0;background:var(--linea-f);position:relative;padding:0;flex:none}
+.interruptor[aria-checked=true]{background:var(--bien)}
+.interruptor i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:11px;background:#fff;
+  transition:transform .18s ease}
+.interruptor[aria-checked=true] i{transform:translateX(19px)}
+@media (prefers-reduced-motion:reduce){.interruptor i{transition:none}}
+
+
+/* El aviso que hay que ensenar siempre, no escondido en ajustes: es lo primero
+   que pregunta alguien que no sabe de donde salen estos precios. */
+.letra-chica{grid-column:1/-1;font-size:11px;color:var(--tinta-3);line-height:1.45;margin-top:2px}
+
+
+/* Con el movil al 200 % de texto, tres columnas no caben. Dos si.
+   Tu madre va a usar esta app durante anos y la vista cansa. */
+@media (max-width:420px){
+  .marcador .izq .v{font-size:24px}
+  .linea{grid-template-columns:auto 36px 1fr auto;gap:9px}
+  .linea .foto,.linea .sinfoto{width:36px;height:36px}
+}
+
+/* --- filtros de la busqueda ------------------------------------------- */
+/* Plegados por defecto: en un movil, cada fila antes de los resultados es una
+   fila de resultados menos. El contador del resumen es lo que impide el fallo
+   clasico de un filtro escondido: buscar, no encontrar nada y no saber por que. */
+.filtros { margin-top: 8px; }
+.filtros > summary {
+  cursor: pointer; font-size: .9rem; color: var(--tinta-3);
+  padding: 6px 2px; list-style: none; user-select: none;
+  min-height: 44px; display: flex; align-items: center;   /* dedo, no raton */
+}
+.filtros > summary::-webkit-details-marker { display: none; }
+.filtros > summary::before { content: '⌄'; margin-right: 6px; transition: transform .15s; }
+.filtros[open] > summary::before { transform: rotate(180deg); }
+.filtros > summary .cuenta {
+  background: var(--tinta); color: var(--papel); border-radius: 999px;
+  padding: 1px 8px; margin-left: 8px; font-size: .78rem; font-weight: 600;
+}
+.filtros .chips { margin-top: 4px; }
+
+/* --- sellos en la ficha ----------------------------------------------- */
+.sellos-ficha { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; }
+/* De donde sale el dato, en pequeno y al lado. Un certificado auditado y una
+   palabra en el nombre del producto no valen lo mismo, y la ficha lo dice. */
+.fuente-dato { font-size: .78rem; color: var(--tinta-3); }
+.hasta { font-size: .85rem; opacity: .85; }
+
+table.nutricion { border-collapse: collapse; width: 100%; font-size: .9rem; }
+table.nutricion td { padding: 3px 0; border-bottom: 1px solid var(--linea); }
+table.nutricion td:last-child { text-align: right; white-space: nowrap; }
+table.nutricion tr:last-child td { border-bottom: 0; }
+
+/* --- avisos graves ---------------------------------------------------- */
+/* Un lote retirado de la venta no es un detalle de la ficha: va arriba y se ve.
+   Es lo unico de toda la interfaz que usa el rojo de fondo. */
+.aviso-grave {
+  background: var(--mal); color: #fff; border-radius: 10px;
+  padding: 10px 12px; margin: 0 0 12px; font-size: .92rem; line-height: 1.35;
+}
+/* Una oferta de tarjeta se ve distinta de una oferta de verdad, porque no baja
+   lo que pagas hoy en caja. */
+.oferta-caja.club { opacity: .85; border-left: 3px solid var(--ambar); }
+
+/* ------------------------------------------------------ explorar pasillos --
+   La rejilla crece sola. Son 19 pasillos, y una lista vertical de 19 obliga a
+   recorrerla entera para ver el ultimo. */
+.titulillo{font-size:13px;font-weight:600;margin:26px 0 10px;color:var(--tinta-3);
+  text-transform:uppercase;letter-spacing:.06em}
+.pasillos{display:grid;gap:7px;grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
+.pasillo{display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  padding:11px 13px;border-radius:3px;text-align:left;font:inherit;color:inherit;
+  background:var(--panel);border:1px solid var(--linea)}
+.pasillo:hover{background:var(--panel2);border-color:var(--linea-f)}
+.pasillo .pn{font-size:14px;font-weight:600;line-height:1.3}
+.pasillo .pc{font-size:11.5px;color:var(--tinta-3)}
+.pasillo .pu{font-size:11px;color:var(--tinta-3);font-style:italic}
+
+.enpasillo{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 10px;padding:9px 12px;border-radius:3px;font-size:13px;
+  background:var(--panel2);border:1px solid var(--linea)}
+
+/* --------------------------------------------------- pestanas del panel -- */
+.subtabs{display:flex;gap:4px;margin:0 0 14px;flex-wrap:wrap}
+.subtab{padding:7px 13px;border-radius:99px;font:inherit;font-size:12.5px;
+  font-weight:600;background:var(--panel);color:var(--tinta-2);
+  border:1px solid var(--linea-f)}
+.subtab.activa{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.controles{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex-wrap:wrap;margin:0 0 12px}
+
+/* --------------------------------------------- bajadas y ofertas dudosas -- */
+.mov,.dudosa{display:flex;gap:12px;align-items:flex-start;position:relative;
+  padding:12px 14px;margin-bottom:9px;border-radius:3px;
+  background:var(--panel);border:1px solid var(--linea)}
+.mov img,.dudosa img{width:52px;height:52px;flex:none;
+  object-fit:contain;border-radius:3px;background:#fff}
+.mov .txt,.dudosa .txt{flex:1;min-width:0}
+.mov h3,.dudosa h3{font-size:15px;font-weight:600;margin:0;line-height:1.35}
+.mov .meta,.dudosa .meta{font-size:11.5px;color:var(--tinta-3);margin-top:3px}
+.mov .precios{margin:7px 0 0;font-size:15px}
+.mov .precios s{color:var(--tinta-3);font-size:13px;margin-right:7px}
+.mov .precios .uni{color:var(--tinta-3);font-size:12px}
+.mov .promo,.dudosa .promo{margin:6px 0 0;font-size:12px;font-weight:600;
+  color:var(--ambar)}
+.mov .aviso-tarjeta,.dudosa .aviso-tarjeta{margin:5px 0 0;font-size:11.5px;
+  color:var(--tinta-3);font-style:italic}
+/* El porcentaje es una columna suya, no algo flotando encima del titulo: en
+   absoluto se le echaba encima al nombre en cuanto ocupaba dos lineas. */
+.mov .delta{flex:none;align-self:flex-start;font-size:15px;font-weight:700;
+  white-space:nowrap;padding-top:1px}
+.mov .delta.baja{color:var(--bien)}
+.mov .delta.sube{color:var(--mal)}
+.dudosa .porque{margin:7px 0 0;font-size:13px;line-height:1.4}
+
+/* La regla de 90 dias. La marca pegada a la derecha significa que "la oferta"
+   esta entre lo mas caro del trimestre; se entiende sin leer nada. */
+.dudosa .leyenda{margin:12px 0 5px;font-size:11.5px;color:var(--tinta-3)}
+.dudosa .regla{position:relative;height:26px;margin:0;
+  border-top:2px solid var(--rejilla)}
+.dudosa .regla .marca{position:absolute;top:-6px;width:3px;height:11px;
+  background:var(--mal);border-radius:2px;transform:translateX(-1px)}
+.dudosa .regla .extremo{position:absolute;top:8px;font-size:11px;color:var(--tinta-3)}
+.dudosa .regla .extremo.izq{left:0}
+.dudosa .regla .extremo.der{right:0}
+
+@media (max-width:380px){
+  .pasillos{grid-template-columns:1fr 1fr}
+  .pasillo{padding:9px 10px}
+}
+
+/* ------------------------------------------------------- gráficos del panel --
+   Cinco cadenas, cinco colores fijos: el color sigue a la entidad, nunca al
+   puesto que ocupe ese día. Los tres claros no llegan a 3:1 contra el fondo
+   blanco, así que ningún dato depende sólo del color: hay leyenda, etiqueta
+   directa en el último punto y tabla desplegable. */
+.gr{width:100%;height:auto;display:block;margin:8px 0 4px;overflow:visible}
+.gr .rej{stroke:var(--rejilla);stroke-width:1}
+.gr .base{stroke:var(--tinta-3);stroke-width:1;stroke-dasharray:3 3}
+.gr .ejeY,.gr .ejeX{font-size:10px;fill:var(--tinta-3);
+  font-family:'JetBrains Mono',ui-monospace,monospace}
+.gr .ejeY{text-anchor:end}
+.gr .ejeX{text-anchor:middle}
+.gr .dir{font-size:11px;font-weight:700;fill:var(--tinta-2);
+  font-family:'JetBrains Mono',ui-monospace,monospace}
+.leyenda-gr{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0 0;font-size:12px;
+  color:var(--tinta-2)}
+.leyenda-gr span{display:inline-flex;align-items:center;gap:6px}
+.leyenda-gr i{width:10px;height:10px;border-radius:2px;flex:none}
+
+.tabla-gr{margin:10px 0 0;font-size:13px}
+.tabla-gr summary{cursor:pointer;color:var(--tinta-2);font-size:12.5px}
+.tabla-gr table{width:100%;border-collapse:collapse;margin-top:8px}
+.tabla-gr th,.tabla-gr td{padding:5px 7px;border-bottom:1px solid var(--linea);
+  text-align:right;font-size:12.5px}
+.tabla-gr th:first-child,.tabla-gr td:first-child{text-align:left}
+.tabla-gr th{color:var(--tinta-3);font-weight:600}
+
+/* ---------------------------------------------------- barras divergentes --
+   Dos polos y un gris en medio, nunca un arcoíris. El par está validado en
+   claro y en oscuro; el cero es una línea, no un color. */
+:root{--debajo:#0d9488; --encima:#d4541a}
+:root[data-tema=oscuro]{--debajo:#0d9488; --encima:#d4541a}
+figure.pos{margin:0 0 18px}
+figure.pos h2{font-size:15px;margin:0}
+.dv{margin:8px 0 0}
+.dvr{display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;
+  margin-bottom:5px}
+.dvn{font-size:12.5px;color:var(--tinta-2)}
+.dvb{position:relative;height:18px}
+.dvcero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--tinta-3)}
+.dvf{position:absolute;top:3px;height:12px;border-radius:3px}
+.dvf.barato{background:var(--debajo)}
+.dvf.caro{background:var(--encima)}
+.dvv{position:absolute;top:2px;font-size:11.5px;color:var(--tinta-2);white-space:nowrap}
+
+/* ------------------------------------------------------------ movimientos -- */
+table.tm{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tm th,table.tm td{padding:6px 7px;border-bottom:1px solid var(--linea)}
+table.tm th{color:var(--tinta-3);font-weight:600;text-align:left}
+table.tm .d{text-align:right}
+table.tm td.d{position:relative}
+table.tm .mini{position:absolute;left:6px;right:auto;bottom:2px;height:2px;
+  background:var(--tinta-3);opacity:.45;max-width:38%}
+.pt,table.tm .pt{display:inline-block;width:8px;height:8px;border-radius:2px;
+  margin-right:6px;vertical-align:-1px}
+table.tm .salto{color:var(--tinta-3);font-size:11px;margin-left:4px}
+table.tm .nw{white-space:nowrap}
+table.tm .med{display:block;color:var(--tinta-3);font-size:11px;margin-top:2px}
+table.tm .quieto{color:var(--tinta-3);font-style:italic;font-size:11.5px}
+
+/* ------------------------------------------------------------------ avisos --
+   Lo único de la pantalla de favoritos que te estaba esperando a ti, así que va
+   arriba del todo y con el color de la casa. */
+.saltan{margin:0 0 18px}
+.saltan h2,.misavisos h2{font-size:13px;font-weight:600;margin:0 0 8px;
+  color:var(--tinta-3);text-transform:uppercase;letter-spacing:.06em}
+.salta{display:flex;gap:12px;align-items:center;justify-content:space-between;
+  padding:12px 14px;margin-bottom:7px;border-radius:3px;
+  background:var(--ambar-s);border:1px solid var(--ambar)}
+.salta h3{font-size:14.5px;font-weight:600;margin:0;line-height:1.3}
+.salta .porque{margin:3px 0 0;font-size:12.5px;color:var(--tinta-2)}
+.salta .precio{font-size:15px;font-weight:700;white-space:nowrap}
+.salta .unit{font-size:11.5px;font-weight:400;color:var(--tinta-3)}
+.saltan #b-vistos{margin-top:4px}
+
+.misavisos{margin:22px 0 0}
+.misavisos .tira{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;font-size:12.5px}
+
+.avisos-de{padding:12px 15px;border-top:1px solid var(--linea);
+  background:var(--panel2)}
+.avisos-de .chips{margin-bottom:10px}
+.avisos-de .chip{white-space:normal;text-align:left}
+.umbral{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.umbral input{width:84px;padding:4px 7px;font:inherit;font-size:13px;
+  border:1px solid var(--linea-f);border-radius:3px;background:var(--panel);
+  color:inherit}

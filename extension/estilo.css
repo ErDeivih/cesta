@@ -1,0 +1,32 @@
+/* Encima de la web del supermercado, así que todo lleva prefijo y nada hereda:
+   una hoja de estilos ajena puede tener cualquier cosa puesta en `aside`. */
+.cesta-panel{
+  position:fixed; right:16px; bottom:16px; z-index:2147483000;
+  width:280px; padding:14px 16px; box-sizing:border-box;
+  font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:#16181a; background:#fff; border:1px solid #d6d9dc; border-radius:4px;
+  box-shadow:0 6px 24px rgba(0,0,0,.14);
+}
+.cesta-panel *{box-sizing:border-box}
+.cesta-panel header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px}
+.cesta-marca{font-size:11px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:#d4881a}
+.cesta-cerrar{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;
+  color:#71787e;padding:0 2px}
+.cesta-precio{margin:0 0 6px;font-size:15px}
+.cesta-precio b{font-size:20px}
+.cesta-precio span{color:#71787e;font-size:12.5px}
+.cesta-curva{display:block;width:100%;height:auto;color:#2a78d6;margin:6px 0 2px}
+.cesta-pie{margin:0;font-size:11.5px;color:#71787e}
+.cesta-otro{margin:10px 0 0;font-size:13px;padding-top:9px;border-top:1px solid #e6e8ea}
+.cesta-ahorro{color:#2c6f52;font-weight:700}
+.cesta-fecha{margin:8px 0 0;font-size:11px;color:#9aa1a8}
+.cesta-flojo{font-size:12.5px;color:#71787e;width:auto;max-width:280px}
+
+@media (prefers-color-scheme: dark){
+  .cesta-panel{color:#e8eaec;background:#1c1f22;border-color:#2e3338}
+  .cesta-otro{border-top-color:#262b2f}
+  .cesta-curva{color:#3987e5}
+  .cesta-ahorro{color:#5fa384}
+}

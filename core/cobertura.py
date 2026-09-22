@@ -1,0 +1,200 @@
+"""¿Falta media tienda? Comparar la captura de hoy con la ultima buena, por rama.
+
+El fallo que obliga a escribir esto
+-----------------------------------
+El 18 de septiembre de 2026, Alcampo entrego 20.571 productos en vez de 23.573 y
+la ejecucion se dio por **completa, con cero errores**. El bronze se escribio, el
+pipeline lo proceso y el catalogo del dia salio a la app.
+
+Faltaba la rama **Frescos entera**: 2.646 productos el dia anterior, 91 ese dia.
+Fruta, verdura, carne y pescado, que es justo donde mas se notan las diferencias
+de precio entre supermercados y la mitad de la razon de ser de esta aplicacion.
+
+Nadie se entero hasta que alguien comparo los dos dias a mano.
+
+Por que los controles que ya habia no lo vieron
+-----------------------------------------------
+Habia tres, y los tres miran el **total**:
+
+    check_drift          aviso en el log, no decide nada
+    MERMA_ACEPTABLE      solo se aplica si la ejecucion ya se dio por parcial
+    errores == 0         no hubo ni un error: nadie fallo, simplemente no se pidio
+
+Un total puede bajar un 13 % por mil razones normales. Lo que no es normal es que
+una rama con 2.646 productos se quede en 91 **mientras las demas siguen igual**.
+El total lo esconde; la rama lo grita.
+
+Como se usa
+-----------
+    caidas = cobertura.revisa(df, "alcampo")
+    if caidas:
+        # la ejecucion no esta completa por mucho que no haya habido errores
+"""
+from __future__ import annotations
+
+from collections import Counter
+
+import polars as pl
+
+from core import config
+
+# Una rama tiene que ser lo bastante grande para que su desaparicion signifique
+# algo. Por debajo de esto, que un dia no salga es ruido normal del catalogo.
+#
+# Es RELATIVO al tamano del catalogo, y eso importa: con un minimo fijo de 100,
+# el control era inerte en Aldi -- 2.065 productos repartidos en 100 categorias,
+# ninguna llega a 100 -- y tambien en cualquier prueba pequena. Se probo con un
+# catalogo de mentira de 60 productos al que se le quitaba una rama de 24 (el
+# 40 %) y el control no decia nada.
+#
+# Ahora vigila cualquier rama que sea el 2 % del catalogo, con suelo de 20
+# productos (por debajo de eso es ruido de verdad) y techo de 100 (por encima no
+# hace falta ser mas estricto: en Alcampo el 2 % son 471 y perder 100 productos
+# de una rama ya merece mirarlo).
+MINIMO_RELATIVO = 0.02
+MINIMO_SUELO = 20
+MINIMO_TECHO = 100
+
+
+def minimo_para_vigilar(total: int) -> int:
+    return max(MINIMO_SUELO, min(MINIMO_TECHO, int(total * MINIMO_RELATIVO)))
+
+# Cuanto puede encoger una rama sin que salte la alarma. La mitad es mucho, y
+# aun asi el caso real de Alcampo perdio el 96,6 % de la suya.
+CAIDA_MAXIMA = 0.5
+
+
+def _rama(categoria: str | None, fuente: str) -> str:
+    """El primer nivel de la categoria, como lo escribe cada cadena."""
+    if not categoria:
+        return "(sin categoria)"
+    if fuente == "alcampo":            # "Frescos > Pescaderia > ..."
+        return categoria.split(" > ")[0].strip()
+    if fuente == "dia":                # "https://www.dia.es/congelados-y-helados/..."
+        trozos = [t for t in categoria.split("/") if t]
+        return trozos[2] if len(trozos) > 2 else categoria
+    return categoria.split("/")[0].strip()
+
+
+def por_rama(df: pl.DataFrame, fuente: str) -> dict[str, int]:
+    if "categoria" not in df.columns or df.is_empty():
+        return {}
+    return dict(Counter(_rama(c, fuente) for c in df["categoria"].to_list()))
+
+
+def _ultimo_bronze(fuente: str) -> pl.DataFrame | None:
+    partes = sorted((config.DATA / "bronze" / f"fuente={fuente}").glob(
+        "fecha=*/part.parquet"))
+    if not partes:
+        return None
+    try:
+        return pl.read_parquet(partes[-1])
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def particiones_bronze() -> set[tuple[str, str]]:
+    """Los pares (cadena, fecha) que hay escritos en bronze, ahora mismo.
+
+    Un solo sitio que sepa como esta puesto bronze en disco. Lo usan dos
+    controles distintos -- el de la ejecucion diaria y el del resumen -- y la
+    experiencia dice que la misma regla escrita en dos sitios acaba siendo dos
+    reglas distintas.
+    """
+    raiz = config.DATA / "bronze"
+    return {
+        (parte.parent.parent.name.split("=", 1)[1],
+         parte.parent.name.split("=", 1)[1])
+        for parte in raiz.glob("fuente=*/fecha=*/*.parquet")
+        if "=" in parte.parent.name and "=" in parte.parent.parent.name
+    }
+
+
+def apartados() -> dict[tuple[str, str], str]:
+    """Particiones de bronze que alguien aparto a mano, y por que.
+
+    `docs/OPERACION.md` dice que un bronze malo se **aparta, no se borra**:
+
+        mv data/bronze/fuente=alcampo/fecha=2026-09-18 \
+           data/debug/descartados/alcampo-2026-09-18-sin-frescos
+
+    El motivo va en el nombre de la carpeta. Esto lo lee de vuelta, para que los
+    controles sepan distinguir "esto lo apartaste tu, y ahi esta" de "esto ha
+    desaparecido y no hay rastro". Son dos situaciones muy distintas y durante un
+    dia entero se confundieron: el 18 de septiembre de 2026 se dio por perdido un
+    bronze que estaba entero en `data/debug/descartados`, apartado a proposito esa
+    misma manana por venir sin la rama Frescos.
+
+    Devuelve {(cadena, fecha): motivo}.
+    """
+    raiz = config.DATA / "debug" / "descartados"
+    fuera = {}
+    if not raiz.exists():
+        return fuera
+    for carpeta in raiz.glob("*"):
+        if not carpeta.is_dir():
+            continue
+        # <cadena>-<aaaa-mm-dd>-<motivo con guiones>
+        trozos = carpeta.name.split("-")
+        if len(trozos) < 4:
+            continue
+        fuente, anio, mes, dia = trozos[0], trozos[1], trozos[2], trozos[3]
+        fecha = f"{anio}-{mes}-{dia}"
+        if not (anio.isdigit() and mes.isdigit() and dia.isdigit()):
+            continue
+        motivo = "-".join(trozos[4:]) or "sin motivo apuntado"
+        fuera[(fuente, fecha)] = motivo.replace("-", " ")
+    return fuera
+
+
+def sin_bronze(fuentes: list[str], dia: str) -> list[str]:
+    """De las cadenas que dicen haber ido bien, cuales no dejaron bronze.
+
+    El 18 de septiembre de 2026 el colector de Alcampo termino con 20.571
+    productos y cero errores a las 08:26, y a las 08:52 la carpeta
+    `bronze/fuente=alcampo/fecha=2026-09-18` ya no estaba. El pipeline siguio con
+    la instantanea del dia anterior, el resumen dijo trece dias acumulados tan
+    tranquilo, y en gold quedaron 20.559 filas de un dia sin bronze. Aquel caso
+    resulto ser un apartado a proposito -- estaba entero en
+    `data/debug/descartados` --, pero eso se supo un dia despues, y lo que quedo
+    claro es lo otro: **nada en el sistema se entero de que la carpeta ya no
+    estaba**, ni para bien ni para mal.
+
+    Esto se mira **antes** del pipeline, que es cuando todavia sirve de algo: el
+    crudo del dia sigue en disco y `reprocesar --fuente X --fecha Y` lo arregla en
+    un minuto.
+
+    Una cadena que se nego a escribir a proposito -- porque el control de
+    cobertura vio media tienda desaparecida -- ya devuelve error, asi que no llega
+    aqui: esta lista es solo para las que dijeron que todo habia ido bien.
+    """
+    hay = particiones_bronze()
+    return [f for f in fuentes if (f, dia) not in hay]
+
+
+def revisa(df: pl.DataFrame, fuente: str, *,
+           minimo: int | None = None,
+           caida: float = CAIDA_MAXIMA) -> list[str]:
+    """Ramas que se han hundido respecto al ultimo bronze bueno.
+
+    Devuelve una lista de frases listas para imprimir, vacia si todo bien. No
+    decide nada: quien llama es el que sabe si eso justifica no guardar.
+    """
+    anterior = _ultimo_bronze(fuente)
+    if anterior is None or anterior.is_empty():
+        return []                       # primera captura: no hay con que comparar
+    antes = por_rama(anterior, fuente)
+    ahora = por_rama(df, fuente)
+    if not antes:
+        return []
+    if minimo is None:
+        minimo = minimo_para_vigilar(len(anterior))
+    caidas = []
+    for rama, n_antes in sorted(antes.items(), key=lambda x: -x[1]):
+        if n_antes < minimo:
+            continue
+        n_ahora = ahora.get(rama, 0)
+        if n_ahora < n_antes * (1 - caida):
+            perdido = 100 * (1 - n_ahora / n_antes)
+            caidas.append(f"{rama}: {n_antes} -> {n_ahora} ({perdido:.0f}% menos)")
+    return caidas

@@ -1,0 +1,14 @@
+# Tu lista real de la compra. Empieza corto: 30-50 lineas.
+codigo_postal: "28001"
+cadenas: [mercadona]        # anade carrefour, dia, alcampo cuando el colector exista
+productos:
+  - nombre: "leche entera"
+    unidad: l
+    cantidad_habitual: 6
+    precio_objetivo_eur_l: 0.95
+  - nombre: "aceite de oliva virgen extra"
+    unidad: l
+    cantidad_habitual: 1
+    precio_objetivo_eur_l: 7.50
+alertas:
+  telegram_chat_id: ""

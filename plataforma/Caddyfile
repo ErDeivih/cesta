@@ -1,0 +1,31 @@
+# Sirve la interfaz y manda /api a la API. Un solo origen para el navegador,
+# asi que no hay lios de CORS ni cookies que se pierden entre puertos.
+:8080 {
+	encode gzip zstd
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		# Las fotos de los productos las sirven las propias cadenas desde sus
+		# CDN. No se copian: se enlazan. Por eso img-src admite https.
+		Content-Security-Policy "default-src 'self'; img-src 'self' https: data:; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'"
+		# no-referrer haria que algunos CDN rechazasen la imagen.
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

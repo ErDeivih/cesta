@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f1f2f3" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#141618" media="(prefers-color-scheme:dark)">
+<title>Cesta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<!-- entrar ------------------------------------------------------------- -->
+<section id="v-entrar" class="entrar" hidden>
+  <h1>Cesta</h1>
+  <p id="entrar-sub">Los precios de cinco supermercados, en casa.</p>
+
+  <form id="f-entrar">
+    <label for="i-usuario">Usuario</label>
+    <input type="text" id="i-usuario" autocomplete="username" required>
+    <label for="i-clave">Contraseña</label>
+    <input type="password" id="i-clave" autocomplete="current-password" required>
+    <button type="submit" class="bt principal" style="margin-top:20px;width:100%">Entrar</button>
+    <p class="error" id="e-entrar" hidden></p>
+    <p class="cambiar">¿No tienes cuenta?
+      <button type="button" id="b-a-registro" class="enlace">Créala</button></p>
+  </form>
+
+  <!-- El nombre va ANTES que el usuario a propósito: es lo que verán los demás
+       en una lista compartida, y es la pregunta fácil. El usuario, que es la
+       que tiene reglas y puede estar cogida, se pregunta después. -->
+  <form id="f-registro" hidden>
+    <label for="r-nombre">Tu nombre</label>
+    <input type="text" id="r-nombre" autocomplete="name" required
+           placeholder="Como quieres que te vean">
+    <label for="r-usuario">Usuario</label>
+    <input type="text" id="r-usuario" autocomplete="username" required
+           autocapitalize="none" spellcheck="false" placeholder="sin tildes ni espacios">
+    <label for="r-clave">Contraseña</label>
+    <input type="password" id="r-clave" autocomplete="new-password" required
+           minlength="8" placeholder="ocho caracteres o más">
+    <button type="submit" class="bt principal" style="margin-top:20px;width:100%">Crear cuenta</button>
+    <p class="error" id="e-registro" hidden></p>
+    <p class="cambiar">¿Ya tienes cuenta?
+      <button type="button" id="b-a-entrar" class="enlace">Entra</button></p>
+  </form>
+</section>
+
+<!-- la app ------------------------------------------------------------- -->
+<main id="app" hidden>
+
+  <!-- buscar -->
+  <section id="v-buscar" class="envoltorio">
+    <div class="caja-buscar">
+      <input type="search" id="q" placeholder="leche entera, atún, papel de cocina…"
+             autocomplete="off" enterkeyhint="search" aria-label="Buscar producto">
+      <div class="chips" id="chips-cadenas"></div>
+      <!-- Los filtros de dieta van plegados: la mayoria de las busquedas no los
+           necesitan y en un movil cada fila que se ve antes de los resultados
+           es una fila de resultados que no se ve. -->
+      <details class="filtros" id="filtros-avanzados">
+        <summary>Filtros<span id="filtros-cuenta" class="cuenta" hidden></span></summary>
+        <div class="chips" id="chips-sellos" role="group" aria-label="Filtrar por dieta"></div>
+        <div class="chips" id="chips-otros" role="group" aria-label="Otros filtros"></div>
+      </details>
+    </div>
+    <div id="aviso-datos"></div>
+    <div id="resultados"></div>
+  </section>
+
+  <!-- lista -->
+  <section id="v-lista" class="envoltorio" hidden>
+    <header class="pantalla">
+      <h1 id="lista-nombre">Lista</h1>
+      <p id="lista-meta"></p>
+    </header>
+    <div id="lista-avisos"></div>
+    <div id="marcador"></div>
+    <div id="lista-lineas"></div>
+    <div class="acciones" style="padding-inline:0;margin-top:16px">
+      <button class="bt principal" id="b-donde">¿Dónde la compro?</button>
+      <button class="bt" id="b-compartir">Compartir</button>
+    </div>
+    <div id="donde"></div>
+  </section>
+
+  <!-- favoritos -->
+  <section id="v-favoritos" class="envoltorio" hidden>
+    <header class="pantalla">
+      <h1>Favoritos</h1>
+      <p>Lo que compras siempre, y cómo va su precio.</p>
+    </header>
+    <div id="favoritos"></div>
+  </section>
+
+  <!-- panel -->
+  <section id="v-panel" class="envoltorio" hidden>
+    <header class="pantalla">
+      <h1>Panel</h1>
+      <p id="panel-meta"></p>
+    </header>
+    <div id="panel"></div>
+  </section>
+
+  <!-- ajustes -->
+  <section id="v-ajustes" class="envoltorio" hidden>
+    <header class="pantalla">
+      <h1>Ajustes</h1>
+      <p id="ajustes-quien"></p>
+    </header>
+    <div id="ajustes"></div>
+  </section>
+
+  <nav>
+    <button data-vista="buscar" aria-current="page">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      Buscar
+    </button>
+    <button data-vista="lista">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Lista<span class="pin" id="pin-lista" hidden></span>
+    </button>
+    <button data-vista="favoritos">
+      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 8a3.5 3.5 0 0 1 7 2.5C19 15.5 12 20 12 20z"/></svg>
+      Favoritos
+    </button>
+    <button data-vista="panel">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      Panel
+    </button>
+    <button data-vista="ajustes">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 2.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H7a1.7 1.7 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V7a1.7 1.7 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Ajustes
+    </button>
+  </nav>
+</main>
+
+<div class="hoja" id="hoja" hidden role="dialog" aria-modal="true" aria-labelledby="hoja-titulo">
+  <div class="panel-hoja">
+    <div class="asa"></div>
+    <div class="cabh">
+      <button class="cerrar" id="hoja-cerrar" aria-label="Cerrar">&times;</button>
+      <h2 id="hoja-titulo"></h2>
+      <p class="sub2" id="hoja-sub"></p>
+    </div>
+    <div class="contenido" id="hoja-contenido"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# GitHub desactiva los workflows programados tras 60 dias sin commits en el repo.
+# Este hace un commit vacio cada tres semanas para que eso no pase nunca.
+name: keepalive (inactivo)
+on: workflow_dispatch
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name "keepalive"
+          git config user.email "keepalive@users.noreply.github.com"
+          git commit --allow-empty -m "keepalive: mantener vivo el cron"
+          git push

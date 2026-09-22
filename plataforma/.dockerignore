@@ -1,0 +1,9 @@
+**/__pycache__
+**/*.pyc
+.venv
+data
+notebooks
+docs
+.git
+.ruff_cache
+.pytest_cache

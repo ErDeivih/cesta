@@ -1,0 +1,67 @@
+# Cesta: la plataforma entera en un comando.
+#
+#   docker compose up -d      arrancar
+#   docker compose logs -f    ver que pasa
+#   docker compose down       parar
+#
+# Los datos se quedan en tu PC. Lo unico que sale de aqui es lo que pidan los
+# moviles a traves de Tailscale, y Tailscale no publica nada en internet.
+
+name: cesta
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cesta
+      POSTGRES_PASSWORD: ${CESTA_CLAVE_DB:?falta CESTA_CLAVE_DB en el fichero .env}
+      POSTGRES_DB: cesta
+      # Sin esto, un contenedor recreado no lee el volumen anterior.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - datos_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cesta -d cesta"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # No se publica el puerto: solo lo alcanza la API, por la red interna.
+
+  api:
+    build:
+      context: ..
+      dockerfile: plataforma/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      CESTA_POSTGRES: postgresql://cesta:${CESTA_CLAVE_DB}@db:5432/cesta
+      CESTA_GOLD: /datos/gold
+      CESTA_ORIGENES: ${CESTA_ORIGENES:-http://localhost:8080}
+      CESTA_DIAS_SESION: ${CESTA_DIAS_SESION:-30}
+    volumes:
+      # SOLO LECTURA, y es importante: gold lo escribe el pipeline una vez al
+      # dia y la API no lo toca nunca. Si un dia el scraper falla, aqui se sigue
+      # sirviendo lo de ayer y la interfaz lo dice.
+      - ${CESTA_DATOS:-../data}:/datos:ro
+
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # Solo en la interfaz de Tailscale si esta definida; si no, en todas.
+      # Lo segundo esta bien mientras el router no tenga nada abierto, pero lo
+      # primero es lo correcto.
+      - "${CESTA_ESCUCHA:-0.0.0.0}:8080:8080"
+    volumes:
+      - ./web:/srv:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - datos_caddy:/data
+
+volumes:
+  datos_db:
+  datos_caddy:

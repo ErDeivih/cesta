@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>Cesta — ajustes</title>
+<style>
+  body{font:15px/1.5 system-ui,sans-serif;max-width:32rem;margin:2rem auto;padding:0 1rem}
+  label{display:block;margin:1rem 0 .3rem;font-weight:600}
+  input{width:100%;padding:.5rem;font:inherit;border:1px solid #bbb;border-radius:3px}
+  p{color:#555}
+  button{margin-top:1rem;padding:.5rem 1rem;font:inherit}
+</style>
+<h1>Dónde está tu Cesta</h1>
+<p>La extensión sólo habla con tu propia Cesta. Si la abres desde el mismo
+   ordenador, <code>http://localhost:8080</code>; desde el móvil o el portátil
+   con Tailscale, <code>http://cesta:8080</code>.</p>
+<label for="api">Dirección</label>
+<input id="api" type="url" placeholder="http://localhost:8080">
+<button id="guardar">Guardar</button>
+<p id="dicho"></p>
+<script src="opciones.js"></script>

@@ -1,0 +1,23 @@
+data/
+.venv/
+.pytest_cache/
+.env
+__pycache__/
+*.duckdb
+debug/
+.prueba
+*.log
+.ipynb_checkpoints/
+
+# Marca de "ya se ejecuto hoy" y volcado externo: estado local, no codigo.
+data/ultima_ejecucion.txt
+data/externo/
+
+# Volcado entero de Open Food Facts: varios GB, se vuelve a bajar cuando toque.
+data/externo/food.parquet
+
+# Respaldos de PostgreSQL: contienen las cuentas y las listas.
+data/respaldos/
+
+# Ficheros intermedios de rehacer_maestro cuando se para a medias.
+data/master/*.parcial.json.gz

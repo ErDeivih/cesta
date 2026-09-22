@@ -1,0 +1,943 @@
+# Cesta: de la categoria de cada cadena a una seccion comun.
+#
+# POR QUE ESTE FICHERO Y NO UN MODELO
+#   Son 849 claves. Un fichero se lee de un vistazo, se corrige en diez segundos
+#   y no se equivoca en silencio. Un clasificador de texto acierta el 90 % y el
+#   10 % restante no se sabe cual es hasta que alguien lo ve en pantalla.
+#
+# COMO SE USA
+#   clave = la categoria de la cadena, recortada:
+#     alcampo    los dos primeros niveles de su arbol  ('Bebidas > Cervezas')
+#     dia        los dos primeros trozos de su URL     ('zumos-y-smoothies/smoothies')
+#     el resto   su categoria tal cual
+#   valor = una de las secciones de SECCIONES (abajo), o `null` si no encaja.
+#
+# ESTADO: repasado. Las 849 claves estan asignadas.
+#   El 97 % salio de una propuesta automatica por palabras clave; las 25 que
+#   quedaron fuera se miraron y se decidieron a mano el 17 de septiembre.
+#   Cobertura medida sobre el catalogo: 99,5 % de los productos.
+#
+#   Si una cadena cambia su arbol apareceran claves nuevas sin asignar, y la
+#   prueba `test_no_crecen_las_claves_sin_repasar` avisara.
+#
+# Al lado de cada clave va cuantos productos tiene, para saber cuales merecen
+# mas cuidado.
+
+secciones:
+  - frutas-verduras
+  - carniceria
+  - pescaderia
+  - lacteos-huevos
+  - panaderia
+  - despensa
+  - desayuno-dulces
+  - aperitivos
+  - congelados
+  - bebidas
+  - preparados
+  - bebe
+  - mascotas
+  - droguería-limpieza
+  - higiene-belleza
+  - parafarmacia
+  - hogar
+  - ecologico
+  - promociones
+
+mapa:
+
+  # ---- alcampo — 202 claves, 23573 productos ----
+  alcampo:
+    "Alimentación > Aperitivos, aceitunas y frutos secos": aperitivos  # 776
+    "Frescos > Quesos": lacteos-huevos                                    # 737
+    "Frescos > Charcutería": carniceria                                   # 707
+    "Perfumeria > Maquillaje": higiene-belleza                            # 673
+    "Folletos y Promociones > Folleto de Alimentación (excepto Canarias)": despensa # 593
+    "Perfumeria > Cuidado del cabello": higiene-belleza                   # 566
+    "Desayuno y Merienda > Cafés": desayuno-dulces                        # 416
+    "Alimentación > Panadería, Harina y Masas": panaderia                 # 412
+    "Bebidas > Refrescos": bebidas                                        # 411
+    "Perfumeria > Cuidado corporal": higiene-belleza                      # 407
+    "Bebidas > Cervezas": bebidas                                         # 405
+    "Desayuno y Merienda > Galletas": desayuno-dulces                     # 379
+    "Alimentación > Conservas de pescado": pescaderia                     # 370
+    "Droguería > Lavado de Ropa": droguería-limpieza                      # 364
+    "Campañas > Todo a un EURO": promociones                           # 340
+    "Bebidas > Vino Tinto": bebidas                                       # 340
+    "Frescos > Carne": carniceria                                         # 338
+    "Mascotas > Comida gatos": mascotas                                   # 332
+    "Congelados > Helados": congelados                                    # 322
+    "Desayuno y Merienda > Chocolates, Cremas untar y Bombones": desayuno-dulces # 306
+    "Mascotas > Comida perros": mascotas                                  # 302
+    "Alimentación > Tomate Frito y Salsas": despensa                      # 300
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Yogures, Bífidus, L-Casei y productos vegetales y fermentados": lacteos-huevos # 295
+    "Bebidas > Bebidas Alcohólicas": bebidas                              # 281
+    "Bebé > Alimentación Infantil": despensa                              # 278
+    "Desayuno y Merienda > Golosinas": desayuno-dulces                    # 276
+    "Alimentación > Arroz y Legumbres": despensa                          # 275
+    "Droguería > Limpieza Hogar": droguería-limpieza                      # 264
+    "Droguería > Utensilios Limpieza": droguería-limpieza              # 254
+    "Perfumeria > Higiene bucal": higiene-belleza                         # 254
+    "Alimentación > Conservas vegetales": despensa                        # 253
+    "Perfumeria > Cuidado facial": higiene-belleza                        # 238
+    "Desayuno y Merienda > Bollería y Pastelería": panaderia              # 237
+    "Folletos y Promociones > Folleto Alimentación Canarias": despensa    # 234
+    "Alimentación > Aceite y Vinagre": despensa                           # 231
+    "Alimentación > Comida Internacional": despensa                       # 226
+    "Alimentación > Sal, Especias y Sazonadores": despensa                # 226
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Postres": lacteos-huevos # 224
+    "Desayuno y Merienda > Cereales y Barritas": despensa                 # 222
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Leche": lacteos-huevos # 213
+    "Alimentación > Pasta alimenticia": despensa                          # 212
+    "Alimentación > Conservas cárnicas, platos preparados y almíbares": despensa # 210
+    "Frescos > Ahumados, surimis, anchoas, pulpos y otros": pescaderia    # 207
+    "Droguería > Ambientadores": droguería-limpieza                       # 204
+    "Desayuno y Merienda > Té e Infusiones": desayuno-dulces              # 204
+    "Perfumeria > Colonias": higiene-belleza                              # 199
+    "Congelados > Platos preparados congelados": congelados               # 193
+    "Desayuno y Merienda > Mermelada, almibares, membrillo": desayuno-dulces # 193
+    "Frescos > Verduras y hortalizas": frutas-verduras                    # 191
+    "Bebidas > Zumos de Frutas": bebidas                               # 172
+    "Perfumeria > Desodorantes": higiene-belleza                       # 171
+    "Bebidas > Agua, Soda y Gaseosas": bebidas                            # 168
+    "Folletos y Promociones > Promociones Club Alcampo": promociones      # 168
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Sin Gluten apto Celíacos": desayuno-dulces # 162
+    "Bebidas > Vino rosados, frizzantes, dulces y olorosos": bebidas   # 161
+    "Congelados > Pescados, mariscos y surimis": pescaderia               # 158
+    "Desayuno y Merienda > Preparación Postres": desayuno-dulces          # 158
+    "Frescos > Pescados, mariscos y moluscos": pescaderia                 # 153
+    "Parafarmacia > Dermocosmética corporal": higiene-belleza             # 152
+    "Droguería > Celulosas": droguería-limpieza                           # 146
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Complementos Naturales y Herbolario": desayuno-dulces # 146
+    "Alimentación > Sopas, Caldos y Cremas": despensa                     # 142
+    "Perfumeria > Higiene íntima": higiene-belleza                        # 139
+    "Parafarmacia > Dermocosmética facial": higiene-belleza               # 136
+    "Bebidas > Licores": bebidas                                          # 134
+    "Bebé > Higiene y cuidado bebé": bebe                                 # 127
+    "Parafarmacia > Higiene Bucal": higiene-belleza                       # 126
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Nutrición deportiva": desayuno-dulces # 125
+    "Bebidas > Vino Blanco": bebidas                                      # 123
+    "Bebé > Paseo del bebé": bebe                                         # 122
+    "Perfumeria > Bronceadores y protectores Solares": higiene-belleza # 122
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Bebidas vegetales": lacteos-huevos # 119
+    "Bebé > Pañales y toallitas": bebe                                 # 116
+    "Frescos > Frutas": frutas-verduras                                   # 115
+    "Droguería > Lavavajillas": droguería-limpieza                        # 110
+    "Campañas > ALCAMPO CULTIVAMOS LO BUENO": promociones              # 106
+    "Parafarmacia > Dietética y control de peso": desayuno-dulces         # 103
+    "Comida Preparada > Pizzas": preparados                               # 99
+    "Parafarmacia > Parafarmacia Bebé": bebe                              # 95
+    "Supermercado Ecológico > Producto Fresco Ecológico": ecologico       # 93
+    "Desayuno y Merienda > Azúcar, miel y otros edulcorantes": despensa   # 91
+    "Frescos > Panadería": panaderia                                      # 88
+    "Congelados > Verduras Congeladas": frutas-verduras                   # 88
+    "Supermercado Ecológico > Tu despensa Ecológica": ecologico           # 86
+    "Bebidas > Champagne Cavas y Sidras": bebidas                         # 85
+    "Parafarmacia > Botiquín": parafarmacia                               # 84
+    "Droguería > Limpieza Calzado": droguería-limpieza                    # 74
+    "Comida Preparada > Arroces y pastas": despensa                       # 74
+    "Supermercado Ecológico > Alimentación infantil ecológica": despensa  # 69
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Batidos, horchatas y bebidas frías de café": lacteos-huevos # 69
+    "Campañas > Producto Local La Rioja": promociones                  # 68
+    "Comida Preparada > Gazpachos, salmorejos y cremas": despensa         # 67
+    "Frescos > Pastelería": panaderia                                     # 66
+    "Perfumeria > Afeitado y cuidado masculino": higiene-belleza          # 64
+    "Bebé > Cunas": bebe                                                  # 63
+    "Droguería > Insecticidas": droguería-limpieza                        # 61
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Alimentos y Bebidas funcionales": desayuno-dulces # 60
+    "Congelados > Patatas, croquetas y empanadillas": congelados       # 57
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Tortitas": desayuno-dulces # 57
+    "Comida Preparada > Sándwiches, bocadillos y roscas": preparados      # 54
+    "Congelados > Esenciales para tu freidora de aire": congelados        # 53
+    "Droguería > Conservación de Alimentos y Moldes": droguería-limpieza # 50
+    "Campañas > Ofertas exclusivas online": promociones                # 47
+    "Desayuno y Merienda > Cacaos  solubles": desayuno-dulces             # 46
+    "Hogar y Decoración > Salón comedor": despensa                        # 44
+    "Frescos > Jamones y paletas": carniceria                             # 44
+    "Bebidas > Bebidas energéticas": bebidas                              # 43
+    "Comida Preparada > Alimentos vegetarianos": preparados               # 43
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Productos proteicos": lacteos-huevos # 42
+    "Congelados > Tartas, postres y fruta congelada": congelados       # 40
+    "Comida Preparada > Platos preparados en conserva": despensa          # 40
+    "Campañas > Stock fuera": promociones                              # 40
+    "Perfumeria > Estuches de Perfumería": higiene-belleza                # 38
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Huevos": lacteos-huevos # 37
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Dietéticos Control de peso": desayuno-dulces # 37
+    "Comida Preparada > Otras especialidades": despensa                   # 33
+    "Bebidas > Vinos y bebidas sin alcohol": bebidas                      # 33
+    "Supermercado Ecológico > Desayunos Ecológicos": desayuno-dulces      # 33
+    "Bebé > Puericultura": bebe                                           # 33
+    "Bebé > Equipamiento del bebé": bebe                                  # 32
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Mantequilla": lacteos-huevos # 32
+    "Bebé > Accesorios para bebé": bebe                                   # 31
+    "Droguería > Lejías y Amoníacos": droguería-limpieza                  # 30
+    "Parafarmacia > Bienestar sexual": parafarmacia                       # 30
+    "Parafarmacia > Cuidado del cabello": parafarmacia                    # 29
+    "Perfumeria > Cosmética coreana": higiene-belleza                     # 29
+    "Perfumeria > Depilación": higiene-belleza                            # 29
+    "Veganos > Bebidas veganas": bebidas                                  # 28
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Nata": lacteos-huevos # 27
+    "Perfumeria > Desmaquillantes": higiene-belleza                    # 27
+    "Bebé > Entretenimiento del bebé": bebe                            # 26
+    "Parafarmacia > Cuidado naríz, ojos y oidos": parafarmacia            # 26
+    "Folletos y Promociones > Especial Folleto": despensa                 # 25
+    "Droguería > Antimosquitos": droguería-limpieza                       # 24
+    "Campañas > Productos de Asturias": promociones                    # 24
+    "Supermercado Ecológico > Bebidas Ecológicas": bebidas                # 24
+    "Congelados > San jacobos, nuggets y pollo empanado": carniceria      # 24
+    "Bebidas > Tintos de verano y sangrías": bebidas                      # 24
+    "Veganos > Alimentación vegana": despensa                             # 23
+    "Folletos y Promociones > Folleto Hogar y Tecnología": desayuno-dulces # 22
+    "Comida Preparada > Hummus, guacamole y otros": preparados            # 22
+    "Mascotas > Conejos y roedores": mascotas                             # 21
+    "Automóvil > Ambientadores coche": hogar                              # 20
+    "Supermercado Ecológico > Perfumería Ecológica": higiene-belleza      # 19
+    "Congelados > Carne": carniceria                                      # 18
+    "Comida Preparada > Ensaladas refrigeradas": frutas-verduras          # 18
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Margarinas y otros untables": lacteos-huevos # 18
+    "Supermercado Ecológico > Lácteos y Huevos de producción ecológica": lacteos-huevos # 17
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Productos sin lactosa": desayuno-dulces # 16
+    "Comida Preparada > Platos Internacionales": desayuno-dulces          # 16
+    "Veganos > Vino Vegano": bebidas                                      # 16
+    "Comida Preparada > Masas y bases": panaderia                         # 15
+    "Mascotas > Pájaros": mascotas                                        # 15
+    "Automóvil > Lavado coche": hogar                                     # 14
+    "Congelados > Repostería, hielo y bolsas isotérmicas": congelados  # 14
+    "Bebidas > Bebidas ecológicas": bebidas                               # 14
+    "Supermercado Ecológico > Droguería Ecológica y sostenible": desayuno-dulces # 14
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Semillas y otros cereales": despensa # 14
+    "Perfumeria > Stock fuera": higiene-belleza                           # 13
+    "Comida Preparada > Sushi": preparados                                # 13
+    "Comida Preparada > Asados y carnes": carniceria                      # 12
+    "Bebé > Tronas y sillas elevadoras": bebe                             # 12
+    "Veganos > Proteina vegana": desayuno-dulces                          # 12
+    "Comida Preparada > Esenciales para tu freidora de aire": preparados  # 11
+    "Mascotas > Higiene gatos": mascotas                                  # 11
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Zumos con leche": lacteos-huevos # 10
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Preparado lácteo": lacteos-huevos # 10
+    "Mascotas > Peces y tortugas": mascotas                               # 10
+    "Campañas > Producto Local Galicia": promociones                   # 9
+    "Perfumeria > Neceseres": higiene-belleza                             # 9
+    "Mascotas > Higiene perros": mascotas                                 # 8
+    "Mascotas > Accesorios perros": mascotas                              # 8
+    "Campañas > Producto Local Andalucía y Málaga": promociones        # 8
+    "Bebé > Bebé a bordo": bebe                                           # 7
+    "Comida Preparada > Tortillas de patata": frutas-verduras             # 7
+    "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales > Leche condensada, polvo y evaporada": lacteos-huevos # 7
+    "Bebé > Sin gluten": bebe                                          # 6
+    "Folletos y Promociones > Súper Ofertas Frescos": promociones         # 6
+    "Comida Preparada > Empanadas": panaderia                             # 6
+    "Campañas > Producto Local Palma": promociones                     # 5
+    "Campañas > Nuestra selección de vinos": bebidas                   # 5
+    "Bebé > Parafarmacia bebé": bebe                                      # 5
+    "Droguería > Droguería Ecológica y sostenible": droguería-limpieza # 5
+    "Desayuno y Merienda > Turrones": desayuno-dulces                     # 3
+    "Perfumeria > Cosmética Bio": higiene-belleza                         # 3
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Dietéticos Sin Azúcares añadidos": despensa # 3
+    "Mascotas > Accesorios gatos": mascotas                               # 3
+    "Mascotas > Hogar limpio y fresco": mascotas                          # 3
+    "Bricolaje > Pinturas": hogar                                         # 2
+    "Sin Gluten / Sin Lactosa, Nutrición deportiva y Funcional > Dietéticos Clásicos": desayuno-dulces # 2
+    "Bebé > Alcampo Baby": bebe                                           # 2
+    "Campañas > Producto Local País Vasco": promociones                # 2
+    "Electrodomésticos > Aspiración y limpieza": droguería-limpieza       # 1
+    "Supermercado Ecológico > Comercio Justo": ecologico                  # 1
+    "Automóvil > Recambios coche y moto": ecologico                       # 1
+    "Campañas > Chollos en bazar": hogar                               # 1
+    "Juguetes > Juguetes por edades": desayuno-dulces                     # 1
+    "Electrodomésticos > Electrodomésticos Qilive": hogar                 # 1
+    "Bebé > Alcampo Baby ecológico": bebe                                 # 1
+    "Electrodomésticos > Cuidado de la salud": despensa                   # 1
+    "Parafarmacia > Solares y bronceadores Parafarmacia": parafarmacia    # 1
+    "Jardín y terraza > Jardinería": desayuno-dulces                      # 1
+
+  # ---- aldi — 99 claves, 1996 productos ----
+    "Folletos y Promociones > Sabor Granada": promociones              # nueva, 21 sep
+    "Deportes y Maletas > Maletas y equipaje": hogar                   # nueva, 21 sep
+    "Hogar y Decoración > Menaje de cocina": hogar                     # nueva, 21 sep
+    "Bricolaje > Adhesivos y siliconas": hogar                         # nueva, 21 sep
+  aldi:
+    "cuidado-facial-y-corporal": higiene-belleza                          # 106
+    "yogures-y-postres-lacteos": lacteos-huevos                           # 97
+    "cuidado-del-cabello": higiene-belleza                                # 85
+    "verduras-y-hortalizas": frutas-verduras                              # 77
+    "chocolates": desayuno-dulces                                         # 71
+    "frutas": frutas-verduras                                             # 62
+    "embutidos-curados": carniceria                                       # 50
+    "pescado-y-marisco-congelado": pescaderia                             # 49
+    "galletas": desayuno-dulces                                           # 44
+    "comida-de-perro": mascotas                                           # 37
+    "frutos-secos-y-semillas": aperitivos                                 # 37
+    "pollo-pavo-y-jamon-cocido": carniceria                               # 35
+    "platos-preparados-calientes": desayuno-dulces                        # 32
+    "cuidado-de-la-ropa": droguería-limpieza                              # 32
+    "queso-curado-semicurado-y-tierno": lacteos-huevos                    # 30
+    "conservas-vegetales": despensa                                       # 30
+    "parafarmacia": parafarmacia                                          # 29
+    "tomates-y-salsas": despensa                                          # 28
+    "higiene-bucal": higiene-belleza                                      # 28
+    "helados-y-postres": congelados                                       # 27
+    "queso-fresco-y-blando": lacteos-huevos                               # 27
+    "conservas-de-pescado": pescaderia                                    # 27
+    "ambientadores": hogar                                                # 27
+    "comida-de-gato": mascotas                                            # 27
+    "pasta": despensa                                                     # 26
+    "lechugas-y-ensaladas": frutas-verduras                               # 26
+    "productos-de-limpieza": droguería-limpieza                           # 26
+    "vino-tinto": bebidas                                                 # 25
+    "cereales": despensa                                                  # 24
+    "especias-y-condimentos": despensa                                    # 24
+    "cafe": desayuno-dulces                                               # 23
+    "leche-y-bebidas-vegetales": lacteos-huevos                           # 23
+    "golosinas-y-caramelos": desayuno-dulces                              # 23
+    "aceitunas-y-encurtidos": aperitivos                                  # 21
+    "bolleria-envasada": panaderia                                        # 21
+    "cerveza": bebidas                                                    # 20
+    "listo-para-comer": preparados                                        # 20
+    "proteccion-solar": higiene-belleza                                # 19
+    "papel-higienico-y-celulosa": droguería-limpieza                      # 19
+    "cosmetica": higiene-belleza                                          # 19
+    "pan-tostado": panaderia                                              # 19
+    "aceites-y-vinagres": despensa                                        # 18
+    "platos-preparados": preparados                                       # 18
+    "tes-e-infusiones": desayuno-dulces                                   # 18
+    "barritas-y-tortitas": desayuno-dulces                                # 17
+    "vino-blanco": bebidas                                                # 17
+    "licores": bebidas                                                    # 17
+    "zumos": bebidas                                                      # 16
+    "patatas-fritas-y-snacks": aperitivos                              # 16
+    "afeitado-y-depilacion": higiene-belleza                              # 16
+    "refrescos-y-sodas": bebidas                                          # 16
+    "pizzas-congeladas": congelados                                       # 16
+    "alimentacion-infantil": despensa                                     # 15
+    "higiene-intima": higiene-belleza                                     # 15
+    "pan-de-molde-y-otras-especialidades": panaderia                      # 15
+    "queso-en-lonchas": lacteos-huevos                                    # 15
+    "frutas-y-verduras-congeladas": frutas-verduras                       # 14
+    "salsas-dips-y-untables": despensa                                    # 13
+    "lavavajillas": droguería-limpieza                                    # 13
+    "bacon-y-salchichas": despensa                                        # 12
+    "utensilios-de-limpieza": desayuno-dulces                             # 11
+    "bolsas-de-basura-conservacion-y-preparacion": droguería-limpieza  # 10
+    "panales": bebe                                                    # 10
+    "carnes-empanadas-y-preparados": carniceria                           # 10
+    "pates-y-untables": desayuno-dulces                                   # 10
+    "crema-de-avellanas-cacao-y-untables": desayuno-dulces                # 10
+    "pasta-fresca": despensa                                              # 9
+    "bolleria-fresca": panaderia                                          # 9
+    "pan-de-horno": panaderia                                             # 9
+    "caldos-cremas-y-sopas": despensa                                     # 9
+    "platos-veganos-y-vegetarianos": ecologico                            # 9
+    "queso-rallado": lacteos-huevos                                       # 8
+    "arroz": despensa                                                     # 8
+    "cuidados-e-higiene-infantil": bebe                                   # 8
+    "miel-y-sirope": despensa                                             # 8
+    "espumosos": bebidas                                                  # 7
+    "cerdo": carniceria                                                   # 7
+    "masas": panaderia                                                    # 7
+    "queso-de-untar": lacteos-huevos                                      # 7
+    "bebidas-energeticas": bebidas                                        # 7
+    "carne-congelada": carniceria                                         # 6
+    "pizzas": preparados                                                  # 6
+    "harinas-levadura-y-pan-rallado": panaderia                           # 5
+    "mermeladas": desayuno-dulces                                         # 4
+    "legumbres-y-cereales": despensa                                      # 4
+    "queso-fundido": lacteos-huevos                                       # 3
+    "bombones": desayuno-dulces                                           # 3
+    "vino-rosado": bebidas                                                # 3
+    "cacao": desayuno-dulces                                              # 3
+    "insecticidas": droguería-limpieza                                    # 2
+    "mantequilla-margarina-y-nata": lacteos-huevos                        # 2
+    "sidra-sangria-y-tinto-de-verano": bebidas                            # 2
+    "agua": bebidas                                                       # 2
+    "accesorios-y-juguetes": desayuno-dulces                              # 2
+    "pollo-y-pavo": carniceria                                            # 2
+    "hamburguesas-y-carne-picada": carniceria                             # 2
+    "carnes-barbacoa": carniceria                                         # 1
+    "mariscos": pescaderia                                                # 1
+    "azucar-y-edulcorantes": despensa                                     # 1
+
+  # ---- carrefour — 269 claves, 16416 productos ----
+    "ternera": carniceria                                              # nueva, 21 sep
+    "pescado-fresco": pescaderia                                       # nueva, 21 sep
+  carrefour:
+    "la-despensa/desayuno": desayuno-dulces                               # 985
+    "frescos": frutas-verduras                                            # 755
+    "congelados": congelados                                              # 735
+    "frescos/charcuteria": carniceria                                     # 599
+    "la-despensa/aperitivos": aperitivos                                  # 450
+    "drogueria-y-limpieza": droguería-limpieza                            # 447
+    "la-despensa/yogures-y-postres": lacteos-huevos                       # 447
+    "la-despensa/conservas-sopas-y-precocinados": despensa                # 398
+    "la-despensa/lacteos": lacteos-huevos                                 # 360
+    "bebidas/vinos": bebidas                                              # 357
+    "la-despensa/dulce/bombones-y-chocolates": desayuno-dulces            # 330
+    "la-despensa/alimentacion/salsas-y-tomate-frito": despensa            # 323
+    "la-despensa/dulce": desayuno-dulces                                  # 317
+    "mascotas/gatos": mascotas                                            # 307
+    "bebidas/refrescos": bebidas                                          # 295
+    "drogueria-y-limpieza/cuidado-de-la-ropa": droguería-limpieza         # 272
+    "cuidado-personal-e-higiene/cuidado-y-proteccion-corporal/facial": higiene-belleza # 272
+    "la-despensa/conservas-sopas-y-precocinados/conservas-de-pescado-y-marisco": pescaderia # 265
+    "parafarmacia": parafarmacia                                          # 244
+    "bebe/alimentacion-infantil": despensa                                # 223
+    "cuidado-personal-e-higiene/cuidado-del-cabello": higiene-belleza     # 212
+    "mascotas/perros": mascotas                                           # 205
+    "bebidas/cerveza": bebidas                                            # 202
+    "la-despensa/panaderia-bolleria-y-pasteleria": panaderia              # 182
+    "frescos/quesos/todos-los-quesos": lacteos-huevos                     # 178
+    "bebidas/alcoholes": bebidas                                          # 171
+    "cuidado-personal-e-higiene/bano-e-higiene-corporal/desodorantes": higiene-belleza # 166
+    "bebidas/aguas-y-zumos/zumos": bebidas                                # 163
+    "cuidado-personal-e-higiene/cuidado-del-cabello/champus": higiene-belleza # 161
+    "la-despensa/aceites-y-vinagres": despensa                            # 155
+    "la-despensa/alimentacion/pastas": despensa                           # 154
+    "la-despensa/conservas-sopas-y-precocinados/caldos-sopas-y-pure": despensa # 153
+    "la-despensa/conservas-sopas-y-precocinados/conservas-de-vegetales": despensa # 148
+    "parafarmacia/higiene-bucal": higiene-belleza                         # 140
+    "bebe": bebe                                                          # 136
+    "bebidas/vinos/vinos-blancos": bebidas                                # 131
+    "la-despensa/aperitivos/snacks": aperitivos                           # 122
+    "la-despensa/alimentacion/especias-y-sazonadores": despensa           # 122
+    "la-despensa/alimentacion": despensa                                  # 118
+    "la-despensa/alimentacion/nutricion-deportiva": despensa              # 116
+    "cuidado-personal-e-higiene/bano-e-higiene-corporal": higiene-belleza # 115
+    "cuidado-personal-e-higiene/cuidado-del-cabello/cuidado-y-tratamientos-del-cabello": higiene-belleza # 115
+    "cuidado-personal-e-higiene/cuidado-y-proteccion-corporal": higiene-belleza # 106
+    "bebidas/aguas-y-zumos/agua": bebidas                                 # 105
+    "cuidado-personal-e-higiene/bano-e-higiene-corporal/geles-de-bano": higiene-belleza # 99
+    "frescos/pan-y-bolleria-del-dia": panaderia                           # 98
+    "drogueria-y-limpieza/limpieza-bano-y-wc": droguería-limpieza         # 93
+    "cuidado-personal-e-higiene/higiene-bucal": higiene-belleza           # 93
+    "drogueria-y-limpieza/menaje/utensilios-de-cocina": droguería-limpieza # 92
+    "frescos/quesos": lacteos-huevos                                      # 85
+    "la-despensa/alimentacion/arroz-y-cous-cous": despensa                # 78
+    "congelados/mariscos-congelados": pescaderia                          # 76
+    "la-despensa": despensa                                               # 74
+    "la-despensa/panaderia-bolleria-y-pasteleria/especialidades-de-pan": panaderia # 67
+    "bebidas/energeticas": bebidas                                        # 62
+    "cuidado-personal-e-higiene/higiene-bucal/cepillos-recambios-y-accesorios": higiene-belleza # 61
+    "la-despensa/conservas-sopas-y-precocinados/tortillas-empanadillas-y-sandwiches": panaderia # 61
+    "la-despensa/dulce/cremas-de-cacao-avellana-y-cacahuete": desayuno-dulces # 61
+    "cuidado-personal-e-higiene/higiene-intima": higiene-belleza          # 56
+    "drogueria-y-limpieza/conservacion-de-alimentos": droguería-limpieza # 56
+    "bebidas/cava-champagne-y-espumosos": bebidas                         # 56
+    "la-despensa/panaderia-bolleria-y-pasteleria/colines-picos-y-crakers": panaderia # 54
+    "la-despensa/desayuno/galletas": desayuno-dulces                      # 53
+    "drogueria-y-limpieza/utensilios-de-limpieza": droguería-limpieza  # 52
+    "drogueria-y-limpieza/menaje": droguería-limpieza                     # 52
+    "la-despensa/dulce/reposteria": desayuno-dulces                       # 48
+    "parafarmacia/bebe/leche-infantil": lacteos-huevos                    # 47
+    "la-despensa/yogures-y-postres/yogures-griegos-y-enriquecidos": lacteos-huevos # 46
+    "cuidado-personal-e-higiene/higiene-intima/compresas": higiene-belleza # 46
+    "cuidado-personal-e-higiene/higiene-intima/incontinencia": higiene-belleza # 45
+    "drogueria-y-limpieza/menaje/ollas-cazos-y-accesorios": droguería-limpieza # 42
+    "la-despensa/yogures-y-postres/natillas-cremas-y-copas": lacteos-huevos # 41
+    "la-despensa/conservas-sopas-y-precocinados/platos-preparados": despensa # 41
+    "drogueria-y-limpieza/limpieza-cocina/lavavajillas-maquina": droguería-limpieza # 40
+    "drogueria-y-limpieza/limpieza-del-hogar/suelos": droguería-limpieza  # 40
+    "parafarmacia/cuidado-corporal/cremas-y-lociones": higiene-belleza    # 40
+    "cuidado-personal-e-higiene/cosmetica/accesorios-de-maquillaje": higiene-belleza # 38
+    "drogueria-y-limpieza/bazar/pilas": droguería-limpieza                # 37
+    "la-despensa/desayuno/cafes": desayuno-dulces                         # 37
+    "cuidado-personal-e-higiene/cuidado-del-cabello/peines-y-accesorios": higiene-belleza # 37
+    "frescos/pescado-y-marisco": pescaderia                               # 37
+    "bebidas/licores-y-cremas/licores-y-orujo": bebidas                   # 36
+    "frescos/comida-preparada": preparados                                # 36
+    "frescos/carne": carniceria                                           # 35
+    "drogueria-y-limpieza/menaje/vajillas-y-vasos": droguería-limpieza    # 34
+    "congelados/helados/conos": congelados                                # 34
+    "cuidado-personal-e-higiene/higiene-bucal/enjuagues-bucales": higiene-belleza # 34
+    "la-despensa/yogures-y-postres/proteina": lacteos-huevos              # 33
+    "cuidado-personal-e-higiene/cosmetica": higiene-belleza               # 31
+    "drogueria-y-limpieza/ambientadores/automaticos": droguería-limpieza  # 30
+    "frescos/quesos/curado": lacteos-huevos                               # 30
+    "parafarmacia/complementos-alimenticios/energia": parafarmacia        # 30
+    "la-despensa/conservas-sopas-y-precocinados/conservas-de-tomate": despensa # 30
+    "frescos/carne/cerdo": carniceria                                     # 29
+    "bebidas/alcoholes/ron": bebidas                                      # 29
+    "cuidado-personal-e-higiene/bienestar-sexual": higiene-belleza        # 29
+    "cuidado-personal-e-higiene/bano-e-higiene-corporal/jabon-de-manos": higiene-belleza # 29
+    "parafarmacia/bebe/cuidado-del-bebe": bebe                            # 29
+    "frescos/carne/vacuno": carniceria                                    # 28
+    "parafarmacia/bebe": bebe                                             # 28
+    "drogueria-y-limpieza/ambientadores/electricos": droguería-limpieza   # 28
+    "bebe/puericultura": bebe                                             # 27
+    "la-despensa/panaderia-bolleria-y-pasteleria/masa-fresca-y-bases": panaderia # 27
+    "cuidado-personal-e-higiene/afeitado/maquinillas-y-recambios": higiene-belleza # 27
+    "la-despensa/lacteos/nata": lacteos-huevos                            # 27
+    "la-despensa/dulce/miel": despensa                                    # 26
+    "frescos/quesos/tierno": lacteos-huevos                               # 24
+    "bebe/alimentacion-infantil/papillas-y-cereales": despensa            # 24
+    "la-despensa/cestas-y-lotes": desayuno-dulces                         # 24
+    "congelados/pizzas-congeladas/masa-gruesa": panaderia                 # 24
+    "drogueria-y-limpieza/utensilios-de-limpieza/bolsa-y-cubos-de-basura": droguería-limpieza # 24
+    "drogueria-y-limpieza/papel-y-celulosa/papel-cocina": droguería-limpieza # 23
+    "drogueria-y-limpieza/papel-y-celulosa/servilletas": droguería-limpieza # 23
+    "parafarmacia/complementos-alimenticios/sueno-y-relajacion": parafarmacia # 22
+    "congelados/helados/polos": congelados                                # 22
+    "la-despensa/alimentacion/sales-y-bicarbonatos": despensa             # 22
+    "bebe/cuidado-e-higiene-infantil/hidratacion-y-cuidado-de-la-piel": bebe # 22
+    "la-despensa/aperitivos/palomitas": aperitivos                        # 21
+    "cuidado-personal-e-higiene/depilacion/maquinillas-y-recambios": higiene-belleza # 21
+    "frescos/carne/otras-carnes": carniceria                              # 21
+    "frescos/verduras-y-hortalizas/ensaladas-y-verduras-preparadas": frutas-verduras # 21
+    "la-despensa/desayuno/infusiones-y-tes": desayuno-dulces              # 21
+    "la-despensa/desayuno/cereales": despensa                             # 21
+    "frescos/pescado-y-marisco/pescado-fresco": pescaderia                # 20
+    "drogueria-y-limpieza/ambientadores": droguería-limpieza              # 20
+    "drogueria-y-limpieza/limpieza-del-hogar/lejias-y-amoniacos": droguería-limpieza # 20
+    "bebidas/sin-alcohol-nolo": bebidas                                   # 19
+    "frescos/pan-y-bolleria-del-dia/pan-rebanado": panaderia              # 19
+    "congelados/reposteria-y-panaderia/churros-y-reposteria": panaderia   # 19
+    "mascotas": mascotas                                                  # 19
+    "bebidas/vinos/todos-los-vinos": bebidas                              # 19
+    "frescos/pescado-y-marisco/preparados-y-elaborados-de-pescado-y-marisco": pescaderia # 18
+    "la-despensa/yogures-y-postres/flanes": lacteos-huevos                # 18
+    "cuidado-personal-e-higiene/depilacion": higiene-belleza              # 18
+    "bebidas/alcoholes/vermouth": bebidas                                 # 18
+    "cuidado-personal-e-higiene/depilacion/crema-y-cera-depilatoria": higiene-belleza # 18
+    "bebe/alimentacion-infantil/snacks-y-galletas-infantiles": despensa   # 17
+    "cuidado-personal-e-higiene/bienestar-sexual/lubricantes": higiene-belleza # 17
+    "drogueria-y-limpieza/conservacion-de-alimentos/bolsas": droguería-limpieza # 17
+    "mascotas/conejos-y-roedores/pienso-para-conejos-y-rodeores": mascotas # 16
+    "drogueria-y-limpieza/bazar/automovil": droguería-limpieza            # 16
+    "frescos/frutas": frutas-verduras                                     # 16
+    "la-despensa/panaderia-bolleria-y-pasteleria/pan-perrito-y-burguer": panaderia # 16
+    "bebidas/aguas-y-zumos/zumos-refrigerados": bebidas                   # 15
+    "la-despensa/huevos": lacteos-huevos                                  # 15
+    "mascotas/gatos/accesorios-e-higiene": mascotas                       # 15
+    "frescos/quesos/semicurado": lacteos-huevos                           # 14
+    "drogueria-y-limpieza/bazar": droguería-limpieza                      # 14
+    "cuidado-personal-e-higiene/depilacion/afeitado": higiene-belleza     # 13
+    "frescos/pescado-y-marisco/marisco-almejas-y-mejillones": pescaderia  # 13
+    "drogueria-y-limpieza/menaje/menaje-desechable": droguería-limpieza   # 13
+    "bebidas/licores-y-cremas": bebidas                                   # 13
+    "congelados/air-fryer/pescados-y-mariscos-air-fryer": pescaderia      # 13
+    "congelados/helados/bites": congelados                             # 13
+    "congelados/air-fryer/accesorios-air-fryer": congelados               # 13
+    "drogueria-y-limpieza/menaje/cafeteras-y-accesorios": droguería-limpieza # 13
+    "bebidas/alcoholes/vodka": bebidas                                    # 12
+    "drogueria-y-limpieza/menaje/jarras-y-filtros-de-agua": droguería-limpieza # 12
+    "parafarmacia/botiquin/alivio-del-dolor": parafarmacia                # 12
+    "parafarmacia/cuidado-del-cabello/anticaida": parafarmacia            # 12
+    "cuidado-personal-e-higiene/higiene-bucal/protesis-y-limpieza": higiene-belleza # 12
+    "drogueria-y-limpieza/limpieza-cocina/quitagrasas": droguería-limpieza # 12
+    "parafarmacia/complementos-alimenticios/control-de-peso-y-detox": parafarmacia # 11
+    "drogueria-y-limpieza/cuidado-de-la-ropa/tendido-y-planchado": droguería-limpieza # 11
+    "parafarmacia/cuidado-de-manos-y-pies": parafarmacia                  # 11
+    "bebidas/sidra/cider": bebidas                                        # 11
+    "bebidas/sidra": bebidas                                              # 11
+    "parafarmacia/complementos-alimenticios/colagenos": parafarmacia      # 11
+    "parafarmacia/cuidado-e-higiene-facial/desmaquillantes": desayuno-dulces # 11
+    "frescos/carne/hamburguesas": carniceria                              # 11
+    "frescos/comida-preparada/asados": preparados                         # 10
+    "drogueria-y-limpieza/limpieza-del-hogar": droguería-limpieza         # 10
+    "la-despensa/alimentacion/semillas": despensa                         # 10
+    "drogueria-y-limpieza/papeleria/pequeno-accesorio": droguería-limpieza # 10
+    "drogueria-y-limpieza/ambientadores/aerosol-y-pistola": droguería-limpieza # 10
+    "drogueria-y-limpieza/calzado/plantillas-de-calzado": droguería-limpieza # 10
+    "frescos/verduras-y-hortalizas/hierbas-aromaticas-y-especias": frutas-verduras # 9
+    "drogueria-y-limpieza/calzado/crema": droguería-limpieza              # 9
+    "drogueria-y-limpieza/limpieza-del-hogar/limpiacristales-y-multiusos": droguería-limpieza # 9
+    "frescos/carne/cordero": carniceria                                   # 9
+    "drogueria-y-limpieza/papel-y-celulosa": droguería-limpieza           # 9
+    "cuidado-personal-e-higiene/afeitado/gel-y-espuma-de-afeitar": higiene-belleza # 9
+    "la-despensa/yogures-y-postres/gelatina": lacteos-huevos              # 9
+    "frescos/charcuteria-y-quesos-al-corte/fiambres-y-cocidos": carniceria # 8
+    "frescos/verduras-y-hortalizas": frutas-verduras                      # 8
+    "frescos/quesos/fundidos": lacteos-huevos                             # 8
+    "parafarmacia/botiquin/sprays-y-tiras-nasales": parafarmacia       # 8
+    "frescos/quesos/azules-y-roquefort": lacteos-huevos                   # 8
+    "parafarmacia/cuidado-e-higiene-facial/tonicos-y-lociones": higiene-belleza # 8
+    "frescos/quesos/crema-de-queso": lacteos-huevos                       # 8
+    "parafarmacia/botiquin/cuidado-del-oido": parafarmacia                # 8
+    "frescos/charcuteria-y-quesos-al-corte": carniceria                   # 8
+    "parafarmacia/botiquin/antimosquitos": parafarmacia                   # 8
+    "frescos/quesos/otros-internacionales": lacteos-huevos                # 8
+    "parafarmacia/cuidado-del-cabello/antiparasitarios": parafarmacia     # 7
+    "frescos/pescado-y-marisco/surimi-y-elaborados": pescaderia           # 7
+    "la-despensa/panaderia-bolleria-y-pasteleria/pan-rallado-y-rebozados": panaderia # 7
+    "drogueria-y-limpieza/menaje/cuberteria": droguería-limpieza       # 7
+    "bebe/parafarmacia-para-el-bebe": bebe                                # 7
+    "congelados/air-fryer/patatas-air-fryer": congelados               # 7
+    "drogueria-y-limpieza/bazar/barbacoas-y-accesorios": droguería-limpieza # 7
+    "drogueria-y-limpieza/papeleria/lapices-y-accesorios": droguería-limpieza # 7
+    "frescos/carne/conejo": carniceria                                    # 7
+    "la-despensa/conservas-sopas-y-precocinados/conservas-de-frutas": frutas-verduras # 7
+    "drogueria-y-limpieza/bazar/jardineria": droguería-limpieza           # 6
+    "la-despensa/panaderia-bolleria-y-pasteleria/pasteleria": panaderia   # 6
+    "parafarmacia/cuidado-corporal/higiene-intima": higiene-belleza       # 6
+    "parafarmacia/cuidado-corporal/desodorantes": higiene-belleza      # 6
+    "parafarmacia/complementos-alimenticios/nutricosmetica": higiene-belleza # 6
+    "bebe/puericultura/protegecamas-y-bolsas-para-panales": bebe       # 6
+    "frescos/charcuteria-y-quesos-al-corte/quesos-internacionales": carniceria # 6
+    "cuidado-personal-e-higiene/depilacion/after-shave": higiene-belleza # 6
+    "frescos/frutas/uvas": frutas-verduras                                # 5
+    "drogueria-y-limpieza/calzado/limpiador-liquido": droguería-limpieza  # 5
+    "la-despensa/desayuno/cacaos-y-cereales-solubles": despensa           # 5
+    "frescos/verduras-y-hortalizas/patatas-cebollas-y-ajos": frutas-verduras # 4
+    "frescos/pan-y-bolleria-del-dia/picos-y-reganas": panaderia           # 4
+    "congelados/helados/copas-y-vasitos": congelados                      # 4
+    "frescos/pan-y-bolleria-del-dia/pan-tradicional": panaderia           # 4
+    "la-despensa/conservas-sopas-y-precocinados/gazpacho-y-salmorejo": despensa # 4
+    "bebidas": bebidas                                                    # 4
+    "drogueria-y-limpieza/limpieza-cocina": droguería-limpieza            # 4
+    "frescos/verduras-y-hortalizas/tomates-y-pepinos": frutas-verduras    # 4
+    "la-despensa/desayuno/barritas": desayuno-dulces                      # 4
+    "parafarmacia/cuidado-de-manos-y-pies/cuidado-de-pies": parafarmacia  # 4
+    "cuidado-personal-e-higiene": higiene-belleza                         # 4
+    "frescos/quesos/gouda-y-emmental": lacteos-huevos                     # 4
+    "drogueria-y-limpieza/limpieza-cocina/limpiadores-electrodomesticos": droguería-limpieza # 4
+    "parafarmacia/cuidado-del-cabello/anticaspa": parafarmacia            # 4
+    "drogueria-y-limpieza/limpieza-cocina/aditivos-y-limpiamaquinas": droguería-limpieza # 4
+    "drogueria-y-limpieza/insecticidas": droguería-limpieza               # 4
+    "la-despensa/conservas-sopas-y-precocinados/platos-tradicionales": despensa # 4
+    "frescos/quesos/queso-fresco": lacteos-huevos                         # 3
+    "drogueria-y-limpieza/limpieza-del-hogar/limpiador-de-alfombras-y-tapicerias": droguería-limpieza # 3
+    "mascotas/conejos-y-roedores": mascotas                               # 3
+    "frescos/quesos/anejo": lacteos-huevos                                # 3
+    "cuidado-personal-e-higiene/cosmetica/manicura-y-pedicura": higiene-belleza # 3
+    "cuidado-personal-e-higiene/depilacion/depilacion": higiene-belleza   # 3
+    "drogueria-y-limpieza/bazar/accesorios-de-bano": droguería-limpieza   # 3
+    "cuidado-personal-e-higiene/bienestar-sexual/estimuladores": higiene-belleza # 3
+    "la-despensa/desayuno/azucar-y-edulcorantes": despensa                # 3
+    "frescos/carne/empanados": carniceria                                 # 2
+    "drogueria-y-limpieza/calzado/limpiador-de-piel-y-ante": droguería-limpieza # 2
+    "mascotas/peces-y-tortugas/tortugas": mascotas                        # 2
+    "cuidado-personal-e-higiene/afeitado/aftershave": higiene-belleza  # 2
+    "la-despensa/alimentacion/harinas-y-levaduras": panaderia             # 2
+    "drogueria-y-limpieza/calzado/esponjas-autobrillantes": droguería-limpieza # 2
+    "frescos/quesos/con-denominacion-origen": lacteos-huevos              # 2
+    "frescos/carne/preparados-y-arreglos-de-carne": carniceria            # 2
+    "drogueria-y-limpieza/papel-y-celulosa/panuelos": droguería-limpieza # 2
+    "la-despensa/alimentacion/legumbres": despensa                        # 2
+    "frescos/verduras-y-hortalizas/setas-y-hongos": frutas-verduras       # 2
+    "frescos/charcuteria-y-quesos-al-corte/jamon-a-cuchillo": carniceria  # 2
+    "la-despensa/alimentacion/vino-de-cocinar": despensa                  # 2
+    "bebe/ofertas-en-bebe": bebe                                          # 2
+    "frescos/charcuteria-y-quesos-al-corte/jamones-y-paletas-curados": carniceria # 2
+    "parafarmacia/complementos-alimenticios/colesterol": desayuno-dulces  # 2
+    "la-despensa/conservas-sopas-y-precocinados/salteados-de-verdura-arroz-y-paella": frutas-verduras # 2
+    "drogueria-y-limpieza/papeleria/archivadores": droguería-limpieza     # 2
+    "frescos/carne/casqueria": carniceria                                 # 1
+    "la-despensa/conservas-sopas-y-precocinados/conservas-de-carne": carniceria # 1
+    "drogueria-y-limpieza/papeleria/accesorios-manualidades": droguería-limpieza # 1
+    "bebidas/alcoholes/brandy-y-conac": bebidas                           # 1
+    "drogueria-y-limpieza/limpieza-cocina/vitroceramicas-e-induccion": droguería-limpieza # 1
+    "la-despensa/alimentacion/vitaminas-y-complementos": despensa         # 1
+    "drogueria-y-limpieza/papeleria/cuadernos-y-carpetas": droguería-limpieza # 1
+    "la-despensa/conservas-sopas-y-precocinados/pizzas": despensa         # 1
+    "bebidas/cerveza/rubia": bebidas                                      # 1
+    "bebidas/cerveza/todas-las-cervezas": bebidas                         # 1
+
+  # ---- dia — 253 claves, 5410 productos ----
+    "frescos/carne/carne-picada": carniceria                           # nueva, 21 sep
+    "drogueria-y-limpieza/papeleria": hogar                            # nueva, 21 sep
+    "drogueria-y-limpieza/papeleria/boligrafos-y-correctores": hogar   # nueva, 21 sep
+    "drogueria-y-limpieza/papeleria/marcadores": hogar                 # nueva, 21 sep
+    "drogueria-y-limpieza/bazar/pegamentos-y-siliconas": hogar         # nueva, 21 sep
+    "drogueria-y-limpieza/bazar/herramientas": hogar                   # nueva, 21 sep
+    "drogueria-y-limpieza/papeleria/folios-y-papeles-especiales": hogar # nueva, 21 sep
+    "cuidado-personal-e-higiene/afeitado": higiene-belleza             # nueva, 21 sep
+    "parafarmacia/botiquin/geles-hidroalcoholicos": parafarmacia       # nueva, 21 sep
+    "frescos/charcuteria/fiambre-de-pavo-y-pollo": carniceria          # nueva 2026-09-21
+    "frescos/pan-y-bolleria-del-dia/pasteleria-y-reposteria": panaderia # nueva 2026-09-21
+    "frescos/frutas/sandias-y-melones": frutas-verduras                # nueva 2026-09-21
+    "frescos/frutas/fruta-de-temporada": frutas-verduras               # nueva 2026-09-21
+    "frescos/pan-y-bolleria-del-dia/bolleria-tradicional": panaderia   # nueva 2026-09-21
+    "drogueria-y-limpieza/conservacion-de-alimentos/hermetico": droguería-limpieza # nueva 2026-09-21
+    "frescos/frutas/fruta-cortada": frutas-verduras                    # nueva 2026-09-21
+    "la-despensa/aperitivos/frutos-secos": aperitivos                  # nueva 2026-09-21
+    "la-despensa/aperitivos/patatas-fritas": aperitivos                # nueva 2026-09-21
+    "frescos/charcuteria/bacon-y-panceta": carniceria                  # nueva 2026-09-21
+    "frescos/frutas/manzanas-y-peras": frutas-verduras                 # nueva 2026-09-21
+    "frescos/frutas/frutos-del-bosque": frutas-verduras                # nueva 2026-09-21
+    "frescos/charcuteria/jamon-cocido-y-lacon": carniceria             # nueva 2026-09-21
+    "frescos/frutas/pinas-kiwis-aguacates-y-tropicales": frutas-verduras # nueva 2026-09-21
+    "drogueria-y-limpieza/bazar/burletes": droguería-limpieza          # nueva 2026-09-21
+    "ofertas": promociones                                             # nueva 2026-09-21
+  dia:
+    "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
+    "verduras/conservas-de-verduras": frutas-verduras                     # 77
+    "cervezas-vinos-y-licores/vino-tinto": bebidas                        # 75
+    "cabello-y-perfumeria/perfumes-y-colonias": higiene-belleza           # 67
+    "higiene-y-cuidado-del-cuerpo/desodorantes": higiene-belleza       # 67
+    "cervezas-vinos-y-licores/packs-de-cervezas": bebidas                 # 66
+    "aperitivos-y-frutos-secos/snacks-salados": aperitivos             # 65
+    "cabello-y-perfumeria/champu": higiene-belleza                        # 63
+    "agua-y-refrescos/cola": bebidas                                      # 56
+    "novedades-y-recomendados/vuelta-a-la-accion": promociones            # 55
+    "chocolates-y-golosinas/golosinas": desayuno-dulces                   # 55
+    "chocolates-y-golosinas/chocolate-con-leche": desayuno-dulces      # 55
+    "aceites-salsas-y-especias/salsas-de-tomate-y-pasta": despensa        # 55
+    "higiene-y-cuidado-del-cuerpo/compresas-e-higiene-intima": higiene-belleza # 55
+    "novedades-y-recomendados/nutricion-deportiva": parafarmacia          # 54
+    "bolleria-reposteria-y-azucar/magdalenas-y-bolleria-clasica": panaderia # 54
+    "panaderia/pan-rallado-tostado-y-picos": panaderia                    # 53
+    "chocolates-y-golosinas/chicles-y-caramelos": desayuno-dulces         # 53
+    "cervezas-vinos-y-licores/vino-blanco": bebidas                       # 51
+    "novedades-y-recomendados/productos-premiados": promociones           # 51
+    "huevos-leche-y-mantequilla/leche": lacteos-huevos                    # 50
+    "bolleria-reposteria-y-azucar/rosquillas-y-pastelitos": panaderia     # 50
+    "aperitivos-y-frutos-secos/frutos-secos": aperitivos                  # 50
+    "galletas-cereales-y-mermeladas/mermeladas": despensa                 # 49
+    "conservas-caldos-y-cremas/caldos-y-sopas": despensa                  # 48
+    "higiene-y-cuidado-del-cuerpo/higiene-bucal": higiene-belleza         # 48
+    "galletas-cereales-y-mermeladas/galletas-clasicas-y-digestive": despensa # 47
+    "cabello-y-perfumeria/cuidado-facial": higiene-belleza                # 46
+    "huevos-leche-y-mantequilla/leche-sin-lactosa-y-enriquecidas": lacteos-huevos # 46
+    "arroz-pastas-y-legumbres/garbanzos-y-alubias": despensa              # 45
+    "infantil/golosinas-y-chocolatinas": bebe                             # 45
+    "aperitivos-y-frutos-secos/aceitunas": aperitivos                     # 44
+    "limpieza-y-hogar/ambientadores-recambios-y-velas": droguería-limpieza # 44
+    "higiene-y-cuidado-del-cuerpo/gel-de-ducha-y-esponjas": higiene-belleza # 41
+    "arroz-pastas-y-legumbres/macarrones-espaguetis-y-pastas-secas": despensa # 40
+    "chocolates-y-golosinas/chocolatinas-y-bombones": desayuno-dulces     # 40
+    "aceites-salsas-y-especias/aceites": despensa                         # 40
+    "congelados-y-helados/helados-y-hielo": congelados                    # 40
+    "huevos-leche-y-mantequilla/bebidas-vegetales-y-horchatas": lacteos-huevos # 39
+    "zumos-y-smoothies/multifrutas-y-otros-sabores": bebidas           # 39
+    "conservas-caldos-y-cremas/atun-y-bonito": despensa                   # 39
+    "congelados-y-helados/verduras-y-patatas": frutas-verduras            # 38
+    "aceites-salsas-y-especias/salsas-especiales-y-picantes": despensa    # 38
+    "agua-y-refrescos/agua": bebidas                                      # 38
+    "verano/helados": congelados                                          # 38
+    "bolleria-reposteria-y-azucar/azucar-miel-y-edulcorantes": panaderia  # 37
+    "aceites-salsas-y-especias/especias-y-hierbas": despensa              # 37
+    "limpieza-y-hogar/estropajos-bayetas-y-guantes": droguería-limpieza # 36
+    "limpieza-y-hogar/pilas-menaje-y-bolsas": droguería-limpieza          # 36
+    "infantil/bolsitas-y-snacks": bebe                                 # 36
+    "limpieza-y-hogar/papel-higienico-cocina-y-servilletas": droguería-limpieza # 36
+    "limpieza-y-hogar/detergentes": droguería-limpieza                 # 35
+    "cabello-y-perfumeria/acondicionadores-y-mascarillas": higiene-belleza # 35
+    "cafe-cacao-e-infusiones/infusiones": desayuno-dulces                 # 35
+    "agua-y-refrescos/bebidas-energeticas": bebidas                       # 34
+    "aperitivos-y-frutos-secos/patatas-fritas": aperitivos             # 33
+    "galletas-cereales-y-mermeladas/cereales": despensa                   # 33
+    "charcuteria/pate-y-sobrasada": carniceria                            # 32
+    "platos-preparados-y-pizzas/comida-asiatica": preparados              # 32
+    "mascotas/gato-comida-humeda": mascotas                               # 32
+    "agua-y-refrescos/naranja-limon-y-lima-limon": bebidas                # 31
+    "limpieza-y-hogar/suavizantes-y-cuidado-de-la-ropa": droguería-limpieza # 31
+    "aceites-salsas-y-especias/ketchup-mayonesa-y-mostaza": despensa      # 31
+    "chocolates-y-golosinas/chocolate-negro": desayuno-dulces             # 31
+    "limpieza-y-hogar/lavavajillas": droguería-limpieza                   # 30
+    "cervezas-vinos-y-licores/cervezas": bebidas                          # 30
+    "bolleria-reposteria-y-azucar/preparados-para-postres-y-decoracion": panaderia # 30
+    "cervezas-vinos-y-licores/cremas-licores-y-brandy": bebidas           # 29
+    "congelados-y-helados/croquetas-y-rebozados": congelados              # 29
+    "cervezas-vinos-y-licores/cervezas-premium-y-especiales": bebidas  # 28
+    "panaderia/pan-recien-horneado": panaderia                            # 28
+    "congelados-y-helados/pizzas-y-masas": panaderia                      # 27
+    "cervezas-vinos-y-licores/ron-y-whisky": bebidas                      # 27
+    "charcuteria/pavo-y-pollo": carniceria                                # 27
+    "galletas-cereales-y-mermeladas/tortitas": despensa                   # 27
+    "galletas-cereales-y-mermeladas/barritas-de-cereales-y-proteinas": despensa # 27
+    "cafe-cacao-e-infusiones/cafe-molido": desayuno-dulces                # 26
+    "cafe-cacao-e-infusiones/capsulas-compatibles-nespresso": desayuno-dulces # 26
+    "chocolates-y-golosinas/cremas-de-cacao-y-de-untar": desayuno-dulces  # 26
+    "frutas/frutas-de-temporada": frutas-verduras                         # 26
+    "aceites-salsas-y-especias/ajo-sal-y-pimienta": despensa              # 25
+    "zumos-y-smoothies/melocoton-y-pina": bebidas                         # 24
+    "higiene-y-cuidado-del-cuerpo/afeitado": higiene-belleza              # 24
+    "infantil/panales-y-toallitas": bebe                               # 24
+    "mascotas/gato-comida-seca": mascotas                                 # 24
+    "charcuteria/lomo-y-chorizo": carniceria                              # 23
+    "arroz-pastas-y-legumbres/arroz": despensa                            # 23
+    "limpieza-y-hogar/lejia-y-desinfectantes": droguería-limpieza      # 23
+    "cervezas-vinos-y-licores/ginebra-vodka-y-tequila": bebidas        # 23
+    "agua-y-refrescos/packs-de-agua-y-refrescos": bebidas                 # 23
+    "limpieza-y-hogar/limpieza-suelos-cristales-y-muebles": droguería-limpieza # 22
+    "yogures-y-postres/yogures-bifidus-y-colesterol": lacteos-huevos      # 22
+    "galletas-cereales-y-mermeladas/cereales-integrales-y-muesli": despensa # 22
+    "pescados-y-mariscos/congelado": pescaderia                           # 22
+    "carnes/hamburguesas-carne-picada-y-albondigas": carniceria           # 22
+    "infantil/leches-y-papillas": lacteos-huevos                          # 22
+    "mascotas/perro-comida-seca": mascotas                                # 22
+    "charcuteria/salchichas": carniceria                                  # 21
+    "verduras/tomates-pimientos-y-pepinos": frutas-verduras               # 21
+    "yogures-y-postres/kefir-y-postres-vegetales": lacteos-huevos         # 21
+    "cafe-cacao-e-infusiones/capsulas-compatibles-dolce-gusto": desayuno-dulces # 20
+    "agua-y-refrescos/tonica-gaseosa-y-bitter": bebidas                # 20
+    "bolleria-reposteria-y-azucar/harinas-y-levaduras": panaderia         # 20
+    "carnes/pollo": carniceria                                            # 20
+    "higiene-y-cuidado-del-cuerpo/jabon-de-manos": higiene-belleza        # 20
+    "higiene-y-cuidado-del-cuerpo/hidratacion-de-cuerpo-y-manos": higiene-belleza # 20
+    "quesos/fresco": lacteos-huevos                                       # 20
+    "conservas-caldos-y-cremas/mejillones": despensa                      # 19
+    "quesos/en-lonchas": lacteos-huevos                                   # 19
+    "zumos-y-smoothies/naranja": bebidas                                  # 19
+    "cafe-cacao-e-infusiones/cafe-soluble": desayuno-dulces               # 19
+    "verduras/lechugas-y-hojas-verdes": frutas-verduras                   # 19
+    "cervezas-vinos-y-licores/cervezas-sin-alcohol": bebidas              # 19
+    "galletas-cereales-y-mermeladas/galletas-saladas-y-crackers": despensa # 18
+    "cabello-y-perfumeria/espumas-y-fijadores": higiene-belleza           # 18
+    "limpieza-y-hogar/bolsas-de-basura-escobas-y-fregonas": droguería-limpieza # 18
+    "cafe-cacao-e-infusiones/cacao-y-chocolate-a-la-taza": desayuno-dulces # 18
+    "pescados-y-mariscos/ahumado-y-salazon": pescaderia                   # 18
+    "mascotas/perro-comida-humeda": mascotas                              # 18
+    "agua-y-refrescos/bebidas-isotonicas-y-deportivas": bebidas           # 17
+    "verano/aperitivos-y-picoteo": desayuno-dulces                        # 17
+    "azucar-chocolates-y-caramelos/chocolates-y-bombones": despensa       # 17
+    "limpieza-y-hogar/limpieza-bano-y-wc": droguería-limpieza             # 17
+    "higiene-y-cuidado-del-cuerpo/depilacion": higiene-belleza            # 17
+    "platos-preparados-y-pizzas/pizzas-refrigeradas": preparados          # 16
+    "conservas-caldos-y-cremas/caballa-y-sardinas": despensa              # 16
+    "salud-y-parafarmacia/complementos-nutricionales": despensa           # 16
+    "aperitivos-y-frutos-secos/encurtidos": aperitivos                    # 16
+    "cabello-y-perfumeria/tintes": higiene-belleza                     # 16
+    "mascotas/perro-snacks-y-cuidado": mascotas                        # 16
+    "charcuteria/jamon-cocido": carniceria                                # 16
+    "salud-y-parafarmacia/parafarmacia": despensa                         # 15
+    "zumos-y-smoothies/fruta-y-leche": bebidas                         # 15
+    "agua-y-refrescos/refrescos-sin-gas": bebidas                         # 15
+    "carnes/cerdo": carniceria                                            # 15
+    "panaderia/pan-de-molde-y-especiales": panaderia                      # 15
+    "bolleria-reposteria-y-azucar/bolleria-de-horno-dulce": panaderia     # 15
+    "arroz-pastas-y-legumbres/lentejas": despensa                         # 15
+    "charcuteria/jamon-serrano": carniceria                               # 15
+    "quesos/rallado": lacteos-huevos                                      # 14
+    "frutas/frutas-tropicales": frutas-verduras                           # 14
+    "agua-y-refrescos/te-frio": bebidas                                # 14
+    "huevos-leche-y-mantequilla/batidos": lacteos-huevos                  # 14
+    "yogures-y-postres/yogures-liquidos": lacteos-huevos                  # 14
+    "platos-preparados-y-pizzas/comida-tradicional": preparados           # 14
+    "huevos-leche-y-mantequilla/mantequilla-y-margarina": lacteos-huevos  # 14
+    "aceites-salsas-y-especias/vinagres-y-alinos": despensa               # 14
+    "infantil/yogures-y-postres": lacteos-huevos                          # 14
+    "aperitivos-y-frutos-secos/mix-de-frutos-secos": aperitivos           # 13
+    "platos-preparados-y-pizzas/ensaladas-y-bowls": frutas-verduras       # 13
+    "charcuteria/fuet-y-salchichon": carniceria                           # 13
+    "quesos/especialidades": lacteos-huevos                               # 13
+    "salud-y-parafarmacia/protector-solar": parafarmacia               # 13
+    "quesos/curado": lacteos-huevos                                       # 13
+    "conservas-caldos-y-cremas/cremas-y-pures": despensa                  # 13
+    "yogures-y-postres/yogures-de-sabores-y-frutas": lacteos-huevos    # 13
+    "sin-gluten/productos-infantiles-sin-gluten": desayuno-dulces         # 13
+    "yogures-y-postres/yogures-griegos": lacteos-huevos                   # 13
+    "arroz-pastas-y-legumbres/pastas-rellenas-y-en-salsa": despensa       # 13
+    "salud-y-parafarmacia/botiquin": despensa                             # 13
+    "congelados-y-helados/pescado-y-marisco": pescaderia                  # 13
+    "cervezas-vinos-y-licores/vermouth-y-aperitivos": bebidas          # 13
+    "panaderia/masas-y-hojaldres": panaderia                              # 12
+    "navidad/postres-de-navidad": desayuno-dulces                         # 12
+    "verduras/ajos-cebollas-y-puerros": frutas-verduras                   # 12
+    "cafe-cacao-e-infusiones/cafes-frios": desayuno-dulces                # 12
+    "conservas-caldos-y-cremas/mejillones-berberechos-y-pescado": pescaderia # 12
+    "charcuteria/chopped-y-mortadela": carniceria                         # 12
+    "mascotas/gato-snacks-y-cuidado": mascotas                         # 12
+    "pescados-y-mariscos/fresco": pescaderia                              # 12
+    "novedades-y-recomendados/freidora-de-aire-airfryer": promociones     # 12
+    "yogures-y-postres/natillas-flan-y-arroz-con-leche": lacteos-huevos   # 12
+    "chocolates-y-golosinas/chocolate-blanco": desayuno-dulces            # 12
+    "congelados-y-helados/arroces-y-pasta": despensa                      # 12
+    "conservas-caldos-y-cremas/conservas-de-fruta": frutas-verduras       # 12
+    "quesos/untable-y-en-porciones": lacteos-huevos                       # 12
+    "limpieza-y-hogar/limpieza-cocina-y-quitagrasas": droguería-limpieza  # 11
+    "frutas/manzanas-y-peras": frutas-verduras                            # 11
+    "frutas/naranjas-mandarinas-y-limones": frutas-verduras               # 11
+    "huevos-leche-y-mantequilla/huevos": lacteos-huevos                   # 11
+    "pescados-y-mariscos/surimi-y-elaborados": pescaderia                 # 11
+    "cervezas-vinos-y-licores/vino-rosado": bebidas                       # 11
+    "limpieza-y-hogar/insecticidas": droguería-limpieza                   # 10
+    "limpieza-y-hogar/film-aluminio-y-conservacion": droguería-limpieza # 10
+    "cervezas-vinos-y-licores/cavas-y-sidra": bebidas                     # 10
+    "aceites-salsas-y-especias/sazonadores": despensa                     # 10
+    "cervezas-vinos-y-licores/cervezas-con-limon": bebidas                # 10
+    "verano/listo-para-comer": preparados                                 # 10
+    "platos-preparados-y-pizzas/gazpachos-y-salmorejos": despensa         # 9
+    "arroz-pastas-y-legumbres/fideos": despensa                           # 9
+    "carnes/vacuno": carniceria                                           # 9
+    "verduras/patatas-y-zanahorias": frutas-verduras                      # 9
+    "novedades-y-recomendados/mejor-valorados": promociones               # 8
+    "panaderia/horno": panaderia                                          # 8
+    "panaderia/tortillas-de-trigo-y-pitas": panaderia                     # 8
+    "yogures-y-postres/gelatinas-y-cuajadas": lacteos-huevos              # 8
+    "agua-y-refrescos/kombucha-y-aguas-vitaminadas": bebidas              # 8
+    "platos-preparados-y-pizzas/sandwiches-y-hamburguesas": preparados    # 8
+    "zumos-y-smoothies/limonadas": bebidas                                # 8
+    "cafe-cacao-e-infusiones/cafe-en-grano": desayuno-dulces              # 8
+    "frutas/frutos-rojos-y-del-bosque": frutas-verduras                   # 8
+    "cervezas-vinos-y-licores/tinto-de-verano-y-sangria": bebidas         # 7
+    "panaderia/pan-sin-gluten": panaderia                                 # 7
+    "quesos/azul-y-de-cabra": lacteos-huevos                              # 7
+    "charcuteria/bacon": carniceria                                       # 7
+    "verduras/brocoli-coliflor-y-judias-verdes": frutas-verduras          # 7
+    "yogures-y-postres/yogures-naturales-y-desnatados": lacteos-huevos    # 7
+    "yogures-y-postres/postres-tradicionales": lacteos-huevos             # 6
+    "navidad/frutos-secos-y-deshidratados": aperitivos                    # 6
+    "conservas-caldos-y-cremas/conservas-de-verdura": frutas-verduras     # 6
+    "arroz-pastas-y-legumbres/quinoa-couscous-y-soja": despensa           # 6
+    "huevos-leche-y-mantequilla/leche-condensada-y-evaporada": lacteos-huevos # 6
+    "carnes/pavo": carniceria                                             # 5
+    "novedades-y-recomendados/especial-mundial": despensa                 # 5
+    "huevos-leche-y-mantequilla/nata": lacteos-huevos                     # 5
+    "verano/barbacoa": carniceria                                         # 5
+    "quesos/tierno": lacteos-huevos                                       # 5
+    "platos-preparados-y-pizzas/hummus-y-guacamoles": preparados          # 5
+    "frutas/platanos-y-bananas": frutas-verduras                          # 5
+    "infantil/potitos-y-tarritos": bebe                                   # 5
+    "cafe-cacao-e-infusiones/te": desayuno-dulces                         # 5
+    "verduras/calabacin-calabaza-y-berenjena": frutas-verduras            # 4
+    "zumos-y-smoothies/smoothies": bebidas                                # 4
+    "platos-preparados-y-pizzas/listos-para-comer": preparados            # 4
+    "verduras/setas-y-champinones": frutas-verduras                       # 4
+    "arroz-pastas-y-legumbres/lasana-y-canelones": despensa               # 3
+    "panaderia/pan-para-hamburguesas-y-perritos": panaderia               # 3
+    "carnes/empanados-y-elaborados": carniceria                           # 3
+    "novedades-y-recomendados/seleccion-sin-gluten": desayuno-dulces      # 3
+    "congelados-y-helados/tartas-y-churros": panaderia                 # 3
+    "zumos-y-smoothies/recien-exprimido-y-fresco": bebidas                # 3
+    "aperitivos-y-frutos-secos/snacks-vegetales": aperitivos              # 3
+    "platos-preparados-y-pizzas/comida-mexicana": preparados              # 3
+    "verduras/hierbas-aromaticas": frutas-verduras                        # 3
+    "navidad/entrantes-navidad": desayuno-dulces                          # 3
+    "frutas/uvas": frutas-verduras                                        # 3
+    "quesos/semicurado": lacteos-huevos                                   # 2
+    "platos-preparados-y-pizzas/tortillas-y-empanadas": panaderia         # 2
+    "sin-gluten/desayunos-sin-gluten": desayuno-dulces                    # 2
+    "arroz-pastas-y-legumbres/noodles": despensa                          # 2
+    "infantil/galletas-y-bolleria": bebe                               # 2
+    "sin-gluten/reposteria-sin-gluten": desayuno-dulces                   # 2
+    "novedades-y-recomendados/novedades": promociones                     # 2
+    "cafe-cacao-e-infusiones/otras-capsulas-compatibles": desayuno-dulces # 2
+    "galletas-cereales-y-mermeladas/galletas-cereales-y-tortitas-sin-gluten": despensa # 2
+    "sin-gluten/bebidas-sin-gluten": desayuno-dulces                      # 1
+    "aperitivos-y-frutos-secos/frutas-deshidratadas": frutas-verduras     # 1
+    "navidad/roscones-panettones-y-polvorones": panaderia                 # 1
+    "infantil/higiene-y-cuidado": bebe                                    # 1
+    "yogures-y-postres/yogures-y-postres-infantiles": lacteos-huevos      # 1
+    "carnes/arreglos-y-despieces": carniceria                             # 1
+    "navidad/carnes-navidad": carniceria                                  # 1
+    "carnes/conejo": carniceria                                           # 1
+
+  # ---- mercadona — 26 claves, 4317 productos ----
+    "frutas/frutas-congeladas": frutas-verduras                        # nueva, 21 sep
+  mercadona:
+    "Cuidado facial y corporal": higiene-belleza                          # 458
+    "Limpieza y hogar": droguería-limpieza                                # 345
+    "Panadería y pastelería": panaderia                                   # 300
+    "Charcutería y quesos": carniceria                                    # 276
+    "Bodega": bebidas                                                     # 228
+    "Agua y refrescos": bebidas                                           # 189
+    "Congelados": congelados                                              # 179
+    "Cuidado del cabello": higiene-belleza                               # 177
+    "Carne": carniceria                                                   # 173
+    "Fruta y verdura": frutas-verduras                                    # 158
+    "Marisco y pescado": pescaderia                                       # 152
+    "Maquillaje": higiene-belleza                                         # 152
+    "Huevos, leche y mantequilla": lacteos-huevos                         # 151
+    "Pizzas y platos preparados": preparados                              # 147
+    "Aperitivos": aperitivos                                              # 144
+    "Postres y yogures": lacteos-huevos                                   # 143
+    "Conservas, caldos y cremas": despensa                                # 137
+    "Azúcar, caramelos y chocolate": despensa                             # 133
+    "Aceite, especias y salsas": despensa                                 # 127
+    "Cacao, café e infusiones": desayuno-dulces                           # 106
+    "Cereales y galletas": despensa                                       # 105
+    "Mascotas": mascotas                                                  # 84
+    "Arroz, legumbres y pasta": despensa                                  # 79
+    "Bebé": bebe                                                          # 63
+    "Zumos": bebidas                                                      # 58
+    "Fitoterapia y parafarmacia": desayuno-dulces                         # 53

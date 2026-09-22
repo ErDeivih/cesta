@@ -1,0 +1,59 @@
+# FASE 2. En la fase 1 esto NO se usa: todo corre en el PC con ejecutar.bat.
+# Se activa cuando el pipeline local lleve semanas funcionando solo.
+#
+#  - "abiertas":   cadenas sin proteccion -> runner de GitHub
+#  - "protegidas": Cloudflare/Akamai -> runner propio en el PC (IP residencial)
+# El repo debe ser PUBLICO para tener minutos ilimitados. Los DATOS no van aqui.
+
+name: recoleccion diaria
+
+on:
+  # Manual mientras DIA/Carrefour no tengan colector completo y no exista una
+  # estrategia probada para mover el historico local entre trabajos.
+  workflow_dispatch:
+
+concurrency:
+  group: recoleccion
+  cancel-in-progress: false
+
+jobs:
+  abiertas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false        # que una cadena caiga no debe tumbar a las demas
+      matrix:
+        fuente: [mercadona, aldi, alcampo]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv sync --frozen
+      - run: uv run python -m projects.cesta.run --solo ${{ matrix.fuente }} --sin-pipeline
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bronze-${{ matrix.fuente }}
+          path: data/bronze/**
+          retention-days: 7
+
+  protegidas:
+    runs-on: [self-hosted, windows, casa]   # el PC de David
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        fuente: [dia, carrefour]
+    steps:
+      - uses: actions/checkout@v4
+      - run: uv sync --frozen
+      - run: uv run python -m projects.cesta.run --solo ${{ matrix.fuente }} --sin-pipeline
+
+  transformar:
+    needs: [abiertas, protegidas]
+    if: always()              # aunque falte una cadena, seguimos con lo que hay
+    runs-on: [self-hosted, windows, casa]   # el historico vive en el PC
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: data/bronze, merge-multiple: true }
+      - run: uv run python -m projects.cesta.pipeline
