@@ -294,6 +294,37 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    `tests/test_atributos.py`: techos 54, 74, 615 y 21, y si bajan se bajan en el
    mismo commit.
 
+### Como se comprueba el encargo, y cuanto sale hoy
+
+Las cinco condiciones van **juntas a proposito**: lo que paso el 22 de septiembre fue
+subir un numero mientras bajaba el otro (el recall del emparejador subio y los grupos
+se fundieron peor), y mirando una sola columna eso se ve como una mejora.
+
+    condicion                                   comando                                        hoy
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        682 pasan, 0 fallan
+    --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
+                                                  --medir                                      65 %   CUMPLE
+    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        54     NO
+    menos de 30 grupos de 11+ productos         (el mismo comando)                           74     NO
+    las cinco cadenas con bronze del mismo dia  ver `docs/ESTADO.md`                         por comprobar
+
+Y la de mas valor, que no es ninguna de esas cinco porque es la que las explica:
+
+    grupos que mezclan un pack con sueltas      615
+    de esos, de 11 o mas                          21
+
+Los tres instrumentos, y donde viven: `projects/cesta/ejes.py` (ejes y pack, sobre el
+gold; sus techos estan en `tests/test_atributos.py`), `tests/test_contraste.py` (el
+contraste del texto y de los limites, con la formula de WCAG escrita dentro) y
+`data/debug/_conflictos.py` (los conflictos de asignacion de una pasada, a partir de
+su `equivalencia.parquet`). Los dos primeros son pruebas; el tercero es un script de
+trabajo y **deberia subir a `projects/cesta/`** el dia que se toque el canal de
+vectores otra vez.
+
+Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
+que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a
+proposito (sube a 73 % de recall y rompe los conflictos de asignacion de 0 a 861).
+
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
 montaje de `docker-compose.yml:77` es la paridad de la interfaz, que es el punto
