@@ -27,6 +27,8 @@ GOLD = Path(__file__).resolve().parents[1] / "data" / "gold" / "grupos.parquet"
 # algo ha empeorado y hay que mirarlo antes de tocar el numero.
 TECHO_CONTRADICTORIOS = 54
 TECHO_DE_11_O_MAS = 74
+TECHO_QUE_MEZCLAN_PACK = 615
+TECHO_PACK_DE_11_O_MAS = 21
 
 
 # --------------------------------------------------------------- la funcion ---
@@ -89,3 +91,33 @@ def test_el_catalogo_no_ha_empeorado():
     assert r["grupos_de_11_o_mas"] <= TECHO_DE_11_O_MAS, (
         f"hay {r['grupos_de_11_o_mas']} grupos de 11 o mas productos y el techo "
         f"esta en {TECHO_DE_11_O_MAS}; la barra pide menos de 30")
+    assert r["grupos_que_mezclan_pack"] <= TECHO_QUE_MEZCLAN_PACK, (
+        f"hay {r['grupos_que_mezclan_pack']} grupos que mezclan un pack con "
+        f"unidades sueltas y el techo esta en {TECHO_QUE_MEZCLAN_PACK}. Nadie se "
+        f"contradice ahi -- todas son agua de 1,5 l --, pero \"donde compro agua\" "
+        f"acaba recomendando nueve litros frente a uno y medio")
+    assert r["de_esos_de_11_o_mas"] <= TECHO_PACK_DE_11_O_MAS, (
+        f"{r['de_esos_de_11_o_mas']} grupos grandes mezclan pack con sueltas, y el "
+        f"techo esta en {TECHO_PACK_DE_11_O_MAS}")
+
+
+@pytest.mark.skipif(not GOLD.exists(), reason="esta copia no trae gold")
+def test_el_pack_caza_lo_que_los_ejes_no_ven():
+    """Los dos instrumentos son complementarios, y eso hay que fijarlo.
+
+    El grupo de las 84 cervezas **no lo caza el eje del alcohol**: nadie escribe
+    "con alcohol" en una cerveza, asi que nunca hay dos valores que se contradigan.
+    Lo caza el pack, porque mete un pack de 12 con latas sueltas. Si algun dia
+    alguien toca una de las dos medidas pensando que la otra la cubre, esto lo dice.
+    """
+    from projects.cesta.ejes import resumen
+
+    # Con `peores=5` porque `peores_pack` viene vacio si no se pide: la primera
+    # version de esta prueba llamaba a `resumen()` a secas y fallaba por eso, no
+    # porque el catalogo hubiera cambiado.
+    r = resumen(peores=5)
+    assert r["grupos_que_mezclan_pack"] > 0 and r["grupos_con_eje_contradictorio"] > 0
+    cervezas = [g for n, g, _t in r["peores_pack"] if n >= 80]
+    assert cervezas, (
+        "el grupo grande de cervezas ya no sale como mezcla de pack: comprueba si "
+        "alguien ha cambiado `unidades_pack` o el instrumento")

@@ -273,11 +273,26 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    Para ese caso hace falta la **comprobacion de cohesion contra el medoide**, que
    es el mismo bloque del encargo.
 
+   **Y la segunda dimension, que no estaba en ningun diagnostico: el pack no es la
+   unidad.** El grupo mezcla una botella de 1,5 l con un pack de 6x1,5 l. Ahi **nadie
+   se contradice** (todas son agua de 1,5 l) y el precio por litro se compara bien:
+   el problema es que "donde compro agua" acaba recomendando nueve litros frente a
+   uno y medio. Medido con `unidades_pack`:
+
+       grupos que mezclan un pack con sueltas        615
+       de esos, de 11 o mas productos                 21
+
+   Y los ejemplos de la revision salen exactos: el grupo **444** con unidades [1, 6]
+   y el **6182** con [1, 6, 12, 18]. Ademas, **el instrumento del pack caza lo que el
+   de los ejes no ve**: el grupo de las 84 cervezas es [1, 12], porque nadie escribe
+   "con alcohol" en una cerveza y el eje nunca llega a tener dos valores. Los dos
+   medidores son complementarios, y hay una prueba que lo fija.
+
    Queda hecho aqui lo que se puede hacer sin tocar el emparejador: medir. **Partir
-   los grupos** (por eje, y descartando los que no declaran) y **la cohesion contra
-   el medoide** son el paso siguiente. El trinquete esta en
-   `tests/test_atributos.py`: techo 54 y 74, y si bajan se baja el techo en el mismo
-   commit.
+   los grupos** (por eje y por pack, descartando los que no declaran) y **la cohesion
+   contra el medoide** son el paso siguiente. El trinquete esta en
+   `tests/test_atributos.py`: techos 54, 74, 615 y 21, y si bajan se bajan en el
+   mismo commit.
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
