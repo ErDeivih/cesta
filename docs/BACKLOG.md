@@ -65,7 +65,7 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
     grupo mayor                         329    ->  97
     etiqueta identico que dice verdad   70 %   ->  100 %
     fallos por "otra unidad"            172    ->  39
-    grupos con el mas caro >200 %       369    ->  458     (tasa 6,5 % -> 6,4 %)
+    grupos con el mas caro >200 %       369    ->  448     (tasa 6,5 % -> 6,3 %)
 
 **Lo que queda mal, con las dos causas ya identificadas y medidas.**
 
@@ -90,9 +90,15 @@ veto de precio de 30x. Vienen de dos sitios distintos:
    de dorada de "300 g aprox". Es el mismo roto que los 33 detergentes "de 61
    litros": el dato de cantidad de lo que se vende al peso.
 
-El criterio del BACKLOG (**menos de 150 grupos con mas del 200 %**, hoy 458) no se
+El criterio del BACKLOG (**menos de 150 grupos con mas del 200 %**, hoy 448) no se
 cumple y no se va a cumplir con frenos. **Esto sustituye a la tarea 2**, con las
 dos pistas medidas en `docs/DIAGNOSTICO-MATCHING.md` §16.
+
+Y una cosa que ya no cuesta nada: `uv sync --extra plataforma` esta hecho, asi
+que `pytest` completo pasa de 545 a **585 en verde** (los 30 de mas son las
+pruebas de la API, que no corrian por falta de fastapi). Quedan 2 fallos, los dos
+de `test_verificar_precios`, que van de contar bien el caso "no hubo conexion" y
+"la pagina no trae precio" — no tienen que ver con el matching.
 
 **Las decisiones que se tomaron, y por que.**
 

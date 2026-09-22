@@ -306,10 +306,18 @@ def dispersion_grupos(filas) -> dict:
     (kg/l/m): mezclar un bote de 500 g con uno de 1 kg en 'ud' no cuenta.
     """
     precios: dict[int, list[float]] = defaultdict(list)
+    descartados = 0
     for f in filas:
         p, u = f.get("precio_unidad_cent"), f.get("unidad_canon")
-        if p and u in ("kg", "l", "m"):
-            precios[f["grupo_id"]].append(float(p))
+        if not p or u not in ("kg", "l", "m"):
+            continue
+        # Un precio que la propia cadena marca como no comparable no puede contar
+        # para medir si un grupo es ancho: seria medir el grupo con un numero que
+        # ya sabemos que no vale. La plataforma tampoco lo usa para decidir.
+        if f.get("precio_comparable") is False:
+            descartados += 1
+            continue
+        precios[f["grupo_id"]].append(float(p))
     ratios = {}
     for k, v in precios.items():
         if len(v) > 1 and min(v) > 0:
@@ -325,7 +333,7 @@ def dispersion_grupos(filas) -> dict:
         else:
             tramos["<50 %"] += 1
     return {"con_precio": len(ratios), "tramos": tramos,
-            "mas_200": tramos.get(">200 %", 0),
+            "mas_200": tramos.get(">200 %", 0), "descartados": descartados,
             "peores": sorted(ratios.items(), key=lambda x: -x[1])[:10]}
 
 

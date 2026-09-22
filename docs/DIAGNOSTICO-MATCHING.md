@@ -834,10 +834,16 @@ DIA lo publica como si fuera un peso fijo.
 ### 16.3 El criterio del BACKLOG sigue sin cumplirse
 
 El BACKLOG §2 pide **menos de 150 grupos con más del 200 % de dispersión**. Hoy
-hay **458** (6,4 % de los 7.142 con precio comparable, contra el 7,5 % de antes:
-la tasa sí mejora). No se cumple, y no se va a cumplir con frenos: hace falta el
-IDF por sección del §16.2 y arreglar la cantidad de los productos al peso. Queda
-en el BACKLOG como tarea 2, con estas dos pistas en vez de con una corazonada.
+hay **448** (6,3 % de los 7.130 grupos con precio comparable, contra el 7,5 % de
+antes: la tasa sí mejora). No se cumple, y no se va a cumplir con frenos: hace
+falta el IDF por sección del §16.2 y arreglar la cantidad de los productos al
+peso. Queda en el BACKLOG como tarea 2, con estas dos pistas en vez de con una
+corazonada.
+
+La medida excluye los precios que la propia cadena marca `precio_comparable =
+false`: medir el ancho de un grupo con un número que ya sabemos que no vale es
+medir el grupo con una regla rota. Quitarlos baja de 458 a 448, así que no eran
+el motor del problema, pero la cuenta es más honesta así.
 
 ---
 
