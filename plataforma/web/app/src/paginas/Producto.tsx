@@ -24,6 +24,7 @@ import {
   ms,
   NO_LO_SE,
   nombreCadena,
+  numero,
   porcentaje,
   porcentajeConSigno,
   selloLegible,
@@ -63,6 +64,9 @@ export function Producto() {
    *  Se calcula aqui y no dentro del `map` a proposito: es un dato por ficha,
    *  no uno por sello, y dentro del `map` se repetiria en cada etiqueta. */
   const origenDeSellos = textoOrigenSello(miembro?.sellos_origen)
+
+  /** Cuanto puede bailar el peso, si el producto se vende al peso. `null` si no. */
+  const pesoVariable = miembro?.peso_variacion_pct ?? null
 
   const historico = useMemo(() => {
     if (!grupo) return { puntos: [] as PuntoChispa[], bloqueado: false, filas: 0 }
@@ -178,6 +182,16 @@ export function Producto() {
             <Dato etiqueta="Precio por unidad">
               {eurosUnidad(producto.precio_unidad_cent, producto.unidad)}
             </Dato>
+            {/* Al peso, el precio es una estimacion y hay que decirlo antes de
+                que se entere en la caja. Son los 711 productos del catalogo que
+                traen `peso_variacion_pct` (todos al 25 %), y sin esta linea el
+                €/kg parece una promesa cuando es un calculo. */}
+            {pesoVariable !== null && (
+              <Dato etiqueta="Al peso">
+                ronda los {textoCantidad(producto.cantidad, producto.unidad)} y puede variar
+                un {numero(pesoVariable)} %
+              </Dato>
+            )}
             <Dato etiqueta="Nutri-Score">
               <SelloNutriscore valor={producto.nutriscore} />
             </Dato>
