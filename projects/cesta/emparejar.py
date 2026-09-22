@@ -19,6 +19,7 @@ import time
 import polars as pl
 
 from core import config
+from core import equivalencias as eq
 from core.calidad import letras, por_precio, puntua
 from core.matching import (
     CAMPOS_PARA_EMPAREJAR,
@@ -435,6 +436,27 @@ def main(argv: list[str] | None = None) -> int:
     if len(con_ns):
         print(f"  Nutri-Score en {len(con_ns)} productos "
               f"({salida.filter(pl.col('nova').is_not_null()).height} con NOVA)")
+
+    # La pasada entera, versionada. Los ficheros de arriba son "lo de hoy" y se
+    # reescriben; esto es el registro de que paso cada dia, con clave estable y
+    # con el motivo de cada par, y no se toca nunca mas.
+    ejecucion_id = eq.id_de_ejecucion()
+    equivalencias = eq.filas_de_equivalencia(filas, ls, ejecucion_id)
+    metricas = {
+        "enlaces": float(len(ls)),
+        "identicos": float(sum(1 for x in ls if x[3] == "identico")),
+        "grupos_comparables": float(len(multi)),
+        "productos_comparables": float(
+            salida.filter(pl.col("grupo_id").is_in(multi["grupo_id"])).height),
+        "calidad_asignada": float(len(con_letra)),
+        "grupos_dudosos_ud": float(dudosos),
+    }
+    carpeta = eq.escribe_ejecucion(
+        ejecucion_id, equivalencias, metricas,
+        {"productos": len(filas), "huella_catalogo": eq.huella_catalogo(filas),
+         "umbral": a.umbral})
+    print(f"  equivalencias versionadas en {carpeta.name} "
+          f"({len(equivalencias)} pares con su motivo)")
     print(f"emparejar: hecho en {time.monotonic() - t0:.0f}s")
     return 0
 

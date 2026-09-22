@@ -738,10 +738,10 @@ pequeño y coherente vale más que uno grande y falso. Eso, más las fases 5 a 1
 | fase | estado |
 |---|---|
 | 0 · diagnóstico | **hecho** |
-| 1 · modelo versionado | pendiente (propuesto en el §8) |
+| 1 · modelo versionado | **hecho** (§17) |
 | 2 · dato de formato | **hecho** (§13.1) |
 | 3 · bloqueo | pendiente: el actual aguanta, falta el ANN con embeddings |
-| 4 · asignación | **la mitad**: húngaro hecho (§13.2); freno de grupo, no (§14) |
+| 4 · asignación | **hecha**: húngaro (§13.2) y freno de grupo (§16) |
 | 5 a 11 | pendientes |
 
 Lo entregado el 22 de septiembre: `core/normalize.py`, `core/matching.py`,
@@ -838,3 +838,41 @@ hay **458** (6,4 % de los 7.142 con precio comparable, contra el 7,5 % de antes:
 la tasa sí mejora). No se cumple, y no se va a cumplir con frenos: hace falta el
 IDF por sección del §16.2 y arreglar la cantidad de los productos al peso. Queda
 en el BACKLOG como tarea 2, con estas dos pistas en vez de con una corazonada.
+
+---
+
+## 17. El modelo de equivalencias, versionado (Fase 1)
+
+`core/equivalencias.py`. Dos cosas que el modelo de antes no tenía, y las dos
+importan:
+
+1. **`producto_id` estable.** Hasta hoy `enlaces.parquet` guardaba **pares de
+   posiciones** en la lista de productos; por eso existía `enlaces_huella.json`,
+   que avisa cuando el catálogo cambia. Un par de posiciones no sobrevive a
+   reordenar el catálogo, a añadir una cadena ni a que un día falle una captura.
+   Ahora un par es `(dia:12345, carrefour:9)`, que significa lo mismo siempre.
+2. **Cada pasada escribe su propio directorio y no toca las anteriores**
+   (`data/gold/matching/ejecucion=<id>/`), con la huella del catálogo del que
+   salió y la versión del modelo. Se puede comparar una pasada con la anterior y
+   volver atrás. Es lo que pedía el encargo: nunca sobrescribir.
+
+Y cada par guarda **por qué** se aceptó, en `features`: si el EAN coincide y si
+está en los dos lados, si la marca coincide, si coinciden cantidad, unidad y
+sección, el parecido y el **ratio de precio por unidad**. Eso es lo que hace
+auditable el resultado sin que nadie apruebe nada.
+
+```text
+data/gold/matching/ejecucion=20260922-134241/
+    equivalencia.parquet   22.702 pares, con metodo, confianza y features
+    metrica.parquet        enlaces, identicos, grupos y productos comparables...
+    resumen.json           de que catalogo salio, con que codigo y con que umbral
+data/gold/matching/ultima.json     cual es la ultima
+```
+
+Diez pruebas en `tests/test_equivalencias.py`: que el id no depende de la
+posición, que la huella cambia si cambia el orden, que dos pasadas no se pisan,
+que las features dicen la verdad y que sin ninguna pasada no revienta.
+
+**Lo que queda de esta fase**: migrar las listas y los favoritos de PostgreSQL,
+que hoy apuntan a `grupo_id` (un número que cambia en cada pasada). Con
+`producto_id` estable ya se puede; ver `docs/MODELO.md`.

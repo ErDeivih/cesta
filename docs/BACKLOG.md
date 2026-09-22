@@ -47,7 +47,11 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
     projects/cesta/pipeline.py              cantidad_fiable, la unidad que se
                                             contradice, respaldo por el nombre
     core/matching.py                        asignacion hungara 1-a-1, la
-                                            etiqueta identico veraz, veto de precio
+                                            etiqueta identico veraz, veto de
+                                            precio y freno de grupo
+    core/equivalencias.py                   Fase 1: producto_id estable y cada
+                                            pasada versionada, con su motivo
+    tests/test_equivalencias.py             10 pruebas
     projects/cesta/collectors/carrefour.py  cat11729677 en ROTAS_EN_ORIGEN
     git                                     el proyecto YA tiene control de
                                             versiones; no tenia .git
