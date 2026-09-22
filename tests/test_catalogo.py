@@ -27,6 +27,14 @@ def gold(tmp_path, monkeypatch):
                 promo_txt, categoria, url, grupo_id, calidad, calidad_origen,
                 calidad_nota, nutriscore, comparacion_fiable, nova)
         """)
+        # `promo_hasta` con zona horaria, que es como lo escribe el pipeline. Se
+        # anade aqui y no en las tuplas de arriba para no tocar las pruebas que
+        # ya existian, pero tiene que estar: sin una columna TIMESTAMPTZ de
+        # verdad, la prueba de pytz no probaria nada.
+        con.execute("""
+            ALTER TABLE g ADD COLUMN promo_hasta TIMESTAMPTZ;
+            UPDATE g SET promo_hasta = TIMESTAMPTZ '2026-09-25 00:00:00+02';
+        """)
         con.execute(f"COPY g TO '{tmp_path / 'grupos.parquet'}' (FORMAT PARQUET)")
         for otro in ("enlaces", "precio_derivado", "resumen"):
             con.execute(f"COPY (SELECT 1 AS x) TO '{tmp_path / otro}.parquet' (FORMAT PARQUET)")
@@ -270,3 +278,37 @@ def test_el_panel_solo_lee(gold):
     catalogo.matching(5)
     despues = sorted(p.name for p in (tmp / "matching").rglob("*"))
     assert antes == despues
+
+
+# --- la ficha del grupo y la zona horaria -------------------------------
+# El fallo que esto cierra, encontrado el 22 de septiembre de 2026: la pantalla
+# de grupo -- la clave del encargo -- daba 500 en casi todos los grupos
+# comparables. `promo_hasta` es un TIMESTAMP WITH TIME ZONE y DuckDB, para
+# devolverlo como objeto de fecha, importa `pytz` por debajo. La imagen de la API
+# no lo trae, porque la API no maneja zonas horarias. En el entorno de desarrollo
+# tampoco estaba, y aun asi ninguna prueba lo vio: el catalogo de mentira no
+# tenia ninguna columna con zona horaria.
+
+
+def test_la_ficha_del_grupo_trae_la_fecha_de_la_promocion(gold):
+    from plataforma.api import catalogo
+    g = catalogo.grupo(1)
+    assert g is not None
+    assert g["productos"][0]["promo_hasta"] == "2026-09-25"
+
+
+def test_la_ficha_del_grupo_no_necesita_pytz(gold, monkeypatch):
+    """Se esconde `pytz` para reproducir lo que pasa DENTRO del contenedor.
+
+    Poner `None` en `sys.modules` hace que cualquier `import pytz` falle aunque
+    el modulo este instalado, que es exactamente la diferencia entre el entorno de
+    desarrollo y la imagen de la API. Sin esto, la prueba pasaria en los dos
+    sitios y no protegeria nada.
+    """
+    import sys
+
+    from plataforma.api import catalogo
+    monkeypatch.setitem(sys.modules, "pytz", None)
+    g = catalogo.grupo(1)
+    assert g is not None
+    assert g["productos"][0]["promo_hasta"] == "2026-09-25"

@@ -181,9 +181,9 @@ bien pero `ultima` es `null`, dice que no hay ninguna pasada guardada en
   `data/gold/matching/` leída con DuckDB. El estado 404 también está probado,
   contra la API de verdad.
 
-## Dos problemas del backend que se han visto al probar esto
+## Tres cosas del entorno que se han visto al probar esto
 
-No se ha tocado nada fuera de `plataforma/web/app/`, así que quedan apuntados:
+No se ha tocado nada fuera de `plataforma/web/app/`, así que quedan apuntadas.
 
 1. **`/api/grupo/{id}` da 500** para cualquier grupo cuyos productos tengan
    `promo_hasta` no nulo: DuckDB necesita `pytz` para devolver un

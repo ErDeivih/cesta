@@ -399,11 +399,22 @@ def secciones(cadenas: list[str] | None = None) -> list[dict]:
 # ------------------------------------------------------------ ficha de grupo --
 
 def grupo(grupo_id: int) -> dict | None:
-    """Todo lo que la ficha necesita: los miembros, los equivalentes y la curva."""
+    """Todo lo que la ficha necesita: los miembros, los equivalentes y la curva.
+
+    Ojo con `promo_hasta`: es un ``TIMESTAMP WITH TIME ZONE`` y se pide **ya
+    convertido a texto**. DuckDB, para devolverlo como objeto de fecha, importa
+    `pytz` por debajo, y la imagen de la API no lo trae -- ni debe, porque la API
+    no maneja zonas horarias. Sin el `::VARCHAR` la pantalla de grupo, que es la
+    pantalla clave del encargo, daba 500 en cuanto un miembro tenia promocion con
+    fecha; y era la mayoria. Lo vigila `test_la_ficha_del_grupo_no_necesita_pytz`,
+    que esconde el modulo para reproducir lo que pasa dentro del contenedor.
+    """
     con = conexion()
     disponibles = {f[0] for f in con.execute("DESCRIBE grupos").fetchall()}
     nuevas = ", ".join(
-        c if c in disponibles else f"NULL AS {c}"
+        # El unico que necesita conversion: los demas son texto o numeros.
+        f"{c}::VARCHAR AS {c}" if c == "promo_hasta"
+        else (c if c in disponibles else f"NULL AS {c}")
         for c in ("sellos", "sellos_origen", "certificados", "conservacion",
                   "es_marca_propia", "nutricion", "nutricion_por", "envase",
                   "descripcion", "tipo_producto", "dias_caducidad", "peso_neto_g",
@@ -449,7 +460,9 @@ def grupo(grupo_id: int) -> dict | None:
             "nutricion_por": f[26], "envase": f[27], "descripcion": f[28],
             "tipo_producto": f[29], "dias_caducidad": f[30],
             "peso_neto_g": f[31], "grado_alcohol": f[32],
-            "promo_hasta": f[33].date().isoformat() if f[33] else None,
+            # Ya viene como texto de la consulta (ver el docstring): los diez
+            # primeros caracteres son la fecha, "2026-09-25".
+            "promo_hasta": f[33][:10] if f[33] else None,
             # Una oferta de tarjeta NO baja lo que pagas en caja: se acumula en
             # un monedero. La ficha lo dice con esas palabras.
             "promo_club": bool(f[34]),

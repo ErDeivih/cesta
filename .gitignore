@@ -21,3 +21,10 @@ data/respaldos/
 
 # Ficheros intermedios de rehacer_maestro cuando se para a medias.
 data/master/*.parcial.json.gz
+
+# La interfaz nueva: lo que se versiona es `plataforma/web/app/src` y su
+# configuracion. `node_modules` son cientos de megas de dependencias y `dist` se
+# reconstruye con `npm run build` en cinco segundos: guardarlos seria versionar un
+# artefacto que envejece en cada commit y que nadie lee.
+plataforma/web/app/node_modules/
+plataforma/web/dist/

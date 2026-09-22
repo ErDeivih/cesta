@@ -58,7 +58,12 @@ services:
       # primero es lo correcto.
       - "${CESTA_ESCUCHA:-0.0.0.0}:8080:8080"
     volumes:
-      - ./web:/srv:ro
+      # La interfaz nueva. Vite compila a `web/dist` (ver `web/app/vite.config.ts`)
+      # y Caddy sirve eso; antes se servia la carpeta entera, con el `index.html`
+      # y el `app.js` escritos a mano. Aquellos dos ficheros siguen en el
+      # repositorio sin tocar: volver atras es cambiar esta linea.
+      # Si los dos lados se separan, lo dice `tests/test_interfaz.py`.
+      - ./web/dist:/srv:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - datos_caddy:/data
 
