@@ -342,6 +342,21 @@ de lineas mas y sin pruebas.
     voz         SpeechRecognition del navegador. Cero dependencias.
     entrada     Tailscale. Ver DESPLIEGUE.md punto 4.
 
+**Los colores con significado viven en dos ficheros que tienen que decir lo
+mismo.** `tailwind.config.js` define los nombres (`text-tinta-suave`, `bg-fondo`,
+`border-borde`, `text-aviso`, `border-bien`, `bg-bien-suave`) y
+`src/estilos.css` les da valor, uno para el tema claro y otro para el oscuro. Son
+variables de CSS y no hexadecimales porque estas clases se escriben sin el prefijo
+`dark:`, y con un valor fijo el gris del texto secundario desaparece de noche.
+
+Eso tiene prueba propia (`tests/test_interfaz.py::test_colores_conocidos`) por un
+fallo real, no por gusto: los seis nombres se usaban **27 veces** y **no estaban
+definidos en ninguna parte**. Tailwind, cuando no reconoce una clase, la omite en
+silencio: ni error de compilacion, ni aviso en el navegador. `tsc` y `vite build`
+tampoco podian verlo, porque una clase desconocida es una cadena de texto
+perfectamente valida. La prueba compara lo que se escribe con lo que el tema
+define, que es lo unico que cierra ese agujero.
+
 Se mantiene lo que ya estaba decidido y no cambia:
 
 - **Caddy sigue sirviendo la interfaz** y la API sigue sin servir HTML

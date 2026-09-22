@@ -63,10 +63,23 @@ services:
       # y el `app.js` escritos a mano.
       #
       # **ANTES DE DESPLEGAR ESTO, LEER.** La interfaz nueva NO TIENE PARIDAD
-      # todavia: le faltan la lista de la compra, los favoritos, los ajustes y el
-      # login. El `app.js` viejo SI los tiene (sus vistas son buscar, lista,
-      # favoritos, panel y ajustes; el nuevo solo tiene buscar, grupo, ficha,
-      # escaner y panel). Servir `dist` hoy **quita funciones del producto**.
+      # todavia, y el 23 de septiembre se audito linea a linea para saber cuanto
+      # falta de verdad. La lista completa, con el fichero y la linea de cada
+      # cosa, esta en `docs/BACKLOG.md` (§0). En corto:
+      #
+      #   - La cesta **no se puede usar**: no pinta las lineas de la lista y no
+      #     se puede anadir, tachar ni quitar nada (`src/paginas/Cesta.tsx`).
+      #   - No hay **registro** de cuenta, asi que quien llega nuevo no puede
+      #     entrar en la suya.
+      #   - No se puede **compartir** la lista.
+      #
+      # Ojo con una trampa: las pantallas ya estan TODAS (buscar, cesta,
+      # favoritos, ajustes, panel), asi que parece que hay paridad. No la hay:
+      # lo que falta son funciones dentro de las pantallas. La forma rapida de
+      # verlo es contar lo que se puede **escribir**, no lo que se puede mirar:
+      # cinco operaciones en la nueva contra catorce en el `app.js` viejo.
+      #
+      # Servir `dist` hoy **quita funciones del producto**.
       #
       # La linea es la de destino y se queda puesta porque es a donde va esto,
       # pero cambiarla en produccion es una decision del dueno, no un paso

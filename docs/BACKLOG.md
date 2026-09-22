@@ -43,8 +43,13 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 0. **LA INTERFAZ NUEVA NO TIENE PARIDAD, y por tanto NO SE DESPLIEGA TODAVIA.**
    El `app.js` viejo tiene cinco vistas: `buscar`, `lista` (la lista de la
    compra), `favoritos`, `panel` y `ajustes`, con login. La nueva tiene buscador,
-   grupo, ficha, escaner, panel y panel de matching... **y no tiene la lista de la
-   compra, ni favoritos, ni ajustes, ni login**.
+   grupo, ficha, escaner, cesta, favoritos, ajustes, panel y panel de matching.
+   Las pantallas ya estan todas, y esa es justo la trampa: **una pantalla no es
+   una funcion.** Auditado el 23 de septiembre leyendo `app.js` entero (1.758
+   lineas) contra todo `app/src`, la interfaz nueva tiene **5 operaciones de
+   escritura** (entrar, salir, favoritos, preferencias y las de la cesta que se
+   anadan) contra **14** de la vieja. La diferencia no se ve mirando las
+   pantallas: se ve contando lo que se puede escribir.
 
    Servir `web/dist` hoy **quita funciones del producto**. Por eso
    `plataforma/docker-compose.yml` trae la linea puesta (`./web/dist:/srv:ro`) con
@@ -54,8 +59,19 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 
    Lo que falta, por orden de valor:
 
-   1. ~~**La lista de la compra**~~ — **hecha** (22 sep): login, lista y donde
-      comprarla, en `src/paginas/Cesta.tsx`. Las rutas de la API ya existian.
+   1. ~~**La lista de la compra**~~ — **a medias, y hay que decirlo asi** (23 sep):
+      estan el login, la lista y donde comprarla (`src/paginas/Cesta.tsx`), y las
+      rutas de la API ya existian. Pero **no se puede anadir nada**: el front
+      nuevo solo llama a `GET /listas`, `GET /listas/{id}` y
+      `GET /listas/{id}/donde`. Medido con `Select-String` sobre
+      `src/api/*.ts`: **0 llamadas de escritura**. La API tiene
+      `POST /listas/{id}/lineas` y `PATCH /listas/{id}/lineas/{id}` desde el
+      principio (`plataforma/api/main.py:390` y `:398`) y el `app.js` viejo las
+      usa (`app.js:628` y `:655`). O sea: la pantalla sirve para mirar una lista
+      que hayas hecho en la interfaz vieja, no para hacerla. Esto no se ve mirando
+      la pantalla, porque una lista vacia y una lista que no se puede llenar se
+      parecen mucho. **Es el hueco que mas se nota**: la lista es el caso de uso
+      numero uno.
    2. ~~**El login**~~ — **hecho** (22 sep), va con la cesta: la API usa sesion
       por cookie y un solo origen, asi que funciona sin tocar CORS.
    3. ~~**Favoritos**~~ — **hecho** (22 sep): la pantalla
@@ -63,24 +79,105 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       (`src/componentes/BotonFavorito.tsx`). El boton **no se pinta si no hay
       sesion**: uno que al pulsarlo pida entrar es una promesa que no se puede
       cumplir en el pasillo, con una mano.
-   4. **Ajustes**: preferencias y cadenas de cerca. Es lo unico que queda.
+   4. ~~**Ajustes**~~ — **hecho** (23 sep): `src/paginas/Ajustes.tsx` y
+      `src/api/ajustes.ts`, sobre `PUT /api/preferencias`, que ya existia.
+
+   ### Lo que sigue faltando, auditado linea a linea (23 sep)
+
+   Cada linea es una funcion que el `app.js` viejo tiene y la interfaz nueva no,
+   con el sitio exacto. Ordenado por lo que se nota al usarla en la tienda.
+
+   **Bloquean servir `dist`:**
+
+   1. **Escribir en la lista** (en curso, 23 sep): anadir, tachar, cantidad,
+      borrar. La API lo tiene desde el principio (`main.py:390` y `:398`) y el
+      viejo lo usa (`app.js:628`, `:655`).
+   2. **Pintar las lineas de la lista.** No es que no se puedan tocar: es que
+      **no se pintan**. `Cesta.tsx:213-217` solo usa `detalle.data.lineas.length`
+      y `tachado_en`; el campo `nombre_visto` (`tipos.ts:414`) no se renderiza en
+      ningun fichero de `app/src`. Se entra, se ve un total, y no hay lista.
+   3. **Crear la lista "Casa" si no existe.** `Cesta.tsx:155-164` dice "se crean
+      desde el movil o con la interfaz antigua": manda a la interfaz vieja. El
+      viejo la crea sola (`app.js:448-455`) con `POST /listas`.
+   4. **El registro** (`POST /api/registrarse`, `main.py:83`). Cero
+      coincidencias de `registrarse` en `app/src`: **quien llega nuevo no puede
+      crearse cuenta**, y sin cuenta no hay cesta ni favoritos. El viejo lo tiene
+      (`app.js:128-152`).
+   5. **Compartir la lista**: enlace de invitacion, copiar, quien esta dentro,
+      anular (`POST/DELETE /listas/{id}/invitacion`, `POST /invitacion/{codigo}`,
+      `POST /listas/{id}/compartir`). Cero coincidencias de `invitacion` en
+      `app/src`. El viejo lo tiene (`app.js:1358-1395`).
+   6. **Escribir sin cobertura**: cola local + `POST /listas/{id}/sincronizar`, y
+      leer la lista sin red. El viejo funcionaba con el PC de casa apagado
+      (`app.js:39-47, 63-80, 476-484`); el nuevo depende de `GET /listas/{id}` y
+      sin red no ensena nada. En `docs/APP.md` esto es el paso 7 del orden de
+      construccion, asi que **se puede escalonar**, pero hay que decidirlo.
+
+   **Se pueden escalonar, pero que sea decidido y no por omision:**
+
+   7. **Avisos de precio**: crear ("cuando este mas barato que nunca en 90 dias",
+      "cada vez que baje", umbral), ver los que han saltado y quitarlos
+      (`GET/POST/DELETE /api/alertas`, `main.py:528, 542, 552`). Cero
+      coincidencias de `alertas` en `app/src`. Era lo unico de Favoritos que
+      avisaba de algo.
+   8. **Tres pantallas del panel**: `GET /indice` (`app.js:796-920`),
+      `GET /posicion` (`app.js:925-996`) y `GET /ofertas-dudosas`
+      (`app.js:1110-1156`), mas el **filtro del panel por cadenas cercanas**:
+      `Panel.tsx:488` llama `useBajadas(dias, subidas, [])` con la lista vacia y
+      ninguna pestana lee `cadenas_cerca`.
+   9. **"Darme de baja"** (`DELETE /api/yo`, `main.py:609`). El viejo lo tiene con
+      confirmacion por usuario (`app.js:1571-1603`).
+   10. **Interruptor "repartir entre dos tiendas"** en Ajustes (`max_tiendas=1`;
+      el viejo en `app.js:1413-1418`), y el desglose "N en CADENA" del reparto
+      (`app.js:718-719`).
+   11. **Campos de la ficha de producto** que ya vienen en los tipos y no se
+      pintan: `certificados` (`tipos.ts:90`), `peso_variacion_pct`
+      (`tipos.ts:105`, "al peso: ronda los N g y puede variar un X %") y
+      `distintivo` (`tipos.ts:106`, "la cadena dice"). Y la tabla de nutricion
+      (`Producto.tsx:352-366`) pinta la clave cruda de la API
+      (`energia_kj`, `saturadas`...) sin nombre legible ni unidad; el viejo la
+      traducia y la ordenaba (`app.js:1734-1748`).
+   12. **Detalles menores**: sin ejemplos pulsables en el buscador
+      (`app.js:284-295`), sin contador de lo que falta por coger en la barra de
+      abajo (`app.js:507-509`), el estado vacio del buscador no distingue "nada
+      con esa palabra" de "nada con los filtros" (`app.js:325-332`), y pulsar
+      "Buscar" en la barra de abajo borra la busqueda porque el enlace es `to="/"`
+      sin query (`componentes/Nav.tsx:21`).
+
+   **Lo que la nueva tiene y la vieja no** (no es paridad, es ir por delante), por
+   si alguien se plantea volver atras: buscador con orden por columna, numero de
+   resultados y limite 40/80/120; vistas guardadas de filtros; ficha de grupo en
+   pagina propia con columnas por cadena y pesos ajustables; chispa de historico
+   por producto; escaner de codigo de barras; penalizacion y explicacion del
+   emparejamiento; y el panel de matching.
 
    La barra de abajo del movil tiene cuatro sitios — buscar, cesta, escaner y
    panel — y el matching paso a estar dentro del panel: la lista de la compra es
    a lo que se va en la tienda, y el matching se mira en casa.
 
-1. **Reconstruir la imagen de la API.** El contenedor que corre hoy no tiene
-   `/api/ean`, ni `/api/panel/matching`, ni `marca` en la busqueda, ni
-   `producto_id` en la serie, aunque el codigo del repositorio si:
-   `cd plataforma; docker compose up -d --build api`.
+1. ~~**Reconstruir la imagen de la API**~~ — **hecho** (23 sep). Medido contra
+   `http://127.0.0.1:8080`, la misma matriz de rutas antes y despues:
+
+       /api/grupo/11580          500  ->  200  (53.248 B)   el fallo vivo
+       /api/panel/matching       404  ->  200  (10.278 B)
+       /api/ean/8412345678905    404  ->  200
+       /api/buscar?q=leche       200  ->  200  (1.303 -> 1.353 B: +`marca`)
+       las otras 15 rutas        200  ->  200  sin cambios
+
+   Lo del 500 no era una tarea de limpieza: **la ficha de grupo estaba rota en
+   produccion** por el `TIMESTAMP WITH TIME ZONE` de DuckDB (necesita `pytz`).
+   Comprobado despues: `marca` en 3 de 3 resultados de busqueda y `producto_id`
+   en 22 de 22 productos del grupo 11580.
 2. ~~`/api/buscar` no devuelve `marca`~~ — **hecho** (22 sep).
 3. ~~`serie` no dice de que producto es cada punto~~ — **hecho** (22 sep); el
    front ya pinta la chispa del historico siempre.
 4. **El boton de camara del escaner no esta probado en un movil real.** Lo
    verificado es que se esconde solo cuando no hay `BarcodeDetector`.
 
-Con los puntos 2 y 3 hechos, lo unico que queda para poder usarla es el 1: es un
-comando.
+Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
+hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
+montaje de `docker-compose.yml:77` es la paridad de la interfaz, que es el punto
+0 de arriba, no la API.
 
 **Lo que ya esta hecho (22 sep 2026).** Todo esto esta en git, con sus pruebas.
 
@@ -110,7 +207,7 @@ comando.
                                             sirve eso (docker-compose.yml:61).
                                             Los ficheros viejos siguen ahi como
                                             plan B.
-    tests/                                  638 pruebas. Las que guardan cosas
+    tests/                                  640 pruebas. Las que guardan cosas
                                             que se rompen solas: test_interfaz
                                             (el sitio donde compila y el que se
                                             sirve), test_imagen_api (la API no
