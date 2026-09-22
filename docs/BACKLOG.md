@@ -186,6 +186,19 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
    emparejador con 34 pruebas y la tarea diaria de las 06:00 detras: no se hace a
    la carrera al final de una sesion. El detalle, en
    `docs/DIAGNOSTICO-MATCHING.md` (§22).
+6. **`core.embeddings.candidatos` no cabe en la pasada diaria, y hay que
+   arreglarlo antes de encender el canal de vectores.** Medido el 23 sep con la
+   cache completa: `--medir` con vectores **no termino en 62 minutos** (sin
+   vectores, recalcular los enlaces son 90 s; la pasada diaria entera, 355 s). El
+   canal se ha dejado **opt-in** (`usar_vectores=False` por defecto y
+   `USAR_VECTORES = False` en `emparejar.py`, con cinco pruebas que lo guardan),
+   asi que hoy no estorba. El arreglo esta acotado y localizado: (a) filtrar por
+   el alias `s` en vez de recalcular el coseno en el `WHERE`
+   (`core/embeddings.py:246` y `:249`), (b) trocear la consulta por bloque como
+   dice su propia docstring, en vez de una sola sobre toda la tabla, y (c)
+   no volver a copiar los vectores con `list(v)`. Despues hay que **medir con y
+   sin** otra vez, que es la parte que no se puede saltar. Detalle y numeros en
+   `docs/DIAGNOSTICO-MATCHING.md` (§22).
 
 Con los puntos 1 a 3 hechos, la interfaz nueva **ya se puede servir**: la API que
 hay en produccion tiene todo lo que pide. Lo que decide cuando se cambia el
