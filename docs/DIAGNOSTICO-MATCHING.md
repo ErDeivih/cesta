@@ -778,22 +778,30 @@ grupo, pero **no puede pegar dos grupos que ya existen**. Es la regla que corta 
 mecanismo del grupo monstruo, que es la propagación, no el par.
 
 El número salió de medir, no de elegir (`grupo mayor / grupos comparables /
-grupos de 5 cadenas / grupos con dos productos de la misma cadena y EAN distinto`):
+productos comparables / grupos de 5 cadenas / error demostrable / grupos >200 % /
+productos con letra de calidad`):
 
-| unión exige | grupo mayor | comparables | de 5 cadenas | con error demostrable |
-|---|---:|---:|---:|---:|
-| sin freno | **329** | 6.589 | 271 | 935 |
-| 0,70 | 217 | 7.565 | 224 | 882 |
-| 0,75 | 166 | 7.770 | 208 | 895 |
-| **0,80** | **97** | **7.925** | 201 | 900 |
-| 0,85 | 52 | 8.050 | 184 | 893 |
-| 0,90 | 43 | 8.149 | 174 | 879 |
+| regla | grupo mayor | comparables | productos | 5 cadenas | error dem. | >200 % | con calidad |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| sin freno | **329** | 6.589 | 23.049 | 271 | 935 | 7,5 % | 14.610 |
+| **A · 0,80** | **97** | **7.925** | 23.047 | 201 | 900 | 6,4 % | **12.996** |
+| B · 0,80 | 85 | 8.499 | 20.176 | 69 | **422** | **3,7 %** | **5.546** |
 
-Se eligió 0,80: por encima, cada punto rompe más grupos buenos que malos.
+Dos reglas, no una. La A es la de arriba: un enlace flojo puede meter a un
+producto suelto, pero no pegar dos grupos. La B es más dura: un enlace flojo
+**solo** vale entre dos productos sueltos.
 
-Consecuencia: **los productos comparables no bajan (23.047)**, los grupos
-comparables suben de 6.589 a **7.925** (+20 %, o sea más productos con alternativa
-visible) y el grupo mayor cae de 329 a **97**.
+**Se elige la A, y la B se descartó midiendo.** La B es claramente mejor en lo que
+se estaba mirando —mitad de error demostrable, mitad de grupos anchos—, pero
+**hunde la letra de calidad de 12.996 productos a 5.546**, porque casi todos los
+grupos se quedan en pareja y `letras()` pide tres comparables para dar una letra.
+La letra de calidad es una función que se usa en la ficha y en la API: no se
+cambia por una mejora en un indicador indirecto. La medición queda escrita en
+`core/matching.py` por si algún día la letra deja de pedir tres.
+
+Consecuencia de lo elegido: **los productos comparables no bajan (23.047)**, los
+grupos comparables suben de 6.589 a **7.925** (+20 %, o sea más productos con
+alternativa visible) y el grupo mayor cae de 329 a **97**.
 
 ### 16.2 Lo que **no** arregla: las familias temáticas
 

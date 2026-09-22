@@ -68,10 +68,16 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
 Los grupos anchos NO vienen de un par malo: de los 22.702 enlaces, **0** violan el
 veto de precio de 30x. Vienen de dos sitios distintos:
 
-1. **Un grupo es lo que queda conectado, y eso se propaga.** A-B razonable, B-C
-   razonable, A y C a 125 veces. El grupo 92 llego a tener 329 productos: todas
-   las cervezas. Ya hay un freno (`core.matching.agrupar_enlaces`, union 0,80) que
-   lo baja a 97, pero **no lo arregla del todo**.
+1. **Un grupo es lo que queda conectado, y eso se propaga.** Y no por muchos
+   enlaces flojos, sino por **uno solo**: dentro del grupo 92 (97 productos, 181
+   enlaces internos) el parecido mediano es **1,00** y lo que lo sostenia eran dos
+   puentes de 0,55 (`Mahou tostada 0,0` <-> `Saer Brau tostada 0,0` <-> `Mahou
+   tostada`). Ya hay un freno (`core.matching.agrupar_enlaces`, union 0,80: un
+   enlace flojo puede meter a un producto suelto pero no pegar dos grupos) que
+   baja el mayor de 329 a 97 y sube los comparables de 6.589 a 7.925. Se probo
+   una version mas dura (un flojo solo entre dos sueltos): frena el error a la
+   mitad, pero **hunde la letra de calidad de 12.996 a 5.546 productos** y se
+   descarto midiendo.
 2. **El IDF se calcula sobre el catalogo entero**, y ahi "cerveza" parece una
    palabra rarisima (600 cervezas entre 52.567 productos) cuando entre cervezas no
    distingue nada. El arreglo es calcular los pesos **dentro de la seccion**, y

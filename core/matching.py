@@ -559,31 +559,32 @@ def _marca(valor) -> str:
 # grupo, pero **no puede pegar dos grupos que ya existen**. Es el freno contra el
 # grupo monstruo.
 #
-# Por que hace falta. Un grupo es lo que queda conectado, y eso se propaga: A-B
-# razonable, B-C razonable, y A y C a 125 veces. Medido el 22 de septiembre sobre
-# los 22.702 enlaces: el grupo 92 tenia **329 productos** y metia "Cerveza sin
-# alcohol Dia Ramblers" con "Cerveza Leffe Brune negra" y "Guinness"; el 252, 145
-# aguas; el 434, 83 desodorantes. Con el freno, el mayor baja de 329 a 97 (0,80)
-# o a 52 (0,85), y los productos comparables no bajan (23.047): no se pierde
-# cobertura, se deja de juntar lo que no era lo mismo.
+# Por que hace falta. Un grupo es lo que queda conectado, y eso se propaga. Y no
+# se propaga por muchos enlaces flojos, sino por **uno solo**: mirando por dentro
+# el grupo 92 (97 productos, 181 enlaces internos), el parecido mediano es 1,00 y
+# lo que lo sostenia eran un par de puentes de 0,55:
 #
-# El numero se eligio midiendo, no a ojo (union exigida / grupo mayor /
-# grupos comparables / grupos de 5 cadenas / grupos con dos productos de la misma
-# cadena y EAN distinto):
+#     0.55  MAHOU Cerveza tostada 0,0% lata      <-> Cerveza tostada Saer Brau 0,0
+#     0.55  Cerveza tostada Saer Brau 0,0        <-> Cerveza tostada 0,0% Mahou
+#     0.58  Agua mineral con gas Perrier 1 l     <-> Agua mineral con gas Vichy 1 L
+#     0.66  SAN PELLEGRINO agua con gas 1 l      <-> Agua mineral Font Vella 1 l
 #
-#     sin freno   329 / 6.589 / 271 / 935
-#     0,70        217 / 7.565 / 224 / 882
-#     0,75        166 / 7.770 / 208 / 895
-#     0,80         97 / 7.925 / 201 / 900
-#     0,85         52 / 8.050 / 184 / 893
-#     0,90         43 / 8.149 / 174 / 879
+# Cada puente une dos racimos correctos por su equivalente de marca blanca, y asi
+# acaban juntos "todas las cervezas tostadas" o "todas las aguas".
 #
-# 0,80 es donde el monstruo deja de serlo sin quedarse sin grupos de cinco
-# cadenas: por encima, cada punto rompe mas grupos buenos que malos.
+# Se probaron dos reglas, medidas sobre los 22.702 enlaces del 22 de septiembre
+# (grupo mayor / grupos comparables / productos comparables / grupos de 5 cadenas
+# / error demostrable / grupos con mas del 200 % / calidad asignada):
 #
-# OJO: esto **no** arregla del todo los grupos por familia ("todas las cervezas").
-# Ver docs/DIAGNOSTICO-MATCHING.md §16: la causa de fondo es que el IDF se calcula
-# sobre el catalogo entero, y ahi "cerveza" parece una palabra rarisima.
+#   sin freno                  329 / 6.589 / 23.049 / 271 / 935 / 7,5 % / 14.610
+#   A: 0,80 no pega grupos      97 / 7.925 / 23.047 / 201 / 900 / 6,4 % / 12.996
+#   B: 0,80 flojo solo sueltos  85 / 8.499 / 20.176 /  69 / 422 / 3,7 % /  5.546
+#
+# B frena el error a la mitad y los grupos anchos a la mitad, **pero hunde la
+# letra de calidad de 12.996 productos a 5.546**, porque casi todos los grupos se
+# quedan en pareja y la letra pide tres comparables. La letra de calidad es una
+# funcion que se usa: no se cambia por una mejora en un indicador indirecto. Se
+# queda A.
 UMBRAL_UNION = 0.80
 
 
@@ -591,9 +592,9 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
                     umbral_union: float = UMBRAL_UNION) -> list[int]:
     """Id de grupo por producto, con el freno contra el grupo monstruo.
 
-    Los enlaces se recorre de mas parecido a menos, que es lo que hace que el
-    nucleo bueno de cada grupo se forme primero y el enlace flojo que llegaba a
-    pegarlo con otra cosa se quede fuera.
+    Los enlaces se recorren de mas parecido a menos, que es lo que hace que el
+    nucleo bueno de cada grupo se forme primero y los puentes flojos se queden
+    fuera: cuando un enlace de 0,55 llega, los dos racimos que uniria ya existen.
     """
     padre = list(range(n))
     tamano = [1] * n
