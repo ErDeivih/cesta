@@ -1,4 +1,4 @@
-# DIAGNÓSTICO DEL MATCHING — Fase 0
+﻿# DIAGNÓSTICO DEL MATCHING — Fase 0
 
 > Informe de la Fase 0 de `docs/PLAN-UI-MATCHING.md`. **Solo mide: no cambia
 > nada.** Todos los números salen del catálogo de gold del **21 de septiembre de
@@ -1209,3 +1209,70 @@ que las features dicen la verdad y que sin ninguna pasada no revienta.
 **Lo que queda de esta fase**: migrar las listas y los favoritos de PostgreSQL,
 que hoy apuntan a `grupo_id` (un número que cambia en cada pasada). Con
 `producto_id` estable ya se puede; ver `docs/MODELO.md`.
+
+---
+
+## 22. Fase 3: los embeddings SI aportan (y es la unica fase avanzada que pasa)
+
+De las tres fases que el encargo llamaba "algoritmos complejos", las dos primeras
+midieron y no aportaron nada (§20 y §21). Esta si. La medida decide una sola cosa
+-- *de los 640 pares que sabemos ciertos por EAN y el emparejador por nombre NO
+encuentra, ¿cuantos acerca un embedding?* -- y compara contra los dos controles
+que hacen falta: pares al azar y **negativos dificiles** (misma marca, unidad y
+codigo distinto: dos productos distintos que se parecen muchisimo).
+
+    uv run python -m projects.cesta.embeddings --modelo bge-m3
+
+ge-m3 (el que nombra el plan), servido por Ollama: **no hace falta instalar
+torch ni sentence-transformers**, que eran 2,5 GB para esto. 1.024 dimensiones,
+1.524 productos en 109 segundos en la GTX 1660.
+
+| grupo | mediana | p25 | p75 |
+|---|---:|---:|---:|
+| ciertos que el nombre **sí** encuentra | 0,890 | 0,856 | 0,938 |
+| ciertos que el nombre **no** encuentra | **0,823** | 0,765 | 0,863 |
+| **negativos difíciles** (misma marca, otro código) | **0,680** | 0,621 | 0,734 |
+| pares al azar entre cadenas | 0,414 | 0,366 | 0,470 |
+
+Dos cosas se ven sin cuentas: **el 99 % de los pares que se escapan supera el
+percentil 95 del azar** (0,545), o sea que ~636 de los 640 están a tiro; y **hay
+hueco de verdad entre un acierto (0,823) y dos productos distintos (0,680)**, con
+el p25 de los aciertos (0,765) por encima del p75 de los negativos (0,734).
+
+Y con el barrido de umbral, la decisión:
+
+| umbral | recupera | se cuelan | precisión | recall |
+|---:|---:|---:|---:|---:|
+| 0,65 | 291 | 126 | 0,70 | 0,97 |
+| 0,75 | 271 | 41 | 0,87 | 0,90 |
+| **0,76 (mejor F1)** | **266** | **31** | **0,90** | **0,89** |
+| 0,80 | 235 | 16 | 0,94 | 0,78 |
+| 0,85 | 164 | 8 | 0,95 | 0,55 |
+
+**Precisión 0,90 con recall 0,89, y medida contra el peor caso posible.** Para
+comparar: el emparejador por nombre saca el 65 % de recall, y entre los enlaces
+comprobables con código tiene 612 errores sobre 3.542 pares de la misma marca, o
+sea una precisión del 0,83 en ese subconjunto peor. Los embeddings no solo
+recuperan lo que se escapa: lo hacen **con más precisión que el texto**.
+
+Contra esto no hay que confiarse, y queda dicho: la muestra son 150 + 150 + 200
+pares, no el catálogo entero; y "se cuelan" se mide contra los negativos difíciles,
+que son el peor caso -- en el catálogo real la mayoría de los pares parecidos no
+son ni de la misma marca, así que la precisión real será mejor, no peor.
+
+**Lo que falta para que entre** (Fase 3 del plan, con el orden ya claro):
+
+1. Embeber el catálogo entero, 52.567 productos: unos 55 minutos con este modelo,
+   **cacheado en parquet** para no repetirlo cada día. Respetar el cerrojo de GPU
+   compartida de `%TEMP%` antes de empezar.
+2. Buscar vecinos **dentro del bloque canónico** (sección + formato), que es donde
+   el plan pone el bloqueo. Ahí el espacio por consulta son decenas de productos y
+   la similitud coseno se puede hacer **en SQL con DuckDB**, sin FAISS ni hnswlib
+   ni una dependencia nueva.
+3. Solo como **generador de candidatos**: los candidatos pasan por la asignación
+   húngara y los dos frenos que ya están. Los embeddings proponen; el resto
+   decide.
+4. Medir --medir antes y después, con el mismo bronze, como todo lo demás.
+
+Embeber el catálogo y meter la búsqueda coseno en SQL es una tarde, y es lo
+siguiente que hay que hacer con el matching.
