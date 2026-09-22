@@ -82,10 +82,18 @@ veto de precio de 30x. Vienen de dos sitios distintos:
    una version mas dura (un flojo solo entre dos sueltos): frena el error a la
    mitad, pero **hunde la letra de calidad de 12.996 a 5.546 productos** y se
    descarto midiendo.
-2. **El IDF se calcula sobre el catalogo entero**, y ahi "cerveza" parece una
-   palabra rarisima (600 cervezas entre 52.567 productos) cuando entre cervezas no
-   distingue nada. El arreglo es calcular los pesos **dentro de la seccion**, y
-   obliga a recalibrar el umbral 0,55 entero contra `--medir`. Es la tarea 2.
+2. **El IDF por pasillo se probo y NO arregla nada.** La hipotesis era buena:
+   "cerveza" parece una palabra rarisima entre 52.567 productos y no distingue
+   nada entre cervezas. Se implemento, se midio y se descarto: al mismo umbral
+   cuesta 3 puntos de acierto, y puesto al umbral que los recupera el grupo mayor
+   solo baja de 97 a 80 y la tasa de grupos anchos hasta empeora. **El motivo esta
+   medido**: de los 137 enlaces internos del grupo mayor, en 50 manda el TRIGRAMA,
+   y son justo los puentes. `parejo()` es `max(palabras, 0,85 x trigramas)`, asi
+   que quitarle peso a las palabras no cierra un puente que abre el trigrama.
+   **El numero a tocar es el 0,85**, con cuidado: los trigramas se anadieron por
+   casos medidos ("chocowafer" contra "choco wafer", "Tosta Rica" contra
+   "Tostarica") y bajarlos puede llevarselos por delante. El codigo de
+   `pesos_por_pasillo` se queda en `core/matching.py` con sus pruebas.
 3. Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes
    de dorada de "300 g aprox". Es el mismo roto que los 33 detergentes "de 61
    litros": el dato de cantidad de lo que se vende al peso.

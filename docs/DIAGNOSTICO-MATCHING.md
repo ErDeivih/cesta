@@ -803,27 +803,65 @@ Consecuencia de lo elegido: **los productos comparables no bajan (23.047)**, los
 grupos comparables suben de 6.589 a **7.925** (+20 %, o sea más productos con
 alternativa visible) y el grupo mayor cae de 329 a **97**.
 
-### 16.2 Lo que **no** arregla: las familias temáticas
+### 16.2 Lo que **no** arregla: las familias temáticas, y por qué
 
-97 productos de cervezas siguen siendo demasiadas cervezas juntas. Y la causa de
-fondo está identificada:
+Después del freno siguen habiendo 80 productos de cervezas juntos. La causa se
+buscó, se encontró una candidata, **se implementó, se midió y se descartó**.
 
-**El IDF se calcula sobre el catálogo entero.** De 52.567 productos habrá unos 600
-que sean cerveza, así que para la fórmula `cerveza` es una palabra **rara**
+**La hipótesis.** El IDF se calcula sobre el catálogo entero. De 52.567 productos
+unos 600 son cerveza, así que para la fórmula `cerveza` es una palabra **rara**
 (`log(52567/601) ≈ 4,4`) y por tanto distintiva, cuando entre cervezas no
-distingue absolutamente nada. En un pasillo de 600 cervezas, "cerveza" aparece en
-todas y no debería pesar; "leffe" o "ramblers" sí.
+distingue absolutamente nada. Arreglo: calcular el peso dentro del pasillo.
 
-La segunda pieza es el canal de trigramas: `cervezasinalcohol...` y
-`cervezaleffebrune...` comparten los trozos `cer`, `erv`, `rve`, `vez`, `eza`, y
-la cuenta de trigramas los acerca por el prefijo.
+**La medición.** Se implementó (`pesos_por_pasillo`, 60 líneas, con sus pruebas) y
+se corrió sobre el mismo catálogo, recalibrando el umbral porque la escala cambia:
 
-**Arreglo propuesto, para la siguiente pasada**: calcular los pesos **dentro de la
-sección** en vez de sobre el catálogo. Es un cambio de tres líneas
-(`CAMPOS_PARA_EMPAREJAR` necesita `seccion`, y `pesos` pasa a ser un diccionario
-por sección) pero cambia el parecido de todos los pares, así que hay que **volver
-a calibrar el 0,55** y comprobarlo contra `--medir`, que hoy está en 65 %. No se
-hizo en esta pasada por eso: no se toca la escala sin poder remedirla entera.
+| | aciertos `--medir` | grupos comparables | productos | grupo mayor | tasa >200 % |
+|---|---:|---:|---:|---:|---:|
+| IDF global, 0,55 | 65 % | 7.925 | 23.047 | 97 | 6,28 % |
+| IDF por pasillo, 0,55 | 62 % | — | — | — | — |
+| IDF por pasillo, 0,50 | **66 %** | 8.134 | 23.449 | **80** | 6,38 % |
+
+Cuesta 3 puntos de acierto al mismo umbral y, puesto al umbral que los recupera,
+**el grupo mayor baja de 97 a 80 y la tasa de grupos anchos hasta empeora un
+poco**. La hipótesis era falsa.
+
+**Por qué era falsa, medido.** De los 137 enlaces internos del grupo mayor, en
+**50 manda el trigrama**, y son justo los flojos, los que hacen de puente:
+
+```text
+total=0.50   palabra=0.32   trigrama*0.85=0.39
+   [alcampo]   AMSTEL CLASICA Cerveza tostada 33 cl.
+   [dia]       Cerveza tostada Dia Ramblers 33 cl
+total=0.52   palabra=0.33   trigrama*0.85=0.42
+   [alcampo]   MAHOU Cerveza tostada 0.0 % alcohol lata 33 cl.
+   [carrefour] Cerveza tostada Saer Brau 0,0 sin alcohol lata 33 cl
+total=0.52   palabra=0.33   trigrama*0.85=0.42
+   [carrefour] Cerveza tostada Saer Brau 0,0 sin alcohol lata 33 cl
+   [dia]       Cerveza tostada 0,0% alcohol Mahou 33 cl
+```
+
+`parejo()` es `max(palabras, 0,85 × trigramas)`. **Quitarle peso a las palabras no
+cierra un puente que abre el trigrama.** El número a tocar es el **0,85**, y eso
+queda como la siguiente medida a probar — con cuidado, porque los trigramas se
+añadieron por un motivo medido (`Galleta chocowafer Milka` contra `Galletas choco
+wafer chocolate con leche Milka`, y `Tosta Rica` contra `Tostarica`), y bajarlos
+puede llevarse esos aciertos por delante. Hay que medirlo, no suponerlo.
+
+El código de `pesos_por_pasillo` se queda en `core/matching.py` con sus pruebas y
+con este resultado escrito al lado: la idea es buena, el sitio donde falla está
+localizado, y no se usa porque la medición dice que no aporta.
+
+### 16.4 Y una cosa que no era un hallazgo, era un fallo: no era reproducible
+
+Persiguiendo lo anterior salió esto: dos ejecuciones del **mismo día con el mismo
+código** daban **22.702** y **22.704** enlaces. No es ruido de datos. El reparto
+1-a-1 va marcando qué producto queda ocupado, y el orden en que se recorrían los
+grupos de candidatos salía de un diccionario cuyas claves llevan texto: eso
+depende del *hash seed* del proceso, que Python sortea en cada arranque. Se
+arregla con un `sorted`, y no es cosmético: el plan pide medir la **estabilidad
+entre ejecuciones** ("menos del 2 % de grupos cambian de composición"), y no se
+puede medir lo que no es reproducible.
 
 Y el grupo 30054 no es de emparejamiento: DIA publica **1 g** para unos filetes de
 dorada de "300 g aprox". Es el mismo tipo de roto que los 33 detergentes "de 61

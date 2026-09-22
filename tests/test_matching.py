@@ -335,3 +335,80 @@ def test_el_veto_de_precio_solo_actua_cuando_se_puede_comparar():
     # Falta un precio.
     assert not precio_imposible(barato, {**base, "precio_unidad_cent": None})
     assert not precio_imposible(barato, {**base, "precio_unidad_cent": 2})
+
+
+# ---------------------------------------------------------------------------
+# El peso de las palabras mira el pasillo, no solo el catalogo
+# ---------------------------------------------------------------------------
+# "cerveza" sale en cientos de productos, asi que en el catalogo entero parece
+# una palabra rarisima y acababa pegando TODAS las cervezas en un grupo de 97
+# productos. Dentro del pasillo de bebidas no distingue nada.
+
+
+def _corpus():
+    """Un catalogo de mentira: 60 bebidas que dicen 'cerveza' y 40 de otros pasillos.
+
+    Con eso, en el catalogo entero "cerveza" aparece en el 60 % de los productos
+    (rara, segun la formula) y dentro de bebidas en el 100 % (no distingue nada).
+    """
+    docs, secciones = [], []
+    for n in range(60):
+        docs.append(tokens(f"cerveza negra marca{n}", None))
+        secciones.append("bebidas")
+    for n in range(40):
+        docs.append(tokens(f"detergente ropa marca{n}", None))
+        secciones.append("drogueria-limpieza")
+    return docs, secciones
+
+
+def test_el_peso_relativo_de_una_palabra_generica_baja_en_su_pasillo():
+    """Lo que importa no es el peso en absoluto, es el peso AL LADO de los demas.
+
+    "cerveza" tiene que pesar menos que "ramblers" dentro de su pasillo, mucho
+    mas de lo que pesa menos en el catalogo entero. Eso es lo que impide que dos
+    cervezas distintas se den por el mismo producto solo por decir "cerveza".
+    """
+    from core.matching import idf, pesos_por_pasillo
+
+    docs, secciones = _corpus()
+    docs.append(tokens("cerveza negra ramblers", None))
+    secciones.append("bebidas")
+    vec, tot = pesos_por_pasillo(docs, secciones)
+    globales = idf(docs)
+
+    i = len(docs) - 1
+    # `tokens` quita el plural, asi que "ramblers" entra como "rambler".
+    assert "cerveza" in vec[i] and "rambler" in vec[i]
+    generico_catalogo = globales["cerveza"] / globales["rambler"]
+    generico_pasillo = vec[i]["cerveza"] / vec[i]["rambler"]
+    assert generico_pasillo < generico_catalogo
+    assert tot[i] > 0
+
+
+def test_sin_seccion_todo_cae_en_el_mismo_saco():
+    """Un producto sin pasillo no puede quedar incomparable: usa los globales."""
+    from core.matching import idf, parecido_de_par, pesos_por_pasillo
+
+    docs, _ = _corpus()
+    sin = [None] * len(docs)
+    vec, tot = pesos_por_pasillo(docs, sin)
+    globales = idf(docs)
+    # Un solo saco: el peso es exactamente el del catalogo.
+    assert vec[0]["cerveza"] == globales["cerveza"]
+    assert parecido_de_par(vec[0], vec[1], tot[0], tot[1]) > 0.35
+
+
+def test_parecido_de_par_coge_el_peso_menor():
+    """Si una palabra pesa poco en un lado, no puede servir para unir por el otro."""
+    from core.matching import parecido_de_par
+
+    a = {"cerveza": 5.0, "leffe": 4.0}
+    b = {"cerveza": 0.2, "guinness": 4.0}
+    # Solo comparten "cerveza", y cuenta por 0,2 (el menor), no por 5: la
+    # aportacion es minima, no la mitad del total.
+    flojo = parecido_de_par(a, b, sum(a.values()), sum(b.values()))
+    assert flojo < 0.05
+    # Compartiendo todo, 1.0.
+    c = {"cerveza": 5.0, "leffe": 4.0}
+    assert parecido_de_par(a, c, sum(a.values()), sum(c.values())) == 1.0
+    assert parecido_de_par({}, c, 0.0, 9.0) == 0.0

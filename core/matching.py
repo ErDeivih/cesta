@@ -119,11 +119,67 @@ def parecido(a: frozenset[str], b: frozenset[str], pesos: dict[str, float]) -> f
     cadena: "Fairy 654 ml" contra "Lavavajillas a mano ultra poder Fairy 654 ml".
     Jaccard castiga esa asimetria hasta hacerla indistinguible del ruido; Dice
     reconoce que todo lo que dice el corto lo dice tambien el largo.
+
+    Esta es la version con un diccionario de pesos comun a todo. La que se usa de
+    verdad al emparejar es `parecido_de_par`, que ademas mira el pasillo.
     """
     if not a or not b:
         return 0.0
     comun = sum(pesos.get(p, 1.0) for p in a & b)
     total = sum(pesos.get(p, 1.0) for p in a) + sum(pesos.get(p, 1.0) for p in b)
+    return 2 * comun / total if total else 0.0
+
+
+def pesos_por_pasillo(docs: list[frozenset[str]],
+                      secciones: list[str | None]) -> tuple[list[dict], list[float]]:
+    """El peso de cada palabra **en cada producto**: el menor entre el catalogo y su pasillo.
+
+    Se escribio el 22 de septiembre de 2026 para arreglar los grupos por familia
+    ("todas las cervezas" en un grupo de 97 productos) y **no se usa**, porque la
+    medicion dijo que no arregla nada: con esto el grupo mayor baja de 97 a 80 y
+    la tasa de grupos anchos hasta empeora un poco (6,28 % a 6,38 %). Se queda
+    aqui, con sus pruebas, porque la idea es buena y el motivo de que no funcione
+    esta medido: los puentes que sostienen esos grupos los abre el **canal de
+    trigramas**, no el de palabras. Ver `enlaces.parejo`.
+
+    Lo que hace, cuando se use: dentro de un pasillo, "cerveza" sale en cientos de
+    productos y se queda sin peso, que es lo correcto; y "leffe" o "rambler"
+    siguen pesando igual, porque tambien son raras en su pasillo. Devuelve, por
+    producto, su vector de pesos y el total ya sumado (que hace falta en el
+    denominador del Dice).
+    """
+    globales = idf(docs)
+    por_seccion: dict[str, list[frozenset[str]]] = defaultdict(list)
+    for s, d in zip(secciones, docs, strict=True):
+        por_seccion[s or "?"].append(d)
+    locales = {s: idf(lista) for s, lista in por_seccion.items()}
+    vectores: list[dict] = []
+    totales: list[float] = []
+    for s, d in zip(secciones, docs, strict=True):
+        local = locales[s or "?"]
+        v = {p: min(globales.get(p, 1.0), local.get(p, 1.0)) for p in d}
+        vectores.append(v)
+        totales.append(sum(v.values()))
+    return vectores, totales
+
+
+def parecido_de_par(vi: dict, vj: dict, ti: float, tj: float) -> float:
+    """El Dice ponderado de dos productos ya con sus vectores de pesos.
+
+    La palabra compartida cuenta por el **menor** de los dos pesos: si "cerveza"
+    pesa poco en un pasillo, no puede servir para unir dos productos por el otro.
+    Compañero de `pesos_por_pasillo`; hoy no se usa al emparejar, por lo mismo.
+    """
+    if not vi or not vj:
+        return 0.0
+    if len(vi) > len(vj):
+        vi, vj = vj, vi
+    comun = 0.0
+    for p, w in vi.items():
+        w2 = vj.get(p)
+        if w2 is not None:
+            comun += w if w < w2 else w2
+    total = ti + tj
     return 2 * comun / total if total else 0.0
 
 
@@ -403,6 +459,18 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
         letras salvan los casos en que una junta lo que la otra separa. Las letras
         se descuentan un poco porque tambien acercan cosas que solo se parecen por
         fuera ("aceite de oliva" y "aceite de coco" comparten mucho trozo).
+
+        **Cuidado con este max(): es el que sostiene los grupos por familia.** Se
+        probo el 22 de septiembre a quitarle peso al canal de palabras (calcular
+        el IDF dentro del pasillo en vez de sobre todo el catalogo, porque
+        "cerveza" parece rarisima entre 52.567 productos y no distingue nada
+        entre cervezas). No arreglo el problema, y la medicion dice por que: de
+        los 137 enlaces internos del grupo mayor, en **50 manda el trigrama** y
+        son justo los flojos, los que hacen de puente.
+        "Cerveza tostada Dia Ramblers 33 cl" contra "AMSTEL CLASICA Cerveza
+        tostada 33 cl" da 0,32 por palabras y 0,39 por letras: sin el trigrama no
+        llegaria al liston. Quitar peso a las palabras no cierra un puente que
+        abre el trigrama; el numero a tocar es el 0,85 de abajo.
         """
         return max(parecido(docs[i], docs[j], pesos),
                    0.85 * dice(tris[i], tris[j]))
@@ -502,7 +570,13 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # repite, pero un producto si puede salir en los dos.
     for canal in ("marca", "equivalente"):
         ocupados: set[tuple[int, str]] = set()
-        for _grupo, candidatos in canales[canal].items():
+        # `sorted` no sobra: iterar un diccionario cuyas claves llevan texto
+        # depende del hash seed del proceso, y como el reparto 1-a-1 va marcando
+        # quien queda ocupado, dos ejecuciones del MISMO dia daban 22.702 y
+        # 22.704 enlaces segun el proceso. Diferencia pequeña, pero el plan pide
+        # medir la estabilidad entre ejecuciones, y no se puede medir lo que no
+        # es reproducible.
+        for _grupo, candidatos in sorted(canales[canal].items()):
             for x, y, s in _asignacion_1a1(candidatos, umbral):
                 emitir(x, y, s, ocupados)
 
@@ -542,7 +616,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                     continue
                 sueltos[(None, filas[x]["fuente"], filas[y]["fuente"])].append(
                     (x, y, s))
-    for _grupo, candidatos in sueltos.items():
+    for _grupo, candidatos in sorted(sueltos.items()):
         # Un enlace con formato comprobado siempre gana a uno sin comprobar,
         # aunque el nombre del segundo se parezca mas: por eso esta pasada va
         # despues y respeta lo que ya esta ocupado.
