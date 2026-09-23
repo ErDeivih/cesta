@@ -51,6 +51,12 @@ def test_hay_un_patron_por_cadena():
     ("mercadona",
      "https://tienda.mercadona.es/product/13294/gel-bano-granada", "13294"),
     ("alcampo", "https://www.compraonline.alcampo.es/products/181786", "181786"),
+    # Lo que se corta en el mostrador lleva el corte dentro del identificador.
+    ("alcampo",
+     "https://www.compraonline.alcampo.es/products/94846-LONCHA-NORMAL-2-A-3-MM",
+     "94846-LONCHA-NORMAL-2-A-3-MM"),
+    ("alcampo", "https://www.compraonline.alcampo.es/products/39529-TROZO",
+     "39529-TROZO"),
 ])
 def test_saca_el_identificador_de_una_url_de_verdad(cadena, url, espera):
     m = patrones()[cadena].search(url)

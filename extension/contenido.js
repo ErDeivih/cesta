@@ -27,11 +27,26 @@ const DE_LA_URL = [
   // tienda.mercadona.es/product/13294/<slug>
   {cadena: 'mercadona', patron: /mercadona\.es\/product\/(\d+)/},
   // compraonline.alcampo.es/products/181786
+  // compraonline.alcampo.es/products/94846-LONCHA-NORMAL-2-A-3-MM
   //
-  // Los digitos van anclados al final del segmento a proposito. Sin eso, la URL
-  // vieja con UUID (`products/72bccb32-...`) casaba y devolvia "72": un
-  // identificador inventado que habria pedido a Cesta un producto que no es.
-  {cadena: 'alcampo', patron: /alcampo\.es\/products\/(\d+)(?:[/?#]|$)/},
+  // Dos formas, y la segunda se descubrio el 23 de septiembre de 2026 con el
+  // primer bronze bueno de Alcampo: **lo que se corta en el mostrador lleva el
+  // corte pegado al identificador** -- 39529-TROZO, 90012-TAPEO-3-A-5-MM,
+  // 97018-LONCHA-FINA-1-MM -- y ese sufijo es parte del `id_fuente`, no un
+  // adorno de la direccion. Son 335 de 23.842 productos (el 1,4 %): todo el
+  // mostrador de quesos y embutidos, que es justo donde una persona se para a
+  // comparar.
+  //
+  // El patron anterior pedia digitos hasta el final del segmento, asi que en
+  // esas 335 fichas la extension se quedaba muda. Ahora se admite un sufijo en
+  // MAYUSCULAS, y se admite dentro de lo que se captura, porque el
+  // identificador de Cesta es `39529-TROZO` entero.
+  //
+  // Sigue sin casar la URL vieja con UUID (`products/72bccb32-c2f9-...`): tras
+  // los digitos exige un guion seguido de MAYUSCULA, y el UUID lleva minuscula
+  // hexadecimal. Comprobado sobre las 23.842 URL de hoy: las reconoce todas y
+  // el identificador que saca es exactamente el `id_fuente` en las 23.842.
+  {cadena: 'alcampo', patron: /alcampo\.es\/products\/(\d+(?:-[A-Z][A-Z0-9-]*)?)(?:[/?#]|$)/},
 ];
 
 function queProducto(url) {

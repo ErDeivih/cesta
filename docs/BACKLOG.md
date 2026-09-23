@@ -1763,6 +1763,22 @@ supermercado**, mientras compras. Es la unica forma de que trece dias de serie
 sirvan en el momento de decidir, y para nosotros es **un cliente mas de la API que
 ya existe**, no una pieza nueva de datos.
 
+**Y el lector de direcciones de Alcampo estaba mal, arreglado el 23 de septiembre de
+2026.** Lo que se corta en el mostrador lleva **el corte pegado al identificador**
+(`products/39529-TROZO`, `products/94846-LONCHA-NORMAL-2-A-3-MM`) y ese sufijo **es parte
+del `id_fuente`**, no un adorno de la direccion: la ficha de Cesta se guarda como
+`alcampo:39529-TROZO`. El patron viejo pedia digitos hasta el final del segmento, asi
+que en esas fichas la extension se quedaba muda. Son **335 de 23.842 productos** (el
+1,4 %), y son justo el mostrador de quesos y embutidos, que es donde una persona se para
+a comparar.
+
+Ahora se admite un sufijo en **MAYUSCULAS** dentro de lo capturado, y sigue sin casar la
+direccion vieja con UUID (`products/72bccb32-...`), que devolvia un identificador
+inventado: tras los digitos se exige un guion y una mayuscula. Comprobado sobre las
+23.842 direcciones del bronze de ese dia -- las reconoce todas y el identificador que
+saca es exactamente el `id_fuente` en las 23.842. La prueba esta en
+`tests/test_extension.py`, con los dos casos del mostrador.
+
 ## N22. Pantalla "bajadas de esta semana" y "verificador de ofertas"
 
 Las dos salen de la competencia (Precios del Super y PrecioReal) y las dos las
