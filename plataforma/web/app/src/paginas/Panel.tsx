@@ -498,8 +498,14 @@ function Bajadas() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-end gap-3">
+            {/* El titulo y el vacio dicen **lo que el servidor ha hecho**, no lo que se
+                le ha pedido: `d.solo_mios` es "he filtrado por lo tuyo" y la peticion
+                puede quedarse sin efecto -- sin sesion no hay "lo mio" --. Con lo que
+                se pidio, la pantalla ensenaria el catalogo entero bajo el titulo "Lo
+                tuyo que ha bajado". Lo encontro la verificacion contra un PostgreSQL de
+                verdad; el boton sigue diciendo lo que has pedido, que eso es un mando. */}
             <h2 className="text-base font-semibold">
-              {soloMios ? 'Lo tuyo que ha' : 'Lo que más ha'}{' '}
+              {d.solo_mios ? 'Lo tuyo que ha' : 'Lo que más ha'}{' '}
               {subidas ? 'subido' : 'bajado'} en {numero(d.dias, 0)} días
             </h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
@@ -538,8 +544,9 @@ function Bajadas() {
             /* Dos vacios distintos, y decir el mismo texto en los dos seria
                mentir en uno: "nada ha bajado" no es lo mismo que "de lo tuyo no
                ha bajado nada", y la segunda tiene arreglo (apuntar cosas en una
-               lista o en favoritos), que es lo que hay que decir. */
-            soloMios ? (
+               lista o en favoritos), que es lo que hay que decir. Y se elige por
+               `d.solo_mios`, que es lo que el servidor ha hecho de verdad. */
+            d.solo_mios ? (
               <Vacio titulo={`Nada de lo tuyo ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`}>
                 <p>
                   Este filtro mira lo que tienes en tus listas y en favoritos. Si

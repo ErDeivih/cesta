@@ -281,6 +281,13 @@ export interface RespuestaBajadas {
   fecha_datos: string
   dias: number
   sentido: 'bajadas' | 'subidas'
+  /** **Lo que el servidor ha hecho, no lo que se le pidio.**
+   *
+   *  Sin sesion no hay "lo mio" que filtrar, asi que la peticion se queda sin efecto y
+   *  esto llega `false` aunque se haya pedido `solo_mios=true`. La pantalla tiene que
+   *  decir el titulo por este campo: con lo pedido, ensenaria el catalogo entero bajo
+   *  el titulo "Lo tuyo que ha bajado". */
+  solo_mios: boolean
   resultados: Baja[]
 }
 

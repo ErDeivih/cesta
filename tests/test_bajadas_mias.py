@@ -95,13 +95,25 @@ def test_sin_nada_apuntado_se_contesta_vacio_sin_mirar_el_catalogo(casi):
 
 
 def test_sin_sesion_no_se_inventa_un_tuyo(casi):
-    """`solo_mios` sin sesion: lo del catalogo, y dicho en la respuesta."""
+    """`solo_mios` sin sesion: lo del catalogo, **y dicho en la respuesta**.
+
+    Este `assert` del campo es el que faltaba, y por eso el fallo llego hasta la
+    verificacion contra un PostgreSQL de verdad: la respuesta ponia `solo_mios: true`
+    porque el cliente lo habia pedido, aunque no hubiera filtrado nada. La pantalla
+    habria ensenado sesenta bajadas del catalogo entero bajo el titulo "Solo lo mio".
+
+    Se mira aqui porque es lo unico que distingue "filtrado" de "pedido": los grupos que
+    llegan al SQL ya se comprobaban, y eso pasaba igual de bien con el campo mintiendo.
+    """
     con_sesion, visto = casi
     cliente = con_sesion()          # con sesion, pero el filtro no puede saber de quien
     main.app.dependency_overrides.clear()
     cuerpo = cliente.get("/api/bajadas", params={"solo_mios": "true"}).json()
     assert cuerpo["resultados"], "sin sesion se contesta el catalogo, no vacio"
     assert visto["grupos"] is None, "sin sesion no hay grupos que pasar"
+    assert cuerpo["solo_mios"] is False, (
+        "la respuesta dice que ha filtrado por 'lo mio' y no ha filtrado: la pantalla "
+        "ensenaria el catalogo entero bajo el titulo 'Solo lo mio'")
 
 
 def test_la_consulta_lleva_el_filtro_y_no_se_filtra_despues():

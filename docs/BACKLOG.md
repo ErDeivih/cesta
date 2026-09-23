@@ -601,6 +601,46 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### La verificacion de punta a punta, y el fallo que encontro
+
+Las pruebas de `tests/` sustituyen PostgreSQL a proposito -- una prueba que dependa de la
+base del dia mide el calendario, no el codigo --, y eso deja un hueco que **no se ve hasta
+que alguien arranca el contenedor: el SQL y las migraciones no los ejecuta nadie**. El 23
+de septiembre de 2026 ese hueco dejo pasar un fallo, y lo encontro esta verificacion:
+
+    GET /api/bajadas?solo_mios=true   **sin sesion**
+      antes:  {"solo_mios": true,  "resultados": [60 filas del catalogo entero]}
+      ahora:  {"solo_mios": false, "resultados": [60 filas del catalogo entero]}
+
+La respuesta decia que habia filtrado por "lo mio" porque el cliente lo habia pedido, y no
+habia filtrado nada: sin sesion no hay "lo mio" que filtrar. La pantalla habria ensenado
+**sesenta bajadas del catalogo entero bajo el titulo "Lo tuyo que ha bajado"**. Las pruebas
+unitarias miraban los grupos que llegaban al SQL -- y eso pasaba igual de bien con el campo
+mintiendo --, asi que no lo vieron. Ahora el campo **dice si se filtro, no si se pidio**, en
+la API y en la pantalla (el titulo y el vacio se eligen por `d.solo_mios`), y la prueba
+unitaria comprueba el campo.
+
+**Y queda un instrumento para no volver a depender de que alguien mire:**
+`plataforma/prueba_e2e.py`. Ejecuta contra un PostgreSQL **desechable** (contenedor en el
+5434, que no es el de casa: el de Cesta no publica su 5432) todo lo que las pruebas
+sustituyen:
+
+    docker run --rm -d --name cesta-prueba-db -e POSTGRES_PASSWORD=prueba \
+        -e POSTGRES_USER=cesta -e POSTGRES_DB=cesta -p 127.0.0.1:5434:5432 postgres:16-alpine
+    uv run python -m plataforma.prueba_e2e
+    docker rm -f cesta-prueba-db
+
+    las seis migraciones       se aplican una a una sobre una base vacia
+    /api/listas/{id}           el pasillo en cada linea, con el orden del recorrido
+    /api/habituales            la cuadricula: origenes=['tuyo', 'basico']
+    /api/alertas               la alerta con el nombre y el precio del producto
+    el vigilante               una pasada: {'miradas': 1, 'saltan': 1, 'apuntadas': 1}
+    /api/buscar?q=lece…        corregido='leche entera'
+    /api/bajadas?solo_mios     con sesion -> true y 2 filas; sin sesion -> false y 60
+
+Salida de la ultima pasada: **TODO BIEN**. Es lo que hay que correr **antes de desplegar**
+una imagen nueva, y esta escrito donde se busca (`docs/OPERACION.md`).
+
 ### El pack: medido, y **no se usa como guarda** (pero si para decirlo)
 
 Es la dimension que `docs/BACKLOG.md` llamaba "la de mas valor" despues de la barra: **642

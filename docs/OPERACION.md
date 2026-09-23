@@ -3,6 +3,23 @@
 Restricciones: nada de proxies residenciales, nada de VPS por ahora, GitHub Actions
 como opcion cuando toque, y local mientras tanto.
 
+## Antes de desplegar una imagen nueva: la prueba de punta a punta
+
+Las pruebas de `tests/` sustituyen PostgreSQL a proposito, asi que **el SQL y las
+migraciones no los ejecuta nadie** hasta que arranca el contenedor. Para eso esta
+`plataforma/prueba_e2e.py`, que corre todo contra una base **desechable** (el 5434, que no
+es el de casa: el de Cesta no publica su 5432) y con el gold de verdad:
+
+    docker run --rm -d --name cesta-prueba-db -e POSTGRES_PASSWORD=prueba \
+        -e POSTGRES_USER=cesta -e POSTGRES_DB=cesta -p 127.0.0.1:5434:5432 postgres:16-alpine
+    uv run python -m plataforma.prueba_e2e
+    docker rm -f cesta-prueba-db
+
+Aplica las seis migraciones, recorre las rutas nuevas y **falla con un mensaje claro** si
+algo no cuadra. La primera vez que se corrio encontro un fallo que las pruebas unitarias no
+podian ver: `/api/bajadas?solo_mios=true` sin sesion contestaba `"solo_mios": true` sin
+haber filtrado (`docs/BACKLOG.md`). Salida esperada: **TODO BIEN**.
+
 ## Fase 1: todo en el PC, y el almacen tambien
 
 Medido el 6 sep 2026 en F:\aprendizaje\scrap: **158 GB libres de 209 GB**.

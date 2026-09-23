@@ -275,9 +275,16 @@ def bajadas(dias: int = 7, cadenas: str | None = None, limite: int = 60,
             return {"fecha_datos": catalogo.fecha_de_gold(), "dias": dias,
                     "sentido": "subidas" if subidas else "bajadas",
                     "solo_mios": True, "resultados": []}
+    # **`solo_mios` dice si se filtro, no si se pidio.** Es la diferencia entre una
+    # respuesta honesta y una que miente: sin sesion no hay "lo mio" (`grupos` se queda
+    # en `None`) y se contesta el catalogo, asi que el campo tiene que decir `false`.
+    # Poniendo lo que pidio el cliente, la pantalla ensenaria sesenta bajadas del
+    # catalogo entero bajo el titulo "Solo lo mio" -- y eso se vio de verdad: lo
+    # encontro la verificacion de punta a punta contra un PostgreSQL de verdad, porque
+    # la prueba unitaria miraba los grupos que llegaban al SQL y no este campo.
     return {"fecha_datos": catalogo.fecha_de_gold(), "dias": dias,
             "sentido": "subidas" if subidas else "bajadas",
-            "solo_mios": bool(solo_mios),
+            "solo_mios": grupos is not None,
             "resultados": movimientos.bajadas(dias, lista, limite, subidas, grupos)}
 
 
