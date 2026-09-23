@@ -30,10 +30,16 @@ GOLD = Path(__file__).resolve().parents[1] / "data" / "gold" / "grupos.parquet"
 # `agrupar_enlaces`: los enlaces son 1-a-1 por par de cadenas, asi que un grupo no
 # puede tener dos productos de la misma cadena. Los techos anteriores eran 54, 74,
 # 615 y 21.
-TECHO_CONTRADICTORIOS = 52
+TECHO_CONTRADICTORIOS = 49
 TECHO_DE_11_O_MAS = 0
 TECHO_QUE_MEZCLAN_PACK = 648
 TECHO_PACK_DE_11_O_MAS = 0
+# La sexta condicion de la barra, medida por el instrumento del proyecto (antes
+# vivia en un script de `data/debug/`, que esta en `.gitignore`, asi que no estaba
+# en el repositorio). Es la invariante del reparto: **cero grupos con una cadena
+# repetida sin compartir EAN**. El duplicado con EAN no cuenta: son el mismo
+# producto listado dos veces.
+TECHO_CADENA_REPETIDA_SIN_EAN = 0
 
 
 # --------------------------------------------------------------- la funcion ---
@@ -104,6 +110,12 @@ def test_el_catalogo_no_ha_empeorado():
     assert r["de_esos_de_11_o_mas"] <= TECHO_PACK_DE_11_O_MAS, (
         f"{r['de_esos_de_11_o_mas']} grupos grandes mezclan pack con sueltas, y el "
         f"techo esta en {TECHO_PACK_DE_11_O_MAS}")
+    assert r["grupos_con_cadena_repetida_sin_ean"] <= TECHO_CADENA_REPETIDA_SIN_EAN, (
+        f"hay {r['grupos_con_cadena_repetida_sin_ean']} grupos con una cadena "
+        f"repetida **sin compartir EAN**, y la barra pide cero. Los enlaces son "
+        f"1-a-1 por par de cadenas: dos productos de la misma cadena en un grupo "
+        f"solo valen si son el mismo producto (mismo codigo de barras). Mira la "
+        f"guarda de `agrupar_enlaces` (parametros `cadenas` y `eans`)")
 
 
 @pytest.mark.skipif(not GOLD.exists(), reason="esta copia no trae gold")
