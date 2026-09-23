@@ -415,7 +415,11 @@ como se hizo con los grupos.
     punto 2  la lista                             HECHO (dos secciones, pasillo pegajoso,
                                                   deshacer y sin rojo sin cobertura)
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
-    punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
+    punto 4  /api/habituales                      HECHO de punta a punta: el endpoint
+                                                  (3 escalones, origen por tarjeta) y
+                                                  **el mosaico en el buscador**
+                                                  (componentes/Mosaico.tsx); 404 en
+                                                  produccion hasta el rebuild
     punto 5  el medoide como segunda red          HECHO y MEDIDO: no se pone como
                                                   guarda (el suelo del banco y los
                                                   grupos malos caen en el mismo tramo).
@@ -594,6 +598,42 @@ de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde si
 ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
+
+### El mosaico de lo de siempre, en el buscador: un toque en vez de tres
+
+La mejora que `docs/DISENO.md` llamaba «la de mas valor del buscador», y la pantalla que le
+faltaba al punto 4. `componentes/Mosaico.tsx`, en el estado vacio del buscador: cuadricula
+de **tres columnas** (`docs/PANTALLAS.md:57-62`), foto, nombre, precio por unidad y la
+cadena mas barata, y **un boton que apunta a la lista de casa con un toque** -- sin
+dialoga, sin elegir lista y sin preguntar la cantidad (se anade con 1 y se cambia en la
+cesta, que es donde se ve lo que va a costar).
+
+**Las tres decisiones que lleva dentro, y ninguna es adorno:**
+
+  1. **Sin historial no se pinta: sale la tarjeta de la primera vez.** Una cuadricula de
+     24 productos basicos son 24 recuadros sin una razon para mirarlos;
+     `LoQueSeCompra` ensena cuatro que compra todo el mundo **con su diferencia de hoy**,
+     que es lo que hace entender para que sirve la aplicacion. Primero se entiende,
+     despues se usa. **Y decide `Mosaico`, en un solo sitio**: con la condicion tambien
+     en `Buscar.tsx`, el dia que una cambie se pintan las dos cosas a la vez.
+  2. **Un 404 no es una pantalla roja.** Mientras la imagen de la API que corre no tenga
+     la ruta, esto contesta 404 -- y quien acaba de abrir la aplicacion no tiene la culpa
+     de eso. Se cae al mismo sitio que sin historial.
+  3. **El `origen` se dice solo cuando la cuadricula mezcla escalones.** Una tarjeta
+     basica y una tuya no valen lo mismo, asi que hay que poder decirlo; pero doce
+     etiquetas iguales en una cuadricula que no mezcla son ruido.
+
+Y el boton dice **«En la cesta»** cuando ya esta: pulsar tres veces el mismo boton es el
+error facil de verdad, y aqui se ve sin salir de la pantalla.
+
+Probado en `tests/test_mosaico.py` (7 pruebas, leyendo el codigo como las de contraste) y
+en `tests/test_primera_vez.py`, que ahora comprueba la cadena entera -- `Buscar` pinta el
+mosaico, y el mosaico cae en la tarjeta cuando no hay historial -- porque **el fallo de
+"escrito y sin pintar" ya paso una vez** con esa misma tarjeta.
+
+Verificado en el bundle servido: pide `/habituales`, lleva «Lo de siempre» y la
+cuadricula de tres columnas. `pytest` 759 pasan / 2 fallan (las dos de
+`core/datos/secciones.yml`, que no son mias) y `ruff` limpio.
 
 ### Los avisos ya avisan: el vigilante mira cuando cambian los datos
 

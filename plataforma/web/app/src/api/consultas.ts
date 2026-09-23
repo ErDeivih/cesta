@@ -8,14 +8,16 @@
  *  termina el pipeline. Refrescar cada vez que se cambia de pantalla es pedir
  *  lo mismo cuarenta veces para recibir la misma respuesta.
  */
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { anadirLinea, crearLista, misListas } from './cesta'
 import { ErrorApi, pide } from './cliente'
 import type {
   RespuestaBajadas,
   RespuestaBuscar,
   RespuestaEan,
   RespuestaEstado,
+  RespuestaHabituales,
   RespuestaProducto,
   RespuestaSecciones,
   Grupo,
@@ -150,6 +152,58 @@ export function useBajadas(dias: number, subidas: boolean, cadenas: string[],
         signal,
       ),
     staleTime: CINCO_MIN,
+  })
+}
+
+/** El mosaico de lo habitual: "lo de siempre", para anadirlo de un toque.
+ *
+ *  Pide sesion, porque es el historial de compra de una persona. Y **el 404 no es un
+ *  fallo**: mientras la imagen de la API que corre no tenga la ruta, esto contesta 404
+ *  y la pantalla se queda como estaba -- con la tarjeta de la primera vez -- en vez de
+ *  ensenar un error rojo por algo que todavia no se ha desplegado. No hace falta
+ *  decirlo aqui: la regla de `main.tsx` **no reintenta un 4xx**, y quien decide que
+ *  hacer con ese 404 es la pantalla.
+ */
+export function useHabituales(limite = 12) {
+  return useQuery({
+    queryKey: ['habituales', limite],
+    queryFn: ({ signal }) =>
+      pide<RespuestaHabituales>('/habituales', { limite }, signal),
+    staleTime: CINCO_MIN,
+  })
+}
+
+/** Anade un producto a la lista de casa, que es donde se apunta la compra.
+ *
+ *  **La cuadricula se usa de pie y con una mano**, asi que no hay dialogo ni selector
+ *  de lista: un toque es un toque. La lista de casa es la de la compra de verdad; si
+ *  no hay ninguna, se crea (mandar a otra pantalla a crearla seria justo el rodeo que
+ *  esto quita). La cantidad no se pregunta aqui: se anade con 1 y se cambia en la
+ *  cesta, que es donde se ve la lista entera.
+ */
+export function useAnadeALaCesta() {
+  const cliente = useQueryClient()
+  const listas = useQuery({
+    queryKey: ['listas'],
+    queryFn: misListas,
+    staleTime: 60_000,
+  })
+  const destino = listas.data?.find((l) => l.es_de_casa) ?? listas.data?.[0] ?? null
+
+  return useMutation({
+    mutationFn: async (x: { grupoId: number; nombre: string }) => {
+      const lista = destino ?? (await crearLista('Casa', true))
+      await anadirLinea(lista.id, { nombre: x.nombre, grupo_id: x.grupoId,
+                                    producto_id: null })
+      return lista.id
+    },
+    onSuccess: (listaId) => {
+      // Lo que hay en pantalla de esa lista ya no vale: la cesta la ensena con su
+      // total y con donde sale mas barata, y las dos cosas cambian al anadir.
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+      cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+    },
   })
 }
 

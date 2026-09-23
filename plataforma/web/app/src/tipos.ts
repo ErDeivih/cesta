@@ -435,6 +435,34 @@ export interface Linea {
   pasillo_orden?: number
 }
 
+/** Una tarjeta del mosaico de lo habitual.
+ *
+ *  **`origen` viaja en cada tarjeta** y no una vez por respuesta: una cuadricula
+ *  puede tener cosas tuyas y cosas de la compra basica a la vez, y no valen lo
+ *  mismo. Sin ese campo, la pantalla ensenaria "lo que sueles comprar" con lo que
+ *  compra otro. */
+export interface Habitual {
+  grupo_id: number
+  nombre: string
+  /** No viaja si no hay foto: la pantalla sabe dibujar su hueco. */
+  imagen?: string
+  precio_unidad_cent: number
+  unidad: string | null
+  cadena_mas_barata: string | null
+  fiable: boolean
+  origen: 'tuyo' | 'de todos' | 'basico'
+  /** Solo en las de `tuyo`: son la historia de esta persona. */
+  veces?: number
+  ultima_vez?: string
+}
+
+export interface RespuestaHabituales {
+  /** Los escalones que han entrado, para poder explicar el mosaico. */
+  origenes: string[]
+  habituales: Habitual[]
+  fecha_datos: string
+}
+
 /** Lo que cuesta la lista ahora mismo, en la cadena mas barata de cada cosa. */
 export interface Estimacion {
   total_cent: number

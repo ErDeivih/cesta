@@ -998,16 +998,19 @@ es una idea nueva: está pedido y sin hacer.
 ### 5.3 Lo que no se puede hacer todavía
 
 **33. El mosaico de habituales.** `docs/PANTALLAS.md:50-65` y
-`docs/USABILIDAD.md:24-36` lo piden, y sería la mejora de más valor del buscador:
-añadir algo que compras siempre pasaría de **2 pulsaciones más teclear** (escribir,
-abrir el grupo, «Añadir a la cesta») a **1 pulsación**. **Ya no está bloqueado por la
-API** (23 de septiembre de 2026): `GET /api/habituales` existe
-(`plataforma/api/habituales.py`), rellena hasta `limite` bajando escalones y **cada
-tarjeta dice su `origen`** — antes decía aquí que el endpoint «no existe en
-`plataforma/api`» y que buscar `habituales` daba cero coincidencias, y eso dejó de ser
-cierto ese día. Lo que falta es **la pantalla**: el diseño de la cuadrícula de 3
-columnas sigue en `docs/PANTALLAS.md:57-62`, y la palabra `habituales` sigue sin
-aparecer en `plataforma/web/app/src`.
+`docs/USABILIDAD.md:24-36` lo piden, y era la mejora de más valor del buscador:
+añadir algo que compras siempre pasa de **2 pulsaciones más teclear** (escribir,
+abrir el grupo, «Añadir a la cesta») a **1 pulsación**. **Hecha el 23 de septiembre de
+2026**: `GET /api/habituales` existe (`plataforma/api/habituales.py`) y **la cuadrícula
+está puesta** en el buscador vacío (`componentes/Mosaico.tsx`, tres columnas, un toque
+por tarjeta). Antes decía aquí que estaba bloqueada por la API y que buscar
+`habituales` en `plataforma/api` daba cero coincidencias: las dos cosas dejaron de ser
+ciertas ese día.
+
+Lo que la cuadrícula **no** hace, y es una decisión: **sin historial no se pinta**. Sale
+la tarjeta de la primera vez (`componentes/LoQueSeCompra.tsx`), cuatro productos que
+compra todo el mundo con su diferencia de hoy. 24 recuadros de compra básica no
+explican para qué sirve la aplicación; cuatro precios con su diferencia, sí.
 
 ---
 

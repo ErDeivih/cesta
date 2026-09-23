@@ -43,27 +43,40 @@ Usuario, contrasena, y el nombre de la app. Nada mas: no hay registro, no hay
 
 ## 2. Buscar
 
-**[hecho]** el buscador, los filtros de cadena, los resultados con foto
-**[falta]** el mosaico de habituales (tarea 3), la voz (tarea 3), el escaner
-(tarea 8)
+**[hecho]** el buscador, los filtros de cadena, los resultados con foto, **el mosaico de
+habituales** (`componentes/Mosaico.tsx`, 23 sep 2026)
+**[falta]** la voz (tarea 3), el escaner en el buscador (tarea 8; el escaner tiene su
+propia pantalla desde antes)
 
 ### Lo que se ve al abrir, con el buscador vacio
 
-Aqui esta la mejora mas grande que queda por hacer. Hoy: nada. Deberia:
+Aqui estaba la mejora mas grande que quedaba por hacer. Hoy:
 
-    [ buscar...                          🎤  📷 ]
+    [ buscar...                          🎤  📷 ]     <- la voz, todavia no
     [ Alcampo ][ Aldi ][ Carrefour ][ DIA ][ Merc ]
 
-    LO DE SIEMPRE
+    Lo de siempre
+    Un toque y a la lista. Lo tocado se cambia en la cesta.
     ┌──────┐ ┌──────┐ ┌──────┐
     │ foto │ │ foto │ │ foto │      cuadricula de 3 columnas
     │Leche │ │Atun  │ │Papel │      un toque = a la lista
-    │0,95 €│ │3,45 €│ │2,10 €│      24 como mucho
+    │0,95 €│ │3,45 €│ │2,10 €│      12 tarjetas por defecto
+    │Añadir│ │Añadir│ │Añadir│
     └──────┘ └──────┘ └──────┘
 
 Sale de `GET /api/habituales`, con **tres escalones** en el campo `origen`: lo que ha
 comprado esta persona (`tuyo`), lo mas comprado por todos (`de todos`) y una compra
-basica fija (`basico`), para que la cuadricula **no se vea vacia el primer dia**.
+basica fija (`basico`), para que la cuadricula **no se vea vacia el primer dia**. El
+`origen` viaja **en cada tarjeta** desde el 23 de septiembre de 2026 -- una cuadricula
+puede mezclar escalones y no valen lo mismo -- y la cuadricula lo dice cuando mezcla,
+que es cuando hay algo que decir.
+
+**Y sin historial no sale la cuadricula: sale la tarjeta de la primera vez**
+(`componentes/LoQueSeCompra.tsx`, cuatro productos que compra todo el mundo con su
+diferencia de hoy). Es la decision que evita el peor primer dia: 24 recuadros de compra
+basica no explican para que sirve la aplicacion; cuatro precios con su diferencia, si.
+Primero se entiende, despues se usa. El que decide entre las dos es `Mosaico`, en un solo
+sitio: con la condicion en dos sitios, el dia que una cambie se pintan las dos cosas.
 
 **Esto cambio el 23 de septiembre, y se cuenta en vez de borrarse.** Antes decía:
 

@@ -30,6 +30,8 @@ import pytest
 RAIZ = Path(__file__).resolve().parents[1]
 COMPONENTE = (RAIZ / "plataforma" / "web" / "app" / "src" / "componentes"
               / "LoQueSeCompra.tsx")
+MOSAICO = (RAIZ / "plataforma" / "web" / "app" / "src" / "componentes"
+           / "Mosaico.tsx")
 BUSCAR = (RAIZ / "plataforma" / "web" / "app" / "src" / "paginas" / "Buscar.tsx")
 
 
@@ -45,14 +47,26 @@ def test_la_tarjeta_esta_puesta_en_la_pantalla_de_entrada():
     if not BUSCAR.exists():
         pytest.skip("esta copia no trae la interfaz nueva")
     buscar = BUSCAR.read_text(encoding="utf-8")
-    assert re.search(r"import\s*\{[^}]*\bLoQueSeCompra\b[^}]*\}\s*from", buscar), \
-        "la pantalla de entrada no importa la tarjeta de la primera vez"
-    assert "<LoQueSeCompra />" in buscar, \
-        "la pantalla de entrada importa la tarjeta pero no la pinta"
+
+    # La cadena se alargo al entrar el mosaico (`Mosaico`, que es "lo de siempre"):
+    # la pantalla de entrada pinta el mosaico, y **el mosaico decide** -- con
+    # historial, la cuadricula; sin historial, esta tarjeta. La decision vive en un
+    # solo sitio a proposito: con la condicion en los dos, el dia que una cambie se
+    # pintan las dos cosas a la vez.
+    assert re.search(r"import\s*\{[^}]*\bMosaico\b[^}]*\}\s*from", buscar), \
+        "la pantalla de entrada no importa el mosaico de lo de siempre"
+    assert "<Mosaico />" in buscar, \
+        "la pantalla de entrada importa el mosaico pero no lo pinta"
+
+    mosaico = MOSAICO.read_text(encoding="utf-8")
+    assert re.search(r"import\s*\{[^}]*\bLoQueSeCompra\b[^}]*\}\s*from", mosaico), \
+        "el mosaico no importa la tarjeta de la primera vez"
+    assert "<LoQueSeCompra />" in mosaico, \
+        "sin historial el mosaico no cae en la tarjeta de la primera vez"
 
     # Y no debajo de los resultados: cuando hay busqueda en curso, no.
-    assert re.search(r"\{!busca\s*&&\s*<LoQueSeCompra\s*/>\}", buscar), \
-        "la tarjeta tiene que salir solo en el estado vacio, no pegada a los resultados"
+    assert re.search(r"\{!busca\s*&&\s*<Mosaico\s*/>\}", buscar), \
+        "esto tiene que salir solo en el estado vacio, no pegado a los resultados"
 
 
 def test_sin_ejemplos_comparables_no_se_pinta_nada(componente: str):

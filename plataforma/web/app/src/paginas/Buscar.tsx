@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom'
 import { FILTROS_VACIOS, consultaUtil, useBuscar, useEstado, type FiltrosBuscar } from '../api/consultas'
 import { fecha } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
-import { LoQueSeCompra } from '../componentes/LoQueSeCompra'
+import { Mosaico } from '../componentes/Mosaico'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
 import { Aviso, Boton, Cargando, Etiqueta, Fallo, Vacio } from '../componentes/ui'
@@ -154,16 +154,17 @@ export function Buscar() {
         </Vacio>
       )}
 
-      {/* Y debajo, la aplicacion funcionando de verdad: cuatro cosas que compra
-          todo el mundo con la diferencia de hoy. Los ejemplos de arriba ensenan
-          como se escribe una busqueda; esto ensena **para que sirve** la
-          aplicacion, que es lo que no se entiende al llegar. Va fuera del
-          `Vacio` a proposito: una tarjeta con cuatro precios alineados a la
-          izquierda dentro de una caja centrada y de texto pequeñito se lee mal,
-          y esto es lo primero que se mira. No se pinta si hay busqueda en curso
-          (el componente devuelve `null` si no encuentra ejemplos comparables),
-          asi que no se cuela debajo de los resultados. */}
-      {!busca && <LoQueSeCompra />}
+      {/* Y debajo, lo que se compra: **el mosaico de lo de siempre**, de un toque, y
+          si no hay historial -- o el endpoint todavia no esta desplegado -- la
+          tarjeta de la primera vez, que ensena la aplicacion funcionando con cuatro
+          precios reales. El que decide entre las dos es `Mosaico`, que es el unico
+          sitio que sabe si esta persona tiene historial: tener esa decision en dos
+          sitios es como acaban pintandose las dos cosas a la vez.
+
+          Va fuera del `Vacio` a proposito: una cuadricula dentro de una caja centrada
+          y de texto pequenito se lee mal, y esto es lo primero que se mira. Solo sale
+          con el buscador vacio, asi que no se cuela debajo de los resultados. */}
+      {!busca && <Mosaico />}
 
       {busca && resultados.isPending && <Cargando que="el catálogo" />}
 
