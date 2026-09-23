@@ -159,6 +159,12 @@ export interface Grupo {
 export interface RespuestaBuscar {
   fecha_datos: string
   resultados: ResultadoBusqueda[]
+  /** Lo que se ha entendido, cuando lo escrito no encontraba nada y se ha arreglado.
+   *
+   *  **No viaja `null`**: si no hay correccion, la clave no esta. Y solo llega si la
+   *  busqueda corregida **encuentra algo**: anunciar una correccion que no ha servido
+   *  de nada seria culpar a quien escribe de un fallo que es nuestro. */
+  corregido?: string
 }
 
 export interface Seccion {

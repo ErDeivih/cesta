@@ -598,6 +598,56 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### El buscador encuentra con faltas de ortografia
+
+Lo pide el §8 del encargo: *"que encuentre con faltas de ortografia y sin tildes (ya se
+normaliza en el dato)"*. Las tildes y las mayusculas si se normalizaban; **una letra
+cambiada devolvia cero resultados**. Medido contra la API viva el 23 de septiembre de 2026:
+
+    leche entera   -> 3 resultados        lece entera   -> 0
+    azucar         -> 3                   leche entea   -> 0
+    detergente     -> 3                   detergnete    -> 0
+                                          asucar        -> 0
+
+**Como funciona, y por que asi.** `catalogo.corregir` mira **palabra a palabra** contra el
+diccionario del catalogo -- las palabras que existen de verdad, 21.482, montadas una vez
+por conexion en 0,06 s -- y cambia solo la que no existe por la mas parecida. Dos reglas, y
+las dos salen de un fallo medido:
+
+  - **El mismo tamano (±1 letra).** El parecido de Jaro-Winkler premia los prefijos, asi
+    que sin esto `asucar` se "corrige" a **`asua`** (0,922) en vez de a `azucar` (0,900).
+    Cambiar una palabra por otra que no tiene nada que ver y ensenar esos resultados es
+    peor que no corregir.
+  - **A igualdad de parecido, la palabra que mas aparece.** No es un desempate decorativo:
+    `natral` empata con `natrual` (que existe **una** vez, porque alguien la escribio mal
+    en su ficha) y con `natural` (que aparece miles). El parecido se redondea a dos
+    decimales para agrupar a los que empatan de verdad, y ahi manda la frecuencia: es lo
+    que distingue una palabra de la errata de una tienda.
+
+**Y es el ultimo recurso**: primero se busca lo escrito, y la correccion solo entra cuando
+no hay nada. Eso hace dos cosas -- no se paga en las busquedas que ya funcionan, y no puede
+"corregir" una palabra que si tenia resultados.
+
+**La respuesta dice lo que se ha entendido** (`corregido`), y **solo si ha servido**: si la
+busqueda corregida tampoco encuentra nada, no se anuncia ninguna correccion. Anunciar una
+correccion que no arregla nada seria culpar a quien escribe de un fallo que es nuestro.
+
+Medido despues, sobre el gold de hoy y llamando a la ruta tal cual:
+
+    lece entera    40 resultados   corregido='leche entera'    primero «Leche entera»
+    leche entea    40 resultados   corregido='leche entera'
+    detergnete     40 resultados   corregido='detergente'
+    asucar         40 resultados   corregido='azucar'
+    yogur natral   40 resultados   corregido='yogur natural'
+    azucar         40 resultados   corregido=None              (ya estaba bien)
+    leche entera   40 resultados   corregido=None
+    xyzzy           0 resultados   corregido=None              (no se inventa nada)
+
+Coste: 60-94 ms por busqueda, igual que antes; el diccionario se monta al abrir la conexion
+(0,06 s) y no en cada consulta. Probado en `tests/test_busqueda_faltas.py` (9 pruebas, gold
+de mentira y PostgreSQL fuera), incluidos los dos casos que sostienen las dos reglas
+(`asucar` -> `azucar` y `natral` -> `natural`).
+
 ### La campana, la pantalla de avisos y el punto en el icono
 
 La mitad de fuera del punto 6. Dentro ya estaba el vigilante (la alerta salta cuando
@@ -666,11 +716,12 @@ uno, medido sobre el codigo de hoy:
                                                  (`estado/busquedasRecientes.ts`, 8
                                                  chips, sin repetir, en el aparato)
     el buscador: no exige pulsar una lupa        HECHO (busca al teclear, con 250 ms)
-    el buscador: encuentra con faltas            **PENDIENTE**: se normalizan tildes y
-                                                 mayusculas en el dato, pero una letra
-                                                 cambiada no encuentra nada. Hay que
-                                                 medirlo antes de tocar el ranking:
-                                                 `curl '/api/buscar?q=lece%20entera'`
+    el buscador: encuentra con faltas            HECHO el 23 sep. Medido antes:
+                                                 `lece entera`, `leche entea`,
+                                                 `detergnete` y `asucar` daban **0**
+                                                 resultados. Ahora dan 40, y la
+                                                 respuesta dice lo que ha entendido
+                                                 (`corregido`). Ver abajo.
     los numeros, con su unidad al lado           HECHO (`eurosUnidad` pinta «0,96 €/kg»:
                                                  el numero suelto no existe en la
                                                  pantalla)

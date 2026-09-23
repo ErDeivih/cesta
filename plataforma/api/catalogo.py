@@ -112,6 +112,15 @@ def conexion() -> duckdb.DuckDBPyConnection:
           FROM grupos
     """)
     con.execute("CREATE INDEX buscable_grupo ON buscable(grupo_id)")
+    # El diccionario de palabras del catalogo, para arreglar una busqueda con faltas
+    # de ortografia (`corregir`). Se monta **una vez por conexion** -- 0,06 s medidos
+    # sobre 52.417 productos -- y no en cada busqueda: cambia cuando cambia gold, y
+    # gold cambia cuando esta conexion se rehace, que es exactamente cuando toca.
+    con.execute("""CREATE TABLE palabras AS
+        SELECT palabra, count(*) AS veces FROM buscable,
+               unnest(string_split(texto, ' ')) AS t(palabra)
+         WHERE length(palabra) >= 4
+         GROUP BY palabra""")
     _local.con = con
     _local.sello = sello
     return con
@@ -159,6 +168,65 @@ SELLOS_FILTRABLES = ("sin-gluten", "sin-lactosa", "vegano", "vegetariano",
 # antes habia dos numeros distintos y los dos se llamaban "imposible".
 FACTOR_INCREIBLE = comparacion.FACTOR_INCREIBLE
 CONSERVACIONES = ("refrigerado", "congelado", "ambiente")
+
+# Arreglar una busqueda escrita con faltas (ver `corregir`). Dos numeros, y los dos
+# estan medidos sobre el catalogo de hoy:
+#
+#   `PARECIDO`     0,85. Con 0,80 entraban cosas como `asucar` -> `asua`, que es peor
+#                  que no corregir: cambiar una palabra por otra que no tiene nada que
+#                  ver y ensenar esos resultados es peor que decir "no encuentro".
+#   `LARGO_MINIMO` 4 letras. Con tres letras, `pan` esta a un cambio de letra de `paz`,
+#                  `paz` de `paz`... y corregir una palabra corta acierta menos veces de
+#                  las que falla.
+PARECIDO = 0.85
+LARGO_MINIMO = 4
+
+
+def corregir(texto: str) -> str | None:
+    """El texto con las palabras mal escritas arregladas, o `None` si no hay nada.
+
+    Se busca **palabra a palabra** en el diccionario del catalogo (las palabras que
+    existen de verdad, `conexion`), y se cambia solo la que no existe por la mas
+    parecida **del mismo tamano** (`±1` letra). Las dos reglas tienen su porque:
+
+      - **El mismo tamano** es lo que evita `asucar` -> `asua`. El parecido de Jaro-
+        Winkler premia los prefijos, asi que sin esa condicion gana la palabra corta que
+        empieza igual, y cambiar `asucar` por `asua` es peor que no corregir.
+      - **La palabra que ya existe no se toca**: si esta en el diccionario, ella misma es
+        su mejor candidata (parecido 1,0) y no cambia nada. Asi corregir es idempotente.
+      - **A igualdad de parecido gana la palabra que mas aparece** en el catalogo. No es un
+        desempate decorativo: `natral` empata casi exacto con `natrual` (que existe **una**
+        vez: alguien la escribio mal en su ficha) y con `natural` (que aparece miles). El
+        parecido redondeado a dos decimales agrupa a los que empatan de verdad, y ahi manda
+        la frecuencia, que es lo que distingue una palabra de una errata de una tienda.
+
+    Devuelve `None` -- y no el texto igual -- cuando no hay nada que arreglar: quien
+    llama tiene que poder decir "esto es lo que has escrito" o "esto es lo que he
+    entendido", y son dos frases distintas.
+    """
+    palabras = [p for p in _sin_tildes(texto).lower().split() if p]
+    if not palabras:
+        return None
+    con = conexion()
+    salida: list[str] = []
+    cambio = False
+    for p in palabras:
+        if len(p) < LARGO_MINIMO:
+            salida.append(p)
+            continue
+        fila = con.execute("""
+            SELECT palabra FROM palabras
+             WHERE length(palabra) BETWEEN ? AND ?
+               AND jaro_winkler_similarity(palabra, ?) >= ?
+             ORDER BY round(jaro_winkler_similarity(palabra, ?), 2) DESC, veces DESC
+             LIMIT 1""",
+            [len(p) - 1, len(p) + 1, p, PARECIDO, p]).fetchone()
+        if fila and fila[0] != p:
+            salida.append(fila[0])
+            cambio = True
+        else:
+            salida.append(p)
+    return " ".join(salida) if cambio else None
 
 
 def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,

@@ -222,6 +222,19 @@ export function Buscar() {
 
       {busca && resultados.data && (
         <>
+          {/* Cuando lo escrito no encontraba nada y el servidor lo ha arreglado, se
+              dice **que** se ha entendido. Sin esto, quien escribe "asucar" y ve
+              resultados de azucar no sabe si la aplicacion le entiende o le esta
+              ensenando otra cosa -- y con el tiempo deja de fiarse del buscador. */}
+          {resultados.data.corregido && (
+            <Aviso tono="info">
+              <p>
+                No he encontrado <strong>«{filtros.q.trim()}»</strong>. Esto es lo que
+                hay para <strong>«{resultados.data.corregido}»</strong>.
+              </p>
+            </Aviso>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
               <strong className="font-semibold text-neutral-900 dark:text-neutral-100">

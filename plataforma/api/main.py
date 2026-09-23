@@ -169,6 +169,18 @@ def buscar(q: str = "", cadenas: str | None = None, limite: int = 40,
     `q` deja de ser obligatorio: explorar un pasillo es una busqueda sin texto.
     Sin ninguna de las dos, la respuesta es una lista vacia, no un error: es lo
     que hay que contestar cuando no se ha preguntado nada.
+
+    **Y si no encuentra nada, lo intenta con las palabras arregladas.** El encargo pide
+    que el buscador *"encuentre con faltas de ortografia"*, y medido el 23 de septiembre
+    de 2026 no las encontraba: `lece entera`, `detergnete` y `asucar` devolvian **cero**
+    resultados. La correccion es la de `catalogo.corregir` (palabra a palabra contra el
+    diccionario del catalogo, mismo tamano, y a igualdad de parecido la palabra que mas
+    aparece), y **solo se usa como ultimo recurso**: primero se busca lo que se ha
+    escrito, y la correccion solo entra cuando no hay nada.
+
+    `corregido` viaja en la respuesta **solo si la busqueda corregida encuentra algo**.
+    Si tampoco encuentra nada, no se anuncia una correccion que no ha servido de nada: lo
+    honesto es decir que no hay nada, con lo que se escribio.
     """
     lista = [c.strip() for c in cadenas.split(",")] if cadenas else None
     filtros = [s.strip() for s in sellos.split(",")] if sellos else None
@@ -177,10 +189,23 @@ def buscar(q: str = "", cadenas: str | None = None, limite: int = 40,
         cercanas = almacen.preferencias_de(usuario["id"]).get("cadenas_cerca")
         if cercanas:
             lista = list(cercanas)
+
+    def busca(que: str) -> list:
+        return catalogo.buscar(que, lista, limite, comparables, con_nutricion,
+                               filtros, conservacion, marca_propia, ofertas,
+                               sin_alcohol, seccion)
+
+    resultados = busca(q)
+    corregido = None
+    if not resultados and q.strip():
+        arreglado = catalogo.corregir(q)
+        if arreglado:
+            resultados = busca(arreglado)
+            if resultados:
+                corregido = arreglado
     return {"fecha_datos": catalogo.fecha_de_gold(),
-            "resultados": catalogo.buscar(q, lista, limite, comparables, con_nutricion,
-                                          filtros, conservacion, marca_propia, ofertas,
-                                          sin_alcohol, seccion)}
+            "resultados": resultados,
+            **({"corregido": corregido} if corregido else {})}
 
 
 @app.get("/api/secciones")

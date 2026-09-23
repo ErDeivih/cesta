@@ -117,7 +117,19 @@ existiendo para el registro cerrado:
              "nombre", "marca", "cadena_mas_barata", "precio_cent",
              "precio_unidad_cent", "precio_unidad_max_cent", "unidad",
              "cadenas", "productos", "nutriscore", "imagen", "con_oferta",
-             "comparable", "ahorro_pct"}]}
+             "comparable", "ahorro_pct"}],
+           "corregido": "leche entera"}     solo si hizo falta y sirvio
+
+**`corregido` es lo que se ha entendido**, y solo viaja cuando lo escrito no encontraba
+nada y la busqueda arreglada **si** encuentra algo. La pantalla ensena las dos cosas:
+*«No he encontrado «asucar». Esto es lo que hay para «azucar»»*. Si tampoco encuentra
+nada, no se anuncia correccion: seria culpar a quien escribe de un fallo nuestro.
+
+La correccion (`catalogo.corregir`) va **palabra a palabra** contra el diccionario del
+catalogo, exige el **mismo tamano (±1 letra)** y, a igualdad de parecido, se queda con la
+palabra que **mas aparece**. Las dos reglas salen de un fallo medido: sin la primera,
+`asucar` se corrige a `asua`; sin la segunda, `natral` se corrige a `natrual`, que existe
+una vez en una ficha. Y es el ultimo recurso: primero se busca lo escrito.
 
 **Los productos sin grupo salen igual, marcados.** Son 32.486 de 51.781: el 63 % del
 catalogo. Esconderlos seria esconder casi todo.
