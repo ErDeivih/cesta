@@ -423,6 +423,16 @@ export interface Linea {
   grupo_id: number | null
   producto_id: string | null
   tachado_en: string | null
+  /** El pasillo, y donde cae en el recorrido de la tienda.
+   *
+   *  **Opcionales a proposito**: mientras gold no traiga la columna `seccion`, o
+   *  cuando el grupo no esta en gold, no vienen -- y entonces la lista se pinta
+   *  como siempre, de un tiron y sin encabezados. La pantalla distingue "no lo se"
+   *  (la clave no esta) de "es de este pasillo", que es la regla del proyecto: un
+   *  dato que no tenemos no se rellena. */
+  seccion?: string
+  pasillo?: string
+  pasillo_orden?: number
 }
 
 /** Lo que cuesta la lista ahora mismo, en la cadena mas barata de cada cosa. */

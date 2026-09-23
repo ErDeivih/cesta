@@ -347,6 +347,47 @@ function Repartido({ reparto }: { reparto: Reparto }) {
  *    vuelo a la vez y no se puede lanzar un tachado mientras se guarda una
  *    cantidad.
  */
+/** Las lineas de una seccion, agrupadas por pasillo y en el orden de la tienda.
+ *
+ *  El motivo no es de diseno, es de tienda: la lista se usa **de pie, en
+ *  movimiento y con una mano**, y lo que hay que saber mientras se empuja el carro
+ *  es en que pasillo se esta. Con nueve lineas de seis pasillos, leer el nombre de
+ *  cada una para saber que queda aqui es trabajo que se hace andando.
+ *
+ *  **El pasillo viene de la API** (`catalogo.pasillo_de_grupos`, en
+ *  `GET /api/listas/{id}`), con su posicion en el recorrido de la tienda. Esto solo
+ *  ordena y corta: aqui no se decide que pasillo tiene un producto, que es un dato
+ *  del catalogo y no de la pantalla.
+ *
+ *  Tres decisiones que estan en estas seis lineas:
+ *
+ *  1. **Las lineas sin pasillo van al final y sin encabezado**, no al principio ni
+ *     repartidas por donde "parezca". Cuando gold no trae la columna `seccion`, o el
+ *     grupo no esta en el catalogo, no sabemos de que pasillo es: eso no se
+ *     rellena, se deja al final.
+ *  2. **Dentro de un pasillo se respeta el orden que manda la API** (`en_carrito,
+ *     anadido_en`): `sort` es estable, asi que las lineas sin pasillo y las del
+ *     mismo pasillo mantienen el orden en que llegaron. Ordenarlas aqui otra vez
+ *     daria dos ordenes peleandose en cada recarga.
+ *  3. **Los pasillos se cortan por nombre, no por `seccion`**, para pintar lo que se
+ *     lee. Dos tandas seguidas con el mismo nombre no pueden pasar: el nombre sale
+ *     de la misma seccion (`NOMBRES_SECCIONES`), asi que van juntas.
+ */
+function porPasillo(lineas: Linea[]): [string, Linea[]][] {
+  const sinPasillo = Number.MAX_SAFE_INTEGER
+  const ordenadas = [...lineas].sort(
+    (a, b) => (a.pasillo_orden ?? sinPasillo) - (b.pasillo_orden ?? sinPasillo),
+  )
+  const tandas: [string, Linea[]][] = []
+  for (const l of ordenadas) {
+    const nombre = l.pasillo ?? ''
+    const ultima = tandas[tandas.length - 1]
+    if (ultima && ultima[0] === nombre) ultima[1].push(l)
+    else tandas.push([nombre, [l]])
+  }
+  return tandas
+}
+
 function UnaLinea({ linea, guardando, cambiar }: {
   linea: Linea
   guardando: boolean
@@ -954,8 +995,13 @@ export function Cesta() {
  
                     El orden dentro de cada seccion es el de la API
                     (`ORDER BY en_carrito, anadido_en`, almacen.py): lo ya cogido
-                    se va al final y lo ultimo anadido va arriba. Ordenar aqui otra
-                    vez daria dos ordenes que se pelean en cada recarga.
+                    se va al final y lo ultimo anadido va arriba. **Y dentro de un
+                    pasillo ese orden se respeta tal cual** -- `porPasillo` solo
+                    reparte en tandas y las coloca en el orden del recorrido de la
+                    tienda, sin tocar el orden de dentro. Antes esto decia que aqui
+                    no se ordenaba nunca; ahora se ordena **por pasillo**, y eso es
+                    una decision nueva con su motivo: la lista se recorre andando,
+                    no por orden de llegada.
 
                     Los encabezados solo salen **si hay algo en los dos lados**: un
                     «En el carro 0» o un «Por coger 0» es ruido, y el segundo es
@@ -974,17 +1020,39 @@ export function Cesta() {
                           </span>
                         </h3>
                       )}
-                      <ul className="grid gap-2">
-                        {(lineas_ as Linea[]).map((l) => (
-                          <UnaLinea
-                            key={l.id}
-                            linea={l}
-                            guardando={cambia.isPending || detalle.data.papel === 'mira'}
-                            cambiar={(lineaId, cambio) =>
-                            cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
-                          />
-                        ))}
-                      </ul>
+                      {/* Y dentro, por pasillos, con el pasillo **pegado arriba**.
+                          Es lo que pidio Claude para esta pantalla, y el motivo es
+                          de tienda, no de diseno: la lista se mira de pie, en
+                          movimiento y con una mano, y lo que se necesita saber es
+                          en que pasillo se esta, no el indice de la fila. El
+                          encabezado se queda pegado mientras dura su tanda, asi que
+                          la pregunta "¿que me falta aqui?" se contesta sin subir a
+                          mirar el titulo.
+
+                          Las lineas sin pasillo van **las ultimas y sin encabezado**
+                          (el orden de `porPasillo`), porque un dato que no tenemos
+                          no se coloca donde tocaria: se deja al final, que es donde
+                          no estorba. */}
+                      {porPasillo(lineas_ as Linea[]).map(([pasillo, delPasillo]) => (
+                        <div key={pasillo || 'sin-pasillo'} className="mb-3 last:mb-0">
+                          {pasillo && (
+                            <h4 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-xs font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
+                              {pasillo}
+                            </h4>
+                          )}
+                          <ul className="grid gap-2">
+                            {delPasillo.map((l) => (
+                              <UnaLinea
+                                key={l.id}
+                                linea={l}
+                                guardando={cambia.isPending || detalle.data.papel === 'mira'}
+                                cambiar={(lineaId, cambio) =>
+                                cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
                     </section>
                   ))}
                 {/* Deshacer en vez de confirmar: quitar una linea es la accion

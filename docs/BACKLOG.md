@@ -301,7 +301,7 @@ subir un numero mientras bajaba el otro (el recall del emparejador subio y los g
 se fundieron peor), y mirando una sola columna eso se ve como una mejora.
 
     condicion                                   comando                                        hoy
-    pruebas verdes                              uv run pytest -q && uv run ruff check .        719 pasan, 2 fallan (ajenos)
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        732 pasan, 2 fallan (ajenos)
     --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
                                                   --medir                                      65 %   CUMPLE
     cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        49     NO
@@ -409,8 +409,8 @@ como se hizo con los grupos.
 ### Estado del encargo de UX, y el paso siguiente escrito
 
     punto 1  la primera vez con datos reales      HECHO (23 sep: la tarjeta, puesta)
-    punto 2  la lista                             casi: dos secciones y sin cobertura en
-                                                  tono neutro; falta el pasillo pegajoso
+    punto 2  la lista                             HECHO (dos secciones, pasillo pegajoso,
+                                                  deshacer y sin rojo sin cobertura)
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
     punto 5  el medoide como segunda red          PENDIENTE (calibrar contra el banco)
@@ -491,6 +491,57 @@ devuelve nada o devuelve algo que no se puede comparar, **ese hueco no se rellen
 si no queda ninguno de los cuatro, no se pinta nada y el buscador se queda como estaba.
 La diferencia sale de restar los dos precios por unidad del grupo, no de un `ahorro` que
 llegue sumado por otro camino.
+
+### El pasillo de la lista, pegado arriba: la ultima pieza del punto 2
+
+Es la condicion (c) de la barra, y la que cerraba el punto 2: *"la lista en dos
+secciones, **con pasillo pegajoso** y sin aviso rojo cuando no hay cobertura"*.
+
+**El motivo no es de diseno, es de tienda.** Esta es la unica pantalla que se usa de
+pie, en movimiento y con una mano: lo que hay que saber mientras se empuja el carro es
+**en que pasillo se esta**. Con nueve lineas de seis pasillos, leer los nueve nombres
+para saber que queda aqui es trabajo que se hace andando.
+
+**De donde sale el pasillo, y la regla que hubo que escribir.** El pasillo es un
+atributo del **producto** (`seccion` viaja por producto, `catalogo.buscar:225`), y un
+grupo tiene miembros de varias cadenas. Medido sobre el gold del 23 de septiembre:
+
+    pasillos distintos en gold                          20
+    productos sin pasillo                                86   (0,16 % de 52.417)
+    grupos con miembros en mas de un pasillo          2.437 de 39.702   (6,1 %)
+
+O sea que el caso "no coinciden" **no es un rincon**: en 2.437 grupos hay que decidir.
+Se decide asi, y esta escrito en `catalogo.pasillo_de_grupos`: gana **el pasillo que
+mas miembros comparten**, y los empates se rompen **por el orden del recorrido de la
+tienda**. Sin una regla escrita, el mismo grupo cambia de pasillo entre dos ejecuciones
+sin que haya cambiado nada, y la lista se reordena sola delante de quien la mira.
+
+**Las tres decisiones de pantalla**, en `Cesta.tsx::porPasillo`:
+
+1. **Las lineas sin pasillo van las ultimas y sin encabezado.** No se les pone "otros"
+   ni el nombre del grupo: un dato que no tenemos no se rellena. Y si gold no trae la
+   columna -- la plataforma se despliega por separado del scraper, puede llegar antes
+   --, la lista se pinta de un tiron, exactamente como ayer.
+2. **El orden de dentro de un pasillo no se toca.** Lo manda la API
+   (`ORDER BY en_carrito, anadido_en`), y `sort` es estable, asi que las lineas del
+   mismo pasillo mantienen el orden en que llegaron. Lo unico que se ordena aqui es
+   **en que orden salen las tandas**: el del recorrido de la tienda.
+3. **La altura de la cabecera se mide, no se escribe.** La cabecera de la aplicacion
+   tambien es `sticky top-0`, asi que un pasillo pegado en `top: 0` se metería detras.
+   `Cabecera.tsx` publica su altura como `--alto-cabecera` con un `ResizeObserver`, y
+   el pasillo se pega en `top: var(--alto-cabecera)`. Se mide porque **no es una altura
+   fija**: envuelve en movil y el desplegable de "Estado de las cadenas" la hace mas
+   alta. Un `top-14` escrito a mano acierta hoy y falla el dia que cambie una linea de
+   texto, sin dar ningun error.
+
+**Lo que la API manda y lo que no**: `GET /api/listas/{id}` devuelve cada linea con
+`seccion` (el slug), `pasillo` (el nombre que se lee) y `pasillo_orden` (su punto en el
+recorrido). **No reordena nada**: quien reparte en tandas es la pantalla, que es la que
+sabe cuantas secciones tiene la lista. Lo mismo en `/sincronizar`, para que la lista no
+cambie de forma segun por donde haya entrado el dato.
+
+Probado en `tests/test_pasillos.py` (8 pruebas, con gold de mentira y sin PostgreSQL) y
+`tests/test_pasillo_pegajoso.py` (5, leyendo el codigo, como las de contraste).
 
 ### Sin cobertura en el pasillo no es un fallo, y ya no se anuncia como uno
 

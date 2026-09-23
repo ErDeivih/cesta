@@ -208,6 +208,27 @@ De que dia es cada cadena y si esta al dia. La interfaz la pide al abrir.
            "personas": [...],
            "fecha_datos"}
 
+Cada linea de `lineas` lleva ademas **su pasillo**, que es lo que permite pintar la
+lista por tandas con el pasillo delante:
+
+    {"id", "grupo_id", "producto_id", "nombre_visto", "cantidad", "nota",
+     "tachado_en", "anadido_en", "en_carrito", "anadido_por", "tachado_por",
+     "seccion": "lacteos-huevos",         el slug, para agrupar
+     "pasillo": "Lácteos y huevos",       lo que se lee
+     "pasillo_orden": 3}                  su punto en el recorrido de la tienda
+
+Las tres claves son **opcionales y no viajan con `null`**: si gold no trae la columna
+`seccion` (la plataforma se despliega por separado del scraper) o si el grupo no esta
+en el catalogo, la linea sale sin ellas y la pantalla la pinta al final y sin
+encabezado. Un dato que no tenemos no se rellena.
+
+**El pasillo es del producto, no del grupo**, y un grupo tiene miembros de varias
+cadenas: cuando no coinciden gana el que mas miembros comparten, y los empates se
+rompen por el orden del recorrido (`catalogo.pasillo_de_grupos`). **El orden de
+`lineas` no cambia**: lo decide PostgreSQL (`en_carrito, anadido_en`), y quien reparte
+en tandas y las coloca en el recorrido es la pantalla, que es la que sabe cuantas
+secciones tiene la lista.
+
 `estimacion` es **el numero que se mira mientras se anaden cosas**: coge cada
 cosa donde este mas barata. No es el calculo de "donde la compro", que pide
 elegir tienda. Tiene que salir siempre y rapido.

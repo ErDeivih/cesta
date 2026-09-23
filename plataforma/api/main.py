@@ -412,7 +412,13 @@ def nueva_lista(datos: NuevaLista, usuario: dict = Depends(usuario_actual)):
 @app.get("/api/listas/{lista_id}")
 def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     papel = _acceso(lista_id, usuario)
-    lineas = almacen.lineas_de(lista_id)
+    # Cada linea con su pasillo: es lo que permite pintar la lista por tandas, con
+    # el pasillo delante, que es como se usa de pie en la tienda. Se anade aqui y no
+    # en `almacen.lineas_de` porque el pasillo vive en gold (DuckDB) y las lineas en
+    # PostgreSQL: son dos almacenes distintos y se juntan en la capa que ya habla
+    # con los dos. Y **no se reordena nada aqui**: la pantalla es la que sabe
+    # cuantas secciones tiene la lista y en que orden se pintan.
+    lineas = catalogo.con_pasillos(almacen.lineas_de(lista_id))
     nuevo = almacen.novedades(lista_id, usuario["id"])
     almacen.marca_visita(lista_id, usuario["id"])
     return {
@@ -496,7 +502,11 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
         except Exception as exc:  # noqa: BLE001
             fallidos.append({"id": c.get("id"), "motivo": type(exc).__name__})
     return {"aplicados": hechos, "fallidos": fallidos,
-            "lineas": almacen.lineas_de(lista_id)}
+            # Con pasillo, igual que `ver_lista`: las dos devuelven lineas y la
+            # pantalla las pinta con el mismo codigo. Que una traiga el pasillo y
+            # la otra no seria una lista que cambia de forma segun por donde haya
+            # entrado el dato.
+            "lineas": catalogo.con_pasillos(almacen.lineas_de(lista_id))}
 
 
 @app.post("/api/listas/{lista_id}/compartir")

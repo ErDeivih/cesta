@@ -6,6 +6,7 @@
  *  mira sabe de que dia es lo que esta viendo. Por eso va arriba, pegada, y no
  *  escondida en un "acerca de".
  */
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useEstado } from '../api/consultas'
@@ -17,9 +18,39 @@ export function Cabecera() {
   const { data, isPending, error } = useEstado()
   const { pathname } = useLocation()
   const enPanel = pathname.startsWith('/panel')
+  const caja = useRef<HTMLElement | null>(null)
+
+  /** La altura de esta cabecera, publicada como `--alto-cabecera`.
+   *
+   *  Existe por una cosa concreta: **el encabezado de pasillo de la lista se queda
+   *  pegado justo debajo**, y esta cabecera tambien es `sticky`. Sin saber cuanto
+   *  mide, el pasillo se pegaria en `top: 0` y quedaria **detras** de una cabecera
+   *  que ocupa ese mismo sitio: se veria a medias a traves del fondo translucido, o
+   *  no se veria.
+   *
+   *  Se mide en vez de escribirse a mano porque **no es una altura fija**: la
+   *  cabecera se reparte en varias lineas, el desplegable de "Estado de las
+   *  cadenas" la hace mas alta al abrirse, y en un movil estrecho envuelve antes que
+   *  en el escritorio. Un `top-14` escrito a mano acierta hoy y falla el dia que
+   *  cambie una linea de texto. */
+  useEffect(() => {
+    const nodo = caja.current
+    if (!nodo) return
+    const publica = () =>
+      document.documentElement.style.setProperty(
+        '--alto-cabecera', `${Math.round(nodo.getBoundingClientRect().height)}px`)
+    publica()
+    if (typeof ResizeObserver === 'undefined') return
+    const observador = new ResizeObserver(publica)
+    observador.observe(nodo)
+    return () => observador.disconnect()
+  }, [enPanel])
 
   return (
-    <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-neutral-700 dark:bg-neutral-900/95 dark:supports-[backdrop-filter]:bg-neutral-900/80">
+    <header
+      ref={caja}
+      className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-neutral-700 dark:bg-neutral-900/95 dark:supports-[backdrop-filter]:bg-neutral-900/80"
+    >
       <div className="mx-auto flex max-w-app flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
         {/* 44 px de alto: medido antes, el enlace media **43x28** y se pulsa en
             todas las pantallas. Es el mismo minimo que el resto de lo pulsable. */}

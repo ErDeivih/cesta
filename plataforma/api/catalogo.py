@@ -564,6 +564,72 @@ def secciones(cadenas: list[str] | None = None) -> list[dict]:
     return salida
 
 
+def pasillo_de_grupos(grupo_ids: list[int]) -> dict[int, dict]:
+    """El pasillo de cada grupo, para poder agrupar una lista de la compra.
+
+    La lista se usa **de pie, en movimiento y con una mano**, y por eso el pasillo
+    va delante de cada tanda de lineas: en el pasillo se decide lo que se coge, no
+    delante del movil. Esto es lo unico que hace falta para eso -- que pasillo es y
+    en que punto del recorrido de la tienda cae --, y quien ordena y pinta las
+    tandas es la pantalla, que es la que sabe cuantas secciones tiene la lista.
+
+    **El pasillo es un atributo del producto, no del grupo** (`seccion` viaja por
+    producto, ver `catalogo.buscar:225`), y un grupo tiene miembros de varias
+    cadenas. Cuando no coinciden gana **el pasillo que mas miembros comparten**, y
+    los empates se rompen por el orden del recorrido: asi un grupo no baila de
+    pasillo entre dos ejecuciones sin que haya cambiado nada.
+
+    Devuelve un diccionario vacio mientras `seccion` no haya llegado a gold. Una
+    lista sin pasillos se pinta como siempre, sin encabezados; inventarse el
+    pasillo de un producto, no.
+    """
+    ids = sorted({int(g) for g in grupo_ids if g is not None})
+    if not ids:
+        return {}
+    con = conexion()
+    disponibles = {f[0] for f in con.execute("DESCRIBE buscable").fetchall()}
+    if "seccion" not in disponibles:
+        return {}
+    filas = con.execute(f"""
+        SELECT grupo_id, seccion, count(*) AS n
+          FROM buscable
+         WHERE grupo_id IN ({','.join('?' * len(ids))}) AND seccion IS NOT NULL
+         GROUP BY grupo_id, seccion
+    """, ids).fetchall()
+    orden = {s: i for i, s in enumerate(ORDEN_SECCIONES)}
+    elegido: dict[int, tuple] = {}
+    for grupo_id, seccion, n in filas:
+        # Mas miembros primero; a igualdad, el que se recorre antes en la tienda.
+        clave = (-n, orden.get(seccion, len(orden)), seccion)
+        if grupo_id not in elegido or clave < elegido[grupo_id][0]:
+            elegido[grupo_id] = (clave, seccion)
+    return {
+        g: {"seccion": s,
+            "pasillo": NOMBRES_SECCIONES.get(s, s.replace("-", " ").capitalize()),
+            "pasillo_orden": orden.get(s, len(orden))}
+        for g, (_, s) in elegido.items()
+    }
+
+
+def con_pasillos(lineas: list[dict]) -> list[dict]:
+    """Las lineas, cada una con su pasillo. **No reordena nada.**
+
+    Se anade el pasillo a la linea en vez de mandar una lista de pasillos aparte
+    porque la pantalla necesita las dos cosas juntas: al pintar una linea tiene que
+    saber si empieza una tanda nueva, y con dos listas eso es cruzar indices por
+    `grupo_id` en el navegador, que es donde peor se depura.
+
+    Una linea sin pasillo **no lleva las claves**, no viaja con `null`: la pantalla
+    distingue "no lo se" de "es de este pasillo" mirando si la clave esta.
+    """
+    pasillos = pasillo_de_grupos([ln.get("grupo_id") for ln in lineas])
+    salida = []
+    for linea in lineas:
+        pasillo = pasillos.get(linea.get("grupo_id"))
+        salida.append(linea | pasillo if pasillo else linea)
+    return salida
+
+
 # ------------------------------------------------------------ ficha de grupo --
 
 def grupo(grupo_id: int) -> dict | None:
