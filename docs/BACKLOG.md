@@ -794,10 +794,12 @@ rojo no da ningun error de compilacion. Verificado ademas en el bundle servido: 
 en ninguna parte.
 
 **Lo que queda del punto 2**: nada de la lista en si -- el **pasillo pegajoso** entro el
-mismo dia, unas lineas mas arriba. Queda **la misma regla de "sin cobertura" en el resto
-de pantallas**, que hoy usan `Fallo` (rojo) tambien cuando lo que pasa es que no hay red:
-buscar, la ficha, el escaner y el panel. La regla esta ya escrita y probada
-(`api/cliente.ts::esSinRed`), asi que es aplicar la misma decision en cuatro sitios.
+mismo dia, unas lineas mas arriba --, y **la regla de "sin cobertura" ya vale en todas
+las pantallas**: se puso en `componentes/ui.tsx::Fallo`, que es el unico sitio por el que
+pasan buscar, la ficha, el grupo, el escaner, el panel y el panel de matching. Arreglarlo
+pantalla por pantalla habria dejado la septima naciendo en rojo, que es justo lo que
+habia pasado con la lista. El rojo sigue para lo que **la API contesta que no** (un 403 de
+una lista de solo mirar, un 500): eso si hay que mirarlo.
 
 ### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
 

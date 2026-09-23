@@ -13,7 +13,7 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
 import { useId } from 'react'
 
-import { textoDeError } from '../api/cliente'
+import { esSinRed, textoDeError } from '../api/cliente'
 
 export function cx(...clases: (string | false | null | undefined)[]): string {
   return clases.filter(Boolean).join(' ')
@@ -280,6 +280,29 @@ export function Cargando({ que = 'los datos' }: { que?: string }) {
 export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () => void }) {
   // El texto lo pone `textoDeError`, que ya distingue "sin conexion" de "el
   // servidor ha contestado 500". Aqui no se inventa un mensaje nuevo.
+  //
+  // **Y el color tambien lo decide eso**, no la pantalla que llama: si lo que pasa
+  // es que no hay red, esto no es un fallo, es un movil en un pasillo de supermercado
+  // -- y en rojo, con `role="alert"`, se lee como "la aplicacion se ha roto" y se
+  // deja de usar justo donde mas sirve. Se arregla en **un solo sitio** y no en las
+  // seis pantallas que usan `Fallo`: buscar, la ficha, el grupo, el escaner, el panel
+  // y el panel de matching. Si se arreglara pantalla por pantalla, la septima
+  // volveria a nacer en rojo.
+  if (esSinRed(error)) {
+    return (
+      <Aviso tono="aviso" titulo="Sin cobertura">
+        <p>No he podido traer esto: no hay conexion con casa.</p>
+        {reintentar && (
+          <>
+            <p className="mt-1">Vuelve a intentarlo cuando tengas red.</p>
+            <Boton variante="normal" className="mt-2" onClick={reintentar}>
+              Volver a intentarlo
+            </Boton>
+          </>
+        )}
+      </Aviso>
+    )
+  }
   return (
     <Aviso tono="mal" titulo="No he podido traer esto">
       <p>{textoDeError(error)}</p>

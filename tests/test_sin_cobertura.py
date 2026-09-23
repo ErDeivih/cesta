@@ -42,6 +42,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 SRC = RAIZ / "plataforma" / "web" / "app" / "src"
 CLIENTE = SRC / "api" / "cliente.ts"
 CESTA = SRC / "paginas" / "Cesta.tsx"
+UI = SRC / "componentes" / "ui.tsx"
 
 
 def _leer(f: Path) -> str:
@@ -91,3 +92,21 @@ def test_si_no_llega_la_lista_se_dice_algo():
     cesta = _leer(CESTA)
     assert "detalle.isError" in cesta, \
         "si falla traer la lista no se pinta nada: ni aviso, ni reintento"
+
+
+def test_el_fallo_de_red_es_neutro_en_todas_las_pantallas():
+    """La misma regla, en el sitio por el que pasan todas.
+
+    **`Fallo` es el unico sitio que puede arreglarlo de una vez**: lo usan buscar, la
+    ficha, el grupo, el escaner, el panel y el panel de matching. Arreglarlo pantalla
+    por pantalla dejaria la septima naciendo en rojo, que es exactamente lo que paso
+    con la lista antes de esto.
+    """
+    ui = _leer(UI)
+    assert "esSinRed(error)" in ui, \
+        "`Fallo` no distingue que no haya red: seis pantallas siguen en rojo"
+    assert 'tono="aviso" titulo="Sin cobertura"' in ui, \
+        "sin cobertura tiene que ir en tono neutro, no en `role=alert`"
+    # Y el rojo sigue existiendo para lo que la API contesta que no: un 403 o un 500
+    # hay que mirarlos, y quitarlo de todo seria el error contrario.
+    assert 'tono="mal" titulo="No he podido traer esto"' in ui
