@@ -71,6 +71,84 @@ def _grupo_de_una_cadena() -> int | None:
     return int(fila[0]) if fila else None
 
 
+# El contraste, medido ya pintado: color de texto, fondo real (subiendo por los padres,
+# porque casi nunca es el del propio elemento) y el minimo de WCAG segun el tamano.
+#
+# **Sin una sola barra invertida a proposito.** La primera version llevaba el regex
+# `rgba?\(...\)` escrito a mano, se perdio al pasar el texto de Python al navegador, y la
+# medida decia "0 textos malos" **sin haber mirado ninguno**. Por eso el JS de aqui no usa
+# regex con escapes, y por eso al final de la puerta hay una trampa: un texto ilegible
+# puesto a mano que TIENE que salir.
+_CONTRASTE = """() => {
+  const lum = (c) => {
+    const v = c.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92
+                                                : Math.pow((x + 0.055) / 1.055, 2.4); });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  };
+  const parse = (s) => {
+    if (!s || s.indexOf('rgb') !== 0) return null;
+    const p = s.replace(/[^0-9.]+/g, ' ').trim().split(' ').map(Number);
+    if (p.length < 3) return null;
+    return {rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1};
+  };
+  const fondo = (el) => {
+    let n = el;
+    while (n) {
+      const c = parse(getComputedStyle(n).backgroundColor);
+      if (c && c.a > 0.9) return c.rgb;
+      n = n.parentElement;
+    }
+    return [255, 255, 255];
+  };
+  const ratio = (a, b) => {
+    const l1 = lum(a), l2 = lum(b);
+    const hi = l1 > l2 ? l1 : l2, lo = l1 > l2 ? l2 : l1;
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const salida = [];
+  const nodos = document.querySelectorAll(
+    'p, span, a, button, h1, h2, h3, h4, li, td, th, dd, dt, summary, label, strong');
+  for (const el of nodos) {
+    let propio = false;
+    for (const n of el.childNodes) {
+      if (n.nodeType === 3 && n.textContent.trim().length > 1) { propio = true; break; }
+    }
+    if (!propio) continue;
+    const r = el.getBoundingClientRect();
+    const s = getComputedStyle(el);
+    if (r.width < 1 || r.height < 1 || s.visibility === 'hidden' || s.display === 'none'
+        || parseFloat(s.opacity) < 0.6) continue;
+    const fg = parse(s.color);
+    if (!fg) continue;
+    const cr = ratio(fg.rgb, fondo(el));
+    const px = parseFloat(s.fontSize);
+    const negrita = parseInt(s.fontWeight, 10) >= 700;
+    const grande = px >= 24 || (px >= 18.66 && negrita);
+    const minimo = grande ? 3 : 4.5;
+    if (cr < minimo) {
+      salida.push({texto: el.innerText.trim().split('\\n').join(' ').slice(0, 40),
+                   cr: Math.round(cr * 100) / 100, minimo: minimo, px: px,
+                   color: s.color, fondo: fondo(el).join(',')});
+    }
+  }
+  return salida;
+}"""
+
+# Un texto que no se lee, puesto a mano. Si la medida no lo ve, la medida no sirve.
+_TRAMPA = """() => {
+  const malo = document.createElement('p');
+  malo.style.color = 'rgb(238, 238, 238)';
+  malo.style.backgroundColor = 'rgb(255, 255, 255)';
+  malo.textContent = 'Este texto no se lee';
+  document.querySelector('main').prepend(malo);
+}"""
+
+
+def _contraste_flojo(pagina) -> list[dict]:
+    """Los textos que no llegan al minimo de contraste, ya pintados."""
+    return pagina.evaluate(_CONTRASTE)
+
+
 def _toques_pequenos(pagina) -> list[dict]:
     """Lo que se puede pulsar y mide menos de 44 px de verdad, ya pintado.
 
@@ -432,6 +510,33 @@ def main() -> int:
                 "{}x{} {}".format(t["w"], t["h"], t["texto"]) for t in graves)
             comprueba(not graves,
                       f"en {ruta} no hay nada que pulsar por debajo de 44 px ({resumen})")
+
+        # ------------------------------- el contraste del texto, pintado y en los dos temas --
+        # §1 del encargo: *"el contraste y los limites de los campos, con las formulas dentro
+        # de las pruebas. Eso es accesibilidad de verdad y esta medida"*. `tests/test_contraste.py`
+        # mide los **tokens** del CSS; esto mide el texto **pintado**, resolviendo el fondo
+        # real de cada uno (que casi nunca es el del propio elemento) y **en los dos temas**:
+        # un `dark:` que falte no se ve en los tokens y si se ve aqui.
+        print("\n== el contraste del texto, ya pintado (§1)")
+        for tema in ("light", "dark"):
+            pagina.emulate_media(color_scheme=tema)
+            for ruta in ("/", "/cesta", "/avisos"):
+                carga(ruta)
+                pagina.wait_for_timeout(600)
+                malos = _contraste_flojo(pagina)
+                detalle = "; ".join(
+                    "{:.2f}<{} {}px {!r}".format(m["cr"], m["minimo"], m["px"], m["texto"])
+                    for m in malos[:4])
+                comprueba(not malos,
+                          f"en {ruta} con el tema {tema} todo el texto se lee ({detalle})")
+        # **Y la prueba de que la medida mira**: un texto ilegible puesto a mano tiene que
+        # salir. Sin esto, un `0` puede significar "todo bien" o "no he mirado nada".
+        pagina.emulate_media(color_scheme="light")
+        carga("/")
+        pagina.evaluate(_TRAMPA)
+        vistos = _contraste_flojo(pagina)
+        comprueba(any("no se lee" in m["texto"] for m in vistos),
+                  "la medida del contraste ve un texto ilegible puesto a mano")
 
         # Un `pageerror` es una excepcion de JavaScript: eso si invalida todo lo demas. Un
         # 401 en `/api/yo` es como la aplicacion pregunta "¿hay sesion?" antes de entrar, y

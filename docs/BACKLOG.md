@@ -605,6 +605,29 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
+
+El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el
+contraste y los limites de los campos, con las formulas dentro de las pruebas. Eso es
+accesibilidad de verdad y esta medida."* `tests/test_contraste.py` mide los **tokens** del
+CSS. Lo que faltaba era medir **el texto pintado**: el color real de cada texto sobre **su**
+fondo (que casi nunca es el de su propio elemento, sino el de un padre, o un `bg-white/95`), y
+**en los dos temas** -- un `dark:` que falte no se ve en los tokens y si se ve aqui.
+
+**Resultado, en cinco pantallas y dos temas: 0 textos por debajo del minimo.** Ni uno en `/`,
+`/cesta`, `/avisos`, `/panel` ni `/ajustes`, ni en claro ni en oscuro. Es un resultado
+aburrido y es el que se queria: los tokens estaban bien y el pintado tambien.
+
+**Pero el primer intento de medirlo mentia, y eso hay que contarlo.** La primera version decia
+"0 textos malos" y era mentira: el JavaScript llevaba el regex de `rgba(...)` con una barra
+invertida, se perdio al pasar el texto de Python al navegador, `parse()` devolvia `null`
+siempre y **la medida no estaba mirando nada**. Se descubrio poniendo una trampa: un texto
+gris claro sobre blanco (contraste 1,13) metido a mano en la pagina. Si la medida no lo ve, la
+medida no sirve -- y `verificar_docs.py` ya tenia escrita esa leccion para otro caso (*"un
+control que aprueba cuando no tiene con que comparar es peor que no tenerlo: se confia en
+el"*). Ahora **la trampa esta dentro de la puerta**: cada pasada comprueba que la medida ve un
+texto ilegible puesto a mano, antes de creerse el cero.
+
 ### Lo que se pulsa, medido **ya pintado**: siete objetivos por debajo de 44 px
 
 El §3.3 del encargo lo pide con estas palabras: *"lo que se toca con el carro en marcha
