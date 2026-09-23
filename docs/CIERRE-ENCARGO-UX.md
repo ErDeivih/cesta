@@ -109,3 +109,21 @@ Ninguna de las tres es trabajo de codigo pendiente: son una medicion y dos decis
     uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal
     uv run python -m projects.cesta.emparejar --medir 65 % (420 s)
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL
+
+## La tarea diaria de las 06:00
+
+El encargo tiene una condicion que no se puede romper: **`ejecutar.bat` a las 06:00**
+(`rehacer_maestro` -> `reprocesar` -> `pipeline` -> `emparejar` -> `verificar_docs`). No se
+ha tocado el `.bat`, y de sus pasos **solo cambia uno**: `emparejar`, que ahora pasa los
+nombres a `agrupar_enlaces` (la segunda red de los ejes) e imprime las invariantes.
+
+    emparejar        ejecutado dos veces hoy con el codigo nuevo: 438 s y 451 s, gold escrito
+    ejes             sobre ese gold: 0 contradictorios, 0 de 11+, 0 sin EAN
+    verificar_docs   verde sobre ese gold
+    los otros pasos  no importan nada de lo que se ha tocado: `pipeline` usa `core.alcohol,
+                     config, derive, promos, secciones, sellos + normalize/storage`;
+                     `reprocesar` y `rehacer_maestro`, solo `config`/`schemas`/`storage`
+
+Lo unico nuevo que corre **al arrancar** (no en la tarea) son las migraciones 006 y 007, que
+las aplica la API sola (`almacen.migra()` corre todos los `.sql` por orden y son
+idempotentes).
