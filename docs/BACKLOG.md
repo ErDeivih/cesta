@@ -399,6 +399,39 @@ estudio **no se hace en paralelo en el front**; **el codigo del front lo toca un
 agente a la vez**. Quien mida en el navegador devuelve los defectos con su numero,
 como se hizo con los grupos.
 
+### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
+
+Verificado el 23 de septiembre contra la base viva. La ruta existe
+(`plataforma/api/habituales.py`), pide sesion, `limite` acotado, los tres origenes
+documentados, sin `polars`, y eligio **pesar por recencia con vida media de 30 dias**
+con el porque escrito. Todo eso esta bien.
+
+**El problema es de contrato, y se ve con los datos de la casa, no con un caso
+inventado.** El historial real:
+
+    lineas del dueno            1   (grupo 9919, del 2026-09-21)
+    lineas de toda la casa      1   (y esa esta borrada)
+
+Y `lista()` devuelve **el primer escalon que tenga algo**, sin rellenar:
+
+    if suyos:      return {"origen": "tuyo",     "habituales": propias[:limite]}
+    if de_todos:   return {"origen": "de todos", "habituales": ajenas[:limite]}
+    return              {"origen": "basico",   "habituales": _compra_basica()[:limite]}
+
+Asi que con **una** linea propia la respuesta es un mosaico de **una tarjeta**. El
+encargo pedia que **"con historial vacio la pantalla no se vea vacia"**; con historial
+*casi* vacio, que es el caso real de una casa que empieza, se ve casi vacia. Es el
+problema numero uno del encargo -- la primera vez -- reapareciendo dentro del
+endpoint construido para resolverlo.
+
+**Lo que hay que decidir, y no es solo codigo**: si se rellena **por escalones**
+hasta `limite` (los tuyos, y despues "de todos", y despues "basico"), entonces el
+campo `origen` deja de poder ser uno por respuesta y pasa a ser **uno por tarjeta**
+--que es mas honesto, porque una tarjeta basica y una tuya no valen lo mismo-- o se
+queda uno por respuesta diciendo de donde salio **la primera**. Las dos son
+defendibles; lo que no lo es es dejar una cuadricula de una tarjeta y llamarla
+mosaico.
+
 Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
 que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a
 proposito (sube a 73 % de recall y rompe los conflictos de asignacion de 0 a 861).
