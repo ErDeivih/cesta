@@ -605,6 +605,28 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### El escaner, con un codigo de verdad: la pregunta 2 como se pregunta en la tienda
+
+La pregunta 2 del encargo -- *"esto que tengo en la mano, ¿esta caro?"* -- empieza, de pie en
+el pasillo, **escaneando el codigo de barras**. Hasta hoy la pantalla del escaner no la habia
+abierto un navegador: se probaba el endpoint (`/api/ean`), no la pantalla. Y son dos cosas
+distintas: el endpoint puede contestar perfecto y la pantalla no ensenarlo.
+
+Se anadio a la puerta, con **el camino manual** -- que es el que funciona cuando no hay camara
+o no hay permiso -- y con un codigo **de verdad**, sacado de gold (uno que este en tres
+cadenas o mas, porque un codigo que solo exista en una no puede contestar "¿esta caro?"):
+
+    ok  el escaner deja escribir el codigo a mano (sin camara tambien vale)
+    ok  el codigo 3700123300014 contesta con el producto y su precio
+    ok  y no dice que no lo conoce, porque lo conoce
+    ok  un codigo que no esta dice que no lo sabe, en vez de callarse
+    ok  y la pantalla no se rompe
+
+    1,0 s   escanear un codigo
+
+El ultimo caso es el del «no lo sé», que es la regla de siempre: un codigo que no esta en el
+catalogo tiene que decirlo con palabras, no quedarse en blanco ni inventarse nada.
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

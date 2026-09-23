@@ -1,4 +1,4 @@
-# Operacion: sin VPS, sin proxies, sin pagar
+﻿# Operacion: sin VPS, sin proxies, sin pagar
 
 Restricciones: nada de proxies residenciales, nada de VPS por ahora, GitHub Actions
 como opcion cuando toque, y local mientras tanto.
@@ -39,8 +39,10 @@ recorrido de las **cuatro preguntas** y mide cuanto tarda cada paso:
 mas vieja que el repositorio. La cuenta es **fija** (`prueba-navegador`) y no nueva en cada
 pasada, porque la API limita cuantas se crean por hora (`ALTAS_POR_HORA`).
 
-En su primera pasada encontro tres cosas que leyendo el codigo no se ven -- React Query
-pausando los cambios sin cobertura, la frase de «¿esto esta caro?» ausente en la pantalla a
+Cubre las cuatro preguntas (con sus tiempos), el pasillo pegado, el «Deshacer», los cambios
+sin cobertura, los avisos, **el escaner con un codigo de verdad**, **todo lo que se pulsa
+medido** y **el contraste del texto pintado en los dos temas**. En su primera pasada encontro tres cosas que leyendo el codigo no se ven -- React Query
+pausando los cambios sin cobertura, la frase de Â«Â¿esto esta caro?Â» ausente en la pantalla a
 la que se llega buscando, y el arranque roto con dos listas de casa --, asi que **es lo que
 hay que correr cuando se toque la interfaz**. No cierra la condicion (a) de la barra: eso es
 una persona con un movil (`docs/PRUEBA-15-SEGUNDOS.md`).
@@ -141,10 +143,10 @@ Y cuando quieras VPS, mueves el runner al VPS y no tocas ni una linea del workfl
 
 | Que | Donde | Limite | Por que ahi |
 |---|---|---|---|
-| Codigo | GitHub, repo publico | — | minutos ilimitados |
+| Codigo | GitHub, repo publico | â€” | minutos ilimitados |
 | raw + historico Parquet | dataset PRIVADO en Hugging Face | de sobra | git-lfs, versionado, gratis, y el dia que quieras publicarlo es un interruptor |
 | Estado de la app | Supabase free | **500 MB de BD**, 5+5 GB de egress | ya lo tienes; da auth y Postgres |
-| Web | Vercel hobby | — | ya lo tienes |
+| Web | Vercel hobby | â€” | ya lo tienes |
 
 Cuentas de tamano, que es lo que decide el reparto:
 
@@ -155,7 +157,7 @@ Cuentas de tamano, que es lo que decide el reparto:
 Por tanto: **el historico completo NUNCA entra en Supabase.** En Postgres van solo
 usuarios, listas, favoritos, grupos, la tabla de "precios de hoy" y los agregados ya
 calculados (percentil, min/max, tendencia). Eso son unas decenas de MB y cabe de
-sobra. El historico entero vive en Parquet y se consulta con DuckDB — desde el
+sobra. El historico entero vive en Parquet y se consulta con DuckDB â€” desde el
 backend, o directamente desde el navegador con DuckDB-WASM cuando quieras un grafico
 de dos anos sin tocar el servidor.
 
@@ -189,7 +191,7 @@ cambia el alcance del proyecto.
 
 Dos herramientas, y la diferencia entre ellas importa.
 
-## `reprocesar.py` — rehace **bronze** desde `data/raw`
+## `reprocesar.py` â€” rehace **bronze** desde `data/raw`
 
 ```
 uv run python -m projects.cesta.reprocesar --fuente aldi
@@ -215,7 +217,7 @@ columna con el anterior y avisa:
 El margen es del 10 %: que un dia haya un 5 % menos de productos es normal, que
 una columna se quede a cero no.
 
-## `rehacer_maestro.py` — rehace **las fichas maestras** desde `data/raw`
+## `rehacer_maestro.py` â€” rehace **las fichas maestras** desde `data/raw`
 
 ```
 uv run python -m projects.cesta.rehacer_maestro --fuente dia
@@ -290,7 +292,7 @@ Los pasos 3 y 4 tardan un par de minutos cada uno con el catalogo completo.
 
 ---
 
-## `pipeline --rehacer-historico` — rehace **la serie de precios** desde bronze
+## `pipeline --rehacer-historico` â€” rehace **la serie de precios** desde bronze
 
 ```
 uv run python -m projects.cesta.pipeline --rehacer-historico
@@ -298,7 +300,7 @@ uv run python -m projects.cesta.pipeline --rehacer-historico
 
 El pipeline normal se queda con la instantanea mas reciente de cada cadena y la
 **anade** a `gold/precio_diario.parquet`. Es lo correcto a diario, pero significa
-que el historico no se calcula: se acumula, y sólo existe en ese fichero. Con
+que el historico no se calcula: se acumula, y sÃ³lo existe en ese fichero. Con
 esto se recorre bronze dia a dia y se reescribe entero.
 
 Cuando usarlo:
@@ -311,7 +313,7 @@ Cuando usarlo:
 
 Tarda un par de minutos con trece dias de bronze. **Reescribe el fichero entero**:
 lo que no este en bronze, no sobrevive. Si el resumen avisa de filas huerfanas
-(ver abajo), esas filas se pierden — apartalas antes si hacen falta.
+(ver abajo), esas filas se pierden â€” apartalas antes si hacen falta.
 
 ## Una cadena termina bien y no deja bronze
 

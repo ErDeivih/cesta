@@ -114,7 +114,8 @@ Ninguna de las tres es trabajo de codigo pendiente: son una medicion y dos decis
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL
     uv run python -m plataforma.prueba_navegador     LA INTERFAZ en un navegador: las cuatro
                                                 preguntas, la cola sin cobertura, los
-                                                avisos y TODO lo que se pulsa medido
+                                                avisos, el escaner, TODO lo que se pulsa
+                                                medido y el contraste en los dos temas
 
 Las dos ultimas son las que no se pueden sustituir por una prueba de codigo: la primera
 ejecuta el SQL de verdad (y encontro que la API no arrancaba con dos listas de casa), y la

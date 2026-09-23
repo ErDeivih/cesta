@@ -196,6 +196,28 @@ def _toques_pequenos(pagina) -> list[dict]:
     }""")
 
 
+def _ean_con_comparacion() -> str | None:
+    """Un codigo de barras de verdad que este en tres cadenas o mas.
+
+    Es como empieza la pregunta 2 de verdad: **escaneando lo que tienes en la mano**. Un
+    codigo que solo exista en una cadena no puede contestar «¿esto esta caro?», asi que no
+    sirve para esta prueba. Cual es hoy es cosa del catalogo: se pregunta a gold.
+    """
+    try:
+        from plataforma.api import catalogo
+    except Exception:  # noqa: BLE001
+        return None
+    try:
+        fila = catalogo.conexion().execute("""
+            SELECT ean FROM buscable
+             WHERE ean IS NOT NULL AND ean <> '' AND precio_unidad_cent > 0
+             GROUP BY ean HAVING count(DISTINCT fuente) >= 3
+             ORDER BY count(DISTINCT fuente) DESC, ean LIMIT 1""").fetchone()
+    except Exception:  # noqa: BLE001
+        return None
+    return str(fila[0]) if fila else None
+
+
 def main() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -537,6 +559,42 @@ def main() -> int:
         vistos = _contraste_flojo(pagina)
         comprueba(any("no se lee" in m["texto"] for m in vistos),
                   "la medida del contraste ve un texto ilegible puesto a mano")
+
+        # --------------------------------- el escaner: la pregunta 2 de verdad, en la tienda --
+        # §3 del encargo: la lista y la ficha se usan **de pie y con una mano**, y lo que
+        # se tiene en la mano se escanea. Hasta hoy la pantalla del escaner no la habia
+        # abierto un navegador: se probaba el endpoint, no la pantalla. Aqui se teclea un
+        # codigo de verdad -- el camino manual, que es el que funciona cuando la camara no
+        # esta o no hay permiso -- y se comprueba que contesta.
+        print("\n== el escaner, con un codigo de verdad")
+        ean = _ean_con_comparacion()
+        if ean is None:
+            print("   (no he encontrado un codigo con comparacion: no se puede comprobar)")
+        else:
+            carga("/escaner")
+            comprueba(pagina.locator("#ean").count() == 1,
+                      "el escaner deja escribir el codigo a mano (sin camara tambien vale)")
+            t0 = time.monotonic()
+            pagina.locator("#ean").fill(ean)
+            pagina.get_by_role("button", name="Buscar").first.click()
+            with contextlib.suppress(Exception):
+                pagina.get_by_text("€", exact=False).first.wait_for(timeout=20000)
+            pagina.wait_for_timeout(800)
+            tiempos.append(("escanear un codigo", time.monotonic() - t0))
+            texto_ean = pagina.inner_text("main")
+            comprueba(ean in texto_ean or "€/" in texto_ean,
+                      f"el codigo {ean} contesta con el producto y su precio")
+            comprueba("No conozco" not in texto_ean and "no lo sé" not in texto_ean.lower(),
+                      "y no dice que no lo conoce, porque lo conoce")
+            # Y un codigo que no existe: tiene que decir que no lo sabe, no romperse.
+            pagina.locator("#ean").fill("0000000000000")
+            pagina.get_by_role("button", name="Buscar").first.click()
+            pagina.wait_for_timeout(2500)
+            texto_malo = pagina.inner_text("main")
+            comprueba("no lo" in texto_malo.lower() or "no conozco" in texto_malo.lower()
+                      or "desconocido" in texto_malo.lower(),
+                      "un codigo que no esta dice que no lo sabe, en vez de callarse")
+            comprueba(not errores, f"y la pantalla no se rompe ({errores[:2]})")
 
         # Un `pageerror` es una excepcion de JavaScript: eso si invalida todo lo demas. Un
         # 401 en `/api/yo` es como la aplicacion pregunta "¿hay sesion?" antes de entrar, y
