@@ -50,7 +50,7 @@ TOLERANCIA_CANTIDAD = 0.02
 
 
 def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
-            subidas: bool = False) -> list[dict]:
+            subidas: bool = False, grupos: list[int] | None = None) -> list[dict]:
     """Lo que mas ha cambiado de precio en los ultimos `dias`.
 
     Se mira **el precio por unidad**, no el precio de venta: un pack que pasa de
@@ -61,6 +61,17 @@ def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
     `dias` -- en vez de encadenar variaciones diarias. Encadenar suma el ruido de
     cada dia; comparar los extremos contesta la pregunta que se hace la gente,
     que es "¿esta mas barato que la semana pasada?".
+
+    `grupos` es **"solo lo mio"**: la lista de grupos de esta persona (sus listas y
+    sus favoritos, ver `almacen.mis_grupos`). Se filtra **en SQL y no despues**: con
+    un `LIMIT` de 60 por detras, filtrar en Python lo que ya viene recortado dejaria
+    fuera bajadas mias que no estan entre las sesenta mayores del catalogo -- y la
+    pregunta es "¿ha bajado algo de lo mio?", no "¿de lo mio hay algo entre lo mas
+    bajado del catalogo?".
+
+    Una lista **vacia** de grupos no es "sin filtro": es que esta persona no tiene
+    nada apuntado, y entonces no hay nada que contestar. Se distingue con `None`, que
+    es "no me filtres".
     """
     con = catalogo.conexion()
     signo = ">" if subidas else "<"
@@ -69,7 +80,14 @@ def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
     if cadenas:
         filtro_cadena = " AND d.fuente IN (" + ",".join("?" * len(cadenas)) + ")"
         args.extend(cadenas)
-    args.extend([MINIMO_PCT, TOLERANCIA_CANTIDAD, FACTOR_INCREIBLE, limite])
+    filtro_grupo = ""
+    if grupos is not None:
+        if not grupos:
+            return []
+        filtro_grupo = " AND b.grupo_id IN (" + ",".join("?" * len(grupos)) + ")"
+    args.extend([MINIMO_PCT, TOLERANCIA_CANTIDAD, FACTOR_INCREIBLE])
+    args.extend(grupos or [])
+    args.append(limite)
 
     filas = con.execute(f"""
         WITH ventana AS (
@@ -119,7 +137,7 @@ def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
            AND (a.precio_cent - n.venta_antes) {signo} 0
            -- La red de seguridad de siempre, por si algo se cuela.
            AND greatest(a.precio_hoy, n.precio_antes)
-               / least(a.precio_hoy, n.precio_antes) < ?
+               / least(a.precio_hoy, n.precio_antes) < ?{filtro_grupo}
          ORDER BY abs(100.0 * (a.precio_hoy - n.precio_antes) / n.precio_antes) DESC
          LIMIT ?
     """, args).fetchall()

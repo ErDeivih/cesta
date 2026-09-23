@@ -131,13 +131,22 @@ export function useProducto(fuente: string, idFuente: string) {
   })
 }
 
-export function useBajadas(dias: number, subidas: boolean, cadenas: string[]) {
+/** Lo que ha bajado (o subido) de precio.
+ *
+ *  `soloMios` contesta a *"¿ha bajado algo de lo mio?"*, que es una de las cuatro
+ *  preguntas con las que se abre la aplicacion. El filtro se hace **en el servidor**
+ *  y no aqui: la respuesta viene recortada a 60, y filtrar despues dejaria fuera
+ *  bajadas mias que no estan entre las sesenta mayores del catalogo.
+ */
+export function useBajadas(dias: number, subidas: boolean, cadenas: string[],
+                           soloMios = false) {
   return useQuery({
-    queryKey: ['bajadas', dias, subidas, cadenas],
+    queryKey: ['bajadas', dias, subidas, cadenas, soloMios],
     queryFn: ({ signal }) =>
       pide<RespuestaBajadas>(
         '/bajadas',
-        { dias, subidas: subidas ? 'true' : '', cadenas: cadenas.join(',') },
+        { dias, subidas: subidas ? 'true' : '', cadenas: cadenas.join(','),
+          solo_mios: soloMios ? 'true' : '' },
         signal,
       ),
     staleTime: CINCO_MIN,

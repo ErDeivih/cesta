@@ -485,7 +485,13 @@ function Bajadas() {
   const [params, setParams] = useSearchParams()
   const dias = Number(params.get('dias') ?? '7') || 7
   const subidas = params.get('subidas') === 'true'
-  const consulta = useBajadas(dias, subidas, [])
+  // "Solo lo mio" contesta a la cuarta de las cuatro preguntas con las que se abre
+  // la aplicacion: *"¿ha bajado algo de lo mio?"*. Va en la direccion como los otros
+  // filtros: asi se puede volver a lo mismo con el boton de atras y compartirlo.
+  const soloMios = params.get('mios') === 'true'
+  const consulta = useBajadas(dias, subidas, [], soloMios)
+  const alterna = (clave: string, valor: string) =>
+    setParams({ ...Object.fromEntries(params), [clave]: valor }, { replace: true })
 
   return (
     <Bloque consulta={consulta} titulo="las bajadas">
@@ -493,13 +499,14 @@ function Bajadas() {
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-end gap-3">
             <h2 className="text-base font-semibold">
-              Lo que más ha {subidas ? 'subido' : 'bajado'} en {numero(d.dias, 0)} días
+              {soloMios ? 'Lo tuyo que ha' : 'Lo que más ha'}{' '}
+              {subidas ? 'subido' : 'bajado'} en {numero(d.dias, 0)} días
             </h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
             <Selector
               etiqueta="Ventana"
               value={String(dias)}
-              onChange={(e) => setParams({ ...Object.fromEntries(params), dias: e.target.value }, { replace: true })}
+              onChange={(e) => alterna('dias', e.target.value)}
             >
               <option value="1">1 día</option>
               <option value="7">7 días</option>
@@ -509,17 +516,39 @@ function Bajadas() {
             <button
               type="button"
               aria-pressed={subidas}
-              onClick={() =>
-                setParams({ ...Object.fromEntries(params), subidas: subidas ? 'false' : 'true' }, { replace: true })
-              }
+              onClick={() => alterna('subidas', subidas ? 'false' : 'true')}
               className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium dark:border-neutral-600 dark:bg-neutral-800"
             >
               Ver las subidas
             </button>
+            {/* El boton que separa "todo el catalogo" de "lo mio". Sin el, esta
+                pantalla contesta "¿que ha bajado?" -- que no es la pregunta: la
+                pregunta es "¿ha bajado algo de lo mio?". */}
+            <button
+              type="button"
+              aria-pressed={soloMios}
+              onClick={() => alterna('mios', soloMios ? 'false' : 'true')}
+              className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium dark:border-neutral-600 dark:bg-neutral-800"
+            >
+              {soloMios ? 'Ver todo el catálogo' : 'Solo lo mío'}
+            </button>
           </div>
 
           {d.resultados.length === 0 ? (
-            <Vacio titulo={`Nada ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`} />
+            /* Dos vacios distintos, y decir el mismo texto en los dos seria
+               mentir en uno: "nada ha bajado" no es lo mismo que "de lo tuyo no
+               ha bajado nada", y la segunda tiene arreglo (apuntar cosas en una
+               lista o en favoritos), que es lo que hay que decir. */
+            soloMios ? (
+              <Vacio titulo={`Nada de lo tuyo ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`}>
+                <p>
+                  Este filtro mira lo que tienes en tus listas y en favoritos. Si
+                  apuntas la compra, la próxima vez esto contesta solo.
+                </p>
+              </Vacio>
+            ) : (
+              <Vacio titulo={`Nada ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`} />
+            )
           ) : (
             <TablaScroll etiqueta="Cambios de precio" minAncho="46rem">
               <table className="w-full border-collapse text-sm">

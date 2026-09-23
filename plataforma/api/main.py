@@ -220,12 +220,20 @@ def posicion():
 
 @app.get("/api/bajadas")
 def bajadas(dias: int = 7, cadenas: str | None = None, limite: int = 60,
-            subidas: bool = False,
+            subidas: bool = False, solo_mios: bool = False,
             usuario: dict | None = Depends(usuario_opcional)):
     """Lo que mas ha cambiado de precio esta semana.
 
     `dias` se acota a la ventana que el historico puede sostener: pedir 365 dias
     con trece en disco no da un error, da una respuesta vacia que parece un fallo.
+
+    `solo_mios` contesta a la cuarta de las cuatro preguntas con las que se abre la
+    aplicacion: *"¿ha bajado algo de lo mio?"*. Filtra por los grupos de esta persona
+    -- sus listas y sus favoritos (`almacen.mis_grupos`) -- **en SQL**, no recortando
+    la respuesta: con un limite de 60 por detras, filtrar despues dejaria fuera
+    bajadas mias que no estan entre las sesenta mayores del catalogo. Sin sesion,
+    `solo_mios` no puede saber que es "lo mio" y se contesta lo del catalogo, que es
+    lo honesto: no se inventa un "tuyo" que no existe.
     """
     dias = max(1, min(dias, 90))
     lista = [c.strip() for c in cadenas.split(",")] if cadenas else None
@@ -233,9 +241,19 @@ def bajadas(dias: int = 7, cadenas: str | None = None, limite: int = 60,
         cercanas = almacen.preferencias_de(usuario["id"]).get("cadenas_cerca")
         if cercanas:
             lista = list(cercanas)
+    # `None` es "no me filtres"; una lista vacia es "no tiene nada apuntado", y eso
+    # es una respuesta distinta: no hay bajadas suyas porque no hay "suyo".
+    grupos = None
+    if solo_mios:
+        grupos = almacen.mis_grupos(usuario["id"]) if usuario else None
+        if grupos is not None and not grupos:
+            return {"fecha_datos": catalogo.fecha_de_gold(), "dias": dias,
+                    "sentido": "subidas" if subidas else "bajadas",
+                    "solo_mios": True, "resultados": []}
     return {"fecha_datos": catalogo.fecha_de_gold(), "dias": dias,
             "sentido": "subidas" if subidas else "bajadas",
-            "resultados": movimientos.bajadas(dias, lista, limite, subidas)}
+            "solo_mios": bool(solo_mios),
+            "resultados": movimientos.bajadas(dias, lista, limite, subidas, grupos)}
 
 
 @app.get("/api/ofertas-dudosas")

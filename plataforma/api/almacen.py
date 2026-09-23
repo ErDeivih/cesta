@@ -381,6 +381,35 @@ def quita_favorito(usuario_id: str, grupo_id: int | None, producto_id: str | Non
                         (usuario_id, producto_id))
 
 
+def mis_grupos(usuario_id: str) -> list[int]:
+    """Los grupos de **esta persona**: sus listas y sus favoritos.
+
+    Es "lo mio" para la pantalla de bajadas, que contesta a la pregunta *"¿ha bajado
+    algo de lo mio?"* -- la cuarta de las cuatro con las que se abre la aplicacion, y
+    la unica que hasta hoy no tenia por donde contestarse.
+
+    Van las dos cosas y por eso es una consulta: lo que alguien tiene apuntado en una
+    lista es lo que va a comprar, y lo que ha marcado como favorito es lo que mira.
+    Ni una linea borrada cuenta (ya no esta en la lista) ni un grupo nulo: una linea
+    sin grupo es un producto suelto, y sin grupo no hay nada que comparar.
+
+    Se devuelven **identificadores de grupo**, no productos: el historico de precios
+    se guarda por producto de cada cadena, y quien lo cruza con esto es
+    `movimientos.bajadas`.
+    """
+    with cursor() as cur:
+        cur.execute("""
+            SELECT DISTINCT grupo_id FROM (
+                SELECT li.grupo_id FROM lista_linea li
+                  JOIN lista l ON l.id = li.lista_id
+                  JOIN lista_acceso la ON la.lista_id = l.id
+                 WHERE la.usuario_id = %s AND li.borrado_en IS NULL
+                UNION
+                SELECT f.grupo_id FROM favorito f WHERE f.usuario_id = %s
+            ) x WHERE grupo_id IS NOT NULL""", (usuario_id, usuario_id))
+        return [int(f["grupo_id"]) for f in cur.fetchall()]
+
+
 # ------------------------------------------------------------- habituales ---
 #
 # Lo que esta persona ha puesto mas veces en sus listas. Es lo que sostiene el

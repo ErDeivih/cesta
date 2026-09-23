@@ -433,6 +433,10 @@ se cumplen las seis condiciones y no cuando se acaban las tareas:
     (a) las cuatro preguntas en menos de 15 s con el movil    SIN MEDIR
         No lo puede medir quien escribe el codigo: hace falta un navegador y un movil.
         Es lo que mide Claude, y devuelve defectos con su numero, no parches.
+        Las cuatro YA tienen por donde contestarse: falta y donde (Cesta), esta caro
+        (ficha, con la frase), voy tachando (Cesta, dos secciones), y ha bajado algo de
+        lo mio (**Panel -> Bajadas -> «Solo lo mio»**, que entro el 23 sep). El guion
+        de la medicion esta en `docs/PRUEBA-15-SEGUNDOS.md`, con los pasos exactos.
     (b) la primera vez con datos reales                       CUMPLE
     (c) la lista: dos secciones, pasillo pegajoso,
         sin rojo sin cobertura                                CUMPLE (23 sep)

@@ -260,6 +260,41 @@ avisa de quien fue.
 `tachado` y `en_carrito` son la misma accion vista de dos formas y se mantienen
 coherentes en el mismo UPDATE.
 
+### `GET /api/bajadas`
+
+    dias      7 por defecto (1..90)
+    cadenas   separadas por comas; sin ellas, las de casa si hay sesion
+    limite    60 por defecto
+    subidas   false: lo que bajo. true: lo que subio
+    solo_mios false por defecto -- **lo mio**: mis listas y mis favoritos
+
+    sale  {"fecha_datos", "dias", "sentido": "bajadas" | "subidas", "solo_mios",
+           "resultados": [{"grupo_id", "nombre", "marca", "cadena", "imagen",
+                           "unidad", "precio_cent", "precio_unidad_cent",
+                           "precio_unidad_antes_cent", "precio_antes_cent",
+                           "desde", "variacion_pct", "promo_txt",
+                           "solo_con_tarjeta"}]}
+
+Lo que mas ha cambiado de precio en la ventana, **por precio por unidad** y con las
+cuatro condiciones de `movimientos` (misma unidad, misma cantidad implicita, el precio de
+venta movido y ningun factor imposible): una "bajada" de un envase de 30 unidades leido
+como uno no es una bajada.
+
+**`solo_mios` contesta a la cuarta de las cuatro preguntas con las que se abre la
+aplicacion**: *"¿ha bajado algo de lo mio?"*. Filtra por los grupos de esta persona
+(`almacen.mis_grupos`: lo que tiene en sus listas y en favoritos) **dentro de la
+consulta**, no recortando la respuesta: con un `limite` de 60 por detras, filtrar despues
+dejaria fuera bajadas mias que no estan entre las sesenta mayores del catalogo.
+
+Sin sesion, `solo_mios` no puede saber que es "lo mio" y se contesta lo del catalogo, con
+`solo_mios: false` en la respuesta: no se inventa un "tuyo" que no existe. Y con sesion
+pero **sin nada apuntado**, la respuesta es vacia y no se consulta el catalogo -- no hay
+bajadas tuyas porque no hay "tuyo", que es distinto de "no ha bajado nada".
+
+### `GET /api/ofertas-dudosas`
+
+Ofertas anunciadas que el historico no sostiene. Mismos filtros de cadena.
+
 ### `GET /api/alertas`
 
     sale  {"fecha_datos",
