@@ -817,6 +817,12 @@ la propia API calculaba para la ficha del grupo. Los tres arreglados con la mism
 **solo se compara con lo que se mide igual**, y quien no tiene con quien compararse no saca
 un porcentaje, saca una frase que lo dice (*"sin otra cadena que lo mida igual"*).
 
+Y el arreglo deja las **tres consultas que comparan precios** -- `buscar` (el buscador),
+`tarjetas` (el mosaico y los avisos) y `grupo` (la ficha) -- con la misma regla, que es lo
+que faltaba: las dos primeras ya elegian una unidad por grupo (`catalogo.py`, el bloque
+`unidades`/`manda`) desde que el buscador anunciaba ahorros del 229.833 %; la ficha se
+quedo sin arreglar y era la que se ve al abrir un resultado de la busqueda.
+
 Medido sobre el gold de hoy, antes y despues, con los topes del resumen:
 
     grupos que mezclan unidades                        125 de 39.592

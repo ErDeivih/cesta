@@ -37,7 +37,10 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
     §0  el cambio de marco            Cesta contesta preguntas. Las cuatro tienen pantalla:
                                       que me falta (Cesta), esto esta caro (ficha, con la
                                       frase), voy tachando (Cesta, dos secciones), ha
-                                      bajado algo de lo mio (Avisos).
+                                      bajado algo de lo mio (**Panel -> Bajadas -> «Solo lo
+                                      mio»**, que contesta sin haber pedido nada antes; y
+                                      `/avisos`, que contesta lo que pediste con la
+                                      campana).
     §1  lo que no hay que tocar       AUDITADO: las seis cosas siguen en pie (abajo).
     §2  la primera vez                HECHO: `LoQueSeCompra` ensena cuatro productos que
                                       compra todo el mundo con su diferencia de hoy, y NO
@@ -149,20 +152,41 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 
 ## Como se comprueba todo esto sin creerse nada
 
+**Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
+septiembre de 2026), no cada numero de un dia distinto:
+
     uv run pytest -q                                 820 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
-    uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal
-    uv run python -m projects.cesta.emparejar --medir 65 % (420 s)
+    uv run python -m projects.cesta.ejes             39.592 grupos, 0 con eje contradictorio,
+                                                0 de 11+, 642 que mezclan pack, 85 codigos
+                                                con el pack contradicho, 41 con la cadena
+                                                repetida y 0 de esas sin EAN
+    uv run python -m projects.cesta.emparejar --medir 65 % (1.175 de 1.813 pares de verdad,
+                                                en 339 s), y en esa misma pasada 40.111
+                                                grupos con 0 ejes contradictorios
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL: el
                                                 SQL de verdad, la alerta que salta, el paso de
-                                                la cadena y lo que tarda abrir los avisos
+                                                la cadena (`avisos: 1 saltaron hoy`) y lo que
+                                                tarda abrir los avisos: 47 ms en frio, 9 ms
+                                                en caliente (y el andamio de la prueba, 381 ms,
+                                                que no es la aplicacion)
     uv run python -m plataforma.prueba_navegador     LA INTERFAZ en un navegador: las cuatro
                                                 preguntas, la cola sin cobertura, los
                                                 avisos, el escaner, el enlace de invitacion
-                                                abierto por una segunda persona, TODO lo que
-                                                se pulsa medido y el contraste en los dos
-                                                temas (TODO BIEN)
+                                                abierto por una segunda persona, la curva con
+                                                su frase, el ahorro en euros, TODO lo que se
+                                                pulsa medido, el contraste en los dos temas y
+                                                ningun porcentaje imposible pintado.
+                                                TODO BIEN, con los tiempos de cada paso:
+                                                abrir 3,5 s | a la ficha 0,5 s | a la lista
+                                                0,9 s | tachar sin red 1,2 s | a los avisos
+                                                0,7 s | escanear 1,1 s
+
+Los dos numeros de grupos (39.592 y 40.111) no se contradicen: `ejes` cuenta los grupos del
+gold que escribio la ultima pasada del emparejador, y `--medir` los reconstruye en su propia
+pasada para medir el recall. Son dos pasadas distintas del mismo dia, y las dos dan cero en
+las condiciones de la barra.
 
 Las dos ultimas son las que no se pueden sustituir por una prueba de codigo: la primera
 ejecuta el SQL de verdad (y encontro que la API no arrancaba con dos listas de casa), y la

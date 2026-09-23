@@ -601,6 +601,27 @@ def main() -> int:
         comprueba(any(e in avisos for e in estados),
                   f"y sale en uno de sus estados, con su frase ({estados})")
 
+        # **Y la otra mitad de la pregunta 4: lo que ha bajado de lo mio sin haber pedido
+        # ningun aviso.** Son dos cosas distintas y las dos contestan a la misma pregunta:
+        # `/avisos` (un toque) contesta lo que pediste con la campana, y **solo** eso --
+        # medido en un navegador el 23 sep 2026 con una cuenta sin avisos: la pantalla
+        # dice «No sigues ningun producto», que es correcto y no es una respuesta --;
+        # `Panel -> Bajadas -> Solo lo mio` contesta lo que ha bajado entre los productos
+        # de tu lista, sin haber hecho nada antes. Es la ruta que el guion de los quince
+        # segundos manda usar (`docs/PRUEBA-15-SEGUNDOS.md`), asi que se comprueba que
+        # siga contestando.
+        t0 = time.monotonic()
+        carga("/panel?pestana=bajadas&mios=true")
+        pagina.wait_for_timeout(1200)
+        tiempos.append(("del panel a 'lo mio que ha bajado'", time.monotonic() - t0))
+        mio = pagina.inner_text("main")
+        comprueba("Lo tuyo que ha" in mio,
+                  "el panel contesta 'lo tuyo que ha bajado', con lo tuyo de verdad")
+        comprueba("en 7 días" in mio or "en 30 días" in mio,
+                  "y dice de que ventana habla")
+        comprueba("unidad y la cantidad siguen siendo las mismas" in mio,
+                  "y explica que no cuenta como bajada: misma unidad y misma cantidad")
+
         # ------------------------- y un grupo del que NO nos fiamos no da frase (barra d) --
         # La frase no se inventa: si el grupo esta en una sola cadena, no hay comparacion
         # que hacer y la pantalla no puede decir «es la mas barata de las cinco». Se busca

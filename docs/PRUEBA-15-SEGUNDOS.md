@@ -39,9 +39,17 @@ Cada pregunta se lanza **como se pregunta en la vida**, no con el nombre del bot
        el grupo no es de fiar: en ese caso hay que poder contestar "no lo se" sin que
        parezca un fallo.
     3. Cesta, la misma pantalla: los dos encabezados con su cuenta y el tachado.
-    4. **Panel -> Bajadas -> «Solo lo mio»** (`paginas/Panel.tsx`). Es la que entro mas
-       tarde, el 23 de septiembre de 2026: `/api/bajadas` contestaba «que ha bajado en el
-       catalogo», que no es la pregunta.
+    4. **Panel -> Bajadas -> «Solo lo mío»** (`paginas/Panel.tsx`, 3 toques). Es la que
+       contesta **sin haber hecho nada antes**: *«Lo tuyo que ha bajado en 7 días»*, con
+       la tabla y la regla escrita debajo (*"si lo que cambió fue el formato, eso no es
+       una bajada"*). Se midió en un navegador el 23 de septiembre de 2026 y contesta
+       con una fila de verdad: leche entera Lauki, Dia, 1,15 €/l -> 1,05 €/l, un -8,7 %.
+       **Y hay una segunda ruta, que es la de un toque: «Avisos»** (`paginas/Avisos.tsx`).
+       Contesta *lo que pediste con la campana*, y **solo eso**: con una cuenta que no ha
+       pedido ningún aviso, la pantalla dice *«No sigues ningún producto»* con la
+       explicación de cómo pedirlo. Es correcto, y no es una respuesta a la pregunta.
+       Para la prueba de los quince segundos, la ruta buena es la del panel; si quien la
+       hace ya tiene avisos pedidos, la de Avisos contesta en un toque.
 
 ## Que se apunta
 
