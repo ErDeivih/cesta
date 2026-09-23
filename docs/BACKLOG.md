@@ -406,6 +406,43 @@ estudio **no se hace en paralelo en el front**; **el codigo del front lo toca un
 agente a la vez**. Quien mida en el navegador devuelve los defectos con su numero,
 como se hizo con los grupos.
 
+### Estado del encargo de UX, y el paso siguiente escrito
+
+    punto 1  la primera vez con datos reales      PENDIENTE (el que Claude pone primero)
+    punto 2  la lista                             a medias: hechas las dos secciones
+    punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
+    punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
+    punto 5  el medoide como segunda red          PENDIENTE (calibrar contra el banco)
+    punto 6  los avisos que no avisan             PENDIENTE
+
+**El «Deshacer» de la lista, listo para ejecutar.** Es el resto del punto 2 que mas
+vale (quitar una linea es la accion destructiva, y hoy no se puede volver atras).
+Esta comprobado que **la API ya lo permite**, que era la duda:
+
+    almacen.py:288   en el ON CONFLICT (id) DO UPDATE de anadir linea:
+                     borrado_en = NULL, tocado_en = now()
+
+O sea que volver a anadir con **el mismo id** resucita la linea. Y
+`api/cesta.ts::anadirLinea` ya acepta ese `id` como parametro (commit `481abff`), con
+el porque escrito al lado. **Lo que falta son tres cambios en
+`plataforma/web/app/src/paginas/Cesta.tsx`, y hay que hacerlos los tres juntos**
+(una parada a medias deja el arbol en rojo, porque TypeScript avisa de importaciones
+y variables sin usar):
+
+    1.  anadir `anadirLinea` a la importacion de `../api/cesta` (linea ~34).
+    2.  en el `map` de las secciones, pasar la linea entera cuando el cambio es un
+        borrado:  `cambiar={(lineaId, cambio) => cambia.mutate({lineaId, cambio,
+        linea: cambio.borrado ? l : null})}`. Asi **no hace falta estado nuevo**: la
+        linea quitada viaja en las `variables` de la propia mutacion de TanStack.
+    3.  pintar la barra de deshacer leyendo `cambia.variables?.linea`, con un
+        `<Boton>` que llame a `anadirLinea(listaId, {nombre: l.nombre_visto,
+        grupo_id: l.grupo_id, producto_id: l.producto_id, cantidad: l.cantidad},
+        l.id)` y refresque la lista.
+
+Y lo que **no** hay que hacer, que es la tentacion: reanadir sin el id. Eso no
+deshace: **crea una linea nueva** y deja la compra duplicada, que es peor que no
+poder deshacer.
+
 ### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
 
 Verificado el 23 de septiembre contra la base viva. La ruta existe
