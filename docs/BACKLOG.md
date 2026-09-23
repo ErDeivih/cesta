@@ -334,6 +334,9 @@ Y la de mas valor, que no es ninguna de esas cinco porque es la que las explica
 
     grupos que mezclan un pack con sueltas      642
     de esos, de 11 o mas                          0
+    codigos con el pack contradicho               85   (por eso el pack NO es guarda:
+                                                       `1` es el silencio, no una
+                                                       declaracion. Ver mas abajo.)
 
 Los tres instrumentos, y donde viven: `projects/cesta/ejes.py` (ejes y pack, sobre el
 gold; sus techos estan en `tests/test_atributos.py`), `tests/test_contraste.py` (el
@@ -597,6 +600,48 @@ de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde si
 ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
+
+### El pack: medido, y **no se usa como guarda** (pero si para decirlo)
+
+Es la dimension que `docs/BACKLOG.md` llamaba "la de mas valor" despues de la barra: **642
+grupos mezclan un pack con sueltas** (un pack de 6 botellas de 1,5 l con una botella
+suelta). Nadie se contradice -- todas son agua de 1,5 l -- y el precio por litro se puede
+comparar perfectamente; el problema es otro: *"donde compro agua" acaba recomendando nueve
+litros frente a uno y medio*, sin decirlo.
+
+**Se midio antes de tocar nada, y el resultado cambia la decision.** Lo primero que parece
+razonable es una guarda como la de los ejes: "dos packs declarados distintos no van al
+mismo grupo". Medido sobre el gold del 23 de septiembre de 2026:
+
+    pares ciertos (mismo EAN, dos cadenas)                     1.809
+    con `unidades_pack` contradicho entre cadenas                120   (en 85 codigos)
+    con los DOS declarados y > 1 y distintos                       0
+    grupos con dos packs > 1 y distintos                          12
+    de esos 12, cuantos son de verdad un error                     0
+
+Las dos ultimas lineas son las que deciden. **`1` no es una declaracion: es el silencio**
+-- el valor que sale cuando la cadena no publica el campo y no se puede deducir del nombre
+--, y la prueba son esos 120 pares: la misma Coca-Cola de dos botellas lleva `1` en una
+cadena y `2` en otra, **con el mismo codigo de barras**. Una guarda por el pack separaria
+esos pares, que son el mismo producto.
+
+Y los **12 grupos** que una guarda estrecha (solo `> 1`) separaria tampoco son un error:
+son el mismo producto en formato de 2 y de 4 (lonchas de embutido de Mercadona y de
+Carrefour, «Salami extra» y «Salami extra 2x120 g»), o una errata de lectura
+(`85x4 g` leido como 85 unidades). Separarlos **quitaria comparaciones legitimas**, que es
+el error caro en esta aplicacion -- el mismo argumento que dejo al medoide fuera.
+
+**Lo que se hace en su lugar, que es lo que resuelve el problema de verdad: decirlo.**
+`GET /api/grupo` ya manda `unidades_pack` **solo cuando es mayor que 1** -- el silencio no
+viaja, igual que en los ejes -- y la ficha lo ensena al lado del precio («· pack de 6»,
+`paginas/Grupo.tsx`). Asi "donde comprar esto" se entiende: el precio por litro es del
+pack, y se ve.
+
+Y queda **medido y con trinquete** para que nadie lo rehaga a ciegas:
+`projects.cesta.ejes` imprime los codigos con el pack contradicho (85) y
+`tests/test_atributos.py` le pone techo. **Si ese numero baja mucho**, es que las cadenas
+empiezan a publicar el campo de verdad, y entonces se puede volver a mirar si el pack sirve
+para separar.
 
 ### El buscador encuentra con faltas de ortografia
 

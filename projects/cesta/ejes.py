@@ -33,6 +33,44 @@ def _filas() -> list[tuple]:
         f"WHERE grupo_id IS NOT NULL AND precio_unidad_cent > 0").fetchall()
 
 
+def pack_no_fiable() -> int:
+    """Pares **ciertos** por codigo de barras cuyo `unidades_pack` se contradice.
+
+    Esta es la medida que decide si se puede usar el pack como guarda, y la respuesta es
+    que **no**: de 1.809 pares ciertos (mismo EAN en dos cadenas), **120** tienen una
+    cadena diciendo `1` y la otra diciendo 2, 3, 12 o 24. O sea que **`1` no es una
+    declaracion, es el silencio** -- el valor que sale cuando la cadena no publica el
+    campo y no se puede deducir del nombre --, y con el silencio no se puede cortar.
+
+    Medido sobre el gold del 23 de septiembre de 2026:
+
+        pares ciertos (mismo EAN, dos cadenas)                    1.809
+        con packs declarados distintos                             120   (85 codigos)
+        con los DOS packs declarados y > 1 y distintos               0
+        grupos con dos packs > 1 y distintos                        12
+
+    Los 12 grupos que separaria una guarda estrecha **no son un error**: son el mismo
+    producto en formato de 2 y de 4 (lonchas de embutido de Mercadona y de Carrefour) o
+    una errata de lectura (85x4 g leido como 85 unidades). Separarlos quitaria
+    comparaciones legitimas, que es el error caro en esta aplicacion. Por eso el pack
+    **no se usa como guarda**: se usa para **decirlo** (`docs/BACKLOG.md`), que es lo que
+    resuelve el problema de verdad -- que "donde compro agua" parezca recomendar nueve
+    litros sin decir que son un pack.
+    """
+    filas = _filas()
+    por_ean: dict[str, list] = {}
+    for _grupo_id, _nombre, _fuente, ean, _precio, unidades in filas:
+        if not ean:
+            continue
+        por_ean.setdefault(str(ean), []).append(unidades)
+    malos = 0
+    for unidades in por_ean.values():
+        declarados = {int(u) for u in unidades if u is not None}
+        if len(unidades) > 1 and len(declarados) > 1:
+            malos += 1
+    return malos
+
+
 def resumen(peores: int = 0) -> dict:
     """Los grupos con eje contradictorio, el pack, y el reparto por tamaño.
 
@@ -96,6 +134,7 @@ def resumen(peores: int = 0) -> dict:
         "de_esos_con_eje_contradictorio": len(grandes_malos),
         "grupos_que_mezclan_pack": len(mezclan_pack),
         "de_esos_de_11_o_mas": sum(1 for g in mezclan_pack if tamano[g] >= 11),
+        "codigos_con_pack_contradicho": pack_no_fiable(),
         "grupos_con_cadena_repetida": len(repetida),
         "grupos_con_cadena_repetida_sin_ean": len(repetida_sin_ean),
         "repetida_sin_ean_de_11_o_mas": sum(
@@ -129,6 +168,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  que mezclan un pack con sueltas         "
           f"{r['grupos_que_mezclan_pack']:>7,}")
     print(f"  de esos, de 11 o mas                    {r['de_esos_de_11_o_mas']:>7,}")
+    print(f"  codigos de barras con el pack contradicho "
+          f"{r['codigos_con_pack_contradicho']:>6,}   (por eso el pack NO es guarda)")
     print(f"  con la misma cadena repetida            "
           f"{r['grupos_con_cadena_repetida']:>7,}   (incluye el duplicado con EAN)")
     print(f"  de esa, SIN compartir EAN               "

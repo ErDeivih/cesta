@@ -46,6 +46,16 @@ TECHO_CONTRADICTORIOS = 0
 TECHO_DE_11_O_MAS = 0
 TECHO_QUE_MEZCLAN_PACK = 642
 TECHO_PACK_DE_11_O_MAS = 0
+# Y este es el techo que explica por que **el pack no se usa como guarda**: codigos de
+# barras cuyo `unidades_pack` se contradice entre cadenas. Medido el 23 de septiembre de
+# 2026: 85 codigos (120 pares de los 1.809 ciertos). O sea que `1` **no es una
+# declaracion, es el silencio** -- una cadena dice 1 para un pack de dos botellas Coca-
+# Cola y otra dice 2, con el mismo codigo --, y con el silencio no se puede cortar.
+#
+# Si este numero **baja mucho**, es que las cadenas empiezan a publicar el campo de
+# verdad, y entonces se puede volver a mirar si el pack se puede usar para separar. Si
+# sube, algo se ha roto al leerlo.
+TECHO_PACK_CONTRADICHO = 85
 # La sexta condicion de la barra, medida por el instrumento del proyecto (antes
 # vivia en un script de `data/debug/`, que esta en `.gitignore`, asi que no estaba
 # en el repositorio). Es la invariante del reparto: **cero grupos con una cadena
@@ -122,6 +132,13 @@ def test_el_catalogo_no_ha_empeorado():
     assert r["de_esos_de_11_o_mas"] <= TECHO_PACK_DE_11_O_MAS, (
         f"{r['de_esos_de_11_o_mas']} grupos grandes mezclan pack con sueltas, y el "
         f"techo esta en {TECHO_PACK_DE_11_O_MAS}")
+    assert r["codigos_con_pack_contradicho"] <= TECHO_PACK_CONTRADICHO, (
+        f"hay {r['codigos_con_pack_contradicho']} codigos de barras con el pack "
+        f"contradicho entre cadenas y el techo esta en {TECHO_PACK_CONTRADICHO}. Esto "
+        f"no es un fallo del catalogo: es lo que demuestra que `1` es el silencio y no "
+        f"una declaracion, y por eso el pack no se usa como guarda (mira "
+        f"`projects/cesta/ejes.py::pack_no_fiable`). Si el numero SUBE, se ha roto algo "
+        f"al leer el campo; si BAJA mucho, se puede volver a mirar si sirve para separar")
     assert r["grupos_con_cadena_repetida_sin_ean"] <= TECHO_CADENA_REPETIDA_SIN_EAN, (
         f"hay {r['grupos_con_cadena_repetida_sin_ean']} grupos con una cadena "
         f"repetida **sin compartir EAN**, y la barra pide cero. Los enlaces son "
