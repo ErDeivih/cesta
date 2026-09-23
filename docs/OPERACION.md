@@ -150,10 +150,10 @@ Y cuando quieras VPS, mueves el runner al VPS y no tocas ni una linea del workfl
 
 | Que | Donde | Limite | Por que ahi |
 |---|---|---|---|
-| Codigo | GitHub, repo publico | â€” | minutos ilimitados |
+| Codigo | GitHub, repo publico | — | minutos ilimitados |
 | raw + historico Parquet | dataset PRIVADO en Hugging Face | de sobra | git-lfs, versionado, gratis, y el dia que quieras publicarlo es un interruptor |
 | Estado de la app | Supabase free | **500 MB de BD**, 5+5 GB de egress | ya lo tienes; da auth y Postgres |
-| Web | Vercel hobby | â€” | ya lo tienes |
+| Web | Vercel hobby | — | ya lo tienes |
 
 Cuentas de tamano, que es lo que decide el reparto:
 
@@ -164,7 +164,7 @@ Cuentas de tamano, que es lo que decide el reparto:
 Por tanto: **el historico completo NUNCA entra en Supabase.** En Postgres van solo
 usuarios, listas, favoritos, grupos, la tabla de "precios de hoy" y los agregados ya
 calculados (percentil, min/max, tendencia). Eso son unas decenas de MB y cabe de
-sobra. El historico entero vive en Parquet y se consulta con DuckDB â€” desde el
+sobra. El historico entero vive en Parquet y se consulta con DuckDB — desde el
 backend, o directamente desde el navegador con DuckDB-WASM cuando quieras un grafico
 de dos anos sin tocar el servidor.
 
@@ -198,7 +198,7 @@ cambia el alcance del proyecto.
 
 Dos herramientas, y la diferencia entre ellas importa.
 
-## `reprocesar.py` â€” rehace **bronze** desde `data/raw`
+## `reprocesar.py` — rehace **bronze** desde `data/raw`
 
 ```
 uv run python -m projects.cesta.reprocesar --fuente aldi
@@ -224,7 +224,7 @@ columna con el anterior y avisa:
 El margen es del 10 %: que un dia haya un 5 % menos de productos es normal, que
 una columna se quede a cero no.
 
-## `rehacer_maestro.py` â€” rehace **las fichas maestras** desde `data/raw`
+## `rehacer_maestro.py` — rehace **las fichas maestras** desde `data/raw`
 
 ```
 uv run python -m projects.cesta.rehacer_maestro --fuente dia
@@ -299,7 +299,57 @@ Los pasos 3 y 4 tardan un par de minutos cada uno con el catalogo completo.
 
 ---
 
-## `pipeline --rehacer-historico` â€” rehace **la serie de precios** desde bronze
+## Los avisos en la cadena: `projects/cesta/avisos.py`
+
+```
+uv run python -m projects.cesta.avisos
+```
+
+Es el paso que pide el §6 del encargo (*"evaluarlas en la cadena diaria, despues del
+pipeline"*): mira las alertas pendientes contra gold y deja en `data/avisos.json` lo que el
+resumen tiene que contar. `run.py` lo llama solo, entre `emparejar` y el resumen, asi que
+**no hay que cambiar `ejecutar.bat`** ni la tarea de las 06:00.
+
+Con la base de datos delante:
+
+```
+[avisos] avisos: 1 saltaron hoy | 0 en esta pasada de 0 miradas (19:53)
+```
+
+Y sin ella -- que es lo que pasa hoy en el PC, porque PostgreSQL no publica su puerto:
+
+```
+[avisos] avisos: no lo se -- la base de datos no se alcanza desde aqui (la cadena corre
+         en el PC y PostgreSQL no publica su puerto): ConnectionTimeout
+```
+
+**Devuelve 0 en los dos casos**, y eso es a proposito: detras van el resumen, la comprobacion
+de precios y `verificar_docs`, y una linea de resumen no puede contar un dia bueno como
+fallido. Tarda 6,5 s en decir que no puede (dos intentos, IPv6 e IPv4).
+
+Para verlo funcionando de verdad esta la prueba de punta a punta, que corre contra un
+PostgreSQL de verdad:
+
+```
+docker run --rm -d --name cesta-prueba-db -e POSTGRES_PASSWORD=prueba \
+    -e POSTGRES_USER=cesta -e POSTGRES_DB=cesta -p 127.0.0.1:5434:5432 postgres:16-alpine
+uv run python -m plataforma.prueba_e2e
+docker rm -f cesta-prueba-db
+```
+
+Esa misma prueba cronometra **abrir la pantalla de avisos**, y ahi hay una trampa que conviene
+conocer antes de medir nada por `TestClient`: el andamio de la prueba (httpx en el mismo
+proceso) tarda **409 ms en un endpoint que no hace nada**, asi que los 469 ms que se midieron
+primero eran la prueba midiendose a si misma. Lo que cuesta la aplicacion:
+
+```
+en frio (gold recien cambiado)     47 ms
+en caliente (lo que vive alguien)  13 ms (0-16)
+```
+
+---
+
+## `pipeline --rehacer-historico` — rehace **la serie de precios** desde bronze
 
 ```
 uv run python -m projects.cesta.pipeline --rehacer-historico
@@ -320,7 +370,7 @@ Cuando usarlo:
 
 Tarda un par de minutos con trece dias de bronze. **Reescribe el fichero entero**:
 lo que no este en bronze, no sobrevive. Si el resumen avisa de filas huerfanas
-(ver abajo), esas filas se pierden â€” apartalas antes si hacen falta.
+(ver abajo), esas filas se pierden — apartalas antes si hacen falta.
 
 ## Una cadena termina bien y no deja bronze
 

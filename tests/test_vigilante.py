@@ -93,6 +93,12 @@ def gold(tmp_path, monkeypatch):
 
 def _casi(monkeypatch, alertas_: list[dict]):
     """El vigilante con las alertas de PostgreSQL sustituidas y lo apuntado recogido."""
+    # **Se tira la memoria de los avisos en cada prueba.** El vigilante evalua con
+    # `evalua_con_memoria`, que recuerda el veredicto mientras el sello de gold no
+    # cambie -- y el sello es el `mtime` del fichero. Dos golds de prueba distintos
+    # pueden caer en el mismo instante, y entonces una prueba se comeria el veredicto de
+    # la anterior: verde por el motivo equivocado.
+    alertas.olvida()
     pendientes = list(alertas_)
     apuntadas: list[tuple[str, str]] = []
     vistas: list = []

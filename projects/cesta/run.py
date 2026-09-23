@@ -250,6 +250,19 @@ def _main() -> int:
     except Exception as exc:  # noqa: BLE001
         print(f"[limpiar] no se pudo limpiar el crudo viejo: {exc}")
 
+    # Los avisos: el §6 del encargo dice *"evaluarlas en la cadena diaria, despues del
+    # pipeline"*, porque un aviso que solo salta cuando alguien abre la pantalla no es
+    # un aviso. Va aqui, con gold ya entero y antes del resumen, que es quien lo cuenta.
+    #
+    # La base de datos de casa no publica su puerto, asi que desde el PC este paso no
+    # la alcanza: lo dice, deja el resumen diciendo "no lo se" y el dia sigue. Un paso
+    # que se cayera por eso convertiria un dia bueno en un dia fallido por una linea.
+    if not args.sin_pipeline:
+        try:
+            importlib.import_module("projects.cesta.avisos").main([])
+        except Exception as exc:  # noqa: BLE001
+            print(f"[avisos] no se pudieron mirar: {exc}")
+
     # El resumen se imprime siempre, tambien cuando algo ha fallado: saber que
     # quedo en disco importa mas cuando el dia ha ido mal que cuando ha ido bien.
     if not args.sin_pipeline:

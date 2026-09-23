@@ -653,6 +653,10 @@ def ver_alertas(usuario: dict = Depends(usuario_actual)):
     mirar**: lo apunta el vigilante (`api/vigilante.py`) en cuanto cambia gold, para
     que un aviso no dependa de que alguien abra la pantalla. Esa es la mitad que
     faltaba del punto 6 del encargo. `vista_en` sigue siendo tuyo.
+
+    Y la otra mitad es que **abrir esto sea instantaneo**: la evaluacion va por
+    `alertas.evalua_con_memoria`, que recuerda el veredicto mientras gold no cambie. Se
+    midio que sin eso la pantalla tardaba 469 ms con una sola alerta.
     """
     mias = almacen.alertas_de(usuario["id"])
     # Cada alerta con **la tarjeta de su grupo**: sin el nombre, la pantalla solo puede
@@ -663,7 +667,7 @@ def ver_alertas(usuario: dict = Depends(usuario_actual)):
     mias = [a | tarjetas.get(a["grupo_id"], {}) for a in mias]
     return {"fecha_datos": catalogo.fecha_de_gold(),
             "alertas": mias,
-            "saltan": alertas.evalua([a for a in mias if not a["vista_en"]])}
+            "saltan": alertas.evalua_con_memoria([a for a in mias if not a["vista_en"]])}
 
 
 @app.post("/api/alertas", status_code=201)

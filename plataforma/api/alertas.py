@@ -192,6 +192,10 @@ def evalua(alertas: list[dict]) -> list[dict]:
     Recibe las alertas ya leidas de PostgreSQL (este modulo no toca la base de
     datos: aqui solo se mira gold, que es de solo lectura) y devuelve las que
     saltan, cada una con el producto que la hizo saltar.
+
+    **Esto mira gold entero y por eso es caro: no se llama en cada visita a la
+    pantalla.** Para eso esta `evalua_con_memoria`, que es lo que usan la API y el
+    vigilante.
     """
     if not alertas:
         return []
@@ -214,3 +218,73 @@ def evalua(alertas: list[dict]) -> list[dict]:
             saltan.append({**mejor, "alerta_id": str(a["id"]), "tipo": a["tipo"],
                            "umbral_cent": a.get("umbral_cent"), "por_que": frase})
     return saltan
+
+
+# --------------------------------------------------------------- la memoria ---
+#
+# **Por que existe esto, y esta medido.** El §6 del encargo pide *"dejar el resultado
+# guardado, para que abrir la aplicacion sea instantaneo"*, y no lo era: `GET
+# /api/alertas` tardaba **469 ms** (453-484 ms, cinco veces, en el PC de casa, con
+# UNA sola alerta) porque `evalua` recorre el historico de 90 dias entero para juzgar
+# una pregunta. En un movil por Tailscale, eso es mas todavia.
+#
+# La clave lleva **el sello de gold**: los precios se escriben una vez al dia, asi que
+# el veredicto de una alerta no puede cambiar mientras gold no cambie. Y como el
+# vigilante pasa por aqui a las 06:00 **en este mismo proceso**, la primera persona que
+# abra la pantalla ya encuentra la respuesta hecha: la pasa el vigilante, no ella.
+#
+# Lo que se guarda **no lleva el id de nadie**: la clave es la pregunta ("este grupo,
+# este tipo, este umbral") y el valor es la respuesta. Dos personas con la misma alerta
+# comparten respuesta, y por eso una respuesta guardada no puede llevar dentro el
+# `alerta_id` de la primera que pregunto -- el id se pone al devolver, alerta a alerta.
+_memoria: dict = {"sello": None, "veredicto": {}}
+
+# Lo que devuelve `evalua` y **no** es la respuesta a la pregunta, sino de quien
+# pregunto. Se quita antes de guardar.
+_DE_QUIEN_PREGUNTA = ("alerta_id", "tipo", "umbral_cent", "por_que")
+
+
+def olvida() -> None:
+    """Tira lo recordado. Para las pruebas y para el dia que gold cambie de golpe."""
+    _memoria["sello"] = None
+    _memoria["veredicto"] = {}
+
+
+def _clave(alerta: dict) -> tuple:
+    """La pregunta, sin quien la hace."""
+    return (int(alerta["grupo_id"]), str(alerta["tipo"]), alerta.get("umbral_cent"))
+
+
+def evalua_con_memoria(alertas: list[dict]) -> list[dict]:
+    """`evalua`, mirando gold una vez por dia en vez de una vez por visita.
+
+    Devuelve exactamente lo mismo que `evalua`, con el `alerta_id` de cada una.
+    """
+    if not alertas:
+        return []
+    sello = catalogo.sello_de_gold()
+    if _memoria["sello"] != sello:
+        # Gold nuevo: todo lo recordado es del dia anterior y ya no vale.
+        olvida()
+        _memoria["sello"] = sello
+    veredicto: dict = _memoria["veredicto"]
+
+    faltan = [a for a in alertas if _clave(a) not in veredicto]
+    if faltan:
+        # Las que faltan, **de golpe**: `evalua` mira gold una vez por llamada, asi que
+        # preguntar de una en una seria mirar gold una vez por alerta.
+        saltan = {s["alerta_id"]: s for s in evalua(faltan)}
+        for a in faltan:
+            salto = saltan.get(str(a["id"]))
+            veredicto[_clave(a)] = None if salto is None else {
+                "por_que": salto["por_que"],
+                "mejor": {k: v for k, v in salto.items() if k not in _DE_QUIEN_PREGUNTA}}
+
+    fuera = []
+    for a in alertas:
+        guardado = veredicto.get(_clave(a))
+        if guardado:
+            fuera.append({**guardado["mejor"], "alerta_id": str(a["id"]), "tipo": a["tipo"],
+                          "umbral_cent": a.get("umbral_cent"),
+                          "por_que": guardado["por_que"]})
+    return fuera

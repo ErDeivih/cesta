@@ -57,7 +57,13 @@ def una_pasada() -> dict:
     pendientes = almacen.alertas_por_saltar()
     if not pendientes:
         return {"miradas": 0, "saltan": 0, "apuntadas": 0}
-    saltan = alertas.evalua(pendientes)
+    # **`evalua_con_memoria` y no `evalua`**, y no es un detalle de rendimiento: esta
+    # pasada es la que deja la respuesta hecha para el dia. Como corre en el mismo
+    # proceso que la API, cuando alguien abre la pantalla de avisos la respuesta ya
+    # esta calculada y abrirla es instantaneo -- que es lo que pide el §6 del encargo.
+    # Que el vigilante pase primero es lo que hace que la primera visita no pague los
+    # 469 ms que se midieron.
+    saltan = alertas.evalua_con_memoria(pendientes)
     apuntadas = 0
     for s in saltan:
         # La frase se guarda con el aviso: se mide contra el gold de hoy, y manana gold

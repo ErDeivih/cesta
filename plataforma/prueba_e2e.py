@@ -32,13 +32,18 @@ Que comprueba
     /api/habituales          la cuadricula, con `origen` en cada tarjeta y rellenando
     /api/alertas             la alerta con la tarjeta del grupo (nombre, precio)
     el vigilante             una pasada de verdad: mira, salta y apunta `salto_en`
+    avisos.py (la cadena)    la misma pasada desde el paso de la cadena, y lo que
+                             contaria el resumen (`3 saltaron hoy`)
     /api/buscar?q=lece…      la correccion de faltas
     /api/bajadas?solo_mios   el filtro "lo mio", y que el campo diga la verdad
 """
 from __future__ import annotations
 
 import os
+import pathlib
 import sys
+import tempfile
+import time
 import uuid
 
 PUERTO = 5434
@@ -51,7 +56,7 @@ os.environ.setdefault(
 def main() -> int:
     from fastapi.testclient import TestClient
 
-    from plataforma.api import almacen, catalogo, main, vigilante
+    from plataforma.api import alertas, almacen, catalogo, main, vigilante
 
     print("== arrancando el almacen (aplica plataforma/sql/*.sql)")
     almacen.arranca()
@@ -157,6 +162,80 @@ def main() -> int:
     if not any(a.get("salto_texto") for a in cuerpo.get("alertas", [])):
         fallos += 1
         print("   FALLO: la frase no se guardo")
+
+    # **Y el paso de la cadena diaria** (§6): la misma pasada, pero pedida desde donde
+    # la pide `run.py` a las 06:00, y contada como la cuenta el resumen. Lo que se
+    # comprueba aqui no es el SQL -- eso ya esta arriba --, sino que el numero que
+    # llega al resumen es el de verdad: cuando la base SI se alcanza.
+    print("\n== el paso de la cadena: projects/cesta/avisos.py")
+    from projects.cesta import avisos
+    with tempfile.TemporaryDirectory() as sitio:
+        de_verdad, avisos.FICHERO = avisos.FICHERO, pathlib.Path(sitio) / "avisos.json"
+        try:
+            nota = avisos.una_pasada()
+        finally:
+            avisos.FICHERO = de_verdad
+        print(f"   {nota}")
+        print(f"   resumen: {avisos.frase(nota)}")
+        if "error" in nota:
+            fallos += 1
+            print(f"   FALLO: el paso no ha podido mirar con la base delante: {nota}")
+        if nota.get("saltaron_hoy", 0) < 1:
+            fallos += 1
+            print("   FALLO: la alerta salto y el resumen diria que no ha saltado nada")
+        if nota.get("por_mirar", 1) != 0:
+            fallos += 1
+            print(f"   FALLO: la cola del vigilante no se ha vaciado: {nota.get('por_mirar')}")
+        if "saltaron hoy" not in avisos.frase(nota):
+            fallos += 1
+            print("   FALLO: la linea del resumen no cuenta lo que ha visto el paso")
+        if not almacen.arrancado():
+            fallos += 1
+            print("   FALLO: el paso le ha cerrado el almacen a quien ya lo tenia abierto")
+
+    # §6: *"dejar el resultado guardado, para que abrir la aplicacion sea instantaneo"*.
+    # Eso es una afirmacion sobre el tiempo, asi que se mide -- y **midiendolo se
+    # descubrio que el instrumento mentia**, que es la segunda vez en este proyecto:
+    #
+    #   - por `TestClient` (httpx en el mismo proceso), `GET /api/salud`, que no hace
+    #     nada, tarda **409 ms**. Los 469 ms que se midieron primero eran el andamio de
+    #     la prueba, no la aplicacion. Con ese numero se habria "arreglado" algo que no
+    #     estaba roto, y el arreglo habria sido creerse un dato falso.
+    #   - La aplicacion se mide **llamando a la ruta**, que es lo que de verdad cuesta.
+    #     Y se mide el andamio tambien, para que quede dicho y nadie lo confunda otra
+    #     vez. Es la misma leccion que la trampa del contraste: la medida tiene que
+    #     demostrar que mira.
+    print("\n== abrir los avisos, cronometrado")
+    t0 = time.monotonic()
+    for _ in range(5):
+        cliente.get("/api/salud")
+    andamio = (time.monotonic() - t0) / 5 * 1000
+    print(f"   el andamio de la prueba (GET /api/salud por TestClient): {andamio:.0f} ms")
+    print("   ^ eso NO es la aplicacion: es httpx en el mismo proceso.")
+
+    alertas.olvida()          # en frio: lo primero que pasa despues de cambiar gold
+    t0 = time.monotonic()
+    cuerpo = main.ver_alertas(usuario=yo)
+    frio = (time.monotonic() - t0) * 1000
+    if not cuerpo.get("alertas"):
+        fallos += 1
+        print("   FALLO: la ruta de los avisos no devuelve las alertas de la persona")
+    momentos = []
+    for _ in range(5):
+        t0 = time.monotonic()
+        main.ver_alertas(usuario=yo)
+        momentos.append((time.monotonic() - t0) * 1000)
+    media = sum(momentos) / len(momentos)
+    print(f"   la aplicacion, en frio (gold recien cambiado, nadie ha preguntado): "
+          f"{frio:.0f} ms")
+    print(f"   la aplicacion, en caliente: {media:.0f} ms de media "
+          f"({min(momentos):.0f}-{max(momentos):.0f} ms de 5, en este PC)")
+    print("   (el frio lo paga el vigilante a las 06:00 en este mismo proceso, y su "
+          "respuesta es la que encuentra quien abre la pantalla)")
+    if media > 150:
+        fallos += 1
+        print("   FALLO: abrir los avisos tarda mas que un parpadeo: el resultado "
+              "guardado no esta sirviendo de nada")
 
     cuerpo = pide("/api/buscar", q="lece entera", limite=2)
     print(f"   corregido={cuerpo.get('corregido')!r}  "

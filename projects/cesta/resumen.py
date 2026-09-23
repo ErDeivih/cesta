@@ -12,6 +12,7 @@ from __future__ import annotations
 import polars as pl
 
 from core import cobertura, comparacion, config
+from projects.cesta import avisos
 
 # Por encima de esto no hay ninguna diferencia de precio real entre supermercados
 # espanoles: lo que hay es un formato mal leido. Se mide, se avisa y no se mezcla.
@@ -209,6 +210,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"         el peor: {peor['ejemplo'][:44]} "
                   f"({peor['min_cent'] / 100:.2f} -> {peor['max_cent'] / 100:.2f} "
                   f"EUR/{peor['unidad'] or 'ud'})")
+
+    # Y los avisos, que es lo ultimo que pedia el §6 del encargo: *"que el resumen
+    # diario diga cuantas saltaron"*. Lo mide `projects/cesta/avisos.py`, que corre
+    # justo antes que esto, y lo deja escrito en `data/avisos.json`; aqui solo se lee
+    # y se traduce. **La base no se consulta desde aqui**: desde el PC no se llega a
+    # PostgreSQL (no publica su puerto), y si el paso no ha podido mirarlos, esta
+    # linea tiene que decir "no lo se" en vez de un cero, que se leeria como "no ha
+    # saltado nada" cuando lo que pasa es que no se ha mirado.
+    print("  " + avisos.frase(avisos.lee()))
     return 0
 
 

@@ -58,9 +58,14 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
     §5  el mosaico                    HECHO: `Mosaico.tsx` (tres columnas, un toque) y
                                       `/api/habituales` rellenando por escalones con `origen`
                                       en cada tarjeta.
-    §6  los avisos                    HECHO de punta a punta: el vigilante mira cuando cambia
-                                      gold (no cuando entras), campana en la ficha, pantalla
-                                      `/avisos` y punto en el icono.
+    §6  los avisos                    HECHO de punta a punta y en los tres sitios que pide:
+                                      el **vigilante** mira cuando cambia gold (no cuando
+                                      entras), la **cadena diaria** pide la pasada en su paso
+                                      (`projects/cesta/avisos.py`, entre `emparejar` y el
+                                      resumen) y el **resumen diario dice cuantas saltaron**.
+                                      En la pantalla: campana en la ficha, `/avisos` con la
+                                      frase entera y punto en el icono. Abrir la pantalla
+                                      cuesta 13 ms (medido; ver `docs/OPERACION.md`).
     §7  la honestidad                 APLICADA y con prueba donde toca: fecha del dato en la
                                       cabecera, «no lo se» cuando no hay dato, la frase no se
                                       inventa, y el pack se **dice** en vez de cortarlo.
@@ -101,29 +106,50 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
                                               tiene los bloqueantes que tenia el 23 sep;
                                               lo que falta de paridad esta listado en
                                               `docs/BACKLOG.md` (§0).
+    que la cadena alcance PostgreSQL          **del dueno**, y es pequena. El §6 pide que el
+                                              resumen diario diga cuantas alertas saltaron, y
+                                              para eso la cadena tiene que poder preguntar: hoy
+                                              la base **no publica su puerto** (`docker-
+                                              compose.yml`: "solo lo alcanza la API"), asi que
+                                              el paso dice "no lo se" y el dia sigue. Dos
+                                              formas de arreglarlo, las dos de una linea:
+                                              publicar `127.0.0.1:5432:5432` (solo el PC, no
+                                              la red) o correr la cadena dentro de la red de
+                                              Docker. Hasta entonces el numero no esta, y se
+                                              dice que no esta.
 
-Ninguna de las tres es trabajo de codigo pendiente: son una medicion y dos decisiones.
+Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres decisiones.
 
 ## Como se comprueba todo esto sin creerse nada
 
-    uv run pytest -q                                 802 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 810 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal
     uv run python -m projects.cesta.emparejar --medir 65 % (420 s)
-    uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL
+    uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL: el
+                                                SQL de verdad, la alerta que salta, el paso de
+                                                la cadena y lo que tarda abrir los avisos
     uv run python -m plataforma.prueba_navegador     LA INTERFAZ en un navegador: las cuatro
                                                 preguntas, la cola sin cobertura, los
                                                 avisos, el escaner, el enlace de invitacion
                                                 abierto por una segunda persona, TODO lo que
                                                 se pulsa medido y el contraste en los dos
-                                                temas (tres pasadas seguidas, TODO BIEN)
+                                                temas (TODO BIEN)
 
 Las dos ultimas son las que no se pueden sustituir por una prueba de codigo: la primera
 ejecuta el SQL de verdad (y encontro que la API no arrancaba con dos listas de casa), y la
 segunda abre la aplicacion en un movil de verdad y recorre las cuatro preguntas (y encontro
 que React Query pausaba los cambios sin cobertura, y que la frase de «¿esto esta caro?» no
 estaba en la pantalla a la que se llega buscando). Las recetas, en `docs/OPERACION.md`.
+
+**Y las dos han mentido alguna vez, que es lo que hay que saber de ellas.** La de punta a
+punta midio primero "abrir los avisos: 469 ms" por `TestClient`, y esos 469 ms eran httpx en
+el mismo proceso (**409 ms los gasta un endpoint que no hace nada**): ahora imprime el
+andamio y la aplicacion por separado, 47 ms en frio y 13 ms en caliente. Y la regla de los
+documentos aprobo durante una pasada un `docs/OPERACION.md` que seguia con la raya larga
+partida en tres caracteres, porque solo miraba una de las dos familias del doble codificado.
+Las dos estan corregidas y las dos tienen su prueba de que miran.
 
 Las **dos que fallan** son `tests/test_auditar_secciones.py`, y no son de este encargo: salen
 de `core/datos/secciones.yml`, que otro agente tiene modificado sin terminar. Estan dichas
@@ -134,11 +160,17 @@ aqui para que nadie las confunda con un fallo de la interfaz.
 El encargo tiene una condicion que no se puede romper: **`ejecutar.bat` a las 06:00**
 (`rehacer_maestro` -> `reprocesar` -> `pipeline` -> `emparejar` -> `verificar_docs`). No se
 ha tocado el `.bat`, y de sus pasos **solo cambia uno**: `emparejar`, que ahora pasa los
-nombres a `agrupar_enlaces` (la segunda red de los ejes) e imprime las invariantes.
+nombres a `agrupar_enlaces` (la segunda red de los ejes) e imprime las invariantes. El paso
+de los avisos (`projects/cesta/avisos.py`, §6) **va dentro de `run.py`**, que es a quien el
+`.bat` ya llama, asi que la forma de la tarea no cambia y tampoco hay que tocar el
+Programador de tareas.
 
     emparejar        ejecutado dos veces hoy con el codigo nuevo: 438 s y 451 s, gold escrito
     ejes             sobre ese gold: 0 contradictorios, 0 de 11+, 0 sin EAN
     verificar_docs   verde sobre ese gold
+    avisos           dentro de `run.py`: 6,5 s diciendo "no lo se" (la base no se alcanza) y
+                     **codigo de salida 0**, medido dos veces; con base delante, `avisos.py`
+                     hace la pasada y el resumen dice `1 saltaron hoy`
     los otros pasos  no importan nada de lo que se ha tocado: `pipeline` usa `core.alcohol,
                      config, derive, promos, secciones, sellos + normalize/storage`;
                      `reprocesar` y `rehacer_maestro`, solo `config`/`schemas`/`storage`

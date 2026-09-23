@@ -686,19 +686,98 @@ repositorio.
 Nada de eso rompe la aplicacion -- por eso vivio ahi sin que nadie lo viera --, pero rompe
 **lo que se lee**, que en este proyecto es la mitad del trabajo: quien abre el documento ve
 basura donde deberia haber una coma y deja de fiarse de lo que pone dentro. Arreglado en
-**21 renglones** entre los dos ficheros (y la marca de `plataforma/web/estilo.css`, la unica
+**28 renglones** entre los dos ficheros (y la marca de `plataforma/web/estilo.css`, la unica
 del repositorio), sin tocar nada mas: ni un salto de linea, ni una palabra.
 
 Y con una **regla nueva** para que no vuelva, `tests/test_documentos.py`: ningun fichero de
-texto del repositorio empieza por U+FEFF, y ninguno lleva la pareja `Â`/`Ã` pegada a un
-caracter de la banda 0x80-0xBF. Con su prueba de que el detector mira (una linea doble
-codificada metida a mano tiene que salir), que es la leccion que ya dejo la trampa del
-contraste. Las pruebas de la regla estan escritas con escapes a proposito: el fichero tiene
-que pasar su propia regla.
+texto del repositorio empieza por U+FEFF, y ninguno lleva la firma del doble codificado. Con su
+prueba de que el detector mira (una linea doble codificada metida a mano tiene que salir), que
+es la leccion que ya dejo la trampa del contraste. Las pruebas de la regla estan escritas con
+escapes a proposito: el fichero tiene que pasar su propia regla.
+
+**Y la regla tenia un punto ciego, que se descubrio una pasada despues.** La primera version
+solo miraba la familia de dos bytes (`Â`/`Ã` pegados a la banda 0x80-0xBF), asi que **aprobo
+un fichero que seguia mintiendo**: `docs/OPERACION.md` tenia siete renglones con la raya larga
+y las comillas tipograficas partidas en tres caracteres, y la prueba decia que todo estaba
+bien. No salio del control: salio de leer el fichero al escribir la receta de otra cosa.
+
+La causa de esos siete es que el codec no era Latin-1 sino **Windows-1252**, que es lo que usa
+PowerShell en un Windows en castellano: cp1252 tiene caracteres imprimibles (la raya, las
+comillas, el euro) donde Latin-1 tiene controles, asi que los tres bytes de una raya larga
+acaban en tres caracteres que se salen de Latin-1 y el arreglo renglon a renglon los dejaba
+pasar. Arreglados con el codec correcto, y el detector mira ya las dos familias. Un control
+que aprueba lo que no mira es peor que no tenerlo, porque se confia en el -- y este lo hizo
+durante una pasada entera.
 
 Lo que **no** se ha normalizado, dicho a proposito: los saltos de linea. `core/matching.py`,
 `docs/CIFRAS.md` y `docs/DIAGNOSTICO-MATCHING.md` estan en CRLF desde antes de esto, y
 cambiarlos seria un diff enorme que no arregla nada de lo que se ve en la pantalla.
+
+### Los avisos, mirados en la cadena diaria: el §6 entero (y el instrumento que mintio otra vez)
+
+El §6 del encargo pedia cuatro cosas. Dos ya estaban desde la pasada del vigilante -- *"dejar
+el resultado guardado"* (`salto_en` y su frase, que es lo que pinta la pantalla) y *"un punto
+en el icono, y al abrirlo la frase entera"* --, y le faltaban las otras dos:
+
+    - *"Evaluarlas en la cadena diaria, despues del pipeline."*
+    - *"Que el resumen diario diga cuantas saltaron."*
+
+Ahora estan. El paso es **`projects/cesta/avisos.py`**, va en `run.py` justo despues de
+`emparejar` y antes del resumen (que es quien lo cuenta), y **no toca `ejecutar.bat`**: el
+`.bat` sigue llamando a `run.py` como siempre, asi que la tarea de las 06:00 no cambia de
+forma. Lo que deja escrito es `data/avisos.json`, y la linea del resumen sale de ahi:
+
+    avisos: 1 saltaron hoy | 0 en esta pasada de 0 miradas (19:53)
+
+Los numeros los cuenta `almacen.avisos_del_dia()`, **en la zona de casa** y no en la del
+servidor: `salto_en` es un `timestamptz` y el contenedor de PostgreSQL corre en UTC, asi que
+a las 06:00 los dos dias coinciden pero a las 00:30 no, y un "hoy" que unas veces es hoy y
+otras ayer no se puede leer.
+
+**Lo mas importante del paso es lo que hace cuando no puede, y no es un caso raro.** La base
+de datos de casa **no publica su puerto** -- `docker-compose.yml`, *"solo lo alcanza la API,
+por la red interna"* --, asi que desde el PC la cadena no la alcanza. Medido hoy en este
+equilibrio: `127.0.0.1:5432` no contesta, `127.0.0.1:8080` si (Caddy). Y el paso, en ese caso:
+
+    [avisos] avisos: no lo se -- la base de datos no se alcanza desde aqui (la cadena corre
+             en el PC y PostgreSQL no publica su puerto): ConnectionTimeout
+    6,5 s (dos pasadas: 6,7 y 6,5) y **codigo de salida 0**
+
+Un cero en esa linea se leeria como "no ha saltado nada" y lo que pasa es que no se ha
+mirado. Y **no puede fallar el dia**: detras de este paso van el resumen, la comprobacion de
+precios y `verificar_docs`, asi que un paso que se cayera por no llegar a la base
+convertiria un dia bueno en un dia fallido por una linea.
+
+Con la base delante si hace su trabajo, y eso se comprueba en `plataforma/prueba_e2e.py`
+(receta en `docs/OPERACION.md`): alli hay PostgreSQL de verdad, la alerta salta, y el resumen
+dice `1 saltaron hoy | 0 en esta pasada de 0 miradas` con la cola del vigilante vacia.
+
+**Y midiendo esto se descubrio que el instrumento mentia, por segunda vez en el proyecto.**
+La primera medicion de "abrir los avisos" dio **469 ms** y puso en marcha un arreglo. Al
+comprobarlo pieza a pieza salio esto:
+
+    GET /api/salud por TestClient (no hace nada)         409-419 ms   <- el andamio
+    la ruta, en frio (gold recien cambiado)                   47 ms   <- la aplicacion
+    la ruta, en caliente (lo que vive una persona)    13 ms (0-16)
+    catalogo.conexion(), la primera vez del proceso          406 ms   <- una vez por arranque
+    alertas.evalua (frio) -> evalua_con_memoria (caliente)  47 -> 0 ms
+
+Los 469 ms eran **httpx en el mismo proceso**, no la aplicacion: la prueba se estaba midiendo
+a si misma. La prueba de punta a punta se quedo con las dos medidas -- la del andamio, escrita
+para que nadie la confunda, y la de la ruta --, y el andamio esta ahora en el registro de la
+salida para que la siguiente persona que mida no vuelva a creerse ese numero. Es exactamente
+la leccion de la trampa del contraste: **una medida tiene que demostrar que mira**.
+
+Lo que si quedo del hallazgo es `alertas.evalua_con_memoria`: el veredicto de una alerta se
+recuerda mientras gold no cambie (`47 -> 0 ms`), y como el vigilante pasa por ahi a las 06:00
+**en el mismo proceso**, la primera persona que abre la pantalla encuentra la respuesta hecha.
+Lo que se guarda **no lleva el id de nadie** (la clave es la pregunta, no quien la hace), y
+por eso dos personas con la misma alerta comparten respuesta sin compartir nada suyo.
+
+Lo unico que sigue pagando la primera visita despues de arrancar la API son los **406 ms** de
+la conexion a gold. No se ha tocado: es una vez por arranque, no cambia ninguna de las cuatro
+preguntas, y calentarlo "por si acaso" seria trabajo en cada arranque para casi nadie. Queda
+dicho y medido, que es lo que hace falta para decidirlo con el numero delante.
 
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 

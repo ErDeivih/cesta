@@ -8,6 +8,7 @@ problema que hay que resolver.
 from __future__ import annotations
 
 import hashlib
+import os
 import secrets
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -36,6 +37,14 @@ MAX_INVITACIONES_VIVAS = 3
 # tamano del volumen de PostgreSQL. Diez caben de sobra aunque se apunte un
 # grupo entero de amigos a la vez.
 ALTAS_POR_HORA = 10
+
+# La zona de casa, para contar dias. Es la misma que `core/config.py`
+# (`SCRAP_TZ`, por defecto Europe/Madrid), y esta escrita aqui por una razon de
+# capas: este modulo es el unico que sabe de PostgreSQL y no importa nada del
+# proyecto de recoleccion -- `core.config` crea carpetas al importarse y el
+# contenedor de la API monta gold en solo lectura. Que los dos numeros no se
+# separen lo vigila `tests/test_avisos_cadena.py`.
+ZONA_HORARIA = os.environ.get("SCRAP_TZ", "Europe/Madrid")
 _pool: ConnectionPool | None = None
 
 
@@ -47,12 +56,33 @@ class DemasiadasAltas(RuntimeError):
     """Se ha llegado al tope de cuentas nuevas por hora."""
 
 
-def arranca() -> None:
+def arranca(espera: float = 30) -> None:
+    """Arranca el almacen: el pool de conexiones y, si toca, las migraciones.
+
+    `espera` es cuanto se aguanta a que la base conteste, y existe por la cadena
+    diaria: `projects/cesta/avisos.py` pasa por aqui desde el PC, donde la base de
+    casa **no publica su puerto** (`docker-compose.yml`: "solo lo alcanza la API"),
+    y a las 06:00 no se puede estar treinta segundos esperando a un puerto que no
+    va a contestar. La API sigue con los treinta de siempre.
+
+    **Se prueba la base con una conexion suelta antes de crear el pool**, y esto se
+    aprendio midiendo: el pool abre un hilo que reintenta conectar, asi que cuando la
+    base no esta, el fallo tarda lo que tarde el `wait` **mas** otros cinco segundos
+    de ese hilo muriendo, y el proceso termina con un aviso de hilo que no para. Sin
+    pool no hay hilo: si la base no esta, esto falla en el acto y no deja nada detras.
+    """
     global _pool
     if _pool is None:
+        # El tope de la conexion suelta y el de las del pool son el mismo, y ninguno
+        # baja de tres segundos: una conexion no puede quedarse colgada para siempre
+        # contra un puerto que no contesta (un cortafuegos que descarta los paquetes,
+        # en vez de rechazarlos).
+        tope = max(int(espera), 3)
+        psycopg.connect(AJUSTES.postgres, connect_timeout=tope).close()
         _pool = ConnectionPool(AJUSTES.postgres, min_size=1, max_size=8,
-                               kwargs={"row_factory": dict_row})
-        _pool.wait(timeout=30)
+                               kwargs={"row_factory": dict_row,
+                                       "connect_timeout": tope})
+        _pool.wait(timeout=espera)
         migra()
 
 
@@ -61,6 +91,17 @@ def para() -> None:
     if _pool is not None:
         _pool.close()
         _pool = None
+
+
+def arrancado() -> bool:
+    """Si el pool esta en marcha.
+
+    Existe por el paso de la cadena (`projects/cesta/avisos.py`): si el almacen ya
+    estaba arrancado -- porque quien llama es la API, o una prueba de punta a punta
+    que ya lo arranco --, ese paso **no puede cerrarlo** al terminar. Seria apagarle
+    el almacen a quien se lo presto.
+    """
+    return _pool is not None
 
 
 @contextmanager
@@ -554,6 +595,37 @@ def alertas_por_saltar() -> list[dict]:
         cur.execute("""SELECT id, grupo_id, tipo, umbral_cent FROM alerta
                         WHERE vista_en IS NULL AND salto_en IS NULL""")
         return cur.fetchall()
+
+
+def avisos_del_dia() -> dict:
+    """Cuantos avisos han saltado hoy y cuantos siguen esperando. Solo cuenta.
+
+    Es lo que pide el §6 del encargo -- *"que el resumen diario diga cuantas
+    saltaron"* --, y lo lee `projects/cesta/avisos.py` despues de su pasada.
+
+    **El dia se cuenta en la zona de casa, no en la del servidor.** `salto_en` es un
+    `timestamptz` y el contenedor de PostgreSQL corre en UTC: a las 06:00 los dos
+    dias coinciden, pero a las 00:30 no, y un "hoy" que unas veces es hoy y otras
+    ayer no se puede leer. La zona es la misma que usa el resto del proyecto
+    (`core.config.ZONA_HORARIA`), que es de donde sale el `Europe/Madrid`.
+
+    Los tres numeros dicen tres cosas distintas, y por eso van los tres:
+    `saltaron_hoy` es lo que se le ensena a nadie (es el resumen), `sin_saltar` son
+    las que esperan su dia, y `por_mirar` es **la cola del vigilante** -- sin saltar
+    y sin que nadie las haya visto --, que es el numero con el que se comprueba que
+    la pasada ha hecho su trabajo.
+    """
+    zona = ZONA_HORARIA
+    with cursor() as cur:
+        cur.execute("""
+            SELECT count(*) FILTER (
+                       WHERE (salto_en AT TIME ZONE %(z)s)::date
+                             = (now() AT TIME ZONE %(z)s)::date) AS saltaron_hoy,
+                   count(*) FILTER (WHERE salto_en IS NULL)             AS sin_saltar,
+                   count(*) FILTER (WHERE salto_en IS NULL
+                                      AND vista_en IS NULL)             AS por_mirar
+              FROM alerta""", {"z": zona})
+        return dict(cur.fetchone())
 
 
 def marca_alerta_saltada(alerta_id: str, texto: str) -> bool:
