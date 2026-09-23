@@ -177,14 +177,14 @@ septiembre de 2026), no cada numero de un dia distinto:
                                                 0 de 11+, 642 que mezclan pack, 85 codigos
                                                 con el pack contradicho, 41 con la cadena
                                                 repetida y 0 de esas sin EAN
-    uv run python -m projects.cesta.emparejar --medir 65 % (1.175 de 1.813 pares de verdad,
-                                                en 339 s), y en esa misma pasada 40.111
+    uv run python -m projects.cesta.emparejar --medir 65 % (1.174 de 1.813 pares de verdad,
+                                                en 359 s), y en esa misma pasada 40.110
                                                 grupos con 0 ejes contradictorios
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL: el
                                                 SQL de verdad, la alerta que salta, el paso de
                                                 la cadena (`avisos: 1 saltaron hoy`) y lo que
-                                                tarda abrir los avisos: 47 ms en frio, 9 ms
-                                                en caliente (y el andamio de la prueba, 381 ms,
+                                                tarda abrir los avisos: 47 ms en frio, 16 ms
+                                                en caliente (y el andamio de la prueba, 425 ms,
                                                 que no es la aplicacion)
     uv run python -m plataforma.prueba_navegador     LA INTERFAZ en un navegador: las cuatro
                                                 preguntas, la cola sin cobertura, los
@@ -196,11 +196,12 @@ septiembre de 2026), no cada numero de un dia distinto:
                                                 los dos temas y ningun porcentaje imposible
                                                 pintado.
                                                 TODO BIEN, con los tiempos de cada paso:
-                                                abrir 3,5 s | a la ficha 0,5 s | a la lista
-                                                0,9 s | tachar sin red 1,2 s | a los avisos
-                                                0,7 s | escanear 1,1 s
+                                                abrir 4,8 s | a la ficha 0,6 s | a la lista
+                                                0,8 s | tachar sin red 1,2 s | a los avisos
+                                                0,7 s | del panel a lo mio que ha bajado 2,0 s
+                                                | escanear 1,0 s
 
-Los dos numeros de grupos (39.592 y 40.111) no se contradicen: `ejes` cuenta los grupos del
+Los dos numeros de grupos (39.592 y 40.110) no se contradicen: `ejes` cuenta los grupos del
 gold que escribio la ultima pasada del emparejador, y `--medir` los reconstruye en su propia
 pasada para medir el recall. Son dos pasadas distintas del mismo dia, y las dos dan cero en
 las condiciones de la barra.
@@ -214,7 +215,8 @@ estaba en la pantalla a la que se llega buscando). Las recetas, en `docs/OPERACI
 **Y las dos han mentido alguna vez, que es lo que hay que saber de ellas.** La de punta a
 punta midio primero "abrir los avisos: 469 ms" por `TestClient`, y esos 469 ms eran httpx en
 el mismo proceso (**409 ms los gasta un endpoint que no hace nada**): ahora imprime el
-andamio y la aplicacion por separado, 47 ms en frio y 13 ms en caliente. Y la regla de los
+andamio y la aplicacion por separado, 47 ms en frio y 9-16 ms en caliente (medido en cuatro
+pasadas). Y la regla de los
 documentos aprobo durante una pasada un `docs/OPERACION.md` que seguia con la raya larga
 partida en tres caracteres, porque solo miraba una de las dos familias del doble codificado.
 Las dos estan corregidas y las dos tienen su prueba de que miran.
