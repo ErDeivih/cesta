@@ -50,15 +50,19 @@ export function promesa(a: Alerta): string {
  *  producto de los que sigues -- y el enlace lleva a la ficha, que si sabe la verdad.
  */
 function Nombre({ a }: { a: Alerta }) {
+  // `min-h-[44px]` con `inline-flex`: medido en el navegador (23 sep 2026), estos enlaces
+  // median **21 px de alto**, y son la forma de ir al producto del que habla el aviso.
   if (!a.nombre) {
     return (
-      <Link to={`/grupo/${a.grupo_id}`} className="flex-1 text-tinta-suave underline">
+      <Link to={`/grupo/${a.grupo_id}`}
+            className="inline-flex min-h-[44px] flex-1 items-center text-tinta-suave underline">
         Un producto que sigues
       </Link>
     )
   }
   return (
-    <Link to={`/grupo/${a.grupo_id}`} className="flex-1 font-medium underline">
+    <Link to={`/grupo/${a.grupo_id}`}
+          className="inline-flex min-h-[44px] flex-1 items-center font-medium underline">
       {a.nombre}
     </Link>
   )
@@ -105,7 +109,8 @@ export function Avisos() {
           <ul className="grid gap-3">
             {saltan.map((s) => (
               <li key={s.alerta_id} className="rounded-lg border border-borde p-3">
-                <Link to={`/grupo/${s.grupo_id}`} className="font-medium underline">
+                <Link to={`/grupo/${s.grupo_id}`}
+                      className="inline-flex min-h-[44px] items-center font-medium underline">
                   {s.nombre}
                 </Link>
                 <p className="mt-1 text-sm">{s.por_que}</p>

@@ -619,7 +619,12 @@ function FichaAlternativa({
       </p>
 
       <details className="mt-1">
-        <summary className="cursor-pointer text-xs text-sky-800 dark:text-sky-400">
+        {/* **El alto se mide en el navegador, no se supone.** Medido el 23 de septiembre de
+            2026 en un movil de 390 x 844: este `<summary>` media **306 x 16 px**. Un texto
+            de 12 px con un `cursor-pointer` no es un objetivo: es una trampa, y es de las
+            cosas que se pulsan con el carro al lado. Se le dan los 44 px del minimo, que
+            aqui no se notan porque va al final de la tarjeta de cada alternativa. */}
+        <summary className="flex min-h-[44px] cursor-pointer items-center text-xs text-sky-800 dark:text-sky-400">
           Por qué está en esta posición
         </summary>
         <ul className="mt-1 grid gap-0.5 text-xs">

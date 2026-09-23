@@ -48,8 +48,12 @@ export function Boton({ variante = 'normal', compacto, className, ...resto }: Pr
       {...resto}
       className={cx(
         'inline-flex items-center justify-center gap-2 rounded-lg border font-medium transition-colors',
-        // 44 px: el minimo para pulsar con el pulgar sin fallar.
-        compacto ? 'min-h-[44px] px-3 py-2' : 'min-h-[44px] px-4 py-2',
+        // 44 px: el minimo para pulsar con el pulgar sin fallar. **En las dos
+        // direcciones**: medido en el navegador el 23 de septiembre de 2026, los botones
+        // «−» y «+» de la cantidad -- justo lo que se toca con el carro en marcha --
+        // median **37 x 44**: el alto estaba, el ancho no, porque un solo caracter con
+        // `px-3` no llega. Un `min-w` lo arregla sin tocar ninguna pantalla.
+        compacto ? 'min-h-[44px] min-w-[44px] px-3 py-2' : 'min-h-[44px] px-4 py-2',
         'disabled:cursor-not-allowed disabled:opacity-50',
         ESTILO_BOTON[variante],
         className,

@@ -71,6 +71,53 @@ def _grupo_de_una_cadena() -> int | None:
     return int(fila[0]) if fila else None
 
 
+def _toques_pequenos(pagina) -> list[dict]:
+    """Lo que se puede pulsar y mide menos de 44 px de verdad, ya pintado.
+
+    §3.3 del encargo: *"lo que se toca con el carro en marcha va abajo y grande. Las siete
+    zonas por debajo de 44 px que estan medidas son solo el minimo legal"*. Las pruebas de
+    codigo comprueban que la clase esta escrita; **esto mide lo que el navegador pinta**,
+    que es otra cosa: un elemento con la clase puede quedar comprimido por su contenedor, y
+    otro sin clase puede medir 16 px sin que nadie lo note. Medido el 23 de septiembre de
+    2026 en un movil de 390 x 844, esto encontro tres: el desplegable «Estado de las
+    cadenas» (358 x 24), los «Por que esta en esta posicion» de la ficha (306 x 16) y el
+    enlace «Cesta» de la cabecera (**43** px de ancho, un pixel por debajo).
+
+    Dos cosas que la medida tiene que tener en cuenta para no mentir:
+
+      - **Un `input` dentro de un `<label>` no es el objetivo**: el objetivo es el label, que
+        es lo que se pulsa. Los cinco filtros del buscador salen como `input` de 16 px, y su
+        etiqueta mide los 44 que manda el diseno.
+      - **Un enlace dentro de una frase no es un control**: «...buscalo en la cesta» son
+        palabras, no un boton, y agrandarlas romperia el texto. Se marcan y se dejan estar.
+    """
+    return pagina.evaluate("""() => {
+      const caja = (n) => {
+        const r = n.getBoundingClientRect();
+        return {w: Math.round(r.width), h: Math.round(r.height)};
+      };
+      return [...document.querySelectorAll(
+          'button, a, select, summary, [role=button], input[type=checkbox]')]
+        .filter(n => {
+          const r = n.getBoundingClientRect();
+          const s = getComputedStyle(n);
+          return r.width > 0 && r.height > 0 && s.display !== 'none'
+                 && s.visibility !== 'hidden';
+        })
+        .map(n => {
+          const objetivo = (n.tagName === 'INPUT' && n.closest('label')) || n;
+          const c = caja(objetivo);
+          return {
+            texto: (n.innerText || n.getAttribute('aria-label') || n.value || '')
+                     .trim().slice(0, 34).replace(/\\n/g, ' '),
+            w: c.w, h: c.h, rol: n.tagName.toLowerCase(),
+            enFrase: n.tagName === 'A' && n.closest('p') !== null,
+          };
+        })
+        .filter(t => t.w < 44 || t.h < 44);
+    }""")
+
+
 def main() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -364,6 +411,27 @@ def main() -> int:
                       f"el grupo {solo_uno} (una sola cadena) NO lleva frase")
             comprueba("sin comparación" in texto_uno or "una sola cadena" in texto_uno,
                       "y dice por que no la lleva, en vez de callarse")
+
+        # ------------------------------- y lo que se pulsa, medido de verdad (§3.3) -------
+        # Un objetivo que no se acierta es un boton que no existe: la condicion (a) dice
+        # "sin saber donde esta el boton", y 16 px de alto no se aciertan ni mirando.
+        print("\n== lo que se pulsa, medido ya pintado")
+        rutas = ["/", "/cesta"]
+        if solo_uno is not None:
+            rutas.append(f"/grupo/{solo_uno}")
+        rutas += ["/avisos", "/panel", "/ajustes"]
+        for ruta in rutas:
+            carga(ruta)
+            pagina.wait_for_timeout(800)
+            pequenos = _toques_pequenos(pagina)
+            graves = [t for t in pequenos if not t["enFrase"]]
+            for t in pequenos:
+                print(f"   {'(frase)' if t['enFrase'] else 'FALLO '} {t['w']:4d} x"
+                      f"{t['h']:3d}  {t['rol']:8s} {t['texto']!r}")
+            resumen = ", ".join(
+                "{}x{} {}".format(t["w"], t["h"], t["texto"]) for t in graves)
+            comprueba(not graves,
+                      f"en {ruta} no hay nada que pulsar por debajo de 44 px ({resumen})")
 
         # Un `pageerror` es una excepcion de JavaScript: eso si invalida todo lo demas. Un
         # 401 en `/api/yo` es como la aplicacion pregunta "¿hay sesion?" antes de entrar, y

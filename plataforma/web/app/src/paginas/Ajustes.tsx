@@ -63,7 +63,7 @@ export function Ajustes() {
         <p className="text-sm text-tinta-suave">
           Has entrado como <strong>{sesion.data.usuario.usuario}</strong>.
           <button
-            className="ml-2 underline"
+            className="ml-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline"
             onClick={async () => {
               await salir()
               cliente.invalidateQueries()
@@ -91,7 +91,7 @@ export function Ajustes() {
                 disabled={guarda.isPending}
                 aria-pressed={dentro}
                 className={
-                  'rounded-full border px-3 py-1 text-sm ' +
+                  'inline-flex min-h-[44px] items-center rounded-full border px-3 py-1 text-sm ' +
                   (dentro
                     ? 'border-bien bg-bien-suave font-medium'
                     : 'border-borde')

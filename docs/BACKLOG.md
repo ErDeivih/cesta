@@ -605,6 +605,46 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### Lo que se pulsa, medido **ya pintado**: siete objetivos por debajo de 44 px
+
+El §3.3 del encargo lo pide con estas palabras: *"lo que se toca con el carro en marcha
+--tachar, sumar uno, quitar uno, meter en el carro-- va abajo y grande. **Las siete zonas por
+debajo de 44 px que estan medidas son solo el minimo legal**: en la lista, el objetivo no es
+44, es que se acierte sin mirar."*
+
+Las pruebas de codigo comprobaban que la clase `min-h-[44px]` **esta escrita**. Medir lo que
+el navegador **pinta** es otra cosa, y son siete cosas distintas:
+
+    «−» y «+» de la cantidad      37 x 44   <- justo lo que se toca con el carro
+    «Estado de las cadenas»      358 x 24   el desplegable de la cabecera, en todas las pantallas
+    «Por que esta en esta posicion» 306 x 16  uno por alternativa, en la ficha del grupo
+    «Cesta» (cabecera)            43 x 44   **un pixel** por debajo del minimo
+    «Favoritos» / «Ajustes» / «Salir»  20 de alto
+    el nombre del producto en /avisos   21-24 de alto
+    «Salir» y las cadenas en /ajustes   20 y 30 de alto
+
+**El caso que mas importa es el primero**, y es el que el encargo nombra: los botones de
+sumar y quitar uno median 37 px de ancho porque un solo caracter con `px-3` no llega a 44 --
+el alto estaba, el ancho no. Ninguna prueba de codigo lo veia: la clase estaba puesta y el
+boton se veia bien. Un `min-w-[44px]` en el boton compacto (`ui.tsx`) lo arregla en todas las
+pantallas a la vez.
+
+Los otros seis se arreglaron uno a uno (el desplegable de la cabecera y los de la ficha a 44;
+los enlaces de la lista, los de los avisos y los de ajustes con `min-h` y `min-w`). Y quedan
+**dos que se dejan a proposito**, dichos en la propia puerta para que no parezcan olvidos:
+
+  - **Un `input` dentro de un `<label>` no es el objetivo**: el objetivo es el label, que es
+    lo que se pulsa. Los cinco filtros del buscador salen como `input` de 16 px y su etiqueta
+    mide los 44 que manda el diseno.
+  - **Un enlace dentro de una frase no es un control**: «...buscalo en la cesta» son
+    palabras, no un boton, y agrandarlas romperia el texto. Se marcan como `(frase)` y se
+    dejan estar.
+
+**Medido despues, en las seis pantallas**: `0` cosas por debajo de 44 px en `/`, `/cesta`,
+`/grupo/<id>`, `/avisos`, `/panel` y `/ajustes`. La comprobacion se queda en la puerta del
+navegador (`_toques_pequenos`), que es donde se puede medir: una prueba de codigo no puede
+saber cuanto mide un boton pintado.
+
 ### La puerta del navegador, a fondo: (b), el §3.4, los avisos y la regla que no se salta
 
 Tercera pasada por la interfaz en un navegador de verdad, esta vez para cubrir lo que aun no

@@ -53,8 +53,11 @@ export function Cabecera() {
     >
       <div className="mx-auto flex max-w-app flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
         {/* 44 px de alto: medido antes, el enlace media **43x28** y se pulsa en
-            todas las pantallas. Es el mismo minimo que el resto de lo pulsable. */}
-        <Link to="/" className="inline-flex min-h-[44px] items-center text-lg font-bold tracking-tight">
+            todas las pantallas. Es el mismo minimo que el resto de lo pulsable.
+            Y medido otra vez en el navegador (23 sep 2026) seguia midiendo **43 de
+            ancho**: un pixel por debajo del minimo, que es lo que no se ve en el
+            codigo. Con `min-w-[44px]` queda cuadrado. */}
+        <Link to="/" className="inline-flex min-h-[44px] min-w-[44px] items-center text-lg font-bold tracking-tight">
           Cesta
         </Link>
 
@@ -94,7 +97,15 @@ export function Cabecera() {
 
         {!enPanel && (
           <details className="w-full text-xs text-neutral-600 lg:w-auto dark:text-neutral-400">
-            <summary className="min-h-[24px] cursor-pointer">Estado de las cadenas</summary>
+            {/* **Medido en el navegador el 23 de septiembre de 2026**: este desplegable
+                media **358 x 24 px** en un movil. Es un objetivo de toque de verdad -- esta
+                en todas las pantallas y lleva al estado de cada cadena --, asi que se le da
+                el minimo de 44. Lo mismo con el enlace de al lado («Cesta»), que medía
+                **43 px de ancho**: un pixel por debajo, que es justo la clase de cosa que
+                no se ve leyendo el codigo. */}
+            <summary className="flex min-h-[44px] cursor-pointer items-center">
+              Estado de las cadenas
+            </summary>
             <ul className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {data?.cadenas.map((c) => (
                 <li key={c.cadena} className="flex items-center gap-2">

@@ -978,14 +978,14 @@ export function Cesta() {
             Van como enlaces y no como botones porque no hacen nada: llevan a otra
             pantalla, y en el navegador eso se abre en una pestana nueva si se
             quiere. */}
-        <Link to="/favoritos" className="ml-auto text-sm text-tinta-suave underline">
+        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline">
           Favoritos
         </Link>
-        <Link to="/ajustes" className="text-sm text-tinta-suave underline">
+        <Link to="/ajustes" className="inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline">
           Ajustes
         </Link>
         <button
-          className="text-sm text-tinta-suave underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm text-tinta-suave underline"
           onClick={async () => {
             await salir()
             cliente.invalidateQueries()
