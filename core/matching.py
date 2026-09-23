@@ -799,7 +799,9 @@ def _se_hace_ancho(a: dict, b: dict) -> bool:
 
 def agrupar_enlaces(enlaces_: list[tuple], n: int,
                     umbral_union: float = UMBRAL_UNION,
-                    precios: list | None = None) -> list[int]:
+                    precios: list | None = None,
+                    cadenas: list[str] | None = None,
+                    eans: list[str | None] | None = None) -> list[int]:
     """Id de grupo por producto, con el freno contra el grupo monstruo.
 
     Los enlaces se recorren de mas parecido a menos, que es lo que hace que el
@@ -808,6 +810,25 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
 
     `precios` es, por producto, `(unidad_canon, precio_unidad_cent)`; con eso se
     aplica ademas el freno de ANCHO_MAXIMO. Sin el, solo se aplica el de union.
+
+    `cadenas` (y `eans`) activan **la invariante del reparto**, que es el freno que
+    mas limpia de todos: los enlaces son 1-a-1 **por par de cadenas**, asi que un
+    grupo correcto **no puede tener dos productos de la misma cadena**. La union por
+    componentes conexas rompia esa promesa sin que ningun enlace individual
+    estuviera mal. Medido el 23 de septiembre de 2026:
+
+        grupos de 2 a 4     714 de 7.277 con cadena repetida   ( 9,8 %)
+        grupos de 5 a 10    597 de   630                        (94,8 %)
+        grupos de 11 o mas   74 de    74                        (100,0 %)
+
+    El grupo 92 lo decia sin leer un solo nombre: 25 productos de Alcampo, 25 de
+    DIA, 17 de Carrefour, 14 de Mercadona y 3 de Aldi. **No era un grupo ancho:
+    eran diecisiete grupos fundidos en uno.**
+
+    La guarda rechaza la union que dejaria una cadena repetida, **salvo que los dos
+    compartan EAN**: ese es el duplicado legitimo del catalogo (38 casos en todo
+    gold), el mismo producto listado dos veces. Un producto sin EAN cuenta como un
+    valor propio, asi que dos sin codigo nunca se dan por el mismo: no hay prueba.
     """
     padre = list(range(n))
     tamano = [1] * n
@@ -818,6 +839,12 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
             par = _rango_de(precios, i)
             if par:
                 rango[i][par[0]] = (par[1], par[1])
+    # Cadena -> juego de EAN que hay en esa componente, para la invariante.
+    por_cadena: list[dict[str, set[str]]] = [{} for _ in range(n)]
+    if cadenas is not None:
+        for i in range(n):
+            cod = (eans[i] if eans else None) or f"?{i}"
+            por_cadena[i][cadenas[i]] = {cod}
 
     def raiz(x: int) -> int:
         while padre[x] != x:
@@ -830,6 +857,13 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
         ri, rj = raiz(i), raiz(j)
         if ri == rj:
             continue
+        if cadenas is not None:
+            # La invariante, antes que los frenos de precio: es estructural, no una
+            # tolerancia, y no mira el precio, asi que no puede borrar los ahorros
+            # reales de marca blanca (los de 28x que documenta `core/comparacion`).
+            choque = por_cadena[ri].keys() & por_cadena[rj].keys()
+            if any(len(por_cadena[ri][c] | por_cadena[rj][c]) > 1 for c in choque):
+                continue
         if s < umbral_union:
             if tamano[ri] > 1 and tamano[rj] > 1:
                 continue
@@ -840,6 +874,9 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
                 continue
         padre[rj] = ri
         tamano[ri] += tamano[rj]
+        if cadenas is not None:
+            for cadena, codigos in por_cadena[rj].items():
+                por_cadena[ri].setdefault(cadena, set()).update(codigos)
         if precios:
             for unidad, (lo, hi) in rango[rj].items():
                 if unidad in rango[ri]:
@@ -861,4 +898,6 @@ def agrupar(filas: list[dict], umbral: float = 0.55,
     return agrupar_enlaces(
         enlaces(filas, umbral=umbral, usar_ean=usar_ean), len(filas),
         precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
-                 for f in filas])
+                 for f in filas],
+        cadenas=[f["fuente"] for f in filas],
+        eans=[f.get("ean") for f in filas])

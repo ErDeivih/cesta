@@ -211,12 +211,16 @@ def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) ->
 
     Se le pasan los precios por unidad porque el freno necesita saber si un
     enlace flojo esta a punto de crear un grupo ANCHO, y ancho solo lo puede
-    decir el precio.
+    decir el precio. Y se le pasan las cadenas y los EAN porque la invariante del
+    reparto -- **un grupo no puede tener dos productos de la misma cadena** -- es
+    la que mas limpia: los 74 de 74 grupos grandes la incumplian.
     """
     return agrupar_enlaces(
         enlaces_, len(filas),
         precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
-                 for f in filas])
+                 for f in filas],
+        cadenas=[f["fuente"] for f in filas],
+        eans=[f.get("ean") for f in filas])
 
 
 def composicion(filas: list[dict], ingredientes: dict,

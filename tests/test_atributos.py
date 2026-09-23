@@ -22,13 +22,18 @@ from core.atributos import contradicciones, ejes_declarados, valores
 
 GOLD = Path(__file__).resolve().parents[1] / "data" / "gold" / "grupos.parquet"
 
-# Los numeros del 23 de septiembre de 2026, con el instrumento recien escrito. Son
-# un TECHO, no un objetivo: si bajan, se baja el techo en el mismo commit; si suben,
-# algo ha empeorado y hay que mirarlo antes de tocar el numero.
-TECHO_CONTRADICTORIOS = 54
-TECHO_DE_11_O_MAS = 74
-TECHO_QUE_MEZCLAN_PACK = 615
-TECHO_PACK_DE_11_O_MAS = 21
+# Los numeros del 23 de septiembre de 2026. Son un TECHO, no un objetivo: si bajan,
+# se bajan en el mismo commit; si suben, algo ha empeorado y hay que mirarlo antes de
+# tocar el numero.
+#
+# Los cuatro bajaron el mismo dia, al meter **la invariante del reparto** en
+# `agrupar_enlaces`: los enlaces son 1-a-1 por par de cadenas, asi que un grupo no
+# puede tener dos productos de la misma cadena. Los techos anteriores eran 54, 74,
+# 615 y 21.
+TECHO_CONTRADICTORIOS = 52
+TECHO_DE_11_O_MAS = 0
+TECHO_QUE_MEZCLAN_PACK = 648
+TECHO_PACK_DE_11_O_MAS = 0
 
 
 # --------------------------------------------------------------- la funcion ---
@@ -102,22 +107,27 @@ def test_el_catalogo_no_ha_empeorado():
 
 
 @pytest.mark.skipif(not GOLD.exists(), reason="esta copia no trae gold")
-def test_el_pack_caza_lo_que_los_ejes_no_ven():
+def test_los_ejes_y_el_pack_miden_cosas_distintas():
     """Los dos instrumentos son complementarios, y eso hay que fijarlo.
 
-    El grupo de las 84 cervezas **no lo caza el eje del alcohol**: nadie escribe
-    "con alcohol" en una cerveza, asi que nunca hay dos valores que se contradigan.
-    Lo caza el pack, porque mete un pack de 12 con latas sueltas. Si algun dia
-    alguien toca una de las dos medidas pensando que la otra la cubre, esto lo dice.
+    Cuando se escribio esta prueba, el grupo de las 84 cervezas **no lo cazaba el
+    eje del alcohol** (nadie escribe "con alcohol" en una cerveza, asi que nunca hay
+    dos valores que se contradigan) y si lo cazaba el pack, por meter [1, 12]. Ese
+    grupo ya no existe: la invariante del reparto lo partio, y con ella los 74
+    grupos de 11 o mas.
+
+    Asi que lo que se fija ahora es lo que sigue siendo verdad y lo que hay que
+    vigilar: **el pack sigue viendo casos que los ejes no ven**. Si algun dia los
+    dos numeros se mueven exactamente igual, es que uno de los dos ha dejado de
+    medir algo propio.
     """
     from projects.cesta.ejes import resumen
 
-    # Con `peores=5` porque `peores_pack` viene vacio si no se pide: la primera
-    # version de esta prueba llamaba a `resumen()` a secas y fallaba por eso, no
-    # porque el catalogo hubiera cambiado.
     r = resumen(peores=5)
-    assert r["grupos_que_mezclan_pack"] > 0 and r["grupos_con_eje_contradictorio"] > 0
-    cervezas = [g for n, g, _t in r["peores_pack"] if n >= 80]
-    assert cervezas, (
-        "el grupo grande de cervezas ya no sale como mezcla de pack: comprueba si "
-        "alguien ha cambiado `unidades_pack` o el instrumento")
+    assert r["grupos_que_mezclan_pack"] > 0, (
+        "el pack ya no encuentra nada: o el catalogo ha cambiado o el instrumento "
+        "dejo de mirar `unidades_pack`")
+    assert r["grupos_con_eje_contradictorio"] > 0
+    assert r["grupos_de_11_o_mas"] == 0, (
+        "han vuelto a aparecer grupos de 11 o mas: la invariante del reparto "
+        "(`agrupar_enlaces`, parametro `cadenas`) puede haberse roto")

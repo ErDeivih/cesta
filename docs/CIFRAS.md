@@ -19,7 +19,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 | | |
 |---|---:|
 | productos del catalogo | **52.567** |
-| grupos comparables | **7.992** |
+| grupos comparables | **8.803** |
 | productos comparables por kg/l/m | **42.353** |
 | productos con codigo de barras | **25.517** |
 
@@ -43,9 +43,9 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 |---|---:|---:|---:|---|
 | carrefour | 16.525 | 4 | 2.789 s | 2026-09-22 |
 | alcampo | 9.729 | 1 | 463 s | 2026-09-22 |
-| dia | 5.780 | 0 | 112 s | 2026-09-22 |
-| mercadona | 4.328 | 0 | 91 s | 2026-09-22 |
-| aldi | 2.123 | 0 | 3 s | 2026-09-22 |
+| dia | 5.809 | 0 | 647 s | 2026-09-23 |
+| mercadona | 4.325 | 0 | 93 s | 2026-09-23 |
+| aldi | 2.066 | 0 | 84 s | 2026-09-23 |
 
 ## Promociones
 
