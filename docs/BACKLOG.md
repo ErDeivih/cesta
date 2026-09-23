@@ -346,6 +346,47 @@ sobre-disparan (`yogur natural` no es cafeina, `vino blanco` no es harina integr
 `orujo de hierbas` no es aceite), y los **ejes contradictorios** (hoy 52) no pueden
 subir.
 
+### El encargo de UX del 23 de septiembre, y como se juzga
+
+Esta en `Claude outputs/ENCARGO-UX-23SEP.md` (328 lineas, 11 secciones). Lo que
+cambia de marco, y es lo que manda sobre todo lo demas:
+
+**Cesta hoy ensena datos; lo que hace falta es que conteste preguntas.** Nadie abre
+esto pensando "quiero ver el indice encadenado". Se abre con una de estas cuatro:
+
+    1. Que me falta, y donde lo compro.
+    2. Esto que tengo en la mano, esta caro?
+    3. Voy tachando bien?
+    4. Ha bajado algo de lo mio?
+
+**Y la prueba de aceptacion no es un porcentaje**: coger el movil y contestar las
+cuatro **en menos de quince segundos sin saber donde esta el boton**. Se juzga
+**contra la madre del dueno**, no contra quien escribio el codigo: no va a leer
+ayuda, no va a explorar menus, y si algo no se entiende a la primera **no pregunta:
+deja de usarlo**. Cualquier tarea de interfaz que no acerque a eso es decoracion.
+
+Por orden de valor, y con lo que cada uno tiene de innegociable:
+
+    1. La primera vez (nadie la ha mirado y decide si alguien vuelve): se arregla
+       ENSENANDO LA APLICACION FUNCIONANDO con datos reales, no con una visita
+       guiada.
+    2. La lista, mas cuidado que el resto junto: dos secciones (por coger / en el
+       carro), pasillo pegajoso, deshacer en vez de confirmar, y SIN aviso rojo
+       cuando no hay cobertura.
+    3. "Esto esta caro?": LA FRASE ANTES QUE LA TABLA, y sin frase si el grupo no
+       es de fiar.
+    4. /api/habituales, con el caso del primer dia (origen: tuyo | de todos |
+       basico).
+    5. La cohesion contra el medoide como SEGUNDA RED: la invariante caza lo que se
+       funde ENTRE cadenas, el medoide lo que se funde DENTRO de un grupo
+       legitimo. El umbral se calibra contra el banco de pares, no a ojo.
+    6. Los avisos, que hoy no avisan (`alertas.evalua()` solo corre al abrir la API).
+
+**Reparto del trabajo, para no repetir el error**: el barrido de las 28 mejoras del
+estudio **no se hace en paralelo en el front**; **el codigo del front lo toca un solo
+agente a la vez**. Quien mida en el navegador devuelve los defectos con su numero,
+como se hizo con los grupos.
+
 Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
 que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a
 proposito (sube a 73 % de recall y rompe los conflictos de asignacion de 0 a 861).
