@@ -943,6 +943,45 @@ que no puede deslizarse es la página. Medido en las ocho pantallas que visita l
     /  /cesta  /grupo/0  /avisos  /panel  /ajustes  /escaner  /producto/dia/147509
     ocho pantallas: ninguna con algo que pulsar por debajo de 44 px, ninguna que se salga
 
+### Cuando la API falla: la cesta era la única sin «Volver a intentarlo» (y dos instrumentos que mentían)
+
+La fila «errores + reintentar» del §8 no la había mirado un navegador: se probaba el endpoint
+que devuelve 500, no la pantalla que lo recibe. Al medirla, con la API devolviendo 500 de
+verdad en cuatro pantallas, salió un hueco y dos fallos de instrumento.
+
+**El hueco.** La cesta era **la única** pantalla que escribía su error a mano (`Vacio` +
+`textoDeError`) en vez de usar `Fallo`, y por eso era la única **sin «Volver a intentarlo»**:
+
+    la cesta, /api/listas -> 500   «No he podido traer tus listas» y **ni un botón**
+    los avisos, /api/alertas       «No he podido traer esto» + «Volver a intentarlo»
+    lo mío que ha bajado           + «Volver a intentarlo»
+    el buscador, /api/buscar       + «Volver a intentarlo»
+
+Había que recargar la página a mano, que en el móvil no es evidente. Ahora usa `Fallo`, que
+además es quien decide **el tono**: sin cobertura no es rojo, es un móvil en un pasillo
+(`ui.tsx`), y esa decisión tiene que estar en un sitio y no repetida en seis pantallas.
+
+**El primer instrumento que mentía** (el cuarto del proyecto, contando el contraste, el
+`TestClient` que medía 469 ms de andamio y el detector de codificación): el patrón
+`**/api/alertas*` no coge solo el endpoint, coge también **`/src/api/alertas.ts`** del
+servidor de desarrollo, porque la cadena `/api/alertas` está dentro de esa ruta. El módulo se
+quedaba con un 500, la aplicación no llegaba a montarse y la pantalla se veía en blanco: iba a
+escribir «un 500 en los avisos deja la aplicación en blanco», y era mentira. Lo delató el
+control (`/api/buscar` con 500 sí pintaba su error) y la lista de peticiones, que enseñó
+`500 http://localhost:5173/src/api/alertas.ts`.
+
+**El segundo**: `unroute` quita la ruta que se registró, y para eso necesita **el mismo
+objeto**. Con un filtro nuevo en cada llamada, la intercepción se quedaba puesta y las
+pantallas siguientes seguían recibiendo 500 —el fallo aparecía tres secciones más tarde y
+parecía otra cosa—.
+
+**Y el tercero, el de siempre**: leer la pantalla nada más cargar mide «Cargando…», porque
+React Query reintenta antes de darse por vencida (y hace bien: un 500 de un segundo no es un
+fallo). Ahora la puerta **espera al botón**, no a un número de milisegundos.
+
+Las cuatro pantallas quedan medidas en la puerta en cada pasada (`tests/test_errores_de_la_api.py`
+guarda las tres lecciones escritas, para que no se repitan).
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

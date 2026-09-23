@@ -46,9 +46,10 @@ pantalla del enlace y acaba dentro de la lista), **las cuatro respuestas dentro 
 pantalla de un movil** (la banda util son 109..787 px de 844: lo que obligue a desplazar la
 pantalla no se lee en quince segundos), **todo lo que se pulsa medido** en las ocho pantallas
 donde se puede acabar de pie (incluidas la ficha del producto y el escaner, que entraron al
-encontrar ahi cuatro objetivos de 19 px), **que ninguna pantalla se deslice de lado** y **el
-contraste del texto pintado en los dos temas**, tambien en la ficha del producto. En su
-primera pasada encontro tres cosas que
+encontrar ahi cuatro objetivos de 19 px), **que ninguna pantalla se deslice de lado**, **que
+con la API a 500 cada pantalla lo diga con palabras y deje reintentar** (la cesta era la unica
+sin boton: escribia su error a mano) y **el contraste del texto pintado en los dos temas**,
+tambien en la ficha del producto. En su primera pasada encontro tres cosas que
 leyendo el codigo no se ven -- React Query pausando los cambios sin cobertura, la frase de
 «¿esto esta caro?» ausente en la pantalla a la que se llega buscando, y el arranque roto con
 dos listas de casa --, asi que **es lo que hay que correr cuando se toque la interfaz**. No

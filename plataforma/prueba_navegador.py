@@ -373,6 +373,48 @@ def _cabe_en_la_primera(pagina, elemento) -> tuple[bool, str]:
     return dentro, f"y={y:.0f}..{fin:.0f} (la banda util es {arriba}..{abajo})"
 
 
+def _solo_el_endpoint(nombre: str):
+    """Un filtro de URL que coge **el endpoint de la API y no un modulo del front**.
+
+    Esto existe por un fallo de instrumento, el tercero del proyecto, y hay que contarlo:
+    la primera version de la medida de los errores usaba el patron `**/api/alertas*`, que no
+    solo coge `/api/alertas`: coge tambien **`/src/api/alertas.ts`**, porque la cadena
+    `/api/alertas` esta dentro de esa ruta. Al servidor de desarrollo le llegaba un 500 por
+    un modulo, la aplicacion no llegaba a montarse y la pantalla se veia **en blanco**.
+
+    Lo que salio de ahi, medido, fue "un 500 en los avisos deja la aplicacion en blanco",
+    que era mentira: lo que pasaba es que no habia aplicacion. Lo delato el control
+    (`/api/buscar` con 500 si pintaba su error) y la lista de peticiones
+    (`500 http://localhost:5173/src/api/alertas.ts`).
+
+    Ahora el filtro mira **la ruta despues del host**: `/api/...` es la API, `/src/...` es el
+    front, y no se pueden confundir.
+    """
+    def vale(url: str) -> bool:
+        sin_parametros = url.split("?")[0]
+        if "/api/" not in sin_parametros:
+            return False
+        antes, despues = sin_parametros.rsplit("/api/", 1)
+        return antes.endswith(BASE.removesuffix("/")) and nombre in despues
+    return vale
+
+
+def _contesta_mal(pagina, endpoint: str):
+    """Que ese endpoint devuelva 500 de verdad: la peticion sale y vuelve mal.
+
+    Devuelve **el filtro**, y hay que devolverlo: `unroute` quita la ruta que se registro, y
+    para eso necesita *el mismo* objeto. Con un filtro nuevo en cada llamada, la ruta se
+    quedaba puesta y las pantallas siguientes seguian recibiendo 500 -- el fallo se veia tres
+    secciones mas tarde y parecia otra cosa.
+    """
+    filtro = _solo_el_endpoint(endpoint)
+    pagina.route(filtro,
+                 lambda r: r.fulfill(status=500,
+                                     body='{"detail": "la API ha contestado 500"}',
+                                     content_type="application/json"))
+    return filtro
+
+
 def main() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -715,6 +757,53 @@ def main() -> int:
                 " document.documentElement.scrollWidth]")
             comprueba(scroll <= ancho + 1,
                       f"en {ruta} la pagina no se sale de la pantalla ({scroll} > {ancho})")
+
+        # ------------------- cuando la API falla: una frase y una forma de reintentar -----
+        # La fila «errores + reintentar» del §8 no la habia mirado un navegador nunca: se
+        # probaba el endpoint (que devuelve 500), no la pantalla que lo recibe. Y salio un
+        # hueco real: la cesta era **la unica** pantalla que escribia su error a mano
+        # (`Vacio` + `textoDeError`) en vez de usar `Fallo`, y por eso era la unica **sin
+        # «Volver a intentarlo»** -- habia que recargar la pagina a mano, que en el movil no
+        # es evidente. Ahora usa `Fallo`, que ademas es quien decide el tono (sin cobertura
+        # no es rojo, y esa decision tiene que estar en un sitio y no repetida en seis
+        # pantallas: `ui.tsx`).
+        #
+        # **El filtro de la URL es lo que hace que esto mida lo que dice medir**: el patron
+        # `**/api/alertas*` cogia tambien `/src/api/alertas.ts` y dejaba la aplicacion sin
+        # montar. Ver `_solo_el_endpoint`, que lo explica con el caso.
+        print("\n== cuando la API falla, cada pantalla lo dice y deja reintentar")
+        for que, endpoint, ruta, escribe in (
+                ("la cesta", "listas", "/cesta", None),
+                ("los avisos", "alertas", "/avisos", None),
+                ("lo mio que ha bajado", "bajadas", "/panel?pestana=bajadas&mios=true", None),
+                ("el buscador", "buscar", "/", "leche entera"),
+        ):
+            filtro = _contesta_mal(pagina, endpoint)
+            try:
+                carga(ruta)
+                if escribe:
+                    pagina.get_by_placeholder(
+                        "leche entera, atún, papel de cocina…").fill(escribe)
+                # **Se espera al estado de error, no a un numero de milisegundos.** React
+                # Query reintenta antes de darse por vencida (y hace bien: un 500 de un
+                # segundo no es un fallo), asi que leer la pantalla nada mas cargar mide
+                # «Cargando…» -- que es exactamente lo que paso la primera vez que se
+                # escribio esto, y por eso ahora se espera al boton.
+                with contextlib.suppress(Exception):
+                    pagina.get_by_role("button", name="Volver a intentarlo").first.wait_for(
+                        timeout=20000)
+                texto = pagina.inner_text("body")
+                botones = [b.strip() for b in pagina.locator("button").all_inner_texts()]
+                # El fallo dice **lo que se ha visto**, no solo que no estaba: sin eso, un
+                # FALLO aqui no se puede leer sin volver a correr todo.
+                visto = " | ".join(texto.splitlines()[:8])
+                comprueba("No he podido" in texto or "Sin cobertura" in texto,
+                          f"{que}: con la API a 500 lo dice con palabras (lei: {visto})")
+                comprueba("Volver a intentarlo" in botones,
+                          f"{que}: y deja reintentar sin recargar la pagina "
+                          f"({[b for b in botones if b][-3:]})")
+            finally:
+                pagina.unroute(filtro)
 
         # -------------------------- el enlace de invitacion, abierto por otra persona ----
         # Que la lista sea de quien la creo **y de quien entre** lleva escrito desde el

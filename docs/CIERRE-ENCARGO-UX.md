@@ -25,7 +25,7 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
                                                       en los dos sentidos: con frase en la
                                                       ficha y en el grupo, y SIN frase en un
                                                       grupo de una sola cadena
-    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (825 pasan, ruff limpio, docs ok)
+    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (829 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
         `--medir >= 57 %`                             65 % CUMPLE
@@ -108,7 +108,9 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
 
 ## §8 auditado: las diez filas
 
-    estados vacios, todos con una frase        HECHO      errores + reintentar          HECHO
+    estados vacios, todos con una frase        HECHO      errores + reintentar      HECHO, en
+                                                                                     cuatro pantallas
+                                                                                     y ya pintado
     sin cobertura no es rojo                   HECHO      buscar al teclear            HECHO
     ultimas busquedas                          HECHO      numeros con su unidad        HECHO
     titulo de la pestana                       HECHO      volver atras / enlaces       HECHO
@@ -168,7 +170,7 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 **Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
 septiembre de 2026), no cada numero de un dia distinto:
 
-    uv run pytest -q                                 825 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 829 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             39.592 grupos, 0 con eje contradictorio,

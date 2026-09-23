@@ -935,9 +935,14 @@ export function Cesta() {
 
   if (listas.isLoading) return <Cargando que="tus listas" />
   if (listas.isError) {
-    return <Vacio titulo="No he podido traer tus listas">
-      <p>{textoDeError(listas.error)}</p>
-    </Vacio>
+    // **`Fallo` y no un `Vacio` escrito aqui.** Es la unica pantalla que se lo escribia a
+    // mano, y por eso era la unica sin «Volver a intentarlo»: medido en un navegador el 23
+    // de septiembre de 2026, con `/api/listas` devolviendo 500, la cesta decia «No he podido
+    // traer tus listas» **sin un solo boton** -- habia que recargar la pagina a mano, que en
+    // el movil no es evidente. Ademas `Fallo` es quien decide el tono: sin cobertura no es
+    // rojo, es un movil en un pasillo (`ui.tsx`), y esa decision tiene que estar en un sitio
+    // y no repetida en seis pantallas.
+    return <Fallo error={listas.error} reintentar={() => void listas.refetch()} />
   }
   if (!listas.data?.length) {
     // **Una lista vacia no puede ser un cartel que manda a otra pantalla.** El §2 del
