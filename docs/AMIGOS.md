@@ -31,6 +31,19 @@ sale a internet -- `CESTA_REGISTRO=cerrado`, y las cuentas vuelven a la consola.
 suya; echar a alguien pide un papel de duenno que hoy no hay, y de momento se
 hace con una consulta (`docs/DESPLIEGUE.md` punto 5).
 
+**Y desde el 23 de septiembre de 2026 el enlace lo abre un navegador, con dos
+personas.** Lo hace la puerta mecanica de la interfaz
+(`plataforma/prueba_navegador.py`, seccion "el enlace de invitacion, abierto por
+otra persona"): la cuenta de siempre crea el enlace desde su cesta, y **una
+segunda sesion** -- otro contexto del navegador, sin cookies ni nada en comun --
+lo abre tal como lo abre quien lo recibe, entra (o se crea la cuenta) **en la
+propia pantalla del enlace**, aterriza en la lista con las lineas que ya estaban
+dentro, y **no le sale el boton de invitar, porque la lista no es suya**. Hasta
+ese dia se probaba el endpoint, no la pantalla: el mismo hueco que tenia el
+escaner. La seccion **anula antes los enlaces que haya**, que es lo que hace falta
+para poder correrla mas de tres veces (la API admite tres vivos por lista) y de
+paso comprueba el otro camino, el de apagar un enlace que ya no vale.
+
 ---
 
 ## 1. Lo que ya aguanta, sin tocar nada

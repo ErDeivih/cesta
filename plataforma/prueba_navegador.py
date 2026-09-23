@@ -41,6 +41,60 @@ BASE = os.environ.get("CESTA_UI", "http://localhost:5173")
 CLAVE = "clave-de-prueba-123"
 # **Fija, no nueva en cada pasada**: la API limita las altas por hora (`ALTAS_POR_HORA`).
 USUARIO = "prueba-navegador"
+# Y la segunda cuenta, la que **abre el enlace de invitacion**: tiene que ser otra persona,
+# porque el caso que manda es el de quien recibe el enlace y no estaba dentro.
+USUARIO_INVITADA = "prueba-invitada"
+
+
+def _carga(pagina, ruta: str = "/") -> None:
+    """Abre una ruta y espera a que la pantalla deje de pedir cosas."""
+    pagina.goto(f"{BASE}{ruta}", wait_until="domcontentloaded")
+    pagina.wait_for_load_state("networkidle")
+
+
+def _entra(pagina, usuario: str, clave: str, nombre: str, comprueba=None, *,
+           puerta: str = "Entra para ver tu lista") -> str:
+    """Entra con una cuenta **fija** en la pantalla que ya esta abierta, y solo si la
+    cuenta no existe la crea.
+
+    Devuelve `"entrado"`, `"creado"` o `"sin-sesion"` (no ha podido entrar).
+
+    Entra **donde la pantalla este**, y eso es lo que permite usarlo tambien en
+    `/unirme/<codigo>`: esa pantalla no se puede recargar, porque el codigo de la invitacion
+    vive en la barra de direcciones y `Unirse.tsx` navega solo, y solo cuando se aplica.
+    `puerta` es la frase con la que cada pantalla dice que no hay sesion; la cesta y la
+    invitacion no dicen lo mismo.
+
+    La cuenta es fija y no nueva en cada pasada porque la API limita cuantas se crean por
+    hora (`ALTAS_POR_HORA`, `main.py:114`): una prueba que se corre diez veces agotaba el
+    limite y la sexta pasada se quedaba sin cuenta, con todo lo que depende de la sesion en
+    rojo y por un motivo que no tiene nada que ver con la interfaz.
+    """
+    if puerta not in pagina.inner_text("body"):
+        return "entrado"
+    campos = pagina.locator("form input")
+    if campos.count() < 2:
+        return "sin-sesion"
+    campos.nth(0).fill(usuario)
+    campos.nth(1).fill(clave)
+    pagina.get_by_role("button", name="Entrar").click()
+    pagina.wait_for_timeout(2500)
+    if puerta not in pagina.inner_text("body"):
+        return "entrado"
+    pagina.get_by_role("button", name="Créala").click()
+    pagina.wait_for_timeout(300)
+    campos = pagina.locator("form input")
+    if comprueba is not None:
+        comprueba(campos.count() == 3,
+                  f"el alta de {usuario} pide nombre, usuario y clave ({campos.count()})")
+    if campos.count() < 3:
+        return "sin-sesion"
+    campos.nth(0).fill(nombre)
+    campos.nth(1).fill(usuario)
+    campos.nth(2).fill(clave)
+    pagina.get_by_role("button", name="Crear cuenta").click()
+    pagina.wait_for_timeout(2500)
+    return "sin-sesion" if puerta in pagina.inner_text("body") else "creado"
 
 
 def _grupo_de_una_cadena() -> int | None:
@@ -245,8 +299,7 @@ def main() -> int:
         pagina.on("console", lambda m: consola.append(m.text) if m.type == "error" else None)
 
         def carga(ruta: str = "/") -> None:
-            pagina.goto(f"{BASE}{ruta}", wait_until="domcontentloaded")
-            pagina.wait_for_load_state("networkidle")
+            _carga(pagina, ruta)
 
         # ---------------------------------------------- abrir: la fecha y el buscador ---
         print("\n== abrir la aplicacion")
@@ -282,35 +335,16 @@ def main() -> int:
         # ------------------------------------------------------------- una cuenta -------
         # Se hace primero porque la lista y los avisos son de una persona: sin sesion, la
         # ficha ni siquiera ensena el boton de anadir (no hay donde apuntarlo).
-        #
-        # **La cuenta es fija, no nueva en cada pasada.** La API limita cuantas se crean
-        # por hora (`ALTAS_POR_HORA`, `main.py:114`) y una prueba que se corre diez veces
-        # agotaba el limite: la sexta pasada se quedaba sin cuenta y fallaba todo lo que
-        # depende de la sesion. Se entra con la de siempre, y solo si no existe se crea.
         print("\n== entrar (como alguien que ya tiene cuenta)")
         carga("/cesta")
         comprueba(pagina.get_by_text("Entra para ver tu lista").count() >= 1,
                   "sin sesion la lista pide entrar, y lo explica")
-        campos = pagina.locator("form input")
-        campos.nth(0).fill(USUARIO)
-        campos.nth(1).fill(CLAVE)
-        pagina.get_by_role("button", name="Entrar").click()
-        pagina.wait_for_timeout(2500)
-        if pagina.get_by_text("Entra para ver tu lista").count():
-            print("   (la cuenta no existia: se crea, una vez)")
-            pagina.get_by_role("button", name="Créala").click()
-            pagina.wait_for_timeout(300)
-            campos = pagina.locator("form input")
-            comprueba(campos.count() == 3, f"el alta pide nombre, usuario y clave ({campos.count()})")
-            if campos.count() == 3:
-                campos.nth(0).fill("Madre")
-                campos.nth(1).fill(USUARIO)
-                campos.nth(2).fill(CLAVE)
-                pagina.get_by_role("button", name="Crear cuenta").click()
-                pagina.wait_for_timeout(2500)
+        estado = _entra(pagina, USUARIO, CLAVE, "Madre", comprueba)
+        if estado == "creado":
+            print(f"   (la cuenta {USUARIO} no existia: se ha creado, una vez)")
         carga("/cesta")
         cuerpo_entrada = pagina.inner_text("body")
-        comprueba("Entra para ver tu lista" not in cuerpo_entrada,
+        comprueba(estado != "sin-sesion" and "Entra para ver tu lista" not in cuerpo_entrada,
                   f"la cuenta {USUARIO} entra (si dice 429, se han creado demasiadas "
                   f"cuentas en la ultima hora)")
 
@@ -532,6 +566,106 @@ def main() -> int:
                 "{}x{} {}".format(t["w"], t["h"], t["texto"]) for t in graves)
             comprueba(not graves,
                       f"en {ruta} no hay nada que pulsar por debajo de 44 px ({resumen})")
+
+        # -------------------------- el enlace de invitacion, abierto por otra persona ----
+        # Que la lista sea de quien la creo **y de quien entre** lleva escrito desde el
+        # primer dia (`docs/AMIGOS.md`), y no lo habia abierto un navegador nunca: se probaba
+        # el endpoint, no el enlace. Aqui se hace el viaje entero y con dos personas: la de
+        # siempre manda el enlace desde su cesta, y la segunda -- otra sesion, otro aparato,
+        # sin nada en comun -- lo abre tal como lo abre quien lo recibe: en el movil y sin
+        # cuenta todavia.
+        print("\n== el enlace de invitacion, abierto por otra persona")
+        carga("/cesta")
+        # **Se anulan antes los que haya**, y no es adorno: la API admite tres enlaces
+        # vivos por lista (`MAX_INVITACIONES_VIVAS`, `almacen.py:645`) y contesta 409 al
+        # cuarto. Una prueba que crea uno en cada pasada dejaba la lista sin poder invitar a
+        # nadie en la cuarta vuelta -- y fallaba ella, no la aplicacion. Anulando primero se
+        # mide ademas el otro camino, el de apagar un enlace que ya no vale.
+        anular = pagina.get_by_role("button", name="Anular los enlaces que haya dado")
+        comprueba(anular.count() == 1, "quien creo la lista puede anular los enlaces")
+        if anular.count():
+            anular.first.click()
+            with contextlib.suppress(Exception):
+                pagina.get_by_text("Anulad", exact=False).first.wait_for(timeout=15000)
+            dicho = pagina.inner_text("main")
+            comprueba("Anulados" in dicho or "No había ninguno" in dicho,
+                      "y la pantalla dice cuantos ha anulado (o que no habia ninguno)")
+            comprueba("A quien ya entró no le afecta" in dicho,
+                      "y avisa de que anular no echa a quien ya esta dentro")
+        crear = pagina.get_by_role("button", name="Crear un enlace")
+        comprueba(crear.count() >= 1,
+                  "quien creo la lista manda el enlace desde la pantalla (no por API)")
+        enlace = ""
+        if crear.count():
+            crear.first.click()
+            campo_enlace = pagina.get_by_label("Enlace de invitación")
+            with contextlib.suppress(Exception):
+                campo_enlace.wait_for(timeout=20000)
+            if campo_enlace.count():
+                enlace = campo_enlace.input_value()
+            comprueba("/unirme/" in enlace,
+                      f"el enlace sale escrito entero, con su codigo ({enlace[-14:]})")
+            caduca = pagina.inner_text("main")
+            comprueba("Caduca" in caduca and "personas que lo abran" in caduca,
+                      "y dice cuando caduca y para cuantas personas vale")
+        if not enlace:
+            print("   (sin enlace no se puede seguir: la invitacion se queda sin comprobar)")
+        else:
+            ruta = enlace[len(BASE):] if enlace.startswith(BASE) else enlace
+            # Otra sesion de verdad: contexto nuevo, sin cookies ni almacenamiento.
+            contexto2 = navegador.new_context(
+                viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True,
+                locale="es-ES")
+            otra = contexto2.new_page()
+            otra.on("pageerror", lambda e: errores.append(f"[invitada] {e}"))
+            _carga(otra, ruta)
+            invitacion = otra.inner_text("body")
+            comprueba("Te han invitado a una lista" in invitacion,
+                      "quien abre el enlace sin cuenta ve que le han invitado, no un error")
+            comprueba("barra de direcciones" in invitacion,
+                      "y le dicen que el codigo no se pierde al entrar")
+            # Se entra **aqui**, sin salir de la ruta: el codigo vive en la barra de
+            # direcciones, y una pantalla que navegara antes de aplicar la invitacion lo
+            # perderia (`Unirse.tsx:14`).
+            estado2 = _entra(otra, USUARIO_INVITADA, CLAVE, "Invitada", comprueba,
+                             puerta="Te han invitado a una lista")
+            print(f"   (la invitada: {estado2})")
+            # **Llegar a la cesta es la prueba**: la pantalla del enlace navega sola, y
+            # solo cuando la invitacion se aplica (`Unirse.tsx:52`). Si sigue en `/unirme`,
+            # o no ha entrado o la API ha dicho 429 (demasiadas altas en la ultima hora).
+            with contextlib.suppress(Exception):
+                otra.wait_for_url("**/cesta", timeout=20000)
+            otra.wait_for_load_state("networkidle")
+            traida = otra.inner_text("body")
+            comprueba("/cesta" in otra.url and "unirme" not in otra.url,
+                      f"al aplicarse lleva a la cesta, y no deja el enlace a mano ({otra.url})")
+            # **Los dos estados valen, a proposito.** La cuenta es la misma en cada pasada:
+            # la primera vez entra, y a partir de la segunda la API dice que ya estaba
+            # dentro (y no gasta un uso del enlace, `almacen.py:493`). Una prueba que solo
+            # acepte el primer estado obliga a crear una cuenta nueva cada vez, y las altas
+            # estan limitadas por hora.
+            recien = "Ya estás en" in traida
+            ya_estaba = "Ya estabas en" in traida
+            comprueba(recien or ya_estaba,
+                      "y dice a que lista ha entrado, con el nombre que le puso quien la creo")
+            comprueba(not recien or "quien te la mandó te ha dejado" in traida,
+                      "y con que papel: escribir o solo mirar, dicho en castellano")
+            # **Lo que se ve dentro**: la lista que abrio la otra persona es la misma, con
+            # la linea que hay dentro. Sin esto, "te meto en la lista" seria solo una frase.
+            with contextlib.suppress(Exception):
+                otra.locator("input[type=checkbox]").first.wait_for(timeout=20000)
+            comprueba(otra.locator("input[type=checkbox]").count() >= 1,
+                      "la invitada ve las lineas que ya estaban puestas")
+            # Y quien no creo la lista **no puede invitar**: la API contesta 403 y la
+            # pantalla no ensena el boton, en vez de ensenar uno que no puede funcionar.
+            comprueba(otra.get_by_role("button", name="Crear un enlace").count() == 0,
+                      "y no le sale el boton de invitar, porque la lista no es suya")
+            # Y de vuelta en la lista de quien invito: la otra persona **aparece**.
+            carga("/cesta")
+            dentro = pagina.inner_text("body")
+            comprueba("Invitada" in dentro or USUARIO_INVITADA in dentro,
+                      "quien invito ve a la otra persona en «Quién está dentro»")
+            contexto2.close()
 
         # ------------------------------- el contraste del texto, pintado y en los dos temas --
         # §1 del encargo: *"el contraste y los limites de los campos, con las formulas dentro

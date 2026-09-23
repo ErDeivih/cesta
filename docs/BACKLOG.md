@@ -627,6 +627,79 @@ cadenas o mas, porque un codigo que solo exista en una no puede contestar "¿est
 El ultimo caso es el del «no lo sé», que es la regla de siempre: un codigo que no esta en el
 catalogo tiene que decirlo con palabras, no quedarse en blanco ni inventarse nada.
 
+### El enlace de invitacion, abierto por otra persona: la otra pantalla que no habia visto un navegador
+
+`docs/AMIGOS.md` cuenta desde el 21 de septiembre que la lista es de quien la creo **y de
+quien entre**, y que entrar se hace con un enlace. Estaba probado contra la API
+(`tests/test_invitaciones.py`) y **nunca contra la pantalla**: el mismo hueco que tenia el
+escaner, y por el mismo motivo -- el endpoint puede contestar perfecto y la pantalla no
+ensenarlo, ni llevar a donde tiene que llevar.
+
+La puerta mecanica tiene ahora una seccion que hace **el viaje entero y con dos personas**:
+la cuenta de siempre crea el enlace desde su cesta, y una **segunda sesion del navegador**
+-- otro contexto, sin cookies, como el movil de quien lo recibe -- lo abre sin tener cuenta,
+entra desde ahi y acaba dentro de la lista:
+
+    ok  quien creo la lista manda el enlace desde la pantalla (no por API)
+    ok  el enlace sale escrito entero, con su codigo (e/743lEovwQc5Z)
+    ok  y dice cuando caduca y para cuantas personas vale
+    ok  quien abre el enlace sin cuenta ve que le han invitado, no un error
+    ok  y le dicen que el codigo no se pierde al entrar
+    ok  el alta de prueba-invitada pide nombre, usuario y clave (3)
+    ok  al aplicarse lleva a la cesta, y no deja el enlace a mano
+    ok  y dice a que lista ha entrado, con el nombre que le puso quien la creo
+    ok  la invitada ve las lineas que ya estaban puestas
+    ok  y no le sale el boton de invitar, porque la lista no es suya
+    ok  quien invito ve a la otra persona en «Quién está dentro»
+    ok  quien creo la lista puede anular los enlaces
+    ok  y la pantalla dice cuantos ha anulado (o que no habia ninguno)
+
+**No encontro ningun defecto, y eso tambien es un dato**: hay flujos que estan bien y lo que
+faltaba era la prueba. Lo que si hubo que arreglar fue **la prueba misma**, dos veces, y las
+dos son la misma leccion de siempre -- una puerta que se pone roja sola no sirve de nada:
+
+    el presupuesto de enlaces   la API admite **tres enlaces vivos por lista** y contesta 409
+                                al cuarto. La cuarta pasada de la prueba se quedaba sin
+                                enlace y fallaba ella, no la aplicacion. Ahora **anula los
+                                que haya antes de crear uno** -- y con eso se comprueba
+                                ademas el camino de anular, que no habia visto nadie.
+    la segunda pasada          la cuenta es fija (las altas estan limitadas por hora), asi
+                                que a partir de la segunda vuelta la API contesta «ya estabas
+                                en la lista» en vez de «ya estas». La prueba acepta **los dos
+                                estados**, como ya hacia con «Te aviso» / «Avisarme si baja».
+
+Corrida **tres veces seguidas** contra la misma base: `TODO BIEN` las tres.
+
+### Los documentos estaban doble codificados (y ahora hay una regla que lo ve)
+
+En la misma pasada salio otra cosa, esta vez en el repositorio y no en la pantalla:
+`docs/CIERRE-ENCARGO-UX.md` tenia las comillas angulares y los signos de interrogacion
+convertidos en **dos caracteres cada uno** -- `\u00c2\u00ab\u00c2\u00bf` donde tenia que haber
+`«¿` --, y `docs/OPERACION.md` tenia `s\u00c3\u00b3lo` donde tenia que decir `sólo`. (Los
+ejemplos van con escapes **porque este documento tambien tiene que pasar la regla que
+cuenta**: escrito con los caracteres de verdad, este mismo renglon la incumpliria.) Los dos
+venian de renglones escritos con PowerShell en pasadas anteriores: el texto se leyo como
+Latin-1 y se volvio a escribir como UTF-8, de modo que cada byte acabo siendo dos caracteres.
+Y los dos empezaban por una marca invisible (U+FEFF) que no llevaba ningun otro fichero del
+repositorio.
+
+Nada de eso rompe la aplicacion -- por eso vivio ahi sin que nadie lo viera --, pero rompe
+**lo que se lee**, que en este proyecto es la mitad del trabajo: quien abre el documento ve
+basura donde deberia haber una coma y deja de fiarse de lo que pone dentro. Arreglado en
+**21 renglones** entre los dos ficheros (y la marca de `plataforma/web/estilo.css`, la unica
+del repositorio), sin tocar nada mas: ni un salto de linea, ni una palabra.
+
+Y con una **regla nueva** para que no vuelva, `tests/test_documentos.py`: ningun fichero de
+texto del repositorio empieza por U+FEFF, y ninguno lleva la pareja `Â`/`Ã` pegada a un
+caracter de la banda 0x80-0xBF. Con su prueba de que el detector mira (una linea doble
+codificada metida a mano tiene que salir), que es la leccion que ya dejo la trampa del
+contraste. Las pruebas de la regla estan escritas con escapes a proposito: el fichero tiene
+que pasar su propia regla.
+
+Lo que **no** se ha normalizado, dicho a proposito: los saltos de linea. `core/matching.py`,
+`docs/CIFRAS.md` y `docs/DIAGNOSTICO-MATCHING.md` estan en CRLF desde antes de esto, y
+cambiarlos seria un diff enorme que no arregla nada de lo que se ve en la pantalla.
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el
@@ -825,6 +898,13 @@ personas, cada una con su lista de casa, y borrarlas.
 
     abrir la aplicacion 2,4 s | a la ficha con la frase 0,9 s | a la lista 0,8 s
     tachar sin cobertura 1,2 s | a los avisos 0,7 s
+
+Y desde entonces la puerta ha ido creciendo con **lo que faltaba por mirar**: el escaner con
+un codigo de verdad y el enlace de invitacion abierto por otra persona (los dos, unas
+secciones mas arriba), todo lo que se pulsa medido **ya pintado** (§3.3) y el contraste del
+texto pintado en los dos temas (§1), con su trampa para saber que la medida mira. Hoy son
+**mas de sesenta comprobaciones** en la misma pasada, y las tres ultimas veces seguidas ha
+dicho `TODO BIEN`.
 
 **Esto NO cierra (a)**: la condicion se juzga *contra la madre del dueno*, y eso lo dice
 `docs/PRUEBA-15-SEGUNDOS.md` con alguien que no haya escrito estas pantallas. Lo que hace

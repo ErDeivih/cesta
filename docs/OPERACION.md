@@ -1,4 +1,4 @@
-﻿# Operacion: sin VPS, sin proxies, sin pagar
+# Operacion: sin VPS, sin proxies, sin pagar
 
 Restricciones: nada de proxies residenciales, nada de VPS por ahora, GitHub Actions
 como opcion cuando toque, y local mientras tanto.
@@ -40,12 +40,19 @@ mas vieja que el repositorio. La cuenta es **fija** (`prueba-navegador`) y no nu
 pasada, porque la API limita cuantas se crean por hora (`ALTAS_POR_HORA`).
 
 Cubre las cuatro preguntas (con sus tiempos), el pasillo pegado, el «Deshacer», los cambios
-sin cobertura, los avisos, **el escaner con un codigo de verdad**, **todo lo que se pulsa
-medido** y **el contraste del texto pintado en los dos temas**. En su primera pasada encontro tres cosas que leyendo el codigo no se ven -- React Query
-pausando los cambios sin cobertura, la frase de Â«Â¿esto esta caro?Â» ausente en la pantalla a
-la que se llega buscando, y el arranque roto con dos listas de casa --, asi que **es lo que
-hay que correr cuando se toque la interfaz**. No cierra la condicion (a) de la barra: eso es
-una persona con un movil (`docs/PRUEBA-15-SEGUNDOS.md`).
+sin cobertura, los avisos, **el escaner con un codigo de verdad**, **el enlace de invitacion
+abierto por una segunda persona** (otra sesion, que entra o crea su cuenta en la propia
+pantalla del enlace y acaba dentro de la lista), **todo lo que se pulsa medido** y **el
+contraste del texto pintado en los dos temas**. En su primera pasada encontro tres cosas que
+leyendo el codigo no se ven -- React Query pausando los cambios sin cobertura, la frase de
+«¿esto esta caro?» ausente en la pantalla a la que se llega buscando, y el arranque roto con
+dos listas de casa --, asi que **es lo que hay que correr cuando se toque la interfaz**. No
+cierra la condicion (a) de la barra: eso es una persona con un movil
+(`docs/PRUEBA-15-SEGUNDOS.md`).
+
+Las **dos cuentas** de esta prueba son fijas (`prueba-navegador` y `prueba-invitada`), y por
+el mismo motivo: cada pasada corre contra la misma base. Se ha corrido **tres veces seguidas**
+con el mismo resultado (`TODO BIEN`), que es lo unico que hace fiable una puerta.
 
 ## Fase 1: todo en el PC, y el almacen tambien
 
@@ -300,7 +307,7 @@ uv run python -m projects.cesta.pipeline --rehacer-historico
 
 El pipeline normal se queda con la instantanea mas reciente de cada cadena y la
 **anade** a `gold/precio_diario.parquet`. Es lo correcto a diario, pero significa
-que el historico no se calcula: se acumula, y sÃ³lo existe en ese fichero. Con
+que el historico no se calcula: se acumula, y sólo existe en ese fichero. Con
 esto se recorre bronze dia a dia y se reescribe entero.
 
 Cuando usarlo:
