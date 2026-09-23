@@ -609,7 +609,7 @@ function FichaAlternativa({
       <div className="mt-2 flex flex-wrap gap-2 text-xs">
         <Link
           to={`/producto/${p.fuente}/${p.id_fuente}`}
-          className="inline-flex min-h-[36px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
+          className="inline-flex min-h-[44px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
         >
           Ficha e histórico
         </Link>
@@ -619,7 +619,7 @@ function FichaAlternativa({
             target="_blank"
             // `noopener` porque si no la pagina de destino puede manejar esta.
             rel="noopener noreferrer"
-            className="inline-flex min-h-[36px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
+            className="inline-flex min-h-[44px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
           >
             Ver en {nombreCadena(p.fuente)}
           </a>

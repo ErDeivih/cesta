@@ -50,7 +50,7 @@ export function VistasGuardadas({ consulta, onAplicar }: Props) {
             type="button"
             aria-label={`Borrar la vista ${v.nombre}`}
             onClick={() => setVistas(borrarVista(v.nombre))}
-            className="min-h-[44px] border-l border-neutral-300 px-2 text-neutral-500 hover:bg-neutral-50 hover:text-red-700 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-red-400"
+            className="min-h-[44px] min-w-[44px] border-l border-neutral-300 px-2 text-neutral-500 hover:bg-neutral-50 hover:text-red-700 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-red-400"
           >
             ×
           </button>

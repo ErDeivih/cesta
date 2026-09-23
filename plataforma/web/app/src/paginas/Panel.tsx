@@ -48,7 +48,7 @@ export function Panel() {
         <h1 className="text-xl font-bold">Panel</h1>
         <Link
           to="/panel/matching"
-          className="text-sm underline"
+          className="inline-flex min-h-[44px] items-center text-sm underline"
         >
           Panel de matching →
         </Link>

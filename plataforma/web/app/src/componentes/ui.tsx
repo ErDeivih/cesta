@@ -377,7 +377,7 @@ export function Th({
           // El manejador de TanStack espera un evento: se le pasa el del boton
           // tal cual, que es lo que necesita para el orden multiple con Shift.
           onClick={(e) => onClick(e)}
-          className="inline-flex min-h-[32px] items-center gap-1 hover:text-neutral-900 dark:hover:text-white"
+          className="inline-flex min-h-[44px] items-center gap-1 hover:text-neutral-900 dark:hover:text-white"
         >
           {contenido}
         </button>
