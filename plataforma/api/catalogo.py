@@ -326,6 +326,170 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
     } for f in filas]
 
 
+# ---------------------------------------------------------------- tarjetas ---
+#
+# La tarjeta del mosaico de habituales: foto, nombre, precio por unidad, unidad y
+# en que cadena esta mas barato. La pide `api/habituales.py`.
+#
+# Se queda en lo justo a proposito: una cuadricula son 24 tarjetas, y la ficha
+# entera de 24 grupos (con sus miembros, su curva y su explicacion) seria una
+# consulta enorme para pintar 24 recuadros de 100 x 100.
+#
+# La regla de la unidad es la MISMA que la de `buscar` (ver el comentario largo de
+# alli): primero se elige una unidad por grupo -- la que comparten mas cadenas -- y
+# solo se compara dentro de ella, porque los precios de un grupo medidos en
+# unidades distintas no se pueden restar. Se repite aqui en vez de sacarlo a un
+# sitio comun porque `buscar` es la consulta que sostiene la pantalla de
+# resultados y no se toca para reutilizar un trozo: lo que impide que las dos se
+# separen es `test_la_tarjeta_y_la_busqueda_dicen_el_mismo_precio`, que compara las
+# dos salidas sobre el mismo gold.
+_TARJETAS = """
+    WITH mios AS ({fuente}),
+    unidades AS (
+        SELECT grupo_id, unidad_canon,
+               count(DISTINCT fuente) AS c, count(*) AS n
+          FROM mios
+         WHERE precio_unidad_cent > 0 AND unidad_canon IS NOT NULL
+           AND coalesce(precio_comparable, true)
+         GROUP BY grupo_id, unidad_canon),
+    manda AS (
+        SELECT grupo_id, arg_max(unidad_canon, c * 1000 + n) AS unidad
+          FROM unidades GROUP BY grupo_id),
+    comparables AS (
+        SELECT m.* FROM mios m JOIN manda u
+          ON m.grupo_id = u.grupo_id AND m.unidad_canon = u.unidad
+         WHERE m.precio_unidad_cent > 0
+           AND coalesce(m.precio_comparable, true)),
+    porgrupo AS (
+        SELECT grupo_id,
+               count(DISTINCT fuente) AS cadenas,
+               min(precio_unidad_cent) AS min_unidad,
+               max(precio_unidad_cent) AS max_unidad,
+               arg_min(nombre, precio_unidad_cent) AS nombre,
+               arg_min(fuente, precio_unidad_cent) AS cadena_mas_barata,
+               -- `arg_min` se salta los nulos, asi que la foto es la del miembro
+               -- mas barato QUE TENGA foto. Un grupo sin ninguna no la manda.
+               arg_min(imagen, precio_unidad_cent) AS imagen,
+               -- El miembro mas barato es el que da el precio, asi que es su
+               -- unidad la que tiene que ser de fiar. Con `coalesce` a falso: un
+               -- gold viejo sin la columna no puede presumir de comparable.
+               arg_min(coalesce(comparacion_fiable, false),
+                       precio_unidad_cent) AS unidad_fiable,
+               any_value(unidad_canon) AS unidad
+          FROM comparables GROUP BY grupo_id)
+    SELECT grupo_id, nombre, imagen, min_unidad, unidad, cadena_mas_barata,
+           -- `fiable` es lo que la pantalla necesita para no inventarse una
+           -- recomendacion: que la unidad sea de las que se pueden comparar
+           -- (kg, l, m -- "ud" no lo es), que haya al menos otra cadena con quien
+           -- comparar, y que los precios del grupo no se contradigan por mas de
+           -- {factor}x, que es cuando el error somos nosotros (ver
+           -- core/comparacion.py). Con una sola cadena no hay comparacion que
+           -- hacer, y decir "no lo puedo comparar" es una respuesta.
+           unidad_fiable
+             AND cadenas >= 2
+             AND NOT (min_unidad > 0 AND max_unidad / min_unidad > {factor}) AS fiable
+      FROM porgrupo
+"""
+
+
+def _tarjeta(fila: tuple) -> dict:
+    """Un grupo -> la tarjeta. Los datos que no estan no viajan.
+
+    Nunca se manda `imagen: null` ni `imagen: ""`: la pantalla sabe dibujar su
+    hueco cuando el campo no llega, y un campo vacio se lee como un dato roto.
+    """
+    tarjeta = {
+        "grupo_id": fila[0], "nombre": fila[1],
+        "precio_unidad_cent": fila[3], "unidad": fila[4],
+        "cadena_mas_barata": fila[5], "fiable": bool(fila[6]),
+    }
+    if fila[2]:
+        tarjeta["imagen"] = fila[2]
+    return tarjeta
+
+
+def tarjetas(grupo_ids: list[int]) -> dict[int, dict]:
+    """La tarjeta de cada grupo pedido, por `grupo_id`.
+
+    Los que no salen son los que no se pueden pintar: un grupo que ya no esta en
+    gold (el emparejador se rehizo y esos ids no son los de hoy) o uno sin ningun
+    precio con el que comparar. Devolverlos con el precio en blanco seria peor que
+    no devolverlos: una tarjeta sin precio no se puede tocar para anadir nada, que
+    es lo unico que hace la cuadricula.
+    """
+    ids = list(dict.fromkeys(grupo_ids))
+    if not ids:
+        return {}
+    fuente = f"SELECT * FROM buscable WHERE grupo_id IN ({','.join('?' * len(ids))})"
+    filas = conexion().execute(
+        _TARJETAS.format(fuente=fuente, factor=FACTOR_INCREIBLE), ids).fetchall()
+    # Por `grupo_id`, que es como lo busca quien llama: es el que une el historial
+    # de PostgreSQL con el catalogo, que viven en dos sitios distintos.
+    return {f[0]: _tarjeta(f) for f in filas}
+
+
+# El catalogo se escribe sin tildes y en minusculas en `buscable.texto`
+# (`strip_accents(lower(nombre || ' ' || marca))`), asi que los nombres que se
+# piden aqui van igual: sin tildes y en minusculas.
+_NOMBRES_A_GRUPOS = """
+    WITH quiero(puesto, texto) AS (VALUES {valores}),
+    casan AS (
+        SELECT q.puesto, b.grupo_id,
+               count(DISTINCT b.fuente) AS cadenas,
+               min(b.precio_unidad_cent) AS precio
+          FROM quiero q JOIN buscable b
+            ON b.grupo_id IS NOT NULL AND b.precio_unidad_cent > 0
+           -- El nombre del producto TIENE QUE EMPEZAR por lo pedido. Buscar la
+           -- frase en cualquier parte del texto trae lo que solo la menciona:
+           -- "huevos" devolvia Kinder Huevos de chocolate y "mantequilla" unas
+           -- palomitas sabor mantequilla, que son los que mas cadenas venden de
+           -- esas palabras. "Mantequilla sin sal" es mantequilla; "palomitas
+           -- sabor mantequilla" no.
+           AND strpos(strip_accents(lower(b.nombre)), q.texto) = 1
+         GROUP BY q.puesto, b.grupo_id)
+    SELECT puesto, grupo_id FROM (
+        SELECT puesto, grupo_id,
+               row_number() OVER (PARTITION BY puesto
+                                  ORDER BY cadenas DESC, precio, grupo_id) AS n
+          FROM casan) t
+     WHERE n = 1
+"""
+
+
+def tarjetas_por_nombre(nombres: list[str]) -> list[dict]:
+    """La tarjeta de cada nombre pedido, en el orden en que se pidio.
+
+    El grupo elegido es **el que mas cadenas venden** de eso, y no el primero que
+    salga en una busqueda. La diferencia no es cosmetica: `buscar` ordena por lo
+    mas barato por unidad, que es lo correcto para buscar y terrible para esto --
+    pidiendo "patatas" devuelve una tortilla de patatas y pidiendo "huevos" unos
+    gofres de huevo, porque son mas baratos por kilo. El que venden todas las
+    cadenas es, por definicion, la compra basica.
+
+    Se usa para el ultimo de los tres origenes de `/api/habituales`: el dia que
+    alguien abre la aplicacion por primera vez y no hay ningun historial, ni suyo
+    ni de nadie.
+    """
+    if not nombres:
+        return []
+    valores = ", ".join("(?, ?)" for _ in nombres)
+    args = [x for puesto, nombre in enumerate(nombres, start=1)
+            for x in (puesto, nombre)]
+    filas = conexion().execute(
+        _NOMBRES_A_GRUPOS.format(valores=valores), args).fetchall()
+    suyos = tarjetas([f[1] for f in filas])
+    salida, vistos = [], set()
+    for _puesto, grupo_id in sorted(filas):
+        # Dos nombres pueden acabar en el mismo grupo ("leche" y "leche entera").
+        # Se queda el primer puesto: dos tarjetas iguales en la cuadricula se leen
+        # como un fallo de la aplicacion.
+        if grupo_id in vistos or grupo_id not in suyos:
+            continue
+        vistos.add(grupo_id)
+        salida.append(suyos[grupo_id])
+    return salida
+
+
 # --------------------------------------------------------------- los pasillos --
 
 # El recorrido de la tienda, no el alfabeto. Se repite aqui a proposito y no se

@@ -20,7 +20,17 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import alertas, almacen, analisis, catalogo, cesta, movimientos, panel, registro
+from . import (
+    alertas,
+    almacen,
+    analisis,
+    catalogo,
+    cesta,
+    habituales,
+    movimientos,
+    panel,
+    registro,
+)
 from .ajustes import AJUSTES
 
 COOKIE = "cesta_sesion"
@@ -319,6 +329,25 @@ def estado():
         "cadenas": [{"cadena": f[0], "productos": f[1], "ultimo_dia": f[2],
                      "al_dia": f[2] == hoy} for f in filas],
     }
+
+
+# ------------------------------------------------------------- habituales ---
+
+@app.get("/api/habituales")
+def ver_habituales(limite: int = Query(24, ge=1, le=60),
+                   usuario: dict = Depends(usuario_actual)):
+    """El mosaico de lo habitual: lo que esta persona compra una y otra vez.
+
+    Pide sesion, y no por costumbre: esto es **su** historial de compra. Ni el
+    recuento de lo que compra la casa dice quien lo compro.
+
+    `origen` dice de donde sale lo que se manda -- `"tuyo"`, `"de todos"` o
+    `"basico"` --, porque los tres casos se pintan igual y significan cosas muy
+    distintas: la pantalla tiene que poder decir *"todavia no se lo que sueles
+    comprar"* en vez de inventarse un habito. El porque de cada uno, en
+    `api/habituales.py`.
+    """
+    return habituales.lista(usuario["id"], limite)
 
 
 # ----------------------------------------------------------------- listas ---

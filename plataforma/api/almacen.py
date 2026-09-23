@@ -381,6 +381,124 @@ def quita_favorito(usuario_id: str, grupo_id: int | None, producto_id: str | Non
                         (usuario_id, producto_id))
 
 
+# ------------------------------------------------------------- habituales ---
+#
+# Lo que esta persona ha puesto mas veces en sus listas. Es lo que sostiene el
+# mosaico de `/api/habituales` (ver `api/habituales.py` para los tres origenes).
+#
+# Las tres decisiones que hay detras de esta consulta -- contar tambien las lineas
+# borradas, contar solo lo que anadio esta persona y pesar por recencia -- estan
+# escritas en el docstring de `historial_de`, que es donde se leen antes de
+# tocarla. Del SQL, lo unico que hay que saber aqui: `y` es el filtro del autor y
+# `orden` el criterio que cambia entre el historial propio y el de todos.
+
+# La vida media del decaimiento, en dias. El porque, en `historial_de`.
+VIDA_MEDIA_DIAS = 30
+
+# El propio: ordenado por lo reciente que se ha anadido, y a igualdad por veces.
+# `grupo_id` al final para que la cuadricula no baile entre dos peticiones: sin un
+# ultimo criterio estable, PostgreSQL puede devolver el empate en cualquier orden.
+_ORDEN_PROPIO = "peso DESC, veces DESC, grupo_id"
+# El de todos: primero lo que ha anadido MAS GENTE DISTINTA, que es la unica
+# lectura honesta de "lo mas comprado por todos". Con dos personas, ordenar solo
+# por veces haria que lo que compra una sola de ellas pareciera de todos.
+_ORDEN_DE_TODOS = "personas DESC, peso DESC, veces DESC, grupo_id"
+
+SQL_HISTORIAL = """
+    SELECT grupo_id,
+           count(*) AS veces,
+           max(anadido_en)::date::text AS ultima_vez,
+           count(DISTINCT anadido_por) AS personas,
+           sum(power(0.5::float8,
+                     EXTRACT(EPOCH FROM (now() - anadido_en))::float8
+                     / 86400.0 / {vida})) AS peso
+      FROM lista_linea
+     WHERE grupo_id IS NOT NULL {y}
+     GROUP BY grupo_id
+     ORDER BY {orden}
+     LIMIT %(n)s
+"""
+
+
+def consulta_historial(suyo: bool = True) -> str:
+    """El SQL del ranking, montado y listo para ejecutar.
+
+    Se saca a una funcion para que las tres reglas del historial se puedan leer
+    desde fuera -- y vigilar desde una prueba -- sin PostgreSQL delante: el filtro
+    del autor y el orden no son los mismos en el historial propio que en el de
+    todos, y son justo las dos cosas que no se pueden equivocar.
+    """
+    return SQL_HISTORIAL.format(
+        vida=VIDA_MEDIA_DIAS,
+        y="AND anadido_por = %(u)s" if suyo else "",
+        orden=_ORDEN_PROPIO if suyo else _ORDEN_DE_TODOS)
+
+
+def _ranking(usuario_id: str | None, limite: int) -> list[dict]:
+    """El ranking, propio o de todos. Uno solo para que no se separen las reglas."""
+    suyo = usuario_id is not None
+    parametros: dict = {"n": int(limite)}
+    if suyo:
+        parametros["u"] = usuario_id
+    with cursor() as cur:
+        cur.execute(consulta_historial(suyo), parametros)
+        return [{"grupo_id": f["grupo_id"], "veces": f["veces"],
+                 "ultima_vez": f["ultima_vez"], "personas": f["personas"]}
+                for f in cur.fetchall()]
+
+
+def historial_de(usuario_id: str, limite: int = 72) -> list[dict]:
+    """Los grupos que esta persona ha anadido, lo reciente pesando mas.
+
+    Tres decisiones, y las tres estan en el SQL para que la regla y la consulta no
+    se puedan separar:
+
+    **Se cuentan todas las lineas, incluidas las borradas.** `lista_linea` no borra
+    de verdad: pone `borrado_en` y `limpiar_lineas_borradas` las quita a los 30
+    dias. *Una lista se vacia al terminar la compra; el habito no.* Contando solo
+    las lineas vivas, el historial de quien usa la lista como se usa una lista
+    -- vaciandola despues de comprar -- estaria siempre vacio, y el mosaico
+    ensenaria lo de todos a alguien que lleva meses comprando.
+
+    **Se cuenta por `anadido_por`, no por "las listas en las que estoy".** En una
+    lista compartida se apunta lo que trae el otro, y eso no es tu historial: es el
+    suyo. Ademas, quien tiene permiso de solo mirar una lista no puede sacar de
+    aqui lo que hay dentro de ella.
+
+    **Lo reciente pesa mas, con un decaimiento y no con un corte.** El encargo deja
+    elegir entre contar solo los ultimos 90 dias o pesar por recencia, y pide
+    escribirlo. Se eligio pesar, con una vida media de 30 dias:
+
+        - con un corte a 90 dias, un producto desaparece del mosaico de un dia para
+          otro al cruzar el dia 90, y `veces` tendria que pasar a significar "veces
+          en 90 dias". Dos numeros distintos con el mismo nombre es justo el error
+          que este proyecto ya pago una vez con "imposible" (core/comparacion.py);
+        - noventa dias, ademas, es un numero que no se puede defender frente a 60 o
+          a 180. Una vida media es una sola linea y se explica sola;
+        - con 30 dias de vida media, lo que se anadio este mes pesa el doble que lo
+          del mes pasado y a los 90 dias pesa un octavo -- casi el mismo trabajo
+          que aquel corte, sin el borde. Nueve veces hace tres meses, que es el
+          caso que el encargo pone como "eso no es un habito", pesa poco mas que
+          una vez de ayer.
+
+    `veces` es el recuento entero, sin decaimiento: es lo que se le ensena a la
+    persona, y tiene que ser lo que de verdad hizo. El decaimiento decide **el
+    orden**, nada mas.
+    """
+    return _ranking(usuario_id, limite)
+
+
+def mas_comprados(limite: int = 72) -> list[dict]:
+    """Lo mismo sobre las lineas de todo el mundo, sin decir de quien es cada una.
+
+    Es el segundo origen del mosaico: quien acaba de crearse la cuenta no tiene
+    historial, y con esto la pantalla no se ve vacia el primer dia. Lo que sale de
+    aqui es un recuento agregado -- "esto lo ha anadido alguien N veces" --, nunca
+    quien lo anadio.
+    """
+    return _ranking(None, limite)
+
+
 # ----------------------------------------------------------------- alertas ---
 #
 # La tabla estaba en el esquema desde el primer dia y no la usaba nadie. Ver
