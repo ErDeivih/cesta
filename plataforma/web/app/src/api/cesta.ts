@@ -203,10 +203,18 @@ export interface NuevaLinea {
   nota?: string | null
 }
 
-/** Anade una linea a la lista. */
-export async function anadirLinea(listaId: string, linea: NuevaLinea): Promise<void> {
+/** Anade una linea a la lista.
+ *
+ *  `id` se puede pasar para **resucitar** una linea que se acaba de quitar, y ese
+ *  es el motivo de que sea un parametro: la API hace `ON CONFLICT (id) DO UPDATE`
+ *  con `borrado_en = NULL` (`almacen.py:288`), asi que volver a anadir con **el
+ *  mismo id** deshace el borrado en vez de crear otra linea. Es lo que hace
+ *  posible un «Deshacer» de verdad y no un boton que duplica la compra.
+ */
+export async function anadirLinea(listaId: string, linea: NuevaLinea,
+                                  id: string = idDeLinea()): Promise<void> {
   await escribe(`/listas/${encodeURIComponent(listaId)}/lineas`, 'POST', {
-    id: idDeLinea(),
+    id,
     // Cantidad 1 y sin nota es lo que hace la interfaz vieja (`anade`, app.js:614):
     // desde la ficha se dice QUE se compra, no cuanto. El cuanto se cambia en la
     // cesta, que es donde se ve la lista entera.
