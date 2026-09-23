@@ -31,7 +31,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 
 import {
-  cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
+  anadirLinea, cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
   revocarInvitaciones, salir, verLista, donde, yo,
 } from '../api/cesta'
 import type { CambioLinea, Invitacion, Persona } from '../api/cesta'
@@ -734,7 +734,8 @@ export function Cesta() {
   const enElCarro = detalle.data?.lineas.filter((l) => l.tachado_en !== null) ?? []
 
   const cambia = useMutation({
-    mutationFn: ({ lineaId, cambio }: { lineaId: string; cambio: CambioLinea }) =>
+    mutationFn: ({ lineaId, cambio }: { lineaId: string; cambio: CambioLinea;
+      linea?: Linea | null }) =>
       cambiarLinea(listaId as string, lineaId, cambio),
     onSuccess: () => {
       // Se vuelve a pedir y se pinta lo que dice el servidor. El total, el
@@ -935,12 +936,52 @@ export function Cesta() {
                             key={l.id}
                             linea={l}
                             guardando={cambia.isPending || detalle.data.papel === 'mira'}
-                            cambiar={(lineaId, cambio) => cambia.mutate({ lineaId, cambio })}
+                            cambiar={(lineaId, cambio) =>
+                            cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
                           />
                         ))}
                       </ul>
                     </section>
                   ))}
+                {/* Deshacer en vez de confirmar: quitar una linea es la accion
+                    destructiva de esta pantalla. **El id es la llave**: la API hace
+                    ON CONFLICT (id) DO UPDATE con orrado_en = NULL (almacen.py:288),
+                    asi que reanadir con **el mismo id** resucita la linea en vez de
+                    crear otra. Por eso se manda l.id y no se deja que se genere uno.
+
+                    La linea quitada se lee de cambia.variables, que es la mutacion
+                    la que la guarda: asi no hace falta un useState aparte que se
+                    pueda quedar desincronizado con lo que se ve. Y desaparece sola en
+                    cuanto se hace cualquier otro cambio, porque las variables son las
+                    del ultimo. */}
+                {cambia.variables?.linea && (
+                  <Aviso tono="info">
+                    <span className="flex flex-wrap items-center gap-3">
+                      Has quitado <strong>{cambia.variables.linea.nombre_visto}</strong>.
+                      <Boton
+                        variante="sutil"
+                        onClick={async () => {
+                          const quitada = cambia.variables?.linea
+                          if (!quitada || !listaId) return
+                          await anadirLinea(
+                            listaId,
+                            {
+                              nombre: quitada.nombre_visto,
+                              grupo_id: quitada.grupo_id,
+                              producto_id: quitada.producto_id,
+                              cantidad: quitada.cantidad,
+                            },
+                            quitada.id,
+                          )
+                          cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+                          cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+                        }}
+                      >
+                        Deshacer
+                      </Boton>
+                    </span>
+                  </Aviso>
+                )}
                 {/* El numero que se mira mientras se coge: al tachar algo, esto
                     es lo unico que confirma que el cambio ha llegado. */}
                 <p className="mt-3 text-sm text-tinta-suave">
