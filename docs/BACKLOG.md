@@ -842,6 +842,48 @@ ninguno puede pasar del tope de *"esto ya no es una oferta"* (`core/comparacion.
 29 veces no es una oferta, es una unidad mal leida). Con su trampa, para que la medida
 demuestre que mira: con el tope a cero tiene que encontrar algo.
 
+### La cesta vacía deja de ser un cartel: la cuadrícula de un toque
+
+El §2 pone **las tres cosas juntas** como el peor momento de la aplicación: *"un amigo que se
+registra ve un buscador vacío, **una cesta vacía** y un panel de índices que no significa
+nada"*. El buscador se arregló el 23 de septiembre (`LoQueSeCompra` + `Mosaico`); la cesta se
+quedó con un cartel: *"Busca un producto, abre su ficha y pulsa «Añadir a la cesta»"*, o sea
+tres pasos para volver al mismo sitio, con la aplicación sin hacer nada por quien acaba de
+llegar.
+
+Ahora las dos ramas vacías de `/cesta` —**sin ninguna lista** y **con la lista sin líneas**—
+pintan la cuadrícula (`Mosaico`, seis tarjetas) además de la frase:
+
+    No tienes ninguna lista
+    Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se apunta en
+    la lista de casa, que se crea sola, y la cantidad se cambia aquí.
+
+    La compra basica                                  <- el titulo dice de donde sale
+    Un toque y a la lista. Lo tocado se cambia en la cesta.
+    Leche entera   0,96 EUR/l  en Aldi     [Añadir]
+    Pan de molde blanco  1,33 EUR/kg  en Aldi   [Añadir]
+    ...
+
+Medido en un navegador con una cuenta recién creada, sobre este mismo bronze:
+
+    la pantalla        seis productos reales con su cadena más barata, y el título
+                       «La compra básica» (que es lo que son: no se titula «Lo de siempre»)
+    un toque           la lista se crea sola y la cesta queda con su línea, su total
+                       (0,96 €), sus dos secciones y su pasillo
+
+**Y `vacia` es una excepción escrita, no un descuido.** En el buscador, sin historial, la
+cuadrícula de básicos **no** se pinta a propósito (`Mosaico.tsx`, regla 1: 24 recuadros no
+explican nada y ahí sale la tarjeta de la primera vez). En la cesta vacía sí, porque la
+pregunta que se trae a esa pantalla es *"¿qué me falta?"* y con la lista vacía la respuesta es
+"todo": seis recuadros que se apuntan de un toque la contestan; un cartel que manda a buscar,
+no. Lo que no puede pasar es enseñarla **sin decir de dónde sale**: con la cuadrícula de
+básicos el título pasa a ser el de su origen, porque titulada «Lo de siempre» sería una
+mentira dicha en un título.
+
+Los dos estados están en `tests/test_primera_vez.py` (que existan, que estén en **las dos**
+ramas, y que la excepción esté escrita), y el guion de los quince segundos ya los apunta en
+el apartado de «la primera vez».
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

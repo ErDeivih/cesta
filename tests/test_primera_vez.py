@@ -33,6 +33,7 @@ COMPONENTE = (RAIZ / "plataforma" / "web" / "app" / "src" / "componentes"
 MOSAICO = (RAIZ / "plataforma" / "web" / "app" / "src" / "componentes"
            / "Mosaico.tsx")
 BUSCAR = (RAIZ / "plataforma" / "web" / "app" / "src" / "paginas" / "Buscar.tsx")
+CESTA = (RAIZ / "plataforma" / "web" / "app" / "src" / "paginas" / "Cesta.tsx")
 
 
 @pytest.fixture(scope="module")
@@ -85,6 +86,54 @@ def test_la_diferencia_se_resta_de_los_dos_precios_del_grupo(componente: str):
     # de un grupo de una sola cadena no es un ahorro, es que no hay comparacion.
     assert re.search(r"caro\s*<=\s*barato\s*\)\s*return\s+null", componente), \
         "sin dos precios distintos no hay diferencia que ensenar"
+
+
+def test_la_cesta_vacia_no_es_un_cartel_que_manda_a_buscar():
+    """El §2 lista **la cesta vacia** entre el peor momento de la aplicacion.
+
+    Y lo era en el sentido literal: la pantalla decia "busca un producto, abre su ficha y
+    pulsa Añadir a la cesta", o sea tres pasos para volver al mismo sitio, con la
+    aplicacion sin hacer nada por quien acaba de llegar. Ahora pinta la cuadricula
+    (`Mosaico`, que apunta de un toque) con la compra basica o lo que compra la casa.
+
+    Medido en un navegador el 23 de septiembre de 2026 con una cuenta recien creada: la
+    pantalla ensenaba seis productos reales con su cadena mas barata (leche entera 0,96
+    EUR/l en Aldi, pan de molde 1,33 EUR/kg...), y **un toque** dejaba la cesta con su
+    linea, su total (0,96 EUR) y su pasillo.
+    """
+    if not CESTA.exists():
+        pytest.skip("esta copia no trae la interfaz nueva")
+    cesta = CESTA.read_text(encoding="utf-8")
+
+    assert re.search(r"import\s*\{[^}]*\bMosaico\b[^}]*\}\s*from", cesta), \
+        "la cesta no importa la cuadricula"
+    # En **los dos** estados vacios: sin ninguna lista, y con la lista sin lineas. Son dos
+    # ramas distintas del mismo fichero (una sale antes de pintar la lista) y las dos se
+    # ven: la primera, al registrarse; la segunda, al quitar la ultima linea.
+    assert cesta.count("<Mosaico limite={6} vacia />") == 2, (
+        "la cuadricula no esta en los dos estados vacios de la cesta: "
+        f"{cesta.count('<Mosaico limite={6} vacia />')}")
+    # Y la frase deja de mandar a otra pantalla a hacer el trabajo.
+    assert "abre su ficha y pulsa" not in cesta, \
+        "la cesta vacia vuelve a mandar a la ficha a dar tres pasos"
+
+
+def test_con_la_cesta_vacia_la_compra_basica_si_se_ensena():
+    """La excepcion a la regla del mosaico, escrita y con su razon.
+
+    En el buscador, sin historial **no se pinta la cuadricula de basicos**: son 24
+    recuadros que no explican nada (`Mosaico.tsx`, regla 1). En la cesta vacia si, porque
+    la pregunta que se trae a esa pantalla es *"¿que me falta?"* y con la lista vacia la
+    respuesta es "todo". Lo que no puede pasar es que se ensene **sin decir de donde
+    sale**: titulada "Lo de siempre", una cuadricula de la compra basica seria una mentira
+    dicha en un titulo.
+    """
+    mosaico = MOSAICO.read_text(encoding="utf-8")
+    assert "vacia = false" in mosaico, "no hay forma de pedir la cuadricula en la cesta"
+    assert re.search(r"soloBasico\s*&&\s*!vacia", mosaico), \
+        "`vacia` no quita el respaldo de la tarjeta de la primera vez"
+    assert "TITULO[tarjetas[0]?.origen]" in mosaico, \
+        "el titulo no dice de donde sale lo que se esta viendo"
 
 
 def test_los_cuatro_basicos_son_cuatro_y_de_nombre_llano(componente: str):

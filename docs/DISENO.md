@@ -383,9 +383,11 @@ vacío de entrada (`Buscar.tsx:145-152`). No se toca.
 
     pantalla        vacío hoy                                        falta
     /               tres ejemplos pulsables (Buscar.tsx:135-154) ✓  —
-    /cesta          «La lista está vacía» + qué hacer (Cesta.tsx:871) ✓  —
-    /cesta (sin listas)  «No tienes ninguna lista» + qué hacer (Cesta.tsx:765) ✓  —
-    /cesta (dónde)  «No puedo decir dónde» (Cesta.tsx:927) ✓        —
+    /cesta          «La lista está vacía» + qué hacer y **la cuadrícula de un toque**
+                    (Cesta.tsx:1143) ✓                              —
+    /cesta (sin listas)  «No tienes ninguna lista» + qué hacer y la cuadrícula
+                    (Cesta.tsx:955) ✓                               —
+    /cesta (dónde)  «No puedo decir dónde» (Cesta.tsx:1298) ✓       —
     /favoritos      dice QUÉ son, no CÓMO añadir uno (Favoritos.tsx:63-72)  ver 3.4
     /grupo          «Este grupo no tiene ningún producto con precio»
                     (Grupo.tsx:283) ✓                               —

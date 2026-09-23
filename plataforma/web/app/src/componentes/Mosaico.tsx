@@ -17,6 +17,14 @@
  *     diferencia de hoy**, que es lo que hace entender para que sirve la aplicacion.
  *     Una cuadricula de 24 productos basicos no explica nada: son 24 recuadros sin
  *     una sola razon para mirarlos. Primero se entiende, despues se usa.
+ *
+ *     **Con una excepcion: `vacia`** (la cesta sin nada dentro). Ahi la cuadricula de
+ *     la compra basica **si** tiene una razon: la pregunta que se trae a esa pantalla es
+ *     *"¿que me falta?"*, y con la lista vacia la respuesta es "todo". 24 recuadros que
+ *     se apuntan de un toque contestan eso; la tarjeta de la primera vez, no. Por eso
+ *     `vacia` quita el respaldo y **cambia el titulo** por el de verdad ("La compra
+ *     basica", "Lo que compra la casa"): sin eso, una cuadricula de basicos se leeria
+ *     como "lo que sueles comprar", que es mentira.
  *  2. **Si el endpoint no esta, no pasa nada.** El 404 de una API que todavia no se
  *     ha desplegado no es un fallo de nadie: se cae a la tarjeta de la primera vez,
  *     igual que si no hubiera historial. Un error rojo aqui seria culpar a quien
@@ -41,7 +49,13 @@ const TITULO: Record<string, string> = {
   basico: 'La compra basica',
 }
 
-export function Mosaico({ limite = 12 }: { limite?: number }) {
+/** La cuadricula de lo habitual.
+ *
+ *  `vacia` se pone cuando se pinta dentro de una lista sin nada: ahi la compra basica
+ *  **si** se ensena (ver la regla 1 del comentario de arriba). Por defecto no, que es lo
+ *  que quieren el buscador y todo lo demas.
+ */
+export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia?: boolean }) {
   const habituales = useHabituales(limite)
   const anade = useAnadeALaCesta()
   const [puestos, setPuestos] = useState<number[]>([])
@@ -55,15 +69,21 @@ export function Mosaico({ limite = 12 }: { limite?: number }) {
   // tarjeta llevan al mismo sitio: la tarjeta de la primera vez.
   const tarjetas = habituales.data?.habituales ?? []
   const soloBasico = (habituales.data?.origenes ?? []).every((o) => o === 'basico')
-  if (tarjetas.length === 0 || soloBasico) return <LoQueSeCompra />
+  if (tarjetas.length === 0 || (soloBasico && !vacia)) return <LoQueSeCompra />
 
   // Si la cuadricula mezcla escalones, se dice: una tarjeta basica y una tuya no
   // valen lo mismo, y el titulo solo puede hablar de uno.
   const mezcla = new Set(tarjetas.map((h) => h.origen)).size > 1
+  // Y cuando **no** mezcla, el titulo dice de donde sale de verdad. En la cesta vacia
+  // importa: una cuadricula de la compra basica titulada "Lo de siempre" seria una
+  // mentira dicha con un titulo.
+  const titulo = vacia && !mezcla
+    ? (TITULO[tarjetas[0]?.origen] ?? 'Lo de siempre')
+    : 'Lo de siempre'
 
   return (
     <Tarjeta>
-      <p className="text-sm font-semibold">Lo de siempre</p>
+      <p className="text-sm font-semibold">{titulo}</p>
       <p className="mt-0.5 text-sm text-tinta-suave">
         Un toque y a la lista. Lo tocado se cambia en la cesta.
       </p>

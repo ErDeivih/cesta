@@ -41,6 +41,7 @@ import {
   apuntaCambio, leerCola, vaciaCola,
 } from '../estado/cola'
 import type { CambioPendiente } from '../estado/cola'
+import { Mosaico } from '../componentes/Mosaico'
 import {
   Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
   Tarjeta, Vacio, cx,
@@ -939,13 +940,26 @@ export function Cesta() {
     </Vacio>
   }
   if (!listas.data?.length) {
+    // **Una lista vacia no puede ser un cartel que manda a otra pantalla.** El §2 del
+    // encargo pone esto como el peor momento de la aplicacion: *"un amigo que se
+    // registra ve un buscador vacio, **una cesta vacia** y un panel de indices que no
+    // significa nada"*. Antes, esta pantalla decia "busca un producto, abre su ficha y
+    // pulsa Añadir": tres pasos para volver al mismo sitio, y la aplicacion sin hacer
+    // nada por quien acaba de llegar.
+    //
+    // Ahora se ensena **la aplicacion funcionando con datos reales** (`Mosaico`, con la
+    // compra basica o lo que compra la casa segun lo que haya) y se apunta de un toque.
+    // La lista de casa la crea el propio "Añadir" si no existe (`useAnadeALaCesta`).
     return (
-      <Vacio titulo="No tienes ninguna lista">
-        <p>
-          Todavía no hay listas guardadas. Busca un producto, abre su ficha y
-          pulsa «Añadir a la cesta»: la lista de casa se crea sola.
-        </p>
-      </Vacio>
+      <div className="grid gap-4">
+        <Vacio titulo="No tienes ninguna lista">
+          <p>
+            Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se
+            apunta en la lista de casa, que se crea sola, y la cantidad se cambia aquí.
+          </p>
+        </Vacio>
+        <Mosaico limite={6} vacia />
+      </div>
     )
   }
 
@@ -1125,11 +1139,19 @@ export function Cesta() {
                 navegador el 23 de septiembre de 2026 (`plataforma/prueba_navegador.py`). */}
             <>
               {lineas.length === 0 && (
-              <Vacio titulo="La lista está vacía">
-                <p>
-                  Busca un producto, abre su ficha y pulsa «Añadir a la cesta».
-                </p>
-              </Vacio>
+                <>
+                  <Vacio titulo="La lista está vacía">
+                    <p>
+                      Busca un producto o toca uno de abajo: se apunta en un toque, y la
+                      cantidad se cambia aquí.
+                    </p>
+                  </Vacio>
+                  {/* La misma cuadricula que en el otro estado vacio: la pregunta que se
+                      trae a esta pantalla es "¿que me falta?", y con la lista vacia la
+                      respuesta es "todo". Datos reales y un toque, no un cartel que
+                      manda a buscar. */}
+                  <Mosaico limite={6} vacia />
+                </>
               )}
                 {/* **Dos secciones, no una lista.** Es la unica pantalla que se usa
                     de pie, en movimiento y con una mano, y con nueve lineas y
