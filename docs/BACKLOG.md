@@ -416,6 +416,37 @@ como se hizo con los grupos.
     punto 5  el medoide como segunda red          PENDIENTE (calibrar contra el banco)
     punto 6  los avisos que no avisan             PENDIENTE
 
+**Lo que le falta a la barra, dicho con su numero**, porque el encargo se cierra cuando
+se cumplen las seis condiciones y no cuando se acaban las tareas:
+
+    (a) las cuatro preguntas en menos de 15 s con el movil    SIN MEDIR
+        No lo puede medir quien escribe el codigo: hace falta un navegador y un movil.
+        Es lo que mide Claude, y devuelve defectos con su numero, no parches.
+    (b) la primera vez con datos reales                       CUMPLE
+    (c) la lista: dos secciones, pasillo pegajoso,
+        sin rojo sin cobertura                                CUMPLE (23 sep)
+    (d) la frase antes que la tabla, y sin frase si el
+        grupo no es de fiar                                   CUMPLE
+    (e) pruebas verdes y `verificar_docs` verde                CUMPLE
+        (732 pasan; las 2 que fallan son de `core/datos/secciones.yml`, de otro
+        agente, y no se tocan desde aqui)
+    (f) CERO grupos con eje contradictorio                    49   NO
+        menos de 30 grupos de 11+                             0    CUMPLE
+        `--medir >= 57 %`                                     65 % CUMPLE
+
+**Lo unico que queda de la barra es (f): los 49 grupos con eje contradictorio**, y el
+camino esta escrito y medido, no por descubrir: la invariante caza lo que se funde
+**entre** cadenas y esto es lo que se funde **dentro** de un grupo legitimo, que es
+justo el papel del medoide como **segunda red** (punto 5). Su umbral se calibra contra
+el banco de pares (`projects/cesta/banco_de_pares.py`), no se elige a ojo. Lo que **no**
+se puede hacer, y esta comprobado: usar el margen de precio como cuchillo -- hay ahorros
+reales de 28x (`core/comparacion.py`), asi que **el margen detecta y el eje declarado en
+el nombre corta**, y el que calla no bloquea (ausencia de prueba no es tolerancia).
+
+Y (a) tampoco se puede dar por hecha sin medirla: es la unica condicion que se juzga
+**contra la madre del dueno**, y quien la mide tiene que ser alguien que no haya escrito
+la pantalla.
+
 **El «Deshacer» de la lista, listo para ejecutar.** Es el resto del punto 2 que mas
 vale (quitar una linea es la accion destructiva, y hoy no se puede volver atras).
 Esta comprobado que **la API ya lo permite**, que era la duda:
@@ -510,6 +541,9 @@ grupo tiene miembros de varias cadenas. Medido sobre el gold del 23 de septiembr
     productos sin pasillo                                86   (0,16 % de 52.417)
     grupos con miembros en mas de un pasillo          2.437 de 39.702   (6,1 %)
 
+(El total de 39.702 son los grupos con `grupo_id` de `data/gold/grupos.parquet`; los
+39.563 de `ejes.py` son los comparables, que es otra cuenta y por eso no cuadra.)
+
 O sea que el caso "no coinciden" **no es un rincon**: en 2.437 grupos hay que decidir.
 Se decide asi, y esta escrito en `catalogo.pasillo_de_grupos`: gana **el pasillo que
 mas miembros comparten**, y los empates se rompen **por el orden del recorrido de la
@@ -582,9 +616,11 @@ rojo no da ningun error de compilacion. Verificado ademas en el bundle servido: 
 «Sin cobertura», sigue llevando el rojo del guardado, y ya no dice «interfaz antigua»
 en ninguna parte.
 
-**Lo que queda del punto 2**: el **pasillo como separador pegajoso** (necesita que la
-API mande el pasillo en cada linea, que hoy no lo manda) y la «no se note cuando no hay
-cobertura» en el resto de pantallas, que hoy usan `Fallo` tambien para la red.
+**Lo que queda del punto 2**: nada de la lista en si -- el **pasillo pegajoso** entro el
+mismo dia, unas lineas mas arriba. Queda **la misma regla de "sin cobertura" en el resto
+de pantallas**, que hoy usan `Fallo` (rojo) tambien cuando lo que pasa es que no hay red:
+buscar, la ficha, el escaner y el panel. La regla esta ya escrita y probada
+(`api/cliente.ts::esSinRed`), asi que es aplicar la misma decision en cuatro sitios.
 
 ### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
 
