@@ -1,5 +1,45 @@
 # Cesta — traspaso: que falta, y que se hizo en cada ronda
 
+> ## AVISO: este documento se quedo viejo, y hay que leerlo con cuidado
+>
+> Se escribio el 23 de septiembre **antes** del encargo de UX, de la invariante del
+> reparto, de `/api/habituales` y del estudio de Jev. Sus numeros y su lista de "lo
+> que falta" **ya no son el estado actual**. Sigue valiendo por dos cosas, que son
+> las que no caducan: **la seccion 3, las trampas** (errores ya cometidos y pagados,
+> para no repetirlos) y **la seccion 4, lo que NO hay que rehacer**.
+>
+> **El estado actual, al dia, esta en:**
+>
+>     docs/BACKLOG.md  §0        la barra de aceptacion, sus SEIS condiciones, el
+>                                comando que reproduce cada una y el valor de hoy
+>     docs/DISENO.md             33 mejoras de interfaz medidas en un navegador real
+>     docs/COMPETENCIA-IMPLANTABLE.md   127 funcionalidades de ~50 apps, 17 fichas
+>                                listas para implementar y 11 tareas (N29-N39)
+>     docs/JEV-IMPLANTACION.md   donde encaja un modelo de salida forzada, y por que
+>                                la parte que vale no necesita esperar a Jev
+>     docs/REVISION-23SEP.md     la revision externa de ese dia
+>
+> **Lo que ha cambiado desde que se escribio, en corto:**
+>
+> - **La invariante del reparto** sustituyo a la cohesion contra el medoide como
+>   criterio principal: un grupo no puede tener dos productos de la misma cadena
+>   salvo que compartan EAN. Grupos de 11+ de **74 a 0**, cadena repetida sin EAN de
+>   **1.385 a 0**, y ningun EAN en dos grupos. El medoide queda como **segunda red**,
+>   con su umbral por calibrar contra el banco de pares.
+> - **Las cinco cadenas escribieron bronze el mismo dia** (23 sep): esa condicion de
+>   la barra, que aqui figura como "por comprobar", **esta cumplida**.
+> - **`/api/habituales` existe** (`plataforma/api/habituales.py`), con los tres
+>   origenes y el peso por recencia. Pendiente: reconstruir la imagen de la API para
+>   que responda en produccion, y decidir si `origen` va por tarjeta o por respuesta
+>   -- con el historial real de la casa el mosaico sale de **una** tarjeta.
+> - **El contraste esta arreglado** y con la formula de WCAG dentro de las pruebas
+>   (`tests/test_contraste.py`), mas las reglas de movil (`tests/test_ui_movil.py`) y
+>   el contraste de los limites de campo.
+> - **`/favoritos` y `/ajustes` ya tienen enlace**, que era funcion muerta.
+> - Y los **cuatro instrumentos** de la barra viven en el repositorio
+>   (`projects/cesta/ejes.py`, `tests/test_atributos.py`, `tests/test_contraste.py`),
+>   no en scripts de `data/debug/`, que esta en `.gitignore`.
+
 Escrito el 23 de septiembre de 2026 al cerrar el goal que ejecuto el encargo de
 `docs/TAREAS-22SEP.md`. Va dirigido a quien siga: **lo que falta, con la prueba de
 que falta**, y **lo que ya se hizo, para no repetirlo ni deshacerlo sin querer**.
