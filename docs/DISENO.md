@@ -1000,11 +1000,14 @@ es una idea nueva: está pedido y sin hacer.
 **33. El mosaico de habituales.** `docs/PANTALLAS.md:50-65` y
 `docs/USABILIDAD.md:24-36` lo piden, y sería la mejora de más valor del buscador:
 añadir algo que compras siempre pasaría de **2 pulsaciones más teclear** (escribir,
-abrir el grupo, «Añadir a la cesta») a **1 pulsación**. Está bloqueado: el endpoint
-`GET /api/habituales` está escrito en el contrato (`docs/API.md:380-388`) y en el
-backlog (`docs/BACKLOG.md:571`) pero **no existe en `plataforma/api`**. Buscado
-`habituales` en `plataforma/api`: cero coincidencias. Sin endpoint no hay mosaico, y
-el diseño de la cuadrícula de 3 columnas ya está en `docs/PANTALLAS.md:57-62`.
+abrir el grupo, «Añadir a la cesta») a **1 pulsación**. **Ya no está bloqueado por la
+API** (23 de septiembre de 2026): `GET /api/habituales` existe
+(`plataforma/api/habituales.py`), rellena hasta `limite` bajando escalones y **cada
+tarjeta dice su `origen`** — antes decía aquí que el endpoint «no existe en
+`plataforma/api`» y que buscar `habituales` daba cero coincidencias, y eso dejó de ser
+cierto ese día. Lo que falta es **la pantalla**: el diseño de la cuadrícula de 3
+columnas sigue en `docs/PANTALLAS.md:57-62`, y la palabra `habituales` sigue sin
+aparecer en `plataforma/web/app/src`.
 
 ---
 
@@ -1246,5 +1249,6 @@ que el estado «sin conexión» sale bien.
                                      de un supermercado ni el pulgar de nadie. Lo
                                      único que se puede afirmar con números es el
                                      contraste, el tamaño y el orden de tabulación.
-    `/api/habituales`                sigue sin existir: la mejora 33 está bloqueada
-                                     por la API, no por el diseño.
+    `/api/habituales`                existe desde el 23 de septiembre de 2026 y rellena
+                                     la cuadricula; la mejora 33 esta bloqueada por la
+                                     **pantalla**, no por la API.
