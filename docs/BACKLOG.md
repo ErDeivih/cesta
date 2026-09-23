@@ -301,12 +301,24 @@ subir un numero mientras bajaba el otro (el recall del emparejador subio y los g
 se fundieron peor), y mirando una sola columna eso se ve como una mejora.
 
     condicion                                   comando                                        hoy
-    pruebas verdes                              uv run pytest -q && uv run ruff check .        682 pasan, 0 fallan
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        687 pasan, 2 fallan (ajenos)
     --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
                                                   --medir                                      65 %   CUMPLE
-    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        54     NO
-    menos de 30 grupos de 11+ productos         (el mismo comando)                           74     NO
-    las cinco cadenas con bronze del mismo dia  ver `docs/ESTADO.md`                         por comprobar
+    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        52     NO
+    menos de 30 grupos de 11+ productos         (el mismo comando)                            0    CUMPLE
+    las cinco cadenas con bronze del mismo dia  ver `docs/ESTADO.md`                         CUMPLE (23 sep)
+    cadena repetida de la misma sin EAN         `data/debug/_cadena_repetida.py`              0    CUMPLE
+
+**La sexta la propuso Claude y es la mejor de todas**, asi que va en la barra: los
+enlaces son 1-a-1 **por par de cadenas**, y por tanto **un grupo no puede tener dos
+productos de la misma cadena** salvo que compartan EAN (el duplicado legitimo). Es
+una **invariante**, no una tolerancia: no hay umbral que elegir, y no mira el precio,
+asi que no puede borrar los ahorros reales de 28x. Cuando se midio por primera vez,
+los **74 de 74** grupos de 11 o mas la incumplian.
+
+Los dos instrumentos de esa condicion viven hoy en `data/debug/_cadena_repetida.py`,
+que esta en `.gitignore`: **deberia subir a `projects/cesta/` junto a `ejes.py`**, y
+su techo ponerse en `tests/test_atributos.py` como los otros cuatro.
 
 Y la de mas valor, que no es ninguna de esas cinco porque es la que las explica:
 
