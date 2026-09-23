@@ -373,7 +373,10 @@ subir.
 
 ### El encargo de UX del 23 de septiembre, y como se juzga
 
-Esta en `Claude outputs/ENCARGO-UX-23SEP.md` (328 lineas, 11 secciones). Lo que
+Esta en `Claude outputs/ENCARGO-UX-23SEP.md` (328 lineas, 11 secciones). **El indice de
+cierre, seccion por seccion y con la barra condicion a condicion, esta en
+`docs/CIERRE-ENCARGO-UX.md`**: es lo que hay que leer para decidir si el encargo esta
+cumplido, y aqui queda el detalle del dia a dia. Lo que
 cambia de marco, y es lo que manda sobre todo lo demas:
 
 **Cesta hoy ensena datos; lo que hace falta es que conteste preguntas.** Nadie abre
