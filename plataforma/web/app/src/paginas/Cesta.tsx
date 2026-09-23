@@ -35,10 +35,10 @@ import {
   revocarInvitaciones, salir, verLista, donde, yo,
 } from '../api/cesta'
 import type { CambioLinea, Invitacion, Persona } from '../api/cesta'
-import { textoDeError } from '../api/cliente'
+import { esSinRed, textoDeError } from '../api/cliente'
 import { euros, hace } from '../api/formato'
 import {
-  Aviso, Boton, CampoTexto, Cargando, Casilla, Etiqueta, Selector, Tarjeta,
+  Aviso, Boton, CampoTexto, Cargando, Casilla, Etiqueta, Fallo, Selector, Tarjeta,
   Vacio, cx,
 } from '../componentes/ui'
 import type { Linea, Reparto } from '../tipos'
@@ -837,14 +837,58 @@ export function Cesta() {
       )}
 
       {detalle.isLoading && <Cargando que="la lista" />}
+
+      {/* Cuando no se ha podido guardar un cambio. **Se distinguen dos cosas que
+          no son la misma**, y hasta hoy se pintaban igual:
+      
+          - **Sin cobertura** (`esSinRed`): en el pasillo esto pasa, y no es un
+            fallo de nadie. Va en tono neutro, sin `role="alert"`, y dice lo
+            unico que hay que saber: que la lista sigue como estaba y que hay que
+            volver a pulsar. En rojo, esto mismo se lee como "la aplicacion se ha
+            roto" y se deja de usar la lista justo donde mas sirve.
+          - **La API ha contestado que no** (un 403 de una lista de solo mirar, un
+            500): eso si hay que mirarlo, y va en rojo con lo que ha dicho.
+      
+          Y el texto no habla de la cola de cambios de la interfaz vieja: eso es
+          una explicacion para quien programa, no para quien esta en la caja. */}
       {cambia.isError && (
-        <Aviso tono="mal" titulo="No he podido guardar el cambio">
-          <p>{textoDeError(cambia.error)}</p>
-          <p className="mt-1">
-            La lista sigue como estaba. Sin la cola de cambios de la interfaz
-            antigua, aquí no se pinta un cambio que el servidor no ha aceptado.
-          </p>
-        </Aviso>
+        esSinRed(cambia.error) ? (
+          <Aviso tono="aviso" titulo="Sin cobertura">
+            <p>
+              El cambio no se ha guardado: no he podido avisar a casa. La lista
+              sigue como estaba.
+            </p>
+            <p className="mt-1">
+              Pulsa otra vez cuando tengas red y se guarda. Lo que ya estaba
+              cogido sigue cogido.
+            </p>
+          </Aviso>
+        ) : (
+          <Aviso tono="mal" titulo="No he podido guardar el cambio">
+            <p>{textoDeError(cambia.error)}</p>
+            <p className="mt-1">
+              La lista sigue como estaba. Aquí no se pinta un cambio que el
+              servidor no ha aceptado.
+            </p>
+          </Aviso>
+        )
+      )}
+
+      {/* Y si lo que no llega es la propia lista -- abrir la aplicacion en el
+          pasillo sin cobertura --, antes no se pintaba **nada**: el estado de
+          carga desaparecia y quedaba el encabezado con la pantalla en blanco,
+          que es lo que parece una aplicacion rota. */}
+      {detalle.isError && (
+        esSinRed(detalle.error) ? (
+          <Aviso tono="aviso" titulo="Sin cobertura">
+            <p>
+              No he podido traer la lista ahora mismo. Vuelve a intentarlo cuando
+              tengas red.
+            </p>
+          </Aviso>
+        ) : (
+          <Fallo error={detalle.error} reintentar={() => void detalle.refetch()} />
+        )
       )}
       {detalle.data && (
         <>

@@ -28,6 +28,23 @@ export function esErrorApi(e: unknown): e is ErrorApi {
   return e instanceof ErrorApi
 }
 
+/** El fallo es que no hay red, no que la API haya dicho que no.
+ *
+ *  `fetch` lanza `TypeError` cuando no puede ni salir del aparato, y ese es el
+ *  caso de estar en un pasillo sin cobertura. **No es lo mismo que un error de la
+ *  API**, y confundirlos se paga en la pantalla de la lista: un 403 o un 500 son
+ *  fallos que hay que contar y mirar, y quedarse sin cobertura en un supermercado
+ *  no -- es lo normal. Lo unico que hace falta saber es que el cambio **no se ha
+ *  guardado** y que hay que volver a pulsar, dicho sin alarma.
+ *
+ *  Vive aqui, al lado de `textoDeError` y de la linea que ya trata `TypeError`
+ *  como "sin conexion", porque el texto y la decision de pintarlo en rojo tienen
+ *  que salir de la misma regla: dos comprobaciones distintas del mismo hecho
+ *  acaban discrepando. */
+export function esSinRed(e: unknown): boolean {
+  return e instanceof TypeError
+}
+
 type Valor = string | number | boolean | null | undefined
 
 /** Un texto legible para cualquier fallo, nunca "undefined". */

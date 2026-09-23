@@ -301,7 +301,7 @@ subir un numero mientras bajaba el otro (el recall del emparejador subio y los g
 se fundieron peor), y mirando una sola columna eso se ve como una mejora.
 
     condicion                                   comando                                        hoy
-    pruebas verdes                              uv run pytest -q && uv run ruff check .        711 pasan, 2 fallan (ajenos)
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        719 pasan, 2 fallan (ajenos)
     --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
                                                   --medir                                      65 %   CUMPLE
     cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        49     NO
@@ -409,7 +409,8 @@ como se hizo con los grupos.
 ### Estado del encargo de UX, y el paso siguiente escrito
 
     punto 1  la primera vez con datos reales      HECHO (23 sep: la tarjeta, puesta)
-    punto 2  la lista                             a medias: hechas las dos secciones
+    punto 2  la lista                             casi: dos secciones y sin cobertura en
+                                                  tono neutro; falta el pasillo pegajoso
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
     punto 5  el medoide como segunda red          PENDIENTE (calibrar contra el banco)
@@ -490,6 +491,49 @@ devuelve nada o devuelve algo que no se puede comparar, **ese hueco no se rellen
 si no queda ninguno de los cuatro, no se pinta nada y el buscador se queda como estaba.
 La diferencia sale de restar los dos precios por unidad del grupo, no de un `ahorro` que
 llegue sumado por otro camino.
+
+### Sin cobertura en el pasillo no es un fallo, y ya no se anuncia como uno
+
+Condicion (c) de la barra, y la mitad que faltaba del punto 2. Lo que habia en
+`paginas/Cesta.tsx` era esto:
+
+    {cambia.isError && (
+      <Aviso tono="mal" titulo="No he podido guardar el cambio">
+        ... Sin la cola de cambios de la interfaz antigua, aqui no se pinta un cambio
+        que el servidor no ha aceptado.
+
+Tres cosas mal en cuatro lineas, y las tres se arreglan distinguiendo **que clase de
+fallo es**:
+
+  - **Un fallo de red pintado en rojo.** `Aviso` pone `role="alert"` cuando el tono es
+    `mal`, asi que quedarse sin cobertura en el pasillo -- que es lo normal, no un fallo
+    de nadie -- se anunciaba como una alarma. Se lee como "la aplicacion se ha roto" y
+    la lista se deja de usar justo donde mas sirve. Ahora va en tono neutro, y dice lo
+    unico que hay que saber: que el cambio **no se ha guardado** y que hay que volver a
+    pulsar.
+  - **Una explicacion para quien programa dentro del aviso que lee quien esta en la
+    caja**: la cola de cambios de la interfaz vieja no le importa a nadie que este
+    haciendo la compra.
+  - **Y el agujero que salio al mirarlo**: si lo que no llega es **la propia lista**
+    --abrir la aplicacion en el pasillo sin cobertura--, `detalle.isError` **no se
+    miraba en ninguna parte**. Desaparecia el estado de carga, quedaba el encabezado y
+    la pantalla en blanco, sin decir nada. Eso si parece una aplicacion rota.
+
+La regla vive en un solo sitio, `api/cliente.ts::esSinRed` (`fetch` lanza `TypeError`
+cuando no puede ni salir del aparato), al lado de `textoDeError`, que ya trataba ese
+mismo caso: si cada pantalla lo comprobara por su cuenta, el texto y el color acabarian
+discrepando. Un 403 de una lista de solo mirar o un 500 **siguen siendo rojos**: eso si
+hay que mirarlo.
+
+Probado en `tests/test_sin_cobertura.py` (4 pruebas), que leen el codigo como las de
+contraste y las de movil: esto es una decision de pantalla y un cambio que devuelva el
+rojo no da ningun error de compilacion. Verificado ademas en el bundle servido: lleva
+«Sin cobertura», sigue llevando el rojo del guardado, y ya no dice «interfaz antigua»
+en ninguna parte.
+
+**Lo que queda del punto 2**: el **pasillo como separador pegajoso** (necesita que la
+API mande el pasillo en cada linea, que hoy no lo manda) y la «no se note cuando no hay
+cobertura» en el resto de pantallas, que hoy usan `Fallo` tambien para la red.
 
 ### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
 
