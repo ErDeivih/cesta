@@ -470,8 +470,17 @@ function BotonAnadirACesta({ grupoId, nombre }: { grupoId: number; nombre: strin
  *  `dias_precio_valido` existe para evitar.
  */
 function textoDiferencia(a: Alternativa): string {
-  const { diferenciaPct, decide } = a
-  if (diferenciaPct === null) return 'sin precio por unidad'
+  const { diferenciaPct, decide, producto } = a
+  // **Dos cosas distintas que antes se decian igual.** No tener precio por unidad no
+  // es lo mismo que tenerlo y que no haya otra cadena que lo mida en la misma unidad
+  // (el grupo de un azafran de 0,4 g tiene un bote en `ud` y dos en `kg`): lo primero
+  // es un dato que falta, lo segundo es una comparacion que no se puede hacer, y decir
+  // "sin precio por unidad" cuando el precio esta en pantalla seria mentir sobre lo
+  // que falta.
+  if (producto.precio_unidad_cent === null || !(producto.precio_unidad_cent > 0)) {
+    return 'sin precio por unidad'
+  }
+  if (diferenciaPct === null) return 'sin otra cadena que lo mida igual'
   if (!decide) {
     return diferenciaPct < 0
       ? `${porcentaje(Math.abs(diferenciaPct))} por debajo del mejor que decide`

@@ -126,6 +126,15 @@ export interface PuntoSerie {
   fuente: string
   fecha: string
   precio_unidad_cent: number | null
+  /** Con que unidad se midio ESE dia, si la API la manda.
+   *
+   *  La API lo añadio el 23 de septiembre de 2026, para la frase de debajo de la
+   *  curva: sin la unidad no se puede decir "es el mas bajo de los N dias que
+   *  tenemos" -- si la unidad cambio por el camino, ese minimo no significa nada, y
+   *  es la misma regla que ya aplican las alertas ("si la unidad cambio, no es una
+   *  bajada"). Se lee como opcional: una API mas vieja no lo manda y entonces no hay
+   *  frase, que es lo honesto. */
+  unidad_canon?: string | null
 }
 
 /** Opcional y todavia NO implementado por la API: si algun dia manda la

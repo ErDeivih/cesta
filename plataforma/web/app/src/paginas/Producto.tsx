@@ -31,6 +31,7 @@ import {
   textoOrigenSello,
 } from '../api/formato'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
+import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
@@ -76,15 +77,31 @@ export function Producto() {
   const pesoVariable = miembro?.peso_variacion_pct ?? null
 
   const historico = useMemo(() => {
-    if (!grupo) return { puntos: [] as PuntoChispa[], bloqueado: false, filas: 0 }
+    if (!grupo) {
+      return { puntos: [] as PuntoChispa[], bloqueado: false, filas: 0, serie: [] }
+    }
     const deLaCadena = grupo.serie.filter((s) => s.fuente === fuente)
     // Cuantos productos de ESTA cadena hay en el grupo: la serie no los separa.
     const cuantos = grupo.productos.filter((p) => p.fuente === fuente).length
     const puntos = deLaCadena
       .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent }))
       .sort((a, b) => ms(a.fecha) - ms(b.fecha))
-    return { puntos, bloqueado: cuantos > 1, filas: cuantos }
+    // La serie **con su unidad**, ordenada, que es lo que necesita la frase de debajo
+    // de la curva: sin la unidad no se puede decir "el mas bajo de los N dias" sin
+    // arriesgarse a comparar kg con ud (`logica/curva.ts`).
+    const serie = [...deLaCadena].sort((a, b) => ms(a.fecha) - ms(b.fecha))
+    return { puntos, bloqueado: cuantos > 1, filas: cuantos, serie }
   }, [grupo, fuente])
+
+  /** Lo que dice la curva: la frase, o el motivo por el que no la hay.
+   *
+   *  Se calcula desde la serie **con la unidad** y no desde los puntos de la chispa:
+   *  `Chispa` solo necesita fecha y valor, y la unidad es lo que impide comparar dos
+   *  series pegadas (`logica/curva.ts`). */
+  const curva = useMemo(
+    () => loQueDiceLaCurva(historico.bloqueado ? [] : historico.serie),
+    [historico.bloqueado, historico.serie],
+  )
 
   const resumen = useMemo(() => {
     const valores = historico.puntos
@@ -134,13 +151,39 @@ export function Producto() {
       ? (100 * (resumen.ultimo - resumen.primero)) / resumen.primero
       : null
 
-  /** La referencia de las diferencias: el precio por unidad más bajo del grupo.
-   *  `null` si no hay ninguno, para no acabar comparando contra un cero. */
-  const baratoDelGrupo = (() => {
-    const valores = (grupo?.productos ?? [])
-      .map((p) => p.precio_unidad_cent)
-      .filter((c): c is number => c !== null && Number.isFinite(c) && c > 0)
-    return valores.length > 0 ? Math.min(...valores) : null
+  /** **Dónde está más barato y cuánto se ahorra, en euros por unidad de uso.**
+   *
+   *  Apartado 2 del punto 3 del encargo, y es la mitad que faltaba en esta ficha: la
+   *  frase de arriba ya dice *"cuesta un 18 % más que en DIA"*, pero un porcentaje
+   *  abstracto no es lo que se compara en la tienda. Aquí va el producto más barato
+   *  del grupo con su €/unidad, y lo que te ahorras comprándolo ahí.
+   *
+   *  **Solo cuenta lo que se puede comparar de verdad**: misma unidad y precio fiable.
+   *  Lo primero no es un detalle: la primera versión de este dato salió en pantalla
+   *  diciendo *«te ahorras 6872,01 €/kg»* en la ficha de un azafrán de 0,4 g, porque
+   *  comparaba su precio por kilo con el de un bote medido en unidades. Restar €/kg de
+   *  €/ud es el disparate que el proyecto ya tiene escrito en tres sitios, y me lo
+   *  encontró la puerta del navegador, no una prueba de código.
+   *
+   *  `null` cuando no hay nada que ahorrar -- este es el más barato de los comparables,
+   *  o el grupo no tiene con qué compararlo --: un *"te ahorras 0,00 €"* es ruido. */
+  const masBarato = (() => {
+    if (!grupo || producto.precio_unidad_cent === null) return null
+    const mio = producto.precio_unidad_cent
+    if (!Number.isFinite(mio) || mio <= 0) return null
+    const otros = grupo.productos.filter(
+      (p) =>
+        p.fuente !== producto.fuente &&
+        p.comparable &&
+        p.precio_unidad_cent !== null &&
+        p.precio_unidad_cent > 0 &&
+        p.unidad === producto.unidad,
+    )
+    if (!otros.length) return null
+    const minimo = Math.min(...otros.map((p) => p.precio_unidad_cent as number))
+    if (mio <= minimo) return null
+    const otro = otros.find((p) => p.precio_unidad_cent === minimo)
+    return { fuente: otro?.fuente ?? '', precio_unidad_cent: minimo, ahorro: mio - minimo }
   })()
 
   return (
@@ -227,6 +270,18 @@ export function Producto() {
             <Dato etiqueta="Precio por unidad">
               {eurosUnidad(producto.precio_unidad_cent, producto.unidad)}
             </Dato>
+            {/* Dónde está más barato y cuánto, en euros por unidad. Va pegado al
+                precio por unidad porque es lo que se compara con él. Solo sale cuando
+                hay algo que ahorrar (ver `masBarato`). */}
+            {masBarato && (
+              <Dato etiqueta="Más barato en">
+                {nombreCadena(masBarato.fuente)}
+                <span className="block text-xs font-normal text-tinta-suave">
+                  {eurosUnidad(masBarato.precio_unidad_cent, producto.unidad)} · te ahorras{' '}
+                  {eurosUnidad(masBarato.ahorro, producto.unidad)}
+                </span>
+              </Dato>
+            )}
             {/* Al peso, el precio es una estimacion y hay que decirlo antes de
                 que se entere en la caja. Son los 711 productos del catalogo que
                 traen `peso_variacion_pct` (todos al 25 %), y sin esta linea el
@@ -313,6 +368,18 @@ export function Producto() {
             ) : (
               <>
                 <Chispa puntos={historico.puntos} alto={120} etiqueta={`Histórico de ${producto.nombre}`} />
+                {/* **La frase debajo de la curva.** Punto 3 del encargo, apartado 3:
+                    *"la curva, que ya existe, con una frase debajo"*. Una linea que
+                    sube y baja sin decir nada es un adorno del dato -- lo dice el
+                    propio `Chispa.tsx` --, y lo que se viene a saber es si **hoy** esta
+                    caro o barato. Las reglas (y sobre todo cuando NO hay frase) estan
+                    en `logica/curva.ts`. */}
+                {curva.frase && (
+                  <p className="mt-2 text-base font-semibold leading-snug">{curva.frase}</p>
+                )}
+                {curva.motivo && (
+                  <p className="mt-2 text-sm text-tinta-suave">{curva.motivo}</p>
+                )}
                 <dl className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                   <Dato etiqueta="Mínimo">{eurosUnidad(resumen.min, grupo.unidad)}</Dato>
                   <Dato etiqueta="Máximo">{eurosUnidad(resumen.max, grupo.unidad)}</Dato>
@@ -349,12 +416,30 @@ export function Producto() {
                 </thead>
                 <tbody>
                   {grupo.productos.map((p) => {
+                    // La referencia de la diferencia es **el mas barato de SU unidad**,
+                    // no el minimo del grupo. El minimo del grupo puede estar medido en
+                    // otra unidad, y entonces «+162.943,5 %» es un numero que no
+                    // significa nada: medido en un navegador el 23 de septiembre de 2026
+                    // en la ficha de un azafran de 0,4 g, comparando 4.875,00 EUR/kg con
+                    // 2,99 EUR/ud. La API ya calcula su `ahorro_pct` asi (`catalogo.py`),
+                    // y la nota de abajo dice exactamente eso: que los productos de otra
+                    // unidad no entran en la cuenta. Ahora la columna lo cumple.
+                    const delMismo = grupo.productos
+                      .filter(
+                        (q) =>
+                          q.comparable &&
+                          q.unidad === p.unidad &&
+                          q.precio_unidad_cent !== null &&
+                          q.precio_unidad_cent > 0,
+                      )
+                      .map((q) => q.precio_unidad_cent as number)
+                    const referencia = delMismo.length > 0 ? Math.min(...delMismo) : null
                     const dif =
-                      baratoDelGrupo !== null &&
+                      referencia !== null &&
                       p.precio_unidad_cent !== null &&
                       p.precio_unidad_cent > 0
                         ? Math.round(
-                            (100 * (p.precio_unidad_cent - baratoDelGrupo)) / baratoDelGrupo * 10,
+                            (100 * (p.precio_unidad_cent - referencia)) / referencia * 10,
                           ) / 10
                         : null
                     return (

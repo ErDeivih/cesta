@@ -146,7 +146,7 @@ grupo sea de un solo producto. Lo que hace comparable a un grupo es tener
 ### `GET /api/grupo/{grupo_id}`
 
     sale  {"grupo_id", "nombre", "imagen", "unidad", "cadenas",
-           "ahorro_pct", "ahorro_cent",
+           "cadenas_comparables", "ahorro_pct", "ahorro_cent",
            "productos": [{
               "producto_id": "dia:12345",   <- "fuente:id_fuente"
               "fuente", "nombre", "marca", "cantidad", "unidad",
@@ -155,10 +155,31 @@ grupo sea de un solo producto. Lo que hace comparable a un grupo es tener
               "gama",        <- SOLO si sale de ordenar por precio
               "nutriscore", "nova", "ean", "imagen", "alergenos",
               "ingredientes", "origen", "promo", "url"}],
-           "serie": [{"producto_id", "fuente", "fecha", "precio_unidad_cent"}],
+           "serie": [{"producto_id", "fuente", "fecha", "precio_unidad_cent",
+                      "unidad_canon"}],
            "explicacion": {              <- SOLO si hay algo que explicar
               "ejecucion", "nivel", "metodo", "pares",
               "confianza_minima", "confianza_media", "par_mas_flojo", "features"}}
+
+**`unidad`, `ahorro_pct`, `ahorro_cent` y `cadenas_comparables` se miden dentro de una
+sola unidad** (23 de septiembre de 2026). El ahorro de un grupo se calcula ahora con los
+productos medidos en la unidad que comparten más cadenas, y solo con los precios
+`comparable`, que es la regla que el proyecto ya aplicaba en el resumen diario
+(`core/comparacion.py`, `resumen.ahorro()`). Antes era el mínimo y el máximo de **todo** el
+grupo, y eso cruza unidades: en la ficha de un azafrán de 0,4 g salía «te ahorras 6.872,01
+EUR/kg» comparando 6.875,00 €/kg con 2,99 €/ud. Medido antes y después: de los 8.771 grupos
+comparables, **54 enseñaban una diferencia imposible** (> 2.900 %, el tope del proyecto) y
+ahora **ninguna**; la mediana se movió de 16,5 % a 16,0 %.
+
+- `unidad` es la que comparten más cadenas (no la del primer producto, que salía por ser el
+  más barato en valor absoluto, aunque estuviera medido en otra cosa).
+- `cadenas_comparables` son las que miden el producto en esa unidad: es lo que la frase
+  necesita para no contar cadenas que están midiendo otra cosa.
+- `unidad_canon` en cada punto de `serie` es **la unidad con la que se midió ese día**. Sin
+  ella, «es el precio más bajo de los 17 días que tenemos» puede estar comparando kg con ud
+  si la unidad cambió por el camino: la pantalla no dice la frase (`logica/curva.ts`). Si el
+  gold es anterior a esta columna, viaja como `null` y la frase tampoco se dice, que es lo
+  honesto.
 
 **`explicacion`: por que esos productos acabaron juntos.** Se añadió el 23 de
 septiembre de 2026 y **no se recalcula nada**: sale de `equivalencia.parquet` de

@@ -779,6 +779,63 @@ la conexion a gold. No se ha tocado: es una vez por arranque, no cambia ninguna 
 preguntas, y calentarlo "por si acaso" seria trabajo en cada arranque para casi nadie. Queda
 dicho y medido, que es lo que hace falta para decidirlo con el numero delante.
 
+### La curva con su frase, el ahorro en euros, y **el ahorro que cruzaba unidades**
+
+El §4 del encargo pide cuatro cosas en la ficha, en este orden: *"1. Una frase. 2. Donde
+esta mas barato y cuanto se ahorra en euros por unidad de uso. 3. La curva, que ya existe,
+**con una frase debajo**. 4. Y solo despues, la tabla"*. La 1 y la 4 estaban; las otras dos,
+a medias, y buscarlas destapo un tercer fallo que no estaba en la lista.
+
+**La frase debajo de la curva** (`logica/curva.ts`, nueva). La curva estaba desde el primer
+dia y no decia nada: `Chispa.tsx` ya avisa de que *"la chispa es un adorno del dato, no el
+dato"*. Ahora dice una de estas cuatro, y cual es cosa del historico:
+
+    Es el precio más bajo de los 17 días que tenemos.
+    Es el precio más alto de los 17 días que tenemos: un 12 % por encima del más bajo.
+    Lleva 6 días al mismo precio.
+    Está un 3 % por encima del más bajo de los 17 días que tenemos.
+
+**Y la regla que mas importa de esa frase es el plazo.** El encargo pone como ejemplo *"esta
+mas barato que en los ultimos 90 dias"* porque suena bien; hoy el historico son **18 dias**.
+Decir 90 seria una mentira tranquila -- suena mejor y no es verdad --, asi que la frase dice
+los dias que hay de verdad, y la puerta del navegador comprueba ya pintado que no prometa
+noventa. Es la misma regla del "no lo se" del resto de la aplicacion.
+
+**El ahorro en euros** (apartado 2): un dato nuevo en la cabecera de la ficha,
+«MÁS BARATO EN / Dia · 0,98 €/l · te ahorras 0,27 €/l», solo cuando hay algo que ahorrar.
+
+**Y el fallo que salio de ahi, que no estaba en el encargo.** La primera version de ese dato
+se pinto en el navegador diciendo **«te ahorras 6.872,01 EUR/kg»** en la ficha de un azafran
+de 0,4 g: estaba comparando su precio por kilo con el de un bote medido en unidades. La
+misma cuenta, en la pantalla del grupo, decia **«+229.833,1 % frente al mas barato»**.
+
+La regla llevaba escrita en el proyecto desde el primer dia -- `core/comparacion.py`,
+`resumen.ahorro()` (*"una sola unidad por grupo, la misma regla que usa la interfaz"*) y
+`api/alertas.py` (*"si la unidad cambio, no es una bajada"*) -- y **la interfaz se la saltaba
+en tres sitios**: el dato nuevo, la columna «Diferencia» de la tabla, y el `ahorro_pct` que
+la propia API calculaba para la ficha del grupo. Los tres arreglados con la misma regla:
+**solo se compara con lo que se mide igual**, y quien no tiene con quien compararse no saca
+un porcentaje, saca una frase que lo dice (*"sin otra cadena que lo mida igual"*).
+
+Medido sobre el gold de hoy, antes y despues, con los topes del resumen:
+
+    grupos que mezclan unidades                        125 de 39.592
+    grupos comparables (mas de una cadena)        8.771  ->  7.918
+      diferencias imposibles (> 2.900 %)             54  ->  0
+      diferencias llamativas (> 200 %)              370  ->  226
+    mediana de la diferencia                      16,5 %  ->  16,0 %
+
+La mediana no se mueve -- el apaño es para la cola absurda -- y **54 numeros imposibles
+dejan de salir en pantalla**. Los 853 grupos que se quedan sin comparacion pierden un numero
+que no era comparable en vez de ensenarlo mal.
+
+Lo encontro **la puerta del navegador**, no una prueba de codigo: el numero se calculaba en
+el JSX, y ningun `grep` lo ve. Por eso se anadio tambien la medida que lo caza sola: la
+puerta mira **todos los porcentajes pintados** de la ficha y de la pantalla del grupo y
+ninguno puede pasar del tope de *"esto ya no es una oferta"* (`core/comparacion.py`: mas de
+29 veces no es una oferta, es una unidad mal leida). Con su trampa, para que la medida
+demuestre que mira: con el tope a cero tiene que encontrar algo.
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

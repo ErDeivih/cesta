@@ -272,6 +272,72 @@ def _ean_con_comparacion() -> str | None:
     return str(fila[0]) if fila else None
 
 
+def _porcentajes_gordos(pagina, tope: float = 2900.0) -> list[tuple[float, str]]:
+    """Los porcentajes que se pintan y pasan del tope de "esto ya no es una oferta".
+
+    El tope es el del proyecto (`core/comparacion.FACTOR_INCREIBLE`: una diferencia de
+    mas de 29 veces no es una oferta, es una unidad mal leida), el mismo que usa el
+    resumen para contar los "imposibles". Se mira lo que hay **en pantalla**, no el
+    codigo: el 23 de septiembre de 2026 la ficha de un azafran de 0,4 g ensenaba
+    «+162.943,5 %» comparando su precio por kilo con el de un bote medido en unidades, y
+    ninguna prueba de codigo lo veia porque el numero se calculaba en el JSX.
+
+    De paso comprueba que la medida mira: con el tope a 0, cualquier pantalla con un
+    porcentaje tiene que dar algo.
+    """
+    textos = pagina.evaluate("""(tope) => {
+      const crudo = document.querySelector('main').innerText;
+      const fuera = [];
+      const re = /([\\d.]+(?:,\\d+)?)\\s*%/g;
+      let m;
+      while ((m = re.exec(crudo)) !== null) {
+        const n = parseFloat(m[1].replace(/\\./g, '').replace(',', '.'));
+        if (Number.isFinite(n) && n > tope) {
+          fuera.push([n, crudo.slice(Math.max(0, m.index - 40),
+                                     m.index + m[0].length + 10).replace(/\\n/g, ' ')]);
+        }
+      }
+      return fuera;
+    }""", tope)
+    return [(float(n), t) for n, t in textos]
+
+
+def _producto_caro_con_historial() -> tuple[str, str] | None:
+    """Un producto que **no es el mas barato de su grupo** y tiene historico.
+
+    Es el caso que contesta la pregunta 2 entera, y por eso se elige asi y no a mano:
+    tiene que haber **mas de una cadena** (si no, no hay comparacion), tiene que **haber
+    algo que ahorrar** (asi se comprueba el dato «Mas barato en ... te ahorras ...») y
+    tiene que tener **varios dias de serie** (asi se comprueba la frase de debajo de la
+    curva). Cual es hoy es cosa del catalogo: se pregunta a gold.
+    """
+    try:
+        from plataforma.api import catalogo
+    except Exception:  # noqa: BLE001
+        return None
+    try:
+        fila = catalogo.conexion().execute("""
+            WITH comparables AS (
+                SELECT grupo_id, min(precio_unidad_cent) AS minimo
+                  FROM buscable
+                 WHERE grupo_id IS NOT NULL AND precio_unidad_cent > 0
+                 GROUP BY grupo_id HAVING count(DISTINCT fuente) >= 2),
+            con_serie AS (
+                SELECT producto_id, count(DISTINCT fecha) AS dias
+                  FROM diario WHERE precio_unidad_cent > 0
+                 GROUP BY producto_id HAVING count(DISTINCT fecha) >= 3)
+            SELECT b.fuente, b.id_fuente
+              FROM buscable b
+              JOIN comparables c USING (grupo_id)
+              JOIN con_serie s ON s.producto_id = b.fuente || ':' || b.id_fuente
+             WHERE b.precio_unidad_cent > c.minimo
+             ORDER BY (b.precio_unidad_cent - c.minimo) DESC
+             LIMIT 1""").fetchone()
+    except Exception:  # noqa: BLE001
+        return None
+    return (str(fila[0]), str(fila[1])) if fila else None
+
+
 def main() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -522,10 +588,18 @@ def main() -> int:
         avisos = pagina.inner_text("body")
         comprueba("Avisos" in avisos, "la pantalla de avisos existe y se abre")
         comprueba("Esperando" in avisos, "ensena lo que se esta esperando")
-        # El aviso pedido desde la ficha tiene que estar aqui: es la otra mitad del punto
-        # 6, y sin esto la pantalla esta vacia para siempre.
-        comprueba("Te aviso cuando" in avisos,
-                  "el aviso pedido en la ficha aparece aqui, con lo que promete")
+        # El aviso pedido en la ficha tiene que estar **aqui**, que es la otra mitad del
+        # punto 6: sin esto la pantalla esta vacia para siempre. Y puede estar en tres
+        # estados, los tres correctos: esperando ("Te aviso cuando..."), cumpliendose hoy
+        # ("Ha bajado") o ya saltado y sin cumplirse hoy ("Salto"). La cuenta es la misma
+        # en cada pasada y **el vigilante hace una pasada al arrancar la API**, asi que
+        # exigir un solo estado es una prueba que se pone roja sola -- ya paso con
+        # «Te aviso» / «Avisarme si baja», y volvio a pasar aqui.
+        comprueba("que sigues" in avisos,
+                  "el aviso pedido en la ficha esta aqui (la pantalla cuenta lo que sigues)")
+        estados = ("Te aviso cuando", "Ha bajado", "Saltó")
+        comprueba(any(e in avisos for e in estados),
+                  f"y sale en uno de sus estados, con su frase ({estados})")
 
         # ------------------------- y un grupo del que NO nos fiamos no da frase (barra d) --
         # La frase no se inventa: si el grupo esta en una sola cadena, no hay comparacion
@@ -666,6 +740,80 @@ def main() -> int:
             comprueba("Invitada" in dentro or USUARIO_INVITADA in dentro,
                       "quien invito ve a la otra persona en «Quién está dentro»")
             contexto2.close()
+
+        # ------------------- la curva, con la frase debajo y el ahorro en euros (§4) ----
+        # §4 pide cuatro cosas en la ficha, en este orden: una frase, **donde esta mas
+        # barato y cuanto se ahorra en euros**, **la curva con una frase debajo** y, solo
+        # al final, la tabla. Lo que faltaba era el apartado 3: la curva estaba desde el
+        # primer dia y **no decia nada** -- una linea que sube y baja es un adorno del
+        # dato. Esto es lo que ningun `grep` puede comprobar: que la frase se pinte, que
+        # diga un plazo de verdad y que este **antes** que la tabla.
+        print("\n== la curva de un producto, con su frase debajo")
+        producto = _producto_caro_con_historial()
+        if producto is None:
+            print("   (no he encontrado ningun producto comparable con historico)")
+        else:
+            fuente, id_fuente = producto
+            carga(f"/producto/{fuente}/{id_fuente}")
+            pagina.wait_for_timeout(900)
+            comprueba(pagina.locator("canvas").count() >= 1,
+                      "la curva se pinta (el lienzo del historico esta)")
+            ficha = pagina.inner_text("main")
+            formas = ("Es el precio más bajo", "Es el precio más alto", "Lleva ",
+                      "Está un ")
+            frase = next((f for f in formas if f in ficha), None)
+            comprueba(frase is not None,
+                      f"debajo de la curva hay una FRASE que la contesta ({producto})")
+            if frase:
+                # **El plazo tiene que ser el de verdad.** El encargo pone como ejemplo
+                # "esta mas barato que en los ultimos 90 dias", y hoy el historico son 18
+                # dias: decir 90 seria una mentira tranquila -- suena mejor y no es verdad.
+                # La frase dice los dias que hay, y esto lo comprueba ya pintado.
+                #
+                # Se mira **la frase y no la pantalla entera**: en esta ficha la campana
+                # dice «te aviso cuando este en su precio mas bajo de 90 dias», y ahi el
+                # plazo es el de la alerta (`minimo_90d`), que si son 90 dias. Un `in` sobre
+                # todo el texto suspenderia por una frase correcta que no es esta.
+                desde = ficha.find(frase)
+                la_frase = ficha[desde:desde + 140]
+                comprueba("días que tenemos" in la_frase or "días al mismo precio" in la_frase,
+                          "y el plazo que dice es el que tenemos, no uno inventado")
+                comprueba("90 días" not in la_frase,
+                          "y no promete 90 dias de historico en la frase de la curva")
+                html = pagina.content()
+                comprueba(html.find(frase) < html.find("Su grupo de equivalencias"),
+                          "la frase va ANTES que la tabla de equivalencias")
+                print(f"   la frase: «{la_frase.strip()[:90]}»")
+            # Y el ahorro **en euros**, que es el apartado 2: el producto se eligio para
+            # que haya algo que ahorrar, asi que este dato tiene que estar. El texto se
+            # busca en minusculas porque la etiqueta del dato se pinta en mayusculas
+            # (`Dato` lleva `uppercase`), y buscar "Más barato en" no encontraba nada --
+            # que es como esta prueba se puso roja la primera vez, por el instrumento.
+            comprueba("más barato en" in ficha.lower() and "te ahorras" in ficha,
+                      "y dice donde esta mas barato y cuanto se ahorra, en euros por unidad")
+            # **Y ninguna diferencia imposible en pantalla.** El producto elegido es del
+            # grupo que destapo el fallo (unidades mezcladas), asi que aqui se ve si la
+            # columna «Diferencia» y el ahorro vuelven a cruzar unidades.
+            gordos = _porcentajes_gordos(pagina)
+            comprueba(not gordos,
+                      "y ningun porcentaje de la ficha pasa del tope de 'esto no es una "
+                      f"oferta' ({[(n, t[:46]) for n, t in gordos[:2]]})")
+            # Y la prueba de que **esa** medida mira, en la misma pantalla: con el tope a
+            # cero tiene que salir cualquier porcentaje. Sin esto, un cero puede ser "todo
+            # bien" o "no he sabido leer un numero en castellano" (162.943,5 %).
+            comprueba(len(_porcentajes_gordos(pagina, 0.0)) > 0,
+                      "y la medida de los porcentajes mira (con el tope a 0 encuentra algo)")
+            # La misma medida en la pantalla del grupo, que es donde vive el dato grande
+            # de "de la mas barata a la mas cara".
+            enlace_grupo = pagina.locator("a[href^='/grupo/']").first
+            if enlace_grupo.count():
+                grupo_url = enlace_grupo.get_attribute("href") or ""
+                carga(grupo_url)
+                pagina.wait_for_timeout(700)
+                gordos_grupo = _porcentajes_gordos(pagina)
+                comprueba(not gordos_grupo,
+                          "y tampoco en la pantalla del grupo "
+                          f"({[(n, t[:46]) for n, t in gordos_grupo[:2]]})")
 
         # ------------------------------- el contraste del texto, pintado y en los dos temas --
         # §1 del encargo: *"el contraste y los limites de los campos, con las formulas dentro

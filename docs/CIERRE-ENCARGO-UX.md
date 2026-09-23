@@ -20,7 +20,7 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
                                                       en los dos sentidos: con frase en la
                                                       ficha y en el grupo, y SIN frase en un
                                                       grupo de una sola cadena
-    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (802 pasan, ruff limpio, docs ok)
+    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (820 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
         `--medir >= 57 %`                             65 % CUMPLE
@@ -53,8 +53,15 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
     §3.5 sin cobertura                HECHO: los cambios se guardan en el movil con la hora
                                       del movil, se pintan al instante, y **se suben solos**
                                       al volver la cobertura, con su frase. Sin rojo.
-    §4  esto esta caro                HECHO: la frase antes de la tabla, y **no se inventa**
-                                      cuando el grupo no es de fiar (`logica/frase.ts`).
+    §4  esto esta caro                HECHO los cuatro apartados, en el orden que pide:
+                                      la frase **antes** de la tabla y sin inventarse cuando
+                                      el grupo no es de fiar (`logica/frase.ts`); donde esta
+                                      mas barato y **cuanto se ahorra en euros** («Mas barato
+                                      en / Dia · 0,98 €/l · te ahorras 0,27 €/l»); **la curva
+                                      con su frase debajo** (`logica/curva.ts`, «es el precio
+                                      mas bajo de los 17 dias que tenemos»); y la tabla al
+                                      final. Y una regla que salio al medirlo: el ahorro
+                                      **no cruza unidades** (ver abajo).
     §5  el mosaico                    HECHO: `Mosaico.tsx` (tres columnas, un toque) y
                                       `/api/habituales` rellenando por escalones con `origen`
                                       en cada tarjeta.
@@ -91,6 +98,26 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
     titulo de la pestana                       HECHO      volver atras / enlaces       HECHO
     carga sin saltos de maquetacion            HECHO      faltas de ortografia         HECHO
 
+## La regla que salio al medir el §4: **el ahorro no cruza unidades**
+
+El apartado 2 del §4 (donde esta mas barato y cuanto se ahorra) se pinto por primera vez en
+un navegador diciendo **«te ahorras 6.872,01 EUR/kg»** en la ficha de un azafran de 0,4 g, y
+la pantalla del grupo decia **«+229.833,1 % frente al mas barato»**: las dos comparaban un
+precio por kilo con otro medido en unidades.
+
+La regla llevaba escrita en el proyecto desde el primer dia (`core/comparacion.py`,
+`resumen.ahorro()`, `api/alertas.py`) y **la interfaz se la saltaba en tres sitios**. Los
+tres arreglados, y medido antes y despues sobre el gold de hoy:
+
+    grupos que mezclan unidades                        125 de 39.592
+    grupos comparables (mas de una cadena)        8.771  ->  7.918
+      diferencias imposibles (> 2.900 %)             54  ->  0
+    mediana de la diferencia                      16,5 %  ->  16,0 %
+
+Y la puerta del navegador gana la medida que lo caza sola: **ningun porcentaje pintado**
+( ni en la ficha ni en la pantalla del grupo) puede pasar del tope de *"esto ya no es una
+oferta"*, con su trampa para demostrar que la medida mira.
+
 ---
 
 ## Lo que queda, y de quien es la decision
@@ -122,7 +149,7 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 
 ## Como se comprueba todo esto sin creerse nada
 
-    uv run pytest -q                                 810 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 820 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal

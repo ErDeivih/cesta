@@ -789,26 +789,92 @@ def grupo(grupo_id: int) -> dict | None:
     # (cadena, fecha) y ninguna se puede pintar: no se sabe de cual de los dos
     # es cada precio. La interfaz lo decia en pantalla en vez de dibujar algo
     # que podria estar mezclando dos productos distintos.
-    serie = con.execute("""
-        SELECT producto_id, fuente, fecha::VARCHAR, precio_unidad_cent
+    # **La unidad viaja en cada punto del historico**, y llego tarde. Con el precio por
+    # unidad y la fecha no se puede decir *"es el precio mas bajo de los 18 dias que
+    # tenemos"*: si la unidad cambio por el camino (`kg` un dia y `ud` otro), el minimo
+    # de esa serie no significa nada, y la regla del proyecto es la misma que en las
+    # alertas -- *"si la unidad cambio, no es una bajada"* (`api/alertas.py`). Se manda
+    # y decide la pantalla (`logica/curva.ts`), que es donde se lee la frase.
+    #
+    # Y se comprueba si la columna esta, como se hace mas arriba con las de `grupos`: la
+    # API tiene que poder servir un gold viejo sin caerse (es el caso de "el scraper fallo
+    # y se sigue sirviendo lo de ayer", escrito en `docker-compose.yml`). Si no esta, el
+    # punto viaja sin unidad y la pantalla **no dice la frase**: no puede.
+    columnas_diario = {f[0] for f in con.execute("DESCRIBE diario").fetchall()}
+    la_unidad = "unidad_canon" if "unidad_canon" in columnas_diario else "NULL AS unidad_canon"
+    serie = con.execute(f"""
+        SELECT producto_id, fuente, fecha::VARCHAR, precio_unidad_cent, {la_unidad}
           FROM diario
          WHERE producto_id IN (SELECT fuente || ':' || id_fuente FROM grupos WHERE grupo_id = ?)
          ORDER BY fecha
     """, [grupo_id]).fetchall()
 
-    barato = productos[0]["precio_unidad_cent"]
-    caro = productos[-1]["precio_unidad_cent"]
+    # **La unidad que decide, y el ahorro medido dentro de ella.**
+    #
+    # Antes esto era `productos[0]` y `productos[-1]` -- el minimo y el maximo de TODO el
+    # grupo --, y eso cruza unidades: restar EUR/kg de EUR/ud no es una diferencia de
+    # precio, es un disparate. La regla esta escrita en tres sitios del proyecto
+    # (`core/comparacion.py`, `resumen.py`, `api/alertas.py`: *"si la unidad cambio, no es
+    # una bajada"*) y la ficha del grupo se la saltaba.
+    #
+    # Medido sobre el gold del 23 de septiembre de 2026, antes y despues, con los mismos
+    # topes que usa el resumen (`resumen.TOPE_CREIBLE` 2.900 % y `TOPE_LLAMATIVO` 200 %):
+    #
+    #     grupos que mezclan unidades                    125 de 39.592
+    #     grupos comparables (mas de una cadena)    8.771  ->  7.918
+    #       diferencias imposibles (> 2.900 %)         54  ->  0
+    #       diferencias llamativas (> 200 %)          370  ->  226
+    #     mediana de la diferencia                   16,5 %  ->  16,0 %
+    #
+    # Es decir: la mediana no se mueve -- el apaño es para la cola absurda --, **54
+    # numeros imposibles dejan de salir en pantalla**, y los grupos que se quedan sin
+    # comparacion (853) pierden un numero que no era comparable en vez de ensenarlo mal.
+    # El caso que lo destapo, en un navegador: la ficha de `dia:147509` (azafran en un
+    # pote de 0,4 g) decia *«te ahorras 6.872,01 EUR/kg»* comparando su precio por kilo
+    # con el de un bote medido en unidades.
+    #
+    # La unidad que decide es **la que comparten mas cadenas**, que es la misma regla que
+    # usa `alertas._mejor_de_cada_grupo` en su SQL (`ORDER BY count(DISTINCT fuente)
+    # DESC, count(*) DESC`): asi el precio por unidad que se ensena es el que de verdad
+    # se puede comparar entre cadenas.
+    def _unidad_dominante(filas: list[dict]) -> str | None:
+        cadenas: dict[str, set[str]] = {}
+        cuantos: dict[str, int] = {}
+        for p in filas:
+            if p["unidad"] and p["precio_unidad_cent"]:
+                cadenas.setdefault(p["unidad"], set()).add(p["fuente"])
+                cuantos[p["unidad"]] = cuantos.get(p["unidad"], 0) + 1
+        if not cadenas:
+            return filas[0]["unidad"] if filas else None
+        return max(cadenas, key=lambda u: (len(cadenas[u]), cuantos[u]))
+
+    unidad = _unidad_dominante(productos)
+    # Y dentro de la unidad, **solo los precios en los que se puede confiar**: es la
+    # misma regla que `resumen.ahorro()` (`comparacion_fiable` y `precio_comparable`), que
+    # lleva desde el primer dia sin contar las filas en disputa. Si solo hay uno, no hay
+    # ahorro que anunciar: cero, y la pantalla no pinta la frase.
+    del_mismo = [p for p in productos
+                 if p["unidad"] == unidad and p["precio_unidad_cent"] and p["comparable"]]
+    barato = del_mismo[0]["precio_unidad_cent"] if del_mismo else None
+    caro = del_mismo[-1]["precio_unidad_cent"] if del_mismo else None
     return {
         "grupo_id": grupo_id,
         "nombre": productos[0]["nombre"],
         "imagen": next((p["imagen"] for p in productos if p["imagen"]), None),
-        "unidad": productos[0]["unidad"],
+        "unidad": unidad,
         "productos": productos,
         "cadenas": len({p["fuente"] for p in productos}),
+        # Con una sola cadena en esa unidad no hay ahorro que anunciar: cero, y la
+        # pantalla dice "sin comparacion" o no lo pinta.
         "ahorro_pct": round(100 * (caro - barato) / barato, 1) if barato else 0.0,
-        "ahorro_cent": caro - barato,
+        "ahorro_cent": (caro - barato) if barato is not None else 0,
+        # Y con cuantas cadenas se puede comparar **de verdad**: las que miden este
+        # producto en esa unidad. Es lo que la frase necesita para no contar cadenas
+        # que estan midiendo otra cosa.
+        "cadenas_comparables": len({p["fuente"] for p in del_mismo}),
         "serie": [{"producto_id": s[0], "fuente": s[1], "fecha": s[2],
-                   "precio_unidad_cent": s[3]} for s in serie],
+                   "precio_unidad_cent": s[3], "unidad_canon": s[4]}
+                  for s in serie],
     }
 
 

@@ -15,6 +15,14 @@
  *  4. **`promo` mira lo que se paga en caja.** Una oferta de tarjeta cuenta la
  *     mitad y se dice; una promo ausente es un cero de verdad, porque "no hay
  *     promoción" es un dato, no un hueco.
+ *  5. **La referencia de precio es de la MISMA unidad.** Restar euros por kilo de
+ *     euros por unidad no da una diferencia, da un disparate: medido en un
+ *     navegador el 23 de septiembre de 2026, la pantalla del grupo de un azafran
+ *     de 0,4 g decia «+229.833,1 % frente al mas barato» comparando 6.875,00
+ *     EUR/kg con 2,99 EUR/ud. Cada producto se mide contra el mas barato **que se
+ *     mide como el**, y el que no tiene con quien compararse se queda sin
+ *     porcentaje en vez de con uno inventado. Es la misma regla que la API al
+ *     calcular `ahorro_pct` (`catalogo.py`) y la que el encargo pide en el §7.
  */
 import type { Producto } from '../tipos'
 
@@ -102,10 +110,31 @@ export function puntuaAlternativas(
   // más barato del grupo es de hace cinco días, no puede ser la referencia de
   // nadie.
   const deciden = productos.filter((p) => puedeDecidir(p).decide)
-  const precios = deciden
-    .map((p) => p.precio_unidad_cent)
-    .filter((c): c is number => c !== null && Number.isFinite(c) && c > 0)
-  const minimo = precios.length > 0 ? Math.min(...precios) : null
+  // **Y por unidad, no para el grupo entero.** Un grupo puede mezclar unidades (125
+  // de 39.592 grupos hoy, medido sobre gold), y entonces el minimo del grupo es el
+  // precio de otra cosa. Se guarda el minimo de cada unidad, y quien no tenga con
+  // quien compararse se queda sin referencia (`minimoDe` devuelve null): sin
+  // porcentaje en pantalla, que es lo honesto, en vez de un +229.833 %.
+  const minimos = new Map<string, number>()
+  for (const p of deciden) {
+    const c = p.precio_unidad_cent
+    if (c === null || !Number.isFinite(c) || c <= 0) continue
+    const unidad = p.unidad ?? ''
+    const antes = minimos.get(unidad)
+    if (antes === undefined || c < antes) minimos.set(unidad, c)
+  }
+  const cuantosPorUnidad = new Map<string, number>()
+  for (const p of deciden) {
+    if (p.precio_unidad_cent === null || !(p.precio_unidad_cent > 0)) continue
+    const unidad = p.unidad ?? ''
+    cuantosPorUnidad.set(unidad, (cuantosPorUnidad.get(unidad) ?? 0) + 1)
+  }
+  /** El mas barato que se mide como este producto, o null si no hay otro. */
+  const minimoDe = (p: Producto): number | null => {
+    const unidad = p.unidad ?? ''
+    if ((cuantosPorUnidad.get(unidad) ?? 0) < 2) return null
+    return minimos.get(unidad) ?? null
+  }
 
   const sumaPesos = pesos.precio + pesos.letra + pesos.cercania + pesos.promo
   const reparto: Pesos =
@@ -119,6 +148,8 @@ export function puntuaAlternativas(
   const salida: Alternativa[] = productos.map((p) => {
     const { decide, motivo } = puedeDecidir(p)
     const precio = p.precio_unidad_cent
+    // La referencia de ESTE producto: el mas barato que se mide en su unidad.
+    const minimo = minimoDe(p)
 
     const componentes: Componentes = {
       precio:
