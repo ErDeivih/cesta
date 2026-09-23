@@ -71,11 +71,36 @@ function diferencia(r: ResultadoBusqueda): number | null {
   return Math.round((100 * (caro - barato)) / barato)
 }
 
+/** Sin tildes y en minusculas, para poder comparar un nombre con lo que se busco. */
+function llano(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+/** El primer resultado que **habla de lo que se ha buscado**.
+ *
+ *  No vale el primero a secas, y esto se vio en el navegador el 23 de septiembre de 2026:
+ *  buscar "aceite de oliva" devolvia **«Picos sin gluten»** el primero, asi que la tarjeta
+ *  de la primera vez -- lo unico que ve quien acaba de llegar -- ensenaba «Picos sin gluten
+ *  13,90 €/kg · un 9 % menos» como ejemplo de comparar precios. Cualquiera que lo lea
+ *  piensa que la aplicacion esta rota, y con razon.
+ *
+ *  La regla es la que ya estaba escrita para elegir los cuatro basicos: **el nombre tiene
+ *  que repetir la palabra que se ha buscado** (la primera, que es el sustantivo: "leche",
+ *  "pan", "aceite", "agua"). Se piden cinco resultados y se coge el primero que la cumpla;
+ *  si ninguno la cumple, esa busqueda **no aporta nada** y se cae sola. Es la misma regla
+ *  de siempre: un dato que no tenemos no se rellena con lo que haya al lado.
+ */
+function elQueHablaDe(r: ResultadoBusqueda, buscado: string): boolean {
+  const palabra = llano(buscado).split(' ')[0] ?? ''
+  return palabra.length >= 3 && llano(r.nombre).includes(palabra)
+}
+
 export function LoQueSeCompra() {
   const consultas = useQueries({
     queries: BASICOS.map((q) => ({
       queryKey: ['primera-vez', q],
-      queryFn: () => pide<RespuestaBuscar>('/buscar', { q, limite: 1 }),
+      // Cinco y no uno: el primero puede no tener nada que ver (ver `elQueHablaDe`).
+      queryFn: () => pide<RespuestaBuscar>('/buscar', { q, limite: 5 }),
       // Un dia entero: esto es una muestra de la aplicacion, no un dato que haya que
       // refrescar mientras alguien mira. Y asi cuatro busquedas no se repiten cada
       // vez que se vuelve al buscador.
@@ -83,9 +108,12 @@ export function LoQueSeCompra() {
     })),
   })
 
-  const ejemplos = consultas
-    .map((c) => c.data?.resultados?.[0])
-    .filter((r): r is ResultadoBusqueda => Boolean(r && r.comparable))
+  const ejemplos = BASICOS
+    .map((q, i) => {
+      const candidatos = consultas[i]?.data?.resultados ?? []
+      return candidatos.find((r) => r.comparable && elQueHablaDe(r, q))
+    })
+    .filter((r): r is ResultadoBusqueda => Boolean(r))
 
   // Sin ejemplos no se pinta nada: mejor el buscador pelado que cuatro tarjetas
   // vacias o un ejemplo inventado.

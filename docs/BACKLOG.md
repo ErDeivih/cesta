@@ -605,6 +605,43 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### La primera vez y el «Deshacer»: dos cosas que el navegador enseno mal
+
+La puerta del navegador ya estaba; lo que faltaba era que **mirara tambien las dos
+condiciones que aun no tocaba** -- (b) la primera vez, y el «Deshacer» del §3.4 --. Al
+hacerlo salieron dos fallos mas, y los dos son de los que no se ven leyendo el codigo.
+
+**1. El ejemplo de la primera vez era un disparate.** Buscar «aceite de oliva» devolvia
+**«Picos sin gluten»** el primero, y la tarjeta de la primera vez -- lo unico que ve quien
+acaba de llegar -- lo pintaba tal cual: «Picos sin gluten 13,90 €/kg · un 9 % menos» como
+ejemplo de comparar precios. Cualquiera que lo lea piensa que la aplicacion esta rota, y con
+razon. Arreglado con la regla que ya estaba escrita para elegir los cuatro basicos: **el
+nombre tiene que repetir la palabra buscada**, se piden cinco resultados y se coge el primero
+que la cumpla; si ninguno la cumple, esa busqueda se cae sola. Medido despues en el
+navegador: los cuatro ejemplos son «Leche entera», «Pan de molde integral sin corteza»,
+«PRODUCTO ALCAMPO Aceite de orujo de oliva» y «Agua mineral Dia 1,5 L», cada uno hablando de
+lo que se busco.
+
+**2. El «Deshacer» desaparecia justo cuando mas falta hace.** El bloque estaba bien escrito,
+pero vivia **dentro del lado "si hay lineas" de un ternario**: al quitar **la ultima** linea
+la lista se queda vacia, ese lado no se pinta, y con la linea se iba el «Deshacer». Es el
+momento exacto en que alguien quiere volver atras. Arreglado dejando de partir la lista con
+un ternario: el «la lista esta vacia» es una pieza mas y el «Deshacer» es hermano suyo.
+Medido en el navegador: quitar la unica linea -> «Has quitado · Leche semidesnatada ·
+Deshacer» -> y «Deshacer» la trae de vuelta.
+
+Los dos tienen su prueba en el mismo commit: `tests/test_deshacer.py` (3, que fija **la
+forma** -- que no vuelva el ternario --, porque el fallo era donde estaba el bloque y no lo
+que decia) y `tests/test_primera_vez.py`, que ahora exige la regla del nombre.
+
+**Y la puerta del navegador cubre ya (b) y el §3.4**, con sus tiempos:
+
+    ok  sin sesion sale la tarjeta de la primera vez (no un esqueleto)
+    ok  y no es una visita guiada: no hay pasos que pasar
+    ok  los cuatro ejemplos hablan de lo que se ha buscado
+    ok  al quitar sale «Has quitado … Deshacer», sin preguntar nada
+    ok  «Deshacer» la trae de vuelta, tambien si era la ultima linea
+
 ### La interfaz, en un navegador de verdad: tres fallos que no se veian de otra forma
 
 Hasta hoy todo lo de la interfaz estaba comprobado **leyendo el codigo** (las pruebas de

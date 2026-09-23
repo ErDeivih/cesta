@@ -1117,14 +1117,20 @@ export function Cesta() {
                 </Aviso>
               </div>
             )}
-            {lineas.length === 0 ? (
+            {/* Las dos secciones, la linea de totales y el «Deshacer» se pintan
+                **siempre**, y el «la lista esta vacia» es una pieza mas. Antes esto era
+                un ternario, y el «Deshacer» vivia en el lado de "si hay lineas": al
+                quitar **la ultima** linea la lista se queda vacia, ese lado no se pinta,
+                y el «Deshacer» desaparecia justo cuando mas falta hace. Lo encontro el
+                navegador el 23 de septiembre de 2026 (`plataforma/prueba_navegador.py`). */}
+            <>
+              {lineas.length === 0 && (
               <Vacio titulo="La lista está vacía">
                 <p>
                   Busca un producto, abre su ficha y pulsa «Añadir a la cesta».
                 </p>
               </Vacio>
-            ) : (
-              <>
+              )}
                 {/* **Dos secciones, no una lista.** Es la unica pantalla que se usa
                     de pie, en movimiento y con una mano, y con nueve lineas y
                     cuatro ya cogidas hay que leer **nueve nombres** para saber
@@ -1245,8 +1251,7 @@ export function Cesta() {
                   </span>{' '}
                   en el carro
                 </p>
-              </>
-            )}
+            </>
           </Tarjeta>
         </>
       )}

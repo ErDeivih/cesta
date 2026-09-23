@@ -84,6 +84,25 @@ def main() -> int:
                   "el buscador se ve y se puede tocar sin buscar el boton")
         comprueba(pagina.get_by_text("Escribe al menos dos letras").count() >= 1,
                   "sin escribir nada hay algo que leer, no una pantalla vacia")
+        # **La primera vez, con datos reales y sin visita guiada** (condicion (b) de la
+        # barra): sin sesion, el buscador vacio ensena cuatro productos que compra todo el
+        # mundo con su diferencia de hoy. Y cada uno tiene que **hablar de lo que se ha
+        # buscado**: el 23 sep 2026 buscar "aceite de oliva" devolvia «Picos sin gluten» el
+        # primero, y la tarjeta lo pintaba tal cual.
+        primera = pagina.inner_text("main")
+        comprueba("Esto compara el precio" in primera,
+                  "sin sesion sale la tarjeta de la primera vez (no un esqueleto)")
+        comprueba("visita guiada" not in primera.lower()
+                  and pagina.get_by_role("button", name="Siguiente").count() == 0,
+                  "y no es una visita guiada: no hay pasos que pasar")
+        lista_ejemplos = pagina.locator("main ul li")
+        nombres = [lista_ejemplos.nth(i).inner_text().split("\n")[0]
+                   for i in range(lista_ejemplos.count())]
+        print(f"   ejemplos: {nombres}")
+        comprueba(len(nombres) >= 3, f"la tarjeta ensena ejemplos ({len(nombres)})")
+        for buscado, nombre in zip(("leche", "pan", "aceite", "agua"), nombres, strict=False):
+            comprueba(buscado in nombre.lower(),
+                      f"el ejemplo «{nombre[:32]}» habla de «{buscado}»")
 
         # ------------------------------------------------------------- una cuenta -------
         # Se hace primero porque la lista y los avisos son de una persona: sin sesion, la
@@ -189,6 +208,31 @@ def main() -> int:
                       f"el encabezado de pasillo se queda pegado (position: {pegado})")
         else:
             print("   (no hay pasillo que comprobar con una sola linea)")
+
+        # ------------------------------------------------------ deshacer, sin preguntar --
+        # §3.4 del encargo: *"cada accion destructiva deja un «deshacer» durante unos
+        # segundos, y ninguna pide confirmacion"*. Quitar una linea es LA accion
+        # destructiva de esta pantalla.
+        print("\n== quitar una linea, y deshacerlo")
+        quitar = pagina.get_by_role("button", name="Quitar")
+        comprueba(quitar.count() >= 1, "cada linea se puede quitar")
+        if quitar.count():
+            quitar.first.click()
+            with contextlib.suppress(Exception):
+                pagina.get_by_text("Has quitado").first.wait_for(timeout=15000)
+            cuerpo_tras_quitar = pagina.inner_text("body")
+            comprueba("Has quitado" in cuerpo_tras_quitar
+                      and "Deshacer" in cuerpo_tras_quitar,
+                      "al quitar sale «Has quitado … Deshacer», sin preguntar nada")
+            comprueba(pagina.locator("input[type=checkbox]").count() == 0,
+                      "la linea quitada desaparece de la lista")
+            deshacer = pagina.get_by_role("button", name="Deshacer")
+            if deshacer.count():
+                deshacer.first.click()
+                with contextlib.suppress(Exception):
+                    pagina.locator("input[type=checkbox]").first.wait_for(timeout=15000)
+                comprueba(pagina.locator("input[type=checkbox]").count() >= 1,
+                          "«Deshacer» la trae de vuelta")
 
         # ------------------------------------------------- sin cobertura: tachar igual ---
         print("\n== tachar sin cobertura")

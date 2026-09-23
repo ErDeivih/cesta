@@ -100,3 +100,25 @@ def test_los_cuatro_basicos_son_cuatro_y_de_nombre_llano(componente: str):
     assert len(basicos) == 4, f"son cuatro, no {len(basicos)}: {basicos}"
     assert "huevos" not in basicos, \
         "los huevos vuelven a estar: su primer resultado es una tortilla"
+
+
+def test_el_ejemplo_tiene_que_hablar_de_lo_que_se_ha_buscado(componente: str):
+    """El primero a secas no vale, y esto lo vio el navegador (23 sep 2026).
+
+    Buscar «aceite de oliva» devolvia **«Picos sin gluten»** el primero, y la tarjeta de la
+    primera vez -- lo unico que ve quien acaba de llegar -- lo pintaba como ejemplo de
+    comparar precios. Cualquiera que lo lea piensa que la aplicacion esta rota, y con razon.
+
+    La regla: **el nombre tiene que repetir la palabra buscada** (la primera, que es el
+    sustantivo). Se piden cinco resultados y se coge el primero que la cumpla; si ninguno
+    la cumple, esa busqueda no aporta nada y se cae sola.
+    """
+    assert "elQueHablaDe(" in componente, \
+        "se vuelve a coger el primer resultado sin mirar si habla de lo buscado"
+    assert "limite: 5" in componente, \
+        "con un solo resultado no hay de donde elegir: hay que pedir unos cuantos"
+    assert re.search(r"\.find\(\(r\) => r\.comparable && elQueHablaDe\(r, q\)\)", componente), \
+        "hay que coger el primero comparable QUE HABLE de lo buscado, no el primero"
+    # Y la regla, escrita: la palabra buscada tiene que estar en el nombre.
+    assert re.search(r"llano\(r\.nombre\)\.includes\(palabra\)", componente), \
+        "la comprobacion tiene que ser sobre el nombre, sin tildes ni mayusculas"
