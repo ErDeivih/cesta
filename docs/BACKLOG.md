@@ -439,6 +439,17 @@ queda uno por respuesta diciendo de donde salio **la primera**. Las dos son
 defendibles; lo que no lo es es dejar una cuadricula de una tarjeta y llamarla
 mosaico.
 
+**Y la ventana para decidirlo sigue abierta, medido el 23 de septiembre: el front
+todavia no consume el endpoint.** La palabra `habituales` aparece **0 veces** en todo
+`plataforma/web/app/src`, asi que hoy no hay ningun consumidor al que romperle el
+contrato y cambiarlo cuesta una linea. En cuanto el mosaico se programe contra el,
+cambiar `origen` pasa a ser un cambio de contrato. **Decidirlo antes, no despues.**
+
+Lo que **si** esta ya decidido por quien lo implemento, y con razon: `origen` va a
+nivel de respuesta, y en `"de todos"` y `"basico"` **no viajan `veces` ni
+`ultima_vez`** -- son recuentos de todo el mundo o de nadie, y mandarlos con el mismo
+nombre que los tuyos seria repetir el error de "imposible" (dos numeros, un nombre).
+
 Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
 que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a
 proposito (sube a 73 % de recall y rompe los conflictos de asignacion de 0 a 861).
