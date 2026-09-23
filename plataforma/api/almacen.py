@@ -506,10 +506,42 @@ def mas_comprados(limite: int = 72) -> list[dict]:
 
 def alertas_de(usuario_id: str) -> list[dict]:
     with cursor() as cur:
-        cur.execute("""SELECT id, grupo_id, tipo, umbral_cent, creada_en, vista_en
+        cur.execute("""SELECT id, grupo_id, tipo, umbral_cent, creada_en, vista_en,
+                              salto_en, salto_texto
                          FROM alerta WHERE usuario_id = %s
                         ORDER BY creada_en DESC""", (usuario_id,))
         return cur.fetchall()
+
+
+def alertas_por_saltar() -> list[dict]:
+    """Las alertas de todo el mundo que no han saltado y nadie ha visto.
+
+    Son para el vigilante (`api/vigilante.py`), y por eso **no** llevan `usuario_id`:
+    evaluar una alerta no necesita saber de quien es, y lo que no viaja no se puede
+    filtrar por descuido. `vista_en IS NULL` deja fuera las ya contadas -- una alerta
+    se dispara una vez -- y `salto_en IS NULL` las que ya saltaron.
+    """
+    with cursor() as cur:
+        cur.execute("""SELECT id, grupo_id, tipo, umbral_cent FROM alerta
+                        WHERE vista_en IS NULL AND salto_en IS NULL""")
+        return cur.fetchall()
+
+
+def marca_alerta_saltada(alerta_id: str, texto: str) -> bool:
+    """Apunta que esta alerta salto, y con que frase. False si ya estaba apuntada.
+
+    El `AND salto_en IS NULL` es lo que hace que dos pasadas seguidas del vigilante no
+    cuenten lo mismo dos veces, y que lo que se cuenta sea **lo que se apunto** y no lo
+    que se intento apuntar.
+
+    **El texto se guarda y no se recalcula**: la frase se mide contra el gold de ese
+    dia, y gold se reescribe cada manana. Sin guardarla, el aviso que alguien vio ayer
+    contaria hoy otra cosa, o ninguna.
+    """
+    with cursor() as cur:
+        cur.execute("""UPDATE alerta SET salto_en = now(), salto_texto = %s
+                        WHERE id = %s AND salto_en IS NULL""", (texto, alerta_id))
+        return cur.rowcount > 0
 
 
 def crea_alerta(usuario_id: str, grupo_id: int, tipo: str,
@@ -517,7 +549,9 @@ def crea_alerta(usuario_id: str, grupo_id: int, tipo: str,
     """Una alerta por grupo y tipo. Repetirla la actualiza en vez de duplicarla.
 
     Sin eso, pulsar dos veces la campana deja dos avisos identicos y el dia que
-    salten llegan por duplicado.
+    salten llegan por duplicado. Y al volver a crearla se limpian `vista_en` y
+    `salto_en`: pedir otra vez la misma alerta es volver a empezar, y si no se
+    limpiara, una alerta que ya salto no volveria a saltar nunca.
     """
     if tipo not in ALERTA_TIPOS:
         raise ValueError(f"tipo de alerta desconocido: {tipo}")
@@ -528,8 +562,10 @@ def crea_alerta(usuario_id: str, grupo_id: int, tipo: str,
             INSERT INTO alerta (usuario_id, grupo_id, tipo, umbral_cent)
                  VALUES (%s, %s, %s, %s)
             ON CONFLICT (usuario_id, grupo_id, tipo) DO UPDATE
-                    SET umbral_cent = EXCLUDED.umbral_cent, vista_en = NULL
-              RETURNING id, grupo_id, tipo, umbral_cent, creada_en, vista_en
+                    SET umbral_cent = EXCLUDED.umbral_cent, vista_en = NULL,
+                        salto_en = NULL, salto_texto = NULL
+              RETURNING id, grupo_id, tipo, umbral_cent, creada_en, vista_en,
+                        salto_en, salto_texto
         """, (usuario_id, grupo_id, tipo, umbral_cent))
         return cur.fetchone()
 

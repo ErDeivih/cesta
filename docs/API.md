@@ -260,6 +260,38 @@ avisa de quien fue.
 `tachado` y `en_carrito` son la misma accion vista de dos formas y se mantienen
 coherentes en el mismo UPDATE.
 
+### `GET /api/alertas`
+
+    sale  {"fecha_datos",
+           "alertas": [{"id", "grupo_id", "tipo", "umbral_cent", "creada_en",
+                        "vista_en", "salto_en", "salto_texto"}],
+           "saltan":  [{"grupo_id", "nombre", "cadena", "precio_unidad_cent",
+                        "unidad", "alerta_id", "tipo", "por_que"}]}
+
+Los tres tipos son los del `CHECK` de la tabla: `baja_de` (con `umbral_cent`),
+`minimo_90d` y `cualquier_bajada`. `saltan` trae las que se cumplen hoy, **con la frase
+que las explica**, y viene de `alertas.evalua`, que es el unico sitio que sabe de
+precios.
+
+**`salto_en` y `vista_en` son dos relojes distintos, y por eso son dos columnas**:
+
+    salto_en      cuando se cumplio la condicion. Lo pone el **vigilante**
+                  (`api/vigilante.py`) en cuanto cambia gold, sin que nadie abra nada.
+    vista_en      cuando esta persona lo ha visto. Lo pone ella, con
+                  `POST /api/alertas/vistas`.
+
+`salto_texto` es la frase **guardada en el momento en que salto**: se mide contra el gold
+de ese dia, y gold se reescribe cada manana, asi que recalcularla haria que el aviso que
+alguien vio ayer contara hoy otra cosa. Una alerta **salta una vez** (el `UPDATE` lleva
+`AND salto_en IS NULL`): un aviso que se repite todos los dias deja de leerse.
+
+    POST   /api/alertas              {"grupo_id", "tipo", "umbral_cent"}
+    DELETE /api/alertas/{alerta_id}
+    POST   /api/alertas/vistas       {"ids": [...]}   marca `vista_en`
+
+`POST` es una alerta por persona, grupo y tipo; repetirla la actualiza y **limpia
+`vista_en` y `salto_en`**: pedir otra vez la misma alerta es volver a empezar.
+
 ### `POST /api/listas/{id}/sincronizar`
 
 La cola de lo que se hizo sin cobertura, de golpe. Cada cambio con su hora.

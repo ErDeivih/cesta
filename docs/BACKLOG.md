@@ -422,7 +422,10 @@ como se hizo con los grupos.
                                                   La segunda red que SI corta son los
                                                   ejes declarados, y los 49 estan en 0.
                                                   Instrumento: projects/cesta/cohesion.py
-    punto 6  los avisos que no avisan             PENDIENTE
+    punto 6  los avisos que no avisan             HECHO: el vigilante mira cuando
+                                                  cambia gold (`api/vigilante.py`);
+                                                  falta la campana en la pantalla
+                                                  (no hay pantalla de alertas)
 
 **Lo que le falta a la barra, dicho con su numero**, porque el encargo se cierra cuando
 se cumplen las seis condiciones y no cuando se acaban las tareas:
@@ -587,6 +590,61 @@ de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde si
 ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
+
+### Los avisos ya avisan: el vigilante mira cuando cambian los datos
+
+Punto 6 del encargo, y el fallo era de una linea: *"`alertas.evalua()` solo corre cuando
+alguien abre `GET /api/alertas`, o sea que la alerta salta si entras a mirar."* Un aviso
+que solo salta cuando vas a verlo no es un aviso.
+
+**Lo que se hizo.** `plataforma/api/vigilante.py`, un hilo dentro de la API que mira
+**cuando cambia gold** (`catalogo.sello_de_gold()`, la fecha de escritura de
+`grupos.parquet`) y, en cada pasada:
+
+  1. lee de PostgreSQL las alertas **pendientes**: `vista_en IS NULL AND salto_en IS NULL`
+  2. las mira contra gold con `alertas.evalua` -- la misma funcion que usa la pantalla,
+     para que no haya dos reglas que puedan separarse
+  3. apunta `salto_en = now()` y **la frase que la explica** en cada una que salta
+
+**Dos columnas nuevas, y son dos cosas distintas** (`sql/006_alertas_que_saltan.sql`,
+que se aplica sola: `almacen.migra()` corre todos los `.sql` al arrancar):
+
+    salto_en      cuando se cumplio la condicion. Lo pone el vigilante.
+    salto_texto   la frase, guardada en ese momento.
+
+La frase **se guarda y no se recalcula**, y ese detalle importa: se mide contra el gold de
+ese dia, y gold se reescribe cada manana. Sin guardarla, el aviso que alguien vio ayer
+contaria hoy otra cosa, o ninguna. Es lo que pedia el encargo con *"dejar el resultado
+guardado, para que abrir la aplicacion sea instantaneo"*.
+
+**`vista_en` no se toca, y es la mitad de la gracia.** `vista_en` es "esta persona lo ha
+visto" y lo pone ella; apuntarlo desde el vigilante seria decir que alguien ha visto un
+aviso que no ha visto, y abrir la pantalla no podia volver a contarlo. Y una alerta
+**salta una vez**: el `UPDATE` lleva `AND salto_en IS NULL`, asi que dos pasadas seguidas
+no cuentan lo mismo. Un aviso que se repite todos los dias deja de leerse.
+
+**Donde se aparta de lo que decia el encargo, y por que.** El encargo pedia evaluarlas
+*"en la cadena diaria, despues del pipeline"*. **No se hizo ahi**: la cadena diaria corre
+en la maquina y no toca PostgreSQL, que es donde viven las alertas -- la API es la unica
+que habla con las dos mitades. Meter un paso nuevo en `ejecutar.bat` seria cruzar esa
+frontera y arriesgar la tarea de las 06:00, que **no se puede romper**. El vigilante
+consigue lo mismo (la alerta salta sin que nadie mire) y ademas cubre los relanzados: si
+el pipeline se rehace a las once, vuelve a mirar.
+
+**Un fallo no puede tumbar la API**: la pasada va envuelta, se imprime el fallo y el bucle
+sigue; si PostgreSQL o gold no estan, se reintenta en la vuelta siguiente. Probado.
+
+`tests/test_vigilante.py` (8 pruebas, gold de mentira y PostgreSQL sustituido): que se
+apunta `salto_en` y la frase, que **no** se toca `vista_en`, que una alerta que no se
+cumple no se apunta, que dos pasadas no cuentan lo mismo, que un fallo no para el bucle y
+que **solo se mira cuando gold cambia**.
+
+**Lo que queda del punto 6, y es pantalla**: el *"punto en el icono"* y la frase entera
+al abrirlo. **Hoy no hay pantalla de alertas en la interfaz nueva** -- `alertas` no
+aparece ni una vez en `plataforma/web/app/src` --, asi que eso es una pantalla entera, y
+va en la lista de lo que falta de la interfaz, no en el vigilante. La API ya lo tiene todo
+para pintarla: `GET /api/alertas` devuelve cada alerta con su `salto_en` y su
+`salto_texto`.
 
 ### El medoide: medido, calibrado contra el banco, y **no se pone como guarda**
 

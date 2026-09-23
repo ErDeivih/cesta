@@ -55,6 +55,15 @@ def _sello_de_gold() -> float:
         return 0.0
 
 
+def sello_de_gold() -> float:
+    """Lo mismo, con nombre publico: es la senal de "hay datos nuevos".
+
+    La usa el vigilante de las alertas (`api/vigilante.py`) para no mirar cien veces
+    lo que cambia una: los precios se escriben una vez al dia.
+    """
+    return _sello_de_gold()
+
+
 def conexion() -> duckdb.DuckDBPyConnection:
     """La conexion de este hilo, con las vistas ya montadas.
 

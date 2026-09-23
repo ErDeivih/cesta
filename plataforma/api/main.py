@@ -30,6 +30,7 @@ from . import (
     movimientos,
     panel,
     registro,
+    vigilante,
 )
 from .ajustes import AJUSTES
 
@@ -40,7 +41,12 @@ COOKIE = "cesta_sesion"
 async def ciclo(app: FastAPI):
     almacen.arranca()
     catalogo.conexion()          # que falle al arrancar y no en la primera visita
+    # El vigilante de las alertas: las mira cuando cambia gold, sin esperar a que
+    # nadie abra la pantalla. Va en un hilo aparte y no puede tumbar la API (ver
+    # `api/vigilante.py`).
+    vigilante.arranca()
     yield
+    vigilante.para()
     almacen.para()
 
 
@@ -592,6 +598,11 @@ def ver_alertas(usuario: dict = Depends(usuario_actual)):
     Las que saltan se devuelven con la frase que las explica; marcarlas como
     vistas es otra llamada, para que no se den por leidas solo por abrir la
     pantalla en el autobus.
+
+    Y **`salto_en` dice cuando se cumplio la condicion, no cuando has entrado a
+    mirar**: lo apunta el vigilante (`api/vigilante.py`) en cuanto cambia gold, para
+    que un aviso no dependa de que alguien abra la pantalla. Esa es la mitad que
+    faltaba del punto 6 del encargo. `vista_en` sigue siendo tuyo.
     """
     mias = almacen.alertas_de(usuario["id"])
     return {"fecha_datos": catalogo.fecha_de_gold(),
