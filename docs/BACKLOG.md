@@ -408,7 +408,7 @@ como se hizo con los grupos.
 
 ### Estado del encargo de UX, y el paso siguiente escrito
 
-    punto 1  la primera vez con datos reales      PENDIENTE (el que Claude pone primero)
+    punto 1  la primera vez con datos reales      HECHO (23 sep: la tarjeta, puesta)
     punto 2  la lista                             a medias: hechas las dos secciones
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
@@ -442,6 +442,54 @@ y variables sin usar):
 Y lo que **no** hay que hacer, que es la tentacion: reanadir sin el id. Eso no
 deshace: **crea una linea nueva** y deja la compra duplicada, que es peor que no
 poder deshacer.
+
+### El punto 1 esta hecho, y se hizo mal una vez: escrita y sin poner
+
+La tarjeta de la primera vez es `plataforma/web/app/src/componentes/LoQueSeCompra.tsx`,
+y esta puesta en el estado vacio del buscador (`paginas/Buscar.tsx`, `{!busca &&
+<LoQueSeCompra />}`). Cuatro productos que compra todo el mundo, con la diferencia de
+hoy. **Sin visita guiada**: una guia se lee una vez; cuatro precios reales se entienden
+solos.
+
+**El fallo que hay que contar, porque es el que se repite.** El componente se escribio
+en la ronda anterior, compilaba, y **no lo llamaba ninguna pantalla**: en el buscador
+seguia viendose exactamente lo de antes, y ni `tsc` ni `vite build` dicen nada de un
+componente que nadie pinta. Estuvo asi hasta que se fue a mirar quien lo llamaba. Por
+eso `tests/test_primera_vez.py` comprueba **quien lo pinta**, no que exista: un
+componente suelto es como no tenerlo.
+
+**De donde salen los cuatro, medido y no elegido a ojo.** Cada busqueda ensena solo su
+primer resultado, asi que ese primero tiene que ser un producto llano cuyo nombre repita
+lo que se ha buscado. Contra la API viva el 23 de septiembre de 2026
+(`/api/buscar?q=<basico>&limite=1`, los cuatro `comparable: true`):
+
+    leche entera    -> «Leche entera»                        96 -> 167 cent
+    pan de molde    -> «Pan de molde integral sin corteza»  233 -> 644 cent
+    aceite de oliva -> «Aceite de oliva suave»              370 -> 519 cent
+    agua mineral    -> «Agua mineral Dia 1,5 L»              18 ->  26 cent
+
+**`huevos` estuvo en la lista y se quito**: su primer resultado es «Media tortilla de
+patata con cebolla». Una tarjeta que promete huevos y ensena una tortilla se lee como un
+fallo justo el dia que mas caro sale. La regla queda escrita al lado de `BASICOS`, y la
+prueba se pone roja si alguien lo devuelve a la lista.
+
+**Y eso destapa un defecto aparte, que no se tapa eligiendo otra palabra**: buscar
+`huevos` pone **una tortilla** la primera, y buscar `aceite de oliva` mete «Picos sin
+gluten» entre los cinco primeros. Es relevancia de busqueda, afecta a todo el mundo y no
+solo a esta tarjeta. Queda **pendiente** con la consulta que lo reproduce, para que se
+pueda comprobar sin creerselo:
+
+    curl -s "http://127.0.0.1:8080/api/buscar?q=huevos&limite=5" | jq '.resultados[].nombre'
+    curl -s "http://127.0.0.1:8080/api/buscar?q=aceite%20de%20oliva&limite=5" | jq '.resultados[].nombre'
+
+Elegir `agua mineral` para el ejemplo **no arregla** que a quien escriba `huevos` le
+salga una tortilla: son dos cosas distintas, y la segunda sigue abierta.
+
+Lo que la tarjeta **no** hace, y es lo que la mantiene honesta: si una busqueda no
+devuelve nada o devuelve algo que no se puede comparar, **ese hueco no se rellena**; y
+si no queda ninguno de los cuatro, no se pinta nada y el buscador se queda como estaba.
+La diferencia sale de restar los dos precios por unidad del grupo, no de un `ahorro` que
+llegue sumado por otro camino.
 
 ### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
 

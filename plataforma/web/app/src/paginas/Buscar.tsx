@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router-dom'
 import { FILTROS_VACIOS, consultaUtil, useBuscar, useEstado, type FiltrosBuscar } from '../api/consultas'
 import { fecha } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
+import { LoQueSeCompra } from '../componentes/LoQueSeCompra'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
 import { Aviso, Boton, Cargando, Etiqueta, Fallo, Vacio } from '../componentes/ui'
@@ -152,6 +153,17 @@ export function Buscar() {
           </div>
         </Vacio>
       )}
+
+      {/* Y debajo, la aplicacion funcionando de verdad: cuatro cosas que compra
+          todo el mundo con la diferencia de hoy. Los ejemplos de arriba ensenan
+          como se escribe una busqueda; esto ensena **para que sirve** la
+          aplicacion, que es lo que no se entiende al llegar. Va fuera del
+          `Vacio` a proposito: una tarjeta con cuatro precios alineados a la
+          izquierda dentro de una caja centrada y de texto pequeñito se lee mal,
+          y esto es lo primero que se mira. No se pinta si hay busqueda en curso
+          (el componente devuelve `null` si no encuentra ejemplos comparables),
+          asi que no se cuela debajo de los resultados. */}
+      {!busca && <LoQueSeCompra />}
 
       {busca && resultados.isPending && <Cargando que="el catálogo" />}
 

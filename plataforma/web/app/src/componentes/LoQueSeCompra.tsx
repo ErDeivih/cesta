@@ -34,8 +34,34 @@ import type { RespuestaBuscar, ResultadoBusqueda } from '../tipos'
 import { Tarjeta } from './ui'
 
 /** Lo que compra todo el mundo. Cuatro, no veinte: una cuadricula larga no se lee,
- *  y lo que tiene que quedar claro en dos segundos es que esto compara precios. */
-const BASICOS = ['leche entera', 'pan de molde', 'huevos', 'aceite de oliva']
+ *  y lo que tiene que quedar claro en dos segundos es que esto compara precios.
+ *
+ *  **Como se eligieron, y no fue a ojo.** Cada busqueda ensena solo su primer
+ *  resultado, asi que ese primero tiene que ser un producto llano **cuyo nombre
+ *  repita lo que se ha buscado**: si no, la tarjeta parece un error. Medido
+ *  contra la API viva el 23 de septiembre de 2026:
+ *
+ *      /api/buscar?q=<lo de arriba>&limite=1
+ *
+ *      leche entera    -> «Leche entera»                        96 -> 167 cent
+ *      pan de molde    -> «Pan de molde integral sin corteza»  233 -> 644 cent
+ *      aceite de oliva -> «Aceite de oliva suave»              370 -> 519 cent
+ *      agua mineral    -> «Agua mineral Dia 1,5 L»              18 ->  26 cent
+ *
+ *  Los cuatro salen `comparable: true`, que es lo que hace falta para poder
+ *  decir una diferencia sin inventarla.
+ *
+ *  **`huevos` estuvo aqui y se quito**, por esto: su primer resultado es «Media
+ *  tortilla de patata con cebolla», y una tarjeta que promete huevos y ensena
+ *  una tortilla se lee como un fallo el primer dia, que es cuando mas caro
+ *  sale. Que la busqueda de `huevos` ponga una tortilla la primera es un
+ *  defecto de relevancia **aparte**, anotado en `docs/BACKLOG.md`, y no se
+ *  tapa eligiendo otra palabra aqui.
+ *
+ *  Esto cambia con el dia, y esta bien: lo que se ensena es el catalogo de hoy,
+ *  no una foto fija. Lo que **no** cambia es la regla de arriba -- y si un dia
+ *  una de las cuatro deja de ser comparable, esa se cae sola y quedan tres. */
+const BASICOS = ['leche entera', 'pan de molde', 'aceite de oliva', 'agua mineral']
 
 /** La diferencia entre la cadena mas barata y la mas cara, en %. */
 function diferencia(r: ResultadoBusqueda): number | null {
