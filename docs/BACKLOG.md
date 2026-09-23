@@ -301,13 +301,20 @@ subir un numero mientras bajaba el otro (el recall del emparejador subio y los g
 se fundieron peor), y mirando una sola columna eso se ve como una mejora.
 
     condicion                                   comando                                        hoy
-    pruebas verdes                              uv run pytest -q && uv run ruff check .        687 pasan, 2 fallan (ajenos)
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        711 pasan, 2 fallan (ajenos)
     --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
                                                   --medir                                      65 %   CUMPLE
-    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        52     NO
+    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        49     NO
     menos de 30 grupos de 11+ productos         (el mismo comando)                            0    CUMPLE
     las cinco cadenas con bronze del mismo dia  ver `docs/ESTADO.md`                         CUMPLE (23 sep)
-    cadena repetida de la misma sin EAN         `data/debug/_cadena_repetida.py`              0    CUMPLE
+    cadena repetida de la misma sin EAN         `projects.cesta.ejes`                         0    CUMPLE
+
+**El `--medir` esta medido CON la invariante puesta**, que era la duda que quedo al
+ponerla: cortar por cadena repetida podia llevarse pares ciertos por delante. No se
+los llevo -- 20.949 enlaces y **1.174 de 1.813 pares ciertos, el 65 %**, en 423 s
+sobre el catalogo de hoy (52.417 productos). Los numeros anteriores de esta fila eran
+de antes del cambio, asi que esta es la que vale.
+
 
 **La sexta la propuso Claude y es la mejor de todas**, asi que va en la barra: los
 enlaces son 1-a-1 **por par de cadenas**, y por tanto **un grupo no puede tener dos
