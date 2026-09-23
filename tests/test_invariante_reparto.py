@@ -69,3 +69,68 @@ def test_un_producto_sin_ean_no_se_da_por_el_mismo_que_otro():
     """
     grupos = agrupar_enlaces(ENLACES, 3, cadenas=CADENAS, eans=[None, None, None])
     assert grupos[0] != grupos[1]
+
+
+# ------------------------------------------- la segunda red: el eje declarado ---
+#
+# La invariante de arriba caza lo que se funde **entre** cadenas. Queda lo que se
+# funde **dentro** de un grupo que, mirado por cadenas, es legitimo: tres cadenas,
+# tres productos, y dos de ellos no son el mismo producto. Eso no lo dice el
+# precio -- y el precio no puede decirlo, porque hay ahorros reales de 28x entre
+# marca blanca y marca --: lo dice **el nombre**.
+#
+# Medido el 23 de septiembre de 2026, con la invariante ya puesta: 49 grupos con
+# eje contradictorio, todos de 2 o 3 productos. La barra del encargo pide cero.
+
+# Tres cadenas distintas (o sea que la invariante del reparto no tiene nada que
+# decir) y dos de los tres nombres se contradicen: virgen contra virgen extra.
+ACEITES = ["Aceite de oliva virgen 1 l", "Aceite de oliva virgen extra 1 l",
+           "Aceite de oliva suave 1 l"]
+TRES_CADENAS = ["aldi", "dia", "mercadona"]
+ENLACES_ACEITE = [(0, 1, 0.95, "equivalente"), (0, 2, 0.90, "equivalente"),
+                  (1, 2, 0.90, "equivalente")]
+
+
+def test_dos_nombres_que_se_contradicen_no_van_al_mismo_grupo():
+    sin_nombres = agrupar_enlaces(ENLACES_ACEITE, 3, cadenas=TRES_CADENAS)
+    assert len(set(sin_nombres)) == 1, (
+        "sin nombres los tres se juntan: es el estado del que se parte, y por eso "
+        "la segunda red hace falta")
+
+    con_nombres = agrupar_enlaces(ENLACES_ACEITE, 3, cadenas=TRES_CADENAS,
+                                  nombres=ACEITES)
+    assert con_nombres[0] != con_nombres[1], (
+        "`virgen` y `virgen extra` han acabado en el mismo grupo: el nombre lo "
+        "declara y el eje tiene que cortar")
+
+
+def test_el_que_calla_no_bloquea():
+    """Ausencia de prueba no es tolerancia.
+
+    Un producto que no dice de que aceite es no esta afirmando que sea igual: es
+    que no lo sabemos. Bloquear por silencio quitaria comparaciones legitimas, que
+    es el error caro en esta aplicacion.
+    """
+    grupos = agrupar_enlaces(
+        [(0, 1, 0.95, "equivalente")], 2, cadenas=["aldi", "dia"],
+        nombres=["Aceite de oliva virgen 1 l", "Aceite de oliva 1 l"])
+    assert grupos[0] == grupos[1], "el silencio ha bloqueado una union legitima"
+
+
+def test_una_entera_y_una_semidesnatada_sin_lactosa_no_son_el_mismo_producto():
+    """El eje que corta puede no ser el que uno mira primero.
+
+    `semidesnatada sin lactosa` y `entera` no se parecen solo por un adjetivo: son
+    dos productos distintos en el eje de la grasa, y el nombre lo dice. Con los
+    nombres a ojo, "sin lactosa" tapa lo que de verdad separa a los dos.
+    """
+    grupos = agrupar_enlaces(
+        [(0, 1, 0.95, "equivalente")], 2, cadenas=["aldi", "dia"],
+        nombres=["Leche entera 1 l", "Leche semidesnatada sin lactosa 1 l"])
+    assert grupos[0] != grupos[1]
+
+
+def test_sin_el_parametro_de_nombres_nada_cambia():
+    """Un llamante que no pase nombres no puede llevarse una sorpresa."""
+    assert agrupar_enlaces(ENLACES_ACEITE, 3, cadenas=TRES_CADENAS) == \
+        agrupar_enlaces(ENLACES_ACEITE, 3, cadenas=TRES_CADENAS, nombres=None)

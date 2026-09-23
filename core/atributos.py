@@ -73,9 +73,26 @@ EJES: dict[str, list[tuple[str, tuple[str, ...]]]] = {
         ("sin gluten", ("sin gluten", "gluten free", "0% gluten")),
     ],
     "formato": [
+        # **`concentrado` estuvo aqui y se quito el 23 de septiembre de 2026**, y el
+        # motivo es que no es una opcion del mismo eje que las otras dos: el estado
+        # (polvo o liquido) y la concentracion son dos cosas distintas, y un producto
+        # puede ser las dos a la vez. Medido: se llevaba por delante pares **ciertos
+        # por codigo de barras** --
+        #
+        #     «Cafe liquido espresso concentrado black Nescafe 500 ml»   (Carrefour)
+        #     «Cafe espresso concentrado black Nescafe 500 ml»           (DIA)
+        #     «Ambientador liquido concentrado Foresan deluxe»            (Mercadona)
+        #     «Ambientador concentrado Deluxe Foresan 125 ml»            (Carrefour)
+        #
+        # --, que son el mismo producto con el nombre escrito de dos maneras. Un eje
+        # que dice que esas dos fichas no son el mismo producto esta simplemente
+        # equivocado, y la regla del proyecto es que **un eje inventado es peor que
+        # no tenerlo**, porque quita comparaciones que si valian. Para separar un
+        # concentrado de uno que no lo es haria falta un eje propio con su opcion
+        # "normal", y esa no existe en los nombres del catalogo: nadie escribe
+        # "no concentrado".
         ("en polvo", ("en polvo", "polvo soluble")),
         ("liquido", ("liquido",)),
-        ("concentrado", ("concentrad",)),
     ],
     "cafe": [
         ("molido", ("molido",)),

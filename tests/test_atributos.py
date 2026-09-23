@@ -30,9 +30,21 @@ GOLD = Path(__file__).resolve().parents[1] / "data" / "gold" / "grupos.parquet"
 # `agrupar_enlaces`: los enlaces son 1-a-1 por par de cadenas, asi que un grupo no
 # puede tener dos productos de la misma cadena. Los techos anteriores eran 54, 74,
 # 615 y 21.
-TECHO_CONTRADICTORIOS = 49
+#
+# Y el de las contradicciones llego a **CERO** ese mismo dia, con **la segunda red**
+# (el parametro `nombres` de `agrupar_enlaces`): dos nombres que se contradicen en un
+# eje -- `virgen` contra `virgen extra` -- no son el mismo producto. Venia de 49, que
+# es lo que pide la barra del encargo, y el techo se baja a 0 en el mismo commit que
+# el codigo.
+#
+# El pack se queda en 642, y no es un cero que haya que bajar: **no es una
+# contradiccion de nadie**. Todas las unidades de esos grupos son el mismo producto en
+# el mismo formato -- agua de 1,5 l --, y el precio por litro se puede comparar
+# perfectamente. Lo que pasa es que "donde compro agua" acabaria recomendando nueve
+# litros frente a uno y medio, y eso es otra dimension (ver `docs/BACKLOG.md`).
+TECHO_CONTRADICTORIOS = 0
 TECHO_DE_11_O_MAS = 0
-TECHO_QUE_MEZCLAN_PACK = 648
+TECHO_QUE_MEZCLAN_PACK = 642
 TECHO_PACK_DE_11_O_MAS = 0
 # La sexta condicion de la barra, medida por el instrumento del proyecto (antes
 # vivia en un script de `data/debug/`, que esta en `.gitignore`, asi que no estaba
@@ -139,7 +151,15 @@ def test_los_ejes_y_el_pack_miden_cosas_distintas():
     assert r["grupos_que_mezclan_pack"] > 0, (
         "el pack ya no encuentra nada: o el catalogo ha cambiado o el instrumento "
         "dejo de mirar `unidades_pack`")
-    assert r["grupos_con_eje_contradictorio"] > 0
+    # El 23 de septiembre de 2026 los ejes llegaron a **cero contradicciones**, con
+    # la segunda red puesta (`agrupar_enlaces`, parametro `nombres`). A partir de
+    # ahi, la prueba de que los dos instrumentos miden cosas distintas ya no puede
+    # ser "los dos ven algo": **el pack sigue viendo 641 grupos y los ejes cero**, y
+    # eso es exactamente dos dimensiones distintas -- el pack no es una
+    # contradiccion de nadie, son unidades distintas del mismo producto.
+    assert r["grupos_con_eje_contradictorio"] == 0, (
+        "los ejes han vuelto a encontrar contradicciones: mira si la segunda red de "
+        "`agrupar_enlaces` (parametro `nombres`) sigue recibiendo los nombres")
     assert r["grupos_de_11_o_mas"] == 0, (
         "han vuelto a aparecer grupos de 11 o mas: la invariante del reparto "
         "(`agrupar_enlaces`, parametro `cadenas`) puede haberse roto")

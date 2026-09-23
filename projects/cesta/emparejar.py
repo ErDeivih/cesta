@@ -20,6 +20,7 @@ import polars as pl
 
 from core import config
 from core import equivalencias as eq
+from core.atributos import contradicciones
 from core.calidad import letras, por_precio, puntua
 from core.matching import (
     CAMPOS_PARA_EMPAREJAR,
@@ -214,13 +215,19 @@ def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) ->
     decir el precio. Y se le pasan las cadenas y los EAN porque la invariante del
     reparto -- **un grupo no puede tener dos productos de la misma cadena** -- es
     la que mas limpia: los 74 de 74 grupos grandes la incumplian.
+
+    Y se le pasan los **nombres**, que activan la segunda red: un grupo donde un
+    nombre dice `virgen` y otro dice `virgen extra` no es un grupo, por muy
+    legitimo que sea mirado por cadenas. El porque y el numero que lo sostiene,
+    en `core.matching.agrupar_enlaces`.
     """
     return agrupar_enlaces(
         enlaces_, len(filas),
         precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
                  for f in filas],
         cadenas=[f["fuente"] for f in filas],
-        eans=[f.get("ean") for f in filas])
+        eans=[f.get("ean") for f in filas],
+        nombres=[f.get("nombre") for f in filas])
 
 
 def composicion(filas: list[dict], ingredientes: dict,
@@ -337,8 +344,50 @@ def medir(filas: list[dict], umbral: float, comparar_vectores: bool = False) -> 
               f"encuentra {acertados} ({100 * acertados / len(verdad):.0f}%)  "
               f"de los {con_ean} comprobables comparten codigo {iguales} "
               f"({100 * iguales / max(con_ean, 1):.0f}%)", flush=True)
+        _invariantes(filas, ls)
     print("  ojo: un enlace 'equivalente' con EAN distinto NO es un fallo, es el")
     print("       objetivo. Comparar marcas blancas es imposible por codigo.")
+
+
+def _invariantes(filas: list[dict], ls: list[tuple]) -> None:
+    """Las condiciones de dato de la barra, medidas **en esta misma pasada**.
+
+    Existe para no medir dos veces cosas que salen del mismo trabajo. El recall
+    dice si el emparejador acierta los pares que ya sabemos ciertos; esto dice si
+    los grupos que ha formado **se sostienen**, y son las condiciones que el
+    encargo pide a cero:
+
+      - **eje contradictorio**: el grupo mezcla `virgen` con `virgen extra`. Es lo
+        que caza la segunda red (`agrupar_enlaces`, parametro `nombres`).
+      - **cadena repetida sin compartir EAN**: la invariante del reparto. Un grupo
+        asi dice que dos productos de la misma cadena son el mismo, y solo lo puede
+        afirmar un EAN.
+
+    Se mide sobre los grupos recien calculados y no sobre gold: gold se escribe al
+    final, y si alguien esta midiendo antes de rehacerlo, aqui sale lo que la
+    configuracion de hoy produce de verdad.
+    """
+    grupos = grupos_de(ls, filas)
+    por_grupo: dict[int, list[int]] = {}
+    for i, g in enumerate(grupos):
+        por_grupo.setdefault(g, []).append(i)
+
+    contradictorios = grandes = repetida_sin_ean = 0
+    for indices in por_grupo.values():
+        if contradicciones([filas[i].get("nombre") for i in indices]):
+            contradictorios += 1
+        if len(indices) >= 11:
+            grandes += 1
+        vistas: dict[str, set[str]] = {}
+        for i in indices:
+            codigo = _ean(filas[i].get("ean")) or f"?{i}"
+            vistas.setdefault(filas[i]["fuente"], set()).add(codigo)
+        if any(len(codigos) > 1 for codigos in vistas.values()):
+            repetida_sin_ean += 1
+    print(f"  invariantes    {len(por_grupo)} grupos  "
+          f"eje contradictorio {contradictorios} (la barra pide 0)  "
+          f"de 11+ {grandes} (pide <30)  "
+          f"cadena repetida sin EAN {repetida_sin_ean} (pide 0)", flush=True)
 
 
 def _huella(filas: list[dict]) -> str:

@@ -301,19 +301,21 @@ subir un numero mientras bajaba el otro (el recall del emparejador subio y los g
 se fundieron peor), y mirando una sola columna eso se ve como una mejora.
 
     condicion                                   comando                                        hoy
-    pruebas verdes                              uv run pytest -q && uv run ruff check .        732 pasan, 2 fallan (ajenos)
+    pruebas verdes                              uv run pytest -q && uv run ruff check .        736 pasan, 2 fallan (ajenos)
     --medir >= 57 %                             uv run python -m projects.cesta.emparejar \
                                                   --medir                                      65 %   CUMPLE
-    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes        49     NO
+    cero grupos con eje contradictorio          uv run python -m projects.cesta.ejes         0    CUMPLE
     menos de 30 grupos de 11+ productos         (el mismo comando)                            0    CUMPLE
     las cinco cadenas con bronze del mismo dia  ver `docs/ESTADO.md`                         CUMPLE (23 sep)
     cadena repetida de la misma sin EAN         `projects.cesta.ejes`                         0    CUMPLE
 
-**El `--medir` esta medido CON la invariante puesta**, que era la duda que quedo al
-ponerla: cortar por cadena repetida podia llevarse pares ciertos por delante. No se
-los llevo -- 20.949 enlaces y **1.174 de 1.813 pares ciertos, el 65 %**, en 423 s
-sobre el catalogo de hoy (52.417 productos). Los numeros anteriores de esta fila eran
-de antes del cambio, asi que esta es la que vale.
+**El `--medir` esta medido CON las dos redes puestas**, que era la duda que quedo al
+ponerlas: cortar por cadena repetida y por eje contradictorio podia llevarse pares
+ciertos por delante. No se los llevo -- **1.174 de 1.813 pares ciertos, el 65 %**, en
+420 s sobre el catalogo de hoy (52.417 productos). Y el numero que de verdad mide el
+precio de la segunda red no es ese, porque el recall cuenta **enlaces** y la segunda red
+solo toca **grupos**: medido sobre gold, los pares ciertos que acaban en el mismo grupo
+pasaron de **1.806 de 1.809 a 1.807 de 1.809**. No costo: gano uno.
 
 
 **La sexta la propuso Claude y es la mejor de todas**, asi que va en la barra: los
@@ -327,10 +329,11 @@ Los dos instrumentos de esa condicion viven hoy en `data/debug/_cadena_repetida.
 que esta en `.gitignore`: **deberia subir a `projects/cesta/` junto a `ejes.py`**, y
 su techo ponerse en `tests/test_atributos.py` como los otros cuatro.
 
-Y la de mas valor, que no es ninguna de esas cinco porque es la que las explica:
+Y la de mas valor, que no es ninguna de esas cinco porque es la que las explica
+(medido el 23 de septiembre de 2026, despues de las dos redes):
 
-    grupos que mezclan un pack con sueltas      615
-    de esos, de 11 o mas                          21
+    grupos que mezclan un pack con sueltas      642
+    de esos, de 11 o mas                          0
 
 Los tres instrumentos, y donde viven: `projects/cesta/ejes.py` (ejes y pack, sobre el
 gold; sus techos estan en `tests/test_atributos.py`), `tests/test_contraste.py` (el
@@ -413,7 +416,10 @@ como se hizo con los grupos.
                                                   deshacer y sin rojo sin cobertura)
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
-    punto 5  el medoide como segunda red          PENDIENTE (calibrar contra el banco)
+    punto 5  el medoide como segunda red          A MEDIAS: la segunda red de los EJES
+                                                  esta hecha y los 49 estan en 0; falta
+                                                  el medoide, para lo que el nombre no
+                                                  declara. Umbral contra el banco.
     punto 6  los avisos que no avisan             PENDIENTE
 
 **Lo que le falta a la barra, dicho con su numero**, porque el encargo se cierra cuando
@@ -428,24 +434,21 @@ se cumplen las seis condiciones y no cuando se acaban las tareas:
     (d) la frase antes que la tabla, y sin frase si el
         grupo no es de fiar                                   CUMPLE
     (e) pruebas verdes y `verificar_docs` verde                CUMPLE
-        (732 pasan; las 2 que fallan son de `core/datos/secciones.yml`, de otro
+        (736 pasan; las 2 que fallan son de `core/datos/secciones.yml`, de otro
         agente, y no se tocan desde aqui)
-    (f) CERO grupos con eje contradictorio                    49   NO
+    (f) CERO grupos con eje contradictorio                    0    CUMPLE (23 sep)
         menos de 30 grupos de 11+                             0    CUMPLE
         `--medir >= 57 %`                                     65 % CUMPLE
 
-**Lo unico que queda de la barra es (f): los 49 grupos con eje contradictorio**, y el
-camino esta escrito y medido, no por descubrir: la invariante caza lo que se funde
-**entre** cadenas y esto es lo que se funde **dentro** de un grupo legitimo, que es
-justo el papel del medoide como **segunda red** (punto 5). Su umbral se calibra contra
-el banco de pares (`projects/cesta/banco_de_pares.py`), no se elige a ojo. Lo que **no**
-se puede hacer, y esta comprobado: usar el margen de precio como cuchillo -- hay ahorros
-reales de 28x (`core/comparacion.py`), asi que **el margen detecta y el eje declarado en
-el nombre corta**, y el que calla no bloquea (ausencia de prueba no es tolerancia).
+**De la barra solo queda (a), y no la puede cerrar quien escribe el codigo.** Las cinco
+condiciones de dato estan en verde, y la ultima -- los 49 grupos con eje contradictorio
+-- cayo el 23 de septiembre de 2026 con **la segunda red**; el como y el precio que
+tuvo, unas lineas mas abajo.
 
-Y (a) tampoco se puede dar por hecha sin medirla: es la unica condicion que se juzga
-**contra la madre del dueno**, y quien la mide tiene que ser alguien que no haya escrito
-la pantalla.
+Y (a) no se puede dar por hecha sin medirla: es la unica condicion que se juzga **contra
+la madre del dueno**, y quien la mide tiene que ser alguien que no haya escrito la
+pantalla. Lo que si se puede hacer desde aqui es no dejar nada que estorbe, y eso es lo
+que se ha hecho.
 
 **El «Deshacer» de la lista, listo para ejecutar.** Es el resto del punto 2 que mas
 vale (quitar una linea es la accion destructiva, y hoy no se puede volver atras).
@@ -522,6 +525,66 @@ devuelve nada o devuelve algo que no se puede comparar, **ese hueco no se rellen
 si no queda ninguno de los cuatro, no se pinta nada y el buscador se queda como estaba.
 La diferencia sale de restar los dos precios por unidad del grupo, no de un `ahorro` que
 llegue sumado por otro camino.
+
+### La segunda red: el eje que el nombre declara (los 49 se fueron a cero)
+
+Es la ultima condicion de dato que quedaba, y la que el encargo pide **a cero**: cero
+grupos con eje contradictorio. Estaba en 49.
+
+**Lo que se hizo, en una frase**: `agrupar_enlaces` acepta ahora un parametro `nombres`
+(`core/matching.py`), y con el **rechaza la union que dejaria un eje contradictorio
+dentro del grupo**. Dos nombres que dicen `virgen` y `virgen extra` -- o `entera` y
+`desnatada` -- **no son el mismo producto**, y no hace falta mirar el precio para
+saberlo: lo dice el nombre.
+
+**Por que el eje y no el margen.** Ya estaba comprobado y conviene repetirlo, porque es
+la tentacion: `core/comparacion.py` documenta ahorros reales de 28x entre marca blanca y
+marca. Un cuchillo de precio borraria justo los hallazgos que esta aplicacion existe para
+encontrar. **El margen detecta; el eje declarado en el nombre corta.** Y con la regla que
+lo hace honesto, la misma de `core/atributos`: **el que calla no bloquea** -- un producto
+que no dice si es entera o desnatada no afirma que sea igual, es que no lo sabemos.
+
+**Lo que costo, medido sobre el mismo bronze y antes/despues** (23 de septiembre de 2026):
+
+    metrica                                     antes    despues
+    grupos con eje contradictorio                  49          0     <- la barra
+    grupos de 11 o mas productos                    0          0
+    cadena repetida sin EAN                         0          0
+    grupos comparables entre cadenas            8.803      8.781
+    pares ciertos EN EL MISMO GRUPO      1.806 de 1.809  1.807 de 1.809
+    recall de --medir                           65 %        65 %    <- la barra
+    grupos que mezclan pack con sueltas           644        642
+
+El recall de `--medir` cuenta **enlaces**, y la segunda red solo toca **grupos**: por eso
+el numero que mide su precio no es ese, sino **cuantos pares ciertos acaban en el mismo
+grupo**, y eso hay que medirlo sobre gold (1.809 pares con el mismo codigo en dos
+cadenas distintas). Salio **a favor**: uno mas que antes. No hay coste que justificar.
+
+**Y por el camino se encontro un eje que estaba mal.** El eje `formato` tenia
+`concentrado` como opcion, y no es una opcion del mismo eje que las otras dos: el estado
+(polvo o liquido) y la concentracion son dos cosas distintas y un producto puede ser las
+dos. Se llevaba por delante pares **ciertos por codigo de barras**:
+
+    «Cafe liquido espresso concentrado black Nescafe 500 ml»   carrefour
+    «Cafe espresso concentrado black Nescafe 500 ml»           dia        EAN 9556001329141
+    «Ambientador liquido concentrado Foresan deluxe»           mercadona
+    «Ambientador concentrado Deluxe Foresan 125 ml»            carrefour  EAN 8414716502321
+
+Son el mismo producto con el nombre escrito de dos maneras. `concentrado` se quito de
+`formato`, y con eso los pares ciertos juntos subieron de 1.801 a 1.807: **un eje
+inventado es peor que no tenerlo**, que es la regla que ya estaba escrita en
+`core/atributos.py`.
+
+Los cuatro techos de `tests/test_atributos.py` bajaron en el mismo commit (`49 -> 0`,
+`648 -> 642`), y `tests/test_invariante_reparto.py` gana cinco pruebas de la segunda red,
+incluidas las dos que importan: **`virgen` y `virgen extra` no van al mismo grupo** y
+**el que calla no bloquea**.
+
+**Lo que queda de este punto, y es el punto 5 del encargo**: el medoide. La segunda red
+de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde sin que
+ningun nombre diga nada -- dos productos distintos que ningun eje separa porque ninguno
+de los dos lo escribe. Eso no lo puede cortar un patron de texto, y es donde entra la
+cohesion contra el medoide, con el umbral **calibrado contra el banco de pares**.
 
 ### El pasillo de la lista, pegado arriba: la ultima pieza del punto 2
 

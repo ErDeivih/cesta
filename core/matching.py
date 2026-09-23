@@ -19,6 +19,7 @@ import math
 import re
 from collections import Counter, defaultdict
 
+from core.atributos import valores
 from core.normalize import nombre_limpio
 
 # Palabras que no distinguen un producto de otro y solo generan parecido falso.
@@ -801,7 +802,8 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
                     umbral_union: float = UMBRAL_UNION,
                     precios: list | None = None,
                     cadenas: list[str] | None = None,
-                    eans: list[str | None] | None = None) -> list[int]:
+                    eans: list[str | None] | None = None,
+                    nombres: list[str | None] | None = None) -> list[int]:
     """Id de grupo por producto, con el freno contra el grupo monstruo.
 
     Los enlaces se recorren de mas parecido a menos, que es lo que hace que el
@@ -829,6 +831,23 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
     compartan EAN**: ese es el duplicado legitimo del catalogo (38 casos en todo
     gold), el mismo producto listado dos veces. Un producto sin EAN cuenta como un
     valor propio, asi que dos sin codigo nunca se dan por el mismo: no hay prueba.
+
+    `nombres` activa **la segunda red: el eje que el nombre declara**. La invariante
+    de arriba caza lo que se funde **entre** cadenas; esto caza lo que se funde
+    **dentro** de un grupo que, mirado por cadenas, es legitimo. Dos nombres que se
+    contradicen en un eje -- `virgen` contra `virgen extra`, `concentrado` contra
+    `liquido`, `con azucar` contra `sin azucar` -- **no son el mismo producto**, y no
+    hace falta mirar el precio para saberlo: lo dice el nombre.
+
+    Medido el 23 de septiembre de 2026 sobre el gold de entonces, con la invariante
+    ya puesta: **49 grupos con eje contradictorio** (2 o 3 productos cada uno), y la
+    barra del encargo pide **cero**.
+
+    Y la regla que lo hace honesto, que es la misma de `core/atributos`: **si uno de
+    los dos no declara nada, no bloquea**. Un producto que no dice si es entera o
+    desnatada no esta afirmando que sea igual: es que no lo sabemos. Eso no es
+    tolerancia, es ausencia de prueba. Y los ejes se comprueban **antes** de
+    cualquier freno de precio, porque no son una tolerancia: son un hecho declarado.
     """
     padre = list(range(n))
     tamano = [1] * n
@@ -845,6 +864,12 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
         for i in range(n):
             cod = (eans[i] if eans else None) or f"?{i}"
             por_cadena[i][cadenas[i]] = {cod}
+    # Eje -> valor declarado, por componente, para la segunda red. Un eje que no
+    # aparece es un eje sobre el que esa componente **no dice nada**.
+    por_eje: list[dict[str, str]] = [{} for _ in range(n)]
+    if nombres is not None:
+        for i in range(n):
+            por_eje[i] = valores(nombres[i])
 
     def raiz(x: int) -> int:
         while padre[x] != x:
@@ -864,6 +889,19 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
             choque = por_cadena[ri].keys() & por_cadena[rj].keys()
             if any(len(por_cadena[ri][c] | por_cadena[rj][c]) > 1 for c in choque):
                 continue
+        if nombres is not None:
+            # Un eje donde las dos componentes declaran cosas **distintas** bloquea.
+            # Las dos ya son coherentes por dentro (cada union se comprobo), asi que
+            # basta comparar los valores declarados: ejes que solo declara una no
+            # cuentan, porque callar no es afirmar.
+            contradice = False
+            for eje, valor in por_eje[rj].items():
+                mio = por_eje[ri].get(eje)
+                if mio is not None and mio != valor:
+                    contradice = True
+                    break
+            if contradice:
+                continue
         if s < umbral_union:
             if tamano[ri] > 1 and tamano[rj] > 1:
                 continue
@@ -877,6 +915,10 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
         if cadenas is not None:
             for cadena, codigos in por_cadena[rj].items():
                 por_cadena[ri].setdefault(cadena, set()).update(codigos)
+        if nombres is not None:
+            # Lo que declara el que se absorbe se suma a lo que declara el que
+            # queda: por construccion no hay ejes con dos valores distintos aqui.
+            por_eje[ri] = por_eje[rj] | por_eje[ri]
         if precios:
             for unidad, (lo, hi) in rango[rj].items():
                 if unidad in rango[ri]:
@@ -900,4 +942,5 @@ def agrupar(filas: list[dict], umbral: float = 0.55,
         precios=[(f.get("unidad_canon"), f.get("precio_unidad_cent"))
                  for f in filas],
         cadenas=[f["fuente"] for f in filas],
-        eans=[f.get("ean") for f in filas])
+        eans=[f.get("ean") for f in filas],
+        nombres=[f.get("nombre") for f in filas])
