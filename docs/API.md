@@ -377,15 +377,45 @@ Se implementó en `plataforma/api/catalogo.py` (`normaliza_ean` y `por_ean`) y e
 una cadena. Vacia se lee como "he mirado y no hay nada mas barato"; `null` se lee
 como "no puedo comparar". No es lo mismo.
 
-### `GET /api/habituales`  — tarea 3, el mosaico
+### `GET /api/habituales`  — el mosaico · **HECHO** (23 sep 2026)
 
-    limite   24 por defecto
-    sale     {"habituales": [{"grupo_id", "nombre", "imagen",
-                              "precio_cent", "veces", "ultima_vez"}]}
+    limite   24 por defecto (1..60)
+    pide     sesion
+    sale     {"origen": "tuyo" | "de todos" | "basico",
+              "habituales": [{"grupo_id", "nombre", "imagen",
+                              "precio_unidad_cent", "unidad",
+                              "cadena_mas_barata", "fiable",
+                              "veces", "ultima_vez"}],
+              "fecha_datos"}
 
-Los grupos que ese usuario mas ha anadido en 90 dias. **Lista vacia si no hay
-historial**, y la interfaz no pinta nada. No se rellena con "populares", que no
-es lo mismo y no sirve.
+Los grupos que esa persona ha anadido mas veces, **lo reciente pesando mas**, con lo
+justo para pintar una tarjeta y anadirla de un toque. La especificacion que se siguio
+es `Claude outputs/ENCARGO-UX-23SEP.md` (§5).
+
+**`origen` dice de donde sale lo que se esta viendo, y hay tres escalones.** Esto es
+un **cambio de criterio** respecto a lo que decia aqui antes, asi que se cuenta en vez
+de borrarse:
+
+    "tuyo"       lo que ha anadido esta persona. Manda `veces` y `ultima_vez`.
+    "de todos"   no hay historial suyo: lo mas anadido en toda la casa, que es un
+                 recuento agregado y no lleva datos personales. **No manda `veces`
+                 ni `ultima_vez`**: son de todo el mundo, y mandarlos con el mismo
+                 nombre que los tuyos seria otra vez dos numeros llamandose igual
+                 -- el error que este proyecto ya pago con "imposible".
+    "basico"     y si tampoco hay de donde sacarlo, una compra basica fija, para que
+                 la cuadricula **no se vea vacia** el primer dia.
+
+**Antes este documento decia que con historial vacio la lista sale vacia y que no se
+rellena con "populares".** El encargo del 23 de septiembre pide lo contrario, y su
+razon esta en `docs/PANTALLAS.md`: una pantalla en blanco es el peor momento de la
+aplicacion y el unico que todo el mundo ve. Lo que **no** se hace es mezclar los
+escalones sin decirlo: para eso esta `origen`, que permite que la pantalla diga
+*«todavia no se lo que sueles comprar»*.
+
+Sin foto no viaja la clave `imagen` (nunca `null`, ni `""`, ni `0`). `fiable` es
+unidad comparable (kg/l/m; "ud" no) **y** dos cadenas o mas **y** sin contradiccion
+de precio mayor de 30x dentro del grupo: con una sola cadena no hay comparacion que
+hacer, asi que es `false`.
 
 ### La nota, dentro de la ficha  — tarea 9
 
