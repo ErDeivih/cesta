@@ -103,7 +103,7 @@ Ninguna de las tres es trabajo de codigo pendiente: son una medicion y dos decis
 
 ## Como se comprueba todo esto sin creerse nada
 
-    uv run pytest -q                                 796 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 799 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal
