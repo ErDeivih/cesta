@@ -416,10 +416,12 @@ como se hizo con los grupos.
                                                   deshacer y sin rojo sin cobertura)
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO y verificado; 404 hasta el rebuild
-    punto 5  el medoide como segunda red          A MEDIAS: la segunda red de los EJES
-                                                  esta hecha y los 49 estan en 0; falta
-                                                  el medoide, para lo que el nombre no
-                                                  declara. Umbral contra el banco.
+    punto 5  el medoide como segunda red          HECHO y MEDIDO: no se pone como
+                                                  guarda (el suelo del banco y los
+                                                  grupos malos caen en el mismo tramo).
+                                                  La segunda red que SI corta son los
+                                                  ejes declarados, y los 49 estan en 0.
+                                                  Instrumento: projects/cesta/cohesion.py
     punto 6  los avisos que no avisan             PENDIENTE
 
 **Lo que le falta a la barra, dicho con su numero**, porque el encargo se cierra cuando
@@ -582,9 +584,63 @@ incluidas las dos que importan: **`virgen` y `virgen extra` no van al mismo grup
 
 **Lo que queda de este punto, y es el punto 5 del encargo**: el medoide. La segunda red
 de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde sin que
-ningun nombre diga nada -- dos productos distintos que ningun eje separa porque ninguno
-de los dos lo escribe. Eso no lo puede cortar un patron de texto, y es donde entra la
-cohesion contra el medoide, con el umbral **calibrado contra el banco de pares**.
+ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
+cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
+cae en el mismo tramo que los grupos peores del catalogo.
+
+### El medoide: medido, calibrado contra el banco, y **no se pone como guarda**
+
+El punto 5 del encargo pedia la cohesion contra el medoide como segunda red, con el
+umbral **calibrado contra el banco de pares y no elegido a ojo**. Esta hecho, medido y
+decidido, y la decision es **no cortar con ella**. El instrumento se queda en
+`projects/cesta/cohesion.py`, que es lo que faltaba: hasta hoy solo habia una hipotesis.
+
+**Que mide.** Para cada grupo, el **medoide** (el miembro con la media de parecido mas
+alta al resto, o sea el centro medido y no elegido) y la **cohesion** (el parecido del
+medoide con el miembro que peor encaja). Los vectores son `bge-m3` del cache de
+`data/gold/embedding.parquet`, leidos en SQL.
+
+**Lo que salio el 23 de septiembre de 2026** (52.417 productos, 8.756 grupos con dos o
+mas miembros con vector; 1.791 pares ciertos con vector):
+
+    grupos cuya cohesion es menor que:   0,50 -> 0    0,60 -> 84    0,70 -> 1.244
+                                         0,75 -> 2.865   0,85 -> 5.925   0,95 -> 8.456
+    pares CIERTOS:   minimo 0,511   p1 0,617   p5 0,725   mediana 0,874
+
+**El suelo del banco (0,511) esta en el mismo tramo que los grupos peores del catalogo**,
+asi que el umbral no separa nada: o no corta (por debajo de 0,51, y ahi no hay ningun
+grupo), o se lleva por delante pares ciertos y grupos legitimos a la vez.
+
+Y leyendo los nombres se ve por que. Los cuatro grupos de cohesion mas baja:
+
+    grupo 24370   0,500   'Boniato'                             (aldi)
+                          'Boniato Carrefour 1 kg aprox'        (carrefour)
+    grupo 7096    0,513   'CILLIT BANG Multiusos 750ml + 33% gr.'  (alcampo)
+                          'Multiusos cocina Bosque Verde'          (mercadona)
+    grupo 2750    0,537   'TENDILLA Torrezno frito lima-chili'  (alcampo)
+                          'Rolls picantes sabor chili-lima'     (aldi)
+    grupo 2393    0,719   'VICTORIA Cerveza pack 6 uds. x 20 cl.'  (alcampo)
+                          'Cerveza Estrella Galicia especial pack 24 latas 33 cl.' (carrefour)
+                          'Cerveza Estrella Galicia pack 6 x 20 cl'  (dia)
+
+Los dos primeros son **comparaciones legitimas y valiosas** -- el mismo producto con marca
+blanca y con marca nacional, escrito de dos maneras, que es exactamente lo que esta
+aplicacion existe para comparar --; el tercero mezcla dos aperitivos distintos y el
+cuarto dos cervezas distintas, **y los cuatro tienen el mismo parecido**. El texto es
+justo lo que cambia cuando la comparacion vale mas. Para cazar el grupo 2393 (que esta en
+0,719) habria que cortar en 0,72, y ahi se van un 5 % de los pares ciertos y 2.865 grupos.
+
+**Conclusion, escrita como es**: la cohesion sirve para **mirar**, no para cortar. No se
+pone como guarda en `agrupar_enlaces`, y el motivo esta medido, no supuesto. Lo que
+separa de verdad en ese grupo de cervezas no es la cohesion: son **formatos distintos**
+(6 x 20 cl frente a 24 x 33 cl), o sea la dimension del pack, que se mide en
+`projects/cesta/ejes.py` (hoy 642 grupos mezclan un pack con sueltas, y **0 de ellos son
+de 11 o mas**).
+
+Esto es la misma leccion que dio el canal de vectores (+3.998 enlaces y 861 conflictos de
+asignacion): **el parecido de texto propone, no decide**. Se puede volver a intentar
+cuando haya una senal que separe "otro nombre" de "otro producto" -- y entonces el numero
+a batir es este: **0,511 de suelo y 0,719 el grupo malo que se quiere cazar**.
 
 ### El pasillo de la lista, pegado arriba: la ultima pieza del punto 2
 
