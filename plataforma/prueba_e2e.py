@@ -145,6 +145,28 @@ def main() -> int:
         fallos += 1
         print("   FALLO: con sesion no ha filtrado por 'lo mio'")
 
+    # **La cola de lo que se hizo sin cobertura** (§3.5). El movil manda los cambios de
+    # golpe con su hora, y el servidor los aplica: esto es lo que hace que tachar sin red
+    # no sea un error.
+    print("\n== la cola sin cobertura: /sincronizar")
+    linea = almacen.lineas_de(str(lista["id"]))[0]
+    momento = "2026-09-23T18:04:00+00:00"
+    r = cliente.post(f"/api/listas/{lista['id']}/sincronizar",
+                     json=[{"id": linea["id"], "momento": momento, "tachado": True}])
+    print(f"   POST /sincronizar -> {r.status_code}  {r.json() if r.status_code == 200 else r.text[:150]}")
+    if r.status_code != 200 or r.json().get("aplicados") != 1:
+        fallos += 1
+        print("   FALLO: la cola no se ha aplicado")
+    despues = next(x for x in almacen.lineas_de(str(lista["id"]))
+                   if x["id"] == linea["id"])
+    print(f"   tachado_en={despues['tachado_en']}  (la hora que mando el movil: {momento})")
+    if not despues["tachado_en"]:
+        fallos += 1
+        print("   FALLO: el cambio de la cola no se aplico")
+    if str(despues["tachado_en"]).replace("T", " ")[:16] != momento.replace("T", " ")[:16]:
+        fallos += 1
+        print("   FALLO: se ha guardado la hora de llegada en vez de la del movil")
+
     # **Sin sesion**: el filtro no puede saber que es "lo mio", y el campo tiene que
     # decir la verdad. Este es el fallo que encontro esta prueba.
     print("\n== y sin sesion, que el campo no mienta")

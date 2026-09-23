@@ -65,19 +65,31 @@ def test_sin_red_es_typeerror_y_esta_en_un_solo_sitio():
 
 
 def test_un_fallo_de_red_no_va_en_rojo_y_uno_de_la_api_si():
+    """Sin cobertura ya no es un aviso: es un cambio que espera (§3.5).
+
+    Esto cambio el 23 de septiembre de 2026, y se cuenta en vez de borrarse: antes, un
+    cambio que no llegaba por falta de red pintaba un aviso neutro -- mejor que el rojo,
+    pero seguia pidiendo a alguien, de pie en el pasillo, que entendiera un mensaje y
+    volviera a pulsar. Ahora **se guarda en el movil con su hora** y sale la linea
+    discreta de "N cambios se subirán al volver la cobertura", que es lo que pedia el
+    encargo. Lo que se comprueba aqui es que **sin red no se pinta ningun error** y que
+    el rojo se queda para lo que la API contesta que no.
+    """
     cesta = _leer(CESTA)
     assert "esSinRed(cambia.error)" in cesta, \
         "al no poder guardar un cambio hay que distinguir la red de la API"
     assert "esSinRed(detalle.error)" in cesta, \
         "al no poder traer la lista, lo mismo"
-
-    # El aviso de sin cobertura es neutro y no es una alerta.
-    sin_cobertura = re.findall(
-        r'<Aviso tono="(\w+)" titulo="Sin cobertura">', cesta)
-    assert sin_cobertura == ["aviso", "aviso"], \
-        f"los dos casos de sin cobertura van en tono neutro, no en {sin_cobertura}"
+    # El rojo solo para lo que la API rechaza: un 403 de una lista de solo mirar, un 500.
+    assert re.search(r'cambia\.isError && !esSinRed\(cambia\.error\)', cesta), \
+        "sin cobertura sigue pintandose como un error, y no lo es"
     assert 'tono="mal" titulo="No he podido guardar el cambio"' in cesta, \
         "cuando la API contesta que no, sigue siendo un fallo que hay que mirar"
+    # Y si no llega la lista entera -- abrir la app en el pasillo sin cobertura --, eso
+    # si es un aviso: no hay nada que guardar en cola, no hay lista.
+    sin_cobertura = re.findall(r'<Aviso tono="(\w+)" titulo="Sin cobertura">', cesta)
+    assert sin_cobertura == ["aviso"], \
+        f"el unico 'Sin cobertura' que queda es el de no poder traer la lista: {sin_cobertura}"
 
 
 def test_el_aviso_no_le_habla_al_de_la_caja_de_la_interfaz_antigua():

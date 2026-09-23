@@ -25,18 +25,22 @@
  *  usuario, y todo el mundo ve quien esta dentro. Sin esto una lista compartida
  *  es un sitio donde aparecen cosas que no has puesto tu.
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 
 import {
   anadirLinea, cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
-  revocarInvitaciones, salir, verLista, donde, yo,
+  revocarInvitaciones, salir, sincronizar, verLista, donde, yo,
 } from '../api/cesta'
-import type { CambioLinea, Invitacion, Persona } from '../api/cesta'
+import type { CambioDeCola, CambioLinea, Invitacion, Persona } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
 import { euros, hace } from '../api/formato'
+import {
+  apuntaCambio, leerCola, vaciaCola,
+} from '../estado/cola'
+import type { CambioPendiente } from '../estado/cola'
 import {
   Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
   Tarjeta, Vacio, cx,
@@ -715,8 +719,40 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
   )
 }
 
-/* ------------------------------------------- llegar desde una invitacion --- */
+/** La lista, con lo que se ha tocado sin cobertura ya aplicado encima.
+ *
+ *  Es lo que hace que tachar **funcione** sin red en vez de solo guardarse: la linea
+ *  sale tachada en el mismo toque, sin ruedecita y sin esperar a nadie. Y una linea
+ *  quitada sin cobertura desaparece de la lista, que es lo que se acaba de pedir.
+ *
+ *  Gana **el ultimo cambio de cada linea**: tachar y destachar sin cobertura no son dos
+ *  cambios que subir en orden, es el ultimo (y la API es idempotente, asi que da igual
+ *  cuantas veces se haya tocado).
+ */
+function conPendientes(lineas: Linea[], cola: CambioPendiente[]): Linea[] {
+  if (!cola.length) return lineas
+  const porLinea = new Map(cola.map((c) => [c.lineaId, c]))
+  const salida: Linea[] = []
+  for (const linea of lineas) {
+    const pendiente = porLinea.get(linea.id)
+    if (!pendiente) {
+      salida.push(linea)
+      continue
+    }
+    const c = pendiente.cambio
+    if (c.borrado) continue
+    salida.push({
+      ...linea,
+      cantidad: c.cantidad ?? linea.cantidad,
+      // La hora del movil, que es la que se mando y la que va a valer cuando suba.
+      tachado_en: c.tachado === true ? (linea.tachado_en ?? pendiente.momento)
+        : c.tachado === false ? null : linea.tachado_en,
+    })
+  }
+  return salida
+}
 
+/* ------------------------------------------- llegar desde una invitacion --- */
 /** Lo que deja `Unirse` al llegar a la cesta. */
 interface VenidaDeInvitacion {
   listaId: string
@@ -745,6 +781,12 @@ export function Cesta() {
   // ha hecho nada.
   const venida = venidaDeInvitacion(ubicacion.state)
   const [elegida, setElegida] = useState<string | null>(venida?.listaId ?? null)
+  // Lo que se toco sin cobertura y todavia no ha llegado al servidor.
+  const [cola, setCola] = useState<CambioPendiente[]>([])
+  // Dos frases para el mismo sitio: lo que se ha subido, o que la cola no se ha podido
+  // guardar (modo privado del navegador). La segunda es un aviso de verdad.
+  const [subidos, setSubidos] = useState<string | null>(null)
+  const [sinGuardar, setSinGuardar] = useState(false)
 
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
   const listas = useQuery({
@@ -770,10 +812,16 @@ export function Cesta() {
    *  «Por coger» y «en el carro» no son dos estados de animo del mismo dato: son
    *  las dos mitades del trabajo que se esta haciendo. La marca es `tachado_en`
    *  porque la API tacha y mete en el carro **a la vez** (`almacen.py`), asi que no
-   *  son dos cosas que puedan separarse: tachado = ya esta en el carro. */
-  const porCoger = detalle.data?.lineas.filter((l) => l.tachado_en === null) ?? []
-  const enElCarro = detalle.data?.lineas.filter((l) => l.tachado_en !== null) ?? []
-
+   *  son dos cosas que puedan separarse: tachado = ya esta en el carro.
+   *
+   *  **Y se pintan con lo que hay sin subir aplicado encima**: si acabas de tachar sin
+   *  cobertura, la linea tiene que salir tachada ya -- "que tachar funcione igual sin
+   *  red" no es que se guarde, es que se vea. Los totales de abajo siguen siendo los del
+   *  servidor, y por eso la linea de "N cambios sin subir" esta ahi: para que nadie
+   *  compare un total que todavia no cuenta lo que acaba de tocar. */
+  const lineas = conPendientes(detalle.data?.lineas ?? [], cola)
+  const porCoger = lineas.filter((l) => l.tachado_en === null)
+  const enElCarro = lineas.filter((l) => l.tachado_en !== null)
   const cambia = useMutation({
     mutationFn: ({ lineaId, cambio }: { lineaId: string; cambio: CambioLinea;
       linea?: Linea | null }) =>
@@ -788,10 +836,73 @@ export function Cesta() {
       cliente.invalidateQueries({ queryKey: ['lista', listaId] })
       cliente.invalidateQueries({ queryKey: ['donde', listaId] })
     },
+    onError: (error, variables) => {
+      // **Sin cobertura no es un error: es un cambio que espera.** Se guarda en el
+      // movil con la hora a la que se toco (§3.5 del encargo: *"que tachar funcione
+      // igual sin red, sin ruedecita ni error"*) y se sube al volver la cobertura. Un
+      // aviso rojo aqui seria decirle a alguien, de pie en el pasillo, que la
+      // aplicacion se ha roto -- cuando lo unico que pasa es que no hay red.
+      if (!esSinRed(error)) return
+      const cola = apuntaCambio(listaId as string, {
+        lineaId: variables.lineaId,
+        cambio: variables.cambio,
+        momento: variables.cambio.momento ?? new Date().toISOString(),
+      })
+      if (cola) setCola(cola)
+      else setSinGuardar(true)
+    },
   })
 
-  if (sesion.isLoading) return <Cargando que="tu sesión" />
+  /** Sube de golpe lo que espera. Se llama al volver la cobertura y al abrir la lista. */
+  const sube = useMutation({
+    mutationFn: (pendientes: CambioPendiente[]) =>
+      sincronizar(listaId as string, pendientes.map((c): CambioDeCola => ({
+        id: c.lineaId, momento: c.momento, ...c.cambio,
+      }))),
+    onSuccess: (r, pendientes) => {
+      // La cola se vacia **solo cuando el servidor dice que los aplico**. Y lo que
+      // fallo se queda: puede ser una linea que la otra persona ya borro, y eso hay que
+      // poder contarlo en vez de perderlo en silencio.
+      vaciaCola(listaId as string)
+      setCola(leerCola(listaId as string))
+      if (r.aplicados) {
+        setSubidos(r.aplicados === 1
+          ? 'Se ha subido 1 cambio que hiciste sin cobertura.'
+          : `Se han subido ${r.aplicados} cambios que hiciste sin cobertura.`)
+      }
+      if (r.fallidos.length) setSinGuardar(true)
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+      cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+      void pendientes
+    },
+  })
 
+  // La cola se lee **de lo guardado en el movil**, no se hereda del estado: si se cierra
+  // la pestaña en el pasillo, los cambios siguen ahi al volver a abrirla.
+  useEffect(() => {
+    setCola(listaId ? leerCola(listaId) : [])
+    setSubidos(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listaId])
+
+  // Y se sube solo **al volver la cobertura** -- y al abrir la lista, por si la pestaña
+  // se cerro con la cola llena --, que es lo que pide el encargo: *"al volver, se suba
+  // solo y se diga en una frase"*. Sin red no se intenta: subir desde el pasillo sin
+  // cobertura es exactamente lo que no funciona.
+  useEffect(() => {
+    const alVolver = () => {
+      const pendientes = listaId ? leerCola(listaId) : []
+      if (!listaId || !pendientes.length || sube.isPending) return
+      if (!navigator.onLine) return
+      sube.mutate(pendientes)
+    }
+    window.addEventListener('online', alVolver)
+    alVolver()
+    return () => window.removeEventListener('online', alVolver)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listaId, cola.length])
+
+  if (sesion.isLoading) return <Cargando que="tu sesión" />
   if (!sesion.data?.usuario) {
     return (
       <Introducir
@@ -882,40 +993,49 @@ export function Cesta() {
           maquetacion mueve el boton que el pulgar ya tenia camino de pulsar. */}
       {detalle.isLoading && <Esqueleto filas={5} alto="3.5rem" />}
 
-      {/* Cuando no se ha podido guardar un cambio. **Se distinguen dos cosas que
-          no son la misma**, y hasta hoy se pintaban igual:
-      
-          - **Sin cobertura** (`esSinRed`): en el pasillo esto pasa, y no es un
-            fallo de nadie. Va en tono neutro, sin `role="alert"`, y dice lo
-            unico que hay que saber: que la lista sigue como estaba y que hay que
-            volver a pulsar. En rojo, esto mismo se lee como "la aplicacion se ha
-            roto" y se deja de usar la lista justo donde mas sirve.
-          - **La API ha contestado que no** (un 403 de una lista de solo mirar, un
-            500): eso si hay que mirarlo, y va en rojo con lo que ha dicho.
-      
-          Y el texto no habla de la cola de cambios de la interfaz vieja: eso es
-          una explicacion para quien programa, no para quien esta en la caja. */}
-      {cambia.isError && (
-        esSinRed(cambia.error) ? (
-          <Aviso tono="aviso" titulo="Sin cobertura">
-            <p>
-              El cambio no se ha guardado: no he podido avisar a casa. La lista
-              sigue como estaba.
-            </p>
-            <p className="mt-1">
-              Pulsa otra vez cuando tengas red y se guarda. Lo que ya estaba
-              cogido sigue cogido.
-            </p>
-          </Aviso>
-        ) : (
-          <Aviso tono="mal" titulo="No he podido guardar el cambio">
-            <p>{textoDeError(cambia.error)}</p>
-            <p className="mt-1">
-              La lista sigue como estaba. Aquí no se pinta un cambio que el
-              servidor no ha aceptado.
-            </p>
-          </Aviso>
-        )
+      {/* Lo que se toco sin cobertura. **Una linea discreta, no un aviso rojo**: estar
+          sin red en un supermercado no es un fallo de la aplicacion (§3.5 del encargo),
+          y lo unico que hay que saber es que esos cambios no han llegado todavia. */}
+      {cola.length > 0 && (
+        <Aviso tono="info">
+          <p>
+            {cola.length === 1
+              ? '1 cambio hecho sin cobertura se subirá al volver la cobertura.'
+              : `${cola.length} cambios hechos sin cobertura se subirán al volver la cobertura.`}
+          </p>
+        </Aviso>
+      )}
+
+      {/* Y cuando vuelve y sube, se dice en una frase y se va. */}
+      {subidos && (
+        <Aviso tono="bien">
+          <p>{subidos}</p>
+        </Aviso>
+      )}
+
+      {/* Este si es un aviso de verdad: la cola no se ha podido guardar (el navegador en
+          modo privado deja leer y lanza al escribir). Un cambio que se pierde al cerrar
+          la pestaña hay que decirlo. */}
+      {sinGuardar && (
+        <Aviso tono="aviso" titulo="No he podido guardar los cambios sin cobertura">
+          <p>
+            El navegador no me deja escribir en este aparato, así que un cambio hecho sin
+            red se perdería. Vuelve a intentarlo cuando tengas cobertura.
+          </p>
+        </Aviso>
+      )}
+
+      {/* **Cuando la API contesta que no** (un 403 de una lista de solo mirar, un 500):
+          eso si hay que mirarlo, y va en rojo con lo que ha dicho. Que no haya red no
+          entra aqui: eso ya no es un error, es un cambio que espera. */}
+      {cambia.isError && !esSinRed(cambia.error) && (
+        <Aviso tono="mal" titulo="No he podido guardar el cambio">
+          <p>{textoDeError(cambia.error)}</p>
+          <p className="mt-1">
+            La lista sigue como estaba. Aquí no se pinta un cambio que el
+            servidor no ha aceptado.
+          </p>
+        </Aviso>
       )}
 
       {/* Y si lo que no llega es la propia lista -- abrir la aplicacion en el
@@ -951,9 +1071,9 @@ export function Cesta() {
               )}
             </p>
             <p className="mt-2 text-sm">
-              {detalle.data.lineas.length} líneas
-              {detalle.data.lineas.some((l) => l.tachado_en) && (
-                <> · {detalle.data.lineas.filter((l) => l.tachado_en).length} ya
+              {lineas.length} líneas
+              {lineas.some((l) => l.tachado_en) && (
+                <> · {lineas.filter((l) => l.tachado_en).length} ya
                   cogidas</>
               )}
             </p>
@@ -981,7 +1101,7 @@ export function Cesta() {
                 </Aviso>
               </div>
             )}
-            {detalle.data.lineas.length === 0 ? (
+            {lineas.length === 0 ? (
               <Vacio titulo="La lista está vacía">
                 <p>
                   Busca un producto, abre su ficha y pulsa «Añadir a la cesta».

@@ -415,8 +415,9 @@ como se hizo con los grupos.
 ### Estado del encargo de UX, y el paso siguiente escrito
 
     punto 1  la primera vez con datos reales      HECHO (23 sep: la tarjeta, puesta)
-    punto 2  la lista                             HECHO (dos secciones, pasillo pegajoso,
-                                                  deshacer y sin rojo sin cobertura)
+    punto 2  la lista                             HECHO: dos secciones, pasillo pegajoso,
+                                                  deshacer, y los cambios SIN COBERTURA
+                                                  se guardan en el movil y se suben solos
     punto 3  "esto esta caro?"                    HECHO (la frase antes que la tabla)
     punto 4  /api/habituales                      HECHO de punta a punta: el endpoint
                                                   (3 escalones, origen por tarjeta) y
@@ -600,6 +601,73 @@ de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde si
 ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
+
+### Los cambios sin cobertura: tachar funciona sin red, y se sube solo
+
+La ultima pieza del punto 2, y la que el encargo describe con mas detalle (§3.5) para la
+pantalla que *"merece mas cuidado que el resto junto"*:
+
+    - que tachar funcione igual sin red, sin ruedecita ni error;
+    - una linea discreta cuando hay cambios sin subir: «3 cambios se subiran al volver
+      la cobertura»;
+    - y que al volver, se suba solo y se diga en una frase.
+    - **Que no**: un aviso rojo de error. Estar sin cobertura en un supermercado no es
+      un fallo de la aplicacion.
+
+La mecanica de la API ya estaba desde el primer dia -- **el identificador de linea lo
+genera el movil**, cada cambio viaja con **su hora** (`momento`) y existe
+`POST /listas/{id}/sincronizar` --; **lo que no existia era guardarlos**. Y sin guardarlos,
+"tachar sin red" era un error que habia que leer y reintentar. Lo que se hizo antes (que ese
+error no fuera rojo) arreglaba el color, no el problema.
+
+**`estado/cola.ts`**: la cola vive en el **aparato** (`localStorage`, clave con version),
+no en memoria -- si se cierra la pestaña en el pasillo, los cambios siguen ahi --, con la
+hora **del movil** puesta al tocar, un cambio por linea (gana el ultimo, pero sin perder
+campos distintos del mismo PATCH) y `try/catch` en todo: si el navegador no deja escribir,
+se dice (`null`) en vez de tragarse el fallo.
+
+En la lista (`Cesta.tsx`):
+
+  - un cambio que falla **por red** se guarda en la cola en vez de pintar nada: ya no es un
+    error, es un cambio que espera (el rojo se queda para lo que **la API contesta que no**:
+    un 403 de una lista de solo mirar, un 500);
+  - **la linea se pinta con lo que espera aplicado encima** (`conPendientes`), asi que
+    tachar sin red se ve en el mismo toque -- "que funcione igual" no es que se guarde, es
+    que se vea --, y el total de abajo sigue siendo el del servidor: por eso esta la linea
+    de "N cambios sin subir", para que nadie compare un total que todavia no cuenta lo que
+    acaba de tocar;
+  - la linea discreta, y la frase **«Se han subido 3 cambios que hiciste sin cobertura»**
+    cuando vuelve;
+  - **se sube solo** al volver la cobertura (`online`) y al abrir la lista, y **la cola se
+    vacia solo cuando el servidor dice que los aplico**: si se vaciara al mandarlos, un
+    fallo en el camino perderia cambios hechos de pie en la tienda.
+
+**Verificado de punta a punta, no solo en el navegador**: `plataforma/prueba_e2e.py` manda
+un cambio con `momento = 2026-09-23T18:04:00` a `/sincronizar` y comprueba que la linea
+acaba tachada **con esa hora** (`tachado_en=2026-09-23 18:04:00+00:00`) y no con la de
+llegada, que es el invariante del encargo. Probado tambien en
+`tests/test_cola_sin_cobertura.py` (6 pruebas) y en `tests/test_sin_cobertura.py`, que ahora
+fija que **sin red no se pinta ningun error**.
+
+### Un fallo de esquema que impedia darse de baja: `tachado_coherente`
+
+Lo encontro la verificacion de punta a punta en su primera pasada **con la cola puesta**, y
+es de produccion: `DELETE FROM usuario` falla si esa persona habia tachado algo en una lista
+que sobrevive (compartida, o de casa).
+
+    lista_linea.tachado_por  uuid REFERENCES usuario(id) ON DELETE SET NULL  (001:95)
+    tachado_coherente        CHECK ((tachado_por IS NULL) = (tachado_en IS NULL))  (001:100)
+
+Las dos cosas juntas no pueden ser: al dar de baja a alguien, PostgreSQL pone
+`tachado_por = NULL` y deja `tachado_en` -- que es lo correcto, la linea se tacho y eso paso
+--, y la fila incumple el CHECK: **el DELETE falla entero**. Es el mismo caso que arreglo
+`005_borrarse_del_todo.sql` con `anadido_por` (de `RESTRICT` a `SET NULL`); aqui el
+`SET NULL` ya estaba, pero el CHECK lo dejaba sin efecto. En produccion es un **500 al darse
+de baja**.
+
+`sql/007_tachado_sin_quien.sql` deja el invariante que de verdad importa -- **no puede haber
+"quien" sin "cuando"** -- y permite lo que si es legitimo: que haya "cuando" sin "quien",
+porque quien lo tacho ya no esta.
 
 ### La verificacion de punta a punta, y el fallo que encontro
 

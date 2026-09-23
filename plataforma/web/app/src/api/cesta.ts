@@ -249,6 +249,38 @@ export async function cambiarLinea(listaId: string, lineaId: string,
     })
 }
 
+/* ------------------------------------------------- lo que no llego a subir -- */
+
+/** Un cambio guardado en el movil, tal cual lo espera `/sincronizar`.
+ *
+ *  La API lo lee asi (`main.py::sincronizar`): sin `tipo` es un cambio de una linea
+ *  existente -- `id`, la hora y los campos que cambian --, y con `tipo: "anadir"` es una
+ *  linea nueva. Aqui solo se usan los de la primera clase: anadir desde la ficha necesita
+ *  el catalogo, y la ficha sin red no tiene nada que ensenar.
+ */
+export interface CambioDeCola {
+  id: string
+  momento: string
+  tachado?: boolean
+  en_carrito?: boolean
+  cantidad?: number
+  nota?: string | null
+  borrado?: boolean
+}
+
+/** Sube de golpe lo que se hizo sin cobertura.
+ *
+ *  **Es lo que hace que tachar sin red no sea un error**: el cambio se guarda en el
+ *  movil con su hora, y al volver la cobertura se sube entero. La API contesta cuantos
+ *  aplico y cuales fallaron -- un cambio puede referirse a una linea que la otra persona
+ *  ya borro --, y no se para por uno malo.
+ */
+export async function sincronizar(listaId: string, cambios: CambioDeCola[]):
+    Promise<{ aplicados: number; fallidos: { id: string; motivo: string }[] }> {
+  return await escribe(`/listas/${encodeURIComponent(listaId)}/sincronizar`, 'POST',
+                       cambios)
+}
+
 /* ------------------------------------------------- invitaciones y gente -- */
 
 /** Un enlace de invitacion recien creado. `ruta` es relativa a proposito
