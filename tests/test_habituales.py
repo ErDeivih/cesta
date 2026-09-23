@@ -177,9 +177,13 @@ def test_lo_suyo_dice_que_es_suyo_y_cuando_lo_anadio(monkeypatch, gold):
         cuerpo = _pide(cliente)
     finally:
         main.app.dependency_overrides.clear()
-    assert cuerpo["origen"] == "tuyo"
+    assert [h["origen"] for h in cuerpo["habituales"]] == ["tuyo", "tuyo"], (
+        "el origen tiene que viajar EN LA TARJETA: una cuadricula puede tener tarjetas "
+        "de dos origenes a la vez, y con un campo por respuesta no se puede decir cual "
+        "es cual")
+    assert cuerpo["origenes"] == ["tuyo"]
     # El orden lo decide PostgreSQL (lo reciente pesa mas): la ruta no lo toca.
-    assert [h["grupo_id"] for h in cuerpo["habituales"]] == [20, 10]
+    assert [h["grupo_id"] for h in cuerpo["habituales"][:2]] == [20, 10]
     primero = cuerpo["habituales"][0]
     assert primero["veces"] == 9
     assert primero["ultima_vez"] == "2026-09-16"
@@ -207,8 +211,13 @@ def test_lo_suyo_solo_ensena_lo_que_se_puede_pintar(monkeypatch, gold):
         cuerpo = _pide(cliente)
     finally:
         main.app.dependency_overrides.clear()
-    assert cuerpo["origen"] == "tuyo"
-    assert [h["grupo_id"] for h in cuerpo["habituales"]] == [10]
+    assert cuerpo["habituales"][0]["origen"] == "tuyo"
+    assert [h["grupo_id"] for h in cuerpo["habituales"]][:1] == [10]
+    # Y el resto del mosaico se rellena bajando escalones: lo que se puede pintar de
+    # esta persona primero, y despues la compra basica. Un grupo que ya no esta en
+    # gold no viaja, pero tampoco deja la cuadricula a medias.
+    assert "tuyo" in cuerpo["origenes"] and "999999" not in [
+        str(h["grupo_id"]) for h in cuerpo["habituales"]]
 
 
 def test_sin_historial_se_ensena_lo_de_todos_y_sin_decir_tus_veces(monkeypatch, gold):
@@ -227,11 +236,14 @@ def test_sin_historial_se_ensena_lo_de_todos_y_sin_decir_tus_veces(monkeypatch, 
         cuerpo = _pide(cliente)
     finally:
         main.app.dependency_overrides.clear()
-    assert cuerpo["origen"] == "de todos"
-    assert [h["grupo_id"] for h in cuerpo["habituales"]] == [10, 20]
+    assert cuerpo["origenes"][0] == "de todos"
+    assert [h["grupo_id"] for h in cuerpo["habituales"]][:2] == [10, 20]
     for h in cuerpo["habituales"]:
-        assert "veces" not in h and "ultima_vez" not in h
+        assert "veces" not in h and "ultima_vez" not in h, (
+            "el recuento de todo el mundo no puede viajar con el mismo nombre que el "
+            "tuyo")
     assert cuerpo["habituales"][0]["precio_unidad_cent"] == 100.0
+    assert cuerpo["habituales"][0]["origen"] == "de todos"
 
 
 def test_sin_historial_ni_de_nadie_la_pantalla_no_se_ve_vacia(monkeypatch, gold):
@@ -250,9 +262,10 @@ def test_sin_historial_ni_de_nadie_la_pantalla_no_se_ve_vacia(monkeypatch, gold)
         cuerpo = _pide(cliente)
     finally:
         main.app.dependency_overrides.clear()
-    assert cuerpo["origen"] == "basico"
+    assert cuerpo["origenes"] == ["basico"]
     assert cuerpo["habituales"], "con historial vacio la cuadricula no puede ir vacia"
     for h in cuerpo["habituales"]:
+        assert h["origen"] == "basico"
         assert not _vacios(h), h
         assert h["precio_unidad_cent"] > 0
         assert "veces" not in h and "ultima_vez" not in h
@@ -262,8 +275,8 @@ def test_un_historial_que_no_se_puede_pintar_baja_al_siguiente_origen(monkeypatc
     """Tener historial no basta: tiene que haber algo que ensenar.
 
     Si todos los grupos que alguien compraba han desaparecido del catalogo, la
-    pantalla se queda vacia igual que si no hubiera historial, y `origen` lo dice:
-    "de todos", que es de donde sale lo que se esta ensenando.
+    pantalla se queda vacia igual que si no hubiera historial, y el origen de las
+    tarjetas lo dice: "de todos", que es de donde sale lo que se esta ensenando.
     """
     gold(TRES_CADENAS)
     cliente = _cliente(monkeypatch,
@@ -274,8 +287,57 @@ def test_un_historial_que_no_se_puede_pintar_baja_al_siguiente_origen(monkeypatc
         cuerpo = _pide(cliente)
     finally:
         main.app.dependency_overrides.clear()
-    assert cuerpo["origen"] == "de todos"
-    assert [h["grupo_id"] for h in cuerpo["habituales"]] == [20]
+    assert cuerpo["origenes"][0] == "de todos"
+    assert [h["grupo_id"] for h in cuerpo["habituales"]][:1] == [20]
+    assert cuerpo["habituales"][0]["origen"] == "de todos"
+
+
+def test_un_mosaico_casi_vacio_se_rellena_con_lo_basico(monkeypatch, gold):
+    """El caso real de una casa que empieza: **una** linea propia.
+
+    Es el problema numero uno del encargo reapareciendo dentro del endpoint
+    construido para resolverlo, y estaba medido contra la base viva: con una linea
+    propia, la respuesta era un mosaico de **una** tarjeta. Un mosaico de una tarjeta
+    no es un mosaico, y "casi vacio" se ve casi vacio.
+    """
+    gold(TRES_CADENAS)
+    cliente = _cliente(monkeypatch,
+                       historial=[{"grupo_id": 20, "veces": 1,
+                                   "ultima_vez": "2026-09-21"}])
+    try:
+        cuerpo = _pide(cliente)
+    finally:
+        main.app.dependency_overrides.clear()
+    assert cuerpo["habituales"][0]["grupo_id"] == 20
+    assert cuerpo["habituales"][0]["origen"] == "tuyo"
+    assert len(cuerpo["habituales"]) > 1, (
+        "con una sola linea propia el mosaico sigue siendo de una tarjeta")
+    assert cuerpo["origenes"][0] == "tuyo"
+    # Lo que rellena sale del escalon de abajo, y lo dice cada tarjeta.
+    assert all(h["origen"] in ("tuyo", "de todos", "basico")
+               for h in cuerpo["habituales"])
+
+
+def test_un_grupo_no_sale_dos_veces_en_el_mosaico(monkeypatch, gold):
+    """Lo que sale en dos escalones sale una vez, en el de mas arriba.
+
+    Repetir un grupo para llenar la cuadricula seria inflar el mosaico con lo mismo.
+    """
+    gold([
+        {"fuente": "aldi", "nombre": "Leche entera", "grupo_id": 10, "imagen": "foto"},
+        {"fuente": "dia", "nombre": "Leche entera brik", "grupo_id": 10},
+    ])
+    # "Leche entera" esta en la compra basica, y ademas lo compra esta persona.
+    cliente = _cliente(monkeypatch,
+                       historial=[{"grupo_id": 10, "veces": 3,
+                                   "ultima_vez": "2026-09-20"}])
+    try:
+        cuerpo = _pide(cliente)
+    finally:
+        main.app.dependency_overrides.clear()
+    ids = [h["grupo_id"] for h in cuerpo["habituales"]]
+    assert len(ids) == len(set(ids)), f"hay un grupo repetido: {ids}"
+    assert ids[0] == 10 and cuerpo["habituales"][0]["origen"] == "tuyo"
 
 
 def test_el_limite_manda(monkeypatch, gold):

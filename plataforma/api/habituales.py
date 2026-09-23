@@ -15,11 +15,12 @@ La **tarjeta** -- nombre, foto, precio por unidad, unidad, cadena mas barata y
 El historial dice QUE productos; gold dice COMO estan hoy. Un grupo que ya no esta
 en gold no se puede pintar y no viaja.
 
-Tres origenes, y se dice cual
------------------------------
+Tres origenes, y se dice cual de cada tarjeta
+--------------------------------------------
 El primer dia no hay historial, y el primer dia es justo el que se queda sin
-pensar. Asi que hay tres escalones y el campo `origen` dice en cual estamos, para
-que la pantalla pueda ser honesta: *"todavia no se lo que sueles comprar"*.
+pensar. Asi que hay tres escalones y **cada tarjeta dice de donde sale**, para que la
+pantalla pueda ser honesta: *"todavia no se lo que sueles comprar"*, *"esto lo compra la
+casa"*, *"esto es la compra basica"*.
 
     "tuyo"       lo que esta persona ha anadido mas veces
     "de todos"   lo que mas gente ha anadido en toda la casa. Es un recuento
@@ -27,17 +28,30 @@ que la pantalla pueda ser honesta: *"todavia no se lo que sueles comprar"*.
     "basico"     una lista fija de la compra basica, para que la cuadricula no
                  este vacia ni con la base de datos recien creada
 
-Se baja un escalon cuando el de arriba no da ni una tarjeta que se pueda pintar,
-no solo cuando no hay historial: un historial entero de grupos que ya no estan en
-el catalogo tampoco llena la pantalla.
+**Se rellena hasta `limite`, bajando escalones**, y el orden es el de lo que mas dice de
+esta persona: primero lo suyo, despues lo de la casa, despues la compra basica. Medido el
+23 de septiembre de 2026 contra la base viva: con **una sola** linea propia, la respuesta
+era un mosaico de **una** tarjeta -- el problema numero uno del encargo (la primera vez)
+reapareciendo dentro del endpoint construido para resolverlo. Un mosaico de una tarjeta no
+es un mosaico, y *"casi vacio"* se ve casi vacio.
+
+**El `origen` va en cada tarjeta**, y no uno por respuesta. Una tarjeta basica y una tuya
+no valen lo mismo, y con un solo campo por respuesta la pantalla no tendria como decirlo:
+una cuadricula puede tener las dos cosas a la vez, y ahora las tiene. Lo que se dice una
+vez es `origenes`, la lista de escalones que han entrado, para que la pantalla sepa si
+tiene que explicar algo.
+
+Y un grupo **no se repite**: si lo que compras es "leche entera" y ademas esta en la
+compra basica, sale una vez, en el escalon de mas arriba. Repetirlo para llenar la
+cuadricula seria inflar el mosaico con lo mismo.
 
 Lo que NO viaja, y por que
 --------------------------
-`veces` y `ultima_vez` son la historia de esta persona, asi que solo se mandan en
-`origen: "tuyo"`. En "de todos" el recuento es de todo el mundo y en "basico" no
-hay recuento ninguno: mandarlos con el mismo nombre en los tres casos seria otra
-vez dos numeros distintos llamandose igual (ver `core/comparacion.py`), y la
-pantalla no tendria como saber que esta leyendo.
+`veces` y `ultima_vez` son la historia de esta persona, asi que solo se mandan en las
+tarjetas de `"tuyo"`. En "de todos" el recuento es de todo el mundo y en "basico" no hay
+recuento ninguno: mandarlos con el mismo nombre en los tres casos seria otra vez dos
+numeros distintos llamandose igual (ver `core/comparacion.py`), y la pantalla no tendria
+como saber que esta leyendo.
 
 El porque del decaimiento
 -------------------------
@@ -111,12 +125,30 @@ def _con_historial(tarjeta: dict, hist: dict) -> dict:
 
 
 def lista(usuario_id: str, limite: int = 24) -> dict:
-    """El mosaico: las tarjetas de lo habitual, y de donde han salido.
+    """El mosaico: las tarjetas de lo habitual, **hasta `limite`**, con su origen.
 
-    `limite` es lo que se ensena; al historial se le piden `MARGEN` veces mas.
+    `limite` es lo que se ensena; a cada escalon se le piden `MARGEN` veces mas.
     """
     limite = max(1, int(limite))
     candidatos = limite * MARGEN
+    puestas: list[dict] = []
+    vistas: set[int] = set()
+    origenes: list[str] = []
+
+    def anade(origen: str, tarjetas: list[dict]) -> None:
+        """Suma tarjetas hasta el limite, sin repetir grupo, con su origen."""
+        antes = len(puestas)
+        for t in tarjetas:
+            if len(puestas) >= limite:
+                break
+            gid = int(t["grupo_id"])
+            if gid in vistas:
+                continue
+            vistas.add(gid)
+            puestas.append({**t, "origen": origen})
+        if len(puestas) > antes:
+            origenes.append(origen)
+
     suyos = almacen.historial_de(usuario_id, candidatos)
     if suyos:
         tarjetas = catalogo.tarjetas([h["grupo_id"] for h in suyos])
@@ -126,21 +158,21 @@ def lista(usuario_id: str, limite: int = 24) -> dict:
         # catalogo, que no es el del habito.
         propias = [_con_historial(tarjetas[h["grupo_id"]], h)
                    for h in suyos if h["grupo_id"] in tarjetas]
-        if propias:
-            return {"origen": "tuyo", "habituales": propias[:limite],
-                    "fecha_datos": catalogo.fecha_de_gold()}
+        anade("tuyo", propias)
 
-    de_todos = almacen.mas_comprados(candidatos)
-    if de_todos:
-        tarjetas = catalogo.tarjetas([h["grupo_id"] for h in de_todos])
-        ajenas = [tarjetas[h["grupo_id"]] for h in de_todos
-                  if h["grupo_id"] in tarjetas]
-        if ajenas:
-            return {"origen": "de todos", "habituales": ajenas[:limite],
-                    "fecha_datos": catalogo.fecha_de_gold()}
+    if len(puestas) < limite:
+        de_todos = almacen.mas_comprados(candidatos)
+        if de_todos:
+            tarjetas = catalogo.tarjetas([h["grupo_id"] for h in de_todos])
+            ajenas = [tarjetas[h["grupo_id"]] for h in de_todos
+                      if h["grupo_id"] in tarjetas]
+            anade("de todos", ajenas)
+
+    if len(puestas) < limite:
+        anade("basico", _compra_basica())
 
     # Sin catalogo no hay nada que pintar: la lista vacia es una respuesta honesta
     # y la pantalla ya sabe decir "no lo se" (ver `catalogo.secciones`, que hace lo
     # mismo mientras el scraper no ha escrito la columna que necesita).
-    return {"origen": "basico", "habituales": _compra_basica()[:limite],
+    return {"origenes": origenes, "habituales": puestas[:limite],
             "fecha_datos": catalogo.fecha_de_gold()}

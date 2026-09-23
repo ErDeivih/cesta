@@ -801,49 +801,47 @@ pantalla por pantalla habria dejado la septima naciendo en rojo, que es justo lo
 habia pasado con la lista. El rojo sigue para lo que **la API contesta que no** (un 403 de
 una lista de solo mirar, un 500): eso si hay que mirarlo.
 
-### `/api/habituales` esta hecho, y con los datos de verdad falla la intencion
+### `/api/habituales` rellena por escalones, y el origen va en cada tarjeta
 
 Verificado el 23 de septiembre contra la base viva. La ruta existe
 (`plataforma/api/habituales.py`), pide sesion, `limite` acotado, los tres origenes
 documentados, sin `polars`, y eligio **pesar por recencia con vida media de 30 dias**
 con el porque escrito. Todo eso esta bien.
 
-**El problema es de contrato, y se ve con los datos de la casa, no con un caso
+**El problema era de contrato, y se vio con los datos de la casa, no con un caso
 inventado.** El historial real:
 
     lineas del dueno            1   (grupo 9919, del 2026-09-21)
     lineas de toda la casa      1   (y esa esta borrada)
 
-Y `lista()` devuelve **el primer escalon que tenga algo**, sin rellenar:
+Y `lista()` devolvia **el primer escalon que tuviera algo**, sin rellenar, asi que con
+**una** linea propia la respuesta era un mosaico de **una tarjeta**. El encargo pedia que
+*"con historial vacio la pantalla no se vea vacia"*; con historial *casi* vacio, que es el
+caso real de una casa que empieza, se veia casi vacia. Era el problema numero uno del
+encargo -- la primera vez -- reapareciendo dentro del endpoint construido para resolverlo.
 
-    if suyos:      return {"origen": "tuyo",     "habituales": propias[:limite]}
-    if de_todos:   return {"origen": "de todos", "habituales": ajenas[:limite]}
-    return              {"origen": "basico",   "habituales": _compra_basica()[:limite]}
+**La decision, tomada antes de que haya consumidor** (y entonces costaba una linea, como
+estaba escrito aqui): **se rellena hasta `limite` bajando escalones** -- tuyo, de todos,
+basico -- y **`origen` pasa a ir en cada tarjeta**, que es la opcion honesta de las dos
+que estaban sobre la mesa: una tarjeta basica y una tuya no valen lo mismo, y una
+cuadricula puede tener las dos a la vez. Lo que se dice una vez es `origenes`, la lista de
+escalones que han entrado, para que la pantalla sepa si tiene que explicar algo.
 
-Asi que con **una** linea propia la respuesta es un mosaico de **una tarjeta**. El
-encargo pedia que **"con historial vacio la pantalla no se vea vacia"**; con historial
-*casi* vacio, que es el caso real de una casa que empieza, se ve casi vacia. Es el
-problema numero uno del encargo -- la primera vez -- reapareciendo dentro del
-endpoint construido para resolverlo.
+Y **un grupo no se repite**: si lo que compras es "leche entera" y ademas esta en la
+compra basica, sale una vez, en el escalon de mas arriba. Repetirlo para llenar la
+cuadricula seria inflar el mosaico con lo mismo.
 
-**Lo que hay que decidir, y no es solo codigo**: si se rellena **por escalones**
-hasta `limite` (los tuyos, y despues "de todos", y despues "basico"), entonces el
-campo `origen` deja de poder ser uno por respuesta y pasa a ser **uno por tarjeta**
---que es mas honesto, porque una tarjeta basica y una tuya no valen lo mismo-- o se
-queda uno por respuesta diciendo de donde salio **la primera**. Las dos son
-defendibles; lo que no lo es es dejar una cuadricula de una tarjeta y llamarla
-mosaico.
+Lo que **no** cambia: en `"de todos"` y `"basico"` **no viajan `veces` ni `ultima_vez`**
+-- son recuentos de todo el mundo o de nadie, y mandarlos con el mismo nombre que los
+tuyos seria repetir el error de "imposible" (dos numeros, un nombre).
 
-**Y la ventana para decidirlo sigue abierta, medido el 23 de septiembre: el front
-todavia no consume el endpoint.** La palabra `habituales` aparece **0 veces** en todo
-`plataforma/web/app/src`, asi que hoy no hay ningun consumidor al que romperle el
-contrato y cambiarlo cuesta una linea. En cuanto el mosaico se programe contra el,
-cambiar `origen` pasa a ser un cambio de contrato. **Decidirlo antes, no despues.**
+Probado en `tests/test_habituales.py` (26 pruebas, dos nuevas): un mosaico con **una**
+linea propia deja de ser de una tarjeta, y un grupo que sale en dos escalones sale una
+vez.
 
-Lo que **si** esta ya decidido por quien lo implemento, y con razon: `origen` va a
-nivel de respuesta, y en `"de todos"` y `"basico"` **no viajan `veces` ni
-`ultima_vez`** -- son recuentos de todo el mundo o de nadie, y mandarlos con el mismo
-nombre que los tuyos seria repetir el error de "imposible" (dos numeros, un nombre).
+**La ventana sigue abierta y sigue siendo el momento**: la palabra `habituales` aparece
+**0 veces** en `plataforma/web/app/src`, asi que no hay ningun consumidor al que
+romperle el contrato. El dia que el mosaico se programe, esto ya esta decidido.
 
 Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
 que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a

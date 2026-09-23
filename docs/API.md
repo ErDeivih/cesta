@@ -434,36 +434,49 @@ como "no puedo comparar". No es lo mismo.
 
     limite   24 por defecto (1..60)
     pide     sesion
-    sale     {"origen": "tuyo" | "de todos" | "basico",
+    sale     {"origenes": ["tuyo" | "de todos" | "basico", ...],
               "habituales": [{"grupo_id", "nombre", "imagen",
                               "precio_unidad_cent", "unidad",
                               "cadena_mas_barata", "fiable",
-                              "veces", "ultima_vez"}],
+                              "origen",              en CADA tarjeta
+                              "veces", "ultima_vez"}],   solo en las de "tuyo"
               "fecha_datos"}
 
 Los grupos que esa persona ha anadido mas veces, **lo reciente pesando mas**, con lo
 justo para pintar una tarjeta y anadirla de un toque. La especificacion que se siguio
 es `Claude outputs/ENCARGO-UX-23SEP.md` (§5).
 
-**`origen` dice de donde sale lo que se esta viendo, y hay tres escalones.** Esto es
-un **cambio de criterio** respecto a lo que decia aqui antes, asi que se cuenta en vez
-de borrarse:
+**`origen` va en cada tarjeta, y hay tres escalones.** Esto es un **cambio de criterio**
+respecto a lo que decia aqui antes, asi que se cuenta en vez de borrarse:
 
     "tuyo"       lo que ha anadido esta persona. Manda `veces` y `ultima_vez`.
-    "de todos"   no hay historial suyo: lo mas anadido en toda la casa, que es un
-                 recuento agregado y no lleva datos personales. **No manda `veces`
-                 ni `ultima_vez`**: son de todo el mundo, y mandarlos con el mismo
-                 nombre que los tuyos seria otra vez dos numeros llamandose igual
-                 -- el error que este proyecto ya pago con "imposible".
-    "basico"     y si tampoco hay de donde sacarlo, una compra basica fija, para que
-                 la cuadricula **no se vea vacia** el primer dia.
+    "de todos"   lo mas anadido en toda la casa, que es un recuento agregado y no lleva
+                 datos personales. **No manda `veces` ni `ultima_vez`**: son de todo el
+                 mundo, y mandarlos con el mismo nombre que los tuyos seria otra vez dos
+                 numeros llamandose igual -- el error que este proyecto ya pago con
+                 "imposible".
+    "basico"     una compra basica fija, para que la cuadricula **no se vea vacia** el
+                 primer dia.
+
+**Se rellena hasta `limite`, bajando escalones en ese orden**, y el mosaico **no repite
+un grupo**: si lo que compras es "leche entera" y ademas esta en la compra basica, sale
+una vez, en el escalon de mas arriba. Antes se bajaba un escalon solo si el de arriba no
+daba **ni una** tarjeta, y eso dejaba el caso peor sin resolver: medido contra la base
+viva el 23 de septiembre, con **una** linea propia la respuesta era un mosaico de **una**
+tarjeta. Casi vacio se ve casi vacio.
+
+`origenes` dice, una vez por respuesta, que escalones han entrado -- para que la pantalla
+sepa si tiene que explicar algo --, pero **cual es cual lo dice cada tarjeta**: una
+cuadricula puede tener tarjetas tuyas y basicas a la vez, y con un solo campo por
+respuesta no habria como decirlo.
 
 **Antes este documento decia que con historial vacio la lista sale vacia y que no se
 rellena con "populares".** El encargo del 23 de septiembre pide lo contrario, y su
 razon esta en `docs/PANTALLAS.md`: una pantalla en blanco es el peor momento de la
 aplicacion y el unico que todo el mundo ve. Lo que **no** se hace es mezclar los
-escalones sin decirlo: para eso esta `origen`, que permite que la pantalla diga
-*«todavia no se lo que sueles comprar»*.
+escalones sin decirlo: para eso esta `origen` en cada tarjeta, que permite que la
+pantalla diga *«todavia no se lo que sueles comprar»* sin renunciar a llenar la
+cuadricula.
 
 Sin foto no viaja la clave `imagen` (nunca `null`, ni `""`, ni `0`). `fiable` es
 unidad comparable (kg/l/m; "ud" no) **y** dos cadenas o mas **y** sin contradiccion
