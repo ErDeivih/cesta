@@ -605,6 +605,69 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### La interfaz, en un navegador de verdad: tres fallos que no se veian de otra forma
+
+Hasta hoy todo lo de la interfaz estaba comprobado **leyendo el codigo** (las pruebas de
+contraste, de movil, de la cola...) y en un `tsc` limpio. Eso deja fuera lo que solo pasa
+cuando alguien pulsa: que un boton no este, que una peticion se quede pausada, que los
+numeros salgan sin sujeto. Con `patchright` -- el navegador que ya estaba puesto para los
+colectores -- se puede abrir la aplicacion **en un movil de 390 x 844 con `has_touch`** y
+hacer el recorrido entero. Eso es `plataforma/prueba_navegador.py`, y en su primera pasada
+encontro tres cosas:
+
+**1. React Query pausaba los cambios sin cobertura, y la cola no se llenaba nunca.**
+Por defecto, una mutacion con `navigator.onLine` falso **no se manda, no falla y no avisa**:
+queda pausada en memoria y se reintenta sola al volver la red. Medido en el navegador:
+tachar sin cobertura no pintaba la linea tachada, no encolaba nada y no decia nada; y el
+`PATCH` salia al volver la red -- o sea que el cambio vivia en memoria y se perdia al cerrar
+la pestaña, que es justo el caso que la cola existe para cubrir. Arreglado con
+`networkMode: 'always'` en las dos mutaciones de la lista. Despues, medido:
+`net::ERR_INTERNET_DISCONNECTED` -> cola escrita **en 200 ms** con la hora del movil ->
+al volver, «Se ha subido 1 cambio que hiciste sin cobertura». **Ninguna prueba de codigo
+podia verlo: es una politica interna de la libreria.**
+
+**2. La frase de «¿esto esta caro?» no estaba donde se llega buscando.** Punto 3 del
+encargo, y estaba solo en la ficha del producto. El navegador enseno lo que ve una persona:
+buscar "leche", abrir el resultado, y encontrarse «ALTERNATIVA QUE GANA CONTIGO / Dia /
+1,05 €/l» con un «74 %» al lado -- numeros, ninguno con sujeto. Ahora la pantalla del grupo
+pinta **la misma frase** (`logica/frase.ts`, la misma funcion y la misma regla: si el grupo
+no es de fiar, no hay frase) y **antes** que los numeros.
+
+**3. Y un fallo de arranque: la API no arrancaba con dos listas de casa.** Aplicando las
+migraciones de verdad en un PostgreSQL limpio, `migra()` reventaba:
+
+    psycopg.errors.UniqueViolation: could not create unique index "lista_de_casa_unica"
+    DETAIL: Key (es_de_casa)=(t) is duplicated.
+
+`almacen.migra()` aplica **todos** los `.sql` **en cada arranque**, y `001_esquema.sql`
+creaba un indice unico sobre `es_de_casa` a secas ("una sola lista de casa en todo el
+sistema") que `003_mas_de_dos.sql` borra para que cada persona tenga la suya. Como el que
+crea va antes por numero, **el que borra perdia siempre**: el segundo arranque lo resucitaba.
+Y dos listas de casa es el estado normal de esta aplicacion. Arreglado quitando la creacion
+de `001` (el `DROP` de `003` sigue, para las bases que lo tengan), con `tests/test_migraciones.py`
+vigilando esa clase de pelea -- **un fichero viejo que se reaplica no puede contradecir a
+uno nuevo que lo corrige** -- y con el caso concreto comprobado en `prueba_e2e.py`: dos
+personas, cada una con su lista de casa, y borrarlas.
+
+**La puerta mecanica de (a).** El recorrido entero, con sus tiempos, en un navegador:
+
+    ok  la cabecera dice de que dia son los precios        ok  el pasillo se queda STICKY
+    ok  el buscador se ve y se toca sin buscar el boton    ok  tachar sin cobertura dice que espera
+    ok  sin escribir nada hay algo que leer                ok  y NO lo pinta como un error
+    ok  la cuenta entra (fija, no nueva: hay tope)         ok  al volver se sube solo, y lo dice
+    ok  el resultado abre la ficha                         ok  los avisos existen y se abren
+    ok  LA FRASE, antes que la tabla                       ok  sin excepciones de JavaScript
+    ok  la ficha deja pedir el aviso (la campana)
+    ok  anadir a la lista, y el boton dice «En la cesta»
+
+    abrir la aplicacion 2,4 s | a la ficha con la frase 0,9 s | a la lista 0,8 s
+    tachar sin cobertura 1,2 s | a los avisos 0,7 s
+
+**Esto NO cierra (a)**: la condicion se juzga *contra la madre del dueno*, y eso lo dice
+`docs/PRUEBA-15-SEGUNDOS.md` con alguien que no haya escrito estas pantallas. Lo que hace
+es quitar de delante todo lo que haria imposible cumplirla, y avisar en el acto si vuelve.
+La receta para correrlo esta en `docs/OPERACION.md`.
+
 ### Los cambios sin cobertura: tachar funciona sin red, y se sube solo
 
 La ultima pieza del punto 2, y la que el encargo describe con mas detalle (§3.5) para la

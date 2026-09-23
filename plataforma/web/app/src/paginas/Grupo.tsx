@@ -28,6 +28,7 @@ import { textoDeError } from '../api/cliente'
 import { useEstado, useGrupo } from '../api/consultas'
 import { Campana } from '../componentes/Campana'
 import { useTitulo } from '../componentes/Titulo'
+import { fraseDePrecio } from '../logica/frase'
 import {
   cantidad as textoCantidad,
   diasDesde,
@@ -242,6 +243,41 @@ export function Grupo() {
               </>
             )}
           </div>
+
+          {/* **La frase, antes que los numeros.** Punto 3 del encargo: *"«¿esto esta
+              caro?» hoy se contesta con una tabla, y una tabla no es una respuesta"*.
+              Esto estaba solo en la ficha del producto (`paginas/Producto.tsx`), y la
+              pantalla a la que se llega **buscando** es esta -- medido en un navegador
+              de verdad el 23 sep 2026 (`plataforma/prueba_navegador.py`): buscar "leche",
+              abrir el resultado, y encontrarse «ALTERNATIVA QUE GANA CONTIGO / Dia /
+              1,05 €/l» con «74 %» al lado. Numeros, ninguno con sujeto.
+
+              Se usa **la misma funcion** que la ficha (`logica/frase.ts`), que es la que
+              decide cuando NO hay frase: si el grupo no es de fiar, o esta en una sola
+              cadena, no se pinta nada. Inventarse una frase segura sobre un grupo mal
+              emparejado es peor que no decir nada. */}
+          {(() => {
+            // **La fiabilidad del grupo, con la misma senal que la ficha**: todos sus
+            // productos tienen que ser comparables. Si uno no lo es, el grupo puede
+            // estar mezclando cosas que no se comparan, y entonces no hay frase.
+            const fiable = grupo.cadenas >= 2
+              && grupo.productos.every((p) => p.comparable !== false)
+            const frase = fraseDePrecio({
+              cadenas: grupo.cadenas,
+              ahorro_pct: grupo.ahorro_pct,
+              ahorro_cent: grupo.ahorro_cent,
+              fiable,
+              cadena_mas_barata: ganadora?.producto.fuente ?? null,
+              cadena_de_este: null,
+              // Los dos iguales: aqui no se mira un producto concreto, se mira el
+              // grupo, asi que la frase puede ser «es la mas barata» o el empate --
+              // nunca «cuesta un X % mas que en ...», que habla de un producto.
+              precio_unidad_este: ganadora?.producto.precio_unidad_cent ?? null,
+              precio_unidad_minimo: ganadora?.producto.precio_unidad_cent ?? null,
+            })
+            if (!frase) return null
+            return <p className="mt-3 text-base font-semibold leading-snug">{frase}</p>
+          })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Alternativa que gana contigo">

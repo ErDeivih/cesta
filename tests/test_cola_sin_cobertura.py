@@ -44,6 +44,7 @@ SRC = RAIZ / "plataforma" / "web" / "app" / "src"
 COLA = SRC / "estado" / "cola.ts"
 CESTA = SRC / "paginas" / "Cesta.tsx"
 API = SRC / "api" / "cesta.ts"
+GRUPO = SRC / "paginas" / "Grupo.tsx"
 
 
 def _leer(f: Path) -> str:
@@ -116,3 +117,54 @@ def test_la_api_tiene_la_puerta_para_subirlos_de_golpe():
     assert "export async function sincronizar(" in api, \
         "la pantalla no tiene por donde subir la cola"
     assert "/sincronizar" in api, "la ruta de la cola de la API es `/listas/{id}/sincronizar`"
+
+
+def test_las_mutaciones_no_se_quedan_pausadas_por_react_query():
+    """`networkMode: 'always'`: sin esto la cola no se llena nunca.
+
+    **Es el fallo que encontro el navegador** (23 sep 2026). Por defecto, React Query
+    *pausa* una mutacion cuando `navigator.onLine` es falso: no la manda, **no falla** y
+    no avisa -- y la reintenta sola al volver la red. Suena bien y es lo contrario de lo
+    que hace falta:
+
+      - el cambio vive **en memoria**, asi que si se cierra la pestaña en el pasillo se
+        pierde, que es justo el caso que la cola existe para cubrir;
+      - y como no hay error, **la pantalla no puede decir que hay cambios sin subir**:
+        no sabe que los hay.
+
+    Medido en el navegador antes del arreglo: se tachaba sin cobertura y no pasaba nada
+    -- ni la linea tachada, ni el aviso, ni una entrada en la cola --, y el PATCH salia
+    al volver la red. Con esto, la peticion se intenta, falla con un `TypeError` y el
+    cambio acaba en la cola del movil con su hora.
+
+    Ninguna prueba de codigo podia verlo: es una politica interna de la libreria.
+    """
+    cesta = _leer(CESTA)
+    # Las dos mutaciones que importan: la que cambia una linea y la que sube la cola.
+    assert cesta.count("networkMode: 'always'") >= 2, \
+        "al cambiar una linea o al subir la cola, React Query las pausa sin avisar"
+    assert "networkMode: 'always'" in cesta.split("const sube = useMutation(")[1][:400], \
+        "la mutacion que sube la cola tambien tiene que intentarlo sin cobertura"
+
+
+def test_la_frase_esta_tambien_en_el_grupo_y_antes_que_los_numeros():
+    """La pantalla a la que se llega **buscando** tambien contesta en palabras.
+
+    Punto 3 del encargo: *"«¿esto esta caro?» hoy se contesta con una tabla, y una tabla
+    no es una respuesta"*. La frase estaba solo en la ficha del producto
+    (`paginas/Producto.tsx`), y **el navegador enseno donde faltaba**: buscar "leche",
+    abrir el resultado, y encontrarse «ALTERNATIVA QUE GANA CONTIGO / Dia / 1,05 €/l» con
+    un «74 %» al lado. Numeros, ninguno con sujeto.
+
+    Se usa la misma funcion que la ficha (`logica/frase.ts`) y **tambien la misma regla**:
+    si el grupo no es de fiar, no hay frase. Y va antes de los numeros en el codigo, que
+    es lo que hace que salga antes en la pantalla.
+    """
+    grupo = _leer(GRUPO)
+    assert "fraseDePrecio(" in grupo, "la pantalla del grupo no contesta con una frase"
+    assert "from '../logica/frase'" in grupo, \
+        "la frase tiene que ser LA MISMA que la de la ficha, no una copia"
+    assert grupo.index("fraseDePrecio(") < grupo.index("<dl "), \
+        "los numeros salen antes que la frase"
+    assert "p.comparable !== false" in grupo, \
+        "sin senal de fiabilidad, la frase se inventa en grupos mal emparejados"

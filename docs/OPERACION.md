@@ -16,9 +16,34 @@ es el de casa: el de Cesta no publica su 5432) y con el gold de verdad:
     docker rm -f cesta-prueba-db
 
 Aplica las seis migraciones, recorre las rutas nuevas y **falla con un mensaje claro** si
-algo no cuadra. La primera vez que se corrio encontro un fallo que las pruebas unitarias no
-podian ver: `/api/bajadas?solo_mios=true` sin sesion contestaba `"solo_mios": true` sin
-haber filtrado (`docs/BACKLOG.md`). Salida esperada: **TODO BIEN**.
+algo no cuadra. La primera vez que se corrio encontro dos fallos que las pruebas unitarias no
+podian ver: `/api/bajadas?solo_mios=true` sin sesion contestaba que habia filtrado sin
+filtrar, y **la API no arrancaba con dos listas de casa** (un indice que un fichero viejo
+resucitaba en cada arranque). Salida esperada: **TODO BIEN**.
+
+## Y la interfaz, en un navegador de verdad
+
+Lo de arriba comprueba el servidor. La pantalla se comprueba con
+`plataforma/prueba_navegador.py`, que abre la aplicacion en un movil de 390 x 844 con
+`has_touch` (el navegador de `patchright`, que ya esta puesto para los colectores), hace el
+recorrido de las **cuatro preguntas** y mide cuanto tarda cada paso:
+
+    docker run --rm -d --name cesta-prueba-db -e POSTGRES_PASSWORD=prueba \
+        -e POSTGRES_USER=cesta -e POSTGRES_DB=cesta -p 127.0.0.1:5434:5432 postgres:16-alpine
+    $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
+    uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8099
+    cd plataforma/web/app; $env:CESTA_API='http://127.0.0.1:8099'; npm run dev
+    uv run python -m plataforma.prueba_navegador
+
+**La interfaz tiene que hablar con la API nueva**: la imagen que corre en el 8080 puede ser
+mas vieja que el repositorio. La cuenta es **fija** (`prueba-navegador`) y no nueva en cada
+pasada, porque la API limita cuantas se crean por hora (`ALTAS_POR_HORA`).
+
+En su primera pasada encontro tres cosas que leyendo el codigo no se ven -- React Query
+pausando los cambios sin cobertura, la frase de «¿esto esta caro?» ausente en la pantalla a
+la que se llega buscando, y el arranque roto con dos listas de casa --, asi que **es lo que
+hay que correr cuando se toque la interfaz**. No cierra la condicion (a) de la barra: eso es
+una persona con un movil (`docs/PRUEBA-15-SEGUNDOS.md`).
 
 ## Fase 1: todo en el PC, y el almacen tambien
 

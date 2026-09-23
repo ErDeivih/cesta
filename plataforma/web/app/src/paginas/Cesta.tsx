@@ -823,6 +823,19 @@ export function Cesta() {
   const porCoger = lineas.filter((l) => l.tachado_en === null)
   const enElCarro = lineas.filter((l) => l.tachado_en !== null)
   const cambia = useMutation({
+    // **`networkMode: 'always'` es la pieza que hace que la cola sirva.** Por defecto,
+    // React Query *pausa* una mutacion cuando `navigator.onLine` es falso: no la manda,
+    // no falla, no avisa, y la reintenta sola cuando vuelve la red. Eso suena bien y es
+    // justo lo que no queremos: el cambio vive **en memoria**, asi que si se cierra la
+    // pestaña en el pasillo se pierde, no hay nada que subir despues y **la pantalla no
+    // puede decir que hay cambios sin subir** porque no sabe que los hay.
+    //
+    // Medido en un navegador de verdad (23 sep 2026, `plataforma/prueba_navegador.py`):
+    // sin esto, tachar sin cobertura no pintaba nada, no encolaba nada, y el PATCH salia
+    // al volver la red. Con esto, la peticion se intenta, falla con un `TypeError`, y el
+    // cambio acaba donde tiene que acabar: en la cola del movil, con su hora, pintado y
+    // diciendolo.
+    networkMode: 'always',
     mutationFn: ({ lineaId, cambio }: { lineaId: string; cambio: CambioLinea;
       linea?: Linea | null }) =>
       cambiarLinea(listaId as string, lineaId, cambio),
@@ -855,6 +868,9 @@ export function Cesta() {
 
   /** Sube de golpe lo que espera. Se llama al volver la cobertura y al abrir la lista. */
   const sube = useMutation({
+    // Y lo mismo al subir la cola: 'pausada' no sirve, porque entonces el fallo no llega
+    // nunca y no se puede contar que no se ha podido.
+    networkMode: 'always',
     mutationFn: (pendientes: CambioPendiente[]) =>
       sincronizar(listaId as string, pendientes.map((c): CambioDeCola => ({
         id: c.lineaId, momento: c.momento, ...c.cambio,

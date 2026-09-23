@@ -64,9 +64,19 @@ CREATE TABLE IF NOT EXISTS lista (
     archivada_en timestamptz
 );
 CREATE INDEX IF NOT EXISTS lista_por_dueno ON lista(dueno_id);
--- Una sola lista de casa en todo el sistema: es la que se abre al entrar.
-CREATE UNIQUE INDEX IF NOT EXISTS lista_de_casa_unica
-    ON lista((es_de_casa)) WHERE es_de_casa;
+-- Aqui habia un indice unico de "una sola lista de casa en todo el sistema"
+-- (`lista_de_casa_unica`, sobre `es_de_casa` a secas). **Ya no se crea, y el motivo
+-- importa**: `almacen.migra()` aplica TODOS los ficheros .sql **en cada arranque**, y
+-- `003_mas_de_dos.sql` borra ese indice porque con mas de una persona cada una quiere la
+-- suya. Con las dos cosas, el segundo arranque lo resucitaba:
+--
+--     psycopg.errors.UniqueViolation: could not create unique index "lista_de_casa_unica"
+--     DETAIL: Key (es_de_casa)=(t) is duplicated.
+--
+-- O sea que **la API no arrancaba** en cuanto habia dos listas de casa (medido el 23 de
+-- septiembre de 2026 en `plataforma/prueba_e2e.py`), y ese es el estado normal de esta
+-- aplicacion: una lista de casa por persona. El indice bueno es el de `003`, por dueno.
+-- Un fichero viejo que se reaplica no puede contradecir a uno nuevo que lo corrige.
 
 CREATE TABLE IF NOT EXISTS lista_acceso (
     lista_id     uuid NOT NULL REFERENCES lista(id) ON DELETE CASCADE,

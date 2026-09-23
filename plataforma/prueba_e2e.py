@@ -56,10 +56,37 @@ def main() -> int:
     print("== arrancando el almacen (aplica plataforma/sql/*.sql)")
     almacen.arranca()
     print("   migraciones aplicadas")
+    fallos = 0
 
     # Una persona limpia en cada pasada: la base es de prueba y se puede vaciar.
     with almacen.cursor() as cur:
         cur.execute("DELETE FROM usuario")
+
+    # **Dos personas, cada una con su lista de casa, y borrarlas.** No es un adorno: el
+    # 23 de septiembre de 2026 esto fallaba por dos motivos distintos, y los dos solo se
+    # ven con dos listas de casa de verdad --
+    #
+    #   - `001_esquema.sql` creaba un indice unico sobre `es_de_casa` a secas (una sola
+    #     lista de casa en TODO el sistema), `003` lo borraba, y como `migra()` aplica
+    #     todos los ficheros en cada arranque, el segundo arranque lo resucitaba: la API
+    #     no arrancaba con dos listas de casa.
+    #   - `lista_linea.tachado_coherente` pedia "quien" si y solo si "cuando", asi que
+    #     borrar a alguien que habia tachado algo fallaba (`007`).
+    print("\n== dos personas con su lista de casa, y borrarlas")
+    for nombre in ("dos-a", "dos-b"):
+        otra = almacen.crea_usuario(nombre, nombre.title(), "clave-de-prueba-123")
+        almacen.crea_lista(otra["id"], "Casa", True)
+    with almacen.cursor() as cur:
+        cur.execute("SELECT count(*) AS n FROM lista WHERE es_de_casa")
+        listas_de_casa = cur.fetchone()["n"]
+    print(f"   listas de casa: {listas_de_casa}")
+    if listas_de_casa < 2:
+        fallos += 1
+        print("   FALLO: no se han podido crear dos listas de casa")
+    for nombre in ("dos-a", "dos-b"):
+        with almacen.cursor() as cur:
+            cur.execute("DELETE FROM usuario WHERE usuario = %s", (nombre,))
+    print("   las dos se borran sin error")
 
     filas = catalogo.conexion().execute("""
         SELECT grupo_id, min(nombre), count(DISTINCT fuente) AS cadenas
@@ -82,7 +109,6 @@ def main() -> int:
     # comprobar las dos ramas -- con sesion filtra, sin sesion tiene que decirlo.
     main.app.dependency_overrides[main.usuario_opcional] = lambda: yo
     cliente = TestClient(main.app)
-    fallos = 0
 
     def pide(ruta, **params):
         nonlocal fallos
