@@ -31,6 +31,7 @@ import {
   textoOrigenSello,
 } from '../api/formato'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
+import { fraseDePrecio } from '../logica/frase'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
@@ -176,6 +177,44 @@ export function Producto() {
               <Etiqueta tono="dato">datos del {fechaTexto(consulta.data.fecha_datos)}</Etiqueta>
             )}
           </p>
+
+          {/* **La frase, antes que la tabla.** Punto 3 del encargo: «una tabla no
+              es una respuesta». Va aqui arriba, antes del precio y de la tabla de
+              cadenas, porque es lo primero que se mira con el paquete en la mano.
+
+              Se calcula aqui mismo y no en un `useMemo` de mas arriba **para que la
+              frase y los datos que la forman esten en el mismo sitio**: el dia que
+              alguien cambie que es «fiable», tiene que cambiar la frase al lado, no
+              a treinta lineas de distancia. Las reglas de la frase estan en
+              `logica/frase.ts`, que es donde se deciden.
+
+              Y si no hay frase **no se pinta nada**: la tabla de abajo ya deja
+              comparar con desconfianza, y una frase inventada se cree. */}
+          {(() => {
+            if (!grupo || !miembro) return null
+            // Solo cuentan los productos con precio y marcados como comparables
+            // por la API: es su señal, no una regla reinventada aqui.
+            const conPrecio = grupo.productos.filter(
+              (p) => p.comparable && p.precio_unidad_cent != null,
+            )
+            if (conPrecio.length < 2) return null
+            const minimo = Math.min(
+              ...conPrecio.map((p) => p.precio_unidad_cent as number),
+            )
+            const barato = conPrecio.find((p) => p.precio_unidad_cent === minimo)
+            const frase = fraseDePrecio({
+              cadenas: grupo.cadenas,
+              ahorro_pct: grupo.ahorro_pct,
+              ahorro_cent: grupo.ahorro_cent,
+              fiable: grupo.cadenas >= 2 && conPrecio.length >= 2,
+              cadena_mas_barata: barato?.fuente ?? null,
+              cadena_de_este: miembro.fuente,
+              precio_unidad_este: miembro.precio_unidad_cent,
+              precio_unidad_minimo: minimo,
+            })
+            if (!frase) return null
+            return <p className="mt-3 text-base font-semibold leading-snug">{frase}</p>
+          })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Precio">{euros(producto.precio_cent)}</Dato>
