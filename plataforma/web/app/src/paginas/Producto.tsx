@@ -31,6 +31,7 @@ import {
   textoOrigenSello,
 } from '../api/formato'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
+import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
@@ -43,6 +44,11 @@ export function Producto() {
 
   const producto = consulta.data?.producto
   const grupo = consulta.data?.grupo ?? null
+
+  // El titulo de la pestana con el nombre del producto, que es lo que distingue esta
+  // pestana de las otras nueve. Mientras el dato viaja se queda "Producto", que lo
+  // pone `App` por ruta: aqui solo se mejora cuando se sabe mas.
+  useTitulo(producto?.nombre ?? grupo?.nombre)
 
   /** El miembro del grupo que corresponde a este producto, con la ficha
    *  completa. `/api/producto` devuelve menos campos (no trae imágenes, ni

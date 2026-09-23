@@ -16,6 +16,9 @@ import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
 import { Aviso, Boton, Cargando, Etiqueta, Fallo, Vacio } from '../componentes/ui'
 import { cuantosFiltros, escribirFiltros, leerFiltros } from '../estado/filtrosUrl'
+import {
+  MINIMO, apuntaBusqueda, leerBusquedas,
+} from '../estado/busquedasRecientes'
 
 /** Tres busquedas de ejemplo, que se pueden pulsar.
  *
@@ -42,6 +45,13 @@ export function Buscar() {
   const resultados = useBuscar(filtros)
 
   const [texto, setTexto] = useState(filtros.q)
+  const [recientes, setRecientes] = useState<string[]>([])
+
+  // Las ultimas busquedas se leen del aparato al abrir, no del servidor: son de
+  // este movil y no tienen por que viajar.
+  useEffect(() => {
+    setRecientes(leerBusquedas())
+  }, [])
 
   const ponFiltros = (nuevos: FiltrosBuscar) => setParams(escribirFiltros(nuevos), { replace: true })
 
@@ -62,7 +72,25 @@ export function Buscar() {
   const buscaEjemplo = (ejemplo: string) => {
     setTexto(ejemplo)
     ponFiltros({ ...filtros, q: ejemplo })
+    setRecientes(apuntaBusqueda(ejemplo))
   }
+
+  /** Y una busqueda de verdad se recuerda sola, sin pulsar nada.
+   *
+   *  **Con un segundo de calma a proposito**: el texto que se busca va con 250 ms de
+   *  retraso, y eso basta para que al teclear "leche" despacio se guarde tambien
+   *  "lech". Un segundo es mas de lo que se tarda en escribir la palabra entera y
+   *  menos de lo que se tarda en mirar los resultados, asi que lo que se apunta es lo
+   *  que alguien quiso buscar. Y solo si hay resultados: una busqueda que no
+   *  encuentra nada no se recuerda, porque volver a pulsarla no ayuda.
+   */
+  useEffect(() => {
+    const q = filtros.q.trim()
+    if (q.length < MINIMO || !resultados.data) return
+    const t = window.setTimeout(() => setRecientes(apuntaBusqueda(q)), 1000)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtros.q, resultados.data])
 
   // El texto que se teclea y el que se busca no son el mismo: este se retrasa.
   useEffect(() => {
@@ -151,6 +179,26 @@ export function Buscar() {
               </Boton>
             ))}
           </div>
+
+          {/* Y debajo, lo que ya has buscado: la compra se repite cada semana, y
+              "leche entera" es la misma busqueda que la de la semana pasada. Se
+              guardan en el aparato (ver `estado/busquedasRecientes.ts`), no viajan,
+              y van despues de los ejemplos porque un ejemplo siempre encuentra algo
+              y una busqueda vieja puede no encontrar nada. */}
+          {recientes.length > 0 && (
+            <>
+              <p className="mt-4 text-xs uppercase tracking-wide text-neutral-500">
+                Lo que has buscado
+              </p>
+              <div className="mt-2 flex flex-wrap justify-center gap-2">
+                {recientes.map((q) => (
+                  <Boton key={q} variante="sutil" onClick={() => buscaEjemplo(q)}>
+                    {q}
+                  </Boton>
+                ))}
+              </div>
+            </>
+          )}
         </Vacio>
       )}
 

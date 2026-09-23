@@ -1,7 +1,9 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Route, Routes, useLocation } from 'react-router-dom'
 
 import { Cabecera } from './componentes/Cabecera'
 import { NavAbajo } from './componentes/Nav'
+import { SUFIJO } from './componentes/Titulo'
 import { Vacio } from './componentes/ui'
 import { Ajustes } from './paginas/Ajustes'
 import { Buscar } from './paginas/Buscar'
@@ -14,12 +16,39 @@ import { PanelMatching } from './paginas/PanelMatching'
 import { Producto } from './paginas/Producto'
 import { Unirse } from './paginas/Unirse'
 
+/** El titulo de la pestana por ruta. Lo de dentro lo mejora si sabe mas.
+ *
+ *  La ficha y el grupo ponen **el nombre del producto** cuando su dato llega
+ *  (`useTitulo`), porque "Producto" y "Leche entera Hacendado" no se parecen en nada
+ *  cuando hay diez pestanas abiertas. Aqui esta el titulo de arranque de cada ruta,
+ *  que es el que se ve mientras el dato viaja.
+ */
+export function tituloDe(ruta: string): string {
+  if (ruta === '/') return 'Buscar'
+  if (ruta.startsWith('/grupo/') || ruta.startsWith('/producto/')) return 'Producto'
+  if (ruta.startsWith('/escaner')) return 'Escáner'
+  if (ruta.startsWith('/cesta')) return 'La cesta'
+  if (ruta.startsWith('/favoritos')) return 'Favoritos'
+  if (ruta.startsWith('/ajustes')) return 'Ajustes'
+  if (ruta.startsWith('/panel/matching')) return 'Matching'
+  if (ruta.startsWith('/panel')) return 'Panel'
+  if (ruta.startsWith('/unirme/')) return 'Invitación'
+  return 'Cesta'
+}
+
 /** El armazon de la app: cabecera pegada arriba, contenido y barra abajo.
  *
  *  `pb-24` en el main es el hueco de la barra de abajo en el movil: sin el, el
  *  ultimo resultado de una lista queda debajo de la barra y no se puede pulsar.
  */
 export function App() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    const nombre = tituloDe(pathname)
+    document.title = nombre === 'Cesta' ? 'Cesta' : `${nombre} ${SUFIJO}`
+  }, [pathname])
+
   return (
     <div className="flex min-h-screen flex-col">
       <Cabecera />

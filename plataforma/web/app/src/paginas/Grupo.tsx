@@ -26,6 +26,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { anadirLinea, crearLista, misListas, yo } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useEstado, useGrupo } from '../api/consultas'
+import { useTitulo } from '../componentes/Titulo'
 import {
   cantidad as textoCantidad,
   diasDesde,
@@ -61,6 +62,10 @@ export function Grupo() {
 
   const grupo = consulta.data
   const diasValidos = estado.data?.dias_precio_valido ?? 3
+
+  // El nombre del producto en la pestana: con diez pestanas abiertas, "Producto" no
+  // distingue esta de las demas. Ver `componentes/Titulo.tsx`.
+  useTitulo(grupo?.nombre)
 
   /** De que dia es el precio de esa cadena.
    *

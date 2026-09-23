@@ -78,6 +78,20 @@ basica no explican para que sirve la aplicacion; cuatro precios con su diferenci
 Primero se entiende, despues se usa. El que decide entre las dos es `Mosaico`, en un solo
 sitio: con la condicion en dos sitios, el dia que una cambie se pintan las dos cosas.
 
+### Lo que has buscado
+
+Debajo de los ejemplos, y solo con el buscador vacio, van **las ultimas busquedas** (ocho,
+las mas recientes primero, sin repetir) como chips que lanzan la busqueda de un toque. La
+compra se repite cada semana y "leche entera" es la misma busqueda que la de la semana
+pasada: escribirla otra vez, de pie y con una mano, es el trabajo que hay que quitar.
+Viven en el aparato (`estado/busquedasRecientes.ts`), no viajan, y se apuntan con un
+segundo de calma y solo si la busqueda encontro algo -- si no, la lista se llena de "l",
+"le", "lec" y de busquedas que no sirven.
+
+El titulo de la pestaña se pone por ruta (`App.tituloDe`) y la ficha y el grupo lo mejoran
+con **el nombre del producto**: con diez pestañas abiertas, "Producto" no distingue una de
+otra.
+
 **Esto cambio el 23 de septiembre, y se cuenta en vez de borrarse.** Antes decía:
 
 > ~~Si no hay historial, no se pinta nada y se ve solo el buscador. No se rellena con

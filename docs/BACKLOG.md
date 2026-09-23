@@ -599,6 +599,45 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### Los detalles que hacen que parezca terminada (§8), uno a uno
+
+El encargo tiene una seccion que no es de diseño sino de acabado, y dice *"ninguno es
+grande; juntos son la diferencia entre «un proyecto» y «una aplicacion»"*. Estado de cada
+uno, medido sobre el codigo de hoy:
+
+    los estados vacios, todos con una frase      HECHO (componente `Vacio`; el
+                                                 «Nada con «».» de la interfaz vieja
+                                                 esta arreglado desde el principio)
+    los estados de carga, sin saltos             **PENDIENTE**: `Cargando` es una linea
+                                                 de texto, no un hueco del tamaño de lo
+                                                 que va a venir. Es lo unico que queda
+                                                 de esta seccion y es un cambio de
+                                                 pantallas, no de una.
+    los errores, «no llego a casa» + reintentar  HECHO (`Fallo` + `textoDeError`), y
+                                                 **sin cobertura no es rojo** desde el
+                                                 23 sep (`esSinRed`, un solo sitio)
+    el buscador: recuerda lo ultimo              HECHO el 23 sep
+                                                 (`estado/busquedasRecientes.ts`, 8
+                                                 chips, sin repetir, en el aparato)
+    el buscador: no exige pulsar una lupa        HECHO (busca al teclear, con 250 ms)
+    el buscador: encuentra con faltas            **PENDIENTE**: se normalizan tildes y
+                                                 mayusculas en el dato, pero una letra
+                                                 cambiada no encuentra nada. Hay que
+                                                 medirlo antes de tocar el ranking:
+                                                 `curl '/api/buscar?q=lece%20entera'`
+    los numeros, con su unidad al lado           HECHO (`eurosUnidad` pinta «0,96 €/kg»:
+                                                 el numero suelto no existe en la
+                                                 pantalla)
+    el titulo de cada pantalla en la pestaña     HECHO el 23 sep (`componentes/Titulo.tsx`
+                                                 + `App.tituloDe`; la ficha y el grupo
+                                                 ponen **el nombre del producto**)
+    volver atras siempre, y los enlaces que      HECHO (`/favoritos` y `/ajustes` con
+    faltaban                                     enlace desde la cesta)
+
+Las dos que quedan estan dichas con lo que hay que hacer, no con una idea: los saltos de
+maquetacion son un cambio pantalla a pantalla, y las faltas de ortografia hay que medirlas
+antes de tocar el buscador -- que es la consulta que sostiene toda la aplicacion.
+
 ### El mosaico de lo de siempre, en el buscador: un toque en vez de tres
 
 La mejora que `docs/DISENO.md` llamaba «la de mas valor del buscador», y la pantalla que le
