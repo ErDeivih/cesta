@@ -4,16 +4,21 @@
  *  el pulgar llega al borde inferior de la pantalla y no a la esquina de arriba.
  *  En el escritorio la barra de arriba no molesta a nadie.
  *
- *  **Cuatro destinos, y son los cuatro de estar un rato en la tienda**: buscar,
- *  la cesta, el escaner y el panel. Antes estaba el panel de matching en lugar de
- *  la cesta; se ha cambiado porque la lista de la compra es a lo que se va, y el
- *  matching es una pantalla de auditoria que se mira en casa. Sigue accesible
- *  desde el panel (`/panel/matching`), que es donde se busca.
+ *  **Cinco destinos, y el quinto es distinto de los otros cuatro.** Los cuatro de
+ *  estar un rato en la tienda siguen siendo buscar, la cesta, el escaner y el panel.
+ *  **Avisos** (23 de septiembre de 2026) no es un sitio donde estar: es **lo unico que
+ *  la aplicacion hace por ti mientras no la miras** -- te busca ella a ti --, y es la
+ *  respuesta a *"¿ha bajado algo de lo mio?"*, una de las cuatro preguntas con las que
+ *  se abre esto. Ponerlo dentro de otra pantalla habria sido esconderlo en una esquina,
+ *  que es justo lo que este encargo quita. Ademas el encargo lo pide literalmente: *"un
+ *  punto en el icono"*, y un punto necesita un icono donde estar.
  *
- *  Una barra de ocho iconos no se lee, se busca a tientas.
+ *  Una barra de ocho iconos no se lee, se busca a tientas. Cinco entran en un movil de
+ *  390 px (78 px cada uno) y el pulgar llega a los cinco.
  */
 import { NavLink, useLocation } from 'react-router-dom'
 
+import { useAvisosSinVer } from '../api/consultas'
 import { IconoCodigoBarras, IconoLupa, IconoPanel, IconoGrafica } from './iconos'
 import { cx } from './ui'
 
@@ -21,11 +26,17 @@ const ITEMS = [
   { a: '/', texto: 'Buscar', Icono: IconoLupa, exacto: true },
   { a: '/cesta', texto: 'Cesta', Icono: IconoGrafica, exacto: false },
   { a: '/escaner', texto: 'Escáner', Icono: IconoCodigoBarras, exacto: false },
+  { a: '/avisos', texto: 'Avisos', Icono: IconoPanel, exacto: false },
   { a: '/panel', texto: 'Panel', Icono: IconoPanel, exacto: true },
 ] as const
 
 function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { compacto?: boolean }) {
   const { pathname, search } = useLocation()
+  // El punto del icono: **cuantos avisos han saltado y nadie ha visto**. Cuenta lo que
+  // ha saltado, no lo que hay: una alerta que existe y no se ha cumplido no es un
+  // aviso, es una promesa. Y `vista_en` es de la persona, no de la pantalla que se
+  // abre: abrirla en el autobus no puede dar por leido lo que no se ha leido.
+  const sinVer = useAvisosSinVer()
 
   /* Pulsar "Buscar" **estando ya en el buscador** no puede borrar la busqueda.
    *
@@ -56,7 +67,20 @@ function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { 
       {({ isActive }) => (
         <>
           <Icono width={compacto ? 22 : 18} height={compacto ? 22 : 18} />
-          <span>{texto}</span>
+          <span className="relative">
+            {texto}
+            {a === '/avisos' && sinVer > 0 && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-2 -top-1 h-2 w-2 rounded-full bg-red-600"
+                />
+                {/* Un punto no dice cuanto. El numero va para quien no ve el color:
+                    el punto es la senal, y el numero es la misma senal en palabras. */}
+                <span className="sr-only">{sinVer} sin ver</span>
+              </>
+            )}
+          </span>
           {/* El estado activo no se marca solo con color: lleva un subrayado,
               que se ve tambien en una pantalla con el brillo bajo y al sol. */}
           <span

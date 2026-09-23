@@ -151,8 +151,8 @@ export async function donde(id: string,
  *  lee; sin cuerpo tampoco se pone `Content-Type`, que es lo mismo dicho al
  *  reves.
  */
-async function escribe<T>(ruta: string, metodo: 'POST' | 'PATCH' | 'DELETE',
-                          cuerpo?: unknown): Promise<T> {
+export async function escribe<T>(ruta: string, metodo: 'POST' | 'PATCH' | 'DELETE',
+                                 cuerpo?: unknown): Promise<T> {
   const respuesta = await fetch(`/api${ruta}`, {
     method: metodo,
     headers: cuerpo === undefined

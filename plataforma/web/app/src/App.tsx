@@ -6,6 +6,7 @@ import { NavAbajo } from './componentes/Nav'
 import { SUFIJO } from './componentes/Titulo'
 import { Vacio } from './componentes/ui'
 import { Ajustes } from './paginas/Ajustes'
+import { Avisos } from './paginas/Avisos'
 import { Buscar } from './paginas/Buscar'
 import { Cesta } from './paginas/Cesta'
 import { Escaner } from './paginas/Escaner'
@@ -32,6 +33,7 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/ajustes')) return 'Ajustes'
   if (ruta.startsWith('/panel/matching')) return 'Matching'
   if (ruta.startsWith('/panel')) return 'Panel'
+  if (ruta.startsWith('/avisos')) return 'Avisos'
   if (ruta.startsWith('/unirme/')) return 'Invitación'
   return 'Cesta'
 }
@@ -59,6 +61,7 @@ export function App() {
           <Route path="/producto/:fuente/:idFuente" element={<Producto />} />
           <Route path="/escaner" element={<Escaner />} />
           <Route path="/cesta" element={<Cesta />} />
+          <Route path="/avisos" element={<Avisos />} />
           {/* La ruta que devuelve la API al crear una invitacion
               (`/unirme/<codigo>`, main.py:500). Caddy sirve `index.html` para
               cualquier ruta que no sea un fichero (`try_files {path}`,

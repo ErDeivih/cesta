@@ -26,6 +26,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { anadirLinea, crearLista, misListas, yo } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useEstado, useGrupo } from '../api/consultas'
+import { Campana } from '../componentes/Campana'
 import { useTitulo } from '../componentes/Titulo'
 import {
   cantidad as textoCantidad,
@@ -220,6 +221,11 @@ export function Grupo() {
               <BotonAnadirACesta grupoId={id} nombre={grupo.nombre} />
               <BotonFavorito grupoId={id} />
             </div>
+          </div>
+          {/* La campana, debajo de las dos acciones y pegada al titulo: "avisame si
+              baja" es de ESTE producto, y va donde esta el producto. */}
+          <div className="mt-2">
+            <Campana grupoId={id} />
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
             <span>{grupo.productos.length} productos</span>

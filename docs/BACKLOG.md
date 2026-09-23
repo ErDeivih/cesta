@@ -426,10 +426,9 @@ como se hizo con los grupos.
                                                   La segunda red que SI corta son los
                                                   ejes declarados, y los 49 estan en 0.
                                                   Instrumento: projects/cesta/cohesion.py
-    punto 6  los avisos que no avisan             HECHO: el vigilante mira cuando
-                                                  cambia gold (`api/vigilante.py`);
-                                                  falta la campana en la pantalla
-                                                  (no hay pantalla de alertas)
+    punto 6  los avisos que no avisan             HECHO de punta a punta: el vigilante
+                                                  los mira cuando cambia gold, y hay
+                                                  campana, pantalla y punto en el icono
 
 **Lo que le falta a la barra, dicho con su numero**, porque el encargo se cierra cuando
 se cumplen las seis condiciones y no cuando se acaban las tareas:
@@ -598,6 +597,53 @@ de hoy corta donde **el nombre declara** algo distinto; queda lo que se funde si
 ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo: **la
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
+
+### La campana, la pantalla de avisos y el punto en el icono
+
+La mitad de fuera del punto 6. Dentro ya estaba el vigilante (la alerta salta cuando
+cambia gold, sin que nadie abra nada); esto es lo que se ve cuando salta, y el encargo lo
+pedia literal: *"un punto en el icono, y al abrirlo **la frase entera** --«el aceite que
+sigues esta a 3,89 €/l en Alcampo, el mas barato en 90 dias»--, no un numero rojo sin
+contexto."*
+
+**Tres piezas, y cada una resuelve una parte de la frase:**
+
+    la campana     en la ficha del producto: «Avisarme si baja». Pide el aviso **util**
+                   (`minimo_90d`) sin preguntar ningun numero, porque es el unico tipo
+                   que no exige saber cuanto deberia costar algo -- y casi nadie lo sabe
+                   hasta que ve la curva. Sin sesion no se pinta.
+    la pantalla    `/avisos`: lo que ha bajado **con su frase**, lo que salto y ya no
+                   esta a ese precio (con la frase **guardada** y su fecha), y lo que
+                   esta esperando. Mas «Ya los he visto».
+    el punto       en el icono de Avisos de la barra de abajo: cuantos han saltado y
+                   nadie ha visto.
+
+**La frase sale del servidor, siempre.** `por_que` para las que se cumplen hoy y
+`salto_texto` para las que saltaron; la pantalla no monta ninguna. Recalcularla en el
+navegador daria una segunda version de la misma verdad, y **la guardada no se puede
+recalcular**: se midio contra el gold de ese dia, y gold es otro cada manana. Un aviso que
+cambia de texto al dia siguiente no es un aviso, es un rumor.
+
+**El punto cuenta lo que ha saltado, no lo que hay.** Una alerta que existe y no se ha
+cumplido es una promesa, no una noticia. Y se apaga **a mano** (`POST /alertas/vistas`):
+abrir la pantalla en el autobus no puede dar por leido lo que no se ha leido. El punto va
+con `aria-hidden` **y** un `sr-only` con el numero: un punto no dice cuanto.
+
+**Y una decision que hubo que tomar y escribir: la barra de abajo pasa a cinco
+destinos.** Cuatro eran "los cuatro de estar un rato en la tienda" y habia una prueba que
+lo fijaba. Avisos no es un sitio donde estar: es **lo unico que la aplicacion hace por ti
+mientras no la miras**, y es la respuesta a *"¿ha bajado algo de lo mio?"*. Ponerlo dentro
+de otra pantalla habria sido esconderlo en una esquina, que es justo lo que este encargo
+quita -- y un punto necesita un icono donde estar. Queda escrito en `Nav.tsx`,
+`docs/USABILIDAD.md` y la prueba, que ahora fija los cinco **y su razon**.
+
+Para que la pantalla pueda decir de que producto habla, `GET /api/alertas` **anade la
+tarjeta del grupo** (`catalogo.tarjetas`). Un grupo que ya no esta en gold no la lleva, y
+la pantalla lo dice: *"Un producto que ya no esta en el catalogo"*, que es la verdad.
+
+Probado en `tests/test_alertas_pantalla.py` (6 pruebas: dos de la API con gold de mentira
+y PostgreSQL sustituido, cuatro de la pantalla leyendo el codigo) y en
+`tests/test_vigilante.py`, que fija la mitad de dentro.
 
 ### Los detalles que hacen que parezca terminada (§8), uno a uno
 

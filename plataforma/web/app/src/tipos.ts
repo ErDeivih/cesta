@@ -463,6 +463,54 @@ export interface RespuestaHabituales {
   fecha_datos: string
 }
 
+/** Una alerta de precio, tal cual la guarda la API.
+ *
+ *  **`salto_en` y `vista_en` son dos relojes distintos**: `salto_en` es cuando se
+ *  cumplio la condicion -- lo pone el vigilante de la API en cuanto cambia gold, sin
+ *  que nadie abra nada -- y `vista_en` es cuando esta persona lo ha visto. La pantalla
+ *  no los puede confundir: el punto de "sin ver" es `vista_en`, y la fecha que se
+ *  ensena es `salto_en`. */
+export interface Alerta {
+  id: string
+  grupo_id: number
+  tipo: 'baja_de' | 'minimo_90d' | 'cualquier_bajada'
+  umbral_cent: number | null
+  creada_en: string
+  vista_en: string | null
+  salto_en: string | null
+  /** La frase, guardada cuando salto: se mide contra el gold de ese dia. */
+  salto_texto: string | null
+  /** La tarjeta del grupo, que la API anade en `GET /api/alertas`.
+   *
+   *  Sin el nombre, la pantalla solo puede decir "producto", y un aviso que no dice
+   *  **de que** producto es no es un aviso. Si el grupo ya no esta en el catalogo no
+   *  llegan: entonces no hay nombre que poner y la pantalla lo dice. */
+  nombre?: string
+  imagen?: string
+  precio_unidad_cent?: number
+  unidad?: string | null
+  cadena_mas_barata?: string | null
+  fiable?: boolean
+}
+
+/** Una alerta que se cumple **hoy**, con la frase que la explica. */
+export interface AlertaQueSalta {
+  grupo_id: number
+  nombre: string
+  cadena: string
+  unidad: string | null
+  precio_unidad_cent: number
+  alerta_id: string
+  tipo: string
+  por_que: string
+}
+
+export interface RespuestaAlertas {
+  fecha_datos: string
+  alertas: Alerta[]
+  saltan: AlertaQueSalta[]
+}
+
 /** Lo que cuesta la lista ahora mismo, en la cadena mas barata de cada cosa. */
 export interface Estimacion {
   total_cent: number

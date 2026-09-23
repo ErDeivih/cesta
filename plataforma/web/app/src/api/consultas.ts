@@ -10,7 +10,8 @@
  */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { anadirLinea, crearLista, misListas } from './cesta'
+import { anadirLinea, crearLista, misListas, yo } from './cesta'
+import { misAlertas } from './alertas'
 import { ErrorApi, pide } from './cliente'
 import type {
   RespuestaBajadas,
@@ -171,6 +172,32 @@ export function useHabituales(limite = 12) {
       pide<RespuestaHabituales>('/habituales', { limite }, signal),
     staleTime: CINCO_MIN,
   })
+}
+
+/** Los avisos de esta persona, y cuantos estan sin ver para el punto del icono.
+ *
+ *  Se pide en el armazon (la barra de abajo), asi que va con `staleTime` largo y solo
+ *  cuando hay sesion: sin sesion la API contesta 401 y no hay nada que mirar.
+ */
+export function useAlertas() {
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  return useQuery({
+    queryKey: ['alertas'],
+    queryFn: misAlertas,
+    enabled: sesion.data?.usuario != null,
+    staleTime: CINCO_MIN,
+  })
+}
+
+/** Cuantos avisos han saltado y nadie ha visto todavia.
+ *
+ *  **El punto cuenta lo que ha saltado, no lo que hay**: una alerta que existe y no se
+ *  ha cumplido no es un aviso, es una promesa. Y `vista_en` es de la persona, no de la
+ *  pantalla que se abre (`salto_en` es la otra mitad, y la pone el vigilante).
+ */
+export function useAvisosSinVer(): number {
+  const { data } = useAlertas()
+  return (data?.alertas ?? []).filter((a) => a.salto_en && !a.vista_en).length
 }
 
 /** Anade un producto a la lista de casa, que es donde se apunta la compra.

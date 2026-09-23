@@ -104,6 +104,38 @@ decide si vuelve. Lo que se mantiene del criterio viejo es la parte que importab
 **no se mezclan sin decirlo**. Por eso `origen` viaja en la respuesta y la pantalla
 puede decir *«todavia no se lo que sueles comprar»* mientras ensena lo de todos.
 
+## 2. Avisos
+
+**[hecho] el 23 de septiembre de 2026.** La pantalla del punto 6 del encargo, y una de las
+cinco de la barra de abajo. Existe porque la alerta **ya no salta solo si entras a mirar**:
+la mira el vigilante de la API en cuanto cambia gold, y esto es lo que se ve cuando salta.
+
+    Ha bajado
+      Aceite de oliva virgen extra
+      esta al precio mas bajo de los ultimos 90 dias: 3,89 EUR/l en alcampo
+
+    Salio y ya no esta a ese precio
+      Cafe molido
+      ha bajado un 18,0 % desde 2026-09-16: 2,50 EUR/kg en dia
+      Salto hace 2 dias · 23/09/2026
+
+    [ Ya los he visto (2) ]
+
+    Esperando
+      Pan de molde            Te aviso cuando este en su precio mas bajo de 90 dias
+
+**La frase la escribe el servidor, no la pantalla**: `por_que` para las que se cumplen hoy
+y `salto_texto` para las que saltaron. La guardada **no se recalcula** -- se midio contra
+el gold de aquel dia, y gold es otro cada manana -- porque un aviso que cambia de texto al
+dia siguiente no es un aviso, es un rumor. Y una promesa no se escribe como un hecho: lo
+que no se ha cumplido va aparte, debajo.
+
+El punto del icono cuenta **lo que ha saltado y nadie ha visto**, no lo que hay: abrir la
+pantalla en el autobus no puede dar por leido nada, asi que se apaga con «Ya los he visto».
+La campana, para pedir un aviso, esta en la ficha del producto (`componentes/Campana.tsx`).
+
+---
+
 ### Los resultados
 
 Una tarjeta por grupo: foto, nombre, cuantas cadenas, el ahorro si lo hay,

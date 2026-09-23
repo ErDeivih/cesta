@@ -109,16 +109,23 @@ def test_la_barra_de_abajo_reserva_la_raya_del_iphone():
 
 
 @sin_interfaz
-def test_la_barra_de_abajo_tiene_cuatro_destinos():
-    """Cuatro, y son los cuatro de estar un rato en la tienda.
+def test_la_barra_de_abajo_tiene_cinco_destinos_y_el_quinto_es_una_decision():
+    """Cuatro de estar un rato en la tienda, y **Avisos**, que es otra cosa.
 
     Lo dice `docs/USABILIDAD.md`: una barra de ocho iconos no se lee, se busca a
-    tientas. Si alguien anade un quinto destino, que sea decidiendolo.
+    tientas. El quinto entro el 23 de septiembre de 2026 **decidido y escrito**, no
+    colado: Avisos no es un sitio donde estar, es **lo unico que la aplicacion hace por
+    ti mientras no la miras**, y es la respuesta a *"¿ha bajado algo de lo mio?"*. El
+    encargo de esa fecha pide literalmente *"un punto en el icono"*, y un punto necesita
+    un icono donde estar -- dentro de otra pantalla seria esconderlo en una esquina.
     """
     fuente = NAV.read_text(encoding="utf-8")
     bloque = re.search(r"const ITEMS = \[(.*?)\] as const", fuente, re.S)
     assert bloque, "no he sabido leer los destinos de la barra: revisa esta prueba"
     destinos = re.findall(r"a:\s*'([^']+)'", bloque.group(1))
-    assert destinos == ["/", "/cesta", "/escaner", "/panel"], (
-        f"la barra de abajo tiene {destinos}. Son cuatro a proposito: buscar, la "
-        f"cesta, el escaner y el panel. Anadir uno es una decision, no un detalle")
+    assert destinos == ["/", "/cesta", "/escaner", "/avisos", "/panel"], (
+        f"la barra de abajo tiene {destinos}. Son cinco a proposito: buscar, la cesta, "
+        f"el escaner, los avisos y el panel. Anadir otro es una decision, no un detalle")
+    # Y el porque tiene que estar donde se lee, que es con los destinos.
+    assert "lo unico que" in fuente and "punto en el icono" in fuente, \
+        "el quinto destino tiene que llevar su razon escrita al lado"

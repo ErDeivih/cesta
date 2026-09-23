@@ -299,9 +299,18 @@ Ofertas anunciadas que el historico no sostiene. Mismos filtros de cadena.
 
     sale  {"fecha_datos",
            "alertas": [{"id", "grupo_id", "tipo", "umbral_cent", "creada_en",
-                        "vista_en", "salto_en", "salto_texto"}],
+                        "vista_en", "salto_en", "salto_texto",
+                        "nombre", "imagen", "precio_unidad_cent", "unidad",
+                        "cadena_mas_barata", "fiable"}],
            "saltan":  [{"grupo_id", "nombre", "cadena", "precio_unidad_cent",
                         "unidad", "alerta_id", "tipo", "por_que"}]}
+
+**Cada alerta lleva la tarjeta de su grupo** (`nombre`, precio, unidad y cadena), que
+la ruta pide a gold con `catalogo.tarjetas`. Sin el nombre, la pantalla solo puede decir
+"producto", y un aviso que no dice **de que** producto es no es un aviso. Si el grupo ya
+no esta en el catalogo -- el emparejador se rehizo y ese id no es de hoy -- **la tarjeta
+no llega**: entonces no hay nombre que poner y la pantalla lo dice, en vez de
+inventarselo.
 
 Los tres tipos son los del `CHECK` de la tabla: `baja_de` (con `umbral_cent`),
 `minimo_90d` y `cualquier_bajada`. `saltan` trae las que se cumplen hoy, **con la frase

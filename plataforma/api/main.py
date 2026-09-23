@@ -623,6 +623,12 @@ def ver_alertas(usuario: dict = Depends(usuario_actual)):
     faltaba del punto 6 del encargo. `vista_en` sigue siendo tuyo.
     """
     mias = almacen.alertas_de(usuario["id"])
+    # Cada alerta con **la tarjeta de su grupo**: sin el nombre, la pantalla solo puede
+    # decir "producto", y un aviso que no dice de que producto es no es un aviso. Se
+    # pide la tarjeta a gold, que es quien sabe como esta hoy ese grupo; un grupo que ya
+    # no esta en el catalogo sale sin tarjeta y la pantalla lo dice.
+    tarjetas = catalogo.tarjetas([a["grupo_id"] for a in mias])
+    mias = [a | tarjetas.get(a["grupo_id"], {}) for a in mias]
     return {"fecha_datos": catalogo.fecha_de_gold(),
             "alertas": mias,
             "saltan": alertas.evalua([a for a in mias if not a["vista_en"]])}

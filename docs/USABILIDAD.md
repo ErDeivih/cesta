@@ -91,6 +91,13 @@ tiene que llevar**.
 Para que nadie lo "mejore":
 
     la barra abajo          el pulgar llega. Arriba no.
+    cinco destinos          buscar, la cesta, el escaner, **avisos** y el panel. El
+                            quinto entro el 23 de septiembre de 2026 y es una decision
+                            escrita, no un detalle: avisos no es un sitio donde estar,
+                            es **lo unico que la aplicacion hace por ti mientras no la
+                            miras**, y es la respuesta a "¿ha bajado algo de lo mio?".
+                            Ocho iconos no se leen, se busca a tientas; cinco entran en
+                            un movil de 390 px.
     dos secciones           "por coger" y "en el carro", no una lista tachada.
                             En el pasillo miras la lista veinte veces y lo que
                             necesitas saber es QUE ME QUEDA.
