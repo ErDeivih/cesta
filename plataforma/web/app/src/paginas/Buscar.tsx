@@ -14,7 +14,7 @@ import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
 import { Mosaico } from '../componentes/Mosaico'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
-import { Aviso, Boton, Cargando, Etiqueta, Fallo, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Esqueleto, Etiqueta, Fallo, Vacio } from '../componentes/ui'
 import { cuantosFiltros, escribirFiltros, leerFiltros } from '../estado/filtrosUrl'
 import {
   MINIMO, apuntaBusqueda, leerBusquedas,
@@ -214,7 +214,10 @@ export function Buscar() {
           con el buscador vacio, asi que no se cuela debajo de los resultados. */}
       {!busca && <Mosaico />}
 
-      {busca && resultados.isPending && <Cargando que="el catálogo" />}
+      {/* El hueco de los resultados, con la forma de la tabla que va a venir: seis
+          filas de la altura de una fila. Antes esto era una linea de texto y, al
+          llegar los cuarenta resultados, todo lo de abajo saltaba. */}
+      {busca && resultados.isPending && <Esqueleto filas={6} />}
 
       {busca && resultados.isError && (
         <Fallo error={resultados.error} reintentar={() => void resultados.refetch()} />

@@ -92,6 +92,12 @@ El titulo de la pestaña se pone por ruta (`App.tituloDe`) y la ficha y el grupo
 con **el nombre del producto**: con diez pestañas abiertas, "Producto" no distingue una de
 otra.
 
+**Y mientras carga, un hueco con la forma de lo que viene** (`Esqueleto`, `ui.tsx`): filas
+del alto de una fila para los resultados y para las líneas de la lista, y una cuadrícula de
+tres columnas para el mosaico. Antes era una línea de texto, y al llegar cuarenta
+resultados todo lo de abajo bajaba de golpe -- en una pantalla que se usa de pie y con una
+mano, con el pulgar ya camino de un botón.
+
 **Esto cambio el 23 de septiembre, y se cuenta en vez de borrarse.** Antes decía:
 
 > ~~Si no hay historial, no se pinta nada y se ve solo el buscador. No se rellena con

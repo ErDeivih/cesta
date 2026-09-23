@@ -752,11 +752,10 @@ uno, medido sobre el codigo de hoy:
     los estados vacios, todos con una frase      HECHO (componente `Vacio`; el
                                                  «Nada con «».» de la interfaz vieja
                                                  esta arreglado desde el principio)
-    los estados de carga, sin saltos             **PENDIENTE**: `Cargando` es una linea
-                                                 de texto, no un hueco del tamaño de lo
-                                                 que va a venir. Es lo unico que queda
-                                                 de esta seccion y es un cambio de
-                                                 pantallas, no de una.
+    los estados de carga, sin saltos             HECHO el 23 sep: `Cargando` reserva
+                                                 sitio y hay esqueletos con la forma de
+                                                 lo que viene (filas y cuadricula),
+                                                 usados donde el contenido empuja
     los errores, «no llego a casa» + reintentar  HECHO (`Fallo` + `textoDeError`), y
                                                  **sin cobertura no es rojo** desde el
                                                  23 sep (`esSinRed`, un solo sitio)
@@ -779,9 +778,20 @@ uno, medido sobre el codigo de hoy:
     volver atras siempre, y los enlaces que      HECHO (`/favoritos` y `/ajustes` con
     faltaban                                     enlace desde la cesta)
 
-Las dos que quedan estan dichas con lo que hay que hacer, no con una idea: los saltos de
-maquetacion son un cambio pantalla a pantalla, y las faltas de ortografia hay que medirlas
-antes de tocar el buscador -- que es la consulta que sostiene toda la aplicacion.
+Las dos que quedaban estan hechas y la seccion esta cerrada. La de los saltos, con el caso
+que la justifica: en la lista de la compra, `Cargando` era **una linea de texto**; cuando
+llegaba la lista, esa linea se convertia en nueve filas y **todo lo de abajo bajaba de
+golpe** -- en la pantalla que se usa de pie y con una mano, con el pulgar ya camino de un
+boton. Eso no es una espera: es pulsar lo que no era.
+
+Ahora `Cargando` reserva sitio (`min-h`), y hay dos esqueletos **con la forma de lo que va
+a venir**: `Esqueleto` (filas, con el mismo `gap-2` que la lista de verdad) y
+`EsqueletoRejilla` (tres columnas, para el mosaico). Se usan donde el contenido de verdad
+empuja -- los resultados del buscador, las lineas de la lista y la cuadricula --, y los dos
+llevan `role="status"` y un texto para lectores de pantalla: **un bloque gris no dice nada
+a quien no ve**. Un esqueleto con la forma equivocada es peor que una linea de texto:
+reserva el sitio que no es y encima promete algo que no viene. Probado en
+`tests/test_esqueletos.py` (4 pruebas).
 
 ### El mosaico de lo de siempre, en el buscador: un toque en vez de tres
 

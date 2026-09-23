@@ -31,7 +31,7 @@ import { useState } from 'react'
 
 import { useAnadeALaCesta, useHabituales } from '../api/consultas'
 import { eurosUnidad, nombreCadena } from '../api/formato'
-import { Boton, Cargando, Etiqueta, Tarjeta } from './ui'
+import { Boton, EsqueletoRejilla, Etiqueta, Tarjeta } from './ui'
 import { LoQueSeCompra } from './LoQueSeCompra'
 
 /** Lo que dice el titulo segun de donde salga lo que se esta viendo. */
@@ -46,9 +46,10 @@ export function Mosaico({ limite = 12 }: { limite?: number }) {
   const anade = useAnadeALaCesta()
   const [puestos, setPuestos] = useState<number[]>([])
 
-  // Mientras se sabe, no se pinta nada: un hueco que aparece y desaparece es peor
-  // que esperar medio segundo.
-  if (habituales.isPending) return <Cargando que="lo que sueles comprar" />
+  // Mientras se sabe, **el hueco de la cuadricula**: seis recuadros del tamaño de una
+  // tarjeta, para que lo que llegue no empuje nada. Un hueco que aparece y desaparece
+  // es peor que esperar medio segundo.
+  if (habituales.isPending) return <EsqueletoRejilla tarjetas={6} />
 
   // El 404 (la ruta todavia no esta desplegada) y un historial que no da ni una
   // tarjeta llevan al mismo sitio: la tarjeta de la primera vez.

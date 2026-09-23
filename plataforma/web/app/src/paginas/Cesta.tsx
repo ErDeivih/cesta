@@ -38,8 +38,8 @@ import type { CambioLinea, Invitacion, Persona } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
 import { euros, hace } from '../api/formato'
 import {
-  Aviso, Boton, CampoTexto, Cargando, Casilla, Etiqueta, Fallo, Selector, Tarjeta,
-  Vacio, cx,
+  Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
+  Tarjeta, Vacio, cx,
 } from '../componentes/ui'
 import type { Linea, Reparto } from '../tipos'
 
@@ -877,7 +877,10 @@ export function Cesta() {
         </Aviso>
       )}
 
-      {detalle.isLoading && <Cargando que="la lista" />}
+      {/* El hueco de las lineas, con su forma: cinco filas del alto de una linea. Esta
+          es la pantalla que se usa de pie y con una mano, y aqui un salto de
+          maquetacion mueve el boton que el pulgar ya tenia camino de pulsar. */}
+      {detalle.isLoading && <Esqueleto filas={5} alto="3.5rem" />}
 
       {/* Cuando no se ha podido guardar un cambio. **Se distinguen dos cosas que
           no son la misma**, y hasta hoy se pintaban igual:

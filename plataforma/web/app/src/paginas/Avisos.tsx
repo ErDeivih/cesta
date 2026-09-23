@@ -26,7 +26,7 @@ import { Link } from 'react-router-dom'
 import { borrarAlerta, marcarVistas } from '../api/alertas'
 import { useAlertas } from '../api/consultas'
 import { fecha, hace } from '../api/formato'
-import { Aviso, Boton, Cargando, Fallo, Tarjeta, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Esqueleto, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 import type { Alerta } from '../tipos'
 
 /** Lo que promete una alerta, en palabras. Es una promesa: no ha pasado todavia. */
@@ -77,7 +77,7 @@ export function Avisos() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['alertas'] }),
   })
 
-  if (consulta.isPending) return <Cargando que="tus avisos" />
+  if (consulta.isPending) return <Esqueleto filas={4} alto="4.25rem" />
   if (consulta.isError) {
     return <Fallo error={consulta.error} reintentar={() => void consulta.refetch()} />
   }

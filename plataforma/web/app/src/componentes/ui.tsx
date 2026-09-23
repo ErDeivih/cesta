@@ -270,10 +270,58 @@ export function CampoTexto({
 // ------------------------------------------------------------ estados raros ---
 
 export function Cargando({ que = 'los datos' }: { que?: string }) {
+  // **Un hueco, no una linea de texto.** Lo pide el encargo (§8): *"los estados de
+  // carga: nada de saltos de maquetacion. Un hueco del tamaño de lo que va a venir"*.
+  // Una linea que dice "Cargando…" y despues se convierte en una lista de nueve filas
+  // hace saltar todo lo que hay debajo -- y en el movil, con el pulgar ya camino del
+  // boton, el boton se mueve.
   return (
-    <p role="status" className="py-6 text-center text-sm text-neutral-600 dark:text-neutral-400">
-      Cargando {que}…
-    </p>
+    <div role="status" className="grid min-h-[6rem] place-items-center py-6">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">Cargando {que}…</p>
+    </div>
+  )
+}
+
+/** El hueco de una lista o una tabla que todavia no ha llegado.
+ *
+ *  Con **la forma** de lo que va a venir: `filas` bloques de la altura de una fila, con
+ *  el mismo hueco entre ellos que la lista de verdad (`gap-2`). Asi, cuando el dato
+ *  llega, el contenido no empuja nada: ocupa el sitio que ya estaba reservado.
+ *
+ *  Un esqueleto que no se parece a lo que viene es peor que una linea de texto: reserva
+ *  el sitio equivocado y encima promete una forma que no es. Por eso las dos formas que
+ *  hay -- filas y rejilla -- son las de las dos cosas que se esperan en esta aplicacion:
+ *  listas y cuadriculas.
+ */
+export function Esqueleto({ filas = 4, alto = '3.25rem' }: { filas?: number; alto?: string }) {
+  return (
+    <div role="status" className="grid gap-2">
+      {Array.from({ length: filas }).map((_, i) => (
+        <div
+          key={i}
+          style={{ height: alto }}
+          className="animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-700/60"
+        />
+      ))}
+      <span className="sr-only">Cargando…</span>
+    </div>
+  )
+}
+
+/** Lo mismo, con la forma de la cuadricula del mosaico. */
+export function EsqueletoRejilla({ tarjetas = 6, alto = '11rem' }:
+                                 { tarjetas?: number; alto?: string }) {
+  return (
+    <div role="status" className="grid grid-cols-3 gap-2">
+      {Array.from({ length: tarjetas }).map((_, i) => (
+        <div
+          key={i}
+          style={{ height: alto }}
+          className="animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-700/60"
+        />
+      ))}
+      <span className="sr-only">Cargando…</span>
+    </div>
   )
 }
 
