@@ -321,6 +321,31 @@ su `equivalencia.parquet`). Los dos primeros son pruebas; el tercero es un scrip
 trabajo y **deberia subir a `projects/cesta/`** el dia que se toque el canal de
 vectores otra vez.
 
+**Donde se aplicaria un modelo de salida forzada (Jev), para cuando haya acceso.**
+El estudio esta en `docs/JEV-IMPLANTACION.md` y el catalogo en `docs/JEV.md`. Los
+sitios, por orden de valor, y los dos primeros **se pueden probar hoy sin Jev**,
+porque ya tenemos un modelo local y un arnes que fuerza el esquema JSON
+(`projects/cesta/banco_de_pares.py`):
+
+1. **El clasificador de ejes** (`core/atributos.py`): hoy son 12 ejes, 28 opciones y
+   71 patrones de subcadena escritos a mano, y cada eje nuevo es otra ocasion del
+   mismo fallo (`desnatad` casando dentro de `semidesnatad`). Es un `Choice` de
+   manual: el nombre es el `state`, los valores del eje mas "no lo dice" la salida, y
+   la regla de que **el que calla no bloquea** se implementa con la confianza.
+2. **Las categorias sin pasillo**: es **el unico paso de la cadena diaria que
+   todavia dice "A MANO"**. Son 19 opciones exactas (`core/secciones.ORDEN`) y hay
+   881 claves ya mapeadas que sirven de banco de pruebas gratis.
+3. **Nada mas por ahora**: como juez de pares no (el 64 % de lo que se nos escapa es
+   dato numerico, que es justo lo que Jev documenta que no sabe hacer), y las
+   ofertas tampoco (las 1.260 fichas de `SIN_REGLA` son **20 textos distintos**: eso
+   es una lista de veinte cadenas, no un modelo).
+
+La barra antes de tocar `core/atributos.py`: tiene que **reproducir las listas a
+mano** en el pasillo coherente, tiene que salir mejor en los tres casos que hoy
+sobre-disparan (`yogur natural` no es cafeina, `vino blanco` no es harina integral,
+`orujo de hierbas` no es aceite), y los **ejes contradictorios** (hoy 52) no pueden
+subir.
+
 Y el numero que hay que mirar antes que ninguno: **`--medir` mide la configuracion
 que corre**, que hoy son 65 % sin el canal de vectores. El canal esta apagado a
 proposito (sube a 73 % de recall y rompe los conflictos de asignacion de 0 a 861).

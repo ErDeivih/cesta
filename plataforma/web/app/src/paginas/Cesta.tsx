@@ -28,7 +28,7 @@
 import { useRef, useState } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import {
   cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
@@ -790,8 +790,24 @@ export function Cesta() {
             ))}
           </select>
         )}
+        {/* Los dos sitios de "lo tuyo" van aqui, con la sesion, porque es donde
+            uno los busca: los favoritos y los ajustes. Hasta hoy **no habia ni un
+            enlace a ninguno de los dos en toda la aplicacion** -- dos pantallas
+            terminadas a las que solo se llegaba escribiendo la direccion, y una de
+            ellas es donde va el boton de darse de baja. Se midio en el navegador:
+            cero coincidencias de `to="/favoritos"` y `to="/ajustes"`.
+
+            Van como enlaces y no como botones porque no hacen nada: llevan a otra
+            pantalla, y en el navegador eso se abre en una pestana nueva si se
+            quiere. */}
+        <Link to="/favoritos" className="ml-auto text-sm text-tinta-suave underline">
+          Favoritos
+        </Link>
+        <Link to="/ajustes" className="text-sm text-tinta-suave underline">
+          Ajustes
+        </Link>
         <button
-          className="ml-auto text-sm text-tinta-suave underline"
+          className="text-sm text-tinta-suave underline"
           onClick={async () => {
             await salir()
             cliente.invalidateQueries()
