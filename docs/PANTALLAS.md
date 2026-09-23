@@ -134,6 +134,11 @@ El punto del icono cuenta **lo que ha saltado y nadie ha visto**, no lo que hay:
 pantalla en el autobus no puede dar por leido nada, asi que se apaga con «Ya los he visto».
 La campana, para pedir un aviso, esta en la ficha del producto (`componentes/Campana.tsx`).
 
+Si el nombre del producto no llega, la pantalla **no afirma nada**: dice *"Un producto que
+sigues"* y enlaza a la ficha. Pueden ser dos cosas -- que el grupo ya no este en el catalogo
+o que la API que corre sea mas vieja que la pantalla --, y decir la primera cuando pasa la
+segunda seria mentir sobre un producto que existe.
+
 ---
 
 ### Los resultados

@@ -688,8 +688,11 @@ quita -- y un punto necesita un icono donde estar. Queda escrito en `Nav.tsx`,
 `docs/USABILIDAD.md` y la prueba, que ahora fija los cinco **y su razon**.
 
 Para que la pantalla pueda decir de que producto habla, `GET /api/alertas` **anade la
-tarjeta del grupo** (`catalogo.tarjetas`). Un grupo que ya no esta en gold no la lleva, y
-la pantalla lo dice: *"Un producto que ya no esta en el catalogo"*, que es la verdad.
+tarjeta del grupo** (`catalogo.tarjetas`). Y si la tarjeta no llega, la pantalla **no
+afirma nada**: dice "Un producto que sigues" y enlaza a la ficha. Pueden ser dos cosas --
+que el grupo ya no este en el catalogo, o que **la API que corre sea mas vieja que esta
+pantalla** -- y "ya no esta en el catalogo" seria mentira en la segunda, encima sobre un
+producto que si existe. La ficha si sabe la verdad y lo dice.
 
 Probado en `tests/test_alertas_pantalla.py` (6 pruebas: dos de la API con gold de mentira
 y PostgreSQL sustituido, cuatro de la pantalla leyendo el codigo) y en

@@ -40,10 +40,22 @@ export function promesa(a: Alerta): string {
   return 'Te aviso si baja'
 }
 
-/** El nombre del producto, o la verdad: ya no está en el catálogo. */
+/** El nombre del producto, o algo que sea verdad cuando no llega.
+ *
+ *  **Cuidado con lo que se dice aqui.** Si la tarjeta no llega, pueden ser dos cosas y
+ *  ninguna se puede afirmar: que el grupo ya no este en el catalogo (el emparejador se
+ *  rehizo) **o que la API que corre sea mas vieja que esta pantalla** y todavia no mande
+ *  el nombre. Escribir "ya no esta en el catalogo" seria mentir en el segundo caso, y
+ *  encima sobre un producto que si existe. Se dice lo unico que sabemos -- que es un
+ *  producto de los que sigues -- y el enlace lleva a la ficha, que si sabe la verdad.
+ */
 function Nombre({ a }: { a: Alerta }) {
   if (!a.nombre) {
-    return <span className="flex-1 text-tinta-suave">Un producto que ya no está en el catálogo</span>
+    return (
+      <Link to={`/grupo/${a.grupo_id}`} className="flex-1 text-tinta-suave underline">
+        Un producto que sigues
+      </Link>
+    )
   }
   return (
     <Link to={`/grupo/${a.grupo_id}`} className="flex-1 font-medium underline">
