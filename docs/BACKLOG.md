@@ -605,6 +605,47 @@ ningun nombre diga nada. Se ha medido, y la respuesta esta unas lineas mas abajo
 cohesion contra el medoide mira, pero no puede cortar** -- el suelo del banco de pares
 cae en el mismo tramo que los grupos peores del catalogo.
 
+### La puerta del navegador, a fondo: (b), el §3.4, los avisos y la regla que no se salta
+
+Tercera pasada por la interfaz en un navegador de verdad, esta vez para cubrir lo que aun no
+miraba. **No salio ningun fallo del producto**, y eso tambien es un resultado: los tres
+fallos de la primera vez (React Query pausando los cambios sin cobertura, la frase ausente en
+la pantalla a la que se llega buscando, el arranque con dos listas de casa) y los dos de la
+segunda (el ejemplo disparate de la primera vez y el «Deshacer» que se escondia) ya estan
+arreglados, y lo que se anadio ahora lo pasa a la primera.
+
+**Lo que se anadio, y que ya se comprueba:**
+
+    la campana pide el aviso y dice «Te aviso»                  punto 6, la mitad de pantalla
+    el aviso pedido aparece en /avisos, con lo que promete       y sin el, esa pantalla esta
+                                                                 vacia para siempre
+    el cambio sin cobertura QUEDA GUARDADO en el movil           se mira `localStorage`, que es
+                                                                 la mitad que no se ve
+    la cola se vacia SOLO cuando el servidor los aplica          `{}` despues de «Se ha subido»
+    un grupo de UNA SOLA CADENA no lleva frase                   la regla que no se salta (§4)
+    y dice por que no la lleva                                   «sin comparación: está en una
+                                                                 sola cadena»
+
+El caso de «una sola cadena» se busca **en gold y no con el buscador**, y eso se aprendio
+intentandolo: en los primeros cuarenta resultados de cinco busquedas **no sale ninguno de una
+sola cadena** -- los productos sin pareja no aparecen ahi --, asi que la unica forma de
+comprobar esa regla es ir a un grupo concreto. Medido hoy: hay **30.821 grupos de una sola
+cadena** con precio, o sea que el caso no es un rincon: es la mayoria del catalogo, y la frase
+no se puede decir en ninguno de ellos.
+
+**Y la puerta es ahora repetible**, que es lo que la hace util de verdad. Las tres cosas que
+lo impedian eran de la prueba, no del producto, y las tres se arreglaron:
+
+  - **La cuenta es fija** (`prueba-navegador`), no nueva en cada pasada: la API limita las
+    altas por hora (`ALTAS_POR_HORA`) y la sexta pasada se quedaba sin cuenta.
+  - **Se cuentan las lineas de forma relativa** (`5 -> 4`), no «cero despues»: la lista va
+    creciendo entre pasadas.
+  - **Se espera a que la pantalla cambie**, en vez de leer justo despues del clic: quitar una
+    linea manda un PATCH y vuelve a pedir la lista, asi que leer en el acto mide la pantalla
+    de antes. Es el mismo error que ya habia cometido en la ficha.
+
+Comprobado con **dos pasadas seguidas**: las dos en TODO BIEN.
+
 ### La primera vez y el «Deshacer»: dos cosas que el navegador enseno mal
 
 La puerta del navegador ya estaba; lo que faltaba era que **mirara tambien las dos

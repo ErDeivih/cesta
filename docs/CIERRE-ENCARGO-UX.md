@@ -16,7 +16,10 @@ cada cosa esta en `docs/BACKLOG.md` (Â§0), que es el registro del dia a dia.
         sin rojo sin cobertura, y sin cobertura
         los cambios se guardan y se suben solos       CUMPLE
     (d) la frase antes que la tabla, y sin frase
-        si el grupo no es de fiar                     CUMPLE
+        si el grupo no es de fiar                     CUMPLE, y comprobado en el navegador
+                                                      en los dos sentidos: con frase en la
+                                                      ficha y en el grupo, y SIN frase en un
+                                                      grupo de una sola cadena
     (e) pruebas verdes y `verificar_docs` verde       CUMPLE (791 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
