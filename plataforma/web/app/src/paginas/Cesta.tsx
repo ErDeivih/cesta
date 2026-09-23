@@ -724,6 +724,15 @@ export function Cesta() {
     enabled: listaId != null,
   })
 
+  /** La lista partida en dos, que es como se usa de pie en la tienda.
+   *
+   *  «Por coger» y «en el carro» no son dos estados de animo del mismo dato: son
+   *  las dos mitades del trabajo que se esta haciendo. La marca es `tachado_en`
+   *  porque la API tacha y mete en el carro **a la vez** (`almacen.py`), asi que no
+   *  son dos cosas que puedan separarse: tachado = ya esta en el carro. */
+  const porCoger = detalle.data?.lineas.filter((l) => l.tachado_en === null) ?? []
+  const enElCarro = detalle.data?.lineas.filter((l) => l.tachado_en !== null) ?? []
+
   const cambia = useMutation({
     mutationFn: ({ lineaId, cambio }: { lineaId: string; cambio: CambioLinea }) =>
       cambiarLinea(listaId as string, lineaId, cambio),
@@ -891,20 +900,47 @@ export function Cesta() {
               </Vacio>
             ) : (
               <>
-                {/* El orden es el de la API (`ORDER BY en_carrito, anadido_en`,
-                    almacen.py:272): lo ya cogido se va al final solo. Ordenar
-                    aqui otra vez daria dos ordenes distintos que se pelean en
-                    cada recarga. */}
-                <ul className="grid gap-2">
-                  {detalle.data.lineas.map((l) => (
-                    <UnaLinea
-                      key={l.id}
-                      linea={l}
-                      guardando={cambia.isPending || detalle.data.papel === 'mira'}
-                      cambiar={(lineaId, cambio) => cambia.mutate({ lineaId, cambio })}
-                    />
+                {/* **Dos secciones, no una lista.** Es la unica pantalla que se usa
+                    de pie, en movimiento y con una mano, y con nueve lineas y
+                    cuatro ya cogidas hay que leer **nueve nombres** para saber
+                    cuales quedan. Con el encabezado se lee uno: «Por coger 5».
+                    Lo piden `docs/PANTALLAS.md` y `docs/UX-MOVIL.md`, y era lo
+                    mejor que tenia la aplicacion de la que se copio la idea.
+ 
+                    El orden dentro de cada seccion es el de la API
+                    (`ORDER BY en_carrito, anadido_en`, almacen.py): lo ya cogido
+                    se va al final y lo ultimo anadido va arriba. Ordenar aqui otra
+                    vez daria dos ordenes que se pelean en cada recarga.
+
+                    Los encabezados solo salen **si hay algo en los dos lados**: un
+                    «En el carro 0» o un «Por coger 0» es ruido, y el segundo es
+                    ademas el rato en que estas a punto de salir de la tienda. */}
+                {[
+                  ['Por coger', porCoger],
+                  ['En el carro', enElCarro],
+                ].map(([titulo, lineas_]) =>
+                  (lineas_ as Linea[]).length === 0 ? null : (
+                    <section key={titulo as string} className="mb-4">
+                      {porCoger.length > 0 && enElCarro.length > 0 && (
+                        <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold">
+                          {titulo as string}
+                          <span className="cifra text-tinta-suave">
+                            {(lineas_ as Linea[]).length}
+                          </span>
+                        </h3>
+                      )}
+                      <ul className="grid gap-2">
+                        {(lineas_ as Linea[]).map((l) => (
+                          <UnaLinea
+                            key={l.id}
+                            linea={l}
+                            guardando={cambia.isPending || detalle.data.papel === 'mira'}
+                            cambiar={(lineaId, cambio) => cambia.mutate({ lineaId, cambio })}
+                          />
+                        ))}
+                      </ul>
+                    </section>
                   ))}
-                </ul>
                 {/* El numero que se mira mientras se coge: al tachar algo, esto
                     es lo unico que confirma que el cambio ha llegado. */}
                 <p className="mt-3 text-sm text-tinta-suave">
