@@ -132,6 +132,49 @@ def test_la_barra_de_abajo_tiene_cinco_destinos_y_el_quinto_es_una_decision():
         "el quinto destino tiene que llevar su razon escrita al lado"
 
 
+def test_los_objetivos_de_la_ficha_del_producto_tienen_44_px():
+    """Los cuatro que se escaparon por no medir esa pantalla (23 sep 2026).
+
+    La puerta medía todas las pantallas menos la ficha del producto, y ahí había **cuatro
+    objetivos por debajo de 44 px** desde el primer día, medidos en un móvil de 390 x 844:
+
+        el enlace al producto de al lado, en la tabla    161 x 19
+        (y el mismo enlace con el nombre en dos líneas)  158 x 39
+        el desplegable «Ingredientes»                    324 x 20
+
+    El enlace es la forma de saltar a la ficha de otro producto del grupo, que es lo que se
+    hace **con el paquete en la mano**, y el desplegable abre los ingredientes, que es donde
+    se mira si algo lleva lo que no se puede comer. Ninguno de los dos se acierta de pie a
+    19 px. La pantalla entró en la pasada de la puerta en el mismo cambio.
+    """
+    ficha = (APP / "src" / "paginas" / "Producto.tsx").read_text(encoding="utf-8")
+    assert re.search(r"<summary[^>]*min-h-\[44px\]", ficha), \
+        "el desplegable de ingredientes vuelve a tener su altura de texto (20 px)"
+    assert re.search(r"<Link to=\{`/producto/\$\{p\.fuente\}.*?min-h-\[44px\]", ficha, re.S), \
+        "el enlace al producto de al lado vuelve a medir 19 px"
+    # Y la puerta tiene que medir esta pantalla, que es de donde salió el fallo.
+    puerta = PUERTA.read_text(encoding="utf-8")
+    assert '/producto/{con_historial[0]}/{con_historial[1]}' in puerta, \
+        "la ficha del producto no está en la lista de pantallas que se miden"
+    assert "/escaner" in puerta, "la pantalla del escáner tampoco"
+
+
+def test_la_puerta_mide_que_ninguna_pantalla_se_deslice_de_lado():
+    """Una página que se sale obliga a moverla con el pulgar para leer el final de las
+    líneas, y en la tienda eso es soltar el carro.
+
+    Las tablas anchas se deslizan **dentro de su caja** (`TablaScroll`), que es a propósito:
+    lo que no puede deslizarse es la página. La puerta lo mide en cada pantalla que visita
+    (`documentElement.scrollWidth` contra `clientWidth`) y el 23 de septiembre de 2026, con
+    ocho pantallas, todas dan 390 de 390.
+    """
+    puerta = PUERTA.read_text(encoding="utf-8")
+    assert "document.documentElement.scrollWidth" in puerta, \
+        "la puerta no comprueba que la pagina quepa a lo ancho"
+    assert "la pagina no se sale de la pantalla" in puerta, \
+        "la comprobacion del ancho no dice lo que está midiendo"
+
+
 def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla():
     """(a) no la puede cerrar una prueba, pero lo que no quepa queda descartado antes.
 

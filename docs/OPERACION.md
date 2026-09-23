@@ -44,8 +44,11 @@ sin cobertura, los avisos, **el escaner con un codigo de verdad**, **el enlace d
 abierto por una segunda persona** (otra sesion, que entra o crea su cuenta en la propia
 pantalla del enlace y acaba dentro de la lista), **las cuatro respuestas dentro de la primera
 pantalla de un movil** (la banda util son 109..787 px de 844: lo que obligue a desplazar la
-pantalla no se lee en quince segundos), **todo lo que se pulsa medido** y **el contraste del
-texto pintado en los dos temas**. En su primera pasada encontro tres cosas que
+pantalla no se lee en quince segundos), **todo lo que se pulsa medido** en las ocho pantallas
+donde se puede acabar de pie (incluidas la ficha del producto y el escaner, que entraron al
+encontrar ahi cuatro objetivos de 19 px), **que ninguna pantalla se deslice de lado** y **el
+contraste del texto pintado en los dos temas**, tambien en la ficha del producto. En su
+primera pasada encontro tres cosas que
 leyendo el codigo no se ven -- React Query pausando los cambios sin cobertura, la frase de
 «¿esto esta caro?» ausente en la pantalla a la que se llega buscando, y el arranque roto con
 dos listas de casa --, asi que **es lo que hay que correr cuando se toque la interfaz**. No

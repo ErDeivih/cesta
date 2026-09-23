@@ -445,7 +445,13 @@ export function Producto() {
                     return (
                       <tr key={p.producto_id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
                         <Td>
-                          <Link to={`/producto/${p.fuente}/${p.id_fuente}`} className="underline">
+                          {/* **44 px de alto, medido.** El 23 de septiembre de 2026 este
+                              enlace medía 161 x **19**: es la forma de saltar a la ficha de
+                              otro producto del grupo, que es justo lo que se hace con el
+                              paquete en la mano, y de pie no se acierta. La marca va dentro
+                              del mismo enlace para que el objetivo sea el nombre entero. */}
+                          <Link to={`/producto/${p.fuente}/${p.id_fuente}`}
+                                className="inline-flex min-h-[44px] items-center underline">
                             {p.nombre}
                           </Link>
                           {p.marca && (
@@ -512,7 +518,15 @@ export function Producto() {
 
           {miembro.ingredientes && (
             <details className="mt-3">
-              <summary className="cursor-pointer text-sm font-medium">Ingredientes</summary>
+              {/* **44 px, aunque sea una palabra.** Medido en un móvil de 390 x 844 el 23 de
+                  septiembre de 2026: este `<summary>` medía 324 x **20**. Es un objetivo de
+                  verdad (abre los ingredientes, que es donde se mira si algo lleva lo que no
+                  se puede comer) y a 20 px no se acierta de pie con el carro en la otra mano.
+                  Es la misma regla que la puerta comprueba ya pintada en las demás
+                  pantallas. */}
+              <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-medium">
+                Ingredientes
+              </summary>
               <p className="mt-1 text-sm">{miembro.ingredientes}</p>
             </details>
           )}

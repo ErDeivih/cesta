@@ -913,6 +913,36 @@ no quiere decir que se entienda. Lo que queda de (a) es exactamente eso, y se mi
 persona y el guion de `docs/PRUEBA-15-SEGUNDOS.md`, que ahora empieza por la lista de lo que
 **ya esta descartado** para que nadie vuelva a medirlo.
 
+### La ficha del producto tenía cuatro objetivos de 19 px (y ninguna pantalla se desliza de lado)
+
+La puerta del navegador medía **todas las pantallas menos dos**: la ficha del producto y el
+escáner. Al añadirlas salió lo de siempre -- lo que no se mide no se ve --, y en la ficha del
+producto, medida en un móvil de 390 x 844 el 23 de septiembre de 2026:
+
+    el enlace al producto de al lado, en la tabla    161 x 19   <- 19 px de alto
+    el mismo enlace, con el nombre en dos lineas     158 x 39
+    el desplegable «Ingredientes»                    324 x 20
+
+El enlace es **la forma de saltar a la ficha de otro producto del grupo**, que es justo lo
+que se hace con el paquete en la mano; y el desplegable abre los ingredientes, que es donde
+se mira si algo lleva lo que no se puede comer. Ninguno de los dos se acierta de pie a 19 px,
+y llevaban ahí desde el primer día.
+
+Los dos arreglados (`inline-flex min-h-[44px] items-center`), y **las dos pantallas entran en
+la pasada de la puerta**: la ficha del producto también en el contraste de los dos temas
+(tiene avisos de color propios, como los alérgenos en rojo, que es donde un `dark:` que falte
+se ve).
+
+**Y de paso entra una clase de fallo que no se medía: que la página se deslice de lado.** Una
+pantalla que se sale obliga a moverla con el pulgar para leer el final de las líneas, y en la
+tienda eso es soltar el carro. Las tablas anchas se deslizan **dentro de su caja**
+(`TablaScroll`, con su «Desliza la tabla para ver todas las columnas»), que es a propósito; lo
+que no puede deslizarse es la página. Medido en las ocho pantallas que visita la puerta
+(`scrollWidth` contra `clientWidth`): **390 de 390 en todas**.
+
+    /  /cesta  /grupo/0  /avisos  /panel  /ajustes  /escaner  /producto/dia/147509
+    ocho pantallas: ninguna con algo que pulsar por debajo de 44 px, ninguna que se salga
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

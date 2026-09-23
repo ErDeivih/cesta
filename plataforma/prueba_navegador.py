@@ -680,10 +680,19 @@ def main() -> int:
         # Un objetivo que no se acierta es un boton que no existe: la condicion (a) dice
         # "sin saber donde esta el boton", y 16 px de alto no se aciertan ni mirando.
         print("\n== lo que se pulsa, medido ya pintado")
+        # **Todas las pantallas donde se puede acabar de pie**, no solo las cuatro del
+        # encargo. Las dos ultimas entraron el 23 de septiembre de 2026 al medir la ficha del
+        # producto: ahi habia **cuatro objetivos por debajo de 44 px** que llevaban ahi desde
+        # el primer dia -- el enlace al producto de al lado en la tabla de equivalencias medía
+        # 161 x **19**, y el desplegable «Ingredientes», 324 x **20** --, y no los habia
+        # visto nadie porque esta pantalla no la medía ninguna pasada.
         rutas = ["/", "/cesta"]
         if solo_uno is not None:
             rutas.append(f"/grupo/{solo_uno}")
-        rutas += ["/avisos", "/panel", "/ajustes"]
+        rutas += ["/avisos", "/panel", "/ajustes", "/escaner"]
+        con_historial = _producto_caro_con_historial()
+        if con_historial is not None:
+            rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")
         for ruta in rutas:
             carga(ruta)
             pagina.wait_for_timeout(800)
@@ -696,6 +705,16 @@ def main() -> int:
                 "{}x{} {}".format(t["w"], t["h"], t["texto"]) for t in graves)
             comprueba(not graves,
                       f"en {ruta} no hay nada que pulsar por debajo de 44 px ({resumen})")
+            # Y la otra mitad de una pantalla de movil: **que no se deslice de lado.** Una
+            # pagina que se sale obliga a moverla con el pulgar para leer el final de las
+            # lineas, y en la tienda eso es soltar el carro. Las tablas anchas se deslizan
+            # **dentro de su caja** (`TablaScroll`), que es a proposito; lo que no puede
+            # deslizarse es la pagina.
+            ancho, scroll = pagina.evaluate(
+                "() => [document.documentElement.clientWidth,"
+                " document.documentElement.scrollWidth]")
+            comprueba(scroll <= ancho + 1,
+                      f"en {ruta} la pagina no se sale de la pantalla ({scroll} > {ancho})")
 
         # -------------------------- el enlace de invitacion, abierto por otra persona ----
         # Que la lista sea de quien la creo **y de quien entre** lleva escrito desde el
@@ -941,7 +960,12 @@ def main() -> int:
         print("\n== el contraste del texto, ya pintado (§1)")
         for tema in ("light", "dark"):
             pagina.emulate_media(color_scheme=tema)
-            for ruta in ("/", "/cesta", "/avisos"):
+            # La ficha del producto entra aqui desde el 23 de septiembre de 2026, cuando la
+            # ficha de un azafran enseno que tenia cuatro objetivos por debajo de 44 px: es
+            # una pantalla con avisos de color (los alergenos en rojo) y con cajas propias,
+            # justo donde un `dark:` que falte se ve.
+            for ruta in ("/", "/cesta", "/avisos") + (
+                    (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)
                 malos = _contraste_flojo(pagina)
