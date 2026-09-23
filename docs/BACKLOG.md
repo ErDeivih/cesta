@@ -884,6 +884,35 @@ Los dos estados están en `tests/test_primera_vez.py` (que existan, que estén e
 ramas, y que la excepción esté escrita), y el guion de los quince segundos ya los apunta en
 el apartado de «la primera vez».
 
+### Las cuatro respuestas, en la primera pantalla de un movil
+
+La condicion (a) —*"las cuatro preguntas contestadas en menos de quince segundos con el
+movil y sin saber donde esta el boton"*— **no la puede cerrar quien escribe las pantallas**:
+se juzga contra la madre del dueño. Pero si se puede descartar de antemano lo que la haria
+imposible, y eso es lo que faltaba medir: **una respuesta que obliga a desplazar la pantalla
+no se lee en quince segundos ni sabiendo donde esta**.
+
+La puerta del navegador mide ahora la **banda util** de un movil de 390 x 844 —la cabecera
+de arriba y la barra de abajo no son pantalla— y comprueba que lo que contesta cada pregunta
+cabe entero dentro, con la pantalla arriba del todo:
+
+    la banda util                                       109..787 px de 844
+                                                        (109 de cabecera, 57 de barra)
+    1 y 3  la primera linea de la lista (input)          557..573   dentro
+    2      la frase del grupo al que se llega buscando   520..564   dentro
+    4      «lo tuyo que ha bajado», con su tabla         437..557   dentro
+    4      la seccion de los avisos                      186..210   dentro
+
+Las cuatro dentro, medido el 23 de septiembre de 2026 sobre este mismo bronze. Y la medida
+sale de la cabecera de verdad (`--alto-cabecera`, que la pone `Cabecera.tsx` con un
+`ResizeObserver`) y de la barra de abajo, no de dos numeros escritos a mano: el dia que la
+cabecera crezca, esto lo dice.
+
+**Lo que esto NO dice, y se dice en el mismo sitio**: no cierra (a). Que una respuesta quepa
+no quiere decir que se entienda. Lo que queda de (a) es exactamente eso, y se mide con una
+persona y el guion de `docs/PRUEBA-15-SEGUNDOS.md`, que ahora empieza por la lista de lo que
+**ya esta descartado** para que nadie vuelva a medirlo.
+
 ### El contraste, medido ya pintado y en los dos temas (y el instrumento que mentia)
 
 El §1 del encargo pone esto el primero de *"lo que ya esta bien y no hay que tocar"*: *"el

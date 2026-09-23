@@ -30,6 +30,29 @@ Cada pregunta se lanza **como se pregunta en la vida**, no con el nombre del bot
     3. «¿Voy tachando bien?»
     4. «¿Ha bajado algo de lo mio?»
 
+## Lo que ya esta descartado antes de empezar
+
+No todo se puede medir antes de que alguien coja el movil, pero una parte si, y esa parte
+**ya esta medida**: lo que la hace imposible. Lo que se descarta aqui no hay que medirlo
+despues.
+
+    que la pantalla cargue                 la puerta: abrir la aplicacion en un movil
+    que haya respuesta que leer            las cuatro, con su frase
+    que la respuesta no obligue a
+      desplazar la pantalla                las cuatro caben en la banda util de un
+                                           390 x 844: 109 px de cabecera arriba, 57 de
+                                           barra de abajo. Medido el 23 sep 2026:
+                                           la primera linea de la lista 557..573 ·
+                                           la frase del grupo 520..564 · "lo tuyo que ha
+                                           bajado" 437..557 · la seccion de avisos
+                                           186..210. **Todas dentro de 109..787.**
+    que lo que hay que pulsar se acierte   44 px minimo, y medido ya pintado
+    que el texto se lea                    contraste en claro y en oscuro, medido
+
+Todo eso lo comprueba `plataforma/prueba_navegador.py` en cada pasada. **Lo que queda es
+lo unico que no se puede medir desde aqui: si se entiende a la primera.** Y eso es lo que
+se viene a apuntar en la tabla de abajo.
+
 ## Por donde se contesta cada una, hoy
 
     1. Cesta. Dos secciones («Por coger» / «En el carro»), el total arriba y la

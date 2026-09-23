@@ -338,6 +338,41 @@ def _producto_caro_con_historial() -> tuple[str, str] | None:
     return (str(fila[0]), str(fila[1])) if fila else None
 
 
+def _franja_util(pagina) -> tuple[int, int]:
+    """La banda de pantalla que no tapan la cabecera de arriba ni la barra de abajo.
+
+    La condicion (a) se mide con el movil en la mano y sin saber donde esta el boton: **una
+    respuesta que obliga a desplazar la pantalla no se lee en quince segundos**, ni
+    sabiendo donde esta. Esto no cierra (a) -- eso es una persona --, pero lo que no quepa
+    aqui esta descartado de antemano.
+
+    Medido en el movil de 390 x 844 (23 sep 2026): la cabecera deja `--alto-cabecera`
+    (109 px) y la barra de abajo mide **57 px**, asi que la banda util son 678 px de 844.
+    """
+    arriba, abajo = pagina.evaluate("""() => {
+      const cab = parseFloat(getComputedStyle(document.documentElement)
+                              .getPropertyValue('--alto-cabecera')) || 0;
+      const nav = [...document.querySelectorAll('nav')]
+        .map(n => n.getBoundingClientRect())
+        .filter(r => r.height > 0 && r.width > 0)
+        .reduce((a, r) => Math.min(a, r.top), innerHeight);
+      return [cab, Math.min(nav, innerHeight)];
+    }""")
+    return int(arriba), int(abajo)
+
+
+def _cabe_en_la_primera(pagina, elemento) -> tuple[bool, str]:
+    """Si el elemento se ve entero en la banda util, con la pantalla arriba del todo."""
+    caja = elemento.bounding_box()
+    if caja is None:
+        return False, "no tiene caja: no se esta pintando"
+    arriba, abajo = _franja_util(pagina)
+    y = caja["y"]
+    fin = y + caja["height"]
+    dentro = y >= arriba and fin <= abajo
+    return dentro, f"y={y:.0f}..{fin:.0f} (la banda util es {arriba}..{abajo})"
+
+
 def main() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -835,6 +870,67 @@ def main() -> int:
                 comprueba(not gordos_grupo,
                           "y tampoco en la pantalla del grupo "
                           f"({[(n, t[:46]) for n, t in gordos_grupo[:2]]})")
+
+        # -------------------- las cuatro respuestas caben en la primera pantalla --------
+        # La condicion (a) se juzga con el movil en la mano y **sin saber donde esta el
+        # boton**: una respuesta que obliga a desplazar la pantalla no se lee en quince
+        # segundos ni sabiendo donde esta. Esto no cierra (a) -- eso lo dice una persona --,
+        # pero descarta de antemano lo que no quepa: la banda util son 678 px de 844
+        # (109 de cabecera arriba y 57 de barra abajo, medidos en `_franja_util`).
+        #
+        # Se mide **lo que contesta cada pregunta**, no la pantalla entera:
+        #
+        #   1 y 3  la primera linea de la lista, que es lo que hay que coger
+        #   2      la frase que contesta "¿esto esta caro?", en el grupo al que se llega
+        #          buscando (y que ya esta comprobado que va antes que la tabla)
+        #   4      la tabla de "lo tuyo que ha bajado", con su titulo; y en los avisos,
+        #          la seccion que dice lo que ha bajado
+        print("\n== las respuestas, en la primera pantalla de un movil")
+        arriba, abajo = _franja_util(pagina)
+        print(f"   la banda util: {arriba}..{abajo} px de {pagina.viewport_size['height']}")
+
+        carga("/cesta")
+        with contextlib.suppress(Exception):
+            pagina.locator("input[type=checkbox]").first.wait_for(timeout=20000)
+        primera_linea = pagina.locator("input[type=checkbox]").first
+        dentro, donde = _cabe_en_la_primera(pagina, primera_linea)
+        comprueba(dentro,
+                  f"1 y 3: la primera linea de la lista se ve sin desplazar ({donde})")
+
+        carga("/")
+        pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
+        resultado = pagina.locator("a[href^='/grupo/']").first
+        with contextlib.suppress(Exception):
+            resultado.wait_for(timeout=15000)
+        resultado.click()
+        pagina.wait_for_url("**/grupo/**", timeout=15000)
+        pagina.wait_for_load_state("networkidle")
+        with contextlib.suppress(Exception):
+            pagina.get_by_role("button", name="Añadir a la cesta").first.wait_for(timeout=20000)
+        la_frase = pagina.locator("main p.font-semibold").first
+        dentro, donde = _cabe_en_la_primera(pagina, la_frase)
+        comprueba(dentro,
+                  f"2: la frase que contesta «¿esto esta caro?» se ve sin desplazar ({donde})")
+
+        carga("/panel?pestana=bajadas&mios=true")
+        pagina.wait_for_timeout(1000)
+        tabla_mia = pagina.locator("main table").first
+        dentro, donde = _cabe_en_la_primera(pagina, tabla_mia)
+        comprueba(dentro,
+                  f"4: lo tuyo que ha bajado se ve sin desplazar ({donde})")
+
+        carga("/avisos")
+        # La seccion de lo que ha bajado, que es la respuesta de la pregunta 4 en esta
+        # pantalla. Cual de las dos ("Ha bajado" / "Esperando") depende de si el aviso se
+        # ha cumplido hoy, asi que se acepta la que haya.
+        seccion = pagina.get_by_text("Ha bajado", exact=True)
+        if seccion.count() == 0:
+            seccion = pagina.get_by_text("Esperando", exact=True)
+        if seccion.count():
+            dentro, donde = _cabe_en_la_primera(pagina, seccion.first)
+            comprueba(dentro, f"4: la seccion de los avisos se ve sin desplazar ({donde})")
+        else:
+            comprueba(False, "4: no encuentro la seccion de avisos en la pantalla")
 
         # ------------------------------- el contraste del texto, pintado y en los dos temas --
         # §1 del encargo: *"el contraste y los limites de los campos, con las formulas dentro

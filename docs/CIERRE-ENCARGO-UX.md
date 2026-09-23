@@ -11,6 +11,11 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
 
     (a) las cuatro preguntas en < 15 s con el movil   **SIN MEDIR** -- necesita una persona
                                                       con un movil. Guion: PRUEBA-15-SEGUNDOS.md
+                                                      Lo que la haria imposible esta ya
+                                                      descartado y medido: **las cuatro
+                                                      respuestas caben en la banda util de
+                                                      un 390 x 844** (109..787 px), en el
+                                                      navegador y en cada pasada
     (b) la primera vez con datos reales               CUMPLE
     (c) la lista: dos secciones, pasillo pegajoso,
         sin rojo sin cobertura, y sin cobertura
@@ -20,7 +25,7 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
                                                       en los dos sentidos: con frase en la
                                                       ficha y en el grupo, y SIN frase en un
                                                       grupo de una sola cadena
-    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (822 pasan, ruff limpio, docs ok)
+    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (823 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
         `--medir >= 57 %`                             65 % CUMPLE
@@ -159,7 +164,7 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 **Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
 septiembre de 2026), no cada numero de un dia distinto:
 
-    uv run pytest -q                                 822 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 823 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             39.592 grupos, 0 con eje contradictorio,
@@ -179,9 +184,11 @@ septiembre de 2026), no cada numero de un dia distinto:
                                                 preguntas, la cola sin cobertura, los
                                                 avisos, el escaner, el enlace de invitacion
                                                 abierto por una segunda persona, la curva con
-                                                su frase, el ahorro en euros, TODO lo que se
-                                                pulsa medido, el contraste en los dos temas y
-                                                ningun porcentaje imposible pintado.
+                                                su frase, el ahorro en euros, **las cuatro
+                                                respuestas dentro de la primera pantalla**,
+                                                TODO lo que se pulsa medido, el contraste en
+                                                los dos temas y ningun porcentaje imposible
+                                                pintado.
                                                 TODO BIEN, con los tiempos de cada paso:
                                                 abrir 3,5 s | a la ficha 0,5 s | a la lista
                                                 0,9 s | tachar sin red 1,2 s | a los avisos

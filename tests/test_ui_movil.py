@@ -30,6 +30,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 APP = RAIZ / "plataforma" / "web" / "app"
 UI = APP / "src" / "componentes" / "ui.tsx"
 NAV = APP / "src" / "componentes" / "Nav.tsx"
+PUERTA = RAIZ / "plataforma" / "prueba_navegador.py"
 
 sin_interfaz = pytest.mark.skipif(
     not APP.exists(), reason="esta copia no trae la interfaz nueva")
@@ -129,3 +130,36 @@ def test_la_barra_de_abajo_tiene_cinco_destinos_y_el_quinto_es_una_decision():
     # Y el porque tiene que estar donde se lee, que es con los destinos.
     assert "lo unico que" in fuente and "punto en el icono" in fuente, \
         "el quinto destino tiene que llevar su razon escrita al lado"
+
+
+def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla():
+    """(a) no la puede cerrar una prueba, pero lo que no quepa queda descartado antes.
+
+    La condicion (a) se juzga con el movil en la mano y **sin saber donde esta el boton**:
+    una respuesta que obliga a desplazar la pantalla no se lee en quince segundos ni
+    sabiendo donde esta. La puerta del navegador mide la **banda util** del movil
+    (`_franja_util`: la cabecera y la barra de abajo se comen 109 y 57 px de los 844) y
+    comprueba que las cuatro respuestas caben enteras dentro, con la pantalla arriba:
+
+        1 y 3  la primera linea de la lista             y=557..573
+        2      la frase del grupo al que se llega
+               buscando                                  y=520..564
+        4      "lo tuyo que ha bajado", con su tabla     y=437..557
+        4      la seccion de los avisos                 y=186..210
+
+    Medido asi el 23 de septiembre de 2026, con la banda util en 109..787. Esto **no**
+    quiere decir que (a) este cumplida -- eso lo dice una persona --, pero si alguna de
+    las cuatro se fuera por debajo de 787, seria imposible cumplirla y se sabria por que.
+    """
+    puerta = PUERTA.read_text(encoding="utf-8")
+    assert "def _franja_util(" in puerta, \
+        "la puerta no sabe cual es la banda util de la pantalla"
+    assert "def _cabe_en_la_primera(" in puerta, \
+        "la puerta no comprueba si una respuesta cabe en la primera pantalla"
+    assert "--alto-cabecera" in puerta and "la banda util" in puerta, \
+        "la banda util tiene que salir de la cabecera de verdad, no de un numero a ojo"
+    for que in ("1 y 3: la primera linea de la lista se ve sin desplazar",
+                "2: la frase que contesta «¿esto esta caro?» se ve sin desplazar",
+                "4: lo tuyo que ha bajado se ve sin desplazar",
+                "4: la seccion de los avisos se ve sin desplazar"):
+        assert que in puerta, f"la puerta no comprueba «{que}»"

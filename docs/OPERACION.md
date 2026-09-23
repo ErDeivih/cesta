@@ -42,8 +42,10 @@ pasada, porque la API limita cuantas se crean por hora (`ALTAS_POR_HORA`).
 Cubre las cuatro preguntas (con sus tiempos), el pasillo pegado, el «Deshacer», los cambios
 sin cobertura, los avisos, **el escaner con un codigo de verdad**, **el enlace de invitacion
 abierto por una segunda persona** (otra sesion, que entra o crea su cuenta en la propia
-pantalla del enlace y acaba dentro de la lista), **todo lo que se pulsa medido** y **el
-contraste del texto pintado en los dos temas**. En su primera pasada encontro tres cosas que
+pantalla del enlace y acaba dentro de la lista), **las cuatro respuestas dentro de la primera
+pantalla de un movil** (la banda util son 109..787 px de 844: lo que obligue a desplazar la
+pantalla no se lee en quince segundos), **todo lo que se pulsa medido** y **el contraste del
+texto pintado en los dos temas**. En su primera pasada encontro tres cosas que
 leyendo el codigo no se ven -- React Query pausando los cambios sin cobertura, la frase de
 «¿esto esta caro?» ausente en la pantalla a la que se llega buscando, y el arranque roto con
 dos listas de casa --, asi que **es lo que hay que correr cuando se toque la interfaz**. No
