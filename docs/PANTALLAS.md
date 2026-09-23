@@ -61,8 +61,21 @@ Aqui esta la mejora mas grande que queda por hacer. Hoy: nada. Deberia:
     │0,95 €│ │3,45 €│ │2,10 €│      24 como mucho
     └──────┘ └──────┘ └──────┘
 
-Sale de `GET /api/habituales`. **Si no hay historial, no se pinta nada** y se ve
-solo el buscador. No se rellena con "populares": no es lo mismo y no sirve.
+Sale de `GET /api/habituales`, con **tres escalones** en el campo `origen`: lo que ha
+comprado esta persona (`tuyo`), lo mas comprado por todos (`de todos`) y una compra
+basica fija (`basico`), para que la cuadricula **no se vea vacia el primer dia**.
+
+**Esto cambio el 23 de septiembre, y se cuenta en vez de borrarse.** Antes decía:
+
+> ~~Si no hay historial, no se pinta nada y se ve solo el buscador. No se rellena con
+> "populares": no es lo mismo y no sirve.~~
+
+El encargo de ese dia (`Claude outputs/ENCARGO-UX-23SEP.md` §5) pidio lo contrario, y
+con una razon que gana a la de antes: **una pantalla en blanco es el peor momento de
+la aplicacion y el unico que todo el mundo ve**, y es justo el momento en que alguien
+decide si vuelve. Lo que se mantiene del criterio viejo es la parte que importaba:
+**no se mezclan sin decirlo**. Por eso `origen` viaja en la respuesta y la pantalla
+puede decir *«todavia no se lo que sueles comprar»* mientras ensena lo de todos.
 
 ### Los resultados
 
