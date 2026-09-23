@@ -112,7 +112,9 @@ Ninguna de las tres es trabajo de codigo pendiente: son una medicion y dos decis
     uv run python -m projects.cesta.ejes             0 ejes, 0 de 11+, 642 pack, 85 pack mal
     uv run python -m projects.cesta.emparejar --medir 65 % (420 s)
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL
-    uv run python -m plataforma.prueba_navegador     LA INTERFAZ, en un navegador de verdad
+    uv run python -m plataforma.prueba_navegador     LA INTERFAZ en un navegador: las cuatro
+                                                preguntas, la cola sin cobertura, los
+                                                avisos y TODO lo que se pulsa medido
 
 Las dos ultimas son las que no se pueden sustituir por una prueba de codigo: la primera
 ejecuta el SQL de verdad (y encontro que la API no arrancaba con dos listas de casa), y la
