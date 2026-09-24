@@ -301,13 +301,23 @@ def comparte(lista_id: str, con_usuario: str, quien_invita: str,
 
 
 def lineas_de(lista_id: str) -> list[dict]:
+    """Las lineas vivas de una lista, con el nombre de quien las anadio.
+
+    **`LEFT JOIN` en el autor, y no `JOIN`.** Con un `JOIN` a secas, la linea que alguien
+    anadio a una lista ajena y luego se dio de baja **desaparecia de la pantalla**: la fila
+    seguia en la base (con `anadido_por` a NULL, que es lo que promete `borrar_usuario` en
+    `plataforma/sql/003_mas_de_dos.sql`: *"las lineas en listas ajenas pierden el autor pero
+    no desaparecen"*), pero la consulta no la devolvia, asi que la otra persona veia su
+    compra menguada sin saber por que. Medido en un navegador el 24 de septiembre de 2026:
+    4 lineas en la lista, se da de baja quien anadio una, y la pantalla ensena 3.
+    """
     with cursor() as cur:
         cur.execute("""
             SELECT li.id, li.grupo_id, li.producto_id, li.nombre_visto, li.cantidad,
                    li.nota, li.tachado_en, li.anadido_en, li.en_carrito,
                    qa.nombre AS anadido_por, qt.nombre AS tachado_por
               FROM lista_linea li
-              JOIN usuario qa ON qa.id = li.anadido_por
+              LEFT JOIN usuario qa ON qa.id = li.anadido_por
               LEFT JOIN usuario qt ON qt.id = li.tachado_por
              WHERE li.lista_id = %s AND li.borrado_en IS NULL
              ORDER BY li.en_carrito, li.anadido_en

@@ -145,11 +145,11 @@ oferta"*, con su trampa para demostrar que la medida mira.
     el montaje de la interfaz nueva           **del dueno** (`docker-compose.yml`): cambiar
                                               `./web:/srv:ro` por `./web/dist:/srv:ro`. Es
                                               lo unico que queda de la puesta en
-                                              produccion, y **antes hay que medir la
-                                              paridad que falta**, porque el dia que se
-                                              cambie lo que la interfaz vieja hace y la
-                                              nueva no desaparece de la mano de quien la
-                                              usa (`docs/BACKLOG.md`, §0).
+                                              produccion. Auditado el 24 sep, la paridad
+                                              que falta son **tres cosas**: el interruptor
+                                              de repartir entre dos tiendas, las tres
+                                              pantallas del panel y el contador de la barra
+                                              de abajo (`docs/BACKLOG.md`, §0).
 
 Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de septiembre de
 2026, medidas antes y despues:

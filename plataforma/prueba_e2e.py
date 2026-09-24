@@ -93,12 +93,34 @@ def main() -> int:
             cur.execute("DELETE FROM usuario WHERE usuario = %s", (nombre,))
     print("   las dos se borran sin error")
 
+    # Los grupos de prueba: con tres cadenas o mas, y **ordenados por lo cerca que estan de su
+    # minimo de 90 dias**, que es lo que hace que la alerta `minimo_90d` salte.
+    #
+    # Elegirlos solo por numero de cadenas parecia inofensivo y no lo era: el 24 de septiembre
+    # de 2026 esta prueba se puso roja de pronto -- «la alerta no se apunto» -- y el fallo no
+    # era de la aplicacion: `ORDER BY cadenas DESC` **sin desempate** deja que DuckDB devuelva
+    # cualquiera de los grupos empatados a cadenas, y habia caido en uno cuyo precio no estaba
+    # en su minimo. `grupo_id` cierra el orden, y el minimo de 90 dias se lee como lo lee la
+    # aplicacion (`arg_max(min_90d_cent, fecha)`, la ultima fecha de cada producto).
     filas = catalogo.conexion().execute("""
-        SELECT grupo_id, min(nombre), count(DISTINCT fuente) AS cadenas
-          FROM buscable
-         WHERE grupo_id IS NOT NULL AND precio_unidad_cent > 0
-         GROUP BY grupo_id HAVING count(DISTINCT fuente) >= 3
-         ORDER BY cadenas DESC LIMIT 3""").fetchall()
+        WITH der AS (
+            SELECT fuente, id_fuente, arg_max(min_90d_cent, fecha) AS minimo
+              FROM derivado GROUP BY fuente, id_fuente),
+        candidatos AS (
+            SELECT b.grupo_id, min(b.precio_unidad_cent) AS precio,
+                   count(DISTINCT b.fuente) AS cadenas,
+                   min(der.minimo) AS minimo
+              FROM buscable b
+              JOIN der ON der.fuente = b.fuente AND der.id_fuente = b.id_fuente
+             WHERE b.grupo_id IS NOT NULL AND b.precio_unidad_cent > 0
+             GROUP BY b.grupo_id HAVING count(DISTINCT b.fuente) >= 3)
+        SELECT c.grupo_id,
+               (SELECT min(nombre) FROM buscable WHERE grupo_id = c.grupo_id) AS nombre,
+               c.cadenas
+          FROM candidatos c
+         WHERE c.minimo IS NOT NULL
+         ORDER BY (c.precio - c.minimo) ASC, c.grupo_id
+         LIMIT 3""").fetchall()
     print(f"   grupos de verdad: {[(g, n[:30]) for g, n, _c in filas]}")
 
     yo = almacen.crea_usuario("prueba", "Prueba", "clave-de-prueba")
@@ -236,6 +258,47 @@ def main() -> int:
         fallos += 1
         print("   FALLO: abrir los avisos tarda mas que un parpadeo: el resultado "
               "guardado no esta sirviendo de nada")
+
+    # **Darse de baja** (`DELETE /api/yo`). La interfaz nueva gano el boton el 24 de
+    # septiembre de 2026 (`Ajustes.tsx`), y aqui se comprueba lo que de verdad promete el
+    # borrado, que es lo que no se ve en la pantalla: sus listas se van, **y la linea que
+    # dejo en la lista de otra persona se queda**, sin autor. Eso es la migracion 005
+    # (`anadido_por` con `SET NULL`): sin ella la baja respondia 500.
+    print("\n== darse de baja: DELETE /api/yo")
+    quien_se_va = almacen.crea_usuario("se-va", "Se va", "clave-de-prueba-123")
+    suya = almacen.crea_lista(quien_se_va["id"], "Su casa", True)
+    almacen.anade_linea(str(suya["id"]), quien_se_va["id"], str(uuid.uuid4()),
+                        "Leche entera", grupo_id=int(filas[0][0]))
+    # Y una linea suya en la lista de la otra persona: esa es la que tiene que sobrevivir.
+    almacen.anade_linea(str(lista["id"]), quien_se_va["id"], str(uuid.uuid4()),
+                        "Pan de molde", grupo_id=int(filas[1][0]))
+    antes_en_la_otra = len(almacen.lineas_de(str(lista["id"])))
+    main.app.dependency_overrides[main.usuario_actual] = lambda: quien_se_va
+    r = cliente.delete("/api/yo")
+    print(f"   DELETE /api/yo -> {r.status_code}  "
+          f"{r.json() if r.status_code == 200 else r.text[:150]}")
+    if r.status_code != 200:
+        fallos += 1
+        print("   FALLO: no se ha podido dar de baja")
+    else:
+        print(f"   listas borradas: {r.json().get('listas_borradas')}  "
+              f"lineas conservadas: {r.json().get('lineas_conservadas')}")
+    main.app.dependency_overrides[main.usuario_actual] = lambda: yo
+    if any(x["id"] == str(suya["id"]) for x in almacen.listas_de(quien_se_va["id"])):
+        fallos += 1
+        print("   FALLO: la lista propia sigue ahi despues de la baja")
+    with almacen.cursor() as cur:
+        cur.execute("SELECT count(*) AS n FROM usuario WHERE usuario = 'se-va'")
+        if cur.fetchone()["n"]:
+            fallos += 1
+            print("   FALLO: la cuenta sigue existiendo")
+    despues = almacen.lineas_de(str(lista["id"]))
+    mia = next((x for x in despues if x["nombre_visto"] == "Pan de molde"), None)
+    print(f"   en la lista de la otra persona: {antes_en_la_otra} -> {len(despues)} lineas, "
+          f"la suya con autor={mia['anadido_por'] if mia else 'NO ESTA'}")
+    if mia is None or mia["anadido_por"] is not None:
+        fallos += 1
+        print("   FALLO: la linea que dejo en la lista de otro no se ha conservado sin autor")
 
     cuerpo = pide("/api/buscar", q="lece entera", limite=2)
     print(f"   corregido={cuerpo.get('corregido')!r}  "

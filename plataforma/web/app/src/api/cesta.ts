@@ -82,6 +82,23 @@ export async function salir(): Promise<void> {
   })
 }
 
+/** **Darse de baja**: se lleva la cuenta, sus listas y sus favoritos.
+ *
+ *  La API devuelve cuantas listas se llevo y cuantas lineas quedaron: lo que alguien anadio
+ *  a listas de otras personas **se queda**, sin autor, porque borrarlo vaciaria la compra de
+ *  quien no ha pedido nada. Eso cuenta la pantalla, que es lo que hace que el numero sea
+ *  util y no un adorno.
+ *
+ *  Es la unica operacion de esta aplicacion que **no se puede deshacer**, asi que la pantalla
+ *  la confirma escribiendo el propio usuario (`Ajustes.tsx`), como hacia la interfaz vieja
+ *  (`app.js:1571-1603`): un boton de "¿seguro?" se pulsa sin leer.
+ */
+export async function borrarme(): Promise<{ listas_borradas: number;
+                                           lineas_conservadas: number }> {
+  return await escribe<{ listas_borradas: number; lineas_conservadas: number }>(
+    '/yo', 'DELETE')
+}
+
 /** Quien esta dentro, si hay alguien. Nunca falla: sin sesion devuelve null. */
 export async function yo(): Promise<Sesion> {
   try {

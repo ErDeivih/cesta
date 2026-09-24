@@ -135,16 +135,30 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       (`app.js:1110-1156`), mas el **filtro del panel por cadenas cercanas**:
       `Panel.tsx:488` llama `useBajadas(dias, subidas, [])` con la lista vacia y
       ninguna pestana lee `cadenas_cerca`.
-   9. **"Darme de baja"**: falta el boton en Ajustes (`DELETE /api/yo`,
-      `main.py:617`; el viejo lo tiene con confirmacion por usuario,
-      `app.js:1571-1603`). **La API ya funciona**: hasta el 23 de septiembre
-      respondia **500** para quien hubiera anadido una linea a una lista suya,
-      porque `lista_linea.anadido_por` era la unica clave ajena del esquema con
-      `ON DELETE RESTRICT` y PostgreSQL la comprueba antes de que actue el
-      CASCADE. Arreglado en `plataforma/sql/005_borrarse_del_todo.sql` (la clave
-      pasa a `SET NULL`, como ya estaba `tachado_por`) y comprobado contra la API
-      viva: 500 -> 200. Sin eso, poner el boton habria sido poner un boton que
-      revienta.
+   9. ~~**"Darme de baja"**~~ — **hecho el 24 de septiembre de 2026**: el boton esta en
+      `Ajustes.tsx`, con la confirmacion por usuario de la interfaz vieja (escribir tu propio
+      usuario, no un «¿seguro?», que se pulsa sin leer) y `borrarme()` en `src/api/cesta.ts`
+      sobre `DELETE /api/yo`. Comprobado en un navegador: el boton esta deshabilitado sin
+      escribir y con un texto que no es el usuario, y al pulsarlo la cuenta desaparece de
+      verdad (entrar despues contesta 401) y la aplicacion vuelve a su estado sin sesion.
+
+      Y al comprobarlo salieron **dos fallos de verdad**, los dos arreglados:
+
+      - **La linea que alguien anadio a una lista ajena desaparecia de la pantalla** cuando
+        esa persona se daba de baja. La fila seguia en la base (con `anadido_por` a NULL, que
+        es lo que promete `sql/003`: *"las lineas en listas ajenas pierden el autor pero no
+        desaparecen"*), pero `almacen.lineas_de` hacia `JOIN usuario` en el autor y no la
+        devolvia: medido, 4 lineas en la lista -> se da de baja quien anadio una -> la
+        pantalla ensena **3**. Arreglado con `LEFT JOIN`, como ya estaba el de `tachado_por`.
+      - **La pantalla de ajustes sin sesion era un callejon sin salida**: decia «Entra para
+        cambiar tus ajustes» y **no habia ni un enlace ni un boton** (lo tenia apuntado
+        `docs/DISENO.md` §3.4). Ahora dice por donde se entra, como la de favoritos.
+
+      Y un tercer fallo, este de la prueba: elegia los grupos por numero de cadenas **sin
+      desempate**, y DuckDB devolvia cualquiera de los empatados. El 24 sep se puso roja ella
+      sola -- «la alerta no se apunto» -- porque habia caido en un grupo cuyo precio no estaba
+      en su minimo de 90 dias. Ahora ordena por lo cerca que estan de su minimo, con
+      `grupo_id` de desempate, y la prueba se ha corrido dos veces seguidas en verde.
    10. **Interruptor "repartir entre dos tiendas"** en Ajustes (`max_tiendas=1`;
       el viejo en `app.js:1413-1418`), y el desglose "N en CADENA" del reparto
       (`app.js:718-719`).
