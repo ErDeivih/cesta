@@ -893,6 +893,11 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          permite comparar; el p90 de la dispersion (112 %); los
                                          recortes contados (0,21 %) y los movimientos falsos
                                          (1.943 de 18.185)
+    07  indices de precios               Jevons encadenado y por que (Carli tiene sesgo al
+                                         alza); el **sesgo de encadenamiento medido** con el
+                                         SQL de la app: 0,38 pp como mucho, y el primer
+                                         intento de medirlo que daba +8 pp porque comparaba
+                                         dos cosas que no eran la misma
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
@@ -916,6 +921,23 @@ Eso cambia la lectura del 65 % de recall: **es el 86 % de lo que el bloqueo deja
 el margen no está en el matcher sino en las 436 parejas que se pierden antes de comparar (datos
 y presentaciones, no modelo). La misma medida se hizo el 8 de septiembre (579 de 1.767) y de
 ella salió la segunda pasada sin bloque con el listón alto (`UMBRAL_SIN_FORMATO = 0.82`).
+
+**Y el cruce, que es el diagnóstico que faltaba** (`projects/cesta/auditar_pares.py`, offline:
+corre el emparejador de verdad y recalcula el parecido de cada par perdido con las mismas
+funciones). De los 1.799 pares ciertos:
+
+    encontrado                                                1.161   (64,5 %)
+    A  el bloqueo por formato no los junta                      368   (20,5 %)
+    B  mismo formato, ninguna palabra en comun                    3   (0,2 %)
+    C  se comparan y no se parecen (por debajo del umbral)      177   (9,8 %)
+    D  se parecen y aun asi no se enlazan (asignacion 1-a-1)     90   (5,0 %)
+
+Lo que enseña el reparto: **el montón grande no lo arregla ningún modelo** (A: el formato, o dos
+nombres comerciales distintos para el mismo producto), el montón donde un matcher mejor tiene
+margen son 177 pares (**+9,8 puntos de recall como techo**), y hay 90 pares que el nombre ya
+aprueba y que **se pierden después**, en el reparto 1-a-1: o el que ganó el hueco es mejor (hay
+duplicados), o es un falso positivo ganando una suma mayor. Ese último montón es el que nadie
+audita y el que conviene mirar antes de tocar el umbral.
 
 **De dónde sale lo que dicen.** El 24 de septiembre de 2026 se lanzaron **cuatro
 investigaciones** sobre fuentes públicas (2020-2026), cada una con las mismas cuatro reglas: en

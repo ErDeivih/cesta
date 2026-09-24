@@ -105,17 +105,63 @@ Y hay una fuga silenciosa que este proyecto ya cometió una vez y tiene document
 un banco construido con la misma regla que se está evaluando. Se evita separando el banco
 (identificadores con EAN) del método (nombres, formatos, ejes).
 
-## 6. La auditoría que sigue: ¿fue el bloqueo o fue el matcher?
+## 6. La auditoría dirigida: por qué falta cada par que falta
 
-Cuando un par cierto no se encuentra, hay dos causas y el arreglo es distinto:
+Saber que el recall es del 65 % no dice qué hacer. Lo dice **repartir los pares que faltan por
+su causa**, y eso se mide con el emparejador de verdad y las mismas funciones de comparación
+(`uv run python -m projects.cesta.auditar_pares`):
 
-    fallo de bloqueo    el par no cae en el mismo bloque  -> el matcher no lo ve nunca
-    fallo de matching   el par cae en el mismo bloque y no se enlaza -> umbral, similitud,
-                                                                       asignacion 1-a-1
+    de los 1.799 pares ciertos, por que falta cada uno:
+      encontrado                                                1.161   (64,5 %)
+      A  el bloqueo por formato no los junta                      368   (20,5 %)
+      B  mismo formato, ninguna palabra en comun                    3   (0,2 %)
+      C  se comparan y no se parecen (por debajo del umbral)      177   (9,8 %)
+      D  se parecen y aun asi no se enlazan (asignacion 1-a-1)     90   (5,0 %)
 
-Separarlas es el diagnóstico con mejor relación valor/precio de todo el emparejamiento, y ya
-están las dos piezas para hacerlo: el medidor de bloqueo (arriba) y el listado de pares que
-`--medir` deja fuera. **Lo que falta es el cruce** (capítulo 09, primera fila de la tabla).
+Cuatro montones, cuatro arreglos distintos y cuatro costes distintos:
+
+**A · 368 pares (más de la mitad de lo que falta): el bloqueo por formato.** No se comparan
+nunca. Los ejemplos explican por qué:
+
+    Mermelada de fresa Helios pack de 10 unidades (carrefour) <-> Helios pack 10 x 25 g (dia)
+    Mini bombon helado Intense Dark 70% cacao (carrefour)     <-> Magnum mini intense dark 70% 6 x 44 g (dia)
+
+El segundo es el caso difícil de verdad: **el mismo producto con dos nombres comerciales
+distintos** (uno describe el formato, el otro la marca). Ni el bloqueo ni el nombre lo resuelven
+sin leer el catálogo. Aquí un modelo no ayuda mucho: lo que ayuda es el dato (formato legible en
+las dos fichas) o una regla de negocio (los packs).
+
+**B · 3 pares: el bloqueo por palabras.** Mismo formato, ningún token en común: `7UP de
+lima-limón lata 33 cl` contra `7 Up 330 ml` (el tokenizador parte `7UP` y `7 Up` de otra
+manera). Es un 0,2 %: arreglarlo es una tarde de normalización, y da una idea de la escala de
+estos problemas.
+
+**C · 177 pares (9,8 %): se comparan y no se parecen lo suficiente.** Aquí **sí** hay margen
+para un matcher mejor, porque el par es correcto y el nombre no lo parece:
+
+    0,48  Tarrito de arroz con pollo desde 6 meses Hero  <->  Pure de arroz con pollo Hero 235 g
+    0,52  Quitamanchas en pulverizador sin manchas KH-7  <->  Quitamanchas KH-7 780 ml
+
+Los dos son el mismo producto, y las dos fichas comparten marca. Lo que falla es que la
+similitud por tokens premia la brevedad: cuanto más largo es un nombre, más se diluye el parecido.
+Este es el montón donde tiene sentido probar (embeddings, un verificador, o una similitud
+distinta), y su tamaño —177 pares— es el techo realista de esa mejora: **como mucho, +9,8 puntos
+de recall**.
+
+**D · 90 pares (5,0 %): se parecen y aun así no se enlazan.** Este es el montón más interesante y
+el que casi nadie audita, porque no es un problema de similitud: **el reparto 1-a-1 le dio el
+hueco a otro candidato**.
+
+    0,69  Galletas Maria Gullon Zero sin azucar 400 g   <->  Galletas maria sin azucares Gullon 400 g
+    0,76  Lejia hogar con detergente frescor limon Est  <->  Lejia con detergente limon Estrella 1,43 L
+
+Dos causas posibles, y hay que separarlas antes de tocar nada: (a) el candidato que ganó el
+hueco es **mejor** y el par cierto es un duplicado dentro de la otra cadena; (b) el ganador es un
+**falso positivo** y el reparto, que maximiza la suma de parecidos del bloque, está prefiriendo
+una suma alta con un error dentro. La segunda es la que dolería.
+
+Sin esta auditoría, la conclusión natural habría sido «hay que mejorar el matcher», y el 20,5 %
+del montón A no lo arregla ningún matcher.
 
 ## 7. Lo que se aprende en este capítulo
 
@@ -127,3 +173,6 @@ están las dos piezas para hacerlo: el medidor de bloqueo (arriba) y el listado 
   no necesitan banco etiquetado y detectan la clase de error que más duele (fusiones).
 - Declarar el sesgo del banco y la fuga de información no debilita el resultado: lo hace
   creíble.
+- **Un recall bajo no dice qué arreglar.** Repartir los fallos por causa (bloqueo, palabras,
+  umbral, asignación) convierte un porcentaje en una lista de trabajo, y en este proyecto el
+  montón más grande no lo arregla ningún modelo.
