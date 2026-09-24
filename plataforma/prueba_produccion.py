@@ -67,7 +67,13 @@ def main() -> int:
 
         def carga(ruta: str) -> None:
             pagina.goto(f"{BASE}{ruta}", wait_until="domcontentloaded")
-            pagina.wait_for_load_state("networkidle")
+            # **`networkidle` con tope, no a secas.** La pestaña de ofertas dudosas carga 60
+            # fotos desde los CDN de las cadenas: si uno tarda, la espera a que la red se
+            # quede quieta revienta con un `TimeoutError` de 30 s y la comprobacion muere a
+            # mitad (paso el 24 de septiembre de 2026, con la pagina bien). Se espera lo que
+            # se pueda y se sigue: lo que se comprueba despues es el contenido, no la red.
+            with contextlib.suppress(Exception):
+                pagina.wait_for_load_state("networkidle", timeout=8000)
             pagina.wait_for_timeout(800)
 
         print(f"== la aplicacion monta en {BASE}, y el CSP de Caddy la deja")
@@ -103,6 +109,12 @@ def main() -> int:
                 ("posicion", "En qué es cara cada cadena"),
                 ("dudosas", "conviene mirar dos veces")):
             carga(f"/panel?pestana={pestana}")
+            # **Se espera al texto, no a un tiempo fijo.** Estos paneles piden a la API y
+            # pintan cientos de filas: con una espera fija, la comprobacion falla con la
+            # aplicacion bien (paso el 24 de septiembre de 2026). Se espera a que aparezca lo
+            # que se va a comprobar, con tope.
+            with contextlib.suppress(Exception):
+                pagina.get_by_text(tiene_que_decir, exact=False).first.wait_for(timeout=20000)
             comprueba(tiene_que_decir in pagina.inner_text("main"),
                       f"el panel de {pestana} contesta")
         comprueba("no se juzgan aquí" in pagina.inner_text("main"),
@@ -116,6 +128,16 @@ def main() -> int:
         comprueba(pagina.locator("#buscar").count() == 1, "y trae su buscador")
         comprueba(pagina.locator("ol.temario li").count() >= 8,
                   f"con los capitulos del curso ({pagina.locator('ol.temario li').count()})")
+        # **Y el buscador funciona de verdad**, no solo existe. El 24 de septiembre de 2026
+        # estaba muerto en produccion y no daba ningun error visible: el CSP de Caddy prohibe
+        # los scripts en linea (`script-src 'self'`), y el indice iba dentro de uno. Se caza
+        # escribiendo: si el JavaScript no corre, no aparece ningun resultado.
+        pagina.locator("#buscar").fill("emparejar")
+        pagina.wait_for_timeout(600)
+        resultados = pagina.locator("#resultados li").count()
+        comprueba(resultados >= 1,
+                  f"y el buscador responde bajo el CSP ({resultados} resultados para "
+                  f"«emparejar»)")
         carga("/aprende/04-emparejar-productos.html")
         comprueba(pagina.locator("article table").count() >= 1,
                   "un capitulo se lee: pintan las tablas")
