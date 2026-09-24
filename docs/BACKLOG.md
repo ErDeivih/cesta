@@ -854,7 +854,45 @@ que se cambiara, lo que la interfaz vieja hace y la nueva no **desaparece** de l
 quien la usa. **Se hizo el 24 de septiembre de 2026 por la tarde, con la paridad cerrada y
 medida: ver «La interfaz nueva, servida», mas abajo.**
 
+### Los toques hasta cada respuesta: lo medible de la barra (a)
+
+La condicion (a) -- *"las cuatro preguntas contestadas en menos de quince segundos con el
+movil y sin saber donde esta el boton"* -- **no la puede cerrar quien escribe el codigo**: se
+juzga contra la madre del dueno. Pero tiene una mitad que si es de codigo y hasta ahora no se
+media: **cuanto hay que andar**. Un boton a cinco toques no se pulsa en quince segundos ni
+sabiendo donde esta.
+
+Asi que la puerta **cuenta los toques andando de verdad** desde la primera pantalla, no
+leyendo el mapa de rutas (`prueba_navegador.py`, «cuantos toques hay desde la primera
+pantalla hasta cada respuesta»). Medido el 24 de septiembre de 2026:
+
+    1. que me falta y donde lo compro   1 toque    Buscar -> Cesta
+    2. esto esta caro                   1 toque    escribir en Buscar -> el resultado
+    3. voy tachando bien                0 toques   el numero esta en la barra de abajo
+    4. ha bajado algo de lo mio         1 toque    Avisos (si tienes avisos pedidos)
+                                        3 toques   Panel -> Bajadas -> «Solo lo mío»
+
+**La primera version de este bloque fallo TRES veces con la aplicacion bien**, y las tres se
+cuentan porque son de instrumento, no de pantalla:
+
+  1. daba por hecho un estado de la cesta («Lo que cuesta ahora», «Por coger») y la pasada
+     anterior la deja como la deja -- con todo tachado, o vacia con la cuadricula --. Ahora
+     la marca de cada caso es **una lista de frases validas**, y lo que se mide son los
+     toques.
+  2. pulsaba la barra **por su texto**, y «Cesta» tambien es el titulo de la cabecera, cuyo
+     enlace lleva a la portada: la medida se quedaba en el buscador y las dos comprobaciones
+     de la cesta fallaban con los toques ya bien contados.
+  3. pulsaba **la primera barra del DOM**, que es la del escritorio (`NavEscritorio`,
+     `hidden lg:block`): en un movil de 390 px no se ve, y Playwright espera a que sea
+     visible hasta morir. Hay que pulsar la visible, y las pestañas del panel son
+     `role="tab"`, no botones.
+
+Y con esto, `docs/PRUEBA-15-SEGUNDOS.md` queda listo para que lo ejecute una persona: la
+direccion (el 8080, por Tailscale), la cuenta nueva por persona (con el limite de altas por
+hora dicho), los toques de cada respuesta, y **la tabla para escribir los segundos**.
+
 ### Los avisos, mirados en la cadena diaria: el §6 entero (y el instrumento que mintio otra vez)
+
 El §6 del encargo pedia cuatro cosas. Dos ya estaban desde la pasada del vigilante -- *"dejar
 el resultado guardado"* (`salto_en` y su frase, que es lo que pinta la pantalla) y *"un punto
 en el icono, y al abrirlo la frase entera"* --, y le faltaban las otras dos:

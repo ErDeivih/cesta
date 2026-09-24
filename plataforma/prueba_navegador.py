@@ -869,6 +869,73 @@ def main() -> int:
         comprueba("no se juzgan aquí" in texto or "no se juzgan aqui" in texto,
                   "y la pantalla dice cuantas se quedan fuera y por que")
 
+        # ------------- cuantos toques hay hasta cada respuesta (lo medible de la barra a) --
+        # La condicion (a) -- *"las cuatro preguntas en menos de quince segundos sin saber
+        # donde esta el boton"* -- **no la puede cerrar quien escribe el codigo**: hace falta
+        # una persona. Pero si se puede medir **cuanto hay que andar**, que es su mitad de
+        # codigo: los toques desde la primera pantalla hasta la respuesta. Un boton a cinco
+        # toques no se pulsa en quince segundos ni sabiendo donde esta, y ese numero no es
+        # una opinion. Se cuenta **andando de verdad**, no leyendo el mapa de rutas.
+        print("\n== cuantos toques hay desde la primera pantalla hasta cada respuesta")
+        # **La barra se pulsa por su `href` y con `:visible`**, y las dos cosas son
+        # lecciones de este bloque. Por el texto, no: la cabecera lleva el titulo de la
+        # aplicacion, que tambien se llama «Cesta», asi que `get_by_role("link", name=...)`
+        # coge ese enlace -- que lleva a la portada -- y la medida se queda en el buscador
+        # sin enterarse. Y sin `:visible`, no: hay **dos barras** (`NavAbajo` en el movil y
+        # `NavEscritorio`, `hidden lg:block`), y la primera del DOM es la del escritorio,
+        # que en un movil de 390 px no se ve y no se puede pulsar.
+        BARRA = {"Cesta": "/cesta", "Avisos": "/avisos", "Panel": "/panel",
+                 "Buscar": "/", "Escáner": "/escaner"}
+        # Las pestañas del panel son `role="tab"`, no botones: `get_by_role("button")` no
+        # las encuentra, y la espera se queda colgada hasta el timeout.
+        PESTANAS_PANEL = ("Hoy", "Cadenas", "Marcas", "Histórico", "Movidos", "Bajadas",
+                          "Índice", "Posición", "Ofertas dudosas")
+        # **Y la marca de cada caso es una lista, no una frase.** La cesta contesta de tres
+        # formas segun como la deje la pasada anterior (con lineas por coger, con todo en
+        # el carro, o vacia con la cuadricula), y las tres son respuestas: lo que se mide
+        # aqui son los toques, no el estado de la lista.
+        for que, marcas, camino in (
+                ("3: voy tachando bien (el numero de la barra lo dice sin abrir nada)",
+                 ("Por coger", "En el carro", "Lo que cuesta", "No tienes ninguna lista"),
+                 ("Cesta",)),
+                ("1: que me falta y donde lo compro", ("Por coger", "En el carro",
+                                                       "No tienes ninguna lista"),
+                 ("Cesta",)),
+                ("4: lo mio que ha bajado", ("Lo tuyo que ha",),
+                 ("Panel", "Bajadas", "Solo lo mío")),
+                ("4: los avisos", ("que sigues",),
+                 ("Avisos",)),
+        ):
+            carga("/")
+            for paso in camino:
+                if paso in BARRA:
+                    toque = pagina.locator(f"nav a[href='{BARRA[paso]}']:visible").first
+                elif paso in PESTANAS_PANEL:
+                    toque = pagina.get_by_role("tab", name=paso).first
+                else:
+                    toque = pagina.get_by_role("button", name=paso).first
+                toque.click()
+                pagina.wait_for_timeout(900)
+            pagina.wait_for_timeout(900)
+            texto = pagina.inner_text("main")
+            visto = next((m for m in marcas if m in texto), None)
+            comprueba(visto is not None,
+                      f"{que}: se contesta a {len(camino)} toque(s) desde la primera "
+                      f"pantalla ({' -> '.join(camino)}; lei {texto[:40]!r})")
+
+        # Y la 2, que es la unica que empieza escribiendo: nadie sabe el nombre exacto del
+        # producto, asi que se escribe a medias y se toca el resultado. **Un toque.**
+        carga("/")
+        pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
+        with contextlib.suppress(Exception):
+            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+        pagina.locator("a[href^='/grupo/']").first.click()
+        pagina.wait_for_url("**/grupo/**", timeout=20000)
+        pagina.wait_for_load_state("networkidle")
+        pagina.wait_for_timeout(1200)
+        comprueba(pagina.locator("main p.font-semibold").first.count() > 0,
+                  "2: esto esta caro se contesta con un toque y lo que escribas")
+
         # ------------------------- y un grupo del que NO nos fiamos no da frase (barra d) --
         # La frase no se inventa: si el grupo esta en una sola cadena, no hay comparacion
         # que hacer y la pantalla no puede decir «es la mas barata de las cinco». Se busca
