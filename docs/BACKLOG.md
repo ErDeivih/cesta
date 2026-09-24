@@ -966,6 +966,21 @@ en el índice):
                                          las cinco formulas de indices de precios, el dinero en
                                          centimos (`0,1+0,2`), la nota de calidad con sus pesos y la
                                          tabla de las constantes con el valor de cada una
+    93  ...y la captura                 el apartado 11 del mismo anexo: el intervalo del ritmo y
+                                         su ruido (hasta el 40 %, y por que: pedir cada 1,000 s
+                                         exactos se delata), la tabla de ritmos por cadena
+                                         (mercadona y aldi 2/s, carrefour y dia 1/s, alcampo
+                                         0,15/s porque a 1/s cortaba y a una cada 4 s el reto
+                                         escalo a pedir un clic humano), la espera creciente de
+                                         los reintentos (`2^intento + U(0,1)`) y **por que el 403
+                                         no se reintenta ahi** (45 s por categoria bloqueada x 373
+                                         = cuatro horas y media en una tarea de 38 minutos), la
+                                         huella TLS (JA3/JA4: por que Akamai decide antes de leer
+                                         el User-Agent) y el reto de un WAF, con los cuatro
+                                         detalles que se aprendieron fallando: validar por
+                                         resultado y no por el nombre de la cookie, copiar el
+                                         User-Agent, probar contra una pagina protegida y que con
+                                         ventana se pasa mas
 
 **El temario esta completo**: 21 capitulos en 8 secciones (00 a 15 y los cuatro anexos), y se leen
 seguidos. Aquí van el de análisis y los tres primeros anexos, para que la lista no se corte:

@@ -381,7 +381,109 @@ El sesgo siempre va en la misma dirección. La taxonomía de Rubin (1976) distin
 (MCAR), condicionado a lo observado (MAR) o por el propio valor (MNAR); el reparto de este catálogo
 es MNAR de libro: **el que calla, calla por algo**.
 
-## 11. Las constantes, en una tabla
+## 11. La captura: ritmo, reintentos, huella y retos
+
+Aquí no hay fórmulas de datos, y por eso va aparte: lo que hay son **dos números con teoría**
+(el ritmo y la espera de un reintento) y tres mecanismos que se explican con palabras. Todo está en
+`core/fetch.py` (el cliente) y `core/waf.py` (los retos), y el capítulo 15 cuenta el caso de cada
+cadena.
+
+### 11.1 El ritmo: intervalo, y ruido encima
+
+    intervalo_minimo = 1 / ritmo                 (ritmo en peticiones por segundo)
+    espera           = intervalo_minimo − transcurrido + U(0, 0,4 · intervalo_minimo)
+
+El ruido aleatorio (`U` es una uniforme) no es decoración: una máquina que pide exactamente cada
+1,000 s se delata por la regularidad. Con el ruido, el hueco medio pasa a ser 1,2 veces el
+intervalo, o sea que el ritmo real es un 17 % más lento que el nominal. Los que usa cada cadena:
+
+| Cadena | Ritmo | Por qué |
+|---|---|---|
+| mercadona, aldi | 2,0 /s | API pública, sin muro: el límite es la educación, no la defensa |
+| carrefour | 1,0 /s | el `Crawl-delay: 60` de su `robots.txt` es de **TwengaBot**, no de `User-agent: *` |
+| dia | 1,0 /s | Akamai: sin prisa, y el recorrido entero cabe en la noche |
+| alcampo | 0,15 /s (una cada 6,7 s) | AWS WAF: a 1/s cortaba, y a una cada 4 s el reto escaló a pedir un clic humano |
+
+Ese último número tiene su historia medida: bajar de 1/s a una cada 4 s **no bastó** — el 8 de
+septiembre el reto pasó a pedir interacción humana tras siete cortes. Menos presión es la única
+palanca que queda del lado del código, y a una cada 6,7 s el recorrido entero pasa de 27 a unos
+45 minutos de trabajo real, que en una tarea nocturna no le importa a nadie.
+
+### 11.2 Los reintentos: espera creciente con ruido, y una excepción
+
+    se reintenta:  429, 500, 502, 503, 504   (y los fallos de red)
+    espera:        min(Retry-After, 120 s)  si el servidor lo manda
+                   si no: 2^intento + U(0,1)  ->  1-2 s, 2-3 s, 4-5 s
+    NO se reintenta: 403
+
+La espera creciente (backoff exponencial) con ruido es el patrón estándar: si el servidor está
+saturado, insistir al mismo ritmo lo empeora, y el ruido evita que varios clientes reintenten a la
+vez.
+
+**El 403 no se reintenta aquí, y eso costó una medición.** Parecía obvio: Cloudflare y AWS WAF
+contestan 403 cuando te tienen fichado un rato, y el 18 de septiembre el bloqueo de Carrefour se
+levantó solo a los veinte minutos. Se puso una espera de 15 s y otra de 30 s por petición… y
+medido contra un servidor de mentira que bloquea de verdad salían **45 segundos por categoría
+bloqueada**: con las 373 de aquel día, cuatro horas y media durmiendo en una tarea que entera dura
+38 minutos. El error de fondo era tener dos mecanismos esperando por lo mismo: **quien espera es el
+colector**, que apunta las categorías fallidas y vuelve a por ellas en tandas, esperando una vez
+para todo el grupo.
+
+### 11.3 La huella: por qué `curl_cffi` y no un cliente HTTP normal
+
+Antes de que el servidor lea una sola cabecera, el cliente y el servidor han hecho un saludo TLS, y
+en ese saludo el cliente **elige** qué cifrados propone y en qué orden, qué extensiones manda y con
+qué curvas. Esa lista la fija la librería y su versión, así que identifica al cliente igual que una
+matrícula: es lo que se conoce como huella TLS (`JA3`, y su versión más fina `JA4`). Un cliente
+HTTP de Python tiene una huella que **ningún navegador del mundo** tiene, y por eso Akamai (DIA)
+puede decidir antes de mirar el `User-Agent`: la cabecera se escribe a mano, la huella no.
+
+`curl_cffi` reproduce el saludo de un Chrome real (`impersonate="chrome131"`). No es magia ni
+disfraz: es mandar el mismo saludo que mandaría el navegador de la casa.
+
+Y una consecuencia que se paga en cookies: **la sesión es parte de la identidad**. El 20 de
+septiembre el rescate de Carrefour creaba un `Fetcher` nuevo para ir más despacio, y las cuatro
+categorías dieron 403 a la primera («rescatadas 0 de 4»): una `Session` nueva no lleva las cookies
+(`__cf_bm` y compañía) que el recorrido se había ganado en media hora de navegación limpia. Ir más
+despacio es una propiedad del ritmo, no de la identidad: se cambia el ritmo y **se conserva quién
+eres**.
+
+### 11.4 El reto: qué es un WAF y cómo se pasa
+
+Cuando no hay testigo válido, AWS WAF no devuelve un 403 a secas: devuelve una **página de reto**
+—un JavaScript que calcula algo y se lo devuelve al servidor— en vez del catálogo. El código la
+reconoce por lo que trae dentro (`window.gokuProps`, `awsWafCookieDomainList`) y no por su tamaño.
+
+    es_reto(html)  =  "gokuProps" in html  or  "awsWafCookieDomainList" in html
+
+Después de resolverlo, la página deja cookies que valen horas (aquí se cachean 6 h) y **sí**
+funcionan desde `curl_cffi`. De ahí la arquitectura: **un navegador al día, no uno por página.**
+
+Cuatro detalles que se aprendieron fallando, y que son la parte aprovechable:
+
+1. **Se valida por resultado, no por el nombre de la cookie.** Comprobar si existe
+   `aws-waf-token` daba por mala una sesión que ya era buena; lo que se comprueba es que una página
+   de categoría de verdad llegue **con datos**.
+2. **Se copia el `User-Agent` del navegador.** El testigo va ligado al agente que lo obtuvo:
+   mandarlo con otro agente lo invalida.
+3. **La página de prueba tiene que ser una protegida** (una categoría, no la portada). Validar
+   contra una página libre guarda una sesión inútil.
+4. **Con ventana pasa más retos que sin ella** (medido: en modo sin ventana el WAF corta más a
+   menudo). Por eso la tarea programada corre con sesión iniciada, y el modo sin ventana existe
+   como opción consciente.
+
+Y la medida que hoy deja claro qué es un reto: sin la sesión, la página de producto de Alcampo
+devuelve **2.491 bytes**, que es el reto; con la sesión, sus endpoints de API responden. Eso es lo
+que se encontró al verificar la ingesta del 24 de septiembre, y por eso la conclusión fue «esta
+comprobación no puede leer esta cadena», no «el precio no está».
+
+### 11.5 Lo que aquí no hay
+
+No hay una fórmula para «parecer humano». Hay ritmo, ruido, sesión, persistencia y una regla que
+está por encima de todas: **un reto no es un dato**, y quien no pueda distinguirlos debe decir «no
+puedo comprobar esto» en vez de publicar un cero.
+
+## 12. Las constantes, en una tabla
 
 | Constante | Valor | Qué gobierna |
 |---|---|---|
@@ -400,8 +502,13 @@ es MNAR de libro: **el que calla, calla por algo**.
 | `VENTANA_PERC` | 90 días | ventana del mínimo y el máximo |
 | `TOPE_API` (Alcampo) | 300 | productos por respuesta: al llegar al tope, hay que bajar al subárbol |
 | `TERMINOS_POR_DIA` (Alcampo) | 600 de 5.153 | términos de búsqueda que se recorren cada día, en turnos de ~9 días |
+| `RITMO` | 2,0 / 1,0 / 0,15 | peticiones por segundo, por cadena (el 0,15 es Alcampo, con WAF) |
+| ruido del ritmo | hasta 40 % del intervalo | evita pedir exactamente cada 1,000 s |
+| reintentos | 3, con `2^intento + U(0,1)` | 1-2 s, 2-3 s, 4-5 s; nunca para un 403 |
+| `VIDA_SEGUNDOS` (WAF) | 6 h | cuánto vale en caché la sesión del navegador |
+| `DIAS_RAW` | 30 | días de crudo que se conservan (lo que se puede reprocesar) |
 
-## 12. Lo que este anexo no tiene
+## 13. Lo que este anexo no tiene
 
 No hay una fórmula para decidir **cuándo** alguien es el mismo producto: hay una puntuación, unos
 frenos y unas invariantes. Tampoco hay una fórmula para la exactitud de un dato, porque no se puede

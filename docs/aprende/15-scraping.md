@@ -11,6 +11,10 @@ HTML»: es **un sistema** con un cliente HTTP que se comporta como un navegador,
 permite reprocesar sin volver a golpear la web, controles que detectan cuando falta media tienda,
 y una capa de datos detrás que hace el resto del trabajo posible.
 
+La **teoría** que hay debajo de cada truco --el intervalo y su ruido, la espera creciente de los
+reintentos, la huella TLS y por qué hace falta, y qué es exactamente el reto de un WAF-- está en el
+**anexo 93**, apartado 11. Aquí se cuenta el caso de cada cadena.
+
 ## 1. Los cinco casos son cinco problemas distintos
 
 No hay dos cadenas iguales, y eso es lo primero que aprende quien hace scraping de verdad:
