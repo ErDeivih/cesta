@@ -25,7 +25,7 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
                                                       en los dos sentidos: con frase en la
                                                       ficha y en el grupo, y SIN frase en un
                                                       grupo de una sola cadena
-    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (829 pasan, ruff limpio, docs ok)
+    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (848 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
         `--medir >= 57 %`                             65 % CUMPLE
@@ -60,10 +60,13 @@ escriben los numeros -- esta en `docs/PRUEBA-15-SEGUNDOS.md`.
                                       ResizeObserver.
     §3.3 la zona del pulgar           HECHO: 44 px minimo en todo lo que se pulsa, y el
                                       deshacer y los contadores pegados a la linea.
-                                      Medido ya pintado en **ocho pantallas** (entraron la
-                                      ficha del producto y el escaner, que no se median: en
-                                      la ficha habia cuatro objetivos de 19 px), y ninguna
-                                      pantalla se desliza de lado (390 de 390).
+                                      Medido ya pintado en **once pantallas** (entraron la
+                                      ficha del producto, el escaner y **las tres pestanas
+                                      nuevas del panel**, que no se median: en la ficha habia
+                                      cuatro objetivos de 19 px, y en la de ofertas dudosas
+                                      **28 enlaces de nombre de producto**, entre 145 x 19 y
+                                      248 x 39), y ninguna pantalla se desliza de lado
+                                      (390 de 390).
     §3.4 deshacer, siempre            HECHO: «Deshacer» al quitar una linea, reanadiendo con
                                       **el mismo id**; tachar se deshace volviendo a pulsar.
     §3.5 sin cobertura                HECHO: los cambios se guardan en el movil con la hora
@@ -143,14 +146,17 @@ oferta"*, con su trampa para demostrar que la medida mira.
     (a) la medicion de los quince segundos    **de una persona** con un movil. No la puede
                                               hacer quien ha escrito estas pantallas.
     el montaje de la interfaz nueva           **del dueno** (`docker-compose.yml`): cambiar
-                                              `./web:/srv:ro` por `./web/dist:/srv:ro`. Es
-                                              lo unico que queda de la puesta en
-                                              produccion. Auditado el 24 sep, la paridad
-                                              que falta son **tres cosas**: el interruptor
-                                              de repartir entre dos tiendas y las tres
-                                              pantallas del panel (`docs/BACKLOG.md`,
-                                              §0). El contador de la barra se hizo el
-                                              24 sep.
+                                              `./web:/srv:ro` por `./web/dist:/srv:ro`.
+
+**La paridad que faltaba ya no falta.** Auditado otra vez el 24 de septiembre de 2026 al
+cerrar el panel: las tres pantallas que quedaban (`indice`, `posicion`, `ofertas dudosas`) y
+el filtro por cadenas cercanas estan hechas y medidas, y el interruptor de repartir entre dos
+tiendas se dio por cubierto con la etiqueta de «no compensa». Con eso **el front nuevo tiene
+todo lo que tenia el viejo** salvo lo que se decidio no copiar, asi que el montaje es ya solo
+una decision: cambiar una linea de `docker-compose.yml` y volver a levantar la web. Lo que no
+se hace aqui es cambiarla por la espalda: la interfaz que se sirve hoy es la vieja y el dia
+que se cambie conviene mirarla una vez servida por Caddy, no solo en el servidor de
+desarrollo.
 
 Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de septiembre de
 2026, medidas antes y despues:
@@ -174,7 +180,7 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 **Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
 septiembre de 2026), no cada numero de un dia distinto:
 
-    uv run pytest -q                                 838 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 848 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             **con el gold del 24 sep**: 44.285 grupos,
@@ -201,14 +207,24 @@ septiembre de 2026), no cada numero de un dia distinto:
                                                 abierto por una segunda persona, la curva con
                                                 su frase, el ahorro en euros, **las cuatro
                                                 respuestas dentro de la primera pantalla**,
-                                                TODO lo que se pulsa medido, el contraste en
+                                                **las tres pestanas nuevas del panel y su
+                                                filtro de cadenas**, TODO lo que se pulsa
+                                                medido en **once pantallas**, el contraste en
                                                 los dos temas y ningun porcentaje imposible
                                                 pintado.
                                                 TODO BIEN, con los tiempos de cada paso:
-                                                abrir 4,8 s | a la ficha 0,6 s | a la lista
-                                                0,8 s | tachar sin red 1,2 s | a los avisos
-                                                0,7 s | del panel a lo mio que ha bajado 2,0 s
-                                                | escanear 1,0 s
+                                                abrir 3,4 s | a la ficha 1,0 s | a la lista
+                                                0,9 s | tachar sin red 1,2 s | a los avisos
+                                                0,8 s | del panel a lo mio que ha bajado 3,0 s
+                                                | escanear 1,1 s
+
+Y tres cosas que se arreglaron **porque se pintaron**, que es el argumento de esta puerta:
+la pestaña de ofertas dudosas encabezaba con «Ampollas Compeed 8 ml» a 1.306,25 €/l contra
+«su precio de siempre» 10,45 €/l (una cantidad mal leída, no una oferta falsa: 337 acusadas
+con hoy > 3× su base, hoy 17), el 63 % de la lista eran ofertas cuyo descuento depende de
+cuántas unidades compres (un 3x2 no baja el precio de una: 3.658 de 5.488, hoy se cuentan y
+se dicen), y 28 enlaces de nombre de producto por debajo de 44 px. El detalle, en
+`docs/MOVIMIENTOS.md` §5 y `docs/BACKLOG.md` (§0).
 
 Los dos numeros de grupos (39.592 y 40.110) no se contradicen: `ejes` cuenta los grupos del
 gold que escribio la ultima pasada del emparejador, y `--medir` los reconstruye en su propia
