@@ -19,6 +19,18 @@ forzada en esta cadena. El catalogo de Jev y sus dos sitios naturales estan en
 3. **Lo que cuesta es menos de un euro y lo que bloquea es una lista de espera.** Un
    plan que dependa del acceso no es un plan. El que no depende de el, si.
 
+---
+
+> **Actualizacion del 24 de septiembre de 2026: el plan ya no depende del acceso, y se
+> ha ejecutado.** Los pesos abiertos de **Laya** (Apache 2.0) hacen el mismo trabajo
+> —hasta exponen el mismo `POST /v1/systemone`— y corren en este PC, asi que el
+> `respaldo` de §3 se pudo poner **hoy** en lugar de esperar a la lista de espera. El
+> banco de §2/§4 se corrio entero: **73,1 % de acuerdo contra la barra del 97 %**, con
+> los desacuerdos auditados uno a uno. **27 de los 85 desacuerdos son fallos de
+> nuestras listas a mano**, con nombre y apellidos: eso es lo que hay que arreglar
+> antes de volver a usar el banco como verdad de referencia. Todo en `docs/LAYA.md`;
+> el instrumento es `projects/cesta/laya_ejes.py`.
+
 ## 1. Lo que he verificado yo, sobre nuestro codigo
 
 | Dato | Dice el informe | Mido yo | |

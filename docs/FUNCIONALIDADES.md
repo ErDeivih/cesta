@@ -253,3 +253,16 @@ Para no volver a proponerlo dentro de tres meses.
     Notificaciones push          necesitan servidor siempre accesible y el PC se
                                  apaga. Las novedades al abrir cubren el caso.
     Resolver el CAPTCHA          no se hace, ni a mano ni automatizado
+    Modelo de decision para      Laya y Jev: se midio el primero contra las listas
+      los ejes de atributo       a mano (215 nombres, 316 declaraciones) y da
+                                 73,1 % donde la barra pide 97 %, con dos fallos
+                                 sistematicos -- `sin grasa` por entera/semidesnatada
+                                 y `natural` por descafeinado -- y 1.230
+                                 declaraciones donde el nombre no dice nada, que
+                                 cortarian comparaciones si entraran como guarda.
+                                 `docs/LAYA.md`. **No se descarta para siempre**:
+                                 se descarta *cero shot*. Lo que falta antes de
+                                 volver a mirarlo es arreglar las listas que
+                                 sobre-disparan (27 de los 85 desacuerdos eran
+                                 nuestros) y, si alguien quiere gastar una GPU,
+                                 afinar con nuestras etiquetas.

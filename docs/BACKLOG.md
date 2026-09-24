@@ -2114,6 +2114,76 @@ dia de precios malos. Ahora solo `no aparece` y `404` cuentan. La suite entera:
    `docs/FASES.md` tambien. Se sustituyen por un panel de auditoria que explica
    cada par sin que nadie apruebe nada.
 
+### Laya: el mismo sitio que Jev, sin lista de espera — y medido, no llega
+
+**Por qué.** El dueño pasó un enlace a `convaiinnovations/laya4` con «parece que hace
+lo mismo que jev». Hace lo mismo —hasta expone el mismo `POST /v1/systemone`—, y eso
+tumba uno de los dos bloqueos que tenía parado el asunto de Jev: la lista de espera.
+El otro, ser un tercero en un proyecto que vive en casa, también: Laya son **pesos
+abiertos Apache 2.0 que corren en CPU**.
+
+**El nombre pedido no existe.** `laya4` responde 401, pero **ese 401 no prueba nada**:
+un nombre inventado a propósito bajo la misma cuenta da el mismo 401 y la misma página
+(52.307 y 52.331 bytes), y `?search=laya4` devuelve `[]` mientras los tres de verdad
+salen en la misma búsqueda. La familia publicada es `laya` (ModernBERT-large, 421 M),
+`laya-multilingual` (mmBERT-base, 322 M, castellano entre 100+ idiomas) y
+`laya-typed-decisions`. Si existe un `laya4` privado, **no lo sé**.
+
+**Se instaló y se midió, que es lo que hacía falta para decidir.**
+
+    2,2 GB de pesos · Router(preload=True) 402 s · 2,16 s por petición en CPU
+    el enrutador manda el castellano al checkpoint inglés (dice "Latin script,
+    language not identified... using default (english)"): hay que forzarlo
+
+**Y el experimento que `docs/JEV-IMPLANTACION.md` daba por bloqueado, hecho.** Es el
+diseño de `docs/JEV.md` §4.2 tal cual —una petición por producto, las 12 `Choice`, la
+opción «no lo dice»— y su barra del §4.4:
+
+    banco: 215 nombres, 316 declaraciones de las listas a mano, los 12 ejes
+    acuerdo 231 (73,1 %)   la barra pide 97 %
+    se abstiene 48 · declara otro valor 37
+    declara un valor donde la lista calla: 1.230 de 2.264 (54 %)
+
+Los fallos no son ruido, son dos patrones: **11 veces `sin grasa`** donde el nombre
+dice entera o semidesnatada, y **6 veces `natural`** donde el nombre dice
+descafeinado. Y el 54 % de declaraciones sin prueba es el número que más pesa, porque
+con la regla de la casa —el que calla no bloquea— esas declaraciones **cortarían
+comparaciones legítimas** si entraran como guarda.
+
+**Lo que de verdad se ha ganado: 27 de los 85 desacuerdos son fallos NUESTROS.**
+Auditados uno a uno, en cinco ejes, y no es un hallazgo sobre Laya sino sobre
+`core/atributos.py`: `leche` dispara `bebida vegetal` en cualquier cosa con arroz,
+avena, soja o almendra (8 casos: «Tostas de pan con avena», «Arroz blanco
+precocido»); `cafe` dispara `soluble` con «instantáneo» (5: «Apresto instantáneo para
+planchado», «Sopinstant Crema de pollo»); `aceite` dispara `orujo` en **licores** de
+crema de orujo y `virgen` en la marca «Virgen del Brezo» (9); `azucar` dispara dentro
+de la negación —«bajo en azúcares», «0 % azúcar»— (4); e `integral` dispara en «vino
+blanco» (1). **No se arregla aquí a propósito**: `core/atributos.py` mueve los ejes
+contradictorios de todo el catálogo y la barra pide 0, así que eso es un trabajo con
+su propia medida.
+
+Y una precaución que se midió en vez de suponerla: 12 de los 27 enunciados llevan
+dentro el patrón de la lista, así que el experimento podría estar midiendo un espejo.
+No lo está: donde copia saca **68,1 %** y donde no copia **76,8 %** (no se distingue
+la diferencia, pero no hay indicio de inflado).
+
+**Lo que queda, de más barato a más caro.** (1) Arreglar las listas sobre-disparadas y
+volver a correr el mismo banco, que es el mismo comando. (2) Las 19 opciones de
+pasillo (`docs/JEV.md` §5), con las 881 claves ya mapeadas de banco: ~30 minutos de
+CPU, y sin medirlo **no lo sé**. (3) Afinar con nuestras etiquetas, que es donde su
+tarjeta dice que está la puntería — y eso necesita una GPU que no está en casa, así
+que es una decisión del dueño, no un paso técnico.
+
+**Lo que NO cambia.** El 64 % de lo que se escapa sigue siendo aritmética de envases
+(`docs/JEV.md` §2); el juez de pares sigue siendo el 20 % detrás del canal de
+vectores; las ofertas siguen siendo 20 textos; y **nada de esto entra en la tarea de
+las 06:00**: `laya` no es dependencia del proyecto (se importa dentro de la función
+que mide, y `tests/test_laya_ejes.py` lo fija).
+
+Lo medido, con la receta reproducible, está en **`docs/LAYA.md`**; el instrumento es
+`projects/cesta/laya_ejes.py` (corre sin modelo con `--sin-modelo`); y los listados
+enteros de desacuerdos e invenciones, en `data/laya_ejes.json`.
+
 ---
 
 ## Antes de tocar nada

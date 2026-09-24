@@ -7,6 +7,15 @@
 >
 > Fecha del estudio: **2026-09-23** · Raíz: `F:\aprendizaje\scrap`
 
+> **Actualización del 24 de septiembre de 2026 — el bloqueo del acceso ya no existe.**
+> Los pesos abiertos de **Laya** (Apache 2.0, `convaiinnovations/laya`) hacen el mismo
+> trabajo, se instalan y corren **en este PC**, y el experimento del §4 **se ha hecho
+> con ellos**: **73,1 % de acuerdo contra la barra de 97 %**, con dos fallos
+> sistemáticos que su propia tarjeta documenta. Todo el detalle, con la receta
+> reproducible, está en **`docs/LAYA.md`**. Lo que sigue valiendo de aquí, palabra por
+> palabra, es el §2 (lo que estos modelos no saben hacer) y el §7. Este documento se
+> deja como estaba: es el registro de lo que se midió el 23.
+
 **De dónde sale esto.** Los dos sitios que se proponen abajo —los ejes de
 atributo y las categorías sin pasillo— **los identificó primero la revisión
 paralela** (`Claude outputs/JEV.md`), y este documento es su versión canónica en

@@ -361,6 +361,54 @@ en caliente (lo que vive alguien)  13 ms (0-16)
 
 ---
 
+## El banco de ejes contra un modelo: `projects/cesta/laya_ejes.py`
+
+```
+uv run python -m projects.cesta.laya_ejes --sin-modelo     # solo el banco, sin nada instalado
+```
+
+Eso ultimo no necesita ni modelo ni red: lee el gold, coge hasta 8 nombres por cada
+(eje, valor) que las listas a mano de `core/atributos.py` **ya declaran**, y enseña el
+banco. Es la mitad barata del experimento de `docs/LAYA.md`, y sirve para cualquier
+modelo al que se le quiera preguntar lo mismo.
+
+El dia que haya un modelo instalado, la receta entera esta en la cabecera del modulo.
+En corto, y **fuera del entorno del proyecto**:
+
+```powershell
+$d = "$env:TEMP\laya-prueba"
+uv venv "$d\venv" --python 3.12
+uv pip install --python "$d\venv\Scripts\python.exe" laya duckdb tzdata
+$env:USE_TF='0'; $env:HF_HOME="$d\hf"     # USE_TF=0: sin el, transformers busca TensorFlow
+& "$d\venv\Scripts\python.exe" -m projects.cesta.laya_ejes --por-valor 8 --json data\laya_ejes.json
+```
+
+**`laya` no entra en `pyproject.toml`**, y no es un descuido: son 2,1 GB con torch y la
+cadena de las 06:00 no puede depender de eso. Por eso se importa **dentro** de la
+funcion que mide, y `tests/test_laya_ejes.py` comprueba que importar el modulo no lo
+arrastra. Los tres paquetes de arriba son el minimo medido: `tzdata` es lo que pide
+`core/config.py` en un entorno sin la zona horaria del sistema.
+
+Con el modelo delante, medido el 24 de septiembre de 2026 (gold del 24, 215 nombres,
+316 declaraciones, CPU):
+
+```
+acuerdo sobre lo declarado   231  (73.1 %  -- la barra pide 97 %)      2,16 s por peticion
+generosidad del enunciado: 12 de 27 valores llevan dentro un patron de la lista
+    donde el enunciado copia el patron       135 pares,  68.1 % de acuerdo
+    donde el enunciado no copia nada         181 pares,  76.8 % de acuerdo
+```
+
+Lo que hay que mirar de esa salida, en este orden: el **acuerdo**, las **abstenciones**
+(no es lo mismo decir «no lo dice» que decir otro valor), las **declaraciones donde la
+lista calla** —que son las que cortarian comparaciones si entraran como guarda—, y por
+ultimo los dos listados enteros del JSON (`desacuerdos` y `todas_las_invenciones`), que
+estan para poder auditar uno a uno sin volver a correr el modelo. **Un desacuerdo es o
+un fallo del modelo o un fallo de la lista**, y en la primera pasada 27 de los 85 eran
+nuestros.
+
+---
+
 ## `pipeline --rehacer-historico` — rehace **la serie de precios** desde bronze
 
 ```
