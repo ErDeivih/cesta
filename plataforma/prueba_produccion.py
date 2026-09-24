@@ -108,6 +108,22 @@ def main() -> int:
         comprueba("no se juzgan aquí" in pagina.inner_text("main"),
                   "y la de ofertas dice cuantas no se juzgan (el campo nuevo de la API)")
 
+        print("\n== el material de aprendizaje, servido")
+        carga("/aprende/")
+        texto = pagina.inner_text("main")
+        comprueba("Aprender datos con un proyecto de verdad" in texto,
+                  f"el temario se sirve en /aprende/ (lei: {texto[:40]!r})")
+        comprueba(pagina.locator("#buscar").count() == 1, "y trae su buscador")
+        comprueba(pagina.locator("ol.temario li").count() >= 8,
+                  f"con los capitulos del curso ({pagina.locator('ol.temario li').count()})")
+        carga("/aprende/04-emparejar-productos.html")
+        comprueba(pagina.locator("article table").count() >= 1,
+                  "un capitulo se lee: pintan las tablas")
+        comprueba(pagina.locator("article pre").count() >= 2,
+                  "y los bloques de codigo")
+        comprueba(pagina.locator("aside.lateral a[href^='#']").count() >= 3,
+                  "con su indice lateral")
+
         print("\n== la primera vez, con una cuenta de verdad (barra b)")
         carga("/cesta")
         # La cuenta puede quedar de una pasada anterior que se cortara: se intenta
@@ -158,11 +174,37 @@ def main() -> int:
         comprueba("No he podido" not in texto, "sin un error rojo al leer")
 
         print("\n== pregunta 3: tachar, y las dos secciones (barra c)")
-        pagina.get_by_role("checkbox").first.click()
-        pagina.wait_for_timeout(2500)
+        # **Se deja la lista con algo de los dos lados**, en vez de suponer como la dejo la
+        # pasada anterior: si hay menos de dos lineas se anade otra, y si no hay nada tachado
+        # se tacha una. La version anterior pulsaba la primera casilla y la cuenta podia
+        # venir con lineas ya tachadas -- pulsarla entonces *destacha*, y la comprobacion
+        # fallaba con la aplicacion bien (medido el 24 de septiembre de 2026).
+        carga("/cesta")
+        if pagina.locator("input[type=checkbox]").count() < 2:
+            carga("/")
+            pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
+            with contextlib.suppress(Exception):
+                pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+            pagina.locator("a[href^='/grupo/']").first.click()
+            pagina.wait_for_url("**/grupo/**", timeout=20000)
+            with contextlib.suppress(Exception):
+                pagina.get_by_role("button", name="Añadir a la cesta").first.wait_for(
+                    timeout=20000)
+            pagina.get_by_role("button", name="Añadir a la cesta").first.click()
+            pagina.wait_for_timeout(2500)
+            carga("/cesta")
+        if pagina.locator("input[type=checkbox]:checked").count() == 0:
+            pagina.locator("input[type=checkbox]:not(:checked)").first.click()
+            pagina.wait_for_timeout(2500)
+            carga("/cesta")
+        por_coger = pagina.locator("input[type=checkbox]:not(:checked)")
+        en_el_carro = pagina.locator("input[type=checkbox]:checked")
+        comprueba(por_coger.count() >= 1 and en_el_carro.count() >= 1,
+                  f"la lista tiene lineas de los dos lados "
+                  f"({por_coger.count()} por coger, {en_el_carro.count()} en el carro)")
         texto = pagina.inner_text("main")
-        comprueba("En el carro" in texto, "al tachar aparece «En el carro»")
-        comprueba("Por coger" in texto, "y sigue «Por coger», que es la otra mitad")
+        comprueba("En el carro" in texto, "y salen las dos secciones, «En el carro»")
+        comprueba("Por coger" in texto, "y «Por coger», que es la otra mitad")
         # El numero de la barra: la respuesta 3 sin abrir nada. Se lee la **chapa** (el
         # `span` con `aria-hidden` y solo digitos) y no el texto del enlace, porque
         # `innerText` pega la cifra a la etiqueta y no se distingue un 1 de un 11.
@@ -175,10 +217,9 @@ def main() -> int:
             .find(t => /^\\d+$/.test(t));
           return chapa ? Number(chapa) : 0;
         }""")
-        sin_tachar = pagina.locator("input[type=checkbox]:not(:checked)").count()
-        comprueba(sin_tachar == 1 and en_la_barra == sin_tachar,
+        comprueba(en_la_barra == por_coger.count(),
                   f"y la barra dice las que quedan por coger ({en_la_barra} contra "
-                  f"{sin_tachar})")
+                  f"{por_coger.count()})")
 
         print("\n== y la cuenta de prueba se borra")
         carga("/ajustes")

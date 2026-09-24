@@ -146,16 +146,32 @@ def test_el_sitio_no_pide_nada_por_red(sitio):
                 f"{nombre} carga un recurso de fuera ({patron}): el sitio tiene que verse sin red")
 
 
-def test_el_indice_lleva_el_buscador_dentro(sitio):
-    """El buscador va con su indice embebido: asi funciona tambien sin servidor."""
+def test_el_indice_lleva_el_buscador_al_lado_porque_el_csp_prohibe_el_en_linea(sitio):
+    """El buscador funciona sin red, y **sin un solo script en linea**.
+
+    Caddy sirve esto con `script-src 'self'`: un `<script>` incrustado no se ejecuta y el
+    buscador se queda muerto sin dar ningun error visible. Paso al desplegarlo, y lo caza
+    `plataforma/prueba_produccion.py`; aqui se vigila que el generador no vuelva a escribirlo.
+    """
     salida, paginas = sitio
     indice = _leer(salida, "index.html")
-    assert "const INDICE = [" in indice, "el buscador no tiene indice embebido"
-    assert "addEventListener('input'" in indice, "el buscador no escucha"
+    assert 'src="indice.js"' in indice and 'src="buscar.js"' in indice, (
+        "el buscador tiene que cargarse desde ficheros, no en linea")
+    assert "addEventListener('input'" in _leer(salida, "buscar.js"), "el buscador no escucha"
+    datos = _leer(salida, "indice.js")
+    assert datos.startswith("//") and "const INDICE = [" in datos, "el indice no es un fichero"
+    for nombre in paginas:
+        texto = _leer(salida, nombre)
+        # Los comentarios se quitan antes de mirar: un `<script>` **dentro de un comentario** no
+        # se ejecuta, y el primero que salto fue justo eso -- el comentario que explica esta
+        # regla. Es la misma trampa que ya tuvo `test_interfaz.py` con las palabras prohibidas.
+        sin_comentarios = re.sub(r"<!--.*?-->", " ", texto, flags=re.S)
+        en_linea = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>", sin_comentarios)
+        assert not en_linea, f"{nombre} lleva un script en linea: el CSP no lo dejaria correr"
     for nombre in paginas:
         if nombre == "index.html":
             continue
-        assert f'"{nombre}"' in indice, f"{nombre} no esta en el buscador"
+        assert f'"{nombre}"' in datos, f"{nombre} no esta en el indice del buscador"
 
 
 def test_el_sitio_esta_montado_donde_el_servidor_lo_busca():

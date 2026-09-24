@@ -293,14 +293,21 @@ PLANTILLA_INDICE = """<!doctype html>
     <ul class="temario ref">
       {referencia}
     </ul>
-    <script>const INDICE = {indice};{guion}</script>
+    <!-- **Nada de scripts en linea**: Caddy sirve esto con `script-src 'self'`, asi que un
+         `<script>` incrustado no se ejecuta y el buscador se queda muerto sin dar ningun
+         error visible. Paso al desplegarlo (lo caza `plataforma/prueba_produccion.py`) y por
+         eso el indice y el codigo van en ficheros aparte. -->
+    <script src="indice.js" defer></script>
+    <script src="buscar.js" defer></script>
   </main>
 </div>
 </body>
 </html>
 """
 
-GUION_BUSCADOR = """
+GUION_BUSCADOR = """// El buscador del material: filtra el indice que va en `indice.js` (al lado, no por red).
+// Filtrar en el navegador y no en un servidor es lo que hace que el sitio se pueda abrir con
+// doble clic, sin levantar nada, y que la busqueda sea instantanea.
 const caja = document.getElementById('buscar');
 const lista = document.getElementById('resultados');
 const plano = (t) => t.normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
@@ -490,11 +497,16 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
                 f'<li><a href="{p.fichero}">{html.escape(p.titulo)}</a>'
                 f'<span class="resumen">{html.escape(p.resumen)}</span></li>'
                 for p in referencia),
-            indice=json.dumps(indice, ensure_ascii=False),
-            guion=GUION_BUSCADOR,
         ),
         encoding="utf-8", newline="\n")
     (salida / "estilo.css").write_text(ESTILO, encoding="utf-8", newline="\n")
+    # El indice y el buscador, en ficheros aparte: con `script-src 'self'` (el CSP de Caddy)
+    # un script en linea NO se ejecuta, y el buscador se quedaria muerto sin avisar.
+    (salida / "indice.js").write_text(
+        "// El indice del buscador: una linea por pagina, generada desde los documentos.\n"
+        f"const INDICE = {json.dumps(indice, ensure_ascii=False)};\n",
+        encoding="utf-8", newline="\n")
+    (salida / "buscar.js").write_text(GUION_BUSCADOR, encoding="utf-8", newline="\n")
 
     print(f"  capitulos del curso   {len(curso):>4}")
     print(f"  documentos de la ref. {len(referencia):>4}")
