@@ -84,29 +84,38 @@ uv run python -c "import duckdb; print(duckdb.sql(\"select count(*) from 'data/g
 
 ## El mapa
 
-    El problema y los datos           01  que hay, de donde sale y que NO se puede concluir
-    Ingenieria de datos               02  capas, formatos, motores, idempotencia, la cadena diaria
-    Unidades y comparabilidad         03  por que un catalogo de envases no se puede comparar sin normalizar
-    Emparejar productos               04  resolucion de entidades: bloqueo, similitud, hungaro, ejes
-    Medir el emparejador              05  el banco de pares, el techo del bloqueo, invariantes y fugas
-    Estadistica del catalogo          06  medianas frente a medias, percentiles, muestra, recortes
-    Indices de precios                07  Jevons encadenado, formulas oficiales, y el sesgo de
-                                           encadenamiento medido (y descartado) aqui
-    Promociones y anomalias           08  que se anuncia, que sostiene el historico, y por que
-                                           la mayoria de las ofertas NO se pueden juzgar
-    Que mas se puede hacer            09  el catalogo de analisis, con lo que se puede y lo que no
-    Cuando NO usar machine learning   10  tres intentos medidos y descartados, con su numero
-    Servir los datos                11  API, PostgreSQL, migraciones, Caddy y la puerta del
-                                           despliegue (38 endpoints, y el andamio que engana)
-    Medir sin enganarse              12  diecisiete instrumentos que mintieron, y la senal que
-                                           los delata (el capitulo que mas se aprende)
+El temario está agrupado en secciones, y en el sitio se ve en el índice de la izquierda. Este es
+el orden de lectura:
 
-    Anexo 90   la investigacion sobre emparejamiento, entera y con sus fuentes
-    Anexo 91   la investigacion sobre indices de precios con datos de escaner, y la auditoria
-    Anexo 92   como se hizo esta investigacion (metodo, fechas y lo que no se pudo verificar)
+    EMPIEZA AQUI
+      00  como usar este material      el mapa, las reglas de la casa y los comandos
+    FUNDAMENTOS
+      01  el problema y los datos      que hay, de donde sale y que NO se puede concluir
+      03  unidades y comparabilidad    por que un catalogo de envases no se compara sin normalizar
+      98  glosario                     los terminos, en una linea cada uno
+    INGENIERIA DE DATOS
+      02  ingenieria de datos          capas, formatos, motores, idempotencia, la cadena diaria
+      15  scraping                     como se recoge el dato de cinco webs distintas
+      11  servir los datos             API, PostgreSQL, migraciones y despliegue
+    ALGORITMOS Y EVALUACION
+      04  emparejar productos          resolucion de entidades: bloqueo, similitud, hungaro, ejes
+      05  medir el emparejador         el banco de pares, el techo del bloqueo, invariantes
+    MEDIDAS Y AGREGADOS
+      06  estadistica del catalogo     medianas frente a medias, percentiles, muestra, recortes
+      07  indices de precios           Jevons encadenado, formulas oficiales y el sesgo medido
+      08  promociones y anomalias      que se anuncia, que sostiene el historico y que no se juzga
+    ANALISIS Y DECISION
+      09  que mas se puede hacer       12 analisis en una tabla, con lo que se puede y lo que no
+      10  cuando NO usar ML            tres intentos medidos y descartados, con su numero
+    PRACTICA DEL ANALISIS
+      12  medir sin enganarse          los instrumentos que mintieron, y la senal que los delata
+    INVESTIGACION Y ANEXOS
+      90  la investigacion sobre emparejamiento, entera y con sus fuentes
+      91  la investigacion sobre indices de precios, y la auditoria de este proyecto
+      92  como se hizo la investigacion, y que no se pudo verificar
 
-**El temario está completo.** Los doce capítulos (00 a 12, sin el 13) y los tres anexos se pueden
-leer seguidos; si algo se añade más adelante, aparecerá en el índice sin tocar código.
+Los capítulos que faltan por escribir (fundamentos del dato y el stack explicado) irán a sus
+secciones: el índice los recoge solo en cuanto existan como fichero con su cabecera.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los
