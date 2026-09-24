@@ -910,6 +910,14 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          del grupo malo: no separa) y los modelos de decision
                                          (73,1 % frente a 97 %, y 54 % de declaraciones sin
                                          prueba; dejo 27 bugs propios)
+    12  medir sin enganarse              los diecisiete instrumentos que mintieron en este
+                                         proyecto, por tipo de mentira: el andamio, el objeto
+                                         equivocado, leer antes del estado final, el filtro
+                                         que no filtra, la configuracion que nadie mira, la
+                                         prueba que pasa con produccion rota y comparar dos
+                                         cosas que no son la misma. Con la senal que delata
+                                         cada uno y las seis preguntas que auditan un
+                                         instrumento
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
