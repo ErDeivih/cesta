@@ -898,6 +898,18 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          SQL de la app: 0,38 pp como mucho, y el primer
                                          intento de medirlo que daba +8 pp porque comparaba
                                          dos cosas que no eran la misma
+    08  promociones y anomalias          el 80 % de las ofertas anunciadas no baja, pero **la
+                                         mayoria no se puede juzgar** (3.658 dependen de
+                                         cuantas compres, 288 no anuncian precio): se juzgan
+                                         1.538. La ventana legal de 30 dias no cabe en 19
+                                         dias de historico, y la regla propia esta dormida
+                                         (0 de 872.650 filas)
+    10  cuando NO usar machine learning  los tres intentos medidos y descartados: el canal de
+                                         vectores (+8 puntos de recall con 861 conflictos),
+                                         el medoide (0,511 de cohesion del banco contra 0,719
+                                         del grupo malo: no separa) y los modelos de decision
+                                         (73,1 % frente a 97 %, y 54 % de declaraciones sin
+                                         prueba; dejo 27 bugs propios)
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes

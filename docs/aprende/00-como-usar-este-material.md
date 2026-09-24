@@ -81,16 +81,18 @@ uv run python -c "import duckdb; print(duckdb.sql(\"select count(*) from 'data/g
     Estadistica del catalogo          06  medianas frente a medias, percentiles, muestra, recortes
     Indices de precios                07  Jevons encadenado, formulas oficiales, y el sesgo de
                                            encadenamiento medido (y descartado) aqui
+    Promociones y anomalias           08  que se anuncia, que sostiene el historico, y por que
+                                           la mayoria de las ofertas NO se pueden juzgar
     Que mas se puede hacer            09  el catalogo de analisis, con lo que se puede y lo que no
+    Cuando NO usar machine learning   10  tres intentos medidos y descartados, con su numero
 
     Anexo 90   la investigacion sobre emparejamiento, entera y con sus fuentes
     Anexo 91   la investigacion sobre indices de precios con datos de escaner, y la auditoria
     Anexo 92   como se hizo esta investigacion (metodo, fechas y lo que no se pudo verificar)
 
-Los capitulos que faltan (promociones, cuándo NO usar machine learning, servir los datos y medir
-sin engañarse) están en camino: cada uno necesita sus números medidos y reproducibles, y se
-escriben en ese orden. **El temario del índice es la lista completa**; aquí solo están los que
-ya se pueden leer.
+Los capitulos que faltan (servir los datos y medir sin engañarse) están en camino: cada uno
+necesita sus números medidos y reproducibles, y se escriben en ese orden. **El temario del índice
+es la lista completa**; aquí solo están los que ya se pueden leer.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los
