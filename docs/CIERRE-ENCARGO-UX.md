@@ -185,8 +185,9 @@ septiembre de 2026), no cada numero de un dia distinto:
                                                 (El 23 sep, con 39.592 grupos, eran 642 los
                                                 que mezclaban pack: el numero se mueve con el
                                                 catalogo, y por eso se dice la fecha.)
-    uv run python -m projects.cesta.emparejar --medir 65 % (1.174 de 1.813 pares de verdad,
-                                                en 359 s), y en esa misma pasada 40.110
+    uv run python -m projects.cesta.emparejar --medir **con el gold del 24 sep**:
+                                                65 % (1.161 de 1.799 pares de verdad),
+                                                en 498 s, y en esa misma pasada 44.808
                                                 grupos con 0 ejes contradictorios
     uv run python -m plataforma.prueba_e2e           de punta a punta contra PostgreSQL: el
                                                 SQL de verdad, la alerta que salta, el paso de
