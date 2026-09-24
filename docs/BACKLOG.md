@@ -889,6 +889,10 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          y las trampas con el caso que las enseño
     05  medir el emparejador             el banco de pares, el **techo del bloqueo** (75,7 %),
                                          las invariantes, la fuga de informacion y la auditoria
+    06  estadistica del catalogo         la media es 2,31x la mediana; el 79 % de los grupos no
+                                         permite comparar; el p90 de la dispersion (112 %); los
+                                         recortes contados (0,21 %) y los movimientos falsos
+                                         (1.943 de 18.185)
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
