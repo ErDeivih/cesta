@@ -147,9 +147,10 @@ oferta"*, con su trampa para demostrar que la medida mira.
                                               lo unico que queda de la puesta en
                                               produccion. Auditado el 24 sep, la paridad
                                               que falta son **tres cosas**: el interruptor
-                                              de repartir entre dos tiendas, las tres
-                                              pantallas del panel y el contador de la barra
-                                              de abajo (`docs/BACKLOG.md`, §0).
+                                              de repartir entre dos tiendas y las tres
+                                              pantallas del panel (`docs/BACKLOG.md`,
+                                              §0). El contador de la barra se hizo el
+                                              24 sep.
 
 Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de septiembre de
 2026, medidas antes y despues:

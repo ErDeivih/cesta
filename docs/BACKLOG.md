@@ -170,8 +170,12 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       (`energia_kj`, `saturadas`...) sin nombre legible ni unidad; el viejo la
       traducia y la ordenaba (`app.js:1734-1748`).
    12. **Detalles menores**: sin ejemplos pulsables en el buscador
-      (`app.js:284-295`), sin contador de lo que falta por coger en la barra de
-      abajo (`app.js:507-509`), el estado vacio del buscador no distingue "nada
+      ~~sin contador de lo que falta por coger en la barra de abajo~~ -- **hecho el 24 de
+      septiembre de 2026**: la chapa con el numero va en el icono de la cesta
+      (`usePorCoger` en `api/consultas.ts`, `Nav.tsx`), sale de las lineas sin tachar de
+      la lista de casa, comparte cache con la cesta y desaparece con cero. Medido en un
+      navegador con una cuenta nueva: 0 -> no hay chapa, 1 -> dice 1, todo tachado -> fuera
+      (`app.js:284-295`), el estado vacio del buscador no distingue "nada
       con esa palabra" de "nada con los filtros" (`app.js:325-332`), y pulsar
       "Buscar" en la barra de abajo borra la busqueda porque el enlace es `to="/"`
       sin query (`componentes/Nav.tsx:21`).

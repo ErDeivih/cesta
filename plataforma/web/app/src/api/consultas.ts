@@ -10,7 +10,7 @@
  */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { anadirLinea, crearLista, misListas, yo } from './cesta'
+import { anadirLinea, crearLista, misListas, verLista, yo } from './cesta'
 import { misAlertas } from './alertas'
 import { ErrorApi, pide } from './cliente'
 import type {
@@ -198,6 +198,36 @@ export function useAlertas() {
 export function useAvisosSinVer(): number {
   const { data } = useAlertas()
   return (data?.alertas ?? []).filter((a) => a.salto_en && !a.vista_en).length
+}
+
+/** **Cuantas lineas quedan por coger** en la lista de casa. Es el numero de la barra.
+ *
+ *  La pregunta 3 del encargo -- *"¿voy tachando bien?"* -- se contesta con este numero
+ *  **sin abrir nada**: la interfaz vieja lo ponia en el icono de la lista
+ *  (`app.js:507-509`, el `pin-lista`) y era lo unico que se podia leer de un vistazo con
+ *  el carro en la mano. Servir `dist` sin esto era quitarle a la cesta la unica senal que
+ *  se ve desde cualquier pantalla.
+ *
+ *  Se apoya en **las mismas claves de cache** que la cesta (`['yo']`, `['listas']` y
+ *  `['lista', id]`), asi que abrir la cesta no pide nada dos veces. Sin sesion no se pide
+ *  nada y devuelve 0 -- y si la peticion falla (sin cobertura) tambien, porque un cero
+ *  callado es mejor que un aviso rojo en la barra de abajo: estar sin red en el pasillo no
+ *  es un fallo de la aplicacion.
+ */
+export function usePorCoger(): number {
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  const listas = useQuery({
+    queryKey: ['listas'],
+    queryFn: misListas,
+    enabled: sesion.data?.usuario != null,
+  })
+  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  const detalle = useQuery({
+    queryKey: ['lista', listaId],
+    queryFn: () => verLista(listaId as string),
+    enabled: listaId != null,
+  })
+  return (detalle.data?.lineas ?? []).filter((l) => l.tachado_en === null).length
 }
 
 /** Anade un producto a la lista de casa, que es donde se apunta la compra.

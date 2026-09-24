@@ -223,9 +223,9 @@ comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
                 vieja hace y la nueva no desaparece de la mano de quien la usa. Auditado el
                 24 de septiembre de 2026, lo que queda son **tres cosas** (eran cuatro; la
                 de "darme de baja" se hizo ese dia, y con ella salieron dos fallos de
-                verdad): el interruptor de repartir entre dos tiendas, las tres pantallas
-                del panel (indice, posicion, ofertas dudosas) y el contador de lo que falta
-                por coger en la barra de abajo. Todo lo demas -- escribir en la lista,
+                verdad): el interruptor de repartir entre dos tiendas y las
+                tres pantallas del panel (indice, posicion, ofertas dudosas). El contador
+                de lo que falta por coger en la barra de abajo se hizo el 24 sep. Todo lo demas -- escribir en la lista,
                 registro, compartir, escribir sin cobertura, avisos, favoritos, ajustes --
                 esta en la nueva.
     cesta-panel Sigue siendo el cuadro de mando de `DASHBOARD.md`.

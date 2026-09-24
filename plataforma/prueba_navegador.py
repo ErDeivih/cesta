@@ -657,7 +657,52 @@ def main() -> int:
             comprueba(not vacia or vacia == "{}",
                       f"y la cola se vacia cuando el servidor los aplica: {vacia}")
 
-        # -------------------------------------------------------- pregunta 4: los avisos --
+        # ------------------------- el numero de la barra: cuantas quedan por coger ------
+        # La pregunta 3 -- *"¿voy tachando bien?"* -- contestada **desde cualquier pantalla**,
+        # sin abrir la lista: el numero va en el icono de la cesta. Lo tenia la interfaz vieja
+        # (`app.js:507-509`, el `pin-lista`) y era de las cosas que se pierden al servir
+        # `dist`. Se compara con las lineas sin tachar de la lista, que es de donde sale: un
+        # numero que no cuadre con lo que se ve al abrirla seria peor que no tenerlo.
+        print("\n== el numero de la barra, con lo que hay en la lista")
+        carga("/cesta")
+        with contextlib.suppress(Exception):
+            pagina.locator("input[type=checkbox]").first.wait_for(timeout=20000)
+        pagina.wait_for_timeout(700)
+        # **Se destacha una a proposito.** Con la lista entera tachada (como la deja la
+        # pasada anterior) el numero esta fuera y la comprobacion seria «0 contra 0», que no
+        # prueba nada. Al terminar se vuelve a tachar, para no dejarle a la pasada siguiente
+        # una lista distinta de la que encontro.
+        marcadas = pagina.locator("input[type=checkbox]:checked")
+        destachada = False
+        if marcadas.count():
+            marcadas.first.click()
+            pagina.wait_for_timeout(1800)
+            destachada = True
+        sin_tachar = pagina.locator("input[type=checkbox]:not(:checked)").count()
+        # **Se lee la chapa, no el texto del enlace.** `innerText` del enlace pega el numero
+        # con la etiqueta -- «Cesta22 por coger» para un 2 --, y la primera version de esta
+        # comprobacion leyo 22 y dio el numero por malo. La chapa es un `span` con
+        # `aria-hidden` y solo digitos; el texto de verdad, para quien no ve el color, va en
+        # el `sr-only` que hay al lado.
+        en_la_barra = pagina.evaluate("""() => {
+          const a = [...document.querySelectorAll('nav a')]
+            .find(x => x.getAttribute('href') === '/cesta');
+          if (!a) return -1;
+          const chapa = [...a.querySelectorAll('span[aria-hidden="true"]')]
+            .map(s => (s.innerText || '').trim())
+            .find(t => /^\\d+$/.test(t));
+          return chapa ? Number(chapa) : 0;
+        }""")
+        comprueba(sin_tachar > 0 and en_la_barra == sin_tachar,
+                  f"la barra dice las que quedan por coger ({en_la_barra} contra "
+                  f"{sin_tachar} sin tachar)")
+        if destachada:
+            por_coger = pagina.locator("input[type=checkbox]:not(:checked)")
+            if por_coger.count():
+                por_coger.first.click()
+                pagina.wait_for_timeout(1800)
+
+        # ------------------------- pregunta 4: los avisos --
         print("\n== 'ha bajado algo de lo mio?'")
         t0 = time.monotonic()
         carga("/avisos")

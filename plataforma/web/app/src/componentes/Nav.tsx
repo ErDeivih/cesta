@@ -18,7 +18,7 @@
  */
 import { NavLink, useLocation } from 'react-router-dom'
 
-import { useAvisosSinVer } from '../api/consultas'
+import { useAvisosSinVer, usePorCoger } from '../api/consultas'
 import { IconoCodigoBarras, IconoLupa, IconoPanel, IconoGrafica } from './iconos'
 import { cx } from './ui'
 
@@ -37,6 +37,11 @@ function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { 
   // aviso, es una promesa. Y `vista_en` es de la persona, no de la pantalla que se
   // abre: abrirla en el autobus no puede dar por leido lo que no se ha leido.
   const sinVer = useAvisosSinVer()
+  // **Y en la cesta, cuantas quedan por coger.** Es la pregunta 3 -- *"¿voy tachando
+  // bien?"* -- contestada de un vistazo desde cualquier pantalla, sin abrir la lista. Lo
+  // tenia la interfaz vieja (`app.js:507-509`) y era de las cosas que se pierden al
+  // servir `dist`. Con cero no se pinta nada: un cero en la barra es ruido.
+  const porCoger = usePorCoger()
 
   /* Pulsar "Buscar" **estando ya en el buscador** no puede borrar la busqueda.
    *
@@ -78,6 +83,20 @@ function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { 
                 {/* Un punto no dice cuanto. El numero va para quien no ve el color:
                     el punto es la senal, y el numero es la misma senal en palabras. */}
                 <span className="sr-only">{sinVer} sin ver</span>
+              </>
+            )}
+            {a === '/cesta' && porCoger > 0 && (
+              <>
+                {/* Con el numero dentro, no un punto: **aqui el cuanto es la
+                    pregunta**. «¿Voy tachando bien?» se contesta sabiendo cuantas
+                    quedan, y un punto solo diria "queda algo". */}
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-3 -top-2 min-w-[1.05rem] rounded-full bg-sky-700 px-1 text-center text-[10px] font-semibold leading-4 text-white dark:bg-sky-400 dark:text-neutral-900"
+                >
+                  {porCoger}
+                </span>
+                <span className="sr-only">{porCoger} por coger</span>
               </>
             )}
           </span>
