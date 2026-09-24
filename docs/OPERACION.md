@@ -583,6 +583,46 @@ Una cadena que se nego a escribir a proposito -- porque el control de cobertura
 vio media tienda desaparecida -- ya devuelve error por su cuenta y no pasa por
 aqui.
 
+## Comprobar que la cosecha del dia llego entera: `verificar_ingesta.py`
+
+Los controles de la cadena diaria miran el total, las ramas que caen y los precios contra la web.
+Ninguno miraba lo mas tonto: **de lo que la cadena dio hoy, que llego a bronze**. Eso lo contesta
+
+```
+uv run python -m projects.cesta.verificar_ingesta                 # el dia de hoy
+uv run python -m projects.cesta.verificar_ingesta --fecha 2026-09-23
+uv run python -m projects.cesta.verificar_ingesta --fuente dia
+```
+
+Compara el crudo del dia contra bronze y saca, por cadena: productos declarados/guardados,
+categorias declaradas, paginas declaradas/pedidas y el estado de los enlaces (sin url, sin su
+propio id, fuera de su dominio, repetidos). **Sale 0 si todo cuadra** y, si no, cuantos problemas
+hay. Es de solo lectura: no pide nada a las cadenas.
+
+Lo que cuenta como problema y lo que no esta razonado en el propio modulo, y es la parte que hay
+que respetar si se toca:
+
+- Un producto declarado y no guardado es un problema **si nadie puede explicarlo**. Hoy los 13 que
+  faltan tienen su razon medida (3 de Aldi sin precio en su API, 7 de Carrefour en bloques de
+  recomendaciones fuera de la rejilla, 3 en paginas que Carrefour sirve sin rejilla).
+- **El enlace tiene que llevar su id donde lo construimos nosotros** (Alcampo, Aldi). Donde el
+  enlace lo da la cadena — Carrefour publica `R-<referencia>` y su `product_id` no aparece — el
+  id de dentro puede ser otro a proposito, y exigirlo daria 1.212 falsas alarmas al dia.
+- Una categoria del sitemap sin pedir **no es un problema por si sola**: la cadena puede estar
+  devolviendo 404 (DIA publica 3 direcciones muertas). El registro del dia lo dice, y
+  `auditar_recorrido.py` es quien mira las categorias del arbol.
+
+El informe del 24 de septiembre esta en `docs/VERIFICACION-INGESTA.md`, con los dos puntos ciegos
+de `verificar_precios` medidos (Aldi pinta el precio con JavaScript; la pagina de Alcampo
+devuelve el reto del WAF) y con la comprobacion en vivo de las 34 categorias de Alcampo que no se
+piden.
+
+> **Aviso:** una comprobacion **no puede escribir en lo que esta midiendo**. La pasada en vivo de
+> esas 34 categorias guardo 34 respuestas dentro de `raw/2026-09-24` (los colectores cachean ahi
+> lo que piden), y eso cambiaba la evidencia del dia: el recorrido de hoy no las pidio y el crudo
+> tiene que seguir diciendo eso. Se movieron a `data/debug/verificaciones/<fecha>/`. Si algun dia
+> se automatiza esa pasada, hay que pedirle al `Fetcher` que no guarde.
+
 ## Filas del historico sin bronze en su sitio
 
 El resumen diario lo dice solo, y distingue apartado de perdido:

@@ -1050,6 +1050,58 @@ Y una trampa de mantenimiento que conviene saber: el número del nombre del fich
 orden dentro de su sección, y ese orden es **alfabético**. Hoy funciona porque todos los capítulos
 llevan dos cifras (`09` va antes que `10`); un capítulo `100` se colaría delante de `11`.
 
+### La ingesta del día, comprobada contra las cadenas (24 de septiembre)
+
+**Por qué.** El dueño preguntó si la ingesta de hoy se había hecho bien, con las categorías y los
+productos y sus enlaces, comprobándolo **en las propias cadenas**. Los controles que había no
+contestaban eso: `runlog` mira el total, `cobertura` mira las ramas que desaparecen,
+`auditar_recorrido` mira las categorías que no se piden y `verificar_precios` sale a la calle a
+mirar precios. Lo que no se miraba en ningún sitio es lo más tonto y lo que más duele: **de los
+productos que la cadena dio hoy, cuántos están en bronze**, y **de las páginas que la cadena dice
+que tiene una categoría, cuántas se pidieron**.
+
+**Lo que se escribió.** `projects/cesta/verificar_ingesta.py`, con sus 7 pruebas en
+`tests/test_verificar_ingesta.py` y su informe en `docs/VERIFICACION-INGESTA.md`. Compara el crudo
+del día contra bronze en cuatro cosas: productos declarados/guardados, categorías, paginación
+declarada/pedida y enlaces. Sale 0 si todo cuadra.
+
+**El resultado de hoy: 0 problemas.**
+
+    3.432 respuestas · 57.616 productos declarados · 57.603 en bronze
+    13 faltan, y los 13 con explicación (3 de Aldi sin precio en su API, 7 de Carrefour
+    en bloques de recomendaciones fuera de la rejilla, 3 en páginas que su web sirve sin rejilla)
+    0 sobran  ·  0 filas sin enlace  ·  0 enlaces repetidos  ·  0 fuera de su dominio
+    paginación completa: carrefour 2.065/2.065 · dia 520/520
+
+**Y tres hallazgos que valen más que el 0:**
+
+1. **Los enlaces llevan su propio id**, que es la comprobación que faltaba el 21 de septiembre
+   (23.776 enlaces de Alcampo en 404 por guardar el `productId` interno en vez del
+   `retailerProductId`). Con una excepción medida: **Carrefour publica `R-<referencia>`**, así que
+   su `product_id` no aparece en la URL en 1.212 filas de 16.452 (7,4 %) — y ahí el enlace no lo
+   construimos nosotros, lo da la cadena, así que exigirlo daría 1.212 falsas alarmas al día.
+2. **Las 34 categorías de Alcampo que no se piden no pierden ni un producto**: se preguntó a
+   Alcampo una a una con su sesión del WAF, devolvió 477 ids en esas 34 categorías y **los 477
+   están en bronze**. Son las mismas 32 que `docs/AUDITAR-RECORRIDO.md` contaba el 17 de
+   septiembre, con los mismos nombres («Sin Gluten / Sin Lactosa», «Arroz Ecológico», «Pollo
+   Ecológico»); lo que falta no es el producto, es **la palabra que los agrupa** (navegación por
+   pasillo, no dato). La de Mercadona es la misma clase en pequeño: la categoría 491 «Pizzas
+   refrigeradas» es de tercer nivel dentro de la 138 y sus 24 productos están los 24.
+3. **Dos puntos ciegos del instrumento, dichos en voz alta.** `verificar_precios` da 10/10 en DIA,
+   9/10 en Carrefour, 9/10 en Mercadona, **3/10 en Alcampo y 0/10 en Aldi**, y esos dos números no
+   son un suspenso del dato: Aldi pinta el precio con JavaScript (su HTML de 70 KB no trae ni una
+   cifra con euro) y la página de Alcampo devuelve 2.491 bytes, que es el reto del WAF. Lo que sí
+   se comprobó: en Aldi el nombre del producto aparece en su página en 8 de 8, y en Alcampo la API
+   responde con la sesión del colector (así se comprobaron las 34 categorías). Queda apuntado que
+   la comprobación use la sesión del WAF y la API, y que diga «no puedo comprobar esto» en vez de
+   «sin precio» cuando el motivo es suyo.
+
+**Un detalle de método que hay que dejar escrito.** La comprobación en vivo de las 34 categorías
+guardó 34 respuestas dentro de `raw/2026-09-24`, y eso **ensuciaba la evidencia del día** (el
+recorrido no las pidió, y el crudo tiene que seguir diciendo eso): se movieron a
+`data/debug/verificaciones/2026-09-24/`. Un control que altera lo que está midiendo deja de ser un
+control.
+
 ### Los toques hasta cada respuesta: lo medible de la barra (a)
 
 La condicion (a) -- *"las cuatro preguntas contestadas en menos de quince segundos con el
