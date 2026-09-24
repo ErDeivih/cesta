@@ -85,6 +85,8 @@ uv run python -c "import duckdb; print(duckdb.sql(\"select count(*) from 'data/g
                                            la mayoria de las ofertas NO se pueden juzgar
     Que mas se puede hacer            09  el catalogo de analisis, con lo que se puede y lo que no
     Cuando NO usar machine learning   10  tres intentos medidos y descartados, con su numero
+    Servir los datos                11  API, PostgreSQL, migraciones, Caddy y la puerta del
+                                           despliegue (38 endpoints, y el andamio que engana)
     Medir sin enganarse              12  diecisiete instrumentos que mintieron, y la senal que
                                            los delata (el capitulo que mas se aprende)
 
@@ -92,9 +94,8 @@ uv run python -c "import duckdb; print(duckdb.sql(\"select count(*) from 'data/g
     Anexo 91   la investigacion sobre indices de precios con datos de escaner, y la auditoria
     Anexo 92   como se hizo esta investigacion (metodo, fechas y lo que no se pudo verificar)
 
-Los capitulos que faltan (servir los datos, con la API, PostgreSQL y las migraciones) está en
-camino: necesita sus números medidos y reproducibles. **El temario del índice es la lista
-completa**; aquí solo están los que ya se pueden leer.
+**El temario está completo.** Los doce capítulos (00 a 12, sin el 13) y los tres anexos se pueden
+leer seguidos; si algo se añade más adelante, aparecerá en el índice sin tocar código.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los

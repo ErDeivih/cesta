@@ -918,6 +918,16 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          cosas que no son la misma. Con la senal que delata
                                          cada uno y las seis preguntas que auditan un
                                          instrumento
+    11  servir los datos                 leer (DuckDB/Parquet, solo lectura) contra escribir
+                                         (PostgreSQL, transaccional); 38 endpoints, 23
+                                         publicos; la API que dice lo que ha hecho
+                                         (`solo_mios: false`); migraciones idempotentes y las
+                                         dos que rompieron algo; un solo origen y su CSP; y el
+                                         andamio que engana: un endpoint vacio tarda 450 ms
+                                         con TestClient frente a 9-16 ms de verdad
+
+**El temario esta completo** (00 a 12 y los tres anexos), y se leen seguidos.
+
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
