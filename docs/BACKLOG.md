@@ -713,8 +713,53 @@ Lo que **no** se ha normalizado, dicho a proposito: los saltos de linea. `core/m
 `docs/CIFRAS.md` y `docs/DIAGNOSTICO-MATCHING.md` estan en CRLF desde antes de esto, y
 cambiarlos seria un diff enorme que no arregla nada de lo que se ve en la pantalla.
 
-### Los avisos, mirados en la cadena diaria: el §6 entero (y el instrumento que mintio otra vez)
+### Puesta en produccion: la imagen, el puerto de la base y el contexto de construccion
 
+Las tres cosas que quedaban de la puesta en produccion, hechas y medidas el 24 de septiembre
+de 2026 **sobre el mismo gold del 23** (los datos no han cambiado; cambia el reloj).
+
+**1. La imagen de la API, reconstruida.** Lo que corre en el 8080 llevaba dos dias sin las
+cosas del repositorio. Medido por sus rutas, antes y despues:
+
+    /api/habituales                    404 Not Found   ->  401 «Hay que entrar primero.»
+    /api/buscar?q=lece entera          resultados: []  ->  encuentra «Leche entera» de
+                                                           MILSANI en Aldi a 0,96 EUR/l
+                                                           (con su `corregido`)
+    /api/alertas, /api/salud           401 / 200       ->  igual
+
+Y las migraciones **006** y **007** se aplicaron solas al arrancar (`almacen.migra()`), que es
+lo que se pidio comprobar antes de recrear el contenedor: `alerta` tiene ya `salto_en` y
+`salto_texto` con su indice parcial, y `lista_linea` ya **no** tiene `tachado_coherente`. Antes
+de tocar nada se comprobo lo unico que podia hacer fallar la 007 -- una fila con `tachado_por`
+sin `tachado_en`: **0**. Y la interfaz vieja, que es la que se sirve hoy, sigue funcionando con
+la API nueva: entrar, buscar y ver los resultados, comprobado en un navegador (con una cuenta
+de prueba, borrada despues; la base quedo con su usuario y su linea de siempre).
+
+**2. El puerto de la base, publicado en `127.0.0.1` y solo ahi.** Era la condicion para que el
+paso de los avisos de la cadena pudiera preguntar algo. La clave **no se copia a ningun sitio**:
+`projects/cesta/avisos.py` la lee de `plataforma/.env` -- que es de donde la saca Compose -- si
+no hay un `CESTA_POSTGRES` en el entorno. Asi la cadena de las 06:00 funciona **sin tocar
+`ejecutar.bat`** ni el Programador de tareas, y no hay una segunda copia de la clave que se
+quede vieja:
+
+    antes   [avisos] avisos: no lo se -- la base de datos no se alcanza desde aqui: ...   6,5 s
+    ahora   [avisos] avisos: 0 saltaron hoy | 0 en esta pasada de 0 miradas (11:03)      1,1 s
+
+**3. El contexto de construccion, que era el repositorio entero.** El `Dockerfile` de la API
+se construye con contexto de la **raiz** (`context: ..`), asi que Docker busca el
+`.dockerignore` en la raiz… y **no habia**: habia uno en `plataforma/`, que con ese contexto
+no se usa para nada. El daemon recibia **11 GB de `data/`**, 541 MB de `.venv` y 96 MB de
+`node_modules`, y `COPY plataforma/` metia el arbol del front dentro de la imagen de la API.
+Arreglado con un `.dockerignore` en la raiz que excluye lo que la API no necesita (`core/` y
+`plataforma/` es todo lo que copia el `Dockerfile`, y el front lo sirve Caddy desde el
+volumen). La reconstruccion tarda **segundos** en vez de minutos.
+
+Lo que queda de la puesta en produccion es una sola cosa, y es la que cambia lo que se ve:
+**cambiar el montaje de la interfaz** (`docker-compose.yml`: `./web/dist:/srv:ro` en vez de
+`./web:/srv:ro`). Antes de hacerlo hay que medir la paridad que falta, porque el dia que se
+cambie, lo que la interfaz vieja hace y la nueva no **desaparece** de la mano de quien la usa.
+
+### Los avisos, mirados en la cadena diaria: el §6 entero (y el instrumento que mintio otra vez)
 El §6 del encargo pedia cuatro cosas. Dos ya estaban desde la pasada del vigilante -- *"dejar
 el resultado guardado"* (`salto_en` y su frase, que es lo que pinta la pantalla) y *"un punto
 en el icono, y al abrirlo la frase entera"* --, y le faltaban las otras dos:

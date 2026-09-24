@@ -142,26 +142,29 @@ oferta"*, con su trampa para demostrar que la medida mira.
 
     (a) la medicion de los quince segundos    **de una persona** con un movil. No la puede
                                               hacer quien ha escrito estas pantallas.
-    la imagen de la API en produccion         **del dueno**. Hay tres cosas en el repositorio
-                                              que no estan en lo que corre: el nombre en las
-                                              alertas, la correccion de faltas y
-                                              `/api/habituales`. Al reconstruir se aplican
-                                              solas las migraciones 006 y 007.
-    el montaje de la interfaz nueva           **del dueno** (`docker-compose.yml:95`). Ya no
-                                              tiene los bloqueantes que tenia el 23 sep;
-                                              lo que falta de paridad esta listado en
-                                              `docs/BACKLOG.md` (§0).
-    que la cadena alcance PostgreSQL          **del dueno**, y es pequena. El §6 pide que el
-                                              resumen diario diga cuantas alertas saltaron, y
-                                              para eso la cadena tiene que poder preguntar: hoy
-                                              la base **no publica su puerto** (`docker-
-                                              compose.yml`: "solo lo alcanza la API"), asi que
-                                              el paso dice "no lo se" y el dia sigue. Dos
-                                              formas de arreglarlo, las dos de una linea:
-                                              publicar `127.0.0.1:5432:5432` (solo el PC, no
-                                              la red) o correr la cadena dentro de la red de
-                                              Docker. Hasta entonces el numero no esta, y se
-                                              dice que no esta.
+    el montaje de la interfaz nueva           **del dueno** (`docker-compose.yml`): cambiar
+                                              `./web:/srv:ro` por `./web/dist:/srv:ro`. Es
+                                              lo unico que queda de la puesta en
+                                              produccion, y **antes hay que medir la
+                                              paridad que falta**, porque el dia que se
+                                              cambie lo que la interfaz vieja hace y la
+                                              nueva no desaparece de la mano de quien la
+                                              usa (`docs/BACKLOG.md`, §0).
+
+Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de septiembre de
+2026, medidas antes y despues:
+
+    la imagen de la API      RECONSTRUIDA. `/api/habituales` pasó de 404 a existir, y
+                             `q=lece entera` de no encontrar nada a encontrar la leche
+                             (la correccion de faltas). Las migraciones 006 y 007 se
+                             aplicaron solas al arrancar; antes se comprobo que no habia
+                             ninguna fila que las hiciera fallar (0), y despues que la
+                             interfaz vieja -- la que se sirve hoy -- sigue entrando y
+                             buscando. Detalle y numeros: `docs/BACKLOG.md` (§0).
+    la base para la cadena   PUBLICADA en `127.0.0.1:5432`, y solo ahi (ni wifi ni
+                             Tailscale). El paso de los avisos pasó de «no lo se» en 6,5 s
+                             a «0 saltaron hoy» en 1,1 s, con la clave leida de
+                             `plataforma/.env` para no tocar `ejecutar.bat`.
 
 Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres decisiones.
 

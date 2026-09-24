@@ -316,22 +316,28 @@ pipeline"*): mira las alertas pendientes contra gold y deja en `data/avisos.json
 resumen tiene que contar. `run.py` lo llama solo, entre `emparejar` y el resumen, asi que
 **no hay que cambiar `ejecutar.bat`** ni la tarea de las 06:00.
 
-Con la base de datos delante:
+**De donde saca la base.** Si hay un `CESTA_POSTGRES` en el entorno, ese manda. Si no, lee
+`plataforma/.env` -- el fichero de Docker Compose -- y arma el DSN con la clave de ahi, contra
+`127.0.0.1:5432` (que es donde la publica `docker-compose.yml`, **solo en el PC**). Asi la
+cadena no necesita una segunda copia de la clave, que se quedaria vieja el dia que se cambie
+la de verdad. Si no hay ni entorno ni fichero, dice "no lo se" y sigue.
+
+Con la base delante, medido el 24 de septiembre de 2026 sobre el gold del 23:
 
 ```
-[avisos] avisos: 1 saltaron hoy | 0 en esta pasada de 0 miradas (19:53)
+[avisos] avisos: 0 saltaron hoy | 0 en esta pasada de 0 miradas (11:03)        1,1 s
 ```
 
-Y sin ella -- que es lo que pasa hoy en el PC, porque PostgreSQL no publica su puerto:
+Y sin ella (por ejemplo con la base parada, que es como estaba antes de publicar el puerto):
 
 ```
-[avisos] avisos: no lo se -- la base de datos no se alcanza desde aqui (la cadena corre
-         en el PC y PostgreSQL no publica su puerto): ConnectionTimeout
+[avisos] avisos: no lo se -- la base de datos no se alcanza desde aqui (mirada en
+         `plataforma/.env` y en `CESTA_POSTGRES`: ...): ConnectionTimeout         6,5 s
 ```
 
 **Devuelve 0 en los dos casos**, y eso es a proposito: detras van el resumen, la comprobacion
 de precios y `verificar_docs`, y una linea de resumen no puede contar un dia bueno como
-fallido. Tarda 6,5 s en decir que no puede (dos intentos, IPv6 e IPv4).
+fallido.
 
 Para verlo funcionando de verdad esta la prueba de punta a punta, que corre contra un
 PostgreSQL de verdad:

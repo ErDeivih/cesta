@@ -26,7 +26,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    # No se publica el puerto: solo lo alcanza la API, por la red interna.
+    # **El puerto se publica EN EL PC, y solo en el PC** (`127.0.0.1`), desde el 23 de
+    # septiembre de 2026. Antes no se publicaba: *"solo lo alcanza la API, por la red
+    # interna"*, y eso dejaba a la cadena diaria sin poder preguntar nada. Lo que hacia
+    # falta: el paso de los avisos (`projects/cesta/avisos.py`) corre en el PC a las
+    # 06:00 y tiene que mirar las alertas, que viven aqui; sin el puerto decia "no lo se"
+    # y el resumen de la manana no podia contar cuantas saltaron.
+    #
+    # `127.0.0.1` y no `5432:5432` a proposito: asi la base **no se asoma ni a la wifi ni
+    # a Tailscale**. Solo la alcanza un proceso de esta maquina, que es exactamente lo que
+    # es la cadena diaria. La API sigue entrando por la red interna (`db:5432`).
+    ports:
+      - "127.0.0.1:5432:5432"
 
   api:
     build:

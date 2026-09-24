@@ -30,6 +30,8 @@ que de verdad se viene a ver a las 06:00.
 from __future__ import annotations
 
 import json
+import os
+from dataclasses import replace
 from datetime import datetime
 
 from core import config
@@ -51,8 +53,50 @@ ESPERA = 3.0
 
 # Como se dice que no se pudo. Se guarda en el fichero y se imprime, para que el
 # resumen no tenga que adivinar por que no hay numeros.
-SIN_BASE = ("la base de datos no se alcanza desde aqui (la cadena corre en el PC y "
-            "PostgreSQL no publica su puerto)")
+SIN_BASE = ("la base de datos no se alcanza desde aqui (mirada en `plataforma/.env` y en "
+            "`CESTA_POSTGRES`: si el puerto de la base no esta publicado en 127.0.0.1, "
+            "este paso no llega)")
+
+# El fichero de Compose, que es donde vive la clave de la base.
+ENV_DE_COMPOSE = config.RAIZ / "plataforma" / ".env"
+
+_ya_mirado = False
+
+
+def dsn_de_casa() -> str | None:
+    """El DSN de la base de casa tal como la ve **este PC**, o `None` si no se sabe.
+
+    `CESTA_POSTGRES` manda: si esta puesto, ese es el DSN y no se busca nada mas.
+
+    Si no esta, se lee `plataforma/.env` -- el fichero de Docker Compose -- y se arma el
+    DSN con la clave de ahi. Es lo que hace que la cadena de las 06:00 funcione **sin
+    tocar `ejecutar.bat`**: el paso de los avisos corre en el PC y la base en Docker, y
+    desde el 23 de septiembre de 2026 el puerto esta publicado en `127.0.0.1`
+    (`docker-compose.yml`), asi que se llega.
+
+    **La clave no se copia a ningun sitio.** Escribirla en el `.bat` o en una variable de
+    entorno del Programador de tareas seria una segunda copia que se queda vieja el dia
+    que se cambie la de verdad -- y la de verdad es la del `.env`, que es de donde la lee
+    Compose para arrancar la base. Si el fichero no esta o no tiene la clave, se devuelve
+    `None` y el paso dice "no lo se", que es lo honesto.
+    """
+    if os.environ.get("CESTA_POSTGRES"):
+        return None                 # ya hay uno puesto: no se busca nada mas
+    try:
+        texto = ENV_DE_COMPOSE.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    clave = ""
+    for linea in texto.splitlines():
+        limpia = linea.strip()
+        if limpia.startswith("#") or "=" not in limpia:
+            continue
+        nombre, _, valor = limpia.partition("=")
+        if nombre.strip() == "CESTA_CLAVE_DB":
+            clave = valor.strip().strip('"').strip("'")
+    if not clave:
+        return None
+    return f"postgresql://cesta:{clave}@127.0.0.1:5432/cesta"
 
 
 def una_pasada(momento: datetime | None = None) -> dict:
@@ -68,6 +112,14 @@ def una_pasada(momento: datetime | None = None) -> dict:
     """
     cuando = momento or config.ahora_local()
     mio = not almacen.arrancado()
+    # **La base de casa, si no hay un DSN puesto en el entorno.** Se hace antes de
+    # `arranca()` y una sola vez por proceso: el pool se construye con `AJUSTES.postgres`,
+    # asi que despues de arrancarlo ya no serviria de nada.
+    global _ya_mirado
+    if not _ya_mirado:
+        _ya_mirado = True
+        if (dsn := dsn_de_casa()) is not None:
+            almacen.AJUSTES = replace(almacen.AJUSTES, postgres=dsn)
     try:
         almacen.arranca(espera=ESPERA)
         r = vigilante.una_pasada()

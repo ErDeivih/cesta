@@ -1,0 +1,28 @@
+# Lo que NO entra en el contexto de construccion de la imagen.
+#
+# **Este es el fichero que cuenta, y llego tarde.** El `Dockerfile` de la API se construye
+# con contexto de la **raiz del repositorio** (`plataforma/docker-compose.yml`: `context: ..`),
+# asi que Docker busca el `.dockerignore` en la raiz. Habia uno en `plataforma/`, que con ese
+# contexto **no se usa para nada**: el daemon recibia el repositorio entero -- 11 GB de
+# `data/`, 541 MB de `.venv`, 96 MB de `node_modules` -- y `COPY plataforma/` metia el arbol
+# del front dentro de la imagen de la API.
+#
+# Nada de esto lo necesita la API: sirve JSON y lee `core/` y `plataforma/sql/*.sql`. El front
+# lo sirve Caddy desde el volumen (`./web/dist:/srv:ro`, o `./web:/srv:ro` mientras tanto), no
+# la imagen.
+**/__pycache__
+**/*.pyc
+.venv
+.ruff_cache
+.pytest_cache
+.mypy_cache
+data
+docs
+notebooks
+.git
+.gitignore
+# El front entero: la API no lo usa, y `web/app/node_modules` son 96 MB.
+plataforma/web
+# Y lo que solo existe en la maquina del dueno.
+*.log
+data/avisos.json

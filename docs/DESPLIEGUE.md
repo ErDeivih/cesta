@@ -196,3 +196,29 @@ Es una decision coherente: lo importante es saber que se ha decidido.
     7  Escritura sin conexion en el movil.
 
 Los pasos 1 a 3 son lo que hay que tener antes de ensenarselo a nadie.
+
+---
+
+## 8. Estado del montaje (24 de septiembre de 2026)
+
+Lo que hay montado de verdad, y lo que falta. El detalle de cada cosa, con sus numeros y su
+comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
+
+    cesta-db    **Publica su puerto en 127.0.0.1:5432, y solo ahi** (ni wifi ni Tailscale).
+                No es para nadie de fuera: es para la **cadena diaria**, que corre en el
+                PC y tiene que mirar las alertas para que el resumen de las 06:00 diga
+                cuantas saltaron (`projects/cesta/avisos.py`, que lee la clave de
+                `plataforma/.env` y asi no necesita una segunda copia). Antes decia
+                "no lo se"; desde el 24 sep dice el numero.
+    cesta-api   Imagen **reconstruida** el 24 sep: la que corria llevaba dos dias sin la
+                correccion de faltas, sin `/api/habituales` y sin el vigilante de los
+                avisos. Al arrancar se aplicaron solas las migraciones 006 y 007.
+                El `.dockerignore` esta **en la raiz**, no en `plataforma/`: el contexto de
+                construccion es la raiz (`context: ..`), asi que el de `plataforma/` no se
+                usaba para nada y el daemon recibia los 11 GB de `data/` y los 96 MB de
+                `node_modules`.
+    cesta-web   Sirve la interfaz **vieja** (`./web:/srv:ro`). Cambiar el montaje a
+                `./web/dist:/srv:ro` es la ultima cosa que queda, y no es un paso
+                automatico: **antes hay que medir la paridad que falta**, porque lo que la
+                vieja hace y la nueva no desaparece de la mano de quien la usa.
+    cesta-panel Sigue siendo el cuadro de mando de `DASHBOARD.md`.
