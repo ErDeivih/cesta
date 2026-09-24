@@ -10,6 +10,9 @@ Este capítulo es el de la estadística que de verdad se usa en un proyecto de d
 bien una distribución, elegir el estadístico correcto y saber cuándo un número no significa
 nada por falta de muestra**. Todo con los números de hoy y la consulta que los saca.
 
+Las fórmulas --media, mediana, percentil, media recortada, coeficiente de variación, IQR, MAD y
+error típico-- están en el **anexo 93**, apartado 4.
+
 ## 1. La forma de la distribución, y por qué la media no sirve
 
 Precio por unidad de los 45.884 productos comparables del catálogo, en céntimos

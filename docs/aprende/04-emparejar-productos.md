@@ -20,6 +20,10 @@ un emparejador ingenuo compararía 1,09 €/l con 1,05 €/l (correcto) y con 1,
 6 (mal, si no normaliza). Comparar mal aquí no da un error pequeño: da «te ahorras 5,25 €» en
 la ficha de la leche.
 
+Este capítulo cuenta **qué decide** cada paso. Las fórmulas --Dice, el IDF, la mezcla con los
+trigramas, la ganancia del reparto húngaro y los cuatro frenos-- están una a una en el
+**anexo 93**, con sus símbolos y el número que dan sobre este catálogo.
+
 ## 1. La teoría, en cuatro pasos
 
 Todo sistema de *entity resolution* serio tiene las mismas cuatro etapas, y conviene

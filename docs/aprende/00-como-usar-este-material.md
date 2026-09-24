@@ -118,9 +118,11 @@ el orden de lectura:
       90  la investigacion sobre emparejamiento, entera y con sus fuentes
       91  la investigacion sobre indices de precios, y la auditoria de este proyecto
       92  como se hizo la investigacion, y que no se pudo verificar
+      93  las formulas                   todas, con sus simbolos, su origen y el numero que dan hoy
 
 Si vas a leer dos capítulos y parar, que sean el 13 (qué es un dato) y el 12 (cómo se mide sin
-engañarse): el resto se apoya en esos dos.
+engañarse): el resto se apoya en esos dos. Y cuando te preguntes «¿y ese 0,55 de dónde sale?», la
+respuesta está en el 93, que es el capítulo para volver.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los

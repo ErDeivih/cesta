@@ -10,6 +10,10 @@ en_una_frase: Casi todas las promociones de este catálogo no se pueden juzgar c
 capítulo es el de la verificación: cómo se decide si un descuento existe, por qué la mayoría de
 las promociones anunciadas **no se pueden juzgar** con un solo precio, y qué dice la norma.
 
+Las fórmulas --el descuento, el equivalente por unidad comprada del 2x1 y del 3x2, la mediana
+móvil del «precio de siempre» y las ventanas de 30 y 90 días-- están en el **anexo 93**,
+apartado 7.
+
 ## 1. El problema, en dos frases
 
 Un cartel dice «−50 %». Para comprobarlo hacen falta dos cosas: **el precio de referencia** (lo

@@ -11,6 +11,10 @@ Comparar 1,09 € de una botella de leche con 0,89 € de un brik de 200 ml no d
 da un disparate. Este capítulo es el de la normalización, y es el que más veces salva al
 proyecto de decir una tontería.
 
+Las fórmulas --la regla de tres del precio por unidad, las conversiones de unidad canónica, el
+peso con el que se elige la unidad que manda en un grupo y el factor 30 que prohibe comparar--
+están en el **anexo 93**, apartados 6 y 9.
+
 ## 1. El problema, con el caso que lo enseñó
 
 En la ficha de un azafrán de 0,4 g, la aplicación llegó a decir **«te ahorras 6.872 €/kg»**. Los

@@ -11,6 +11,9 @@ capítulo es el de la medida agregada: **cómo se construye un índice con datos
 dicen las fuentes oficiales, y qué se ha medido aquí (incluido un sesgo conocido, comprobado y
 **descartado con números**).
 
+Las cinco fórmulas --Carli, Dutot, Jevons, Laspeyres, Paasche y Fisher-- con sus símbolos, y la
+del encadenado que se usa aquí, están en el **anexo 93**, apartado 5.
+
 ## 1. Las fórmulas, y por qué la elección no es un detalle
 
 Tres familias, y la diferencia entre ellas no es estética:

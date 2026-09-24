@@ -10,6 +10,9 @@ El capítulo anterior explicaba el método. Este explica lo que casi nadie hace 
 si funciona**. Y aquí es donde un proyecto de datos se separa de una demo, porque medir mal es
 peor que no medir: da confianza.
 
+Las fórmulas de este capítulo --recall, precisión, F1, la completitud de pares y el intervalo de
+Wilson para saber cuánto puede bailar una tasa-- están en el **anexo 93**, apartado 3.
+
 ## 1. La verdad de referencia, y por qué es barata
 
 Para medir hace falta saber la respuesta correcta, y eso normalmente cuesta dinero (etiquetar a

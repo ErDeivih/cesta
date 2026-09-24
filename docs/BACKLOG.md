@@ -876,7 +876,7 @@ anclas a los encabezados, y genera un índice con buscador **embebido** (funcion
 (`markdown-it-py`, `linkify-it-py`) en un extra nuevo `docs`: el scraper y la API no los
 necesitan, y si faltan el comando dice la instrucción exacta.
 
-**Lo que ya está escrito** (20 capítulos en 8 secciones y 32.143 palabras, y el temario completo
+**Lo que ya está escrito** (21 capítulos en 8 secciones y 36.187 palabras, y el temario completo
 en el índice):
 
     00  como usar este material          el mapa, las reglas de la casa, los comandos
@@ -927,7 +927,7 @@ en el índice):
                                          andamio que engana: un endpoint vacio tarda 450 ms
                                          con TestClient frente a 9-16 ms de verdad
 
-**Y los cuatro que cierran el material** (escritos después, y son los que más se van a leer):
+**Y los cinco que cierran el material** (escritos después, y son los que más se van a leer):
 
     13  fundamentos del dato             que es un dato: valor, unidad, momento y procedencia; el
                                          grano y como se comprueba (0 duplicados sobre la clave);
@@ -955,9 +955,20 @@ en el índice):
                                          2.646 -> 91)
     98  glosario                         todo el vocabulario del material, en una linea cada uno,
                                          agrupado por tema y con el capitulo donde se explica
+    93  las formulas                     **todas** las formulas del proyecto, una a una: que
+                                         significa cada simbolo, de donde sale y el numero que da
+                                         hoy. Dice y Jaccard (y por que Dice: 0,600 contra 0,429
+                                         con el mismo ejemplo), el IDF (`ln(n/(1+c))+1`, de 1,000
+                                         a 8,917 segun la palabra), la mezcla con los trigramas y
+                                         su aritmetica (0,55/0,85 = 0,647), el reparto hungaro y
+                                         su ganancia (`max(0, s-umbral)`), los cuatro frenos, el
+                                         recall y el intervalo de Wilson (64,5 % +- 2,2 puntos),
+                                         las cinco formulas de indices de precios, el dinero en
+                                         centimos (`0,1+0,2`), la nota de calidad con sus pesos y la
+                                         tabla de las constantes con el valor de cada una
 
-**El temario esta completo**: 20 capitulos en 8 secciones (00 a 15 y los tres anexos), y se leen
-seguidos. Aquí van el de análisis y los tres anexos, para que la lista no se corte:
+**El temario esta completo**: 21 capitulos en 8 secciones (00 a 15 y los cuatro anexos), y se leen
+seguidos. Aquí van el de análisis y los tres primeros anexos, para que la lista no se corte:
 
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
@@ -1034,6 +1045,12 @@ pruebas de `tests/test_aprende.py` —incluida la nueva: **todo capítulo declar
 **La legibilidad, mejorada a propósito.** El encargo pedía que se leyera como la documentación de
 una empresa grande y que lo técnico se entendiera sin ser del oficio. Lo que se cambió, y se
 puede ver abriendo el sitio:
+
+0. **El anexo 93, «Las fórmulas, una a una»**: el capítulo que faltaba para que esto sea material
+   de estudio y no un diario. Reúne todas las fórmulas que usa el proyecto con el significado de
+   cada símbolo, de dónde sale cada una y el número que produce hoy, más una tabla con las trece
+   constantes y lo que gobierna cada valor. Los capítulos 03 a 08 apuntan a su apartado, así que
+   quien lea «listón de 0,55» tiene a un clic por qué es 0,55 y qué pasaría con otro número.
 
 1. **Recuadro «En una frase» en los 20 capítulos**, justo debajo del título: es la línea que se
    lee desde el móvil, y la única que hay que entender si no se lee nada más. Vive en la cabecera
