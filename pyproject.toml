@@ -25,6 +25,13 @@ plataforma = [
   "psycopg[binary,pool]>=3.2",
   "argon2-cffi>=23",
 ]
+# La web de aprendizaje (`plataforma/aprende.py`, `docs/aprende/`). Son dos paquetes
+# **puros de Python**: no compilan nada, no necesitan navegador y el sitio que generan se
+# abre sin servidor. Van aparte para que ni el scraper ni la API los arrastren.
+docs = [
+  "markdown-it-py>=3.0",
+  "linkify-it-py>=2.0",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.5", "ipykernel", "httpx>=0.27"]

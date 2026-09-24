@@ -50,6 +50,55 @@ el uvicorn del PC, donde polars si esta. Las dos se han arreglado en el mismo si
 estaba el fallo: el numero compartido se mudo a `core/comparacion.py` (que la API si puede
 importar) y `tests/test_imagen_api.py` ahora mira **todos** los imports, esten donde esten.
 
+## El material de aprendizaje: `plataforma/aprende.py`
+
+El proyecto tiene 1,1 MB de documentos (el registro del día a día, los informes, la operación)
+y, aparte, **un curso** en `docs/aprende/`: capítulos en orden que explican la parte técnica y
+la teórica con los números medidos de aquí como caso práctico. `plataforma/aprende.py` los
+junta y los pinta como un sitio que se puede leer:
+
+```bash
+uv run --extra docs python -m plataforma.aprende          # escribe plataforma/web/aprende/
+uv run --extra docs python -m plataforma.aprende --salida otra/carpeta
+```
+
+El extra `docs` son dos paquetes **puros de Python** (`markdown-it-py`, `linkify-it-py`); el
+scraper y la API no los necesitan, y si faltan el comando lo dice con la instrucción exacta en
+vez de reventar.
+
+> **Trampa de `uv sync`, y costó un entorno roto.** `uv sync --extra docs` deja el entorno con
+> **eso y nada más**: quita el extra `plataforma` (FastAPI, argon2) y media suite empieza a
+> fallar con `ModuleNotFoundError`. Hay que pedir los dos a la vez:
+>
+> ```bash
+> uv sync --extra plataforma --extra docs      # o --all-extras
+> ```
+>
+> Y si al sincronizar sale *«failed to remove file …_ffi.pyd: Acceso denegado»*, es que había
+> un proceso del proyecto usando el entorno (una API de pruebas, el servidor de desarrollo).
+> Se para ese proceso y se reinstala la pieza: `uv sync --reinstall-package
+> argon2-cffi-bindings --extra plataforma --extra docs`. Un `.pyd` bloqueado deja el paquete a
+> medias y el error que sale después («cannot import name 'ffi'») no dice nada de la causa.
+
+Se lee de dos maneras, y las dos importan:
+
+- **En el PC, sin servidor**: `plataforma/web/aprende/index.html`, con doble clic. El buscador
+  lleva su índice embebido, así que funciona desde `file://` y no pide nada por red.
+- **Desde el móvil**: `http://<el-PC>:8080/aprende/`, servido por Caddy. El montaje está en
+  `docker-compose.yml` (`./web/aprende:/aprende:ro`) y la ruta en el `Caddyfile`
+  (`handle_path /aprende/*`). **Va fuera de `/srv` a propósito**: `/srv` está montado de solo
+  lectura, y un montaje anidado dentro de otro de sólo lectura **no se puede crear** — el
+  contenedor no arranca (`read-only file system`). Se descubrió al desplegarlo, y lo vigila
+  `tests/test_aprende.py`.
+
+Regenerar el material después de tocar un documento es volver a lanzar el comando: no hay que
+reconstruir ninguna imagen, porque el sitio se monta. `docs/` es la fuente y el HTML es
+desechable: si algo está mal, está mal en el markdown.
+
+Y una regla que no se salta: **las cifras del material las vigila `verificar_docs`**, que desde
+el 24 de septiembre de 2026 mira también las subcarpetas de `docs/` (antes solo miraba el
+primer nivel, así que el curso habría quedado sin vigilancia justo cuando más crece).
+
 ## Y la interfaz, en un navegador de verdad
 
 Lo de arriba comprueba el servidor. La pantalla se comprueba con

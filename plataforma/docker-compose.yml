@@ -102,6 +102,19 @@ services:
       # interfaz vieja **no se borra**: es el plan B, y lo vigila
       # `tests/test_interfaz.py`.
       - ./web/dist:/srv:ro
+      # **El material de aprendizaje**, en `/aprende/`. Es un sitio estatico generado con
+      # `uv run --extra docs python -m plataforma.aprende` a partir de los documentos
+      # (`docs/aprende/*.md` son el curso y `docs/*.md` la referencia).
+      #
+      # Va montado **fuera de `/srv`**, en `/aprende`, y el `Caddyfile` lo sirve con
+      # `handle_path`. La primera version lo monto en `/srv/aprende` y el contenedor **no
+      # arranco**: Docker tiene que crear ese punto de montaje *dentro* de `/srv`, que ya
+      # esta montado de solo lectura, y falla con `read-only file system`. Un montaje
+      # anidado dentro de otro de solo lectura no se puede.
+      #
+      # Se monta en vez de copiarse a proposito: regenerar el material es relanzar el
+      # comando, sin reconstruir ninguna imagen.
+      - ./web/aprende:/aprende:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - datos_caddy:/data
 

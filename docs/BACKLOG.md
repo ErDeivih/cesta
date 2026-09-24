@@ -854,6 +854,72 @@ que se cambiara, lo que la interfaz vieja hace y la nueva no **desaparece** de l
 quien la usa. **Se hizo el 24 de septiembre de 2026 por la tarde, con la paridad cerrada y
 medida: ver «La interfaz nueva, servida», mas abajo.**
 
+### El material de aprendizaje, y la web de documentación
+
+**Por qué.** El proyecto llevaba **1,1 MB de documentos** (60 ficheros: el registro del día a
+día, los informes, la operación, las decisiones) y ninguna forma de leerlos como lo que son:
+un material de estudio. Faltaba lo que convierte un proyecto en algo que se puede enseñar (y
+en una destreza de portfolio): **la parte teórica escrita y con números medidos**, y un sitio
+por donde recorrerla.
+
+**Lo que se hizo.** Dos cosas separadas a propósito:
+
+    docs/aprende/*.md            el CURSO: capitulos en orden, con teoria y con los numeros
+                                 de este proyecto como caso practico
+    docs/*.md                    la REFERENCIA: todo lo demas, tal cual se escribio
+    plataforma/aprende.py        el conversor: markdown -> un sitio que se puede leer
+
+El conversor no inventa nada: lee los documentos, reescribe los enlaces entre ellos (los
+documentos se citan por nombre: `docs/BACKLOG.md`) para que funcionen como páginas planas, pone
+anclas a los encabezados, y genera un índice con buscador **embebido** (funciona desde
+`file://`, sin servidor y sin pedir nada por red). Dos paquetes puros de Python
+(`markdown-it-py`, `linkify-it-py`) en un extra nuevo `docs`: el scraper y la API no los
+necesitan, y si faltan el comando dice la instrucción exacta.
+
+**Lo que ya está escrito** (8 capítulos, y el temario completo en el índice):
+
+    00  como usar este material          el mapa, las reglas de la casa, los comandos
+    01  el problema y los datos          que publica cada cadena, cuanto ocupa cada capa, y
+                                         **que NO se puede concluir** con estos datos
+    02  ingenieria de datos              capas, Parquet, DuckDB/Polars, idempotencia, la cadena
+                                         diaria, calidad, observabilidad, coste, privacidad
+    04  emparejar productos              entity resolution: bloqueo, similitud, hungaro, ejes,
+                                         y las trampas con el caso que las enseño
+    09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
+                                         riesgo de conclusion falsa de cada uno
+    90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
+    91  anexo: la investigacion sobre indices de precios con datos de escaner, y una
+               auditoria de lo que hace este proyecto, con 12 filas y veredicto
+    92  anexo: como se hizo la investigacion, que no se pudo verificar, y un error propio
+               que enseña por que hay que citar la linea de codigo
+
+**De dónde sale lo que dicen.** El 24 de septiembre de 2026 se lanzaron **cuatro
+investigaciones** sobre fuentes públicas (2020-2026), cada una con las mismas cuatro reglas: en
+castellano, sin relleno, cada afirmación con su fuente, y «no lo sé» cuando el dato no
+aparece. Salieron **siete cosas medibles** con lo que ya hay, y la primera es la que más puede
+cambiar el proyecto: **medir la *pair completeness* del bloqueo del emparejador**, porque si el
+bloqueo ya deja fuera al 35 % de los pares ciertos, el 65 % de recall no es una nota del
+matcher sino un techo estructural.
+
+**Lo que descubrió el despliegue, otra vez.** El material se sirve en `/aprende/` del 8080. El
+primer montaje fue `./web/aprende:/srv/aprende:ro`, y **el contenedor no arrancó**: `/srv` ya
+está montado de solo lectura, y Docker no puede crear un punto de montaje dentro de otro de
+solo lectura (`read-only file system`). Se movió a `/aprende` (fuera de `/srv`) con
+`handle_path /aprende/*` en el `Caddyfile`, y `tests/test_aprende.py` fija las dos mitades de
+la configuración —el montaje y la ruta— para que no vuelvan a separarse. Es la misma clase de
+fallo que ya documenta `test_interfaz.py`.
+
+**Y un error propio, que se deja escrito.** El encargo de la investigación sobre índices
+describía el recorte de relativos como «0,5×-2×»; el código usa `1.0/3`–`3.0`
+(`plataforma/api/analisis.py:55-56`) y ningún documento decía otra cosa. La investigación lo
+detectó y lo señaló como discrepancia: un auditor que no comprueba el dato que le dan no está
+auditando. Está contado en el anexo 92.
+
+**Lo que queda de esto**: los capítulos 03 (unidades), 05 (evaluación del emparejador), 06
+(estadística), 07 (índices), 08 (promociones), 10 (cuándo no usar machine learning), 11
+(servir datos) y 12 (medir sin engañarse). Cada uno necesita sus números medidos y
+reproducibles, y se escriben en ese orden; el temario del índice ya los lista.
+
 ### Los toques hasta cada respuesta: lo medible de la barra (a)
 
 La condicion (a) -- *"las cuatro preguntas contestadas en menos de quince segundos con el

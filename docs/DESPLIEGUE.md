@@ -246,3 +246,11 @@ comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
                 Volver a la vieja es cambiar la linea por `./web:/srv:ro` y recrear la web;
                 la carpeta **no se borra**, es el plan B, y lo vigila `tests/test_interfaz.py`.
     cesta-panel Sigue siendo el cuadro de mando de `DASHBOARD.md`.
+    /aprende    El **material de aprendizaje** (`docs/aprende/`, generado por
+                `plataforma/aprende.py`), servido por Caddy desde el 24 de septiembre de 2026.
+                Montado en `/aprende` y **no** en `/srv/aprende`, y esa diferencia costo un
+                contenedor que no arrancaba: `/srv` esta montado de solo lectura, y Docker no
+                puede crear un punto de montaje dentro de otro de solo lectura
+                (`read-only file system`). El `Caddyfile` lo sirve con `handle_path /aprende/*`.
+                Regenerarlo es `uv run --extra docs python -m plataforma.aprende`, sin tocar
+                imagenes.

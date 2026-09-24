@@ -7,6 +7,16 @@
 		reverse_proxy api:8000
 	}
 
+	# El material de aprendizaje: un sitio estatico que se monta en `/aprende` (fuera de
+	# `/srv`, que esta de solo lectura: un montaje anidado dentro de otro de solo lectura no
+	# se puede crear). `handle_path` quita el prefijo antes de servir, asi que las paginas
+	# del sitio se enlazan entre si por su nombre y no por su ruta.
+	handle_path /aprende/* {
+		root * /aprende
+		try_files {path} {path}/index.html /index.html
+		file_server
+	}
+
 	handle {
 		root * /srv
 		try_files {path} /index.html

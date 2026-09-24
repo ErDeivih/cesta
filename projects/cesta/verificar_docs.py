@@ -45,7 +45,11 @@ import duckdb
 from core import config
 
 RAIZ = Path(__file__).resolve().parents[2]
-DOCS = [*(RAIZ / "docs").glob("*.md"), RAIZ / "plataforma" / "LEEME.md"]
+# **Tambien las subcarpetas**, desde el 24 de septiembre de 2026: el material de
+# aprendizaje vive en `docs/aprende/*.md` (una carpeta, para no mezclarlo con el registro
+# del dia a dia) y sus cifras son las mismas que las del resto de la casa. Si el control
+# no mirara ahi, la mitad nueva del corpus quedaria sin vigilar justo cuando mas crece.
+DOCS = [*(RAIZ / "docs").rglob("*.md"), RAIZ / "plataforma" / "LEEME.md"]
 
 # (nombre, consulta, como se escribe en los documentos, tolerancia en %)
 COMPROBACIONES = [

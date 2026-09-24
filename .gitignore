@@ -28,3 +28,10 @@ data/master/*.parcial.json.gz
 # artefacto que envejece en cada commit y que nadie lee.
 plataforma/web/app/node_modules/
 plataforma/web/dist/
+
+# La web de aprendizaje: lo que se versiona es el **material** (`docs/`, y en particular
+# `docs/aprende/`), que es la fuente. El sitio es un artefacto: se regenera entero con
+# `uv run --extra docs python -m plataforma.aprende`, y guardarlo seria versionar HTML que
+# envejece en cada commit y que nadie lee. Se sirve montado desde el PC (`/aprende`), asi que
+# existe donde tiene que existir sin estar en git.
+plataforma/web/aprende/
