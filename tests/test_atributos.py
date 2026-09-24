@@ -42,9 +42,15 @@ GOLD = Path(__file__).resolve().parents[1] / "data" / "gold" / "grupos.parquet"
 # el mismo formato -- agua de 1,5 l --, y el precio por litro se puede comparar
 # perfectamente. Lo que pasa es que "donde compro agua" acabaria recomendando nueve
 # litros frente a uno y medio, y eso es otra dimension (ver `docs/BACKLOG.md`).
+#
+# **Y subio a 661 el 24 de septiembre de 2026, sin tocar una linea del emparejador**: ese dia
+# la cadena de las 06:00 volvio a llenar gold con el bronze nuevo (44.285 grupos contra 39.592
+# del dia anterior), y con mas catalogo hay mas grupos que mezclan pack. Que un techo se mueva
+# porque se mueve el dato no invalida el techo, pero hay que decirlo: el numero viejo media el
+# catalogo de un dia, no el codigo. Los otros tres siguen igual (0, 0 y 85).
 TECHO_CONTRADICTORIOS = 0
 TECHO_DE_11_O_MAS = 0
-TECHO_QUE_MEZCLAN_PACK = 642
+TECHO_QUE_MEZCLAN_PACK = 661
 TECHO_PACK_DE_11_O_MAS = 0
 # Y este es el techo que explica por que **el pack no se usa como guarda**: codigos de
 # barras cuyo `unidades_pack` se contradice entre cadenas. Medido el 23 de septiembre de

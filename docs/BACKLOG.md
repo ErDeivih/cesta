@@ -731,6 +731,79 @@ Lo que **no** se ha normalizado, dicho a proposito: los saltos de linea. `core/m
 `docs/CIFRAS.md` y `docs/DIAGNOSTICO-MATCHING.md` estan en CRLF desde antes de esto, y
 cambiarlos seria un diff enorme que no arregla nada de lo que se ve en la pantalla.
 
+### La ficha del grupo servia campos de otra columna (y 482 grupos daban 500)
+
+Lo encontro la puerta del navegador, y no buscandolo: anadiendo la comprobacion del reparto
+entre dos tiendas salio un `FALLO` en la seccion del grupo de una sola cadena -- *"y dice por
+que no la lleva"* --, y el motivo era que **`/api/grupo/0` contestaba 500**.
+
+`catalogo.grupo()` leia cada fila **por posicion** (`f[35]`, `f[36]`...). El dia que alguien
+anadio una columna a la lista de `nuevas`, todo lo que iba detras se quedo **uno a la
+izquierda**, sin que nada avisara. Medido el 24 de septiembre de 2026 sobre el gold del 23:
+
+    482 grupos daban 500         el producto mas barato tiene `advertencias` (texto) y el
+                                 codigo hacia `(f[40] or 0) > 1`: comparar texto con un numero
+                                 revienta. Es el 1,1 % de los 44.434 grupos.
+    3.844 productos con alcohol  salian marcados como **retirados** (`es_recall` leia
+                                 `es_alcohol`): la mentira mas cara que puede decir esta
+                                 pantalla es decir que un producto esta retirado
+    341 promociones solo online  salian como alcohol, y con eso el filtro de "sin alcohol"
+                                 escondia productos que no lo son
+    544 productos                ensenaban su `peso_variacion_pct` en el sitio del `distintivo`
+    unidades_pack                no llegaba nunca a la pantalla (leia `advertencias`)
+
+Arreglado leyendo **por nombre**: los nombres los da la propia consulta
+(`cursor.description`), asi que anadir una columna no puede mover ninguna otra. Comprobado por
+HTTP: `grupo 0` pasa de 500 a **200** con sus advertencias en su sitio, y un grupo con alcohol
+da `es_alcohol: true` y **`es_recall: false`** (antes: retirado).
+
+Y con la prueba que lo habria cazado: `tests/test_campos_del_grupo.py` construye un grupo de
+mentira con **un valor distinto en cada columna** y comprueba campo a campo. Un desajuste se ve
+ahi como lo que es -- un campo con el valor de otro -- en vez de como un 500 tres capas mas
+arriba.
+
+### El numero de la barra: cuantas quedan por coger, desde cualquier pantalla
+
+La pregunta 3 del encargo -- *"¿voy tachando bien?"* -- se contesta **sin abrir la lista**: la
+chapa con el numero va en el icono de la cesta. Lo tenia la interfaz vieja en el mismo sitio
+(`app.js:507-509`, el `pin-lista`), asi que entra en la cuenta de paridad.
+
+Sale de las lineas **sin tachar de la lista de casa**, por las **mismas claves de cache** que la
+cesta (`['yo']`, `['listas']`, `['lista', id]`): abrirla no pide nada dos veces. Sin sesion no
+pide nada y devuelve 0, y si la peticion falla (sin cobertura) tambien: **un cero callado es
+mejor que un aviso rojo en la barra**, porque estar sin red en el pasillo no es un fallo de la
+aplicacion. Con cero no se pinta.
+
+Medido en un navegador con una cuenta recien creada: sin nada no hay chapa, con una linea dice
+1, y con todo tachado desaparece. Y en la puerta, en cada pasada, comparado con lo que hay en la
+lista (destacha una a proposito, para que la comprobacion no sea un "0 contra 0" que no prueba
+nada).
+
+Y la septima leccion de instrumento de la sesion: la primera version de esa comprobacion leia
+el `innerText` **del enlace** y saco **22** donde ponia 2 -- `innerText` pega la chapa con la
+etiqueta, «Cesta22 por coger» --. El numero estaba bien y el que mentia era el que miraba.
+Ahora lee la chapa (el `span` con `aria-hidden` y solo digitos) y el texto para quien no ve el
+color sigue en el `sr-only`.
+
+### El reparto entre dos tiendas ya se pintaba (y no lo sabia nadie)
+
+En la lista de paridad figuraba como que falta el reparto, y estaba hecho:
+`Cesta.tsx:1319` pinta `Repartido` cuando la API manda `repartido`, y el componente ensena el
+total, el ahorro y **cuantas cosas van a cada cadena** -- el "N en CADENA" de la interfaz
+vieja (`app.js:718`), que era lo que la hacia planificable.
+
+Lo que faltaba era la prueba, y ahora esta: la puerta intercepta `donde` con una respuesta
+puesta a mano -- porque hace falta una lista cuyos productos mas baratos esten en cadenas
+distintas, y eso no se puede pedir "que salga" en una pasada -- y comprueba que se pinta el
+titulo, el total, el ahorro, el desglose por cadena y la etiqueta **«no compensa»** cuando el
+ahorro no llega a 1,50 EUR. Medido antes: seis productos de la compra basica salen todos mas
+baratos en Alcampo, la API contesta `repartido: null` y **no hay reparto que ensenar**, que es
+lo correcto y no un fallo.
+
+Con esto, servir `dist` quitaria **una sola cosa**: las tres pantallas del panel (indice,
+posicion, ofertas dudosas). El interruptor de repartir entre dos tiendas se puede quitar
+teniendo el aviso de "no compensa": el que no quiere dos viajes ya ve cuando no los quiere.
+
 ### Puesta en produccion: la imagen, el puerto de la base y el contexto de construccion
 
 Las tres cosas que quedaban de la puesta en produccion, hechas y medidas el 24 de septiembre

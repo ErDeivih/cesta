@@ -174,13 +174,17 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 **Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
 septiembre de 2026), no cada numero de un dia distinto:
 
-    uv run pytest -q                                 829 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 838 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
-    uv run python -m projects.cesta.ejes             39.592 grupos, 0 con eje contradictorio,
-                                                0 de 11+, 642 que mezclan pack, 85 codigos
-                                                con el pack contradicho, 41 con la cadena
-                                                repetida y 0 de esas sin EAN
+    uv run python -m projects.cesta.ejes             **con el gold del 24 sep**: 44.285 grupos,
+                                                0 con eje contradictorio, 0 de 11+, 661 que
+                                                mezclan pack, 85 codigos con el pack
+                                                contradicho, 38 con la cadena repetida y 0 de
+                                                esas sin EAN.
+                                                (El 23 sep, con 39.592 grupos, eran 642 los
+                                                que mezclaban pack: el numero se mueve con el
+                                                catalogo, y por eso se dice la fecha.)
     uv run python -m projects.cesta.emparejar --medir 65 % (1.174 de 1.813 pares de verdad,
                                                 en 359 s), y en esa misma pasada 40.110
                                                 grupos con 0 ejes contradictorios

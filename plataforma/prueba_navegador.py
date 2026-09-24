@@ -33,6 +33,7 @@ mano.
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import sys
 import time
@@ -702,7 +703,57 @@ def main() -> int:
                 por_coger.first.click()
                 pagina.wait_for_timeout(1800)
 
-        # ------------------------- pregunta 4: los avisos --
+        # ------------------- el reparto entre dos tiendas: que se PINTE ------------------
+        # En la lista de paridad figuraba como que falta, y el componente existia. Se
+        # comprueba **pintado**, y con la respuesta de la API puesta a mano: hace falta una
+        # lista cuyos productos mas baratos esten en cadenas distintas, y eso no se puede
+        # pedir «que salga» en una pasada. Medido antes: seis productos de la compra basica
+        # salen todos mas baratos en Alcampo, la API contesta `repartido: null` y no hay
+        # reparto que ensenar -- que es lo correcto, no un fallo.
+        print("\n== el reparto entre dos tiendas, pintado")
+        filtro_donde = _solo_el_endpoint("donde")
+
+        def sirve(cuerpo: dict):
+            """El manejador de la ruta, con el cuerpo cerrado dentro.
+
+            **Sin argumentos por defecto.** `lambda r, c=cuerpo: ...` -- que es lo primero
+            que uno escribe para cerrar sobre una variable de bucle -- hace que Playwright
+            reviente con «Error occurred in event listener» y la pasada se muere a mitad, sin
+            decir por que. Medido aqui.
+            """
+            return lambda r: r.fulfill(status=200, body=json.dumps(cuerpo),
+                                       content_type="application/json")
+
+        for merece, etiqueta in ((True, "compensa"), (False, "no compensa")):
+            cuerpo_falso = {
+                "lineas": 6,
+                "una_tienda": [{"cadena": "alcampo", "total_cent": 1194,
+                                "total_sin_ofertas_cent": 1194, "encontrados": 6,
+                                "faltan": []}],
+                "repartido": {"cadenas": ["dia", "mercadona"], "total_cent": 998,
+                              "ahorro_cent": 196, "merece_la_pena": merece,
+                              "faltan": [], "productos": [],
+                              "reparto": {"dia": 4, "mercadona": 2}},
+                "fecha_datos": "2026-09-23",
+            }
+            pagina.route(filtro_donde, sirve(cuerpo_falso))
+            try:
+                carga("/cesta")
+                pagina.wait_for_timeout(1200)
+                cuerpo = pagina.inner_text("main")
+                comprueba("Repartido entre 2 tiendas" in cuerpo,
+                          f"el reparto entre dos tiendas se pinta ({etiqueta})")
+                comprueba("ahorras" in cuerpo and "9,98" in cuerpo,
+                          f"con su total y lo que ahorra ({etiqueta})")
+                comprueba("4 en dia" in cuerpo and "2 en mercadona" in cuerpo,
+                          f"y con cuantas cosas en cada cadena ({etiqueta})")
+                # Y si el ahorro es ridiculo se dice, en vez de empujar a dos viajes.
+                comprueba(("no compensa" in cuerpo) is (not merece),
+                          f"la etiqueta dice si merece la pena ({etiqueta})")
+            finally:
+                pagina.unroute(filtro_donde)
+
+
         print("\n== 'ha bajado algo de lo mio?'")
         t0 = time.monotonic()
         carga("/avisos")

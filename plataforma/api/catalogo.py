@@ -733,7 +733,24 @@ def grupo(grupo_id: int) -> dict | None:
                   "promo_solo_online", "es_alcohol",
                   "es_recall", "peso_variacion_pct", "distintivo", "advertencias",
                   "unidades_pack"))
-    miembros = con.execute(f"""
+    # **Por nombre, no por posicion.** Aqui habia indices (`f[35]`, `f[36]`...) y el dia que
+    # alguien anadio una columna a `nuevas` -- `es_recall` entro despues -- los de detras se
+    # quedaron **uno a la izquierda** sin que nada avisara. Medido el 24 de septiembre de 2026
+    # sobre el gold del 23, lo que aquello costaba:
+    #
+    #     482 grupos daban **500** (su producto mas barato tiene `advertencias`, que es texto,
+    #         y el codigo hacia `(f[40] or 0) > 1`: comparar texto con un numero revienta)
+    #     3.844 productos con alcohol salian marcados como **retirados** (`es_recall` leia
+    #         `es_alcohol`), que es la mentira mas cara que puede decir esta pantalla
+    #     341 promociones "solo online" salian como alcohol, y con eso el filtro de
+    #         "sin alcohol" escondia productos que no lo son
+    #     544 productos ensenaban su `peso_variacion_pct` en el sitio del `distintivo`
+    #     y `unidades_pack` no llegaba nunca a la pantalla (leia `advertencias`)
+    #
+    # Con nombres, anadir una columna no puede mover ninguna otra. La lista de nombres la da
+    # la propia consulta (`cursor.description`), asi que el codigo y el `SELECT` no pueden
+    # separarse ni por descuido.
+    consulta = con.execute(f"""
         SELECT fuente, id_fuente, nombre, marca, cantidad, unidad_canon,
                precio_cent, precio_unidad_cent, comparacion_fiable,
                calidad, calidad_origen, nutriscore, nova, ean,
@@ -741,46 +758,54 @@ def grupo(grupo_id: int) -> dict | None:
                {nuevas}
           FROM grupos WHERE grupo_id = ? AND precio_unidad_cent > 0
          ORDER BY precio_unidad_cent
-    """, [grupo_id]).fetchall()
+    """, [grupo_id])
+    nombres = [d[0] for d in consulta.description]
+    miembros = [dict(zip(nombres, fila, strict=True)) for fila in consulta.fetchall()]
     if not miembros:
         return None
 
-    def prod(f):
+    def prod(f: dict) -> dict:
         return {
-            "fuente": f[0], "id_fuente": f[1], "producto_id": f"{f[0]}:{f[1]}",
-            "nombre": f[2], "marca": f[3], "cantidad": f[4], "unidad": f[5],
-            "precio_cent": f[6], "precio_unidad_cent": f[7],
-            "comparable": bool(f[8]),
+            "fuente": f["fuente"], "id_fuente": f["id_fuente"],
+            "producto_id": f"{f['fuente']}:{f['id_fuente']}",
+            "nombre": f["nombre"], "marca": f["marca"], "cantidad": f["cantidad"],
+            "unidad": f["unidad_canon"],
+            "precio_cent": f["precio_cent"], "precio_unidad_cent": f["precio_unidad_cent"],
+            "comparable": bool(f["comparacion_fiable"]),
             # La letra sale de leer ingredientes o de ordenar por precio. Si
             # sale del precio NO es calidad: es gama, y se dice como tal. En el
             # 77 % de los casos es lo segundo, y mezclarlas produce la
             # conclusion falsa de que lo barato es peor.
-            "calidad": f[9] if f[10] and f[10].startswith("ingredientes") else None,
-            "gama": f[9] if f[10] == "precio" else None,
-            "nutriscore": f[11], "nova": f[12], "ean": f[13],
-            "imagen": f[14], "alergenos": f[15], "ingredientes": f[16],
-            "origen": f[17], "promo": f[18], "url": f[19],
+            "calidad": f["calidad"] if f["calidad_origen"]
+                       and f["calidad_origen"].startswith("ingredientes") else None,
+            "gama": f["calidad"] if f["calidad_origen"] == "precio" else None,
+            "nutriscore": f["nutriscore"], "nova": f["nova"], "ean": f["ean"],
+            "imagen": f["imagen"], "alergenos": f["alergenos"],
+            "ingredientes": f["ingredientes"],
+            "origen": f["origen"], "promo": f["promo_txt"], "url": f["url"],
             # Los sellos van con su procedencia: no es lo mismo un certificado
             # auditado que una palabra en el nombre del producto. La interfaz lo
             # dice, para no dar por seguro lo que no lo es.
-            "sellos": (f[20] or "").split(",") if f[20] else [],
-            "sellos_origen": f[21],
-            "certificados": (f[22] or "").split(",") if f[22] else [],
-            "conservacion": f[23], "es_marca_propia": f[24],
-            "nutricion": json.loads(f[25]) if f[25] else None,
-            "nutricion_por": f[26], "envase": f[27], "descripcion": f[28],
-            "tipo_producto": f[29], "dias_caducidad": f[30],
-            "peso_neto_g": f[31], "grado_alcohol": f[32],
+            "sellos": (f["sellos"] or "").split(",") if f["sellos"] else [],
+            "sellos_origen": f["sellos_origen"],
+            "certificados": (f["certificados"] or "").split(",") if f["certificados"] else [],
+            "conservacion": f["conservacion"], "es_marca_propia": f["es_marca_propia"],
+            "nutricion": json.loads(f["nutricion"]) if f["nutricion"] else None,
+            "nutricion_por": f["nutricion_por"], "envase": f["envase"],
+            "descripcion": f["descripcion"],
+            "tipo_producto": f["tipo_producto"], "dias_caducidad": f["dias_caducidad"],
+            "peso_neto_g": f["peso_neto_g"], "grado_alcohol": f["grado_alcohol"],
             # Ya viene como texto de la consulta (ver el docstring): los diez
             # primeros caracteres son la fecha, "2026-09-25".
-            "promo_hasta": f[33][:10] if f[33] else None,
+            "promo_hasta": f["promo_hasta"][:10] if f["promo_hasta"] else None,
             # Una oferta de tarjeta NO baja lo que pagas en caja: se acumula en
             # un monedero. La ficha lo dice con esas palabras.
-            "promo_club": bool(f[34]),
-            "es_alcohol": bool(f[35]), "es_recall": bool(f[36]),
-            "peso_variacion_pct": f[37], "distintivo": f[38],
-            "advertencias": (f[39] or "").split(" | ") if f[39] else [],
-            "unidades_pack": f[40] if (f[40] or 0) > 1 else None,
+            "promo_club": bool(f["promo_club"]),
+            "promo_solo_online": bool(f["promo_solo_online"]),
+            "es_alcohol": bool(f["es_alcohol"]), "es_recall": bool(f["es_recall"]),
+            "peso_variacion_pct": f["peso_variacion_pct"], "distintivo": f["distintivo"],
+            "advertencias": (f["advertencias"] or "").split(" | ") if f["advertencias"] else [],
+            "unidades_pack": f["unidades_pack"] if (f["unidades_pack"] or 0) > 1 else None,
         }
 
     productos = [prod(f) for f in miembros]
