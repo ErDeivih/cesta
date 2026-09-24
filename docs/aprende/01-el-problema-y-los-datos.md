@@ -1,3 +1,8 @@
+---
+seccion: Fundamentos
+resumen: Que publica cada cadena, cuanto ocupa cada capa y que NO se puede concluir.
+---
+
 # 01 · El problema, los datos y lo que NO se puede concluir
 
 Todo curso de datos debería empezar por aquí, y casi ninguno lo hace: **qué datos hay de
@@ -88,6 +93,11 @@ la compra, y **sin ventas ni tickets**, la frontera es esta:
 
 Esa tabla es material de portfolio por sí sola: demuestra que sabes **acotar** un problema.
 El detalle de cada fila, con las fuentes y los métodos, está en el capítulo 09.
+
+> **Trampa:** el error caro de un proyecto de datos casi nunca es un número mal calculado: es
+> **contestar una pregunta que los datos no pueden contestar**. Si alguien pide «la cuota de
+> mercado» o «la elasticidad» y no hay ventas, la respuesta profesional es esta tabla, no un
+> modelo con supuestos heroicos.
 
 ## 5. El vocabulario mínimo
 

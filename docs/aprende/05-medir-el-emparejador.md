@@ -1,3 +1,8 @@
+---
+seccion: Algoritmos y evaluación
+resumen: El banco de pares, el techo del bloqueo, las invariantes y la auditoria de fallos.
+---
+
 # 05 · Medir si el emparejador funciona (y no engañarse al medirlo)
 
 El capítulo anterior explicaba el método. Este explica lo que casi nadie hace bien: **comprobar

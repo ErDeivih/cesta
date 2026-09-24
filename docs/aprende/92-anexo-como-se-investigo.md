@@ -1,3 +1,8 @@
+---
+seccion: Investigación y anexos
+resumen: Como se investigo, que no se pudo verificar y un error propio que enseña.
+---
+
 # 92 · Anexo: cómo se hizo esta investigación
 
 Un material de aprendizaje que cita fuentes tiene que decir **de dónde salen** y **qué no se

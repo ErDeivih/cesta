@@ -55,7 +55,46 @@ importar) y `tests/test_imagen_api.py` ahora mira **todos** los imports, esten d
 El proyecto tiene 1,1 MB de documentos (el registro del día a día, los informes, la operación)
 y, aparte, **un curso** en `docs/aprende/`: capítulos en orden que explican la parte técnica y
 la teórica con los números medidos de aquí como caso práctico. `plataforma/aprende.py` los
-junta y los pinta como un sitio que se puede leer:
+junta y los pinta **con la forma de un sitio de documentación**: barra de arriba con buscador,
+índice lateral por secciones, índice de la página a la derecha, migas de pan, tarjetas de
+anterior/siguiente, botón de copiar en cada bloque de código, avisos destacados y modo oscuro.
+
+### Añadir o cambiar un capítulo
+
+Un fichero nuevo en `docs/aprende/`, con su cabecera:
+
+```markdown
+---
+seccion: Algoritmos y evaluación
+resumen: Una línea que sale en el índice, en la portada y en el buscador.
+---
+
+# 16 · El título del capítulo
+```
+
+**La sección tiene que estar en `SECCIONES`** (`plataforma/aprende.py`); si no, el capítulo sale
+en «Otros» y el generador lo avisa por consola. El número del nombre del fichero manda en el
+orden dentro de su sección. No hay que tocar el generador ni el índice: aparece solo, y lo
+comprueban las 12 pruebas de `tests/test_aprende.py` (que un capítulo sin `seccion:` no pase,
+que los enlaces entre documentos se reescriban, que el índice de la página apunte a anclas que
+existen, que no haya ni un script ni un estilo en línea, y que la referencia liste los 60
+documentos).
+
+### Los cuatro recuadros
+
+Un `blockquote` cuya primera negrita sea una de las palabras conocidas sale destacado:
+
+```markdown
+> **Nota:** matiza algo que se podría malinterpretar.
+> **Trampa:** un error que ya se cometió aquí.
+> **La lección:** la idea que merece recordarse.
+> **Regla:** una decisión del proyecto que no se salta.
+```
+
+Se hace **después** de pintar el markdown (markdown no tiene avisos) y el texto no se toca: solo
+se le pone clase. El artículo («La lección:» / «Lección:») da igual.
+
+### Regenerar y leerlo
 
 ```bash
 uv run --extra docs python -m plataforma.aprende          # escribe plataforma/web/aprende/
@@ -66,9 +105,9 @@ El extra `docs` son dos paquetes **puros de Python** (`markdown-it-py`, `linkify
 scraper y la API no los necesitan, y si faltan el comando lo dice con la instrucción exacta en
 vez de reventar.
 
-> **Trampa de `uv sync`, y costó un entorno roto.** `uv sync --extra docs` deja el entorno con
-> **eso y nada más**: quita el extra `plataforma` (FastAPI, argon2) y media suite empieza a
-> fallar con `ModuleNotFoundError`. Hay que pedir los dos a la vez:
+> **Trampa:** `uv sync --extra docs` deja el entorno con **eso y nada más**: quita el extra
+> `plataforma` (FastAPI, argon2) y media suite empieza a fallar con `ModuleNotFoundError`. Hay
+> que pedir los dos a la vez:
 >
 > ```bash
 > uv sync --extra plataforma --extra docs      # o --all-extras
@@ -83,7 +122,8 @@ vez de reventar.
 Se lee de dos maneras, y las dos importan:
 
 - **En el PC, sin servidor**: `plataforma/web/aprende/index.html`, con doble clic. El buscador
-  lleva su índice embebido, así que funciona desde `file://` y no pide nada por red.
+  lleva su índice en un fichero de al lado (`indice.js`), así que funciona desde `file://` y no
+  pide nada por red.
 - **Desde el móvil**: `http://<el-PC>:8080/aprende/`, servido por Caddy. El montaje está en
   `docker-compose.yml` (`./web/aprende:/aprende:ro`) y la ruta en el `Caddyfile`
   (`handle_path /aprende/*`). **Va fuera de `/srv` a propósito**: `/srv` está montado de solo

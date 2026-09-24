@@ -1,3 +1,8 @@
+---
+seccion: Investigación y anexos
+resumen: La investigacion sobre emparejamiento, entera y con sus fuentes.
+---
+
 # Entity resolution / record linkage / product matching: estado del arte (2024-2026) aplicado a un comparador de precios de supermercados
 
 > Contexto de referencia: pipeline Python + DuckDB + Parquet, 5 cadenas españolas, bloqueo por marca/categoría, similitud Dice ponderada por IDF + trigramas, reparto húngaro 1-a-1 por par de cadenas, unión por componentes conexas. Banco de verdad = 1.799 pares con el mismo EAN; recall actual 1.161/1.799 = 65 %.

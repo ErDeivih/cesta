@@ -1,3 +1,8 @@
+---
+seccion: Ingeniería de datos
+resumen: API, PostgreSQL, migraciones, Caddy y la puerta del despliegue.
+---
+
 # 11 · Servir los datos: API, PostgreSQL, migraciones y despliegue
 
 Un análisis que se queda en un notebook no sirve a nadie. Este capítulo es el de la última

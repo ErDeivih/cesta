@@ -1,3 +1,8 @@
+---
+seccion: Ingeniería de datos
+resumen: Capas, Parquet, DuckDB y Polars, idempotencia, calidad, coste y privacidad.
+---
+
 # 02 · Ingeniería de datos: capas, formatos, motores y la cadena diaria
 
 Este capítulo es la parte de ingeniería del proyecto: cómo entra el dato, por dónde pasa y
@@ -98,6 +103,10 @@ razón: el pipeline se queda a propósito con la instantánea más reciente de c
 añade** al histórico, así que el histórico solo vivía en un parquet que se podía perder. Ahora
 se reconstruye día a día desde `bronze` (`docs/OPERACION.md`), y eso convierte una pérdida en
 una tarde de CPU.
+
+> **Regla:** todo paso de la cadena tiene que poder correrse dos veces con el mismo resultado.
+> Un paso que no cumpla eso no es un paso: es un riesgo que se descubre el día que hay que
+> relanzar a las siete de la mañana con la web cambiada.
 
 ## 5. La cadena diaria, paso a paso
 

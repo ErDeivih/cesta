@@ -1,3 +1,8 @@
+---
+seccion: Medidas y agregados
+resumen: Jevons encadenado, las formulas oficiales y el sesgo de encadenamiento medido.
+---
+
 # 07 · Índices de precios: medir el nivel, no el caso
 
 Un producto que sube 20 céntimos no dice nada del nivel de precios de un supermercado. Este

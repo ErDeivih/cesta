@@ -1,3 +1,8 @@
+---
+seccion: Análisis y decisión
+resumen: Doce analisis en una tabla, con lo que se puede, lo que no y su riesgo.
+---
+
 # 09 · Qué más se puede hacer con estos datos (y qué no)
 
 Un proyecto de datos se juzga también por saber **dónde está su frontera**. Este capítulo es el

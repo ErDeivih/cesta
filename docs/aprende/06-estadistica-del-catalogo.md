@@ -1,3 +1,8 @@
+---
+seccion: Medidas y agregados
+resumen: Medianas frente a medias, percentiles, tamano de muestra y recortes contados.
+---
+
 # 06 · Estadística de un catálogo sucio
 
 Este capítulo es el de la estadística que de verdad se usa en un proyecto de datos: **describir

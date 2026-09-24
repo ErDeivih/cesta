@@ -1,3 +1,8 @@
+---
+seccion: Empieza aquí
+resumen: El mapa, las reglas de la casa, los comandos y como se lee esto.
+---
+
 # 00 · Cómo usar este material
 
 Esto no es la documentación de una aplicación. Es **el material de un curso** que usa un
@@ -18,7 +23,8 @@ Se lee de arriba abajo, y cada capítulo hace lo mismo:
 De dos maneras, y las dos valen:
 
 - **En el PC, sin servidor**: `plataforma/web/aprende/index.html`, con doble clic. El buscador
-  lleva su índice embebido, así que funciona sin conexión.
+  lleva su índice embebido, así que funciona sin conexión. Se navega por el índice de la
+  izquierda, y cada página tiene su propio índice a la derecha.
 - **Desde el móvil o cualquier cacharro de casa**: `http://<el-PC>:8080/aprende/`.
 
 El sitio se genera a partir de estos documentos, que son la fuente:
@@ -26,6 +32,11 @@ El sitio se genera a partir de estos documentos, que son la fuente:
 ```bash
 uv run --extra docs python -m plataforma.aprende
 ```
+
+> **Nota:** vas a encontrar cuatro tipos de recuadro, y ninguno es decoración. **Nota** matiza
+> algo que se podría malinterpretar; **Trampa** avisa de un error que ya se cometió aquí;
+> **La lección** cierra una idea que merece recordarse; y **Regla** es una decisión del proyecto
+> que no se salta. Si un recuadro no te aporta nada, sáltalo: el texto de al lado se lee igual.
 
 ## Lo que hay que saber antes de empezar
 

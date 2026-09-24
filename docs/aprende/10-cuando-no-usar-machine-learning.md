@@ -1,3 +1,8 @@
+---
+seccion: Análisis y decisión
+resumen: Tres intentos medidos y descartados, con su numero y su motivo.
+---
+
 # 10 · Cuándo NO usar machine learning (tres intentos medidos y descartados)
 
 Este capítulo es el que más valor tiene en un portfolio y el que casi nadie escribe: **tres

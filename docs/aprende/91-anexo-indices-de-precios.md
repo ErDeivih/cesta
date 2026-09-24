@@ -1,3 +1,8 @@
+---
+seccion: Investigación y anexos
+resumen: La metodologia oficial de indices y la auditoria de lo que hace este proyecto.
+---
+
 # Índice de precios con datos de escáner: teoría, práctica oficial y auditoría del proyecto
 
 **Alcance.** Reviso la metodología publicada y la contrasto con lo que hace este repositorio: `plataforma/api/analisis.py` (índice), `core/derive.py` ("precio de siempre"), `core/promos.py` (mecánicas de oferta) y `core/comparacion.py` (ventanas). Lo que afirmo del proyecto sale de leer su código, no de medir sus datos.

@@ -1,3 +1,8 @@
+---
+seccion: Medidas y agregados
+resumen: Que se anuncia, que sostiene el historico y por que la mayoria no se puede juzgar.
+---
+
 # 08 · Promociones: lo que se anuncia y lo que el histórico sostiene
 
 «Oferta» es la palabra que más se usa en un supermercado y la que menos se comprueba. Este

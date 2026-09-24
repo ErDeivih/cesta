@@ -1,3 +1,8 @@
+---
+seccion: Práctica del análisis
+resumen: Los instrumentos que mintieron en este proyecto, por tipo de mentira.
+---
+
 # 12 · Medir sin engañarse: los instrumentos que mienten
 
 Este es el capítulo más importante del material y el que no está en ningún tutorial: **cómo saber
@@ -163,3 +168,7 @@ auditarlo a él**. Las preguntas que lo hacen:
 - Y la conclusión práctica: cada vez que se arregla un instrumento en este proyecto, se escribe
   **por qué mentía** —en el código, no en un correo— para que el siguiente no lo repita. Ese
   registro es, en sí mismo, el activo más valioso del repositorio.
+
+> **La lección:** si quieres fiarte de un número, escribe **la trampa** que lo pone a prueba. Un
+> instrumento sin trampa es una opinión con formato de dato, y esa es la diferencia entre medir y
+> creer que se mide.

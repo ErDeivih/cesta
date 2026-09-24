@@ -1,3 +1,8 @@
+---
+seccion: Algoritmos y evaluación
+resumen: Resolucion de entidades: bloqueo, similitud, reparto hungaro y los ejes del nombre.
+---
+
 # 04 · Emparejar productos: el método
 
 El problema central del proyecto, y el que más enseña: **decidir cuándo dos fichas de dos
