@@ -126,8 +126,14 @@ def main() -> int:
         comprueba("Aprender datos con un proyecto de verdad" in texto,
                   f"el temario se sirve en /aprende/ (lei: {texto[:40]!r})")
         comprueba(pagina.locator("#buscar").count() == 1, "y trae su buscador")
-        comprueba(pagina.locator("ol.temario li").count() >= 8,
-                  f"con los capitulos del curso ({pagina.locator('ol.temario li').count()})")
+        # La portada lista el temario por secciones en tarjetas (`ul.tarjetas`). La comprobacion
+        # miro `ol.temario` hasta el 24 de septiembre de 2026: era la portada vieja, y desde que
+        # el sitio tiene indice por secciones daba **0** con el sitio perfecto. Una comprobacion
+        # que suspende lo que se sirve cuando esta bien es peor que no tenerla.
+        tarjetas = pagina.locator("section.bloque ul.tarjetas li").count()
+        comprueba(tarjetas >= 15, f"con los capitulos del curso ({tarjetas} tarjetas)")
+        comprueba(pagina.locator("nav.nav-lateral a[href$='.html']").count() >= 15,
+                  "y el indice lateral con las secciones y sus capitulos")
         # **Y el buscador funciona de verdad**, no solo existe. El 24 de septiembre de 2026
         # estaba muerto en produccion y no daba ningun error visible: el CSP de Caddy prohibe
         # los scripts en linea (`script-src 'self'`), y el indice iba dentro de uno. Se caza
@@ -143,8 +149,13 @@ def main() -> int:
                   "un capitulo se lee: pintan las tablas")
         comprueba(pagina.locator("article pre").count() >= 2,
                   "y los bloques de codigo")
-        comprueba(pagina.locator("aside.lateral a[href^='#']").count() >= 3,
-                  "con su indice lateral")
+        comprueba(pagina.locator("article aside.frase").count() == 1,
+                  "y el capitulo abre con su «en una frase»")
+        # El indice de la pagina (la columna de la derecha) apunta a los apartados. Se miro en
+        # `aside.lateral` hasta el 24 de septiembre de 2026, y ahi no hay anclas: el lateral
+        # enlaza paginas. El indice del capitulo vive en `aside.toc`.
+        comprueba(pagina.locator("aside.toc a[href^='#']").count() >= 3,
+                  "con su indice de apartados")
 
         print("\n== la primera vez, con una cuenta de verdad (barra b)")
         carga("/cesta")

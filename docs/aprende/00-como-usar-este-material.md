@@ -1,6 +1,7 @@
 ---
 seccion: Empieza aquí
-resumen: El mapa, las reglas de la casa, los comandos y como se lee esto.
+resumen: El mapa, las reglas de la casa, los comandos y cómo se lee esto.
+en_una_frase: Se lee de arriba abajo, cada capítulo trae la teoría, el caso con números medidos y lo que no se sabe, y todo se reproduce en este PC.
 ---
 
 # 00 · Cómo usar este material
@@ -33,10 +34,12 @@ El sitio se genera a partir de estos documentos, que son la fuente:
 uv run --extra docs python -m plataforma.aprende
 ```
 
-> **Nota:** vas a encontrar cuatro tipos de recuadro, y ninguno es decoración. **Nota** matiza
-> algo que se podría malinterpretar; **Trampa** avisa de un error que ya se cometió aquí;
-> **La lección** cierra una idea que merece recordarse; y **Regla** es una decisión del proyecto
-> que no se salta. Si un recuadro no te aporta nada, sáltalo: el texto de al lado se lee igual.
+> **Nota:** cada capítulo abre con un recuadro **En una frase**, y dentro vas a encontrar cinco
+> tipos de recuadro, y ninguno es decoración. **Nota** matiza algo que se podría malinterpretar;
+> **Aviso** señala un límite que conviene no olvidar; **Trampa** cuenta un error que ya se cometió
+> aquí; **La lección** cierra una idea que merece recordarse; y **Regla** es una decisión del
+> proyecto que no se salta. Si un recuadro no te aporta nada, sáltalo: el texto de al lado se lee
+> igual.
 
 ## Lo que hay que saber antes de empezar
 
@@ -92,11 +95,13 @@ el orden de lectura:
     FUNDAMENTOS
       01  el problema y los datos      que hay, de donde sale y que NO se puede concluir
       03  unidades y comparabilidad    por que un catalogo de envases no se compara sin normalizar
+      13  fundamentos del dato         valor, grano, clave y ausencia: que es un dato
       98  glosario                     los terminos, en una linea cada uno
     INGENIERIA DE DATOS
       02  ingenieria de datos          capas, formatos, motores, idempotencia, la cadena diaria
-      15  scraping                     como se recoge el dato de cinco webs distintas
       11  servir los datos             API, PostgreSQL, migraciones y despliegue
+      14  el stack explicado           cada pieza, por que esta y que costaria quitarla
+      15  scraping                     como se recoge el dato de cinco webs distintas
     ALGORITMOS Y EVALUACION
       04  emparejar productos          resolucion de entidades: bloqueo, similitud, hungaro, ejes
       05  medir el emparejador         el banco de pares, el techo del bloqueo, invariantes
@@ -114,8 +119,8 @@ el orden de lectura:
       91  la investigacion sobre indices de precios, y la auditoria de este proyecto
       92  como se hizo la investigacion, y que no se pudo verificar
 
-Los capítulos que faltan por escribir (fundamentos del dato y el stack explicado) irán a sus
-secciones: el índice los recoge solo en cuanto existan como fichero con su cabecera.
+Si vas a leer dos capítulos y parar, que sean el 13 (qué es un dato) y el 12 (cómo se mide sin
+engañarse): el resto se apoya en esos dos.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los

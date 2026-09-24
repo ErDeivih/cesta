@@ -1,6 +1,7 @@
 ---
 seccion: Práctica del análisis
 resumen: Los instrumentos que mintieron en este proyecto, por tipo de mentira.
+en_una_frase: Un instrumento de medida puede mentir sin dar error: esto es el catálogo de las veces que pasó aquí y la señal que lo delata.
 ---
 
 # 12 · Medir sin engañarse: los instrumentos que mienten

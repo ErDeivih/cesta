@@ -876,7 +876,8 @@ anclas a los encabezados, y genera un índice con buscador **embebido** (funcion
 (`markdown-it-py`, `linkify-it-py`) en un extra nuevo `docs`: el scraper y la API no los
 necesitan, y si faltan el comando dice la instrucción exacta.
 
-**Lo que ya está escrito** (10 capítulos, y el temario completo en el índice):
+**Lo que ya está escrito** (20 capítulos en 8 secciones y 32.143 palabras, y el temario completo
+en el índice):
 
     00  como usar este material          el mapa, las reglas de la casa, los comandos
     01  el problema y los datos          que publica cada cadena, cuanto ocupa cada capa, y
@@ -926,7 +927,37 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                                          andamio que engana: un endpoint vacio tarda 450 ms
                                          con TestClient frente a 9-16 ms de verdad
 
-**El temario esta completo** (00 a 12 y los tres anexos), y se leen seguidos.
+**Y los cuatro que cierran el material** (escritos después, y son los que más se van a leer):
+
+    13  fundamentos del dato             que es un dato: valor, unidad, momento y procedencia; el
+                                         grano y como se comprueba (0 duplicados sobre la clave);
+                                         que una clave no es unica (25.413 filas con EAN y 1.627
+                                         codigos repetidos); «no lo se» no es cero (98,8 % sin
+                                         certificados, 93,3 % sin tabla nutricional); el dinero en
+                                         centimos enteros (sumar en coma flotante desvia 1,41
+                                         centimos); los dos tiempos del dato; y las seis
+                                         dimensiones de la calidad, cada una con su numero
+    14  el stack explicado               las piezas, una a una: que resuelven, cuanto cuestan y
+                                         **que se rompe si se quitan**. Los extras de dependencias,
+                                         el Programador de tareas en vez de Airflow, el generador
+                                         propio en vez de MkDocs (el CSP prohibe el script en
+                                         linea), la tabla de los «no estan» cada uno con su
+                                         condicion de cambio, y la medida incomoda: **el 90,3 %
+                                         de gold es un experimento apagado** (190,9 MB de
+                                         embedding de 211,3 MB de tablas)
+    15  scraping                         cinco webs, cinco trucos: la API publica de Mercadona (el
+                                         precio depende de la tienda), el sitemap y el lote de
+                                         Aldi, el `window.__INITIAL_STATE__` de Carrefour, la
+                                         paginacion con Akamai de DIA y el WAF de Alcampo; por
+                                         que el crudo es sagrado; y como se detecta un fallo
+                                         **silencioso** (el 18 de septiembre, Alcampo 20.571 en
+                                         vez de 23.573 y la rama de Frescos entera ausente:
+                                         2.646 -> 91)
+    98  glosario                         todo el vocabulario del material, en una linea cada uno,
+                                         agrupado por tema y con el capitulo donde se explica
+
+**El temario esta completo**: 20 capitulos en 8 secciones (00 a 15 y los tres anexos), y se leen
+seguidos. Aquí van el de análisis y los tres anexos, para que la lista no se corte:
 
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
@@ -991,10 +1022,33 @@ describía el recorte de relativos como «0,5×-2×»; el código usa `1.0/3`–
 detectó y lo señaló como discrepancia: un auditor que no comprueba el dato que le dan no está
 auditando. Está contado en el anexo 92.
 
-**Lo que queda de esto**: los capítulos 03 (unidades), 05 (evaluación del emparejador), 06
-(estadística), 07 (índices), 08 (promociones), 10 (cuándo no usar machine learning), 11
-(servir datos) y 12 (medir sin engañarse). Cada uno necesita sus números medidos y
-reproducibles, y se escriben en ese orden; el temario del índice ya los lista.
+**Como se mantiene, que era la otra mitad del encargo.** El material no es un documento que se
+escribe una vez: crece con lo que se mide. Un capítulo nuevo es un fichero en `docs/aprende/` con
+su cabecera (`seccion:`, `resumen:` y `en_una_frase:`) y **aparece solo** en su sección, en el
+índice lateral, en la portada y en el buscador; el número del nombre del fichero manda en el
+orden dentro de la sección. La sección tiene que estar en `SECCIONES`, o el generador avisa por
+consola y el capítulo sale en «Otros». Está escrito en `docs/OPERACION.md`, y lo vigilan las 13
+pruebas de `tests/test_aprende.py` —incluida la nueva: **todo capítulo declara su
+`en_una_frase:`** y se pinta en un recuadro debajo del título—.
+
+**La legibilidad, mejorada a propósito.** El encargo pedía que se leyera como la documentación de
+una empresa grande y que lo técnico se entendiera sin ser del oficio. Lo que se cambió, y se
+puede ver abriendo el sitio:
+
+1. **Recuadro «En una frase» en los 20 capítulos**, justo debajo del título: es la línea que se
+   lee desde el móvil, y la única que hay que entender si no se lee nada más. Vive en la cabecera
+   del documento, así que no se puede quedar desfasado respecto al capítulo.
+2. **Los cuatro recuadros con nombre** —Nota, Trampa, La lección y Regla— en los capítulos donde
+   hacen falta, en vez de prosa seguida: cada capítulo dice también **qué se aprende** al final.
+3. **Navegación de sitio de documentación**: índice por secciones a la izquierda, índice de la
+   página a la derecha, migas de pan, y tarjetas de anterior/siguiente.
+4. **La referencia** (`/aprende/referencia.html`): los documentos del proyecto con su primer
+   párrafo, que es donde se comprueba de dónde sale cada cosa.
+5. **El glosario**, porque la mitad de los atascos al leer material técnico son una palabra.
+
+Y una trampa de mantenimiento que conviene saber: el número del nombre del fichero manda en el
+orden dentro de su sección, y ese orden es **alfabético**. Hoy funciona porque todos los capítulos
+llevan dos cifras (`09` va antes que `10`); un capítulo `100` se colaría delante de `11`.
 
 ### Los toques hasta cada respuesta: lo medible de la barra (a)
 

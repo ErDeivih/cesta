@@ -1,6 +1,7 @@
 ---
 seccion: Fundamentos
-resumen: Por que un catalogo es una tabla de envases, y el pack medido y no usado como cuchillo.
+resumen: Por qué un catálogo es una tabla de envases, y el pack medido y no usado como cuchillo.
+en_una_frase: Un catálogo de supermercado es una tabla de envases: sin normalizar la unidad, comparar precios da ahorros de miles de euros en un azafrán.
 ---
 
 # 03 · Unidades, comparabilidad y el precio por unidad

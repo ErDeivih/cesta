@@ -1,6 +1,7 @@
 ---
 seccion: Medidas y agregados
-resumen: Que se anuncia, que sostiene el historico y por que la mayoria no se puede juzgar.
+resumen: Qué se anuncia, qué sostiene el histórico y por qué la mayoría no se puede juzgar.
+en_una_frase: Casi todas las promociones de este catálogo no se pueden juzgar con los datos que hay, y decirlo es la conclusión, no una excusa.
 ---
 
 # 08 · Promociones: lo que se anuncia y lo que el histórico sostiene

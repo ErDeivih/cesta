@@ -1,6 +1,7 @@
 ---
 seccion: Análisis y decisión
-resumen: Doce analisis en una tabla, con lo que se puede, lo que no y su riesgo.
+resumen: Doce análisis en una tabla, con lo que se puede, lo que no y su riesgo.
+en_una_frase: Doce análisis posibles con estos datos, cada uno con lo que hace falta, lo que cuesta y el riesgo de equivocarse al hacerlo.
 ---
 
 # 09 · Qué más se puede hacer con estos datos (y qué no)

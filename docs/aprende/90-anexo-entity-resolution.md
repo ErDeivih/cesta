@@ -1,6 +1,7 @@
 ---
 seccion: Investigación y anexos
-resumen: La investigacion sobre emparejamiento, entera y con sus fuentes.
+resumen: La investigación sobre emparejamiento, entera y con sus fuentes.
+en_una_frase: La investigación sobre resolución de entidades, entera y con sus fuentes, sin resumir a favor de lo que hace este proyecto.
 ---
 
 # Entity resolution / record linkage / product matching: estado del arte (2024-2026) aplicado a un comparador de precios de supermercados

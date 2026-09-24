@@ -1,6 +1,7 @@
 ---
 seccion: Fundamentos
-resumen: Que publica cada cadena, cuanto ocupa cada capa y que NO se puede concluir.
+resumen: Qué publica cada cadena, cuánto ocupa cada capa y qué NO se puede concluir.
+en_una_frase: Los datos no vienen dados: se rescatan de cinco webs que no publican lo mismo, y saber qué no se puede concluir es la mitad del trabajo.
 ---
 
 # 01 · El problema, los datos y lo que NO se puede concluir

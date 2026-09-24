@@ -1,6 +1,7 @@
 ---
 seccion: Fundamentos
-resumen: Los terminos que usa el material, en una linea cada uno, agrupados por tema y con el capitulo donde se explican.
+resumen: Los términos que usa el material, en una línea cada uno, agrupados por tema y con el capítulo donde se explican.
+en_una_frase: Todo el vocabulario del material en una línea cada uno, para cuando una palabra se atasca.
 ---
 
 # 98 · Glosario

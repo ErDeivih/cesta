@@ -1,6 +1,7 @@
 ---
 seccion: Análisis y decisión
-resumen: Tres intentos medidos y descartados, con su numero y su motivo.
+resumen: Tres intentos medidos y descartados, con su número y su motivo.
+en_una_frase: Tres modelos probados y descartados con su número: aquí el machine learning no aporta, y es la medición la que lo dice.
 ---
 
 # 10 · Cuándo NO usar machine learning (tres intentos medidos y descartados)

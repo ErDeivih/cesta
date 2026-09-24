@@ -1,6 +1,7 @@
 ---
 seccion: Algoritmos y evaluación
-resumen: El banco de pares, el techo del bloqueo, las invariantes y la auditoria de fallos.
+resumen: El banco de pares, el techo del bloqueo, las invariantes y la auditoría de fallos.
+en_una_frase: Un emparejador sin banco de pares no se puede mejorar: aquí se mide el techo del bloqueo (75,7 %) y se auditan los pares que se pierden.
 ---
 
 # 05 · Medir si el emparejador funciona (y no engañarse al medirlo)

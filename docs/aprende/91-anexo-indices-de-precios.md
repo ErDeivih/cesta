@@ -1,6 +1,7 @@
 ---
 seccion: Investigación y anexos
-resumen: La metodologia oficial de indices y la auditoria de lo que hace este proyecto.
+resumen: La metodología oficial de índices y la auditoría de lo que hace este proyecto.
+en_una_frase: La metodología oficial de los índices de precios, comparada línea a línea con lo que hace este proyecto.
 ---
 
 # Índice de precios con datos de escáner: teoría, práctica oficial y auditoría del proyecto

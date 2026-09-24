@@ -49,13 +49,17 @@ Un fichero nuevo en `docs/aprende/` con su cabecera:
     ---
     seccion: Algoritmos y evaluacion
     resumen: Una linea que sale en el indice y en el buscador.
+    en_una_frase: La idea del capitulo, en una frase, para quien llega con prisa.
     ---
 
     # 16 · El titulo del capitulo
 
-El numero del nombre del fichero manda en el orden dentro de su seccion, y la seccion tiene que
-estar en `SECCIONES` (si no, el capitulo sale en «Otros» y el generador lo avisa). No hay que
-tocar este fichero ni el indice: aparece solo, y `tests/test_aprende.py` lo comprueba.
+`en_una_frase` sale en un recuadro justo debajo del titulo (lo primero que se lee, sobre todo
+desde el movil) y vive en la cabecera a proposito: asi no se puede quedar desfasado respecto al
+capitulo. El numero del nombre del fichero manda en el orden dentro de su seccion, y la seccion
+tiene que estar en `SECCIONES` (si no, el capitulo sale en «Otros» y el generador lo avisa). No
+hay que tocar este fichero ni el indice: aparece solo, y `tests/test_aprende.py` lo comprueba
+--incluida la frase, porque un recuadro que desaparece en silencio es peor que no tenerlo--.
 
 Las dos dependencias (`markdown-it-py`, `linkify-it-py`) son **puras de Python**: el scraper y la
 API no las necesitan, por eso van en el extra `docs`.
@@ -98,7 +102,7 @@ AVISOS = {
     "nota": ("Nota", "nota"),
     "aviso": ("Aviso", "aviso"),
     "trampa": ("Trampa", "trampa"),
-    "leccion": ("La leccion", "leccion"),
+    "leccion": ("La lección", "leccion"),
     "regla": ("Regla de la casa", "regla"),
 }
 
@@ -120,6 +124,10 @@ class Pagina:
     titulo: str
     seccion: str = SIN_SECCION
     resumen: str = ""
+    # La frase que resume el capitulo, en la cabecera del documento (`en_una_frase:`). Sale en un
+    # recuadro justo debajo del titulo: es lo que se lee cuando alguien llega con prisa o desde el
+    # movil, y lo unico que hay que entender si no se lee nada mas.
+    en_una_frase: str = ""
     curso: bool = False
     orden: int = 0
     # Las anclas que ha puesto el conversor, en orden: `(nivel, id, texto)`. Salen de lo que se
@@ -298,6 +306,7 @@ def recoge() -> list[Pagina]:
             ruta=ruta, slug=ruta.stem, titulo=_titulo(texto, ruta.stem),
             seccion=datos.get("seccion", SIN_SECCION), curso=True, orden=numero,
             resumen=datos.get("resumen", "") or _primer_parrafo(texto),
+            en_una_frase=datos.get("en_una_frase", ""),
             palabras=len(texto.split())))
     for ruta in sorted(DOCS.glob("*.md")):
         crudo = ruta.read_text(encoding="utf-8")
@@ -306,6 +315,25 @@ def recoge() -> list[Pagina]:
             ruta=ruta, slug=ruta.stem, titulo=_titulo(texto, ruta.stem), curso=False,
             resumen=_primer_parrafo(texto), palabras=len(texto.split())))
     return paginas
+
+
+def _caja_frase(cuerpo: str, frase: str) -> str:
+    """Pone el recuadro de `en_una_frase:` justo debajo del titulo del capitulo.
+
+    Va **en la cabecera del documento** y no dentro del texto a proposito: asi el recuadro no se
+    puede quedar desfasado respecto al capitulo (se cambia la frase donde se cambia el titulo), y
+    el dia que alguien reescriba el capitulo lo tiene delante. Si el documento no declara la
+    frase, no se pinta nada: es una mejora, no un requisito para escribir.
+    """
+    if not frase:
+        return cuerpo
+    caja = ('<aside class="frase"><p class="frase-titulo">En una frase</p>'
+            f"<p>{html.escape(frase)}</p></aside>")
+    corte = cuerpo.find("</h1>")
+    if corte == -1:
+        return caja + cuerpo
+    fin = corte + len("</h1>")
+    return cuerpo[:fin] + caja + cuerpo[fin:]
 
 
 def _capitulos(paginas: list[Pagina], seccion: str) -> list[Pagina]:
@@ -470,8 +498,12 @@ def _portada(paginas: list[Pagina]) -> str:
       <li>Si no sabes de que va esto: <a href="00-como-usar-este-material.html">Como usar este
           material</a>.</li>
       <li>Si vienes a por scraping: <a href="15-scraping.html">Como se recoge el dato</a>.</li>
+      <li>Si estas empezando con datos: <a href="13-fundamentos-del-dato.html">Que es un dato</a>
+          (valor, grano, clave y ausencia).</li>
       <li>Si vienes a por algoritmos: <a href="04-emparejar-productos.html">Emparejar
           productos</a> y <a href="05-medir-el-emparejador.html">como se mide</a>.</li>
+      <li>Si vas a montar lo tuyo: <a href="14-el-stack-explicado.html">el stack</a>, pieza a
+          pieza y con lo que costaria quitarlas.</li>
       <li>Y si vienes a aprender a medir: <a href="12-medir-sin-enganarse.html">los instrumentos
           que mienten</a>.</li>
     </ol>
@@ -663,6 +695,11 @@ tbody tr:hover { background: var(--fondo-suave); }
    con cifras proporcionales no se alinean. */
 td.num, .cifra { font-variant-numeric: tabular-nums; }
 
+/* El recuadro de «en una frase»: la cabecera del capitulo, en una linea. Va aparte de `.aviso`
+   porque no avisa de nada: resume. */
+.frase { border: 1px solid var(--borde); border-left: 3px solid var(--acento); border-radius: .5rem; padding: .2rem .9rem .6rem; margin: 1rem 0 1.8rem; background: var(--panel); }
+.frase p { margin: .5rem 0; font-size: 1.02rem; }
+.frase-titulo { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
 .aviso { border: 1px solid var(--borde); border-left-width: 3px; border-radius: .5rem; padding: .2rem .9rem .6rem; margin: 1.4rem 0; background: var(--fondo-suave); }
 .aviso p { margin: .5rem 0; }
 .aviso-titulo { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
@@ -801,7 +838,8 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
         _datos, texto = _front_matter(crudo)
         env: dict = {}
         cuerpo = _reescribe_enlaces(motor.render(texto, env), por_nombre)
-        pagina.cuerpo = _destaca_avisos(cuerpo)
+        pagina.cuerpo = _caja_frase(cuerpo, pagina.en_una_frase)
+        pagina.cuerpo = _destaca_avisos(pagina.cuerpo)
         pagina.anclas = [(a["nivel"], a["id"], a["texto"]) for a in env.get("anclas", [])]
 
     for pagina in paginas:

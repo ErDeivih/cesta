@@ -20,6 +20,7 @@ roto. Ahora se lee el fichero que abriria una persona.
 """
 from __future__ import annotations
 
+import html
 import re
 from pathlib import Path
 
@@ -79,6 +80,38 @@ def test_cada_capitulo_declara_una_seccion_conocida():
         assert seccion in aprende.SECCIONES, (
             f"{ruta.name} declara la seccion {seccion!r}, que no esta en `SECCIONES`: "
             f"saldria en «{aprende.SIN_SECCION}»")
+
+
+def test_cada_capitulo_lleva_su_frase_en_una_frase(sitio):
+    """La idea del capitulo, en un recuadro y debajo del titulo.
+
+    Existe por legibilidad: alguien llega desde el movil o con prisa, lee esa linea y decide si
+    sigue. Por eso se vigila: si un capitulo se escribe sin ella, el recuadro desaparece **sin
+    que nada avise**, y una pagina sin resumen se lee peor que una con resumen malo. La frase
+    sale de la cabecera del documento (no del texto) para que no se pueda quedar desfasada.
+    """
+    salida, _ = sitio
+    faltan: list[str] = []
+    for ruta in sorted(CURSO.glob("*.md")):
+        datos, _texto = aprende._front_matter(ruta.read_text(encoding="utf-8"))
+        frase = datos.get("en_una_frase", "")
+        if not frase:
+            faltan.append(ruta.name)
+            continue
+        assert len(frase) <= 200, (
+            f"{ruta.name}: la frase tiene {len(frase)} caracteres, y es para leerla de un tiron")
+        pagina = _leer(salida, f"{ruta.stem}.html")
+        assert 'class="frase"' in pagina, f"{ruta.name}: la frase no se pinta"
+        # Debajo del titulo y **antes** del primer apartado: es lo primero que se lee.
+        assert pagina.index("</h1>") < pagina.index('class="frase"') < pagina.index("<h2"), (
+            f"{ruta.name}: el recuadro de la frase no esta debajo del titulo")
+        assert html.escape(frase) in pagina, f"{ruta.name}: la frase no sale tal cual"
+    assert not faltan, f"capitulos sin `en_una_frase:` en la cabecera: {faltan}"
+    # Los documentos de la referencia no llevan cabecera de curso: no se les pone recuadro.
+    for nombre in ("BACKLOG.html", "OPERACION.html"):
+        if (salida / nombre).exists():
+            assert 'class="frase"' not in _leer(salida, nombre), (
+                f"{nombre} es de la referencia y no deberia llevar el recuadro del curso")
 
 
 def test_una_pagina_por_documento_y_las_dos_de_estructura(sitio):

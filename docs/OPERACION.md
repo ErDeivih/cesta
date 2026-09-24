@@ -67,6 +67,7 @@ Un fichero nuevo en `docs/aprende/`, con su cabecera:
 ---
 seccion: Algoritmos y evaluación
 resumen: Una línea que sale en el índice, en la portada y en el buscador.
+en_una_frase: La idea del capítulo en una frase, para quien llega con prisa o desde el móvil.
 ---
 
 # 16 · El título del capítulo
@@ -75,10 +76,15 @@ resumen: Una línea que sale en el índice, en la portada y en el buscador.
 **La sección tiene que estar en `SECCIONES`** (`plataforma/aprende.py`); si no, el capítulo sale
 en «Otros» y el generador lo avisa por consola. El número del nombre del fichero manda en el
 orden dentro de su sección. No hay que tocar el generador ni el índice: aparece solo, y lo
-comprueban las 12 pruebas de `tests/test_aprende.py` (que un capítulo sin `seccion:` no pase,
-que los enlaces entre documentos se reescriban, que el índice de la página apunte a anclas que
-existen, que no haya ni un script ni un estilo en línea, y que la referencia liste los 60
-documentos).
+comprueban las 13 pruebas de `tests/test_aprende.py` (que un capítulo sin `seccion:` no pase, que
+lleve su `en_una_frase:` y se pinte debajo del título, que los enlaces entre documentos se
+reescriban, que el índice de la página apunte a anclas que existen, que no haya ni un script ni
+un estilo en línea, y que la referencia liste los 60 documentos).
+
+`en_una_frase` es la **mejora de legibilidad** del material, y por eso se vigila: sale en un
+recuadro justo debajo del título, que es lo primero que se lee (y lo único que mucha gente va a
+leer en el móvil). Va en la cabecera y no dentro del texto a propósito: así no puede quedarse
+desfasada respecto al capítulo, porque se cambia donde se cambia el título.
 
 ### Los cuatro recuadros
 

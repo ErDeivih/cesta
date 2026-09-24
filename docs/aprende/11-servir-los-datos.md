@@ -1,6 +1,7 @@
 ---
 seccion: Ingeniería de datos
 resumen: API, PostgreSQL, migraciones, Caddy y la puerta del despliegue.
+en_una_frase: Leer en columnar lo que se recalcula cada día y escribir en relacional lo que no se puede perder, con una sola puerta de entrada.
 ---
 
 # 11 · Servir los datos: API, PostgreSQL, migraciones y despliegue

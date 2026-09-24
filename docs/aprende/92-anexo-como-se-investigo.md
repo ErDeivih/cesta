@@ -1,6 +1,7 @@
 ---
 seccion: Investigación y anexos
-resumen: Como se investigo, que no se pudo verificar y un error propio que enseña.
+resumen: Cómo se investigó, qué no se pudo verificar y un error propio que enseña.
+en_una_frase: Cómo se investigó, qué quedó sin verificar y un error propio que vale como lección de método.
 ---
 
 # 92 · Anexo: cómo se hizo esta investigación

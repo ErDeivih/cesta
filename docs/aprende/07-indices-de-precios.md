@@ -1,6 +1,7 @@
 ---
 seccion: Medidas y agregados
-resumen: Jevons encadenado, las formulas oficiales y el sesgo de encadenamiento medido.
+resumen: Jevons encadenado, las fórmulas oficiales y el sesgo de encadenamiento medido.
+en_una_frase: Los índices de precios oficiales (Jevons encadenado) se pueden reproducir aquí, y el sesgo de encadenar vale 0,38 puntos como mucho.
 ---
 
 # 07 · Índices de precios: medir el nivel, no el caso

@@ -1,6 +1,7 @@
 ---
 seccion: Medidas y agregados
-resumen: Medianas frente a medias, percentiles, tamano de muestra y recortes contados.
+resumen: Medianas frente a medias, percentiles, tamaño de muestra y recortes contados.
+en_una_frase: Con el 79,2 % de los grupos formados por un solo producto y una media 2,31 veces la mediana, la estadística de este catálogo empieza por no promediar.
 ---
 
 # 06 · Estadística de un catálogo sucio

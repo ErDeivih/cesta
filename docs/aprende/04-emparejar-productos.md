@@ -1,6 +1,7 @@
 ---
 seccion: Algoritmos y evaluación
-resumen: Resolucion de entidades: bloqueo, similitud, reparto hungaro y los ejes del nombre.
+resumen: Resolución de entidades: bloqueo, similitud, reparto húngaro y los ejes del nombre.
+en_una_frase: Decidir que dos ofertas son el mismo producto no lo resuelve una regla: se bloquea, se puntúa y se reparte uno a uno.
 ---
 
 # 04 · Emparejar productos: el método

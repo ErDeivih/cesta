@@ -1,6 +1,7 @@
 ---
 seccion: Ingeniería de datos
 resumen: Capas, Parquet, DuckDB y Polars, idempotencia, calidad, coste y privacidad.
+en_una_frase: Guardar el crudo antes de transformarlo es lo que permite arreglar un parser y reprocesar un día entero sin volver a golpear la web.
 ---
 
 # 02 · Ingeniería de datos: capas, formatos, motores y la cadena diaria

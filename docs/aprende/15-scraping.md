@@ -1,6 +1,7 @@
 ---
 seccion: Ingeniería de datos
-resumen: Como se recoge el dato de cinco webs distintas, que es un WAF, por que el crudo es sagrado y como se detecta un fallo silencioso.
+resumen: Cómo se recoge el dato de cinco webs distintas, qué es un WAF, por qué el crudo es sagrado y cómo se detecta un fallo silencioso.
+en_una_frase: Cinco webs, cinco trucos: el dato se recoge guardando el crudo primero, respetando el ritmo y desconfiando del silencio.
 ---
 
 # 15 · Scraping: traer el dato de cinco webs distintas
