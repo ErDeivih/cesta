@@ -114,7 +114,34 @@ quiere gastar una GPU, afinar con nuestras etiquetas.
 > **La lección:** antes de meter un modelo, comprueba **cuál es el cuello de botella**. Aquí no
 > era el juicio semántico: era aritmética de envases y datos mal leídos.
 
-## 4. El patrón que comparten los tres
+## 4. La calibración: cuando el modelo dice «0,9» y no significa 0,9
+
+Una cosa es acertar y otra **saber cuánto acierta**. Un modelo está *calibrado* si cuando dice
+«0,9» acierta el 90 % de las veces. Se mide con el **ECE** (*Expected Calibration Error*): se
+agrupan las predicciones por confianza y se compara la confianza media con la tasa de acierto.
+
+Y esto importa aquí porque **la regla del proyecto depende de la confianza**: «el que calla no
+bloquea» se implementa con un umbral (`confianza < 0,9 → no lo dice`), así que si la confianza no
+significa lo que dice, la regla entera se sostiene en el aire.
+
+Lo medido, de las dos fuentes que se probaron:
+
+    Laya   "ships over-confident": recalibrar una temperatura por (tipo de pregunta, numero de
+           opciones) mueve el ECE de 0,466 a 0,081 -- o sea, antes de recalibrar sus
+           probabilidades no se pueden tomar al pie de la letra
+    Jev    ECE publicado 0,246; y su propio `Score` documenta que no se puede reconstruir el
+           numero exacto interpolando entre niveles
+
+Y una advertencia publicada sobre la otra vía: **la confianza de un LLM como verificador tampoco
+está bien calibrada** ([Confidence Calibration in LLM-Based Entity Matching](https://aclanthology.org/2025.uncertainlp-main.12/)),
+así que «usar la confianza para decidir» no es gratis en ningún caso: hay que medirla en tus
+propios datos.
+
+> **La lección:** antes de automatizar una decisión con un umbral de confianza, comprueba con
+> datos propios que la confianza significa algo. Un modelo sin calibrar y un umbral son dos
+> errores que se multiplican.
+
+## 5. El patrón que comparten los tres
 
     intento                    lo que prometia        lo que se midio            decision
     canal de vectores          +8 puntos de recall    861 conflictos de           apagado, con la
@@ -133,7 +160,7 @@ Los tres tienen tres cosas en común, y son la lección del capítulo:
 3. **Se dejó escrito el camino de vuelta**: qué habría que arreglar para encenderlos. Un «no» sin
    condiciones es tan malo como un «sí» sin medida.
 
-## 5. Lo que se aprende en este capítulo
+## 6. Lo que se aprende en este capítulo
 
 - Un modelo no arregla un problema de datos: **mide el cuello de botella antes** (aquí: 64 % de
   aritmética de envases).
@@ -144,3 +171,5 @@ Los tres tienen tres cosas en común, y son la lección del capítulo:
 - Auditar los desacuerdos de un modelo es una de las mejores formas de **encontrar bugs propios**
   (27 listas mal escritas aparecieron así).
 - Deja siempre escrito **por qué no** y **qué haría falta para que sí**.
+- Y si vas a decidir con un umbral de confianza, **mide la calibración** en tus datos antes: un
+  modelo sobre-confiado y un umbral son dos errores que se multiplican.
