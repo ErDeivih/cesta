@@ -17,6 +17,17 @@ Las dos fronteras, medidas el 17 de septiembre sobre 6.324 grupos comparables:
 
 Ningun producto cuesta treinta veces mas en un supermercado que en otro. Si
 nuestros datos lo dicen, los equivocados somos nosotros.
+
+**Y aqui viven tambien las ventanas de la serie**, desde el 24 de septiembre de 2026, por
+el mismo motivo por el que vive el factor: **este modulo lo importa la API y no puede
+arrastrar polars**. `core/derive.py` calcula `precio_base_cent` con una mediana movil de
+`VENTANA_BASE` dias y `min/max_90d_cent` con una ventana de `VENTANA_PERC`, y el
+verificador de ofertas (`plataforma/api/movimientos.py`) necesita **la misma** ventana para
+comprobar que la presentacion del producto no ha cambiado dentro de ella. Tenerla alli y
+pedirsela a `derive` se pago caro: el import dentro de la funcion que lo necesitaba paso
+la prueba estatica de la imagen (que solo mira los imports de arriba) y **rompio la API en
+produccion con un 500** el dia que se desplego. La regla, escrita para no repetirla: *un
+numero compartido vive en un modulo que la API pueda importar*.
 """
 from __future__ import annotations
 
@@ -30,6 +41,10 @@ FACTOR_INCREIBLE = 30.0
 # A partir de aqui la diferencia es lo bastante grande como para mirarla, aunque
 # sea real. Es la lista de trabajo, no la de errores.
 FACTOR_LLAMATIVO = 3.0
+
+# Los dias de la mediana de referencia ("precio de siempre") y de la ventana de 90.
+VENTANA_BASE = 30
+VENTANA_PERC = 90
 
 
 def unidad_dominante(df: pl.DataFrame) -> pl.DataFrame:

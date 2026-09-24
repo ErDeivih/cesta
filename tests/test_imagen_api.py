@@ -234,3 +234,76 @@ def test_el_grafo_llega_a_core():
     vistos, _ = grafo(ENTRADA)
     assert "plataforma.api.catalogo" in vistos
     assert any(m.startswith("core.") for m in vistos), sorted(vistos)
+
+
+# ------------------------------------------------------------------ y de noche ---
+#
+# La prueba de arriba mira **solo los imports de arriba del modulo**, y ese detalle
+# tiene una consecuencia que costo un 500 en produccion. El 24 de septiembre de 2026
+# `plataforma/api/movimientos.py` necesitaba la misma ventana que usa `derive` para el
+# precio de siempre, y se trajo con un import **dentro de la funcion** -- que es justo lo
+# que recomienda el mensaje de `test_la_api_no_arrastra_polars` --. La prueba estatica
+# paso (un import dentro de una funcion no se ejecuta al importar) y el navegador paso
+# **contra el uvicorn del PC, donde polars si esta**. En el contenedor, donde no esta:
+#
+#     File "/app/plataforma/api/movimientos.py", line 178, in _ventana_base
+#     ModuleNotFoundError: No module named 'polars'
+#     GET /api/ofertas-dudosas 500 Internal Server Error
+#
+# La leccion no es "no importes dentro de una funcion": es que **la API no puede
+# alcanzar un modulo que arrastra polars, ni de dia ni de noche**. El numero compartido
+# se mueve al modulo que la API si puede importar (`core/comparacion.py`), y esta prueba
+# lo vigila mirando **todos** los imports, esten donde esten.
+
+MODULOS_CON_POLARS = ("core.derive", "core.pipeline", "core.embeddings")
+
+
+def _todos_los_imports(fichero: Path) -> set[str]:
+    """Los modulos que este fichero importa **en cualquier sitio**, incluido dentro de
+    una funcion o de un `try`."""
+    arbol = ast.parse(fichero.read_text(encoding="utf-8"), filename=str(fichero))
+    fuera: set[str] = set()
+    for nodo in ast.walk(arbol):
+        if isinstance(nodo, ast.Import):
+            fuera.update(a.name for a in nodo.names)
+        elif isinstance(nodo, ast.ImportFrom) and nodo.module:
+            fuera.add(nodo.module)
+            fuera.update(f"{nodo.module}.{a.name}" for a in nodo.names)
+    return fuera
+
+
+def test_la_api_no_alcanza_polars_ni_dentro_de_una_funcion():
+    """La mitad que le faltaba a la prueba de arriba, y que se pago con un 500."""
+    api = RAIZ / "plataforma" / "api"
+    if not api.exists():
+        pytest.skip("esta copia no trae la API")
+    alcanzan = []
+    for fichero in api.rglob("*.py"):
+        for importado in _todos_los_imports(fichero):
+            if any(importado == m or importado.startswith(f"{m}.")
+                   for m in MODULOS_CON_POLARS):
+                alcanzan.append(f"{fichero.name}: {importado}")
+    assert not alcanzan, (
+        f"plataforma/api alcanza un modulo que importa polars ({alcanzan}). En el "
+        f"contenedor no esta instalado, asi que **si esa funcion se llama alguna vez** "
+        f"la peticion da 500 -- y si no se llama, es codigo muerto. Mueve el numero "
+        f"compartido a un modulo que la API pueda importar (`core/comparacion.py`) o "
+        f"haz la consulta con SQL.")
+
+
+def test_la_ventana_del_precio_de_siempre_es_la_misma_en_los_dos_sitios():
+    """Guarda de la guarda: el numero se movio, y sigue siendo uno.
+
+    Si alguien cambia la ventana en `derive` y no en `comparacion` (o al reves), la API
+    comprobaria la cantidad con una ventana y el precio de siempre con otra, y las dos
+    cosas pareceria que cuadran. Por eso se comprueba que son el mismo numero.
+    """
+    from core import comparacion, derive
+    assert derive.VENTANA_BASE == comparacion.VENTANA_BASE
+    assert derive.VENTANA_PERC == comparacion.VENTANA_PERC
+    texto = (RAIZ / "core" / "derive.py").read_text(encoding="utf-8")
+    assert "rolling_median(VENTANA_BASE" in texto, (
+        "`derive.enriquecer` ya no usa la ventana compartida: revisa esta prueba")
+    assert "VENTANA_BASE = " not in texto, (
+        "`core/derive.py` ha vuelto a declarar la ventana por su cuenta: tiene que "
+        "importarla de `core/comparacion.py`, que es el sitio que la API puede leer")

@@ -2257,6 +2257,56 @@ bronze ni volver a scrapear. La cadena de las 06:00 hará lo mismo mañana con e
 nuevo. Si alguien compara contra una copia vieja de `precio_derivado.parquet`, los números
 no cuadrarán y no es un fallo: es el arreglo.
 
+### La interfaz nueva, servida: el 8080 ya no enseña la vieja
+
+Era lo único que quedaba de la puesta en producción, y se hizo el 24 de septiembre de 2026
+por la tarde. Medido antes y después, con el mismo comando:
+
+    antes     :8080/  el index.html viejo (6.858 bytes, del 22 de sep) y /app.js a mano
+    despues   :8080/  el paquete de Vite (/assets/index-DkYmH6vZ.js, 892 bytes de index)
+
+**La línea de `docker-compose.yml` llevaba escrita desde antes y no bastaba.** El
+contenedor se creó cuando montaba `./web`, y Docker Compose lee los volúmenes al crearlo:
+cambiar el fichero no cambia lo que sirve un contenedor que ya está arriba. Hay que
+recrearlo (`docker compose up -d web`). Es la clase de fallo que no da ningún error —
+Caddy sirve un `index.html` que existe y sale la interfaz vieja —, y por eso `tests/
+test_interfaz.py` compara los dos lados leyendo los ficheros.
+
+**El orden importa, y el primero fue la API.** El front nuevo lee
+`/api/ofertas-dudosas` → `sin_poder_juzgar`, que la imagen que corría no devolvía (su
+respuesta tenía solo `fecha_datos` y `resultados`): servir el front antes de reconstruir la
+API habría roto esa pestaña. Así que primero la imagen, después el montaje.
+
+**Y ahí apareció el fallo del día, que solo se ve desplegando.** Con la API reconstruida,
+`/api/ofertas-dudosas` contestó **500** en el contenedor:
+
+    File "/app/plataforma/api/movimientos.py", line 178, in _ventana_base
+    ModuleNotFoundError: No module named 'polars'
+    GET /api/ofertas-dudosas 500 Internal Server Error
+
+El verificador necesitaba la ventana de `core/derive.py` (30 días) y la traía con un import
+**dentro de la función**, que es justo lo que recomienda el mensaje de
+`test_la_api_no_arrastra_polars`. Esa prueba pasó — mira solo los imports de arriba —, y la
+puerta del navegador también, porque corría contra el uvicorn del PC, **donde polars sí
+está**. En el contenedor no. Arreglado en el sitio correcto: `VENTANA_BASE` y `VENTANA_PERC`
+se mudaron a `core/comparacion.py`, que la API ya importa; `core/derive.py` las reexporta
+para que nadie tenga que cambiar una llamada; y `tests/test_imagen_api.py` gana una prueba
+que mira **todos** los imports, estén donde estén, más una que comprueba que las dos copias
+de la ventana siguen diciendo el mismo número. De 848 a 850 pruebas.
+
+**La comprobación que faltaba, ahora es una herramienta.** `plataforma/prueba_produccion.py`
+mira **lo que se sirve**: el paquete compilado, las cabeceras de Caddy con el CSP (que en
+desarrollo no existen), la base de casa, y el recorrido de una cuenta de verdad que se crea
+y **se borra al final**. Salida de la pasada, con la interfaz nueva ya en el 8080:
+
+    TODO BIEN   (monta, el CSP no bloquea nada, sin excepciones de JavaScript,
+                 la ficha contesta con su frase, las tres pestañas del panel,
+                 la primera vez con 6 productos reales que tocar, al tachar las
+                 dos secciones y la barra diciendo 1, el buscador, la baja)
+
+Los únicos mensajes de consola son **401**, que es como la aplicación pregunta si hay
+sesión: no son fallos, y están dichos en la salida para que nadie los cuente como tales.
+
 ---
 
 ## Antes de tocar nada

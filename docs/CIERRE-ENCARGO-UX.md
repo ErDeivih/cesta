@@ -25,7 +25,7 @@ cada cosa esta en `docs/BACKLOG.md` (§0), que es el registro del dia a dia.
                                                       en los dos sentidos: con frase en la
                                                       ficha y en el grupo, y SIN frase en un
                                                       grupo de una sola cadena
-    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (848 pasan, ruff limpio, docs ok)
+    (e) pruebas verdes y `verificar_docs` verde       CUMPLE (850 pasan, ruff limpio, docs ok)
     (f) CERO grupos con eje contradictorio            0   CUMPLE
         menos de 30 grupos de 11+                     0   CUMPLE
         `--medir >= 57 %`                             65 % CUMPLE
@@ -145,18 +145,26 @@ oferta"*, con su trampa para demostrar que la medida mira.
 
     (a) la medicion de los quince segundos    **de una persona** con un movil. No la puede
                                               hacer quien ha escrito estas pantallas.
-    el montaje de la interfaz nueva           **del dueno** (`docker-compose.yml`): cambiar
-                                              `./web:/srv:ro` por `./web/dist:/srv:ro`.
+                                              Guion: `docs/PRUEBA-15-SEGUNDOS.md`.
 
-**La paridad que faltaba ya no falta.** Auditado otra vez el 24 de septiembre de 2026 al
-cerrar el panel: las tres pantallas que quedaban (`indice`, `posicion`, `ofertas dudosas`) y
-el filtro por cadenas cercanas estan hechas y medidas, y el interruptor de repartir entre dos
-tiendas se dio por cubierto con la etiqueta de «no compensa». Con eso **el front nuevo tiene
-todo lo que tenia el viejo** salvo lo que se decidio no copiar, asi que el montaje es ya solo
-una decision: cambiar una linea de `docker-compose.yml` y volver a levantar la web. Lo que no
-se hace aqui es cambiarla por la espalda: la interfaz que se sirve hoy es la vieja y el dia
-que se cambie conviene mirarla una vez servida por Caddy, no solo en el servidor de
-desarrollo.
+**No queda nada mas.** El montaje de la interfaz nueva se hizo el **24 de septiembre de
+2026 por la tarde**: `cesta-web` sirve ya el paquete de Vite (`./web/dist:/srv:ro`,
+recreado con `docker compose up -d web`), medido antes y despues — antes `:8080/` servia el
+`index.html` viejo del 22 de septiembre, despues sirve `/assets/index-*.js`. La paridad ya
+no faltaba: las tres pantallas del panel y el filtro por cadenas cercanas se hicieron ese
+mismo dia, y el interruptor de repartir entre dos tiendas se dio por cubierto con la
+etiqueta de «no compensa». Volver atras es cambiar una linea y recrear la web; la carpeta
+`plataforma/web` **no se borra**, es el plan B, y lo vigila `tests/test_interfaz.py`.
+
+Y ese despliegue dejo un fallo que solo se ve desplegando, y su arreglo: la API del
+contenedor devolvia **500** en `/api/ofertas-dudosas` porque `core/derive.py` (que arrastra
+polars, y polars no esta en su imagen) se alcanzaba con un import dentro de una funcion. La
+prueba estatica de la imagen no lo veia (mira solo los imports de arriba) y la puerta del
+navegador tampoco (corria contra el uvicorn del PC, donde polars si esta). El numero
+compartido se mudo a `core/comparacion.py`, `tests/test_imagen_api.py` ahora mira **todos**
+los imports, y hay una herramienta nueva para lo que se sirve de verdad:
+`plataforma/prueba_produccion.py`, que recorre el 8080 con una cuenta que crea y borra.
+Detalle y numeros, en `docs/BACKLOG.md` (§0) y `docs/DESPLIEGUE.md` §8.
 
 Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de septiembre de
 2026, medidas antes y despues:
@@ -180,7 +188,7 @@ Ninguna de las cuatro es trabajo de codigo pendiente: son una medicion y tres de
 **Todo lo de abajo se midio junto, en la misma tarde y sobre el mismo bronze** (el del 23 de
 septiembre de 2026), no cada numero de un dia distinto:
 
-    uv run pytest -q                                 848 pasan (2 fallan, ajenas)
+    uv run pytest -q                                 850 pasan (2 fallan, ajenas)
     uv run ruff check .                              limpio
     uv run python -m projects.cesta.verificar_docs   los numeros de los documentos
     uv run python -m projects.cesta.ejes             **con el gold del 24 sep**: 44.285 grupos,

@@ -164,21 +164,6 @@ def _filtro_de_cadenas(cadenas: list[str] | None) -> tuple[str, list]:
     return (" AND x.fuente IN (" + ",".join("?" * len(cadenas)) + ")", list(cadenas))
 
 
-def _ventana_base() -> int:
-    """La ventana con la que `core/derive.py` calcula el precio de siempre.
-
-    **El import va dentro de la funcion, y no es un capricho.** `core/derive.py`
-    abre con `import polars`: es del pipeline, que vive de dataframes. La API no
-    manipula dataframes -- consulta SQL -- y su imagen no instala polars, asi que
-    importarlo arriba mata el contenedor al arrancar con un `ModuleNotFoundError`
-    que solo se ve en `docker compose logs api`. Paso el 21 de septiembre de 2026
-    con `core/comparacion.py`, y `tests/test_imagen_api.py` existe para que no
-    vuelva a pasar. Lo que se comparte es el **numero**, no el modulo.
-    """
-    from core.derive import VENTANA_BASE
-    return VENTANA_BASE
-
-
 # El texto de promocion no solo dice *que* hay oferta: dice **como funciona**, y no
 # todas se pueden juzgar con el precio de una unidad.
 #
@@ -323,7 +308,7 @@ def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[
                ORDER BY posicion_90d DESC NULLS LAST,
                         precio_unidad_cent / precio_base_cent DESC
                LIMIT ?""",
-        [*args, _ventana_base(), TOLERANCIA_CANTIDAD, limite]).fetchall()
+        [*args, comparacion.VENTANA_BASE, TOLERANCIA_CANTIDAD, limite]).fetchall()
 
     return [{
         "grupo_id": f[0], "nombre": f[1], "marca": f[2], "cadena": f[3],
@@ -370,7 +355,7 @@ def ofertas_sin_poder_juzgar(cadenas: list[str] | None = None) -> dict:
                  count(*) FILTER (WHERE mecanica = 'precio' AND NOT cantidad_comparable)
               FROM veredicto
              WHERE es_dudosa""",
-        [*args, _ventana_base(), TOLERANCIA_CANTIDAD]).fetchone()
+        [*args, comparacion.VENTANA_BASE, TOLERANCIA_CANTIDAD]).fetchone()
     por_varias, sin_precio, cantidad = (int(x or 0) for x in fila)
     return {"por_varias_unidades": por_varias, "sin_descuento_de_precio": sin_precio,
             "cantidad_cambiada": cantidad,

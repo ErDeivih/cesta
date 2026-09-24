@@ -21,6 +21,35 @@ podian ver: `/api/bajadas?solo_mios=true` sin sesion contestaba que habia filtra
 filtrar, y **la API no arrancaba con dos listas de casa** (un indice que un fichero viejo
 resucitaba en cada arranque). Salida esperada: **TODO BIEN**.
 
+## Y despues de desplegar: la interfaz **servida**, no la de desarrollo
+
+`prueba_navegador` mide la aplicacion en el servidor de desarrollo (`localhost:5173`, con el
+proxy de Vite) y contra un PostgreSQL de pruebas. Eso **no es lo que se sirve**: lo que se
+sirve es el paquete compilado (`web/dist`), con **las cabeceras de Caddy** -- incluido el
+`Content-Security-Policy`, que en desarrollo no existe -- y contra la base de casa.
+
+    uv run python -m plataforma.prueba_produccion
+
+Abre `http://127.0.0.1:8080` (o lo que diga `CESTA_PRODUCCION`), y comprueba: que la
+aplicacion monta y **el CSP no bloquea nada**, que el buscador encuentra y la ficha contesta
+con su frase, las tres pantallas nuevas del panel, la primera vez con una cuenta de verdad
+(la aplicacion funcionando, no un cartel), que al tachar salen **las dos secciones** con el
+numero en la barra de abajo, y que la cuenta de prueba **se borra al final**
+(`DELETE /api/yo`): la base de casa no se queda con basura.
+
+Existe por un fallo concreto y del 24 de septiembre de 2026: el dia que se cambio el montaje
+a `web/dist`, la API del contenedor devolvio **500** en `/api/ofertas-dudosas`
+
+    File "/app/plataforma/api/movimientos.py", line 178, in _ventana_base
+    ModuleNotFoundError: No module named 'polars'
+
+porque un import **dentro de una funcion** de `core.derive` (que arrastra polars) si se
+llamaba, y polars no esta en la imagen de la API. La prueba estatica de la imagen no lo vio
+-- mira solo los imports de arriba -- y la puerta del navegador tampoco, porque corria contra
+el uvicorn del PC, donde polars si esta. Las dos se han arreglado en el mismo sitio donde
+estaba el fallo: el numero compartido se mudo a `core/comparacion.py` (que la API si puede
+importar) y `tests/test_imagen_api.py` ahora mira **todos** los imports, esten donde esten.
+
 ## Y la interfaz, en un navegador de verdad
 
 Lo de arriba comprueba el servidor. La pantalla se comprueba con

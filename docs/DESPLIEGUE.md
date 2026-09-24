@@ -204,28 +204,45 @@ Los pasos 1 a 3 son lo que hay que tener antes de ensenarselo a nadie.
 Lo que hay montado de verdad, y lo que falta. El detalle de cada cosa, con sus numeros y su
 comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
 
+    NO queda nada por montar. Lo unico pendiente de la barra del encargo es (a): las cuatro
+    preguntas en menos de quince segundos **con un movil y una persona que no haya escrito
+    estas pantallas**, que es lo que describe `docs/PRUEBA-15-SEGUNDOS.md`. `prueba_produccion`
+    (abajo) comprueba todo lo que tiene que ser verdad para que eso sea posible.
+
     cesta-db    **Publica su puerto en 127.0.0.1:5432, y solo ahi** (ni wifi ni Tailscale).
                 No es para nadie de fuera: es para la **cadena diaria**, que corre en el
                 PC y tiene que mirar las alertas para que el resumen de las 06:00 diga
                 cuantas saltaron (`projects/cesta/avisos.py`, que lee la clave de
                 `plataforma/.env` y asi no necesita una segunda copia). Antes decia
                 "no lo se"; desde el 24 sep dice el numero.
-    cesta-api   Imagen **reconstruida** el 24 sep: la que corria llevaba dos dias sin la
-                correccion de faltas, sin `/api/habituales` y sin el vigilante de los
-                avisos. Al arrancar se aplicaron solas las migraciones 006 y 007.
+    cesta-api   Imagen **reconstruida otra vez** el 24 sep por la tarde, al desplegar la
+                interfaz nueva: sin eso, `/api/ofertas-dudosas` no traia el campo
+                `sin_poder_juzgar` que la pantalla lee. (La primera reconstruccion del dia
+                fue por la correccion de faltas, `/api/habituales` y el vigilante de los
+                avisos; al arrancar se aplicaron solas las migraciones 006 y 007.)
                 El `.dockerignore` esta **en la raiz**, no en `plataforma/`: el contexto de
                 construccion es la raiz (`context: ..`), asi que el de `plataforma/` no se
                 usaba para nada y el daemon recibia los 11 GB de `data/` y los 96 MB de
                 `node_modules`.
-    cesta-web   Sirve la interfaz **vieja** (`./web:/srv:ro`). Cambiar el montaje a
-                `./web/dist:/srv:ro` es la ultima cosa que queda, y no es un paso
-                automatico: **antes hay que medir la paridad que falta**, porque lo que la
-                vieja hace y la nueva no desaparece de la mano de quien la usa. Auditado el
-                24 de septiembre de 2026, lo que queda son **tres cosas** (eran cuatro; la
-                de "darme de baja" se hizo ese dia, y con ella salieron dos fallos de
-                verdad): el interruptor de repartir entre dos tiendas y las
-                tres pantallas del panel (indice, posicion, ofertas dudosas). El contador
-                de lo que falta por coger en la barra de abajo se hizo el 24 sep. Todo lo demas -- escribir en la lista,
-                registro, compartir, escribir sin cobertura, avisos, favoritos, ajustes --
-                esta en la nueva.
+    cesta-web   Sirve la interfaz **nueva** desde el 24 de septiembre de 2026
+                (`./web/dist:/srv:ro`, recreado con `docker compose up -d web`). La linea
+                llevaba escrita desde antes pero el contenedor seguia sirviendo `./web`:
+                cambiar el fichero no basta. Medido antes y despues: antes `:8080/` servia
+                el `index.html` viejo (6.858 bytes, del 22 sep); despues sirve el paquete de
+                Vite (`/assets/index-*.js`).
+                **La paridad ya no falta**: lo ultimo eran las tres pantallas del panel
+                (indice, posicion, ofertas dudosas) y el filtro por cadenas cercanas, hechas
+                ese dia, y el interruptor de repartir entre dos tiendas se dio por cubierto
+                con la etiqueta de «no compensa». Todo lo demas -- escribir en la lista,
+                registro, compartir, escribir sin cobertura, avisos, favoritos, ajustes,
+                darse de baja -- ya estaba.
+                **Lo que hay que correr despues de tocar esto**:
+                `uv run python -m plataforma.prueba_produccion`, que mira lo que se sirve
+                (el paquete compilado, las cabeceras de Caddy con el CSP, la base de casa) y
+                no el servidor de desarrollo. Existe porque ese dia la API del contenedor
+                devolvio 500 en `/api/ofertas-dudosas` -- un import perezoso de
+                `core.derive`, que arrastra polars y no esta en su imagen -- y la puerta del
+                navegador no lo veia: corria contra el uvicorn del PC, donde polars si esta.
+                Volver a la vieja es cambiar la linea por `./web:/srv:ro` y recrear la web;
+                la carpeta **no se borra**, es el plan B, y lo vigila `tests/test_interfaz.py`.
     cesta-panel Sigue siendo el cuadro de mando de `DASHBOARD.md`.

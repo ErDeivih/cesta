@@ -73,36 +73,34 @@ services:
       # y Caddy sirve eso; antes se servia la carpeta entera, con el `index.html`
       # y el `app.js` escritos a mano.
       #
-      # **ANTES DE DESPLEGAR ESTO, LEER.** La interfaz nueva ya **no tiene los
-      # tres bloqueantes** que tenia el 23 de septiembre: se puede escribir en la
-      # lista (anadir, tachar, cantidad, quitar), hay **registro** de cuenta y se
-      # puede **compartir** la lista con un enlace. En escritura, que es la forma
-      # de contarlo que no engana: 13 operaciones contra las 14 de la vieja.
+      # **PUESTA EN PRODUCCION EL 24 DE SEPTIEMBRE DE 2026.** El montaje estaba
+      # escrito desde antes, pero el contenedor seguia sirviendo `./web`: el cambio
+      # de linea no basta, hay que recrear el servicio (`docker compose up -d web`),
+      # y eso es lo que se hizo ese dia. Lo que se midio antes y despues:
       #
-      # Lo que queda fuera, y por que se puede escalonar:
+      #   antes   `:8080/` servia el `index.html` viejo (6.858 bytes, del 22 sep)
+      #   despues `:8080/` sirve el paquete de Vite (`/assets/index-*.js`)
       #
-      #   - **Avisos de bajada de precio** (`/api/alertas`): ni crear, ni ver los
-      #     que saltan, ni quitarlos. Favoritos sigue sin avisar de nada.
-      #   - **Escritura sin cobertura**: la cola local y `/sincronizar`. La vieja
-      #     funcionaba con el PC de casa apagado; esta depende de la red. Es el
-      #     paso 7 del orden de `docs/APP.md`, o sea que estaba previsto despues.
-      #   - **Tres pantallas del panel** (Indice, Posicion, Ofertas dudosas) y el
-      #     filtro del panel por cadenas cercanas.
-      #   - **Darme de baja** (`DELETE /api/yo`).
+      # La paridad **ya no falta**: cuando se escribio el aviso de arriba faltaban
+      # avisos de precio, escritura sin cobertura, las tres pantallas del panel,
+      # el filtro por cadenas cercanas y «Darme de baja». Todo eso esta hecho (el
+      # detalle y las fechas, en `docs/BACKLOG.md` §0 y `docs/CIERRE-ENCARGO-UX.md`),
+      # y la auditoria que lo comprueba compara el `app.js` entero contra `app/src`.
       #
-      # La lista completa, con el fichero y la linea de cada cosa, esta en
-      # `docs/BACKLOG.md` (§0), y la auditoria que la produjo comparo el `app.js`
-      # entero contra todo `app/src`.
+      # **Antes de dar por bueno un despliegue, o despues de tocar esto:**
       #
-      # Servir `dist` hoy **quita esas funciones**. Que se cambie el montaje es
-      # una decision del dueno, no un paso automatico.
+      #   uv run python -m plataforma.prueba_produccion
       #
-      # La linea es la de destino y se queda puesta porque es a donde va esto,
-      # pero cambiarla en produccion es una decision del dueno, no un paso
-      # automatico. El detalle, en `docs/BACKLOG.md` (§0, paridad de la interfaz).
+      # que mira **lo que se sirve** (el paquete compilado, las cabeceras de Caddy
+      # con el CSP, la base de casa) y no el servidor de desarrollo. Existe porque
+      # el dia que se cambio esta linea la API del contenedor devolvio 500 en
+      # `/api/ofertas-dudosas` -- un import perezoso de `core.derive`, que arrastra
+      # polars y no esta en su imagen -- y la puerta del navegador no podia verlo:
+      # corria contra el uvicorn del PC, donde polars si esta.
       #
-      # Volver atras mientras tanto es cambiar esta linea por `./web:/srv:ro`.
-      # Si los dos lados se separan, lo dice `tests/test_interfaz.py`.
+      # Volver atras es cambiar esta linea por `./web:/srv:ro` y recrear la web. La
+      # interfaz vieja **no se borra**: es el plan B, y lo vigila
+      # `tests/test_interfaz.py`.
       - ./web/dist:/srv:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - datos_caddy:/data

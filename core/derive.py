@@ -16,8 +16,12 @@ from __future__ import annotations
 
 import polars as pl
 
-VENTANA_BASE = 30      # dias para la mediana de referencia
-VENTANA_PERC = 90      # dias para el percentil
+# Las dos ventanas viven en `core/comparacion.py` y se reexportan aqui para que
+# `derive.VENTANA_BASE` siga valiendo: las necesita **la API** (el verificador de ofertas
+# comprueba que la presentacion del producto no ha cambiado dentro de la misma ventana con
+# la que se calcula el precio de siempre) y la API no puede importar este modulo, porque
+# este modulo abre con `import polars`. Ver la cabecera de `core/comparacion.py`.
+from core.comparacion import VENTANA_BASE, VENTANA_PERC
 
 
 def enriquecer(df: pl.DataFrame) -> pl.DataFrame:
