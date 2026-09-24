@@ -1511,12 +1511,19 @@ Es la mejora que más se nota andando por el supermercado, y **desbloquea
 
 ## N30. Las cuatro funciones de la competencia que se quedaron en el `app.js`
 
-**Por que.** Cuatro cosas que **ya tienen endpoint y ya tienen pantalla en la
-interfaz vieja**, y que la nueva no tiene: **avisos de precio**
+> **CERRADO el 24 de septiembre de 2026, y esta seccion se deja como estaba porque es el
+> registro de lo que se midio ese dia.** Las cuatro funciones estan ya en la interfaz nueva
+> -- los avisos de precio (campana y `/avisos`), el indice, la posicion y las ofertas dudosas
+> (las tres ultimas pestañas del panel, ver `docs/BACKLOG.md` §0) -- y `web/dist` **es lo que
+> se sirve** desde esa tarde. El bloqueo que describe aqui, `/api/ofertas-dudosas`
+> (`app.js:1110-1156`), existe y esta medido. Lo de abajo es la historia.
+
+**Por que.** Cuatro cosas que **ya tienen endpoint y ya tenian pantalla en la
+interfaz vieja**, y que la nueva no tenia: **avisos de precio**
 (`BACKLOG.md:128-132`), **índice de precios** (`app.js:796-920`), **posición por
 sección** (`app.js:925-996`) y **ofertas dudosas** (`app.js:1110-1156`). Las
-cuatro salen de la competencia (`COMPETENCIA.md:599-606`). **Es el bloqueo para
-servir `web/dist`**: hoy cambiar de interfaz quita funciones
+cuatro salen de la competencia (`COMPETENCIA.md:599-606`). **Era el bloqueo para
+servir `web/dist`**: entonces, cambiar de interfaz quitaba funciones
 (`BACKLOG.md:55-60`).
 
 **Que hay que hacer.**

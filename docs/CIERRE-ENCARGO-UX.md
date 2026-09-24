@@ -174,8 +174,11 @@ Ya no quedan tres decisiones, queda una. Las otras dos se hicieron el 24 de sept
                              (la correccion de faltas). Las migraciones 006 y 007 se
                              aplicaron solas al arrancar; antes se comprobo que no habia
                              ninguna fila que las hiciera fallar (0), y despues que la
-                             interfaz vieja -- la que se sirve hoy -- sigue entrando y
-                             buscando. Detalle y numeros: `docs/BACKLOG.md` (§0).
+                             interfaz vieja -- que era la que se servia entonces -- seguia
+                             entrando y buscando. Detalle y numeros: `docs/BACKLOG.md` (§0).
+                             *(Esa misma tarde se reconstruyo otra vez, ya con el arreglo
+                             del verificador de ofertas, y `cesta-web` paso a servir la
+                             interfaz nueva.)*
     la base para la cadena   PUBLICADA en `127.0.0.1:5432`, y solo ahi (ni wifi ni
                              Tailscale). El paso de los avisos pasó de «no lo se» en 6,5 s
                              a «0 saltaron hoy» en 1,1 s, con la clave leida de

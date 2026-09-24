@@ -822,9 +822,11 @@ Y las migraciones **006** y **007** se aplicaron solas al arrancar (`almacen.mig
 lo que se pidio comprobar antes de recrear el contenedor: `alerta` tiene ya `salto_en` y
 `salto_texto` con su indice parcial, y `lista_linea` ya **no** tiene `tachado_coherente`. Antes
 de tocar nada se comprobo lo unico que podia hacer fallar la 007 -- una fila con `tachado_por`
-sin `tachado_en`: **0**. Y la interfaz vieja, que es la que se sirve hoy, sigue funcionando con
-la API nueva: entrar, buscar y ver los resultados, comprobado en un navegador (con una cuenta
-de prueba, borrada despues; la base quedo con su usuario y su linea de siempre).
+sin `tachado_en`: **0**. Y la interfaz vieja, que era la que se servia entonces, seguia
+funcionando con la API nueva: entrar, buscar y ver los resultados, comprobado en un navegador
+(con una cuenta de prueba, borrada despues; la base quedo con su usuario y su linea de
+siempre). *(Desde la tarde de ese mismo dia se sirve la nueva: ver «La interfaz nueva,
+servida», mas abajo.)*
 
 **2. El puerto de la base, publicado en `127.0.0.1` y solo ahi.** Era la condicion para que el
 paso de los avisos de la cadena pudiera preguntar algo. La clave **no se copia a ningun sitio**:
@@ -845,10 +847,12 @@ Arreglado con un `.dockerignore` en la raiz que excluye lo que la API no necesit
 `plataforma/` es todo lo que copia el `Dockerfile`, y el front lo sirve Caddy desde el
 volumen). La reconstruccion tarda **segundos** en vez de minutos.
 
-Lo que queda de la puesta en produccion es una sola cosa, y es la que cambia lo que se ve:
-**cambiar el montaje de la interfaz** (`docker-compose.yml`: `./web/dist:/srv:ro` en vez de
-`./web:/srv:ro`). Antes de hacerlo hay que medir la paridad que falta, porque el dia que se
-cambie, lo que la interfaz vieja hace y la nueva no **desaparece** de la mano de quien la usa.
+Lo que quedaba de la puesta en produccion era una sola cosa, y era la que cambia lo que se
+ve: **cambiar el montaje de la interfaz** (`docker-compose.yml`: `./web/dist:/srv:ro` en vez
+de `./web:/srv:ro`). Antes de hacerlo habia que medir la paridad que faltaba, porque el dia
+que se cambiara, lo que la interfaz vieja hace y la nueva no **desaparece** de la mano de
+quien la usa. **Se hizo el 24 de septiembre de 2026 por la tarde, con la paridad cerrada y
+medida: ver «La interfaz nueva, servida», mas abajo.**
 
 ### Los avisos, mirados en la cadena diaria: el §6 entero (y el instrumento que mintio otra vez)
 El §6 del encargo pedia cuatro cosas. Dos ya estaban desde la pasada del vigilante -- *"dejar
