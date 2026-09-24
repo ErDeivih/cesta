@@ -876,15 +876,19 @@ anclas a los encabezados, y genera un índice con buscador **embebido** (funcion
 (`markdown-it-py`, `linkify-it-py`) en un extra nuevo `docs`: el scraper y la API no los
 necesitan, y si faltan el comando dice la instrucción exacta.
 
-**Lo que ya está escrito** (8 capítulos, y el temario completo en el índice):
+**Lo que ya está escrito** (10 capítulos, y el temario completo en el índice):
 
     00  como usar este material          el mapa, las reglas de la casa, los comandos
     01  el problema y los datos          que publica cada cadena, cuanto ocupa cada capa, y
                                          **que NO se puede concluir** con estos datos
     02  ingenieria de datos              capas, Parquet, DuckDB/Polars, idempotencia, la cadena
                                          diaria, calidad, observabilidad, coste, privacidad
+    03  unidades y comparabilidad        por que un catalogo es una tabla de envases; el pack
+                                         medido y **no** usado como cuchillo; el `en_disputa`
     04  emparejar productos              entity resolution: bloqueo, similitud, hungaro, ejes,
                                          y las trampas con el caso que las enseño
+    05  medir el emparejador             el banco de pares, el **techo del bloqueo** (75,7 %),
+                                         las invariantes, la fuga de informacion y la auditoria
     09  que mas se puede hacer           12 analisis en una tabla, con «si/parcial/no» y el
                                          riesgo de conclusion falsa de cada uno
     90  anexo: la investigacion entera sobre emparejamiento, con sus fuentes
@@ -892,6 +896,22 @@ necesitan, y si faltan el comando dice la instrucción exacta.
                auditoria de lo que hace este proyecto, con 12 filas y veredicto
     92  anexo: como se hizo la investigacion, que no se pudo verificar, y un error propio
                que enseña por que hay que citar la linea de codigo
+
+**Y la primera medición que pedía la investigación, hecha** (`projects/cesta/bloqueo.py`, con su
+trinquete en `tests/test_bloqueo.py`): cuántos de los pares ciertos por EAN **puede ver** el
+bloqueo, que es el techo del recall. Medido hoy sobre el gold:
+
+    pares ciertos (mismo EAN, dos cadenas)      1.795
+    el bloqueo los puede ver                    1.359   (75,7 %)   <- el techo
+    el bloqueo los pierde                         436
+        no se le pudo leer el formato             336
+        misma unidad y cantidad distinta           61
+        una cadena por unidad y la otra al peso    39
+
+Eso cambia la lectura del 65 % de recall: **es el 86 % de lo que el bloqueo deja ver**, así que
+el margen no está en el matcher sino en las 436 parejas que se pierden antes de comparar (datos
+y presentaciones, no modelo). La misma medida se hizo el 8 de septiembre (579 de 1.767) y de
+ella salió la segunda pasada sin bloque con el listón alto (`UMBRAL_SIN_FORMATO = 0.82`).
 
 **De dónde sale lo que dicen.** El 24 de septiembre de 2026 se lanzaron **cuatro
 investigaciones** sobre fuentes públicas (2020-2026), cada una con las mismas cuatro reglas: en

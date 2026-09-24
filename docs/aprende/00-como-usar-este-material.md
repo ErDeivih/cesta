@@ -75,18 +75,19 @@ uv run python -c "import duckdb; print(duckdb.sql(\"select count(*) from 'data/g
 
     El problema y los datos           01  que hay, de donde sale y que NO se puede concluir
     Ingenieria de datos               02  capas, formatos, motores, idempotencia, la cadena diaria
+    Unidades y comparabilidad         03  por que un catalogo de envases no se puede comparar sin normalizar
     Emparejar productos               04  resolucion de entidades: bloqueo, similitud, hungaro, ejes
+    Medir el emparejador              05  el banco de pares, el techo del bloqueo, invariantes y fugas
     Que mas se puede hacer            09  el catalogo de analisis, con lo que se puede y lo que no
 
     Anexo 90   la investigacion sobre emparejamiento, entera y con sus fuentes
     Anexo 91   la investigacion sobre indices de precios con datos de escaner, y la auditoria
     Anexo 92   como se hizo esta investigacion (metodo, fechas y lo que no se pudo verificar)
 
-Los capitulos que faltan (unidades y comparabilidad, evaluacion del emparejador, estadistica
-del catálogo, índices de precios, promociones, cuándo NO usar machine learning, servir los
-datos y medir sin engañarse) están en camino: cada uno necesita sus números medidos y
-reproducibles, y se escriben en ese orden. **El temario del índice es la lista completa**;
-aquí solo están los que ya se pueden leer.
+Los capitulos que faltan (estadistica del catálogo, índices de precios, promociones, cuándo NO
+usar machine learning, servir los datos y medir sin engañarse) están en camino: cada uno
+necesita sus números medidos y reproducibles, y se escriben en ese orden. **El temario del
+índice es la lista completa**; aquí solo están los que ya se pueden leer.
 
 Los documentos largos del proyecto (el registro del día a día, los informes, la operación)
 están en **la referencia**, que es donde se comprueba de dónde sale cada cosa. Este curso los
