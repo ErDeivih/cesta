@@ -1119,6 +1119,15 @@ recorrido no las pidió, y el crudo tiene que seguir diciendo eso): se movieron 
 `data/debug/verificaciones/2026-09-24/`. Un control que altera lo que está midiendo deja de ser un
 control.
 
+**Y dos sustos de la puerta de producción, que eran del reloj y no del dato.** Ese día, con el
+código sin tocar, `plataforma/prueba_produccion.py` fallo dos veces en dos comprobaciones
+distintas: una pestaña del panel («el panel de indice contesta») y la frase de la ficha. Las dos
+tenían la misma causa, la que documenta el capítulo 12 como *leer antes del estado final*: el
+elemento ya existía pero se leía **antes** de que se rellenara. Se arreglan esperando a la
+condición que se va a comprobar —no a un tiempo fijo— y con **un reintento con recarga** en el
+panel. Ninguna de las dos bajó el listón: si el texto no aparece tampoco a la segunda, sigue
+siendo un fallo.
+
 ### Los toques hasta cada respuesta: lo medible de la barra (a)
 
 La condicion (a) -- *"las cuatro preguntas contestadas en menos de quince segundos con el

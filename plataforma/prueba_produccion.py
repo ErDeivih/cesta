@@ -100,6 +100,16 @@ def main() -> int:
         pagina.wait_for_load_state("networkidle")
         pagina.wait_for_timeout(1200)
         frase = pagina.locator("main p.font-semibold").first
+        # **Se espera a que la frase tenga texto**, no a que la pagina este quieta. La version
+        # anterior esperaba `networkidle` y 1,2 s, y el 24 de septiembre de 2026 fallo una vez
+        # con la frase ya escrita: el párrafo existia, pero se leyo **antes** de que se
+        # rellenara, asi que `inner_text()` devolvio vacio. Es la misma mentira de instrumento
+        # que documenta el capitulo 12 -- leer antes del estado final --, y se arregla
+        # esperando a la condicion que se va a comprobar.
+        with contextlib.suppress(Exception):
+            pagina.wait_for_function(
+                "() => { const p = document.querySelector('main p.font-semibold');"
+                " return !!p && p.innerText.trim().length > 10; }", timeout=15000)
         comprueba(frase.count() > 0 and len(frase.inner_text()) > 10,
                   f"y la ficha contesta con una frase: {frase.inner_text()[:64]!r}")
 
@@ -108,13 +118,23 @@ def main() -> int:
                 ("indice", "El nivel de precios de cada cadena"),
                 ("posicion", "En qué es cara cada cadena"),
                 ("dudosas", "conviene mirar dos veces")):
-            carga(f"/panel?pestana={pestana}")
             # **Se espera al texto, no a un tiempo fijo.** Estos paneles piden a la API y
             # pintan cientos de filas: con una espera fija, la comprobacion falla con la
             # aplicacion bien (paso el 24 de septiembre de 2026). Se espera a que aparezca lo
             # que se va a comprobar, con tope.
-            with contextlib.suppress(Exception):
-                pagina.get_by_text(tiene_que_decir, exact=False).first.wait_for(timeout=20000)
+            #
+            # Y **se intenta dos veces**, porque el 24 de septiembre de 2026 esta misma
+            # comprobacion fallo una vez y paso en la siguiente, con el codigo sin tocar: el
+            # panel tarda, la primera carga se queda sin el texto y el fallo era del reloj,
+            # no del panel. Un reintento con recarga no baja el liston (si tampoco aparece a
+            # la segunda, sigue siendo un fallo); lo que evita es que una puerta que miente
+            # una vez de cada veinte deje de mirarse.
+            for _intento in (1, 2):
+                carga(f"/panel?pestana={pestana}")
+                with contextlib.suppress(Exception):
+                    pagina.get_by_text(tiene_que_decir, exact=False).first.wait_for(timeout=20000)
+                if tiene_que_decir in pagina.inner_text("main"):
+                    break
             comprueba(tiene_que_decir in pagina.inner_text("main"),
                       f"el panel de {pestana} contesta")
         comprueba("no se juzgan aquí" in pagina.inner_text("main"),
