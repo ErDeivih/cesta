@@ -2184,6 +2184,79 @@ Lo medido, con la receta reproducible, está en **`docs/LAYA.md`**; el instrumen
 `projects/cesta/laya_ejes.py` (corre sin modelo con `--sin-modelo`); y los listados
 enteros de desacuerdos e invenciones, en `data/laya_ejes.json`.
 
+### El panel: las tres pantallas que faltaban, y lo que apareció al pintarlas
+
+Era el punto 8 de los que quedaban (líneas 133-137): `GET /api/indice` (`app.js:796-920`),
+`GET /api/posicion` (`app.js:925-996`) y `GET /api/ofertas-dudosas`
+(`app.js:1110-1156`), más **el filtro del panel por cadenas cercanas** — `Panel.tsx:488`
+llamaba `useBajadas(dias, subidas, [])` con la lista vacía y ninguna pestaña leía
+`cadenas_cerca`. Con esto **el panel nuevo tiene todo lo que tenía el viejo**, salvo las
+dos pestañas en que se decidió no copiarlo.
+
+**Las tres pestañas**, en `plataforma/web/app/src/paginas/Panel.tsx` y el gráfico nuevo en
+`componentes/GraficoIndice.tsx`:
+
+- **Índice**: la frase primero («Alcampo es quien más ha bajado (−1,4 %) y Aldi quien más
+  ha subido (+0,1 %) en 18 capturas»), después la gráfica de las cinco series con el 100
+  de referencia, y **la tabla con capturas, productos y recortados**, que no es un extra:
+  cinco colores no se distinguen y el dato no puede depender de verlos bien.
+- **Posición**: cada sección con sus cadenas alrededor del cero (barra a la izquierda =
+  por debajo de las demás), ordenadas por cuánto se separan. Donde están empatadas, elegir
+  tienda no cambia el ticket y esa sección no abre la pantalla.
+- **Ofertas dudosas**: ver abajo, porque lo que apareció aquí vale más que la pantalla.
+- **El filtro**: una fila de cadenas que **arranca en las que tienes puestas** en Ajustes
+  y **dice de dónde sale** («Mirando solo las cadenas que tienes cerca, las de Ajustes»),
+  porque quien ve tres cadenas y no cinco tiene que poder saber si faltan datos o si es su
+  ajuste. Se aplica a las cuatro pestañas donde significa algo, y en `bajadas` sustituye
+  al `[]` que había a mano.
+
+**Lo que apareció al pintarlo, y es el hallazgo del día.** La pestaña de ofertas dudosas
+encabezaba así, el 24 de septiembre de 2026, la primera vez que alguien la miró:
+
+    Ampollas en stick anti-fricción Compeed 8 ml.
+    anuncia oferta y hoy cuesta mas que su precio de siempre
+    1.306,25 €/l  hoy · su precio de siempre 10,45 €/l
+
+Eso no es una oferta dudosa: es **una cantidad mal leída** (un día el envase se leyó como
+una unidad y otro como sus 8 ml). Se vio **porque la pantalla empezó a pintar la unidad**,
+que hasta hoy no se pintaba. Y no era un caso: ordenada por `posicion_90d`, las diez
+primeras eran de esa familia. Tres arreglos, los tres medidos sobre el mismo gold:
+
+1. **La ventana de `core/derive.py` era del producto, no de su unidad.** `precio_base_cent`,
+   `min/max_90d` y `posicion_90d` comparaban EUR/ud con EUR/l en **2.239 productos con más
+   de una unidad en su historial**. Partiendo por `unidad_canon`: las acusadas con hoy > 3×
+   su base pasan de **337 a 17**, los rangos de 90 días absurdos de **3.175 a 1.694** y los
+   «más barato de sus 90 días» con la unidad cambiada de **150 a 101**. Un producto que
+   cambia de unidad empieza de cero: hasta que no haya base, dice «no lo sé».
+2. **El control de la cantidad ya existía en el mismo fichero y no estaba puesto aquí.**
+   `bajadas()` compara la cantidad deducida (`precio_cent / precio_unidad_cent`) con un 2 %
+   de tolerancia desde el 18 de septiembre; el verificador de ofertas no lo hacía. Ahora sí.
+3. **Y el 63 % de la lista no se podía juzgar de ninguna manera.** De las **5.488** ofertas
+   anunciadas cuyo precio no baja de su precio de siempre: **3.658** dependen de cuántas
+   unidades compres (`3x2` 2.195, `2ª unidad -50 %` 848, `Todo a 1 €` 653, lote, pack) y
+   **288** no anuncian un descuento de precio («En pack, más fácil», «Stock Fuera (Unidades
+   Limitadas)», «Novedad Alcampo»). **Un 3x2 no baja el precio de una unidad, baja el de la
+   tercera**: acusarlas era un error de la pantalla, no una mentira de la cadena. Se juzgan
+   **1.538**, y lo que se deja fuera **se cuenta y se dice** (`sin_poder_juzgar`, con sus
+   tres motivos).
+
+Eso último cierra dos de los tres puntos de «lo que falta» de `docs/MOVIMIENTOS.md` §4
+—distinguir el texto que no es una oferta, y la pantalla en la app—; el tercero
+(`solo_online`) sigue pendiente.
+
+**Y la puerta del navegador encontró lo de siempre**: 28 enlaces de nombre de producto por
+debajo de 44 px en la pestaña nueva (entre 145 × 19 y 248 × 39), el mismo fallo que ya
+apareció en la ficha del producto. Arreglado con `min-h-[44px]`, y las tres rutas nuevas
+entran en la lista de pantallas que se miden de pie.
+
+**Cómo se reprodujo todo esto, y una advertencia.** El arreglo de `core/derive.py` cambia
+columnas de gold, así que **los derivados se rehicieron sobre el mismo bronze**: se leyó
+`gold/precio_diario.parquet` (872.650 filas, 19 días) y se volvieron a escribir
+`precio_derivado`, `resumen` y `promos_por_cadena` con `pipeline._derivados`, sin tocar el
+bronze ni volver a scrapear. La cadena de las 06:00 hará lo mismo mañana con el código
+nuevo. Si alguien compara contra una copia vieja de `precio_derivado.parquet`, los números
+no cuadrarán y no es un fallo: es el arreglo.
+
 ---
 
 ## Antes de tocar nada

@@ -19,6 +19,9 @@ import type {
   RespuestaEan,
   RespuestaEstado,
   RespuestaHabituales,
+  RespuestaIndice,
+  RespuestaOfertasDudosas,
+  RespuestaPosicion,
   RespuestaProducto,
   RespuestaSecciones,
   Grupo,
@@ -312,6 +315,55 @@ export function usePanelMovidos() {
   return useQuery({
     queryKey: ['panel', 'movidos'],
     queryFn: ({ signal }) => pide<PanelMovidos>('/panel/movidos', undefined, signal),
+    staleTime: CINCO_MIN,
+  })
+}
+
+/** **Las cadenas que tienes cerca**, de tus preferencias (`cadenas_cerca`).
+ *
+ *  Es lo que hace util el panel: quien tiene Alcampo y DIA a mano no necesita que
+ *  las cinco le ensenen el indice, necesita que le ensenen el suyo. Va con la misma
+ *  clave de cache que la sesion (`['yo']`) que usa el armazon, asi que no pide nada
+ *  de mas; sin sesion devuelve lista vacia, que en el panel significa "las cinco".
+ */
+export function useCadenasCerca(): string[] {
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  const v = sesion.data?.preferencias?.['cadenas_cerca']
+  if (!Array.isArray(v)) return []
+  return v.filter((x): x is string => typeof x === 'string')
+}
+
+/** El indice de precios por cadena. Sin `cadenas` en la URL se piden las cinco y
+ *  el filtro se aplica al pintar: son cinco series y catorce puntos, y recortarlas
+ *  en el servidor multiplicaria las respuestas por cada combinacion de filtro. */
+export function useIndice() {
+  return useQuery({
+    queryKey: ['panel', 'indice'],
+    queryFn: ({ signal }) => pide<RespuestaIndice>('/indice', undefined, signal),
+    staleTime: CINCO_MIN,
+  })
+}
+
+export function usePosicion() {
+  return useQuery({
+    queryKey: ['panel', 'posicion'],
+    queryFn: ({ signal }) => pide<RespuestaPosicion>('/posicion', undefined, signal),
+    staleTime: CINCO_MIN,
+  })
+}
+
+/** Las ofertas que el historico no sostiene. El filtro de cadenas **si** va al
+ *  servidor: la respuesta viene recortada a 60 y filtrar despues dejaria fuera
+ *  ofertas de las cadenas que si te tocan. */
+export function useOfertasDudosas(cadenas: string[], limite = 60) {
+  return useQuery({
+    queryKey: ['panel', 'dudosas', cadenas, limite],
+    queryFn: ({ signal }) =>
+      pide<RespuestaOfertasDudosas>(
+        '/ofertas-dudosas',
+        { limite, cadenas: cadenas.join(',') },
+        signal,
+      ),
     staleTime: CINCO_MIN,
   })
 }

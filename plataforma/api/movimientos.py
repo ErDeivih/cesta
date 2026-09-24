@@ -157,6 +157,127 @@ def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
     } for f in filas]
 
 
+def _filtro_de_cadenas(cadenas: list[str] | None) -> tuple[str, list]:
+    """El trozo de SQL y sus argumentos para mirar solo unas cadenas."""
+    if not cadenas:
+        return "", []
+    return (" AND x.fuente IN (" + ",".join("?" * len(cadenas)) + ")", list(cadenas))
+
+
+def _ventana_base() -> int:
+    """La ventana con la que `core/derive.py` calcula el precio de siempre.
+
+    **El import va dentro de la funcion, y no es un capricho.** `core/derive.py`
+    abre con `import polars`: es del pipeline, que vive de dataframes. La API no
+    manipula dataframes -- consulta SQL -- y su imagen no instala polars, asi que
+    importarlo arriba mata el contenedor al arrancar con un `ModuleNotFoundError`
+    que solo se ve en `docker compose logs api`. Paso el 21 de septiembre de 2026
+    con `core/comparacion.py`, y `tests/test_imagen_api.py` existe para que no
+    vuelva a pasar. Lo que se comparte es el **numero**, no el modulo.
+    """
+    from core.derive import VENTANA_BASE
+    return VENTANA_BASE
+
+
+# El texto de promocion no solo dice *que* hay oferta: dice **como funciona**, y no
+# todas se pueden juzgar con el precio de una unidad.
+#
+# Medido el 24 de septiembre de 2026 sobre el gold de ese dia, de las 5.488 ofertas
+# anunciadas cuyo precio de hoy no baja de su precio de siempre:
+#
+#     3.454 (63 %)  dependen de cuantas unidades compres   ("3x2" 2.195, "2ª unidad
+#                   -50 %" 848+48+..., "Todo a 1 EUR" 653, "5 EUR dto. comprando 20")
+#        345        no anuncian un descuento de precio      ("En pack, mas facil",
+#                   "Stock Fuera (Unidades Limitadas)", "Novedad Alcampo", "Producto
+#                   en Folleto", "Super Precio", "Nuestra seleccion de vinos...")
+#
+# Acusar a las primeras es sencillamente un error de esa pantalla: un 3x2 no baja el
+# precio de una unidad, baja el de la tercera, asi que "hoy cuesta mas que su precio
+# de siempre" es verdad y no significa nada. Las segundas son etiquetas de marketing
+# metidas en el mismo campo que las ofertas.
+#
+# Asi que se juzga **solo** lo que anuncia un descuento sobre el precio de ese
+# producto, y lo demas se cuenta y se dice. El orden importa: `sin_precio` va antes
+# que `varias` porque "Stock Fuera (Unidades Limitadas)" trae la palabra "unidades".
+MECANICAS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("sin_precio", ("stock fuera", "novedad", "folleto", "seleccion", "selección",
+                    "super precio", "protein", "proteín", "mas facil", "más facil")),
+    ("varias", ("unidad", "3x2", "2x1", "4x3", "3x1", "lote", "pack", "comprando",
+                "gratis", "2ª", "2a ud")),
+)
+
+# El texto de promocion, tal cual viene de la cadena.
+_COLUMNA_MECANICA = "lower(coalesce(b.promo_txt, ''))"
+
+
+def _case_mecanica() -> str:
+    """El `CASE` de SQL que clasifica el texto, hecho desde `MECANICAS`.
+
+    Se genera desde Python para que la lista de patrones viva en **un solo sitio**:
+    escrita a mano en el SQL, la primera correccion se haria en un lado y no en el
+    otro, y el numero que la pantalla enseña dejaria de ser el de la lista.
+    """
+    partes = []
+    for mecanica, patrones in MECANICAS:
+        for patron in patrones:
+            partes.append(f"WHEN {_COLUMNA_MECANICA} LIKE '%{patron}%' THEN '{mecanica}'")
+    return "CASE " + " ".join(partes) + " ELSE 'precio' END"
+
+
+# El SQL del verificador, en un sitio y usado por las tres funciones de abajo: la que
+# devuelve las ofertas y las que cuentan lo que se queda fuera. Dos copias de esta
+# consulta se separarian a la primera correccion, y entonces los numeros que la
+# pantalla enseña dejarian de hablar de la misma lista.
+#
+# `{veredicto}` es lo unico que cambia entre ellas.
+_DUDOSAS_SQL = """
+        WITH hist AS (
+            SELECT x.fuente, x.id_fuente, x.fecha, x.precio_unidad_cent,
+                   x.precio_base_cent, x.posicion_90d, x.min_90d_cent, x.max_90d_cent,
+                   -- La cantidad que **deduce** el precio: 3,49 EUR por unidad de un
+                   -- producto de 2,0057 kg dan 1,74 EUR/kg. `bajadas()` ya usa esta
+                   -- cuenta (`TOLERANCIA_CANTIDAD`) para no confundir una bajada con
+                   -- un cambio de formato; aqui hace falta por lo mismo.
+                   x.precio_cent / nullif(x.precio_unidad_cent, 0) AS cantidad,
+                   row_number() OVER (PARTITION BY x.fuente, x.id_fuente
+                                      ORDER BY x.fecha DESC) AS n
+              FROM derivado x
+             WHERE true{filtro}),
+        con_cantidad AS (
+            SELECT h.*,
+                   -- La cantidad normal de los ultimos VENTANA_BASE dias: la misma
+                   -- ventana con la que `core/derive.py` calcula el precio de siempre.
+                   -- Si dentro de esa ventana la presentacion cambio, la mediana mezcla
+                   -- dos productos y **no se puede acusar a nadie**.
+                   median(cantidad) OVER (PARTITION BY fuente, id_fuente
+                                          ORDER BY fecha DESC
+                                          ROWS BETWEEN CURRENT ROW AND ? FOLLOWING)
+                       AS cantidad_ventana
+              FROM hist h),
+        veredicto AS (
+            SELECT u.*, b.grupo_id, b.nombre, b.marca, b.imagen, b.promo_txt,
+                   coalesce(b.promo_club, false) AS es_club, b.unidad_canon,
+                   -- Anuncia oferta y hoy no cuesta menos de lo que cuesta siempre.
+                   (u.precio_base_cent IS NOT NULL
+                    AND u.precio_unidad_cent >= u.precio_base_cent) AS es_dudosa,
+                   -- **Y la presentacion no ha cambiado: el mismo producto, la misma
+                   -- cantidad.** Sin esto la lista encabezaba con "Ampollas Compeed
+                   -- 8 ml" a 1.306,25 EUR/l frente a "su precio de siempre" 10,45
+                   -- EUR/l: no es un disparate de la cadena, es que un dia la cantidad
+                   -- se leyo como 1 y otro como 0,008. Lo encontro el navegador al
+                   -- pintar la unidad, que hasta hoy no se pintaba.
+                   (u.cantidad_ventana IS NOT NULL
+                    AND abs(u.cantidad - u.cantidad_ventana)
+                        <= ? * u.cantidad_ventana) AS cantidad_comparable,
+                   -- Y el texto dice si el descuento es sobre el precio de **esta**
+                   -- unidad o sobre cuantas compres. Ver `MECANICAS`.
+                   {mecanica} AS mecanica
+              FROM con_cantidad u
+              JOIN buscable b USING (fuente, id_fuente)
+             WHERE u.n = 1 AND b.promo_txt IS NOT NULL)
+"""
+
+
 def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[dict]:
     """Ofertas anunciadas que el historico no sostiene.
 
@@ -171,6 +292,15 @@ def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[
     ese producto cuesta normalmente. Sin margen de cortesia: si cuesta lo mismo
     de siempre, el cartel no dice la verdad.
 
+    **Pero solo se juzga lo que se puede juzgar**, y eso son dos condiciones mas
+    (`ofertas_sin_poder_juzgar` cuenta el resto, y la pantalla lo dice):
+
+    - la oferta tiene que ser un descuento sobre el precio de **esta** unidad: un
+      3x2 o una "2ª unidad -50 %" no bajan el precio de una, bajan el de la
+      tercera, y acusarlas es un error de esta pantalla (eran el 63 % de la lista);
+    - la cantidad que deduce el precio no puede haber cambiado dentro de la
+      ventana, o los dos numeros no son del mismo producto.
+
     Nota sobre un control que todavia no puede funcionar
     ----------------------------------------------------
     `core/derive.py` calcula ademas `oferta_sospechosa`, que es mas exigente:
@@ -182,35 +312,18 @@ def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[
     durante seis semanas.
     """
     con = catalogo.conexion()
-    args: list = []
-    filtro = ""
-    if cadenas:
-        filtro = " AND x.fuente IN (" + ",".join("?" * len(cadenas)) + ")"
-        args.extend(cadenas)
-    args.append(limite)
-
-    filas = con.execute(f"""
-        WITH ultimo AS (
-            SELECT x.fuente, x.id_fuente, x.precio_unidad_cent, x.precio_base_cent,
-                   x.posicion_90d, x.min_90d_cent, x.max_90d_cent,
-                   row_number() OVER (PARTITION BY x.fuente, x.id_fuente
-                                      ORDER BY x.fecha DESC) AS n
-              FROM derivado x
-             WHERE true{filtro})
-        SELECT b.grupo_id, b.nombre, b.marca, u.fuente, b.imagen, b.promo_txt,
-               u.precio_unidad_cent, u.precio_base_cent, u.posicion_90d,
-               u.min_90d_cent, u.max_90d_cent, coalesce(b.promo_club, false)
-          FROM ultimo u
-          JOIN buscable b USING (fuente, id_fuente)
-         WHERE u.n = 1
-           AND b.promo_txt IS NOT NULL
-           AND u.precio_base_cent IS NOT NULL
-           -- Anuncia oferta y hoy no cuesta menos de lo que cuesta siempre.
-           AND u.precio_unidad_cent >= u.precio_base_cent
-         ORDER BY u.posicion_90d DESC NULLS LAST,
-                  u.precio_unidad_cent / u.precio_base_cent DESC
-         LIMIT ?
-    """, args).fetchall()
+    filtro, args = _filtro_de_cadenas(cadenas)
+    filas = con.execute(
+        _DUDOSAS_SQL.format(filtro=filtro, mecanica=_case_mecanica())
+        + """ SELECT grupo_id, nombre, marca, fuente, imagen, promo_txt,
+                     precio_unidad_cent, precio_base_cent, posicion_90d,
+                     min_90d_cent, max_90d_cent, es_club, unidad_canon
+                FROM veredicto
+               WHERE es_dudosa AND cantidad_comparable AND mecanica = 'precio'
+               ORDER BY posicion_90d DESC NULLS LAST,
+                        precio_unidad_cent / precio_base_cent DESC
+               LIMIT ?""",
+        [*args, _ventana_base(), TOLERANCIA_CANTIDAD, limite]).fetchall()
 
     return [{
         "grupo_id": f[0], "nombre": f[1], "marca": f[2], "cadena": f[3],
@@ -221,8 +334,47 @@ def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[
         "min_90d_cent": round(f[9], 2) if f[9] is not None else None,
         "max_90d_cent": round(f[10], 2) if f[10] is not None else None,
         "solo_con_tarjeta": bool(f[11]),
+        # **La unidad, que faltaba.** `precio_unidad_cent` es EUR/kg o EUR/l, no
+        # euros: enseñarlo sin decir de qué unidad habla es enseñar un número que
+        # no significa lo que parece (1,29 € el kilo contra 1,29 € el envase).
+        # La pantalla no lo tenía porque el endpoint no lo daba.
+        "unidad": f[12],
         "por_que": _por_que(f[6], f[7], f[8]),
     } for f in filas]
+
+
+def ofertas_sin_poder_juzgar(cadenas: list[str] | None = None) -> dict:
+    """Cuantas ofertas anunciadas **no se pueden juzgar**, y por que.
+
+    Tres familias, y las tres se cuentan porque la pantalla las dice en voz alta:
+    es la regla de siempre -- un dato que no tenemos es "no lo se", y aqui el dato
+    que falta es el precio normal de *ese* producto:
+
+        por_varias_unidades          el descuento depende de cuantas compres
+                                     ("3x2", "2ª unidad -50 %", "Todo a 1 EUR"):
+                                     el precio de una unidad no lo puede ver
+        sin_descuento_de_precio      el texto no anuncia un descuento sobre el
+                                     precio ("Stock Fuera", "Novedad", folleto)
+        cantidad_cambiada            el tamaño declarado cambio dentro de la
+                                     ventana: los dos numeros no son del mismo
+                                     producto ("Ampollas Compeed 8 ml" a 1.306,25
+                                     EUR/l contra "su precio de siempre" 10,45)
+    """
+    con = catalogo.conexion()
+    filtro, args = _filtro_de_cadenas(cadenas)
+    fila = con.execute(
+        _DUDOSAS_SQL.format(filtro=filtro, mecanica=_case_mecanica())
+        + """ SELECT
+                 count(*) FILTER (WHERE mecanica = 'varias'),
+                 count(*) FILTER (WHERE mecanica = 'sin_precio'),
+                 count(*) FILTER (WHERE mecanica = 'precio' AND NOT cantidad_comparable)
+              FROM veredicto
+             WHERE es_dudosa""",
+        [*args, _ventana_base(), TOLERANCIA_CANTIDAD]).fetchone()
+    por_varias, sin_precio, cantidad = (int(x or 0) for x in fila)
+    return {"por_varias_unidades": por_varias, "sin_descuento_de_precio": sin_precio,
+            "cantidad_cambiada": cantidad,
+            "total": por_varias + sin_precio + cantidad}
 
 
 def _por_que(hoy, base, posicion) -> str:

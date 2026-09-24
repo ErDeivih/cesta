@@ -328,6 +328,44 @@ bajadas tuyas porque no hay "tuyo", que es distinto de "no ha bajado nada".
 
 Ofertas anunciadas que el historico no sostiene. Mismos filtros de cadena.
 
+    sale  {"fecha_datos",
+           "resultados": [{"grupo_id", "nombre", "marca", "cadena", "imagen",
+                           "promo_txt", "unidad", "precio_unidad_cent",
+                           "precio_base_cent", "posicion_90d", "min_90d_cent",
+                           "max_90d_cent", "solo_con_tarjeta", "por_que"}],
+           "sin_poder_juzgar": {"por_varias_unidades", "sin_descuento_de_precio",
+                                "cantidad_cambiada", "total"}}
+
+**Se juzga solo lo que se puede juzgar**, y las tres condiciones estan medidas (24 de
+septiembre de 2026, gold de ese dia):
+
+1. **El descuento es sobre el precio de esta unidad.** Un `3x2` no baja el precio de
+   una unidad, baja el de la tercera, asi que "hoy cuesta mas que su precio de siempre"
+   seria verdad y no significaria nada. Eran **3.658 de 5.488** ofertas anunciadas las
+   que dependian de cuantas unidades compres (`3x2` 2.195, `2ª unidad -50 %`, `Todo a
+   1 €`, lote, pack, "comprando 20 €"). Y **288** no anuncian ningun descuento de
+   precio: son etiquetas de marketing en el mismo campo ("En pack, mas facil", "Stock
+   Fuera (Unidades Limitadas)", "Novedad Alcampo").
+2. **La misma unidad y la misma cantidad.** La ventana de `core/derive.py` va partida
+   por `unidad_canon` (2.239 productos tienen mas de una unidad en su historial), y
+   ademas la cantidad que deduce el precio (`precio_cent / precio_unidad_cent`) no
+   puede haber cambiado dentro de la ventana. Sin esto la lista encabezaba con
+   "Ampollas Compeed 8 ml" a 1.306,25 €/l contra "su precio de siempre" 10,45 €/l: una
+   cantidad mal leida, no una oferta falsa.
+3. **`unidad` va en la respuesta** porque `precio_unidad_cent` no son euros: 1,29 €/kg y
+   1,29 € el envase se leen igual y no son lo mismo.
+
+Lo que se queda fuera **se cuenta y se dice** (`sin_poder_juzgar`): es «no lo se», no
+«no hay ninguna».
+
+### `GET /api/indice`, `GET /api/posicion`, `GET /api/pulso`
+
+Los tres son de solo lectura y alimentan las tres ultimas pestanas del panel
+(`indice`, `posicion`): el nivel de precios por cadena encadenado (base 100, compara
+**el mismo producto consigo mismo** en cada eslabon), en que es cara cada cadena
+seccion a seccion (contra **las otras** cadenas de su grupo comparable, no contra el
+precio medio del pasillo) y cuantos precios mueve cada cadena en cada captura.
+
 ### `GET /api/alertas`
 
     sale  {"fecha_datos",

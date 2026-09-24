@@ -53,11 +53,13 @@ def gold(tmp_path, monkeypatch):
         con.execute(f"COPY g TO '{tmp_path / 'grupos.parquet'}' (FORMAT PARQUET)")
 
         con.execute("CREATE TABLE x (fuente VARCHAR, id_fuente VARCHAR, fecha VARCHAR,"
-                    " precio_unidad_cent DOUBLE, precio_base_cent DOUBLE,"
+                    " precio_cent BIGINT, precio_unidad_cent DOUBLE,"
+                    " precio_base_cent DOUBLE,"
                     " posicion_90d DOUBLE, min_90d_cent DOUBLE, max_90d_cent DOUBLE)")
         for f in (derivado or []):
-            con.execute("INSERT INTO x VALUES (?,?,?,?,?,?,?,?)",
-                        [f["fuente"], f["id"], f["fecha"], f["unidad"], f["base"],
+            con.execute("INSERT INTO x VALUES (?,?,?,?,?,?,?,?,?)",
+                        [f["fuente"], f["id"], f["fecha"], f.get("venta", 100),
+                         f["unidad"], f["base"],
                          f.get("pos", 0.5), f.get("min", 0.0), f.get("max", 0.0)])
         con.execute(f"COPY x TO '{tmp_path / 'precio_derivado.parquet'}' (FORMAT PARQUET)")
 
@@ -157,3 +159,82 @@ def test_sin_texto_de_oferta_no_hay_nada_que_verificar(gold):
          derivado=[{"fuente": "aldi", "id": "10", "fecha": "2026-09-18",
                     "unidad": 300.0, "base": 200.0, "pos": 1.0}])
     assert movimientos.ofertas_dudosas() == []
+
+
+def test_no_se_acusa_a_una_cadena_cuando_la_cantidad_cambio(gold):
+    """El caso que encontro el navegador el 24 de septiembre de 2026.
+
+    La pantalla encabezaba con "Ampollas en stick anti-friccion Compeed 8 ml" a
+    1.306,25 EUR/l frente a "su precio de siempre" 10,45 EUR/l. No era un disparate
+    de la cadena: un dia el envase se leyo como **una unidad** (1.045 centimos, que
+    es el precio del envase leido como si fuera por litro) y otro como sus **8 ml**
+    (349 centimos / 0,008 l = 130.625 centimos/l). La cantidad deducida se va de 1 a
+    0,008 y los dos numeros no son del mismo producto.
+
+    Hoy la oferta **no se acusa**, y se cuenta aparte para poder decirlo: es un "no
+    lo se", no un "no hay ninguna".
+    """
+    dias = [("2026-09-10", 1045, 1045.0), ("2026-09-12", 1045, 1045.0),
+            ("2026-09-14", 1045, 1045.0), ("2026-09-20", 349, 43625.0),
+            ("2026-09-24", 349, 43625.0)]
+    gold(_serie("carrefour", "11", dias),
+         [{"fuente": "carrefour", "id": "11", "nombre": "Ampollas anti-friccion 8 ml",
+           "canon": "l", "promo_txt": "-15%"}],
+         derivado=[{"fuente": "carrefour", "id": "11", "fecha": f, "venta": v,
+                    "unidad": u, "base": 1045.0 if f < "2026-09-20" else 349.0,
+                    "pos": 1.0}
+                   for f, v, u in dias])
+    assert movimientos.ofertas_dudosas() == []
+    assert movimientos.ofertas_sin_poder_juzgar() == {
+        "por_varias_unidades": 0, "sin_descuento_de_precio": 0,
+        "cantidad_cambiada": 1, "total": 1}
+
+
+def test_una_oferta_con_la_cantidad_estable_si_se_acusa(gold):
+    """La otra mitad: con la presentacion quieta, la oferta que no baja se denuncia."""
+    dias = [("2026-09-10", 500, 500.0), ("2026-09-14", 500, 500.0),
+            ("2026-09-18", 500, 500.0), ("2026-09-24", 500, 500.0)]
+    gold(_serie("dia", "12", dias),
+         [{"fuente": "dia", "id": "12", "nombre": "Mayonesa 500 g", "canon": "kg",
+           "promo_txt": "5 EUR dto."}],
+         derivado=[{"fuente": "dia", "id": "12", "fecha": f, "venta": v, "unidad": u,
+                    "base": 480.0, "pos": 1.0}
+                   for f, v, u in dias])
+    r = movimientos.ofertas_dudosas()
+    assert len(r) == 1 and r[0]["unidad"] == "kg"
+    assert movimientos.ofertas_sin_poder_juzgar()["total"] == 0
+
+
+def test_un_3x2_no_se_acusa_de_mentir(gold):
+    """**El 63 % de la lista era esto, y era un error de la pantalla.**
+
+    Un 3x2 no baja el precio de una unidad: baja el de la tercera. Decir "anuncia
+    oferta y hoy cuesta mas que su precio de siempre" es verdad y no significa nada,
+    porque el descuento no esta en el precio de una unidad. Medido el 24 de
+    septiembre de 2026: 2.195 ofertas "3x2" y 848 "2ª unidad -50 %" entre las 5.488
+    acusadas. Se cuentan aparte, con su motivo, y la pantalla lo dice.
+    """
+    dias = [("2026-09-10", 500, 500.0), ("2026-09-18", 500, 500.0),
+            ("2026-09-24", 500, 500.0)]
+    gold(_serie("carrefour", "13", dias),
+         [{"fuente": "carrefour", "id": "13", "nombre": "Galletas 1 kg", "canon": "kg",
+           "promo_txt": "3x2"}],
+         derivado=[{"fuente": "carrefour", "id": "13", "fecha": f, "venta": v,
+                    "unidad": u, "base": 480.0, "pos": 1.0}
+                   for f, v, u in dias])
+    assert movimientos.ofertas_dudosas() == []
+    assert movimientos.ofertas_sin_poder_juzgar()["por_varias_unidades"] == 1
+
+
+def test_un_stock_fuera_no_es_una_oferta(gold):
+    """Y el segundo motivo: hay etiquetas de marketing en el campo de las ofertas."""
+    dias = [("2026-09-10", 500, 500.0), ("2026-09-18", 500, 500.0),
+            ("2026-09-24", 500, 500.0)]
+    gold(_serie("aldi", "14", dias),
+         [{"fuente": "aldi", "id": "14", "nombre": "Cafe 1 kg", "canon": "kg",
+           "promo_txt": "Stock Fuera (Unidades Limitadas)"}],
+         derivado=[{"fuente": "aldi", "id": "14", "fecha": f, "venta": v, "unidad": u,
+                    "base": 480.0, "pos": 1.0}
+                   for f, v, u in dias])
+    assert movimientos.ofertas_dudosas() == []
+    assert movimientos.ofertas_sin_poder_juzgar()["sin_descuento_de_precio"] == 1

@@ -126,10 +126,93 @@ la proxima ejecucion, y es que estaban mal. No es una perdida de datos.
 - **`solo_online`** (backlog N17). En el verificador salen ya textos como
   *"5€ dto. comprando 20€ en Nestle. Exclusivo Online"*. Un descuento que no
   existe si vas a la tienda es el mismo caso que el de la tarjeta, y todavia
-  entra en el total.
-- **Distinguir el texto que no es una oferta.** "En pack, más fácil" y
-  "PROTEÍNA, CALIDAD, SABOR" estan en `promo_txt` y no anuncian ningun
-  descuento. Hoy el verificador los saca como ofertas dudosas, y tecnicamente lo
-  son -- anuncian algo y el precio no baja -- pero lo honesto es separarlos.
-- **La pantalla en la app.** Los dos endpoints estan y devuelven datos; la
-  interfaz de `plataforma/web` todavia no los pinta.
+  entra en el total. (Ojo: esos textos ya **no se acusan** en el verificador, porque
+  dicen "comprando" y el descuento depende de cuantas unidades compres. Lo que falta
+  es no contarlos como oferta en la cesta.)
+- ~~**Distinguir el texto que no es una oferta.**~~ — **hecho el 24 de septiembre de
+  2026**, ver §5.3.
+- ~~**La pantalla en la app.**~~ — **hecha el 24 de septiembre de 2026**: la pestaña
+  **Ofertas dudosas** del panel nuevo (`plataforma/web/app/src/paginas/Panel.tsx`), con
+  la misma frase del servidor (`por_que`) antes que el precio y una regla de 90 días.
+
+---
+
+## 5. Lo que aparecio al pintarlo: la pantalla acusaba con numeros que no eran suyos
+
+El 24 de septiembre de 2026 se pintaron por primera vez las tres pantallas del panel
+que le faltaban a la interfaz nueva. La de ofertas dudosas encabezaba así:
+
+```
+Ampollas en stick anti-fricción Compeed 8 ml.
+anuncia oferta y hoy cuesta mas que su precio de siempre
+1.306,25 €/l  hoy · su precio de siempre 10,45 €/l
+```
+
+Eso no es una oferta dudosa: es **una cantidad mal leída**. El envase se leyó un día
+como **una unidad** (1.045 céntimos, el precio del envase leído como si fuera por
+litro) y otro como sus **8 ml** (349 céntimos / 0,008 l = 130.625 céntimos/l). Los dos
+números no son del mismo producto. Y no era un caso suelto: **ordenada por
+`posicion_90d`, las diez primeras eran de esa familia**.
+
+### 5.1 La ventana de `core/derive.py` era del producto, no de su unidad
+
+Todas las columnas derivadas (`precio_base_cent`, `min/max_90d`, `posicion_90d`,
+`descuento_real`) comparan un precio con los suyos anteriores, y **un precio por litro
+no se puede comparar con uno por unidad**: es la misma regla que ya sigue el resto del
+proyecto. Medido sobre el gold de ese día: **2.239 productos tienen más de una unidad
+en su historial**.
+
+Partiendo la ventana por `unidad_canon`, sobre el mismo gold:
+
+| | antes | después |
+|---|---:|---:|
+| ofertas acusadas con hoy > 3× su base | 337 | **17** |
+| productos con un rango de 90 días > 3× | 3.175 | **1.694** |
+| "el más barato de sus 90 días" cuya unidad cambió | 150 | **101** |
+
+Un producto que cambia de unidad **empieza de cero en la nueva**: su base tarda en
+existir y hasta entonces dice «no lo sé» en vez de inventar una comparación.
+
+### 5.2 Y lo que quedaba era la cantidad, no la unidad
+
+Los 17 que seguían saliendo tenían la misma unidad y **otra cantidad declarada**: el
+mismo envase leído como 2,0057 kg un día y como 0,2 kg otro (un 10× exacto). Eso ya no
+es cosa de `derive.py`: es que la comparación **no habla del mismo producto**. El
+control que hacía falta **ya existía en este mismo fichero** para las bajadas
+(`TOLERANCIA_CANTIDAD`, §1.2), y no estaba puesto en el verificador de ofertas. Ahora
+sí, y con la misma tolerancia del 2 %.
+
+### 5.3 Y el 63 % de la lista no se podía juzgar de ninguna manera
+
+Al contar por qué salían tantas, apareció lo gordo. De las **5.488** ofertas anunciadas
+cuyo precio de hoy no baja de su precio de siempre:
+
+| familia | cuántas | qué son |
+|---|---:|---|
+| `por_varias_unidades` | **3.658** | el descuento depende de cuántas compres: `3x2` (2.195), `2ª unidad -50 %` (848+…), `Todo a 1 €` (653), lote, pack, "comprando 20 €" |
+| `sin_descuento_de_precio` | **288** | el texto no anuncia un descuento de precio: "En pack, más fácil", "Stock Fuera (Unidades Limitadas)", "Novedad Alcampo", "Producto en Folleto" |
+| `cantidad_cambiada` | **4** | el tamaño declarado cambió dentro de la ventana |
+| **se juzgan** | **1.538** | descuentos sobre el precio de **esta** unidad |
+
+**Un 3x2 no baja el precio de una unidad, baja el de la tercera.** Decir "anuncia
+oferta y hoy cuesta más que su precio de siempre" es verdad y no significa nada: el
+descuento no está donde lo buscamos. Acusar a esas 3.658 era un error de la pantalla,
+no una mentira de la cadena.
+
+Así que el verificador juzga **sólo** lo que anuncia un descuento sobre el precio de
+ese producto, y **cuenta y dice** lo que deja fuera, por motivo
+(`GET /api/ofertas-dudosas` → `sin_poder_juzgar`). Es la regla de siempre: un dato que
+no tenemos es «no lo sé», y aquí el dato que falta es el precio normal de *ese*
+producto.
+
+### 5.4 Lo que sigue sin saberse
+
+Con las tres cosas puestas, lo que queda en la lista es defendible (hoy cuesta más que
+su mediana de 30 días, misma unidad y misma cantidad), pero **por qué** pasa eso no
+está resuelto: hay textos como *"Todo a 1€ (14/09/2026 - 08/10/2026)"* en productos que
+cuestan 1,70 € y no 1 €. Puede ser que el texto se pegue a productos a los que no
+aplica, o que el precio no haya bajado. El control que lo contestaría
+(`oferta_sospechosa`: subir el precio normal justo antes de la oferta) **sigue dormido**
+hasta los 45 días de histórico (§2). Hasta entonces, la frase que se enseña es la que
+los datos sostienen, y ni una más.
+

@@ -795,6 +795,80 @@ def main() -> int:
         comprueba("unidad y la cantidad siguen siendo las mismas" in mio,
                   "y explica que no cuenta como bajada: misma unidad y misma cantidad")
 
+        # -------------- las tres pantallas del panel que le faltaban (BACKLOG 0.8) ----
+        # `indice`, `posicion` y `ofertas dudosas` son las tres del panel viejo que el
+        # nuevo no tenia (`app.js:762-768`), y eran justo las que impiden cambiar la
+        # interfaz. Se comprueba que **contestan**, no que cargan: un titulo bonito
+        # encima de una lista vacia es peor que no tener pantalla, porque parece hecha.
+        print("\n== las tres pantallas del panel que le faltaban")
+        for pestana, tiene_que_decir in (
+                ("indice", "El nivel de precios de cada cadena"),
+                ("posicion", "En qué es cara cada cadena"),
+                ("dudosas", "conviene mirar dos veces")):
+            carga(f"/panel?pestana={pestana}")
+            pagina.wait_for_timeout(1500)
+            texto = pagina.inner_text("main")
+            visto = " | ".join(texto.splitlines()[:6])
+            comprueba(tiene_que_decir in texto,
+                      f"el panel de {pestana} contesta ({tiene_que_decir!r}; lei: {visto})")
+            # Y cada una dice **de donde sale el filtro de cadenas**: quien ve tres y no
+            # las cinco tiene que poder saber si faltan datos o si es su ajuste.
+            comprueba("Mirando las cinco cadenas." in texto
+                      or "Mirando solo las cadenas que tienes cerca" in texto
+                      or "Mirando solo estas cadenas." in texto,
+                      f"y el panel de {pestana} dice que cadenas esta mirando")
+
+        # La frase del indice, que es la respuesta: quien ha bajado y quien ha subido.
+        carga("/panel?pestana=indice")
+        pagina.wait_for_timeout(1500)
+        texto = pagina.inner_text("main")
+        comprueba("es quien más ha bajado" in texto or "Solo hay una cadena" in texto,
+                  "el indice contesta con una frase, no solo con un dibujo")
+        comprueba("CAPTURAS" in texto.upper() and "PRODUCTOS" in texto.upper(),
+                  "y enseña sobre cuantos productos y cuantas capturas lo dice")
+
+        # El filtro del panel, que era el otro hueco: ninguna pestaña leia `cadenas_cerca`
+        # (`Panel.tsx` llamaba a `useBajadas(dias, subidas, [])` con la lista vacia).
+        carga("/panel?pestana=indice&cadenas=dia")
+        pagina.wait_for_timeout(1500)
+        filas = pagina.locator("main table tbody tr")
+        comprueba(filas.count() == 1 and "Dia" in filas.first.inner_text(),
+                  f"filtrar por una cadena deja una sola serie en el indice "
+                  f"({filas.count()} filas)")
+        comprueba("Mirando solo estas cadenas." in pagina.inner_text("main"),
+                  "y el panel dice que esta mirando solo esa")
+
+        # ------------- y el verificador de ofertas por dentro: lo que NO se acusa ------
+        # La lista encabezaba, medido en el navegador el 24 de septiembre de 2026, con
+        # "Ampollas Compeed 8 ml" a 1.306,25 EUR/l frente a "su precio de siempre" 10,45
+        # EUR/l. Eso no es una oferta dudosa: es una **cantidad mal leida** (un dia el
+        # envase se leyo como 1 y otro como 0,008), y la pantalla acusaba a Carrefour con
+        # numeros que no eran suyos. Se vio al pintar la unidad, que hasta hoy no se
+        # pintaba. Aqui se vigila que no vuelva, y que un 3x2 no se acuse de mentir.
+        print("\n== el verificador de ofertas: a quien acusa y a quien no")
+        from plataforma.api import movimientos
+        lista = movimientos.ofertas_dudosas(limite=200)
+        comprueba(all(x["unidad"] for x in lista),
+                  "cada oferta acusada dice en que unidad esta su precio")
+        gordas = [x for x in lista
+                  if x["precio_unidad_cent"] > 3 * x["precio_base_cent"]]
+        comprueba(not gordas,
+                  f"ninguna se acusa con mas del triple de su precio normal "
+                  f"({[(x['nombre'][:40], x['precio_unidad_cent'], x['precio_base_cent']) for x in gordas[:3]]})")
+        comprueba(not any("3x2" in (x["promo_txt"] or "")
+                          or "unidad" in (x["promo_txt"] or "").lower() for x in lista),
+                  "y ninguna acusada es de las que dependen de cuantas unidades compres")
+        fuera = movimientos.ofertas_sin_poder_juzgar()
+        comprueba(fuera["total"] == (fuera["por_varias_unidades"]
+                                     + fuera["sin_descuento_de_precio"]
+                                     + fuera["cantidad_cambiada"]),
+                  f"lo que no se juzga se cuenta por motivo ({fuera})")
+        carga("/panel?pestana=dudosas")
+        pagina.wait_for_timeout(1500)
+        texto = pagina.inner_text("main")
+        comprueba("no se juzgan aquí" in texto or "no se juzgan aqui" in texto,
+                  "y la pantalla dice cuantas se quedan fuera y por que")
+
         # ------------------------- y un grupo del que NO nos fiamos no da frase (barra d) --
         # La frase no se inventa: si el grupo esta en una sola cadena, no hay comparacion
         # que hacer y la pantalla no puede decir «es la mas barata de las cinco». Se busca
@@ -828,6 +902,11 @@ def main() -> int:
         if solo_uno is not None:
             rutas.append(f"/grupo/{solo_uno}")
         rutas += ["/avisos", "/panel", "/ajustes", "/escaner"]
+        # Las tres pestanas nuevas del panel, cada una con su propia forma: una grafica
+        # con deslizador de tabla, barras y tarjetas con una regla. Entran aqui porque
+        # son pantallas nuevas y nadie las ha medido todavia con el dedo.
+        rutas += ["/panel?pestana=indice", "/panel?pestana=posicion",
+                  "/panel?pestana=dudosas"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
             rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")

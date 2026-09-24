@@ -17,13 +17,20 @@ import type { ReactNode } from 'react'
 
 import {
   useBajadas,
+  useCadenasCerca,
+  useEstado,
+  useIndice,
+  useOfertasDudosas,
   usePanelCadenas,
   usePanelHistorico,
   usePanelHoy,
   usePanelMarcas,
   usePanelMovidos,
+  usePosicion,
+  useSecciones,
 } from '../api/consultas'
-import { euros, eurosUnidad, fecha, numero, porcentaje, porcentajeConSigno } from '../api/formato'
+import { euros, eurosUnidad, fecha, nombreCadena, numero, porcentaje, porcentajeConSigno } from '../api/formato'
+import { GraficoIndice } from '../componentes/GraficoIndice'
 import { Aviso, Cargando, Dato, Etiqueta, Fallo, Selector, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 const PESTANAS = [
@@ -33,14 +40,52 @@ const PESTANAS = [
   { clave: 'historico', texto: 'Histórico' },
   { clave: 'movidos', texto: 'Movidos' },
   { clave: 'bajadas', texto: 'Bajadas' },
+  // Las tres que faltaban respecto de la interfaz vieja (`app.js:762-768`):
+  // `indice` y `posicion` son las que contestan "¿en que soy caro?" y "¿a que
+  // ritmo se mueve el nivel de precios?", y `dudosas` es el verificador de
+  // ofertas. Eran las tres pantallas que hacian que el panel nuevo no pudiera
+  // sustituir al viejo.
+  { clave: 'indice', texto: 'Índice' },
+  { clave: 'posicion', texto: 'Posición' },
+  { clave: 'dudosas', texto: 'Ofertas dudosas' },
 ] as const
 
 type Clave = (typeof PESTANAS)[number]['clave']
+
+/** Las pestanas en las que "¿de que cadenas hablamos?" significa algo.
+ *
+ *  En las de un solo dato global (hoy, marcas, historico) filtrar por cadena no
+ *  tendria sentido: no hay desglose por cadena que recortar. */
+const CON_FILTRO: Clave[] = ['indice', 'posicion', 'dudosas', 'bajadas']
 
 export function Panel() {
   const [params, setParams] = useSearchParams()
   const crudo = params.get('pestana')
   const activa: Clave = (PESTANAS.find((p) => p.clave === crudo)?.clave ?? 'hoy') as Clave
+
+  // **El filtro por cadenas cercanas, que era el otro hueco de esta pantalla.**
+  // `Panel.tsx` llamaba a `useBajadas(dias, subidas, [])` con la lista vacia y
+  // ninguna pestana leia `cadenas_cerca`: las cinco cadenas pesaban lo mismo
+  // aunque en la calle solo haya dos. El valor por defecto son las que la persona
+  // tiene puestas en Ajustes, y la UI dice **de donde sale** el filtro: sin eso,
+  // quien ve tres cadenas y no las cinco no sabe si faltan datos o si es su ajuste.
+  const cercanas = useCadenasCerca()
+  const estado = useEstado()
+  const crudoCadenas = params.get('cadenas')
+  const puestas =
+    crudoCadenas === 'todas'
+      ? []
+      : crudoCadenas
+        ? crudoCadenas.split(',').filter(Boolean)
+        : cercanas
+  const dePreferencias = crudoCadenas === null && cercanas.length > 0
+  const cambiaCadenas = (sel: string[]) =>
+    setParams(
+      { ...Object.fromEntries(params), cadenas: sel.length ? [...sel].sort().join(',') : 'todas' },
+      { replace: true },
+    )
+  const alternaCadena = (c: string) =>
+    cambiaCadenas(puestas.includes(c) ? puestas.filter((x) => x !== c) : [...puestas, c])
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -74,15 +119,93 @@ export function Panel() {
         ))}
       </div>
 
+      {CON_FILTRO.includes(activa) && (
+        <FiltroCadenas
+          conocidas={(estado.data?.cadenas ?? []).map((c) => c.cadena)}
+          puestas={puestas}
+          dePreferencias={dePreferencias}
+          alterna={alternaCadena}
+          todas={() => cambiaCadenas([])}
+        />
+      )}
+
       {activa === 'hoy' && <Hoy />}
       {activa === 'cadenas' && <Cadenas />}
       {activa === 'marcas' && <Marcas />}
       {activa === 'historico' && <Historico />}
       {activa === 'movidos' && <Movidos />}
-      {activa === 'bajadas' && <Bajadas />}
+      {activa === 'bajadas' && <Bajadas cadenas={puestas} />}
+      {activa === 'indice' && <Indice cadenas={puestas} />}
+      {activa === 'posicion' && <Posicion cadenas={puestas} />}
+      {activa === 'dudosas' && <Dudosas cadenas={puestas} />}
     </div>
   )
 }
+
+/** El filtro de cadenas del panel: **de que cadenas habla esta pantalla**.
+ *
+ *  Por defecto, las que la persona tiene cerca (`Ajustes` → `cadenas_cerca`), y se
+ *  dice en voz alta para que nadie crea que faltan datos. Un toque por cadena y un
+ *  atajo para volver a las cinco. Objetivos de 44 px porque esto se usa de pie.
+ */
+function FiltroCadenas({
+  conocidas,
+  puestas,
+  dePreferencias,
+  alterna,
+  todas,
+}: {
+  conocidas: string[]
+  puestas: string[]
+  dePreferencias: boolean
+  alterna: (cadena: string) => void
+  todas: () => void
+}) {
+  const sinFiltro = puestas.length === 0
+  return (
+    <div className="grid gap-1">
+      <p className="text-xs text-tinta-suave">
+        {sinFiltro
+          ? 'Mirando las cinco cadenas.'
+          : dePreferencias
+            ? 'Mirando solo las cadenas que tienes cerca, las de Ajustes.'
+            : 'Mirando solo estas cadenas.'}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {(conocidas.length ? conocidas : puestas).map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={puestas.includes(c)}
+            onClick={() => alterna(c)}
+            className={
+              'inline-flex min-h-[44px] items-center rounded-full border px-3 text-sm font-medium ' +
+              (puestas.includes(c)
+                ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
+                : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
+            }
+          >
+            {nombreCadena(c)}
+          </button>
+        ))}
+        <button
+          type="button"
+          aria-pressed={sinFiltro}
+          onClick={todas}
+          className={
+            'inline-flex min-h-[44px] items-center rounded-full border px-3 text-sm font-medium ' +
+            (sinFiltro
+              ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
+              : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
+          }
+        >
+          Todas
+        </button>
+      </div>
+    </div>
+  )
+}
+
 
 /** Envoltorio comun: pinta cargando, fallo y datos sin repetirlo seis veces. */
 function Bloque<T>({
@@ -481,7 +604,7 @@ function Movidos() {
   )
 }
 
-function Bajadas() {
+function Bajadas({ cadenas }: { cadenas: string[] }) {
   const [params, setParams] = useSearchParams()
   const dias = Number(params.get('dias') ?? '7') || 7
   const subidas = params.get('subidas') === 'true'
@@ -489,7 +612,11 @@ function Bajadas() {
   // la aplicacion: *"¿ha bajado algo de lo mio?"*. Va en la direccion como los otros
   // filtros: asi se puede volver a lo mismo con el boton de atras y compartirlo.
   const soloMios = params.get('mios') === 'true'
-  const consulta = useBajadas(dias, subidas, [], soloMios)
+  // **Las cadenas que el panel tiene puestas, no una lista vacia.** Estaba aqui
+  // `[]` a mano (el hueco que apunto `BACKLOG.md` §0.8): la pestana que contesta
+  // "¿ha bajado algo de lo mio?" enseñaba el catalogo entero de las cinco cadenas
+  // aunque en la calle haya dos.
+  const consulta = useBajadas(dias, subidas, cadenas, soloMios)
   const alterna = (clave: string, valor: string) =>
     setParams({ ...Object.fromEntries(params), [clave]: valor }, { replace: true })
 
@@ -606,6 +733,382 @@ function Bajadas() {
             la unidad y la cantidad siguen siendo las mismas: si lo que cambió fue el formato, eso
             no es una bajada.
           </Aviso>
+        </div>
+      )}
+    </Bloque>
+  )
+}
+
+/* ------------------------------------------------------------ el indice ----
+   "¿A que ritmo se mueve el nivel de precios?" no se contesta con una lista de
+   ofertas: un yogur que baja no dice nada del nivel. El indice encadenado compara
+   **el mismo producto consigo mismo** contra la captura anterior de esa cadena, asi
+   que no se mueve porque cambie el surtido -- que es el error clasico de una cesta
+   fija mal hecha. Lo que no se puede leer de un indice, y por eso va todo junto:
+   cuantos productos sostienen cada eslabon, cuantos relativos se recortaron y
+   cuantas capturas hay.
+*/
+function Indice({ cadenas }: { cadenas: string[] }) {
+  const consulta = useIndice()
+  return (
+    <Bloque consulta={consulta} titulo="el índice">
+      {(d) => {
+        const series = cadenas.length
+          ? d.series.filter((s) => cadenas.includes(s.cadena))
+          : d.series
+        if (series.length === 0) {
+          return (
+            <Vacio titulo="Ninguna de esas cadenas tiene índice todavía">
+              <p>El índice necesita dos capturas de la misma cadena para empezar a moverse.</p>
+            </Vacio>
+          )
+        }
+        const orden = [...series].sort((a, b) => a.variacion_pct - b.variacion_pct)
+        const baja = orden[0]
+        const sube = orden[orden.length - 1]
+        const capturas = Math.max(...series.map((s) => s.capturas))
+        const recortados = series.reduce(
+          (t, s) => t + (s.puntos[s.puntos.length - 1]?.recortados ?? 0),
+          0,
+        )
+        return (
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold">El nivel de precios de cada cadena</h2>
+              <SelloFecha fechaDatos={d.fecha_datos} />
+            </div>
+
+            {/* La frase primero: el dato que se lee de un vistazo. Y con la
+                advertencia pegada, porque un +0,3 % en catorce capturas es una
+                tendencia, no un chollo ni una catastrofe. */}
+            <p className="font-semibold">
+              {baja.cadena === sube.cadena
+                ? `Solo hay una cadena en el gráfico: ${nombreCadena(baja.cadena)}, ${porcentajeConSigno(baja.variacion_pct)} desde la primera captura.`
+                : `${nombreCadena(baja.cadena)} es quien más ha bajado (${porcentajeConSigno(baja.variacion_pct)}) y ${nombreCadena(sube.cadena)} quien más ha subido (${porcentajeConSigno(sube.variacion_pct)}) en ${numero(capturas, 0)} capturas.`}
+            </p>
+            <p className="text-sm text-tinta-suave">
+              Son décimas: en unas semanas un catálogo entero no se mueve mucho, y el valor está en
+              la tendencia, no en el día.
+            </p>
+
+            <Tarjeta titulo="Índice encadenado" sub={`${d.base} · ${d.metodo}`}>
+              <GraficoIndice series={series} />
+            </Tarjeta>
+
+            <Tarjeta titulo="Los números" sub="La tabla no es un extra: el color de cinco series no se distingue, y el dato no puede depender de verlo bien">
+              <TablaScroll etiqueta="Índice de precios por cadena" minAncho="34rem">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr>
+                      <Th>Cadena</Th>
+                      <Th>Índice</Th>
+                      <Th>Variación</Th>
+                      <Th>Capturas</Th>
+                      <Th>Productos</Th>
+                      {recortados > 0 && <Th>Recortados</Th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orden.map((s) => {
+                      const u = s.puntos[s.puntos.length - 1]
+                      return (
+                        <tr key={s.cadena}>
+                          <Td>{nombreCadena(s.cadena)}</Td>
+                          <Td className="cifra">{numero(s.indice, 2)}</Td>
+                          <Td className="cifra font-semibold">
+                            {porcentajeConSigno(s.variacion_pct, 2)}
+                          </Td>
+                          <Td className="cifra">{numero(s.capturas, 0)}</Td>
+                          <Td className="cifra">{numero(u?.productos, 0)}</Td>
+                          {recortados > 0 && <Td className="cifra">{numero(u?.recortados, 0)}</Td>}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </TablaScroll>
+              {recortados > 0 && (
+                <p className="mt-2 text-xs text-tinta-suave">
+                  «Recortados» son los relativos fuera del rango creíble: el índice no los usa. Si
+                  fueran muchos, ese eslabón sería flojo y el índice estaría midiendo otra cosa.
+                </p>
+              )}
+            </Tarjeta>
+          </div>
+        )
+      }}
+    </Bloque>
+  )
+}
+
+/* ----------------------------------------------------------- la posicion ----
+   La pregunta util no es "¿quien es mas barato?" sino **"¿en que soy caro?"**.
+   Una cadena puede ir un 20 % por debajo en lacteos y un 25 % por encima en
+   pescaderia, y la media de las dos no se parece a ninguna. Se ordena por cuanto
+   se separan las cadenas dentro de la seccion: donde estan empatadas, elegir
+   tienda no cambia el ticket y esa seccion no tiene por que abrir la pantalla.
+*/
+function Posicion({ cadenas }: { cadenas: string[] }) {
+  const consulta = usePosicion()
+  // Los nombres de las secciones vienen de `/secciones`, que ya esta en cache
+  // porque lo pide el buscador: aqui solo se traducen. Un slug que no este se
+  // enseña tal cual, que es mejor que esconderlo.
+  const secciones = useSecciones([])
+  const nombre = (s: string) =>
+    secciones.data?.secciones.find((x) => x.seccion === s)?.nombre ?? s
+
+  return (
+    <Bloque consulta={consulta} titulo="la posición">
+      {(d) => {
+        const visibles = d.secciones
+          .map((s) => ({ ...s, cadenas: cadenas.length ? s.cadenas.filter((c) => cadenas.includes(c.cadena)) : s.cadenas }))
+          .filter((s) => s.cadenas.length > 0)
+        if (visibles.length === 0) {
+          return (
+            <Vacio titulo="Todavía no hay secciones comparables">
+              <p>
+                Esto se llena cuando la cadena publica la sección y hay grupos con dos cadenas o más.
+              </p>
+            </Vacio>
+          )
+        }
+        const horquilla = (s: (typeof visibles)[number]) => {
+          const v = s.cadenas.map((c) => c.desvio_pct)
+          return v.length > 1 ? Math.max(...v) - Math.min(...v) : 0
+        }
+        const orden = [...visibles].sort((a, b) => horquilla(b) - horquilla(a))
+        const tope = Math.max(...visibles.flatMap((s) => s.cadenas.map((c) => Math.abs(c.desvio_pct))), 5)
+        return (
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold">En qué es cara cada cadena</h2>
+              <SelloFecha fechaDatos={d.fecha_datos} />
+            </div>
+            <p className="text-sm text-tinta-suave">
+              Cada cadena contra <strong>las otras</strong> dentro de cada grupo de productos
+              equivalentes. No es el precio medio de la sección: eso mediría el surtido, no el
+              precio. Ordenado por cuánto se separan las cadenas: donde están empatadas, elegir
+              tienda no cambia nada.
+            </p>
+
+            {orden.map((s) => (
+              <Tarjeta
+                key={s.seccion}
+                titulo={nombre(s.seccion)}
+                sub={
+                  horquilla(s) > 0
+                    ? `${numero(s.productos, 0)} productos emparejados · ${numero(horquilla(s), 1)} puntos entre la más barata y la más cara`
+                    : `${numero(s.productos, 0)} productos emparejados · aquí están empatadas`
+                }
+              >
+                <ul className="grid gap-2">
+                  {[...s.cadenas]
+                    .sort((a, b) => a.desvio_pct - b.desvio_pct)
+                    .map((c) => {
+                      const ancho = 50 * Math.min(1, Math.abs(c.desvio_pct) / tope)
+                      const caro = c.desvio_pct > 0
+                      return (
+                        <li
+                          key={c.cadena}
+                          className="grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 text-xs"
+                        >
+                          <span className="truncate font-medium">{nombreCadena(c.cadena)}</span>
+                          {/* Barra a los dos lados del cero: a la izquierda lo que
+                              está por debajo de las demás, a la derecha lo que está
+                              por encima. El número va fuera de la barra, siempre
+                              visible, porque es el dato. */}
+                          <span className="relative block h-3 w-full rounded bg-neutral-100 dark:bg-neutral-800">
+                            <span
+                              aria-hidden
+                              className="absolute inset-y-0 left-1/2 w-px bg-neutral-300 dark:bg-neutral-600"
+                            />
+                            <span
+                              aria-hidden
+                              className={
+                                'absolute inset-y-0 rounded ' +
+                                (caro ? 'bg-red-600 dark:bg-red-500' : 'bg-emerald-600 dark:bg-emerald-500')
+                              }
+                              style={
+                                caro
+                                  ? { left: '50%', width: `${ancho}%` }
+                                  : { right: '50%', width: `${ancho}%` }
+                              }
+                            />
+                          </span>
+                          <span
+                            className={
+                              'cifra text-right font-semibold ' +
+                              (caro
+                                ? 'text-red-800 dark:text-red-400'
+                                : 'text-emerald-800 dark:text-emerald-400')
+                            }
+                          >
+                            {porcentajeConSigno(c.desvio_pct)}
+                          </span>
+                        </li>
+                      )
+                    })}
+                </ul>
+              </Tarjeta>
+            ))}
+
+            <Aviso tono="info">
+              El desvío se mide <strong>solo sobre lo emparejado y con la misma unidad</strong>: cada
+              producto contra la mediana de ese mismo producto en las otras cadenas. Un ±5 % con
+              pocos productos es una pista, no una conclusión.
+            </Aviso>
+          </div>
+        )
+      }}
+    </Bloque>
+  )
+}
+
+/* ------------------------------------------------------- ofertas dudosas ----
+   El verificador de ofertas. La pregunta no es cuanto cuesta: es **si el descuento
+   que anuncian existe**. La respuesta la calcula el servidor y viene en `por_que`,
+   y aqui se enseña lo primero, antes de la foto y antes del precio: si el cartel
+   dice "-50 %" y el producto cuesta lo de siempre, eso es lo que hay que leer.
+   El aviso del final no es un adorno legal: `oferta_sospechosa` (la regla que
+   caza subir el precio antes de anunciar la oferta) esta **dormida** hasta que
+   haya 45 dias de historico, asi que no se puede prometer lo que no se mide.
+*/
+function Dudosas({ cadenas }: { cadenas: string[] }) {
+  const consulta = useOfertasDudosas(cadenas)
+  return (
+    <Bloque consulta={consulta} titulo="las ofertas dudosas">
+      {(d) => (
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-semibold">
+              {d.resultados.length === 0
+                ? 'Ninguna oferta sospechosa'
+                : `${numero(d.resultados.length, 0)} ofertas que conviene mirar dos veces`}
+            </h2>
+            <SelloFecha fechaDatos={d.fecha_datos} />
+          </div>
+
+          {d.resultados.length === 0 ? (
+            <Vacio titulo="Hoy ninguna oferta anunciada se cae del histórico">
+              <p>
+                Aquí salen las ofertas anunciadas cuyo precio de hoy no está por debajo de lo que ese
+                producto cuesta normalmente. Que no haya ninguna es una buena noticia.
+              </p>
+            </Vacio>
+          ) : (
+            <>
+              <p className="text-sm text-tinta-suave">
+                No son mentiras necesariamente: son las que el histórico no sostiene, y por eso
+                conviene mirarlas dos veces antes de llenar el carro.
+              </p>
+              <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {d.resultados.map((x, i) => {
+                  const pos =
+                    x.posicion_90d === null ? null : Math.round(100 * Math.min(1, Math.max(0, x.posicion_90d)))
+                  return (
+                    <li
+                      key={`${x.cadena}-${x.grupo_id ?? x.nombre}-${i}`}
+                      className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+                    >
+                      {x.imagen ? (
+                        <img
+                          src={x.imagen}
+                          alt=""
+                          loading="lazy"
+                          className="h-[4.5rem] w-[4.5rem] rounded-lg object-contain"
+                        />
+                      ) : (
+                        <span aria-hidden className="h-[4.5rem] w-[4.5rem]" />
+                      )}
+                      <div className="grid gap-1">
+                        <h3 className="text-sm font-semibold">
+                          {x.grupo_id === null ? (
+                            x.nombre
+                          ) : (
+                            /* `min-h-[44px]`: el nombre es el enlace a la ficha, y un
+                               enlace de 19 px de alto no se acierta de pie con el carro
+                               en la mano. Lo midio la puerta del navegador el 24 de
+                               septiembre de 2026: 28 de estos, entre 145 x 19 y 248 x 39. */
+                            <Link
+                              to={`/grupo/${x.grupo_id}`}
+                              className="inline-flex min-h-[44px] items-center underline"
+                            >
+                              {x.nombre}
+                            </Link>
+                          )}
+                        </h3>
+                        <p className="text-xs text-tinta-suave">
+                          {x.marca ? `${x.marca} · ` : ''}
+                          {nombreCadena(x.cadena)}
+                        </p>
+                        {/* La respuesta, antes que el precio y antes que la foto. */}
+                        <p className="text-sm font-semibold">{x.por_que}</p>
+                        <p className="flex flex-wrap items-center gap-1 text-xs">
+                          <span className="cifra">{eurosUnidad(x.precio_unidad_cent, x.unidad)}</span>
+                          <span className="text-tinta-suave">
+                            hoy · su precio de siempre{' '}
+                            <span className="cifra">{eurosUnidad(x.precio_base_cent, x.unidad)}</span>
+                          </span>
+                        </p>
+                        {x.promo_txt && <Etiqueta tono="dato">{x.promo_txt}</Etiqueta>}
+                        {x.solo_con_tarjeta && (
+                          <Etiqueta tono="aviso" titulo="Sin la tarjeta de la cadena, ese precio no existe">
+                            solo con tarjeta
+                          </Etiqueta>
+                        )}
+                        {pos !== null && (
+                          <div className="grid gap-1">
+                            <span className="text-xs text-tinta-suave">
+                              Dónde cae hoy dentro de sus últimos 90 días
+                            </span>
+                            <span className="relative block h-3 w-full rounded bg-neutral-100 dark:bg-neutral-700">
+                              <span
+                                aria-hidden
+                                className="absolute inset-y-0 w-1 rounded bg-neutral-900 dark:bg-neutral-100"
+                                style={{ left: `calc(${pos}% - 2px)` }}
+                              />
+                            </span>
+                            <span className="flex justify-between text-xs text-tinta-suave">
+                              <span className="cifra">{euros(x.min_90d_cent)}</span>
+                              <span>lo más caro fue {euros(x.max_90d_cent)}</span>
+                            </span>
+                            <span className="sr-only">
+                              Posición {pos} de 100 dentro de sus 90 días.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+
+          <Aviso tono="info">
+            Se marca <strong>anuncia oferta y hoy no cuesta menos de lo que cuesta siempre</strong>.
+            La regla que caza el caso feo de verdad —subir el precio normal justo antes de anunciar
+            la oferta— necesita 45 días de histórico y hoy no los tenemos, así que esa comprobación
+            todavía no está y no se promete.
+          </Aviso>
+
+          {/* **Lo que no se ha podido juzgar, dicho en voz alta.** Son ofertas
+              anunciadas que no bajan pero que no se pueden medir con el precio de una
+              unidad (`/api/ofertas-dudosas` → `sin_poder_juzgar`): un 3x2 no baja el
+              precio de una, baja el de la tercera; "Stock Fuera" no es una oferta; y
+              si el tamaño declarado cambió, los dos números no son del mismo
+              producto. Un dato que no tenemos es «no lo sé», y esconderlo sería hacer
+              parecer que la lista está completa. */}
+          {d.sin_poder_juzgar.total > 0 && (
+            <p className="text-xs text-tinta-suave">
+              Y <strong>{numero(d.sin_poder_juzgar.total, 0)}</strong> ofertas anunciadas más no se
+              juzgan aquí: {numero(d.sin_poder_juzgar.por_varias_unidades, 0)} dependen de cuántas
+              unidades compres (un 3x2 no baja el precio de una),{' '}
+              {numero(d.sin_poder_juzgar.sin_descuento_de_precio, 0)} no anuncian un descuento de
+              precio, y {numero(d.sin_poder_juzgar.cantidad_cambiada, 0)} tienen un tamaño declarado
+              que cambió y no se pueden comparar consigo mismas.
+            </p>
+          )}
         </div>
       )}
     </Bloque>

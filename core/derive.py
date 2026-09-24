@@ -5,7 +5,12 @@ anterior y Aldi la fecha de fin de promocion; el resto no. A partir del dia ~30
 nosotros tenemos ESO Y MAS para las seis, calculado igual para todas.
 
 Entrada: polars.DataFrame de precio_diario con columnas
-    producto_id, fecha, precio_unidad_cent, precio_cent, promo (opcional)
+    producto_id, fecha, precio_unidad_cent, precio_cent, unidad_canon, promo (opcional)
+
+`unidad_canon` no es opcional aunque el resto del proyecto la trate con cuidado: sin
+ella la ventana movil mezcla EUR/kg con EUR/ud y todo lo que sale de aqui -- la base,
+el minimo de 90 dias, la posicion y el descuento real -- se calcula contra un numero
+que no es comparable. Ver `enriquecer()`.
 """
 from __future__ import annotations
 
@@ -16,9 +21,34 @@ VENTANA_PERC = 90      # dias para el percentil
 
 
 def enriquecer(df: pl.DataFrame) -> pl.DataFrame:
-    """Anade todos los campos derivados. Idempotente: se recalcula entero."""
+    """Anade todos los campos derivados. Idempotente: se recalcula entero.
+
+    **La ventana es del producto *y* de su unidad, y eso no es un detalle.** Todas
+    estas columnas comparan un precio con los suyos anteriores, y un precio por
+    litro no se puede comparar con uno por unidad: es la misma regla que ya sigue
+    el resto del proyecto (comparar EUR/kg con EUR/ud no da un desvio, da un
+    disparate).
+
+    Medido el 24 de septiembre de 2026 sobre el gold de ese dia, cuando la ventana
+    era solo por producto: **2.239 productos tienen mas de una unidad en su
+    historial** -- tipicamente porque la cadena no publicaba el tamano el primer
+    dia y ahora si, o al reves: "8 ml" (130.625 centimos por litro) contra el "1 ud"
+    de relleno (1.045 centimos, que es el precio del envase leido como si fuera por
+    litro). Con las dos unidades en la misma ventana salia:
+
+        - 337 ofertas marcadas como falsas donde hoy es > 3x la base, **y son las
+          primeras de la pantalla** porque `posicion_90d` se va a 1,0 solo;
+        - 150 productos anunciados como "el mas barato de sus 90 dias" (posicion
+          0,0) que solo lo parecen porque la unidad cambio;
+        - 3.175 productos con un rango de 90 dias mayor de 3x, que no es un rango:
+          son dos unidades.
+
+    Partiendo por unidad, un producto que cambia de unidad **empieza de cero en la
+    nueva**: su base tarda en existir y hasta entonces dice "no lo se" (`NULL`), que
+    es lo honesto. Un dato que no tenemos no se inventa.
+    """
     df = df.sort(["producto_id", "fecha"])
-    w = {"partition_by": "producto_id", "order_by": "fecha"}
+    w = {"partition_by": ["producto_id", "unidad_canon"], "order_by": "fecha"}
 
     df = df.with_columns([
         # --- precio anterior y variacion (lo que solo Mercadona da nativo) ---

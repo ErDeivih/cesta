@@ -291,14 +291,22 @@ def bajadas(dias: int = 7, cadenas: str | None = None, limite: int = 60,
 @app.get("/api/ofertas-dudosas")
 def ofertas_dudosas(limite: int = 60, cadenas: str | None = None,
                     usuario: dict | None = Depends(usuario_opcional)):
-    """Ofertas anunciadas que el historico no sostiene."""
+    """Ofertas anunciadas que el historico no sostiene.
+
+    `sin_poder_juzgar` cuenta las que **no se pueden juzgar** con el precio de una
+    unidad: las que dependen de cuantas compres (un 3x2 no baja el precio de una),
+    las que no anuncian un descuento de precio (un "Stock Fuera" no es una oferta) y
+    aquellas cuyo tamaño declarado cambio dentro de la ventana. Va en la respuesta
+    porque la pantalla lo dice: es "no lo se", no "no hay ninguna".
+    """
     lista = [c.strip() for c in cadenas.split(",")] if cadenas else None
     if lista is None and usuario:
         cercanas = almacen.preferencias_de(usuario["id"]).get("cadenas_cerca")
         if cercanas:
             lista = list(cercanas)
     return {"fecha_datos": catalogo.fecha_de_gold(),
-            "resultados": movimientos.ofertas_dudosas(limite, lista)}
+            "resultados": movimientos.ofertas_dudosas(limite, lista),
+            "sin_poder_juzgar": movimientos.ofertas_sin_poder_juzgar(lista)}
 
 
 @app.get("/api/grupo/{grupo_id}")

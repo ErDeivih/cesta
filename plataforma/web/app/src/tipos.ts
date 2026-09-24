@@ -368,6 +368,101 @@ export interface PanelMovidos {
   }[]
 }
 
+/** `GET /api/indice` — el nivel de precios de cada cadena, base 100.
+ *
+ *  Cada eslabon compara **el mismo producto consigo mismo** contra la captura
+ *  anterior de esa cadena, asi que el indice no se mueve porque cambie el
+ *  surtido. Es la diferencia entre "ha subido el nivel de precios" y "han
+ *  entrado productos mas caros", que es lo que mide una cesta fija mal hecha.
+ */
+export interface PuntoIndice {
+  fecha: string
+  indice: number
+  variacion_pct: number
+  /** Cuantos productos sostienen este eslabon. Sin esto, un indice es un numero suelto. */
+  productos: number
+  dias_del_salto: number
+  /** Relativos fuera del recorte: el eslabon no los usa, y hay que decirlo. */
+  recortados: number
+}
+
+export interface SerieIndice {
+  cadena: string
+  indice: number
+  variacion_pct: number
+  capturas: number
+  puntos: PuntoIndice[]
+}
+
+export interface RespuestaIndice {
+  fecha_datos: string
+  base: string
+  metodo: string
+  series: SerieIndice[]
+}
+
+/** `GET /api/posicion` — en que es cara cada cadena, seccion a seccion.
+ *
+ *  No es "quien es mas barato": una cadena puede ir un 20 % por debajo en
+ *  lacteos y un 25 % por encima en pescaderia, y la media de las dos no se
+ *  parece a ninguna. `desvio_pct` es la mediana del desvio de cada producto
+ *  respecto a la mediana de **las otras** cadenas de su grupo comparable.
+ */
+export interface RespuestaPosicion {
+  fecha_datos: string
+  medida: string
+  secciones: {
+    seccion: string
+    productos: number
+    cadenas: { cadena: string; productos: number; desvio_pct: number }[]
+  }[]
+}
+
+/** `GET /api/ofertas-dudosas` — ofertas anunciadas que el historico no sostiene.
+ *
+ *  `por_que` es la respuesta, no un adorno: viene calculada de los datos
+ *  (`movimientos._por_que`) y es lo primero que se lee.
+ */
+export interface OfertaDudosa {
+  grupo_id: number | null
+  nombre: string
+  marca: string | null
+  cadena: string
+  imagen: string | null
+  promo_txt: string | null
+  /** La unidad de `precio_unidad_cent`: "kg", "l" o "ud". Sin ella, un 1,29 €
+   *  se lee como el precio del envase y no lo es. */
+  unidad: string | null
+  precio_unidad_cent: number | null
+  precio_base_cent: number | null
+  /** 0 = el mas barato de sus 90 dias, 1 = el mas caro. */
+  posicion_90d: number | null
+  min_90d_cent: number | null
+  max_90d_cent: number | null
+  solo_con_tarjeta: boolean
+  por_que: string
+}
+
+/** Lo que **no se puede juzgar** con el precio de una unidad, contado por motivo.
+ *
+ *  Un 3x2 no baja el precio de una unidad, baja el de la tercera: acusarlo sería un
+ *  error de la pantalla, no una mentira de la cadena. Y "Stock Fuera" no es una
+ *  oferta, es una etiqueta. Se cuentan y se dicen, porque esconderlos haría parecer
+ *  que la lista está completa. */
+export interface OfertasSinPoderJuzgar {
+  por_varias_unidades: number
+  sin_descuento_de_precio: number
+  /** El tamaño declarado cambió dentro de la ventana que se compara. */
+  cantidad_cambiada: number
+  total: number
+}
+
+export interface RespuestaOfertasDudosas {
+  fecha_datos: string
+  resultados: OfertaDudosa[]
+  sin_poder_juzgar: OfertasSinPoderJuzgar
+}
+
 // ------------------------------------------------- el panel de matching ---
 
 /** Una metrica de la pasada: nombre y valor. Los nombres los pone
