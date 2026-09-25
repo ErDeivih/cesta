@@ -82,7 +82,21 @@ def arranca(espera: float = 30) -> None:
         _pool = ConnectionPool(AJUSTES.postgres, min_size=1, max_size=8,
                                kwargs={"row_factory": dict_row,
                                        "connect_timeout": tope})
-        _pool.wait(timeout=espera)
+        # **El pool tiene mas tiempo que un intento de conexion, y no el mismo.**
+        #
+        # Antes se le daba `espera` a secas, que es tambien el `connect_timeout` de
+        # cada intento, asi que el pool se rendia justo cuando la conexion estaba
+        # llegando. Medido el 25 de septiembre de 2026, con la recoleccion diaria
+        # escribiendo en el mismo disco: cada conexion tardaba **10,1 s** contra un
+        # tope de 10, y `arranca()` fallaba una y otra vez mientras una conexion
+        # suelta entraba sin problema. Le paso a este script de comprobacion, y le
+        # habria pasado a `projects/cesta/avisos.py` a las 06:00 con la maquina
+        # cargada: el paso de los avisos se cae y el resumen dice que no sabe cuantos
+        # saltaron.
+        #
+        # Esperar mas no puede colgar nada: la conexion suelta de arriba ya ha
+        # demostrado que la base contesta, y si no contestara, esto no se ejecuta.
+        _pool.wait(timeout=tope * 2 + 5)
         migra()
 
 
