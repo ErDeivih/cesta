@@ -429,6 +429,7 @@ class NuevaLinea(BaseModel):
     producto_id: str | None = None
     cantidad: int = Field(default=1, ge=1, le=99)
     nota: str | None = None
+    cadena_elegida: str | None = None     # se puede anadir ya sabiendo donde se compra
 
 
 class CambioLinea(BaseModel):
@@ -437,7 +438,35 @@ class CambioLinea(BaseModel):
     cantidad: int | None = Field(default=None, ge=1, le=99)
     nota: str | None = None
     borrado: bool | None = None
+    # La tienda donde se compra esta linea. `None` **puesto a proposito** quita la
+    # asignacion; no mandarlo la deja como estaba. La diferencia se resuelve con
+    # `model_fields_set`, porque en JSON las dos cosas llegan igual (`null` y
+    # ausente) y sin eso no habria forma de deshacer una asignacion.
+    cadena_elegida: str | None = None
     momento: datetime | None = None       # la hora del movil, no la de llegada
+
+
+class NombreLista(BaseModel):
+    nombre: str = Field(min_length=1, max_length=80)
+
+
+class EnTienda(BaseModel):
+    """Poner (o quitar) la tienda de un grupo de lineas, o borrar la sublista.
+
+    Tres botones de la pantalla con una sola forma:
+      - `cadena` + `lineas`      esas lineas se compran ahi
+      - `cadena` sin `lineas`    **toda** la lista se compra ahi
+      - `borrar=True` + `cadena` la sublista de esa tienda se borra del tiron
+    """
+    cadena: str | None = None
+    lineas: list[str] | None = None
+    borrar: bool = False
+
+
+class DesdeFavoritos(BaseModel):
+    """Pasar favoritos a una lista, de uno en uno o todos de golpe."""
+    grupo_ids: list[int] = []
+    producto_ids: list[str] = []
 
 
 class Compartir(BaseModel):
@@ -471,6 +500,32 @@ def mis_listas(usuario: dict = Depends(usuario_actual)):
 @app.post("/api/listas", status_code=201)
 def nueva_lista(datos: NuevaLista, usuario: dict = Depends(usuario_actual)):
     return almacen.crea_lista(usuario["id"], datos.nombre, datos.es_de_casa)
+
+
+@app.delete("/api/listas/{lista_id}")
+def borrar_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
+    """Borra la lista entera. **Se archiva: desaparece y se puede recuperar.**
+
+    Lo pidio el dueno el 25 de septiembre de 2026 (*"poder borrar sublista o lista
+    del tiron"*). Archivar y no borrar de verdad porque estas listas se comparten:
+    borrarlas de verdad le quita la compra a otra persona de un toque, y deshacerlo
+    no puede depender de una copia de seguridad.
+    """
+    if _acceso(lista_id, usuario) != "dueno":
+        raise HTTPException(403, "Solo quien la creo puede borrarla.")
+    if not almacen.archiva_lista(lista_id, usuario["id"]):
+        raise HTTPException(404, "Esa lista ya no esta.")
+    return {"borrada": lista_id}
+
+
+@app.patch("/api/listas/{lista_id}")
+def renombrar_lista(lista_id: str, datos: NombreLista,
+                    usuario: dict = Depends(usuario_actual)):
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    hecho = almacen.renombra_lista(lista_id, datos.nombre, usuario["id"])
+    if hecho is None:
+        raise HTTPException(404, "Esa lista ya no esta.")
+    return hecho
 
 
 @app.get("/api/listas/{lista_id}")
@@ -512,7 +567,7 @@ def anadir(lista_id: str, linea: NuevaLinea, usuario: dict = Depends(usuario_act
             422, "Una linea necesita el grupo o el producto al que se refiere.")
     return almacen.anade_linea(lista_id, usuario["id"], linea.id, linea.nombre,
                                linea.grupo_id, linea.producto_id,
-                               linea.cantidad, linea.nota)
+                               linea.cantidad, linea.nota, linea.cadena_elegida)
 
 
 @app.patch("/api/listas/{lista_id}/lineas/{linea_id}")
@@ -529,10 +584,96 @@ def cambiar(lista_id: str, linea_id: str, cambio: CambioLinea,
     resultado = almacen.cambia_linea(lista_id, linea_id, usuario["id"],
                                      tachado=cambio.tachado, cantidad=cambio.cantidad,
                                      nota=cambio.nota, borrado=cambio.borrado,
-                                     en_carrito=cambio.en_carrito, momento=momento)
+                                     en_carrito=cambio.en_carrito, momento=momento,
+                                     cadena_elegida=(cambio.cadena_elegida
+                                                     if "cadena_elegida" in cambio.model_fields_set
+                                                     else almacen.SIN_CAMBIAR))
     if resultado is None:
         raise HTTPException(404, "Esa linea ya no esta en la lista. Puede que la haya quitado la otra persona.")
     return resultado
+
+
+@app.post("/api/listas/{lista_id}/tienda")
+def en_tienda(lista_id: str, datos: EnTienda, usuario: dict = Depends(usuario_actual)):
+    """Elegir tienda: para una linea, para toda la lista o para borrar la sublista.
+
+    Es la operacion que pidio el dueno: *"en la lista poder elegir en que supermercado
+    lo quiero comprar... con opciones para eliminar facilmente de la lista cosas,
+    poder borrar sublista o lista del tiron"*.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    if datos.cadena is not None and datos.cadena not in cesta.CADENAS:
+        raise HTTPException(422, f"'{datos.cadena}' no es una de las cadenas: "
+                                 f"{', '.join(cesta.CADENAS)}")
+    if datos.borrar:
+        if datos.cadena is None:
+            raise HTTPException(422, "Para borrar una sublista hace falta decir de que tienda.")
+        cuantas = almacen.borra_lineas_de_tienda(lista_id, datos.cadena, usuario["id"])
+        return {"borradas": cuantas, "cadena": datos.cadena}
+    if datos.lineas:
+        cuantas = almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], datos.lineas)
+        return {"puestas": cuantas, "cadena": datos.cadena}
+    # Sin `lineas`: toda la lista, que es el boton de «todo en DIA».
+    todas = [x["id"] for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    return {"puestas": almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], todas),
+            "cadena": datos.cadena}
+
+
+@app.post("/api/listas/{lista_id}/desde-favoritos", status_code=201)
+def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
+                    usuario: dict = Depends(usuario_actual)):
+    """Pasar favos a la lista sin salir de favoritos.
+
+    *"Que sea facil anadir a una lista productos que ya esta en favoritos, esa seria
+    la ventaja de tener favoritos configurado"* (25 de septiembre de 2026). Se hace
+    en una peticion y no en veinte: una lista de la compra se monta de golpe, y
+    veinte viajes de ida y vuelta desde el movil en la puerta de la tienda no son
+    una forma de hacerlo.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    if not datos.grupo_ids and not datos.producto_ids:
+        raise HTTPException(422, "No has dicho que favoritos anadir.")
+    puestos = 0
+    for grupo_id in datos.grupo_ids:
+        # El nombre que se guarda en la linea es **el del producto**, no el numero
+        # del grupo: `nombre_visto` se pinta tal cual en la lista y "Favorito 4821"
+        # no le sirve a nadie de pie en el supermercado. Si el grupo ya no esta en
+        # gold (lo rehizo el emparejador), se guarda lo que se sepa y la linea sigue
+        # siendo valida: el grupo es la referencia, el nombre es una comodidad.
+        g = catalogo.grupo(grupo_id) or {}
+        nombre = g.get("nombre") or f"Producto {grupo_id}"
+        almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()),
+                            nombre, grupo_id, None, 1, None)
+        puestos += 1
+    for producto_id in datos.producto_ids:
+        p = catalogo.producto(producto_id) or {}
+        almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()),
+                            p.get("nombre") or producto_id, None, producto_id, 1, None)
+        puestos += 1
+    return {"anadidos": puestos}
+
+
+@app.get("/api/listas/{lista_id}/reparto")
+def reparto(lista_id: str, cadenas: str | None = None,
+            usuario: dict = Depends(usuario_actual)):
+    """La lista partida por tiendas: sublistas, totales y lo que queda por decidir.
+
+    Es la pantalla que pidio el dueno el 25 de septiembre de 2026. `donde` contesta
+    *«¿donde sale mas barata esta lista?»* y esta contesta *«¿que he decidido, y
+    cuanto me cuesta asi?»*: cada linea lleva su `cadena_elegida`, y aquí se agrupa
+    por tienda, se aplican las ofertas y se dice el total de cada sublista y el de
+    la lista entera.
+    """
+    _acceso(lista_id, usuario)
+    lineas = [x for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    peticiones = [cesta.Peticion(x["grupo_id"], x["producto_id"], x["cantidad"],
+                                 x["nombre_visto"], x["id"]) for x in lineas]
+    elegidas = [x.get("cadena_elegida") for x in lineas]
+    prefs = almacen.preferencias_de(usuario["id"])
+    lista_cadenas = ([c.strip() for c in cadenas.split(",")] if cadenas
+                     else prefs.get("cadenas_cerca"))
+    cuerpo = cesta.reparto_por_tienda(peticiones, elegidas, lista_cadenas)
+    return cuerpo | {"fecha_datos": catalogo.fecha_de_gold()}
 
 
 @app.post("/api/listas/{lista_id}/sincronizar")
@@ -550,7 +691,8 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
             if c.get("tipo") == "anadir":
                 almacen.anade_linea(lista_id, usuario["id"], c["id"], c["nombre"],
                                     c.get("grupo_id"), c.get("producto_id"),
-                                    c.get("cantidad", 1), c.get("nota"))
+                                    c.get("cantidad", 1), c.get("nota"),
+                                    c.get("cadena_elegida"))
             else:
                 momento = c.get("momento")
                 almacen.cambia_linea(
@@ -558,6 +700,10 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
                     tachado=c.get("tachado"), cantidad=c.get("cantidad"),
                     nota=c.get("nota"), borrado=c.get("borrado"),
                     en_carrito=c.get("en_carrito"),
+                    # Elegir tienda sin cobertura en el pasillo es justo uno de los
+                    # cambios que hay que poder subir despues, asi que viaja en la cola
+                    # como los demas. Ausente = no tocar; `null` = quitar la tienda.
+                    cadena_elegida=c.get("cadena_elegida", almacen.SIN_CAMBIAR),
                     momento=datetime.fromisoformat(momento) if momento else None)
             hechos += 1
         # Un cambio malo no puede impedir que suban los demas: el movil manda lo

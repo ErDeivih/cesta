@@ -33,6 +33,11 @@ class Peticion:
     producto_id: str | None
     cantidad: int
     nombre: str
+    # El identificador de la linea, cuando viene de una lista de verdad. Es lo que
+    # permite devolver **que** linea esta en cada sublista, para que la pantalla
+    # pueda quitarla o cambiarla de tienda sin adivinar por el nombre (dos lineas
+    # pueden llamarse igual: "leche" y "leche").
+    id: str | None = None
 
 
 @dataclass
@@ -200,6 +205,132 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
         # Ir a dos tiendas cuesta tiempo. Si el ahorro es ridiculo, se dice.
         mejor["merece_la_pena"] = mejor["ahorro_cent"] >= 150
     return mejor
+
+
+def reparto_por_tienda(peticiones: list[Peticion],
+                       asignadas: list[str | None],
+                       cadenas: list[str] | None = None) -> dict:
+    """La lista partida en sublistas: una por tienda **elegida**.
+
+    Es lo que pidio el dueno el 25 de septiembre de 2026, y es otra pregunta que
+    `donde_comprar`: aquello propone donde sale mas barata la lista entera; esto
+    **respeta lo que la persona ya ha decidido** («el pan en DIA, que me pilla de
+    camino») y enseña tres cosas:
+
+      - cada sublista con su precio final, con las ofertas aplicadas **y separadas**
+        de lo que costaria sin ellas, para poder decir cuanto ahorran;
+      - el total de la lista entera, que es la suma de las sublistas;
+      - lo que queda **sin decidir**, con la opcion mas barata de cada cosa al lado,
+        para poder decidirlo.
+
+    Una linea asignada a una tienda donde no hay nada que la resuelva no suma: se
+    dice por su nombre («en Mercadona no lo hay»), que es la misma regla de
+    `donde_comprar`. Una linea **sin decidir** tampoco suma al total: sumarla por
+    la mas barata daria un total que no se corresponde con ninguna compra posible.
+
+    Las ofertas se aplican con `core.promos`, que sabe que una oferta es una regla
+    sobre cuantas unidades compras: "2a unidad -50%" no abarata el producto, abarata
+    el par, y con `cantidad=1` no se aplica.
+    """
+    disponibles = [c for c in (cadenas or CADENAS) if c in CADENAS]
+    mejor = _candidatos(peticiones, "")
+    sublistas: dict[str, list[dict]] = {}
+    sin_encontrar: dict[str, list[str]] = {}
+    sin_asignar: list[dict] = []
+    total = total_sin = 0
+    resueltas = 0
+
+    for peticion, elegida in zip(peticiones, asignadas, strict=True):
+        opciones = {c: _resolver(peticion, c, mejor) for c in disponibles}
+        hay = {c: e for c, e in opciones.items() if e is not None}
+        if elegida is None:
+            if not hay:
+                sin_asignar.append(_sin_asignar(peticion, {}, None, False))
+                continue
+            barata = min(hay, key=lambda c: hay[c].coste_cent)
+            sin_asignar.append(_sin_asignar(peticion, hay, barata, True))
+            continue
+        eleccion = hay.get(elegida)
+        if eleccion is None:
+            sin_encontrar.setdefault(elegida, []).append(peticion.nombre)
+            continue
+        fila = _serializa(eleccion) | {
+            "linea_id": peticion.id,
+            "cantidad": peticion.cantidad,
+            "opciones": _opciones(hay),
+            "elegida": elegida,
+            # Lo que costaria lo mismo en las otras tiendas, para poder cambiar sin
+            # abrir otra pantalla: es la pregunta que se hace de pie en el pasillo.
+            "mas_barata": min(hay, key=lambda c: hay[c].coste_cent),
+        }
+        sublistas.setdefault(elegida, []).append(fila)
+        total += eleccion.coste_cent
+        total_sin += eleccion.coste_sin_oferta_cent
+        resueltas += 1
+
+    salida = []
+    for cadena in disponibles:
+        filas = sublistas.get(cadena, [])
+        # Una tienda con lineas que **no tiene** sale igual, con cero y con el
+        # motivo: si no, la linea desaparece de la pantalla y parece que se ha
+        # borrado sola. Es la misma regla que `donde_comprar` ("faltan, dichos por
+        # su nombre") aplicada a lo que ya se ha decidido.
+        if not filas and not sin_encontrar.get(cadena):
+            continue
+        gastado = sum(f["coste_cent"] for f in filas)
+        sin_oferta = sum(f["coste_sin_oferta_cent"] for f in filas)
+        salida.append({
+            "cadena": cadena,
+            "lineas": filas,
+            "unidades": sum(f["cantidad"] for f in filas),
+            "total_cent": gastado,
+            "total_sin_ofertas_cent": sin_oferta,
+            "ahorro_cent": sin_oferta - gastado,
+            # Las ofertas que de verdad se aplican en esta sublista, con lo que
+            # ahorran cada una: es la explicacion que se pide al enseñar el precio.
+            "ofertas": [
+                {"nombre": f["nombre"], "promo": f["promo"],
+                 "ahorro_cent": f["coste_sin_oferta_cent"] - f["coste_cent"]}
+                for f in filas
+                if f["promo"] and f["coste_sin_oferta_cent"] > f["coste_cent"]
+            ],
+            "sin_encontrar": sin_encontrar.get(cadena, []),
+        })
+    salida.sort(key=lambda x: (-x["total_cent"], x["cadena"]))
+
+    # Lo que costaria si no se hubiera decidido nada: es la comparacion honesta
+    # («asi pagas 41,20; todo en DIA serian 39,80»), y sale de la funcion de al lado.
+    referencia = donde_comprar(peticiones, disponibles) if peticiones else {}
+    return {
+        "sublistas": salida,
+        "sin_asignar": sin_asignar,
+        # Arriba y aparte, para que ninguna linea pueda desaparecer sin decirlo.
+        "sin_encontrar": [{"cadena": c, "nombres": n} for c, n in sin_encontrar.items()],
+        "total_cent": total,
+        "total_sin_ofertas_cent": total_sin,
+        "ahorro_cent": total_sin - total,
+        "lineas": len(peticiones),
+        "decididas": resueltas,
+        "sin_precio": len([x for x in sin_asignar if not x["hay_precio"]]),
+        "una_tienda": referencia.get("una_tienda", []),
+        "repartido": referencia.get("repartido"),
+    }
+
+
+def _opciones(hay: dict) -> list[dict]:
+    """Lo que cuesta esta misma linea en cada tienda, de mas barata a mas cara."""
+    return [{"cadena": c, "coste_cent": e.coste_cent,
+             "coste_sin_oferta_cent": e.coste_sin_oferta_cent, "promo": e.promo_txt}
+            for c, e in sorted(hay.items(), key=lambda x: x[1].coste_cent)]
+
+
+def _sin_asignar(peticion: Peticion, hay: dict, barata: str | None, hay_precio: bool) -> dict:
+    return {"linea_id": peticion.id, "nombre": peticion.nombre,
+            "cantidad": peticion.cantidad,
+            "hay_precio": hay_precio, "mas_barata": barata,
+            "coste_cent": hay[barata].coste_cent if barata else None,
+            "producto_id": hay[barata].producto_id if barata else None,
+            "opciones": _opciones(hay)}
 
 
 def _serializa(e: Eleccion) -> dict:

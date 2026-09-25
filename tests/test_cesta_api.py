@@ -141,6 +141,100 @@ def test_una_lista_vacia_no_revienta():
     assert cesta.donde_comprar([])["una_tienda"] == []
 
 
+# --- el reparto por tiendas: la lista partida por lo que se ha decidido ----
+
+def _pet_tienda(grupo_id, elegida, cantidad=1, nombre="algo", linea_id="L1"):
+    return cesta.Peticion(grupo_id, None, cantidad, nombre, linea_id), elegida
+
+
+def _reparto(filas, decisiones, promos=None, cadenas=("alcampo", "dia")):
+    peticiones = [p for p, _ in decisiones]
+    elegidas = [e for _, e in decisiones]
+    with _catalogo(filas, promos):
+        return cesta.reparto_por_tienda(peticiones, elegidas, list(cadenas))
+
+
+def test_cada_sublista_suma_lo_suyo_y_el_total_es_la_suma():
+    """La pregunta del 25 de septiembre: «¿cuánto me cuesta así, tienda por tienda?»"""
+    filas = [(1, "alcampo", "alcampo:a", "Leche", 100),
+             (1, "dia", "dia:a", "Leche", 120),
+             (2, "alcampo", "alcampo:b", "Pan", 200),
+             (2, "dia", "dia:b", "Pan", 180)]
+    r = _reparto(filas, [_pet_tienda(1, "dia"), _pet_tienda(2, "alcampo")])
+
+    totales = {s["cadena"]: s["total_cent"] for s in r["sublistas"]}
+    assert totales == {"dia": 120, "alcampo": 200}
+    assert r["total_cent"] == 320                 # 1,20 + 2,00
+    assert r["decididas"] == 2 and r["sin_asignar"] == []
+    # Cada linea sabe de qué linea viene: es lo que permite quitarla o moverla.
+    assert [f["linea_id"] for s in r["sublistas"] for f in s["lineas"]] == ["L1", "L1"]
+
+
+def test_lo_que_no_esta_decidido_no_suma_pero_dice_donde_esta_mas_barato():
+    """Sumarlo por lo mas barato daria un total que no corresponde a ninguna compra."""
+    filas = [(1, "alcampo", "alcampo:a", "Leche", 100),
+             (1, "dia", "dia:a", "Leche", 120),
+             (2, "alcampo", "alcampo:b", "Pan", 200),
+             (2, "dia", "dia:b", "Pan", 180)]
+    r = _reparto(filas, [_pet_tienda(1, "dia"), _pet_tienda(2, None, nombre="Pan")])
+
+    assert r["total_cent"] == 120
+    assert [x["nombre"] for x in r["sin_asignar"]] == ["Pan"]
+    sin = r["sin_asignar"][0]
+    assert sin["mas_barata"] == "dia" and sin["coste_cent"] == 180
+    # Y con las opciones ordenadas: la pantalla puede enseñar dónde cambiarla.
+    assert [o["cadena"] for o in sin["opciones"]] == ["dia", "alcampo"]
+
+
+def test_una_linea_asignada_a_una_tienda_donde_no_esta_se_dice_por_su_nombre():
+    """Si no, la linea desaparece de la pantalla y parece que se ha borrado sola."""
+    filas = [(1, "dia", "dia:a", "Leche", 120)]
+    r = _reparto(filas, [_pet_tienda(1, "alcampo", nombre="Leche entera 1 L")])
+
+    assert r["total_cent"] == 0
+    assert r["sublistas"][0]["cadena"] == "alcampo"
+    assert r["sublistas"][0]["total_cent"] == 0
+    assert r["sublistas"][0]["sin_encontrar"] == ["Leche entera 1 L"]
+    assert r["sin_encontrar"] == [{"cadena": "alcampo",
+                                   "nombres": ["Leche entera 1 L"]}]
+
+
+def test_las_ofertas_se_aplican_y_se_explican_en_su_sublista():
+    """«Explicando también la aplicación de descuentos»: el total y lo que ahorran."""
+    filas = [(1, "alcampo", "alcampo:a", "Champú", 630),
+             (2, "alcampo", "alcampo:b", "Pan", 100)]
+    r = _reparto(filas, [_pet_tienda(1, "alcampo", cantidad=2),
+                         _pet_tienda(2, "alcampo")],
+                 promos={"alcampo:a": "2ª unidad -50%"})
+
+    sub = r["sublistas"][0]
+    assert sub["total_cent"] == 945 + 100          # 6,30 + 3,15 + 1,00
+    assert sub["total_sin_ofertas_cent"] == 1260 + 100
+    assert sub["ahorro_cent"] == 315               # 3,15 de la segunda unidad
+    assert [o["promo"] for o in sub["ofertas"]] == ["2ª unidad -50%"]
+    # La oferta es una regla sobre cuantas compras: con una unidad no se aplica.
+    r1 = _reparto(filas, [_pet_tienda(1, "alcampo", cantidad=1),
+                          _pet_tienda(2, "alcampo")],
+                  promos={"alcampo:a": "2ª unidad -50%"})
+    assert r1["sublistas"][0]["ahorro_cent"] == 0
+
+
+def test_se_compara_con_lo_que_costaria_sin_decidir_nada():
+    """La comparación honesta: «así pagas 3,00; repartiendo en dos, 2,80»."""
+    filas = [(1, "alcampo", "alcampo:a", "Leche", 100),
+             (1, "dia", "dia:a", "Leche", 120),
+             (2, "alcampo", "alcampo:b", "Pan", 200),
+             (2, "dia", "dia:b", "Pan", 180)]
+    r = _reparto(filas, [_pet_tienda(1, "dia"), _pet_tienda(2, "dia", nombre="Pan")])
+
+    assert r["total_cent"] == 300                  # lo decidido: todo en DIA
+    una = {t["cadena"]: t["total_cent"] for t in r["una_tienda"]}
+    assert una == {"dia": 300, "alcampo": 300}
+    # Y el reparto que la aplicación propone, para poder compararlo de un vistazo.
+    assert r["repartido"]["total_cent"] == 280
+    assert r["repartido"]["ahorro_cent"] == 20
+
+
 # --- el total en vivo, que es lo que se mira al ir anadiendo --------------
 
 def _linea(grupo_id, cantidad=1, carro=False, nombre="algo"):

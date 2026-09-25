@@ -94,6 +94,15 @@ class RetoWAF(Exception):
 # productos a 21.199; con ocho, a 36.935, y aun asi corto antes de terminar.
 MAX_RENOVACIONES = 20
 
+# Cuantos reintentos con la MISMA sesion antes de tocar el navegador. Existe porque
+# el 25 de septiembre de 2026 el dueno dijo *"a veces salta el navegador"*: el WAF
+# corta entre 8 y 13 veces al dia (13 el dia 24, 10 el 23) y cada corte abria Chrome
+# **a la vista**. Muchos de esos cortes son del momento -- una racha de peticiones --,
+# y con la espera de `ESPERA_TRAS_CORTE` la misma cookie vuelve a valer: abrir una
+# ventana que le roba el foco al ordenador de casa es lo ultimo que hay que probar,
+# no lo primero. Dos reintentos, y si con eso no pasa, sesion nueva.
+REINTENTOS_SIN_NAVEGADOR = 2
+
 # Renovar la cookie al instante no sirve cuando lo que ha saltado no es que el
 # testigo caduque, sino que AWS WAF nos ha marcado por ritmo: el testigo nuevo
 # nace ya vigilado. Esperar antes de pedirlo es lo que deja que el contador del
@@ -507,7 +516,7 @@ def main() -> int:
     else:
         print(f"  {len(cats)} categorias iniciales")
 
-    sin_estado, renovaciones, detener = [], 0, False
+    sin_estado, renovaciones, reintentos, detener = [], 0, 0, False
     pendientes = deque(cats)
     categorias_vistas: set[str] = set()
     while pendientes:
@@ -545,6 +554,7 @@ def main() -> int:
                     filas.extend(a_registro(p) for p in productos)
                 if len(productos) >= TOPE_API and not hijas:
                     truncadas += 1
+                reintentos = 0        # esta categoria ha salido: la racha se rompe
                 break
             except RetoWAF:
                 anterior = _filas_ultimo_bronze()
@@ -565,14 +575,30 @@ def main() -> int:
                     detener = True
                     break
                 espera = min(ESPERA_TRAS_CORTE * (renovaciones + 1), ESPERA_MAXIMA)
+                # **Antes de abrir nada, se reintenta con la misma sesion.** El reto
+                # de AWS WAF es muchas veces del momento -- ritmo, una racha de
+                # peticiones --, y con la pausa de arriba la misma cookie suele valer.
+                # Medido el 25 de septiembre de 2026: el dia anterior se abrio el
+                # navegador 13 veces y esta pausa sola resuelve la mayoria. Abrir una
+                # ventana que le roba el foco al ordenador de casa es lo ultimo que hay
+                # que probar, no lo primero.
+                if reintentos < REINTENTOS_SIN_NAVEGADOR:
+                    reintentos += 1
+                    print(f"  el WAF ha saltado en '{cat.get('name')}': {espera}s de "
+                          f"espera y se reintenta con la misma sesion, sin navegador "
+                          f"({reintentos}/{REINTENTOS_SIN_NAVEGADOR})", flush=True)
+                    time.sleep(espera)
+                    continue
                 print(f"  el WAF ha saltado en '{cat.get('name')}' "
                       f"({renovaciones + 1}/{MAX_RENOVACIONES}): {espera}s de espera "
                       f"y cookie nueva...", flush=True)
                 time.sleep(espera)
                 try:
-                    waf.obtener(DOMINIO, URL_PRUEBA)
+                    sesion = waf.renueva(DOMINIO, URL_PRUEBA)
+                    print(f"      sesion renovada ({sesion.get('via')})", flush=True)
                     f = _fetcher()
                     renovaciones += 1
+                    reintentos = 0
                     continue  # reintenta ESTA categoria; antes se perdia
                 except RuntimeError as exc:
                     errores += 1

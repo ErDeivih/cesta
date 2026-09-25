@@ -136,6 +136,34 @@ def para(dominio: str, url_prueba: str, headless: bool | None = None) -> dict:
     return guardada(dominio) or obtener(dominio, url_prueba, headless=headless)
 
 
+def renueva(dominio: str, url_prueba: str) -> dict:
+    """Sesion nueva **sin abrir una ventana, si se puede**.
+
+    Lo pidio el dueno el 25 de septiembre de 2026: *"a veces salta el navegador"*.
+    Y era verdad y estaba medido: el WAF corta entre 8 y 13 veces al dia en Alcampo
+    (13 el 24 de septiembre, 10 el 23), y cada corte llamaba a `obtener()`, que abre
+    Chrome **a la vista**. O sea que la tarea de las seis de la manana le robaba el
+    foco al ordenador una docena de veces, sin necesidad.
+
+    El orden es: primero sin ventana, y solo si eso no pasa el reto, con ventana.
+    Esta en ese orden y no al reves porque **el modo sin ventana pasa menos retos**
+    (medido: el WAF corta mas a menudo asi), pero cuando pasa, pasa, y no molesta a
+    nadie. Cuando no pasa, se abre la ventana: quedarse sin catalogo por no querer
+    abrir una ventana seria cambiar un dato por una comodidad.
+
+    Devuelve la sesion, con `via` dentro para poder medir cual de las dos hizo falta.
+    """
+    try:
+        sesion = obtener(dominio, url_prueba, headless=True)
+    except RuntimeError:
+        sesion = obtener(dominio, url_prueba, headless=False)
+        sesion["via"] = "con_ventana"
+        print("      (el reto no se paso sin ventana: se ha abierto el navegador)")
+        return sesion
+    sesion["via"] = "sin_ventana"
+    return sesion
+
+
 if __name__ == "__main__":
     import argparse
 

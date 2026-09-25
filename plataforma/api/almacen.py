@@ -315,6 +315,7 @@ def lineas_de(lista_id: str) -> list[dict]:
         cur.execute("""
             SELECT li.id, li.grupo_id, li.producto_id, li.nombre_visto, li.cantidad,
                    li.nota, li.tachado_en, li.anadido_en, li.en_carrito,
+                   li.cadena_elegida,
                    qa.nombre AS anadido_por, qt.nombre AS tachado_por
               FROM lista_linea li
               LEFT JOIN usuario qa ON qa.id = li.anadido_por
@@ -327,25 +328,46 @@ def lineas_de(lista_id: str) -> list[dict]:
 
 def anade_linea(lista_id: str, usuario_id: str, linea_id: str, nombre: str,
                 grupo_id: int | None = None, producto_id: str | None = None,
-                cantidad: int = 1, nota: str | None = None) -> dict:
-    """El id lo trae el movil. Si llega dos veces, no se duplica: se actualiza."""
+                cantidad: int = 1, nota: str | None = None,
+                cadena_elegida: str | None = None) -> dict:
+    """El id lo trae el movil. Si llega dos veces, no se duplica: se actualiza.
+
+    La tienda elegida se actualiza con `COALESCE`: subir otra vez una linea que se
+    anadio sin tienda **no puede borrar** la tienda que se eligio despues en otro
+    movil. Y al reves si funciona: ponerla es ponerla.
+    """
     with cursor() as cur:
         cur.execute("""
             INSERT INTO lista_linea
-                (id, lista_id, grupo_id, producto_id, nombre_visto, cantidad, nota, anadido_por)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                (id, lista_id, grupo_id, producto_id, nombre_visto, cantidad, nota,
+                 anadido_por, cadena_elegida)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
                SET cantidad = EXCLUDED.cantidad, nota = EXCLUDED.nota,
+                   cadena_elegida = COALESCE(EXCLUDED.cadena_elegida,
+                                             lista_linea.cadena_elegida),
                    borrado_en = NULL, tocado_en = now()
-            RETURNING id, grupo_id, producto_id, nombre_visto, cantidad, nota
-        """, (linea_id, lista_id, grupo_id, producto_id, nombre, cantidad, nota, usuario_id))
+            RETURNING id, grupo_id, producto_id, nombre_visto, cantidad, nota,
+                      cadena_elegida
+        """, (linea_id, lista_id, grupo_id, producto_id, nombre, cantidad, nota,
+              usuario_id, cadena_elegida))
         return dict(cur.fetchone(), id=linea_id)
+
+
+SIN_CAMBIAR = object()
+"""Centinela para distinguir «no me lo toques» de «ponlo a NULL».
+
+Sin esto no se puede quitar la tienda de una linea: `None` significaria las dos
+cosas a la vez (no lo cambies / borralo), y la pantalla no tendria forma de
+deshacer una asignacion sin borrar la linea entera.
+"""
 
 
 def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
                  tachado: bool | None = None, cantidad: int | None = None,
                  nota: str | None = None, borrado: bool | None = None,
                  en_carrito: bool | None = None,
+                 cadena_elegida=SIN_CAMBIAR,
                  momento: datetime | None = None) -> dict | None:
     """Idempotente a proposito: tachar algo ya tachado no hace nada y no es un
     error. Si los dos tachais a la vez, gana quien lo hizo antes y el otro ve lo
@@ -390,6 +412,12 @@ def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
         args.append(cuando)
     elif borrado is False:
         trozos.append("borrado_en = NULL")
+    # La tienda donde se compra esta linea. Se guarda para que el total y las
+    # sublistas sean **una decision de la persona** y no una propuesta que se
+    # recalcula cada vez que se abre la pantalla (ver `008_linea_en_tienda.sql`).
+    if cadena_elegida is not SIN_CAMBIAR:
+        trozos.append("cadena_elegida = %s")
+        args.append(cadena_elegida)
     if not trozos:
         return None
     trozos.append("tocado_en = now()")
@@ -397,8 +425,86 @@ def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
         cur.execute(f"""
             UPDATE lista_linea SET {', '.join(trozos)}
              WHERE id = %s AND lista_id = %s
-            RETURNING id, cantidad, nota, tachado_en, borrado_en, en_carrito
+            RETURNING id, cantidad, nota, tachado_en, borrado_en, en_carrito,
+                      cadena_elegida
         """, (*args, linea_id, lista_id))
+        fila = cur.fetchone()
+    return dict(fila, id=str(fila["id"])) if fila else None
+
+
+def pon_tienda(lista_id: str, cadena: str | None, usuario_id: str,
+               lineas: list[str] | None = None) -> int:
+    """Pone (o quita) la tienda de varias lineas de una vez.
+
+    Existe por dos botones de la pantalla que son la misma operacion con distinto
+    alcance: «esta sublista se compra en X» y «quitar toda la sublista». Sin esto,
+    una lista de treinta lineas pide treinta peticiones para cambiar de opinion, y
+    en el pasillo eso no se hace.
+
+    `cadena=None` deja las lineas **sin decidir** (siguen en la lista y vuelven a
+    «sin asignar»); no las borra. Borrar la sublista es `borra_lineas_de_tienda`.
+    """
+    if not lineas:
+        return 0
+    with cursor() as cur:
+        cur.execute("""
+            UPDATE lista_linea SET cadena_elegida = %s, tocado_en = now()
+             WHERE lista_id = %s AND id = ANY(%s) AND borrado_en IS NULL
+        """, (cadena, lista_id, list(lineas)))
+        return cur.rowcount
+
+
+def borra_lineas_de_tienda(lista_id: str, cadena: str, usuario_id: str,
+                           momento: datetime | None = None) -> int:
+    """Borra (de mentira) toda la sublista de una tienda, del tiron.
+
+    Marcadas, no borradas de verdad: la fila se queda y `limpiar_lineas_borradas`
+    se la lleva a los 30 dias. Deshacer veinte lineas borradas sin querer en el
+    pasillo no puede depender de una copia de seguridad.
+    """
+    cuando = momento or datetime.now(timezone.utc)
+    with cursor() as cur:
+        cur.execute("""
+            UPDATE lista_linea SET borrado_en = COALESCE(borrado_en, %s), tocado_en = now()
+             WHERE lista_id = %s AND cadena_elegida = %s AND borrado_en IS NULL
+        """, (cuando, lista_id, cadena))
+        return cur.rowcount
+
+
+def archiva_lista(lista_id: str, usuario_id: str) -> bool:
+    """La lista desaparece de la pantalla. Solo quien la creo.
+
+    Archivar y no borrar: una lista compartida que se borra de verdad le quita la
+    compra a otra persona de un toque. Con la marca, el dia que haga falta
+    recuperarla esta entera en la base.
+    """
+    with cursor() as cur:
+        cur.execute("""
+            UPDATE lista SET archivada_en = now()
+             WHERE id = %s AND dueno_id = %s AND archivada_en IS NULL
+        """, (lista_id, usuario_id))
+        return cur.rowcount > 0
+
+
+def renombra_lista(lista_id: str, nombre: str, usuario_id: str) -> dict | None:
+    """Ponerle nombre a una lista. Cualquiera que escriba en ella, no solo el dueno.
+
+    Con varias listas, «Lista» y «Lista (2)» dejan de distinguirse justo cuando mas
+    hacen falta: quien compra para dos casas necesita llamarlas por su nombre, y
+    quien las usa a diario es quien escribe en ellas.
+    """
+    limpio = nombre.strip()[:80]
+    if not limpio:
+        return None
+    with cursor() as cur:
+        cur.execute("""
+            UPDATE lista SET nombre = %s
+             WHERE id = %s
+               AND EXISTS (SELECT 1 FROM lista_acceso a
+                            WHERE a.lista_id = lista.id AND a.usuario_id = %s
+                              AND a.papel <> 'mira')
+            RETURNING id, nombre
+        """, (limpio, lista_id, usuario_id))
         fila = cur.fetchone()
     return dict(fila, id=str(fila["id"])) if fila else None
 
