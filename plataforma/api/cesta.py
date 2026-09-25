@@ -51,6 +51,10 @@ class Eleccion:
     coste_sin_oferta_cent: int
     promo_txt: str | None
     sugerencia: str | None
+    # De que linea de la lista sale. Viaja hasta la interfaz para que el boton de
+    # «repartir en dos tiendas» pueda poner la tienda de **cada** linea y no de todas
+    # (con `lineas` vacio la API las pone todas en una sola, que es otra cosa).
+    linea_id: str | None = None
 
 
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
@@ -132,7 +136,7 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
                 sugerencia = (f"llevando {n} en vez de {peticion.cantidad}, "
                               f"{ahorro / 100:.2f} EUR menos por unidad")
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
-                    promo_txt if mecanica.util else None, sugerencia)
+                    promo_txt if mecanica.util else None, sugerencia, peticion.id)
 
 
 def donde_comprar(peticiones: list[Peticion],
@@ -337,7 +341,8 @@ def _serializa(e: Eleccion) -> dict:
     return {"producto_id": e.producto_id, "nombre": e.nombre, "cadena": e.fuente,
             "unidades": e.unidades, "coste_cent": e.coste_cent,
             "coste_sin_oferta_cent": e.coste_sin_oferta_cent,
-            "promo": e.promo_txt, "sugerencia": e.sugerencia}
+            "promo": e.promo_txt, "sugerencia": e.sugerencia,
+            "linea_id": e.linea_id}
 
 
 def estimacion(lineas: list[dict]) -> dict:

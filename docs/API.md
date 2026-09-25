@@ -230,6 +230,8 @@ De que dia es cada cadena y si esta al dia. La interfaz la pide al abrir.
 
 ### `GET /api/listas`     las mias y las compartidas conmigo
 ### `POST /api/listas`    `{"nombre": "Casa", "es_de_casa": true}`
+### `PATCH /api/listas/{id}`   `{"nombre": "La del sabado"}` — con varias listas, el nombre es lo que las distingue
+### `DELETE /api/listas/{id}`  quita la lista entera. Solo quien la creo. **Archiva**: desaparece de la pantalla y se puede recuperar. Borrar de verdad una lista compartida le quitaria la compra a otra persona de un toque.
 
 ### `GET /api/listas/{id}`
 
@@ -246,6 +248,7 @@ lista por tandas con el pasillo delante:
 
     {"id", "grupo_id", "producto_id", "nombre_visto", "cantidad", "nota",
      "tachado_en", "anadido_en", "en_carrito", "anadido_por", "tachado_por",
+     "cadena_elegida": "dia",             la tienda donde se compra ESTA linea
      "seccion": "lacteos-huevos",         el slug, para agrupar
      "pasillo": "Lácteos y huevos",       lo que se lee
      "pasillo_orden": 3}                  su punto en el recorrido de la tienda
@@ -415,7 +418,6 @@ sigue. El movil manda lo que tenga guardado, y alguno puede referirse a una line
 que la otra persona ya borro.
 
 ### `GET /api/listas/{id}/donde`
-
     max_tiendas   2 por defecto
     cadenas       las del usuario por defecto
 
@@ -431,6 +433,60 @@ que la otra persona ya borro.
 
 **`merece_la_pena`** es falso si el reparto ahorra menos de 1,50 EUR. Ir a dos
 tiendas cuesta media hora.
+
+### `GET /api/listas/{id}/reparto`
+
+    sale  {"sublistas": [{"cadena": "dia", "lineas": [{"linea_id", "nombre",
+                                                        "cantidad", "coste_cent",
+                                                        "coste_sin_oferta_cent",
+                                                        "promo", "sugerencia",
+                                                        "opciones": [...],
+                                                        "elegida", "mas_barata"}],
+                          "unidades", "total_cent", "total_sin_ofertas_cent",
+                          "ahorro_cent", "ofertas": [...], "sin_encontrar": [...]}],
+           "sin_asignar": [{"linea_id", "nombre", "cantidad", "hay_precio",
+                            "mas_barata", "coste_cent", "opciones"}],
+           "sin_encontrar": [{"cadena", "nombres"}],
+           "total_cent", "total_sin_ofertas_cent", "ahorro_cent",
+           "lineas", "decididas", "sin_precio",
+           "una_tienda", "repartido", "fecha_datos"}
+
+**Es otra pregunta que `/donde`, y por eso es otro endpoint.** `donde` contesta
+*«¿donde sale mas barata esta lista entera?»* y no guarda nada; esto contesta *«¿que he
+decidido, y cuanto me cuesta asi?»*, respetando el `cadena_elegida` de cada linea. Se
+enseñan juntos a proposito: una lista de la compra se decide mirando cuanto se paga por
+haberla decidido.
+
+Tres reglas que se ven en la respuesta y que son de dinero:
+
+- **Lo que no se ha decidido no suma.** `sin_asignar` sale aparte, con su opcion mas
+  barata al lado. Sumarlo por esa opcion daria un total que no corresponde a ninguna
+  compra posible.
+- **Una linea puesta en una tienda que no la tiene no desaparece**: sale en
+  `sin_encontrar`, por su nombre, dentro de su sublista y tambien arriba.
+- **Las ofertas van desglosadas**: `total_cent` (con ofertas), `total_sin_ofertas_cent`
+  y `ofertas` con lo que ahorra cada una. Un total de oferta sin explicacion es un numero
+  que no se puede comprobar.
+
+### `POST /api/listas/{id}/tienda`
+
+    entra  {"cadena": "dia", "lineas": ["<uuid>", ...]}   esas lineas se compran ahi
+           {"cadena": "dia"}                              TODA la lista se compra ahi
+           {"cadena": null, "lineas": [...]}              vuelven a «sin decidir»
+           {"cadena": "dia", "borrar": true}              borra la sublista entera
+
+Una cadena que no es una de las cinco sale 422. Borrar lineas marca `borrado_en` (se
+limpian de verdad a los 30 dias), asi que deshacer no depende de una copia de seguridad.
+
+### `POST /api/listas/{id}/desde-favoritos`
+
+    entra  {"grupo_ids": [4125, 4126], "producto_ids": ["dia:123"]}
+    sale   {"anadidos": 3}
+
+Pasar favoritos a una lista **en una peticion** y no en veinte: una lista de la compra se
+monta de golpe, y veinte viajes de ida y vuelta desde el movil en la puerta de la tienda
+no son una forma de hacerlo. El nombre que se guarda en la linea es el del producto, no
+el numero del grupo.
 
 ### Invitar
 

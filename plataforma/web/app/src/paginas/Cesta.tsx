@@ -31,8 +31,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 
 import {
-  anadirLinea, cambiarLinea, compartirCon, crearInvitacion, entrar, misListas, registrarse,
-  revocarInvitaciones, salir, sincronizar, verLista, donde, yo,
+  anadirLinea, borrarLista, cambiarLinea, compartirCon, crearInvitacion, crearLista,
+  entrar, misListas, registrarse, renombrarLista, revocarInvitaciones, salir, sincronizar,
+  verLista, donde, yo,
 } from '../api/cesta'
 import type { CambioDeCola, CambioLinea, Invitacion, Persona } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
@@ -42,6 +43,7 @@ import {
 } from '../estado/cola'
 import type { CambioPendiente } from '../estado/cola'
 import { Mosaico } from '../componentes/Mosaico'
+import { RepartoEnTiendas } from '../componentes/RepartoEnTiendas'
 import {
   Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
   Tarjeta, Vacio, cx,
@@ -448,6 +450,139 @@ function UnaLinea({ linea, guardando, cambiar }: {
         </Boton>
       </div>
     </li>
+  )
+}
+
+/* ------------------------------------------------------------- las listas ---
+ *
+ *  Varias listas de la compra, y por que hacen falta: una para la semana, otra para
+ *  la casa del pueblo, otra para una comida. El dueno lo pidio el 25 de septiembre de
+ *  2026. La API las tiene desde el principio (`POST /api/listas`, `GET /api/listas`);
+ *  lo que faltaba era poder **crear la segunda** desde la pantalla y poder borrarlas.
+ */
+
+function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
+  const [abierto, setAbierto] = useState(false)
+  const [nombre, setNombre] = useState('')
+  const crear = useMutation({
+    mutationFn: () => crearLista(nombre.trim() || 'Lista'),
+    onSuccess: (l) => {
+      setNombre('')
+      setAbierto(false)
+      alCrear(l.id)
+    },
+  })
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline"
+      >
+        + Lista nueva
+      </button>
+    )
+  }
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <CampoTexto
+        etiqueta="Nombre de la lista"
+        value={nombre}
+        autoFocus
+        onChange={(e) => setNombre(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') crear.mutate() }}
+        placeholder="La del sábado"
+        className="min-h-[44px]"
+      />
+      <Boton variante="principal" disabled={crear.isPending} onClick={() => crear.mutate()}>
+        Crear
+      </Boton>
+      <button type="button" onClick={() => setAbierto(false)}
+              className="min-h-[44px] px-2 text-sm underline">
+        Cancelar
+      </button>
+    </span>
+  )
+}
+
+/** El nombre de la lista, con lo de renombrarla y borrarla.
+ *
+ *  Borrar la lista entera lo pidio el dueno con estas palabras: *"poder borrar sublista
+ *  o lista del tiron"*. Se **archiva** (desaparece y se puede recuperar), y por eso el
+ *  aviso lo dice en vez de dar a entender que se ha destruido: borrar de verdad una
+ *  lista compartida le quita la compra a otra persona de un toque.
+ */
+function NombreDeLaLista({ lista, alHecho }: {
+  lista: { id: string; nombre: string; papel?: string; es_de_casa?: boolean }
+  alHecho: (id: string | null) => void
+}) {
+  const [renombrando, setRenombrando] = useState(false)
+  const [nombre, setNombre] = useState(lista.nombre)
+  const [confirmando, setConfirmando] = useState(false)
+  const renombrar = useMutation({
+    mutationFn: () => renombrarLista(lista.id, nombre.trim() || lista.nombre),
+    onSuccess: () => { setRenombrando(false); alHecho(lista.id) },
+  })
+  const borrar = useMutation({
+    mutationFn: () => borrarLista(lista.id),
+    onSuccess: () => alHecho(null),
+  })
+  const puede = lista.papel !== 'mira'
+
+  return (
+    <div className="mb-1">
+      {renombrando ? (
+        <span className="flex flex-wrap items-center gap-2">
+          <CampoTexto
+            etiqueta="Nombre"
+            value={nombre}
+            autoFocus
+            onChange={(e) => setNombre(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') renombrar.mutate() }}
+            className="min-h-[44px]"
+          />
+          <Boton variante="principal" disabled={renombrar.isPending}
+                 onClick={() => renombrar.mutate()}>Guardar</Boton>
+          <button type="button" onClick={() => setRenombrando(false)}
+                  className="min-h-[44px] px-2 text-sm underline">Cancelar</button>
+        </span>
+      ) : (
+        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="text-base font-semibold">{lista.nombre}</h2>
+          {lista.es_de_casa && <Etiqueta tono="dato">de casa</Etiqueta>}
+          {puede && (
+            <span className="flex flex-wrap gap-2 text-xs">
+              <button type="button" className="min-h-[44px] underline"
+                      onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}>
+                Cambiar el nombre
+              </button>
+              {confirmando ? (
+                <>
+                  <button type="button" className="min-h-[44px] underline"
+                          disabled={borrar.isPending}
+                          onClick={() => borrar.mutate()}>
+                    Sí, quitar esta lista
+                  </button>
+                  <button type="button" className="min-h-[44px] underline"
+                          onClick={() => setConfirmando(false)}>No</button>
+                </>
+              ) : (
+                <button type="button" className="min-h-[44px] underline"
+                        onClick={() => setConfirmando(true)}>
+                  Quitar la lista
+                </button>
+              )}
+            </span>
+          )}
+        </span>
+      )}
+      {confirmando && (
+        <p className="mt-1 text-xs text-tinta-suave">
+          Desaparece de tu pantalla y de la de quien la comparta. No se borra de
+          verdad: se puede recuperar.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -975,18 +1110,27 @@ export function Cesta() {
   return (
     <div className="grid gap-4">
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">La cesta</h1>
-        {listas.data.length > 1 && (
-          <select
-            value={listaId ?? ''}
-            onChange={(e) => setElegida(e.target.value)}
-            className="rounded-md border border-borde bg-fondo px-2 py-1"
-          >
-            {listas.data.map((l) => (
-              <option key={l.id} value={l.id}>{l.nombre}</option>
-            ))}
-          </select>
-        )}
+        <h1 className="text-xl font-semibold">La lista de la compra</h1>
+        {/* **El selector de listas, siempre.** Antes solo aparecia cuando habia mas de
+            una, y eso hace que no se pueda **crear la segunda**: el boton de «nueva
+            lista» vivia detras de un desplegable que no existia hasta que ya tuvieras
+            dos. Con una sola lista, esto es un desplegable de una opcion y un boton. */}
+        <select
+          value={listaId ?? ''}
+          onChange={(e) => setElegida(e.target.value)}
+          aria-label="Lista"
+          className="min-h-[44px] rounded-md border border-borde bg-fondo px-2 py-1"
+        >
+          {listas.data.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.nombre}{l.lineas ? ` (${l.lineas})` : ''}
+            </option>
+          ))}
+        </select>
+        <NuevaLista alCrear={(id) => {
+          cliente.invalidateQueries({ queryKey: ['listas'] })
+          setElegida(id)
+        }} />
         {/* Los dos sitios de "lo tuyo" van aqui, con la sesion, porque es donde
             uno los busca: los favoritos y los ajustes. Hasta hoy **no habia ni un
             enlace a ninguno de los dos en toda la aplicacion** -- dos pantallas
@@ -1092,9 +1236,21 @@ export function Cesta() {
       {detalle.data && (
         <>
           <Tarjeta>
-            <h2 className="mb-1 text-base font-semibold">
-              {listas.data.find((l) => l.id === listaId)?.nombre ?? 'Lista'}
-            </h2>
+            <NombreDeLaLista
+              lista={{
+                id: listaId as string,
+                nombre: listas.data.find((l) => l.id === listaId)?.nombre ?? 'Lista',
+                papel: detalle.data.papel,
+                es_de_casa: listas.data.find((l) => l.id === listaId)?.es_de_casa,
+              }}
+              alHecho={(id) => {
+                cliente.invalidateQueries({ queryKey: ['listas'] })
+                if (id === null) {
+                  setElegida('')
+                  cliente.invalidateQueries()
+                }
+              }}
+            />
             <p className="cifra text-2xl font-semibold">
               {euros(detalle.data.estimacion.total_cent)}
             </p>
@@ -1116,6 +1272,11 @@ export function Cesta() {
               Datos del {detalle.data.fecha_datos}
             </p>
           </Tarjeta>
+
+          {/* **Dónde compro cada cosa**: la lista partida por tiendas, con el total de
+              cada sublista y el de todo. Va justo debajo del total, porque es la
+              pregunta que sigue a «¿cuánto cuesta?», que es «¿y dónde lo compro?». */}
+          <RepartoEnTiendas listaId={listaId as string} papel={detalle.data.papel} />
 
           <Tarjeta
             titulo="Lo que hay que coger"

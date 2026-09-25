@@ -668,6 +668,20 @@ export interface Reparto {
    *  contesta traiga el campo, y un reparto sin desglose se enseña sin cuentas
    *  en vez de inventarselas. */
   reparto?: Record<string, number>
+  /** Las líneas del reparto, con su tienda y su coste.
+   *
+   *  Es lo que permite **aplicarlo**: el botón de «repartir en dos tiendas» pone la
+   *  tienda de cada línea, y para eso hace falta saber qué línea va a cada sitio. Sin
+   *  esto, lo único que se podría hacer es ponerlas todas en una, que es otra cosa. */
+  productos?: {
+    producto_id: string
+    nombre: string
+    cadena: string
+    unidades: number
+    coste_cent: number
+    /** De qué línea de la lista sale, para poder asignarla. */
+    linea_id?: string | null
+  }[]
 }
 
 export interface Donde {

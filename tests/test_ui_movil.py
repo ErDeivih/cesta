@@ -110,8 +110,8 @@ def test_la_barra_de_abajo_reserva_la_raya_del_iphone():
 
 
 @sin_interfaz
-def test_la_barra_de_abajo_tiene_cinco_destinos_y_el_quinto_es_una_decision():
-    """Cuatro de estar un rato en la tienda, y **Avisos**, que es otra cosa.
+def test_la_barra_de_abajo_tiene_seis_destinos_y_el_ultimo_esta_medido():
+    """Los destinos de la barra, y por que son seis y no cinco.
 
     Lo dice `docs/USABILIDAD.md`: una barra de ocho iconos no se lee, se busca a
     tientas. El quinto entro el 23 de septiembre de 2026 **decidido y escrito**, no
@@ -119,17 +119,32 @@ def test_la_barra_de_abajo_tiene_cinco_destinos_y_el_quinto_es_una_decision():
     ti mientras no la miras**, y es la respuesta a *"¿ha bajado algo de lo mio?"*. El
     encargo de esa fecha pide literalmente *"un punto en el icono"*, y un punto necesita
     un icono donde estar -- dentro de otra pantalla seria esconderlo en una esquina.
+
+    **El sexto entro el 25 de septiembre de 2026, tambien decidido y medido**: el dueno
+    pidio *"poner la opcion de lista de la compra y favoritas"*, y Favoritos existia desde
+    hacia dias **sin forma de llegar a ella** (habia que escribir la direccion). Una
+    pantalla a la que no se llega no es una pantalla.
+
+    Y el limite no era el numero de iconos sino **cuanto mide cada uno**, que es lo unico
+    medible: medido en el navegador a 390 px despues del cambio, los seis destinos miden
+    entre 58 y 65 px de ancho por 56 de alto, todos por encima del minimo de 44 px que se
+    pulsa con el pulgar. Con siete serian 55 px y empezaria a apretar; ese dia lo que
+    toca no es apretarlos mas, es sacar de aqui lo que no se usa en el pasillo.
     """
     fuente = NAV.read_text(encoding="utf-8")
     bloque = re.search(r"const ITEMS = \[(.*?)\] as const", fuente, re.S)
     assert bloque, "no he sabido leer los destinos de la barra: revisa esta prueba"
     destinos = re.findall(r"a:\s*'([^']+)'", bloque.group(1))
-    assert destinos == ["/", "/cesta", "/escaner", "/avisos", "/panel"], (
-        f"la barra de abajo tiene {destinos}. Son cinco a proposito: buscar, la cesta, "
-        f"el escaner, los avisos y el panel. Anadir otro es una decision, no un detalle")
+    assert destinos == ["/", "/cesta", "/favoritos", "/escaner", "/avisos", "/panel"], (
+        f"la barra de abajo tiene {destinos}. Son seis a proposito: buscar, la lista, los "
+        f"favoritos, el escaner, los avisos y el panel. Anadir otro es una decision, no "
+        f"un detalle")
     # Y el porque tiene que estar donde se lee, que es con los destinos.
     assert "lo unico que" in fuente and "punto en el icono" in fuente, \
-        "el quinto destino tiene que llevar su razon escrita al lado"
+        "el destino de Avisos tiene que llevar su razon escrita al lado"
+    assert "65 px por cabeza" in fuente or "44 px" in fuente, \
+        ("el sexto destino tiene que llevar escrito por que cabe: el minimo que importa "
+         "no es el numero de iconos, sino lo que mide cada uno")
 
 
 def test_los_objetivos_de_la_ficha_del_producto_tienen_44_px():

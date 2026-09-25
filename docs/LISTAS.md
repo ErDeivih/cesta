@@ -135,11 +135,44 @@ Lo que se ve mientras no hay conexion:
    es una llamada de telefono.
 
 Las lineas borradas se limpian de verdad a los 30 dias, cuando ya nadie las va a
-echar de menos.
+echar de menos. **Una lista entera tambien se puede quitar del tiron** (lo pidio el
+dueno el 25 de septiembre de 2026): eso **archiva** (`archivada_en`), o sea desaparece
+de la pantalla y se puede recuperar. Borrarla de verdad seria quitarle la compra a otra
+persona de un toque, y estas listas se comparten.
 
 ---
 
-## 6. Lo que hace la lista cuando esta llena
+## 6bis. En que tienda se compra cada cosa
+
+Desde el 25 de septiembre de 2026, cada linea guarda **su** tienda (`cadena_elegida`).
+Es lo que pidio el dueno: *"en la lista poder elegir en que supermercado lo quiero
+comprar y hacer en una lista que tenga, sublistas dependiendo de donde he puesto que voy
+a comprar ese producto, con el precio final de la lista entera y de cada sublista
+(explicando tambien aplicacion de descuentos)"*.
+
+Hasta ese dia la aplicacion calculaba donde salia mas barata la lista entera y **no
+guardaba ninguna decision**: cada vez que se abria la pantalla volvia a proponer. Eso
+vale para mirar y no vale para comprar. Quien decide "el pan en DIA, que me pillo de
+camino" tiene que poder dejarlo escrito, y que el total lo tenga en cuenta.
+
+Tres reglas, y las tres son de dinero:
+
+1. **Tres estados, no dos**: sin decidir, decidida y comprada. Lo que no se ha decidido
+   **no suma** al total; sale aparte con su opcion mas barata al lado. Sumarlo por lo mas
+   barato daria un total que no corresponde a ninguna compra posible.
+2. **Una linea puesta en una tienda que no la tiene no desaparece**: sale por su nombre
+   ("en Aldi no lo hay"). Es la misma regla que `donde`, aplicada a lo ya decidido.
+3. **Las ofertas van desglosadas**: el total con ofertas, el total sin ellas y la lista de
+   las que se aplican con lo que ahorran. Un 2x1 es una regla sobre cuantas unidades
+   compras, asi que con una unidad no se aplica y el total lo dice.
+
+Y la comparacion se enseña siempre al lado, porque es lo que convierte el total en una
+decision: *"asi pagas 4,81; todo en Carrefour serian 5,05; repartido entre Aldi y
+Carrefour, 4,81 (el ahorro no paga la segunda parada)"*.
+
+---
+
+## 7. Lo que hace la lista cuando esta llena
 
 Esto es lo que justifica todo lo anterior. Una vez hay catorce cosas apuntadas,
 la app tiene que contestar **donde se compra**:
