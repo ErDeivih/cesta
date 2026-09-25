@@ -676,6 +676,80 @@ export interface Donde {
   lineas: number
   fecha_datos: string
 }
+
+/* ------------------------------------------- la lista, partida por tiendas --- */
+
+/** Lo que cuesta UNA linea en UNA tienda concreta. */
+export interface OpcionEnTienda {
+  cadena: string
+  coste_cent: number
+  coste_sin_oferta_cent: number
+  /** La oferta que se ha aplicado, si hay alguna. */
+  promo: string | null
+}
+
+/** Una linea dentro de la sublista de su tienda. */
+export interface FilaEnTienda {
+  /** De que linea de la lista viene. `null` si la linea no tiene id (no pasa hoy). */
+  linea_id: string | null
+  nombre: string
+  cantidad: number
+  producto_id: string
+  coste_cent: number
+  coste_sin_oferta_cent: number
+  promo: string | null
+  /** «Llevando 3 en vez de 2, 0,50 EUR menos por unidad»: la oferta explicada. */
+  sugerencia: string | null
+  /** Lo mismo en las otras tiendas, de mas barata a mas cara. */
+  opciones: OpcionEnTienda[]
+  /** La tienda en la que esta puesta. */
+  elegida?: string
+  mas_barata: string
+}
+
+/** La compra de una tienda: sus lineas y su cuenta. */
+export interface SubLista {
+  cadena: string
+  lineas: FilaEnTienda[]
+  unidades: number
+  total_cent: number
+  /** Lo que costaria sin las ofertas: la resta es lo que ahorran. */
+  total_sin_ofertas_cent: number
+  ahorro_cent: number
+  ofertas: { nombre: string; promo: string; ahorro_cent: number }[]
+  /** Lo que esta asignado a esta tienda y aqui no hay, por su nombre. */
+  sin_encontrar: string[]
+}
+
+/** Una linea que todavia no se ha decidido, con la opcion mas barata al lado. */
+export interface PendienteDeDecidir {
+  linea_id: string | null
+  nombre: string
+  cantidad: number
+  hay_precio: boolean
+  mas_barata: string | null
+  coste_cent: number | null
+  opciones: OpcionEnTienda[]
+}
+
+/** La respuesta de `GET /listas/{id}/reparto`: la lista partida por lo decidido. */
+export interface RepartoTiendas {
+  sublistas: SubLista[]
+  sin_asignar: PendienteDeDecidir[]
+  /** Lineas asignadas a una tienda que no las tiene. No desaparecen nunca. */
+  sin_encontrar: { cadena: string; nombres: string[] }[]
+  total_cent: number
+  total_sin_ofertas_cent: number
+  ahorro_cent: number
+  lineas: number
+  decididas: number
+  sin_precio: number
+  /** La comparacion: donde saldria mas barata entera, y el mejor reparto. */
+  una_tienda: OpcionTienda[]
+  repartido: Reparto | null
+  fecha_datos: string
+}
+
 /** Un favorito. La lista viene mezclada: los guardados por GRUPO traen el
  *  resumen del grupo, y los guardados por PRODUCTO traen la ficha del producto.
  *  Por eso casi todo es opcional: se pinta lo que venga, sin inventar el resto. */

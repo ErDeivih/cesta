@@ -4,27 +4,42 @@
  *  el pulgar llega al borde inferior de la pantalla y no a la esquina de arriba.
  *  En el escritorio la barra de arriba no molesta a nadie.
  *
- *  **Cinco destinos, y el quinto es distinto de los otros cuatro.** Los cuatro de
- *  estar un rato en la tienda siguen siendo buscar, la cesta, el escaner y el panel.
+ *  **Seis destinos desde el 25 de septiembre de 2026, y el sexto lo pidio el dueno**:
+ *  *"la web tiene mejor pinta, debes poner la opcion de lista de la compra y favoritas"*.
+ *  Hasta ese dia **Favoritos existia y no se llegaba a el**: habia que escribir la
+ *  direccion (`/favoritos`) o entrar desde la ficha de un producto. Una pantalla a la
+ *  que no se llega no es una pantalla.
+ *
+ *  Y ahora son seis y no cinco, que era el limite que decia este comentario. Se puede
+ *  porque el minimo que de verdad importa no es el numero de iconos sino **cuanto mide
+ *  cada uno**: en un movil de 390 px, seis destinos son 65 px por cabeza, por encima
+ *  del minimo de 44 px que se pulsa con el pulgar. Con siete serian 55 y ya empieza a
+ *  apretar; el dia que haga falta el septimo, lo que toca no es apretarlos mas, es
+ *  sacar de aqui lo que no se usa en el pasillo.
+ *
  *  **Avisos** (23 de septiembre de 2026) no es un sitio donde estar: es **lo unico que
  *  la aplicacion hace por ti mientras no la miras** -- te busca ella a ti --, y es la
  *  respuesta a *"¿ha bajado algo de lo mio?"*, una de las cuatro preguntas con las que
  *  se abre esto. Ponerlo dentro de otra pantalla habria sido esconderlo en una esquina,
  *  que es justo lo que este encargo quita. Ademas el encargo lo pide literalmente: *"un
  *  punto en el icono"*, y un punto necesita un icono donde estar.
- *
- *  Una barra de ocho iconos no se lee, se busca a tientas. Cinco entran en un movil de
- *  390 px (78 px cada uno) y el pulgar llega a los cinco.
  */
 import { NavLink, useLocation } from 'react-router-dom'
 
 import { useAvisosSinVer, usePorCoger } from '../api/consultas'
-import { IconoCodigoBarras, IconoLupa, IconoPanel, IconoGrafica } from './iconos'
+import {
+  IconoCarro,
+  IconoCodigoBarras,
+  IconoCorazon,
+  IconoLupa,
+  IconoPanel,
+} from './iconos'
 import { cx } from './ui'
 
 const ITEMS = [
   { a: '/', texto: 'Buscar', Icono: IconoLupa, exacto: true },
-  { a: '/cesta', texto: 'Cesta', Icono: IconoGrafica, exacto: false },
+  { a: '/cesta', texto: 'Lista', Icono: IconoCarro, exacto: false },
+  { a: '/favoritos', texto: 'Favoritos', Icono: IconoCorazon, exacto: false },
   { a: '/escaner', texto: 'Escáner', Icono: IconoCodigoBarras, exacto: false },
   { a: '/avisos', texto: 'Avisos', Icono: IconoPanel, exacto: false },
   { a: '/panel', texto: 'Panel', Icono: IconoPanel, exacto: true },

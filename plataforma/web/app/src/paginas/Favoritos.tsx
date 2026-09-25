@@ -7,65 +7,143 @@
  *
  *  Necesita sesion, como la cesta: los favoritos son de cada uno.
  *
- *  **Falta poner favoritos desde aqui**: se pueden ver y quitar, pero para anadir
- *  hay que usar la interfaz antigua o el movil. Esta apuntado en el BACKLOG.
+ *  **Y desde el 25 de septiembre de 2026 esta pantalla sirve para algo mas que
+ *  mirar**: el dueno pidio *"que sea facil anadir a una lista productos que ya estan
+ *  en favoritos, esa seria la ventaja de tener favoritos configurado"*. Asi que cada
+ *  tarjeta lleva un boton para pasarla a una lista, y arriba hay uno para pasar
+ *  **todas** de golpe: montar la compra de la semana desde los favoritos es
+ *  exactamente lo que se quiere poder hacer en dos toques.
  *
- *  Tampoco esta en la barra de abajo: en el movil hay cuatro sitios y este no es
- *  uno de los que se visitan en el pasillo. Se llega desde aqui o escribiendo la
- *  direccion.
+ *  Antes de eso, para anadir habia que usar la interfaz antigua o el movil; la
+ *  pantalla solo sabia ver y quitar.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { verFavoritos, quitarFavorito } from '../api/favoritos'
+import { anadirDesdeFavoritos, misListas } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
 import { euros } from '../api/formato'
-import { Boton, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
+import type { Favorito } from '../tipos'
+
+/** El desplegable de listas, con la ultima usada ya elegida.
+ *
+ *  Se guarda en el movil cual fue la ultima: quien pasa veinte favoritos a la lista
+ *  de la semana no quiere elegir la misma lista veinte veces. */
+function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
+  listas: { id: string; nombre: string }[]
+  valor: string
+  alCambiar: (id: string) => void
+  etiqueta: string
+}) {
+  if (!listas.length) {
+    return (
+      <Link to="/cesta" className="text-sm underline">
+        Crea una lista para poder añadir
+      </Link>
+    )
+  }
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <span className="text-tinta-suave">{etiqueta}</span>
+      <select
+        value={valor}
+        onChange={(e) => alCambiar(e.target.value)}
+        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-2 dark:border-neutral-600 dark:bg-neutral-800"
+      >
+        {listas.map((l) => (
+          <option key={l.id} value={l.id}>{l.nombre}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
 
 export function Favoritos() {
   const cliente = useQueryClient()
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
-  const favs = useQuery({
+  const listas = useQuery({
+    queryKey: ['listas'],
+    queryFn: misListas,
+    enabled: sesion.data?.usuario != null,
+  })
+  const favoritos = useQuery({
     queryKey: ['favoritos'],
     queryFn: verFavoritos,
     enabled: sesion.data?.usuario != null,
   })
+  // La lista a la que se pasan. Empieza por la primera que haya y se queda con lo
+  // que elija la persona, sin volver a preguntarlo en cada tarjeta.
+  const [destino, setDestino] = useState<string>('')
+  const [dicho, setDicho] = useState<string | null>(null)
+  const elegida = destino || listas.data?.[0]?.id || ''
+
   const quitar = useMutation({
     mutationFn: (f: { grupo_id: number | null; producto_id?: string | null }) =>
       quitarFavorito(f.grupo_id, f.producto_id ?? null),
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['favoritos'] }),
   })
 
-  if (sesion.isLoading || favs.isLoading) return <Cargando que="tus favoritos" />
+  const pasar = useMutation({
+    mutationFn: (f: { grupo_id?: number | null; producto_id?: string | null
+                      todos?: Favorito[] }) => {
+      const grupo_ids: number[] = []
+      const producto_ids: string[] = []
+      if (f.todos) {
+        for (const x of f.todos) {
+          if (x.grupo_id != null) grupo_ids.push(x.grupo_id)
+          else if (x.producto_id) producto_ids.push(x.producto_id)
+        }
+      } else {
+        if (f.grupo_id != null) grupo_ids.push(f.grupo_id)
+        else if (f.producto_id) producto_ids.push(f.producto_id)
+      }
+      return anadirDesdeFavoritos(elegida, { grupo_ids, producto_ids })
+    },
+    onSuccess: (cuantos) => {
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+      cliente.invalidateQueries({ queryKey: ['lista', elegida] })
+      cliente.invalidateQueries({ queryKey: ['reparto', elegida] })
+      setDicho(cuantos === 1 ? 'Añadido a la lista' : `Añadidos ${cuantos} a la lista`)
+      setTimeout(() => setDicho(null), 4000)
+    },
+  })
+
+  if (sesion.isLoading || favoritos.isLoading) return <Cargando que="tus favoritos" />
 
   if (!sesion.data?.usuario) {
     return (
       <Vacio titulo="Entra para ver tus favoritos">
         <p>
           Los favoritos son tuyos, así que hacen falta tus listas. Se entra desde{' '}
-          <Link to="/cesta" className="underline">la cesta</Link>.
+          <Link to="/cesta" className="underline">la lista</Link>.
         </p>
       </Vacio>
     )
   }
 
-  if (favs.isError) {
+  if (favoritos.isError) {
     return (
       <Vacio titulo="No he podido traerlos">
-        <p>{textoDeError(favs.error)}</p>
+        <p>{textoDeError(favoritos.error)}</p>
       </Vacio>
     )
   }
 
-  const lista = favs.data ?? []
+  const lista = favoritos.data ?? []
+  const nombreDeDestino = listas.data?.find((l) => l.id === elegida)?.nombre
+
   if (!lista.length) {
     return (
       <Vacio titulo="Todavía no tienes favoritos">
         <p>
           Los favoritos son los productos que compras siempre. Aparecen aquí con
-          el precio de hoy y marcados cuando han bajado.
+          el precio de hoy y marcados cuando han bajado. Se añaden desde la ficha
+          de un producto, con el corazón.
         </p>
       </Vacio>
     )
@@ -73,11 +151,34 @@ export function Favoritos() {
 
   return (
     <div className="grid gap-4">
-      <header>
+      <header className="grid gap-2">
         <h1 className="text-xl font-semibold">Favoritos</h1>
         <p className="text-sm text-tinta-suave">
           Con el estado de hoy. Primero lo que ha cambiado.
         </p>
+        {/* Lo que hace util tener favoritos: pasarlos a la lista de la compra. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <ElegirLista listas={listas.data ?? []} valor={elegida}
+                       alCambiar={setDestino} etiqueta="Añadir a" />
+          <Boton
+            variante="principal"
+            disabled={!elegida || pasar.isPending}
+            onClick={() => pasar.mutate({ todos: lista })}
+          >
+            {pasar.isPending ? 'Añadiendo…' : `Añadir los ${lista.length} a la lista`}
+          </Boton>
+          {nombreDeDestino && (
+            <Link to="/cesta" className="text-sm underline">
+              Ver «{nombreDeDestino}»
+            </Link>
+          )}
+        </div>
+        {dicho && <Aviso tono="bien" titulo={dicho}>Se puede cambiar de tienda dentro de la lista.</Aviso>}
+        {pasar.isError && (
+          <Aviso tono="mal" titulo="No he podido añadirlos">
+            {textoDeError(pasar.error)}
+          </Aviso>
+        )}
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -111,16 +212,26 @@ export function Favoritos() {
               </p>
               {cadena && <p className="text-sm text-tinta-suave">en {cadena}</p>}
 
-              <Boton
-                variante="sutil"
-                className="mt-3"
-                disabled={quitar.isPending}
-                onClick={() => quitar.mutate({
-                  grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
-                })}
-              >
-                Quitar
-              </Boton>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Boton
+                  variante="principal"
+                  disabled={!elegida || pasar.isPending}
+                  onClick={() => pasar.mutate({
+                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+                  })}
+                >
+                  A la lista
+                </Boton>
+                <Boton
+                  variante="sutil"
+                  disabled={quitar.isPending}
+                  onClick={() => quitar.mutate({
+                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+                  })}
+                >
+                  Quitar
+                </Boton>
+              </div>
             </Tarjeta>
           )
         })}

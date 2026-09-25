@@ -84,3 +84,26 @@ export function IconoGrafica(props: SVGProps<SVGSVGElement>) {
     </Base>
   )
 }
+
+/** El corazon de Favoritos. Se anade el 25 de septiembre de 2026, cuando Favoritos
+ *  entra en la barra: hasta entonces no hacia falta, porque a la pantalla solo se
+ *  llegaba escribiendo la direccion. */
+export function IconoCorazon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M12 20s-7-4.4-7-9.2A4 4 0 0 1 12 8a4 4 0 0 1 7 2.8C19 15.6 12 20 12 20z" />
+    </Base>
+  )
+}
+
+/** El carro: la lista de la compra. Sustituye a la grafica en la barra de abajo
+ *  porque «Lista» con una grafica al lado se leia como «Panel». */
+export function IconoCarro(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M3 5h2l2.4 10.2a1.5 1.5 0 0 0 1.5 1.2h7.8a1.5 1.5 0 0 0 1.5-1.2L20 8H6" />
+      <circle cx="9.5" cy="19.5" r="1.4" />
+      <circle cx="17" cy="19.5" r="1.4" />
+    </Base>
+  )
+}

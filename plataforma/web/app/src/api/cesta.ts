@@ -15,7 +15,7 @@
  *  que la pantalla pueda decir QUE ha fallado y no solo que fallo.
  */
 import { ErrorApi, pide } from './cliente'
-import type { Donde, Estimacion, Linea, Lista, Sesion } from '../tipos'
+import type { Donde, Estimacion, Linea, Lista, RepartoTiendas, Sesion } from '../tipos'
 
 /** Entra con usuario y clave. La cookie la pone la API en la respuesta. */
 export async function entrar(usuario: string, clave: string,
@@ -147,6 +147,53 @@ export async function donde(id: string,
   return await pide<Donde>(`/listas/${encodeURIComponent(id)}/donde`, {
     cadenas: cadenas?.length ? cadenas.join(',') : undefined,
   })
+}
+
+/* --------------------------------------- la lista, partida por tiendas ------ */
+
+/** Lo que se ha decidido: la lista agrupada por la tienda de cada cosa.
+ *
+ *  `donde()` contesta «¿donde sale mas barata la lista entera?» y esto contesta
+ *  «¿que he decidido, y cuanto me cuesta asi?». Son dos preguntas distintas y las
+ *  dos se enseñan juntas a proposito: una lista de la compra se decide mirando
+ *  cuanto se paga por haberla decidido.
+ */
+export async function reparto(listaId: string, cadenas?: string[]): Promise<RepartoTiendas> {
+  return await pide<RepartoTiendas>(`/listas/${encodeURIComponent(listaId)}/reparto`, {
+    cadenas: cadenas?.length ? cadenas.join(',') : undefined,
+  })
+}
+
+/** Poner (o quitar) la tienda de una linea, de varias o de toda la lista.
+ *
+ *  - `{cadena: 'dia', lineas: ['id']}` esas lineas se compran en DIA
+ *  - `{cadena: 'dia'}` **toda** la lista se compra en DIA
+ *  - `{cadena: null, lineas: [...]}` esas lineas vuelven a «sin decidir»
+ *  - `{cadena: 'dia', borrar: true}` se borra la sublista de DIA del tiron
+ */
+export async function ponerTienda(listaId: string,
+                                  cuerpo: { cadena: string | null; lineas?: string[]
+                                            borrar?: boolean }): Promise<void> {
+  await escribe(`/listas/${encodeURIComponent(listaId)}/tienda`, 'POST', cuerpo)
+}
+
+/** Pasar favoritos a una lista, de uno en uno o todos de golpe. */
+export async function anadirDesdeFavoritos(listaId: string,
+                                           cuerpo: { grupo_ids?: number[]
+                                                     producto_ids?: string[] }): Promise<number> {
+  const r = await escribe<{ anadidos: number }>(
+    `/listas/${encodeURIComponent(listaId)}/desde-favoritos`, 'POST', cuerpo)
+  return r.anadidos
+}
+
+/** Ponerle nombre a una lista: con varias, «Lista» y «Lista (2)» no se distinguen. */
+export async function renombrarLista(listaId: string, nombre: string): Promise<{ nombre: string }> {
+  return await escribe(`/listas/${encodeURIComponent(listaId)}`, 'PATCH', { nombre })
+}
+
+/** Borrar la lista entera. Se **archiva**: desaparece y se puede recuperar. */
+export async function borrarLista(listaId: string): Promise<void> {
+  await escribe(`/listas/${encodeURIComponent(listaId)}`, 'DELETE')
 }
 
 /* ---------------------------------------------------------------- escribir -- */
