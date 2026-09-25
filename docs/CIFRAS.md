@@ -1,6 +1,6 @@
 # Las cifras de la ultima ejecucion
 
-**Ejecucion del 24 de septiembre de 2026.** Este documento tiene un solo trabajo:
+**Ejecucion del 25 de septiembre de 2026.** Este documento tiene un solo trabajo:
 llevar los numeros de **hoy**. Lo reescribe entero
 `projects/cesta/cifras.py` al final de cada pasada.
 
@@ -18,40 +18,40 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 | | |
 |---|---:|
-| productos del catalogo | **57.603** |
-| grupos comparables | **9.206** |
-| productos comparables por kg/l/m | **45.891** |
-| productos con codigo de barras | **25.413** |
+| productos del catalogo | **52.701** |
+| grupos comparables | **8.794** |
+| productos comparables por kg/l/m | **42.470** |
+| productos con codigo de barras | **25.414** |
 
 ## Etiquetado y composicion
 
 | | |
 |---|---:|
-| productos con algun sello | **12.911** |
-| productos con certificado | **713** |
-| productos con Nutri-Score | **8.401** |
-| productos con tabla nutricional | **3.853** |
-| productos con envase | **9.126** |
+| productos con algun sello | **11.805** |
+| productos con certificado | **765** |
+| productos con Nutri-Score | **8.415** |
+| productos con tabla nutricional | **3.842** |
+| productos con envase | **9.108** |
 
 ## Historico
 
-    872.650 filas, 19 dias acumulados
+    925.151 filas, 20 dias acumulados
 
 ## Por cadena, la ultima captura de cada una
 
 | cadena | productos | errores | tiempo | fecha |
 |---|---:|---:|---:|---|
-| alcampo | 28.977 | 0 | 5.442 s | 2026-09-24 |
-| carrefour | 16.452 | 4 | 3.511 s | 2026-09-24 |
-| dia | 5.789 | 0 | 664 s | 2026-09-24 |
-| mercadona | 4.319 | 0 | 95 s | 2026-09-24 |
-| aldi | 2.066 | 0 | 62 s | 2026-09-24 |
+| alcampo | 23.924 | 0 | 4.118 s | 2026-09-25 |
+| carrefour | 16.473 | 4 | 3.409 s | 2026-09-25 |
+| dia | 5.772 | 0 | 633 s | 2026-09-25 |
+| mercadona | 4.318 | 0 | 97 s | 2026-09-25 |
+| aldi | 2.214 | 0 | 97 s | 2026-09-25 |
 
 ## Promociones
 
 | | |
 |---|---:|
-| productos con texto de promocion | 7.848 |
-| **de tarjeta** (no bajan lo que pagas en caja) | **576** |
-| **solo por internet** (no bajan el ticket de la tienda) | **341** |
-| ofertas que cuentan de verdad | 6.931 |
+| productos con texto de promocion | 7.963 |
+| **de tarjeta** (no bajan lo que pagas en caja) | **575** |
+| **solo por internet** (no bajan el ticket de la tienda) | **327** |
+| ofertas que cuentan de verdad | 7.061 |
