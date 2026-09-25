@@ -322,6 +322,50 @@ def productos_de_busqueda(f: Fetcher, termino: str) -> list[dict]:
     return list(ents.values())
 
 
+# Cuando hay que recorrer los terminos del buscador, y cuando no.
+#
+# Esto era `if truncadas and not detener`, o sea: solo si alguna categoria HOJA habia
+# tocado el tope de 300 productos. **Esa condicion no se ha cumplido nunca**, y se
+# midio en tres dias seguidos sobre el crudo de Alcampo:
+#
+#     2026-09-23   respuestas 421   al tope  29   hojas al tope  0
+#     2026-09-24   respuestas 543   al tope  44   hojas al tope  0
+#     2026-09-25   respuestas 410   al tope  28   hojas al tope  0
+#
+# Y no se cumple porque una categoria con 300 productos **casi siempre tiene hijas** y
+# entonces no cuenta como hoja: el tope lo tocan los nodos de arriba, que se subdividen.
+# O sea que el segundo camino de descubrimiento llevaba dias existiendo en el codigo y
+# sin ejecutarse ni una vez, y no se notaba porque el arbol de categorias bastaba.
+#
+# Hasta que no basto: el 25 de septiembre de 2026 la captura se quedo en **23.924
+# productos contra 28.977** del dia anterior (un 17,5 % menos, con el aviso de deriva
+# saltando) y el barrido, que es justo lo que tapa ese agujero, no llego a correr.
+#
+# Ahora se recorre **cuando hace falta**, que son dos casos medibles:
+#   - alguna hoja toco el tope (lo de antes, que sigue valiendo cuando pasa);
+#   - o la captura se ha quedado por debajo de la ultima buena, que es la senal de que
+#     el arbol no ha bastado hoy.
+#
+# Y con **presupuesto de tiempo**: a una peticion cada 6,7 s (ritmo del WAF), los 600
+# terminos del turno son casi 67 minutos, mas que el recorrido entero. Se recorre lo que
+# quepa y se dice cuanto quedo, que es mejor que doblar la tarea por si acaso.
+MARGEN_BAJON = 0.05            # por debajo del 5 % ya se barre
+PRESUPUESTO_BARRIDO_S = 1200   # 20 minutos
+
+
+def hay_que_barrer(truncadas: int, filas: int, anterior: int | None, *,
+                   margen: float = MARGEN_BAJON) -> bool:
+    """¿Toca recorrer los terminos del buscador?
+
+    `anterior` es el tamano de la ultima captura buena; `None` si es la primera.
+    """
+    if truncadas:
+        return True
+    if not anterior:
+        return False               # primera captura: no hay con que comparar
+    return filas < anterior * (1 - margen)
+
+
 def _turno_de_hoy(terminos: list[str], cuantos: int) -> list[str]:
     """Reparte los terminos por dias: hoy unos, manana los siguientes."""
     if len(terminos) <= cuantos:
@@ -638,15 +682,24 @@ def main() -> int:
         print(f"  {len(sin_estado)} categorias llegaron sin datos "
               f"(ej.: {', '.join(sin_estado[:3])})")
 
-    if truncadas and not detener:
-        print(f"  {truncadas} categorias hoja tocaron el limite de {TOPE_API}: "
-              f"se completan por buscador")
+    if not detener and hay_que_barrer(truncadas, len(filas), _filas_ultimo_bronze()):
+        if truncadas:
+            print(f"  {truncadas} categorias hoja tocaron el limite de {TOPE_API}: "
+                  f"se completan por buscador", flush=True)
+        else:
+            print(f"  la captura ({len(filas)}) va por debajo de la ultima buena: se "
+                  f"recorren los terminos del buscador", flush=True)
         vistos = {r["id_fuente"] for r in filas}
         nuevos = 0
         terminos = []
+        t0_buscador = time.monotonic()
+        agotado = False
         try:
             terminos = _turno_de_hoy(terminos_de_busqueda(f), TERMINOS_POR_DIA)
             for termino in terminos:
+                if time.monotonic() - t0_buscador > PRESUPUESTO_BARRIDO_S:
+                    agotado = True
+                    break
                 for prod in productos_de_busqueda(f, termino):
                     r = a_registro(prod)
                     if r["id_fuente"] and r["id_fuente"] not in vistos:
@@ -662,7 +715,13 @@ def main() -> int:
             errores += 1
             detener = True
             print(f"  no se pudo completar la fase de buscador: {exc}")
-        print(f"  buscador: {len(terminos)} terminos, {nuevos} productos nuevos")
+        minutos = (time.monotonic() - t0_buscador) / 60
+        print(f"  buscador: {len(terminos)} terminos, {nuevos} productos nuevos "
+              f"({minutos:.0f} min)", flush=True)
+        if agotado:
+            print(f"  aviso: se acabo el presupuesto del buscador "
+                  f"({PRESUPUESTO_BARRIDO_S}s) con {len(filas)} productos: manana "
+                  f"sigue por donde iba")
     elif truncadas:
         print(f"  aviso: {truncadas} categorias hoja alcanzaron el limite de {TOPE_API}")
     # La truncacion es una limitacion conocida y acotada, no una ejecucion rota:

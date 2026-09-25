@@ -1143,6 +1143,48 @@ condición que se va a comprobar —no a un tiempo fijo— y con **un reintento 
 panel. Ninguna de las dos bajó el listón: si el texto no aparece tampoco a la segunda, sigue
 siendo un fallo.
 
+### El barrido del buscador de Alcampo llevaba días sin ejecutarse (25 de septiembre)
+
+**Por qué.** El dueño preguntó cómo iba la ingesta del día. La respuesta corta: **0 problemas**
+(`verificar_ingesta --fecha 2026-09-25`: 411+112+2.113+521+154 respuestas, 48.701 productos
+declarados y guardados, 0 sin explicar, 0 filas sin enlace, paginación completa). Pero Alcampo
+entregó **23.924 productos contra 28.977** del día anterior, un **17,5 % menos**, y el detector de
+deriva lo dijo: `[DERIVA] alcampo: 23924 filas hoy vs 28977 la ultima vez`. Ninguna rama se hundió
+(el control de cobertura no saltó): faltaba un poco de todas — Bebidas −463, Droguería −262,
+Mascotas −244, Parafarmacia −236…
+
+**La causa, medida.** El segundo camino de descubrimiento de Alcampo es el barrido de términos del
+buscador (600 de 5.153 al día, en turnos de ~9 días) y estaba detrás de una condición:
+`if truncadas and not detener`, o sea que alguna categoría **hoja** hubiera tocado el tope de 300
+productos de su API. Reconstruido desde el crudo, con el mismo lector que el colector:
+
+    2026-09-23   respuestas 421   al tope  29   hojas al tope  0
+    2026-09-24   respuestas 543   al tope  44   hojas al tope  0
+    2026-09-25   respuestas 410   al tope  28   hojas al tope  0
+
+**Cero, cero y cero**: una categoría con 300 productos casi siempre tiene hijas, y entonces no
+cuenta como hoja. La guarda no era una guarda, era **una puerta cerrada**: el barrido no se ha
+ejecutado nunca, y no se notaba porque el árbol de categorías bastaba… hasta el día que no bastó.
+
+**El arreglo.** `hay_que_barrer(truncadas, filas, anterior)`, con dos casos medibles: alguna hoja
+al tope (lo de antes, que sigue valiendo) **o** que la captura se haya quedado por debajo de la
+última buena en más de un 5 % (el caso de hoy). Y con **presupuesto de tiempo** de 20 minutos: a
+una petición cada 6,7 s, los 600 términos del turno son casi 67 minutos, más que el recorrido
+entero, así que se recorre lo que quepa y se dice cuántos términos quedaron. 6 pruebas en
+`tests/test_alcampo_buscador.py`.
+
+**Lo que aún no se puede decir**: cuántos productos recupera el barrido, porque al medirlo (12
+términos, justo después de la pasada) el WAF devolvió el reto en **12 de 12** peticiones al
+buscador. El número saldrá de la pasada de mañana, que es la primera que lo ejecuta de verdad; y
+la sonda que lo midió **no escribió nada en el crudo** (se sustituyó `save_raw` por una función
+vacía), porque una sonda que ensucia el día que está midiendo deja de servir para medir.
+
+**Y un aviso sobre las pruebas.** Las dos que fallan en la barra
+(`tests/test_auditar_secciones.py`) son contra `core/datos/secciones.yml`, y ese fichero **lo
+reescribe la propia cadena diaria**: hoy dice «5 claves añadidas a secciones.yml; las que no tienen
+propuesta hay que ponerlas a mano». No es un fichero de otro: es salida del pipeline que hay que
+revisar y decidir.
+
 ### Los toques hasta cada respuesta: lo medible de la barra (a)
 
 La condicion (a) -- *"las cuatro preguntas contestadas en menos de quince segundos con el
