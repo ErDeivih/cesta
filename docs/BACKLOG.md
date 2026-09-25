@@ -1143,7 +1143,55 @@ condición que se va a comprobar —no a un tiempo fijo— y con **un reintento 
 panel. Ninguna de las dos bajó el listón: si el texto no aparece tampoco a la segunda, sigue
 siendo un fallo.
 
-### El barrido del buscador de Alcampo llevaba días sin ejecutarse (25 de septiembre)
+### «Dónde comprar»: la pantalla que pedía el dueño, y compartir, comprobado
+
+**Lo que pidió** (25 de septiembre de 2026): *"la web tiene mejor pinta, debes poner la opción
+de lista de la compra y favoritas, y que pueda tener varias listas… incluido poder compartir con
+otro usuario la lista para colaborar… en las estadísticas, cosas mejor explicadas, o datos más
+claros para elegir dónde comprar o dónde comprar cada producto"*.
+
+**Lo que hay ahora, y cómo se ha comprobado:**
+
+1. **Favoritos en la barra** (sexto destino, con su corazón) y **la lista renombrada a «Lista»**
+   con icono de carro. Hasta hoy Favoritos existía **sin forma de llegar a ella**. Medido después
+   del cambio en 390 px: 58-65 × 56 px, todos por encima de 44. La prueba de la barra pasa de
+   cinco destinos a seis con esa medición escrita.
+2. **Favoritos sirve para algo más que mirar**: cada tarjeta tiene «A la lista» y arriba un
+   «Añadir los N a la lista» con desplegable. **Una sola petición**
+   (`POST /listas/{id}/desde-favoritos`), no veinte.
+3. **Varias listas**: el desplegable sale siempre (antes solo con dos o más, así que la segunda no
+   se podía crear), con «+ Lista nueva», renombrar y quitar la lista (archiva).
+4. **Compartir para colaborar, comprobado con dos personas de verdad** por la API: Ana comparte con
+   Bea dándole papel de *escribir* → Bea la ve en sus listas con ese papel → Bea añade una línea y
+   la tacha → **Ana ve la línea con «Bea» como autora y como quien tachó**, y las dos aparecen en
+   `personas`. Al cambiar el papel a *solo mirar*, escribir devuelve **403 con la frase que lo
+   explica**, y el enlace de invitación se genera (`/unirme/...`). Todo con cuentas reales,
+   borradas al terminar.
+5. **La lista parte la compra por tiendas** (lo grande de este encargo): cada línea con las cinco
+   tiendas y su precio, sublistas con su total, el total de la lista, las ofertas desglosadas con
+   lo que ahorran, lo que no está decidido sin sumar, y borrado de línea, de sublista y de lista.
+   Verificado **pulsando** en el navegador: «Repartir en 2 tiendas» deja la lista partida en
+   mercadona (4,80 €) y aldi (2,79 €) con cero sin decidir, y «Borrar la sublista» se lleva sus
+   líneas y deja las otras.
+6. **Pestaña nueva «Dónde comprar»** en el panel, con tres bloques y una explicación que dice
+   **lo que no se puede decir**:
+   - *Quién gana en cada pasillo*, en el orden del recorrido de la tienda: hoy gana Aldi en 11 de
+     18 pasillos, Alcampo en 6y Mercadona en 1 (Frutas y verduras −19,1 %, Bebidas −17,3 %,
+     Droguería y limpieza −13,9 %…). Se mide con el desvío de cada producto respecto a la mediana
+     de **las otras** cadenas de su grupo, así que **no depende del surtido**.
+   - *Dónde comprar cada producto*: los 120 productos donde más se nota, con la cadena barata, la
+     cara y la diferencia por unidad canónica (p. ej. gelatina neutra 0,60 €/kg en Mercadona
+     contra 1,35 €/kg en Carrefour), filtrados a misma unidad, comparación fiable y diferencia
+     entre el 5 % y el triple.
+   - Y lo que **no** dice: cuál es la cadena más barata en total. No se puede saber con estos
+     datos (cada cadena vende su catálogo); lo que se puede contar es en cuántos pasillos gana
+     cada una, y se cuenta aparte.
+
+**Lo que queda por ver**: la pasada de mañana es la primera que ejecuta el barrido del buscador de
+Alcampo y la primera con el arranque del navegador sin abrir ventana; los dos números (cuántos
+productos recupera y cuántas ventanas se ahorran) salen de ahí.
+
+
 
 **Por qué.** El dueño preguntó cómo iba la ingesta del día. La respuesta corta: **0 problemas**
 (`verificar_ingesta --fecha 2026-09-25`: 411+112+2.113+521+154 respuestas, 48.701 productos

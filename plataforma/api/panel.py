@@ -75,6 +75,136 @@ def hoy():
     return _al_dia("hoy", calcula)
 
 
+@rutas.get("/donde")
+def donde(limite_pasillos: int = 40):
+    """**Donde hacer la compra, pasillo a pasillo.** La pregunta del dueno.
+
+    Lo pidio el 25 de septiembre de 2026: *"en las estadisticas, cosas mejor explicadas, o
+    datos mas claros para elegir donde comprar o donde comprar cada producto"*.
+
+    Lo que contesta, y lo que NO contesta, porque la diferencia es toda la honestidad de
+    esta pantalla:
+
+      SI   en que pasillo es mas barata cada cadena, y por cuanto. Eso se mide con
+           `analisis.desvio_por_seccion`: para cada producto comparable, su desvio respecto
+           a la mediana de las OTRAS cadenas de su grupo, y luego la mediana de esos
+           desvios. Al ser el mismo producto en los dos lados de la resta, **no depende del
+           surtido** de cada cadena.
+      NO   cual es la cadena mas barata en total. Eso no se puede decir con estos datos:
+           cada cadena tiene su catalogo, y quien tiene mas productos caros parece mas caro
+           aunque en lo que comparten sea mas barato. Lo que si se puede decir es en cuantos
+           pasillos gana cada una, que es otra cosa y se dice aparte.
+
+    Solo salen celdas con **15 productos o mas**: con menos, la mediana de un pasillo es el
+    ruido de dos o tres fichas.
+    """
+    def calcula():
+        from . import analisis, catalogo
+
+        crudo = analisis.posicion()
+        pasillos = []
+        for s in crudo["secciones"]:
+            cadenas = sorted(s["cadenas"], key=lambda c: c["desvio_pct"])
+            if not cadenas:
+                continue
+            mejor, peor = cadenas[0], cadenas[-1]
+            siguientes = list(cadenas[1:])
+            pasillos.append({
+                "seccion": s["seccion"],
+                # El nombre que se lee, no el slug: la pantalla no tiene que saber que
+                # "higiene-belleza" se llama "Higiene y belleza".
+                "nombre": catalogo.NOMBRES_SECCIONES.get(s["seccion"], s["seccion"]),
+                "productos": s["productos"],
+                "gana": mejor["cadena"],
+                "desvio_pct": mejor["desvio_pct"],
+                "peor": peor["cadena"],
+                "peor_pct": peor["desvio_pct"],
+                # Cuanto se separa la primera de la siguiente: si es poco, el pasillo no
+                # decide nada y decirlo evita el "compra aqui" que no se sostiene.
+                "ventaja_sobre_la_siguiente_pct": (
+                    round(siguientes[0]["desvio_pct"] - mejor["desvio_pct"], 1)
+                    if siguientes else None),
+                "siguiente": siguientes[0]["cadena"] if siguientes else None,
+                "cadenas": cadenas,
+            })
+        # **En el orden del recorrido de la tienda**, no de mayor a menor: esta pantalla
+        # se lee para decidir la compra, y la compra se hace andando. Lo que no este en
+        # la lista del recorrido va al final, que es lo que se hace con lo desconocido.
+        orden = {s: n for n, s in enumerate(catalogo.ORDEN_SECCIONES)}
+        pasillos.sort(key=lambda p: (orden.get(p["seccion"], 99), -p["productos"]))
+        # Cuantos pasillos gana cada cadena: el unico resumen valido de "quien es mas
+        # barato", porque cuenta pasillos ganados y no precios mezclados de catalogos
+        # distintos.
+        victorias: dict[str, int] = {}
+        for p in pasillos:
+            victorias[p["gana"]] = victorias.get(p["gana"], 0) + 1
+        return {
+            "fecha_datos": crudo["fecha_datos"],
+            "medida": crudo["medida"],
+            "minimo_por_celda": 15,
+            "pasillos": pasillos[:limite_pasillos],
+            "pasillos_totales": len(pasillos),
+            "victorias": [{"cadena": c, "pasillos": n}
+                          for c, n in sorted(victorias.items(), key=lambda x: -x[1])],
+            "oportunidades": _oportunidades(),
+        }
+    return _al_dia("donde", calcula)
+
+
+def _oportunidades(limite: int = 120) -> dict:
+    """**Donde comprar cada producto**: los que mas se diferencian entre cadenas.
+
+    Es la otra mitad de la pregunta del dueno. El pasillo dice donde esta el grueso; esto
+    dice en que productos concretos se nota, que es lo que se compra uno a uno.
+
+    Tres filtros, y los tres quitan mentiras conocidas:
+
+      - **misma unidad dentro del grupo**: restar EUR/kg de EUR/ud fue lo que hizo anunciar
+        un ahorro del 229.833 % (esta escrito en `core/comparacion.py`);
+      - **`comparacion_fiable`**: la propia cadena no puede haber marcado el precio como no
+        comparable;
+      - **entre un 5 % y el triple**: por debajo del 5 % es redondeo, y por encima del
+        triple casi siempre es un problema de unidades o de emparejamiento, no una oferta
+        (es el mismo corte que usa el panel de «dudosas»).
+    """
+    con = conexion()
+    filas = con.execute("""
+        WITH buena AS (
+          SELECT grupo_id, fuente, nombre, precio_unidad_cent, unidad_canon
+            FROM grupos
+           WHERE grupo_id IS NOT NULL AND comparacion_fiable AND precio_unidad_cent > 0
+             AND unidad_canon IS NOT NULL),
+        una_unidad AS (
+          SELECT grupo_id FROM buena
+           GROUP BY grupo_id HAVING count(DISTINCT unidad_canon) = 1),
+        rango AS (
+          SELECT grupo_id, min(precio_unidad_cent) AS mn, max(precio_unidad_cent) AS mx,
+                 count(DISTINCT fuente) AS cadenas
+            FROM buena JOIN una_unidad USING (grupo_id)
+           GROUP BY grupo_id
+          HAVING cadenas >= 3 AND mn > 0 AND mx / mn BETWEEN 1.05 AND 3.0)
+        SELECT b.grupo_id,
+               arg_min(b.nombre, b.precio_unidad_cent) AS barato,
+               arg_min(b.fuente, b.precio_unidad_cent) AS cadena_barata,
+               r.mn, arg_max(b.fuente, b.precio_unidad_cent) AS cadena_cara, r.mx,
+               any_value(b.unidad_canon) AS unidad, r.cadenas
+          FROM buena b JOIN rango r USING (grupo_id)
+         GROUP BY b.grupo_id, r.mn, r.mx, r.cadenas
+         ORDER BY (r.mx - r.mn) DESC
+         LIMIT ?
+    """, [limite]).fetchall()
+    return {
+        "productos": [{"grupo_id": f[0], "nombre": f[1], "mas_barata": f[2],
+                       "precio_cent": round(f[3]), "mas_cara": f[4],
+                       "precio_caro_cent": round(f[5]), "unidad": f[6],
+                       "cadenas": f[7],
+                       "diferencia_cent": round(f[5] - f[3])} for f in filas],
+        "filtros": "misma unidad, comparación fiable y una diferencia de entre el 5 % y el "
+                   "triple (por debajo es redondeo; por encima, casi siempre unidades o "
+                   "emparejamiento)",
+    }
+
+
 @rutas.get("/cadenas")
 def cadenas():
     """Quien es mas barato, y cuanto se mueve cada uno."""

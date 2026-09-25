@@ -511,12 +511,49 @@ siempre acaba reenviado en un grupo que no era.
 ## Panel
 
     GET /api/panel/hoy         estado de la ingesta, precios movidos, alarmas
+    GET /api/panel/donde       **donde hacer la compra**, pasillo a pasillo, y los
+                               productos donde mas se nota la diferencia
     GET /api/panel/cadenas     quien es mas barato, cuanto se mueve, dispersion
     GET /api/panel/marcas      marca propia contra marca, **con su aviso**
     GET /api/panel/historico   dias guardados y que analisis faltan, con fechas
     GET /api/panel/movidos     lo que se ha movido hoy
 
 Todas cacheadas hasta que gold cambie de fecha, que es una vez al dia.
+
+### `GET /api/panel/donde`
+
+    sale  {"fecha_datos", "medida", "minimo_por_celda": 15,
+           "pasillos": [{"seccion", "nombre", "productos", "gana", "desvio_pct",
+                         "peor", "peor_pct", "siguiente",
+                         "ventaja_sobre_la_siguiente_pct",
+                         "cadenas": [{"cadena", "productos", "desvio_pct"}]}],
+           "pasillos_totales", "victorias": [{"cadena", "pasillos"}],
+           "oportunidades": {"productos": [{"grupo_id", "nombre", "mas_barata",
+                                            "precio_cent", "mas_cara",
+                                            "precio_caro_cent", "unidad", "cadenas",
+                                            "diferencia_cent"}],
+                             "filtros"}}
+
+**Lo que contesta, y lo que no**, porque la diferencia es toda la honestidad de esta
+pantalla (la pidio el dueno el 25 de septiembre de 2026: *"datos mas claros para elegir
+donde comprar o donde comprar cada producto"*):
+
+- **Si**: en que pasillo es mas barata cada cadena y por cuanto. Se mide con
+  `analisis.posicion()`: para cada producto comparable, su desvio respecto a la mediana de
+  las **otras** cadenas de su grupo, y luego la mediana de esos desvios. Al ser el mismo
+  producto en los dos lados de la resta, **no depende del surtido**.
+- **No**: cual es la cadena mas barata en total. Eso no se puede decir con estos datos
+  (cada cadena vende su catalogo). Lo que si se puede contar es en cuantos pasillos gana
+  cada una, y eso va en `victorias`.
+- Solo salen celdas con **15 productos o mas** por cadena: con menos, la mediana es el
+  ruido de dos o tres fichas. Y los pasillos van **en el orden del recorrido de la tienda**,
+  no por tamano: esta pantalla se lee para decidir la compra, y la compra se hace andando.
+
+`oportunidades` es la otra mitad de la pregunta —*donde comprar cada producto*— y sale de
+`grupos` con tres filtros que quitan mentiras conocidas: **misma unidad** dentro del grupo
+(restar EUR/kg de EUR/ud fue lo que hizo anunciar un ahorro del 229.833 %),
+**`comparacion_fiable`**, y una diferencia **entre el 5 % y el triple** (por debajo es
+redondeo; por encima casi siempre son unidades o emparejamiento).
 
 `/panel/marcas` devuelve un campo `aviso` que **hay que ensenar siempre**: dice
 que porcentaje de las letras de calidad salen del precio. Sin el, el estudio se

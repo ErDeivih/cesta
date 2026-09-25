@@ -26,6 +26,7 @@ import type {
   RespuestaSecciones,
   Grupo,
   PanelCadenas,
+  PanelDonde,
   PanelHistorico,
   PanelHoy,
   PanelMarcas,
@@ -291,6 +292,21 @@ export function usePanelCadenas() {
   return useQuery({
     queryKey: ['panel', 'cadenas'],
     queryFn: ({ signal }) => pide<PanelCadenas>('/panel/cadenas', undefined, signal),
+    staleTime: CINCO_MIN,
+  })
+}
+
+/** **Dónde comprar**: quién gana en cada pasillo, medido sobre los mismos productos.
+ *
+ *  Es la respuesta a *"¿dónde hago la compra?"* con la única medida que no depende del
+ *  surtido de cada cadena: para cada producto comparable, el desvío respecto a la mediana
+ *  de las OTRAS cadenas de su grupo. Lo que esta pantalla **no** dice es cuál es la cadena
+ *  más barata en total, y lo dice el texto: cada cadena tiene su catálogo.
+ */
+export function usePanelDonde() {
+  return useQuery({
+    queryKey: ['panel', 'donde'],
+    queryFn: ({ signal }) => pide<PanelDonde>('/panel/donde', undefined, signal),
     staleTime: CINCO_MIN,
   })
 }

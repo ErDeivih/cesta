@@ -22,6 +22,7 @@ import {
   useIndice,
   useOfertasDudosas,
   usePanelCadenas,
+  usePanelDonde,
   usePanelHistorico,
   usePanelHoy,
   usePanelMarcas,
@@ -35,6 +36,11 @@ import { Aviso, Cargando, Dato, Etiqueta, Fallo, Selector, TablaScroll, Tarjeta,
 
 const PESTANAS = [
   { clave: 'hoy', texto: 'Hoy' },
+  // **«Dónde comprar» va la primera de las de análisis, y es una decision.** El dueno
+  // pidio el 25 de septiembre de 2026 *"datos mas claros para elegir donde comprar o
+  // donde comprar cada producto"*: la pregunta que se hace de verdad es esa, no la del
+  // indice. Las otras cuatro tablas siguen ahi, detras, para quien quiera el detalle.
+  { clave: 'donde', texto: 'Dónde comprar' },
   { clave: 'cadenas', texto: 'Cadenas' },
   { clave: 'marcas', texto: 'Marcas' },
   { clave: 'historico', texto: 'Histórico' },
@@ -130,6 +136,7 @@ export function Panel() {
       )}
 
       {activa === 'hoy' && <Hoy />}
+      {activa === 'donde' && <DondeComprar />}
       {activa === 'cadenas' && <Cadenas />}
       {activa === 'marcas' && <Marcas />}
       {activa === 'historico' && <Historico />}
@@ -296,6 +303,193 @@ function Hoy() {
               ))}
               {d.movidos.length === 0 && <li>Hoy no se ha movido nada.</li>}
             </ul>
+          </Tarjeta>
+        </div>
+      )}
+    </Bloque>
+  )
+}
+
+/** **Dónde comprar**: la pantalla que contesta la pregunta del dueño.
+ *
+ *  *"Cosas mejor explicadas, o datos más claros para elegir dónde comprar o dónde comprar
+ *  cada producto"* (25 de septiembre de 2026). Tres decisiones, y las tres son para que
+ *  esto se pueda usar de verdad:
+ *
+ *  1. **Se mide sobre los mismos productos.** Para cada producto comparable, el desvío
+ *     respecto a la mediana de las OTRAS cadenas de su grupo, y luego la mediana de esos
+ *     desvíos. Comparar la cesta media de cada cadena no vale: cada una tiene su catálogo y
+ *     quien tiene más productos caros parece más caro aunque en lo que comparten sea más
+ *     barato.
+ *  2. **Se dice lo que no se puede decir.** Esta pantalla no dice cuál es la cadena más
+ *     barata en total, porque con estos datos no se puede. Lo que sí dice es en cuántos
+ *     pasillos gana cada una.
+ *  3. **Se dice cuánto separa al ganador del siguiente**, porque un pasillo donde la
+ *     diferencia es de medio punto no decide nada, y decir "compra aquí" ahí sería mentir
+ *     con un número.
+ */
+function DondeComprar() {
+  const consulta = usePanelDonde()
+  return (
+    <Bloque consulta={consulta} titulo="dónde comprar">
+      {(d) => (
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-semibold">Dónde hacer la compra</h2>
+            <SelloFecha fechaDatos={d.fecha_datos} />
+          </div>
+
+          <Aviso tono="info" titulo="Cómo se mide esto, y qué no dice">
+            <p>
+              Para cada producto que está en dos o más cadenas se mira cuánto se desvía cada
+              una respecto a la mediana de <strong>las otras</strong> de su grupo, y del
+              pasillo se enseña la mediana de esos desvíos. Al ser el mismo producto en los
+              dos lados de la resta, el número <strong>no depende del surtido</strong>: no
+              premia a quien tiene menos productos caros.
+            </p>
+            <p className="mt-1">
+              Lo que <strong>no</strong> dice: cuál es la cadena más barata en total. Eso no
+              se puede saber con estos datos, porque cada cadena vende su catálogo. Lo que sí
+              se puede contar es en cuántos pasillos gana cada una, y eso está abajo.
+            </p>
+            <p className="mt-1 text-xs">
+              {d.medida}. Solo se enseñan los pasillos con {d.minimo_por_celda} productos o
+              más por cadena: con menos, la mediana es el ruido de dos o tres fichas.
+            </p>
+          </Aviso>
+
+          <Tarjeta
+            titulo="Quién gana en cada pasillo"
+            sub={`${d.pasillos_totales} pasillos con productos comparables de dos cadenas o más`}
+          >
+            <TablaScroll etiqueta="Quién gana en cada pasillo" minAncho="44rem">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <Th>Pasillo</Th>
+                    <Th>Más barata</Th>
+                    <Th>Desvio</Th>
+                    <Th>Le sigue</Th>
+                    <Th>Diferencia</Th>
+                    <Th>Más cara</Th>
+                    <Th>Productos</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.pasillos.map((p) => (
+                    <tr key={p.seccion}>
+                      <Td>{p.nombre}</Td>
+                      <Td className="font-semibold">{nombreCadena(p.gana)}</Td>
+                      <Td className="cifra">{porcentajeConSigno(p.desvio_pct)}</Td>
+                      <Td>{p.siguiente ? nombreCadena(p.siguiente) : '—'}</Td>
+                      <Td className="cifra">
+                        {p.ventaja_sobre_la_siguiente_pct == null
+                          ? '—'
+                          : `${porcentaje(p.ventaja_sobre_la_siguiente_pct)} pts`}
+                      </Td>
+                      <Td>
+                        {nombreCadena(p.peor)}{' '}
+                        <span className="cifra text-tinta-suave">
+                          {porcentajeConSigno(p.peor_pct)}
+                        </span>
+                      </Td>
+                      <Td className="cifra">{numero(p.productos, 0)}</Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TablaScroll>
+            <p className="mt-2 text-xs text-tinta-suave">
+              «Desvio» es cuánto se separa del resto del pasillo, en porcentaje: negativo es
+              más barata. «Diferencia» es cuánto le saca a la siguiente; cuando es de medio
+              punto, ese pasillo no decide nada.
+            </p>
+          </Tarjeta>
+
+          <Tarjeta
+            titulo="Cuántos pasillos gana cada cadena"
+            sub="Contar pasillos ganados es lo único que se puede comparar entre catálogos distintos"
+          >
+            <ul className="grid gap-2">
+              {d.victorias.map((v) => (
+                <li key={v.cadena} className="flex items-baseline gap-3">
+                  <span className="min-w-[7rem] font-medium">{nombreCadena(v.cadena)}</span>
+                  <span className="cifra text-lg font-semibold">{v.pasillos}</span>
+                  <span className="text-sm text-tinta-suave">
+                    de {d.pasillos_totales} pasillos
+                    {d.pasillos_totales > 0 && (
+                      <> ({porcentaje((100 * v.pasillos) / d.pasillos_totales, 0)})</>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Tarjeta>
+
+          <Tarjeta
+            titulo="Dónde comprar cada producto"
+            sub={`Los ${d.oportunidades.productos.length} productos donde más se nota, de mayor a menor diferencia`}
+          >
+            <p className="mb-2 text-sm text-tinta-suave">{d.oportunidades.filtros}.</p>
+            <TablaScroll etiqueta="Productos donde más se nota" minAncho="44rem">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <Th>Producto</Th>
+                    <Th>Más barato en</Th>
+                    <Th>Precio</Th>
+                    <Th>Más caro en</Th>
+                    <Th>Precio</Th>
+                    <Th>Diferencia</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.oportunidades.productos.slice(0, 20).map((p) => (
+                    <tr key={p.grupo_id}>
+                      <Td>
+                        <Link to={`/grupo/${p.grupo_id}`} className="underline">
+                          {p.nombre}
+                        </Link>
+                      </Td>
+                      <Td className="font-semibold">{nombreCadena(p.mas_barata)}</Td>
+                      <Td className="cifra">
+                        {eurosUnidad(p.precio_cent, p.unidad)}
+                      </Td>
+                      <Td>{nombreCadena(p.mas_cara)}</Td>
+                      <Td className="cifra">{eurosUnidad(p.precio_caro_cent, p.unidad)}</Td>
+                      <Td className="cifra font-semibold">
+                        {eurosUnidad(p.diferencia_cent, p.unidad)}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TablaScroll>
+            <p className="mt-2 text-xs text-tinta-suave">
+              Precio por unidad canónica (kilo, litro o unidad), no el del envase: es la única
+              forma de comparar un bote de 400 g con uno de 1 kg. La ficha de cada uno dice
+              además los precios de las cinco cadenas, y la lista permite ponerlo en la tienda
+              que quieras.
+            </p>
+          </Tarjeta>
+
+          <Tarjeta titulo="El detalle, cadena por cadena" sub="Para ver quién está segundo y por cuánto">
+            {d.pasillos.slice(0, 8).map((p) => (
+              <div key={p.seccion} className="mb-3">
+                <p className="text-sm font-medium">{p.nombre}</p>
+                <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  {p.cadenas.map((c) => (
+                    <li key={c.cadena}>
+                      {nombreCadena(c.cadena)}{' '}
+                      <span className="cifra">{porcentajeConSigno(c.desvio_pct)}</span>{' '}
+                      <span className="text-xs text-tinta-suave">
+                        ({numero(c.productos, 0)})
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </Tarjeta>
         </div>
       )}

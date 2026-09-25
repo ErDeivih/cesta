@@ -691,6 +691,61 @@ export interface Donde {
   fecha_datos: string
 }
 
+/* ------------------------------------------- donde hacer la compra (panel) --- */
+
+/** El desvío de una cadena en un pasillo, medido sobre los mismos productos. */
+export interface DesvioEnPasillo {
+  cadena: string
+  productos: number
+  /** Mediana del desvío respecto a las otras cadenas del mismo grupo. Negativo = más barata. */
+  desvio_pct: number
+}
+
+/** Un pasillo con quién gana en él. */
+export interface PasilloDeCompra {
+  seccion: string
+  /** El nombre que se lee («Lácteos y huevos»), no el slug. */
+  nombre: string
+  productos: number
+  gana: string
+  desvio_pct: number
+  peor: string
+  peor_pct: number
+  /** Cuánto se separa la primera de la siguiente. Si es poco, el pasillo no decide nada. */
+  ventaja_sobre_la_siguiente_pct: number | null
+  siguiente: string | null
+  cadenas: DesvioEnPasillo[]
+}
+
+export interface PanelDonde {
+  fecha_datos: string
+  /** Cómo se ha medido, en una frase, para poder discutirlo. */
+  medida: string
+  /** Productos mínimos por celda: con menos, la mediana es ruido. */
+  minimo_por_celda: number
+  pasillos: PasilloDeCompra[]
+  pasillos_totales: number
+  /** Cuántos pasillos gana cada cadena: el único resumen válido de «quién es más barato». */
+  victorias: { cadena: string; pasillos: number }[]
+  /** Productos concretos donde más se nota la diferencia entre cadenas. */
+  oportunidades: {
+    productos: {
+      grupo_id: number
+      nombre: string
+      mas_barata: string
+      precio_cent: number
+      mas_cara: string
+      precio_caro_cent: number
+      unidad: string
+      cadenas: number
+      diferencia_cent: number
+    }[]
+    /** Los tres filtros que quitan las mentiras conocidas, en una frase. */
+    filtros: string
+  }
+}
+
+
 /* ------------------------------------------- la lista, partida por tiendas --- */
 
 /** Lo que cuesta UNA linea en UNA tienda concreta. */
