@@ -210,8 +210,22 @@ del precio por unidad 5,2 céntimos).
    devuelve exactamente el tope puede estar cortada; el colector las cubre con el barrido de
    términos de búsqueda, pero **no se puede saber desde el crudo si falta algo**. La forma de
    cerrarlo es pedir esas 44 categorías con paginación propia y contar.
-2. **Las etiquetas de las subcategorías** (Alcampo 34, Mercadona 1): los productos están, el
-   nombre de su categoría fina no. Afecta a la navegación por pasillo, no a los precios.
+2. **Las etiquetas de las subcategorías: medido, y no hay nada que guardar.** El informe decía
+   «Alcampo 34, Mercadona 1» y sonaba a dato perdido. Medido el 26 de septiembre de 2026:
+
+   - **Mercadona**: se miraron las listas de categorías de **3.583 productos** del crudo, y
+     **los 3.583 declaran exactamente una categoría, de nivel 0**. O sea que en el producto no
+     hay etiqueta más fina que guardar: las 5 categorías que «no llegan» hoy (Turrones,
+     Golosinas, Caramelos, Barritas de cereales, Pañal talla 0 a 3) son nodos del árbol cuyos
+     productos van etiquetados con su padre, y **los productos están todos**.
+   - **Alcampo**: su etiqueta fina **sí se guarda**. El bronze tiene **2.067 claves de categoría
+     distintas, hasta cinco niveles** (12.844 productos en el cuarto nivel, 1.914 en el quinto).
+     Lo que falta es la etiqueta de las 32 categorías cuyos productos llegan dentro del listado
+     del padre, y ahí el producto es el mismo: la comprobación en vivo del 24 de septiembre
+     preguntó esas categorías una a una y los **477 ids que devolvieron están los 477 en bronze**.
+   - Y el uso: la aplicación navega por **sección** (19 secciones comunes, `seccion_de`), no por
+     categoría fina. Sin un consumidor, guardar una columna nueva sería infraestructura sin
+     pantalla. Queda escrito con el número para el día que se añada un filtro por subcategoría.
 3. **DIA publica 3 direcciones muertas en su sitemap**: no es nuestro, pero conviene no contarlas
    como categorías del día.
 4. **Los enlaces de Carrefour con otro id: comprobados, y no están rotos.** Eran 1.212 el 24 de
