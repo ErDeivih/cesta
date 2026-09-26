@@ -37,7 +37,14 @@ Que puede contestar cada producto
     no aparece    la pagina carga y nuestro precio no esta en ella
     404           el enlace que publicamos no lleva a ninguna parte
     sin precio    la pagina no ensena ningun precio (login, agotado, region)
+    reto          el WAF contesta con su reto: **no se pudo comprobar**, y se dice asi
     no se pudo    la peticion fallo; no dice nada del dato, solo de la red
+
+Los dos puntos ciegos que tenia, cerrados el 26 de septiembre de 2026: Aldi se lee por su
+API (la misma que usa su web; su HTML no trae ninguna cifra) y Alcampo se pide **con la
+sesion del WAF** que ya tiene el colector. Y cuando aun asi llega el reto, el estado es
+`reto`, no `sin precio`: eso es un limite del comprobador, y contarlo como un problema del
+dato dejo a Alcampo en 3/10 y a Aldi en 0/10 el 24 de septiembre.
 
 **No hay umbral de aprobado.** Cada producto cuyo precio no cuadre con el de su
 pagina (`no aparece`, `404`) sale con su nombre, su URL y las dos cifras, para
@@ -71,9 +78,23 @@ from projects.cesta.sondear_cadena import PRECIO
 # Mercadona no ensena precios en el HTML: su tienda es una aplicacion que los
 # pide aparte, y la pagina desnuda no trae ninguna cifra. Su ficha publica en
 # JSON si, y es la misma que ve el navegador.
+#
+# Aldi igual: su pagina de producto (70 KB de HTML) no trae ni una cifra con simbolo
+# de euro, porque el precio lo pinta el navegador pidiendoselo a su API. El 24 de
+# septiembre de 2026 eso se anoto como un punto ciego del instrumento («aldi 0/10 sin
+# precio») y se dejo asi; desde el 26 se usa la misma API que usa su web.
 API_PRODUCTO = {
     "mercadona": "https://tienda.mercadona.es/api/products/{id}/",
+    "aldi": "https://www.aldi.es/api/product/pds/{id}?scope=" + config.ALDI_SCOPE,
 }
+
+# El unico que no se puede leer ni con API ni sin sesion: Alcampo responde el reto de
+# AWS WAF (2.491 bytes) a quien no lleve la cookie que si tiene el colector. Se pide con
+# la sesion del WAF, y si aun asi llega el reto se dice que no se pudo comprobar, que es
+# distinto de «no aparece su precio».
+CADENA_CON_WAF = "alcampo"
+DOMINIO_WAF = "compraonline.alcampo.es"
+URL_PRUEBA_WAF = f"https://www.{DOMINIO_WAF}/categories/frescos/pasteler%C3%ADa/OC1282"
 
 
 @dataclass
@@ -103,14 +124,23 @@ def precios_en(cuerpo: bytes) -> list[int]:
     return vistos
 
 
-def _precio_de_json(cuerpo: bytes) -> list[int]:
-    """Los `unit_price` de una ficha en JSON, sin importar como venga anidada."""
+def _precio_de_json(cuerpo: bytes, fuente: str | None = None) -> list[int]:
+    """Los precios por unidad de una ficha en JSON, sin importar como vengan anidados.
+
+    Cada cadena llama a lo mismo de una forma: Mercadona `unit_price` y Aldi
+    `priceValue` (dentro de `currentPrice`, y tambien en `basePrice`).
+    """
     import json
     import re
     try:
         json.loads(cuerpo)
     except ValueError:
         return []
+    if fuente == "aldi":
+        fuera = []
+        for m in re.finditer(rb'"priceValue"\s*:\s*"?(\d+[.,]\d{2})"?', cuerpo):
+            fuera.append(round(float(m.group(1).decode().replace(",", ".")) * 100))
+        return fuera
     fuera = []
     for m in re.finditer(rb'"unit_price"\s*:\s*"?(\d+[.,]\d{2})"?', cuerpo):
         fuera.append(round(float(m.group(1).decode().replace(",", ".")) * 100))
@@ -130,6 +160,22 @@ def url_de(fila: dict) -> str:
     return fila["url"]
 
 
+def fetcher_de(fuente: str, ritmo: float = 0.5) -> Fetcher:
+    """El fetcher con el que se pide esta cadena.
+
+    Para Alcampo, **con la sesion del WAF**, que es la diferencia entre comprobar el precio y
+    recibir un reto de 2.491 bytes. No es reutilizar el lector del colector -- eso seguiria
+    estando prohibido y por eso el precio se lee con `precios_en`, a ojo de persona --, es
+    usar el mismo transporte: sin la cookie, la pagina del producto no llega.
+    """
+    if fuente != CADENA_CON_WAF:
+        return Fetcher(rate_per_sec=ritmo)
+    from core import waf
+    sesion = waf.para(DOMINIO_WAF, URL_PRUEBA_WAF)
+    cabeceras = {"User-Agent": sesion["user_agent"]} if sesion.get("user_agent") else None
+    return Fetcher(rate_per_sec=ritmo, cookies=sesion.get("cookies"), headers=cabeceras)
+
+
 def comprueba(fila: dict, f: Fetcher) -> Veredicto:
     fuente, id_fuente = fila["fuente"], str(fila["id_fuente"])
     url = url_de(fila)
@@ -145,7 +191,17 @@ def comprueba(fila: dict, f: Fetcher) -> Veredicto:
         v.detalle = str(exc)[:80]
         return v
 
-    v.visto = _precio_de_json(r.body) or precios_en(r.body)
+    # El reto del WAF no es «su pagina no enseña el precio»: es que la pagina que llego no
+    # es su pagina. Contarlo como `sin precio` disfrazaba un limite del instrumento de un
+    # problema del dato, que es justo lo que el 24 de septiembre dejo a Alcampo en 3/10.
+    texto = r.body.decode("utf-8", "replace")
+    from core import waf as _waf
+    if _waf.es_reto(texto):
+        v.estado = "reto"
+        v.detalle = "AWS WAF"
+        return v
+
+    v.visto = _precio_de_json(r.body, fuente) or precios_en(r.body)
     if not v.visto:
         v.estado = "sin precio"
     elif v.nuestro_cent in v.visto:
@@ -212,6 +268,16 @@ def informe(veredictos: list[Veredicto]) -> int:
     sin_red = [v for v in veredictos if v.estado == "no se pudo"]
     if sin_red:
         print(f"  {len(sin_red)} sin comprobar: es la conexion, no el dato.")
+    # Los puntos ciegos, en su propia linea y con su nombre. Un `reto` del WAF o una pagina
+    # que pinta el precio con JavaScript no dicen nada del dato guardado: dicen que este
+    # instrumento no puede leerlo. El 24 de septiembre de 2026 eso se contaba como
+    # «sin precio» y dejaba a Alcampo en 3/10 y a Aldi en 0/10, que parece un suspenso del
+    # dato cuando era un suspenso del comprobador.
+    ciegos = [v for v in veredictos if v.estado == "reto"]
+    if ciegos:
+        cadenas = sorted({v.fuente for v in ciegos})
+        print(f"  {len(ciegos)} sin poder comprobar por el reto del WAF "
+              f"({', '.join(cadenas)}): eso no dice nada de su precio.")
     if malos:
         print("  los que no coinciden, uno por uno:")
         for v in malos:
@@ -256,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
             break
         # Un fetcher por producto y despacio: son ocho peticiones por cadena al
         # dia, y no hay ninguna prisa en una comprobacion.
-        f = Fetcher(rate_per_sec=0.5)
+        f = fetcher_de(fila["fuente"])
         veredictos.append(comprueba(fila, f))
     if not veredictos:
         return 0

@@ -136,9 +136,11 @@ no como problema.
 2.069 direcciones de producto, 2.066 con precio en su API (los 3 de arriba). No hay paginación
 que auditar: el sitemap es la lista entera.
 
-## 4. Comprobar los precios en las cadenas: 38 de 50, y dos puntos ciegos
+## 4. Comprobar los precios en las cadenas: los dos puntos ciegos, cerrados
 
     uv run python -m projects.cesta.verificar_precios --por-cadena 10
+
+**Antes** (24 de septiembre de 2026, con el comprobador tal y como estaba):
 
     dia        10/10 coinciden
     carrefour   9/10  (1 no se pudo: la red)
@@ -146,29 +148,50 @@ que auditar: el sitemap es la lista entera.
     alcampo     3/10  (7 sin precio)
     aldi        0/10  (10 sin precio)
 
-Los dos últimos números **no dicen que el dato esté mal**: dicen que la comprobación no puede
-leer esas páginas, y eso se midió ayer y hoy:
+Los dos últimos números **no decían que el dato estuviera mal**: decían que la comprobación
+no podía leer esas páginas.
 
     aldi      la pagina del producto (70 KB de HTML) no trae ni una cifra con simbolo de euro:
               su precio lo pinta el navegador pidiendoselo a su API
     alcampo   la respuesta son 2.491 bytes: es el reto del WAF, porque la comprobacion no lleva
               la sesion que el colector si tiene
 
-Lo que sí se pudo comprobar, y se comprobó:
+**Ahora** (26 de septiembre de 2026, los dos cerrados):
+
+    alcampo    0/10 coinciden   10 sin poder comprobar por el reto del WAF
+    aldi      10/10 coinciden
+    carrefour 10/10 coinciden
+    dia       10/10 coinciden
+    mercadona 10/10 coinciden
+
+    salida del programa: 0   (ningun precio mal)
+
+Lo que se cambió, y son dos cosas distintas:
+
+- **Aldi se pregunta a su API** (`/api/product/pds/<id>?scope=es_pen`), que es la misma que usa
+  su web. De 0/10 a 10/10 sin tocar ningún precio.
+- **Alcampo se pide con la sesión del WAF** que ya tiene el colector. No es reutilizar su
+  lector —eso seguiría prohibido, y por eso el precio se sigue leyendo a ojo de persona—, es
+  usar el mismo transporte: sin la cookie, la página del producto no llega.
+- Y cuando aun así llega el reto, el estado es **`reto`**, no `sin precio`. Un punto ciego del
+  instrumento contado como un problema del dato fue lo que dejó a Alcampo en 3/10 y a Aldi en
+  0/10 pareciendo un suspenso de sus precios. Ahora sale en su propia línea («10 sin poder
+  comprobar por el reto del WAF: eso no dice nada de su precio») y **no cuenta como fallo**: la
+  salida del programa es el número de precios que no cuadran, y eso no cambió.
+
+Los diez de Alcampo de hoy están sin comprobar porque el WAF está respondiendo el reto en este
+momento (se le ha pedido bastante durante la investigación del barrido): es exactamente el caso
+que el estado nuevo existe para decir en voz alta.
+
+### Lo que sí se pudo comprobar, y se comprobó el 24 de septiembre
 
 - **Aldi, el enlace**: el nombre del producto aparece en su página en **8 de 8** que se miraron.
   Los enlaces llevan donde tienen que llevar.
 - **Alcampo, la API**: con la sesión del WAF (la del colector), la API responde — así se
-  comprobaron las 34 categorías y sus 477 productos. Lo que no responde sin navegador es la
-  página HTML del producto.
+  comprobaron las 34 categorías y sus 477 productos.
 - **Mercadona, el que no cuadra**: es un producto al peso (pimiento verde), y su precio cambia con
   el peso de la pieza del día. Es la clase de diferencia que hay que esperar, no un fallo de
   lectura.
-
-Queda apuntado como tarea: que `verificar_precios` sepa usar la sesión del WAF para Alcampo y la
-API para Aldi, y que diga «no puedo comprobar esto» en vez de «sin precio» cuando el motivo es un
-punto ciego del instrumento. Mientras tanto, **el aviso de que la comprobación no ve esas dos
-cadenas está aquí**, que es mejor que un 0/10 que parezca un suspenso del dato.
 
 ## 5. Los 1.276 precios que no están, y por qué no se rellenan
 

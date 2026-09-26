@@ -85,6 +85,67 @@ def test_mercadona_se_pregunta_a_su_ficha_en_json():
     assert v.url == "https://tienda.mercadona.es/api/products/13294/"
 
 
+# ------------------------------------- los dos puntos ciegos, cerrados el 26 sep --
+
+def test_aldi_se_pregunta_a_su_api_y_no_a_su_pagina():
+    """El 24 de septiembre Aldi dio **0/10 sin precio** y no era el dato.
+
+    Su pagina de producto (70 KB de HTML) no trae ni una cifra con simbolo de euro: el
+    precio lo pinta el navegador pidiendoselo a su API. Se lee esa API, que es la misma que
+    usa su web, y el resultado del dia fue 10 de 10 coincidiendo.
+    """
+    cuerpo = (b'{"productId":"123","currentPrice":{"priceValue":1.19,'
+              b'"basePrice":[{"basePriceValue":2.38,"basePriceScale":"KG"}]}}')
+    v = vp.comprueba(_fila(fuente="aldi", id_fuente="123", precio=119), _Fetcher(cuerpo))
+    assert v.estado == "coincide"
+    assert "aldi.es/api/product/pds/123" in v.url
+
+
+def test_aldi_sigue_sabiendo_decir_que_no_cuadra():
+    """Que se lea por API no lo vuelve indulgente: si no esta, se canta."""
+    cuerpo = b'{"currentPrice":{"priceValue":1.49}}'
+    v = vp.comprueba(_fila(fuente="aldi", id_fuente="123", precio=119), _Fetcher(cuerpo))
+    assert v.estado == "no aparece"
+    assert v.visto == [149]
+
+
+def test_el_reto_del_waf_es_un_punto_ciego_y_no_un_precio_que_falta():
+    """Alcampo contestaba el reto de AWS WAF (2.491 bytes) y se contaba como `sin precio`.
+
+    Con eso, el 24 de septiembre Alcampo salio 3/10 y parecia un suspenso de sus precios
+    cuando era un suspenso del comprobador. Ahora se dice con su nombre, y no cuenta como
+    fallo del dato.
+    """
+    reto = b'<html><script>window.gokuProps = {"key":"x"}</script></html>'
+    v = vp.comprueba(_fila(fuente="alcampo"), _Fetcher(reto))
+    assert v.estado == "reto"
+    assert v.detalle == "AWS WAF"
+
+
+def test_alcampo_se_pide_con_la_sesion_del_waf(monkeypatch):
+    """Sin la cookie que ya tiene el colector, su pagina de producto no llega."""
+    from core import waf
+
+    monkeypatch.setattr(waf, "para", lambda *a, **k: {
+        "cookies": {"aws-waf-token": "abc"}, "user_agent": "agente-de-prueba"})
+    f = vp.fetcher_de("alcampo")
+    assert f.session.cookies.get("aws-waf-token") == "abc"
+    assert f.headers.get("User-Agent") == "agente-de-prueba"
+    # Y a las demás no se les mete la sesión de Alcampo
+    assert not vp.fetcher_de("dia").session.cookies.get("aws-waf-token")
+
+
+def test_el_reto_no_entra_en_el_recuento_de_fallos(capsys):
+    """Un punto ciego se cuenta aparte; si contara, taparia un fallo de verdad."""
+    veredictos = [
+        vp.Veredicto("alcampo", "1", "Uno", "u", 100, "reto", [], "AWS WAF"),
+        vp.Veredicto("dia", "2", "Dos", "u", 100, "coincide", [100]),
+    ]
+    assert vp.informe(veredictos) == 0
+    salida = capsys.readouterr().out
+    assert "reto del WAF" in salida and "no dice nada de su precio" in salida
+
+
 # ------------------------------------------------------------- sin umbrales --
 
 def test_no_hay_porcentaje_de_aprobado_cada_fallo_sale_con_su_nombre(capsys):
