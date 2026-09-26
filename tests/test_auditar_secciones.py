@@ -72,6 +72,45 @@ def test_ninguna_hoja_se_sale_de_lo_que_hace_su_rama():
 
 # --- las ramas nuevas de cada semana ---------------------------------------
 
+def test_una_hoja_nueva_hereda_la_disidencia_declarada_de_su_padre():
+    """El 23 y el 25 de septiembre estas dos pruebas fallaron por lo mismo, dos veces.
+
+    Carrefour abrió `drogueria-y-limpieza/papeleria/colorear` y `.../cartuchos-de-tinta`, el
+    pipeline les dio la sección de su padre (`hogar`, declarado a mano desde el 20 porque un
+    bolígrafo no es un producto de limpieza) y las dos salieron acusadas de contradecir su
+    rama. La decisión ya estaba tomada; lo que faltaba era que cubriera a las hojas que
+    cuelgan de ella.
+    """
+    mapa = {
+        ("carrefour", "drogueria-y-limpieza/papeleria"): "hogar",
+        ("carrefour", "drogueria-y-limpieza/papeleria/cartuchos-de-tinta"): "hogar",
+        ("carrefour", "drogueria-y-limpieza/papeleria/colorear"): "hogar",
+    }
+    assert aud.contradice_su_rama(mapa) == []
+    # Y en el mapa de verdad, que es donde fallaba:
+    for clave in ("colorear", "cartuchos-de-tinta"):
+        assert aud.disidencia_declarada(
+            "carrefour", f"drogueria-y-limpieza/papeleria/{clave}", "hogar", _mapa())
+
+
+def test_la_herencia_no_tapa_una_hoja_que_se_va_a_otro_sitio():
+    """Cubre a las hojas que hacen lo mismo que el padre, y a nadie más.
+
+    Una hoja nueva dentro de una rama declarada que se fuera a otro pasillo no es una
+    excepción conocida: es una hoja que se ha ido, y tiene que saltar.
+    """
+    mapa = {
+        ("carrefour", "drogueria-y-limpieza/papeleria"): "hogar",
+        ("carrefour", "drogueria-y-limpieza/papeleria/grapadoras"): "desayuno-dulces",
+    }
+    assert aud.disidencia_declarada("carrefour",
+                                    "drogueria-y-limpieza/papeleria/grapadoras",
+                                    "desayuno-dulces", mapa) is False
+    assert aud.contradice_su_rama(mapa) == [
+        ("carrefour", "drogueria-y-limpieza/papeleria/grapadoras",
+         "desayuno-dulces", "droguería-limpieza")]
+
+
 def test_una_hoja_nueva_hereda_la_seccion_de_su_padre(tmp_path, monkeypatch):
     """El 21 de septiembre Carrefour trajo 24 productos en 16 categorías nuevas.
 

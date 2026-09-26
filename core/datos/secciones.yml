@@ -244,7 +244,14 @@ mapa:
     "Supermercado Ecológico > Comercio Justo": ecologico                  # 1
     "Automóvil > Recambios coche y moto": ecologico                       # 1
     "Campañas > Chollos en bazar": hogar                               # 1
-    "Juguetes > Juguetes por edades": desayuno-dulces                     # 1
+    "Juguetes > Juguetes por edades": hogar                               # 1
+
+    # Los juguetes son bazar, no desayuno. Las cuatro claves de esta rama de Alcampo
+    # decian `desayuno-dulces` (una propuesta automatica, heredada despues por las
+    # hojas nuevas del 23, 24 y 25 de septiembre), y `desayuno-dulces` ya cargaba con
+    # 254 utensilios de limpieza y 172 desodorantes por lo mismo: era el cajon de
+    # sastre del generador. Corregido a mano el 26 de septiembre de 2026 leyendo los
+    # productos, que es como se corrige esto (son 1 producto por clave).
     "Electrodomésticos > Electrodomésticos Qilive": hogar                 # 1
     "Bebé > Alcampo Baby ecológico": bebe                                 # 1
     "Electrodomésticos > Cuidado de la salud": despensa                   # 1
@@ -256,6 +263,11 @@ mapa:
     "Deportes y Maletas > Maletas y equipaje": hogar                   # nueva, 21 sep
     "Hogar y Decoración > Menaje de cocina": hogar                     # nueva, 21 sep
     "Bricolaje > Adhesivos y siliconas": hogar                         # nueva, 21 sep
+    "Juguetes > Los juguetes más vendidos": hogar                      # nueva 2026-09-23
+    "Bricolaje > Herramienta de mano": hogar                           # nueva 2026-09-23
+    "Bricolaje > Ferretería": hogar                                    # nueva 2026-09-24
+    "Juguetes > Juguetes por Marcas": hogar                            # nueva 2026-09-24
+    "Juguetes > Juguetes baratos": hogar                               # nueva 2026-09-25
   aldi:
     "cuidado-facial-y-corporal": higiene-belleza                          # 106
     "yogures-y-postres-lacteos": lacteos-huevos                           # 97
@@ -350,7 +362,10 @@ mapa:
     "mantequilla-margarina-y-nata": lacteos-huevos                        # 2
     "sidra-sangria-y-tinto-de-verano": bebidas                            # 2
     "agua": bebidas                                                       # 2
-    "accesorios-y-juguetes": desayuno-dulces                              # 2
+    # Los dos productos que Aldi mete aqui son una "Chaqueta para perro" y un "Rascador
+    # para gatos": son accesorios de mascota, no juguetes ni desayuno. Corregido a mano
+    # el 26 de septiembre de 2026 leyendo los nombres, que es lo unico que lo decide.
+    "accesorios-y-juguetes": mascotas                                     # 2
     "pollo-y-pavo": carniceria                                            # 2
     "hamburguesas-y-carne-picada": carniceria                             # 2
     "carnes-barbacoa": carniceria                                         # 1
@@ -453,6 +468,13 @@ mapa:
     "drogueria-y-limpieza/ambientadores/automaticos": droguería-limpieza  # 30
     "frescos/quesos/curado": lacteos-huevos                               # 30
     "parafarmacia/complementos-alimenticios/energia": parafarmacia        # 30
+    # Hojas nuevas de una rama que ya tiene ocho claves en el mapa (energia, colagenos,
+    # sueno-y-relajacion, colesterol...), todas a parafarmacia. El padre
+    # `parafarmacia/complementos-alimenticios` no esta en el mapa, y por eso el generador
+    # no pudo proponer nada y las dejo "a mano". Decididas leyendo los dos productos:
+    # "Bisglicinato de magnesio en comprimidos" y "Probiotico Pronutri".
+    "parafarmacia/complementos-alimenticios/vitaminas-y-minerales": parafarmacia # 1
+    "parafarmacia/complementos-alimenticios/digestivo": parafarmacia      # 1
     "la-despensa/conservas-sopas-y-precocinados/conservas-de-tomate": despensa # 30
     "frescos/carne/cerdo": carniceria                                     # 29
     "bebidas/alcoholes/ron": bebidas                                      # 29
@@ -529,7 +551,12 @@ mapa:
     "bebidas/sidra/cider": bebidas                                        # 11
     "bebidas/sidra": bebidas                                              # 11
     "parafarmacia/complementos-alimenticios/colagenos": parafarmacia      # 11
-    "parafarmacia/cuidado-e-higiene-facial/desmaquillantes": desayuno-dulces # 11
+    # 11 productos que son agua micelar, desmaquillante de ojos y gel limpiador facial
+    # (Avène, Eucerin, CeraVe). Estaban en `desayuno-dulces` por la misma razon que los
+    # juguetes: era el cajon de sastre del generador. Su hermana de al lado,
+    # `parafarmacia/cuidado-e-higiene-facial/tonicos-y-lociones`, ya iba a
+    # higiene-belleza. Corregido a mano el 26 de septiembre de 2026.
+    "parafarmacia/cuidado-e-higiene-facial/desmaquillantes": higiene-belleza # 11
     "frescos/carne/hamburguesas": carniceria                              # 11
     "frescos/comida-preparada/asados": preparados                         # 10
     "drogueria-y-limpieza/limpieza-del-hogar": droguería-limpieza         # 10
@@ -657,6 +684,15 @@ mapa:
     "frescos/frutas/pinas-kiwis-aguacates-y-tropicales": frutas-verduras # nueva 2026-09-21
     "drogueria-y-limpieza/bazar/burletes": droguería-limpieza          # nueva 2026-09-21
     "ofertas": promociones                                             # nueva 2026-09-21
+    "drogueria-y-limpieza/papeleria/colorear": hogar                   # nueva 2026-09-23
+    "la-despensa/dulce/turron-y-dulces-de-navidad": desayuno-dulces    # nueva 2026-09-25
+    "drogueria-y-limpieza/papeleria/cartuchos-de-tinta": hogar         # nueva 2026-09-25
+    "frescos/comida-preparada/platos-de-pasta": preparados             # nueva 2026-09-25
+    "la-despensa/dulce/dulces-y-golosinas": desayuno-dulces            # nueva 2026-09-25
+    "bebe/panales": bebe                                               # nueva 2026-09-26
+    "la-despensa/yogures-y-postres/yogur-natural-y-sabores": lacteos-huevos # nueva 2026-09-26
+    "cuidado-personal-e-higiene/depilacion-y-afeitado/afeitado": higiene-belleza # nueva 2026-09-26
+    "bebe/alimentacion-infantil/postres-bolsitas-y-yogures-infantiles": despensa # nueva 2026-09-26
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77

@@ -68,6 +68,42 @@ def test_precio_por_unidad_admite_decimales():
     assert _fila(a_silver(f), "1")["precio_unidad_cent"][0] > 0
 
 
+def test_el_precio_por_kilo_va_sobre_el_peso_escurrido_cuando_la_cadena_lo_da():
+    """**El arreglo del 26 de septiembre de 2026, con su medición.**
+
+    La ventresca de atún de Mercadona declara 0,111 kg (neto, con el aceite) y las otras
+    cuatro cadenas declaran 0,073 kg (escurrido, que es lo que se come). Con el neto, nuestro
+    precio por kilo de Mercadona salía casi la mitad y **parecía la más barata sin serlo**.
+    El precio de referencia que publica cada cadena lo confirma: las otras cuatro coinciden
+    con nuestro cálculo al 99,4-99,8 % (porque su cantidad declarada ya es el escurrido), y
+    Mercadona solo al 94,3 %, y la diferencia son justo las conservas.
+    """
+    f = _frame(formato_txt=["400 g"] + ["5 l"] * 5,
+               cantidad_declarada=[0.4] + [5.0] * 5,
+               unidad_declarada=["kg"] + ["l"] * 5,
+               precio_cent=[810] + [1725] * 5,
+               precio_ref_nativo_cent=[2025] + [345] * 5,
+               unidad_ref_nativa=["kg"] + ["l"] * 5,
+               peso_escurrido_g=[280] + [None] * 5)
+    out = a_silver(f)
+    # 8,10 EUR entre 0,28 kg escurridos = 28,93 EUR/kg, no 20,25
+    assert _fila(out, "1")["precio_unidad_cent"][0] == pytest.approx(2892.8571, rel=1e-4)
+    # Y sin escurrido declarado, se sigue usando la cantidad del nombre.
+    assert _fila(out, "2")["precio_unidad_cent"][0] == 345.0
+
+
+def test_el_escurrido_no_cambia_nada_si_no_es_menor_que_lo_declarado():
+    """Un escurrido igual (o mayor) que la cantidad declarada no es información nueva: se
+    ignora. Así no se puede inflar un precio por unidad con un dato raro."""
+    f = _frame(formato_txt=["5 l"] * 6, cantidad_declarada=[5.0] * 6,
+               unidad_declarada=["l"] * 6, precio_cent=[1725] * 6,
+               precio_ref_nativo_cent=[345] * 6, unidad_ref_nativa=["l"] * 6,
+               peso_escurrido_g=[5000, 6000, None, 0, 5000, 5000])
+    out = a_silver(f)
+    for i in ("1", "2", "3", "4", "5", "6"):
+        assert _fila(out, i)["precio_unidad_cent"][0] == 345.0
+
+
 def test_peso_variable_usa_el_precio_por_kilo_y_descarta_el_total():
     """Sin tamano declarado, el 'precio total' de Mercadona es 99x el del kilo."""
     g = _fila(a_silver(_frame()), "6")

@@ -120,7 +120,7 @@ def contradice_su_rama(mapa: dict[tuple[str, str], str]) -> list[tuple[str, str,
     """
     fuera = []
     for (fuente, clave), seccion in sorted(mapa.items()):
-        if EXCEPCIONES.search(clave) or (fuente, clave) in DISIDENCIA_OK:
+        if EXCEPCIONES.search(clave) or disidencia_declarada(fuente, clave, seccion, mapa):
             continue
         raiz = _raiz(clave)
         if CONGELADO.search(raiz) and (seccion == _espejo_de(clave)
@@ -209,6 +209,32 @@ def _padre_de(clave: str) -> str | None:
     return None
 
 
+def disidencia_declarada(fuente: str, clave: str, seccion: str,
+                         mapa: dict[tuple[str, str], str]) -> bool:
+    """¿Su rama ya está declarada como disidencia, y la hoja hace lo mismo que ella?
+
+    El 23 y el 25 de septiembre de 2026 las dos pruebas de este fichero volvieron a fallar por
+    lo mismo: Carrefour abrió dos hojas nuevas bajo `drogueria-y-limpieza/papeleria`
+    (`colorear` y `cartuchos-de-tinta`), el pipeline les dio la sección de su padre —que es
+    `hogar`, y está declarado a mano porque un bolígrafo no es un producto de limpieza— y las
+    dos salieron acusadas de contradecir su rama. La decisión estaba tomada desde el 20 de
+    septiembre; lo que faltaba era que cubriera también a las hojas que cuelgan de ella.
+
+    La herencia se concede **solo si la hoja hace lo mismo que el padre declarado**. Una hoja
+    nueva que se fuera a otro pasillo dentro de una rama declarada sigue saltando: eso no es
+    una excepción conocida, es una hoja que se ha ido.
+    """
+    if (fuente, clave) in DISIDENCIA_OK:
+        return True
+    padre = _padre_de(clave)
+    while padre:
+        if ((fuente, padre) in DISIDENCIA_OK
+                and mapa.get((fuente, padre)) == seccion):
+            return True
+        padre = _padre_de(padre)
+    return False
+
+
 def _rama_de(clave: str) -> str | None:
     if ">" in clave:
         return clave.split(">")[0].strip()
@@ -244,7 +270,7 @@ def disidentes_de_su_rama(mapa: dict[tuple[str, str], str], minimo: int = 5,
         if total < minimo or n / total < mayoria:
             continue
         for clave, seccion in sorted(hojas[k]):
-            if seccion != manda and (k[0], clave) not in DISIDENCIA_OK:
+            if seccion != manda and not disidencia_declarada(k[0], clave, seccion, mapa):
                 fuera.append((k[0], clave, seccion, manda))
     return fuera
 

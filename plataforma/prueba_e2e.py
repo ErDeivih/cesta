@@ -113,6 +113,16 @@ def main() -> int:
               FROM buscable b
               JOIN der ON der.fuente = b.fuente AND der.id_fuente = b.id_fuente
              WHERE b.grupo_id IS NOT NULL AND b.precio_unidad_cent > 0
+               -- **Las mismas condiciones que exige la alerta**, y no es un adorno: el 26
+               -- de septiembre de 2026 esta prueba se puso roja con «la alerta no se apunto»
+               -- y el fallo no era de la aplicacion. Sin este filtro, el grupo mas cercano a
+               -- su minimo de 90 dias resulto ser uno medido en unidades (`ud`, compresas),
+               -- y `alertas._mejor_de_cada_grupo` descarta esos grupos a proposito
+               -- (`comparacion_fiable`: dos precios por unidad de un grupo medido en
+               -- unidades no se comparan entre cadenas). El vigilante hacia lo correcto:
+               -- callarse. Es el mismo tipo de fallo que el desempate del 24 de septiembre,
+               -- un banco de pruebas que no cumple las condiciones que la aplicacion pide.
+               AND coalesce(b.comparacion_fiable, false)
              GROUP BY b.grupo_id HAVING count(DISTINCT b.fuente) >= 3)
         SELECT c.grupo_id,
                (SELECT min(nombre) FROM buscable WHERE grupo_id = c.grupo_id) AS nombre,

@@ -68,6 +68,50 @@ def _cargar_bronze() -> pl.DataFrame | None:
     return pl.concat(trozos, how="diagonal_relaxed")
 
 
+def cantidad_para_el_precio(cantidad: pl.Expr, escurrido: pl.Expr) -> pl.Expr:
+    """Por que cantidad se divide el precio para sacar el precio por unidad.
+
+    **El peso escurrido manda cuando la cadena lo publica.** Arreglo del 26 de septiembre de
+    2026, y va con la medicion delante porque la primera version de esta nota decia lo
+    contrario de lo que dicen los datos (`projects.cesta.auditar_escurrido` la reproduce
+    entera).
+
+    El caso que lo enseño, la ventresca de atun claro: Mercadona declara 111 g (el neto, con
+    el aceite) y aparte dice que el escurrido son 78 g; las otras cadenas venden la misma
+    lata declarando 73 g. Dividiendo por lo declarado, la de Mercadona salia a 2.973 c/kg
+    contra 4.233, 4.274 y 4.781 de las otras: **parecia la mas barata sin serlo**. Dividiendo
+    por el escurrido sale a 4.231 c/kg, que es donde estan las demas.
+
+    Lo que se gana, medido en los 17 grupos de conserva donde Mercadona publica escurrido y
+    hay al menos dos cadenas mas vendiendo lo mismo por kilo, comparando el precio por kilo
+    de Mercadona contra la mediana de las otras:
+
+        dividiendo por lo declarado   mediana 0,606   1 de 17 dentro del mas-menos 20 %
+        dividiendo por el escurrido   mediana 0,990  12 de 17 dentro del mas-menos 20 %
+
+    Lo que cuesta, y se dice aqui para que no sorprenda: el precio de referencia que publica
+    Mercadona se calcula sobre **lo declarado**, no sobre el escurrido (en 142 de esos 179
+    productos), asi que este arreglo nos aleja de su propia ficha: coincidir con ella pasa del
+    98,4 % al 95,4 % al 2 %. Las otras cuatro cadenas no se mueven. Se acepta porque la ficha
+    de una cadena es coherente consigo misma y no comparable entre cadenas, que es justo para
+    lo que sirve este proyecto.
+
+    Y el limite: la base no es uniforme en todas las cadenas. En las sardinas, Mercadona
+    declara 85 g con 65 g escurridos y la competencia declara 85-90 g, asi que ahi normalizar
+    solo a Mercadona se pasa de frenada (5 de esos 17 grupos siguen fuera del 20 %). Para
+    arreglarlo habria que saber la base de cada cadena rival, y eso no lo publica nadie.
+
+    Se usa el escurrido solo si es mayor que cero y menor que el 98 % de lo declarado: asi un
+    valor raro no puede inflar un precio por unidad.
+    """
+    return (pl.when(escurrido.is_not_null()
+                    & (escurrido > 0)
+                    & cantidad.is_not_null()
+                    & (escurrido < cantidad * 1000 * 0.98))
+              .then(escurrido / 1000.0)
+              .otherwise(cantidad))
+
+
 def a_silver(df: pl.DataFrame) -> pl.DataFrame:
     """Deja todo comparable: cantidad, unidad canonica y precio por unidad.
 
@@ -307,9 +351,14 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
 
     # Precio por unidad: derivado si hay formato fiable; nativo para peso variable
     # o formato ausente; precio del articulo cuando no existe referencia.
+    # La columna del escurrido puede no venir (bronze de antes de que se leyera ese campo)
+    # y una prueba pequena construye su marco sin ella: se pregunta antes, no se revienta.
+    escurrido = (pl.col("peso_escurrido_g") if "peso_escurrido_g" in out.columns
+                 else pl.lit(None, dtype=pl.Int32))
+    cantidad_precio = cantidad_para_el_precio(pl.col("cantidad"), escurrido)
     out = out.with_columns([
         pl.when(~sin_tamano & pl.col("precio_cent").is_not_null())
-          .then((pl.col("precio_cent") / pl.col("cantidad")).round(4))
+          .then((pl.col("precio_cent") / cantidad_precio).round(4))
           .when(con_ref).then(pl.col("precio_ref_canon_cent"))
           .otherwise(pl.col("precio_cent").cast(pl.Float64))
           .alias("precio_unidad_cent"),

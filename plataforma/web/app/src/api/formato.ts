@@ -39,11 +39,18 @@ export function sufijoUnidad(unidad: string | null | undefined): string {
 export function eurosUnidad(
   cent: number | null | undefined,
   unidad: string | null | undefined,
+  /**
+   * El precio está calculado sobre el peso escurrido (lo que se come), no sobre el
+   * peso que declara el envase. Se dice en el sitio donde se enseña la cifra, porque
+   * «4,23 €/kg» y «4,23 €/kg escurrido» son dos afirmaciones distintas y la segunda
+   * es la que de verdad permite comparar un bote de aceitunas con otro.
+   */
+  escurrido = false,
 ): string {
   if (cent === null || cent === undefined || !Number.isFinite(cent)) return NO_LO_SE
   // Los precios por unidad llevan dos decimales: 0,09 €/ud y 0,10 €/ud son
   // distintos, y son la diferencia entre dos marcas de papel de cocina.
-  return `${EUROS.format(cent / 100)}${sufijoUnidad(unidad)}`
+  return `${EUROS.format(cent / 100)}${sufijoUnidad(unidad)}${escurrido ? ' escurrido' : ''}`
 }
 
 export function numero(n: number | null | undefined, decimales = 1): string {

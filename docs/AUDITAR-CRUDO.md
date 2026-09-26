@@ -97,10 +97,13 @@ lo ensena ninguna app.
 
 ### Mercadona — el peso escurrido de verdad
 
-`price_instructions.drained_weight`: **179 productos**. En un bote de aceitunas,
-comparar por peso total en vez de por escurrido cambia cual es mas barato. (Es la
-columna que DIA parecia dar al 100 % y resulto ser otra cosa; ver
-`docs/AUDITORIA.md`, punto 6.)
+`price_instructions.drained_weight`: **179 productos**. Es la columna que DIA parecía dar al 100 %
+y resultó ser otra cosa (ver `docs/AUDITORIA.md`, punto 6), y **desde el 26 de septiembre de 2026 se
+usa para calcular**: el precio por kilo de esos 179 va sobre el escurrido, porque comparar un bote
+de aceitunas por su peso total con otro que declara el escurrido da un «más barato» que no existe.
+La medición completa (antes 1 de 18 grupos dentro del ±20 % de la mediana de las otras cadenas;
+después 13 de 18) está en `docs/DATOS-QUE-NO-COGEMOS.md`, punto 5 bis, y se repite con
+`uv run python -m projects.cesta.auditar_escurrido`.
 
 ### Aldi — el aviso de retirada de producto
 

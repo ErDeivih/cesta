@@ -104,6 +104,20 @@ export interface Producto {
   tipo_producto: string | null
   dias_caducidad: number | null
   peso_neto_g: number | null
+  /** El peso escurrido (sin el líquido de cobertura), cuando la cadena lo publica.
+   *
+   *  Solo Mercadona, en 179 conservas y tarros. **Es el peso sobre el que se calcula el
+   *  precio por kilo cuando existe**, porque es lo que se come y porque es la base que usan
+   *  las otras cadenas: la ventresca de Mercadona declara 111 g y dice que el escurrido son
+   *  78 g, y Alcampo, Carrefour y DIA venden la misma lata declarando 73 g. Medido el 26 de
+   *  septiembre de 2026 (`projects.cesta.auditar_escurrido`): dividiendo por lo declarado,
+   *  Mercadona salía en el 59 % de la mediana de las otras cadenas (1 de 18 grupos dentro del
+   *  20 %); por el escurrido, en el 98 % (13 de 18). Y cuesta 3,1 puntos de acuerdo con la
+   *  ficha de la propia Mercadona, que calcula su referencia sobre lo declarado. */
+  peso_escurrido_g?: number | null
+  /** Si el precio por unidad de esta fila va sobre el escurrido. Lo dice la API, que es
+   *  quien hizo la cuenta: la interfaz no lo deduce, solo lo enseña. */
+  precio_por_escurrido?: boolean
   grado_alcohol: number | null
   promo_hasta: string | null
   promo_club: boolean | null
@@ -259,6 +273,9 @@ export interface ProductoSuelto {
   precio_unidad_cent: number | null
   comparable: boolean
   nutriscore: Nutriscore
+  /** El peso escurrido y si el precio por unidad va sobre él. Ver `ProductoDelGrupo`. */
+  peso_escurrido_g?: number | null
+  precio_por_escurrido?: boolean
 }
 
 export interface RespuestaProducto {

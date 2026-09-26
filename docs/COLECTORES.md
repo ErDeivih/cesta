@@ -96,10 +96,14 @@ mano los packs que solo se anuncian en el nombre, con una regla que valida
 contra el precio de la cadena. Para Mercadona **no hace falta adivinar**: lo
 dice el campo. La regla del nombre se queda para las demas.
 
-**`drained_weight`** son 179 productos, pero son atun, legumbres y conservas:
+**`drained_weight`** son 179 productos, pero son atún, legumbres y conservas:
 exactamente donde comparar por peso escurrido en vez de por peso total cambia
-cual es mas barato. DIA ademas lo da en el 100 % de sus fichas, asi que entre
-las dos hay con que construir la comparacion honesta.
+cuál es más barato. DIA publica un campo con ese nombre en el 100 % de sus fichas
+y **no es el peso escurrido** (es la densidad del aceite: ver `docs/AUDITORIA.md`,
+punto 6), así que `peso_escurrido_g` se queda a `None` para DIA: el único escurrido
+de verdad del catálogo es el de Mercadona. Desde el 26 de septiembre de 2026 esos
+179 productos se comparan **por el escurrido** (y la cifra lo dice: «€/kg
+escurrido»), con la medición en `docs/DATOS-QUE-NO-COGEMOS.md`, punto 5 bis.
 
 ---
 

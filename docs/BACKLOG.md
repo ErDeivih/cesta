@@ -3933,3 +3933,33 @@ lo dice.
 100 % de las 11 fichas del crudo de hoy: `['Nota olfativa floral']`. Muestra
 corta -- el maestro es incremental y el crudo viejo se limpia --, pero es un
 descriptor mas, hermano de `main_feature` (N19).
+
+## N29. Los avisos no existen para los 9.235 grupos medidos en unidades
+
+Medido el 26 de septiembre de 2026 sobre `data/gold/grupos.parquet`:
+
+    unidad   grupos  productos  no fiables
+    kg       21.194     28.595           0
+    l         9.709     13.900           0
+    m            58         68           0
+    ud        9.235     10.260      10.260   <- todos
+
+`comparacion_fiable` es falso para todo lo que no se mida en kg, l o m, y
+`alertas._mejor_de_cada_grupo` descarta esas filas. Consecuencia: **en 9.235
+grupos (10.260 productos: compresas, pasta de dientes, detergente, papel) una
+alerta no puede saltar nunca**, ni siquiera la de "esta al precio mas bajo de 90
+dias", que no compara entre cadenas: mira la serie de un producto contra si
+misma.
+
+No se toca hoy porque el arreglo obvio tiene una trampa: `_mejor_de_cada_grupo`
+elige **el mas barato del grupo**, y ahi si hay comparacion entre cadenas (un
+pack de 24 compresas contra uno de 14 sale "mas barato por unidad" sin serlo).
+La regla que habria que escribir es distinta por tipo de alerta -- `minimo_90d`
+sobre la serie del propio producto, `baja_de` y `cualquier_bajada` con el filtro
+de siempre -- y eso pide medir cuantos avisos saldrian y cuantos serian ruido
+antes de encenderlo. Apuntado con el numero delante.
+
+La prueba `plataforma/prueba_e2e.py` pidio el filtro que faltaba: su banco de
+grupos elige los que estan mas cerca de su minimo de 90 dias, y sin exigir
+`comparacion_fiable` cayo en un grupo `ud` y dio por roto el vigilante, que lo
+que hacia era callarse bien.

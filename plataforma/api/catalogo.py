@@ -709,6 +709,18 @@ def con_pasillos(lineas: list[dict]) -> list[dict]:
 
 # ------------------------------------------------------------ ficha de grupo --
 
+def _por_escurrido(f: dict) -> bool:
+    """¿El precio por unidad de esta fila esta calculado sobre el peso escurrido?
+
+    Es la misma condicion que aplica `projects.cesta.pipeline.cantidad_para_el_precio`, y se
+    repite aqui a proposito tan corta: la interfaz solo puede decir «EUR/kg escurrido» cuando
+    de verdad se dividio por el. Etiquetar una cuenta que no es la que se hizo seria peor que
+    no etiquetar nada.
+    """
+    esc, cantidad = f.get("peso_escurrido_g"), f.get("cantidad")
+    return bool(esc and cantidad and 0 < esc < cantidad * 1000 * 0.98)
+
+
 def grupo(grupo_id: int) -> dict | None:
     """Todo lo que la ficha necesita: los miembros, los equivalentes y la curva.
 
@@ -729,6 +741,7 @@ def grupo(grupo_id: int) -> dict | None:
         for c in ("sellos", "sellos_origen", "certificados", "conservacion",
                   "es_marca_propia", "nutricion", "nutricion_por", "envase",
                   "descripcion", "tipo_producto", "dias_caducidad", "peso_neto_g",
+                  "peso_escurrido_g",
                   "grado_alcohol", "promo_hasta", "promo_club",
                   "promo_solo_online", "es_alcohol",
                   "es_recall", "peso_variacion_pct", "distintivo", "advertencias",
@@ -765,8 +778,7 @@ def grupo(grupo_id: int) -> dict | None:
         return None
 
     def prod(f: dict) -> dict:
-        return {
-            "fuente": f["fuente"], "id_fuente": f["id_fuente"],
+        return {    "fuente": f["fuente"], "id_fuente": f["id_fuente"],
             "producto_id": f"{f['fuente']}:{f['id_fuente']}",
             "nombre": f["nombre"], "marca": f["marca"], "cantidad": f["cantidad"],
             "unidad": f["unidad_canon"],
@@ -794,7 +806,19 @@ def grupo(grupo_id: int) -> dict | None:
             "nutricion_por": f["nutricion_por"], "envase": f["envase"],
             "descripcion": f["descripcion"],
             "tipo_producto": f["tipo_producto"], "dias_caducidad": f["dias_caducidad"],
-            "peso_neto_g": f["peso_neto_g"], "grado_alcohol": f["grado_alcohol"],
+            "peso_neto_g": f["peso_neto_g"],
+            # El peso escurrido, cuando la cadena lo publica (hoy solo Mercadona, 179
+            # productos: conservas y tarros). **Este es el peso sobre el que se calcula el
+            # precio por kilo cuando existe**, porque es lo que se come y porque es la base
+            # que usan las otras cadenas: la ventresca de Mercadona declara 111 g y dice que
+            # el escurrido son 78 g, y Alcampo, Carrefour y DIA venden la misma lata
+            # declarando 73 g. Medido el 26 de septiembre de 2026 y reproducible con
+            # `projects.cesta.auditar_escurrido`: dividiendo por lo declarado, Mercadona
+            # salia en el 59 % de la mediana de las otras cadenas (1 de 18 grupos dentro del
+            # 20 %); por el escurrido, en el 98 % (13 de 18).
+            "peso_escurrido_g": f["peso_escurrido_g"],
+            "precio_por_escurrido": _por_escurrido(f),
+            "grado_alcohol": f["grado_alcohol"],
             # Ya viene como texto de la consulta (ver el docstring): los diez
             # primeros caracteres son la fecha, "2026-09-25".
             "promo_hasta": f["promo_hasta"][:10] if f["promo_hasta"] else None,
@@ -1012,7 +1036,7 @@ def producto(producto_id: str) -> dict | None:
     fuente, _, id_fuente = producto_id.partition(":")
     fila = conexion().execute("""
         SELECT grupo_id, nombre, marca, cantidad, unidad_canon, precio_cent,
-               precio_unidad_cent, comparacion_fiable, nutriscore
+               precio_unidad_cent, comparacion_fiable, nutriscore, peso_escurrido_g
           FROM grupos WHERE fuente = ? AND id_fuente = ?
     """, [fuente, id_fuente]).fetchone()
     if not fila:
@@ -1021,7 +1045,10 @@ def producto(producto_id: str) -> dict | None:
             "nombre": fila[1], "marca": fila[2], "cantidad": fila[3],
             "unidad": fila[4], "precio_cent": fila[5],
             "precio_unidad_cent": fila[6], "comparable": bool(fila[7]),
-            "nutriscore": fila[8]}
+            "nutriscore": fila[8],
+            "peso_escurrido_g": fila[9],
+            "precio_por_escurrido": _por_escurrido(
+                {"peso_escurrido_g": fila[9], "cantidad": fila[3]})}
 
 
 # El escaner de codigo de barras (docs/API.md, tarea 8).

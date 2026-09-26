@@ -268,7 +268,13 @@ export function Producto() {
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Precio">{euros(producto.precio_cent)}</Dato>
             <Dato etiqueta="Precio por unidad">
-              {eurosUnidad(producto.precio_unidad_cent, producto.unidad)}
+              {eurosUnidad(producto.precio_unidad_cent, producto.unidad,
+                           producto.precio_por_escurrido)}
+              {producto.precio_por_escurrido && (
+                <span className="block text-xs font-normal text-tinta-suave">
+                  sobre {textoCantidad((producto.peso_escurrido_g ?? 0) / 1000, 'kg')} escurridos
+                </span>
+              )}
             </Dato>
             {/* Dónde está más barato y cuánto, en euros por unidad. Va pegado al
                 precio por unidad porque es lo que se compara con él. Solo sale cuando

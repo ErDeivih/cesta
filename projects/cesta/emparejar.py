@@ -576,8 +576,13 @@ def main(argv: list[str] | None = None) -> int:
         "enlaces": float(len(ls)),
         "identicos": float(sum(1 for x in ls if x[3] == "identico")),
         "grupos_comparables": float(len(multi)),
+        # `is_in` con una columna de la misma tabla daba un aviso de polars en cada pasada
+        # ("is_in with a collection of the same datatype is ambiguous and deprecated"), que
+        # salia por stderr en medio de la ejecucion diaria y parecia un fallo. La lista de
+        # identificadores es ademas mas barata de leer: son los grupos de verdad, no la
+        # columna entera.
         "productos_comparables": float(
-            salida.filter(pl.col("grupo_id").is_in(multi["grupo_id"])).height),
+            salida.filter(pl.col("grupo_id").is_in(multi["grupo_id"].to_list())).height),
         "calidad_asignada": float(len(con_letra)),
         "grupos_dudosos_ud": float(dudosos),
     }

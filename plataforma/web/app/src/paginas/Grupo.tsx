@@ -285,7 +285,9 @@ export function Grupo() {
                 <>
                   {nombreCadena(ganadora.producto.fuente)}
                   <span className="block text-xs font-normal text-tinta-suave">
-                    {eurosUnidad(ganadora.producto.precio_unidad_cent, ganadora.producto.unidad)}
+                    {eurosUnidad(ganadora.producto.precio_unidad_cent,
+                                 ganadora.producto.unidad,
+                                 ganadora.producto.precio_por_escurrido)}
                   </span>
                 </>
               ) : (
@@ -556,6 +558,17 @@ function FichaAlternativa({
           <p className="text-xs text-neutral-600 dark:text-neutral-400">
             {textoCantidad(p.cantidad, p.unidad)}
             {p.unidades_pack && ` · pack de ${p.unidades_pack}`}
+            {/* **El peso escurrido, cuando la cadena lo publica** (hoy solo Mercadona, 179
+                conservas y tarros). Y no es un adorno: **es el peso sobre el que se calcula
+                el precio por kilo cuando existe**, porque es lo que se come y porque es la
+                base que usan las otras cadenas (la ventresca: Mercadona declara 111 g con 78
+                g escurridos; Alcampo, Carrefour y DIA venden la misma lata declarando 73 g).
+                Medido el 26 de septiembre de 2026 con `auditar_escurrido`: dividiendo por lo
+                declarado, Mercadona salía en el 59 % de la mediana de las otras cadenas;
+                por el escurrido, en el 98 %. La cifra de al lado lo dice: «€/kg escurrido». */}
+            {p.peso_escurrido_g
+              ? ` · ${(p.peso_escurrido_g / 1000).toLocaleString('es-ES', { maximumFractionDigits: 3 })} kg escurrido`
+              : ''}
           </p>
         </div>
       </div>
@@ -563,7 +576,7 @@ function FichaAlternativa({
       <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="cifra text-lg font-bold">{euros(p.precio_cent)}</span>
         <span className="cifra text-sm text-neutral-700 dark:text-neutral-300">
-          {eurosUnidad(p.precio_unidad_cent, p.unidad)}
+          {eurosUnidad(p.precio_unidad_cent, p.unidad, p.precio_por_escurrido)}
         </span>
         <span
           className={cx(

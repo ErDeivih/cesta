@@ -78,41 +78,133 @@ demás de este proyecto.
 
 ---
 
-## 5. El primer cruce, hecho: el precio de referencia de Mercadona contra el nuestro
+## 5. El primer cruce, hecho: el precio de referencia de cada cadena contra el nuestro
 
-El punto 1 no se ha dejado para mañana: se ha medido **hoy**, sobre el crudo del 26 de septiembre,
-sin tocar el pipeline. Mercadona publica en cada ficha `reference_price` con su `reference_format`
-(kg, l, 100 g, 100 ml, ud) y también `bulk_price`, que ya viene por kilo o por litro.
+El punto 1 no se ha dejado para mañana: se ha medido sobre el crudo del 26 de septiembre de 2026.
+Mercadona publica en cada ficha `reference_price` con su `reference_format` (kg, l, 100 g, 100 ml,
+ud) y también `bulk_price`, que ya viene por kilo o por litro; las otras cuatro publican su precio
+por unidad en la propia ficha del producto.
 
-    productos de Mercadona con precio de referencia publicado    4.324
-    comparables con el nuestro (misma unidad, normalizando L/l
-      y los «100 ml» / «100 g»)                                  3.587   (83 % de su catálogo)
-    coinciden dentro del 2 %                                     3.263   (91,0 %)
-    no coinciden                                                   324
-      de esos, la nuestra más alta                                 158
-      de esos, la nuestra más baja                                  94
-      (y 72 que no se comparan por unidad: su unidad es «ud», la nuestra «kg»)
+**Todos los números de este punto salen de un comando**, que es lo que hace que sigan siendo
+ciertos la semana que viene:
 
-**Las dos lecturas, y la segunda es la que importa.**
+    uv run python -m projects.cesta.auditar_escurrido --acuerdo 2026-09-26
 
-Buena: **el 91 % cuadra dentro del 2 %**. Nuestro precio por unidad, que se calcula **leyendo el
-nombre**, coincide con el que publica la cadena. Eso valida la normalización entera del proyecto
-—la regla de tres, el catálogo de unidades, los formatos por dosis— contra una fuente que no es
-nuestra.
+Y la primera lectura es buena: **nuestro precio por unidad, que se calcula leyendo el nombre,
+coincide con el que publica cada cadena**. Alcampo 99,2 %, Carrefour 98,3 %, DIA 97,1 %,
+Mercadona 95,4 %, Aldi 94,6 %. Eso valida la normalización entera del proyecto (la regla de tres,
+el catálogo de unidades, los formatos por dosis) contra una fuente que no es nuestra.
 
-Mala: **el 9 % que no cuadra tiene un patrón claro**, y son las **conservas de pescado** (atún,
-bonito, ventresca, migas): ahí la nuestra sale entre un **10 % y un 40 % más baja**. Ejemplos:
+**La lectura mala, y aquí va la enmienda de este documento.** La primera versión de este punto
+decía que «el 9 % que no cuadra tiene un patrón claro: las conservas de pescado, ahí la nuestra sale
+entre un 10 % y un 40 % más baja», y ponía tres ejemplos que en realidad estaban **de acuerdo**
+(722,2 contra 722,0; 1.020,8 contra 1.021,0; 2.973,0 contra 2.973,0). Las tres «cifras suyas» de
+aquella lista eran nuestras: el resultado de dividir el precio entre el peso escurrido, escritas
+como si las publicara la cadena. Un número propio atribuido a la fuente externa es la forma más
+rápida de que una medición deje de significar nada; de aquel error salió, eso sí, el arreglo que hoy
+está en el pipeline, y el error entero está contado en el punto 5 bis.
 
-    Atún en aceite de girasol Hacendado        nuestro  722,2 c/kg   suyo 1.000,0 c/kg
-    Atún claro en aceite de oliva Hacendado    nuestro 1.020,8 c/kg   suyo 1.361,2 c/kg
-    Ventresca de atún claro Hacendado          nuestro 2.973,0 c/kg   suyo 4.230,8 c/kg
+Lo que queda cuando se mide bien, sobre el mismo día y con una definición escrita —comparables son
+las filas donde nosotros derivamos el precio por unidad y la cadena publica el suyo, apartando las
+que se llevan ×2 o más— son dos cosas que no tienen nada que ver entre sí, y por eso el porcentaje
+de acuerdo engaña:
 
-Es la diferencia clásica entre **peso neto (con el aceite o el líquido de cobertura) y peso
-escurrido**: este proyecto ya guarda las dos columnas (`peso_neto_g`, `peso_escurrido_g`) pero
-**no las usa al normalizar**. La cadena publica el precio por kilo escurrido y nuestra lectura del
-nombre coge el neto (o al revés, según la ficha): para las conservas **los dos números no son el
-mismo número**, y comparar así entre cadenas es justo lo que este proyecto no puede permitirse.
+| cadena | comparables | coinciden al 2 % | de las que no: mediana de la diferencia | de 1 céntimo o menos |
+|---|---|---|---|---|
+| Alcampo | 19.413 | 99,2 % | 0,37 céntimos | 133 de 164 |
+| Aldi | 1.765 | 94,6 % | 0,38 céntimos | 64 de 96 |
+| Carrefour | 12.522 | 98,3 % | 0,43 céntimos | 140 de 212 |
+| DIA | 5.753 | 97,1 % | 0,35 céntimos | 161 de 166 |
+| Mercadona | 3.899 | 95,4 % | 227,18 céntimos | 45 de 181 |
 
-Queda apuntado como el primer arreglo de comparabilidad con nombre y número, y va **antes** que
-cualquier mejora del emparejador: afecta a uno de cada diez productos de Mercadona y a las conservas
-de las cinco cadenas.
+**La primera cosa es el redondeo.** La referencia que publica la cadena va al céntimo entero, y la
+nuestra no: un papel higiénico a 1,6 céntimos por hoja con la etiqueta en 2,0 son 0,4 céntimos de
+diferencia y un 25 % en el papel. En las cuatro cadenas que no publican escurrido la mediana de la
+diferencia es de **0,35-0,43 céntimos** y dos tercios o más son de un céntimo o menos. Un umbral
+del 2 % es demasiado fino para un dato que viene redondeado, y llamar «desacuerdo» a eso hace que
+el desacuerdo de verdad no se vea.
+
+**La segunda cosa es la de Mercadona, y es la que este documento trata.** Su mediana no es de
+céntimos: son **227 céntimos por kilo**, y son las 179 conservas y tarros donde Mercadona publica
+el peso escurrido. Ahí ya no hay redondeo ninguno, hay una decisión: la comparación entre cadenas
+manda sobre la coincidencia con su ficha. Está contada entera en el punto 5 bis.
+
+## 5 bis. Lo que decidió el arreglo: la comparación entre cadenas, no la ficha de una
+
+Las tres cifras «suyas» del §5 eran nuestras, y verlo así aclara todo lo demás. Mercadona **sí
+publica** el peso escurrido (`drained_weight`): 179 productos, todos conserva o tarro. Y su precio
+de referencia va sobre **lo declarado**, no sobre el escurrido: en 142 de esos 179 se comprueba que
+su referencia es exactamente `precio ÷ peso declarado`, y en los 34 que no declaran peso en el
+nombre va sobre el escurrido, porque no hay otra base que dar. O sea que en su propia ficha no hay
+ningún error, y nuestra cuenta coincidía con ella. Lo que estaba mal era **la comparación entre
+cadenas**.
+
+La pregunta buena no es *¿nuestra cuenta coincide con su ficha?* sino ***¿el mismo producto
+declara lo mismo en las cinco cadenas?***. Y ahí sí hay un problema grande. La ventresca de atún
+claro:
+
+| cadena | lo que declara | precio | por kilo declarado |
+|---|---|---|---|
+| Mercadona (Hacendado) | 111 g (neto) + **78 g escurridos** | 3,30 € | 2.973,0 c/kg |
+| Alcampo (Sálvora) | 73 g | 3,12 € | 4.274,0 c/kg |
+| Carrefour | 73 g | 3,09 € | 4.233,0 c/kg |
+| DIA (Ribeira) | 73 g | 3,49 € | 4.781,0 c/kg |
+
+Es la misma lata, y Mercadona sale «un 30 % más barata» por el artefacto del aceite que se paga y
+no se come. Con el escurrido: 4.230,8 c/kg, que es donde están las otras tres.
+
+Medido en los 18 grupos de conserva donde Mercadona publica escurrido y hay al menos dos cadenas
+más vendiendo lo mismo por kilo, comparando el precio por kilo de Mercadona contra la mediana de
+las otras:
+
+    dividiendo por lo declarado    mediana 0,590 veces la mediana   1 de 18 dentro del ±20 %
+    dividiendo por el escurrido    mediana 0,982 veces la mediana  13 de 18 dentro del ±20 %
+
+La mediana de las otras es una referencia frágil —hay grupos con dos rivales que se llevan ×3 entre
+sí, una marca cara y una marca blanca—, así que va también la medida que no se puede torcer: ¿el
+precio por kilo de Mercadona cae cerca (±20 %) de **algún** rival del mismo grupo?
+
+    por lo declarado   coincide con algún rival del grupo:  2 de 18  (11 %)
+    por el escurrido   coincide con algún rival del grupo: 16 de 18  (89 %)
+
+Y el efecto sobre la pregunta que contesta la app (*¿dónde está más barato?*): en esos 18 grupos
+el más barato cambia en **17**, y Mercadona deja de serlo en **12** sin pasar a serlo en ninguno.
+
+**Lo que cuesta, dicho antes de que sorprenda.** El acuerdo con la ficha de cada cadena, con la
+misma definición antes y después (tolerancia del 2 %, apartando las filas que se llevan ×2 o más,
+que el propio pipeline no compara). Los dos días a la vez:
+
+    uv run python -m projects.cesta.auditar_escurrido --acuerdo 2026-09-25 2026-09-26
+
+    alcampo   99,2 % -> 99,2 %
+    aldi      94,5 % -> 94,6 %
+    carrefour 98,4 % -> 98,3 %
+    dia       97,1 % -> 97,1 %
+    mercadona 98,4 % -> 95,4 %   <- 3,1 puntos, y son las conservas con escurrido publicado:
+                                    el 25 de septiembre no había ni una diferencia grande con su
+                                    ficha (61, todas de menos de un céntimo) y el 26 hay 181,
+                                    con mediana de 227 céntimos por kilo
+
+Las cuatro cadenas que no publican escurrido no se mueven. Mercadona baja porque **su** referencia
+va sobre lo declarado: coincidir con ella es coincidir con la base que hace que la comparación
+entre cadenas esté mal. Se acepta el cambio por eso, y el número queda escrito aquí para que la
+próxima vez no haya que descubrirlo.
+
+**Y el límite, que también es un resultado.** La base no es la misma en todas las cadenas: en las
+sardinas, Mercadona declara 85 g con 65 g escurridos y la competencia declara 85-90 g, y en la piña
+en su jugo la competencia declara el neto. De los 18 grupos, 5 se quedan fuera del ±20 %, y mirando
+uno por uno no son un problema del escurrido sino de **con quién se compara**:
+
+    melva en aceite     Mercadona queda en 2.312,5 c/kg, exactamente donde Carrefour (2.312,5);
+                        la mediana la mueve Alcampo, que es la marca cara USISA a 6.062,5
+    berenjenas          Mercadona queda en 1.025,7 c/kg, exactamente donde DIA (1.025,7), que es
+                        la misma marca (Antonio); Alcampo vende el tarro de 170 g a 1.588,2
+    sardina ahumada     el par es dudoso de entrada: «filetes de sardina ahumada» contra
+                        «sardinas en aceite de girasol»
+    piña en su jugo     los rivales se llevan ×3 entre sí (Aldi 397 c/kg y Del Monte 1.188)
+    aceitunas verdes    cuatro tamaños distintos de Mercadona contra dos rivales
+
+Arreglar eso pide saber la base y la marca de cada cadena rival en cada producto, y saber que el par
+es el mismo producto, que es justo el otro problema abierto del proyecto
+(`docs/CALIDAD-DEL-EMPAREJAMIENTO.md`). Lo que sí se puede —y se hace— es no esconderlo: la cifra
+lleva su etiqueta («€/kg escurrido») y el producto enseña los dos pesos.

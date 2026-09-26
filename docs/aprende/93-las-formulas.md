@@ -286,6 +286,35 @@ con la unidad canónica en `kg`, `l`, `m` o `ud`. La regla de tres es todo lo qu
 «redondear» no es un detalle: se redondea **una vez**, al final, y nunca se comparan dos `float`
 de dinero con `==`.
 
+Y hay una segunda pregunta antes de dividir, que costó un error de comparación entero: **dividir
+entre qué**. Cuando la cadena publica el peso escurrido (lo que se come, sin el aceite ni el
+líquido de cobertura), la división va sobre él:
+
+    cantidad_para_el_precio = peso_escurrido_g / 1000    si  0 < peso_escurrido_g < 0,98 · cantidad
+                            = cantidad                   en cualquier otro caso
+
+El caso que lo enseñó es una lata de ventresca de atún:
+
+| cadena | lo que declara | precio | por kilo declarado | por kilo escurrido |
+|---|---|---|---|---|
+| Mercadona | 111 g (neto), dice 78 g escurridos | 3,30 € | 2.973,0 c/kg | **4.230,8 c/kg** |
+| Alcampo | 73 g | 3,12 € | 4.274,0 c/kg | — |
+| Carrefour | 73 g | 3,09 € | 4.233,0 c/kg | — |
+| DIA | 73 g | 3,49 € | 4.781,0 c/kg | — |
+
+Es la misma lata. Con el peso del envase, Mercadona parecía un 30 % más barata; con el escurrido
+cae justo donde están las otras tres. Medido en los 18 grupos de conserva donde Mercadona publica
+escurrido y hay al menos dos cadenas más: el precio por kilo de Mercadona caía cerca (±20 %) de
+algún rival en **2 de 18** grupos antes y en **16 de 18** después, y en esos 18 grupos el más barato
+cambia en 17 (Mercadona deja de serlo en 12 y no pasa a serlo en ninguno).
+
+El guardián del 0,98 y el `> 0` no son adornos: sin ellos, un dato raro de la ficha podría inflar
+un precio por unidad. Y el arreglo **tiene un coste que se dice**: la ficha de Mercadona calcula su
+precio de referencia sobre el peso declarado, así que coincidir con ella baja del 98,4 % al 95,4 %
+(y son justo las conservas). Se acepta porque la ficha de una cadena es coherente consigo misma y
+lo que hace falta aquí es comparar **entre** cadenas. Los detalles, con los grupos uno a uno y los
+cinco que quedan fuera, en `docs/DATOS-QUE-NO-COGEMOS.md`, punto 5 bis.
+
 ### 6.2 Los formatos que se pueden y los que no
 
     g, gr  -> kg (÷ 1000)      ml, cl, l -> l        m -> m        ud, u, unidades -> ud
