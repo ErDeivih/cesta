@@ -75,3 +75,44 @@ de esa cadena que traen ese campo con valor.
 
 Cada uno de estos cuatro va con su medición antes y después sobre el mismo bronze, como todo lo
 demás de este proyecto.
+
+---
+
+## 5. El primer cruce, hecho: el precio de referencia de Mercadona contra el nuestro
+
+El punto 1 no se ha dejado para mañana: se ha medido **hoy**, sobre el crudo del 26 de septiembre,
+sin tocar el pipeline. Mercadona publica en cada ficha `reference_price` con su `reference_format`
+(kg, l, 100 g, 100 ml, ud) y también `bulk_price`, que ya viene por kilo o por litro.
+
+    productos de Mercadona con precio de referencia publicado    4.324
+    comparables con el nuestro (misma unidad, normalizando L/l
+      y los «100 ml» / «100 g»)                                  3.587   (83 % de su catálogo)
+    coinciden dentro del 2 %                                     3.263   (91,0 %)
+    no coinciden                                                   324
+      de esos, la nuestra más alta                                 158
+      de esos, la nuestra más baja                                  94
+      (y 72 que no se comparan por unidad: su unidad es «ud», la nuestra «kg»)
+
+**Las dos lecturas, y la segunda es la que importa.**
+
+Buena: **el 91 % cuadra dentro del 2 %**. Nuestro precio por unidad, que se calcula **leyendo el
+nombre**, coincide con el que publica la cadena. Eso valida la normalización entera del proyecto
+—la regla de tres, el catálogo de unidades, los formatos por dosis— contra una fuente que no es
+nuestra.
+
+Mala: **el 9 % que no cuadra tiene un patrón claro**, y son las **conservas de pescado** (atún,
+bonito, ventresca, migas): ahí la nuestra sale entre un **10 % y un 40 % más baja**. Ejemplos:
+
+    Atún en aceite de girasol Hacendado        nuestro  722,2 c/kg   suyo 1.000,0 c/kg
+    Atún claro en aceite de oliva Hacendado    nuestro 1.020,8 c/kg   suyo 1.361,2 c/kg
+    Ventresca de atún claro Hacendado          nuestro 2.973,0 c/kg   suyo 4.230,8 c/kg
+
+Es la diferencia clásica entre **peso neto (con el aceite o el líquido de cobertura) y peso
+escurrido**: este proyecto ya guarda las dos columnas (`peso_neto_g`, `peso_escurrido_g`) pero
+**no las usa al normalizar**. La cadena publica el precio por kilo escurrido y nuestra lectura del
+nombre coge el neto (o al revés, según la ficha): para las conservas **los dos números no son el
+mismo número**, y comparar así entre cadenas es justo lo que este proyecto no puede permitirse.
+
+Queda apuntado como el primer arreglo de comparabilidad con nombre y número, y va **antes** que
+cualquier mejora del emparejador: afecta a uno de cada diez productos de Mercadona y a las conservas
+de las cinco cadenas.
