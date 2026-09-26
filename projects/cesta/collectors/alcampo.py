@@ -357,7 +357,8 @@ def hay_que_barrer(truncadas: int, filas: int, anterior: int | None, *,
                    margen: float = MARGEN_BAJON) -> bool:
     """¿Toca recorrer los terminos del buscador?
 
-    `anterior` es el tamano de la ultima captura buena; `None` si es la primera.
+    `anterior` es el tamaño de la **última captura buena** —el mayor de la última semana,
+    no la de ayer: ver `_filas_ultimo_bronze`—; `None` o 0 si es la primera.
     """
     if truncadas:
         return True
@@ -509,16 +510,31 @@ def a_registro(p: dict) -> dict:
     return r
 
 
-def _filas_ultimo_bronze() -> int:
-    """Cuantos productos tiene el ultimo bronze bueno de Alcampo. 0 si no hay."""
+def _filas_ultimo_bronze(dias: int = 7) -> int:
+    """El catálogo **más grande de los últimos días**: la última captura BUENA.
+
+    No el más reciente, y eso es un arreglo del 26 de septiembre de 2026 con su medición
+    detrás. Ese día la captura de Alcampo llevaba dos días corta (23.932 contra 28.977) y
+    el barrido del buscador —que es justo lo que tapa el agujero— **volvió a no
+    ejecutarse**, aunque la condición ya estaba arreglada. El motivo: al comparar contra
+    el bronze de más cerca, el bajón se comparaba **consigo mismo** (la pasada de las
+    09:17 de esa misma mañana, ya degradada), así que `filas < anterior * 0,95` era falso
+    por construcción. Un catálogo degradado se convertía en la referencia contra la que
+    medirse, y a partir de ahí todo parecía normal.
+
+    Lo bueno se mide hacia atrás: el mayor de la última semana. El día que el catálogo
+    encoja de verdad, esto lo notará una vez y luego la propia semana se habrá movido; y
+    si se equivoca, cuesta lo que dura el barrido, que tiene presupuesto propio.
+    """
     carpeta = config.DATA / "bronze" / f"fuente={FUENTE}"
-    partes = sorted(carpeta.glob("fecha=*/part.parquet"))
-    if not partes:
-        return 0
-    try:
-        return pl.read_parquet(partes[-1]).height
-    except Exception:  # noqa: BLE001
-        return 0
+    partes = sorted(carpeta.glob("fecha=*/part.parquet"))[-dias:]
+    tamano = 0
+    for parte in partes:
+        try:
+            tamano = max(tamano, pl.read_parquet(parte, columns=["id_fuente"]).height)
+        except Exception:  # noqa: BLE001
+            continue
+    return tamano
 
 
 def _fetcher() -> Fetcher:

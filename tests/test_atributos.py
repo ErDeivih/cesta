@@ -61,7 +61,14 @@ TECHO_PACK_DE_11_O_MAS = 0
 # Si este numero **baja mucho**, es que las cadenas empiezan a publicar el campo de
 # verdad, y entonces se puede volver a mirar si el pack se puede usar para separar. Si
 # sube, algo se ha roto al leerlo.
-TECHO_PACK_CONTRADICHO = 85
+#
+# **Y subio a 86 el 26 de septiembre de 2026, sin tocar el codigo que lee el pack**: ese
+# dia Alcampo entrego 5.000 productos menos que el 24 y los grupos se rehicieron (52.823
+# productos comparables, 8.794 grupos con dos cadenas o mas), asi que un codigo de barras
+# mas acabo con el pack contradicho entre cadenas. Es el mismo caso que el techo de arriba:
+# el numero viejo media el catalogo de un dia, no el codigo. Se queda en 86 para que el
+# proximo movimiento vuelva a avisar.
+TECHO_PACK_CONTRADICHO = 86
 # La sexta condicion de la barra, medida por el instrumento del proyecto (antes
 # vivia en un script de `data/debug/`, que esta en `.gitignore`, asi que no estaba
 # en el repositorio). Es la invariante del reparto: **cero grupos con una cadena

@@ -14,12 +14,36 @@ La condicion era `if truncadas and not detener`, o sea que hiciera falta que una
 Cero, cero y cero: una categoria con 300 productos casi siempre tiene hijas, y entonces no
 es hoja. La guarda no era una guarda, era una puerta cerrada.
 """
+from pathlib import Path
+from unittest import mock
+
 from projects.cesta.collectors import alcampo
 
 
 def test_un_bajon_manda_al_buscador():
     """El caso del 25 de septiembre: el arbol no basto y hay que barrer."""
     assert alcampo.hay_que_barrer(0, 23_924, 28_977) is True
+
+
+def test_la_referencia_es_el_mayor_de_la_semana_y_no_el_ultimo():
+    """**El segundo fallo, el del 26 de septiembre de 2026.** Ese dia la condicion ya
+    estaba arreglada y el barrido **volvio a no ejecutarse**: la referencia era el bronze
+    mas reciente, que era el ya degradado de esa misma manana (23.932), asi que
+    `filas < anterior * 0,95` era falso por construccion. Un catalogo degradado se
+    convertia en la vara con la que medirse.
+
+    Se mira el bronze de verdad de este arbol: la ultima captura BUENA tiene que ser la de
+    28.977 (el 24 de septiembre), no la degradada de despues.
+    """
+    with mock.patch.object(alcampo.config, "DATA", Path("data").resolve()):
+        anterior = alcampo._filas_ultimo_bronze()
+    if anterior == 0:
+        import pytest
+        pytest.skip("no hay bronze de Alcampo en este arbol")
+    assert anterior >= 28_000, (
+        f"la ultima captura buena sale {anterior}: si ronda los 23.900, se esta mirando "
+        f"la captura degradada y el barrido no se disparara")
+    assert alcampo.hay_que_barrer(0, 23_932, anterior) is True
 
 
 def test_una_captura_normal_no_dispara_el_barrido():

@@ -1232,6 +1232,30 @@ claros para elegir dónde comprar o dónde comprar cada producto"*.
 Alcampo y la primera con el arranque del navegador sin abrir ventana; los dos números (cuántos
 productos recupera y cuántas ventanas se ahorran) salen de ahí.
 
+### El segundo fallo del barrido: la vara era el catálogo degradado (26 de septiembre)
+
+**La ingesta del 26 se ha comprobado y sale a 0 problemas** (`verificar_ingesta --fecha 2026-09-26`:
+418+112+2.126+523+162 respuestas, **52.823 productos** declarados y guardados, 0 sin explicar, 0
+filas sin enlace, paginación completa). Los 7 que faltan en Carrefour tienen su explicación de
+siempre.
+
+**Pero el barrido del buscador volvió a no ejecutarse**, con la condición ya arreglada el día antes.
+La causa es más fina y conviene tenerla escrita: `_filas_ultimo_bronze()` devolvía **el bronze más
+reciente**, y ese día el más reciente era el **ya degradado de la misma mañana** (23.932, la pasada
+de las 09:17). O sea que el bajón se comparaba **consigo mismo**: `filas < anterior * 0,95` era
+falso por construcción, y un catálogo degradado se convertía en la vara con la que medirse.
+
+Arreglado: la referencia es **el mayor de los últimos 7 días** —la última captura *buena*, no la
+última— y se comprueba con los datos de verdad:
+
+    mayor de la semana   28.977      (el catálogo del 24, el último entero)
+    ¿barrer con 23.932?  sí
+    ¿barrer con 29.000?  no          (un día normal no paga 20 minutos de barrido)
+
+Y con ventana: hoy hubo **33 cortes del WAF** (el triple de lo normal), **22 se resolvieron
+reintentando con la misma sesión sin abrir nada** y **11 acabaron abriendo ventana**. Mañana, las
+que abran, abrirán **fuera del escritorio**.
+
 
 
 **Por qué.** El dueño preguntó cómo iba la ingesta del día. La respuesta corta: **0 problemas**
