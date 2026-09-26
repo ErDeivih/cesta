@@ -1143,6 +1143,47 @@ condición que se va a comprobar —no a un tiempo fijo— y con **un reintento 
 panel. Ninguna de las dos bajó el listón: si el texto no aparece tampoco a la segunda, sigue
 siendo un fallo.
 
+### Lo que las webs publican y no cogemos, y cuánta confusión hay en el emparejamiento (26 de septiembre)
+
+**Lo que preguntó el dueño**, y era una pregunta doble: *"¿está toda la app correcta para usarse?
+creo que sigue habiendo mucha confusión en productos que catálogo como iguales y no lo son, además,
+las webs he visto que muchas ofrecen más datos de los que tú recoges, se puede hacer más si coges
+todos los datos de cada web y mejores comparaciones"*.
+
+**1. El navegador de Alcampo, otra vez.** Hoy se ha abierto **cuatro veces** (Azúcar, Droguería
+Ecológica, Dermocosmética facial, Foie). El arreglo de ayer funciona y se ve en el registro: cada
+corte pasa primero por **dos reintentos con la misma sesión sin abrir nada**, y solo después se
+renueva; y la renovación prueba **sin ventana** antes que con ella. Ayer eran 10-13 ventanas; hoy 4
+(de 6 cortes). Lo que faltaba: cuando hay que abrir ventana, se abre **en medio del escritorio**.
+Ahora se lanza **fuera de la vista** (`--window-position=-2400,-2400`), porque el reto necesita un
+navegador de verdad, **no** que se vea. Pendiente de probar en vivo, con el WAF cortando.
+
+**2. La ingesta de hoy** seguía corriendo al escribir esto (Carrefour en 525/662, Alcampo a medias):
+se comprueba con `verificar_ingesta --fecha 2026-09-26` en cuanto termine, y mañana es la primera
+pasada que ejecuta el barrido del buscador de Alcampo y la primera sin ventanas en el escritorio.
+
+**3. La confusión del emparejamiento, medida** (`docs/CALIDAD-DEL-EMPAREJAMIENTO.md`): de 40 enlaces
+**al azar**, 34 juzgables y **6 juntan productos distintos (17 %)** — chocolate con avellanas contra
+con macadamia, ron con coco contra ron blanco, «1906» contra «1925», galletas Princesa contra
+Campbells. El patrón es siempre el mismo: mismo tipo de producto, **mismo formato**, palabras
+genéricas compartidas y **la palabra que distingue presente solo en un lado**.
+
+Y lo importante: **las tres reglas baratas que parecían la solución están medidas y descartadas**,
+con su número, para que nadie las vuelva a intentar:
+
+    «palabras distintivas sin ninguna en común»   81 enlaces (0,4 %), y casi todos correctos
+    «el que calla bloquea» en ejes de identidad   4.376 (19,2 %), y casi todos con el mismo EAN
+    «exigir la cantidad en el canal suelto»       616 de 1.467, y casi todos con el mismo EAN
+
+Lo que sí puede arreglarlo es **mejor prueba**, no una regla más: el texto de las fichas.
+
+**4. Lo que las webs publican y no cogemos** (`docs/DATOS-QUE-NO-COGEMOS.md`), medido con
+`auditar_crudo`: el precio de referencia que publica Mercadona (**100 %** de sus fichas) para
+contrastar el nuestro, `isComingSoon` y las fechas de validez de Aldi, la mecánica en número de
+Alcampo (`requiredProductQuantity`, 8 %) y `is_club_price` de DIA, y el texto de ficha de Aldi
+(`shortDescriptionFormatted`, 42,8 %) y Mercadona (`main_feature`, 27,4 %) para separar variantes.
+Por orden de valor medido, eso es lo siguiente que se implementa.
+
 ### «Dónde comprar»: la pantalla que pedía el dueño, y compartir, comprobado
 
 **Lo que pidió** (25 de septiembre de 2026): *"la web tiene mejor pinta, debes poner la opción

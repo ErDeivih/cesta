@@ -14,6 +14,7 @@ Lo que se fija aqui:
      Muchos cortes son del momento (una racha de peticiones) y con la espera la
      misma cookie vuelve a valer.
 """
+import re
 from unittest import mock
 
 from core import waf
@@ -56,6 +57,27 @@ def test_si_sin_ventana_no_pasa_el_reto_se_abre_la_ventana():
     assert sesion["via"] == "con_ventana"
 
 
+def test_la_ventana_se_abre_fuera_de_la_vista():
+    """Una ventana de Chrome en medio del escritorio mientras trabajas es lo que el dueno
+    senalo dos dias seguidos. El reto necesita un navegador de verdad, **no** que se vea:
+    los mismos retos pasan con la ventana colocada fuera del area visible.
+
+    Se comprueba en el codigo porque la posicion no se puede medir sin abrir un navegador
+    de verdad, y abrirlo en una prueba es justo lo que no se hace."""
+    fuente = (waf.__file__)
+    with open(fuente, encoding="utf-8") as f:
+        codigo = f.read()
+    assert "ARGS_FUERA_DE_LA_VISTA" in codigo, "la ventana se abre donde se ve"
+    assert "--window-position=-2400,-2400" in codigo, (
+        "la ventana tiene que colocarse fuera del area visible")
+    # Los argumentos tienen que acabar en la configuracion del navegador, con cualquiera
+    # de las dos formas de escribirlo (clave de diccionario o asignacion a la clave).
+    assert re.search(r"args[\"']?\s*[:=]|\[\s*[\"']args[\"']\s*\]\s*=", codigo), (
+        "los argumentos no se estan pasando al navegador")
+    # Y solo cuando hay ventana: en modo oculto no hace falta colocarla.
+    assert "if not headless:" in codigo
+
+
 def test_el_colector_reintenta_con_la_misma_sesion_antes_del_navegador():
     """La politica, escrita en un numero: dos reintentos sin navegador, y luego se
     renueva. Si esto se pone a cero, cada corte vuelve a abrir una ventana."""
@@ -65,3 +87,4 @@ def test_el_colector_reintenta_con_la_misma_sesion_antes_del_navegador():
     assert alcampo.REINTENTOS_SIN_NAVEGADOR <= 5, (
         "demasiados reintentos: la espera crece con cada corte y se topa en 90s, "
         "asi que insistir sale mas caro que renovar la sesion")
+

@@ -39,6 +39,18 @@ VIDA_SEGUNDOS = 6 * 3600
 # entonces el WAF cortara mas a menudo.
 HEADLESS_POR_DEFECTO = os.environ.get("SCRAP_WAF_HEADLESS", "") == "1"
 
+# Cuando hay que abrir ventana, se abre **fuera de la vista del escritorio**.
+#
+# El dueno lo dijo dos dias seguidos: *"a veces salta el navegador"*. Con el reintento con
+# la misma sesion y el modo oculto primero, el 26 de septiembre de 2026 se abrio 4 veces en
+# toda la manana en vez de 10-13, pero **se abrio**, y una ventana de Chrome en medio del
+# escritorio mientras trabajas es exactamente lo que no se quiere.
+#
+# El reto de AWS WAF necesita **un navegador de verdad**, no un navegador que se vea: los
+# mismos retos pasan con la ventana colocada fuera del area visible, y el sistema la sigue
+# tratando como una ventana normal (no es `headless`, que es lo que el WAF detecta mas).
+ARGS_FUERA_DE_LA_VISTA = ["--window-position=-2400,-2400", "--window-size=900,700"]
+
 
 def _fichero(dominio: str) -> Path:
     return COOKIES / f"{dominio}.json"
@@ -88,6 +100,9 @@ def obtener(dominio: str, url_prueba: str, headless: bool | None = None,
             "timezone_id": "Europe/Madrid",
             "viewport": {"width": 1366, "height": 900},
         }
+        if not headless:
+            # Con ventana, pero fuera de la vista: ver `ARGS_FUERA_DE_LA_VISTA`.
+            comun["args"] = list(ARGS_FUERA_DE_LA_VISTA)
         try:
             # el Chrome de verdad pasa mas retos que el Chromium empaquetado
             ctx = p.chromium.launch_persistent_context(channel="chrome", **comun)
