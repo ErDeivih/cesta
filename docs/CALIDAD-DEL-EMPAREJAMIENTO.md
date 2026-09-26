@@ -57,6 +57,45 @@ recambios de Oral-B «4 ud» en DIA contra «1 ud» en Mercadona con **el mismo 
 eso envenena el precio por unidad (los dos casos están fuera de la comparación por unidad, que
 solo admite kg, l y m, pero se ven en la ficha).
 
+## 2 bis. La misma pregunta, medida sobre 4.804 pares con verdad: **precisión 91,1 %**
+
+El 17 % de arriba salió de juzgar 40 enlaces a ojo, que sirve para ver el patrón pero no para
+decidir un cambio: son 40. Lo que faltaba era una medida que se pueda repetir en cada intento, y
+está en `projects/cesta/banco_de_pares.py --precision`: la verdad la da **el código de barras**, que
+es lo único que no se discute.
+
+    POSITIVO   mismo EAN en dos cadenas -> el mismo producto, sin discusión
+    NEGATIVO   misma marca, EAN distinto -> dos productos distintos
+
+Y de los negativos solo cuentan los **confundibles**: misma cantidad y misma unidad canónica, que
+son los que el emparejador llega a mirar. Un par que el bloqueo descarta no es un falso positivo
+del nombre, es un par que el algoritmo no vio.
+
+Medido el 26 de septiembre de 2026 sobre el catálogo de ese día:
+
+    pares medidos: 1.804 ciertos por EAN, 3.000 negativos confundibles (de 7.474)
+
+                              lo junta      de       %
+    mismo producto (EAN)         1.804    1.804  100,0 %
+    dos productos distintos        177    3.000    5,9 %
+
+    precision (de lo que junta, cuanto es correcto):   91,1 %
+    cobertura (de los pares ciertos, cuantos junta):  100,0 %
+    solo por el nombre (bloqueo + umbral):             61,4 %
+
+**Las tres lecturas, y la tercera es la que orienta el trabajo:**
+
+1. La cobertura es del 100 % porque los pares con el mismo código de barras se unen **por el
+   código**, no por el nombre. El techo alcanzable no es un problema.
+2. La precisión del 91,1 % dice que **de cada 100 uniones, 9 son entre productos distintos** —
+   coherente con el 17 % de la muestra a ojo (que era más pequeña y sesgada hacia lo raro).
+3. Y la del nombre solo es del 61,4 %: **el código de barras es lo que sostiene la calidad**. Hoy
+   lo trae el 48,5 % del catálogo, y Alcampo y Aldi no publican ninguno.
+
+Esa última línea es la que dice dónde merece la pena trabajar, y coincide con lo que ya decía §4:
+cada punto de cobertura de EAN quita errores sin tocar el algoritmo, porque dos productos de la
+misma marca con códigos distintos son, por construcción, casi idénticos en el texto.
+
 ## 3. Tres reglas que parecían buenas, medidas y descartadas
 
 Antes de tocar el matcher se midió cada idea sobre el gold del día. **Ninguna de las tres sirve**,

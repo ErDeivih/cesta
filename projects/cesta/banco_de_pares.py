@@ -154,6 +154,82 @@ def banco(filas, cuantos: int = 20, semilla: int = 7) -> list[tuple[tuple, bool]
     return mezcla
 
 
+def precision(filas, cuantos: int = 3000, semilla: int = 7) -> dict:
+    """**La medida que al banco le faltaba: que porcentaje de lo que junta es correcto.**
+
+    El banco tenia las dos clases y se usaba para preguntarle a un modelo local. Lo que no
+    habia era la cuenta que dice si el emparejador acierta: de los pares que junta, cuantos
+    son de verdad el mismo producto.
+
+    La verdad la da el codigo de barras, que es lo unico que no se puede discutir:
+
+        POSITIVO   mismo EAN en dos cadenas -> el mismo producto
+        NEGATIVO   misma marca, distinto EAN -> dos productos distintos
+
+    Y de los negativos solo cuentan los **confundibles**, que son los que el emparejador de
+    verdad compara: misma cantidad y misma unidad canonica (su clave de bloqueo). Un par que
+    el bloqueo descarta antes de mirarlo no es un falso positivo del nombre, es un par que el
+    algoritmo nunca vio; contarlo inflaria la precision.
+
+    Se miden las dos cosas por separado, porque no son lo mismo:
+      - el **enlace**: el par pasa el bloqueo y su parecido llega al umbral;
+      - el **grupo**: los dos productos acabaron con el mismo `grupo_id`, que es lo que ve la
+        pantalla (y eso incluye la union por transitividad, que es la que hace los grupos
+        monstruo).
+    """
+    import inspect
+
+    from core.matching import bloque
+    from core.matching import enlaces as _enlaces_del_emparejador
+
+    # El umbral del emparejador es el argumento por defecto de `enlaces` (0,55); se lee de ahi
+    # en vez de copiar el numero, que es como se acaba teniendo dos verdades.
+    umbral = inspect.signature(_enlaces_del_emparejador).parameters["umbral"].default
+
+    docs = [tokens(f["nombre"] or "", f["marca"]) for f in filas]
+    pesos = idf(docs)
+    tris = [trigramas(f["nombre"] or "", f["marca"]) for f in filas]
+    claves = [bloque(f["cantidad"], f["unidad_canon"]) for f in filas]
+
+    grupo = pl.read_parquet(config.GOLD / "grupos.parquet",
+                            columns=["fuente", "nombre", "grupo_id"])
+    # El grupo de cada posicion de `filas`. `fichas()` lee el mismo fichero en el mismo
+    # orden, asi que las posiciones coinciden; se comprueba igualmente.
+    grupos = grupo["grupo_id"].to_list()
+
+    enlaces_gold = pl.read_parquet(config.GOLD / "enlaces.parquet")
+    pegados = {(min(i, j), max(i, j)) for i, j in
+               zip(enlaces_gold["i"].to_list(), enlaces_gold["j"].to_list(), strict=True)}
+
+    rng = random.Random(semilla)
+    pos = pares_positivos(filas)
+    neg = [p for p in pares_negativos(filas)
+           if claves[p[0]] == claves[p[1]] and claves[p[0]] != (None, None)]
+    rng.shuffle(pos)
+    rng.shuffle(neg)
+    confundibles = len(neg)
+    pos, neg = pos[:cuantos], neg[:cuantos]
+
+    def cuenta(pares):
+        enlace = grupo_ = 0
+        for i, j in pares:
+            if max(parecido(docs[i], docs[j], pesos), dice(tris[i], tris[j])) >= umbral:
+                enlace += 1
+            if (min(i, j), max(i, j)) in pegados or grupos[i] == grupos[j]:
+                grupo_ += 1
+        return {"pares": len(pares), "enlace": enlace, "grupo": grupo_}
+
+    p, n = cuenta(pos), cuenta(neg)
+    aciertos = p["grupo"]
+    fallos = n["grupo"]
+    return {"positivos": p, "negativos": n,
+            "precision_grupo": aciertos / (aciertos + fallos) if aciertos + fallos else None,
+            "precision_enlace": (p["enlace"] / (p["enlace"] + n["enlace"])
+                                 if p["enlace"] + n["enlace"] else None),
+            "cobertura": aciertos / p["pares"] if p["pares"] else None,
+            "negativos_confundibles": confundibles}
+
+
 def _ficha(f: dict) -> str:
     cant = f"{f['cantidad']}{f['unidad_canon'] or ''}" if f["cantidad"] else "?"
     return (f"[{f['fuente']}] nombre: {f['nombre']} | marca: "
@@ -313,6 +389,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="mide tambien al modelo local (tarda y usa la GPU)")
     ap.add_argument("--separacion", action="store_true",
                     help="mide si alguna caracteristica separa aciertos de errores")
+    ap.add_argument("--precision", action="store_true",
+                    help="mide que porcentaje de lo que junta el emparejador es correcto")
+    ap.add_argument("--cuantos-pares", type=int, default=3000,
+                    help="pares de cada clase para la medida de precision (3000)")
     ap.add_argument("--modelo", default=MODELO_POR_DEFECTO)
     ap.add_argument("--cuantos", type=int, default=20, help="pares de cada clase")
     a = ap.parse_args(argv)
@@ -344,6 +424,23 @@ def main(argv: list[str] | None = None) -> int:
                   f"{'-':>8s}")
         print("  Conclusion: ninguna separa. No hay nada que aprender con estas")
         print("  caracteristicas. Ver el docstring de `separacion`.")
+        return 0
+
+    if a.precision:
+        r = precision(filas, a.cuantos_pares)
+        p, n = r["positivos"], r["negativos"]
+        print(f"\n  pares medidos: {p['pares']} ciertos por EAN, {n['pares']} de la misma "
+              f"marca con EAN distinto ({r['negativos_confundibles']} confundibles en total)")
+        print(f"  {'':22s} {'lo junta':>9s} {'de':>7s} {'%':>7s}")
+        for nombre, c in (("mismo producto (EAN)", p), ("dos productos distintos", n)):
+            pct = 100 * c["grupo"] / max(c["pares"], 1)
+            print(f"  {nombre:22s} {c['grupo']:>9} {c['pares']:>7} {pct:6.1f} %")
+        print(f"  precision (de lo que junta, cuanto es correcto): "
+              f"{100 * r['precision_grupo']:.1f} %")
+        print(f"  cobertura (de los pares ciertos, cuantos junta):  "
+              f"{100 * r['cobertura']:.1f} %")
+        print(f"  y por la via del enlace (bloqueo + umbral): precision "
+              f"{100 * r['precision_enlace']:.1f} %")
         return 0
 
     if not a.llm:
