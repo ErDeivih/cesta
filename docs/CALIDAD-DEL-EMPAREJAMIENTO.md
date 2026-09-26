@@ -135,15 +135,27 @@ que separan variantes justo por donde se escapan estos seis errores:
 
 El orden de trabajo, por valor medido:
 
-1. **Meter el texto de las fichas** (Aldi `shortDescriptionFormatted`, Mercadona `main_feature`) y
-   usarlo como **prueba de variante**: si un lado dice «con coco» y el otro no dice nada de coco
-   pero dice «blanco», hay una diferencia declarada que hoy no se mira.
+1. ~~**Meter el texto de las fichas** y usarlo como prueba de variante.~~ **Medido el 26 de
+   septiembre de 2026: no puede funcionar, y por una razón que no se veía desde fuera.** De los
+   **62.668** pares negativos confundibles del banco:
+
+       con texto en LOS DOS lados:     0  (0,0 %)
+       con texto en un solo lado:  5.423  (8,7 %)   carrefour+mercadona 3.381, dia+mercadona 2.042
+       sin texto en ninguno:      57.245 (91,3 %)
+
+   **Cero.** Separar una variante necesita el texto en los dos lados, y no hay ni un par que lo
+   tenga: el texto vive exactamente donde los pares no están. Aldi y Mercadona lo publican sobre
+   todo en sus productos de marca propia, que por definición no se emparejan con la misma marca en
+   otra cadena. Y usarlo en un solo lado sería peor que no usarlo: haría la prueba asimétrica y
+   bajaría el parecido de pares que son correctos.
+
+   (Los mapas se comprobaron antes de creer el cero: las 1.125 fichas de Mercadona y las 950 de
+   Aldi con texto en el crudo se encuentran **todas** por su id en el catálogo.)
 2. **Cruzar el precio de referencia de Mercadona** (100 % de sus fichas) con el nuestro: es la
    única forma de detectar el caso «425 g contra 430 g» sin esperar a que una persona lo vea.
-3. **Un banco de pares negativos**: hoy se mide el recall contra 1.799 pares ciertos (por EAN) y no
-   se mide **cuántos pares que NO son el mismo producto se están enlazando**. Los 40 de la muestra
-   de arriba, etiquetados, son el principio: con 200 pares negativos se puede medir si un cambio
-   mejora la precisión o solo mueve el recall.
+3. ~~**Un banco de pares negativos**~~ **Hecho** (26 de septiembre): 7.474 pares confundibles y
+   1.804 ciertos por EAN, con la verdad dada por el código de barras, y la medida de precisión en
+   el punto 2 bis. Es lo que permite decir si un cambio mejora o solo mueve el recall.
 
 ---
 
