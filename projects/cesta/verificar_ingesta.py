@@ -144,6 +144,9 @@ class Informe:
     sin_pedir: list[str] = field(default_factory=list)
     sin_url: int = 0
     url_sin_id: list[str] = field(default_factory=list)
+    # Los mismos, pero con lo que hace falta para pedirlos de verdad (id, url, nombre). El
+    # crudo no puede juzgarlos porque el enlace no lo construimos nosotros: lo da la cadena.
+    enlaces_a_comprobar: list[tuple[str, str, str]] = field(default_factory=list)
     url_fuera_de_su_host: list[str] = field(default_factory=list)
     enlaces_repetidos: int = 0
     al_tope: int = 0
@@ -299,9 +302,12 @@ def _enlaces(df: pl.DataFrame, fuente: str, informe: Informe) -> None:
     if "url" not in df.columns:
         informe.sin_url = df.height
         return
-    filas = df.select(["id_fuente", "url"]).iter_rows()
+    columnas = ["id_fuente", "url"] + (["nombre"] if "nombre" in df.columns else [])
+    filas = df.select(columnas).iter_rows()
     vistos: set[str] = set()
-    for ident, url in filas:
+    for fila in filas:
+        ident, url = str(fila[0]), fila[1]
+        nombre = fila[2] if len(fila) > 2 else None
         if not url:
             informe.sin_url += 1
             continue
@@ -313,8 +319,9 @@ def _enlaces(df: pl.DataFrame, fuente: str, informe: Informe) -> None:
         # `VC4AECOMM-438819` (Carrefour) salian como enlaces rotos sin serlo: el id lleva guion.
         # Se mira el texto del enlace, y si el id es numerico se exige que no este pegado a otro
         # digito, que es la unica forma de confundir `/p/40976` con `/p/140976`.
-        if not _enlace_lleva(url, str(ident)):
+        if not _enlace_lleva(url, ident):
             informe.url_sin_id.append(f"{ident} -> {url}")
+            informe.enlaces_a_comprobar.append((ident, url, nombre or ""))
         if HOST[fuente] not in url:
             informe.url_fuera_de_su_host.append(f"{ident} -> {url}")
 
@@ -519,10 +526,89 @@ def revisa(fuente: str, fecha: str) -> Informe:
     return inf
 
 
+def comprueba_en_vivo(fuente: str, enlaces: list[tuple[str, str, str]], cuantos: int,
+                      semilla: int | None = None,
+                      fetcher=None) -> tuple[list[str], int]:
+    """Pide de verdad los enlaces que el crudo **no puede** juzgar.
+
+    Existe por la lección del 21 de septiembre de 2026: 23.776 enlaces de Alcampo estuvieron
+    quince días en 404 y ningún control interno podía verlo, porque el precio estaba bien y un
+    enlace roto solo se nota cuando una persona lo pulsa. Hay cadenas que **dan** el enlace en
+    vez de construirlo nosotros (Carrefour publica `R-<referencia>`, así que su `product_id` no
+    aparece en la URL en 1.212 filas de 16.452), y para esas la única comprobación posible es
+    pedirlo.
+
+    Se exigen dos cosas, y la segunda es la que distingue "va donde tiene que ir" de "va a la
+    portada": que conteste 200 **y que el nombre del producto se lea en la página**.
+
+    Devuelve (los fallos con su frase, cuántos se han mirado). Se mira una **muestra**
+    reproducible (`--semilla`) y no los 1.212 enteros: son peticiones a una cadena que ya nos
+    ha dado hoy todo su catálogo.
+    """
+    import random
+
+    from core.fetch import HTTPStatusError as _HTTPStatusError
+
+    if not enlaces or cuantos <= 0:
+        return [], 0
+    azar = random.Random(semilla)
+    muestra = azar.sample(enlaces, min(cuantos, len(enlaces)))
+    fallos: list[str] = []
+    f = fetcher or _fetcher_de(fuente)
+    for ident, url, nombre in muestra:
+        try:
+            r = f.get(url, retries=1)
+        except _HTTPStatusError as exc:
+            fallos.append(f"{ident}: HTTP {exc.status} en {url}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            fallos.append(f"{ident}: no se pudo pedir ({str(exc)[:60]})")
+            continue
+        texto = r.body.decode("utf-8", "replace")
+        if not _nombre_en(texto, nombre):
+            fallos.append(f"{ident}: responde 200 pero su nombre no se lee en la pagina "
+                          f"({url})")
+    return fallos, len(muestra)
+
+
+def _fetcher_de(fuente: str):
+    """El fetcher de esa cadena, con la sesion del WAF si la necesita (Alcampo)."""
+    from projects.cesta.verificar_precios import fetcher_de
+    return fetcher_de(fuente, ritmo=config.RITMO.get(fuente, 0.5))
+
+
+def _nombre_en(texto: str, nombre: str) -> bool:
+    """¿La pagina que contesta es la ficha de ese producto?
+
+    Se busca la palabra mas larga del nombre (sin acentos y en minusculas): en una ficha real
+    esta, y en una portada o en una pagina de error no. Buscar el nombre entero fallaria por un
+    guion o un acento, que es la clase de exigencia que convierte un control en ruido.
+    """
+    if not nombre:
+        return False
+    palabras = [p for p in re.split(r"\W+", _sin_tildes(nombre.lower())) if len(p) >= 5]
+    if not palabras:
+        palabras = [p for p in re.split(r"\W+", _sin_tildes(nombre.lower())) if p]
+    if not palabras:
+        return False
+    plano = _sin_tildes(texto.lower())
+    return any(p in plano for p in sorted(palabras, key=len, reverse=True)[:3])
+
+
+def _sin_tildes(texto: str) -> str:
+    import unicodedata
+    plano = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in plano if not unicodedata.combining(c))
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fecha", default=str(config.hoy_local()))
     ap.add_argument("--fuente", choices=FUENTES)
+    ap.add_argument("--enlaces", type=int, default=0, metavar="N",
+                    help="cuantos enlaces de los que el crudo no puede juzgar se piden de "
+                         "verdad (0 = ninguno: el informe es de solo lectura por defecto)")
+    ap.add_argument("--semilla", type=int, help="para repetir la misma muestra de enlaces")
     args = ap.parse_args(argv)
 
     fuentes = [args.fuente] if args.fuente else FUENTES
@@ -560,6 +646,16 @@ def main(argv: list[str] | None = None) -> int:
         if inf.al_tope:
             print(f"{'':11} respuestas al tope de la API ({TOPE_DE_API[fuente]}): {inf.al_tope}"
                   f"   <- puede estar cortada, se mira con las busquedas")
+        if args.enlaces and inf.enlaces_a_comprobar:
+            # Los que el crudo no puede juzgar, pedidos de verdad. Es lo unico que distingue
+            # "el enlace lo da la cadena" de "el enlace lleva a la portada".
+            fallos, mirados = comprueba_en_vivo(fuente, inf.enlaces_a_comprobar,
+                                                args.enlaces, args.semilla)
+            print(f"{'':11} enlaces pedidos de verdad: {mirados - len(fallos)} de {mirados} "
+                  f"responden y llevan su producto")
+            for fallo in fallos:
+                print(f"{'':11}   PROBLEMA: enlace {fallo}")
+            problemas += len(fallos)
         dichos = inf.problemas()
         if not dichos:
             print(f"{'':11} sin problemas\n")

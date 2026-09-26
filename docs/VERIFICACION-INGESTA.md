@@ -214,15 +214,28 @@ del precio por unidad 5,2 céntimos).
    nombre de su categoría fina no. Afecta a la navegación por pasillo, no a los precios.
 3. **DIA publica 3 direcciones muertas en su sitemap**: no es nuestro, pero conviene no contarlas
    como categorías del día.
-4. **Los 1.212 enlaces de Carrefour con otro id**: se comprueban en vivo, y hoy la comprobación en
-   vivo de Carrefour va 9/10.
+4. **Los enlaces de Carrefour con otro id: comprobados, y no están rotos.** Eran 1.212 el 24 de
+   septiembre y son **1.238 hoy**, y se han pedido de verdad (que es lo único que puede
+   juzgarlos, porque el enlace lo da la cadena). Resultado de hoy:
+
+       uv run python -m projects.cesta.verificar_ingesta --fuente carrefour --enlaces 30
+
+       enlaces: sin url 0  sin su id 1.238  fuera de su dominio 0  repetidos 0
+       enlaces pedidos de verdad: 30 de 30 responden y llevan su producto
+       sin problemas
+
+   Y en la pasada completa, 8 por cadena: los 8 de Carrefour bien. La comprobación quedó como
+   opción (`--enlaces N`) para que se pueda repetir sin depender de que alguien se acuerde: en
+   `--enlaces 0` (por defecto) el informe sigue siendo de solo lectura y no pide nada.
 
 ## 7. Cómo se reproduce
 
     uv run python -m projects.cesta.verificar_ingesta          # crudo vs bronze, 0 si todo cuadra
+    uv run python -m projects.cesta.verificar_ingesta --enlaces 30   # y 30 enlaces de verdad
     uv run python -m projects.cesta.auditar_recorrido          # que categorias no se pidieron
     uv run python -m projects.cesta.verificar_precios --por-cadena 10
     uv run pytest tests/test_verificar_ingesta.py -q
 
 Los cuatro son de solo lectura: no piden nada a las cadenas salvo `verificar_precios`, que pide 10
-páginas por cadena y las pide despacio (0,5 por segundo).
+páginas por cadena y las pide despacio (0,5 por segundo), y `verificar_ingesta --enlaces N`, que
+pide exactamente N enlaces y a ese mismo ritmo.

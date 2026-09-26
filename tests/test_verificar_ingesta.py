@@ -176,3 +176,68 @@ def test_un_enlace_repetido_o_fuera_de_su_dominio_sale(datos):
 
     assert inf.enlaces_repetidos == 1
     assert len(inf.url_fuera_de_su_host) == 2
+
+
+# ------------------------------------------- los enlaces que hay que pedir de verdad --
+
+class _FetcherFalso:
+    def __init__(self, cuerpo=b"", error=None):
+        self.cuerpo, self.error = cuerpo, error
+        self.pedidas: list[str] = []
+
+    def get(self, url, **kw):
+        from core.fetch import RawResponse
+        self.pedidas.append(url)
+        if self.error:
+            raise self.error
+        # RawResponse(url, status, body, fetched_at), como en `core/fetch.py`
+        return RawResponse(url, 200, self.cuerpo, "")
+
+
+def test_un_enlace_que_la_cadena_da_se_comprueba_pidiendolo():
+    """Es lo unico que distingue «el enlace lo da la cadena» de «lleva a la portada».
+
+    El 21 de septiembre de 2026 hubo 23.776 enlaces de Alcampo en 404 durante quince dias: el
+    precio estaba bien y un enlace roto solo se nota cuando alguien lo pulsa.
+    """
+    f = _FetcherFalso(b"<html><h1>Ventresca de atun claro en aceite de oliva</h1></html>")
+    fallos, mirados = vi.comprueba_en_vivo(
+        "carrefour", [("VC4AECOMM-1", "https://www.carrefour.es/supermercado/x/R-1/p",
+                       "Ventresca de atún claro en aceite de oliva")], 1, fetcher=f)
+    assert (fallos, mirados) == ([], 1)
+    assert f.pedidas == ["https://www.carrefour.es/supermercado/x/R-1/p"]
+
+
+def test_un_enlace_roto_sale_con_su_codigo():
+    from core.fetch import HTTPStatusError
+    f = _FetcherFalso(error=HTTPStatusError("u", 404, b""))
+    fallos, _ = vi.comprueba_en_vivo("carrefour", [("1", "https://x/y", "Leche")], 1, fetcher=f)
+    assert fallos and "HTTP 404" in fallos[0]
+
+
+def test_una_pagina_que_responde_pero_no_lleva_el_producto_tambien_sale():
+    """200 no es suficiente: la portada responde 200 y no es la ficha de nada."""
+    f = _FetcherFalso(b"<html><h1>Supermercado online</h1></html>")
+    fallos, _ = vi.comprueba_en_vivo("carrefour", [("1", "https://x/y",
+                                                    "Ventresca de atún claro")], 1, fetcher=f)
+    assert fallos and "no se lee en la pagina" in fallos[0]
+
+
+def test_la_muestra_es_reproducible_y_no_pide_sin_permiso():
+    """Nada de red por defecto: el informe es de solo lectura salvo que se pida."""
+    f = _FetcherFalso(b"Leche entera")
+    enlaces = [("1", "https://x/1", "Leche entera"), ("2", "https://x/2", "Leche entera")]
+    assert vi.comprueba_en_vivo("carrefour", enlaces, 0, fetcher=f) == ([], 0)
+    assert f.pedidas == []
+    _, mirados = vi.comprueba_en_vivo("carrefour", enlaces, 1, semilla=3, fetcher=f)
+    assert mirados == 1
+    _, otra_vez = vi.comprueba_en_vivo("carrefour", enlaces, 1, semilla=3, fetcher=f)
+    assert otra_vez == 1
+
+
+def test_el_nombre_se_busca_sin_acentos_y_por_sus_palabras_largas():
+    """Exigir el nombre entero fallaria por un guion o un acento, y eso convierte el control
+    en ruido."""
+    assert vi._nombre_en("... VENTRESCA DE ATUN claro ...", "Ventresca de atún claro")
+    assert not vi._nombre_en("<h1>Supermercado</h1>", "Ventresca de atún claro")
+    assert not vi._nombre_en("cualquier cosa", "")
