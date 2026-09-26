@@ -26,6 +26,14 @@ ESQUEMA_BRONZE = {
     "precio_cent": pl.Int64,
     "precio_ref_nativo_cent": pl.Int64,
     "unidad_ref_nativa": pl.Utf8,
+    # El otro precio de referencia de Mercadona, y el unico que va de verdad en la
+    # unidad que dice su `reference_format`. Medido el 26 de septiembre de 2026 sobre
+    # el bronze del dia (4.324 productos): `reference_price` y `bulk_price` coinciden
+    # en 3.522 y difieren en 802, porque `bulk_price` va en la unidad del TAMANO
+    # (EUR/kg, EUR/l, EUR/ud) y `reference_price` en la de la referencia (EUR/lavado,
+    # EUR/docena, EUR/100 g). Se guarda entero: un detergente son 14 centimos por
+    # lavado, y a esa escala el redondeo al centimo es un 3 %.
+    "precio_referencia_nativo_cent": pl.Int64,
     "precio_anterior_nativo_cent": pl.Int64,
     "ha_bajado_nativo": pl.Boolean,
     "promo": pl.Boolean,

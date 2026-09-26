@@ -88,3 +88,38 @@ def test_formato_alimenta_al_normalizador():
     from core.normalize import parse_formato
     r = mercadona.a_registro(PRODUCTO)
     assert parse_formato(r["formato_txt"]) == (5.0, "l", 1)
+
+
+def test_los_dos_precios_de_referencia_se_guardan_cada_uno_con_su_unidad():
+    """`bulk_price` y `reference_price` NO van en la misma unidad.
+
+    Medido el 26 de septiembre de 2026 sobre el bronze del día (4.324 productos): coinciden en
+    3.522 y difieren en 802. El caso que lo explica es un detergente de 4,95 €: `reference_format`
+    dice "lv" (lavados) y `reference_price` marca 0,155 —por lavado—, mientras que `bulk_price`
+    marca 8,590, que es por litro (4,95 / 0,576 l). O sea que `bulk_price` va en la unidad del
+    **tamaño** y `reference_price` en la de `reference_format`.
+    """
+    p = {**PRODUCTO, "display_name": "Detergente líquido Hacendado",
+         "price_instructions": {**PRODUCTO["price_instructions"], "unit_size": 0.576,
+                                "size_format": "l", "unit_price": "4.95",
+                                "reference_format": "lv", "bulk_price": "8.590",
+                                "reference_price": "0.155"}}
+    r = mercadona.a_registro(p)
+    assert r["unidad_ref_nativa"] == "lv"           # la unidad de la referencia
+    assert r["precio_ref_nativo_cent"] == 859       # bulk_price: por litro, 8,59 EUR
+    assert r["precio_referencia_nativo_cent"] == 16  # reference_price: 0,155 EUR/lavado
+    # Y el que va con `unidad_ref_nativa` es el segundo: el par consistente.
+    assert r["precio_ref_nativo_cent"] != r["precio_referencia_nativo_cent"]
+
+
+def test_el_producto_de_siempre_tiene_los_dos_iguales():
+    """En los 3.522 donde las unidades coinciden, los dos campos dicen lo mismo.
+
+    Es la comprobación que evita leer la medición al revés: si `reference_price` fuera otra
+    cosa, aquí no cuadraría.
+    """
+    p = {**PRODUCTO, "price_instructions": {**PRODUCTO["price_instructions"],
+                                            "bulk_price": "3.45",
+                                            "reference_price": "3.45"}}
+    r = mercadona.a_registro(p)
+    assert r["precio_ref_nativo_cent"] == r["precio_referencia_nativo_cent"] == 345

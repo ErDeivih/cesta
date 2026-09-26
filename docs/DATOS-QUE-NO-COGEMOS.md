@@ -23,19 +23,60 @@ de esa cadena que traen ese campo con valor.
 
 | Cadena | Campo | Con valor en | Qué mejoraría |
 |---|---|---|---|
-| mercadona | `price_instructions.reference_price` | **100 %** | El precio por unidad **publicado por la cadena**. Es una segunda opinión sobre nuestro `precio_unidad_cent`, que hoy calculamos nosotros: hoy solo se cruza en la ficha (`en_disputa`), no en el emparejador |
-| mercadona | `price_instructions.unit_name` | 28,9 % | La unidad que usa la cadena (`ud.`, `kg`). Sirve para saber si su `reference_price` está por kilo o por unidad antes de compararlo |
-| mercadona | `price_instructions.iva` | 27,6 % | El tipo de IVA. No cambia lo que pagas, pero sí explica saltos raros al comparar formatos y permite comprobar precios sin IVA si algún día hace falta |
-| aldi | `promotionPrices[].validFromLocalDate` / `validUntilLocalDate` | 15 % | Las fechas de la oferta, **en claro**. Hoy `validUntil` se lee, pero el comienzo no: una oferta que empieza mañana no es una oferta de hoy |
-| aldi | `isComingSoon` | 100 % | Producto **anunciado y aún no a la venta**. Es la señal directa de las «199 ofertas que todavía no han empezado» que lleva semanas en el BACKLOG |
-| aldi | `currentPrice.validFrom` | 93,5 % | Desde cuándo vale ese precio: el **tiempo de validez** que el modelo de datos no tiene (capítulo 13: solo guardamos cuándo lo copiamos) |
-| alcampo | `promotions[].requiredProductQuantity` | 8 % | Cuántas unidades pide la mecánica, **en número**. Hoy se adivina del texto («2ª unidad -50%»), y esto lo dice la propia web |
-| alcampo | `type: CATCHWEIGHT` | 100 % | Producto **al peso**. Hoy se deduce comparando días (`peso_variacion_pct`); esto lo declara la cadena en cada ficha |
-| dia | `prices.is_club_price` | 93,7 % | Si ese precio es **solo para socios**. Un precio de club no se puede comparar con el de la estantería de otra cadena |
-| dia | `prices.discount_percentage` | 93,7 % | El porcentaje de descuento que publica la cadena, para contrastar el que calculamos |
-| dia | `expiration_days` | 93,7 % | Días de caducidad (hoy 0 para la mayoría: se leería sin problema) |
-| carrefour | `app_price` / `app_price_per_unit` | **100 %** | El precio que enseña la aplicación frente al de la web. Si difieren, hay una promoción que solo existe en un canal |
-| carrefour | `restrictions[]` (`shipping-restriction`, `display_name: Lunes`, `quantity`) | 3 % | Restricciones de envío por producto. Para comparar precios no aporta; para «¿me lo pueden traer?», sí |
+| mercadona | `price_instructions.reference_price` | **100 %** | El precio por unidad **publicado por la cadena**. Medido el 26 de septiembre: **no coincide con el `bulk_price` que ya leemos en 802 de los 4.324 productos del día**, porque van en unidades distintas (ver §1 bis). Se ha empezado a **capturar** en `precio_referencia_nativo_cent` |
+| mercadona | `price_instructions.unit_name` | 28,9 % | La unidad que usa la cadena (`ud.`, `kg`, `barritas`). Al medirlo, resulta ser lo mismo que `reference_format`, que ya se lee: **descartado** |
+| mercadona | `price_instructions.iva` | 27,6 % | El tipo de IVA. No cambia lo que pagas (todos los precios de estantería lo llevan incluido), así que no mejora ninguna comparación: **descartado** para comparar |
+| aldi | `promotionPrices[].validUntilLocalDate` | 15 % | La fecha de fin **en claro**. Ya se lee: 320 de las 320 ofertas de Aldi tienen hoy fecha de fin en el bronze (desde `currentPrice.validUntil` o desde `promotionPrices`): **ya cubierto** |
+| aldi | `promotionPrices[].validFromLocalDate` | 15 % | El comienzo, que sí es un hueco real: **62 de las 174 promociones de hoy todavía no han empezado** y hoy cuentan como ofertas (BACKLOG N16) |
+| aldi | `isComingSoon` | 100 % | Producto **anunciado y aún no a la venta**. Hoy vale `False` en los 2.218 productos, así que no cambia nada; se vigila por si algún día deja de ser cero |
+| aldi | `currentPrice.validFrom` | 93,5 % | Desde cuándo vale ese precio. Es la vigencia del precio normal, no una oferta: **descartado** (el de la oferta es el de arriba) |
+| alcampo | `promotions[].requiredProductQuantity` | 8 % | Cuántas unidades pide la mecánica, **en número**. Sigue siendo un hueco real: hoy se adivina del texto («2ª unidad -50%») |
+| alcampo | `type: CATCHWEIGHT` | 100 % | Medido: marca **exactamente** los mismos 1.085 productos que `catchweight`, que ya se lee (y los mismos que la etiqueta «peso variable»). Tres fuentes de acuerdo: **descartado**, no añade nada |
+| dia | `prices.is_club_price` | 93,7 % | Los 182 productos que lo traen en `True` **ya estaban marcados** por `promotions[].only_club_dia` (182 de 182, ninguno se escapaba): **descartado** |
+| dia | `prices.discount_percentage` | 93,7 % | El porcentaje de descuento que publica la cadena, para contrastar el que calculamos. 192 productos hoy: **pendiente, y es barato** |
+| dia | `expiration_days` | 93,7 % | Días de caducidad (hoy 0 en todos). Se leería sin problema y no hay nada que leer: **descartado** mientras sea cero |
+| carrefour | `app_price` / `app_price_per_unit` | **100 %** | Medido en los 42.597 productos del día: el precio de la aplicación es **idéntico** al de la web en todos. Se descarta usarlo, y se queda como vigía: el día que difieran, hay una promoción de un solo canal |
+| carrefour | `restrictions[]` | 3 % | Restricciones de envío por producto. Para comparar precios no aporta; para «¿me lo pueden traer?», sí |
+
+## 1 bis. El hallazgo de verdad de esta lista: Mercadona publica **dos** precios de referencia
+
+Los dos campos existen con valor en el 100 % de las fichas, y durante semanas se ha leído uno
+dando por hecho que era el otro:
+
+    bulk_price       -> hoy en precio_ref_nativo_cent
+    reference_price  -> no se leía
+
+**No son el mismo número.** Medido sobre el bronze del 26 de septiembre de 2026 (4.324 productos):
+coinciden en **3.522** y **difieren en 802**. La razón, comprobada con la aritmética de tres
+productos:
+
+| producto | precio | `reference_format` | `bulk_price` | `reference_price` |
+|---|---|---|---|---|
+| Detergente 0,81 l | 3,65 € | `lv` (lavados) | 451 → **4,51 €/litro** | 14 → **0,14 €/lavado** |
+| Huevos 24 ud | 5,25 € | `dz` (docena) | 22 → **0,22 €/unidad** | 262 → **2,62 €/docena** |
+| Manzanilla 26 g | 0,85 € | `100 g` | 3.269 → **32,69 €/kg** | 327 → **3,27 €/100 g** |
+
+O sea: **`bulk_price` va en la unidad del tamaño** (kg, l, ud — lo que dice el nombre) y
+**`reference_price` en la de `reference_format`**. El comentario que había en el colector decía
+exactamente lo contrario («bulk_price va en la unidad de reference_format»), y llevaba ahí desde el
+principio sin que nada lo desmintiera, porque en los 3.522 productos donde las dos unidades
+coinciden los dos números son el mismo.
+
+**Qué se ha hecho:** capturar el par consistente (`reference_price` con `reference_format`) en la
+columna nueva `precio_referencia_nativo_cent`, sin cambiar ninguna decisión.
+
+**Por qué no se usa todavía, dicho sin adivinar:** la referencia solo entra en las cuentas cuando su
+unidad canónica existe, y en los 33 productos del día con `reference_format` de dosis (`lv`, `dc`,
+`dz`) esa unidad queda a `None` (0 de 33 la usan). Es decir: hoy el par descuadrado es **inocuo**, y
+lo que había era una trampa esperando. Se captura porque es lo que publica la cadena y porque el día
+que esa referencia se use, el número tendrá que ir con su unidad.
+
+Queda una consecuencia sin resolver, y es del tamaño justo para no esconderla: guardamos la
+referencia en **céntimos enteros**, y un detergente son 14 céntimos por lavado — ahí el redondeo es
+un 3 %. Si algún día el precio por lavado se usa para comparar, habrá que guardarlo con más
+precisión.
+
+---
 
 ## 2. Lo que mejoraría el emparejamiento (juntar bien lo que es lo mismo)
 

@@ -189,11 +189,34 @@ def a_registro(p: dict, maestro: dict | None = None) -> dict:
         "cantidad_declarada": float(tam) if tam is not None else None,
         "unidad_declarada": (pi.get("size_format") or "").lower() or None,
         "precio_cent": cent(pi.get("unit_price")) or 0,
-        # OJO: bulk_price va en la unidad de reference_format (EUR/lavado, EUR/recambio,
-        # EUR/kg...), que NO es comparable entre cadenas. Se guarda como referencia de
-        # la cadena; el precio comparable lo calcula silver.
+        # Mercadona publica DOS precios de referencia, y no son el mismo numero: en
+        # el bronze del 26 de septiembre de 2026 (4.324 productos) coinciden en
+        # 3.522 y **difieren en 802**.
+        #
+        # El motivo, comprobado con la aritmetica: **`bulk_price` va en la unidad del
+        # TAMANO y `reference_price` en la de `reference_format`**, que no siempre son
+        # la misma.
+        #
+        #   Detergente 0,81 l, 3,65 EUR   reference_format "lv"  bulk 451 (EUR/l)
+        #                                                          reference 14 (EUR/lavado)
+        #   Huevos 24 ud, 5,25 EUR        reference_format "dz"  bulk  22 (EUR/ud)
+        #                                                          reference 262 (EUR/docena)
+        #   Manzanilla 26 g, 0,85 EUR     reference_format "100 g" bulk 3269 (EUR/kg)
+        #                                                          reference 327 (EUR/100 g)
+        #
+        # En los tres, dividir el precio entre la cantidad del nombre da el `bulk_price`
+        # y no el `reference_price`: el que lleva la unidad de `reference_format` es el
+        # otro. El comentario que habia aqui decia justo lo contrario.
+        #
+        # Se guardan los dos, cada uno con lo suyo, y **el par consistente no decide
+        # todavia**: de los 33 productos del dia con `reference_format` de dosis ("lv",
+        # "dc", "dz") la unidad canonica de la referencia queda a None, o sea que ese
+        # numero no entra hoy en ninguna comparacion (0 de 33 lo usan). Se captura
+        # porque es lo que publica la cadena, y porque el dia que esa referencia se use
+        # el numero tendra que ir con su unidad.
         "precio_ref_nativo_cent": cent(pi.get("bulk_price")),
         "unidad_ref_nativa": (pi.get("reference_format") or "").lower() or None,
+        "precio_referencia_nativo_cent": cent(pi.get("reference_price")),
         "precio_anterior_nativo_cent": cent(pi.get("previous_unit_price")),
         "ha_bajado_nativo": bool(pi.get("price_decreased")),
         "iva": pi.get("tax_percentage"),
