@@ -138,6 +138,12 @@ ESQUEMA_BRONZE = {
     # no existen en el ticket.
     "promo_club": pl.Boolean,
     "promo_solo_online": pl.Boolean,
+    # Cuantas unidades hay que comprar para que la oferta valga, dicho por la cadena en
+    # numero y no en el texto de la oferta. Alcampo lo publica en 1.900 productos (7,8 %) y
+    # es la unica cadena que lo da: `2` es "2a unidad al 50 %". Hoy se guarda y no se usa,
+    # por la misma razon por la que un precio de tarjeta no cuenta: una oferta que exige
+    # comprar dos unidades no es el precio de una. Ver `docs/DATOS-QUE-NO-COGEMOS.md`.
+    "promo_unidades_minimas": pl.Int32,
     # Aldi publica este booleano en sus 2.065 productos: marca un lote retirado
     # de la venta. Hoy vale False en todos, pero existir es lo que importa,
     # porque sabemos que hay en cada lista de la compra. Ninguna app de la

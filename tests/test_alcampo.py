@@ -275,3 +275,20 @@ def test_el_peso_variable_sale_de_la_etiqueta_o_del_rango():
 def test_sin_iconos_no_se_inventa_nada():
     r = alcampo.a_registro(_con_iconos())
     assert r["sellos"] is None and r["conservacion"] is None
+
+
+def test_las_unidades_de_la_mecanica_se_leen_en_numero():
+    """«2ª unidad -50 %» en texto y `requiredProductQuantity: 2` en número.
+
+    Medido el 26 de septiembre de 2026: 1.639 productos del día (6,8 %) lo traen, con valores
+    de 2 a 6. Se guarda el mayor, que es la condición más exigente, y `None` cuando ninguna
+    oferta pide más de una unidad (que es distinto de «pide una»).
+    """
+    assert alcampo._unidades_de_la_mecanica([]) is None
+    assert alcampo._unidades_de_la_mecanica([{"requiredProductQuantity": 1}]) is None
+    assert alcampo._unidades_de_la_mecanica([{"description": "sin cantidad"}]) is None
+    assert alcampo._unidades_de_la_mecanica(
+        [{"requiredProductQuantity": 2}, {"requiredProductQuantity": 3}]) == 3
+    # Una promoción con forma rara no puede tumbar la ficha entera: el 26 de septiembre de
+    # 2026 el mismo tipo de descuido en `icons` mató el barrido del buscador entero.
+    assert alcampo._unidades_de_la_mecanica(["texto suelto"]) is None

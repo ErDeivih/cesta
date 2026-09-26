@@ -441,6 +441,23 @@ def _rango_al_peso(p: dict) -> tuple[int | None, int | None]:
     return tipico, None
 
 
+def _unidades_de_la_mecanica(promos: list[dict]) -> int | None:
+    """Cuantas unidades hay que comprar para que la oferta valga, segun la cadena.
+
+    `promotions[].requiredProductQuantity` viene en el 7,8 % del catalogo (1.900 productos de
+    hoy) y vale 2, 3 o 4. Se guarda el mayor de la ficha, que es la condicion mas exigente; y
+    `None` cuando ninguna oferta pide mas de una unidad, que es distinto de "pide una".
+    """
+    exigidas = []
+    for pr in promos:
+        if not isinstance(pr, dict):
+            continue
+        n = pr.get("requiredProductQuantity")
+        if isinstance(n, (int, float)) and n > 1:
+            exigidas.append(int(n))
+    return max(exigidas) if exigidas else None
+
+
 def _fin_de_promo(promos: list[dict]) -> datetime | None:
     """La fecha de fin que Alcampo escribe dentro del texto de la oferta.
 
@@ -528,6 +545,17 @@ def a_registro(p: dict) -> dict:
         "unidad_ref_nativa": unidad_ref,
         "promo": bool(promos),
         "promo_txt": promos[0].get("description") if promos else None,
+        # **Cuantas unidades hay que comprar para que la oferta valga, en numero.** El texto
+        # lo dice en palabras ("2ª UD AL 50% DTO.") y esto lo dice la propia web: 1.900
+        # productos de hoy (7,8 %) traen `requiredProductQuantity` >= 2.
+        #
+        # Se guarda y **no se usa todavia**, y el motivo es el mismo por el que el precio de
+        # tarjeta no cuenta: una oferta que exige comprar dos unidades no es el precio de una.
+        # Decidir que hacer con eso (enseñar "2ª unidad al 50 %" en la ficha, o calcular el
+        # precio efectivo de la pareja) es una decision de producto con su medicion, no un
+        # campo que se lee y ya. Medido el 26 de septiembre de 2026 y escrito en
+        # `docs/DATOS-QUE-NO-COGEMOS.md`.
+        "promo_unidades_minimas": _unidades_de_la_mecanica(promos),
         # Alcampo tenia 3.125 textos de oferta y CERO fechas de fin, porque la
         # fecha va dentro del texto: "Producto en Folleto (10/09/26_23/09/26)".
         # El 61 % de sus ofertas la lleva.
