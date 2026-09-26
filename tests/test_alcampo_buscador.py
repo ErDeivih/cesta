@@ -75,6 +75,84 @@ def test_el_margen_tiene_un_valor_razonable():
         "quedo")
 
 
+def test_con_los_repetidos_dentro_la_condicion_mentia():
+    """**El tercer fallo, el del 26 de septiembre de 2026 por la tarde.**
+
+    Al ejecutar el colector a mano para comprobar el barrido, no barría: la condición se
+    evaluaba con `filas` **antes de quitar los repetidos**. La API de Alcampo devuelve el
+    subárbol entero en cada categoría, así que el mismo producto sale en la rama y en la
+    hoja: ese día fueron **28.783 filas crudas para 23.932 productos**, un 20 % de repetidos.
+
+    Y contra una referencia de 28.977, `28.783 < 28.977 × 0,95` es falso. O sea que el
+    barrido no se ejecutaba **con la captura dos días corta**, que es justo cuando hace
+    falta: los repetidos hinchaban la cuenta hasta hacerla parecer sana.
+
+    Las dos cuentas, con los mismos dos números del día:
+    """
+    filas_crudas, repetidos = alcampo._sin_repetidos(
+        [{"id_fuente": str(i % 23_932)} for i in range(28_783)])
+    assert len(filas_crudas) == 23_932
+    assert repetidos == 4_851
+    # La cuenta limpia dispara el barrido; la hinchada, no.
+    assert alcampo.hay_que_barrer(0, len(filas_crudas), 28_977) is True
+    assert alcampo.hay_que_barrer(0, 28_783, 28_977) is False
+
+
+def test_los_repetidos_se_quedan_con_la_ultima_aparicion():
+    """Es lo que hacía `unique(keep="last")` al guardar: la misma regla, no otra."""
+    filas, repetidos = alcampo._sin_repetidos([
+        {"id_fuente": "1", "nombre": "viejo"},
+        {"id_fuente": "2", "nombre": "solo"},
+        {"id_fuente": "1", "nombre": "nuevo"},
+    ])
+    assert repetidos == 1
+    assert {f["id_fuente"]: f["nombre"] for f in filas} == {"1": "nuevo", "2": "solo"}
+
+
+def test_una_fila_sin_identificador_no_cuenta_como_producto():
+    """Sin `id_fuente` no hay URL ni ficha: no es un producto, es un resto."""
+    filas, repetidos = alcampo._sin_repetidos([{"id_fuente": None}, {"id_fuente": "7"}])
+    assert [f["id_fuente"] for f in filas] == ["7"]
+    assert repetidos == 1
+
+
+def test_un_termino_con_forma_rara_no_tumba_el_barrido_ni_la_captura():
+    """**El cuarto fallo, y el peor de los cuatro, medido el 26 de septiembre de 2026.**
+
+    Con el barrido ya disparándose, el primer término de los 600 trajo una respuesta con
+    `data` en texto y `productos_de_busqueda` reventó con
+    `'str' object has no attribute 'get'`. Y como aquel `except` hacía `errores += 1` y
+    `detener = True`, la pasada entera terminó diciendo **"es una captura rota" y no guardó
+    nada**: un término raro de una fase *extra* decidía el destino del catálogo del día.
+
+    Ahora una respuesta sin forma de búsqueda son cero productos y el barrido sigue con el
+    término siguiente; lo único que corta el barrido entero es el WAF.
+    """
+    f = mock.Mock()
+    casos = [
+        ({"data": "texto en vez de un diccionario"}, []),
+        ({"data": {"products": "texto"}}, []),
+        ({"data": {"products": {"productEntities": "texto"}}}, []),
+        ({"data": {}}, []),
+        ({"data": {"products": {"productEntities": {
+            "1": {"name": "Leche"}, "2": "no es un producto"}}}}, [{"name": "Leche"}]),
+    ]
+    for estado, esperado in casos:
+        with mock.patch.object(alcampo, "_estado", return_value=estado):
+            assert alcampo.productos_de_busqueda(f, "leche") == esperado, estado
+
+
+def test_una_pagina_sin_estado_en_la_busqueda_es_un_corte_del_waf():
+    """Si no hay estado que leer no es «esta búsqueda no tiene resultados»: es que la página
+    no llegó entera, y eso el barrido tiene que tratarlo como un corte."""
+    import pytest
+
+    f = mock.Mock()
+    with mock.patch.object(alcampo, "_estado", return_value="una cadena"):
+        with pytest.raises(alcampo.RetoWAF):
+            alcampo.productos_de_busqueda(f, "leche")
+
+
 def test_el_barrido_tiene_presupuesto_de_tiempo():
     """A una peticion cada 6,7 s, los 600 terminos del turno son casi 67 minutos, mas que
     el recorrido entero. Se recorre lo que quepa y se dice cuanto quedo."""

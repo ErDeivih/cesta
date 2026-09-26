@@ -3963,3 +3963,63 @@ La prueba `plataforma/prueba_e2e.py` pidio el filtro que faltaba: su banco de
 grupos elige los que estan mas cerca de su minimo de 90 dias, y sin exigir
 `comparacion_fiable` cayo en un grupo `ud` y dio por roto el vigilante, que lo
 que hacia era callarse bien.
+
+## N30. Alcampo: el recorrido se queda antes de las hojas, y no es el barrido
+
+El encargo de esta ronda decia: *"que el barrido del buscador de Alcampo dispare de verdad
+y se confirme que recupera ~5.000 productos"*. Se ha hecho, y **la segunda mitad es falsa**,
+que es justo lo que habia que averiguar.
+
+Tres fallos seguidos, los tres con su medicion, y el barrido ahora dispara:
+
+1. La condicion pedia que una categoria **hoja** tocara el tope de 300. Nunca paso
+   (0 hojas al tope en tres dias medidos): una categoria con 300 productos casi siempre
+   tiene hijas. Arreglado el 25 de septiembre.
+2. La referencia con la que se comparaba era el bronze **mas reciente**, o sea la captura
+   ya degradada de esa misma manana: el bajon se comparaba consigo mismo. Arreglado el 26
+   (el mayor de la ultima semana).
+3. La condicion se evaluaba con las filas **antes de quitar los repetidos**. La API de
+   Alcampo devuelve el subarbol entero en cada categoria, asi que el mismo producto sale en
+   la rama y en la hoja: el 26 de septiembre, **28.783 filas crudas para 23.932 productos**
+   (un 20 % de repetidos). Con los repetidos dentro, `28.783 < 28.977 x 0,95` es falso y el
+   barrido no se ejecutaba **con la captura dos dias corta**. Medido ejecutando el colector
+   a mano: 4.851 repetidos.
+4. Y al dispararse por primera vez, murio en el primer termino: `a_registro` leia `icons`
+   como lista de diccionarios, y **el buscador lo manda como diccionario**
+   (`{"certification": [...], "legal": [...]}`), asi que recorria las claves y reventaba con
+   `'str' object has no attribute 'get'`. Peor: ese error hacia `errores += 1` y
+   `detener = True`, y la pasada terminaba diciendo **"es una captura rota" y no guardaba
+   nada**. Un termino raro de una fase *extra* decidia el destino del catalogo del dia.
+
+Con eso arreglado, medido en vivo el 26 de septiembre (8 primeros terminos del turno de
+hoy, 211 productos leidos): **1 producto que no estaba en el bronze de hoy**. Extrapolando a
+los 600 terminos del turno, ~75. El buscador devuelve 50 productos por termino y son los
+mismos que ya estan, asi que **el barrido no recupera los 5.000**.
+
+Lo que de verdad pasa, medido con `data/runs.csv` y los bronze de cada dia:
+
+    2026-09-17   407 respuestas de categoria   23.793 productos
+    2026-09-19   411                           23.794
+    2026-09-20   422                           23.905
+    2026-09-21   418                           23.776
+    2026-09-23   422                           23.842
+    2026-09-24   544                           28.977   <- el raro
+    2026-09-25   411                           23.924
+    2026-09-26   432                           23.932
+
+El 24 de septiembre recorrio 544 categorias en 91 minutos (los demas, ~415 en ~70) y vio
+5.161 productos que el 26 no vio. No es una rama: estan repartidos por todas (Perfumeria
+1.186, Frescos 1.071, Alimentacion 539, Bebidas 495, Desayuno 414...), decenas por
+categoria, y **los 5.161 con precio**. Es la firma de un recorrido que se queda antes de las
+hojas, y encaja con la regla que decide bajar o no:
+
+    if hijas and (len(productos) >= 300 or not productos):   bajar a las hijas
+    else:                                                    quedarse con lo que hay
+
+Una categoria que devuelve, pongamos, 250 productos y tiene hijas se da por completa **sin
+bajar**. Si esas 250 no son todo el subarbol, lo que falta no se pide, no da error y no
+cuenta como merma. El siguiente experimento es medir, en el crudo de un dia normal, cuantas
+categorias devuelven entre 1 y 299 productos **teniendo hijas** y cuanto suman sus hijas:
+si suman mas que el padre, ahi estan los 5.000. No se toca hoy porque cambiar esa regla
+multiplica las peticiones de una cadena que ya va a una cada 6,7 segundos y corta con el WAF
+entre 10 y 30 veces al dia, o sea que hay que medirlo antes de encenderlo.

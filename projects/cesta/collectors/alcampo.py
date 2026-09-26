@@ -316,10 +316,24 @@ def terminos_de_busqueda(f: Fetcher) -> list[str]:
 
 
 def productos_de_busqueda(f: Fetcher, termino: str) -> list[dict]:
+    """Los productos que devuelve el buscador para un termino.
+
+    **Con la forma comprobada a mano, porque una respuesta degradada no es una lista
+    vacia.** El 26 de septiembre de 2026 esto era una cadena de `.get()` encadenados y el
+    primer termino raro de los 600 tumbo el barrido entero con
+    "'str' object has no attribute 'get'": la pagina habia llegado con `data` en texto, que
+    es lo que devuelve el WAF cuando no da el reto de frente pero tampoco da la pagina.
+    """
     ruta = f"/search?q={quote(termino)}"
     st = _estado(f, ruta)
-    ents = st.get("data", {}).get("products", {}).get("productEntities") or {}
-    return list(ents.values())
+    if not isinstance(st, dict):
+        raise RetoWAF(ruta)          # una pagina sin estado no es una busqueda sin resultados
+    datos = st.get("data")
+    productos = datos.get("products") if isinstance(datos, dict) else None
+    entidades = productos.get("productEntities") if isinstance(productos, dict) else None
+    if not isinstance(entidades, dict):
+        return []
+    return [p for p in entidades.values() if isinstance(p, dict)]
 
 
 # Cuando hay que recorrer los terminos del buscador, y cuando no.
@@ -339,7 +353,24 @@ def productos_de_busqueda(f: Fetcher, termino: str) -> list[dict]:
 #
 # Hasta que no basto: el 25 de septiembre de 2026 la captura se quedo en **23.924
 # productos contra 28.977** del dia anterior (un 17,5 % menos, con el aviso de deriva
-# saltando) y el barrido, que es justo lo que tapa ese agujero, no llego a correr.
+# saltando) y el barrido, que es justo lo que tapa ese agujero, no llegó a correr.
+#
+# **Y ese 17,5 % hay que leerlo al revés, medido el 26 de septiembre de 2026.** Los dias
+# de Alcampo, con sus respuestas de categoria y sus productos:
+#
+#     2026-09-17   407 respuestas   23.793      2026-09-23   422   23.842
+#     2026-09-19   411 respuestas   23.794      2026-09-24   544   28.977  <- el raro
+#     2026-09-20   422 respuestas   23.905      2026-09-25   411   23.924
+#     2026-09-21   418 respuestas   23.776      2026-09-26   432   23.932
+#
+# O sea que **el normal es 23.900 y el raro es el 24** (91 minutos de recorrido contra ~70,
+# 544 respuestas contra ~415). Los 5.161 productos que el 24 vio y el 26 no estan repartidos
+# por todas las ramas (Perfumeria 1.186, Frescos 1.071, Alimentacion 539, Bebidas 495...),
+# decenas por categoria: eso no es una rama que falte, es un recorrido que se queda antes de
+# llegar a las hojas. El barrido del buscador **no es** lo que tapa ese agujero: devuelve 50
+# productos por termino y, medido en los 8 primeros terminos del turno del 26, recupera 1
+# producto nuevo (~75 extrapolando a los 600). La medicion entera y el siguiente
+# experimento estan en `docs/BACKLOG.md`, N30.
 #
 # Ahora se recorre **cuando hace falta**, que son dos casos medibles:
 #   - alguna hoja toco el tope (lo de antes, que sigue valiendo cuando pasa);
@@ -427,6 +458,37 @@ def _fin_de_promo(promos: list[dict]) -> datetime | None:
     return None
 
 
+def _iconos_de(p: dict, campo: str) -> list[dict]:
+    """Los iconos de un producto, vengan como vengan.
+
+    **Alcampo manda dos formas distintas del mismo campo, según por dónde se pida.**
+    Medido el 26 de septiembre de 2026 comparando una respuesta de categoría con una del
+    buscador:
+
+        categoría   "icons": [ {"label": ...}, ... ]          <- lista de diccionarios
+        buscador    "icons": {"certification": [...], "legal": [...]}   <- diccionario
+
+    `a_registro` hacía `for ic in (p.get("icons") or [])` y `ic.get("label")`, así que con
+    la forma del buscador recorría **las claves** ("certification", "legal") y reventaba con
+    `'str' object has no attribute 'get'`. Eso es lo que mataba el barrido del buscador
+    incluso después de arreglar cuándo se dispara: sacaba productos y no podía convertirlos
+    a registro.
+    """
+    valor = p.get(campo)
+    if isinstance(valor, dict):
+        # las dos formas de dentro: listas de iconos, o un icono suelto
+        fuera = []
+        for dentro in valor.values():
+            if isinstance(dentro, list):
+                fuera.extend(dentro)
+            elif isinstance(dentro, dict):
+                fuera.append(dentro)
+        valor = fuera
+    if not isinstance(valor, list):
+        return []
+    return [ic for ic in valor if isinstance(ic, dict)]
+
+
 def a_registro(p: dict) -> dict:
     precio = p.get("price") or {}
     # dos formas conviven: la del HTML (price.current) y la de su API (price.amount)
@@ -439,13 +501,13 @@ def a_registro(p: dict) -> dict:
     # nunca podra cruzar con Open Food Facts. Pero SI publica las etiquetas que
     # la gente busca de verdad, y nadie las miraba: 3.337 sin gluten, 2.405
     # veganos, 1.105 sin lactosa, 1.052 ecologicos. Mas que todo lo que da OFF.
-    etiquetas = [ic.get("label") for ic in (p.get("iconAttributes") or [])
+    etiquetas = [ic.get("label") for ic in _iconos_de(p, "iconAttributes")
                  if ic.get("label")]
     # Los pictogramas de peligro del Reglamento CLP: "Corrosivo para la piel",
     # "Peligro para el medio ambiente". Vienen en `icons`, que es otra lista
     # distinta de `iconAttributes` y que nadie leia: 531 productos de limpieza.
     # El tipo dice CERTIFICATION, pero no certifican nada: avisan.
-    peligros = sorted({ic.get("label") for ic in (p.get("icons") or [])
+    peligros = sorted({ic.get("label") for ic in _iconos_de(p, "icons")
                        if ic.get("label")})
     # El rango real de un producto al peso: 742 productos. Un tomate "al peso"
     # de 500 g que puede venir entre 375 y 625 g.
@@ -508,6 +570,28 @@ def a_registro(p: dict) -> dict:
         "capturado_en": datetime.now(timezone.utc),
     })
     return r
+
+
+def _sin_repetidos(filas: list[dict]) -> tuple[list[dict], int]:
+    """Quita los productos repetidos y dice cuántos eran.
+
+    **La API de Alcampo devuelve el subárbol entero en cada categoría**, así que un producto
+    sale en la rama y otra vez en la hoja: el 26 de septiembre de 2026, 28.783 filas crudas
+    para **23.932 productos**, un 20 % de repetidos.
+
+    Eso no era solo un desperdicio: la condición del barrido comparaba esas 28.783 filas
+    contra la referencia de un bronze ya deduplicado (28.977), así que
+    `28.783 < 28.977 × 0,95` salía **falso** y el barrido **no se ejecutaba** ni con la
+    captura dos días corta. Contar peras contra manzanas, y el que salía perdiendo era el
+    mecanismo que tapa el agujero.
+
+    Se queda la última aparición, que es lo que hacía `unique(keep="last")` al guardar.
+    """
+    vistos: dict[str, dict] = {}
+    for r in filas:
+        if r.get("id_fuente"):
+            vistos[str(r["id_fuente"])] = r
+    return list(vistos.values()), len(filas) - len(vistos)
 
 
 def _filas_ultimo_bronze(dias: int = 7) -> int:
@@ -698,6 +782,19 @@ def main() -> int:
         print(f"  {len(sin_estado)} categorias llegaron sin datos "
               f"(ej.: {', '.join(sin_estado[:3])})")
 
+    # **Las cuentas, con los repetidos fuera, y antes de decidir nada.** La API devuelve el
+    # subarbol entero en cada categoria, asi que un producto sale en la rama y en la hoja:
+    # 28.783 filas crudas para 23.932 productos el 26 de septiembre de 2026. Comparar esas
+    # 28.783 contra la referencia de un bronze deduplicado (28.977) hacia que la condicion
+    # del barrido saliera falsa con la captura dos dias corta, o sea que el mecanismo que
+    # tapa el agujero se quedaba apagado justo cuando hacia falta. Medido, no supuesto.
+    if filas:
+        filas, repetidos = _sin_repetidos(filas)
+        if repetidos > len(filas) // 10:
+            print(f"  {repetidos} filas repetidas de {len(filas) + repetidos} "
+                  f"(la API devuelve el subarbol en cada categoria): "
+                  f"quedan {len(filas)} productos", flush=True)
+
     if not detener and hay_que_barrer(truncadas, len(filas), _filas_ultimo_bronze()):
         if truncadas:
             print(f"  {truncadas} categorias hoja tocaron el limite de {TOPE_API}: "
@@ -708,6 +805,7 @@ def main() -> int:
         vistos = {r["id_fuente"] for r in filas}
         nuevos = 0
         terminos = []
+        sin_datos = 0
         t0_buscador = time.monotonic()
         agotado = False
         try:
@@ -716,24 +814,40 @@ def main() -> int:
                 if time.monotonic() - t0_buscador > PRESUPUESTO_BARRIDO_S:
                     agotado = True
                     break
-                for prod in productos_de_busqueda(f, termino):
+                # Un termino que no devuelve datos **no puede tumbar el barrido**, y menos
+                # aun la captura del dia. Medido el 26 de septiembre de 2026: el primer
+                # termino de los 600 trajo una respuesta con forma rara
+                # ("'str' object has no attribute 'get'"), el barrido entero se aborto en
+                # cero minutos y el `errores += 1` de aqui abajo hizo que la pasada
+                # terminara diciendo "es una captura rota" y no guardara nada. Una racha
+                # de seiscientas peticiones tiene terminos raros; el barrido va de
+                # completar lo que falta, no de ser perfecto.
+                try:
+                    encontrados = productos_de_busqueda(f, termino)
+                except RetoWAF:
+                    raise                     # el WAF sí corta el barrido entero
+                except Exception as exc:  # noqa: BLE001
+                    sin_datos += 1
+                    if sin_datos <= 3:
+                        print(f"    termino '{termino}' sin datos: "
+                              f"{type(exc).__name__}: {exc}", flush=True)
+                    continue
+                for prod in encontrados:
                     r = a_registro(prod)
                     if r["id_fuente"] and r["id_fuente"] not in vistos:
                         vistos.add(r["id_fuente"])
                         filas.append(r)
                         nuevos += 1
         except RetoWAF:
-            errores += 1
-            detener = True
-            print("  el WAF corta la fase de buscador: se conserva el ultimo "
-                  "bronze completo")
+            # El WAF corta el barrido, no la captura: el arbol ya esta recorrido y lo que
+            # hay en `filas` es catalogo de hoy. Marcarlo como error dejaba la pasada sin
+            # guardar por un corte en la fase extra.
+            print("  el WAF corta la fase de buscador: se guarda lo que trajo el arbol")
         except Exception as exc:  # noqa: BLE001
-            errores += 1
-            detener = True
             print(f"  no se pudo completar la fase de buscador: {exc}")
         minutos = (time.monotonic() - t0_buscador) / 60
-        print(f"  buscador: {len(terminos)} terminos, {nuevos} productos nuevos "
-              f"({minutos:.0f} min)", flush=True)
+        print(f"  buscador: {len(terminos)} terminos, {nuevos} productos nuevos, "
+              f"{sin_datos} terminos sin datos ({minutos:.0f} min)", flush=True)
         if agotado:
             print(f"  aviso: se acabo el presupuesto del buscador "
                   f"({PRESUPUESTO_BARRIDO_S}s) con {len(filas)} productos: manana "
