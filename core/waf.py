@@ -49,7 +49,79 @@ HEADLESS_POR_DEFECTO = os.environ.get("SCRAP_WAF_HEADLESS", "") == "1"
 # El reto de AWS WAF necesita **un navegador de verdad**, no un navegador que se vea: los
 # mismos retos pasan con la ventana colocada fuera del area visible, y el sistema la sigue
 # tratando como una ventana normal (no es `headless`, que es lo que el WAF detecta mas).
-ARGS_FUERA_DE_LA_VISTA = ["--window-position=-2400,-2400", "--window-size=900,700"]
+#
+# **Y una posicion fija no vale, medido el 26 de septiembre de 2026 con la ventana delante.**
+# El primer arreglo ponia `-2400,-2400` a mano, y en este ordenador eso **no** esta fuera de
+# la vista: su escritorio virtual empieza en x=-1.920 (hay un monitor a la izquierda del
+# principal, 3.840 px de ancho en total), asi que una ventana de 1.382 px colocada en -2.400
+# ocupa de -2.400 a -1.018 y **sus ultimos 900 px caen en el monitor de la izquierda**. La
+# medicion, con la ventana abierta de verdad:
+#
+#     fuera       x=-2400 y=-2400 1382x1034  Pasteleria - Categorias - Alcampo superm...
+#     escritorio virtual: x de -1.920 a 1.920 (3.840 x 1.083)
+#
+# O sea que el dueno seguia viendola, y con razon. Ahora la posicion se **calcula** a partir
+# del escritorio de verdad (`SM_XVIRTUALSCREEN` y compania) y se coloca la ventana entera
+# arriba a la izquierda de todo el escritorio: en este ordenador, `-2870,-750`, que con
+# 900x700 ocupa de -2.870 a -1.970 y de -750 a -50, fuera del area de cualquier monitor.
+TAMANO_VENTANA = (900, 700)
+# Si no se pueden leer las metricas (otra plataforma, o ctypes capado), un valor que queda
+# fuera de cualquier escritorio razonable.
+POSICION_DE_EMERGENCIA = (-10_000, -10_000)
+
+
+def escritorio() -> tuple[int, int, int, int]:
+    """(x, y, ancho, alto) de TODO el escritorio virtual, sumando los monitores.
+
+    En este ordenador devuelve `(-1920, 0, 3840, 1083)`: hay un monitor a la izquierda del
+    principal. Si no se puede preguntar, devuelve un rectangulo de emergencia.
+    """
+    try:
+        import ctypes
+        u = ctypes.windll.user32
+        # 76..79: SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN
+        x, y = u.GetSystemMetrics(76), u.GetSystemMetrics(77)
+        ancho, alto = u.GetSystemMetrics(78), u.GetSystemMetrics(79)
+        if ancho and alto:
+            return (x, y, ancho, alto)
+    except Exception:  # noqa: BLE001
+        pass
+    return (-10_000, -10_000, 20_000, 20_000)
+
+
+def posicion_fuera(escritorio_: tuple[int, int, int, int],
+                   ancho: int, alto: int) -> tuple[int, int]:
+    """Donde poner la ventana para que quede **entera** fuera de ese escritorio.
+
+    **El margen no es el tamaño que pedimos, es el del escritorio**, y eso es una medicion:
+    Chromium no hace caso de `--window-size` cuando el perfil ya tiene su tamaño guardado (el
+    perfil se reutiliza a proposito, ver `obtener`). Medido el 26 de septiembre de 2026: se
+    pidieron 900x700 y la ventana salio de **1.382x1.034**, asi que 50 px de margen dejaban
+    asomar un trozo de 432x284 por el monitor de la izquierda. Contando con una ventana tan
+    grande como el escritorio entero, no asoma ni maximizada.
+
+    Es una funcion pura para poder comprobarla con escritorios de mentira (uno solo, dos en
+    fila, dos en cruz) sin abrir ningun navegador.
+    """
+    x, y, ancho_esc, alto_esc = escritorio_
+    return x - max(ancho, ancho_esc) - 100, y - max(alto, alto_esc) - 100
+
+
+def fuera_de_la_vista(ancho: int | None = None, alto: int | None = None) -> list[str]:
+    """Los argumentos que dejan la ventana **entera** fuera del escritorio virtual.
+
+    Se calcula y no se escribe a mano porque el escritorio no es siempre 0,0-1920,1080: con
+    dos monitores, el area visible puede empezar en x negativo, y una posicion fija que
+    parece lejisimos puede caer dentro. Ver la medicion de arriba.
+    """
+    ancho = ancho or TAMANO_VENTANA[0]
+    alto = alto or TAMANO_VENTANA[1]
+    x, y = posicion_fuera(escritorio(), ancho, alto)
+    return [f"--window-position={x},{y}", f"--window-size={ancho},{alto}"]
+
+
+# El nombre se mantiene: es el que usan la configuracion del navegador y las pruebas.
+ARGS_FUERA_DE_LA_VISTA = fuera_de_la_vista()
 
 
 def _fichero(dominio: str) -> Path:
@@ -179,6 +251,80 @@ def renueva(dominio: str, url_prueba: str) -> dict:
     return sesion
 
 
+def ventana_del_navegador(dominio: str, url_prueba: str,
+                          segundos: int = 240) -> dict:
+    """Abre el navegador como se abre de verdad y **dice donde ha quedado su ventana**.
+
+    Existe porque esto hizo falta dos veces y las dos a mano:
+
+      1. El 25 de septiembre de 2026 el dueno dijo *"a veces salta el navegador"*.
+      2. El 26, con la ventana ya colocada en `-2400,-2400`, la medicion enseno que **seguia
+         asomando** 432x284 px por el monitor de la izquierda (escritorio virtual de -1.920 a
+         1.920) y que Chromium no hace caso de `--window-size` (900x700 pedidos, 1.382x1.034
+         reales). De ahi salio `posicion_fuera`.
+
+    Enumerar ventanas es de Windows (`user32`), que es donde corre la tarea. Devuelve las
+    ventanas vistas y si la del navegador cae fuera del escritorio, para poder imprimirlo.
+
+        uv run python -m core.waf --comprobar-ventana
+    """
+    import threading
+
+    ventanas: dict[int, tuple] = {}
+    parar = threading.Event()
+
+    def anota() -> None:
+        try:
+            import ctypes
+            import ctypes.wintypes as wt
+            user32 = ctypes.windll.user32
+            user32.SetProcessDPIAware()
+        except Exception:  # noqa: BLE001
+            return
+        firma = ctypes.WINFUNCTYPE(ctypes.c_bool, wt.HWND, wt.LPARAM)
+
+        def cb(hwnd, _lparam):
+            if not user32.IsWindowVisible(hwnd):
+                return True
+            rect = wt.RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(rect))
+            ancho, alto = rect.right - rect.left, rect.bottom - rect.top
+            if ancho < 200 or alto < 100:          # tooltips y ventanas de 4x4
+                return True
+            largo = user32.GetWindowTextLengthW(hwnd)
+            titulo = ctypes.create_unicode_buffer(largo + 1)
+            user32.GetWindowTextW(hwnd, titulo, largo + 1)
+            pid = wt.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            ventanas[hwnd] = (rect.left, rect.top, ancho, alto, pid.value, titulo.value[:60])
+            return True
+
+        while not parar.is_set():
+            user32.EnumWindows(firma(cb), 0)
+            time.sleep(0.2)
+
+    esc = escritorio()
+    hilo = threading.Thread(target=anota, daemon=True)
+    hilo.start()
+    resultado: dict = {"escritorio": esc, "posicion": fuera_de_la_vista(), "ventanas": []}
+    try:
+        resultado["sesion"] = obtener(dominio, url_prueba, headless=False)
+    except Exception as exc:  # noqa: BLE001
+        resultado["error"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        parar.set()
+        hilo.join(timeout=5)
+
+    for _hwnd, (x, y, ancho, alto, pid, titulo) in sorted(ventanas.items(),
+                                                          key=lambda kv: kv[1][0]):
+        fuera = (x + ancho <= esc[0] or y + alto <= esc[1]
+                 or x >= esc[0] + esc[2] or y >= esc[1] + esc[3])
+        resultado["ventanas"].append({"x": x, "y": y, "ancho": ancho, "alto": alto,
+                                      "pid": pid, "titulo": titulo, "fuera": fuera})
+    resultado["suyas"] = [v for v in resultado["ventanas"] if v["fuera"] or "Alcampo" in v["titulo"]]
+    return resultado
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -190,7 +336,23 @@ if __name__ == "__main__":
                 "pasteler%C3%ADa/OC1282",
         help="pagina PROTEGIDA con la que validar (una categoria, no la portada)")
     ap.add_argument("--headless", action="store_true", help="sin ventana")
+    ap.add_argument("--comprobar-ventana", action="store_true",
+                    help="abre el navegador con ventana y dice donde queda (solo Windows)")
     a = ap.parse_args()
+    if a.comprobar_ventana:
+        r = ventana_del_navegador(a.dominio, a.url)
+        print(f"escritorio virtual: x de {r['escritorio'][0]} a "
+              f"{r['escritorio'][0] + r['escritorio'][2]}, "
+              f"y de {r['escritorio'][1]} a {r['escritorio'][1] + r['escritorio'][3]}")
+        print(f"posicion calculada: {r['posicion']}")
+        print(f"sesion: {'obtenida' if 'sesion' in r else r.get('error')}")
+        suyas = [v for v in r["ventanas"] if "Alcampo" in v["titulo"]]
+        for v in suyas or r["ventanas"][:5]:
+            print(f"  {'FUERA DE LA VISTA' if v['fuera'] else 'EN PANTALLA':<16} "
+                  f"x={v['x']} y={v['y']} {v['ancho']}x{v['alto']}  {v['titulo']}")
+        if not suyas:
+            print("  (no se vio la ventana del navegador: no se puede afirmar nada)")
+        raise SystemExit(0)
     s = obtener(a.dominio, a.url, headless=a.headless)
     print(f"sesion guardada para {a.dominio}: {len(s['cookies'])} cookies")
     print(f"  {', '.join(sorted(s['cookies']))}")

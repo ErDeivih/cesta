@@ -92,3 +92,45 @@ Dos cosas que costaron un intento fallido:
 
 Y una tercera, aprendida antes: **headless es mas detectable**. El arranque va en
 visible por defecto; `--headless` esta disponible para cuando funcione sin ventana.
+
+## La ventana que no se ve: medido, y dos veces
+
+El dueno dijo el 25 de septiembre de 2026: *"a veces salta el navegador"*. Alcampo corta con
+el WAF entre 10 y 33 veces al dia y cada corte podia abrir Chrome encima de lo que estuviera
+haciendo. Tres cosas, en este orden, y las tres con su numero:
+
+1. **Reintentar con la misma sesion antes de tocar el navegador** (`REINTENTOS_SIN_NAVEGADOR`
+   en el colector). Medido el 26 de septiembre, la pasada de Alcampo:
+
+       33 cortes:  22 resueltos reintentando con la misma cookie (0 navegadores)
+                   11 necesitaron ventana
+        (antes: 13 cortes el dia 24 y 10 el 23, cada uno con su ventana)
+
+2. **Modo oculto primero, ventana solo si el reto no pasa** (`waf.renueva`). El modo oculto
+   pasa menos retos, pero cuando pasa no molesta a nadie.
+3. **La ventana, fuera de la vista.** Aqui esta lo que costo dos intentos:
+
+   El primer arreglo puso `--window-position=-2400,-2400` a mano. **No estaba fuera de la
+   vista**, y se vio midiendo: este ordenador tiene un monitor a la izquierda del principal, o
+   sea un escritorio virtual de x=-1.920 a 1.920 (3.840 px). Una ventana de 1.382 px colocada
+   en -2.400 ocupa de -2.400 a -1.018, asi que **432 px caian dentro** del monitor de la
+   izquierda:
+
+       fuera   x=-2400 y=-2400 1382x1034   Pasteleria - Categorias - Alcampo...
+       escritorio virtual: x de -1920 a 1920
+
+   Y ademas Chromium **no hace caso de `--window-size`** cuando el perfil ya tiene el suyo
+   (900x700 pedidos, 1.382x1.034 reales), asi que el margen se calcula con el escritorio
+   entero y no con lo que pedimos. Ahora la posicion se **calcula** con las metricas del
+   sistema (`SM_XVIRTUALSCREEN` y compania) y la ventana queda entera fuera, ni maximizada:
+
+       posicion calculada: ['--window-position=-5860,-1183', '--window-size=900,700']
+       FUERA DE LA VISTA x=-5860 y=-1183 1382x1034   Pasteleria - Categorias - Alcampo...
+
+La comprobacion esta en la linea de ordenes, porque hizo falta a mano dos veces y la segunda
+fue justamente para descubrir que la primera no bastaba:
+
+    uv run python -m core.waf --comprobar-ventana
+
+Abre el navegador con ventana, enumera las ventanas del escritorio y dice si la suya cae
+fuera del area visible. Es de Windows (`user32`), que es donde corre la tarea de las 06:00.
