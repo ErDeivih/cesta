@@ -26,6 +26,7 @@ argument», que no dice qué argumento.
 | sistema de diseño | `.stitch/DESIGN.md` subido al proyecto (`upload_design_md`) |
 | pantalla 1 | «Cesta · Pantalla Principal» — `projects/15743377346721964880/screens/bc1fef6dd2c94961a94a22b7263f5c8c` |
 | guion de esa pantalla | `data/debug/prompt_inicio.txt` (las cuatro preguntas de la barra (a), los datos reales y las reglas del proyecto) |
+| **portada al código** | `plataforma/web/app/src/paginas/Inicio.tsx`, en `/`, el 27 de septiembre de 2026. Portada **a mano**: el HTML de Stitch trae `cdn.tailwindcss.com` y dos `<script>`, y la CSP de Caddy no lo permite (ver `docs/PANTALLAS.md`) |
 
 La generación tarda minutos: la llamada se corta a los 60 s por defecto y el script ya usa 900 s.
 Si aun así se corta, la pantalla puede estar generándose: se comprueba con `screens` antes de
@@ -35,11 +36,12 @@ repetir, porque repetir crea otra.
 
 1. Bajar el HTML y la captura de cada pantalla (`downloadUrl` de `get_screen`) y **revisar que
    cumple las restricciones**: ni un `<script>` ni un `style="…"` en línea, ni fuentes ni imágenes
-   remotas.
+   remotas. La de la pantalla 1 **no las cumple**: sirve de referencia visual, no de código.
 2. Generar las demás pantallas clave, en este orden: resultados de búsqueda con las cinco cadenas,
    ficha de grupo con la curva de precios, lista con reparto por tiendas, dónde comprar, avisos, y
    la portada del sitio de documentación.
 3. Traducirlas al código del proyecto (`plataforma/web/app`, React + Tailwind; y
-   `plataforma/aprende.py` para el sitio de docs), sin romper la CSP.
+   `plataforma/aprende.py` para el sitio de docs), sin romper la CSP. La traducción es **a mano**:
+   se copia la composición, no el HTML.
 4. Medir cada cambio con `plataforma.prueba_produccion`, `plataforma.prueba_navegador` y `pytest`.
    La barra (a) de los quince segundos la cierra el dueño.

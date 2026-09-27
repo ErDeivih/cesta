@@ -28,16 +28,22 @@ import { NavLink, useLocation } from 'react-router-dom'
 
 import { useAvisosSinVer, usePorCoger } from '../api/consultas'
 import {
+  IconoCasa,
   IconoCarro,
   IconoCodigoBarras,
   IconoCorazon,
-  IconoLupa,
   IconoPanel,
 } from './iconos'
 import { cx } from './ui'
 
 const ITEMS = [
-  { a: '/', texto: 'Buscar', Icono: IconoLupa, exacto: true },
+  // **Inicio** desde el 27 de septiembre de 2026: la pantalla que contesta las cuatro preguntas
+  // de `docs/PRUEBA-15-SEGUNDOS.md` sin entrar en ninguna otra (lo que falta y dónde, el
+  // buscador arriba, y lo que ha bajado de lo tuyo). Sustituye a «Buscar» en la barra porque el
+  // buscador vive **dentro** de Inicio: siete destinos en 390 px son 55 px por cabeza y el
+  // propio comentario de arriba ya decía que el séptimo no se mete apretando, sino sacando de
+  // aquí lo que no se usa en el pasillo. Buscar sigue en `/buscar`, y se llega por su campo.
+  { a: '/', texto: 'Inicio', Icono: IconoCasa, exacto: true },
   { a: '/cesta', texto: 'Lista', Icono: IconoCarro, exacto: false },
   { a: '/favoritos', texto: 'Favoritos', Icono: IconoCorazon, exacto: false },
   { a: '/escaner', texto: 'Escáner', Icono: IconoCodigoBarras, exacto: false },

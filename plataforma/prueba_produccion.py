@@ -76,6 +76,23 @@ def main() -> int:
                 pagina.wait_for_load_state("networkidle", timeout=8000)
             pagina.wait_for_timeout(800)
 
+        def busca(texto: str) -> None:
+            """Busca **como se busca desde el 27 de septiembre de 2026**.
+
+            La pantalla de entrada (`/`) es ahora Inicio, y el buscador vive dentro: se
+            escribe ahi y se manda con Enter, que es lo que hace una persona. Los resultados
+            siguen en `/buscar`, que es donde estaba antes el buscador, asi que las
+            comprobaciones de despues (pulsar el primer `/grupo/`) no cambian.
+            """
+            carga("/")
+            campo = pagina.get_by_placeholder("leche entera, atún, papel de cocina…")
+            campo.fill(texto)
+            campo.press("Enter")
+            with contextlib.suppress(Exception):
+                pagina.wait_for_url("**/buscar**", timeout=15000)
+            with contextlib.suppress(Exception):
+                pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+
         print(f"== la aplicacion monta en {BASE}, y el CSP de Caddy la deja")
         carga("/")
         texto = pagina.inner_text("body")
@@ -89,10 +106,7 @@ def main() -> int:
         comprueba(not errores, f"sin excepciones de JavaScript ({errores[:3]})")
 
         print("\n== pregunta 2: «¿esto que tengo en la mano esta caro?»")
-        carga("/")
-        pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
-        with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+        busca("leche entera")
         comprueba(pagina.locator("a[href^='/grupo/']").count() > 0,
                   "el buscador encuentra (la ruta mas nueva de la API responde)")
         pagina.locator("a[href^='/grupo/']").first.click()
@@ -209,10 +223,7 @@ def main() -> int:
         # La segunda linea entra por donde entra de verdad: buscar, abrir la ficha y
         # anadir alli. Y hacen falta **dos**, porque los encabezados de las dos
         # secciones solo salen cuando hay algo en los dos lados (`Cesta.tsx:1187`).
-        carga("/")
-        pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
-        with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+        busca("leche entera")
         pagina.locator("a[href^='/grupo/']").first.click()
         pagina.wait_for_url("**/grupo/**", timeout=20000)
         with contextlib.suppress(Exception):
@@ -226,6 +237,24 @@ def main() -> int:
                   f"y hay dos lineas apuntadas ({pagina.get_by_role('checkbox').count()})")
         comprueba("No he podido" not in texto, "sin un error rojo al leer")
 
+        # **La pantalla de Inicio, que es la que contesta las cuatro preguntas** (27 de
+        # septiembre de 2026). Antes habia que entrar en Cesta para saber que faltaba y en
+        # Avisos para saber que habia bajado; ahora las cuatro se contestan desde `/`. Esto
+        # comprueba lo que se puede comprobar desde aqui: que el resumen **esta en la primera
+        # pantalla y con datos**, no que se entienda a la primera, que es la barra (a) y la
+        # cierra una persona.
+        print("\n== la primera pantalla contesta las cuatro preguntas (27 sep 2026)")
+        carga("/")
+        texto = pagina.inner_text("main")
+        comprueba("Lo que te falta" in texto,
+                  "el resumen dice lo que falta sin entrar en la lista (preguntas 1 y 3)")
+        comprueba("Ha bajado de lo tuyo" in texto,
+                  "y lo que ha bajado de lo tuyo, tambien en la primera pantalla (pregunta 4)")
+        comprueba(pagina.get_by_placeholder("leche entera, atún, papel de cocina…").count() == 1,
+                  "con el buscador arriba, que es la pregunta 2")
+        comprueba(pagina.locator("nav[aria-label='Secciones'] a[href='/']").count() >= 1,
+                  "y la barra lleva a Inicio")
+
         print("\n== pregunta 3: tachar, y las dos secciones (barra c)")
         # **Se deja la lista con algo de los dos lados**, en vez de suponer como la dejo la
         # pasada anterior: si hay menos de dos lineas se anade otra, y si no hay nada tachado
@@ -234,10 +263,7 @@ def main() -> int:
         # fallaba con la aplicacion bien (medido el 24 de septiembre de 2026).
         carga("/cesta")
         if pagina.locator("input[type=checkbox]").count() < 2:
-            carga("/")
-            pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
-            with contextlib.suppress(Exception):
-                pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+            busca("leche entera")
             pagina.locator("a[href^='/grupo/']").first.click()
             pagina.wait_for_url("**/grupo/**", timeout=20000)
             with contextlib.suppress(Exception):

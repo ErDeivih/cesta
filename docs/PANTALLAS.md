@@ -28,6 +28,82 @@ fecha.
 
 ---
 
+## Inicio — la primera pantalla
+
+**[hecho] el 27 de septiembre de 2026.** Es lo primero que se ve al abrir, y existe por una
+razon que esta escrita en `docs/PRUEBA-15-SEGUNDOS.md`: **las cuatro preguntas con las que se
+abre la aplicacion no se contestaban desde la primera pantalla**. Habia que entrar en otra.
+
+    1. «¿Que me falta comprar y donde lo compro?»   antes 1 toque    ahora 0
+    2. «Esto que tengo en la mano, ¿esta caro?»     antes 1 toque    ahora 1 (escribir aqui)
+    3. «¿Voy tachando bien?»                        antes 0 toques   ahora 0 (y en la barra)
+    4. «¿Ha bajado algo de lo mio?»                 antes 1, o 3     ahora 0
+
+No se ha quitado ninguna pantalla: se contesta **antes** de tener que ir. `/cesta`, `/buscar`,
+`/avisos` y `/panel` siguen donde estaban, y la barra sigue llevando a las mismas seis. El
+titulo de la pestaña sigue poniendose por ruta (`App.tituloDe`), con `/` = «Inicio».
+
+    [ buscar…                            ] [ Buscar ]   <- la pregunta 2, sin salir de aqui
+
+    Lo que te falta                                   <- preguntas 1 y 3
+    7 cosas
+    4 en Mercadona · 2 en Aldi · 1 en DIA
+    Total estimado 43,18 € · con las ofertas te ahorras 2,40 €
+    Ver la lista entera y tachar            -> /cesta
+
+    Pendientes de coger                               <- las cuatro primeras, con lo que
+    Leche entera · 1,05 € · en DIA                       cuestan donde conviene comprarlas
+    …y 3 más en la lista
+
+    Ha bajado de lo tuyo               3 bajadas      <- pregunta 4, y el detalle -> /avisos
+    Leche entera Lauki   -8,7 %
+    DIA  1,15 €/l  1,05 €/l
+
+    Precios del 2026-09-27. Se comparan cinco cadenas y se enseña el precio por unidad.
+
+### Lo que se ve cuando algo falla
+
+Va mas alla de las cuatro reglas de arriba, porque es la primera pantalla y es la que se ve
+rota el primer dia:
+
+    sin cuenta          una tarjeta que dice que hace la aplicacion y lleva a /ajustes. No
+                        se enseña un cero ni un reparto vacio: no hay lista, no hay cero
+    sin lista           «Lo que te falta» sale con 0 y el enlace a la lista, que es donde se
+                        crea. La seccion de bajadas dice que no ha bajado nada de lo tuyo
+    el reparto no
+      ha cargado        se enseña el nombre de la linea y **nada mas**: ni cadena ni precio.
+                        Un hueco es mejor que una cifra inventada
+    no esta en el
+      catalogo          la linea lo dice en vez de callarse: *«sin comparar: no está en el
+                        catálogo»*, que es un dato, no un fallo
+    sin bajadas         la tarjeta lo dice con la fecha de los precios a la vista y con la
+                        regla (7 dias, solo lo tuyo), no con una pantalla en blanco
+
+### Decisiones que se ven en el codigo
+
+  - **El numero manda sobre el adorno.** «Te faltan 7 cosas» sale grande y con la cifra en
+    ancho fijo (`.cifra`), que es la regla del proyecto para todas las cifras.
+  - **No se tacha desde aqui.** Los pendientes **enlazan** a la lista. Tachar en el pasillo
+    sin cobertura funciona porque `Cesta.tsx` tiene la cola del movil (`estado/cola.ts`);
+    traer el boton aqui sin esa cola seria un boton que a veces no hace nada, que es peor que
+    no tenerlo. Cuando la cola se pueda reutilizar entera, este es el sitio.
+  - **Lo de arriba es lo unico que cambia de sitio.** El buscador estaba en `/buscar` y ahora
+    esta en las dos: en `/buscar` sigue el de siempre, con sus filtros y su mosaico, y el de
+    Inicio solo escribe la direccion. Dos buscadores con la misma logica en dos ficheros es
+    como se acaba con dos comportamientos; por eso el de Inicio no busca, navega.
+  - **La pantalla se diseño con Stitch** (proyecto `15743377346721964880`, pantalla «Cesta ·
+    Pantalla Principal», `.stitch/DESIGN.md`), y se porta a mano a React/Tailwind. El HTML de
+    Stitch **no se pega**: trae Tailwind por CDN y dos `<script>`, y la CSP de Caddy
+    (`script-src 'self'`, `style-src 'self'`) lo tumba. Stitch da la composicion; los tokens,
+    la CSP y las areas de 44 px los pone el codigo.
+
+Lo comprueba `plataforma/prueba_produccion.py` en cada pasada («la primera pantalla contesta
+las cuatro preguntas»): que el resumen, las bajadas y el buscador **estan ahi y con datos**, y
+que la barra lleva a Inicio. Si se entienden a la primera lo dice la prueba de los quince
+segundos, que no la puede cerrar quien escribe el codigo.
+
+---
+
 ## 1. Entrar
 
 **[hecho]**
@@ -50,7 +126,10 @@ propia pantalla desde antes)
 
 ### Lo que se ve al abrir, con el buscador vacio
 
-Aqui estaba la mejora mas grande que quedaba por hacer. Hoy:
+**Ojo con el titulo de esta seccion: desde el 27 de septiembre la aplicacion no abre aqui**,
+abre en Inicio (arriba). A `/buscar` se llega escribiendo en el campo de Inicio o desde la
+barra. Lo que sigue es lo que se ve al abrir **esta** pantalla, con el buscador vacio, que
+era aqui donde estaba la mejora mas grande que quedaba por hacer. Hoy:
 
     [ buscar...                          🎤  📷 ]     <- la voz, todavia no
     [ Alcampo ][ Aldi ][ Carrefour ][ DIA ][ Merc ]

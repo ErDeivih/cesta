@@ -99,6 +99,11 @@ def conexion() -> duckdb.DuckDBPyConnection:
     def _o_nulo(*nombres: str) -> str:
         return ", ".join(c if c in disponibles else f"NULL AS {c}" for c in nombres)
 
+    # `promo_unidades_minimas` (las unidades que pide la mecanica de una oferta, Alcampo) va en
+    # esta lista y no solo en `grupos` porque **la busqueda lee `buscable`**: una columna que
+    # existe en `grupos` pero no en esta tabla tira la busqueda entera con un Binder Error.
+    # Paso el 27 de septiembre de 2026: la app se quedo con «No he podido traer esto» en Buscar
+    # por pedir en el SQL una columna que `buscable` no tenia.
     con.execute(f"""
         CREATE TABLE buscable AS
         SELECT grupo_id, fuente, id_fuente, nombre, marca, cantidad, unidad_canon,
@@ -107,7 +112,8 @@ def conexion() -> duckdb.DuckDBPyConnection:
                {_o_nulo("sellos", "conservacion", "es_marca_propia", "envase",
                         "nutricion", "promo_club", "promo_solo_online",
                         "es_alcohol", "es_recall",
-                        "distintivo", "precio_comparable", "seccion")},
+                        "distintivo", "precio_comparable", "seccion",
+                        "promo_unidades_minimas")},
                strip_accents(lower(nombre || ' ' || coalesce(marca, ''))) AS texto
           FROM grupos
     """)
@@ -248,8 +254,10 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
     # Las columnas nuevas se piden **solo si estan**: gold puede ser de antes del ultimo
     # cambio de codigo (pasa cada vez que se anade un campo y aun no ha corrido la pasada), y
     # una busqueda que revienta por una columna que no existe deja la pantalla en blanco.
-    # Es la misma regla que sigue `grupo()` con `disponibles`.
-    columnas = {f[0] for f in con.execute("DESCRIBE grupos").fetchall()}
+    # Se pregunta por **`buscable`**, que es la tabla que lee esta consulta, y no por `grupos`:
+    # las dos pueden no tener las mismas columnas, y preguntarle a la que no es daba por buena
+    # una columna que la consulta no encuentra (medido el 27 de septiembre de 2026).
+    columnas = {f[0] for f in con.execute("DESCRIBE buscable").fetchall()}
     unidades = ("max(coalesce(promo_unidades_minimas, 0))"
                 if "promo_unidades_minimas" in columnas else "0")
 

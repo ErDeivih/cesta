@@ -18,31 +18,31 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 | | |
 |---|---:|
-| productos del catalogo | **52.824** |
-| grupos comparables | **8.829** |
-| productos comparables por kg/l/m | **42.563** |
-| productos con codigo de barras | **25.527** |
+| productos del catalogo | **53.014** |
+| grupos comparables | **8.808** |
+| productos comparables por kg/l/m | **42.589** |
+| productos con codigo de barras | **25.507** |
 
 ## Etiquetado y composicion
 
 | | |
 |---|---:|
-| productos con algun sello | **11.760** |
+| productos con algun sello | **11.826** |
 | productos con certificado | **767** |
-| productos con Nutri-Score | **8.442** |
-| productos con tabla nutricional | **3.841** |
-| productos con envase | **9.106** |
+| productos con Nutri-Score | **8.459** |
+| productos con tabla nutricional | **3.832** |
+| productos con envase | **9.103** |
 
 ## Historico
 
-    977.746 filas, 21 dias acumulados
+    1.030.531 filas, 22 dias acumulados
 
 ## Por cadena, la ultima captura de cada una
 
 | cadena | productos | errores | tiempo | fecha |
 |---|---:|---:|---:|---|
-| alcampo | 23.932 | 1 | 15 s | 2026-09-26 |
-| carrefour | 16.579 | 4 | 584 s | 2026-09-26 |
+| alcampo | 24.120 | 0 | 7.000 s | 2026-09-27 |
+| carrefour | 16.580 | 4 | 5.829 s | 2026-09-27 |
 | dia | 5.757 | 0 | 620 s | 2026-09-27 |
 | mercadona | 4.339 | 0 | 102 s | 2026-09-27 |
 | aldi | 2.218 | 0 | 66 s | 2026-09-27 |
@@ -51,7 +51,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 | | |
 |---|---:|
-| productos con texto de promocion | 7.932 |
-| **de tarjeta** (no bajan lo que pagas en caja) | **569** |
-| **solo por internet** (no bajan el ticket de la tienda) | **328** |
-| ofertas que cuentan de verdad | 7.035 |
+| productos con texto de promocion | 7.991 |
+| **de tarjeta** (no bajan lo que pagas en caja) | **577** |
+| **solo por internet** (no bajan el ticket de la tienda) | **327** |
+| ofertas que cuentan de verdad | 7.087 |

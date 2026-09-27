@@ -35,6 +35,21 @@ export function IconoLupa(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** La casa: el icono de **Inicio**, la pantalla que contesta las cuatro preguntas.
+ *
+ *  Se dibuja a mano como los demas. No lleva techo a dos aguas ni chimenea, que es lo que
+ *  convierte una casa en un dibujo de una casa: el trazo tiene que leerse a 22 px en una
+ *  barra de abajo, con el brillo bajo y de reojo. */
+export function IconoCasa(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M4 10.5 12 4l8 6.5" />
+      <path d="M6 10v10h12V10" />
+      <path d="M10 20v-5h4v5" />
+    </Base>
+  )
+}
+
 export function IconoCodigoBarras(props: SVGProps<SVGSVGElement>) {
   return (
     <Base {...props}>

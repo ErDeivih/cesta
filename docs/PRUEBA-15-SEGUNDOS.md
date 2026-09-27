@@ -75,16 +75,23 @@ se viene a apuntar en la tabla de abajo.
 cinco toques no se pulsa en quince segundos ni sabiendo donde esta, y ese numero es de
 codigo, no de usabilidad. La puerta los **cuenta andando de verdad** desde la primera
 pantalla (`prueba_navegador.py`, «cuantos toques hay desde la primera pantalla hasta cada
-respuesta»); medido el 24 de septiembre de 2026:
+respuesta»). **Desde el 27 de septiembre de 2026 la primera pantalla es Inicio** (`/`), y
+contesta las cuatro sin salir de ella; el buscador sigue en `/buscar`, y a el se llega
+escribiendo en el campo de Inicio:
 
-    1. que me falta y donde lo compro   1 toque    Buscar -> Cesta
-    2. esto esta caro                   1 toque    escribir en Buscar -> el resultado
-    3. voy tachando bien                0 toques   el numero esta en la barra de abajo
+    1. que me falta y donde lo compro   0 toques   Inicio: cuantas faltan y por que cadena
+                                        1 toque    a la lista, para tacharlas andando
+    2. esto esta caro                   1 toque    escribir en el campo de Inicio -> resultados
+    3. voy tachando bien                0 toques   el numero, en Inicio y en la barra de abajo
                                                     (1 toque si se quiere ver la lista)
-    4. ha bajado algo de lo mio         1 toque    Avisos (si tienes avisos pedidos)
-                                        3 toques   Panel -> Bajadas -> «Solo lo mío»
-                                                   (esta ultima contesta **sin haber pedido
-                                                    nada antes**, que es el caso normal)
+    4. ha bajado algo de lo mio         0 toques   Inicio lo enseña, y contesta **sin haber
+                                                    pedido nada antes**, que es el caso normal
+                                        1 toque    Avisos, para el detalle
+
+Antes de esa fecha eran 1, 1, 0 y 1 (o 3 por el panel, `Panel -> Bajadas -> «Solo lo mío»`).
+Lo mide `plataforma/prueba_produccion.py` («la primera pantalla contesta las cuatro
+preguntas»): comprueba que el resumen, las bajadas y el buscador **estan ahi y con datos**,
+y que la barra lleva a Inicio. Lo que no puede medir es si se entienden a la primera.
 
 Si una persona tarda mas de quince segundos con estos numeros, el problema **no es donde
 esta el boton**: es que la respuesta no se entiende, y eso es lo que hay que apuntar en
@@ -92,26 +99,29 @@ voz alta.
 
 ## Por donde se contesta cada una, hoy
 
-    1. Cesta. Dos secciones («Por coger» / «En el carro»), el total arriba y la
-       comparacion por cadenas debajo. `paginas/Cesta.tsx`
-    2. Escaner (codigo de barras) o buscador -> la ficha, con **la frase** antes que la
-       tabla (`paginas/Producto.tsx`, `logica/frase.ts`). La frase **no se inventa** si
-       el grupo no es de fiar: en ese caso hay que poder contestar "no lo se" sin que
-       parezca un fallo.
-    3. Cesta, la misma pantalla: los dos encabezados con su cuenta y el tachado. Y
-       **el numero de la barra de abajo** (`Nav.tsx`), que contesta de un vistazo desde
-       cualquier pantalla sin abrir nada.
-    4. **Panel -> Bajadas -> «Solo lo mío»** (`paginas/Panel.tsx`, 3 toques). Es la que
-       contesta **sin haber hecho nada antes**: *«Lo tuyo que ha bajado en 7 días»*, con
-       la tabla y la regla escrita debajo (*"si lo que cambió fue el formato, eso no es
-       una bajada"*). Se midió en un navegador el 23 de septiembre de 2026 y contesta
-       con una fila de verdad: leche entera Lauki, Dia, 1,15 €/l -> 1,05 €/l, un -8,7 %.
-       **Y hay una segunda ruta, que es la de un toque: «Avisos»** (`paginas/Avisos.tsx`).
-       Contesta *lo que pediste con la campana*, y **solo eso**: con una cuenta que no ha
+    1. **Inicio** (`paginas/Inicio.tsx`), que es la primera pantalla: «Lo que te falta»,
+       el reparto por cadenas y el total estimado con lo que ahorras. Debajo, el enlace a
+       la lista. La lista, con sus dos secciones («Por coger» / «En el carro»), el total
+       arriba y la comparacion por cadenas, en `paginas/Cesta.tsx`.
+    2. El campo de busqueda **de Inicio** -> resultados -> la ficha, con **la frase** antes
+       que la tabla (`paginas/Producto.tsx`, `logica/frase.ts`). Tambien vale el escaner
+       (codigo de barras). La frase **no se inventa** si el grupo no es de fiar: en ese
+       caso hay que poder contestar "no lo se" sin que parezca un fallo.
+    3. El numero, en dos sitios y los dos en la primera pantalla: **el resumen de Inicio**
+       («te faltan N») y **la barra de abajo** (`Nav.tsx`), que lo dice desde cualquier
+       pantalla sin abrir nada. El detalle —los dos encabezados con su cuenta y el
+       tachado— en Cesta.
+    4. **Inicio**, con la seccion «Ha bajado de lo tuyo» (`useBajadas(7, false, [], true)`).
+       Es la que contesta **sin haber hecho nada antes**: *«Lo tuyo que ha bajado en 7
+       días»*, con la tabla y la regla escrita debajo (*"si lo que cambió fue el formato,
+       eso no es una bajada"*). Se midió en un navegador el 23 de septiembre de 2026 y
+       contesta con una fila de verdad: leche entera Lauki, Dia, 1,15 €/l -> 1,05 €/l, un
+       -8,7 %. Las otras dos rutas siguen: **Panel -> Bajadas -> «Solo lo mío»**
+       (`paginas/Panel.tsx`, 3 toques) y **Avisos** (`paginas/Avisos.tsx`, 1 toque), que
+       contesta *lo que pediste con la campana* y **solo eso**: con una cuenta que no ha
        pedido ningún aviso, la pantalla dice *«No sigues ningún producto»* con la
-       explicación de cómo pedirlo. Es correcto, y no es una respuesta a la pregunta.
-       Para la prueba de los quince segundos, la ruta buena es la del panel; si quien la
-       hace ya tiene avisos pedidos, la de Avisos contesta en un toque.
+       explicación de cómo pedirlo. Es correcto, pero no es una respuesta a la pregunta;
+       por eso la respuesta que no depende de haber pedido nada es la de Inicio.
 
 ## Que se apunta
 
@@ -122,8 +132,11 @@ encontro algo. Las frases de la gente valen mas que el numero: "esto no me dice 
 Y lo que hay que apuntar aparte, porque es lo que decide si vuelve:
 
   - **la primera vez**: entrar con una cuenta nueva y ver si la aplicacion se entiende
-    **sin que nadie explique nada**. El buscador vacio ya no esta vacio (cuatro productos
-    con su diferencia de hoy, `componentes/LoQueSeCompra.tsx`), pero eso hay que verlo.
+    **sin que nadie explique nada**. Desde el 27 de septiembre la primera pantalla es
+    Inicio: una cuenta nueva sin lista tiene que decir *«no tienes lista»* y ofrecer como
+    empezar una, no enseñar un cero. En Buscar, el buscador vacio ya no esta vacio
+    (cuatro productos con su diferencia de hoy, `componentes/LoQueSeCompra.tsx`), pero eso
+    hay que verlo.
   - **sin cobertura**: apagar los datos y tachar algo en la lista. No puede salir nada
     rojo, y tiene que quedar claro que el cambio no se ha guardado.
   - **a la primera**: si hay que explicar algo una vez, ese algo esta mal.
