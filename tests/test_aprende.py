@@ -267,6 +267,29 @@ def test_la_franja_del_boton_de_copiar_no_la_paga_un_bloque_sin_boton():
         "no hay franja reservada para el boton de copiar"
 
 
+def test_una_sola_cabecera_de_pagina_por_documento(sitio):
+    """Un `h1` por pagina: el titulo del documento. Los apartados van debajo.
+
+    Los documentos del proyecto son notas de trabajo, no capitulos, y algunos llevan varios `#`
+    (el de operacion, tres): salian tres titulos del mismo nivel en la misma pagina, y quien
+    navega por encabezados oye tres veces «esto es el titulo». Medido con
+    `data/debug/accesibilidad.py` el 27 de septiembre de 2026. El generador deja el primero y
+    baja los demas a `h2`, que es lo que son.
+    """
+    salida, paginas = sitio
+    for nombre in [n for n in paginas if n.endswith(".html")]:
+        texto = _leer(salida, nombre)
+        cuantos = texto.count("<h1")
+        assert cuantos == 1, f"{nombre} tiene {cuantos} `h1` en vez de uno"
+    # Y el caso que lo motivo sigue existiendo en el material: el documento de operacion tiene
+    # tres `#` en su markdown. Si algun dia se reescribe, esta prueba deja de mirar ese caso.
+    operacion = (aprende.DOCS / "OPERACION.md")
+    if operacion.exists():
+        crudo = operacion.read_text(encoding="utf-8")
+        assert crudo.count("\n# ") >= 2, (
+            "el documento que motivo esta regla ya no tiene varios `#`: revisa la prueba")
+
+
 def test_el_markdown_de_verdad_se_pinta(sitio):
     """Tablas, codigo, avisos destacados y boton de copiar: lo que hace legible el material."""
     salida, paginas = sitio

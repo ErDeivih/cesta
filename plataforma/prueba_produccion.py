@@ -190,6 +190,16 @@ def main() -> int:
         # enlaza paginas. El indice del capitulo vive en `aside.toc`.
         comprueba(pagina.locator("aside.toc a[href^='#']").count() >= 3,
                   "con su indice de apartados")
+        # **Un solo `h1` por pagina, tambien en el material.** Los documentos del proyecto son
+        # notas de trabajo y algunos llevan varios `#`: el de operacion tenia tres, y salia una
+        # pagina con tres titulos del mismo nivel (medido el 27 de septiembre de 2026 con
+        # `data/debug/accesibilidad.py`). El generador deja el primero y baja los demas a `h2`.
+        for ruta in ("/aprende/", "/aprende/04-emparejar-productos.html",
+                     "/aprende/93-las-formulas.html", "/aprende/OPERACION.html"):
+            carga(ruta)
+            cuantos = pagina.locator("main h1").count()
+            comprueba(cuantos == 1,
+                      f"{ruta} tiene un solo titulo de pagina ({cuantos})")
         # **Y el capitulo empieza en la primera pantalla del movil.** Medido el 27 de septiembre
         # de 2026: el `<details>` del indice lateral sale abierto y, a 390x844, la primera
         # pantalla era el indice entero -- catorce capitulos y ni una linea del capitulo. Se

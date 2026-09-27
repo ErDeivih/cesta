@@ -386,6 +386,13 @@ export function Inicio() {
 
   return (
     <div className="space-y-4">
+      {/* **El titulo de la pantalla, para quien navega por encabezados.** No se ve porque en
+          esta pantalla la identidad la lleva la barra de abajo (el icono «Inicio» marcado) y
+          poner un titular grande encima del buscador empujaria la primera respuesta hacia
+          abajo, que es justo lo que esta pantalla vino a arreglar. Pero una pagina sin ningun
+          `h1` deja a quien usa un lector de pantalla sin saber donde esta: medido con
+          `data/debug/accesibilidad.py` el 27 de septiembre de 2026. */}
+      <h1 className="sr-only">Inicio</h1>
       <Buscador />
 
       {sinSesion ? (

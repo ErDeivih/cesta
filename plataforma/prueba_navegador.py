@@ -339,6 +339,54 @@ def _producto_caro_con_historial() -> tuple[str, str] | None:
     return (str(fila[0]), str(fila[1])) if fila else None
 
 
+# Lo que hace que una pantalla se pueda recorrer **sin verla bien o sin raton**: imagenes con
+# texto alternativo, botones que se llaman de algo, campos con su etiqueta y una jerarquia de
+# encabezados sin huecos y con un solo `h1`. Es JavaScript y no Python porque hay que mirar el
+# DOM ya pintado: un `<button>` sin nombre no se puede ver en el codigo de React, aparece al
+# montarlo (iconos, componentes que reciben el texto por props).
+_ACCESIBILIDAD = """() => {
+  const visible = (n) => {
+    const r = n.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return false;
+    const e = getComputedStyle(n);
+    return e.visibility !== 'hidden' && e.display !== 'none' && Number(e.opacity) > 0.1;
+  };
+  const nombre = (n) => (n.getAttribute('aria-label') || n.innerText || n.textContent || '')
+      .trim();
+  const problemas = {sinAlt: [], sinNombre: [], campos: [], encabezados: []};
+  for (const img of document.querySelectorAll('img')) {
+    if (visible(img) && !img.hasAttribute('alt')) {
+      problemas.sinAlt.push(img.getAttribute('src') || '(sin src)');
+    }
+  }
+  for (const n of document.querySelectorAll('button, a[href], summary')) {
+    if (!visible(n)) continue;
+    if (!nombre(n) && !n.getAttribute('title')) {
+      problemas.sinNombre.push(n.tagName + ' ' + (n.getAttribute('href') || ''));
+    }
+  }
+  for (const c of document.querySelectorAll('input:not([type=hidden]), select, textarea')) {
+    if (!visible(c)) continue;
+    const id = c.getAttribute('id');
+    const porId = id ? document.querySelector('label[for="' + id + '"]') : null;
+    if (!porId && !c.closest('label') && !c.getAttribute('aria-label')
+        && !c.getAttribute('title')) {
+      problemas.campos.push(c.tagName + ' ' + (c.getAttribute('name') || c.type || ''));
+    }
+  }
+  const niveles = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')]
+      .filter(visible).map(h => Number(h.tagName[1]));
+  let anterior = 0;
+  for (const n of niveles) {
+    if (anterior && n > anterior + 1) problemas.encabezados.push(`h${anterior} -> h${n}`);
+    anterior = n;
+  }
+  const h1 = niveles.filter(n => n === 1).length;
+  if (h1 !== 1) problemas.encabezados.push(`${h1} h1`);
+  return problemas;
+}"""
+
+
 def _franja_util(pagina) -> tuple[int, int]:
     """La banda de pantalla que no tapan la cabecera de arriba ni la barra de abajo.
 
@@ -705,10 +753,12 @@ def main() -> int:
         comprueba("Por coger" in lista or "líneas" in lista, "la lista ensena lo que hay dentro")
 
         # --------------------------------------------------- el pasillo, pegado arriba --
-        cabeceras = pagina.locator("h4")
+        # Se busca por **la clase del encabezado pegado**, no por su nivel: bajo de `h4` a `h3`
+        # el 27 de septiembre de 2026 porque saltaba un nivel de la jerarquia, y una prueba que
+        # busca `h4` a secas deja de mirar sin decirlo.
+        cabeceras = pagina.locator("main h3.sticky, main h4.sticky")
         if cabeceras.count():
-            pegado = pagina.evaluate(
-                "() => getComputedStyle(document.querySelector('h4')).position")
+            pegado = cabeceras.first.evaluate("(n) => getComputedStyle(n).position")
             comprueba(pegado == "sticky",
                       f"el encabezado de pasillo se queda pegado (position: {pegado})")
         else:
@@ -1161,6 +1211,17 @@ def main() -> int:
                       f"en {ruta} ninguna tabla se desliza en horizontal "
                       f"({len(anchas)} de {len(cajas)}: "
                       f"{[n for a, b, n in cajas if a > b + 1][:3]})")
+            # **Y la pantalla se puede recorrer sin verla.** Lo que no da error al
+            # incumplirse: una imagen sin texto alternativo, un boton sin nombre, un campo sin
+            # etiqueta y una jerarquia de encabezados con un hueco o con dos `h1`. Medido el
+            # 27 de septiembre de 2026 con `data/debug/accesibilidad.py`: salieron cinco
+            # (Inicio, Buscar y el caso vacio de Favoritos sin `h1`, la lista con un salto de
+            # `h2` a `h4`, y el documento de operacion con tres `h1`). El contraste se mide
+            # aparte, mas abajo y con su propia pasada.
+            accesibilidad = pagina.evaluate(_ACCESIBILIDAD)
+            comprueba(all(not v for v in accesibilidad.values()),
+                      f"en {ruta} la pantalla se puede recorrer sin verla "
+                      f"({ {k: v[:3] for k, v in accesibilidad.items() if v} })")
 
         # ------------------- cuando la API falla: una frase y una forma de reintentar -----
         # La fila «errores + reintentar» del §8 no la habia mirado un navegador nunca: se

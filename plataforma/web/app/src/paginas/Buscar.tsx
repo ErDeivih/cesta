@@ -126,6 +126,11 @@ export function Buscar() {
 
   return (
     <div className="grid grid-cols-1 gap-4">
+      {/* El titulo de la pantalla, para quien navega por encabezados: no se ve, porque en esta
+          pantalla lo primero tiene que ser el campo de busqueda -- se usa de pie y con una
+          mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
+          `data/debug/accesibilidad.py` el 27 de septiembre de 2026. */}
+      <h1 className="sr-only">Buscar</h1>
       <section aria-label="Buscar" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="q" className="sr-only">

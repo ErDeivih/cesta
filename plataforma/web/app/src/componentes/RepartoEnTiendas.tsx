@@ -259,7 +259,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
       {r.sublistas.map((s) => (
         <section key={s.cadena} className="mb-4 rounded-lg border border-neutral-200 dark:border-neutral-700">
           <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-neutral-200 px-3 py-2 dark:border-neutral-700">
-            <h4 className="text-sm font-semibold">{nombreDeCadena(s.cadena)}</h4>
+            <h3 className="text-sm font-semibold">{nombreDeCadena(s.cadena)}</h3>
             <span className="cifra text-lg font-semibold">{euros(s.total_cent)}</span>
             <span className="text-xs text-tinta-suave">
               {s.lineas.length} línea{s.lineas.length === 1 ? '' : 's'} · {s.unidades} unidad
@@ -336,9 +336,9 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
       {/* ---- lo que falta por decidir ---- */}
       {r.sin_asignar.length > 0 && (
         <section className="rounded-lg border border-dashed border-neutral-300 p-3 dark:border-neutral-600">
-          <h4 className="mb-1 text-sm font-semibold">
+          <h3 className="mb-1 text-sm font-semibold">
             Sin decidir <span className="text-tinta-suave">({r.sin_asignar.length})</span>
-          </h4>
+          </h3>
           <p className="mb-2 text-xs text-tinta-suave">
             Esto no cuenta en el total de arriba hasta que elijas tienda: sumarlo por lo
             más barato daría un número que no corresponde a ninguna compra.

@@ -1365,9 +1365,15 @@ export function Cesta() {
                       {porPasillo(lineas_ as Linea[]).map(([pasillo, delPasillo]) => (
                         <div key={pasillo || 'sin-pasillo'} className="mb-3 last:mb-0">
                           {pasillo && (
-                            <h4 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-xs font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
+                            /* **`h3` y no `h4`.** La tarjeta que lo contiene ya lleva un `h2`
+                               («Lo que hay que coger»), así que saltar a `h4` deja la
+                               jerarquía con un hueco: quien navega por encabezados oye «Lo que
+                               hay que coger» y después un nivel que no existe. Medido con
+                               `data/debug/accesibilidad.py` el 27 de septiembre de 2026: era el
+                               único salto de encabezados de toda la aplicación. */
+                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-xs font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
                               {pasillo}
-                            </h4>
+                            </h3>
                           )}
                           <ul className="grid gap-2">
                             {delPasillo.map((l) => (

@@ -168,3 +168,11 @@ medidos el 27 de septiembre de 2026 y todos al lado de precios con coma. En espa
 es una coma, y un numero escrito en otro idioma se lee como un error. Lo vigila
 `tests/test_ui_movil.py` leyendo el codigo, porque eso no se ve en una captura: una coma y un
 punto se parecen demasiado a 390 px.
+
+**Y la pantalla se puede recorrer sin verla.** Imagenes con texto alternativo, botones que se
+llaman de algo, campos con su etiqueta y **un solo `h1`** con los niveles sin huecos. Medido el
+27 de septiembre de 2026 con `data/debug/accesibilidad.py` en las dos superficies: salieron
+cinco casos -- Inicio, Buscar y el caso vacio de favoritos sin `h1`, la lista con un salto de
+`h2` a `h4`, y el documento de operacion con tres `h1` -- y el contraste del texto ya pintado,
+que era lo unico que ya se medía. Lo vigila `prueba_navegador.py` en las trece pantallas que
+recorre, y `prueba_produccion.py` en las cuatro del material.

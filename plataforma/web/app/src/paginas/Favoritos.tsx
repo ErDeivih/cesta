@@ -144,7 +144,10 @@ export function Favoritos() {
          forma de llegar: en la pantalla que está a un toque de la barra de abajo, un callejón
          sin salida. Medido en una captura de un móvil el 27 de septiembre de 2026. */
       <Tarjeta>
-        <p className="text-base font-semibold">Todavía no tienes favoritos</p>
+        {/* `h1` y no `p`: en el caso vacio esta tarjeta **es** la pantalla, y sin encabezado la
+            pagina se quedaba sin titulo (lo midio `data/debug/accesibilidad.py`). El estilo es
+            el mismo: lo que cambia es lo que oye quien navega por encabezados. */}
+        <h1 className="text-base font-semibold">Todavía no tienes favoritos</h1>
         <p className="mt-2 text-sm text-tinta-suave">
           Los favoritos son los productos que compras siempre. Aparecen aquí con el precio de
           hoy y marcados cuando han bajado, y se añaden desde la ficha de un producto, con el

@@ -215,6 +215,18 @@ def _con_anclas(md) -> None:
         if vistos[nombre] > 1:
             nombre = f"{nombre}-{vistos[nombre]}"
         nivel = tokens[idx].tag
+        # **Un solo `h1` por pagina.** Los documentos del proyecto son notas de trabajo, no
+        # capitulos, y algunos llevan varios `#`: `docs/OPERACION.md` tiene tres, y la pagina
+        # salia con tres titulos del mismo nivel (medido con `data/debug/accesibilidad.py` el
+        # 27 de septiembre de 2026). El primero se queda -- es el titulo del documento -- y los
+        # demas bajan a `h2`, que es lo que son: apartados. Se hace aqui y no despues sobre el
+        # HTML para que el indice de la pagina (`env["anclas"]`) diga el nivel que se ha
+        # pintado de verdad.
+        if nivel == "h1":
+            if env.get("h1_pintado"):
+                nivel = "h2"
+            else:
+                env["h1_pintado"] = True
         env.setdefault("anclas", []).append({"nivel": nivel, "id": nombre, "texto": texto})
         # El `#` del final aparece al pasar por encima: es la forma de copiar el enlace a un
         # apartado concreto, que es lo primero que hace alguien que quiere pasar un dato.
