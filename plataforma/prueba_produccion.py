@@ -190,6 +190,14 @@ def main() -> int:
         # enlaza paginas. El indice del capitulo vive en `aside.toc`.
         comprueba(pagina.locator("aside.toc a[href^='#']").count() >= 3,
                   "con su indice de apartados")
+        # **Y el capitulo empieza en la primera pantalla del movil.** Medido el 27 de septiembre
+        # de 2026: el `<details>` del indice lateral sale abierto y, a 390x844, la primera
+        # pantalla era el indice entero -- catorce capitulos y ni una linea del capitulo. Se
+        # mira la posicion del titulo, que es lo que ve quien abre la pagina.
+        caja_h1 = pagina.locator("main h1").first.bounding_box()
+        comprueba(caja_h1 is not None and caja_h1["y"] < 780,
+                  f"y en un movil el capitulo empieza en la primera pantalla "
+                  f"(el titulo esta a {None if caja_h1 is None else round(caja_h1['y'])} px)")
 
         print("\n== la primera vez, con una cuenta de verdad (barra b)")
         carga("/cesta")
@@ -213,6 +221,16 @@ def main() -> int:
         texto = pagina.inner_text("main")
         comprueba("No tienes ninguna lista" in texto,
                   "una cuenta nueva llega a la pantalla de la primera vez")
+        # Y la primera pantalla, con la cuenta recien creada y sin nada apuntado, tiene que
+        # decir por donde se empieza. Antes decia «Lo que te falta: 0 cosas» y un enlace a una
+        # lista vacia: medido en un movil el 27 de septiembre de 2026, y se vio en una captura.
+        carga("/")
+        texto = pagina.inner_text("main")
+        comprueba("Todavía no tienes lista" in texto,
+                  "la primera pantalla, sin lista, dice por donde se empieza")
+        comprueba("0 cosas" not in texto,
+                  "y no contesta con un cero, que es un hueco con forma de respuesta")
+        carga("/cesta")
         comprueba(pagina.get_by_role("button", name="Añadir").count() >= 4,
                   f"y ve la aplicacion con datos reales que tocar "
                   f"({pagina.get_by_role('button', name='Añadir').count()} productos)")
@@ -254,6 +272,30 @@ def main() -> int:
                   "con el buscador arriba, que es la pregunta 2")
         comprueba(pagina.locator("nav[aria-label='Secciones'] a[href='/']").count() >= 1,
                   "y la barra lleva a Inicio")
+
+        print("\n== sin cuenta, la primera pantalla no promete «lo tuyo» (27 sep 2026)")
+        # **El fallo que esto vigila, y se vio en una captura, no en una prueba.** La API
+        # contesta `solo_mios: false` cuando no hay sesion -- no puede saber que es "lo mio" --
+        # y la pantalla ponia el titulo fijo «Ha bajado de lo tuyo» encima de las sesenta
+        # mayores bajadas del catalogo. Se mira con un contexto **sin cookies**, que es el
+        # unico sitio donde esto se ve: la sesion de la puerta ya esta abierta.
+        suelta_ctx = navegador.new_context(viewport={"width": 390, "height": 844},
+                                           has_touch=True, is_mobile=True)
+        suelta = suelta_ctx.new_page()
+        with contextlib.suppress(Exception):
+            suelta.goto(f"{BASE}/", wait_until="domcontentloaded", timeout=30000)
+        suelta.wait_for_timeout(2500)
+        limpio = suelta.inner_text("main")
+        comprueba("Lo que más ha bajado" in limpio,
+                  "sin cuenta, la tarjeta dice «Lo que más ha bajado»")
+        # El titulo exacto, no la idea: «qué ha bajado de lo tuyo» tambien sale en la tarjeta
+        # que invita a entrar, y esa frase es correcta. Lo que no puede salir es el **titulo**
+        # de la tarjeta cuando el servidor ha dicho que no ha filtrado.
+        comprueba("Ha bajado de lo tuyo" not in limpio,
+                  "y no titula «Ha bajado de lo tuyo» encima de las bajadas del catalogo")
+        comprueba("entra o crea una cuenta" in limpio,
+                  "y dice por donde se entra, en vez de dejarlo sin salida")
+        suelta_ctx.close()
 
         print("\n== pregunta 3: tachar, y las dos secciones (barra c)")
         # **Se deja la lista con algo de los dos lados**, en vez de suponer como la dejo la

@@ -1,0 +1,68 @@
+Diseña la pantalla de RESULTADOS DE BÚSQUEDA de «Cesta», una aplicación móvil (390 x 844) que
+compara el precio por unidad del mismo producto entre cinco supermercados españoles: Mercadona,
+Carrefour, DIA, Alcampo y Aldi. Todo el texto en español. Claro y oscuro por preferencia del
+sistema.
+
+QUIÉN LA USA Y QUÉ VIENE A HACER
+Alguien de pie en el pasillo, con una mano y el carro en la otra, que acaba de escribir «leche
+entera». Viene a una sola cosa: **saber si lo que tiene en la mano está caro y dónde está más
+barato**. No viene a explorar. La respuesta tiene que estar en la primera pantalla, sin desplazar.
+
+QUÉ TIENE QUE CONTESTAR, EN ESTE ORDEN
+  1. **Cuántos resultados hay y cuántos se pueden comparar entre cadenas** («37 resultados · 12
+     comparables entre cadenas»). Es la cifra que decide si la respuesta sirve.
+  2. **El más barato de verdad, con su ahorro**: una banda destacada con el producto, la cadena, el
+     precio por unidad y cuánto menos es que el más caro comparable:
+         «Lo más barato: Leche entera semidesnatada 1 L · Aldi · 0,95 €/L · un 24 % menos que la
+         más cara (Mercadona)».
+  3. **La tabla de resultados** (abajo), con una fila por producto.
+
+QUÉ DATOS REALES HAY QUE ENSEÑAR (inventa el resto con el mismo estilo)
+  · Buscador arriba, con «leche entera» escrito y el botón de borrar.
+  · Filtros de cadena como chips, con su cuenta: «Todas (37) · Mercadona (12) · DIA (9) ·
+    Carrefour (8) · Alcampo (5) · Aldi (3)». El chip activo, marcado.
+  · Filas de la tabla, con el precio por unidad, que es lo que se compara:
+        Leche entera semidesnatada 1 L        Aldi             0,95 €   0,95 €/L   [oferta]
+        Leche entera Pascual 1 L              DIA              1,05 €   1,05 €/L
+        Leche entera Hacendado 6 x 1 L        Mercadona        5,94 €   0,99 €/L   [marca propia]
+        Leche entera Lauki 1 L                Carrefour        1,15 €   1,15 €/L
+        Leche entera Asturiana 1 L            Alcampo          1,29 €   1,29 €/L   [al peso]
+        Leche de granja entera 1,5 L          no lo sé         2,10 €   sin comparar
+  · Cada fila lleva: nombre, marca, la cadena más barata de ese producto, el precio, el precio por
+    unidad, y etiquetas de estado cuando tocan.
+  · Una línea de contexto donde haga falta, sin ocupar media pantalla: «El orden se aplica a los 37
+    resultados que has cargado, no a todo el catálogo», y «Precios del 27 de septiembre».
+  · Barra inferior con cinco destinos: **Buscar, Lista, Favoritos, Escáner, Avisos**. Buscar, activo.
+
+LAS ETIQUETAS DE ESTADO (píldoras pequeñas, y solo cuando dicen algo)
+  «oferta» · «oferta solo con tarjeta» · «oferta · 2 ud» · «marca propia» · «al peso» ·
+  «sin comparar» · «dudoso» (no se pudo emparejar con seguridad) · «retirada» (ya no está en el
+  catálogo). Nunca dos etiquetas que digan lo mismo, y ninguna si no hay nada que decir.
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+
+  · **Cifras en ancho fijo** (tabular-nums) siempre, y el precio por unidad más pequeño que el
+    precio: en una lista de leches, comparar es mirar la columna de €/L de arriba abajo.
+  · Objetivos táctiles de **44 px mínimo**. Cabecera de **109 px** y barra inferior de **57 px**:
+    los resultados empiezan por debajo de la cabecera y la barra no tapa la última fila.
+  · En 390 px de ancho, **una tabla de siete columnas no cabe**: la fila se compone en dos líneas
+    (nombre y marca arriba; cadena, precio y precio por unidad debajo, alineados a la derecha con
+    las cifras en columna). Nada de desplazar en horizontal.
+  · Los encabezados que ordenan («Precio», «€/L») son pulsables y lo dicen; los que no ordenan, no
+    parecen pulsables.
+  · Tipografía del sistema (ui-sans-serif / system-ui), cuerpo 16 px, interlineado 1,7. Nada de
+    fuentes ni imágenes traídas de internet.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), aviso `#b45309` (`#fcd34d`), bien
+    `#059669` (`#10b981`). El color dice algo (bueno, aviso, dudoso), nunca decora.
+  · Nada de tarjetas dentro de tarjetas, ni sombras grandes, ni degradados, ni iconos de colores:
+    esto es una herramienta de trabajo en un pasillo, no una landing.
+  · La foto del producto, si aparece, es pequeña (48 x 48) y no manda: hay productos sin foto y la
+    fila tiene que seguir alineada cuando falta.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en línea (la aplicación sirve con CSP `script-src 'self'`).
+  · Nada de dependencias de red en tiempo de ejecución.
+  · **No prometer lo que no se sabe**: si un producto no se puede comparar entre cadenas, se dice
+    «sin comparar» y **no se enseña un ahorro inventado**. Un hueco es mejor que una cifra falsa, y
+    el hueco además se explica.

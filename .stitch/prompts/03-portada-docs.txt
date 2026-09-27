@@ -1,0 +1,72 @@
+Diseña la PORTADA de un sitio de documentacion tecnica llamado «Aprender datos con un proyecto de
+verdad». Es un sitio **de escritorio** (1440 x 900, y tiene que seguir leyendose bien a 1024 y a
+390), en español, en claro y en oscuro por preferencia del sistema.
+
+QUE ES ESTE SITIO, Y PARA QUIEN
+No es el manual de una aplicacion: es **material de estudio** sobre ingenieria de datos,
+algoritmos, estadistica y scraping, que usa un caso real -- comparar cada dia los precios de cinco
+supermercados españoles desde un PC de casa -- para explicar cada idea **con numeros medidos** y el
+comando que los reproduce.
+
+Lo lee alguien que estudia de verdad: se sienta, lee capitulos seguidos y vuelve a buscar cosas
+concretas. No es una landing de producto y **no hay que vender nada**: nada de «empieza gratis», ni
+de imagenes de personas sonriendo, ni de precios.
+
+QUIEN ESCRIBE EL CONTENIDO
+Los ficheros son Markdown con cabecera (`titulo`, `seccion`, `resumen`) y el sitio se genera a
+partir de ellos con un script propio. **No hay JavaScript en el sitio**: todo lo que se ve es HTML
+y CSS. Nada de buscador que filtre en vivo, nada de menus desplegables que necesiten script: si algo
+no se puede hacer sin JS, se hace con enlaces.
+
+QUE TIENE QUE HABER EN LA PORTADA, EN ESTE ORDEN
+  1. **Cabecera** sobria: el titulo del sitio, y a la derecha dos enlaces: «Indice» y «Referencia».
+     Sin logo grande, sin boton de registro.
+  2. **Titulo y entrada**: «Aprender datos con un proyecto de verdad», y dos frases que digan que es
+     material de estudio con numeros medidos, no un manual.
+  3. **Una linea de datos del propio material**: «34 capitulos · 210.000 palabras · y detras, los
+     documentos del proyecto que se citan uno a uno». Es una cifra real, y en ancho fijo.
+  4. **«Por donde empezar»**: la pieza que decide si alguien se queda. Una lista corta de rutas
+     segun quien entra, cada una con su enlace y una frase, no un parrafo:
+        · Si no sabes de que va esto: «Como usar este material».
+        · Si vienes a por scraping: «Como se recoge el dato».
+        · Si estas empezando con datos: «Que es un dato» (valor, grano, clave y ausencia).
+        · Si vienes a por algoritmos: «Emparejar productos» y «como se mide».
+        · Si vas a montar lo tuyo: «el stack», pieza a pieza y con lo que costaria quitarlas.
+        · Y si vienes a aprender a medir: «los instrumentos que mienten».
+  5. **El temario por secciones**, en rejilla de tarjetas. Cada tarjeta: el titulo del capitulo y
+     una linea de resumen (sacada del propio documento). Las secciones, en este orden:
+     «Empieza aquí» · «Fundamentos» · «Ingeniería de datos» · «Algoritmos y evaluación» ·
+     «Medidas y agregados» · «Análisis y decisión» · «Práctica del análisis» ·
+     «Investigación y anexos». Ocho secciones, y ninguna con una sola tarjeta huérfana.
+  6. **Referencia**: una nota al final que lleva a todos los documentos del proyecto (decisiones,
+     informes, operacion y el registro del dia a dia). No es un curso; es donde se comprueba de
+     donde sale cada cosa.
+
+QUE SE VE EN UNA PAGINA DE CAPITULO (para que el diseño de la portada encaje con ella)
+  · Cabecera igual, **migas de pan** debajo (Inicio › seccion › capitulo) y un lateral izquierdo
+    fijo con todo el temario, marcando el capitulo actual.
+  · Columna de lectura de **72 caracteres como maximo** (unos 720 px), texto a 17-18 px con
+    interlineado 1,7: se lee seguido, no se ojea.
+  · Un indice del capitulo a la derecha, con los titulos de la seccion actual.
+  · Las citas destacadas del material (`Nota`, `Aviso`, `Trampa`, `La lección`, `Regla de la casa`)
+    son bloques con borde a la izquierda y un rotulo pequeno en mayusculas.
+  · Al final, enlaces «anterior» y «siguiente» grandes y pulsables.
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+  · Los **numeros en ancho fijo** (tabular-nums) siempre.
+  · Contraste medido en claro y en oscuro, y areas de pulsar de 44 px como minimo.
+  · Tipografia del sistema (ui-sans-serif / system-ui), y **monoespaciada para el codigo**. Nada de
+    fuentes ni imagenes traidas de internet.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), acento para enlaces, aviso `#b45309`
+    (`#fcd34d`), bien `#059669` (`#10b981`). El color dice algo, nunca decora.
+  · Nada de sombras grandes, degradados, ni tarjetas dentro de tarjetas. La jerarquia se hace con
+    tamano, peso y espacio en blanco, no con adornos.
+  · Densidad de texto de libro tecnico, con aire: esto se lee, no se hojea.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en linea: el sitio se sirve con `script-src 'self'` y
+    `style-src 'self'`.
+  · Nada de dependencias de red en tiempo de ejecucion (ni fuentes, ni iconos, ni CDN).
+  · Nada de contenido inventado que parezca un dato: los numeros que se enseñan son de verdad, y si
+    un dato no se sabe, no se escribe.

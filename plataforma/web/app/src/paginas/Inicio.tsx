@@ -37,19 +37,52 @@ import type { Baja, RepartoTiendas } from '../tipos'
 import { Etiqueta, Tarjeta, cx } from '../componentes/ui'
 import { IconoLupa } from '../componentes/iconos'
 
-/** Las cuatro preguntas, en el orden en que se hacen en la vida. */
-function Cabecera({ reparto: r, porCoger, total }: {
+/** Las cuatro preguntas, en el orden en que se hacen en la vida.
+ *
+ *  **Y el caso que no contesta ninguna de las cuatro: la lista vacía.** Medido en un móvil el
+ *  27 de septiembre de 2026, con una cuenta recién creada: la tarjeta decía «Lo que te falta:
+ *  **0 cosas**» y un enlace a la lista, que también estaba vacía. Es verdad y no sirve para
+ *  nada: quien acaba de entrar no tiene una lista vacía, **no tiene lista**, y lo que necesita
+ *  es saber por dónde se empieza. Un cero no es una respuesta, es un hueco con forma de
+ *  respuesta. Desde entonces se distinguen los tres estados: sin lista, con lista y todo
+ *  cogido, y con cosas pendientes.
+ */
+function Cabecera({ reparto: r, porCoger, total, lineas }: {
   reparto: RepartoTiendas | undefined
   porCoger: number
   total: number
+  lineas: number
 }) {
   const cadenas = (r?.sublistas ?? []).filter((s) => s.lineas.length > 0)
+  if (lineas === 0) {
+    return (
+      <Tarjeta className="border-sky-200 bg-sky-50/60 dark:border-sky-900 dark:bg-sky-950/30">
+        <p className="text-sm font-semibold">Todavía no tienes lista</p>
+        <p className="mt-1 text-sm text-tinta-suave">
+          Busca lo que compras y añádelo. A partir de ahí esta pantalla te dice cuánto te
+          falta, en qué tienda conviene comprarlo y qué ha bajado de lo tuyo.
+        </p>
+        <Link
+          to="/buscar"
+          className="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+        >
+          Ver lo de siempre y añadir
+        </Link>
+      </Tarjeta>
+    )
+  }
   return (
     <Tarjeta className="border-sky-200 bg-sky-50/60 dark:border-sky-900 dark:bg-sky-950/30">
       <p className="text-sm text-tinta-suave">Lo que te falta</p>
       <p className="mt-0.5 text-2xl font-bold leading-tight">
-        <span className="cifra">{numero(porCoger, 0)}</span>{' '}
-        {porCoger === 1 ? 'cosa' : 'cosas'}
+        {porCoger === 0 ? (
+          'No te falta nada'
+        ) : (
+          <>
+            <span className="cifra">{numero(porCoger, 0)}</span>{' '}
+            {porCoger === 1 ? 'cosa' : 'cosas'}
+          </>
+        )}
       </p>
       {cadenas.length > 0 && (
         <>
@@ -131,16 +164,35 @@ function Buscador() {
   )
 }
 
-/** Lo que ha bajado de lo tuyo, con el antes y el ahora. */
-function HaBajado({ bajadas, cargando }: { bajadas: Baja[]; cargando: boolean }) {
+/** Lo que ha bajado, con el antes y el ahora.
+ *
+ *  **Y de quién es lo que se enseña, que es lo que hay que decir bien.** La API contesta
+ *  `solo_mios` diciendo **si filtró**, no si se pidió: sin sesión no hay "lo mío" y devuelve
+ *  las mayores bajadas del catálogo, así que el campo viene en `false`. Poniendo el título
+ *  fijo «Ha bajado de lo tuyo», esta pantalla enseñaba sesenta bajadas de todo el catálogo
+ *  bajo un título que mentía -- y es justo el caso de quien abre la aplicación por primera
+ *  vez, que es quien no tiene cuenta. Es el mismo fallo que ya se corrigió en el servidor
+ *  (`plataforma/api/main.py`), reintroducido en el cliente: el campo viaja para poder usarlo.
+ */
+function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
+  bajadas: Baja[]
+  cargando: boolean
+  soloMios: boolean
+  haySesion: boolean
+  hayLista: boolean
+}) {
   if (cargando) return null
+  const titulo = soloMios ? 'Ha bajado de lo tuyo' : 'Lo que más ha bajado'
   if (bajadas.length === 0) {
     return (
       <Tarjeta>
-        <p className="text-sm font-semibold">Ha bajado de lo tuyo</p>
+        <p className="text-sm font-semibold">{titulo}</p>
         <p className="mt-1 text-sm text-tinta-suave">
-          Nada de tu lista ha bajado en los últimos 7 días. Se mira solo lo que está en tus
-          listas y con la fecha de los precios a la vista.
+          {!soloMios
+            ? 'Nada ha bajado en los últimos 7 días en las cadenas que miras.'
+            : hayLista
+              ? 'Nada de tu lista ha bajado en los últimos 7 días. Se mira solo lo que está en tus listas y con la fecha de los precios a la vista.'
+              : 'Todavía no hay nada tuyo que mirar: en cuanto tengas algo en la lista, aquí sale lo que haya bajado.'}
         </p>
       </Tarjeta>
     )
@@ -148,11 +200,29 @@ function HaBajado({ bajadas, cargando }: { bajadas: Baja[]; cargando: boolean })
   return (
     <Tarjeta>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-semibold">Ha bajado de lo tuyo</p>
-        <Link to="/avisos" className="text-xs font-semibold text-sky-800 underline dark:text-sky-300">
-          {bajadas.length === 1 ? '1 bajada' : `${numero(bajadas.length, 0)} bajadas`}
-        </Link>
+        <p className="text-sm font-semibold">{titulo}</p>
+        {soloMios && (
+          <Link to="/avisos" className="text-xs font-semibold text-sky-800 underline dark:text-sky-300">
+            Avisos
+          </Link>
+        )}
       </div>
+      {!soloMios && (
+        <p className="mt-1 text-xs text-tinta-suave">
+          Son las mayores bajadas del catálogo, no las de tu lista.{' '}
+          {haySesion ? (
+            'En cuanto tengas algo apuntado, esta tarjeta enseña solo lo tuyo.'
+          ) : (
+            <>
+              Para ver lo tuyo,{' '}
+              <Link to="/ajustes" className="underline">
+                entra o crea una cuenta
+              </Link>
+              .
+            </>
+          )}
+        </p>
+      )}
       <ul className="mt-2 divide-y divide-neutral-200 dark:divide-neutral-700">
         {bajadas.slice(0, 3).map((b, i) => (
           <li key={`${b.nombre}-${b.cadena}-${i}`} className="py-2">
@@ -179,6 +249,16 @@ function HaBajado({ bajadas, cargando }: { bajadas: Baja[]; cargando: boolean })
           </li>
         ))}
       </ul>
+      {bajadas.length > 3 && (
+        <p className="mt-2 text-xs">
+          <Link
+            to="/panel?pestana=bajadas"
+            className="font-semibold text-sky-800 underline dark:text-sky-300"
+          >
+            y <span className="cifra">{numero(bajadas.length - 3, 0)}</span> más bajadas
+          </Link>
+        </p>
+      )}
     </Tarjeta>
   )
 }
@@ -201,7 +281,7 @@ export function Inicio() {
     queryFn: () => reparto(listaId as string),
     enabled: listaId != null,
   })
-  const bajadas = useBajadas(7, false, [], true)
+  const bajadas = useBajadas(7, false, [], sesion.data?.usuario != null)
 
   const lineas = detalle.data?.lineas ?? []
   const porCoger = lineas.filter((l) => l.tachado_en === null)
@@ -226,7 +306,7 @@ export function Inicio() {
       ) : (
         <>
           <Cabecera reparto={rep.data} porCoger={porCoger.length}
-                    total={rep.data?.total_cent ?? 0} />
+                    total={rep.data?.total_cent ?? 0} lineas={lineas.length} />
 
           {porCoger.length > 0 && (
             <Tarjeta>
@@ -277,7 +357,9 @@ export function Inicio() {
         </>
       )}
 
-      <HaBajado bajadas={bajadas.data?.resultados ?? []} cargando={bajadas.isLoading} />
+      <HaBajado bajadas={bajadas.data?.resultados ?? []} cargando={bajadas.isLoading}
+                soloMios={bajadas.data?.solo_mios === true} haySesion={!sinSesion}
+                hayLista={lineas.length > 0} />
 
       <p className={cx('px-1 text-xs text-tinta-suave')}>
         {rep.data?.fecha_datos

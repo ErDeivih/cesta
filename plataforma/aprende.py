@@ -782,6 +782,17 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('click', (e) => { if (!e.target.closest('.buscador')) cierra(); });
 """
 
+GUION_LATERAL = """// El indice lateral, plegado en el movil.
+//
+// El `<details>` del indice sale **abierto** en el HTML, porque en el escritorio el CSS esconde
+// el `<summary>` y el indice tiene que verse siempre. En un movil eso significa que la primera
+// pantalla de cualquier pagina es el indice entero: medido en un navegador el 27 de septiembre
+// de 2026 a 390x844, **catorce capitulos y cero contenido**. Se pliega donde molesta y solo
+// donde molesta; sin este guion (o con el JavaScript apagado) la pagina sigue como estaba.
+const lateral = document.querySelector('.lateral details');
+if (lateral && matchMedia('(max-width: 1023px)').matches) lateral.open = false;
+"""
+
 GUION_COPIAR = """// Un boton de copiar en cada bloque de codigo. Es lo primero que hace alguien que viene a
 // aprender: copiar el comando y correrlo. En un fichero y no en linea porque el CSP de Caddy
 // prohibe los scripts incrustados (`script-src 'self'`).
@@ -890,7 +901,7 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
     (salida / "estilo.css").write_text(ESTILO, encoding="utf-8", newline="\n")
     (salida / "indice.js").write_text(
         "// El indice del buscador: una linea por pagina, generada desde los documentos.\n"
-        f"const INDICE = {json.dumps(indice, ensure_ascii=False)};\n",
+        f"const INDICE = {json.dumps(indice, ensure_ascii=False)};\n" + GUION_LATERAL,
         encoding="utf-8", newline="\n")
     (salida / "buscar.js").write_text(GUION_BUSCADOR, encoding="utf-8", newline="\n")
     (salida / "copiar.js").write_text(GUION_COPIAR, encoding="utf-8", newline="\n")

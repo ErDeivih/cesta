@@ -4042,3 +4042,40 @@ categorias devuelven entre 1 y 299 productos **teniendo hijas** y cuanto suman s
 si suman mas que el padre, ahi estan los 5.000. No se toca hoy porque cambiar esa regla
 multiplica las peticiones de una cadena que ya va a una cada 6,7 segundos y corta con el WAF
 entre 10 y 30 veces al dia, o sea que hay que medirlo antes de encenderlo.
+
+---
+
+## N31. Alcampo publica 1,00 € para 1.292 productos, y empieza el 14 de septiembre
+
+Medido el 27 de septiembre de 2026, tirando del hilo de por que la primera pantalla nueva
+(`plataforma/web/app/src/paginas/Inicio.tsx`) encabezaba «lo que ha bajado» con tres productos de
+Alcampo al **-81,6 %**, **-78,2 %** y **-74,9 %**. Los tres estaban a **1,00 €**.
+
+    · En `gold/precio_diario`, los productos de Alcampo con `precio_cent = 100` exactos pasan de
+      **160-176 al dia (0,6-0,7 %)** entre el 10 y el 13 de septiembre a **1.233 el 14 (5,2 %)**,
+      y ahi se quedan: **1.292 de 24.107 hoy (5,4 %)**. El escalon es de un dia para otro.
+    · De los 1.280 productos que hoy estan a 1,00 €, **239 tenian una mediana de precio normal
+      antes** (mas de 1,50 €); los otros 1.041 ya costaban alrededor de 1 €.
+    · **No es el parser.** En el crudo de hoy (`data/raw/fuente=alcampo/fecha=2026-09-27`),
+      Alcampo devuelve `"price": {"amount": "1.00"}` para ese producto, con `"unitPrice"`
+      coherente (0,18 €/100 ml = 1,00 €/560 ml), `available: true` y **ninguna promocion
+      declarada** en `iconAttributes` ni `icons`. El mini cono de helado de 560 ml que costaba
+      5,43 € esta hoy a 1,00 €, en la ficha de Alcampo.
+    · Y pasa todos los filtros de `plataforma/api/movimientos.py`, que son estrictos: misma
+      unidad, cantidad deducida igual (0,56 l los dos dias), precio de venta movido en el mismo
+      sentido, y un factor (5,4x) por debajo de `FACTOR_INCREIBLE` (30). Por `FACTOR_LLAMATIVO`
+      (3) esto es **lista de trabajo, no error**: esta anotado aqui y no se ha tocado nada.
+
+**Lo que decide el dueño, y por que no lo he decidido yo.**
+
+  1. **¿Es real?** Un 1,00 € sostenido catorce dias en 1.292 productos de categorias que no tienen
+     nada que ver (helados, maquillaje, menaje) se parece a un precio de relleno de la cadena mas
+     que a una campana. Se comprueba abriendo una de esas fichas en `compraonline.alcampo.es` y
+     mirando el precio a mano. Si es real, no hay nada que arreglar y esta entrada se cierra.
+  2. **Si es un relleno, ¿se filtra?** Tirar los precios exactamente a 1,00 € borraria tambien los
+     productos que de verdad cuestan 1 €, que son 1.041 de esos 1.280. La regla que decidio el
+     dueño para las alertas sirve aqui y no exige decidir nada nuevo: **exigir que el precio
+     nuevo siga ahi al dia siguiente** antes de encabezar una bajada. Hoy una bajada se mide
+     entre dos dias (`movimientos.bajadas`), asi que un solo dia raro de la cadena es suficiente
+     para salir el primero de la lista.
+

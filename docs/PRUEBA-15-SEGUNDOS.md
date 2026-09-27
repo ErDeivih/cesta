@@ -111,17 +111,20 @@ voz alta.
        («te faltan N») y **la barra de abajo** (`Nav.tsx`), que lo dice desde cualquier
        pantalla sin abrir nada. El detalle —los dos encabezados con su cuenta y el
        tachado— en Cesta.
-    4. **Inicio**, con la seccion «Ha bajado de lo tuyo» (`useBajadas(7, false, [], true)`).
-       Es la que contesta **sin haber hecho nada antes**: *«Lo tuyo que ha bajado en 7
-       días»*, con la tabla y la regla escrita debajo (*"si lo que cambió fue el formato,
-       eso no es una bajada"*). Se midió en un navegador el 23 de septiembre de 2026 y
-       contesta con una fila de verdad: leche entera Lauki, Dia, 1,15 €/l -> 1,05 €/l, un
-       -8,7 %. Las otras dos rutas siguen: **Panel -> Bajadas -> «Solo lo mío»**
-       (`paginas/Panel.tsx`, 3 toques) y **Avisos** (`paginas/Avisos.tsx`, 1 toque), que
-       contesta *lo que pediste con la campana* y **solo eso**: con una cuenta que no ha
-       pedido ningún aviso, la pantalla dice *«No sigues ningún producto»* con la
-       explicación de cómo pedirlo. Es correcto, pero no es una respuesta a la pregunta;
-       por eso la respuesta que no depende de haber pedido nada es la de Inicio.
+    4. **Inicio**, con la seccion de bajadas. Es la que contesta **sin haber hecho nada
+       antes**: *«Lo tuyo que ha bajado en 7 días»*, con la tabla y la regla escrita debajo
+       (*"si lo que cambió fue el formato, eso no es una bajada"*). Se midió en un navegador
+       el 23 de septiembre de 2026 y contesta con una fila de verdad: leche entera Lauki,
+       Dia, 1,15 €/l -> 1,05 €/l, un -8,7 %. **El titulo depende de la respuesta, no de lo
+       que se pide**: el campo `solo_mios` dice si el servidor filtro, y sin sesion no puede
+       filtrar, asi que la tarjeta se titula «Lo que más ha bajado» y dice por donde se
+       entra. Antes ponia «de lo tuyo» encima de sesenta bajadas del catalogo entero, y eso
+       se vio en una captura, no en una prueba: quien abre la aplicacion por primera vez no
+       tiene cuenta, asi que era el caso mas frecuente el que mentia. Las otras dos rutas
+       siguen: **Panel -> Bajadas -> «Solo lo mío»** (`paginas/Panel.tsx`, 3 toques) y
+       **Avisos** (`paginas/Avisos.tsx`, 1 toque), que contesta *lo que pediste con la
+       campana* y **solo eso**: con una cuenta que no ha pedido ningún aviso, la pantalla
+       dice *«No sigues ningún producto»* con la explicación de cómo pedirlo.
 
 ## Que se apunta
 

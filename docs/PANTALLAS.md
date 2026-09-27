@@ -67,9 +67,15 @@ Va mas alla de las cuatro reglas de arriba, porque es la primera pantalla y es l
 rota el primer dia:
 
     sin cuenta          una tarjeta que dice que hace la aplicacion y lleva a /ajustes. No
-                        se enseña un cero ni un reparto vacio: no hay lista, no hay cero
-    sin lista           «Lo que te falta» sale con 0 y el enlace a la lista, que es donde se
-                        crea. La seccion de bajadas dice que no ha bajado nada de lo tuyo
+                        se enseña un cero ni un reparto vacio: no hay lista, no hay cero.
+                        La tarjeta de bajadas se titula **«Lo que más ha bajado»**, no «de lo
+                        tuyo»: el campo `solo_mios` de la respuesta dice si el servidor filtro
+                        de verdad, y sin sesion no filtro
+    sin lista           «Todavia no tienes lista» y «Ver lo de siempre y añadir». **Antes
+                        decia «Lo que te falta: 0 cosas»** y un enlace a una lista vacia:
+                        medido en un movil el 27 sep 2026, con una cuenta recien creada. Un
+                        cero no es una respuesta, es un hueco con forma de respuesta
+    todo cogido         «No te falta nada», en vez de un cero
     el reparto no
       ha cargado        se enseña el nombre de la linea y **nada mas**: ni cadena ni precio.
                         Un hueco es mejor que una cifra inventada
@@ -77,7 +83,9 @@ rota el primer dia:
       catalogo          la linea lo dice en vez de callarse: *«sin comparar: no está en el
                         catálogo»*, que es un dato, no un fallo
     sin bajadas         la tarjeta lo dice con la fecha de los precios a la vista y con la
-                        regla (7 dias, solo lo tuyo), no con una pantalla en blanco
+                        regla (7 dias, solo lo tuyo), no con una pantalla en blanco. Sin
+                        lista no dice «nada de tu lista ha bajado» -- eso es verdad y no
+                        sirve: dice que todavia no hay nada que mirar
 
 ### Decisiones que se ven en el codigo
 

@@ -23,10 +23,17 @@ argument», que no dice qué argumento.
 
 | paso | resultado |
 |---|---|
-| sistema de diseño | `.stitch/DESIGN.md` subido al proyecto (`upload_design_md`) |
+| sistema de diseño | `.stitch/DESIGN.md` subido al proyecto (`upload_design_md`), y el sistema de diseño creado a partir de él (`assets/bddbedcd3f074baca033d6e85b9d8e94`, «Functional Utility») |
 | pantalla 1 | «Cesta · Pantalla Principal» — `projects/15743377346721964880/screens/bc1fef6dd2c94961a94a22b7263f5c8c` |
-| guion de esa pantalla | `data/debug/prompt_inicio.txt` (las cuatro preguntas de la barra (a), los datos reales y las reglas del proyecto) |
+| pantalla 2 | «Cesta · Resultados de Búsqueda (Leche Entera)» — `projects/15743377346721964880/screens/7d0a3de8285b4ec3bd63325264fe6bca` |
+| pantalla 3 | «Portada · Aprender datos con un proyecto de verdad» — `projects/15743377346721964880/screens/bdbf0a85b5aa465395902e4bd4bcad1b` |
+| los guiones | `.stitch/prompts/01-inicio.txt`, `02-resultados.txt` y `03-portada-docs.txt`: **versionados**, porque el guion es la procedencia del diseño. Dicen quién usa la pantalla, qué datos reales tiene que enseñar y las reglas del proyecto (cifras en ancho fijo, 44 px, 109/57 px, tokens) |
 | **portada al código** | `plataforma/web/app/src/paginas/Inicio.tsx`, en `/`, el 27 de septiembre de 2026. Portada **a mano**: el HTML de Stitch trae `cdn.tailwindcss.com` y dos `<script>`, y la CSP de Caddy no lo permite (ver `docs/PANTALLAS.md`) |
+
+La pantalla 2 salió con `deviceType: DESKTOP` aunque se pidió `MOBILE`, y la 1 con un lienzo de
+512 x 410: **el aparato que se pide no es el que se recibe**. Se usa como referencia de
+composición, no como medida; las medidas (390 x 844, cabecera de 109 px, barra de 57 px) las
+comprueba `prueba_navegador.py` sobre la aplicación de verdad.
 
 La generación tarda minutos: la llamada se corta a los 60 s por defecto y el script ya usa 900 s.
 Si aun así se corta, la pantalla puede estar generándose: se comprueba con `screens` antes de

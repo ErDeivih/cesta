@@ -1,0 +1,55 @@
+Diseña la PRIMERA PANTALLA de «Cesta», una aplicación móvil (390 x 844) que compara el precio por
+unidad del mismo producto entre cinco supermercados españoles: Mercadona, Carrefour, DIA, Alcampo y
+Aldi. Todo el texto en español. Claro y oscuro por preferencia del sistema.
+
+QUIÉN LA USA Y QUÉ VIENE A HACER
+Alguien de pie en el pasillo del supermercado, con una mano, sin leer ayuda y sin explorar menús.
+Viene a contestar cuatro preguntas, y la pantalla tiene que dejarlas **a la vista o a un toque**:
+
+  1. «¿Qué me falta comprar y dónde lo compro?»
+  2. «Esto que tengo en la mano, ¿está caro?»
+  3. «¿Voy tachando bien?»
+  4. «¿Ha bajado algo de lo mío?»
+
+La 1 y la 3 se contestan **sin tocar nada** (el número de cosas que faltan por coger, y dónde
+conviene comprarlas). La 2 es el buscador, que tiene que estar en la parte de arriba y ser lo primero
+que se ve. La 4 son dos o tres ejemplos concretos de bajadas, con el ahorro.
+
+QUÉ DATOS REALES HAY QUE ENSEÑAR (inventa el resto con el mismo estilo)
+
+  · Buscador con el marcador «Aceite de oliva, leche, detergente…»
+  · «Te faltan 7 cosas» y debajo «3 en Mercadona · 2 en Aldi · 1 en DIA · 1 en Carrefour»
+    (esto es el reparto por tiendas: dice dónde conviene comprar cada cosa)
+  · Tres productos de la lista, con: nombre, la cadena más barata, el precio y el precio por kilo
+        Aceite de oliva virgen extra 1 L        Mercadona   5,95 €   5,95 €/L
+        Leche entera 6 x 1 L                    Aldi        5,94 €   0,99 €/L
+        Detergente líquido 2,6 L                DIA         4,49 €   1,73 €/L
+  · «Ha bajado de lo tuyo»: dos o tres filas con el producto, la cadena, el precio de antes
+    tachado, el de ahora y cuánto baja:
+        Café molido natural 250 g · DIA     4,25 € → 3,49 €   −18 %
+  · Y una línea sobria que diga de cuándo son los precios («Precios de hoy, 27 de septiembre»)
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+
+  · **Cifras en ancho fijo** (tabular-nums) siempre: una tabla de precios con ancho variable baila
+    fila a fila y comparar de un vistazo cuesta más.
+  · Objetivos táctiles de **44 px mínimo**. Cabecera de **109 px** y barra inferior de **57 px**:
+    todo lo que importa tiene que caber entre las dos sin desplazar la pantalla.
+  · Barra inferior con cinco destinos: **Buscar, Lista, Favoritos, Escáner, Avisos**. La pantalla
+    inicial es una mezcla de «resumen de mi compra» y buscador, no un menú.
+  · Tipografía del sistema (ui-sans-serif / system-ui), cuerpo 16 px, interlineado 1,7.
+    Nada de fuentes ni imágenes traídas de internet: todo local.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), aviso `#b45309` (`#fcd34d`),
+    bien `#059669` (`#10b981`). El color se usa para decir algo (bueno, aviso, dudoso), nunca
+    para decorar.
+  · Las etiquetas de estado son píldoras pequeñas: «oferta», «oferta solo con tarjeta»,
+    «oferta · 2 ud», «marca propia», «al peso», «sin comparar».
+  · Nada de tarjetas dentro de tarjetas, ni sombras grandes, ni degradados, ni iconos de colores:
+    esto es una herramienta de trabajo en un pasillo, no una landing.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en línea (la aplicación sirve con CSP `script-src 'self'`).
+  · Nada de dependencias de red en tiempo de ejecución.
+  · No prometer lo que no se sabe: si un producto no se puede comparar, se dice «sin comparar» y no
+    se enseña un ahorro inventado.
