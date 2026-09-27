@@ -575,6 +575,76 @@ def main() -> int:
         comprueba(ya_pedido or boton_campana.count() == 1,
                   "la ficha deja pedir el aviso («Avisarme si baja» o «Te aviso»)")
 
+        # -------------------- los resultados, sin deslizar la tabla en horizontal --------
+        # **Lo que se mide y por que.** Hasta el 27 de septiembre de 2026 esta pantalla era una
+        # tabla de seis columnas con 52rem de ancho minimo: en un movil habia que deslizar en
+        # horizontal y el PVP y el €/L quedaban fuera de la pantalla. Lo dijo una captura, no
+        # una prueba -- y es exactamente lo que este proyecto llama "una respuesta que no se
+        # ve". Ahora, por debajo de 640 px, son filas de dos lineas.
+        print("\n== los resultados, sin deslizar nada en horizontal (27 sep 2026)")
+        carga("/buscar?q=leche+entera")
+        with contextlib.suppress(Exception):
+            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+        desliza = pagina.evaluate("""() => {
+          const caja = document.querySelector('.tabla-scroll');
+          if (caja) return {ancho: caja.scrollWidth, cabe: caja.clientWidth, quien: 'la tabla'};
+          const main = document.querySelector('main');
+          return {ancho: main.scrollWidth, cabe: main.clientWidth, quien: 'la pagina'};
+        }""")
+        comprueba(desliza["ancho"] <= desliza["cabe"] + 1,
+                  f"nada que deslizar en horizontal ({desliza['quien']}: "
+                  f"{desliza['ancho']} px de ancho en una caja de {desliza['cabe']})")
+        ancho = pagina.viewport_size["width"]
+        cifras = pagina.locator("main li span.cifra")
+        cajas = [cifras.nth(i).bounding_box() for i in range(min(cifras.count(), 8))]
+        fuera = [c for c in cajas if c and c["x"] + c["width"] > ancho + 1]
+        comprueba(bool(cajas) and not fuera,
+                  f"y el precio, que es la respuesta, dentro de la pantalla "
+                  f"({len(fuera)} de {len(cajas)} se salian de {ancho} px)")
+        comprueba(pagina.get_by_text("Por unidad").count() >= 1,
+                  "con las dos columnas de precio dichas por su nombre")
+        chips = pagina.locator("[aria-label='Cadena de los resultados'] button")
+        comprueba(chips.count() >= 5,
+                  f"y las cadenas a un toque, encima de los resultados ({chips.count()})")
+        if chips.count():
+            nombre_cadena = chips.first.inner_text().strip()
+            antes = pagina.locator("a[href^='/grupo/']").count()
+            chips.first.click()
+            pagina.wait_for_timeout(3000)
+            marcadas = pagina.locator(
+                "[aria-label='Cadena de los resultados'] button[aria-pressed='true']")
+            comprueba(marcadas.count() == 1, "al tocar una cadena queda marcada")
+            comprueba(pagina.get_by_role("button", name="Todas").count() == 1,
+                      "y aparece la salida («Todas»)")
+            # Que filtre se mira **en las filas**, no en el numero: el limite son 40
+            # resultados, y una cadena grande puede tener 40 leches y seguir dando 40. Lo que
+            # no puede pasar es que salga una fila de otra cadena.
+            filas = pagina.locator("main ul li").all_inner_texts()[:8]
+            ajenas = [f for f in filas
+                      if nombre_cadena.lower() not in " ".join(f.split()).lower()
+                      and "no lo sé" not in f]
+            comprueba(not ajenas,
+                      f"solo salen resultados de «{nombre_cadena}» "
+                      f"({len(ajenas)} de {len(filas)} filas son de otra)")
+            despues = pagina.locator("a[href^='/grupo/']").count()
+            print(f"   «{nombre_cadena}»: de {antes} resultados a {despues}")
+            pagina.get_by_role("button", name="Todas").click()
+            pagina.wait_for_timeout(3000)
+            comprueba(pagina.locator("a[href^='/grupo/']").count() == antes,
+                      "y «Todas» los trae de vuelta")
+        # **Se vuelve a la ficha del grupo**: el bloque siguiente cuenta con estar en ella
+        # (anade a la lista desde ahi). Medido el 27 de septiembre de 2026: sin esto, el bloque
+        # de la pregunta 1 y 3 fallaba en «se puede anadir a la lista desde la ficha», que no
+        # era un fallo de la aplicacion sino de esta prueba habiendo cambiado de pantalla.
+        pagina.locator("a[href^='/grupo/']").first.click()
+        with contextlib.suppress(Exception):
+            pagina.wait_for_url("**/grupo/**", timeout=15000)
+            pagina.wait_for_load_state("networkidle")
+        # Y se espera al boton de anadir, que es donde se ancla el bloque siguiente: sin esta
+        # espera se lee la ficha a medio pintar (`patchright` no espera sola).
+        with contextlib.suppress(Exception):
+            pagina.get_by_role("button", name="Añadir a la cesta").first.wait_for(timeout=20000)
+
         # ------------------------------------------------------------ pregunta 1 y 3 ----
         print("\n== 'que me falta y donde lo compro' / 'voy tachando bien'")
         anadir = pagina.get_by_role("button", name="Añadir a la cesta")

@@ -13,6 +13,7 @@
  *     llevar el mismo verde que una oferta de verdad.
  */
 import type { Letra, Nutriscore, Producto } from '../tipos'
+import { porcentaje } from '../api/formato'
 import { Etiqueta } from './ui'
 
 const COLOR_NUTRI: Record<string, string> = {
@@ -97,6 +98,38 @@ export function SelloOferta({ texto, club, unidades }: {
     )
   }
   return null
+}
+
+/** Lo que te ahorras comprando en la cadena más barata en vez de en la más cara.
+ *
+ *  Existe desde el 27 de septiembre de 2026, cuando la tabla de resultados se rehizo para el
+ *  móvil: el ahorro era una columna de la tabla, y en las filas de dos líneas del móvil no
+ *  cabía. Y es la respuesta corta a «¿esto está caro?», así que no se puede quedar fuera de la
+ *  pantalla: aquí va pegada al nombre, en una línea.
+ *
+ *  **`0.0` no es un cero**: es el centinela de «no comparable» o «dudoso» (`tipos.ts`), y esas
+ *  dos cosas se dicen, no se pintan como un 0 %.
+ */
+export function SelloAhorro({ pct, comparable, dudoso }: {
+  pct: number
+  comparable: boolean
+  dudoso: boolean
+}) {
+  if (!comparable || dudoso || pct <= 0) {
+    return (
+      <Etiqueta tono="dato" titulo="Sin comparación fiable no hay ahorro que dar">
+        no lo sé
+      </Etiqueta>
+    )
+  }
+  return (
+    <span
+      className="cifra text-xs font-semibold text-emerald-800 dark:text-emerald-400"
+      title="Lo que te ahorras comprándolo en la cadena más barata en vez de en la más cara"
+    >
+      ahorras un {porcentaje(pct)}
+    </span>
+  )
 }
 
 export function SelloRetirada({ retirado }: { retirado: boolean | null }) {

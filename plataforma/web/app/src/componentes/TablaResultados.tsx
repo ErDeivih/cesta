@@ -10,7 +10,7 @@
  *  "más barato" que solo mira 40 filas es una respuesta distinta de la que
  *  parece.
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   flexRender,
@@ -24,8 +24,41 @@ import {
 
 import { euros, eurosUnidad, porcentaje } from '../api/formato'
 import type { ResultadoBusqueda } from '../tipos'
-import { SelloComparable, SelloDudoso, SelloOferta, SelloRetirada, SelloNutriscore } from './Etiquetas'
+import {
+  SelloAhorro,
+  SelloComparable,
+  SelloDudoso,
+  SelloNutriscore,
+  SelloOferta,
+  SelloRetirada,
+} from './Etiquetas'
 import { Etiqueta, TablaScroll, Td, Th } from './ui'
+
+/** Si la pantalla es de móvil. **La tabla de resultados no cabe en 390 px.**
+ *
+ *  Son seis columnas y 52rem de ancho mínimo, así que en un móvil hay que deslizar en
+ *  horizontal, y lo que quedaba fuera era justo el precio. Medido en la captura de
+ *  `/buscar?q=leche entera` del 27 de septiembre de 2026, a 390 x 844: se veían «Producto» y
+ *  «Cadena», y el PVP y el €/L **no**. El aviso «Desliza la tabla para ver todas las
+ *  columnas →» es una instrucción, no una respuesta: quien viene a saber si lo que tiene en la
+ *  mano está caro no lo averigua deslizando una tabla en un pasillo.
+ *
+ *  Por debajo de 640 px se pintan **filas de dos líneas**: nombre, cadena y sellos a la
+ *  izquierda, el precio y el precio por unidad a la derecha, sin deslizar nada. La tabla sigue
+ *  siendo lo bueno en pantalla ancha, que es donde se comparan columnas de verdad.
+ */
+function usePantallaEstrecha() {
+  const [estrecha, setEstrecha] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
+  )
+  useEffect(() => {
+    const m = window.matchMedia('(max-width: 639px)')
+    const oye = (e: MediaQueryListEvent) => setEstrecha(e.matches)
+    m.addEventListener('change', oye)
+    return () => m.removeEventListener('change', oye)
+  }, [])
+  return estrecha
+}
 
 /** Los que no tienen dato, al final. Un `null` que se cuela en el comparador
  *  acaba colocando arriba justo lo que no se sabe, que es lo peor que puede
@@ -168,6 +201,34 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
     getSortedRowModel: getSortedRowModel(),
   })
 
+  const estrecha = usePantallaEstrecha()
+
+  if (estrecha) {
+    return (
+      <div>
+        <BarraDeOrden orden={orden} onOrden={setOrden} />
+        {/* La cabecera de las dos columnas de precio, que es lo que en la tabla hacen los
+            `th`: sin ella, «0,95 €» y «0,95 €/L» son dos números sin nombre. */}
+        <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 border-b border-neutral-200 px-1 pb-1 text-xs uppercase tracking-wide text-tinta-suave dark:border-neutral-700">
+          <span>Producto</span>
+          <span className="text-right">PVP</span>
+          <span className="text-right">Por unidad</span>
+        </div>
+        <ul
+          aria-label="Resultados de la búsqueda"
+          className="divide-y divide-neutral-200 dark:divide-neutral-700"
+        >
+          {tabla.getRowModel().rows.map((fila) => (
+            <FilaCompacta
+              key={`${fila.original.grupo_id ?? 'suelto'}-${fila.original.nombre}-${fila.index}`}
+              fila={fila.original}
+            />
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
   return (
     <TablaScroll etiqueta="Resultados de la búsqueda" minAncho="52rem">
       <table className="w-full border-collapse text-sm">
@@ -199,6 +260,146 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         </tbody>
       </table>
     </TablaScroll>
+  )
+}
+
+/** El orden, en el móvil: la tabla ordena por sus cabeceras, y aquí no hay cabeceras.
+ *
+ *  Los mismos cuatro órdenes que la tabla, con las mismas palabras que su `header`, y el
+ *  sentido en la propia etiqueta («Precio ▾»). Pulsar el que ya está puesto le da la vuelta,
+ *  que es lo que hace cualquier cabecera de tabla.
+ *
+ *  **Y va plegado.** Abierto son cinco botones de 44 px -- dos filas, 110 px -- por encima de
+ *  los resultados, y el orden no es lo que se viene a mirar: lo que se viene a mirar es el
+ *  precio, y en un móvil cada 110 px de controles son una fila de resultados menos en la
+ *  primera pantalla. El `summary` dice el orden que hay puesto, así que plegado **también
+ *  informa**; abierto, se cambia.
+ */
+function BarraDeOrden({ orden, onOrden }: {
+  orden: SortingState
+  onOrden: (o: SortingState) => void
+}) {
+  const cual = orden[0]?.id ?? 'orden_servidor'
+  const arriba = orden[0]?.desc === false
+  const botones: [string, string][] = [
+    ['orden_servidor', 'Lo de siempre'],
+    ['precio', 'Precio'],
+    ['unidad', 'Precio por unidad'],
+    ['ahorro', 'Ahorro'],
+    ['cadenas', 'Dónde'],
+  ]
+  const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
+  return (
+    <details className="mb-2">
+      <summary className="flex min-h-[44px] cursor-pointer items-center gap-2 text-xs uppercase tracking-wide text-tinta-suave">
+        Ordenar por
+        <span className="font-semibold normal-case tracking-normal text-tinta">
+          {puesto}
+          {cual !== 'orden_servidor' && (arriba ? ' ▴' : ' ▾')}
+        </span>
+      </summary>
+      <div className="flex flex-wrap items-center gap-2 pb-1">
+        {botones.map(([id, texto]) => {
+          const esElPuesto = cual === id
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={esElPuesto}
+              onClick={() =>
+                esElPuesto && id !== 'orden_servidor'
+                  ? onOrden([{ id, desc: !arriba }])
+                  : onOrden([{ id, desc: false }])
+              }
+              className={
+                esElPuesto
+                  ? 'min-h-[44px] rounded-lg border border-sky-700 bg-sky-700 px-3 text-sm font-medium text-white dark:border-sky-500'
+                  : 'min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm dark:border-neutral-600 dark:bg-neutral-800'
+              }
+            >
+              {texto}
+              {esElPuesto && id !== 'orden_servidor' && (
+                <span aria-hidden="true">{arriba ? ' ▴' : ' ▾'}</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </details>
+  )
+}
+
+/** Una fila del móvil: dos líneas, y el precio siempre visible.
+ *
+ *  El enlace se estira por toda la fila con `after:inset-0`, igual que en la tabla: se puede
+ *  pulsar en cualquier parte sin anidar enlaces.
+ */
+function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
+  const hayAbanico =
+    fila.precio_unidad_cent !== null &&
+    fila.precio_unidad_max_cent !== null &&
+    fila.precio_unidad_max_cent > fila.precio_unidad_cent
+  return (
+    <li className="relative hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+      <div className="grid grid-cols-[1fr_auto_auto] items-start gap-x-3 py-2">
+        <div className="flex min-w-0 items-start gap-2">
+          {fila.imagen ? (
+            <img
+              src={fila.imagen}
+              alt=""
+              loading="lazy"
+              width={40}
+              height={40}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+              className="h-10 w-10 shrink-0 rounded border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="h-10 w-10 shrink-0 rounded border border-dashed border-neutral-300 dark:border-neutral-600"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-medium leading-snug">
+              {fila.grupo_id === null ? (
+                fila.nombre
+              ) : (
+                <Link to={`/grupo/${fila.grupo_id}`} className="after:absolute after:inset-0">
+                  {fila.nombre}
+                </Link>
+              )}
+            </p>
+            <p className="text-xs text-tinta-suave">
+              {fila.cadena_mas_barata ?? 'no lo sé'}
+              {fila.marca && fila.marca !== fila.cadena_mas_barata ? ` · ${fila.marca}` : ''}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              <SelloAhorro pct={fila.ahorro_pct} comparable={fila.comparable} dudoso={fila.dudoso} />
+              <SelloOferta
+                texto={fila.con_oferta ? 'Hay promoción que baja lo que pagas hoy en caja' : null}
+                club={fila.con_oferta_club}
+                unidades={fila.oferta_unidades ?? null}
+              />
+              <SelloRetirada retirado={fila.con_retirada} />
+              <SelloDudoso dudoso={fila.dudoso} />
+              <SelloComparable cadenas={fila.cadenas} />
+              <SelloNutriscore valor={fila.nutriscore} />
+            </div>
+          </div>
+        </div>
+        <span className="cifra text-sm font-semibold">{euros(fila.precio_cent)}</span>
+        <span className="cifra text-right text-sm">
+          {eurosUnidad(fila.precio_unidad_cent, fila.unidad)}
+          {hayAbanico && (
+            <span className="block text-xs text-tinta-suave">
+              hasta {eurosUnidad(fila.precio_unidad_max_cent, fila.unidad)}
+            </span>
+          )}
+        </span>
+      </div>
+    </li>
   )
 }
 

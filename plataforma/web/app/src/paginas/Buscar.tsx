@@ -14,7 +14,7 @@ import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
 import { Mosaico } from '../componentes/Mosaico'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
-import { Aviso, Boton, Cargando, Esqueleto, Etiqueta, Fallo, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Esqueleto, Etiqueta, Fallo, Vacio, cx } from '../componentes/ui'
 import { cuantosFiltros, escribirFiltros, leerFiltros } from '../estado/filtrosUrl'
 import {
   MINIMO, apuntaBusqueda, leerBusquedas,
@@ -249,6 +249,55 @@ export function Buscar() {
             </p>
             {resultados.isFetching && <Etiqueta tono="dato">actualizando…</Etiqueta>}
           </div>
+
+          {/* **Las cadenas, a la vista y a un toque.** Estaban solo dentro del panel de
+              filtros, que va plegado, así que para mirar «leche entera» en una sola cadena
+              había que abrir un panel y saber que ahí estaba. Comparar el mismo producto entre
+              cinco cadenas es la razón de ser de la aplicación, así que las cinco van encima de
+              los resultados, con la misma lógica del panel (`alternaCadena`), y «Todas» para
+              quitarlas. Sin cuentas por cadena: la API no las manda y el número que saldría de
+              contar estas cuarenta filas no es el del catálogo. */}
+          {cadenas.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2" role="group"
+                 aria-label="Cadena de los resultados">
+              <span className="text-xs uppercase tracking-wide text-tinta-suave">Cadena</span>
+              {cadenas.map((c) => {
+                const puesta = filtros.cadenas.includes(c)
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={puesta}
+                    onClick={() =>
+                      ponFiltros({
+                        ...filtros,
+                        cadenas: puesta
+                          ? filtros.cadenas.filter((o) => o !== c)
+                          : [...filtros.cadenas, c],
+                      })
+                    }
+                    className={cx(
+                      'min-h-[44px] rounded-full border px-3 text-sm font-medium',
+                      puesta
+                        ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500'
+                        : 'border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800',
+                    )}
+                  >
+                    {c}
+                  </button>
+                )
+              })}
+              {filtros.cadenas.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => ponFiltros({ ...filtros, cadenas: [] })}
+                  className="min-h-[44px] rounded-full border border-neutral-300 bg-white px-3 text-sm underline dark:border-neutral-600 dark:bg-neutral-800"
+                >
+                  Todas
+                </button>
+              )}
+            </div>
+          )}
 
           {resultados.data.resultados.length === 0 ? (
             /* Cero resultados tiene DOS causas y se arreglan de forma distinta:

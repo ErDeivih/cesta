@@ -132,6 +132,47 @@ habituales** (`componentes/Mosaico.tsx`, 23 sep 2026)
 **[falta]** la voz (tarea 3), el escaner en el buscador (tarea 8; el escaner tiene su
 propia pantalla desde antes)
 
+### Los resultados, en un movil: dos lineas, y el precio a la vista
+
+**Rehecho el 27 de septiembre de 2026, y la razon es una medida.** Hasta ese dia esta pantalla
+era una tabla de seis columnas con `min-width: 52rem` dentro de una caja con scroll horizontal
+(`TablaScroll`), con el aviso *«Desliza la tabla para ver todas las columnas →»*. En un movil de
+390 px eso significa que **se veian «Producto» y «Cadena», y el PVP y el €/L quedaban fuera de la
+pantalla**. Lo dijo una captura, no una prueba: la tabla estaba entera en el HTML, con sus
+`scope="col"` y su `aria-sort`, y aun asi la respuesta a *«¿esto esta caro?»* no se veia sin
+deslizar. Un aviso que pide deslizar es una instruccion, no una respuesta.
+
+Por debajo de 640 px se pintan **filas de dos lineas** (`componentes/TablaResultados.tsx`,
+`FilaCompacta`), y por encima sigue la tabla de siempre:
+
+    PRODUCTO                              PVP        POR UNIDAD
+    ┌────┐ Leche entera Hacendado       0,96 €        0,96 €/l
+    │foto│ mercadona · Hacendado                   hasta 1,29 €/l
+    └────┘ ahorras un 34,4 %
+           [oferta solo con tarjeta] [comparable · 5 cadenas] [C]
+
+    ORDENAR POR  Lo de siempre ▸        <- plegado: abierto son cinco botones de 44 px
+
+Lo que se decide ahi, y por que:
+
+  - **El precio no se va de la pantalla.** Nombre, cadena, ahorro y sellos a la izquierda; PVP y
+    precio por unidad a la derecha, los dos con `cifra` (ancho fijo) para que se lean en columna.
+  - **El ahorro sube al lado del nombre** (`SelloAhorro`): era una columna mas de la tabla y en
+    dos lineas no cabe, pero es la respuesta corta a la pregunta 2. Y **`0.0` no es un cero**:
+    es el centinela de «no comparable» o «dudoso» y se dice con palabras, no con un 0 %.
+  - **Las cinco cadenas, encima de los resultados y a un toque.** Estaban solo dentro del panel
+    de filtros, que va plegado: para mirar «leche entera» en una sola cadena habia que abrir un
+    panel y saber que ahi estaba. Comparar entre cadenas es la razon de ser de la aplicacion.
+    **Sin cuentas por cadena**: la API no las manda, y contar estas cuarenta filas no da el
+    numero del catalogo (el diseño de Stitch las ponia, y se han quitado por eso).
+  - **El orden va plegado, y el `summary` dice cual hay puesto**: abierto son cinco botones de
+    44 px, dos filas y 110 px, y en un movil cada 110 px de controles es una fila de resultados
+    menos en la primera pantalla.
+
+Medido despues del cambio, con la puerta mecanica: **nada que deslizar** (390 px de ancho en una
+caja de 390), **0 de 8 cifras fuera** de la pantalla, las cadenas a un toque (5) y filtrando de
+verdad (filtrando por `alcampo`, las 8 primeras filas son de Alcampo y ninguna de otra cadena).
+
 ### Lo que se ve al abrir, con el buscador vacio
 
 **Ojo con el titulo de esta seccion: desde el 27 de septiembre la aplicacion no abre aqui**,

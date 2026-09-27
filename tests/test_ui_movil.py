@@ -233,3 +233,24 @@ def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla(
                 "4: y su primera fila, que es la respuesta",
                 "4: la seccion de los avisos se ve sin desplazar"):
         assert que in puerta, f"la puerta no comprueba «{que}»"
+
+
+def test_la_puerta_mide_que_el_precio_no_se_vaya_de_la_pantalla():
+    """Los resultados, sin deslizar en horizontal: el precio tiene que verse (27 sep 2026).
+
+    La tabla de resultados media 52rem de ancho minimo y en un movil habia que deslizarla: se
+    veian «Producto» y «Cadena» y **el PVP y el €/L no**. Lo dijo una captura, no una prueba,
+    que es justo lo que este proyecto llama "una respuesta que no se ve". Ahora la puerta lo
+    mide, y esto vigila que la medida siga estando.
+    """
+    puerta = PUERTA.read_text(encoding="utf-8")
+    for que in ("nada que deslizar en horizontal",
+                "y el precio, que es la respuesta, dentro de la pantalla",
+                "y las cadenas a un toque, encima de los resultados",
+                "solo salen resultados de"):
+        assert que in puerta, f"la puerta no comprueba «{que}»"
+    assert "aria-label='Cadena de los resultados'" in puerta, (
+        "la puerta no encuentra las cadenas de encima de los resultados por su etiqueta")
+    # Y la razon, escrita donde se lee.
+    assert "52rem" in puerta or "deslizar en horizontal" in puerta, (
+        "el caso que lo destapo tiene que estar contado al lado de la medida")
