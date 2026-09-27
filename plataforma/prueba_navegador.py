@@ -374,6 +374,25 @@ def _cabe_en_la_primera(pagina, elemento) -> tuple[bool, str]:
     return dentro, f"y={y:.0f}..{fin:.0f} (la banda util es {arriba}..{abajo})"
 
 
+def _encima_de(pagina, limite: float) -> list[tuple[float, float, str]]:
+    """Lo que hay pintado **por encima** de una altura dada, con su alto.
+
+    Existe porque un FALLO que dice «la primera linea esta a 1.269 px» no se puede leer: hay
+    que saber **que es lo que la empuja**. Medido el 27 de septiembre de 2026 en `/cesta`, el
+    numero no cuadraba con lo que se veia en una captura, y para saber cual de las dos cosas
+    estaba mal hacia falta esto.
+    """
+    return pagina.evaluate("""(limite) => [...document.querySelectorAll('main *')]
+      .map(n => { const r = n.getBoundingClientRect();
+                  return {y: r.top, h: r.height, t: (n.innerText || '').trim().slice(0, 60)}; })
+      .filter(o => o.h > 20 && o.y + o.h <= limite && o.t)
+      .filter((o, i, todos) => !todos.some((otro, j) => j !== i && otro.y <= o.y
+                                            && otro.y + otro.h >= o.y + o.h
+                                            && otro.h > o.h))
+      .sort((a, b) => a.y - b.y)
+      .slice(0, 10)""", limite)
+
+
 def _solo_el_endpoint(nombre: str):
     """Un filtro de URL que coge **el endpoint de la API y no un modulo del front**.
 
@@ -453,14 +472,35 @@ def main() -> int:
         cuerpo = pagina.inner_text("body")
         comprueba("Datos del" in cuerpo, "la cabecera dice de que dia son los precios")
         comprueba(pagina.get_by_placeholder("leche entera, atún, papel de cocina…").count() == 1,
-                  "el buscador se ve y se puede tocar sin buscar el boton")
+                  "el buscador se ve en la primera pantalla, sin buscar el boton")
+        # **Buscar es escribir, no mandar.** Medido en un navegador el 27 de septiembre de 2026:
+        # la primera pantalla nueva solo buscaba al mandar el formulario, y el buscador de
+        # `/buscar` -- que es el que la gente conocia -- buscaba al escribir. Quien conoce la
+        # aplicacion escribe «leche entera» y espera; con un boton hay que saber que existe. Se
+        # escribe y se mira si salen resultados **sin pulsar nada**.
+        campo = pagina.get_by_placeholder("leche entera, atún, papel de cocina…")
+        campo.fill("leche entera")
+        aparece = False
+        with contextlib.suppress(Exception):
+            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=15000)
+            aparece = True
+        comprueba(aparece, "escribir busca: los resultados salen debajo, sin pulsar nada")
+        comprueba(pagina.get_by_text("Abrir en el buscador").count() >= 1
+                  or pagina.get_by_text("Ver todos los resultados").count() >= 1,
+                  "y hay por donde abrirlo entero")
+        campo.fill("")
+        pagina.wait_for_timeout(600)
+
+        # **La primera vez, con datos reales y sin visita guiada** (condicion (b) de la
+        # barra). Esto vive en el buscador (`/buscar`), que desde el 27 de septiembre ya no es
+        # la pantalla de entrada: sin sesion y con el buscador vacio enseña cuatro productos
+        # que compra todo el mundo con su diferencia de hoy. Y cada uno tiene que **hablar de
+        # lo que se ha buscado**: el 23 sep 2026 buscar "aceite de oliva" devolvia «Picos sin
+        # gluten» el primero, y la tarjeta lo pintaba tal cual.
+        print("\n== la primera vez (barra b)")
+        carga("/buscar")
         comprueba(pagina.get_by_text("Escribe al menos dos letras").count() >= 1,
                   "sin escribir nada hay algo que leer, no una pantalla vacia")
-        # **La primera vez, con datos reales y sin visita guiada** (condicion (b) de la
-        # barra): sin sesion, el buscador vacio ensena cuatro productos que compra todo el
-        # mundo con su diferencia de hoy. Y cada uno tiene que **hablar de lo que se ha
-        # buscado**: el 23 sep 2026 buscar "aceite de oliva" devolvia «Picos sin gluten» el
-        # primero, y la tarjeta lo pintaba tal cual.
         primera = pagina.inner_text("main")
         comprueba("Esto compara el precio" in primera,
                   "sin sesion sale la tarjeta de la primera vez (no un esqueleto)")
@@ -602,7 +642,13 @@ def main() -> int:
                 pagina.wait_for_timeout(250)
             return cuantas_casillas()
 
-        quitar = pagina.get_by_role("button", name="Quitar")
+        # **Y el boton de quitar una linea, ni por nombre ni por «el primero que lo lleve».**
+        # `get_by_role("button", name="Quitar")` casa tambien con «Quitar la lista» -- que esta
+        # en la tarjeta de arriba, o sea el primer boton de la lista de botones -- y el boton de
+        # una linea se llama «Quitar <producto> de la lista» (`aria-label`, `Cesta.tsx:446`),
+        # asi que con `exact=True` no encuentra ninguno. Medido el 27 de septiembre de 2026: la
+        # puerta pulsaba «Quitar la lista» y luego decia que quitar una linea no funcionaba.
+        quitar = pagina.locator("button[aria-label^='Quitar '][aria-label$=' de la lista']")
         comprueba(quitar.count() >= 1, "cada linea se puede quitar")
         if quitar.count():
             # **Cuanto habia antes**, no "cero despues": la cuenta es la misma en cada
@@ -1018,7 +1064,9 @@ def main() -> int:
                 ("la cesta", "listas", "/cesta", None),
                 ("los avisos", "alertas", "/avisos", None),
                 ("lo mio que ha bajado", "bajadas", "/panel?pestana=bajadas&mios=true", None),
-                ("el buscador", "buscar", "/", "leche entera"),
+                # `/buscar` y no `/`: desde el 27 de septiembre de 2026 `/` es Inicio, y su
+                # buscador no navega a ningun sitio -- busca ahi mismo, y eso se mide abajo.
+                ("el buscador", "buscar", "/buscar", "leche entera"),
         ):
             filtro = _contesta_mal(pagina, endpoint)
             try:
@@ -1047,7 +1095,24 @@ def main() -> int:
             finally:
                 pagina.unroute(filtro)
 
-        # -------------------------- el enlace de invitacion, abierto por otra persona ----
+        # Y el buscador **de la primera pantalla**, que busca mientras se escribe: con la API
+        # caida, el hueco de los resultados lo dice con palabras. Y, sobre todo, **no dice
+        # «nada con esas palabras»**: eso seria culpar a quien escribe de un fallo nuestro, y
+        # es justo el fallo que tenia esta pantalla cuando se escribio (27 sep 2026).
+        filtro = _contesta_mal(pagina, "buscar")
+        try:
+            carga("/")
+            pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
+            with contextlib.suppress(Exception):
+                pagina.get_by_text("No he podido buscar").first.wait_for(timeout=20000)
+            texto = pagina.inner_text("body")
+            comprueba("No he podido buscar" in texto,
+                      "el buscador de la primera pantalla, con la API a 500, lo dice con "
+                      f"palabras (lei: {' | '.join(texto.splitlines()[:6])})")
+            comprueba("Nada con esas palabras" not in texto,
+                      "y no le echa la culpa a quien escribe: no dice «nada con esas palabras»")
+        finally:
+            pagina.unroute(filtro)
         # Que la lista sea de quien la creo **y de quien entre** lleva escrito desde el
         # primer dia (`docs/AMIGOS.md`), y no lo habia abierto un navegador nunca: se probaba
         # el endpoint, no el enlace. Aqui se hace el viaje entero y con dos personas: la de
@@ -1246,6 +1311,11 @@ def main() -> int:
         dentro, donde = _cabe_en_la_primera(pagina, primera_linea)
         comprueba(dentro,
                   f"1 y 3: la primera linea de la lista se ve sin desplazar ({donde})")
+        if not dentro:
+            print("   lo que hay encima de la primera linea, con su alto:")
+            for caja in _encima_de(pagina, primera_linea.bounding_box()["y"] if
+                                   primera_linea.bounding_box() else 0):
+                print(f"     y={caja['y']:>6.0f}  alto={caja['h']:>5.0f}  {caja['t']}")
 
         carga("/")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
@@ -1264,10 +1334,19 @@ def main() -> int:
 
         carga("/panel?pestana=bajadas&mios=true")
         pagina.wait_for_timeout(1000)
-        tabla_mia = pagina.locator("main table").first
-        dentro, donde = _cabe_en_la_primera(pagina, tabla_mia)
+        # **La primera fila, no la tabla entera.** La tabla de «lo tuyo que ha bajado» es un
+        # ranking: crece sola cada dia que baja algo (medido el 24 sep: 94 px; el 27: 242), asi
+        # que exigir que quepa entera es una prueba que se pone roja por tener mas datos -- el
+        # defecto de instrumento que este proyecto ya se ha comido tres veces. Lo que contesta
+        # la pregunta es su primera fila, con su cabecera: eso es lo que se mide.
+        cabecera_tabla = pagina.locator("main table thead tr").first
+        dentro, donde = _cabe_en_la_primera(pagina, cabecera_tabla)
         comprueba(dentro,
-                  f"4: lo tuyo que ha bajado se ve sin desplazar ({donde})")
+                  f"4: la cabecera de lo tuyo que ha bajado se ve sin desplazar ({donde})")
+        primera_fila = pagina.locator("main table tbody tr").first
+        dentro, donde = _cabe_en_la_primera(pagina, primera_fila)
+        comprueba(dentro,
+                  f"4: y su primera fila, que es la respuesta ({donde})")
 
         carga("/avisos")
         # La seccion de lo que ha bajado, que es la respuesta de la pregunta 4 en esta

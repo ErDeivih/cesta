@@ -27,12 +27,12 @@
  *     es el sitio donde debe estar.
  */
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { euros, eurosUnidad, nombreCadena, numero, porcentajeConSigno } from '../api/formato'
 import { misListas, reparto, verLista, yo } from '../api/cesta'
-import { useBajadas } from '../api/consultas'
+import { FILTROS_VACIOS, consultaUtil, useBajadas, useBuscar } from '../api/consultas'
 import type { Baja, RepartoTiendas } from '../tipos'
 import { Etiqueta, Tarjeta, cx } from '../componentes/ui'
 import { IconoLupa } from '../componentes/iconos'
@@ -120,47 +120,141 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
   )
 }
 
-/** El buscador, lo primero: *«esto que tengo en la mano, ¿esta caro?»*. */
+/** El buscador, lo primero: *«esto que tengo en la mano, ¿esta caro?»*.
+ *
+ *  **Y busca mientras se escribe, sin mandar nada.** La primera version solo navegaba a
+ *  `/buscar` al mandar el formulario, y eso es una regresion que encontro la puerta en un
+ *  navegador de verdad: en la pantalla de antes (el buscador de `/buscar`) escribir ya
+ *  buscaba, asi que quien conoce la aplicacion escribe «leche» y espera. Con un boton, o
+ *  sabes que existe o te quedas mirando una caja de texto quieta -- y la barra (a) se juzga
+ *  contra alguien que no sabe donde esta el boton.
+ *
+ *  Ahora los cuatro primeros resultados salen **debajo del campo, en la misma pantalla donde
+ *  se escribe**, y el campo no se desmonta: la respuesta a la pregunta 2 no obliga a ir a
+ *  ningun sitio. La espera de 350 ms es lo que se tarda en escribir la letra siguiente: sin
+ *  ella, «leche» son cinco peticiones y cuatro para tirar.
+ */
 function Buscador() {
   const [texto, setTexto] = useState('')
+  const [diferido, setDiferido] = useState('')
   const navegar = useNavigate()
+
+  useEffect(() => {
+    const t = setTimeout(() => setDiferido(texto.trim()), 350)
+    return () => clearTimeout(t)
+  }, [texto])
+
+  const filtros = useMemo(
+    // Cinco y no cuatro: el quinto es el que dice si hay mas. La respuesta no trae un total
+    // (`RespuestaBuscar` no lo manda), asi que la unica forma honesta de decir «y hay mas» es
+    // haber pedido una de mas.
+    () => ({ ...FILTROS_VACIOS, q: diferido, limite: 5 }),
+    [diferido],
+  )
+  const util = consultaUtil(filtros)
+  const busqueda = useBuscar(filtros)
+  const todos = util ? (busqueda.data?.resultados ?? []) : []
+  const resultados = todos.slice(0, 4)
+
   return (
-    <form
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault()
-        const limpio = texto.trim()
-        if (limpio) navegar(`/buscar?q=${encodeURIComponent(limpio)}`)
-      }}
-      className="flex items-center gap-2"
-    >
-      <label htmlFor="q-inicio" className="sr-only">
-        Buscar un producto
-      </label>
-      <div className="relative flex-1">
-        <IconoLupa
-          width={18}
-          height={18}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave"
-        />
-        <input
-          id="q-inicio"
-          type="search"
-          inputMode="search"
-          enterKeyHint="search"
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="leche entera, atún, papel de cocina…"
-          className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-base dark:border-neutral-700 dark:bg-neutral-900"
-        />
-      </div>
-      <button
-        type="submit"
-        className="min-h-[44px] rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+    <div>
+      <form
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const limpio = texto.trim()
+          if (limpio) navegar(`/buscar?q=${encodeURIComponent(limpio)}`)
+        }}
+        className="flex items-center gap-2"
       >
-        Buscar
-      </button>
-    </form>
+        <label htmlFor="q-inicio" className="sr-only">
+          Buscar un producto
+        </label>
+        <div className="relative flex-1">
+          <IconoLupa
+            width={18}
+            height={18}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave"
+          />
+          <input
+            id="q-inicio"
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="leche entera, atún, papel de cocina…"
+            className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-base dark:border-neutral-700 dark:bg-neutral-900"
+          />
+        </div>
+        <button
+          type="submit"
+          className="min-h-[44px] rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+        >
+          Buscar
+        </button>
+      </form>
+
+      {util && (
+        <Tarjeta className="mt-2">
+          {busqueda.isPending ? (
+            <p className="text-sm text-tinta-suave">Buscando «{diferido}»…</p>
+          ) : busqueda.isError ? (
+            // **No se puede decir «nada con esas palabras» cuando lo que ha fallado es la
+            // API**: sería culpar a quien escribe de un fallo nuestro, y encima le quita las
+            // ganas de reintentar. Lo mismo que hace la pantalla del buscador, con sus
+            // palabras.
+            <p className="text-sm text-amber-800 dark:text-amber-400">
+              No he podido buscar: la API no contesta. El resto de la pantalla sigue en pie.
+            </p>
+          ) : resultados.length === 0 ? (
+            <p className="text-sm text-tinta-suave">
+              Nada con esas palabras. Prueba con menos, o{' '}
+              <Link to={`/buscar?q=${encodeURIComponent(diferido)}`} className="underline">
+                míralo entero en el buscador
+              </Link>
+              .
+            </p>
+          ) : (
+            <>
+              <ul className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                {resultados.map((f) => (
+                  <li key={`${f.grupo_id ?? 'suelto'}-${f.nombre}`}>
+                    <Link
+                      to={f.grupo_id === null ? `/buscar?q=${encodeURIComponent(diferido)}` : `/grupo/${f.grupo_id}`}
+                      className="flex min-h-[44px] items-baseline justify-between gap-2 py-2"
+                    >
+                      <span className="min-w-0 truncate text-sm">{f.nombre}</span>
+                      <span className="shrink-0 text-right text-sm">
+                        <span className="cifra font-semibold">{euros(f.precio_cent)}</span>
+                        {f.precio_unidad_cent != null && f.unidad && (
+                          <span className="cifra block text-xs text-tinta-suave">
+                            {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+                          </span>
+                        )}
+                        {f.cadena_mas_barata && (
+                          <span className="block text-xs text-tinta-suave">
+                            {nombreCadena(f.cadena_mas_barata)}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={`/buscar?q=${encodeURIComponent(diferido)}`}
+                className="mt-1 inline-flex min-h-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+              >
+                {todos.length > resultados.length
+                  ? 'Ver todos los resultados'
+                  : 'Abrir en el buscador'}
+              </Link>
+            </>
+          )}
+        </Tarjeta>
+      )}
+    </div>
   )
 }
 
@@ -202,7 +296,10 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-sm font-semibold">{titulo}</p>
         {soloMios && (
-          <Link to="/avisos" className="text-xs font-semibold text-sky-800 underline dark:text-sky-300">
+          <Link
+            to="/avisos"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-sky-800 underline dark:text-sky-300"
+          >
             Avisos
           </Link>
         )}
@@ -253,7 +350,7 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
         <p className="mt-2 text-xs">
           <Link
             to="/panel?pestana=bajadas"
-            className="font-semibold text-sky-800 underline dark:text-sky-300"
+            className="inline-flex min-h-[44px] items-center font-semibold text-sky-800 underline dark:text-sky-300"
           >
             y <span className="cifra">{numero(bajadas.length - 3, 0)}</span> más bajadas
           </Link>
@@ -312,7 +409,14 @@ export function Inicio() {
             <Tarjeta>
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold">Pendientes de coger</p>
-                <Link to="/cesta" className="text-xs font-semibold text-sky-800 underline dark:text-sky-300">
+                {/* Los enlaces pequeños de esta pantalla llevan su area de 44 px: medido en un
+                    movil con la puerta mecanica el 27 de septiembre de 2026, este medía
+                    **89 x 16 px** y el de «Avisos» **35 x 16**. Un enlace de texto de 16 px de
+                    alto no se acierta con el pulgar en un pasillo, por mucho que se vea. */}
+                <Link
+                  to="/cesta"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-sky-800 underline dark:text-sky-300"
+                >
                   Toca para tachar
                 </Link>
               </div>

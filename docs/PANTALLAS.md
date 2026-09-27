@@ -293,9 +293,23 @@ codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
     ● [foto] ~~Atun en aceite~~      3,45 €
              lo cogio Mama
 
+    DÓNDE COMPRO CADA COSA                   <- desde el 27 sep 2026, debajo de la lista
+    ...                                        (antes iba arriba y tapaba lo que hay que tachar)
+
 **Dos secciones, no una lista tachada.** En el pasillo miras la lista veinte
 veces y lo que necesitas saber cada vez es *que me queda*. Si lo tachado sigue en
 medio, hay que leerlo todo para descartarlo.
+
+**Y la lista va antes que el reparto por tiendas, desde el 27 de septiembre de 2026.** La
+tarjeta «Dónde compro cada cosa» (`componentes/RepartoEnTiendas.tsx`) estaba justo debajo del
+total, con una razon escrita: *«es la pregunta que sigue a "¿cuanto cuesta?", que es "¿y donde
+lo compro?"»*. La razon es buena y el sitio estaba mal, y lo dijo una medida: en un movil de
+390 x 844 esa tarjeta mide **592 px** y empujaba la primera cosa que se puede tachar hasta
+**1.269 px**, con la banda util en 109..787. O sea que en la pantalla donde se tacha **no se veia
+nada que tachar sin desplazar**, y eso es la condicion (a) rota. Ahora la lista manda y el
+reparto va debajo; la pregunta «¿y donde lo compro?» sigue contestada en la primera pantalla
+(`Inicio`), que ademas es donde se hace antes de salir de casa. Medido despues del cambio: la
+primera linea de la lista esta a **661 px**, dentro de la banda.
 
 ### Agrupar por pasillos **[falta — tarea 1]**
 

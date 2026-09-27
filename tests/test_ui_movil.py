@@ -199,15 +199,26 @@ def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla(
     (`_franja_util`: la cabecera y la barra de abajo se comen 109 y 57 px de los 844) y
     comprueba que las cuatro respuestas caben enteras dentro, con la pantalla arriba:
 
-        1 y 3  la primera linea de la lista             y=557..573
+        1 y 3  la primera linea de la lista             y=661..677
         2      la frase del grupo al que se llega
                buscando                                  y=520..564
-        4      "lo tuyo que ha bajado", con su tabla     y=437..557
+        4      "lo tuyo que ha bajado": su cabecera      y=613..646
+               y su primera fila, que es la respuesta    y=646..706
         4      la seccion de los avisos                 y=186..210
 
-    Medido asi el 23 de septiembre de 2026, con la banda util en 109..787. Esto **no**
+    Medido asi el 27 de septiembre de 2026, con la banda util en 109..787. Esto **no**
     quiere decir que (a) este cumplida -- eso lo dice una persona --, pero si alguna de
     las cuatro se fuera por debajo de 787, seria imposible cumplirla y se sabria por que.
+
+    **Las dos medidas del 27 de septiembre cambiaron de sitio y de objeto, y hay que decir
+    por que**, porque las dos parecian la misma medida de antes:
+
+      - la primera linea de la lista estaba a **1.269 px** porque la tarjeta «Dónde compro
+        cada cosa» (592 px) iba por encima; se bajo la tarjeta y ahora esta a 661;
+      - la tabla de «lo tuyo que ha bajado» se medía **entera**, y es un ranking que crece
+        solo (94 px el 24, 242 el 27): exigir que quepa entera es una prueba que se pone roja
+        por tener mas datos. Ahora se miden su cabecera y su primera fila, que es lo que
+        contesta la pregunta.
     """
     puerta = PUERTA.read_text(encoding="utf-8")
     assert "def _franja_util(" in puerta, \
@@ -218,6 +229,7 @@ def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla(
         "la banda util tiene que salir de la cabecera de verdad, no de un numero a ojo"
     for que in ("1 y 3: la primera linea de la lista se ve sin desplazar",
                 "2: la frase que contesta «¿esto esta caro?» se ve sin desplazar",
-                "4: lo tuyo que ha bajado se ve sin desplazar",
+                "4: la cabecera de lo tuyo que ha bajado se ve sin desplazar",
+                "4: y su primera fila, que es la respuesta",
                 "4: la seccion de los avisos se ve sin desplazar"):
         assert que in puerta, f"la puerta no comprueba «{que}»"

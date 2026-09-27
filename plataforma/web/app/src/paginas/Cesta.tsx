@@ -1273,11 +1273,6 @@ export function Cesta() {
             </p>
           </Tarjeta>
 
-          {/* **Dónde compro cada cosa**: la lista partida por tiendas, con el total de
-              cada sublista y el de todo. Va justo debajo del total, porque es la
-              pregunta que sigue a «¿cuánto cuesta?», que es «¿y dónde lo compro?». */}
-          <RepartoEnTiendas listaId={listaId as string} papel={detalle.data.papel} />
-
           <Tarjeta
             titulo="Lo que hay que coger"
             sub="Marca lo que ya llevas en el carro. Lo tachado sigue contando en el total, pero sale de la cuenta de dónde comprarla."
@@ -1442,6 +1437,21 @@ export function Cesta() {
             </>
           </Tarjeta>
         </>
+      )}
+
+      {/* **Dónde compro cada cosa**: la lista partida por tiendas, con el total de cada
+          sublista y el de todo.
+          
+          **Estaba justo debajo del total, y se ha bajado, y no es un capricho.** El 27 de
+          septiembre de 2026 lo midió la puerta en un móvil de 390 x 844: esta tarjeta mide
+          **592 px** y, con ella delante, la primera cosa que se puede tachar quedaba a
+          **1.269 px** -- muy por debajo de la banda útil (109..787). Es decir: en la pantalla
+          donde se tacha, no se veía nada que tachar sin desplazar. La pregunta «¿y dónde lo
+          compro?» sigue contestada en la primera pantalla (`Inicio`, y sin desplazar), y aquí
+          abajo sigue estando, antes de las tarjetas de cadena; pero la lista manda, que es lo
+          que se mira veinte veces en el pasillo. `docs/PANTALLAS.md` ya lo decía así. */}
+      {detalle.data && (
+        <RepartoEnTiendas listaId={listaId as string} papel={detalle.data.papel} />
       )}
 
       {/* Compartir va antes de los precios a proposito: la comparacion entre
