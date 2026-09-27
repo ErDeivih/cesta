@@ -245,6 +245,20 @@ def main() -> int:
             pagina.get_by_role("button", name="Entrar").first.click()
             pagina.wait_for_timeout(2500)
             carga("/cesta")
+        # **Y si la cuenta quedo a medias, se borra aqui.** Esta parte de la puerta pide una
+        # cuenta **nueva**, y hasta el 27 de septiembre de 2026 daba por hecho que la de la
+        # pasada anterior se habia borrado al final: una pasada cortada a mitad (por ejemplo,
+        # matando el comando por tiempo) dejaba la cuenta con su lista, y la siguiente pasada
+        # fallaba en tres comprobaciones -- «una cuenta nueva llega a la pantalla de la primera
+        # vez» -- por el estado que dejo ella misma, no por la aplicacion. Se vio asi: el
+        # timeout de un comando dejo `prueba-produccion` con una lista en la base.
+        if pagina.locator("input[type=checkbox]").count() > 0 or \
+                "No tienes ninguna lista" not in pagina.inner_text("main"):
+            borrado = pagina.evaluate(
+                "async () => { const r = await fetch('/api/yo', {method: 'DELETE',"
+                " credentials: 'same-origin'}); return r.status; }")
+            print(f"   (quedaba una cuenta a medias: se ha borrado, {borrado})")
+            carga("/cesta")
         if pagina.get_by_role("button", name="Créala").count():
             pagina.get_by_role("button", name="Créala").first.click()
             pagina.get_by_label("Tu nombre").fill("Prueba de produccion")

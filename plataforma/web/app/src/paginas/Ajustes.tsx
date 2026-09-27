@@ -60,17 +60,12 @@ export function Ajustes() {
     // sitio) se quedaba mirando una frase sin salida. La de favoritos ya lo hacia bien
     // (`Favoritos.tsx`): se entra desde la cesta, y se dice.
     return (
-      <div className="grid gap-4">
-        {/* El `h1` de la pagina, sin sesion: `Vacio` pinta su titulo como parrafo. Medido con
-            `data/debug/accesibilidad.py --sin-sesion` el 27 de septiembre de 2026. */}
-        <h1 className="sr-only">Ajustes</h1>
-        <Vacio titulo="Entra para cambiar tus ajustes">
-          <p>
-            Los ajustes son de cada uno, así que hacen falta tus listas. Se entra desde{' '}
-            <Link to="/cesta" className="underline">la cesta</Link>.
-          </p>
-        </Vacio>
-      </div>
+      <Vacio titulo="Entra para cambiar tus ajustes" comoPagina>
+        <p>
+          Los ajustes son de cada uno, así que hacen falta tus listas. Se entra desde{' '}
+          <Link to="/cesta" className="underline">la cesta</Link>.
+        </p>
+      </Vacio>
     )
   }
 

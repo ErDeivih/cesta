@@ -93,16 +93,13 @@ export function Avisos() {
   if (sesion.isLoading) return <Esqueleto filas={4} alto="4.25rem" />
   if (!sesion.data?.usuario) {
     return (
-      <div className="grid gap-4">
-        <h1 className="sr-only">Avisos</h1>
-        <Vacio titulo="Entra para ver tus avisos">
-          <p>
-            Los avisos son de cada uno: se piden desde la ficha de un producto, con la campana,
-            y salen aquí con la frase que los explica. Se entra desde{' '}
-            <Link to="/cesta" className="underline">la cesta</Link>.
-          </p>
-        </Vacio>
-      </div>
+      <Vacio titulo="Entra para ver tus avisos" comoPagina>
+        <p>
+          Los avisos son de cada uno: se piden desde la ficha de un producto, con la campana,
+          y salen aquí con la frase que los explica. Se entra desde{' '}
+          <Link to="/cesta" className="underline">la cesta</Link>.
+        </p>
+      </Vacio>
     )
   }
   if (consulta.isPending) return <Esqueleto filas={4} alto="4.25rem" />

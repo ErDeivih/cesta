@@ -367,10 +367,23 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
   )
 }
 
-export function Vacio({ titulo, children }: { titulo: ReactNode; children?: ReactNode }) {
+/** Un estado vacio: el titulo dice que pasa, y debajo va que hacer.
+ *
+ *  `comoPagina` convierte el titulo en el `h1` de la pantalla. Se usa cuando el estado vacio
+ *  **es** la pantalla entera -- la direccion que no existe, o una puerta de sesion --: ahi el
+ *  titulo es el titulo de la pagina, y sin esto la pantalla se quedaba sin encabezado de nivel 1
+ *  (medido con `data/debug/accesibilidad.py` el 27 de septiembre de 2026, que encontro cinco
+ *  casos asi). Las clases son las mismas: cambia la etiqueta, no lo que se ve.
+ */
+export function Vacio({ titulo, children, comoPagina = false }: {
+  titulo: ReactNode
+  children?: ReactNode
+  comoPagina?: boolean
+}) {
+  const Titulo = comoPagina ? 'h1' : 'p'
   return (
     <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-8 text-center dark:border-neutral-600">
-      <p className="font-medium">{titulo}</p>
+      <Titulo className="font-medium">{titulo}</Titulo>
       {children && (
         <div className="mx-auto mt-2 max-w-prose text-sm text-neutral-600 dark:text-neutral-400">
           {children}

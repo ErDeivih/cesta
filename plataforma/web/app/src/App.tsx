@@ -80,7 +80,7 @@ export function App() {
           <Route
             path="*"
             element={
-              <Vacio titulo="Esa pantalla no existe">
+              <Vacio titulo="Esa pantalla no existe" comoPagina>
                 <p>
                   Puede que el enlace esté mal escrito. <Link to="/" className="underline">Vuelve al
                   buscador</Link>.
