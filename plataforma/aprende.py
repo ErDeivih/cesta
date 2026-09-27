@@ -416,7 +416,7 @@ CABECERA = """<!doctype html>
     {cuerpo}
     <nav class="paso" aria-label="Capitulos anteriores y siguientes">{paso}</nav>
     <footer class="pie">
-      <p>Fuente: <code>{fuente}</code> · {palabras} palabras</p>
+      <p>Fuente: <code>{fuente}</code>{palabras}</p>
       <p>Generado por <code>plataforma/aprende.py</code>: no se edita a mano, se cambia el
       documento y se vuelve a generar.</p>
     </footer>
@@ -578,6 +578,29 @@ def _tablas_apilables(cuerpo: str) -> str:
         return cabeza + "</thead>" + re.sub(r"<td(?:\s[^>]*)?>", pon, resto)
 
     return re.sub(r"<table>.*?</table>", lambda m: con_etiquetas(m.group(0)), cuerpo, flags=re.S)
+
+
+def _no_encontrado() -> str:
+    """La pagina de un documento que no esta: dice que no esta y lleva a donde si.
+
+    Existe porque Caddy servia **la portada** con un `200` para cualquier direccion que no
+    existiera: quien pulsaba un enlace viejo -- un documento renombrado, un marcador de hace
+    una semana -- no podia saber que su enlace estaba roto, porque veia el temario como si tal
+    cosa. Es la cara rota del material, que no estaba diseñada.
+    """
+    return """<article>
+<h1>Ese documento no está</h1>
+<p class="entrada">Puede que el enlace esté mal escrito, o que el documento se haya
+renombrado: el material se reescribe cada semana y los nombres cambian.</p>
+<p>Desde aquí se llega a todo:</p>
+<ul>
+  <li><a href="index.html">El temario</a>: los capítulos del curso, en orden.</li>
+  <li><a href="referencia.html">La referencia</a>: los documentos del proyecto, uno a uno.</li>
+</ul>
+<p class="nota">Y el buscador de la barra de arriba (o la tecla <kbd>/</kbd>) encuentra
+cualquier cosa del material por su título, su sección o su resumen.</p>
+</article>
+"""
 
 
 def _portada(paginas: list[Pagina]) -> str:
@@ -1005,7 +1028,7 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
                 paso=_paso(pagina, paginas),
                 toc=_toc(pagina),
                 fuente=pagina.ruta.relative_to(RAIZ).as_posix(),
-                palabras=f"{pagina.palabras:,}",
+                palabras=f" · {pagina.palabras:,} palabras",
             ),
             encoding="utf-8", newline="\n")
 
@@ -1022,7 +1045,7 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
             migas='<span>Material</span>',
             cuerpo=portada,
             paso="", toc="", fuente="plataforma/aprende.py",
-            palabras=f"{sum(p.palabras for p in curso):,}"),
+            palabras=f" · {sum(p.palabras for p in curso):,} palabras"),
         encoding="utf-8", newline="\n")
     (salida / "referencia.html").write_text(
         CABECERA.format(
@@ -1034,7 +1057,27 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
             cuerpo=f"<article>{_indice_referencia(paginas)}</article>",
             paso='<a class="paso-caja antes" href="index.html"><span>Volver</span>'
                  "<strong>El temario</strong></a>",
-            toc="", fuente="docs/*.md", palabras=f"{sum(p.palabras for p in referencia):,}"),
+            toc="", fuente="docs/*.md",
+            palabras=f" · {sum(p.palabras for p in referencia):,} palabras"),
+        encoding="utf-8", newline="\n")
+
+    # **La pagina de «eso no esta».** Caddy servia la portada para cualquier direccion que no
+    # existiera -- `try_files … /index.html` -- asi que un enlace viejo (un documento
+    # renombrado, un marcador de hace una semana) enseñaba el temario con un 200, y quien lo
+    # pulsaba no sabia que su enlace estaba roto. Medido el 27 de septiembre de 2026 con
+    # `data/debug/cuatrocientos.py`: `/aprende/viejo.html` contestaba `200` con la portada.
+    (salida / "404.html").write_text(
+        CABECERA.format(
+            titulo="Ese documento no está · Cesta, aprender datos",
+            descripcion="El documento que buscas no está en el material.",
+            lateral=_lateral(paginas, Pagina(ruta=Path("404.md"), slug="404",
+                                             titulo="Ese documento no está")),
+            migas='<a href="index.html">Material</a> <span>/</span> '
+                  "<span>Ese documento no está</span>",
+            cuerpo=_no_encontrado(), paso="", toc="", fuente="plataforma/aprende.py",
+            # Sin cuenta de palabras: esta pagina no es un documento, y «0 palabras» seria un
+            # numero que no dice nada.
+            palabras=""),
         encoding="utf-8", newline="\n")
 
     indice = [{"t": p.titulo, "u": p.fichero, "c": p.curso, "sec": p.seccion, "s": p.secciones,

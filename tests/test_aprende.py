@@ -32,8 +32,9 @@ RAIZ = Path(__file__).resolve().parents[1]
 DOCS = RAIZ / "docs"
 CURSO = DOCS / "aprende"
 
-# Las paginas que no salen de un documento: el temario y el indice de la referencia.
-EXTRA = {"index.html", "referencia.html"}
+# Las paginas que no salen de un documento: el temario, el indice de la referencia y la de
+# «eso no esta» (que existe para que un enlace roto no enseñe la portada con un 200).
+EXTRA = {"index.html", "referencia.html", "404.html"}
 
 
 @pytest.fixture(scope="module")
@@ -174,7 +175,10 @@ def test_las_rutas_de_la_portada_llevan_a_capitulos_de_verdad(sitio):
 def test_cada_capitulo_lleva_su_indice_de_pagina(sitio):
     """El indice de la derecha apunta a los encabezados que de verdad se han pintado."""
     salida, paginas = sitio
-    for nombre in [n for n in paginas if n[:2].isdigit()]:
+    # **Los capitulos son `NN-nombre.html`, no «lo que empieza por dos digitos»**: la pagina de
+    # error se llama `404.html` y entraba en la lista por su nombre, pidiendole un indice de
+    # apartados a una pagina que no tiene apartados.
+    for nombre in [n for n in paginas if re.match(r"^\d\d-", n)]:
         texto = _leer(salida, nombre)
         anclas = set(re.findall(r'<h[23] id="([^"]+)"', texto))
         assert anclas, f"{nombre} no tiene encabezados con ancla"
@@ -288,6 +292,40 @@ def test_una_sola_cabecera_de_pagina_por_documento(sitio):
         crudo = operacion.read_text(encoding="utf-8")
         assert crudo.count("\n# ") >= 2, (
             "el documento que motivo esta regla ya no tiene varios `#`: revisa la prueba")
+
+
+def test_la_pagina_de_lo_que_no_esta_existe_y_lleva_a_donde_si(sitio):
+    """Un documento que no esta tiene su pagina, y Caddy la usa con un 404.
+
+    Dos mitades, y las dos hicieron falta: el generador tiene que **escribir** la pagina, y el
+    servidor tiene que **contestarla en vez de la portada**. Hasta el 27 de septiembre de 2026
+    el `try_files` de `/aprende` acababa en `/index.html`, asi que un enlace viejo devolvia 200
+    con el temario: quien lo pulsaba no podia saber que su enlace estaba roto (medido con
+    `data/debug/cuatrocientos.py`).
+    """
+    salida, _ = sitio
+    pagina = _leer(salida, "404.html")
+    assert "<h1>Ese documento no está</h1>" in pagina, "la pagina de error no dice que no esta"
+    for destino in ('href="index.html"', 'href="referencia.html"'):
+        assert destino in pagina, f"la pagina de error no lleva a {destino}"
+    # Y el servidor: la pagina, dentro del bloque de errores, con su `root` (que ahi no se
+    # hereda) y sin colarse dentro del `handle_path` (que Caddy rechaza al arrancar).
+    caddy = (RAIZ / "plataforma" / "Caddyfile").read_text(encoding="utf-8")
+    assert "handle_errors {" in caddy, "el Caddyfile no tiene bloque de errores"
+    errores = caddy[caddy.index("handle_errors {"):]
+    assert "root * /aprende" in errores, "el bloque de errores no fija el root del material"
+    assert "rewrite * /404.html" in errores, "el bloque de errores no sirve la pagina"
+    dentro = caddy[caddy.index("handle_path /aprende/*"):caddy.index("\n\thandle {")]
+    # Se mira **la ultima alternativa del `try_files`**, que es la que decide que se enseña
+    # cuando el fichero no esta: `/aprende/carpeta/` -> `carpeta/index.html` es legitimo (el
+    # indice de una carpeta), pero terminar en `/index.html` es caer en la portada, que es el
+    # fallo. Y se mira la linea, no el bloque: el comentario de arriba cuenta el fallo que se
+    # arreglo y nombra `/index.html`, y buscarlo a lo bruto señalaba el comentario.
+    reglas = [linea.strip() for linea in dentro.splitlines()
+              if linea.strip().startswith("try_files")]
+    ultimas = [r.split()[-1] for r in reglas]
+    assert ultimas and all(u != "/index.html" for u in ultimas), (
+        f"el try_files de /aprende vuelve a caer en la portada: {ultimas}")
 
 
 def test_el_markdown_de_verdad_se_pinta(sitio):

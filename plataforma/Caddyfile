@@ -11,9 +11,16 @@
 	# `/srv`, que esta de solo lectura: un montaje anidado dentro de otro de solo lectura no
 	# se puede crear). `handle_path` quita el prefijo antes de servir, asi que las paginas
 	# del sitio se enlazan entre si por su nombre y no por su ruta.
+	#
+	# **Y una direccion que no existe ya no enseña la portada.** El `try_files` acababa en
+	# `/index.html`, asi que un enlace viejo -- un documento renombrado, un marcador -- daba
+	# **200 con el temario**: quien lo pulsaba no podia saber que su enlace estaba roto.
+	# Medido el 27 de septiembre de 2026 (`data/debug/cuatrocientos.py`). Ahora se contesta la
+	# pagina que lo dice, con su **404**, que es lo que ademas entienden los buscadores y las
+	# caches.
 	handle_path /aprende/* {
 		root * /aprende
-		try_files {path} {path}/index.html /index.html
+		try_files {path} {path}/index.html
 		file_server
 	}
 
@@ -32,6 +39,24 @@
 		# no-referrer haria que algunos CDN rechazasen la imagen.
 		Referrer-Policy strict-origin-when-cross-origin
 		-Server
+	}
+
+	# **La cara rota del material.** Un 404 dentro de `/aprende` se cuenta con la pagina que lo
+	# dice, en vez de con la portada: antes el `try_files` acababa en `/index.html`, asi que un
+	# enlace viejo -- un documento renombrado, un marcador -- daba **200 con el temario** y
+	# quien lo pulsaba no podia saber que su enlace estaba roto (medido el 27 de septiembre de
+	# 2026 con `data/debug/cuatrocientos.py`). Va aqui y no dentro del `handle_path` porque
+	# `handle_errors` no es un manejador ordenado y ahi no se puede usar -- Caddy lo dice al
+	# arrancar, y con el fichero mal el contenedor **no arranca**: se vio al hacerlo.
+	handle_errors {
+		@material path /aprende/*
+		handle @material {
+			# El `root` va aqui dentro: en el bloque de errores no hereda el de los `handle`,
+			# y sin el `file_server` no encontraba el fichero y contestaba vacio -- medido.
+			root * /aprende
+			rewrite * /404.html
+			file_server
+		}
 	}
 
 	log {

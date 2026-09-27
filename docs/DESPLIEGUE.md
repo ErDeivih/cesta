@@ -254,3 +254,13 @@ comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
                 (`read-only file system`). El `Caddyfile` lo sirve con `handle_path /aprende/*`.
                 Regenerarlo es `uv run --extra docs python -m plataforma.aprende`, sin tocar
                 imagenes.
+
+**Y un documento que no esta contesta 404**, con la pagina que lo dice
+(`/aprende/404.html`, tambien generada). Hasta el 27 de septiembre de 2026 el `try_files` de
+esa ruta acababa en `/index.html`, asi que **un enlace viejo -- un documento renombrado, un
+marcador -- devolvia 200 con la portada**: quien lo pulsaba veia el temario y no podia saber
+que su enlace estaba roto. Medido con `data/debug/cuatrocientos.py`. La pagina de error va en
+un `handle_errors` del bloque del sitio y **no** dentro del `handle_path`, porque ahi Caddy no
+lo admite y el contenedor no arranca (tambien se vio al hacerlo); y lleva su propio `root`,
+que en el bloque de errores no se hereda.
+

@@ -200,6 +200,18 @@ def main() -> int:
             cuantos = pagina.locator("main h1").count()
             comprueba(cuantos == 1,
                       f"{ruta} tiene un solo titulo de pagina ({cuantos})")
+        # **Y la cara rota del material: un documento que ya no esta.** Caddy contestaba la
+        # portada con un `200` (`try_files … /index.html`), asi que un enlace viejo -- un
+        # documento renombrado, un marcador -- parecia funcionar y no: quien lo pulsaba veia el
+        # temario y no podia saber que su enlace estaba roto. Medido el 27 de septiembre de 2026
+        # con `data/debug/cuatrocientos.py`. Ahora contesta 404 con la pagina que lo dice.
+        respuesta = pagina.request.get(f"{BASE}/aprende/documento-que-no-existe.html")
+        comprueba(respuesta.status == 404,
+                  f"un documento que no esta contesta 404 ({respuesta.status})")
+        comprueba("Ese documento no está" in respuesta.text(),
+                  "y con la pagina que lo dice, no con la portada")
+        comprueba(pagina.request.get(f"{BASE}/aprende/").status == 200,
+                  "y la portada sigue contestando 200")
         # **Y el capitulo empieza en la primera pantalla del movil.** Medido el 27 de septiembre
         # de 2026: el `<details>` del indice lateral sale abierto y, a 390x844, la primera
         # pantalla era el indice entero -- catorce capitulos y ni una linea del capitulo. Se
