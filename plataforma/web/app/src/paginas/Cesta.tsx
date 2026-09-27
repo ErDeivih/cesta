@@ -1058,14 +1058,22 @@ export function Cesta() {
   if (sesion.isLoading) return <Cargando que="tu sesión" />
   if (!sesion.data?.usuario) {
     return (
-      <Introducir
-        alEntrar={() => {
-          // Al entrar hay que volver a preguntar quien soy y que listas tengo:
-          // las de antes eran las de nadie.
-          cliente.invalidateQueries({ queryKey: ['yo'] })
-          cliente.invalidateQueries({ queryKey: ['listas'] })
-        }}
-      />
+      <div className="grid gap-4">
+        {/* **El título de la página, sin sesión.** `Introducir` lleva su `h2` («Entra para ver
+            tu lista»), así que la pantalla se quedaba sin `h1`: quien navega por encabezados
+            abría una página que no decía cómo se llama. Va oculto porque el `h2` ya lo dice en
+            voz alta. Medido con `data/debug/accesibilidad.py --sin-sesion` el 27 de septiembre
+            de 2026, que es la cara que no había mirado nadie: el instrumento entraba siempre. */}
+        <h1 className="sr-only">Lista</h1>
+        <Introducir
+          alEntrar={() => {
+            // Al entrar hay que volver a preguntar quien soy y que listas tengo:
+            // las de antes eran las de nadie.
+            cliente.invalidateQueries({ queryKey: ['yo'] })
+            cliente.invalidateQueries({ queryKey: ['listas'] })
+          }}
+        />
+      </div>
     )
   }
 

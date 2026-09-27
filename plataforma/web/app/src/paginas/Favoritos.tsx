@@ -117,12 +117,18 @@ export function Favoritos() {
 
   if (!sesion.data?.usuario) {
     return (
-      <Vacio titulo="Entra para ver tus favoritos">
-        <p>
-          Los favoritos son tuyos, así que hacen falta tus listas. Se entra desde{' '}
-          <Link to="/cesta" className="underline">la lista</Link>.
-        </p>
-      </Vacio>
+      <div className="grid gap-4">
+        {/* El `h1` de la pagina, sin sesion: `Vacio` pinta su titulo como parrafo (es un
+            estado vacio, no un titular), asi que la pantalla se quedaba sin encabezado de
+            nivel 1. Medido con `data/debug/accesibilidad.py --sin-sesion`. */}
+        <h1 className="sr-only">Favoritos</h1>
+        <Vacio titulo="Entra para ver tus favoritos">
+          <p>
+            Los favoritos son tuyos, así que hacen falta tus listas. Se entra desde{' '}
+            <Link to="/cesta" className="underline">la lista</Link>.
+          </p>
+        </Vacio>
+      </div>
     )
   }
 

@@ -20,10 +20,11 @@
  *  gold es otro cada manana. Un aviso que cambia de texto al dia siguiente no es un
  *  aviso, es un rumor.
  */
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
 import { borrarAlerta, marcarVistas } from '../api/alertas'
+import { yo } from '../api/cesta'
 import { useAlertas } from '../api/consultas'
 import { euros, fecha, hace } from '../api/formato'
 import { Aviso, Boton, Esqueleto, Fallo, Tarjeta, Vacio } from '../componentes/ui'
@@ -71,6 +72,7 @@ function Nombre({ a }: { a: Alerta }) {
 
 export function Avisos() {
   const cliente = useQueryClient()
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
   const consulta = useAlertas()
 
   const vistas = useMutation({
@@ -82,6 +84,27 @@ export function Avisos() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['alertas'] }),
   })
 
+  // **El orden importa, y aquí está el fallo que se arregló el 27 de septiembre de 2026.**
+  // `useAlertas` tiene `enabled: hay usuario`, así que sin sesión la consulta **no se lanza
+  // nunca** y se queda en `pending` para siempre: mirando `consulta.isPending` antes que la
+  // sesión, la pantalla enseñaba **un esqueleto eterno** -- medido con
+  // `data/debug/texto.py /avisos --sin-sesion`: «Cargando…» y nada más--, en un destino de la
+  // barra de abajo. Primero la sesión, después la consulta.
+  if (sesion.isLoading) return <Esqueleto filas={4} alto="4.25rem" />
+  if (!sesion.data?.usuario) {
+    return (
+      <div className="grid gap-4">
+        <h1 className="sr-only">Avisos</h1>
+        <Vacio titulo="Entra para ver tus avisos">
+          <p>
+            Los avisos son de cada uno: se piden desde la ficha de un producto, con la campana,
+            y salen aquí con la frase que los explica. Se entra desde{' '}
+            <Link to="/cesta" className="underline">la cesta</Link>.
+          </p>
+        </Vacio>
+      </div>
+    )
+  }
   if (consulta.isPending) return <Esqueleto filas={4} alto="4.25rem" />
   if (consulta.isError) {
     return <Fallo error={consulta.error} reintentar={() => void consulta.refetch()} />

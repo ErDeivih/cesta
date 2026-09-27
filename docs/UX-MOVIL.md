@@ -176,3 +176,12 @@ cinco casos -- Inicio, Buscar y el caso vacio de favoritos sin `h1`, la lista co
 `h2` a `h4`, y el documento de operacion con tres `h1` -- y el contraste del texto ya pintado,
 que era lo unico que ya se medía. Lo vigila `prueba_navegador.py` en las trece pantallas que
 recorre, y `prueba_produccion.py` en las cuatro del material.
+
+**Y la cara sin sesion tambien se mide.** El instrumento entraba siempre, asi que las pantallas
+como las ve quien no ha entrado no las habia mirado nadie: con `--sin-sesion` salieron cuatro
+sin `h1` y **el fallo mas serio de la sesion**: en `/avisos`, `useAlertas` tiene
+`enabled: hay usuario`, asi que sin sesion la consulta no se lanza nunca y se queda en
+`pending` para siempre -- quien no habia entrado y tocaba «Avisos» en la barra **se quedaba
+mirando un esqueleto eterno**. Ahora esa pantalla dice «Entra para ver tus avisos» y por donde
+se entra, como la cesta, los favoritos y los ajustes. Lo vigila `prueba_produccion.py`, que
+empieza sin sesion.

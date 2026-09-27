@@ -333,6 +333,23 @@ def main() -> int:
                   "y no titula «Ha bajado de lo tuyo» encima de las bajadas del catalogo")
         comprueba("entra o crea una cuenta" in limpio,
                   "y dice por donde se entra, en vez de dejarlo sin salida")
+        # **Y las pantallas que piden sesion, sin sesion: que no se queden cargando.** Aqui
+        # estaba el fallo mas serio de esta cara: `useAlertas` tiene `enabled: hay usuario`, asi
+        # que sin sesion la consulta no se lanza nunca y se queda en `pending` para siempre --
+        # quien no habia entrado y tocaba «Avisos» en la barra de abajo se quedaba mirando un
+        # esqueleto **eterno**. Medido con `data/debug/texto.py /avisos --sin-sesion`.
+        for ruta, tiene_que_decir in (("/avisos", "Entra para ver tus avisos"),
+                                      ("/cesta", "Entra para ver tu lista"),
+                                      ("/favoritos", "Entra para ver tus favoritos"),
+                                      ("/ajustes", "Entra para cambiar tus ajustes")):
+            with contextlib.suppress(Exception):
+                suelta.goto(f"{BASE}{ruta}", wait_until="domcontentloaded", timeout=30000)
+            suelta.wait_for_timeout(2500)
+            texto = suelta.inner_text("main")
+            comprueba(tiene_que_decir in texto,
+                      f"sin cuenta, {ruta} dice por donde se entra")
+            comprueba("Cargando" not in texto,
+                      f"y {ruta} no se queda cargando para siempre ({texto[:40]!r})")
         suelta_ctx.close()
 
         print("\n== pregunta 3: tachar, y las dos secciones (barra c)")

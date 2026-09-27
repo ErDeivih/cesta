@@ -1175,6 +1175,9 @@ def main() -> int:
         # tablas tenia: entra aqui para que la midan las dos reglas del movil -- nada por debajo
         # de 44 px y ninguna tabla que se deslice. Medido el 27 de septiembre de 2026.
         rutas += ["/panel/matching"]
+        # Y la pantalla del enlace de invitacion caducado, que es por donde entra quien recibe
+        # un enlace viejo: no la medía ninguna pasada hasta el 27 de septiembre de 2026.
+        rutas += ["/unirme/codigo-que-no-existe"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
             rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")

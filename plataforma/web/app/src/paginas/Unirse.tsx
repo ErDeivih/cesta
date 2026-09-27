@@ -111,16 +111,24 @@ export function Unirse() {
 
   if (acepta.isError) {
     return (
-      <Aviso tono="mal" titulo="No he podido meterte en la lista">
-        {/* El 404 de la API ya trae su frase entera ("caduca a los siete dias, y
-            puede que ya lo hayan usado. Pidele otro a quien te lo mando"), y el
-            401 suya. Aqui no se reescriben: se enseñan. */}
-        <p>{textoDeError(acepta.error)}</p>
-        <p className="mt-1">
-          Tus listas de siempre siguen donde estaban:{' '}
-          <Link to="/cesta" className="underline">la cesta</Link>.
-        </p>
-      </Aviso>
+      <div className="grid gap-4">
+        {/* **El titulo de la pagina.** `Aviso` pinta su titulo como un parrafo (es un aviso, no
+            un titular), asi que esta pantalla se quedaba sin `h1`: quien llega desde un enlace
+            caducado abria una pagina que no decia como se llama. Medido con
+            `data/debug/accesibilidad.py` el 27 de septiembre de 2026. Oculta porque el aviso ya
+            lo dice en voz alta, y repetirlo encima seria ruido. */}
+        <h1 className="sr-only">Invitación a una lista</h1>
+        <Aviso tono="mal" titulo="No he podido meterte en la lista">
+          {/* El 404 de la API ya trae su frase entera ("caduca a los siete dias, y
+              puede que ya lo hayan usado. Pidele otro a quien te lo mando"), y el
+              401 suya. Aqui no se reescriben: se enseñan. */}
+          <p>{textoDeError(acepta.error)}</p>
+          <p className="mt-1">
+            Tus listas de siempre siguen donde estaban:{' '}
+            <Link to="/cesta" className="underline">la cesta</Link>.
+          </p>
+        </Aviso>
+      </div>
     )
   }
 
