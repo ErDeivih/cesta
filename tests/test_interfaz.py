@@ -84,6 +84,33 @@ def test_caddy_sirve_una_sola_pagina_y_manda_la_api_al_backend():
     assert "reverse_proxy api:8000" in texto
 
 
+def test_el_csp_no_permite_origenes_de_fuera_para_codigo_ni_fuentes():
+    """La aplicacion no carga codigo, estilos ni fuentes de otro sitio, y el CSP lo dice.
+
+    El `style-src` admitia `https://fonts.googleapis.com` y habia un `font-src` para
+    `fonts.gstatic.com`: eran de la interfaz vieja, que cargaba Archivo desde ahi, y **el permiso
+    se quedo escrito cuando el codigo se arreglo**. Una puerta abierta por costumbre es lo
+    contrario de lo que dice el proyecto («nada de fuentes ni imagenes traidas de internet»), y
+    medido el 27 de septiembre de 2026 no habia ni un `fonts.googleapis` en el codigo ni en lo
+    servido. `img-src` si admite `https:`: las fotos de los productos las sirven las cadenas
+    desde sus CDN y **se enlazan, no se copian** -- esa es la unica puerta que esta abierta a
+    proposito, y por eso la prueba la nombra en vez de prohibir todo `https:`.
+    """
+    if not CADDY.exists():
+        pytest.skip("no hay Caddyfile en esta copia")
+    texto = CADDY.read_text(encoding="utf-8")
+    linea = next((ln for ln in texto.splitlines() if "Content-Security-Policy" in ln), None)
+    assert linea, "el Caddyfile no pone el CSP"
+    assert "fonts.googleapis" not in linea and "fonts.gstatic" not in linea, (
+        "vuelven a estar permitidas las fuentes de Google, y no las usa nadie")
+    assert "script-src 'self'" in linea and "style-src 'self'" in linea, (
+        "el codigo y los estilos tienen que ser del propio origen")
+    assert "img-src 'self' https: data:" in linea, (
+        "las fotos de las cadenas se enlazan desde sus CDN: img-src las tiene que admitir")
+    assert "base-uri 'none'" in linea and "form-action 'self'" in linea, (
+        "faltan los dos cierres: sin `<base>` y con los formularios al mismo origen")
+
+
 def _sin_comentarios(texto: str) -> str:
     """Quita los comentarios de bloque y las lineas que son comentario entero.
 

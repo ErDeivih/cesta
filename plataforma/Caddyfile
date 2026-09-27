@@ -35,7 +35,19 @@
 		X-Frame-Options DENY
 		# Las fotos de los productos las sirven las propias cadenas desde sus
 		# CDN. No se copian: se enlazan. Por eso img-src admite https.
-		Content-Security-Policy "default-src 'self'; img-src 'self' https: data:; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'"
+		#
+		# **Y las fuentes de Google ya no estan permitidas**, porque no hay ninguna: la
+		# interfaz vieja cargaba Archivo desde `fonts.googleapis.com` y eso se arreglo, pero
+		# el permiso se quedo escrito aqui. Un `style-src`/`font-src` que admite un sitio que
+		# nadie usa es una puerta abierta por costumbre, y el proyecto dice justo lo contrario
+		# («nada de fuentes ni imagenes traidas de internet»). Medido el 27 de septiembre de
+		# 2026: ni un `fonts.googleapis` en el codigo ni en lo servido, solo en dos documentos
+		# que cuentan que se quito.
+		#
+		# `base-uri 'none'` y `form-action 'self'` son dos cierres que faltaban y que no
+		# cambian nada de lo que hace la aplicacion: sin `<base>` (no hay ninguno) y con los
+		# formularios que ya van todos por JavaScript al mismo origen.
+		Content-Security-Policy "default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 		# no-referrer haria que algunos CDN rechazasen la imagen.
 		Referrer-Policy strict-origin-when-cross-origin
 		-Server

@@ -245,6 +245,22 @@ comprobacion, esta en `docs/BACKLOG.md` (§0) y en `docs/CIERRE-ENCARGO-UX.md`.
                 navegador no lo veia: corria contra el uvicorn del PC, donde polars si esta.
                 Volver a la vieja es cambiar la linea por `./web:/srv:ro` y recrear la web;
                 la carpeta **no se borra**, es el plan B, y lo vigila `tests/test_interfaz.py`.
+
+**El CSP, el 27 de septiembre de 2026: se quitaron dos permisos que nadie usaba.** El
+`style-src` admitia `https://fonts.googleapis.com` y habia un `font-src` para
+`fonts.gstatic.com`: eran de la interfaz vieja, que cargaba Archivo desde ahi, y **el permiso
+se quedo cuando el codigo se arreglo**. Medido antes de tocarlo: ni un `fonts.googleapis` en el
+codigo ni en lo servido -- solo en dos documentos que cuentan que se quito. Una puerta abierta
+por costumbre es justo lo contrario de lo que dice el proyecto («nada de fuentes ni imagenes
+traidas de internet»), asi que ahora es `style-src 'self'` y las fuentes caen en
+`default-src 'self'`.
+
+Y se cerraron dos cosas que faltaban: **`base-uri 'none'`** (no hay ningun `<base>`, y sin
+permiso nadie puede meter uno) y **`form-action 'self'`** (los formularios van todos por
+JavaScript al mismo origen). Comprobado despues de cambiarlo: las dos puertas del navegador
+siguen en verde y `prueba_produccion` dice «el CSP no bloquea nada ([])» -- que es la
+comprobacion que existe precisamente para esto.
+
     cesta-panel Sigue siendo el cuadro de mando de `DASHBOARD.md`.
     /aprende    El **material de aprendizaje** (`docs/aprende/`, generado por
                 `plataforma/aprende.py`), servido por Caddy desde el 24 de septiembre de 2026.
