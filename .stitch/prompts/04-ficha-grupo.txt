@@ -1,0 +1,72 @@
+Diseña la FICHA DE UN PRODUCTO (el grupo de equivalentes) de «Cesta», una aplicación móvil
+(390 x 844) que compara el precio por unidad del mismo producto entre cinco supermercados
+españoles: Mercadona, Carrefour, DIA, Alcampo y Aldi. Todo el texto en español. Claro y oscuro
+por preferencia del sistema.
+
+QUIÉN LA USA Y QUÉ VIENE A HACER
+Alguien de pie en el pasillo, con una mano y el carrito en la otra, que acaba de buscar (o de
+escanear el código de barras) lo que tiene en la mano. Viene a una sola cosa: **¿esto está caro,
+y dónde está más barato?** Se contesta primero con una frase y después con los números; nunca al
+revés. Si la frase no se puede decir porque los datos no son de fiar, **no se inventa**: se dice
+que no se sabe.
+
+QUÉ TIENE QUE HABER, EN ESTE ORDEN
+  1. **Barra de arriba** con «Volver» y, al lado, «Escanear un código». Nada más.
+  2. **El producto**: foto (pequeña, 72 x 72, no manda), nombre y, debajo, una línea de datos:
+     «5 productos · 5 cadenas · por l · datos del 27 sept 2026». Los datos van pegados a su
+     palabra: un «·» nunca se queda solo al final de una línea.
+  3. **Las tres acciones**, juntas y en una fila si caben: **«Añadir a la cesta»** (la principal,
+     rellena), «Guardar» (favorito, con borde) y «Avisarme si baja» (la campana). 44 px de alto.
+  4. **LA FRASE, y esto es lo que decide si la pantalla sirve**: una caja destacada, con la
+     respuesta en una o dos líneas y los números que la sostienen debajo, en etiquetas pequeñas
+     en mayúsculas. Ejemplo real:
+        «Es la más barata de las 5 cadenas: te ahorras 0,33 € frente a la más cara.»
+        ALTERNATIVA QUE GANA CONTIGO · Aldi · 0,96 €/l
+        DIFERENCIA ENTRE LA MÁS CARA Y LA MÁS BARATA · 34,4 % · 0,33 € por unidad
+        PRECIOS QUE DECIDEN · 5 de 5 (lo de más de 3 días no cuenta)
+        DATOS DEL · 27 sept 2026
+  5. **La tabla por cadenas**, que es donde se compara: una columna por cadena, con su nombre, su
+     producto concreto (el nombre puede ser largo: dos líneas y se corta), el precio de venta, el
+     **precio por unidad en grande** (es lo que decide), la fecha del precio, y las etiquetas de
+     estado cuando tocan. La cadena más barata, marcada; la que gana contigo, marcada distinto y
+     con las palabras «la más barata de las que tienes cerca».
+  6. **La curva de precios** del grupo: línea de 21 días, con MÍNIMO y MÁXIMO anotados y con las
+     fechas. Y la frase que la acompaña, que dice de cuándo son los precios y si el histórico es
+     corto. Si el grupo mezcla dos productos distintos en la misma unidad, **no se pinta la
+     curva** y se dice por qué: una línea que mezcla dos cosas es una mentira con forma de dato.
+  7. **La ficha del producto, si la tiene**: Nutri-Score, sellos, certificados, tabla nutricional
+     y envase. Es material de consulta: va al final y no interrumpe.
+
+QUÉ DATOS REALES HAY QUE ENSEÑAR (inventa el resto con el mismo estilo)
+  · Leche entera · 5 productos · 5 cadenas
+        MERCADONA   Leche entera Hacendado 6 x 1 L          5,94 €   0,99 €/l   marca propia
+        ALCAMPO     Leche entera Asturiana 1 L              1,29 €   1,29 €/l
+        DIA         Leche entera Dia 1 L                    1,05 €   1,05 €/l   marca propia
+        CARREFOUR   Leche entera Lauki 1 L                  1,15 €   1,15 €/l   oferta
+        ALDI        Leche entera Milsani 1 L                0,96 €   0,96 €/l   la más barata
+  · La curva de la leche entera, 21 días: 0,94 €/l de mínimo (hace 9 días) y 1,05 €/l de máximo.
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+
+  · **Cifras en ancho fijo** (tabular-nums) siempre, y el precio por unidad más protagonista que
+    el de venta: en una lista de leches, comparar es mirar la columna de €/L de arriba abajo.
+  · Objetivos táctiles de **44 px mínimo**. Cabecera de **109 px** y barra inferior de **57 px**.
+  · En 390 px de ancho, **una tabla de cinco columnas no cabe**: las cadenas se apilan en filas
+    (una por cadena), cada una con su nombre, su producto, el precio de venta y el precio por
+    unidad alineado a la derecha. Nada de deslizar en horizontal.
+  · Tipografía del sistema (ui-sans-serif / system-ui), cuerpo 16 px, interlineado 1,7. Nada de
+    fuentes ni imágenes traídas de internet.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), aviso `#b45309` (`#fcd34d`), bien
+    `#059669` (`#10b981`). El color dice algo (bueno, aviso, dudoso), nunca decora.
+  · Etiquetas de estado en píldoras pequeñas: «la más barata», «oferta», «oferta solo con
+    tarjeta», «oferta · 2 ud», «marca propia», «al peso», «sin comparar», «dudoso», «retirada».
+  · Nada de tarjetas dentro de tarjetas, ni sombras grandes, ni degradados, ni iconos de colores.
+  · Barra inferior con cinco destinos: **Buscar, Lista, Favoritos, Escáner, Avisos**.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en línea (la aplicación sirve con CSP `script-src 'self'`).
+  · Nada de dependencias de red en tiempo de ejecución.
+  · **No prometer lo que no se sabe**: si un grupo no es de fiar (un miembro vale más del doble
+    que otro en la misma unidad), no hay frase de ahorro ni curva; se dice «dudoso» y ya está. Un
+    hueco es mejor que una cifra inventada, y el hueco se explica.

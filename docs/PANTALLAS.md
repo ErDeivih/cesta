@@ -424,6 +424,56 @@ lo que ha bajado arriba, lo que ha subido debajo, lo quieto al final.
 
 ---
 
+## El grupo: la pantalla que se abre al buscar
+
+**[hecho]** desde el primer dia; **reordenada el 27 de septiembre de 2026**
+
+Es la pantalla a la que se llega **buscando** (`/grupo/<id>`), y la que contesta la pregunta 2 de
+la barra (a): *«esto que tengo en la mano, ¿esta caro?»*. No tenia seccion propia en este
+documento hasta hoy, y es la que mas se usa: el apartado 6 de abajo es la hoja del producto
+(`/producto/<cadena>/<id>`), que es otra cosa.
+
+    ‹ Volver   | 📷 Escanear un código
+
+    [foto]  Leche entera                    <- foto de 72 px, al lado del nombre
+            [ Añadir a la cesta ] [ Guardar ]
+            [ Avisarme si baja ]
+            5 productos · 5 cadenas · por l
+            [datos del 27 sept 2026]
+
+    Es la mas barata de las 5 cadenas: te ahorras 0,33 € frente a la mas cara.
+    ALTERNATIVA QUE GANA CONTIGO ......... Aldi · 0,96 €/l
+    DIFERENCIA ENTRE LA MAS CARA Y LA MAS BARATA ... 34,4 % · 0,33 € por unidad
+    PRECIOS QUE DECIDEN .................. 5 de 5
+    DATOS DEL ............................ 27 sept 2026
+
+    ALDI        la mejor contigo · al día
+      Leche entera Milsani 1 L        0,96 €   0,96 €/l
+    CARREFOUR
+      Leche entera Lauki 1 L          1,15 €   1,15 €/l
+
+    ▸ Ver las otras 3 cadenas   Alcampo · Dia · Mercadona
+
+**El orden no es negociable**: la respuesta (la frase) antes que los numeros y antes que la
+tabla, y la tabla antes de la ficha tecnica. Lo que si se ha cambiado es **cuanto se enseña de
+golpe**, y lo dijo una medida del 27 de septiembre de 2026 en un movil de 390 x 844: la pantalla
+entera medía **3.592 px, 4,3 pantallas**, y **1.600 de esos píxeles eran las cinco tarjetas de
+cadena una debajo de otra**. Se cambiaron dos cosas:
+
+  - **La foto ya no se lleva su propia linea.** Medía 96 px y la columna de texto exigia 16rem
+    (256 px), asi que en 390 px no cabian juntos: la foto se iba arriba y **el nombre caia a
+    297 px**, con la frase detras. Ahora la foto mide 72 px, el texto usa `min-w-0`, y el nombre
+    esta a **185 px**.
+  - **Dos cadenas a la vista y el resto plegado**, con las otras dichas en el resumen («Ver las
+    otras 3 cadenas · Alcampo · Dia · Mercadona»). Lo que se viene a saber es donde esta mas
+    barato, y eso lo dicen la primera y la segunda: `columnas` ya viene ordenado por lo que
+    conviene a esta persona. Medido despues: **2.383 px, 2,8 pantallas**.
+
+La comprueba la puerta en cada pasada: dos cadenas visibles sin pedirlas, el nombre por encima de
+300 px, el resto plegado y **que al abrirlo salgan las cinco**.
+
+---
+
 ## 6. La ficha del producto
 
 **[hecho]** la hoja con foto, precio, alergenos, ingredientes, Nutri-Score

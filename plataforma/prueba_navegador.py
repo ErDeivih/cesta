@@ -575,6 +575,32 @@ def main() -> int:
         comprueba(ya_pedido or boton_campana.count() == 1,
                   "la ficha deja pedir el aviso («Avisarme si baja» o «Te aviso»)")
 
+        # ------------------------ la ficha, sin cinco cadenas seguidas ------------------
+        # **Medido el 27 de septiembre de 2026, en un movil de 390 x 844**: la ficha entera
+        # medía **3.592 px, 4,3 pantallas**, y 1.600 de esos píxeles eran las cinco tarjetas de
+        # cadena una debajo de otra. Lo que se viene a saber es dónde está más barato, y eso lo
+        # dicen las dos primeras; las otras se piden. Ahora mide **2.383 px (2,8 pantallas)** y
+        # el nombre del producto está a 185 px en vez de a 297 (la foto ya no se lleva su
+        # propia línea). Se comprueban las dos mitades: que están plegadas, y que se abren.
+        print("\n== la ficha: las cadenas que deciden delante, el resto a un toque")
+        visibles = pagina.locator("section[aria-label^='Alternativas de']:visible")
+        comprueba(visibles.count() == 2,
+                  f"se enseñan dos cadenas sin pedirlas ({visibles.count()})")
+        nombre = pagina.locator("main h1").first.bounding_box()
+        comprueba(nombre is not None and nombre["y"] < 300,
+                  f"y el nombre del producto esta arriba, no debajo de la foto "
+                  f"({None if nombre is None else round(nombre['y'])} px)")
+        plegado = pagina.locator("main details summary").filter(has_text="Ver ")
+        comprueba(plegado.count() == 1, "con el resto de cadenas plegado y dicho en el resumen")
+        if plegado.count():
+            plegado.first.click()
+            pagina.wait_for_timeout(1200)
+            abiertas = pagina.locator("section[aria-label^='Alternativas de']:visible")
+            comprueba(abiertas.count() > 2,
+                      f"y al abrirlo salen las demas ({abiertas.count()} cadenas)")
+            plegado.first.click()
+            pagina.wait_for_timeout(600)
+
         # -------------------- los resultados, sin deslizar la tabla en horizontal --------
         # **Lo que se mide y por que.** Hasta el 27 de septiembre de 2026 esta pantalla era una
         # tabla de seis columnas con 52rem de ancho minimo: en un movil habia que deslizar en

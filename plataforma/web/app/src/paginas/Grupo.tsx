@@ -46,12 +46,15 @@ import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../comp
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Vacio, cx } from '../componentes/ui'
 import { IconoCodigoBarras } from '../componentes/iconos'
 import { PESOS_INICIALES, explicaPesos, puntuaAlternativas, type Alternativa, type Pesos } from '../logica/pesos'
-import type { Producto } from '../tipos'
+import type { Producto, PuntoSerie } from '../tipos'
 
 interface Juicio {
   decide: boolean
   motivo: string | null
 }
+
+/** Cuántas cadenas se enseñan sin pedirlas. Dos: la mejor para ti y la siguiente. */
+const CADENAS_A_LA_VISTA = 2
 
 export function Grupo() {
   const { grupoId } = useParams<{ grupoId: string }>()
@@ -199,23 +202,29 @@ export function Grupo() {
         </Link>
       </div>
 
-      <header className="flex flex-wrap items-start gap-4">
+      <header className="flex flex-wrap items-start gap-3">
         {grupo.imagen && (
           <img
             src={grupo.imagen}
             alt=""
             loading="lazy"
-            width={96}
-            height={96}
+            width={72}
+            height={72}
             // Si el CDN de la cadena no contesta, el hueco queda limpio: un
             // icono de imagen rota en medio de la ficha no aporta nada.
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-24 w-24 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+            className="h-[72px] w-[72px] shrink-0 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
           />
         )}
-        <div className="min-w-[16rem] flex-1">
+        {/* **`min-w-0`, y la foto de 72 px, desde el 27 de septiembre de 2026.** Antes la
+            columna de texto exigía 16rem (256 px) y con la foto de 96 px más el hueco no
+            cabía en un móvil de 390: la foto se iba a su propia línea y el nombre caía a
+            **297 px** del principio, con la frase (la respuesta) detrás. Es la composición
+            que diseñó Stitch para esta pantalla: foto pequeña al lado del nombre, y el
+            texto con lo que sobre. */}
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <h1 className="text-xl font-bold leading-tight">{grupo.nombre}</h1>
             <div className="flex flex-wrap items-center gap-2">
@@ -228,21 +237,29 @@ export function Grupo() {
           <div className="mt-2">
             <Campana grupoId={id} />
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+          {/* **El separador va pegado a lo que separa, y con un espacio duro.** Como piezas
+              sueltas de un `flex`, el «·» se quedaba solo al final de la línea y el dato se
+              iba a la siguiente: medido en la captura de un móvil de 390 x 844 el 27 de
+              septiembre de 2026, la línea decía «5 productos · 5 cadenas · por l ·» y la fecha
+              aparecía debajo. Aquí el «·» empieza cada trozo (así el corte de línea posible es
+              *antes* de él) y el espacio de detrás es duro, para que no pueda quedar colgando.
+              Con `whitespace-nowrap` en todo el trozo se arreglaba lo de colgar y se rompía
+              otra cosa: la línea se salía del ancho y la fecha salía cortada. */}
+          <p className="mt-1 break-words text-sm text-neutral-600 dark:text-neutral-400">
             <span>{grupo.productos.length} productos</span>
-            <span>·</span>
             <span>
+              {' ·\u00a0'}
               {grupo.cadenas} {grupo.cadenas === 1 ? 'cadena' : 'cadenas'}
             </span>
-            <span>·</span>
-            <span>por {unidadDelGrupo ?? 'unidad desconocida'}</span>
+            <span>
+              {' ·\u00a0'}por {unidadDelGrupo ?? 'unidad desconocida'}
+            </span>
             {grupo.fecha_datos && (
-              <>
-                <span>·</span>
+              <span className="ml-1 inline-flex align-middle">
                 <Etiqueta tono="dato">datos del {fechaTexto(grupo.fecha_datos)}</Etiqueta>
-              </>
+              </span>
             )}
-          </div>
+          </p>
 
           {/* **La frase, antes que los numeros.** Punto 3 del encargo: *"«¿esto esta
               caro?» hoy se contesta con una tabla, y una tabla no es una respuesta"*.
@@ -331,64 +348,116 @@ export function Grupo() {
       {columnas.length === 0 ? (
         <Vacio titulo="Este grupo no tiene ningún producto con precio" />
       ) : (
-        <div className="sm:overflow-x-auto">
-          {/* En el movil las columnas se apilan; a partir de tablet se ponen en
-              fila y se deslizan en horizontal, que es la unica forma de que
-              cinco cadenas se puedan comparar de un vistazo. `grid-cols-none`
-              limpia la plantilla de una columna antes de pasar a flujo por
-              columnas: si no, `grid-cols-1` ganaria y apilaria todo otra vez. */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-[minmax(17rem,21rem)]">
-            {columnas.map(([cadena, lista], indice) => {
-              const ultimo = ultimoDiaDe(cadena)
-              const alDia = lista.some((a) => a.decide)
-              return (
-                <section
-                  key={cadena}
-                  aria-label={`Alternativas de ${cadena}`}
-                  className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
-                >
-                  <header className="mb-2 flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-semibold">{nombreCadena(cadena)}</h2>
-                    {indice === 0 && ganadora && <Etiqueta tono="bien">la mejor contigo</Etiqueta>}
-                    {alDia ? (
-                      <Etiqueta tono="dato">al día</Etiqueta>
-                    ) : (
-                      <Etiqueta tono="aviso">precio del {fechaTexto(ultimo)}</Etiqueta>
-                    )}
-                  </header>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    {lista.map((a) => (
-                      <FichaAlternativa
-                        key={a.producto.producto_id}
-                        alternativa={a}
-                        pesos={pesos}
-                        puntosSerie={
-                          // Se filtra por `producto_id`, no por cadena: es lo que
-                          // permite pintar la chispa aunque la cadena tenga dos
-                          // productos en el grupo. Sin ese campo la serie mezcla
-                          // los dos y no hay forma de saber de cual es cada
-                          // precio, que es por lo que antes solo se pintaba
-                          // cuando la cadena tenia un producto.
-                          grupo.serie
-                            .filter((s) => s.producto_id === a.producto.producto_id)
-                            .map<PuntoChispa>((s) => ({
-                              fecha: s.fecha,
-                              valor: s.precio_unidad_cent,
-                            }))
-                        }
-                        chispaBloqueada={lista.length > 1}
-                        fechaDatos={grupo.fecha_datos ?? null}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
+        <div className="grid grid-cols-1 gap-3">
+          {/* **Las cadenas que deciden, delante; el resto, plegadas.** Medido en un móvil de
+              390 x 844 el 27 de septiembre de 2026: la ficha entera medía **3.592 px, 4,3
+              pantallas**, y 1.600 de esos píxeles eran las cinco tarjetas de cadena una debajo
+              de otra. Lo que se viene a saber es dónde está más barato, y eso lo dicen la
+              primera y la segunda (la mejor para ti y la siguiente); las otras tres se piden.
+              Es la composición de Stitch para esta pantalla («Ver 3 más»). */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-[minmax(17rem,21rem)] sm:overflow-x-auto">
+            {columnas.slice(0, CADENAS_A_LA_VISTA).map(([cadena, lista], indice) => (
+              <ColumnaDeCadena
+                key={cadena}
+                cadena={cadena}
+                lista={lista}
+                indice={indice}
+                ganadora={ganadora}
+                serie={grupo.serie}
+                fechaDatos={grupo.fecha_datos ?? null}
+                pesos={pesos}
+                alDia={lista.some((a) => a.decide)}
+                ultimo={ultimoDiaDe(cadena)}
+              />
+            ))}
           </div>
+          {columnas.length > CADENAS_A_LA_VISTA && (
+            <details className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800">
+              <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold">
+                Ver {columnas.length - CADENAS_A_LA_VISTA === 1 ? 'la otra cadena' : `las otras ${columnas.length - CADENAS_A_LA_VISTA} cadenas`}
+                <span className="ml-2 text-xs font-normal text-tinta-suave">
+                  {columnas.slice(CADENAS_A_LA_VISTA).map(([c]) => nombreCadena(c)).join(' · ')}
+                </span>
+              </summary>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-[minmax(17rem,21rem)] sm:overflow-x-auto">
+                {columnas.slice(CADENAS_A_LA_VISTA).map(([cadena, lista], indice) => (
+                  <ColumnaDeCadena
+                    key={cadena}
+                    cadena={cadena}
+                    lista={lista}
+                    indice={indice + CADENAS_A_LA_VISTA}
+                    ganadora={ganadora}
+                    serie={grupo.serie}
+                    fechaDatos={grupo.fecha_datos ?? null}
+                    pesos={pesos}
+                    alDia={lista.some((a) => a.decide)}
+                    ultimo={ultimoDiaDe(cadena)}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
         </div>
       )}
     </div>
+  )
+}
+
+/** Una cadena, con sus alternativas y su curva: la pieza que se repite en la lista.
+ *
+ *  `alDia` y `ultimo` **llegan de fuera** y no se calculan aquí: los saca `ultimoDiaDe`, que
+ *  vive en la pantalla porque necesita el estado de las cadenas. Duplicar ese cálculo en esta
+ *  pieza sería tener la misma regla en dos sitios, y el día que una cambie se pintarían dos
+ *  fechas distintas en la misma pantalla.
+ */
+function ColumnaDeCadena({ cadena, lista, indice, ganadora, serie, fechaDatos, pesos,
+                           alDia, ultimo }: {
+  cadena: string
+  lista: Alternativa[]
+  indice: number
+  ganadora: Alternativa | null
+  serie: PuntoSerie[]
+  fechaDatos: string | null
+  pesos: Pesos
+  alDia: boolean
+  ultimo: string | null
+}) {
+  return (
+    <section
+      key={cadena}
+      aria-label={`Alternativas de ${cadena}`}
+      className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+    >
+      <header className="mb-2 flex flex-wrap items-center gap-2">
+        <h2 className="text-base font-semibold">{nombreCadena(cadena)}</h2>
+        {indice === 0 && ganadora && <Etiqueta tono="bien">la mejor contigo</Etiqueta>}
+        {alDia ? (
+          <Etiqueta tono="dato">al día</Etiqueta>
+        ) : (
+          <Etiqueta tono="aviso">precio del {fechaTexto(ultimo)}</Etiqueta>
+        )}
+      </header>
+
+      <div className="grid grid-cols-1 gap-3">
+        {lista.map((a) => (
+          <FichaAlternativa
+            key={a.producto.producto_id}
+            alternativa={a}
+            pesos={pesos}
+            puntosSerie={
+              // Se filtra por `producto_id`, no por cadena: es lo que permite pintar la
+              // chispa aunque la cadena tenga dos productos en el grupo. Sin ese campo la
+              // serie mezcla los dos y no hay forma de saber de cual es cada precio.
+              serie
+                .filter((s) => s.producto_id === a.producto.producto_id)
+                .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent }))
+            }
+            chispaBloqueada={lista.length > 1}
+            fechaDatos={fechaDatos}
+          />
+        ))}
+      </div>
+    </section>
   )
 }
 
