@@ -152,3 +152,12 @@ con casa, esto es lo ultimo que vi".
 **Un numero nunca aparece sin su contexto.** El total dice que es aproximado y de
 que fecha son los precios. Lo que no tiene precio se cuenta aparte en vez de
 contarse como cero.
+
+**Ninguna tabla se desliza de lado: se apila.** Una tabla ancha se resolvia con scroll
+horizontal dentro de su caja y un aviso («Desliza la tabla para ver todas las columnas →»), y
+eso es una instruccion en vez de una respuesta: medido el 27 de septiembre de 2026 en un movil
+de 390 px, **lo que quedaba fuera de la pantalla era la columna del precio** -- en el buscador
+y en el panel. Por debajo de 640 px cada fila pasa a ser una linea propia, con las celdas
+fluyendo debajo, y el nombre de la columna viaja **en cada celda** (`Td etiqueta="…"`) para los
+numeros que no se explican solos. Lo hace `.tabla-scroll`, en un solo sitio, y lo vigila
+`prueba_navegador.py` en catorce tablas de golpe.

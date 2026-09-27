@@ -277,10 +277,10 @@ function Hoy() {
                   {d.cadenas.map((c) => (
                     <tr key={c.cadena}>
                       <Td>{c.cadena}</Td>
-                      <Td className="cifra">{numero(c.productos, 0)}</Td>
-                      <Td className="cifra">{numero(c.comparables, 0)}</Td>
-                      <Td className="cifra">{numero(c.con_nutriscore, 0)}</Td>
-                      <Td className="cifra">{numero(c.con_ean, 0)}</Td>
+                      <Td className="cifra" etiqueta="productos">{numero(c.productos, 0)}</Td>
+                      <Td className="cifra" etiqueta="comparables">{numero(c.comparables, 0)}</Td>
+                      <Td className="cifra" etiqueta="con Nutri-Score">{numero(c.con_nutriscore, 0)}</Td>
+                      <Td className="cifra" etiqueta="con EAN">{numero(c.con_ean, 0)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -379,21 +379,21 @@ function DondeComprar() {
                   {d.pasillos.map((p) => (
                     <tr key={p.seccion}>
                       <Td>{p.nombre}</Td>
-                      <Td className="font-semibold">{nombreCadena(p.gana)}</Td>
-                      <Td className="cifra">{porcentajeConSigno(p.desvio_pct)}</Td>
-                      <Td>{p.siguiente ? nombreCadena(p.siguiente) : '—'}</Td>
-                      <Td className="cifra">
+                      <Td className="font-semibold" etiqueta="más barata">{nombreCadena(p.gana)}</Td>
+                      <Td className="cifra" etiqueta="desvío">{porcentajeConSigno(p.desvio_pct)}</Td>
+                      <Td etiqueta="le sigue">{p.siguiente ? nombreCadena(p.siguiente) : '—'}</Td>
+                      <Td className="cifra" etiqueta="diferencia">
                         {p.ventaja_sobre_la_siguiente_pct == null
                           ? '—'
                           : `${porcentaje(p.ventaja_sobre_la_siguiente_pct)} pts`}
                       </Td>
-                      <Td>
+                      <Td etiqueta="más cara">
                         {nombreCadena(p.peor)}{' '}
                         <span className="cifra text-tinta-suave">
                           {porcentajeConSigno(p.peor_pct)}
                         </span>
                       </Td>
-                      <Td className="cifra">{numero(p.productos, 0)}</Td>
+                      <Td className="cifra" etiqueta="productos">{numero(p.productos, 0)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -526,9 +526,9 @@ function Cadenas() {
                   {d.mas_barata.map((c) => (
                     <tr key={c.cadena}>
                       <Td>{c.cadena}</Td>
-                      <Td className="cifra">{numero(c.compite_en, 0)}</Td>
-                      <Td className="cifra">{numero(c.gana, 0)}</Td>
-                      <Td className="cifra font-semibold">{porcentaje(c.pct)}</Td>
+                      <Td className="cifra" etiqueta="compite en">{numero(c.compite_en, 0)}</Td>
+                      <Td className="cifra" etiqueta="gana">{numero(c.gana, 0)}</Td>
+                      <Td className="cifra font-semibold" etiqueta="%">{porcentaje(c.pct)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -555,10 +555,10 @@ function Cadenas() {
                   {d.movimiento.map((m) => (
                     <tr key={m.cadena}>
                       <Td>{m.cadena}</Td>
-                      <Td className="cifra">{numero(m.observaciones, 0)}</Td>
-                      <Td className="cifra">{numero(m.movidos, 0)}</Td>
-                      <Td className="cifra">{porcentaje(m.pct, 2)}</Td>
-                      <Td className="cifra">{euros(m.mediana_cent)}</Td>
+                      <Td className="cifra" etiqueta="observaciones">{numero(m.observaciones, 0)}</Td>
+                      <Td className="cifra" etiqueta="movidos">{numero(m.movidos, 0)}</Td>
+                      <Td className="cifra" etiqueta="%">{porcentaje(m.pct, 2)}</Td>
+                      <Td className="cifra" etiqueta="mediana">{euros(m.mediana_cent)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -644,7 +644,7 @@ function Marcas() {
                   {d.calidad_origen.map((o) => (
                     <tr key={o.origen}>
                       <Td>{o.origen === 'precio' ? 'ordenar por precio (es gama, no calidad)' : o.origen}</Td>
-                      <Td className="cifra">{numero(o.productos, 0)}</Td>
+                      <Td className="cifra" etiqueta="productos">{numero(o.productos, 0)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -719,8 +719,8 @@ function Historico() {
                   {d.serie.map((s) => (
                     <tr key={s.fecha}>
                       <Td>{fecha(s.fecha)}</Td>
-                      <Td className="cifra">{numero(s.observaciones, 0)}</Td>
-                      <Td className="cifra">{numero(s.cadenas, 0)}</Td>
+                      <Td className="cifra" etiqueta="observaciones">{numero(s.observaciones, 0)}</Td>
+                      <Td className="cifra" etiqueta="cadenas">{numero(s.cadenas, 0)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -1008,13 +1008,17 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                       return (
                         <tr key={s.cadena}>
                           <Td>{nombreCadena(s.cadena)}</Td>
-                          <Td className="cifra">{numero(s.indice, 2)}</Td>
-                          <Td className="cifra font-semibold">
+                          <Td className="cifra" etiqueta="índice">{numero(s.indice, 2)}</Td>
+                          <Td className="cifra font-semibold" etiqueta="variación">
                             {porcentajeConSigno(s.variacion_pct, 2)}
                           </Td>
-                          <Td className="cifra">{numero(s.capturas, 0)}</Td>
-                          <Td className="cifra">{numero(u?.productos, 0)}</Td>
-                          {recortados > 0 && <Td className="cifra">{numero(u?.recortados, 0)}</Td>}
+                          <Td className="cifra" etiqueta="capturas">{numero(s.capturas, 0)}</Td>
+                          <Td className="cifra" etiqueta="productos">{numero(u?.productos, 0)}</Td>
+                          {recortados > 0 && (
+                            <Td className="cifra" etiqueta="recortados">
+                              {numero(u?.recortados, 0)}
+                            </Td>
+                          )}
                         </tr>
                       )
                     })}

@@ -304,11 +304,11 @@ export function Escaner() {
                     {hallado.comparacion.map((c) => (
                       <tr key={c.fuente}>
                         <Td>{nombreCadena(c.fuente)}</Td>
-                        <Td className="cifra">{euros(c.precio_cent)}</Td>
-                        <Td className="cifra">
+                        <Td className="cifra" etiqueta="precio">{euros(c.precio_cent)}</Td>
+                        <Td className="cifra" etiqueta="por unidad">
                           {eurosUnidad(c.precio_unidad_cent, hallado.producto.unidad)}
                         </Td>
-                        <Td className="cifra">
+                        <Td className="cifra" etiqueta="diferencia">
                           {c.diferencia_pct === null
                             ? 'no lo sé'
                             : c.precio_unidad_cent !== null && c.precio_unidad_cent === masBarato

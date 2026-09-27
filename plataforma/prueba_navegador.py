@@ -1115,7 +1115,7 @@ def main() -> int:
         # con deslizador de tabla, barras y tarjetas con una regla. Entran aqui porque
         # son pantallas nuevas y nadie las ha medido todavia con el dedo.
         rutas += ["/panel?pestana=indice", "/panel?pestana=posicion",
-                  "/panel?pestana=dudosas"]
+                  "/panel?pestana=dudosas", "/panel?pestana=bajadas"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
             rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")
@@ -1133,14 +1133,25 @@ def main() -> int:
                       f"en {ruta} no hay nada que pulsar por debajo de 44 px ({resumen})")
             # Y la otra mitad de una pantalla de movil: **que no se deslice de lado.** Una
             # pagina que se sale obliga a moverla con el pulgar para leer el final de las
-            # lineas, y en la tienda eso es soltar el carro. Las tablas anchas se deslizan
-            # **dentro de su caja** (`TablaScroll`), que es a proposito; lo que no puede
-            # deslizarse es la pagina.
+            # lineas, y en la tienda eso es soltar el carro.
             ancho, scroll = pagina.evaluate(
                 "() => [document.documentElement.clientWidth,"
                 " document.documentElement.scrollWidth]")
             comprueba(scroll <= ancho + 1,
                       f"en {ruta} la pagina no se sale de la pantalla ({scroll} > {ancho})")
+            # **Y las tablas tampoco, desde el 27 de septiembre de 2026.** Una tabla ancha se
+            # deslizaba dentro de su caja (`TablaScroll`), y eso dejaba **fuera de la pantalla
+            # justo la columna del precio**: medido en el buscador (52rem de minimo) y en el
+            # panel. Ahora, por debajo de 640 px, las filas se apilan y no hay nada que
+            # deslizar; esta comprobacion es la que impide que vuelva, en las catorce tablas
+            # del proyecto a la vez.
+            cajas = pagina.evaluate("""() => [...document.querySelectorAll('.tabla-scroll')]
+              .map(c => [c.scrollWidth, c.clientWidth, (c.getAttribute('aria-label') || '')])""")
+            anchas = [a for a, b, _ in cajas if a > b + 1]
+            comprueba(not anchas,
+                      f"en {ruta} ninguna tabla se desliza en horizontal "
+                      f"({len(anchas)} de {len(cajas)}: "
+                      f"{[n for a, b, n in cajas if a > b + 1][:3]})")
 
         # ------------------- cuando la API falla: una frase y una forma de reintentar -----
         # La fila «errores + reintentar» del §8 no la habia mirado un navegador nunca: se
@@ -1434,15 +1445,13 @@ def main() -> int:
         # ranking: crece sola cada dia que baja algo (medido el 24 sep: 94 px; el 27: 242), asi
         # que exigir que quepa entera es una prueba que se pone roja por tener mas datos -- el
         # defecto de instrumento que este proyecto ya se ha comido tres veces. Lo que contesta
-        # la pregunta es su primera fila, con su cabecera: eso es lo que se mide.
-        cabecera_tabla = pagina.locator("main table thead tr").first
-        dentro, donde = _cabe_en_la_primera(pagina, cabecera_tabla)
-        comprueba(dentro,
-                  f"4: la cabecera de lo tuyo que ha bajado se ve sin desplazar ({donde})")
+        # la pregunta es su primera fila: eso es lo que se mide. La cabecera no se mide desde el
+        # 27 de septiembre de 2026 porque **en el movil ya no hay cabecera**: las tablas se
+        # apilan y el nombre de la columna va en cada celda (`Td etiqueta`).
         primera_fila = pagina.locator("main table tbody tr").first
         dentro, donde = _cabe_en_la_primera(pagina, primera_fila)
         comprueba(dentro,
-                  f"4: y su primera fila, que es la respuesta ({donde})")
+                  f"4: la primera fila de lo tuyo que ha bajado se ve sin desplazar ({donde})")
 
         carga("/avisos")
         # La seccion de lo que ha bajado, que es la respuesta de la pregunta 4 en esta

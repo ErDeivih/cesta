@@ -26,6 +26,13 @@ rota dice **que ha pasado**, no una rueda girando.
 tiene precio se cuenta aparte, no como cero. Un precio de otro dia lleva su
 fecha.
 
+**Ninguna tabla se desliza de lado: se apila.** Por debajo de 640 px, cada fila es una linea y
+las celdas van debajo; el nombre de la columna va **en la celda** (`Td etiqueta="…"`) cuando el
+valor no se explica solo. Antes se deslizaba dentro de su caja con el aviso «Desliza la tabla
+para ver todas las columnas →», y lo que quedaba fuera era el precio (medido el 27 de
+septiembre de 2026, en el buscador y en el panel). Lo hace `.tabla-scroll` en un solo sitio.
+Ver `docs/UX-MOVIL.md` §4.
+
 ---
 
 ## Inicio — la primera pantalla

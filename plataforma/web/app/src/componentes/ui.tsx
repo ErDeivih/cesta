@@ -382,13 +382,20 @@ export function Vacio({ titulo, children }: { titulo: ReactNode; children?: Reac
 
 // ------------------------------------------------------------------ tabla ---
 
-/** Envoltorio de tabla con scroll horizontal **controlado**.
+/** Envoltorio de tabla: **en el móvil se apila, en pantalla ancha se desliza si hace falta**.
  *
- *  Una tabla de precios con siete columnas no cabe en un movil, y las tres
- *  salidas malas son: aplastarla hasta que no se lee, esconder columnas (y que
- *  el dato que falta sea justo el que se buscaba) o dejarla salirse de la
- *  pantalla. La buena es scroll horizontal con la primera columna pegada y un
- *  aviso de que se puede deslizar.
+ *  Una tabla de precios con siete columnas no cabe en un móvil, y las tres salidas malas son:
+ *  aplastarla hasta que no se lee, esconder columnas (y que el dato que falta sea justo el que
+ *  se buscaba) o dejarla salirse de la pantalla. Hasta el 27 de septiembre de 2026 la salida
+ *  era scroll horizontal con la primera columna pegada y un aviso de que se podía deslizar, y
+ *  **el aviso era el sintoma de que la respuesta no se veía**: en un móvil de 390 px lo que
+ *  quedaba fuera era la columna del precio, medido en el buscador y en el panel. Ahora, por
+ *  debajo de 640 px, cada fila es una línea y las celdas fluyen debajo (lo hace `.tabla-scroll`
+ *  en `estilos.css`); de 640 px para arriba sigue la tabla de verdad, que es donde comparar
+ *  columnas tiene sentido.
+ *
+ *  `minAncho` se queda para la tabla ancha, y en el móvil se anula: si no, el ancho mínimo
+ *  seguiría empujando la página en horizontal.
  */
 export function TablaScroll({
   children,
@@ -400,18 +407,13 @@ export function TablaScroll({
   minAncho?: string
 }) {
   return (
-    <div>
-      <p className="mb-1 text-xs text-neutral-500 sm:hidden dark:text-neutral-400">
-        Desliza la tabla para ver todas las columnas →
-      </p>
-      <div
-        className="tabla-scroll"
-        role="region"
-        aria-label={etiqueta}
-        tabIndex={0}
-      >
-        <div style={{ minWidth: minAncho }}>{children}</div>
-      </div>
+    <div
+      className="tabla-scroll"
+      role="region"
+      aria-label={etiqueta}
+      tabIndex={0}
+    >
+      <div style={{ minWidth: minAncho }}>{children}</div>
     </div>
   )
 }
@@ -463,9 +465,33 @@ export function Th({
   )
 }
 
-export function Td({ children, className }: { children: ReactNode; className?: string }) {
+/** Una celda.
+ *
+ *  `etiqueta` es **para el móvil**: por debajo de 640 px las tablas se apilan (una fila por
+ *  línea, con las celdas fluyendo en varias líneas) y ahí no hay cabecera de columna que diga
+ *  qué es cada número. Las celdas cuyo valor se explica solo («0,96 €/l», «−18 %», una fecha)
+ *  no necesitan etiqueta; las que son un número pelado («1.234»), sí, o el dato se queda sin
+ *  sujeto. Ver `.tabla-scroll` en `estilos.css`.
+ *
+ *  La etiqueta es **texto de verdad y no un `::before` de CSS**, y eso importa: el contenido
+ *  de un pseudo-elemento no lo lee un lector de pantalla ni aparece en `innerText`, así que la
+ *  medida de la puerta («¿dice sobre cuántos productos?») no lo vería. Se comprobó el 27 de
+ *  septiembre de 2026: con `::before`, la comprobación del índice del panel se puso roja con la
+ *  etiqueta puesta y visible.
+ */
+export function Td({ children, className, etiqueta }: {
+  children: ReactNode
+  className?: string
+  etiqueta?: string
+}) {
   return (
-    <td className={cx('border-b border-neutral-100 px-3 py-2 align-top dark:border-neutral-700', className)}>
+    <td
+      data-etiqueta={etiqueta}
+      className={cx('border-b border-neutral-100 px-3 py-2 align-top dark:border-neutral-700', className)}
+    >
+      {etiqueta && (
+        <span className="mr-1 text-xs text-tinta-suave sm:hidden">{etiqueta}</span>
+      )}
       {children}
     </td>
   )

@@ -229,10 +229,14 @@ def test_la_puerta_mide_que_las_cuatro_respuestas_quepan_en_la_primera_pantalla(
         "la banda util tiene que salir de la cabecera de verdad, no de un numero a ojo"
     for que in ("1 y 3: la primera linea de la lista se ve sin desplazar",
                 "2: la frase que contesta «¿esto esta caro?» se ve sin desplazar",
-                "4: la cabecera de lo tuyo que ha bajado se ve sin desplazar",
-                "4: y su primera fila, que es la respuesta",
+                "4: la primera fila de lo tuyo que ha bajado se ve sin desplazar",
                 "4: la seccion de los avisos se ve sin desplazar"):
         assert que in puerta, f"la puerta no comprueba «{que}»"
+
+    # Y lo que dejo de medirse, con su motivo: en el movil las tablas se apilan (27 sep 2026),
+    # asi que **no hay cabecera** que quepa o deje de caber; lo que hay que ver es la fila.
+    assert "ninguna tabla se desliza en horizontal" in puerta, \
+        "la puerta no comprueba que las tablas no se deslicen en el movil"
 
 
 def test_la_puerta_mide_que_el_precio_no_se_vaya_de_la_pantalla():

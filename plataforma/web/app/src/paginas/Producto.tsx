@@ -467,13 +467,15 @@ export function Producto() {
                             </span>
                           )}
                         </Td>
-                        <Td>{p.fuente}</Td>
-                        <Td className="cifra">{euros(p.precio_cent)}</Td>
-                        <Td className="cifra">{eurosUnidad(p.precio_unidad_cent, p.unidad)}</Td>
-                        <Td className="cifra">
+                        <Td etiqueta="cadena">{p.fuente}</Td>
+                        <Td className="cifra" etiqueta="precio">{euros(p.precio_cent)}</Td>
+                        <Td className="cifra" etiqueta="por unidad">
+                          {eurosUnidad(p.precio_unidad_cent, p.unidad)}
+                        </Td>
+                        <Td className="cifra" etiqueta="diferencia">
                           {dif === null ? 'no lo sé' : dif <= 0 ? 'el más barato' : `+${porcentaje(dif)}`}
                         </Td>
-                        <Td>
+                        <Td etiqueta="letra">
                           <SelloLetra producto={p} />
                         </Td>
                       </tr>

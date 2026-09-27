@@ -78,3 +78,81 @@
     @apply -mx-4 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:px-0;
   }
 }
+
+/* ---------------------------------------------------------------- tablas en el movil ---
+ *
+ * **Por debajo de 640 px una tabla ancha se apila, no se desliza.** El scroll horizontal
+ * resolvia el problema de que la tabla no cupiera, y creaba otro: en un movil de 390 px la
+ * columna del precio se queda **fuera de la pantalla**, y el aviso «Desliza la tabla para ver
+ * todas las columnas →» es una instruccion, no una respuesta. Medido el 27 de septiembre de
+ * 2026 en el buscador (52rem de ancho minimo) y en el panel: en las dos, lo que no se veia era
+ * el numero.
+ *
+ * Aqui cada fila pasa a ser una linea propia, con las celdas fluyendo en varias lineas (el
+ * nombre primero, a linea completa; los numeros detras). La cabecera de la tabla se esconde
+ * -- no hay columnas que etiquetar -- y las celdas que necesitan decir que son lo dicen con
+ * `data-etiqueta` (`Td etiqueta="..."`), que es lo unico que se pinta como etiqueta.
+ *
+ * **Estas reglas van fuera de `@layer`** a proposito: las clases de Tailwind del componente
+ * (`px-3 py-2`, `border-b`) viven en `utilities`, que sale despues de `components` en el CSS
+ * generado, y desde dentro de una capa no se les gana. Fuera de capa, esta regla es la ultima
+ * y manda. */
+@media (max-width: 639px) {
+  .tabla-scroll {
+    overflow-x: visible;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .tabla-scroll table,
+  .tabla-scroll tbody {
+    display: block;
+    width: 100%;
+  }
+
+  /* Y el ancho minimo que el componente le pone a la tabla ancha, anulado: si no, sigue
+     empujando la pagina en horizontal aunque la tabla ya no lo necesite. */
+  .tabla-scroll > div {
+    min-width: 0 !important;
+  }
+
+  .tabla-scroll thead {
+    /* La cabecera se esconde y su trabajo lo hacen `data-etiqueta` y el orden de las celdas:
+       en una fila apilada no hay columnas que alinear, asi que una cabecera pegada arriba
+       solo taparia la primera fila. */
+    display: none;
+  }
+
+  .tabla-scroll tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .tabla-scroll td {
+    display: block;
+    border: 0;
+    padding: 0;
+  }
+
+  /* Lo que se viene a leer -- el nombre del producto, la cadena, el dia -- ocupa su linea. */
+  .tabla-scroll td:first-child {
+    flex: 1 1 100%;
+  }
+
+  /* **Un enlace de la primera celda mide 44 px de alto, también apilado.** En la tabla ancha
+     el nombre de la primera columna es un enlace de texto y su alto lo pone la fila; apilado,
+     la fila ya no lo envuelve y el enlace medía **39 px** (y **19** cuando el nombre cabía en
+     una línea). Medido con la puerta el 27 de septiembre de 2026 en la tabla de bajadas: eran
+     objetivos de 19 px en una pantalla que se usa de pie. */
+  .tabla-scroll td:first-child a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+}
