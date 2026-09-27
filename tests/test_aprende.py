@@ -402,6 +402,24 @@ def test_nada_en_linea_porque_el_csp_de_caddy_lo_prohibe(sitio):
         assert not en_linea, f"{nombre} lleva un script en linea: el CSP no lo dejaria correr"
         assert not re.search(r"<style[\s>]", sin_comentarios), (
             f"{nombre} lleva un estilo en linea: el CSP no lo aplicaria")
+        # **Y los atributos `style`, que es la tercera forma y la que se colo.** `style-src`
+        # sin `'unsafe-inline'` no solo prohibe `<style>`: **tambien los atributos `style`**. Se
+        # colaron 22 en un capitulo (la alineacion de las columnas, que `markdown-it` pinta asi)
+        # y servidos por Caddy no se aplicaba **ninguno**: medido el 27 de septiembre de 2026 con
+        # `data/debug/alineacion.py`, 0 de 22 alineadas servido y 22 de 22 con doble clic. Las
+        # columnas de numeros se leian a la izquierda justo donde el material se lee de verdad.
+        atributos = re.findall(r'<[a-z][^>]*\sstyle\s*=', sin_comentarios)
+        assert not atributos, (
+            f"{nombre} lleva {len(atributos)} atributo(s) `style` en linea: el CSP no los "
+            f"aplicaria ({atributos[:3]})")
+    # Y la prueba mira: el patron caza el caso que la puso roja, y **sobre el texto ya sin
+    # comentarios** no cae en un ejemplo escrito dentro de un comentario (que es la trampa que
+    # ya se comio esta misma prueba una vez).
+    patron = re.compile(r'<[a-z][^>]*\sstyle\s*=')
+    quita = lambda texto: re.sub(r"<!--.*?-->", " ", texto, flags=re.S)  # noqa: E731
+    assert patron.search('<th style="text-align:right">'), "el patron ya no caza el caso"
+    assert not patron.search(quita('<!-- <th style="text-align:right"> -->')), \
+        "el patron cae en los comentarios, que no se aplican"
 
 
 def test_el_buscador_va_en_ficheros_y_lleva_todo_dentro(sitio):

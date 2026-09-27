@@ -65,6 +65,14 @@ Escribe `plataforma/web/aprende/`, y ese sitio:
 buscador se quedo muerto en produccion por eso, medido el 24 de septiembre de 2026). Todo el
 JavaScript va en `buscar.js` y `copiar.js`.
 
+**Y los atributos `style` tampoco**, que es la tercera forma y la que se colo: `style-src` sin
+`'unsafe-inline'` **tambien bloquea los atributos** `style="…"`. `markdown-it` pinta la
+alineacion de una tabla (`|---:|`) asi, y el 27 de septiembre de 2026 se midio en el capitulo de
+los fundamentos del dato: servido por Caddy, **22 celdas con `style` y 0 alineadas**; abierto
+con doble clic, 22 de 22. O sea que las columnas de numeros se leian a la izquierda justo donde
+el material se lee de verdad, y sin dar ningun error. Ahora la alineacion viaja en clases
+(`_alineacion_por_clase`) y lo vigila `tests/test_aprende.py`.
+
 Como se anade un capitulo
 -------------------------
 Un fichero nuevo en `docs/aprende/` con su cabecera:
@@ -603,6 +611,27 @@ cualquier cosa del material por su título, su sección o su resumen.</p>
 """
 
 
+def _alineacion_por_clase(cuerpo: str) -> str:
+    """La alineacion de una columna, por clase y no por `style="…"` en linea.
+
+    `markdown-it` pinta la alineacion de una tabla (`|---:|`) como un atributo `style` en el
+    `th` y en cada `td`, y **la CSP de Caddy lo bloquea**: `style-src 'self'` sin
+    `'unsafe-inline'` no solo prohibe `<style>`, tambien los atributos `style`. Medido el 27 de
+    septiembre de 2026 con `data/debug/alineacion.py` en el capitulo de los fundamentos del
+    dato: servido por Caddy, **22 celdas con `style` y 0 alineadas**; abierto con doble clic,
+    22 de 22. Es decir, las columnas de numeros se leian a la izquierda justo donde el material
+    se lee de verdad, y no daba ningun error.
+
+    Se cambia por las clases `.num`, `.centro` y `.izq`, que viven en `estilo.css` (que si se
+    carga: es un fichero). Se hace sobre el HTML y no con una extension de markdown porque son
+    tres sustituciones literales y ya hay dos funciones que trabajan asi (`_destaca_avisos`,
+    `_tablas_apilables`).
+    """
+    for valor, clase in (("right", "num"), ("center", "centro"), ("left", "izq")):
+        cuerpo = cuerpo.replace(f' style="text-align:{valor}"', f' class="{clase}"')
+    return cuerpo
+
+
 def _portada(paginas: list[Pagina]) -> str:
     """La portada: que es esto, por donde empezar, y el temario por secciones."""
     curso = [p for p in paginas if p.curso]
@@ -812,6 +841,12 @@ pre.con-copiar { padding-top: 2.4rem; }
 .copiar.hecho { border-color: var(--acento); color: var(--acento); }
 
 table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; font-size: .92rem; display: block; overflow-x: auto; }
+/* La alineacion de una columna, por clase: `markdown-it` la pinta como `style="text-align:…"`
+   y la CSP de Caddy bloquea los atributos `style` (medido: 0 de 22 celdas alineadas servido por
+   Caddy, 22 de 22 con doble clic). Ver `_alineacion_por_clase`. */
+th.num, td.num { text-align: right; }
+th.centro, td.centro { text-align: center; }
+th.izq, td.izq { text-align: left; }
 /* El nombre de la columna, dentro de cada celda: escondido en pantalla ancha, donde la
    cabecera de la tabla ya lo dice, y visible cuando la tabla se apila en el movil. */
 .etiqueta-celda { display: none; }
@@ -830,6 +865,9 @@ table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; font-size: .92
   }
   table td { display: block; border: 0; padding: 0; }
   table td:first-child { flex: 1 1 100%; }
+  /* Apilada, la tabla ya no es una tabla: alinear a la derecha una celda que va debajo de su
+     etiqueta deja el dato descolgado. Se alinean todas a la izquierda. */
+  table th, table td { text-align: left; }
   .etiqueta-celda { display: inline; color: var(--tinta-suave); font-size: .78rem; }
 }
 th, td { border-bottom: 1px solid var(--borde); padding: .55rem .7rem; text-align: left; vertical-align: top; }
@@ -1015,6 +1053,7 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
         pagina.cuerpo = _caja_frase(cuerpo, pagina.en_una_frase)
         pagina.cuerpo = _destaca_avisos(pagina.cuerpo)
         pagina.cuerpo = _tablas_apilables(pagina.cuerpo)
+        pagina.cuerpo = _alineacion_por_clase(pagina.cuerpo)
         pagina.anclas = [(a["nivel"], a["id"], a["texto"]) for a in env.get("anclas", [])]
 
     for pagina in paginas:
