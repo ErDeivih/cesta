@@ -27,7 +27,7 @@ import { anadirDesdeFavoritos, misListas } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
 import { eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
-import { Aviso, Boton, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Etiqueta, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 import type { Favorito } from '../tipos'
 
 /** El desplegable de listas, con la ultima usada ya elegida.
@@ -133,11 +133,13 @@ export function Favoritos() {
   }
 
   if (favoritos.isError) {
-    return (
-      <Vacio titulo="No he podido traerlos">
-        <p>{textoDeError(favoritos.error)}</p>
-      </Vacio>
-    )
+    // **`Fallo` y no un `Vacio` escrito aquí**, que es el mismo fallo que tenía la cesta y que
+    // se arregló allí el 23 de septiembre de 2026: un cartel que dice «No he podido traerlos» y
+    // **no deja volver a intentarlo** obliga a recargar la página a mano, que en el móvil no es
+    // evidente. Además `Fallo` es quien decide el tono: sin cobertura no es rojo. Medido con la
+    // puerta el 27 de septiembre de 2026, al ampliar la prueba de errores de cuatro pantallas a
+    // doce: era la única sin botón.
+    return <Fallo error={favoritos.error} reintentar={() => void favoritos.refetch()} />
   }
 
   const lista = favoritos.data ?? []

@@ -22,6 +22,16 @@ segundos se pulsa tres veces.
 con contenido, vacia, y rota. La vacia dice **que hacer**, no "no hay datos". La
 rota dice **que ha pasado**, no una rueda girando.
 
+**Y las cuatro caras se miden.** La puerta mete un 500 en el endpoint de cada pantalla y
+comprueba que **lo dice con palabras y deja reintentar**. Empezo midiendo cuatro pantallas y
+desde el 27 de septiembre de 2026 mide **trece** (cesta, avisos, bajadas, buscador, ficha del
+grupo, ficha del producto, favoritos, panel, panel de matching, indice, posicion, ofertas
+dudosas y el escaner): la cara rota solo estaba medida en cuatro de las trece, y al ampliarla
+salio que **favoritos decia «No he podido traerlos» sin un solo boton** -- recargar la pagina a
+mano, que en el movil no es evidente --, el mismo fallo que tenia la cesta el 23 de septiembre.
+Es la misma leccion que el esqueleto eterno de `/avisos`: una cara que no se mide es una cara
+que nadie ha visto.
+
 **Un numero nunca sin contexto.** El total dice que es aproximado. Lo que no
 tiene precio se cuenta aparte, no como cero. Un precio de otro dia lleva su
 fecha.

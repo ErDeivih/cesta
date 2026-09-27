@@ -1247,6 +1247,19 @@ def main() -> int:
                 # `/buscar` y no `/`: desde el 27 de septiembre de 2026 `/` es Inicio, y su
                 # buscador no navega a ningun sitio -- busca ahi mismo, y eso se mide abajo.
                 ("el buscador", "buscar", "/buscar", "leche entera"),
+                # **Las demas pantallas, desde el 27 de septiembre de 2026.** Esta lista tenia
+                # cuatro, y el proyecto dice que **las cuatro caras de una pantalla se
+                # diseñan** -- cargando, con contenido, vacia y rota --: la rota solo estaba
+                # medida en cuatro de las trece. Es la misma leccion que el esqueleto eterno de
+                # `/avisos`: una cara que no se mide es una cara que nadie ha visto.
+                ("la ficha del grupo", "grupo", "/grupo/526", None),
+                ("la ficha del producto", "producto", "/producto/dia/141787", None),
+                ("los favoritos", "favoritos", "/favoritos", None),
+                ("el panel", "panel/hoy", "/panel", None),
+                ("el panel de matching", "panel/matching", "/panel/matching", None),
+                ("el indice", "indice", "/panel?pestana=indice", None),
+                ("la posicion", "posicion", "/panel?pestana=posicion", None),
+                ("las ofertas dudosas", "ofertas-dudosas", "/panel?pestana=dudosas", None),
         ):
             filtro = _contesta_mal(pagina, endpoint)
             try:
@@ -1274,6 +1287,28 @@ def main() -> int:
                           f"({[b for b in botones if b][-3:]})")
             finally:
                 pagina.unroute(filtro)
+
+        # **El escaner, que se dispara al pulsar.** No entra en la lista de arriba porque no
+        # carga sola: hay que teclear el codigo y mandarlo. Con `/api/ean` a 500 tiene que
+        # decirlo con palabras y dejar volver a probar sin recargar la pagina.
+        filtro = _contesta_mal(pagina, "ean")
+        try:
+            carga("/escaner")
+            pagina.get_by_label("Código de barras").fill("8410655002410")
+            pagina.get_by_role("button", name="Buscar").first.click()
+            with contextlib.suppress(Exception):
+                pagina.get_by_role("button", name="Volver a intentarlo").first.wait_for(
+                    timeout=20000)
+            texto = pagina.inner_text("body")
+            botones = [b.strip() for b in pagina.locator("button").all_inner_texts()]
+            comprueba("No he podido" in texto or "Sin cobertura" in texto
+                      or "no ha contestado" in texto,
+                      "el escaner: con la API a 500 lo dice con palabras "
+                      f"(lei: {' | '.join(texto.splitlines()[:8])})")
+            comprueba("Volver a intentarlo" in botones,
+                      f"el escaner: y deja reintentar ({[b for b in botones if b][-3:]})")
+        finally:
+            pagina.unroute(filtro)
 
         # Y el buscador **de la primera pantalla**, que busca mientras se escribe: con la API
         # caida, el hueco de los resultados lo dice con palabras. Y, sobre todo, **no dice
