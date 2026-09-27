@@ -230,6 +230,18 @@ def main() -> int:
                   "la primera pantalla, sin lista, dice por donde se empieza")
         comprueba("0 cosas" not in texto,
                   "y no contesta con un cero, que es un hueco con forma de respuesta")
+        # Y los avisos, con la misma cuenta nueva: sin ningun aviso pedido, la pantalla decia
+        # «Esperando · Todavia no se ha cumplido. Te aviso yo.» encima de la caja que decia
+        # «No sigues ningun producto» -- dos cabeceras para un estado, y la primera
+        # contradiciendo a la segunda. Medido en una captura el 27 de septiembre de 2026.
+        carga("/avisos")
+        texto = pagina.inner_text("main")
+        comprueba("No sigues ningún producto" in texto,
+                  "los avisos, con una cuenta nueva, dicen que no sigues nada")
+        comprueba("Esperando" not in texto,
+                  "y no titulan «Esperando» cuando no se espera nada")
+        comprueba(pagina.get_by_role("link", name="Buscar un producto").count() == 1,
+                  "con por donde empezar, en vez de un callejon sin salida")
         carga("/cesta")
         comprueba(pagina.get_by_role("button", name="Añadir").count() >= 4,
                   f"y ve la aplicacion con datos reales que tocar "

@@ -158,15 +158,49 @@ export function Avisos() {
         </div>
       )}
 
+      {alertas.length === 0 && (
+        <Tarjeta>
+          <p className="text-base font-semibold">No sigues ningún producto</p>
+          <p className="mt-2 text-sm text-tinta-suave">
+            Esto sirve para que <strong>la aplicación te busque a ti</strong> en vez de que tú
+            entres a mirar: te aviso cuando lo que sigues esté en su precio más bajo de 90 días,
+            y sale aquí, con la frase que lo explica.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              to="/buscar"
+              className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+            >
+              Buscar un producto
+            </Link>
+            <Link
+              to="/panel?pestana=bajadas"
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+            >
+              Ver lo que ha bajado esta semana
+            </Link>
+          </div>
+          <p className="mt-3 text-sm text-tinta-suave">
+            En la ficha de un producto, el botón se llama «Avisarme si baja».
+          </p>
+        </Tarjeta>
+      )}
+
+      {/* **Sin nada que esperar no se pinta «Esperando».** Medido en la captura de un móvil el
+          27 de septiembre de 2026, con una cuenta que no seguía ningún producto: la pantalla
+          decía «Esperando · Todavía no se ha cumplido. Te aviso yo.» con **cero** avisos, y
+          debajo, dentro de la misma tarjeta, la caja que decía «No sigues ningún producto».
+          Dos cabeceras para un estado, y la primera contradecía a la segunda: una tarjeta que
+          dice «esperando» cuando no se espera nada no informa, confunde. La tarjeta del caso
+          vacío, arriba, **dice qué hacer y da por dónde** (buscar), que era lo que le faltaba:
+          antes acababa en «abre la ficha de un producto», que es un callejón sin salida en la
+          pantalla que está a un toque de la barra de abajo. */}
+      {alertas.length > 0 && (
       <Tarjeta titulo="Esperando" sub="Todavía no se ha cumplido. Te aviso yo.">
         {esperando.length === 0 ? (
-          <Vacio titulo="No sigues ningún producto">
-            <p>
-              Esto sirve para que <strong>la aplicación te busque a ti</strong> en vez de
-              que tú entres a mirar. Abre la ficha de un producto y pulsa «Avisarme si
-              baja»: te aviso cuando esté en su precio más bajo de 90 días.
-            </p>
-          </Vacio>
+          <p className="text-sm text-tinta-suave">
+            Ninguno esperando: los que sigues ya han saltado, y están arriba con su frase.
+          </p>
         ) : (
           <ul className="grid gap-2">
             {esperando.map((a) => (
@@ -181,6 +215,7 @@ export function Avisos() {
           </ul>
         )}
       </Tarjeta>
+      )}
 
       {quita.isError && (
         <Aviso tono="aviso" titulo="No he podido quitar el aviso">

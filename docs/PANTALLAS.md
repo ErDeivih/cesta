@@ -280,6 +280,30 @@ sigues"* y enlaza a la ficha. Pueden ser dos cosas -- que el grupo ya no este en
 o que la API que corre sea mas vieja que la pantalla --, y decir la primera cuando pasa la
 segunda seria mentir sobre un producto que existe.
 
+### Sin seguir ningun producto (27 de septiembre de 2026)
+
+    No sigues ningún producto
+    Esto sirve para que la aplicación te busque a ti en vez de que tú entres a mirar:
+    te aviso cuando lo que sigues esté en su precio más bajo de 90 días, y sale aquí,
+    con la frase que lo explica.
+
+    [ Buscar un producto ]  [ Ver lo que ha bajado esta semana ]
+
+    En la ficha de un producto, el botón se llama «Avisarme si baja».
+
+**Antes eran dos cajas que se contradecian.** Medido en una captura de un movil el 27 de
+septiembre de 2026, con una cuenta que no seguia nada: la pantalla decia *«Esperando ·
+Todavia no se ha cumplido. Te aviso yo.»* con **cero** avisos y, dentro de esa misma tarjeta,
+la caja que decia *«No sigues ningun producto»*. Una tarjeta que dice «esperando» cuando no se
+espera nada no informa: confunde, y encima tapa la que si valia. Ahora la tarjeta «Esperando»
+solo se pinta si hay algo que esperar (y si todo ha saltado ya, la tarjeta lo dice:
+*«Ninguno esperando: los que sigues ya han saltado»*).
+
+**Y el caso vacio da por donde empezar.** Acababa en «abre la ficha de un producto y pulsa
+"Avisarme si baja"»: es correcto y es un callejon sin salida, en la pantalla que esta a un
+toque de la barra de abajo. Ahora lleva al buscador y a lo que ha bajado esta semana, que son
+las dos cosas que se pueden hacer en ese momento.
+
 ---
 
 ### Los resultados
