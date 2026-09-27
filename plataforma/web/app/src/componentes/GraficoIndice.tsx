@@ -12,7 +12,7 @@
  *  que se lee es el de la tabla. Por eso este componente **no** decide nada: pinta
  *  lo que le dan y no calcula ni un dato.
  */
-import { fecha as fechaLegible, numero, porcentajeConSigno } from '../api/formato'
+import { fecha as fechaLegible, nombreCadena, numero, porcentajeConSigno } from '../api/formato'
 import type { SerieIndice } from '../tipos'
 
 /** Los cinco colores de las cadenas, con nombre y no un índice al aire.
@@ -177,7 +177,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
               style={{ background: colorDeCadena(s.cadena) }}
             />
             <span>
-              {s.cadena} {porcentajeConSigno(s.variacion_pct)} ({s.capturas}{' '}
+              {nombreCadena(s.cadena)} {porcentajeConSigno(s.variacion_pct)} ({s.capturas}{' '}
               {s.capturas === 1 ? 'captura' : 'capturas'})
             </span>
           </li>

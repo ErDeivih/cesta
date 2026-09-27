@@ -83,6 +83,55 @@ def _etiqueta_completa(texto: str, inicio: int) -> str:
 
 
 @sin_interfaz
+def test_las_cadenas_se_pintan_con_su_nombre_y_no_con_el_identificador():
+    """El identificador de una cadena (`dia`, `alcampo`) **no es su nombre**.
+
+    Viene en minusculas porque es la clave que usa el colector, y durante meses se pinto tal
+    cual en las pastillas de cinco pantallas, en el desglose del reparto de la cesta, en la
+    leyenda del indice, en cuatro tablas del panel y en la tabla de equivalencias de la ficha:
+    «alcampo», «dia», «carrefour», mientras la ficha del grupo decia «Aldi» y «Mercadona». La
+    que decide como se llama una cadena es `nombreCadena` (`api/formato.ts`), que ademas tiene
+    las excepciones escritas (DIA va con las tres letras en mayuscula). Medido y arreglado el
+    27 de septiembre de 2026.
+
+    Se mira **el texto que se pinta**, no los atributos: `key={c.cadena}` o
+    `to={/producto/${f.fuente}/...}` son identificadores, y ahi es donde tienen que estar.
+    """
+    crudo = re.compile(r"\{(?:[a-z_]+\.)?(?:cadena|fuente)\}")
+    atributo = re.compile(r"\b(?:key|to|href|aria-label|style|className|background|value|id)=")
+
+    def se_pinta(linea: str) -> bool:
+        """Si la linea acaba pintando el identificador en la pantalla."""
+        limpia = linea.strip()
+        # Un comentario no se pinta, y una prop (`cadena={cadena}`) es un dato que se pasa, no
+        # texto que se lee: lo que se persigue es el `{...}` que acaba delante de alguien.
+        if limpia.startswith(("*", "//", "/*")) or atributo.search(linea) \
+                or "nombreCadena" in linea:
+            return False
+        for encontrado in crudo.finditer(linea):
+            if linea[encontrado.start() - 1:encontrado.start()] == "=":
+                continue
+            return True
+        return False
+
+    mal = []
+    for fichero in sorted((APP / "src").rglob("*.tsx")):
+        for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+            if se_pinta(linea):
+                mal.append(f"{fichero.name}:{numero}: {linea.strip()[:70]}")
+    assert not mal, (
+        "hay sitios que pintan el identificador de la cadena en vez de su nombre "
+        "(usa `nombreCadena`):\n  " + "\n  ".join(mal))
+    # Y la prueba mira, con los cuatro casos que la pusieron a punto: el que la hizo falta, los
+    # dos que NO son texto pintado y el que ya esta arreglado.
+    assert se_pinta("<Td>{c.cadena}</Td>"), "el patron ya no caza el caso que lo motivo"
+    assert not se_pinta("              <tr key={c.cadena}>"), "`key` no es texto que se pinte"
+    assert not se_pinta("  cadena={cadena}"), "una prop no es texto que se pinte"
+    assert not se_pinta(" *  `/producto/{cadena}/{id_fuente}`."), "un comentario no se pinta"
+    assert not se_pinta("<Td>{nombreCadena(c.cadena)}</Td>"), "ya arreglado, no se señala"
+
+
+@sin_interfaz
 def test_ningun_campo_de_texto_baja_de_16_px():
     """16 px o Safari hace zoom al enfocar, que descuadra la pagina entera."""
     diminutos = []

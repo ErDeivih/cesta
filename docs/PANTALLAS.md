@@ -33,6 +33,15 @@ para ver todas las columnas →», y lo que quedaba fuera era el precio (medido 
 septiembre de 2026, en el buscador y en el panel). Lo hace `.tabla-scroll` en un solo sitio.
 Ver `docs/UX-MOVIL.md` §4.
 
+**Las cadenas se llaman como se llaman.** El identificador de una cadena (`dia`, `alcampo`)
+**no es su nombre**: viene en minusculas porque es la clave que usa el colector. Lo que se pinta
+es `nombreCadena(cadena)` (`api/formato.ts`), que ademas tiene las excepciones escritas -- DIA
+va con las tres letras en mayuscula --. Se colaron seis sitios (las pastillas de cinco
+pantallas, el desglose del reparto de la cesta, la leyenda del indice, cuatro tablas del panel y
+la tabla de equivalencias de la ficha) y los caza una prueba que mira el codigo
+(`tests/test_ui_movil.py`), porque ninguna medida de pantalla lo habria visto: «dia» se lee
+perfectamente.
+
 ---
 
 ## Inicio — la primera pantalla

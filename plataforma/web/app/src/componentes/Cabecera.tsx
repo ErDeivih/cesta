@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useEstado } from '../api/consultas'
-import { fecha, hace } from '../api/formato'
+import { fecha, hace, nombreCadena } from '../api/formato'
 import { NavEscritorio } from './Nav'
 import { Etiqueta, cx } from './ui'
 
@@ -109,7 +109,7 @@ export function Cabecera() {
             <ul className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {data?.cadenas.map((c) => (
                 <li key={c.cadena} className="flex items-center gap-2">
-                  <span className="font-medium">{c.cadena}</span>
+                  <span className="font-medium">{nombreCadena(c.cadena)}</span>
                   <span className={cx(c.al_dia ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
                     {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
                   </span>

@@ -252,7 +252,7 @@ function Hoy() {
               <ul className="mt-1 grid gap-1">
                 {d.alarmas.map((a) => (
                   <li key={a.cadena}>
-                    <strong>{a.cadena}</strong>: hoy {numero(a.hoy, 0)} productos, y lo normal son{' '}
+                    <strong>{nombreCadena(a.cadena)}</strong>: hoy {numero(a.hoy, 0)} productos, y lo normal son{' '}
                     {numero(a.lo_normal, 0)} ({porcentaje(a.caida_pct)} menos). Una caída así sin un
                     cambio de alcance detrás suele ser algo roto.
                   </li>
@@ -276,7 +276,7 @@ function Hoy() {
                 <tbody>
                   {d.cadenas.map((c) => (
                     <tr key={c.cadena}>
-                      <Td>{c.cadena}</Td>
+                      <Td>{nombreCadena(c.cadena)}</Td>
                       <Td className="cifra" etiqueta="productos">{numero(c.productos, 0)}</Td>
                       <Td className="cifra" etiqueta="comparables">{numero(c.comparables, 0)}</Td>
                       <Td className="cifra" etiqueta="con Nutri-Score">{numero(c.con_nutriscore, 0)}</Td>
@@ -292,7 +292,7 @@ function Hoy() {
             <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {d.movidos.map((m) => (
                 <li key={m.cadena} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
-                  <span className="font-medium">{m.cadena}</span>
+                  <span className="font-medium">{nombreCadena(m.cadena)}</span>
                   <span className="cifra">
                     <span className="text-emerald-800 dark:text-emerald-400">
                       {numero(m.bajadas, 0)} ↓
@@ -525,7 +525,7 @@ function Cadenas() {
                 <tbody>
                   {d.mas_barata.map((c) => (
                     <tr key={c.cadena}>
-                      <Td>{c.cadena}</Td>
+                      <Td>{nombreCadena(c.cadena)}</Td>
                       <Td className="cifra" etiqueta="compite en">{numero(c.compite_en, 0)}</Td>
                       <Td className="cifra" etiqueta="gana">{numero(c.gana, 0)}</Td>
                       <Td className="cifra font-semibold" etiqueta="%">{porcentaje(c.pct)}</Td>
@@ -554,7 +554,7 @@ function Cadenas() {
                 <tbody>
                   {d.movimiento.map((m) => (
                     <tr key={m.cadena}>
-                      <Td>{m.cadena}</Td>
+                      <Td>{nombreCadena(m.cadena)}</Td>
                       <Td className="cifra" etiqueta="observaciones">{numero(m.observaciones, 0)}</Td>
                       <Td className="cifra" etiqueta="movidos">{numero(m.movidos, 0)}</Td>
                       <Td className="cifra" etiqueta="%">{porcentaje(m.pct, 2)}</Td>
@@ -773,7 +773,7 @@ function Movidos() {
                           </span>
                         )}
                       </Td>
-                      <Td>{m.cadena}</Td>
+                      <Td>{nombreCadena(m.cadena)}</Td>
                       <Td className="cifra">{eurosUnidad(m.precio_unidad_cent, m.unidad)}</Td>
                       <Td className="cifra">
                         <span
@@ -910,7 +910,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
                           {b.promo_txt && <Etiqueta tono="dato">{b.promo_txt}</Etiqueta>}
                         </div>
                       </Td>
-                      <Td>{b.cadena}</Td>
+                      <Td>{nombreCadena(b.cadena)}</Td>
                       <Td className="cifra">{eurosUnidad(b.precio_unidad_antes_cent, b.unidad)}</Td>
                       <Td className="cifra">{eurosUnidad(b.precio_unidad_cent, b.unidad)}</Td>
                       <Td className="cifra font-semibold">{porcentajeConSigno(b.variacion_pct)}</Td>
