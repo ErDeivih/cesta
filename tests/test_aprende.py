@@ -328,6 +328,29 @@ def test_la_pagina_de_lo_que_no_esta_existe_y_lleva_a_donde_si(sitio):
         f"el try_files de /aprende vuelve a caer en la portada: {ultimas}")
 
 
+def test_el_material_se_regenera_en_la_pasada_del_dia():
+    """El sitio no puede ser mas viejo que los documentos que sirve.
+
+    `aprende.py` se corria **a mano**, asi que lo que se lee en `/aprende` era tan fresco como
+    la ultima vez que alguien se acordara: medido el 27 de septiembre de 2026, el sitio montado
+    era de **tres dias antes** que los documentos que sirve. El sitio no inventa contenido -- lo
+    convierte del markdown --, asi que dejarlo atras es contar algo que ya no es verdad.
+
+    Lo llama la pasada del dia, al final y **protegido**: un fallo regenerando el material no
+    puede tumbar la recoleccion de las 06:00, que es lo que trae el dato (`docs/CIFRAS.md` se
+    reescribe igual, y por el mismo motivo). Esta prueba lee el codigo porque montar la pasada
+    entera para esto costaria una hora; la otra mitad -- que `aprende` sepa generarlo -- la
+    cubre el resto del fichero, que genera el sitio en cada pasada de pruebas.
+    """
+    fuente = (RAIZ / "projects" / "cesta" / "pipeline.py").read_text(encoding="utf-8")
+    assert "from plataforma import aprende" in fuente and "aprende.main([])" in fuente, (
+        "la pasada del dia no regenera el sitio del material")
+    desde = fuente.index("from plataforma import aprende")
+    bloque = fuente[desde:desde + 400]
+    assert "except Exception" in bloque, (
+        "la regeneracion del material no esta protegida: un fallo ahi tumbaria la pasada")
+
+
 def test_el_markdown_de_verdad_se_pinta(sitio):
     """Tablas, codigo, avisos destacados y boton de copiar: lo que hace legible el material."""
     salida, paginas = sitio

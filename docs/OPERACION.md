@@ -141,6 +141,14 @@ Regenerar el material después de tocar un documento es volver a lanzar el coman
 reconstruir ninguna imagen, porque el sitio se monta. `docs/` es la fuente y el HTML es
 desechable: si algo está mal, está mal en el markdown.
 
+**Y desde el 27 de septiembre de 2026 lo regenera la pasada del día**, al final y protegido,
+igual que `docs/CIFRAS.md`: antes había que acordarse, y medido ese día el sitio montado era
+**de tres días antes** que los documentos que sirve. El sitio no inventa contenido —lo convierte
+del markdown—, así que dejarlo atrás es contar algo que ya no es verdad. Un fallo ahí **no puede
+tumbar la recolección de las 06:00** (el dato ya está escrito y el material es documentación), y
+si al entorno le falta el extra `docs`, `aprende` lo dice y no revienta. Lo vigila
+`tests/test_aprende.py`.
+
 Y una regla que no se salta: **las cifras del material las vigila `verificar_docs`**, que desde
 el 24 de septiembre de 2026 mira también las subcarpetas de `docs/` (antes solo miraba el
 primer nivel, así que el curso habría quedado sin vigilancia justo cuando más crece).

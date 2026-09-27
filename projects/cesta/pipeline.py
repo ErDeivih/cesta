@@ -751,6 +751,21 @@ def main() -> int:
         cifras.main()
     except Exception as exc:  # noqa: BLE001
         print(f"  cifras: no se pudo reescribir CIFRAS.md ({type(exc).__name__}: {exc})")
+    # **Y el sitio del material, que era lo unico que no se regeneraba solo.** `aprende.py` se
+    # corria a mano, asi que lo que se lee en `/aprende` era tan fresco como la ultima vez que
+    # alguien se acordara de generarlo: medido el 27 de septiembre de 2026, el sitio montado era
+    # de **tres dias antes** que los documentos que sirve, con las tablas y los parrafos viejos.
+    # El sitio no inventa contenido: lo convierte del markdown, asi que dejarlo atras es contar
+    # algo que ya no es verdad.
+    #
+    # Como el resto de lo que va al final: **un fallo aqui no puede tumbar el pipeline** -- el
+    # dato ya esta escrito y el material es documentacion --. Y si falta el extra de docs,
+    # `genera` lo dice y devuelve -1 en vez de reventar (`aprende.FALTA_EXTRA`).
+    try:
+        from plataforma import aprende
+        aprende.main([])
+    except Exception as exc:  # noqa: BLE001
+        print(f"  material: no se pudo regenerar /aprende ({type(exc).__name__}: {exc})")
     print("pipeline: hecho")
     return 0
 
