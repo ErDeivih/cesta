@@ -149,6 +149,15 @@ tumbar la recolección de las 06:00** (el dato ya está escrito y el material es
 si al entorno le falta el extra `docs`, `aprende` lo dice y no revienta. Lo vigila
 `tests/test_aprende.py`.
 
+**Y nada de estilos en línea, tampoco en atributos.** `markdown-it` pinta la alineación de una
+tabla (`|---:|`) como un atributo `style`, y la CSP de Caddy (`style-src 'self'`, sin
+`'unsafe-inline'`) **bloquea los atributos `style` igual que un `<style>`**: medido el 27 de
+septiembre de 2026, servido por Caddy **0 de 22 celdas** quedaban alineadas y con doble clic
+22 de 22 — las columnas de números se leían a la izquierda justo donde el material se lee de
+verdad, y sin dar ningún error. La alineación viaja en clases (`.num`, `.centro`, `.izq`). Lo
+vigila `tests/test_aprende.py`, que caza las tres formas: `<script>` en línea, `<style>` y
+atributos `style`.
+
 Y una regla que no se salta: **las cifras del material las vigila `verificar_docs`**, que desde
 el 24 de septiembre de 2026 mira también las subcarpetas de `docs/` (antes solo miraba el
 primer nivel, así que el curso habría quedado sin vigilancia justo cuando más crece).
