@@ -1369,6 +1369,24 @@ def main() -> int:
             # que es como esta prueba se puso roja la primera vez, por el instrumento.
             comprueba("más barato en" in ficha.lower() and "te ahorras" in ficha,
                       "y dice donde esta mas barato y cuanto se ahorra, en euros por unidad")
+            # **Y desde aquí se puede apuntar y seguir.** A esta pantalla se llega escaneando
+            # el código de barras: hasta el 27 de septiembre de 2026 no había ni «Añadir a la
+            # cesta» ni la campana, así que el flujo documentado («+ ficha + añadir»,
+            # `docs/PANTALLAS.md` §6) obligaba a volver al grupo a buscarlo, con el paquete en
+            # la mano. Se comprueba que están, y que la frase sigue dicha con sus tildes y con
+            # la cadena como se llama: «Cuesta un 41 % más que en Mercadona.»
+            comprueba(pagina.get_by_role("button", name="Añadir a la cesta").count() == 1,
+                      "desde la ficha del producto se puede añadir a la cesta")
+            comprueba(pagina.get_by_role("button", name="Avisarme si baja").count() == 1
+                      or pagina.get_by_text("Te aviso").count() >= 1,
+                      "y pedir el aviso, sin volver al grupo")
+            # La frase se mira **sola**, no en toda la pantalla: en el texto de la ficha hay
+            # valores de tabla y notas donde «mas» sin tilde no es un fallo de esta frase.
+            la_frase_de_precio = pagina.locator("main p.font-semibold").first.inner_text()
+            comprueba("mas que" not in la_frase_de_precio
+                      and " mercadona" not in la_frase_de_precio,
+                      "y la frase va con tildes y con la cadena como se llama "
+                      f"({la_frase_de_precio.strip()[:60]!r})")
             # **Y ninguna diferencia imposible en pantalla.** El producto elegido es del
             # grupo que destapo el fallo (unidades mezcladas), asi que aqui se ve si la
             # columna «Diferencia» y el ahorro vuelven a cruzar unidades.

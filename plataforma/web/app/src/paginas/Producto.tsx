@@ -30,6 +30,8 @@ import {
   selloLegible,
   textoOrigenSello,
 } from '../api/formato'
+import { BotonAnadirACesta } from '../componentes/BotonAnadirACesta'
+import { Campana } from '../componentes/Campana'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
@@ -226,6 +228,25 @@ export function Producto() {
               <Etiqueta tono="dato">datos del {fechaTexto(consulta.data.fecha_datos)}</Etiqueta>
             )}
           </p>
+
+          {/* **Apuntarlo y seguirlo, desde aquí.** A esta pantalla se llega escaneando el
+              código de barras, y hasta el 27 de septiembre de 2026 no había forma de apuntar
+              nada: había que abrir el grupo («Ver las N cadenas en columnas»), buscarlo y
+              añadirlo allí, con el paquete en la mano. El flujo documentado en
+              `docs/PANTALLAS.md` §6 dice «+ ficha + añadir» para el caso de «lo conozco y puedo
+              comparar», y la pantalla no tenía ese añadir. Se usa el mismo botón que la ficha
+              del grupo (`componentes/BotonAnadirACesta.tsx`): dos copias habrían acabado en dos
+              comportamientos. */}
+          {grupo && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <BotonAnadirACesta grupoId={grupo.grupo_id} nombre={producto.nombre} />
+            </div>
+          )}
+          {grupo && (
+            <div className="mt-2">
+              <Campana grupoId={grupo.grupo_id} />
+            </div>
+          )}
 
           {/* **La frase, antes que la tabla.** Punto 3 del encargo: «una tabla no
               es una respuesta». Va aqui arriba, antes del precio y de la tabla de

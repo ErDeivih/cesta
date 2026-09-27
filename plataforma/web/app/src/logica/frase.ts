@@ -15,7 +15,7 @@
  *  Esta funcion no pinta nada: solo decide que se dice. Se separa para poder
  *  probarla y para que la regla no acabe enterrada en medio del JSX de una ficha.
  */
-import { euros } from '../api/formato'
+import { euros, nombreCadena } from '../api/formato'
 
 /** Lo que hace falta para decidir la frase. Todos los datos vienen de `/api/grupo`. */
 export interface DatosParaLaFrase {
@@ -37,15 +37,22 @@ export interface DatosParaLaFrase {
 
 /** Una frase, o `null` si no hay nada honesto que decir.
  *
+ *  **Las palabras que salen en pantalla llevan sus tildes, y el nombre de la cadena va como
+ *  se llama.** Hasta el 27 de septiembre de 2026 esta funcion decia «Cuesta un 41 % mas que en
+ *  mercadona.»: sin tilde en «más» y con la cadena en minusculas, mientras el resto de la
+ *  aplicacion escribe «Todavía no tienes lista» y «Mercadona». Esta es **la frase que mas se
+ *  lee de toda la aplicacion** -- es la respuesta a la pregunta 2 --, y se juzga contra alguien
+ *  que lee español, no contra el codigo. Se vio en una captura.
+ *
  *  La tabla de decision, que es lo unico que hay que mirar para saber si esto
  *  funciona:
  *
  *      fiable  cadenas  caso                            frase
  *      no      cualq.   el grupo no es de fiar          null
  *      si      1        una sola cadena                 null
- *      si      2+       es la mas barata                "Es la mas barata de las N cadenas."
- *      si      2+       hay mas barato                  "Cuesta un X % mas que en CADENA."
- *      si      2+       empate (0 %)                    "Esta al mismo precio en N cadenas."
+ *      si      2+       es la mas barata                "Es la más barata de las N cadenas."
+ *      si      2+       hay mas barato                  "Cuesta un X % más que en CADENA."
+ *      si      2+       empate (0 %)                    "Está al mismo precio en N cadenas."
  *
  *  Un `null` no es un fallo de la funcion: es la respuesta correcta cuando no hay
  *  comparacion que hacer o cuando no nos la creemos.
@@ -62,20 +69,20 @@ export function fraseDePrecio(d: DatosParaLaFrase): string | null {
   // decirlo a ojo con el `ahorro_pct` del grupo seria hablar del grupo entero
   // como si fuera de este producto. Mejor la frase sin numero que un numero falso.
   if (este == null || minimo == null) {
-    return barata ? `La mas barata esta en ${barata}.` : null
+    return barata ? `La más barata está en ${nombreCadena(barata)}.` : null
   }
 
   // Empate: no hay ahorro que anunciar, y decir "un 0 % mas barato" es ruido.
   if (este <= minimo) {
     const cuantas = d.cadenas === 2 ? 'las dos cadenas' : `las ${d.cadenas} cadenas`
     return este === minimo && d.ahorro_cent === 0
-      ? `Esta al mismo precio en ${cuantas}.`
-      : `Es la mas barata de ${cuantas}: te ahorras ${euros(d.ahorro_cent)} ` +
-        `frente a la mas cara.`
+      ? `Está al mismo precio en ${cuantas}.`
+      : `Es la más barata de ${cuantas}: te ahorras ${euros(d.ahorro_cent)} ` +
+        `frente a la más cara.`
   }
 
   const mas = Math.round((100 * (este - minimo)) / minimo)
   return barata
-    ? `Cuesta un ${mas} % mas que en ${barata}.`
-    : `Cuesta un ${mas} % mas que la mas barata.`
+    ? `Cuesta un ${mas} % más que en ${nombreCadena(barata)}.`
+    : `Cuesta un ${mas} % más que la más barata.`
 }

@@ -522,6 +522,27 @@ en el pasillo**, y no es negociable:
     7  origen, codigo de barras
     8  "verlo en <cadena>"
 
+### Apuntarlo y seguirlo, desde la ficha (27 de septiembre de 2026)
+
+**La pantalla `/producto/<cadena>/<id>` no tenia ni «Añadir a la cesta» ni la campana**, y a
+ella se llega **escaneando el codigo de barras**: el caso *«lo conozco y puedo comparar»* de
+abajo, que termina en «+ ficha + anadir», obligaba a volver al grupo a buscarlo con el paquete
+en la mano. Ahora lleva las dos cosas, en el mismo sitio que la ficha del grupo (debajo del
+nombre y de la linea de datos, antes de la frase), y con **el mismo componente**
+(`componentes/BotonAnadirACesta.tsx`, sacado de `Grupo.tsx` ese dia): dos copias del boton
+habrian acabado en dos comportamientos.
+
+Dos reglas mas que se ven en esta pantalla y que costaron una captura:
+
+  - **Lo que se lee lleva tildes y los nombres van como se llaman.** La frase decia «Cuesta un
+    41 % mas que en mercadona.»: sin tilde en «más» y con la cadena en minusculas, mientras el
+    resto de la aplicacion escribe «Todavía no tienes lista» y «Mercadona». Es **la frase que
+    mas se lee de toda la aplicacion** -- es la respuesta a la pregunta 2 -- y se juzga contra
+    alguien que lee español, no contra el codigo (`logica/frase.ts`).
+  - **La etiqueta de una celda apilada lleva su espacio dentro del texto.** El nombre de la
+    columna se pinta en cada celda cuando la tabla se apila, y con el espacio solo en el margen
+    (`mr-1`) se leia «precio1,95 €»: un lector de pantalla lee `innerText`, no margenes.
+
 ### Cuando no hay datos
 
     nota sin datos   "no lo se", nunca un cero ni una nota gris

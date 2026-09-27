@@ -490,7 +490,10 @@ export function Td({ children, className, etiqueta }: {
       className={cx('border-b border-neutral-100 px-3 py-2 align-top dark:border-neutral-700', className)}
     >
       {etiqueta && (
-        <span className="mr-1 text-xs text-tinta-suave sm:hidden">{etiqueta}</span>
+        // El espacio va **dentro del texto**, no solo en el margen: `mr-1` separa al mirarlo,
+        // pero `innerText` -- y un lector de pantalla -- leian «precio1,95 €». Medido con
+        // `data/debug/cifras.py` el 27 de septiembre de 2026.
+        <span className="mr-1 text-xs text-tinta-suave sm:hidden">{`${etiqueta} `}</span>
       )}
       {children}
     </td>
