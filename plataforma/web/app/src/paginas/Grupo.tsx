@@ -652,7 +652,7 @@ function FichaAlternativa({
           {componentes.map((c) => (
             <li key={c.clave} className="flex justify-between gap-2">
               <span>
-                {c.nombre} <span className="text-neutral-500">(peso {pesos[c.clave]})</span>
+                {c.nombre} <span className="text-tinta-suave">(peso {pesos[c.clave]})</span>
               </span>
               <span className="cifra">
                 {c.valor === null ? 'sin dato' : numero(c.valor, 2)}

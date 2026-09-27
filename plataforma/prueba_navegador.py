@@ -1605,7 +1605,13 @@ def main() -> int:
             # ficha de un azafran enseno que tenia cuatro objetivos por debajo de 44 px: es
             # una pantalla con avisos de color (los alergenos en rojo) y con cajas propias,
             # justo donde un `dark:` que falte se ve.
-            for ruta in ("/", "/cesta", "/avisos") + (
+            #
+            # **Y la ficha del grupo, desde el 27 de septiembre de 2026**, que es donde salio el
+            # fallo: `text-neutral-500` sin `dark:` propio daba **3,19:1** en el tema oscuro, en
+            # veinte sitios de una misma pantalla (los pesos del «por que esta en esta
+            # posicion»). Estaba a la vista de cualquiera menos de esta prueba, que miraba cuatro
+            # rutas y esa no era una.
+            for ruta in ("/", "/cesta", "/avisos", "/grupo/526") + (
                     (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)

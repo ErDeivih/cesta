@@ -192,7 +192,7 @@ export function Buscar() {
               y una busqueda vieja puede no encontrar nada. */}
           {recientes.length > 0 && (
             <>
-              <p className="mt-4 text-xs uppercase tracking-wide text-neutral-500">
+              <p className="mt-4 text-xs uppercase tracking-wide text-tinta-suave">
                 Lo que has buscado
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-2">

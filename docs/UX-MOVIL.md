@@ -186,6 +186,15 @@ cinco casos -- Inicio, Buscar y el caso vacio de favoritos sin `h1`, la lista co
 que era lo unico que ya se medía. Lo vigila `prueba_navegador.py` en las trece pantallas que
 recorre, y `prueba_produccion.py` en las cuatro del material.
 
+**El gris secundario es `text-tinta-suave`, no un `neutral-500` escrito a mano.** Es la regla que
+ya estaba en `estilos.css` («los colores con significado, en un solo sitio») y que se salto en
+tres sitios: `#737373` sobre el fondo oscuro da **3,19:1**, por debajo del 4,5:1 del texto de
+cuerpo, y en la ficha del grupo eran **veinte textos** de una misma pantalla (los pesos del «por
+qué está en esta posición»). Con la variable son dos colores, uno por tema, y nadie tiene que
+acordarse del par. La puerta mide el contraste **en los dos temas** en cinco rutas -- y la ficha
+del grupo entró ahí justo por esto: la medida existía desde el 23 de septiembre, pero no miraba
+esa pantalla.
+
 **Y la cara sin sesion tambien se mide.** El instrumento entraba siempre, asi que las pantallas
 como las ve quien no ha entrado no las habia mirado nadie: con `--sin-sesion` salieron cuatro
 sin `h1` y **el fallo mas serio de la sesion**: en `/avisos`, `useAlertas` tiene
