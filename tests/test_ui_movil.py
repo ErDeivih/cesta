@@ -52,6 +52,44 @@ def test_el_boton_nunca_baja_de_44_px():
         "solo una de las dos variantes del boton conserva los 44 px")
 
 
+@sin_interfaz
+def test_los_numeros_que_se_leen_no_se_formatean_a_mano():
+    """`toFixed` escribe el punto decimal en inglés: «3.89 €», «8.5», «2.3 g».
+
+    Medido el 27 de septiembre de 2026, con la pantalla delante, en cuatro sitios que se leen:
+    la promesa de un aviso («Te aviso si baja de 3.89 €»), la nota de una alternativa en la
+    ficha del grupo («8.5 de 100»), los componentes de «por qué está en esta posición» (0.85) y
+    la tabla de nutrición (que decía «2.3 g»), todos ellos **al lado de precios con coma**. Los
+    números que se leen pasan por `numero`, `euros` o `porcentaje` (`api/formato.ts`), que son
+    los que saben de comas; `toFixed` se queda para lo que no lee nadie, como las coordenadas
+    de un `path` de SVG.
+    """
+    lectura = re.compile(r"€|%")
+    mal = []
+    for fichero in sorted((APP / "src").rglob("*.tsx")):
+        for numero_linea, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+            if "toFixed(" not in linea:
+                continue
+            limpia = linea.strip()
+            # Lo que se pinta: una unidad que lee una persona, o un `{...}` en medio del JSX.
+            if lectura.search(linea) or ">{" in linea or limpia.startswith("{"):
+                mal.append(f"{fichero.name}:{numero_linea}: {limpia[:70]}")
+    assert not mal, (
+        "hay numeros que se leen formateados con `toFixed`, que pone el punto decimal:\n  "
+        + "\n  ".join(mal) + "\nUsa `numero`, `euros` o `porcentaje`.")
+    # Y la prueba mira, con los cuatro casos que la pusieron a punto.
+    def se_lee(linea: str) -> bool:
+        limpia = linea.strip()
+        return bool("toFixed(" in linea and (
+            lectura.search(linea) or ">{" in linea or limpia.startswith("{")))
+
+    assert se_lee('? `Te aviso si baja de ${(a.umbral_cent / 100).toFixed(2)} €`')
+    assert se_lee("{alternativa.puntos === null ? 'no lo sé' : alternativa.puntos.toFixed(1)}")
+    assert se_lee('<Etiqueta tono="bien">−{f.ahorro_pct.toFixed(0)} %</Etiqueta>')
+    assert not se_lee("      .map((p, i) => `${i ? 'L' : 'M'}${x(p.fecha).toFixed(1)},"
+                      "${y(p.indice).toFixed(1)}`)"), "las coordenadas de un SVG no se leen"
+
+
 def _etiqueta_completa(texto: str, inicio: int) -> str:
     """El texto de una etiqueta JSX, desde `<x` hasta su `>` de cierre.
 

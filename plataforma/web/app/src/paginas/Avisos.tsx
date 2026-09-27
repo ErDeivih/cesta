@@ -25,16 +25,17 @@ import { Link } from 'react-router-dom'
 
 import { borrarAlerta, marcarVistas } from '../api/alertas'
 import { useAlertas } from '../api/consultas'
-import { fecha, hace } from '../api/formato'
+import { euros, fecha, hace } from '../api/formato'
 import { Aviso, Boton, Esqueleto, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 import type { Alerta } from '../tipos'
 
 /** Lo que promete una alerta, en palabras. Es una promesa: no ha pasado todavia. */
 export function promesa(a: Alerta): string {
   if (a.tipo === 'baja_de') {
-    return a.umbral_cent
-      ? `Te aviso si baja de ${(a.umbral_cent / 100).toFixed(2)} €`
-      : 'Te aviso si baja'
+    // `euros` y no `(umbral_cent / 100).toFixed(2)`: con `toFixed` la promesa se leia
+    // «Te aviso si baja de 3.89 €», con el punto decimal en ingles, en una frase que se lee en
+    // español y al lado de precios con coma. Medido el 27 de septiembre de 2026.
+    return a.umbral_cent ? `Te aviso si baja de ${euros(a.umbral_cent)}` : 'Te aviso si baja'
   }
   if (a.tipo === 'minimo_90d') return 'Te aviso cuando esté en su precio más bajo de 90 días'
   return 'Te aviso si baja'

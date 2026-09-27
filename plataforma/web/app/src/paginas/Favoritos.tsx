@@ -26,7 +26,7 @@ import { verFavoritos, quitarFavorito } from '../api/favoritos'
 import { anadirDesdeFavoritos, misListas } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
-import { eurosUnidad, nombreCadena } from '../api/formato'
+import { eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import { Aviso, Boton, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
 import type { Favorito } from '../tipos'
 
@@ -220,7 +220,7 @@ export function Favoritos() {
                   )}
                 </div>
                 {f.ahorro_pct != null && f.ahorro_pct > 0 && (
-                  <Etiqueta tono="bien">−{f.ahorro_pct.toFixed(0)} %</Etiqueta>
+                  <Etiqueta tono="bien">−{porcentaje(f.ahorro_pct, 0)}</Etiqueta>
                 )}
               </div>
 

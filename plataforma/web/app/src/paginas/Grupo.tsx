@@ -36,6 +36,7 @@ import {
   fecha as fechaTexto,
   ms,
   nombreCadena,
+  numero,
   porcentaje,
 } from '../api/formato'
 import { BotonAnadirACesta } from '../componentes/BotonAnadirACesta'
@@ -633,7 +634,7 @@ function FichaAlternativa({
       <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
         Nota contigo:{' '}
         <strong className="cifra font-semibold text-neutral-900 dark:text-neutral-100">
-          {alternativa.puntos === null ? 'no lo sé' : alternativa.puntos.toFixed(1)}
+          {alternativa.puntos === null ? 'no lo sé' : numero(alternativa.puntos, 1)}
         </strong>{' '}
         de 100
       </p>
@@ -653,7 +654,9 @@ function FichaAlternativa({
               <span>
                 {c.nombre} <span className="text-neutral-500">(peso {pesos[c.clave]})</span>
               </span>
-              <span className="cifra">{c.valor === null ? 'sin dato' : c.valor.toFixed(2)}</span>
+              <span className="cifra">
+                {c.valor === null ? 'sin dato' : numero(c.valor, 2)}
+              </span>
             </li>
           ))}
         </ul>

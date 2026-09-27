@@ -161,3 +161,10 @@ y en el panel. Por debajo de 640 px cada fila pasa a ser una linea propia, con l
 fluyendo debajo, y el nombre de la columna viaja **en cada celda** (`Td etiqueta="…"`) para los
 numeros que no se explican solos. Lo hace `.tabla-scroll`, en un solo sitio, y lo vigila
 `prueba_navegador.py` en catorce tablas de golpe.
+
+**Los numeros que se leen pasan por `numero`, `euros` o `porcentaje`.** No por `toFixed`, que
+escribe el punto decimal en ingles: «Te aviso si baja de 3.89 €», «8.5 de 100», «2.3 g», todos
+medidos el 27 de septiembre de 2026 y todos al lado de precios con coma. En español el decimal
+es una coma, y un numero escrito en otro idioma se lee como un error. Lo vigila
+`tests/test_ui_movil.py` leyendo el codigo, porque eso no se ve en una captura: una coma y un
+punto se parecen demasiado a 390 px.

@@ -579,7 +579,7 @@ export function Producto() {
                     <span className="cifra font-medium">
                       {f.valor === null
                         ? NO_LO_SE
-                        : `${f.valor}${f.unidad ? ` ${f.unidad}` : ''}`}
+                        : `${numero(f.valor, 2)}${f.unidad ? ` ${f.unidad}` : ''}`}
                     </span>
                   </li>
                 ))}
