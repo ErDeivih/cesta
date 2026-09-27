@@ -37,11 +37,18 @@ repite todos los dias deja de leerse -- que es la leccion de `CIFRAS.md`.
 """
 from __future__ import annotations
 
+from core.comparacion import FACTOR_INCREIBLE
+
 from . import catalogo
 
-# La misma red de seguridad que en `movimientos`: un factor de mas de 20 entre
-# dos dias del mismo producto no es una oferta.
-FACTOR_INCREIBLE = 20.0
+# `FACTOR_INCREIBLE` se importa, **no se copia**, y esto es un arreglo del 27 de septiembre de
+# 2026 con su medición detrás: aquí había un `20.0` propio mientras el resto del proyecto usa
+# **30** (`core/comparacion.py`, importado igual por `catalogo.py` y `movimientos.py`). El
+# comentario decía «la misma red de seguridad que en `movimientos`» y no lo era: una bajada de
+# 25× disparaba una alerta aquí y la pantalla de bajadas la rechazaba como imposible, así que
+# el aviso podía saltar por un movimiento que el propio proyecto considera un error de dato.
+# Es exactamente lo que avisa el anexo de fórmulas: un número compartido vive en un módulo que
+# los demás importan; copiado en dos sitios acaba siendo distinto.
 TOLERANCIA_CANTIDAD = 0.02
 
 TIPOS = ("baja_de", "minimo_90d", "cualquier_bajada")

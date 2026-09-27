@@ -121,6 +121,104 @@ def test_tres_valores_en_un_eje_tambien_es_contradiccion():
     assert ejes == {"aceite": ["orujo", "virgen", "virgen extra"]}
 
 
+# --------------------- el dominio de cada eje, con los 27 casos de la auditoria ----
+
+def test_el_eje_de_la_leche_no_dispara_con_avena_o_arroz_a_secas():
+    """**Los 8 casos del eje `leche` que encontro el banco de ejes** (`docs/LAYA.md` §5.1).
+
+    Los patrones `avena`, `arroz`, `soja` y `almendra` disparaban "bebida vegetal" en
+    cualquier cosa que los llevara. Medido el 27 de septiembre de 2026: 1.367 declaraciones
+    de menos en el catalogo, y ninguna era de una bebida.
+
+    El que calla no bloquea, asi que callarse de mas **no** rompe comparaciones: lo que hacia
+    era partir grupos por un eje inventado. Y en el otro sentido, una ficha legitima tiene que
+    seguir declarando.
+    """
+    for nombre in ("Tostas de pan con avena especial canape",
+                   "Arroz blanco precocido ultracongelado",
+                   "Almendra frita y salada",
+                   "Postre estilo skyr de soja y coco"):
+        assert "leche" not in valores(nombre), nombre
+    # Y las bebidas de verdad, si.
+    assert valores("Bebida de avena 1 l")["leche"] == "bebida vegetal"
+    assert valores("Leche de soja 1 l")["leche"] == "bebida vegetal"
+    assert valores("Batido de almendra 1 l")["leche"] == "bebida vegetal"
+
+
+def test_el_eje_del_cafe_no_dispara_con_instantaneo_a_secas():
+    """Los 5 casos del eje `cafe`: `instant` disparaba "soluble" fuera del cafe.
+
+    «Apresto instantaneo para planchado», «Fideos instantaneos MAGGI», «Sopinstant Crema de
+    pollo», «Tinte retoca raices spray instantaneo».
+    """
+    for nombre in ("Apresto instantaneo para planchado", "Sopinstant Crema de pollo",
+                   "Fideos instantaneos MAGGI", "Tinte retoca raices spray instantaneo"):
+        assert "cafe" not in valores(nombre), nombre
+    assert valores("Cafe soluble descafeinado")["cafe"] == "soluble"
+    assert valores("Nescafe instantaneo clasico")["cafe"] == "soluble"
+
+
+def test_el_eje_del_aceite_no_dispara_con_el_orujo_de_los_licores():
+    """Los 9 casos del eje `aceite`: el orujo de los licores y la marca «Virgen del Brezo»."""
+    for nombre in ("Crema de Orujo Ruavieja", "Licor de crema de orujo PANIZO",
+                   "Lazos Virgen del Brezo"):
+        assert "aceite" not in valores(nombre), nombre
+    assert valores("Aceite de oliva virgen extra 1 l")["aceite"] == "virgen extra"
+    assert valores("Aceite de orujo de oliva 1 l")["aceite"] == "orujo"
+
+
+def test_el_eje_integral_no_dispara_con_el_vino_blanco():
+    """El `blanco` del vino no es el `blanco` de la harina."""
+    assert "integral" not in valores("Vino blanco con D.O. Rias Baixas")
+    assert "integral" not in valores("Cerveza blanca 33 cl")
+    assert valores("Pan de molde blanco")["integral"] == "blanco"
+    assert valores("Harina de trigo integral")["integral"] == "integral"
+    # `pan` como palabra entera: `Panga` es un pescado y no es pan.
+    assert "integral" not in valores("Filete de panga congelado")
+
+
+def test_el_eje_de_la_grasa_no_dispara_con_avellanas_enteras():
+    """«Avellanas enteras» y «Sardina entera» no son leche entera."""
+    assert "grasa" not in valores("Avellanas enteras")
+    assert "grasa" not in valores("Sardina entera en aceite de oliva")
+    assert valores("Leche entera 1 l")["grasa"] == "entera"
+    assert valores("Yogur natural desnatado")["grasa"] == "sin grasa"
+
+
+def test_el_azucar_negado_no_declara_tener_azucar():
+    """El cuarto caso del eje `azucar`: la negacion con hueco («bajo en sal y en azucares»).
+
+    Una subcadena no coge esa frase, asi que hacia falta un patron con hueco. Y lo que **no**
+    se hace es una regla general de negaciones: se probo y se llevaba por delante fichas
+    legitimas («Leche sin lactosa entera» no deja de ser entera porque no tenga lactosa).
+    """
+    assert valores("Bebida vegetal de almendra (0 % azucar)")["azucar"] == "sin azucar"
+    assert valores("Pan tostado bajo en sal y en azucares")["azucar"] == "sin azucar"
+    assert valores("Galletas sin azucares anadidos")["azucar"] == "sin azucar"
+    # Y el azucar de verdad sigue saliendo.
+    assert valores("Cereales azucarados")["azucar"] == "con azucar"
+
+
+def test_una_ficha_legitima_no_pierde_su_eje_por_el_dominio():
+    """Los 12 nombres de control de la medicion: ninguno se puede haber roto."""
+    esperados = {
+        "Leche entera 1 l": ("grasa", "entera"),
+        "Leche semidesnatada 1 l": ("grasa", "semidesnatada"),
+        "Aceite de oliva virgen extra 1 l": ("aceite", "virgen extra"),
+        "Aceite de oliva virgen 1 l": ("aceite", "virgen"),
+        "Cafe molido natural": ("cafe", "molido"),
+        "Cafe soluble descafeinado": ("cafe", "soluble"),
+        "Bebida de avena 1 l": ("leche", "bebida vegetal"),
+        "Leche de soja 1 l": ("leche", "bebida vegetal"),
+        "Pan integral de trigo": ("integral", "integral"),
+        "Leche semidesnatada sin lactosa": ("lactosa", "sin lactosa"),
+        "Cerveza sin alcohol 0,0% lata": ("alcohol", "sin alcohol"),
+        "Agua mineral con gas": ("gas", "con gas"),
+    }
+    for nombre, (eje, valor) in esperados.items():
+        assert valores(nombre).get(eje) == valor, f"{nombre}: {valores(nombre)}"
+
+
 # --------------------------------------------------------------- el dato -----
 
 @pytest.mark.skipif(not GOLD.exists(), reason="esta copia no trae gold")

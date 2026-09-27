@@ -53,10 +53,18 @@ reconocerlas porque cada una tiene su propia métrica y sus propios errores:
 
 El reparto de tareas, en el código:
 
-    bloqueo        marca normalizada + categoria + tokens de tamano (core/matching.py)
+    bloqueo        (unidad_canonica, round(cantidad, 3)) -- el formato, o ("?") si falta
     similitud      Dice ponderada por IDF sobre tokens, mas trigramas para erratas
     asignacion     reparto hungaro 1-a-1 POR CADA PAR DE CADENAS
     agrupacion     componentes conexas, con una segunda red que rechaza contradicciones
+
+El bloqueo real es **el formato** —misma unidad canónica y misma cantidad redondeada a tres
+decimales—, y el capítulo 93 lo tiene con su cuenta completa: sin él habría que comparar 52.824
+productos entre sí (1.395 millones de pares), y deja 14,9 millones dentro del bloque, de los que el
+emparejador puntúa 3,5 millones. Un bloqueo por marca o por categoría sería **peor aquí**: la marca
+blanca de una cadena no se llama como la de la otra, y la categoría de Alcampo no es la de DIA, así
+que bloquear por ahí dejaría fuera justo los pares que este proyecto busca. Está en la lista de
+trabajo futuro del capítulo, con el coste dicho.
 
 Tres decisiones merecen explicación, porque no son las obvias:
 

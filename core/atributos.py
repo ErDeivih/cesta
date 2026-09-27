@@ -20,7 +20,54 @@ que no lo sabemos. Eso no es tolerancia, es ausencia de prueba.
 """
 from __future__ import annotations
 
+import re
 import unicodedata
+
+# **Las palabras del dominio de cada eje: sin ninguna de ellas, el eje no se pronuncia.**
+#
+# Esto es la correccion del 27 de septiembre de 2026, y sale de la auditoria de los 85
+# desacuerdos del banco de ejes (`docs/LAYA.md` §5.1): de esos 85, **27 eran fallos de estas
+# listas**, no del modelo. Los patrones son subcadenas sueltas aplicadas a los 52.823
+# productos, y fuera de su dominio disparan en cualquier cosa:
+#
+#     leche     «Tostas de pan con avena», «Arroz blanco precocido», «Almendra frita y salada»
+#               -> `avena`, `arroz`, `almendra` disparaban "bebida vegetal" en todo
+#     cafe      «Apresto instantaneo para planchado», «Fideos instantaneos MAGGI»,
+#               «Sopinstant Crema de pollo» -> `instant` disparaba "soluble"
+#     aceite    «Crema de Orujo Ruavieja», «Licor de crema de orujo PANIZO»,
+#               «Lazos Virgen del Brezo» -> `orujo` y `virgen` disparaban sin ser aceite
+#     integral  «Vino blanco con D.O. Rias Baixas» -> `blanco` disparaba "blanco"
+#     grasa     «Avellanas enteras», «Sardina entera» -> `entera` disparaba "entera"
+#
+# Son palabras **enteras**, y se buscan como palabras enteras a proposito: `pan` no esta
+# dentro de `Panga` (un pescado) y `leche` no esta dentro de `lechecillas`.
+DOMINIO: dict[str, tuple[str, ...]] = {
+    "grasa": ("leche", "yogur", "yogures", "nata", "queso", "cuajada", "kefir",
+              "mantequilla", "batido", "postre", "flan", "cuajado"),
+    "aceite": ("aceite", "oliva", "girasol", "olivas"),
+    "cafe": ("cafe", "cafes", "nescafe", "capuchino", "espresso", "expresso", "moka",
+             "torrefacto", "descafeinad", "cafetera"),
+    "leche": ("leche", "leches", "bebida", "bebidas", "batido", "batidos"),
+    "integral": ("pan", "panes", "harina", "arroz", "pasta", "macarra", "macarrones",
+                 "espagueti", "galleta", "galletas", "cereal", "cereales", "tosta",
+                 "tostas", "biscote", "trigo", "centeno", "salvado", "quinoa", "maiz",
+                 "avena", "fideo", "fideos", "semola", "cuscus", "copos", "muesli"),
+}
+
+# **Un valor tambien puede declararse con un patron con hueco.** La cadena no siempre es
+# contigua: «Pan tostado bajo en sal y en azucares» dice lo mismo que «bajo en azucares», y
+# una subcadena no lo coge. Es el cuarto caso que encontro la auditoria de Laya en el eje del
+# azucar (`docs/LAYA.md` §5.1).
+#
+# Se resuelve **antes** que los patrones normales, y por eso el valor negado gana: en este eje
+# "sin azucar" va antes que "con azucar", asi que un nombre negado no declara tener azucar.
+#
+# La regla general de negaciones se probo y se descarto: se llevaba por delante fichas
+# legitimas («Leche sin lactosa entera» no deja de ser entera porque no tenga lactosa).
+REGEX: dict[tuple[str, str], str] = {
+    ("azucar", "sin azucar"): (r"(sin|bajo en|baja en|reducid\w* en|poco|libre de)"
+                               r"[^,.;]{0,20}azucar"),
+}
 
 # Cada eje es una lista de (valor, patrones). **El orden importa**: se comprueba en
 # este orden y gana el primero que encaje, asi que lo especifico va antes que lo
@@ -59,8 +106,12 @@ EJES: dict[str, list[tuple[str, tuple[str, ...]]]] = {
         ("natural", ("natural",)),
     ],
     "azucar": [
-        ("sin azucar", ("sin azucar", "zero", "cero azucar", "0% azucar")),
-        ("con azucar", ("azucar", "azucarado")),
+        # Las negaciones que de verdad declaran "sin": `sin azucar`, `zero`, `0 % azucar`.
+        # Las otras formas ("sin azucares anadidos", "bajo en azucares") **no** son esta
+        # opcion: son otra afirmacion, y sin patron no disparan nada.
+        ("sin azucar", ("sin azucar", "zero", "cero azucar", "0% azucar", "0 % azucar",
+                        "sin azucares", "sin azucares anadidos")),
+        ("con azucar", ("azucar", "azucarado", "azucarada")),
     ],
     "integral": [
         ("integral", ("integral", "entero de trigo", "grano entero")),
@@ -115,6 +166,19 @@ def _plano(texto: str) -> str:
     return "".join(c for c in sin_tildes if not unicodedata.combining(c)).lower()
 
 
+def _palabra(texto: str, palabra: str) -> bool:
+    """¿Aparece esa palabra **entera**? `pan` no esta dentro de `panga`."""
+    return re.search(rf"(?<![a-z0-9]){re.escape(palabra)}(?![a-z0-9])", texto) is not None
+
+
+def _dominio(texto: str, eje: str) -> bool:
+    """¿El nombre habla de lo que ese eje mide? Sin esto, el eje no se pronuncia."""
+    palabras = DOMINIO.get(eje)
+    if not palabras:
+        return True
+    return any(_palabra(texto, p) for p in palabras)
+
+
 def valores(nombre: str | None) -> dict[str, str]:
     """Lo que el nombre declara, eje a eje. Los que no declara **no aparecen**.
 
@@ -126,10 +190,22 @@ def valores(nombre: str | None) -> dict[str, str]:
         return {}
     dicho: dict[str, str] = {}
     for eje, opciones in EJES.items():
+        if not _dominio(texto, eje):
+            continue
         for valor, patrones in opciones:
-            if any(p in texto for p in patrones):
+            hueco = REGEX.get((eje, valor))
+            if hueco and re.search(hueco, texto):
                 dicho[eje] = valor
                 break
+            donde = -1
+            for p in patrones:
+                donde = texto.find(p)
+                if donde >= 0:
+                    break
+            if donde < 0:
+                continue            # este valor no lo dice el nombre
+            dicho[eje] = valor
+            break
     return dicho
 
 

@@ -52,10 +52,13 @@ es práctico: **cuando el parser está mal, se arregla y se reprocesa desde el d
 pedirle nada a la web**. Reprocesar cuesta minutos; volver a rastrear cinco webs cuesta una hora
 y te expone otra vez a que te limiten.
 
-El volumen de esa caché, medido hoy:
+El volumen de esa caché, medido el 27 de septiembre de 2026:
 
-    data/raw        72.426 ficheros   2.874,6 MB   (lo que devolvio la web, tal cual)
-    por pasada          ~338 MB                     (lo que ocupa un dia de captura)
+    data/raw        81.847 ficheros   3.288,1 MB   (lo que devolvio la web, tal cual)
+    por pasada          ~350 MB                    (lo que ocupa un dia de captura)
+
+El crudo se conserva 30 días (`config.DIAS_RAW`) y luego se tira: con cinco cadenas son unos 100 GB
+al año si no se limpiara, y lo que se necesita para reprocesar es la última semana.
 
 ## 3. Un WAF no se «salta»: se pasa una vez y se reutiliza
 

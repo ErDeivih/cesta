@@ -349,8 +349,33 @@ Lo que sí ha quedado, y no es poco:
 
 ### El orden de lo que queda, de más barato a más caro
 
-1. **Arreglar las listas** (§5.2) y volver a correr el mismo banco: es el mismo
-   comando, y sin eso ningún modelo se puede medir contra nuestras listas.
+1. ~~**Arreglar las listas** (§5.2) y volver a correr el mismo banco.~~ **Hecho el 27 de
+   septiembre de 2026, y sin necesidad de volver a correr el modelo.** Los 27 casos se
+   arreglaron con la regla que ellos mismos pedían —**el eje no se pronuncia fuera de su
+   dominio**— más un patrón con hueco para la negación del azúcar:
+
+       eje        declaraciones antes -> ahora      de los 16 casos auditados
+       leche                    2.513 -> 1.146      los 4 corregidos
+       integral                 1.659 ->   563      el del vino blanco, corregido
+       cafe                     1.576 ->   835      los 4 corregidos
+       grasa                      909 ->   689      los 2 corregidos
+       aceite                     456 ->   408      los 3 corregidos
+       azucar / cafeina / gluten / lactosa / gas / alcohol / formato: sin cambio
+
+   En total **16.417 declaraciones -> 12.945** (−21 %), y de los 16 casos auditados **14
+   corregidos** (los otros 2, el zumo «0 % azúcar» y el pan «bajo en sal y en azúcares»,
+   ahora dicen `sin azucar`, que es lo que dicen). **0 de 12 fichas legítimas se rompieron.**
+
+   Y lo que importa, medido con el banco de pares: la precisión del emparejador sigue en
+   **91,0 %** (era 91,1 %: 179 falsos positivos de 3.000 contra 177, o sea dos pares) con la
+   cobertura en el 100 %, y la auditoría de grupos de `ejes` sigue en **0 contradicciones**.
+   Callarse de más no rompe comparaciones —el que calla no bloquea—; lo que hacía era partir
+   grupos por un eje inventado.
+
+   **Aviso de orden para quien lo repita**: al cambiar los ejes hay que **volver a correr
+   `emparejar`** antes de las pruebas del catálogo, porque la agrupación aplica esos vetos y
+   `tests/test_atributos.py::test_el_catalogo_no_ha_empeorado` lee el gold. Con el gold viejo
+   el trinquete salta sin que nada esté mal.
 2. **Las 19 opciones de pasillo** (`docs/JEV.md` §5): el único «A MANO» de la cadena
    diaria, con **881 claves ya mapeadas** como banco gratis. 19 opciones está justo
    en el borde de lo que su tarjeta dice que aguanta, así que **no lo sé** sin

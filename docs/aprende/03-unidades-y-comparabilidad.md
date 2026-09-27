@@ -92,12 +92,13 @@ error caro.
 Así que el pack **se usa para decirlo**, no para cortar: «donde compro agua» no puede
 recomendar 9 litros sin decir que son un pack.
 
-Y hay una consecuencia medida sobre el catálogo de hoy (`uv run python -m projects.cesta.ejes`):
+Y hay una consecuencia medida sobre el catálogo del 27 de septiembre de 2026 (`uv run python -m
+projects.cesta.ejes`):
 
-    grupos que mezclan un pack con sueltas        661
+    grupos que mezclan un pack con sueltas        645
     de esos, de 11 o mas productos                  0
 
-Que 661 grupos mezclen presentaciones no es una contradicción de nadie (todas las unidades son
+Que 645 grupos mezclen presentaciones no es una contradicción de nadie (todas las unidades son
 el mismo producto), y el segundo número es el que importa: **ningún grupo grande lo hace**, que
 era el problema original.
 

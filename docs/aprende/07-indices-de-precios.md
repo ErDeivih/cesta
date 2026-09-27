@@ -48,21 +48,23 @@ consecutivas de la misma cadena. Tres decisiones que lo hacen honesto:
 1. **Cada eslabón compara el mismo producto consigo mismo.** Así el índice no se mueve porque
    cambie el surtido (que es el error clásico de una cesta fija mal hecha).
 2. **Recorta los relativos fuera del rango `1/3`–`3`** y **dice cuántos** (columna
-   «Recortados»): medido hoy, 1.679 de 797.390 eslabones, un **0,21 %**.
+   «Recortados»): medido el 27 de septiembre de 2026, **23 de 886.163 eslabones, un 0,003 %**.
 3. **Declara el método, la base y las capturas.** Cada serie lleva `metodo`, `base`, `capturas`
    y el número de productos de su último eslabón.
 
-Resultado de hoy (`GET /api/indice`, o la pestaña **Índice** del panel):
+Resultado con los datos del 26 de septiembre de 2026 (`GET /api/indice`, o la pestaña **Índice**
+del panel). Estos números son de un día concreto y cambian con cada pasada; el que siempre está al
+día es `docs/CIFRAS.md`:
 
     cadena       índice    variación   capturas   productos (último eslabón)
-    alcampo       98,59     −1,41 %        16              22.987
-    aldi         100,08     +0,08 %        18               1.909
-    carrefour     99,95     −0,05 %        13              16.229
-    dia           99,95     −0,05 %        17               5.772
-    mercadona    100,04     +0,04 %        18               4.288
+    alcampo       98,64     +0,01 %        18              22.921
+    aldi         100,08     +0,00 %        20               2.056
+    carrefour     99,91     +0,00 %        15              16.400
+    dia           99,75     −0,31 %        19               5.749
+    mercadona    100,12     −0,01 %        20               4.265
 
 Leído bien, esto dice que en ~2,5 semanas el nivel de precios de las cinco cadenas se ha movido
-menos de un 1,5 %, y que **el tamaño de la muestra con la que se dice varía mucho** (22.987
+menos de un 1,5 %, y que **el tamaño de la muestra con la que se dice varía mucho** (22.921
 productos frente a 1.909): dos eslabones con muestras así no son comparables en precisión. Esto
 último es una de las tres cauciones pendientes (§5).
 

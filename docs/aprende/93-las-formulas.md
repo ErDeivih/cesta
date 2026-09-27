@@ -30,7 +30,12 @@ Todas las constantes que aparecen aquí se pueden ver en el código:
     limpiar(nombre)      minusculas, sin tildes, sin puntuacion
     raiz(palabra)        "alubias" -> "alubia", "lentejas" -> "lenteja"
     tokens(nombre)       {raiz(p) : p en limpiar(nombre), |p| > 2, p no en RUIDO,
-                          p no es un numero suelto}
+                          p no es un numero suelto}  ∪  {marca normalizada}
+
+La marca **entra como una palabra más**, y eso mueve el IDF: «Hacendado» aparece en miles de
+fichas, así que pesa poco, pero en un producto donde no hay nada más que decir pesa lo suyo. Y hay
+un segundo juego de palabras, `tokens_sin_marca`, que es el mismo conjunto **sin la marca y sin
+trigramas**: es el que usa el canal que compara marca blanca contra marca blanca (ver §1.5).
 
 `RUIDO` es una lista escrita a mano («de», «con», «sin», «calidad», «extra», «nuevo»…): palabras
 que no distinguen un producto de otro y solo generan parecido falso. La raíz quita el plural
@@ -66,7 +71,8 @@ escrito con más y menos detalle.
 
 donde `n` es el número de productos (documentos) y `c_p` cuántos contienen la palabra `p`. Es la
 fórmula clásica de la frecuencia inversa de documento, con el suavizado `+1` que evita el cero.
-Sobre los 57.603 productos de hoy:
+Sobre los 57.603 productos del silver del 24 de septiembre de 2026 (con el catálogo de hoy, 52.824,
+los valores cambian en la tercera cifra y el corte de «palabra ancla» baja a 2.629):
 
     palabra en     20 productos   ->  idf  8,917     ("chocowafer")
     palabra en    100 productos   ->  idf  7,346
@@ -86,6 +92,17 @@ que vale. Y el parecido final de un par es el **mayor de dos canales**:
 
     parejo(i, j) = max( parecido(palabras_i, palabras_j),
                         0,85 · Dice(trigramas_i, trigramas_j) )
+
+**Y hay tres canales, no uno**, cada uno con su propio reparto húngaro y su propio juego de
+parejas ya ocupadas:
+
+    canal "marca"        palabras **con** la marca, y trigramas     (el de siempre)
+    canal "equivalente"  palabras **sin** la marca y **sin** trigramas, mismo listón 0,55
+    canal "vector"       embeddings, apagado por defecto (`USAR_VECTORES`)
+
+El segundo es el que compara marca blanca contra marca blanca —«Hacendado» contra «Carrefour
+Extra»—, que es justo para lo que existe este proyecto: con la marca dentro del nombre, dos
+productos equivalentes de dos cadenas se parecen poco precisamente por lo que no comparten.
 
 El 0,85 es `PESO_TRIGRAMAS`, y su valor está medido: se bajó a 0,80 persiguiendo los grupos por
 familia y **se volvió a 0,85 midiendo** — con 0,85 el acierto era 65 % y con 0,80 el 64 %, con 23
@@ -112,8 +129,12 @@ Y antes de comparar nada, **la clave de bloqueo**:
 
     bloque(cantidad, unidad) = (unidad, round(cantidad, 3))     o ("?") si falta cualquiera
 
-Solo se comparan productos con el mismo formato. Sin esto habría que comparar 57.603 productos
-entre sí: **1.400 millones de pares** en vez de los 16,7 millones que se recorren.
+Solo se comparan productos con el mismo formato. Sin esto habría que comparar 52.824 productos
+entre sí: **1.395 millones de pares**. Con el bloqueo quedan **14,9 millones** dentro del bloque, y
+el emparejador **puntúa 3,5 millones** por pasada (883.183 en el primer canal y 2.625.899 en la
+segunda pasada sin bloque). Medido el 27 de septiembre de 2026 sobre el catálogo de ese día, que es
+la cifra que hay que citar: la de «16,7 millones» que decía antes este anexo era de un catálogo más
+grande (57.603 productos) y además contaba pares que el algoritmo nunca puntúa.
 
 ## 2. Repartir parejas sin repetir
 
@@ -156,9 +177,16 @@ enlaces flojos, basta uno. De ahí tres frenos numéricos y uno estructural:
 | Freno | Fórmula | Qué impide |
 |---|---|---|
 | Unión | `s < 0,80` y los dos lados ya tienen grupo → **no se unen** | que un puente flojo pegue dos racimos correctos |
-| Anchura | `max(hi) / min(lo) > 3,0` **por unidad** → no se unen | que un grupo acabe con el más caro a más del triple |
+| Anchura | `s < 0,80` **y** el grupo resultante tendría más de dos productos **y** `max(hi) / min(lo) > 3,0` por unidad → no se unen | que un grupo acabe con el más caro a más del triple |
 | Precio imposible | `max(p_i, p_j) / min(p_i, p_j) > 30` → ni se compara | un bote de 1 L a 2 € contra uno de 400 ml a 3 € |
 | Reparto | un grupo no puede tener dos productos de la misma cadena (salvo mismo EAN) | diecisiete grupos fundidos en uno |
+
+Las condiciones del freno de anchura están **dentro** del de unión, y eso no es un detalle de
+redacción: un enlace **fuerte** (s ≥ 0,80) no se frena nunca por anchura, y un enlace flojo que une
+dos productos sueltos tampoco. O sea que el freno de anchura **no garantiza** que ningún grupo
+pase del triple; lo que hace es no dejar que un enlace flojo **cree** un grupo ancho. Se ve en la
+medición: hoy hay 254 grupos con el más caro a más del triple (y 130 a más del quíntuple), y son
+ahorros de verdad sostenidos por enlaces fuertes, no errores.
 
 El de anchura se mide **por unidad**, porque mezclar euros por kilo con euros por litro no dice
 nada. El del reparto es el que más limpia: los enlaces son 1-a-1 por par de cadenas, así que un
@@ -231,8 +259,10 @@ Por qué aquí manda la mediana: la media del precio por unidad **es 2,31 veces 
 son 24.911,3 céntimos y el máximo 1.419.000 (un azafrán que se vende por gramos, leído en €/kg).
 Una media que multiplica por 2,3 el valor central no describe el catálogo: lo describe a medias.
 
-Los recortes se **cuentan**: 1.679 de 797.390 valores (0,21 %) quedan fuera de la horquilla de los
-índices. Un recorte silencioso es una decisión escondida; uno contado es una cifra más.
+Los recortes se **cuentan**: hoy son **23 de 886.163 eslabones (0,003 %)** los que quedan fuera de
+la horquilla de los índices. Medido el 27 de septiembre de 2026 con `plataforma/api/analisis.py`,
+que es quien los calcula: la cifra de «1.679 de 797.390» que decía antes este anexo venía de un
+gold anterior y estaba inflada casi ×70. Un recorte silencioso es una decisión escondida; uno contado es una cifra más.
 
 En la dispersión de los grupos, la medida es otra y también está escrita: para cada grupo se toma
 `(max − min) / min` del precio por unidad, y se resume con su mediana (15,9 %) y su p90 (111,8 %).
@@ -280,18 +310,22 @@ mismo recorte y el mismo SQL de la aplicación.
 
 ### 6.1 El precio por unidad
 
-    precio_unidad_cent = round( precio_cent / cantidad )      en centimos por unidad canonica
+    precio_unidad_cent = round( precio_cent / cantidad , 4 )   en centimos por unidad canonica
 
 con la unidad canónica en `kg`, `l`, `m` o `ud`. La regla de tres es todo lo que hay, pero el
-«redondear» no es un detalle: se redondea **una vez**, al final, y nunca se comparan dos `float`
-de dinero con `==`.
+«redondear» no es un detalle: se redondea **una vez**, al final, a **cuatro decimales** (un céntimo
+por unidad es demasiado grueso cuando la unidad es un gramo), y nunca se comparan dos `float` de
+dinero con `==`.
 
 Y hay una segunda pregunta antes de dividir, que costó un error de comparación entero: **dividir
 entre qué**. Cuando la cadena publica el peso escurrido (lo que se come, sin el aceite ni el
 líquido de cobertura), la división va sobre él:
 
-    cantidad_para_el_precio = peso_escurrido_g / 1000    si  0 < peso_escurrido_g < 0,98 · cantidad
+    cantidad_para_el_precio = peso_escurrido_g / 1000    si  escurrido_g / 1000 < 0,98 · cantidad
                             = cantidad                   en cualquier otro caso
+
+(Las dos magnitudes en la misma unidad: el peso escurrido viene en gramos y la cantidad en kilos o
+litros, que es la clase de mezcla que produce errores de mil.)
 
 El caso que lo enseñó es una lata de ventresca de atún:
 
@@ -303,10 +337,15 @@ El caso que lo enseñó es una lata de ventresca de atún:
 | DIA | 73 g | 3,49 € | 4.781,0 c/kg | — |
 
 Es la misma lata. Con el peso del envase, Mercadona parecía un 30 % más barata; con el escurrido
-cae justo donde están las otras tres. Medido en los 18 grupos de conserva donde Mercadona publica
-escurrido y hay al menos dos cadenas más: el precio por kilo de Mercadona caía cerca (±20 %) de
-algún rival en **2 de 18** grupos antes y en **16 de 18** después, y en esos 18 grupos el más barato
-cambia en 17 (Mercadona deja de serlo en 12 y no pasa a serlo en ninguno).
+cae justo donde están las otras tres. Medido en los grupos de conserva donde Mercadona publica
+escurrido y hay al menos dos cadenas más. **Con el gold del 26 de septiembre de 2026 eran 18
+grupos**: el precio por kilo de Mercadona caía cerca (±20 %) de algún rival en **2 de 18** antes y
+en **16 de 18** después, y el más barato cambiaba en 17 (Mercadona dejaba de serlo en 12 y no pasaba
+a serlo en ninguno). **Con el gold del 27**, 17 grupos: de 0,630 a 1,000 de mediana, de 1 de 17 a
+**12 de 17**, con algún rival de 3 de 17 a **15 de 17**, y el más barato cambia en 16 (deja de serlo
+en 11). El número de grupos oscila con el catálogo del día —una conserva entra o sale— y por eso va
+con su fecha: el comando que lo mide es `uv run python -m projects.cesta.auditar_escurrido`, y la
+dirección es la misma en los dos días.
 
 El guardián del 0,98 y el `> 0` no son adornos: sin ellos, un dato raro de la ficha podría inflar
 un precio por unidad. Y el arreglo **tiene un coste que se dice**: la ficha de Mercadona calcula su
@@ -359,14 +398,17 @@ Aquí está la razón de que el 80 % de las ofertas anunciadas no se puedan juzg
 unidades se compran. De 6.938 anuncios con texto, 3.658 son de ese tipo y 288 no anuncian precio.
 
 La referencia legal (Directiva Omnibus) pide comparar contra el **precio más bajo de los 30 días
-anteriores**, y eso aquí no se puede: el histórico más largo son 19 días y **no hay un solo
+anteriores**, y eso aquí no se puede: el histórico más largo son 21 días y **no hay un solo
 producto con 30 observaciones**. La regla propia que sí se puede calcular es una mediana móvil:
 
-    precio_base   = mediana de los ultimos VENTANA_BASE = 30 dias
-    min/max 90d   = ventana de VENTANA_PERC = 90 dias
+    precio_base   = mediana de las ultimas VENTANA_BASE = 30 observaciones
+    min/max 90d   = ventana de VENTANA_PERC = 90 observaciones
 
-Con 19 días, esa mediana se calcula sobre lo que hay, y por eso ninguna pantalla la presenta como
-«precio de siempre» sin decir sobre cuántos días se ha calculado.
+**Observaciones, no días**: el histórico tiene un hueco por día que una cadena no capturó o que un
+producto no apareció, y la ventana del código es de filas (`core/derive.py`, con `min_samples=7`
+para no calcular una mediana con dos datos). Con 21 días de serie, esa mediana se calcula sobre lo
+que hay, y por eso ninguna pantalla la presenta como «precio de siempre» sin decir sobre cuántas
+observaciones se ha calculado.
 
 ## 8. El dinero, que no es un número como los demás
 
@@ -400,8 +442,11 @@ reparte nada, porque inventar un tercil sobre dos productos es ruido con aspecto
 
     tasa de ausencia(columna) = 1 − ( filas con dato / filas totales )
 
-Hoy: certificados 98,8 %, nutrición 93,3 %, Nutri-Score 85,4 %, envase 84,2 %, sellos 77,6 %, EAN
-55,9 %, cantidad 17,2 %. Y el efecto medido de rellenar con ceros en lugar de dejarlo vacío:
+Con el silver del 24 de septiembre de 2026: certificados 98,8 %, nutrición 93,3 %, Nutri-Score
+85,4 %, envase 84,2 %, sellos 77,6 %, EAN 55,9 %, cantidad 17,2 %. (Con el catálogo del 26 son
+98,5 / 92,7 / — / 82,8 / 77,7 / 51,7 / 16,3 %: el orden es el mismo y el número exacto depende del
+día, que es justo por lo que `docs/CIFRAS.md` se reescribe en cada pasada.) Y el efecto medido de
+rellenar con ceros en lugar de dejarlo vacío:
 
     media del precio por unidad ignorando los 147 nulos     2.037,90 c
     media contandolos como cero                             2.032,70 c   (−5,2 c)
@@ -520,15 +565,15 @@ puedo comprobar esto» en vez de publicar un cero.
 | `UMBRAL_SIN_FORMATO` | 0,82 | parecido mínimo cuando el formato no se puede comprobar |
 | `PESO_TRIGRAMAS` | 0,85 | cuánto valen las letras frente a las palabras |
 | `UMBRAL_UNION` | 0,80 | un enlace flojo no pega dos grupos ya formados |
-| `ANCHO_MAXIMO` | 3,0 | un grupo no puede tener el más caro a más del triple |
+| `ANCHO_MAXIMO` | 3,0 | y solo si el enlace es flojo y el grupo tendría más de dos productos |
 | `FACTOR_PRECIO_IMPOSIBLE` | 30,0 | dos precios por unidad que no pueden ser el mismo producto |
-| `FACTOR_INCREIBLE` | 30,0 | a partir de aquí no se da cifra de ahorro |
-| `FACTOR_LLAMATIVO` | 3,0 | a partir de aquí la diferencia se enseña marcada |
+| `FACTOR_INCREIBLE` | 30,0 | a partir de aquí no se da cifra de ahorro (el mismo objeto en los cuatro sitios que lo usan) |
+| `FACTOR_LLAMATIVO` | 3,0 | a partir de aquí la diferencia sale en el informe diario; la ficha solo marca el ×30 |
 | `MIN_IDF_ANCLA` | 4,0 | palabra lo bastante rara para buscar por ella (≤ 2.866 productos) |
 | `RECORTE_MIN` / `RECORTE_MAX` | 1/3 / 3,0 | relativos que se recortan en los índices |
 | `MINIMO_MOVIMIENTO_PCT` | 0,5 % | por debajo de esto es redondeo, no un movimiento |
-| `VENTANA_BASE` | 30 días | mediana móvil del «precio de siempre» |
-| `VENTANA_PERC` | 90 días | ventana del mínimo y el máximo |
+| `VENTANA_BASE` | 30 observaciones | mediana móvil del «precio de siempre» (no 30 días) |
+| `VENTANA_PERC` | 90 observaciones | ventana del mínimo y el máximo |
 | `TOPE_API` (Alcampo) | 300 | productos por respuesta: al llegar al tope, hay que bajar al subárbol |
 | `TERMINOS_POR_DIA` (Alcampo) | 600 de 5.153 | términos de búsqueda que se recorren cada día, en turnos de ~9 días |
 | `RITMO` | 2,0 / 1,0 / 0,15 | peticiones por segundo, por cadena (el 0,15 es Alcampo, con WAF) |

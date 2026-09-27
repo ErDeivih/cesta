@@ -52,21 +52,29 @@ consecuencias que ordenan todo el diseño:
 
 ## 3. Cuánto ocupa esto, de verdad
 
-Medido hoy con `Get-ChildItem` sobre `data/` (el comando está en el pie):
+Medido con `Get-ChildItem` sobre `data/` el 27 de septiembre de 2026 (el comando está en el pie):
 
-    data/raw        72.426 ficheros   2.874,6 MB   lo que devolvio la web, tal cual
-    data/bronze         86 ficheros      65,6 MB   parquet sin tocar
-    data/silver         86 ficheros      84,0 MB   limpio y tipado
-    data/gold           67 ficheros     219,5 MB   lo que consume la aplicacion
+    data/raw        81.847 ficheros   3.288,1 MB   lo que devolvio la web, tal cual
+    data/bronze         99 ficheros      75,3 MB   parquet sin tocar
+    data/silver         96 ficheros      94,7 MB   limpio y tipado
+    data/gold           91 ficheros     223,7 MB   lo que consume la aplicacion
+    --------------------------------------------------------------------------
+    data/externo         2 ficheros   7.512,7 MB   OpenFoodFacts descargado, no es scraping
+    data/navegador   1.536 ficheros     584,7 MB   el perfil del navegador del WAF
+    data/debug         391 ficheros      20,9 MB   lo que se aparta para mirarlo
 
 Dos lecciones de esta tabla:
 
-1. **El 96 % del peso es el crudo** (2.874 MB de 3.243 MB). Es HTML y JSON con todo el ruido
-   de la web —menús, scripts, textos legales— del que se aprovecha un puñado de campos.
-2. **`gold` (219 MB) pesa más que `silver` (84 MB)**, y eso sorprende hasta que se mira qué
-   hay dentro: 190 MB son un `embedding.parquet` con los vectores de los 52.567 productos.
-   Un fichero de 4 bytes por producto por 384 dimensiones es más grande que el catálogo
-   entero, y es el ejemplo perfecto de que **el coste de un dato no se mide en filas**.
+1. **El 96 % del peso de las cuatro capas del pipeline es el crudo** (3.288 MB de 3.682 MB). Es
+   HTML y JSON con todo el ruido de la web —menús, scripts, textos legales— del que se aprovecha un
+   puñado de campos. Y sobre `data/` entero la proporción se da la vuelta: el crudo es el 28 %,
+   porque **lo que más pesa es el volcado de OpenFoodFacts** (7,5 GB) y el perfil del navegador
+   (0,6 GB). Ninguna de las dos es scraping, y por eso se cuentan aparte en lugar de esconderlas.
+2. **`gold` (223 MB) pesa más que `silver` (95 MB)**, y eso sorprende hasta que se mira qué
+   hay dentro: 191 MB son un `embedding.parquet` con los vectores de los 52.567 productos, de un
+   experimento que se descartó. Un fichero de 4 bytes por producto por 384 dimensiones es más
+   grande que el catálogo entero, y es el ejemplo perfecto de que **el coste de un dato no se mide
+   en filas**.
 
 ```powershell
 Get-ChildItem -Recurse -File data\raw, data\bronze, data\silver, data\gold |

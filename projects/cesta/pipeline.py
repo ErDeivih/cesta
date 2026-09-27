@@ -738,6 +738,19 @@ def main() -> int:
 
     a_gold(silver, fecha_proceso)
     registrar_vistas()
+    # **Las cifras, aqui tambien.** `docs/CIFRAS.md` promete que lo reescribe la pasada del dia, y
+    # solo lo hacia `run.py`: una pasada de `pipeline` a secas (o `--rehacer-historico`) dejaba el
+    # documento una pasada por detras del gold, con la comprobacion de documentos dando avisos de
+    # cifras caducadas por algo que no era un error de nadie. Medido el 27 de septiembre de 2026:
+    # CIFRAS.md era de las 16:10 y `precio_diario.parquet` de las 17:16.
+    #
+    # Un fallo aqui **no puede tumbar el pipeline**: el dato ya esta escrito y las cifras son
+    # documentacion.
+    try:
+        from projects.cesta import cifras
+        cifras.main()
+    except Exception as exc:  # noqa: BLE001
+        print(f"  cifras: no se pudo reescribir CIFRAS.md ({type(exc).__name__}: {exc})")
     print("pipeline: hecho")
     return 0
 

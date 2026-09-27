@@ -177,6 +177,26 @@ def test_una_oferta_de_solo_internet_tampoco(gold):
     assert alertas.evalua([_alerta("baja_de", umbral=100)]) == []
 
 
+def test_la_red_de_seguridad_del_precio_es_la_misma_que_en_el_resto():
+    """**El único error de código de la auditoría de documentos del 27 de septiembre de 2026.**
+
+    Aquí había un `FACTOR_INCREIBLE = 20.0` propio mientras el resto del proyecto usa **30**
+    (`core/comparacion.py`, importado igual por `catalogo.py` y `movimientos.py`). El
+    comentario decía «la misma red de seguridad que en `movimientos`» y no lo era: una bajada
+    de 25× disparaba una alerta aquí y la pantalla de bajadas la rechazaba como imposible, o
+    sea que el aviso podía saltar por un movimiento que el propio proyecto considera un error
+    de dato.
+
+    Se comprueba que el número es **el mismo objeto** en los tres sitios, no solo el mismo
+    valor: es lo que impide que se separen otra vez.
+    """
+    from core import comparacion
+    from plataforma.api import alertas, movimientos
+    assert alertas.FACTOR_INCREIBLE is comparacion.FACTOR_INCREIBLE
+    assert movimientos.FACTOR_INCREIBLE == comparacion.FACTOR_INCREIBLE
+    assert comparacion.FACTOR_INCREIBLE == 30.0
+
+
 def test_se_avisa_del_mas_barato_de_todas_las_cadenas(gold):
     gold([
         {"grupo_id": 1, "fuente": "carrefour", "id": "caro", "ud": 200, "venta": 200},

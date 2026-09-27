@@ -15,17 +15,18 @@ error típico-- están en el **anexo 93**, apartado 4.
 
 ## 1. La forma de la distribución, y por qué la media no sirve
 
-Precio por unidad de los 45.884 productos comparables del catálogo, en céntimos
-(`data/gold/grupos.parquet`, `comparacion_fiable`):
+Precio por unidad de los 42.563 productos comparables del catálogo, en céntimos
+(`data/gold/grupos.parquet`, `comparacion_fiable`). Medido el 27 de septiembre de 2026; estas
+cifras son del catálogo de un día y `docs/CIFRAS.md` es el que siempre está al día:
 
-    n        45.884
-    p1           62,9    (0,63 EUR/kg o /l o /ud)
-    p25         488,0
-    mediana   1.029,9    <- "lo normal"
-    p75       1.986,7
-    p99      24.911,3    (249 EUR por unidad)
+    n        42.563
+    p1           61,0    (0,61 EUR/kg o /l o /ud)
+    p25         470,0
+    mediana     998,0    <- "lo normal"
+    p75       1.930,0
+    p99      25.000,0    (250 EUR por unidad)
     maximo 1.419.000,0   (14.190 EUR por unidad)
-    media     2.379,4    =  2,31 x la mediana
+    media     2.355,9    =  2,36 x la mediana
 
 Esa última línea es el capítulo entero. La media está **dos veces y media por encima de la
 mediana** porque la cola es larguísima: hay azafrán, hay trufa, hay productos a granel con
@@ -44,12 +45,13 @@ media solo aparece cuando la distribución es razonable, y se dice.
 
 ## 2. La muestra, que es lo que casi nadie mira
 
-Distribución de tamaños de grupo (`grupo_id`, todos los grupos del catálogo):
+Distribución de tamaños de grupo (`grupo_id`, todos los grupos del catálogo), con el catálogo del
+27 de septiembre de 2026:
 
-    de 1 producto       35.208     79,2 %
-    de 2 productos       6.218
-    de 3 a 5             3.003
-    de 6 a 10                5
+    de 1 producto       31.223     77,9 %
+    de 2 productos       5.904
+    de 3 a 5             2.944
+    de 6 a 10                3
     de mas de 10             0
     ---------------------------
     grupos              44.434
@@ -86,21 +88,24 @@ existe: la frontera está en 30×, `core/comparacion.py`).
 ## 4. Los recortes, contados
 
 El índice de precios compara cada producto consigo mismo en capturas consecutivas y **recorta**
-los relativos fuera del rango `1/3`–`3` (`plataforma/api/analisis.py`). Sobre 797.390 relativos:
+los relativos fuera del rango `1/3`–`3` (`plataforma/api/analisis.py`). Medido el 27 de septiembre
+de 2026 sobre 886.163 relativos:
 
-    fuera del rango     1.679     0,21 %
+    fuera del rango        23     0,003 %
 
-Un 0,21 % es un recorte bien calibrado: si fuera el 10 %, estaría tapando un problema de datos
-en vez de un caso raro; si fuera 0, no estaría protegiendo nada. **Y se cuenta y se enseña**
-(la tabla del índice tiene su columna «Recortados»), porque un recorte silencioso es una
-manipulación aunque sea técnica.
+Un recorte así de pequeño es un recorte bien calibrado: el rango `1/3`–`3` solo tira lo que no
+puede ser un cambio de precio, y lo que tira es un error de dato en la ficha (un formato leído al
+revés). Si fuera el 10 % estaría tapando un problema de datos en vez de un caso raro; **y se cuenta
+y se enseña** (la tabla del índice tiene su columna «Recortados»), porque un recorte silencioso es
+una manipulación aunque sea técnica.
 
 ## 5. Cuánto se mueve un catálogo (y cuánto parece moverse)
 
-Sobre los mismos 797.390 pares de capturas consecutivas, con umbral de movimiento del 0,5 %:
+Sobre los mismos pares de capturas consecutivas, con umbral de movimiento del 0,5 %. Medido el 27
+de septiembre de 2026 (el día anterior daba 18.185 y 1.943):
 
-    se mueve el precio por unidad                 18.185     2,3 %
-    ... pero el precio de venta no cambio          1.943     0,24 %
+    se mueve el precio por unidad                 18.814     2,4 %
+    ... pero el precio de venta no cambio          3.939     0,5 %
 
 Esos 1.943 son **movimientos falsos**: el precio por unidad cambió porque cambió la lectura del
 formato, no porque cambiara el precio de la etiqueta. Es exactamente el control que necesita

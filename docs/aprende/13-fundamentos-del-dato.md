@@ -244,11 +244,12 @@ enseña como precio total viene de un entero.
 
 ## 9. El valor no es el número: es el par (cantidad, unidad)
 
-Sin unidad, un 6,73 no es un precio. En este catálogo la unidad canónica se reparte así:
+Sin unidad, un 6,73 no es un precio. En este catálogo la unidad canónica se reparte así (catálogo
+del 27 de septiembre de 2026; el número exacto de cada día está en `docs/CIFRAS.md`):
 
-    kg   30.782       l   15.038       ud   11.712       m   71
+    kg   28.595       l   13.900       ud   10.260       m   68
 
-y hay **9.928 filas (17,2 %) sin cantidad**, que no es lo mismo que «1 unidad»: es «no lo sé».
+y hay **8.598 filas (16,3 %) sin cantidad**, que no es lo mismo que «1 unidad»: es «no lo sé».
 Esas filas se ven, se pueden añadir a la lista de la compra y se enseña su precio total, pero no
 entran en ninguna comparación por unidad, porque no hay con qué.
 
@@ -276,10 +277,10 @@ Se corrige el código y se recalcula, para que el arreglo valga para todos los d
 parcheara la columna, el parche se perdería en la siguiente pasada y nadie sabría de dónde salió
 el valor bueno.
 
-Y un juicio lleva su explicación pegada: de las 57.603 filas, **47.999 (83,3 %) no tienen
+Y un juicio lleva su explicación pegada: de las 52.824 filas, **43.404 (82,2 %) no tienen
 calidad asignada**, y no es un fallo del clasificador: es que no hay dato para juzgarlas. Las que
-la tienen son 4.593 con A, 2.462 con B y 2.549 con C, y cada una guarda con qué se decidió
-(`calidad_origen`, `calidad_nota` en 11.728 filas). Un juicio sin registro de cómo se hizo es una
+la tienen son 4.267 con A, 2.620 con B y 2.553 con C, y cada una guarda con qué se decidió
+(`calidad_origen`, `calidad_nota` en 11.748 filas). Un juicio sin registro de cómo se hizo es una
 opinión con formato de columna.
 
 ## 11. Las seis dimensiones de la calidad, con el número de cada una
@@ -287,11 +288,11 @@ opinión con formato de columna.
 El marco habitual (DAMA-DMBOK) parte la calidad del dato en dimensiones. Está bien porque obliga
 a decir **qué** se está midiendo cuando se dice «el dato es bueno»:
 
-| Dimensión | Pregunta | Aquí, hoy |
+| Dimensión | Pregunta | Aquí, con el dato del 27 de septiembre de 2026 |
 |---|---|---|
-| Completitud | ¿está? | EAN en el 44,1 % de las filas; nutrición en el 6,7 % |
-| Unicidad | ¿está una vez? | 0 duplicados sobre el grano; 1.627 códigos de barras repetidos |
-| Oportunidad | ¿es de hoy? | gold del 2026-09-24, y la API publica la fecha del dato en cada respuesta |
+| Completitud | ¿está? | EAN en el 48,3 % de las filas; nutrición en el 7,3 % |
+| Unicidad | ¿está una vez? | 0 duplicados sobre el grano; 1.757 códigos de barras repetidos |
+| Oportunidad | ¿es de hoy? | gold del 2026-09-26, y la API publica la fecha del dato en cada respuesta |
 | Validez | ¿cumple las reglas? | 0 precios ≤ 0, 0 fechas mal formadas, 0 ejes contradictorios |
 | Exactitud | ¿es verdad? | **no se puede medir desde dentro** (abajo) |
 | Consistencia | ¿concuerda consigo mismo? | 0 contradicciones entre el precio por unidad propio y el de la cadena |
