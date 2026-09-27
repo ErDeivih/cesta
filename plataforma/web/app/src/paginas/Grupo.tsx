@@ -597,7 +597,7 @@ function FichaAlternativa({
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <SelloLetra producto={p} />
         <SelloNutriscore valor={p.nutriscore} />
-        <SelloOferta texto={p.promo} club={p.promo_club} />
+        <SelloOferta texto={p.promo} club={p.promo_club} unidades={p.promo_unidades} />
         <SelloRetirada retirado={p.es_recall} />
         {p.es_marca_propia && <Etiqueta tono="dato">marca propia</Etiqueta>}
         {p.comparable === false && (

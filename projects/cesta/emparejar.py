@@ -117,7 +117,13 @@ COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon"
             # nuestro precio y el de la cadena se llevan mas del doble -- seguian
             # decidiendo donde estaba mas barato algo. El resumen del 18 de
             # septiembre las tenia como los peores casos del dia.
-            "precio_comparable", "proc_precio_unidad", "unidades_pack")
+            "precio_comparable", "proc_precio_unidad", "unidades_pack",
+            # Cuantas unidades pide la mecanica de la oferta, en numero y no en el texto
+            # («2ª unidad -50 %»). Alcampo lo publica en 1.639 productos (6,8 %) y es la unica
+            # cadena que lo da. Va a la ficha para poder decirlo; **no entra en ninguna
+            # cuenta** de precio, porque una oferta que exige comprar dos unidades no es el
+            # precio de una. Ver core/schemas.py y docs/DATOS-QUE-NO-COGEMOS.md.
+            "promo_unidades_minimas")
 
 
 def catalogo_actual() -> pl.DataFrame:

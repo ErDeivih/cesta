@@ -247,6 +247,7 @@ function Producto({ fila }: { fila: ResultadoBusqueda }) {
           <SelloOferta
             texto={fila.con_oferta ? 'Hay promoción que baja lo que pagas hoy en caja' : null}
             club={fila.con_oferta_club}
+            unidades={fila.oferta_unidades ?? null}
           />
           <SelloRetirada retirado={fila.con_retirada} />
           <SelloDudoso dudoso={fila.dudoso} />

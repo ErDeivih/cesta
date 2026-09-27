@@ -54,6 +54,10 @@ export interface ResultadoBusqueda {
   con_oferta: boolean
   /** Oferta que solo existe con la tarjeta: no baja lo que pagas en caja. */
   con_oferta_club: boolean
+  /** Cuántas unidades exige la mecánica de la oferta, cuando la cadena lo dice en número
+   *  (Alcampo, 1.639 productos). «Oferta» a secas se lee como «más barata hoy», y una oferta
+   *  de «2ª unidad −50 %» no es el precio de una. `null` cuando no exige más de una. */
+  oferta_unidades?: number | null
   /** Retirada del mercado. Manda sobre cualquier otra cosa de la fila. */
   con_retirada: boolean
   comparable: boolean
@@ -121,6 +125,9 @@ export interface Producto {
   grado_alcohol: number | null
   promo_hasta: string | null
   promo_club: boolean | null
+  /** Cuántas unidades exige la mecánica de la oferta (Alcampo lo publica en número). La ficha
+   *  lo dice porque es una condición del precio: «2ª unidad −50 %» no es el precio de una. */
+  promo_unidades?: number | null
   es_alcohol: boolean | null
   es_recall: boolean | null
   peso_variacion_pct: number | null

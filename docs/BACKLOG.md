@@ -3934,7 +3934,7 @@ lo dice.
 corta -- el maestro es incremental y el crudo viejo se limpia --, pero es un
 descriptor mas, hermano de `main_feature` (N19).
 
-## N29. Los avisos no existen para los 9.235 grupos medidos en unidades
+## N29. Los avisos no existen para los 9.235 grupos medidos en unidades — **y medido por qué no se encienden**
 
 Medido el 26 de septiembre de 2026 sobre `data/gold/grupos.parquet`:
 
@@ -3951,13 +3951,32 @@ alerta no puede saltar nunca**, ni siquiera la de "esta al precio mas bajo de 90
 dias", que no compara entre cadenas: mira la serie de un producto contra si
 misma.
 
-No se toca hoy porque el arreglo obvio tiene una trampa: `_mejor_de_cada_grupo`
-elige **el mas barato del grupo**, y ahi si hay comparacion entre cadenas (un
-pack de 24 compresas contra uno de 14 sale "mas barato por unidad" sin serlo).
-La regla que habria que escribir es distinta por tipo de alerta -- `minimo_90d`
-sobre la serie del propio producto, `baja_de` y `cualquier_bajada` con el filtro
-de siempre -- y eso pide medir cuantos avisos saldrian y cuantos serian ruido
-antes de encenderlo. Apuntado con el numero delante.
+**El 27 de septiembre se midio qué pasaria al encenderlo, y la respuesta es que no.** De los 9.935
+grupos ciegos, 9.932 tienen histórico de 90 días y **9.239 (el 93 %) estarian hoy en su mínimo**:
+no sería un aviso, sería ruido. En `ud` los precios se mueven poco y el mínimo de la ventana
+incluye el precio de hoy, así que "está en el mínimo" es el estado normal.
+
+Y midiendo eso salió el hallazgo de verdad, que **no es de `ud` sino de la regla entera**. Con el
+listón que usa hoy la alerta (`hoy ≤ min_90d + 0,5`):
+
+    unidad   productos   "al mínimo"   ya estaba ahí ayer   mínimo NUEVO hoy
+    kg          28.594        24.987            24.935              218
+    l           13.900        10.241            10.232              118
+    ud          10.129         9.415             9.392               26
+    m               68            65                65                0
+
+O sea que el listón lo cumple el **87 % del catálogo**, y en casi todos esos casos el producto ya
+estaba ahí el día anterior: no pasó nada. Lo que de verdad es un acontecimiento —bajar por debajo
+del mínimo de la ventana **anterior**, un mínimo nuevo— son **362 productos** en todo el catálogo,
+no 45.000. La alerta dice la verdad ("está al precio más bajo de los últimos 90 días") y no dice
+nada útil para un producto que lleva tres semanas al mismo precio.
+
+Lo que hay que escribir, entonces, no es "quitar el filtro de unidad": es **exigir un mínimo
+nuevo**, y eso necesita la columna que no existe (el mínimo de la ventana anterior, no el de la
+ventana que incluye hoy) o un proxy con lo que sí hay (`variacion_cent < 0` y `posicion_90d == 0`).
+Eso cambia lo que recibe quien ya tiene una alerta puesta, así que va con su propia medición y su
+propia pantalla. Queda apuntado con los números delante, que es lo que pedía el encargo: **encender
+`ud` sin cambiar la regla habría metido 9.239 avisos vacíos en la primera pasada**.
 
 La prueba `plataforma/prueba_e2e.py` pidio el filtro que faltaba: su banco de
 grupos elige los que estan mas cerca de su minimo de 90 dias, y sin exigir

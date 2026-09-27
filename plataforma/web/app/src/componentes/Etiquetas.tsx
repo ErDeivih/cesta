@@ -62,7 +62,12 @@ export function SelloComparable({ cadenas }: { cadenas: number }) {
   )
 }
 
-export function SelloOferta({ texto, club }: { texto: string | null; club: boolean | null }) {
+export function SelloOferta({ texto, club, unidades }: {
+  texto: string | null
+  club: boolean | null
+  /** Cuántas unidades pide la mecánica, cuando la cadena lo dice en número (Alcampo). */
+  unidades?: number | null
+}) {
   if (club) {
     return (
       <Etiqueta
@@ -76,9 +81,18 @@ export function SelloOferta({ texto, club }: { texto: string | null; club: boole
   if (texto) {
     // El texto completo de la promoción va en el `title`: en una fila de tabla
     // no cabe, y aquí lo que importa es "hay oferta de verdad o no".
+    //
+    // **Y si la mecánica exige comprar varias unidades, se dice en la etiqueta**, no solo en
+    // el texto: «2ª unidad −50 %» es una condición del precio, y quien lee «oferta» sin eso
+    // puede creer que el precio de una unidad ya está rebajado. La cadena lo publica en
+    // número (`requiredProductQuantity`) y por eso se puede decir sin interpretarlo.
+    const exigidas = unidades && unidades > 1 ? ` · ${unidades} ud` : ''
     return (
-      <Etiqueta tono="bien" titulo={texto}>
-        oferta
+      <Etiqueta
+        tono="bien"
+        titulo={exigidas ? `${texto} (hay que comprar ${unidades} unidades)` : texto}
+      >
+        oferta{exigidas}
       </Etiqueta>
     )
   }

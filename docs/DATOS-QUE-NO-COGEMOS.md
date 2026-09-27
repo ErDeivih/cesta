@@ -249,3 +249,11 @@ Arreglar eso pide saber la base y la marca de cada cadena rival en cada producto
 es el mismo producto, que es justo el otro problema abierto del proyecto
 (`docs/CALIDAD-DEL-EMPAREJAMIENTO.md`). Lo que sí se puede —y se hace— es no esconderlo: la cifra
 lleva su etiqueta («€/kg escurrido») y el producto enseña los dos pesos.
+
+**Decidido el 27 de septiembre de 2026: se queda como está.** La alternativa (volver a dividir por
+el peso declarado) haría coincidir nuestra cifra con la ficha de Mercadona —3,1 puntos más de
+acuerdo— y a cambio devolvería a Mercadona a parecer un 39 % más barata que sus cuatro rivales en
+las conservas, que es un error de comparación con consecuencia directa en la lista de la compra:
+quien compre atún por la recomendación de la aplicación pagaría de más creyendo que ahorra. El
+motivo está medido en los dos sentidos y se puede revertir con una función
+(`projects/cesta/pipeline.py::cantidad_para_el_precio`), pero la decisión es esta.

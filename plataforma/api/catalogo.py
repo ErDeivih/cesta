@@ -245,6 +245,13 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
     if not palabras and not seccion:
         return []
     con = conexion()
+    # Las columnas nuevas se piden **solo si estan**: gold puede ser de antes del ultimo
+    # cambio de codigo (pasa cada vez que se anade un campo y aun no ha corrido la pasada), y
+    # una busqueda que revienta por una columna que no existe deja la pantalla en blanco.
+    # Es la misma regla que sigue `grupo()` con `disponibles`.
+    columnas = {f[0] for f in con.execute("DESCRIBE grupos").fetchall()}
+    unidades = ("max(coalesce(promo_unidades_minimas, 0))"
+                if "promo_unidades_minimas" in columnas else "0")
 
     # Dos grupos de condiciones, y la diferencia importa mucho.
     #
@@ -371,7 +378,11 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
                                       AND coalesce(promo_solo_online, false) = false)
                      AS con_oferta,
                    count(*) FILTER (WHERE coalesce(promo_club, false)) AS con_oferta_club,
-                   count(*) FILTER (WHERE coalesce(es_recall, false)) AS con_retirada
+                   count(*) FILTER (WHERE coalesce(es_recall, false)) AS con_retirada,
+                   -- Cuantas unidades exige la mecanica de esa oferta, cuando la cadena lo
+                   -- dice en numero (Alcampo). Es una condicion del precio, y en una lista de
+                   -- resultados «oferta» a secas se lee como «mas barata hoy».
+                   {unidades} AS oferta_unidades
               FROM comparables GROUP BY grupo_id)
         -- `cadenas >= 2` es lo que hace comparable a un grupo, no tener grupo_id:
         -- el emparejador se lo pone a todo, y 32.486 grupos son de un solo
@@ -379,7 +390,7 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
         -- productos" para esos, con el sello de comparable puesto.
         SELECT grupo_id, nombre, marca, fuente_barata, precio_cent, min_unidad,
                max_unidad, unidad, cadenas, productos, nutriscore, imagen,
-               con_oferta, con_oferta_club, con_retirada,
+               con_oferta, con_oferta_club, con_retirada, oferta_unidades,
                cadenas >= 2 AS comparable,
                min_unidad > 0 AND max_unidad / min_unidad > {FACTOR_INCREIBLE} AS dudoso
           FROM porgrupo
@@ -394,12 +405,15 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
         "cadenas": f[8], "productos": f[9], "nutriscore": f[10],
         "imagen": f[11], "con_oferta": bool(f[12]),
         "con_oferta_club": bool(f[13]), "con_retirada": bool(f[14]),
-        "comparable": bool(f[15]),
+        # 0 cuando ninguna oferta exige comprar mas de una unidad: quien pinta la etiqueta
+        # solo dice el numero cuando es mayor que uno.
+        "oferta_unidades": int(f[15] or 0) or None,
+        "comparable": bool(f[16]),
         # Un grupo dudoso sigue saliendo, y sigue diciendo donde esta mas barato.
         # Lo que no hace es poner un numero de ahorro que no se sostiene.
-        "dudoso": bool(f[16]),
+        "dudoso": bool(f[17]),
         "ahorro_pct": (round(100 * (f[6] - f[5]) / f[5], 1)
-                       if f[15] and f[5] and not f[16] else 0.0),
+                       if f[16] and f[5] and not f[17] else 0.0),
     } for f in filas]
 
 
@@ -795,6 +809,11 @@ def grupo(grupo_id: int) -> dict | None:
             "imagen": f["imagen"], "alergenos": f["alergenos"],
             "ingredientes": f["ingredientes"],
             "origen": f["origen"], "promo": f["promo_txt"], "url": f["url"],
+            # Cuantas unidades hay que comprar para que la oferta valga, cuando la cadena lo
+            # dice en numero (Alcampo, 1.639 productos de hoy). La ficha lo enseña porque es
+            # una condicion del precio: «2ª unidad -50 %» no es el precio de una. **No entra
+            # en ninguna cuenta**, y por eso va aparte y no como `promo_txt`.
+            "promo_unidades": f.get("promo_unidades_minimas"),
             # Los sellos van con su procedencia: no es lo mismo un certificado
             # auditado que una palabra en el nombre del producto. La interfaz lo
             # dice, para no dar por seguro lo que no lo es.

@@ -306,7 +306,8 @@ export function Producto() {
 
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {miembro && <SelloLetra producto={miembro} />}
-            <SelloOferta texto={miembro?.promo ?? null} club={miembro?.promo_club ?? null} />
+            <SelloOferta texto={miembro?.promo ?? null} club={miembro?.promo_club ?? null}
+                         unidades={miembro?.promo_unidades ?? null} />
             <SelloRetirada retirado={miembro?.es_recall ?? null} />
             {/* Los sellos con su nombre legible: `sin-gluten` en crudo se lee
                 regular, y el dato viene de la API en codigo. */}
