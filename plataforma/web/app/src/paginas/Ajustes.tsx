@@ -17,6 +17,7 @@ import { cadenasCerca, guardarPreferencia } from '../api/ajustes'
 import { textoDeError } from '../api/cliente'
 import { borrarme, salir, yo } from '../api/cesta'
 import { useEstado } from '../api/consultas'
+import { nombreCadena } from '../api/formato'
 import { Boton, CampoTexto, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
 
 export function Ajustes() {
@@ -118,7 +119,7 @@ export function Ajustes() {
                     : 'border-borde')
                 }
               >
-                {c}
+                {nombreCadena(c)}
               </button>
             )
           })}

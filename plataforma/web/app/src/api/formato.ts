@@ -115,10 +115,23 @@ export function ms(iso: string): number {
   return new Date(iso.length <= 10 ? `${iso}T00:00:00` : iso).getTime()
 }
 
-/** El nombre de la cadena, con la primera letra en mayuscula: vienen en
- *  minusculas (`alcampo`) y en medio de una frase quedan raras. */
+/** El nombre de la cadena **como se llama**, no como sale de la base de datos.
+ *
+ *  Los identificadores vienen en minusculas (`alcampo`, `dia`) porque son la clave que usa el
+ *  colector, y en medio de una frase quedan raras. La primera letra en mayuscula resuelve casi
+ *  todas, pero **no todas**: DIA se escribe con las tres letras en mayuscula, y ponerle
+ *  «Dia» es escribir mal el nombre de una tienda -- que es lo mismo que le pasaba a la frase de
+ *  la ficha del producto, cuando decia «mercadona» (27 de septiembre de 2026). Las que no
+ *  siguen la regla se escriben aqui, que es el unico sitio que decide como se llama una cadena.
+ */
+const NOMBRES: Record<string, string> = {
+  dia: 'DIA',
+}
+
 export function nombreCadena(cadena: string | null | undefined): string {
   if (!cadena) return NO_LO_SE
+  const clave = cadena.trim().toLowerCase()
+  if (NOMBRES[clave]) return NOMBRES[clave]
   return cadena.charAt(0).toUpperCase() + cadena.slice(1)
 }
 

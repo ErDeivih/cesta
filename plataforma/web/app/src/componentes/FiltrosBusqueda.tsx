@@ -14,7 +14,7 @@ import { useId } from 'react'
 
 import { useSecciones } from '../api/consultas'
 import type { FiltrosBuscar } from '../api/consultas'
-import { selloLegible } from '../api/formato'
+import { nombreCadena, selloLegible } from '../api/formato'
 import { Casilla, Etiqueta, Selector, cx } from './ui'
 
 /** Los ocho que acepta `catalogo.SELLOS_FILTRABLES` (docs/API.md). */
@@ -97,7 +97,10 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                     : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700',
                 )}
               >
-                {c}
+                {/* `nombreCadena` y no `{c}`: el identificador viene en minusculas (`alcampo`)
+                    y asi se veia -- «alcampo», «dia» -- en las cinco pantallas que tienen
+                    estas pastillas, mientras la ficha del grupo decia «Aldi» y «DIA». */}
+                {nombreCadena(c)}
               </button>
             ))}
           </div>

@@ -37,7 +37,7 @@ import {
 } from '../api/cesta'
 import type { CambioDeCola, CambioLinea, Invitacion, Persona } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
-import { euros, hace } from '../api/formato'
+import { euros, hace, nombreCadena } from '../api/formato'
 import {
   apuntaCambio, leerCola, vaciaCola,
 } from '../estado/cola'
@@ -308,7 +308,7 @@ function Repartido({ reparto }: { reparto: Reparto }) {
       </header>
       <p className="cifra text-2xl font-semibold">{euros(reparto.total_cent)}</p>
       <p className="mt-1 text-sm text-tinta-suave">
-        {reparto.cadenas.join(' y ')}
+        {reparto.cadenas.map(nombreCadena).join(' y ')}
         {reparto.ahorro_cent ? ` · ahorras ${euros(reparto.ahorro_cent)}` : ''}
       </p>
       {/* El desglose va en su propia linea y con la tinta normal, no en gris
@@ -318,7 +318,8 @@ function Repartido({ reparto }: { reparto: Reparto }) {
         <p className="mt-1 flex flex-wrap gap-x-3 text-sm">
           {desglose.map((d) => (
             <span key={d.cadena}>
-              <span className="cifra font-medium">{d.lineas}</span> en {d.cadena}
+              <span className="cifra font-medium">{d.lineas}</span> en{' '}
+              {nombreCadena(d.cadena)}
             </span>
           ))}
         </p>

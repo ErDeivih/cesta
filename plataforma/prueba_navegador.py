@@ -887,7 +887,7 @@ def main() -> int:
                           f"el reparto entre dos tiendas se pinta ({etiqueta})")
                 comprueba("ahorras" in cuerpo and "9,98" in cuerpo,
                           f"con su total y lo que ahorra ({etiqueta})")
-                comprueba("4 en dia" in cuerpo and "2 en mercadona" in cuerpo,
+                comprueba("4 en DIA" in cuerpo and "2 en Mercadona" in cuerpo,
                           f"y con cuantas cosas en cada cadena ({etiqueta})")
                 # Y si el ahorro es ridiculo se dice, en vez de empujar a dos viajes.
                 comprueba(("no compensa" in cuerpo) is (not merece),
@@ -974,7 +974,12 @@ def main() -> int:
         carga("/panel?pestana=indice&cadenas=dia")
         pagina.wait_for_timeout(1500)
         filas = pagina.locator("main table tbody tr")
-        comprueba(filas.count() == 1 and "Dia" in filas.first.inner_text(),
+        # **«DIA» con las tres letras en mayuscula**, que es como se llama la tienda: hasta el
+        # 27 de septiembre de 2026 esta pantalla ponia el identificador tal cual («dia»), igual
+        # que las cinco pantallas con pastillas de cadena. Lo decide `nombreCadena`
+        # (`api/formato.ts`), y esta comprobacion se puso roja al cambiarlo, que es como se
+        # entero de que la cadena se veia en mas sitios de los que parecia.
+        comprueba(filas.count() == 1 and "DIA" in filas.first.inner_text(),
                   f"filtrar por una cadena deja una sola serie en el indice "
                   f"({filas.count()} filas)")
         comprueba("Mirando solo estas cadenas." in pagina.inner_text("main"),

@@ -453,6 +453,25 @@ lo que ha bajado arriba, lo que ha subido debajo, lo quieto al final.
 
     vacia   "Todavia no sigues nada. Busca un producto, abrelo y pulsa Seguir."
 
+### Lo que se arreglo el 27 de septiembre de 2026
+
+**Sin ningun favorito, la pantalla no daba por donde empezar.** Decia donde se anaden
+--«se anaden desde la ficha de un producto, con el corazon»-- y no daba forma de llegar: un
+callejon sin salida en la pantalla que esta a un toque de la barra de abajo. Es el mismo caso
+que los avisos, y se arreglo igual: el titulo, la explicacion y dos botones («Buscar un
+producto», «Ver mi lista»).
+
+Y dos cosas mas, de la misma pasada:
+
+  - **El precio por unidad se pinta con `eurosUnidad`**, no montado a mano: estaba como
+    `${euros(...)}/${unidad ?? ''}`, que con la unidad vacia deja un «0,96 €/» colgando.
+  - **La cadena se llama como se llama.** Aqui y en las cinco pantallas con pastillas
+    (`ajustes`, `buscar`, los filtros del buscador, el panel) se pintaba el identificador tal
+    cual: «alcampo», «dia», «carrefour», mientras la ficha del grupo decia «Aldi». La funcion
+    que decide como se llama una cadena es `nombreCadena` (`api/formato.ts`), y desde hoy tiene
+    **las excepciones escritas**: DIA va con las tres letras en mayuscula, porque «Dia» es
+    escribir mal el nombre de la tienda.
+
 ---
 
 ## El grupo: la pantalla que se abre al buscar

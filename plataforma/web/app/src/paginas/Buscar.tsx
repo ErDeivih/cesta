@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { FILTROS_VACIOS, consultaUtil, useBuscar, useEstado, type FiltrosBuscar } from '../api/consultas'
-import { fecha } from '../api/formato'
+import { fecha, nombreCadena } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
 import { Mosaico } from '../componentes/Mosaico'
 import { TablaResultados } from '../componentes/TablaResultados'
@@ -283,7 +283,7 @@ export function Buscar() {
                         : 'border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800',
                     )}
                   >
-                    {c}
+                    {nombreCadena(c)}
                   </button>
                 )
               })}

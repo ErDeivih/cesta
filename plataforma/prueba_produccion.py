@@ -242,6 +242,22 @@ def main() -> int:
                   "y no titulan «Esperando» cuando no se espera nada")
         comprueba(pagina.get_by_role("link", name="Buscar un producto").count() == 1,
                   "con por donde empezar, en vez de un callejon sin salida")
+        # Y los favoritos, con la misma cuenta nueva: mismo caso y mismo arreglo. La pantalla
+        # decia donde se anaden («desde la ficha de un producto, con el corazon») y no daba
+        # forma de llegar, en la pantalla que esta a un toque de la barra de abajo.
+        carga("/favoritos")
+        texto = pagina.inner_text("main")
+        comprueba("Todavía no tienes favoritos" in texto,
+                  "los favoritos, con una cuenta nueva, dicen que no hay ninguno")
+        comprueba(pagina.get_by_role("link", name="Buscar un producto").count() == 1,
+                  "y dan por donde empezar, en vez de un callejon sin salida")
+        # Las cadenas se llaman como se llaman: el identificador viene en minusculas (`dia`) y
+        # se veia «dia» y «alcampo» en las cinco pantallas con pastillas, mientras la ficha del
+        # grupo decia «Aldi». DIA va con las tres letras en mayuscula.
+        carga("/ajustes")
+        texto = pagina.inner_text("main")
+        comprueba("DIA" in texto and " dia" not in texto,
+                  "y las cadenas se llaman como se llaman (DIA, no «dia»)")
         carga("/cesta")
         comprueba(pagina.get_by_role("button", name="Añadir").count() >= 4,
                   f"y ve la aplicacion con datos reales que tocar "

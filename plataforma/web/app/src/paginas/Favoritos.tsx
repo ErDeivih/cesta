@@ -26,7 +26,7 @@ import { verFavoritos, quitarFavorito } from '../api/favoritos'
 import { anadirDesdeFavoritos, misListas } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
-import { euros } from '../api/formato'
+import { eurosUnidad, nombreCadena } from '../api/formato'
 import { Aviso, Boton, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
 import type { Favorito } from '../tipos'
 
@@ -139,13 +139,32 @@ export function Favoritos() {
 
   if (!lista.length) {
     return (
-      <Vacio titulo="Todavía no tienes favoritos">
-        <p>
-          Los favoritos son los productos que compras siempre. Aparecen aquí con
-          el precio de hoy y marcados cuando han bajado. Se añaden desde la ficha
-          de un producto, con el corazón.
+      /* **El caso vacío da por dónde empezar, y esto es lo mismo que se arregló en los avisos.**
+         Antes decía dónde se añaden («desde la ficha de un producto, con el corazón») y no daba
+         forma de llegar: en la pantalla que está a un toque de la barra de abajo, un callejón
+         sin salida. Medido en una captura de un móvil el 27 de septiembre de 2026. */
+      <Tarjeta>
+        <p className="text-base font-semibold">Todavía no tienes favoritos</p>
+        <p className="mt-2 text-sm text-tinta-suave">
+          Los favoritos son los productos que compras siempre. Aparecen aquí con el precio de
+          hoy y marcados cuando han bajado, y se añaden desde la ficha de un producto, con el
+          corazón.
         </p>
-      </Vacio>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            to="/buscar"
+            className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+          >
+            Buscar un producto
+          </Link>
+          <Link
+            to="/cesta"
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+          >
+            Ver mi lista
+          </Link>
+        </div>
+      </Tarjeta>
     )
   }
 
@@ -206,11 +225,11 @@ export function Favoritos() {
               </div>
 
               <p className="cifra mt-2 text-lg font-semibold">
-                {f.precio_unidad_cent != null
-                  ? `${euros(f.precio_unidad_cent)}/${f.unidad ?? ''}`
-                  : 'no lo sé'}
+                {eurosUnidad(f.precio_unidad_cent, f.unidad)}
               </p>
-              {cadena && <p className="text-sm text-tinta-suave">en {cadena}</p>}
+              {cadena && (
+                <p className="text-sm text-tinta-suave">en {nombreCadena(cadena)}</p>
+              )}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 <Boton
