@@ -213,6 +213,60 @@ def test_los_enlaces_entre_documentos_apuntan_a_las_paginas(sitio):
     assert not quedan_md, f"documentos que si existen y no se han convertido: {quedan_md[:5]}"
 
 
+def test_las_tablas_llevan_su_columna_en_cada_celda(sitio):
+    """En el movil la tabla se apila, y el nombre de la columna viaja en la celda.
+
+    Medido el 27 de septiembre de 2026 con `data/debug/desbordes.py`: **siete tablas del curso
+    no caben en 390 px** (la de constantes y la de cadenas del capitulo de las formulas, una en
+    «que mas se puede hacer», otra en el del stack, otra en el de scraping y dos en los anexos).
+    Con scroll de lado, lo que queda fuera de la pantalla es la ultima columna, que en estas
+    tablas es el dato. Esto comprueba las dos mitades: que la etiqueta esta, y que dice lo que
+    dice la cabecera de su columna.
+    """
+    salida, paginas = sitio
+    con_tablas = 0
+    sin_cabecera = 0
+    for nombre in [n for n in paginas if n[:2].isdigit()]:
+        texto = _leer(salida, nombre)
+        for tabla in re.findall(r"<table>.*?</table>", texto, re.S):
+            con_tablas += 1
+            cabeceras = [re.sub(r"<[^>]+>", "", c).strip()
+                         for c in re.findall(r"<th[^>]*>(.*?)</th>", tabla, re.S)]
+            # **Una tabla sin cabecera no necesita etiquetas.** El capitulo 02 tiene una tabla
+            # de dos columnas escrita con la fila de cabecera vacia (`| | |`): es una pareja
+            # clave/valor, no una tabla de datos con nombres de columna, y lo que hay que
+            # etiquetar no existe.
+            if not any(cabeceras):
+                sin_cabecera += 1
+                continue
+            celdas = re.findall(r'<span class="etiqueta-celda">([^<]*)</span>', tabla)
+            assert celdas, f"{nombre}: una tabla sin las etiquetas de columna en las celdas"
+            assert len(celdas) % len(cabeceras) == 0, (
+                f"{nombre}: {len(celdas)} etiquetas para {len(cabeceras)} columnas")
+            # La primera fila tiene que decir, columna a columna, lo mismo que la cabecera.
+            primera = celdas[:len(cabeceras)]
+            for etiqueta, cabecera in zip(primera, cabeceras, strict=True):
+                assert etiqueta.strip() == cabecera, (
+                    f"{nombre}: la celda dice {etiqueta.strip()!r} y su columna es {cabecera!r}")
+    assert con_tablas >= 10, f"solo {con_tablas} tablas en el curso: esto no esta midiendo nada"
+    print(f"   tablas del curso: {con_tablas} ({sin_cabecera} sin cabecera que etiquetar)")
+
+
+def test_la_franja_del_boton_de_copiar_no_la_paga_un_bloque_sin_boton():
+    """El hueco de arriba lo reserva `copiar.js` **solo** en los bloques que llevan boton.
+
+    Sin esa franja, el boton de copiar se ponia encima de la primera linea del codigo: medido en
+    un movil el 27 de septiembre de 2026, una linea que empezaba por «Alcampo» se leia «campo».
+    Y si la franja se pusiera en todos los bloques, cada bloque de codigo del sitio pagaria 26 px
+    de hueco por un boton que no tiene.
+    """
+    guion = aprende.GUION_COPIAR
+    assert "classList.add('con-copiar')" in guion, \
+        "el guion no marca los bloques que llevan boton"
+    assert "pre.con-copiar { padding-top" in aprende.ESTILO, \
+        "no hay franja reservada para el boton de copiar"
+
+
 def test_el_markdown_de_verdad_se_pinta(sitio):
     """Tablas, codigo, avisos destacados y boton de copiar: lo que hace legible el material."""
     salida, paginas = sitio

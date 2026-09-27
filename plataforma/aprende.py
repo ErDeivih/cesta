@@ -37,6 +37,16 @@ Dos cosas de la portada y del movil, del 27 de septiembre de 2026, con su motivo
     abierto **la primera pantalla de cualquier pagina en un telefono era el indice entero**:
     medido a 390 x 844, catorce capitulos y cero contenido. Sin JavaScript la pagina sigue
     funcionando como estaba, que es la regla de este sitio.
+  - **Las tablas se apilan en el movil, con el nombre de la columna en cada celda**
+    (`_tablas_apilables`). Medido el 27 de septiembre de 2026 con `data/debug/desbordes.py`:
+    **siete tablas del curso no caben en 390 px**, y con scroll de lado lo que queda fuera de
+    la pantalla es la ultima columna, que en estas tablas es el dato. Es **la misma regla que la
+    aplicacion** (`docs/UX-MOVIL.md` §4) y el mismo CSS, para que las dos superficies se lean
+    igual.
+  - **El boton de copiar tiene su franja.** Sin ella se ponia encima de la primera linea del
+    codigo: medido en un movil, una linea que empezaba por «Alcampo» se leia «campo». La franja
+    la reserva `copiar.js` (`pre.con-copiar`) **solo** en los bloques que llevan boton, asi que
+    un bloque de codigo sin boton no paga el hueco.
 
 Como se corre
 -------------
@@ -518,6 +528,46 @@ def _rutas(paginas: list[Pagina]) -> str:
         f'<ul class="rutas-lista">{"".join(filas)}</ul></div>')
 
 
+def _tablas_apilables(cuerpo: str) -> str:
+    """Pone el nombre de cada columna **dentro de sus celdas**, para que la tabla se apile.
+
+    El sitio tiene **siete tablas que en un movil de 390 px no caben** (medido el 27 de
+    septiembre de 2026 con `data/debug/desbordes.py`: la de constantes y la de cadenas del
+    capitulo de las formulas, una en «que mas se puede hacer», otra en el del stack, otra en el
+    de scraping y dos en los anexos). Una tabla ancha se resuelve con scroll de lado, y eso
+    deja fuera de la pantalla la ultima columna, que suele ser el dato.
+
+    Aqui se le pone a cada celda el nombre de su columna, leido del `<th>` de arriba del todo,
+    como texto de verdad (`<span class="etiqueta-celda">`). En pantalla ancha ese texto esta
+    escondido por CSS y la tabla se ve igual que siempre; por debajo de 640 px la tabla se
+    apila -- una fila por linea, con las celdas debajo -- y ahi el nombre de la columna es lo
+    unico que dice que es cada numero. **La misma regla que la aplicacion** (`docs/UX-MOVIL.md`
+    §4), y por eso el CSS es el mismo que el de `plataforma/web/app/src/estilos.css`.
+
+    Es texto de verdad y no un `content: attr()` de CSS a proposito: el contenido de un
+    pseudo-elemento no lo lee un lector de pantalla ni sale en `innerText`.
+    """
+    def con_etiquetas(trozo: str) -> str:
+        cabeceras = re.findall(r"<th[^>]*>(.*?)</th>", trozo, re.S)
+        if not cabeceras:
+            return trozo
+        nombres = [html.escape(re.sub(r"<[^>]+>", "", c).strip()) for c in cabeceras]
+        cabeza, _, resto = trozo.partition("</thead>")
+        if not resto:
+            return trozo
+        contador = {"i": 0}
+
+        def pon(m: re.Match[str]) -> str:
+            nombre = nombres[contador["i"] % len(nombres)] if nombres else ""
+            contador["i"] += 1
+            etiqueta = f'<span class="etiqueta-celda">{nombre} </span>' if nombre else ""
+            return f"{m.group(0)}{etiqueta}"
+
+        return cabeza + "</thead>" + re.sub(r"<td(?:\s[^>]*)?>", pon, resto)
+
+    return re.sub(r"<table>.*?</table>", lambda m: con_etiquetas(m.group(0)), cuerpo, flags=re.S)
+
+
 def _portada(paginas: list[Pagina]) -> str:
     """La portada: que es esto, por donde empezar, y el temario por secciones."""
     curso = [p for p in paginas if p.curso]
@@ -715,6 +765,9 @@ pre {
   padding: .9rem 1rem; overflow-x: auto; margin: 1.2rem 0;
 }
 pre code { background: none; padding: 0; font: 0.86rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+/* La franja de arriba del bloque, para que el boton de copiar no tape la primera linea. La
+   pone `copiar.js` en los bloques que llevan boton. */
+pre.con-copiar { padding-top: 2.4rem; }
 .copiar {
   position: absolute; top: .5rem; right: .5rem; font: .74rem/1 ui-sans-serif, system-ui, sans-serif;
   padding: .35rem .55rem; border: 1px solid var(--borde-fuerte); border-radius: .4rem;
@@ -724,6 +777,26 @@ pre code { background: none; padding: 0; font: 0.86rem/1.6 ui-monospace, SFMono-
 .copiar.hecho { border-color: var(--acento); color: var(--acento); }
 
 table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; font-size: .92rem; display: block; overflow-x: auto; }
+/* El nombre de la columna, dentro de cada celda: escondido en pantalla ancha, donde la
+   cabecera de la tabla ya lo dice, y visible cuando la tabla se apila en el movil. */
+.etiqueta-celda { display: none; }
+@media (max-width: 639px) {
+  /* **En el movil una tabla ancha se apila, no se desliza.** Con scroll de lado lo que queda
+     fuera de la pantalla es la ultima columna, que en estas tablas suele ser el dato. Cada
+     fila pasa a ser una linea propia y las celdas fluyen debajo; la cabecera se esconde,
+     porque en una fila apilada no hay columnas que alinear, y su trabajo lo hace
+     `.etiqueta-celda`. La misma regla que la aplicacion (`docs/UX-MOVIL.md` §4). */
+  table { display: block; overflow-x: visible; font-size: .92rem; }
+  table thead { display: none; }
+  table tbody { display: block; }
+  table tr {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .75rem;
+    padding: .5rem 0; border-bottom: 1px solid var(--borde);
+  }
+  table td { display: block; border: 0; padding: 0; }
+  table td:first-child { flex: 1 1 100%; }
+  .etiqueta-celda { display: inline; color: var(--tinta-suave); font-size: .78rem; }
+}
 th, td { border-bottom: 1px solid var(--borde); padding: .55rem .7rem; text-align: left; vertical-align: top; }
 thead th { border-bottom: 2px solid var(--borde-fuerte); background: var(--fondo-suave); font-weight: 650; }
 tbody tr:hover { background: var(--fondo-suave); }
@@ -850,6 +923,12 @@ for (const bloque of document.querySelectorAll('pre')) {
   boton.type = 'button';
   boton.className = 'copiar';
   boton.textContent = 'Copiar';
+  // **La clase `con-copiar` es la que reserva la franja de arriba.** El boton va pegado a la
+  // esquina, y sin esa franja se ponia **encima de la primera linea del codigo**: medido en un
+  // movil el 27 de septiembre de 2026, una linea que empezaba por «Alcampo» se leia «campo»,
+  // porque el boton tapaba las tres primeras letras. Se pone solo en los bloques que tienen
+  // boton, asi que un bloque de codigo sin boton no paga el hueco.
+  bloque.classList.add('con-copiar');
   boton.addEventListener('click', async () => {
     const codigo = bloque.querySelector('code');
     try {
@@ -900,6 +979,7 @@ def genera(salida: Path = SALIDA_POR_DEFECTO) -> int:
         cuerpo = _reescribe_enlaces(motor.render(texto, env), por_nombre)
         pagina.cuerpo = _caja_frase(cuerpo, pagina.en_una_frase)
         pagina.cuerpo = _destaca_avisos(pagina.cuerpo)
+        pagina.cuerpo = _tablas_apilables(pagina.cuerpo)
         pagina.anclas = [(a["nivel"], a["id"], a["texto"]) for a in env.get("anclas", [])]
 
     for pagina in paginas:
