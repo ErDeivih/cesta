@@ -78,8 +78,14 @@ export function PanelMatching() {
         <>
           <Tarjeta
             titulo="Última pasada"
+            /* **El umbral pasa por `numero`, y no se pinta como sale de la API.** Aquí ponía
+               `0.55` con punto, mientras el dato de abajo ponía `0,55`: el mismo número escrito
+               de dos formas en la misma tarjeta, y la de arriba en inglés. Es el mismo fallo que
+               la frase de la ficha del producto, y se vio igual: mirando la pantalla. */
             sub={`Versión ${d.ultima.version_modelo ?? 'no lo sé'} · umbral ${
-              d.ultima.umbral === null || d.ultima.umbral === undefined ? 'no lo sé' : d.ultima.umbral
+              d.ultima.umbral === null || d.ultima.umbral === undefined
+                ? 'no lo sé'
+                : numero(d.ultima.umbral, 4)
             }`}
           >
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -127,28 +133,34 @@ export function PanelMatching() {
                           <Td>
                             <code>{m.metrica}</code>
                           </Td>
-                          <Td className="cifra font-semibold">{numero(m.valor, 4)}</Td>
-                          <Td className="cifra">
+                          <Td className="cifra font-semibold" etiqueta="valor">{numero(m.valor, 4)}</Td>
+                          <Td className="cifra" etiqueta="antes">
                             {/* `antes: null` es "esa métrica antes no se medía",
                                 no un cero. */}
                             {cambio === null || cambio.antes === null
                               ? 'no lo sé'
                               : numero(cambio.antes, 4)}
                           </Td>
-                          <Td className="cifra">
+                          <Td className="cifra" etiqueta="cambio">
                             {cambio === null || cambio.delta === null ? (
                               'no lo sé'
                             ) : (
+                              /* **La flecha dice el sentido; el color no dice nada, y eso es a
+                                 proposito.** Hasta el 27 de septiembre de 2026 esto iba en
+                                 verde si subia y en rojo si bajaba, y eso es un veredicto que
+                                 esta pantalla no puede dar: subir no es bueno ni malo --
+                                 `grupos_comparables` arriba es mejor, `grupos_dudosos_ud` arriba
+                                 es peor --, y el aviso de arriba dice justo que aqui no se
+                                 valida nada. El color, en este proyecto, dice algo (bueno,
+                                 aviso, dudoso); si no lo puede decir, no se pinta. */
                               <span
-                                className={
-                                  cambio.delta > 0
-                                    ? 'text-emerald-800 dark:text-emerald-400'
-                                    : cambio.delta < 0
-                                      ? 'text-red-800 dark:text-red-400'
-                                      : ''
-                                }
+                                title={cambio.delta > 0
+                                  ? 'Sube respecto a la pasada anterior'
+                                  : cambio.delta < 0
+                                    ? 'Baja respecto a la pasada anterior'
+                                    : 'Igual que la pasada anterior'}
                               >
-                                {cambio.delta > 0 ? '+' : cambio.delta < 0 ? '−' : ''}
+                                {cambio.delta > 0 ? '↑ ' : cambio.delta < 0 ? '↓ ' : ''}
                                 {numero(Math.abs(cambio.delta), 4)}
                               </span>
                             )}
@@ -174,7 +186,7 @@ export function PanelMatching() {
           </Tarjeta>
 
           <Tarjeta
-            titulo="Pares aceptados"
+            titulo="Muestra de pares aceptados"
             acciones={
               <Selector
                 etiqueta="Cuántos"
@@ -187,80 +199,83 @@ export function PanelMatching() {
                 <option value="200">200</option>
               </Selector>
             }
-            sub={`${d.pares.length} pares de esta pasada, con su método y sus rasgos`}
+            /* «Muestra», y con el numero que se ha pedido, **porque son los primeros N y no
+               todos**: la API no manda el total de pares de la pasada, asi que decir «los 20
+               pares» seria afirmar que solo hay veinte. Se audita un par, no doscientos. */
+            sub={`los primeros ${d.pares.length} de esta pasada, con su método y sus rasgos`}
           >
             {d.pares.length === 0 ? (
               <Vacio titulo="Esta pasada no ha dejado pares" />
             ) : (
-              <TablaScroll etiqueta="Pares aceptados por el emparejador" minAncho="52rem">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr>
-                      <Th>Producto A</Th>
-                      <Th>Producto B</Th>
-                      <Th>Nivel</Th>
-                      <Th>Método</Th>
-                      <Th>Confianza</Th>
-                      <Th>Por qué</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.pares.map((p, i) => (
-                      <tr key={`${p.producto_a}-${p.producto_b}-${i}`}>
-                        <Td>
-                          <EnlaceProducto clave={p.producto_a} nombre={p.nombre_a} fuente={p.fuente_a} />
-                        </Td>
-                        <Td>
-                          <EnlaceProducto clave={p.producto_b} nombre={p.nombre_b} fuente={p.fuente_b} />
-                        </Td>
-                        <Td>
-                          <Nivel nivel={p.nivel} />
-                        </Td>
-                        <Td>
-                          <code className="text-xs">{p.metodo ?? 'no lo sé'}</code>
-                        </Td>
-                        <Td className="cifra">
-                          <span title="Confianza del emparejador, de 0 a 1">
-                            {numero(p.confianza, 4)}
-                          </span>
-                        </Td>
-                        <Td>
-                          {/* Los rasgos son la explicabilidad: sin ellos, un par
-                              aceptado es una caja negra. */}
-                          <details>
-                            <summary className="cursor-pointer text-xs text-sky-800 dark:text-sky-400">
-                              {Object.keys(p.features).length} rasgos
-                            </summary>
-                            <ul className="mt-1 grid grid-cols-1 gap-0.5 text-xs">
-                              {Object.entries(p.features).map(([k, v]) => (
-                                <li key={k} className="flex justify-between gap-3">
-                                  <span className="text-neutral-600 dark:text-neutral-400">{k}</span>
-                                  <span className="cifra">
-                                    {v === null || v === undefined
-                                      ? 'no lo sé'
-                                      : typeof v === 'boolean'
-                                        ? v
-                                          ? 'sí'
-                                          : 'no'
-                                        : typeof v === 'number'
-                                          ? numero(v, 4)
-                                          : String(v)}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        </Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </TablaScroll>
+              /* **Una tarjeta por par, y no una tabla de seis columnas.** Era una tabla de
+                 «Producto A · Producto B · Nivel · Método · Confianza · Por qué» con 52rem de
+                 ancho mínimo: en un móvil de 390 px eso obligaba a deslizar de lado para ver
+                 el método o la confianza, y los dos nombres de producto (que son largos y con
+                 marca) se aplastaban. La composición es la que diseñó Stitch para esta pantalla
+                 (proyecto `15743377346721964880`, «Cesta · Panel de Matching»): el par arriba,
+                 sus tres datos en una tira corta y los rasgos debajo, que es lo que se viene a
+                 auditar. Medido con `data/debug/estructura.py` el 27 de septiembre de 2026: la
+                 pantalla entera medía 4.501 px (5,3 pantallas). */
+              <ul className="grid gap-3">
+                {d.pares.map((p, i) => (
+                  <li
+                    key={`${p.producto_a}-${p.producto_b}-${i}`}
+                    className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"
+                  >
+                    <p className="text-xs uppercase tracking-wide text-tinta-suave">Producto A</p>
+                    <EnlaceProducto clave={p.producto_a} nombre={p.nombre_a} fuente={p.fuente_a} />
+                    <p className="mt-2 text-xs uppercase tracking-wide text-tinta-suave">
+                      Producto B
+                    </p>
+                    <EnlaceProducto clave={p.producto_b} nombre={p.nombre_b} fuente={p.fuente_b} />
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                      <Nivel nivel={p.nivel} />
+                      <span>
+                        <span className="text-tinta-suave">método </span>
+                        <code className="text-xs">{p.metodo ?? 'no lo sé'}</code>
+                      </span>
+                      <span title="Confianza del emparejador, de 0 a 1">
+                        <span className="text-tinta-suave">confianza </span>
+                        <span className="cifra">{numero(p.confianza, 4)}</span>
+                      </span>
+                    </div>
+                    {/* Los rasgos son la explicabilidad: sin ellos, un par aceptado es una caja
+                        negra. */}
+                    <details className="mt-2">
+                      <summary className="flex min-h-[44px] cursor-pointer items-center text-xs text-sky-800 dark:text-sky-400">
+                        Por qué: {Object.keys(p.features).length} rasgos
+                      </summary>
+                      <ul className="mt-1 grid grid-cols-1 gap-0.5 text-xs">
+                        {Object.entries(p.features).map(([k, v]) => (
+                          <li key={k} className="flex justify-between gap-3">
+                            <span className="text-neutral-600 dark:text-neutral-400">{k}</span>
+                            <span className="cifra">
+                              {v === null || v === undefined
+                                ? 'no lo sé'
+                                : typeof v === 'boolean'
+                                  ? v
+                                    ? 'sí'
+                                    : 'no'
+                                  : typeof v === 'number'
+                                    ? numero(v, 4)
+                                    : String(v)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  </li>
+                ))}
+              </ul>
             )}
           </Tarjeta>
 
           <details className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
-            <summary className="cursor-pointer text-sm">Ver la respuesta en crudo</summary>
+            {/* El desplegable tambien se pulsa: medido el 27 de septiembre de 2026, medía
+                **332 x 20 px**. Es la puerta a la respuesta en crudo, y de pie no se acierta. */}
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm">
+              Ver la respuesta en crudo
+            </summary>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
               {JSON.stringify(d, null, 2)}
             </pre>
@@ -296,7 +311,14 @@ function Nivel({ nivel }: { nivel: string | null }) {
 
 /** Un producto de un par. `producto_a` es `fuente:id_fuente`, y `nombre` puede
  *  ser null: el par se guarda con claves estables y el producto puede haber
- *  desaparecido del catálogo de hoy. */function EnlaceProducto({
+ *  desaparecido del catálogo de hoy.
+ *
+ *  **El enlace mide 44 px de alto.** Medido con la puerta mecanica el 27 de septiembre de 2026,
+ *  dentro de la tarjeta de un par medía **21 px**: es la forma de abrir el producto que se está
+ *  auditando, y abrir la ficha es justo lo que se hace para comprobar por qué el emparejador
+ *  aceptó el par. En la tabla de equivalencias de la ficha del producto ya se midió lo mismo el
+ *  23 de septiembre (161 x 19) y se arregló igual. */
+function EnlaceProducto({
   clave,
   nombre,
   fuente,
@@ -309,7 +331,10 @@ function Nivel({ nivel }: { nivel: string | null }) {
   return (
     <>
       {nombre ? (
-        <Link to={`/producto/${fuente}/${id}`} className="underline">
+        <Link
+          to={`/producto/${fuente}/${id}`}
+          className="inline-flex min-h-[44px] items-center underline"
+        >
           {nombre}
         </Link>
       ) : (

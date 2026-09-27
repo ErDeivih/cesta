@@ -1,0 +1,73 @@
+Diseña el PANEL DE MATCHING de «Cesta», una aplicación móvil (390 x 844) que compara el precio
+por unidad del mismo producto entre cinco supermercados españoles. Es la pantalla **interna** que
+audita el emparejador: la que decide cuándo dos ofertas de dos cadenas son el mismo producto.
+Todo el texto en español. Claro y oscuro por preferencia del sistema.
+
+QUIÉN LA USA Y QUÉ VIENE A HACER
+La usa **una sola persona: el dueño del proyecto**, que viene a auditar una pasada del
+emparejador. Se sienta a mirarla, no la usa de pie en un pasillo. Viene a tres cosas, en este
+orden: **¿qué ha hecho esta pasada?**, **¿ha cambiado algo respecto a la anterior?**, y **¿por
+qué ha aceptado estos pares concretos?** Con eso decide si el emparejador va bien o hay que
+tocarlo.
+
+No hay botones de aprobar ni de rechazar, y no debe haberlos: en este proyecto no hay validación
+humana. Lo que se hace aquí es **auditar**. Eso se dice en la pantalla, no se da por supuesto.
+
+QUÉ TIENE QUE HABER, EN ESTE ORDEN
+  1. **Cabecera**: «Panel de matching» y, al lado, la fecha de los datos. Y un enlace de vuelta
+     al panel normal.
+  2. **El aviso de qué es esta pantalla**, antes de ningún número: *«Esta pantalla no valida
+     nada. No hay botón de aprobar ni de rechazar equivalencias, y no lo va a haber: en este
+     proyecto no hay validación humana. Lo que se puede hacer aquí es auditar por qué el
+     emparejador aceptó un par -- su nivel, su método, su confianza y los rasgos que lo
+     sostienen --, que es lo que hace que un emparejamiento se pueda explicar.»*
+  3. **La última pasada**, en cuatro datos: ejecución (`20260927-120959`), productos
+     (`53.014`), umbral (`0,55`) y pasadas guardadas (`28`). Y la **huella del catálogo**
+     (`8bfbc46…`) con su explicación: *«Dos pasadas con la misma huella se hicieron sobre el
+     mismo catálogo y se pueden comparar.»*
+  4. **Las métricas de la pasada**, y esto es lo importante de la pantalla: una tabla con
+     **Métrica · Valor · Antes · Cambio**, donde «Antes» es la pasada anterior y «Cambio» es la
+     diferencia. Los nombres son los que usa el emparejador, tal cual, sin traducir (así no se
+     despegan del código):
+        enlaces              22.801   22.774   +27
+        identicos             6.692    6.674   +18
+        grupos_comparables    8.808    8.829   −21
+        calidad_asignada      9.529    9.440   +89
+        grupos_dudosos_ud       882      883    −1
+     Lo que hay que poder leer de un vistazo es **qué se ha movido**, no los cinco números: los
+     cambios hacia arriba y hacia abajo tienen que distinguirse sin leer.
+  5. **Los pares aceptados**, con **Producto A · Producto B · Nivel · Método · Confianza ·
+     Por qué**. Datos reales:
+        «Bebida de melocotón Granini pack 3 minibrik de 20 cl.» (carrefour:538002036)
+        «Bebida de zumo de melocotón Granini pack 3 x 200 ml» (dia:2225)
+        mismo código de barras · ean · 1 · 8 rasgos
+     Son nombres largos y con marca: la fila tiene que aguantar dos nombres largos sin que el
+     resto se vaya de la pantalla.
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+
+  · **Cifras en ancho fijo** (tabular-nums) siempre: esto es una tabla de números que se lee en
+    columna, y con ancho variable cada fila baila.
+  · Objetivos táctiles de **44 px mínimo**. Cabecera de **109 px** y barra inferior de **57 px**.
+  · En 390 px de ancho, **una tabla de seis columnas no cabe y no se desliza**: cada fila se
+    apila (el nombre del producto primero, a línea completa; el resto de campos debajo, cada uno
+    con el nombre de su columna delante, en pequeño). Nada de scroll horizontal.
+  · Densidad de herramienta interna: se mira con calma, así que cabe más texto que en la
+    pantalla de la compra, pero **sin perder la jerarquía**: lo que se lee primero es el aviso,
+    después la pasada, después lo que se ha movido, y al final los pares.
+  · Tipografía del sistema (ui-sans-serif / system-ui) y monoespaciada para los identificadores
+    (`ejecucion_id`, `enlaces`, una huella). Nada de fuentes ni imágenes de internet.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), aviso `#b45309` (`#fcd34d`), bien
+    `#059669` (`#10b981`). El color dice algo (sube, baja, bien, aviso), nunca decora.
+  · Nada de tarjetas dentro de tarjetas, ni sombras grandes, ni degradados.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en línea (la aplicación sirve con CSP `script-src 'self'`).
+  · Nada de dependencias de red en tiempo de ejecución.
+  · **No inventar un veredicto.** La pantalla no puede decir «el emparejador va bien»: no hay
+    una cifra de precisión en esta pantalla, y un verde inventado sobre un emparejamiento es
+    peor que no decir nada. Lo que sí puede hacer es enseñar **qué se ha movido** y **por qué**
+    se aceptó cada par.
+  · No enseñar un cambio como porcentaje si no se sabe sobre cuántos: «+27» sobre 22.774 es un
+    dato, «+0,1 %» sin decir de qué es un adorno.

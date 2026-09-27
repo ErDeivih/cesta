@@ -610,6 +610,51 @@ porcentaje de las letras salen del precio. Sin el, el estudio se lee al reves.
 **Lo que aun no se puede medir se dice, con la fecha**: "tendencia_30d — faltan
 18 dias". No se dibuja una linea plana con doce puntos y se la llama tendencia.
 
+### El panel de matching (`/panel/matching`), 27 de septiembre de 2026
+
+Es la pantalla que **audita el emparejador**, y desde hoy tiene su composicion propia (diseñada
+con Stitch, proyecto `15743377346721964880`):
+
+    Panel de matching            [datos del 27 sept 2026] [pasada 20260927-120959]
+
+    Esta pantalla no valida nada
+      No hay botón de aprobar ni de rechazar equivalencias... Lo que se puede hacer aquí
+      es auditar por qué el emparejador aceptó un par.
+
+    Última pasada — Versión 2026-09-22.1 · umbral 0,55
+      EJECUCIÓN 20260927-120959 · PRODUCTOS 53.014 · UMBRAL 0,55 · PASADAS GUARDADAS 28
+      Huella del catálogo: 8bbfbc46… Dos pasadas con la misma huella se pueden comparar.
+
+    Métricas de la pasada
+      enlaces                     valor 22.801   antes 22.774   cambio ↑ 27
+      grupos_comparables          valor  8.808   antes  8.829   cambio ↓ 21
+
+    Muestra de pares aceptados — los primeros 20 de esta pasada
+      PRODUCTO A  Bebida de melocotón Granini pack 3 minibrik de 20 cl.  carrefour:538002036
+      PRODUCTO B  Bebida de zumo de melocotón Granini pack 3 x 200 ml    dia:2225
+      [mismo código de barras]  método ean  confianza 1
+      ▸ Por qué: 8 rasgos
+
+Tres decisiones que se ven en la pantalla:
+
+  - **Los pares son tarjetas, no una tabla de seis columnas.** Era una tabla con 52rem de ancho
+    minimo, y en un movil de 390 px habia que deslizar de lado para ver el metodo o la
+    confianza, con los dos nombres de producto aplastados. Una tarjeta por par: los dos
+    productos, sus tres datos en una tira corta y los rasgos debajo, que es lo que se viene a
+    auditar. La pantalla queda mas larga (8,9 pantallas con 20 pares) y se lee por pares, que es
+    como se audita: un par cada vez, y el selector para pedir mas.
+  - **La flecha dice el sentido; el color no dice nada.** El «Cambio» iba en verde si subia y en
+    rojo si bajaba, y eso es un veredicto que esta pantalla no puede dar: subir no es bueno ni
+    malo (`grupos_comparables` arriba es mejor; `grupos_dudosos_ud` arriba es peor), y el aviso
+    de arriba dice justo que aqui no se valida nada. En este proyecto el color dice algo (bueno,
+    aviso, dudoso); si no lo puede decir, no se pinta.
+  - **«Muestra», y con el numero que se ha pedido.** La API no manda el total de pares de la
+    pasada, asi que decir «los 20 pares» afirmaria que solo hay veinte. Son los primeros N.
+
+Y dos cosas que se arreglaron midiendo: el umbral se pintaba como sale de la API («0.55») tres
+lineas encima de su propio dato («0,55»), y los enlaces a los productos de un par median **21 px**
+de alto y el desplegable de la respuesta en crudo **332 x 20** (los dos, con la puerta mecanica).
+
 ---
 
 ## 9. Ajustes

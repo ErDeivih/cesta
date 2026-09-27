@@ -1116,6 +1116,10 @@ def main() -> int:
         # son pantallas nuevas y nadie las ha medido todavia con el dedo.
         rutas += ["/panel?pestana=indice", "/panel?pestana=posicion",
                   "/panel?pestana=dudosas", "/panel?pestana=bajadas"]
+        # Y el panel de matching, que es una pantalla aparte (`/panel/matching`) y la que mas
+        # tablas tenia: entra aqui para que la midan las dos reglas del movil -- nada por debajo
+        # de 44 px y ninguna tabla que se deslice. Medido el 27 de septiembre de 2026.
+        rutas += ["/panel/matching"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
             rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")

@@ -28,8 +28,9 @@ argument», que no dice qué argumento.
 | pantalla 2 | «Cesta · Resultados de Búsqueda (Leche Entera)» — `projects/15743377346721964880/screens/7d0a3de8285b4ec3bd63325264fe6bca` |
 | pantalla 3 | «Portada · Aprender datos con un proyecto de verdad» — `projects/15743377346721964880/screens/bdbf0a85b5aa465395902e4bd4bcad1b` |
 | pantalla 4 | «Cesta · Ficha de Producto (Leche Entera)» — `projects/15743377346721964880/screens/a344f64aeb8543218120b87e39f2b33b` |
-| los guiones | `.stitch/prompts/01-inicio.txt`, `02-resultados.txt`, `03-portada-docs.txt` y `04-ficha-grupo.txt`: **versionados**, porque el guion es la procedencia del diseño. Dicen quién usa la pantalla, qué datos reales tiene que enseñar y las reglas del proyecto (cifras en ancho fijo, 44 px, 109/57 px, tokens) |
-| **portadas al código** | `plataforma/web/app/src/paginas/Inicio.tsx` (el 27 sep 2026, en `/`), `componentes/TablaResultados.tsx` + `paginas/Buscar.tsx` (resultados, el 27 sep) y `paginas/Grupo.tsx` (la ficha, el 27 sep). Portadas **a mano**: el HTML de Stitch trae `cdn.tailwindcss.com` y dos `<script>`, y la CSP de Caddy no lo permite (ver `docs/PANTALLAS.md`) |
+| pantalla 5 | «Cesta · Panel de Matching» — `projects/15743377346721964880/screens/c38ca62d92794d43a55e5079c282e06e` |
+| los guiones | `.stitch/prompts/01-inicio.txt` … `05-panel-matching.txt`: **versionados**, porque el guion es la procedencia del diseño. Dicen quién usa la pantalla, qué datos reales tiene que enseñar y las reglas del proyecto (cifras en ancho fijo, 44 px, 109/57 px, tokens) |
+| **portadas al código** | `paginas/Inicio.tsx` (en `/`), `componentes/TablaResultados.tsx` + `paginas/Buscar.tsx` (resultados), `paginas/Grupo.tsx` (la ficha del grupo) y `paginas/PanelMatching.tsx` (los pares aceptados, como tarjetas), el 27 de septiembre de 2026. Portadas **a mano**: el HTML de Stitch trae `cdn.tailwindcss.com` y dos `<script>`, y la CSP de Caddy no lo permite (ver `docs/PANTALLAS.md`) |
 
 La pantalla 2 salió con `deviceType: DESKTOP` aunque se pidió `MOBILE`, y la 1 con un lienzo de
 512 x 410: **el aparato que se pide no es el que se recibe**. Se usa como referencia de
