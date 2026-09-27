@@ -162,6 +162,15 @@ fluyendo debajo, y el nombre de la columna viaja **en cada celda** (`Td etiqueta
 numeros que no se explican solos. Lo hace `.tabla-scroll`, en un solo sitio, y lo vigila
 `prueba_navegador.py` en catorce tablas de golpe.
 
+**Y tampoco se sale la pagina entera.** Es la otra mitad, y la del material fue peor: un trozo
+sin espacios -- una ruta, una URL, una lista entre llaves -- no se parte solo y **empuja la
+pagina**, asi que hay que mover la pantalla de lado para llegar al final de cada linea. Medido
+con `data/debug/quien_desborda.py`: dos documentos de la referencia medían **486 y 420 px en una
+ventana de 390**. En el material se parte donde haga falta (`overflow-wrap: anywhere` en el
+texto), y **el codigo no se parte: se desliza dentro de su bloque**, porque un comando con las
+lineas rotas deja de ser el comando que se copia. Lo vigilan las dos puertas: `prueba_navegador`
+en sus trece pantallas y `prueba_produccion` en seis paginas del material.
+
 **Los numeros que se leen pasan por `numero`, `euros` o `porcentaje`.** No por `toFixed`, que
 escribe el punto decimal en ingles: «Te aviso si baja de 3.89 €», «8.5 de 100», «2.3 g», todos
 medidos el 27 de septiembre de 2026 y todos al lado de precios con coma. En español el decimal

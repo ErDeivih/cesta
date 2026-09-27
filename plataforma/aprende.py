@@ -847,6 +847,18 @@ table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; font-size: .92
 th.num, td.num { text-align: right; }
 th.centro, td.centro { text-align: center; }
 th.izq, td.izq { text-align: left; }
+
+/* **Nada sin espacios puede sacar la pagina de la pantalla.** Una ruta, una URL, una lista
+   entre llaves (`/supermercado/{mercadona,carrefour,…}`) o una lista de cadenas sin comas no se
+   parten solas y empujan **la pagina entera**: medido el 27 de septiembre de 2026 con
+   `data/debug/quien_desborda.py`, `/aprende/COMPETENCIA-IMPLANTABLE.html` media **486 px en una
+   ventana de 390** y `/aprende/COMPETENCIA.html` 420. Se parte donde haga falta antes que sacar
+   la pagina de la pantalla: leer una ruta partida es feo, tener que mover la pantalla de lado
+   para llegar al final de cada linea es peor.
+   El **codigo si se desliza** (no se parte): un bloque de codigo con las lineas rotas deja de
+   ser el comando que se copia. */
+article p, article li, article td, article th, article a, article strong,
+article blockquote { overflow-wrap: anywhere; }
 /* El nombre de la columna, dentro de cada celda: escondido en pantalla ancha, donde la
    cabecera de la tabla ya lo dice, y visible cuando la tabla se apila en el movil. */
 .etiqueta-celda { display: none; }
@@ -863,7 +875,7 @@ th.izq, td.izq { text-align: left; }
     display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .75rem;
     padding: .5rem 0; border-bottom: 1px solid var(--borde);
   }
-  table td { display: block; border: 0; padding: 0; }
+  table td { display: block; border: 0; padding: 0; min-width: 0; }
   table td:first-child { flex: 1 1 100%; }
   /* Apilada, la tabla ya no es una tabla: alinear a la derecha una celda que va debajo de su
      etiqueta deja el dato descolgado. Se alinean todas a la izquierda. */

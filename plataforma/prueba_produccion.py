@@ -212,6 +212,20 @@ def main() -> int:
                   "y con la pagina que lo dice, no con la portada")
         comprueba(pagina.request.get(f"{BASE}/aprende/").status == 200,
                   "y la portada sigue contestando 200")
+        # **Y ninguna pagina del material se sale de la pantalla.** Medido el 27 de septiembre de
+        # 2026 con `data/debug/quien_desborda.py`: dos documentos de la referencia medían **486 y
+        # 420 px en una ventana de 390** -- una ruta, una URL y una lista entre llaves no se
+        # parten solas y empujaban la pagina entera. Son los dos documentos mas largos del
+        # proyecto, y se leen desde el movil como todo lo demas.
+        for ruta in ("/aprende/", "/aprende/04-emparejar-productos.html",
+                     "/aprende/93-las-formulas.html", "/aprende/COMPETENCIA.html",
+                     "/aprende/COMPETENCIA-IMPLANTABLE.html", "/aprende/BACKLOG.html"):
+            carga(ruta)
+            ancho, scroll = pagina.evaluate(
+                "() => [document.documentElement.clientWidth,"
+                " document.documentElement.scrollWidth]")
+            comprueba(scroll <= ancho + 1,
+                      f"{ruta} no se sale de la pantalla ({scroll} > {ancho})")
         # **Y el capitulo empieza en la primera pantalla del movil.** Medido el 27 de septiembre
         # de 2026: el `<details>` del indice lateral sale abierto y, a 390x844, la primera
         # pantalla era el indice entero -- catorce capitulos y ni una linea del capitulo. Se
