@@ -25,6 +25,19 @@ de anterior/siguiente, boton de copiar en cada bloque de codigo, avisos destacad
 que funcionen dentro del sitio, y genera el indice. Si un numero esta mal, esta mal en el
 markdown, que es la unica fuente.
 
+Dos cosas de la portada y del movil, del 27 de septiembre de 2026, con su motivo medido:
+
+  - **El panel «Por donde empezar»** (`_rutas`) es rejilla de dos columnas, con el contexto
+    («si vienes a por scraping») en una linea y el resumen del capitulo debajo. Ese resumen **se
+    lee del propio documento**, no se escribe aqui: un texto repetido en la portada se queda
+    viejo el dia que el capitulo cambia. La composicion es la que diseno Stitch para esta
+    pantalla (proyecto `15743377346721964880`), portada a mano a HTML y CSS del proyecto.
+  - **El indice lateral se pliega en el movil** (`GUION_LATERAL`, en `indice.js`). El `<details>`
+    sale abierto en el HTML porque en el escritorio el CSS esconde su `<summary>`, y con el
+    abierto **la primera pantalla de cualquier pagina en un telefono era el indice entero**:
+    medido a 390 x 844, catorce capitulos y cero contenido. Sin JavaScript la pagina sigue
+    funcionando como estaba, que es la regla de este sitio.
+
 Como se corre
 -------------
     uv run --extra docs python -m plataforma.aprende
@@ -468,6 +481,43 @@ def _toc(pagina: Pagina) -> str:
     return "".join(filas)
 
 
+RUTAS: tuple[tuple[str, str], ...] = (
+    ("Si no sabes de qué va esto", "00-como-usar-este-material"),
+    ("Si vienes a por scraping", "15-scraping"),
+    ("Si estás empezando con datos", "13-fundamentos-del-dato"),
+    ("Si vienes a por algoritmos", "04-emparejar-productos"),
+    ("Si vas a montar lo tuyo", "14-el-stack-explicado"),
+    ("Y si vienes a aprender a medir", "12-medir-sin-enganarse"),
+)
+
+
+def _rutas(paginas: list[Pagina]) -> str:
+    """El panel «Por dónde empezar»: quien entra, y por dónde.
+
+    **El resumen de cada ruta no se escribe aquí**: se lee del propio documento (su `resumen:`,
+    o su primer párrafo si no lo declara). Un texto repetido en la portada es un texto que se
+    queda viejo el día que el capítulo cambia, y este material se reescribe cada semana. Si un
+    capítulo de la lista ya no existe, se dice y se sigue: la portada no puede tumbar la
+    generación del sitio entero por una ruta que apunta a un fichero que se ha renombrado.
+    """
+    por_slug = {p.slug: p for p in paginas}
+    filas: list[str] = []
+    for contexto, slug in RUTAS:
+        pagina = por_slug.get(slug)
+        if pagina is None:
+            print(f"  aviso: la ruta «{contexto}» apunta a {slug}.md, que no existe")
+            continue
+        filas.append(
+            f'<li class="ruta-item"><p class="ruta-contexto">{html.escape(contexto)}</p>'
+            f'<a class="ruta-enlace" href="{pagina.fichero}">{html.escape(pagina.titulo)}</a>'
+            f'<p class="ruta-frase">{html.escape(pagina.resumen)}</p></li>')
+    return (
+        '<div class="como-empezar">'
+        '<div class="rutas-encabezado"><h2>Por dónde empezar</h2>'
+        f'<p class="rutas-subtitulo">{len(filas)} rutas, según lo que vengas a buscar</p></div>'
+        f'<ul class="rutas-lista">{"".join(filas)}</ul></div>')
+
+
 def _portada(paginas: list[Pagina]) -> str:
     """La portada: que es esto, por donde empezar, y el temario por secciones."""
     curso = [p for p in paginas if p.curso]
@@ -492,22 +542,8 @@ def _portada(paginas: list[Pagina]) -> str:
     cada idea <strong>con numeros medidos</strong> y el comando que los reproduce.
   </p>
   <p class="entrada-meta">{len(curso)} capitulos · {total:,} palabras · y detras, los
-     documentos del proyecto que se citan uno a uno.</p>  <div class="como-empezar">
-    <h2>Por donde empezar</h2>
-    <ol>
-      <li>Si no sabes de que va esto: <a href="00-como-usar-este-material.html">Como usar este
-          material</a>.</li>
-      <li>Si vienes a por scraping: <a href="15-scraping.html">Como se recoge el dato</a>.</li>
-      <li>Si estas empezando con datos: <a href="13-fundamentos-del-dato.html">Que es un dato</a>
-          (valor, grano, clave y ausencia).</li>
-      <li>Si vienes a por algoritmos: <a href="04-emparejar-productos.html">Emparejar
-          productos</a> y <a href="05-medir-el-emparejador.html">como se mide</a>.</li>
-      <li>Si vas a montar lo tuyo: <a href="14-el-stack-explicado.html">el stack</a>, pieza a
-          pieza y con lo que costaria quitarlas.</li>
-      <li>Y si vienes a aprender a medir: <a href="12-medir-sin-enganarse.html">los instrumentos
-          que mienten</a>.</li>
-    </ol>
-  </div>
+     documentos del proyecto que se citan uno a uno.</p>
+  {_rutas(paginas)}
   {''.join(bloques)}
   <section class="bloque">
     <h2>Referencia</h2>
@@ -729,8 +765,21 @@ blockquote p { max-width: var(--ancho); }
 .portada h1 { font-size: 2.3rem; line-height: 1.15; letter-spacing: -.02em; margin: .4rem 0 1rem; }
 .entrada { font-size: 1.1rem; color: var(--tinta-suave); }
 .entrada-meta { color: var(--tinta-suave); font-size: .9rem; }
-.como-empezar { background: var(--fondo-suave); border: 1px solid var(--borde); border-radius: .8rem; padding: 1rem 1.4rem 1.4rem; margin: 2rem 0; }
-.como-empezar h2 { margin: .2rem 0 .6rem; font-size: 1.1rem; border: 0; padding: 0; }
+.como-empezar { background: var(--panel); border: 1px solid var(--borde); border-radius: .8rem; padding: 1.2rem 1.4rem 1.4rem; margin: 2rem 0; }
+/* El panel de rutas, con la composicion de Stitch (pantalla «Portada · Aprender datos con un
+   proyecto de verdad», 27 sep 2026): encabezado con el titulo a la izquierda y lo que hay
+   dentro a la derecha, y las rutas en rejilla de dos columnas. Antes era una lista numerada de
+   seis lineas seguidas, y el «si vienes a por scraping» y el enlace iban en la misma frase:
+   quien llega con prisa tiene que leer las seis para reconocerse en una. */
+.rutas-encabezado { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem; border-bottom: 1px solid var(--borde); padding-bottom: .7rem; margin-bottom: 1.1rem; }
+.rutas-encabezado h2 { margin: 0; font-size: 1.15rem; border: 0; padding: 0; }
+.rutas-subtitulo { margin: 0; font-size: .875rem; color: var(--tinta-suave); }
+.rutas-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem 2rem; grid-template-columns: 1fr; }
+@media (min-width: 800px) { .rutas-lista { grid-template-columns: 1fr 1fr; } }
+.ruta-item { display: flex; flex-direction: column; gap: .1rem; }
+.ruta-contexto { margin: 0; font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-suave); }
+.ruta-enlace { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: 3px; }
+.ruta-frase { margin: 0; font-size: .875rem; line-height: 1.5; color: var(--tinta-suave); }
 .bloque { margin: 2.5rem 0; }
 .bloque h2 { font-size: 1.2rem; border-top: 1px solid var(--borde); padding-top: 1.2rem; }
 .tarjetas { list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; grid-template-columns: 1fr; }

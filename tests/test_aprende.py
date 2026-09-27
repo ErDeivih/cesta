@@ -147,6 +147,30 @@ def test_el_temario_agrupa_por_secciones_y_en_orden(sitio):
     assert 'aria-current="page"' in lateral, "no se marca el capitulo en el que estas"
 
 
+def test_las_rutas_de_la_portada_llevan_a_capitulos_de_verdad(sitio):
+    """«Por dónde empezar»: cada ruta es un capitulo que existe, y su frase es la suya.
+
+    El panel de rutas es de la portada y **su texto no se escribe en la portada**: se lee del
+    capitulo (`resumen:` o su primer parrafo). Esto comprueba las dos mitades: que la ruta
+    apunta a una pagina que se ha generado, y que la frase que sale al lado es la del documento
+    -- que es lo que hace que no se quede vieja el dia que el capitulo cambie (27 sep 2026).
+    """
+    salida, _ = sitio
+    portada = _leer(salida, "index.html")
+    assert '<ul class="rutas-lista">' in portada, "la portada no tiene el panel de rutas"
+    enlaces = re.findall(r'<a class="ruta-enlace" href="([^"]+)">([^<]+)</a>', portada)
+    assert len(enlaces) == len(aprende.RUTAS), (
+        f"{len(enlaces)} rutas en la portada y {len(aprende.RUTAS)} declaradas")
+    for destino, titulo in enlaces:
+        assert (salida / destino).exists(), f"la ruta {titulo!r} apunta a {destino}, que no hay"
+    # Y la frase de cada ruta es el resumen de su capitulo, no un texto aparte.
+    paginas = {p.fichero: p for p in aprende.recoge()}
+    for destino, _titulo in enlaces:
+        pagina = paginas[destino]
+        assert html.escape(pagina.resumen) in portada, (
+            f"{destino}: su resumen no sale en la portada, asi que la portada lo esta inventando")
+
+
 def test_cada_capitulo_lleva_su_indice_de_pagina(sitio):
     """El indice de la derecha apunta a los encabezados que de verdad se han pintado."""
     salida, paginas = sitio
