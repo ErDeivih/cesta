@@ -129,12 +129,31 @@ export interface Persona {
   aceptado_en: string
 }
 
+/** Algo que ha tocado otra persona desde tu ultima visita. Lo manda `GET /listas/{id}`. */
+export interface Novedad {
+  nombre_visto: string
+  en_carrito: boolean
+  anadido_en: string | null
+  tachado_en: string | null
+  anadido_por: string | null
+  tachado_por: string | null
+}
+
 export interface DetalleLista {
   papel: string
   lineas: Linea[]
   estimacion: Estimacion
   personas: Persona[]
   fecha_datos: string
+  /**
+   * Lo que ha tocado la otra persona desde que miraste la lista. Vacio si no hay nada.
+   *
+   * **Llevaba desde el primer dia viajando en la respuesta y sin pintarse en ninguna pantalla.**
+   * `docs/PANTALLAS.md` decia que estaba hecho («las dos secciones, el marcador, las novedades»)
+   * y `docs/VEREDICTO.md` tambien, pero `novedades` no aparecia en `app/src`: la lista compartida
+   * volvia a ser un sitio donde las cosas aparecen y desaparecen solas. Se pinta en `Cesta.tsx`.
+   */
+  novedades?: Novedad[]
 }
 
 export async function verLista(id: string): Promise<DetalleLista> {

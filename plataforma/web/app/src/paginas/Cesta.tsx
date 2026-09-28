@@ -35,7 +35,7 @@ import {
   entrar, misListas, registrarse, renombrarLista, revocarInvitaciones, salir, sincronizar,
   verLista, donde, yo,
 } from '../api/cesta'
-import type { CambioDeCola, CambioLinea, Invitacion, Persona } from '../api/cesta'
+import type { CambioDeCola, CambioLinea, Invitacion, Novedad, Persona } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
 import { euros, hace, nombreCadena } from '../api/formato'
 import {
@@ -630,6 +630,48 @@ function QuienEstaDentro({ personas }: { personas: Persona[] }) {
  *  para que la frase no pueda decir una cosa y la peticion otra. */
 const USOS_DEL_ENLACE = 3
 const DIAS_DEL_ENLACE = 7
+
+/** Lo que ha tocado otra persona desde tu ultima visita.
+ *
+ *  **Esto existia en la API desde el primer dia y no lo pintaba nadie.** `GET /listas/{id}`
+ *  devuelve `novedades` (`almacen.novedades`), `docs/PANTALLAS.md` lo daba por hecho («las dos
+ *  secciones, el marcador, las novedades») y `docs/VEREDICTO.md` tambien, pero la palabra
+ *  `novedades` **no aparecia en `app/src`**: el campo llegaba y se tiraba. Sin esto, una lista
+ *  compartida es un sitio donde las cosas aparecen y desaparecen solas, que son las palabras del
+ *  propio documento: quien llega a la tienda no sabe si lo que falta lo cogio su madre o lo quito
+ *  alguien, ni si el pan lo puso ella o se apunto por error.
+ *
+ *  Tres decisiones:
+ *
+ *  - **Se dice quien y que hizo**: «Mama cogio la leche», «Marta puso papel de cocina». El verbo
+ *    sale de lo ultimo que se hizo con la linea (`tachado_en`), que es lo que se quiere saber.
+ *  - **Solo lo de otra gente.** Una linea que apunte yo y tache yo no es una novedad, es lo que
+ *    acabo de hacer: se filtra por quien lo hizo, que es para lo que el `yo` viaja hasta aqui.
+ *  - **Cuatro y «y N mas».** La API manda hasta doce, y doce lineas de novedades tapan lo que se
+ *    viene a mirar (la lista). Lo que no se enseña se cuenta, no se esconde.
+ */
+function Novedades({ novedades, yo }: { novedades: Novedad[]; yo: string | null }) {
+  const deOtros = novedades.filter((n) => {
+    const quien = n.tachado_en ? n.tachado_por : n.anadido_por
+    return quien !== null && quien !== yo
+  })
+  if (!deOtros.length) return null
+  const dichas = deOtros.slice(0, 4)
+  const resto = deOtros.length - dichas.length
+  return (
+    <Aviso tono="info" titulo="Desde la última vez que miraste">
+      <ul className="grid gap-0.5">
+        {dichas.map((n, i) => (
+          <li key={`${n.nombre_visto}-${i}`}>
+            <strong>{n.tachado_en ? n.tachado_por : n.anadido_por}</strong>{' '}
+            {n.tachado_en ? 'cogió' : 'puso'} {n.nombre_visto}
+          </li>
+        ))}
+      </ul>
+      {resto > 0 && <p className="mt-1 text-xs">y {resto} más.</p>}
+    </Aviso>
+  )
+}
 
 /** Compartir: el enlace, quien esta dentro, quien entra por su usuario y anular.
  *
@@ -1318,6 +1360,21 @@ export function Cesta() {
                 y el «Deshacer» desaparecia justo cuando mas falta hace. Lo encontro el
                 navegador el 23 de septiembre de 2026 (`plataforma/prueba_navegador.py`). */}
             <>
+              {/* **Las novedades: lo que ha tocado la otra persona desde tu ultima visita.**
+                  La API las manda desde el primer dia (`GET /listas/{id}` → `novedades`) y
+                  `docs/PANTALLAS.md` decia que estaban hechas, pero **ninguna pantalla las
+                  pintaba**: `novedades` no aparecia en `app/src`. Sin esto, una lista compartida
+                  es un sitio donde las cosas aparecen y desaparecen solas -- palabras del propio
+                  documento --, y quien llega a la tienda no sabe si lo que falta lo cogio su
+                  madre o lo quito alguien.
+
+                  Va **arriba del todo**, antes de las dos secciones, porque es una noticia: se
+                  lee al abrir y desaparece sola al recargar (la visita se marca al leer, en la
+                  misma peticion). Si hay muchas, se enseñan cuatro y se dice cuantas mas hay:
+                  una lista de doce novedades tapa justo lo que se viene a mirar. */}
+              <Novedades novedades={detalle.data.novedades ?? []}
+                         yo={sesion.data?.usuario?.nombre
+                             ?? sesion.data?.usuario?.usuario ?? null} />
               {lineas.length === 0 && (
                 <>
                   <Vacio titulo="La lista está vacía">

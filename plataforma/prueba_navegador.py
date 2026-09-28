@@ -1107,7 +1107,18 @@ def main() -> int:
                  ("Por coger", "En el carro", "Lo que cuesta", "No tienes ninguna lista"),
                  ("Cesta",)),
                 ("1: que me falta y donde lo compro", ("Por coger", "En el carro",
-                                                       "No tienes ninguna lista"),
+                                                       "No tienes ninguna lista",
+                                                       # **Y la lista con todo cogido.** Los
+                                                       # encabezados «Por coger»/«En el carro» solo
+                                                       # salen si hay algo en los dos lados, asi que
+                                                       # con las 52 lineas tachadas -que es como
+                                                       # quedo la cuenta de esta puerta el 28 de
+                                                       # septiembre de 2026- la respuesta a la
+                                                       # pregunta 1 esta en «52 ya cogidas». Sin
+                                                       # esta marca, la puerta acusaba a la
+                                                       # aplicacion de un estado que la aplicacion
+                                                       # cuenta bien.
+                                                       "ya cogidas"),
                  ("Cesta",)),
                 ("4: lo mio que ha bajado", ("Lo tuyo que ha",),
                  ("Panel", "Bajadas", "Solo lo mío")),
@@ -1436,6 +1447,92 @@ def main() -> int:
             dentro = pagina.inner_text("body")
             comprueba("Invitada" in dentro or USUARIO_INVITADA in dentro,
                       "quien invito ve a la otra persona en «Quién está dentro»")
+
+            # ------------------------------- el papel de «solo mirar» ---------------------
+            # **Lo que promete la tarjeta de Compartir y no medía nadie.** Dice: *«Quien entre
+            # puede escribir en ella o solo mirarla, y eso se elige aquí abajo»*. Y ser de solo
+            # mirar no es una etiqueta: la API contesta **403** a cualquier cambio y la pantalla
+            # apaga los controles **diciendo por que**, en vez de dejar botones que fallan uno a
+            # uno. Se mide con las dos personas delante: el dueno cambia el papel por su usuario
+            # (que es el otro camino de compartir), la invitada recarga, y se comprueba lo que ve
+            # y lo que le deja hacer.
+            campo_usuario = pagina.get_by_label("Su usuario")
+            papel = pagina.get_by_label("Quien entre podrá")
+            if campo_usuario.count() and papel.count():
+                papel.select_option("mira")
+                campo_usuario.fill(USUARIO_INVITADA)
+                pagina.get_by_role("button", name="Compartir").first.click()
+                with contextlib.suppress(Exception):
+                    pagina.get_by_text("Ya está dentro").first.wait_for(timeout=15000)
+                comprueba("solo mira" in pagina.inner_text("body"),
+                          "el dueno puede dejar a alguien en «solo mirar»")
+                _carga(otra, "/cesta")
+                de_solo_mirar = otra.inner_text("main")
+                comprueba("te la compartieron para mirar" in de_solo_mirar,
+                          "y quien solo mira ve por que no puede tocar nada")
+                apagadas = otra.locator("input[type=checkbox]:disabled").count()
+                comprueba(apagadas >= 1,
+                          f"con las casillas apagadas, no con botones que fallan ({apagadas})")
+                # Y la API de verdad: un cambio suyo tiene que salir 403.
+                rechazo = otra.evaluate("""async () => {
+                  const lista = (await (await fetch('/api/listas', {credentials:
+                    'same-origin'})).json()).listas.find((l) => l.papel === 'mira');
+                  if (!lista) return 'no encuentro su lista de solo mirar';
+                  const detalle = await (await fetch(`/api/listas/${lista.id}`,
+                    {credentials: 'same-origin'})).json();
+                  const linea = (detalle.lineas || [])[0];
+                  if (!linea) return 'la lista no tiene lineas';
+                  const r = await fetch(`/api/listas/${lista.id}/lineas/${linea.id}`, {
+                    method: 'PATCH', credentials: 'same-origin',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tachado: true})});
+                  return r.status;
+                }""")
+                comprueba(rechazo == 403,
+                          f"y la API le dice que no si lo intenta igual ({rechazo})")
+                # De vuelta a escribir: el papel se puede cambiar en los dos sentidos, y dejarlo
+                # como estaba importa -- la cuenta de la invitada es **fija** y la siguiente
+                # pasada cuenta con que pueda escribir.
+                papel.select_option("escribe")
+                campo_usuario.fill(USUARIO_INVITADA)
+                pagina.get_by_role("button", name="Compartir").first.click()
+                pagina.wait_for_timeout(2500)
+                _carga(otra, "/cesta")
+                comprueba("te la compartieron para mirar" not in otra.inner_text("main")
+                          and otra.locator("input[type=checkbox]:disabled").count() == 0,
+                          "y volver a dejarle escribir le devuelve los controles")
+
+                # ------------------------------- las novedades ----------------------------
+                # **La API las mandaba desde el primer dia y no las pintaba ninguna pantalla.**
+                # `novedades` (`GET /listas/{id}`) no aparecia en `app/src`: una lista compartida
+                # era un sitio donde las cosas aparecen y desaparecen solas. Se mide aqui porque
+                # hacen falta **las dos personas**: una toca, la otra abre y tiene que enterarse.
+                sin_tachar = otra.locator("input[type=checkbox]:not(:disabled):not(:checked)")
+                if sin_tachar.count():
+                    nombre_visto = otra.evaluate("""() => {
+                      const i = [...document.querySelectorAll('input[type=checkbox]')]
+                        .find((x) => !x.disabled && !x.checked);
+                      return i && i.labels && i.labels[0]
+                        ? i.labels[0].innerText.trim() : '';
+                    }""")
+                    sin_tachar.first.click()
+                    with contextlib.suppress(Exception):
+                        otra.locator("input[type=checkbox]:checked").first.wait_for(timeout=15000)
+                    carga("/cesta")
+                    abierto = pagina.inner_text("main")
+                    comprueba("Desde la última vez que miraste" in abierto
+                              and "cogió" in abierto,
+                              f"el dueno ve lo que ha tocado la otra persona "
+                              f"({nombre_visto[:28]!r})")
+                    # **Y se va sola al recargar**: la visita se marca al leer la lista, asi que
+                    # la segunda vez ya no es una novedad. Un aviso que no se apaga es ruido.
+                    carga("/cesta")
+                    comprueba("Desde la última vez que miraste" not in pagina.inner_text("main"),
+                              "y al volver a mirar desaparece, porque ya no es novedad")
+                else:
+                    print("   (la lista no tiene lineas sin tachar: no se pueden ver novedades)")
+            else:
+                print("   (sin la tarjeta de Compartir no se puede medir el papel de solo mirar)")
             contexto2.close()
 
         # ------------------- la curva, con la frase debajo y el ahorro en euros (§4) ----

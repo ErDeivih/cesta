@@ -370,6 +370,67 @@ def test_ninguna_etiqueta_de_celda_es_un_simbolo_suelto():
     assert not malas, f"hay etiquetas de celda que no dicen nada: {malas}"
 
 
+def test_la_casilla_se_anuncia_con_el_nombre_de_su_linea():
+    """Un `input` sin nombre se lee «casilla, activada»: quien no ve, no sabe que tacha.
+
+    Lo mide la puerta de las funciones ya pintado (el nombre **accesible** sale del `<label>`, no
+    del `value`, que en todas las casillas es «on»). Aqui se vigila el sitio donde eso se decide:
+    `Casilla` (`componentes/ui.tsx`) envuelve el `input` en un `label` **con `htmlFor` al id del
+    input** y con el texto dentro. Sin ese `htmlFor` la asociacion se rompe y ninguna medida de
+    la pantalla lo notaria, porque el clic sigue funcionando.
+    """
+    ui = (APP / "src" / "componentes" / "ui.tsx").read_text(encoding="utf-8")
+    trozo = ui.split("export function Casilla(", 1)[1].split("\nexport function ", 1)[0]
+    assert "htmlFor={mio}" in trozo, (
+        "la casilla no asocia su etiqueta con el input: se anuncia sin nombre")
+    assert "id={mio}" in trozo, "el `<label htmlFor>` apunta a un id que el input no tiene"
+    assert "useId()" in trozo, "el id tiene que ser unico por casilla, no uno escrito a mano"
+    # Y el nombre accesible no puede salir del `value`: es «on» en todas las casillas.
+    assert "value=" not in trozo, "el nombre de la casilla no puede ser su `value`"
+
+
+def test_la_puerta_mide_la_aplicacion_con_el_teclado():
+    """El teclado, que no lo medía ninguna puerta: la app tambien se usa en el ordenador."""
+    puerta = (RAIZ / "plataforma" / "prueba_funciones.py").read_text(encoding="utf-8")
+    for que in ("controles alcanzados con el tabulador",
+                "cada casilla se anuncia con el nombre de su linea",
+                "y una linea se tacha con la barra espaciadora"):
+        assert que in puerta, f"la puerta no comprueba «{que}»"
+    assert "keyboard.press(\"Tab\")" in puerta, "la puerta no tabula"
+    produccion = (RAIZ / "plataforma" / "prueba_produccion.py").read_text(encoding="utf-8")
+    assert "«/» lleva el foco al buscador" in produccion, (
+        "la puerta de produccion no mide el atajo del buscador del material")
+    assert "«Escape» cierra la lista de resultados" in produccion, (
+        "y no mide que se pueda cerrar")
+
+
+def test_las_novedades_de_la_lista_se_pintan():
+    """Un campo que viaja en la respuesta y no se pinta es una funcion que no existe.
+
+    **Paso dos veces, y las dos con el mismo aspecto de estar hechas.** `nombre_visto` viajaba en
+    `GET /listas/{id}` desde el primer dia y no lo pintaba nadie (23 de septiembre de 2026), y
+    `novedades` igual: `docs/PANTALLAS.md` decia «**[hecho]** las dos secciones, el marcador, las
+    novedades», `docs/VEREDICTO.md` decia «novedades al abrir — hecho», la API las mandaba... y la
+    palabra `novedades` **no aparecia en `app/src`**. Una lista compartida seguia siendo un sitio
+    donde las cosas aparecen y desaparecen solas.
+
+    La puerta del navegador lo mide con las dos personas delante (una toca, la otra abre y se
+    entera, y al volver a abrir desaparece). Esto vigila lo que la puerta no puede: que la pantalla
+    siga pintandolo, y que el campo siga **declarado** en el tipo.
+    """
+    cesta = (APP / "src" / "paginas" / "Cesta.tsx").read_text(encoding="utf-8")
+    assert "<Novedades" in cesta, "la pantalla de la lista no pinta las novedades"
+    assert "function Novedades(" in cesta, "falta el componente que las pinta"
+    assert "Desde la última vez que miraste" in cesta, "y falta el titulo que las presenta"
+    tipos = (APP / "src" / "api" / "cesta.ts").read_text(encoding="utf-8")
+    assert "novedades?: Novedad[]" in tipos, (
+        "el campo no esta declarado en `DetalleLista`: TypeScript no lo vigilaria")
+    # Y el filtro que las hace utiles: lo que he tocado yo no es una novedad.
+    trozo = cesta.split("function Novedades(", 1)[1].split("\nexport ", 1)[0]
+    assert "quien !== yo" in trozo, (
+        "sin filtrar por quien lo hizo, la pantalla te cuenta lo que acabas de hacer tu")
+
+
 def test_lo_que_se_despliega_lleva_su_flecha():
     """Nada de `<summary>` sueltos: el marcador nativo desaparece con `display: flex`.
 

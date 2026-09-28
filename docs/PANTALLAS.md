@@ -364,9 +364,11 @@ codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
 
 ## 3. La lista
 
-**[hecho]** las dos secciones, el marcador, las novedades, compartir
-**[falta]** notas (tarea 5), agrupar por pasillos (tarea 1), cerrar compra
-(tarea 10)
+**[hecho]** las dos secciones, el marcador, compartir
+**[hecho, pero llego tarde]** las novedades: se daban por hechas desde el 23 de
+septiembre de 2026 y **no se pintaban en ninguna pantalla** hasta el 28 (ver «Las
+novedades»). Agrupar por pasillos ya no esta en la lista de lo que falta: esta hecho.
+**[falta]** notas (tarea 5), cerrar compra (tarea 10)
 
 ### Lo que se ve
 
@@ -431,6 +433,18 @@ Al abrir, si la otra persona ha tocado algo desde tu ultima visita:
 
 Sin esto, una lista compartida es un sitio donde las cosas aparecen y desaparecen
 solas.
+
+**Esto decia «hecho» desde el 23 de septiembre de 2026 y no lo estaba.** La API mandaba
+`novedades` en `GET /listas/{id}` desde el primer dia, pero la palabra `novedades` **no aparecia
+en `app/src`**: el campo llegaba y se tiraba, asi que la lista compartida seguia siendo el sitio
+descrito arriba. Lo encontro el 28 de septiembre de 2026 el repaso de «que campos viajan y no se
+pintan», y ahora se pinta en `Cesta.tsx` (`Novedades`): arriba de la lista, **una linea por
+cosa** -- «Invitada cogio Leche entera» --, solo lo que ha tocado otra gente (una linea que
+apunte yo y tache yo no es una novedad), como mucho cuatro y «y N mas» si hay mas.
+
+Y **se va sola**: la visita se marca al leer la lista, asi que la segunda vez que se abre ya no
+hay nada que contar. Un aviso que no se apaga es ruido. Lo mide la puerta del navegador con las
+dos personas delante: una toca, la otra abre y se entera, y al volver a abrir desaparece.
 
 ### Sin conexion
 

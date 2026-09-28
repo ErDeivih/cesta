@@ -40,11 +40,14 @@ numero en la barra de abajo, y que la cuenta de prueba **se borra al final**
 **Y mide tambien el material de aprendizaje pulsandolo**, no solo leyendolo: que cada bloque de
 codigo tenga su boton de copiar y que al pulsarlo conteste (con el portapapeles o, por http, con
 «Cópialo a mano» y el codigo seleccionado), que el capitulo traiga sus migas de pan, y que la
-tarjeta de «siguiente» lleve al capitulo que anuncia. Y desde el 28 de septiembre de 2026 **una
-pasada de escritorio**, a 1440 x 900, porque hasta ese dia todo lo de esta puerta era un movil:
-ahi se comprueba que la barra de secciones de arriba sale y lleva a los seis destinos, que los
-resultados vuelven a ser **una tabla con sus columnas** en vez de filas apiladas, que el indice
-lateral del material se ve, y que ninguna de las cinco pantallas se desliza de lado.
+tarjeta de «siguiente» lleve al capitulo que anuncia. **Y con el teclado**, que es de lo que vive
+un sitio de documentacion: «/» lleva el foco al buscador, `Escape` cierra la lista de resultados,
+una busqueda sin resultados lo dice («Nada con esas palabras», la cara vacia que no medía nadie) y
+el indice lateral esta plegado en el movil y desplegado en escritorio. Y desde el 28 de septiembre
+de 2026 **una pasada de escritorio**, a 1440 x 900, porque hasta ese dia todo lo de esta puerta era
+un movil: ahi se comprueba que la barra de secciones de arriba sale y lleva a los seis destinos, que
+los resultados vuelven a ser **una tabla con sus columnas** en vez de filas apiladas, y que ninguna
+de las cinco pantallas se desliza de lado.
 
 Existe por un fallo concreto y del 24 de septiembre de 2026: el dia que se cambio el montaje
 a `web/dist`, la API del contenedor devolvio **500** en `/api/ofertas-dudosas`
@@ -205,18 +208,22 @@ pasada, porque la API limita cuantas se crean por hora (`ALTAS_POR_HORA`).
 Cubre las cuatro preguntas (con sus tiempos), el pasillo pegado, el «Deshacer», los cambios
 sin cobertura, los avisos, **el escaner con un codigo de verdad**, **el enlace de invitacion
 abierto por una segunda persona** (otra sesion, que entra o crea su cuenta en la propia
-pantalla del enlace y acaba dentro de la lista), **las cuatro respuestas dentro de la primera
-pantalla de un movil** (la banda util son 109..787 px de 844: lo que obligue a desplazar la
-pantalla no se lee en quince segundos), **todo lo que se pulsa medido** en las ocho pantallas
-donde se puede acabar de pie (incluidas la ficha del producto y el escaner, que entraron al
-encontrar ahi cuatro objetivos de 19 px), **que ninguna pantalla se deslice de lado**, **que
-con la API a 500 cada pantalla lo diga con palabras y deje reintentar** (la cesta era la unica
-sin boton: escribia su error a mano) y **el contraste del texto pintado en los dos temas**,
-tambien en la ficha del producto. En su primera pasada encontro tres cosas que
-leyendo el codigo no se ven -- React Query pausando los cambios sin cobertura, la frase de
-«¿esto esta caro?» ausente en la pantalla a la que se llega buscando, y el arranque roto con
-dos listas de casa --, asi que **es lo que hay que correr cuando se toque la interfaz**. No
-cierra la condicion (a) de la barra: eso es una persona con un movil
+pantalla del enlace y acaba dentro de la lista), **el papel de «solo mirar»** (el dueno se lo
+cambia por su usuario a la persona que ya esta dentro, ella ve el aviso de por que no puede tocar
+nada -- 50 casillas apagadas -- y la API le contesta **403** si lo intenta igual, y volver a
+dejarle escribir le devuelve los controles), **las novedades** (una toca una linea, la otra abre
+su lista y se entera -- «Invitada cogio Leche entera» --, y al volver a abrir desaparece, porque
+un aviso que no se apaga es ruido), **las cuatro respuestas dentro de la primera pantalla de un
+movil** (la banda util son 109..787 px de 844: lo que obligue a desplazar la pantalla no se lee en
+quince segundos), **todo lo que se pulsa medido** en las ocho pantallas donde se puede acabar de
+pie (incluidas la ficha del producto y el escaner, que entraron al encontrar ahi cuatro objetivos
+de 19 px), **que ninguna pantalla se deslice de lado**, **que con la API a 500 cada pantalla lo
+diga con palabras y deje reintentar** (la cesta era la unica sin boton: escribia su error a mano)
+y **el contraste del texto pintado en los dos temas**, tambien en la ficha del producto. En su
+primera pasada encontro tres cosas que leyendo el codigo no se ven -- React Query pausando los
+cambios sin cobertura, la frase de «¿esto esta caro?» ausente en la pantalla a la que se llega
+buscando, y el arranque roto con dos listas de casa --, asi que **es lo que hay que correr cuando
+se toque la interfaz**. No cierra la condicion (a) de la barra: eso es una persona con un movil
 (`docs/PRUEBA-15-SEGUNDOS.md`).
 
 Las **dos cuentas** de esta prueba son fijas (`prueba-navegador` y `prueba-invitada`), y por
@@ -237,7 +244,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **75 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **79 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:
@@ -262,6 +269,13 @@ Lo que entro el 28 de septiembre de 2026, y por que cada cosa:
   tarjeta, comprobar que el boton **esta apagado** sin escribir tu usuario, que «No, déjalo»
   vuelve a dejarlo como estaba, y que con el tuyo se enciende y la cuenta desaparece. Deja una red
   de seguridad por API para que la base de casa no se quede con basura si la pantalla falla.
+- **La aplicacion con el teclado, y lo que anuncia una casilla.** Ninguna puerta miraba el
+  teclado: se medía el dedo (44 px, contraste, que nada se deslice) y la aplicacion tambien se usa
+  en el ordenador. Ahora se tabula por la pantalla y se comprueba que el foco llega a lo que se
+  usa (24 controles, incluida la casilla de una linea), que **se ve donde esta** (`:focus-visible`
+  pintado en todos), que cada casilla **se anuncia con el nombre de su linea** -- un `input` sin
+  nombre se lee «casilla, activada» y quien no ve la pantalla no sabe que esta tachando -- y que
+  una linea **se tacha con la barra espaciadora**, que es la tarea de verdad sin dedo.
 
 Y las dos cosas que esa ampliacion **encontro, que eran de la aplicacion**:
 
