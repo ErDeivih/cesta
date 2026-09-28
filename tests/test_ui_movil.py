@@ -352,6 +352,24 @@ def test_la_puerta_mide_que_el_precio_no_se_vaya_de_la_pantalla():
         "el caso que lo destapo tiene que estar contado al lado de la medida")
 
 
+def test_ninguna_etiqueta_de_celda_es_un_simbolo_suelto():
+    """La etiqueta de una celda apilada **dice de que es el numero**, no repite su simbolo.
+
+    Medido en la captura de `/panel?pestana=cadenas` el 28 de septiembre de 2026: la columna «%»
+    del panel llevaba `etiqueta="%"` y el valor ya traia su «%», asi que en el movil la linea se
+    leia «compite en 1008  gana 700  **% 69,4 %**». La cabecera de la tabla se esconde al apilar,
+    y la etiqueta es lo unico que queda para decir de que es ese porcentaje.
+    """
+    fuente = list(APP.glob("src/**/*.tsx"))
+    malas: list[str] = []
+    for fichero in fuente:
+        for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+            for etiqueta in re.findall(r'etiqueta="([^"]*)"', linea):
+                if len(etiqueta.strip(" %€$/-")) <= 1:
+                    malas.append(f"{fichero.name}:{numero} etiqueta={etiqueta!r}")
+    assert not malas, f"hay etiquetas de celda que no dicen nada: {malas}"
+
+
 def test_lo_que_se_despliega_lleva_su_flecha():
     """Nada de `<summary>` sueltos: el marcador nativo desaparece con `display: flex`.
 

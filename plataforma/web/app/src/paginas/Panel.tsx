@@ -528,7 +528,7 @@ function Cadenas() {
                       <Td>{nombreCadena(c.cadena)}</Td>
                       <Td className="cifra" etiqueta="compite en">{numero(c.compite_en, 0)}</Td>
                       <Td className="cifra" etiqueta="gana">{numero(c.gana, 0)}</Td>
-                      <Td className="cifra font-semibold" etiqueta="%">{porcentaje(c.pct)}</Td>
+                      <Td className="cifra font-semibold" etiqueta="de las veces que gana">{porcentaje(c.pct)}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -557,7 +557,11 @@ function Cadenas() {
                       <Td>{nombreCadena(m.cadena)}</Td>
                       <Td className="cifra" etiqueta="observaciones">{numero(m.observaciones, 0)}</Td>
                       <Td className="cifra" etiqueta="movidos">{numero(m.movidos, 0)}</Td>
-                      <Td className="cifra" etiqueta="%">{porcentaje(m.pct, 2)}</Td>
+                      {/* **La etiqueta no puede ser «%»**: el valor ya lleva su «%», y en el
+                          móvil se leia «% 69,4 %». La etiqueta dice de que es el porcentaje, que
+                          es lo unico que la cabecera daba y la fila apilada no tiene. Medido en
+                          la captura de `/panel?pestana=cadenas` el 28 de septiembre de 2026. */}
+                      <Td className="cifra" etiqueta="de las observaciones">{porcentaje(m.pct, 2)}</Td>
                       <Td className="cifra" etiqueta="mediana">{euros(m.mediana_cent)}</Td>
                     </tr>
                   ))}

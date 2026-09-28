@@ -36,6 +36,15 @@ que nadie ha visto.
 tiene precio se cuenta aparte, no como cero. Un precio de otro dia lleva su
 fecha.
 
+**Y un numero no se juzga por una captura: se mide en el DOM.** En una captura de 390 px la coma
+decimal y el punto son casi el mismo pixel. Paso dos veces el 28 de septiembre de 2026, mirando las
+capturas de todas las pantallas: el azafran de la ficha parecia decir `6875.00 €/kg` y el panel de
+marcas `12.59 €` y `33.8 %`, o sea numeros sin la coma del proyecto. Medido en la pagina
+(`data/debug/dato.py`), los tres decian `6875,00 €/kg`, `12,59 €` y `33,8 %`: el formateador
+(`api/formato.ts`, con `Intl.NumberFormat` de `es-ES`) estaba bien y lo que engañaba era la
+captura. Las capturas sirven para lo que no se puede medir -- que algo **parezca** lo que es --, y
+para los numeros hay que preguntarle a la pantalla.
+
 **Ninguna tabla se desliza de lado: se apila.** Por debajo de 640 px, cada fila es una linea y
 las celdas van debajo; el nombre de la columna va **en la celda** (`Td etiqueta="…"`) cuando el
 valor no se explica solo. Antes se deslizaba dentro de su caja con el aviso «Desliza la tabla
