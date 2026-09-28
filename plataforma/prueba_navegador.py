@@ -591,6 +591,36 @@ def main() -> int:
                   f"la cuenta {USUARIO} entra (si dice 429, se han creado demasiadas "
                   f"cuentas en la ultima hora)")
 
+        # **La lista de la cuenta de la prueba se poda, y no es un capricho.** Cada pasada anade
+        # una linea desde la ficha (es la pregunta 1), asi que la lista crecia sola: el 28 de
+        # septiembre de 2026 tenia **63 lineas**, 43 de ellas «Leche entera» de pasadas
+        # anteriores. Y una lista que crece cambia lo que se mide: la respuesta 4 de la primera
+        # pantalla se va al fondo, y la pasada siguiente se pone roja por el estado que dejo la
+        # anterior, no por la aplicacion -- que es el defecto de instrumento que este proyecto ya
+        # ha pagado tres veces. Se dejan las **20 mas recientes**.
+        podadas = pagina.evaluate("""async () => {
+          const listas = (await (await fetch('/api/listas', {credentials: 'same-origin'})).json())
+            .listas || [];
+          const casa = listas.find((l) => l.es_de_casa) || listas[0];
+          if (!casa) return 0;
+          const detalle = await (await fetch(`/api/listas/${casa.id}`,
+            {credentials: 'same-origin'})).json();
+          const lineas = detalle.lineas || [];
+          if (lineas.length <= 20) return 0;
+          let fuera = 0;
+          for (const l of lineas.slice(20)) {
+            await fetch(`/api/listas/${casa.id}/lineas/${l.id}`, {
+              method: 'PATCH', credentials: 'same-origin',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({borrado: true})});
+            fuera += 1;
+          }
+          return fuera;
+        }""")
+        if podadas:
+            print(f"   (la lista tenia mas de 20 lineas: se han quitado {podadas}, "
+                  f"las mas viejas de pasadas anteriores)")
+
         # -------------------------------------------------- pregunta 2: ¿esto esta caro? --
         print("\n== 'esto que tengo en la mano, esta caro?'")
         carga("/")

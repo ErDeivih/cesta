@@ -235,6 +235,13 @@ Las **dos cuentas** de esta prueba son fijas (`prueba-navegador` y `prueba-invit
 el mismo motivo: cada pasada corre contra la misma base. Se ha corrido **tres veces seguidas**
 con el mismo resultado (`TODO BIEN`), que es lo unico que hace fiable una puerta.
 
+**Y su lista se poda a las 20 lineas mas recientes.** Cada pasada anade una linea desde la ficha
+(es la pregunta 1), asi que crecia sola: el 28 de septiembre de 2026 tenia **63**, 43 de ellas
+«Leche entera» de pasadas anteriores. Una lista que crece cambia lo que se mide -- la respuesta 4 de
+la primera pantalla se va al fondo -- y la pasada siguiente se pone roja por el estado que dejo la
+anterior, que es el defecto de instrumento que este proyecto ya ha pagado tres veces. Se poda antes
+de medir y se dice por consola cuantas lineas se han quitado.
+
 ## La tercera puerta: **cada funcion de la aplicacion, hecha de verdad**
 
 Las dos puertas del navegador de arriba miran lo que el encargo pide -- las cuatro preguntas y
