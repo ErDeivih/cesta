@@ -226,6 +226,11 @@ buscando, y el arranque roto con dos listas de casa --, asi que **es lo que hay 
 se toque la interfaz**. No cierra la condicion (a) de la barra: eso es una persona con un movil
 (`docs/PRUEBA-15-SEGUNDOS.md`).
 
+**«Ya los he visto» apaga el punto y no borra el aviso**: la chapa del icono y la pantalla tienen
+que decir el mismo numero (`useAvisosSinVer` y el boton leen la misma regla), al pulsarlo el punto se
+apaga y **el aviso sigue ahi** -- son dos relojes distintos (`vista_en` y `salto_en`) y es aqui donde
+se ve que no se confunden --, y al volver a abrir sigue apagado.
+
 Las **dos cuentas** de esta prueba son fijas (`prueba-navegador` y `prueba-invitada`), y por
 el mismo motivo: cada pasada corre contra la misma base. Se ha corrido **tres veces seguidas**
 con el mismo resultado (`TODO BIEN`), que es lo unico que hace fiable una puerta.
@@ -244,7 +249,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **83 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **87 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:

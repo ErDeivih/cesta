@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 83
+COMPROBACIONES = 87
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -400,6 +400,49 @@ def main() -> int:
         else:
             comprueba(False, "no hay boton de quitar el favorito")
 
+        # ------------------------------- pasarlos TODOS de golpe --------------------------
+        # **El boton que existe para montar la compra de la semana** («Añadir los N a la
+        # lista», del 25 de septiembre de 2026: *"que sea facil anadir a una lista productos
+        # que ya estan en favoritos"*) no lo pulsaba ninguna puerta. Hacen falta **dos**
+        # favoritos, y se marcan desde la ficha de dos grupos distintos que salen de una
+        # busqueda, que es el camino que hace una persona.
+        carga("/buscar?q=leche+entera")
+        grupos = pagina.evaluate("""() => [...document.querySelectorAll("main a[href^='/grupo/']")]
+          .map((a) => a.getAttribute('href')).filter((h, i, t) => t.indexOf(h) === i).slice(0, 2)""")
+        for ruta in grupos or []:
+            carga(ruta)
+            corazon = pagina.get_by_role("button", name="Guardar")
+            if corazon.count():
+                corazon.first.click()
+                pagina.wait_for_timeout(1500)
+        carga("/favoritos")
+        todos = pagina.get_by_role("button", name=re.compile(r"^Añadir los \d+ a la lista$"))
+        comprueba(todos.count() == 1 and len(grupos or []) == 2,
+                  f"con {len(grupos or [])} favoritos sale el boton de pasarlos todos")
+        if todos.count():
+            carga("/cesta")
+            antes_todos = lineas()
+            carga("/favoritos")
+            cuantos = int(re.search(r"(\d+)", todos.first.inner_text()).group(1))
+            todos.first.click()
+            comprueba(espera(lambda: "Añadidos" in texto() or "Añadido" in texto()),
+                      "pasarlos todos lo dice")
+            carga("/cesta")
+            comprueba(lineas() == antes_todos + cuantos,
+                      f"y quedan apuntados los {cuantos} ({antes_todos} -> {lineas()} lineas)")
+        # Y se dejan los favoritos como estaban: una pasada no puede dejar basura que la
+        # siguiente tenga que adivinar.
+        carga("/favoritos")
+        for _ in range(6):
+            quitar = pagina.get_by_role("button", name="Quitar")
+            if not quitar.count():
+                break
+            quitar.first.click()
+            pagina.wait_for_timeout(1500)
+        carga("/favoritos")
+        comprueba("Todavía no tienes favoritos" in texto(),
+                  "y quitarlos deja la pantalla de favoritos vacia")
+
         # ----------------------------------------------------------------- avisos ------
         print("\n== avisos: pedirlo desde la ficha")
         carga("/grupo/526")
@@ -665,6 +708,13 @@ def main() -> int:
             .filter((p) => (p.dias_del_salto || 1) > 1).length;
         }""")
         carga("/panel?pestana=indice")
+        # **Se espera al texto, no a un tiempo fijo.** Esta pestana pide `/api/indice`, que
+        # recorre el historico: la primera peticion despues de arrancar el contenedor tarda
+        # segundos (hay que montar la copia de gold), y leer antes daba un FALLO con la pantalla
+        # bien -- paso el 28 de septiembre de 2026, con «5 eslabones en la API y la pantalla no
+        # lo dice». Solo se espera si hay algo que esperar.
+        if saltos:
+            espera(lambda: "más de un día" in texto(), 25.0)
         lo_dice = "más de un día" in texto()
         comprueba((saltos == 0 and not lo_dice) or (saltos > 0 and lo_dice),
                   f"el indice dice los eslabones que cubren mas de un dia ({saltos} en la API, "

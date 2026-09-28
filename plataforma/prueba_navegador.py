@@ -35,6 +35,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import re
 import sys
 import time
 
@@ -987,6 +988,65 @@ def main() -> int:
         comprueba(any(e in avisos for e in estados),
                   f"y sale en uno de sus estados, con su frase ({estados})")
 
+        # ------------------------- los avisos: el punto, y lo que se apaga -----------------
+        # **«Ya los he visto» no lo pulsaba ninguna puerta.** Estaba solo comprobado leyendo
+        # el codigo (`tests/test_alertas_pantalla.py`), y es una accion de verdad: el punto del
+        # icono se apaga **a mano** -- abrir la pantalla en el autobus no puede dar por leido lo
+        # que no se ha leido -- pero el aviso **tiene que seguir ahi**. Son dos relojes distintos
+        # (`vista_en` y `salto_en`) y es justo aqui donde se ve que no se confunden.
+        print("\n== los avisos: «Ya los he visto» apaga el punto y no borra el aviso")
+        carga("/avisos")
+
+        def el_punto() -> int:
+            """Cuantos avisos sin ver dice el icono. **Se lee el `sr-only`, no el punto.**
+
+            El punto de los avisos es **un punto rojo sin numero** (`Nav.tsx`: un `span`
+            `aria-hidden` de 8 px) y el cuanto va para quien no ve el color, en un `sr-only`
+            («3 sin ver»). La primera version de esta comprobacion buscaba un `aria-hidden` con
+            digitos -- que es como esta hecho el de la cesta -- y **siempre leia 0**: una
+            comprobacion que no puede ver la diferencia no es una comprobacion. Se lee el texto
+            oculto, que es el numero de verdad.
+            """
+            return pagina.evaluate("""() => {
+              const a = [...document.querySelectorAll('nav a')]
+                .find(x => x.getAttribute('href') === '/avisos');
+              if (!a) return -1;
+              const oculto = [...a.querySelectorAll('span')]
+                .map((s) => (s.textContent || '').trim()).join(' ');
+              const m = oculto.match(/(\\d+)\\s*sin ver/);
+              if (m) return Number(m[1]);
+              return a.querySelector('span.bg-red-600') ? -2 : 0;
+            }""")
+
+        ya_vistos = pagina.get_by_role("button", name=re.compile(r"^Ya los he visto"))
+        cuantos = el_punto()
+        if ya_vistos.count():
+            # **La chapa y la pantalla tienen que decir lo mismo.** Las dos leen la misma regla
+            # (`salto_en` y sin `vista_en`) del mismo dato: si una dice 3 y la otra 0, una de las
+            # dos esta mintiendo, y esa es la clase de fallo que se busca aqui.
+            dice_el_boton = int(re.search(r"\((\d+)\)",
+                                          ya_vistos.first.inner_text()).group(1))
+            comprueba(cuantos == dice_el_boton,
+                      f"el punto del icono y la pantalla dicen lo mismo "
+                      f"({cuantos} contra {dice_el_boton})")
+            ya_vistos.first.click()
+            with contextlib.suppress(Exception):
+                ya_vistos.first.wait_for(state="detached", timeout=10000)
+            pagina.wait_for_timeout(1500)
+            comprueba(el_punto() == 0,
+                      f"pulsarlo apaga el punto del icono ({cuantos} -> {el_punto()})")
+            comprueba(any(t in pagina.inner_text("main")
+                          for t in ("Ha bajado", "Saltó", "Salió y ya")),
+                      "y el aviso sigue en la pantalla: no se ha borrado nada")
+            comprueba("Ya los he visto" not in pagina.inner_text("main"),
+                      "y el boton desaparece, porque ya no queda nada por ver")
+            carga("/avisos")
+            comprueba(el_punto() == 0 and "Ya los he visto" not in pagina.inner_text("main"),
+                      "y al volver a abrir sigue apagado (lo que se apunto es `vista_en`)")
+        else:
+            print(f"   (no hay avisos sin ver: el punto dice {cuantos}. "
+                  "La cara de «Ya los he visto» no se puede medir en esta pasada)")
+
         # **Y la otra mitad de la pregunta 4: lo que ha bajado de lo mio sin haber pedido
         # ningun aviso.** Son dos cosas distintas y las dos contestan a la misma pregunta:
         # `/avisos` (un toque) contesta lo que pediste con la campana, y **solo** eso --
@@ -1699,13 +1759,21 @@ def main() -> int:
 
         carga("/avisos")
         # La seccion de lo que ha bajado, que es la respuesta de la pregunta 4 en esta
-        # pantalla. Cual de las dos ("Ha bajado" / "Esperando") depende de si el aviso se
-        # ha cumplido hoy, asi que se acepta la que haya.
-        seccion = pagina.get_by_text("Ha bajado", exact=True)
-        if seccion.count() == 0:
-            seccion = pagina.get_by_text("Esperando", exact=True)
-        if seccion.count():
-            dentro, donde = _cabe_en_la_primera(pagina, seccion.first)
+        # pantalla. **Los tres estados valen**, y son los mismos tres que ya documenta el
+        # bloque de arriba: «Ha bajado» (se cumple hoy), «Salió y ya no está a ese precio»
+        # (salto otro dia) y «Esperando» (todavia no). Hasta el 28 de septiembre de 2026 aqui
+        # solo se miraban los dos primeros: con tres avisos que saltaron dias atras -- y que
+        # ya no se cumplen -- la pantalla empieza por «Salió y ya no está a ese precio» y la
+        # comprobacion medía «Esperando», que va **al final** y por eso salia fuera de la
+        # banda util (y=832 en la pasada del 28, con la aplicacion bien).
+        seccion = None
+        for texto in ("Ha bajado", "Salió y ya no está a ese precio", "Esperando"):
+            cual = pagina.get_by_text(texto, exact=True)
+            if cual.count():
+                seccion = cual.first
+                break
+        if seccion is not None:
+            dentro, donde = _cabe_en_la_primera(pagina, seccion)
             comprueba(dentro, f"4: la seccion de los avisos se ve sin desplazar ({donde})")
         else:
             comprueba(False, "4: no encuentro la seccion de avisos en la pantalla")
