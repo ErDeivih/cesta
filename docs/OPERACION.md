@@ -665,6 +665,17 @@ categorias declaradas, paginas declaradas/pedidas y el estado de los enlaces (si
 propio id, fuera de su dominio, repetidos). **Sale 0 si todo cuadra** y, si no, cuantos problemas
 hay. Es de solo lectura: no pide nada a las cadenas.
 
+**Y lee tambien el estado que va dentro del HTML.** Medido el 28 de septiembre de 2026 con la
+cosecha de ese dia delante: el informe daba **18 productos de Alcampo que «sobran»** y sospechaba
+de bronze (*«¿bronce de otro dia?»*). No era bronze: los 18 salian de un `.json.gz` que no es JSON,
+es la pagina `Resultados de la busqueda para papel multiusos`, con el estado incrustado. El
+**barrido del buscador** es un camino de descubrimiento documentado (`collectors/alcampo.py`,
+`productos_de_busqueda`) y lo que encuentra se guarda, asi que la comparacion tenia que leerlo --
+con **el mismo `js_object`** que usa el colector, porque un control que lee de otra forma que el
+colector no puede discrepar de el. Con eso, la cosecha del 28 da **0 problemas**. Lo vigila
+`tests/test_verificar_ingesta.py`, que tiene los dos casos: la pagina con estado (no sobra nada) y
+la pagina sin estado (lo que hay en bronze si sobra).
+
 Lo que cuenta como problema y lo que no esta razonado en el propio modulo, y es la parte que hay
 que respetar si se toca:
 

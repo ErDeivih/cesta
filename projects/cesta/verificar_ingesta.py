@@ -265,8 +265,23 @@ def _declarados(fuente: str, cuerpos) -> set[str]:
 
 
 def _ids_alcampo(cuerpos) -> set[str]:
-    """Camina el JSON y aplica la regla del colector: `retailerProductId or productId`."""
+    """Camina el JSON y aplica la regla del colector: `retailerProductId or productId`.
+
+    **Y mira tambien dentro del HTML, que es donde esta el barrido del buscador.** Medido el
+    28 de septiembre de 2026: el informe daba **18 productos que «sobran»** y sospechaba de
+    bronze («¿bronce de otro dia?»). No era bronze: los 18 salian de
+    `raw/fuente=alcampo/fecha=.../<hash>.json.gz` que **no son JSON**, son la pagina de
+    resultados del buscador (`Resultados de la busqueda para papel multiusos`), con el estado
+    incrustado en el HTML. El barrido del buscador es un camino de descubrimiento documentado
+    (`collectors/alcampo.py`, `productos_de_busqueda`) y lo que encuentra **se guarda**: la
+    comparacion tenia que leerlo, o el control acusaba a la ingesta de un fallo propio.
+
+    Se extrae con **el mismo `js_object`** que usa el colector, no con un regex nuevo: si el
+    control leyera de otra forma que el colector, no podria discrepar de el.
+    """
     import json
+
+    from core.state import js_object
 
     salida: set[str] = set()
 
@@ -285,7 +300,12 @@ def _ids_alcampo(cuerpos) -> set[str]:
     for _n, cuerpo in cuerpos:
         try:
             anda(json.loads(cuerpo))
-        except Exception:  # noqa: BLE001
+            continue
+        except Exception:  # noqa: BLE001 - no es JSON: puede ser una pagina con el estado dentro
+            pass
+        try:
+            anda(js_object(cuerpo.decode("utf-8", "replace"), "__INITIAL_STATE__"))
+        except Exception:  # noqa: BLE001 - ni JSON ni pagina con estado: no declara nada
             continue
     return salida
 

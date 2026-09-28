@@ -97,6 +97,41 @@ def test_un_producto_que_falta_con_explicacion_no_es_un_problema(datos):
     assert sum(len(v) for v in inf.explicados.values()) == 1
 
 
+def test_el_barrido_del_buscador_de_alcampo_cuenta_como_declarado(datos):
+    """Una pagina de resultados del buscador **no es JSON**: lleva el estado dentro del HTML.
+
+    Medido el 28 de septiembre de 2026, con la ingesta del dia delante: el informe daba **18
+    productos que «sobran»** y sospechaba de bronze («¿bronce de otro dia?»). No era bronze: los
+    18 salian de un `.json.gz` que era la pagina `Resultados de la busqueda para papel multiusos`,
+    con el estado incrustado. El barrido del buscador es un camino de descubrimiento documentado
+    (`collectors/alcampo.py`) y lo que encuentra se guarda, asi que la comparacion tenia que
+    leerlo -- o el control acusaba a la ingesta de un fallo suyo, y el siguiente que lo leyera se
+    habria puesto a buscar un problema que no existe.
+    """
+    html = (b'<html><script>window.__INITIAL_STATE__ = {"data": {"products": '
+            b'{"productEntities": {"a": {"retailerProductId": "426148", "name": "Papel"}, '
+            b'"b": {"productId": "497657", "name": "Servilletas"}}}}};</script></html>')
+    _guardar(datos, "alcampo", "/search?q=papel", html)
+    _bronze(datos, "alcampo", ["426148", "497657"])
+
+    inf = vi.revisa("alcampo", FECHA.isoformat())
+
+    assert inf.sobran == set(), inf.sobran
+    assert len(inf.problemas()) == 0, inf.problemas()
+
+
+def test_una_pagina_de_alcampo_sin_estado_no_inventa_declarados(datos):
+    """Y al reves: una pagina que no trae el estado no declara nada (ni revienta el control)."""
+    _guardar(datos, "alcampo", "/search?q=raro", b"<html><body>reto del WAF</body></html>")
+    _bronze(datos, "alcampo", ["12345"])
+
+    inf = vi.revisa("alcampo", FECHA.isoformat())
+
+    # Lo de bronze no esta declarado: eso si es un «sobra», y tiene que salir.
+    assert inf.sobran == {"12345"}
+    assert len(inf.problemas()) == 1
+
+
 def test_la_paginacion_declarada_que_no_se_pidio_sale(datos):
     """DIA dice cuantas paginas tiene la categoria; si se piden menos, faltan productos."""
     sitemap = (b"<url><loc>https://www.dia.es/x/y/c/L1</loc></url>"
