@@ -117,24 +117,24 @@ maestro es `docs/PLAN-UI-MATCHING.md` y su informe es
       porque un enlace caducado guardado se aplicaria solo la proxima vez que
       alguien abra la aplicacion. Con esto **los tres bloqueantes estan
       resueltos** y lo que queda se puede escalonar.
-   6. **Escribir sin cobertura**: cola local + `POST /listas/{id}/sincronizar`, y
-      leer la lista sin red. El viejo funcionaba con el PC de casa apagado
-      (`app.js:39-47, 63-80, 476-484`); el nuevo depende de `GET /listas/{id}` y
-      sin red no ensena nada. En `docs/APP.md` esto es el paso 7 del orden de
-      construccion, asi que **se puede escalonar**, pero hay que decidirlo.
+   6. ~~**Escribir sin cobertura**~~ — **hecho, y comprobado el 27 de septiembre de 2026**:
+       la cola local y `POST /listas/{id}/sincronizar` estan (`cola_sin_cobertura`, con sus
+       pruebas), la lista se lee sin red, y la puerta del navegador lo mide en cada pasada
+       («tachar sin cobertura», 1,2 s) ademas de comprobar que **sin red el aviso no es rojo**
+       (`esSinRed`, en `api/cliente.ts`).
 
-   **Se pueden escalonar, pero que sea decidido y no por omision:**
+   **Lo que quedaba por escalonar, comprobado entero el 27 de septiembre de 2026:**
 
-   7. **Avisos de precio**: crear ("cuando este mas barato que nunca en 90 dias",
-      "cada vez que baje", umbral), ver los que han saltado y quitarlos
-      (`GET/POST/DELETE /api/alertas`, `main.py:528, 542, 552`). Cero
-      coincidencias de `alertas` en `app/src`. Era lo unico de Favoritos que
-      avisaba de algo.
-   8. **Tres pantallas del panel**: `GET /indice` (`app.js:796-920`),
-      `GET /posicion` (`app.js:925-996`) y `GET /ofertas-dudosas`
-      (`app.js:1110-1156`), mas el **filtro del panel por cadenas cercanas**:
-      `Panel.tsx:488` llama `useBajadas(dias, subidas, [])` con la lista vacia y
-      ninguna pestana lee `cadenas_cerca`.
+   7. ~~**Avisos de precio**~~ — **hecho**: `paginas/Avisos.tsx` con los que han saltado, el
+      punto en el icono (`useAvisosSinVer`, que es de la persona y no de la pantalla), el
+      corazon de la ficha y «Avisarme si baja» en la ficha del grupo, y quitar cada uno
+      (`borrarAlerta`, `api/alertas.ts:40`). La tercera puerta pide uno desde la ficha y lo ve
+      llegar a la pantalla.
+   8. ~~**Tres pantallas del panel**~~ — **hecho**: `indice`, `posicion` y `dudosas` son
+      pestanas del panel, y **el filtro por cadenas cercanas tambien**: cuando hay cadenas
+      marcadas en Ajustes, el panel dice «Mirando solo las cadenas que tienes cerca, las de
+      Ajustes» y se puede volver a «Todas» con un toque. La puerta de las funciones mueve la
+      ventana, el sentido y el «solo lo mio» en la pestana de bajadas.
    9. ~~**"Darme de baja"**~~ — **hecho el 24 de septiembre de 2026**: el boton esta en
       `Ajustes.tsx`, con la confirmacion por usuario de la interfaz vieja (escribir tu propio
       usuario, no un «¿seguro?», que se pulsa sin leer) y `borrarme()` en `src/api/cesta.ts`
