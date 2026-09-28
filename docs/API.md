@@ -478,6 +478,24 @@ Tres reglas que se ven en la respuesta y que son de dinero:
 Una cadena que no es una de las cinco sale 422. Borrar lineas marca `borrado_en` (se
 limpian de verdad a los 30 dias), asi que deshacer no depende de una copia de seguridad.
 
+### Cuanto tardan los tres, y por que
+
+`GET /api/listas/{id}`, `/donde` y `/reparto` piden **las ofertas vigentes de silver**, y esa
+consulta recorria silver entero dos veces en cada peticion para quedarse con el ultimo dia. Medido
+**dentro del contenedor** el 28 de septiembre de 2026 (`data/debug/silver.py`, que es donde
+importa: silver llega por el montaje de Docker en Windows y cada lectura cuesta mas que en el
+disco del PC): **2,10 s la consulta de antes y 0,04 s la de ahora**, con el mismo resultado. Y de
+una en una por HTTP (`data/debug/peticiones.py`):
+
+    /api/listas/{id}    2,07 s  ->  0,08 s
+    /donde              2,66 s  ->  0,06 s
+    /reparto            4,50 s  ->  0,10 s
+    la pantalla de la lista se queda quieta   4,3 s  ->  1,0 s
+
+La fecha ya estaba en el nombre de la carpeta (`fuente=dia/fecha=2026-09-28`): preguntarsela a los
+parquet era leer 105 MB para nada. Lo vigila `tests/test_ofertas_del_dia.py`, que ademas fija que
+un dia nuevo se lea **sin reiniciar** el contenedor.
+
 ### `POST /api/listas/{id}/desde-favoritos`
 
     entra  {"grupo_ids": [4125, 4126], "producto_ids": ["dia:123"]}

@@ -821,6 +821,17 @@ def main() -> int:
 
         # ------------------------------------------------- sin cobertura: tachar igual ---
         print("\n== tachar sin cobertura")
+        # **Se espera a que la lista este asentada, y esto es un fallo de la puerta que costo una
+        # pasada roja.** Medido el 28 de septiembre de 2026, corriendo las puertas en fila: todo lo
+        # de arriba en verde -- incluidas «la linea quitada desaparece» y «Deshacer la trae de
+        # vuelta» -- y esta comprobacion en rojo diciendo que no habia lineas que tachar, con una
+        # lista de 44. Lo que pasa es que deshacer **invalida la consulta** de la lista y la
+        # pantalla pasa por un momento en el que aun no hay casillas: mirar justo entonces mide el
+        # hueco, no el resultado. Es la misma clase de error que el desplegable vacio de
+        # `prueba_funciones`, y se arregla igual: esperar al estado, no a un instante.
+        fin = time.monotonic() + 15
+        while pagina.locator("input[type=checkbox]").count() == 0 and time.monotonic() < fin:
+            pagina.wait_for_timeout(300)
         casillas = pagina.locator("input[type=checkbox]")
         comprueba(casillas.count() >= 1, "hay lineas que tachar")
         if casillas.count():

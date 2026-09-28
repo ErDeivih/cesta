@@ -92,27 +92,74 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     return mejor
 
 
+def _ultima_fecha_silver() -> str | None:
+    """La fecha de la ultima particion que hay escrita en silver, o `None`.
+
+    Se mira **en el disco y no en los ficheros**: el nombre de la carpeta ya lo dice
+    (`data/silver/fuente=dia/fecha=2026-09-28/...`), y abrir los parquet para preguntarles una
+    fecha que esta en su ruta es leer 105 MB para nada.
+
+    **Esto es el arreglo de una lentitud medida.** Hasta el 27 de septiembre de 2026 la consulta
+    de las ofertas hacia `WHERE fecha = (SELECT max(fecha) FROM read_parquet('...silver/**'))`,
+    o sea **un recorrido entero de silver dos veces en cada peticion** (1.066.573 filas, 106
+    particiones, 105 MB) para quedarse con el ultimo dia. Medido **dentro del contenedor** con
+    `data/debug/silver.py` (que es donde importa: silver llega por el montaje de Docker en
+    Windows y cada lectura cuesta mas que en el disco del PC): **2,10 s la consulta de antes y
+    0,04 s la de ahora**, con el mismo resultado (7.908 ofertas).
+
+    Y no se pagaba una vez: `_candidatos` llama aqui, asi que la pagaban **los tres endpoints de
+    la cesta**. Medido con `data/debug/peticiones.py`: `/api/listas/{id}` 2,07 s, `/donde` 2,66 s
+    y `/reparto` 4,50 s, y la pantalla de la lista (que pide las tres a la vez) tardaba **4,3 s**
+    en quedarse quieta -- justo la pantalla que se usa de pie en la tienda. El comentario de
+    `_promos_vigentes` ya decia «se lee la particion del dia mas reciente»: ahora es verdad.
+    """
+    silver = AJUSTES.gold.parent / "silver"
+    ultima: str | None = None
+    for ruta in silver.glob("fuente=*/fecha=*"):
+        fecha = ruta.name.removeprefix("fecha=")
+        if ultima is None or fecha > ultima:
+            ultima = fecha
+    return ultima
+
+
+# Las ofertas del ultimo dia, ya leidas: `{producto: texto}`. Se guarda **por fecha**, porque el
+# dia que silver tenga otra particion hay que volver a leer, y sin esto una pasada del dia no se
+# veria hasta reiniciar el contenedor.
+_PROMOS_POR_FECHA: dict[str, dict[str, str]] = {}
+
+
 def _promos_vigentes(producto_ids: set[str]) -> dict[str, str]:
     """El texto de oferta de cada producto, si lo hay.
 
     Vive en silver y no en gold, porque gold se queda con lo que sirve para
-    comparar. Se lee la particion del dia mas reciente y ya esta.
+    comparar. Se lee la particion del dia mas reciente y ya esta (y se guarda: los
+    precios se escriben una vez al dia).
     """
     if not producto_ids:
         return {}
-    con = conexion()
-    ruta = str(AJUSTES.gold.parent / "silver" / "**" / "*.parquet").replace("\\", "/")
     try:
-        filas = con.execute(f"""
-            SELECT fuente || ':' || id_fuente, promo_txt
-              FROM read_parquet('{ruta}', hive_partitioning=1)
-             WHERE fecha = (SELECT max(fecha) FROM read_parquet('{ruta}', hive_partitioning=1))
-               AND promo_txt IS NOT NULL
-        """).fetchall()
+        fecha = _ultima_fecha_silver()
+        if fecha is None:
+            return {}
+        tabla = _PROMOS_POR_FECHA.get(fecha)
+        if tabla is None:
+            con = conexion()
+            dia = AJUSTES.gold.parent / "silver" / "fuente=*" / f"fecha={fecha}" / "*.parquet"
+            # A barras normales: DuckDB en Windows acepta las dos, pero la ruta se compone con el
+            # separador del sistema y el SQL se lee mejor con una sola forma.
+            ruta = str(dia).replace("\\", "/")
+            filas = con.execute(f"""
+                SELECT fuente || ':' || id_fuente, promo_txt
+                  FROM read_parquet('{ruta}', hive_partitioning=1)
+                 WHERE promo_txt IS NOT NULL
+            """).fetchall()
+            tabla = {f[0]: f[1] for f in filas}
+            _PROMOS_POR_FECHA.clear()
+            _PROMOS_POR_FECHA[fecha] = tabla
     except Exception:  # noqa: BLE001 - sin silver, sin ofertas, pero el
         # calculo de la cesta tiene que seguir dando un total.
         return {}
-    return {f[0]: f[1] for f in filas if f[0] in producto_ids}
+    return {k: v for k, v in tabla.items() if k in producto_ids}
 
 
 def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
