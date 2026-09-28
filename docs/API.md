@@ -369,6 +369,19 @@ Los tres son de solo lectura y alimentan las tres ultimas pestanas del panel
 seccion a seccion (contra **las otras** cadenas de su grupo comparable, no contra el
 precio medio del pasillo) y cuantos precios mueve cada cadena en cada captura.
 
+**`dias_del_salto` dice cuantos dias cubre cada eslabon, y la pantalla lo dice.** El indice se
+multiplica dia a dia: donde una cadena no se rastrero un dia, el eslabon salta y el indice se mueve
+sin haber visto los dias de en medio. El campo viajaba desde el primer dia y **la interfaz nueva no
+lo pintaba** (la vieja si, `app.js:1020`), asi que el dibujo hacia como si hubiera visto todos los
+dias. Medido el 28 de septiembre de 2026: **cinco eslabones** de 2 y 3 dias -- Alcampo el 13 y el
+23, Carrefour el 13, el 19 y el 23. Ahora el grafico marca esos puntos con un circulo hueco, la nota
+los dice **con sus dos fechas** («Carrefour del 10 sept al 13 sept, 3 dias») y la tabla gana la
+columna «Salto» cuando hay alguno.
+
+Lo encontro `data/debug/campos_sin_pintar.py`, que recorre los tipos de la API y dice que campos
+**no usa ninguna pantalla**: hoy 255 declarados y 8 sin usar, de los que este era el unico que
+prometia algo. Es la misma clase de fallo que `nombre_visto` y que `novedades`, y ya van tres.
+
 ### `GET /api/alertas`
 
     sale  {"fecha_datos",
