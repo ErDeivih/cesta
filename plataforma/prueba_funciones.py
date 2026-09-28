@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 75
+COMPROBACIONES = 79
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -255,6 +255,56 @@ def main() -> int:
         else:
             comprueba(False, f"no encuentro la lista «Navidad» que cree antes "
                              f"({antes_de_borrar})")
+
+        # ------------------------------------------- con el teclado y con lector --------
+        print("\n== con el teclado, y lo que anuncia una casilla")
+        # **Lo que no medía nadie.** Las puertas miden el dedo (44 px, contraste, que nada se
+        # deslice) y el teclado no lo miraba ninguna: la aplicacion se usa tambien en el
+        # ordenador -- desde el 28 de septiembre de 2026 la puerta de produccion mide la
+        # pantalla ancha --, y un control al que no se llega con el tabulador no existe para
+        # quien no usa el raton. Medido con `data/debug/teclado.py` antes de escribir esto: el
+        # foco recorre los seis destinos, el desplegable y las lineas, y **se ve donde esta**.
+        carga("/cesta")
+        alcanzados = []
+        for _ in range(24):
+            pagina.keyboard.press("Tab")
+            quien = pagina.evaluate("""() => {
+              const a = document.activeElement;
+              if (!a || a === document.body) return null;
+              const e = getComputedStyle(a);
+              return {etiqueta: a.tagName.toLowerCase(),
+                      nombre: (a.getAttribute('aria-label') || a.innerText || '').trim(),
+                      foco: (e.outlineStyle !== 'none' && e.outlineWidth !== '0px')
+                            || e.boxShadow !== 'none'};
+            }""")
+            if quien:
+                alcanzados.append(quien)
+        sin_foco_visible = [a["nombre"][:30] for a in alcanzados if not a["foco"]]
+        comprueba(len(alcanzados) >= 8 and not sin_foco_visible,
+                  f"{len(alcanzados)} controles alcanzados con el tabulador, y todos dicen "
+                  f"donde esta el foco (sin marca: {sin_foco_visible})")
+        comprueba(any(a["etiqueta"] == "input" for a in alcanzados),
+                  "y la casilla de una linea se alcanza con el tabulador")
+        # **Lo que oye un lector de pantalla al llegar a la casilla.** Un `input` sin nombre se
+        # anuncia «casilla, activada» y quien no ve la pantalla no sabe que esta tachando. El
+        # nombre sale del `<label>` (`Casilla`), asi que se mira el nombre **accesible**, no el
+        # `value` del input (que es «on» en todas).
+        nombres = pagina.evaluate("""() => [...document.querySelectorAll('input[type=checkbox]')]
+          .slice(0, 3).map((i) => (i.labels && i.labels[0] ? i.labels[0].innerText.trim() : ''))""")
+        comprueba(bool(nombres) and all(len(n) > 2 for n in nombres),
+                  f"cada casilla se anuncia con el nombre de su linea ({nombres})")
+        # Y la tarea de verdad, sin dedo: se tacha con la barra espaciadora.
+        antes_de_tachar = pagina.locator("input[type=checkbox]:checked").count()
+        casilla = pagina.locator("input[type=checkbox]").first
+        casilla.focus()
+        pagina.keyboard.press("Space")
+        comprueba(espera(lambda: pagina.locator(
+            "input[type=checkbox]:checked").count() == antes_de_tachar + 1),
+            "y una linea se tacha con la barra espaciadora")
+        pagina.locator("input[type=checkbox]:checked").first.focus()
+        pagina.keyboard.press("Space")
+        espera(lambda: pagina.locator(
+            "input[type=checkbox]:checked").count() == antes_de_tachar)
 
         # ------------------------------------------------------------- favoritos -------
         print("\n== favoritos: marcar, ver, pasar a la lista, quitar")

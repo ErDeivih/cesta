@@ -528,7 +528,40 @@ def main() -> int:
         lateral = ancho.locator("aside.lateral")
         comprueba(lateral.count() == 1 and lateral.first.is_visible(),
                   "el indice lateral del material se ve en pantalla ancha")
+        # **Y el teclado del material, que tampoco lo miraba nadie.** El buscador del sitio tiene
+        # un atajo (`/`, `buscar.js`) para no tener que ir al raton, la lista de resultados se
+        # cierra con `Escape`, y lo que no encuentra lo dice («Nada con esas palabras»), que es
+        # la cara vacia que aqui no habia medido nadie. Y el indice lateral esta plegado en el
+        # movil a proposito: en el escritorio es al reves.
+        ancho.goto(f"{BASE}/aprende/04-emparejar-productos.html", wait_until="domcontentloaded")
+        ancho.wait_for_timeout(900)
+        ancho.keyboard.press("/")
+        ancho.wait_for_timeout(400)
+        foco = ancho.evaluate("() => document.activeElement && document.activeElement.id")
+        comprueba(foco == "buscar",
+                  f"en el material, «/» lleva el foco al buscador ({foco!r})")
+        ancho.locator("#buscar").fill("zzz-no-existe-zzz")
+        ancho.wait_for_timeout(600)
+        comprueba("Nada con esas palabras" in ancho.locator("#resultados").inner_text(),
+                  "y una busqueda sin resultados lo dice, en vez de quedarse vacia")
+        ancho.keyboard.press("Escape")
+        ancho.wait_for_timeout(400)
+        comprueba(ancho.locator("#resultados").is_hidden(),
+                  "y «Escape» cierra la lista de resultados")
+        # El indice lateral: plegado en el movil (el `<details>` no lleva `open`), abierto en
+        # escritorio (el CSS esconde el `<summary>`), que es lo que `GUION_LATERAL` decide.
+        comprueba(ancho.locator(".lateral details").first.get_attribute("open") is not None,
+                  "en escritorio el indice lateral esta desplegado de salida")
         ancho_ctx.close()
+
+        movil_lateral = navegador.new_context(viewport={"width": 390, "height": 844},
+                                             is_mobile=True, has_touch=True, locale="es-ES")
+        estrecho = movil_lateral.new_page()
+        estrecho.goto(f"{BASE}/aprende/04-emparejar-productos.html", wait_until="domcontentloaded")
+        estrecho.wait_for_timeout(1200)
+        comprueba(estrecho.locator(".lateral details").first.get_attribute("open") is None,
+                  "y en el movil se pliega, para que la primera pantalla sea el capitulo")
+        movil_lateral.close()
 
         print("\n== y la cuenta de prueba se borra")
         carga("/ajustes")
