@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 72
+COMPROBACIONES = 75
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -149,13 +149,28 @@ def main() -> int:
         espera(lambda: lineas() >= 1)
         comprueba(lineas() == 1, f"añadir desde el mosaico apunta una linea ({lineas()})")
         primera = pagina.locator("input[type=checkbox]").first
-        # La cantidad: `+` sube a 2.
+        # La cantidad, **en los dos sentidos**: `+` sube a 2 y `−` la devuelve a 1. Solo se
+        # medía el `+`, y bajar la cantidad es la mitad de «cambiar la cantidad» -- ademas de
+        # ser el boton que se queda apagado en 1 (la API acepta 1..99 y un 422 por pulsar de
+        # mas no es una forma de enterarse).
+        def cantidad_de_la_primera() -> str:
+            return pagina.locator("button[aria-label^='Más ']").first.locator(
+                "xpath=..").inner_text()
+
         mas = pagina.locator("button[aria-label^='Más ']").first
         if mas.count():
             mas.click()
-            comprueba(espera(lambda: "2" in pagina.locator(
-                "button[aria-label^='Más ']").first.locator("xpath=..").inner_text()),
-                "el boton de mas sube la cantidad")
+            comprueba(espera(lambda: "2" in cantidad_de_la_primera()),
+                      "el boton de mas sube la cantidad")
+            menos = pagina.locator("button[aria-label^='Menos ']").first
+            if menos.count():
+                menos.click()
+                comprueba(espera(lambda: "1" in cantidad_de_la_primera()),
+                          "y el de menos la baja (vuelve a 1)")
+                comprueba(menos.is_disabled(),
+                          "y en 1 se queda apagado, en vez de mandar un 422")
+            else:
+                comprueba(False, "no encuentro el boton de bajar la cantidad")
         else:
             comprueba(False, "no encuentro el boton de subir la cantidad")
         # Tachar: la linea se va a «En el carro».
@@ -454,6 +469,19 @@ def main() -> int:
                       f"marcar una cadena cercana se guarda ({antes} -> {despues})")
         else:
             comprueba(False, "no encuentro las pastillas de cadenas en ajustes")
+        # Y quitarlas todas de una vez: el boton **solo sale cuando hay alguna marcada**, asi
+        # que este es el momento de medirlo (y si el de arriba no ha marcado nada, no se mide
+        # y se dice, en vez de dar por bueno un boton que no estaba).
+        quitar_todas = pagina.get_by_role("button", name="Quitar todas")
+        if quitar_todas.count():
+            quitar_todas.first.click()
+            pagina.wait_for_timeout(2500)
+            carga("/ajustes")
+            marcadas = pagina.locator("button[aria-pressed='true']").count()
+            comprueba(marcadas == 0 and "Quitar todas" not in texto(),
+                      f"«Quitar todas» deja las cadenas sin marcar ({marcadas})")
+        else:
+            print("   (no hay cadenas marcadas: «Quitar todas» no se pinta, y eso es correcto)")
         salir = pagina.get_by_role("button", name="Salir").first
         if salir.count():
             salir.click()

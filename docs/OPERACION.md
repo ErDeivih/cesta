@@ -215,7 +215,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **72 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **75 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:
