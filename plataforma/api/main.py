@@ -528,6 +528,19 @@ def renombrar_lista(lista_id: str, datos: NombreLista,
     return hecho
 
 
+def _linea_movida(linea: dict) -> dict:
+    """Una linea cuyo grupo ya no es su producto: se marca y se le quita el pasillo.
+
+    El pasillo vive en el grupo, asi que el de una linea movida es el de **otro
+    producto** (medido el 28 de septiembre de 2026: la leche entera salia bajo
+    «Higiene y belleza»). Sin pasillo, la pantalla la pinta al final y sin encabezado,
+    que es la cara que ya existe para las lineas sin seccion.
+    """
+    limpia = {k: v for k, v in linea.items()
+              if k not in ("seccion", "pasillo", "pasillo_orden")}
+    return limpia | {"producto_movido": True}
+
+
 @app.get("/api/listas/{lista_id}")
 def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     papel = _acceso(lista_id, usuario)
@@ -538,6 +551,19 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     # con los dos. Y **no se reordena nada aqui**: la pantalla es la que sabe
     # cuantas secciones tiene la lista y en que orden se pintan.
     lineas = catalogo.con_pasillos(almacen.lineas_de(lista_id))
+    # **Y si el grupo ya no es el producto que la linea dice, se dice.** El
+    # `grupo_id` es un ordinal que el emparejador renumera en cada pasada, asi que
+    # una linea puede estar apuntando a otra cosa: sin esta marca, la pantalla
+    # pinta el pasillo y el precio del producto equivocado (medido el 28 de
+    # septiembre de 2026: «Leche entera» en el pasillo de higiene y belleza, con el
+    # precio de una barra de labios). Ver `catalogo.lineas_movidas`.
+    #
+    # **Y se le quita el pasillo**, porque el pasillo tambien es del grupo: dejarlo
+    # seria decir que la leche esta en higiene y belleza, que es justo la mentira que
+    # se esta arreglando. Sin pasillo, la pantalla la pinta al final y sin
+    # encabezado, que es la cara que ya existe para una linea sin seccion.
+    movidas = catalogo.lineas_movidas(lineas)
+    lineas = [_linea_movida(ln) if str(ln.get("id")) in movidas else ln for ln in lineas]
     nuevo = almacen.novedades(lista_id, usuario["id"])
     almacen.marca_visita(lista_id, usuario["id"])
     return {
@@ -666,6 +692,11 @@ def reparto(lista_id: str, cadenas: str | None = None,
     """
     _acceso(lista_id, usuario)
     lineas = [x for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    # Las que apuntan a otro producto no se reparten: se estaria decidiendo la tienda
+    # de un producto que no es el que dice la linea. Se quedan fuera del reparto y la
+    # pantalla las señala en la lista (`producto_movido`).
+    movidas = catalogo.lineas_movidas(lineas)
+    lineas = [x for x in lineas if str(x["id"]) not in movidas]
     peticiones = [cesta.Peticion(x["grupo_id"], x["producto_id"], x["cantidad"],
                                  x["nombre_visto"], x["id"]) for x in lineas]
     elegidas = [x.get("cadena_elegida") for x in lineas]
@@ -779,6 +810,10 @@ def donde(lista_id: str, cadenas: str | None = None, max_tiendas: int | None = N
     """Donde sale mas barata esta lista. Con las ofertas puestas."""
     _acceso(lista_id, usuario)
     lineas = [x for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    # Igual que en el reparto: una linea que apunta a otro producto no se compara, no
+    # sea que «donde sale mas barata» conteste con el precio de otra cosa.
+    movidas = catalogo.lineas_movidas(lineas)
+    lineas = [x for x in lineas if str(x["id"]) not in movidas]
     peticiones = [cesta.Peticion(x["grupo_id"], x["producto_id"],
                                  x["cantidad"], x["nombre_visto"]) for x in lineas]
     prefs = almacen.preferencias_de(usuario["id"])

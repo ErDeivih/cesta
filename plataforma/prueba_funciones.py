@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 80
+COMPROBACIONES = 83
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -190,6 +190,55 @@ def main() -> int:
             comprueba(espera(lambda: lineas() == 1), "y «Deshacer» la trae de vuelta")
         else:
             comprueba(False, "no hay boton de deshacer")
+
+        # ------------------------------------------- una linea que apunta a otro ---------
+        # **El fallo mas caro de la aplicacion, y el mas silencioso.** El emparejador numera los
+        # grupos en el orden en que aparecen los productos, asi que una pasada puede renumerarlos
+        # y una linea guardada acaba apuntando a otra cosa: medido el 28 de septiembre de 2026,
+        # **43 de las 54 lineas** de la lista de la cuenta de pruebas estaban asi, la leche salia
+        # en el pasillo «Higiene y belleza» y la estimacion decia 298,71 EUR cuando lo contable
+        # eran 10,56 (el resto era un pintalabios a 10,66 EUR/ud por linea). Aqui se siembra el
+        # caso a mano -- una linea con el nombre de una cosa y el grupo de otra -- y se comprueba
+        # que la pantalla **no la pinta con el pasillo ni con el precio de otro**.
+        sembrada = pagina.evaluate("""async () => {
+          const listas = (await (await fetch('/api/listas', {credentials: 'same-origin'})).json())
+            .listas;
+          const casa = listas.find((l) => l.es_de_casa) || listas[0];
+          if (!casa) return null;
+          const detalle = await (await fetch(`/api/listas/${casa.id}`,
+            {credentials: 'same-origin'})).json();
+          const mia = (detalle.lineas || []).find((l) => l.grupo_id != null);
+          if (!mia) return null;
+          const id = crypto.randomUUID();
+          const r = await fetch(`/api/listas/${casa.id}/lineas`, {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id, nombre: 'PINTALABIOS QUE NO ES DE ESTE GRUPO',
+                                  grupo_id: mia.grupo_id, cantidad: 1})});
+          return r.status === 201 ? id : null;
+        }""")
+        if sembrada:
+            carga("/cesta")
+            comprueba("ya no es el mismo en el catálogo" in texto(),
+                      "una linea que apunta a otro producto lo dice, en vez de ponerle su "
+                      "pasillo y su precio")
+            comprueba("De " in texto() and "no tengo precio" in texto(),
+                      "y no entra en la cuenta de lo que cuesta la lista")
+            pagina.evaluate("""async (id) => {
+              const listas = (await (await fetch('/api/listas',
+                {credentials: 'same-origin'})).json()).listas;
+              const casa = listas.find((l) => l.es_de_casa) || listas[0];
+              await fetch(`/api/listas/${casa.id}/lineas/${id}`, {
+                method: 'PATCH', credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({borrado: true})});
+            }""", sembrada)
+            pagina.wait_for_timeout(1500)
+            carga("/cesta")
+            comprueba("ya no es el mismo en el catálogo" not in texto(),
+                      "y al quitarla la lista vuelve a estar como estaba")
+        else:
+            comprueba(False, "no he podido sembrar una linea con el grupo de otro producto")
 
         # ------------------------------------------------------------ varias listas ----
         print("\n== varias listas: crear, cambiar de nombre, borrar")

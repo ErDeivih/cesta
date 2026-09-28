@@ -258,6 +258,16 @@ Las tres claves son **opcionales y no viajan con `null`**: si gold no trae la co
 en el catalogo, la linea sale sin ellas y la pantalla la pinta al final y sin
 encabezado. Un dato que no tenemos no se rellena.
 
+**Y `producto_movido`: la linea apunta a un grupo que ya no es su producto.** El emparejador
+numera los grupos en el orden en que aparecen los productos, asi que una pasada puede renumerarlos
+y una linea guardada acaba apuntando a otra cosa. Medido el 28 de septiembre de 2026 con los datos
+de casa: **43 de las 54 lineas** de la lista de la cuenta de pruebas estaban asi, la leche entera
+salia en el pasillo «Higiene y belleza» y la estimacion decia 298,71 EUR cuando lo contable eran
+10,56. Cuando pasa: la linea viene con `producto_movido: true`, **sin** `seccion`/`pasillo`
+(tambien son del grupo) y **fuera** de `estimacion` (cuenta en `sin_precio`), de `/donde` y de
+`/reparto`. La pantalla lo dice y da la salida: volver a buscarla. El porque, con el numero, en
+`docs/MODELO.md`; lo vigilan `tests/test_lineas_movidas.py` y `plataforma/prueba_e2e.py`.
+
 **El pasillo es del producto, no del grupo**, y un grupo tiene miembros de varias
 cadenas: cuando no coinciden gana el que mas miembros comparten, y los empates se
 rompen por el orden del recorrido (`catalogo.pasillo_de_grupos`). **El orden de

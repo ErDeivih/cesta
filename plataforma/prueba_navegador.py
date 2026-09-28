@@ -517,6 +517,16 @@ def main() -> int:
         t0 = time.monotonic()
         carga("/")
         tiempos.append(("abrir la aplicacion", time.monotonic() - t0))
+        # **Se espera a que la cabecera conteste, no a un tiempo fijo.** La fecha viene de
+        # `/api/estado`, y la primera peticion despues de reconstruir el contenedor es lenta
+        # (hay que montar la copia de gold): medido el 28 de septiembre de 2026, esta
+        # comprobacion se puso roja con la aplicacion bien porque leyo «Mirando de qué día son
+        # los precios…». Es la misma trampa que este fichero documenta tres veces: leer antes
+        # del estado final.
+        with contextlib.suppress(Exception):
+            pagina.wait_for_function(
+                "() => document.body.innerText.includes('Datos del')"
+                " || document.body.innerText.includes('no contesta')", timeout=20000)
         cuerpo = pagina.inner_text("body")
         comprueba("Datos del" in cuerpo, "la cabecera dice de que dia son los precios")
         comprueba(pagina.get_by_placeholder("leche entera, atún, papel de cocina…").count() == 1,

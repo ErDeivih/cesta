@@ -557,13 +557,22 @@ export interface Lista {
 }
 
 /** Una linea de la lista: lo que se quiere comprar. */
-export interface Linea {
-  id: string
+export interface Linea {  id: string
   nombre_visto: string
   cantidad: number
   grupo_id: number | null
   producto_id: string | null
   tachado_en: string | null
+  /** El grupo al que apunta esta linea **ya no es** el producto que dice el nombre.
+   *
+   *  El emparejador numera los grupos en el orden en que aparecen los productos, asi
+   *  que una pasada puede renumerarlos y una linea guardada acaba apuntando a otra
+   *  cosa (medido el 28 de septiembre de 2026: «Leche entera» con el precio de una
+   *  barra de labios). Cuando pasa, la API no la cuenta ni la reparte
+   *  (`catalogo.lineas_movidas`) y la pantalla lo dice con una salida: volver a
+   *  buscarla. La migracion de verdad -- guardar el producto estable en vez del
+   *  numero -- esta apuntada en `docs/MODELO.md`. */
+  producto_movido?: boolean
   /** El pasillo, y donde cae en el recorrido de la tienda.
    *
    *  **Opcionales a proposito**: mientras gold no traiga la columna `seccion`, o

@@ -86,6 +86,21 @@ en otro sitio, y no hay integridad referencial entre las dos mitades. Es a
 proposito: si manana se rehace el emparejador y cambian los `grupo_id`, hay que
 poder migrar las listas con una consulta, no reconstruir una base de datos.
 
+> **Eso no es una hipotesis: pasa en cada pasada.** El emparejador numera los grupos **en el orden
+> en que aparecen los productos** (`core.matching.agrupar_enlaces`: el
+> `renombre.setdefault(raiz(i), len(renombre))`), asi que cualquier cambio del catalogo mueve los
+> numeros. Medido el 28 de septiembre de 2026 con los datos de casa y la lista de la cuenta de
+> pruebas: **43 de sus 54 lineas apuntaban a un grupo que ya no era su producto** -- la leche
+> entera salia en el pasillo «Higiene y belleza», porque el grupo 526 es hoy una barra de labios
+> REVLON -- y la estimacion decia **298,71 EUR** cuando lo que se podia contar eran **10,56**: el
+> resto era un pintalabios a 10,66 EUR/ud por linea de leche.
+>
+> Hasta que la migracion este, la aplicacion **no miente**: una linea cuyo grupo ya no es su
+> producto se marca (`producto_movido`), se le quita el pasillo -- el pasillo tambien es del
+> grupo --, no entra en la estimacion ni en el reparto, y la pantalla lo dice con la salida a
+> mano: volver a buscarla. Ver `catalogo.lineas_movidas`, `tests/test_lineas_movidas.py` y la
+> comprobacion del punta a punta.
+
 **Lo que se guarda de las personas**: un nombre, una contrasena cifrada y unas
 preferencias. Ningun dato de pago, ninguna direccion, ningun correo salvo el de
 recuperacion si algun dia lo hay.

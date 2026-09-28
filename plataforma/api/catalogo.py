@@ -729,6 +729,77 @@ def con_pasillos(lineas: list[dict]) -> list[dict]:
     return salida
 
 
+# ------------------------------------------- la linea y su grupo, ¿son lo mismo? ---
+
+def _mismo_producto(nombre: str, nombres_del_grupo: list[str]) -> bool:
+    """¿El grupo sigue siendo el producto que la linea dice ser?
+
+    Se comparan **las palabras significativas** (`core.matching.tokens`: sin
+    articulos, sin numeros, con los plurales fuera), y vale la contencion en
+    cualquiera de los dos sentidos: «Leche entera» esta dentro de «Leche entera
+    Hacendado» y al reves, porque las cadenas anaden y quitan marcas y formatos del
+    nombre y eso no cambia el producto.
+
+    Un nombre sin palabras significativas no se juzga: se da por bueno. Acusar sin
+    pruebas seria peor que no mirar.
+    """
+    from core.matching import tokens
+
+    mio = tokens(nombre or "")
+    if not mio:
+        return True
+    for otro in nombres_del_grupo:
+        suyo = tokens(otro or "")
+        if mio <= suyo or suyo <= mio:
+            return True
+    return False
+
+
+def lineas_movidas(lineas: list[dict]) -> set[str]:
+    """Los ids de las lineas cuyo grupo **ya no es** el producto que la linea dice.
+
+    **Esto es el sintoma de que `grupo_id` es un ordinal, no una identidad.** El
+    emparejador numera los grupos en el orden en que aparecen los productos
+    (`core.matching.agrupar_enlaces`, el `renombre.setdefault(raiz(i), len(renombre))`),
+    asi que **cada pasada puede renumerarlos**: hoy el grupo 526 es una barra de
+    labios REVLON y ayer era la leche entera. Las listas, los favoritos y los avisos
+    de PostgreSQL guardan ese numero.
+
+    Medido el 28 de septiembre de 2026, con los datos de casa: las tres lineas de la
+    lista de la cuenta de pruebas apuntaban a 526, 10226 y 11627, y hoy 526 es el
+    pintalabios y 10226 las barritas: la pantalla ponia **la leche entera en el
+    pasillo de higiene y belleza** y le ponia el precio del pintalabios. Y los avisos
+    decian «TWIX ... 0,96 EUR/l», que es el precio de la leche.
+
+    La migracion de verdad esta apuntada desde el 22 de septiembre (`docs/MODELO.md`,
+    `docs/DIAGNOSTICO-MATCHING.md` §21: pasar listas y favoritos al `producto_id`
+    estable). Mientras eso no este, lo que no puede pasar es **mentir**: una linea
+    movida no se pinta con el precio y el pasillo de otro producto, se dice que se ha
+    movido y se deja volver a buscarla.
+    """
+    ids = sorted({int(ln["grupo_id"]) for ln in lineas if ln.get("grupo_id") is not None})
+    if not ids:
+        return set()
+    con = conexion()
+    marcas = ",".join("?" * len(ids))
+    filas = con.execute(
+        f"SELECT DISTINCT grupo_id, nombre FROM buscable WHERE grupo_id IN ({marcas})",
+        ids).fetchall()
+    por_grupo: dict[int, list[str]] = {}
+    for grupo, nombre in filas:
+        por_grupo.setdefault(int(grupo), []).append(nombre or "")
+    movidas: set[str] = set()
+    for linea in lineas:
+        grupo = linea.get("grupo_id")
+        if grupo is None:
+            continue
+        # Un grupo que ya no existe es el caso extremo del mismo fallo: la linea
+        # apunta a nada.
+        if not _mismo_producto(linea.get("nombre_visto") or "", por_grupo.get(int(grupo), [])):
+            movidas.add(str(linea["id"]))
+    return movidas
+
+
 # ------------------------------------------------------------ ficha de grupo --
 
 def _por_escurrido(f: dict) -> bool:

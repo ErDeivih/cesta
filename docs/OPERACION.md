@@ -244,7 +244,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **80 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **83 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:
@@ -278,6 +278,12 @@ Lo que entro el 28 de septiembre de 2026, y por que cada cosa:
   pintado en todos), que cada casilla **se anuncia con el nombre de su linea** -- un `input` sin
   nombre se lee «casilla, activada» y quien no ve la pantalla no sabe que esta tachando -- y que
   una linea **se tacha con la barra espaciadora**, que es la tarea de verdad sin dedo.
+- **Una linea que apunta a otro producto.** El emparejador numera los grupos en el orden en que
+  aparecen los productos, asi que una pasada puede renumerarlos y una linea guardada acaba
+  apuntando a otra cosa. La puerta siembra el caso (una linea con el nombre de una cosa y el grupo
+  de otra) y comprueba que la pantalla **lo dice** en vez de ponerle el pasillo y el precio del
+  producto equivocado, que no entra en la cuenta de lo que cuesta la lista, y que al quitarla todo
+  vuelve a estar como estaba. Lo mide tambien el punta a punta contra PostgreSQL y gold de verdad.
 
 Y las dos cosas que esa ampliacion **encontro, que eran de la aplicacion**:
 

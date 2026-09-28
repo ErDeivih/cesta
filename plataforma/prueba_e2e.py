@@ -139,6 +139,16 @@ def main() -> int:
         # El id lo trae el movil y es un uuid (`idDeLinea` en el front).
         almacen.anade_linea(str(lista["id"]), yo["id"], str(uuid.uuid4()), nombre,
                             grupo_id=grupo_id)
+    # **Y una linea a la que le han renumerado el grupo.** El emparejador numera los grupos en el
+    # orden en que aparecen los productos, asi que el grupo de esta linea es hoy otro producto: la
+    # linea se queda diciendo un nombre que no es el suyo. Medido el 28 de septiembre de 2026:
+    # **43 de 54 lineas** de la lista de la cuenta de pruebas estaban asi, y la estimacion decia
+    # 298,71 EUR cuando lo que se podia contar eran 10,56 -- el resto era el precio de un
+    # pintalabios puesto en lineas de leche. Aqui se siembra el caso a mano para que se pueda
+    # medir sin depender de que pase.
+    movida_id = str(uuid.uuid4())
+    almacen.anade_linea(str(lista["id"]), yo["id"], movida_id,
+                        "PINTALABIOS DE PRUEBA QUE NO ES DE ESTE GRUPO", grupo_id=int(filas[0][0]))
     almacen.crea_alerta(yo["id"], int(filas[0][0]), "minimo_90d")
 
     main.app.dependency_overrides[main.usuario_actual] = lambda: yo
@@ -161,6 +171,30 @@ def main() -> int:
     for linea in cuerpo.get("lineas", []):
         print(f"   {linea['nombre_visto'][:32]:34s} grupo {linea['grupo_id']:6d}  "
               f"pasillo={linea.get('pasillo')!r} orden={linea.get('pasillo_orden')}")
+    # La linea sembrada tiene que venir marcada y **sin pasillo**: el pasillo tambien es del
+    # grupo, y el suyo seria el de otro producto.
+    sembrada = next((x for x in cuerpo.get("lineas", []) if str(x["id"]) == movida_id), None)
+    print(f"   la linea movida: marcada={sembrada and sembrada.get('producto_movido')} "
+          f"pasillo={sembrada and sembrada.get('pasillo')!r}")
+    if not sembrada or not sembrada.get("producto_movido"):
+        fallos += 1
+        print("   FALLO: la linea cuyo grupo es otro producto no viene marcada")
+    elif sembrada.get("pasillo") is not None:
+        fallos += 1
+        print("   FALLO: la linea movida sigue trayendo el pasillo de otro producto")
+    # Y no puede estar en el total: la estimacion la cuenta como «sin precio».
+    sin_precio = cuerpo.get("estimacion", {}).get("sin_precio", 0)
+    print(f"   sin precio: {sin_precio}")
+    if sin_precio < 1:
+        fallos += 1
+        print("   FALLO: la linea movida esta entrando en la estimacion")
+    # Ni en el reparto: se estaria decidiendo la tienda de un producto por el precio de otro.
+    reparto = pide(f"/api/listas/{lista['id']}/reparto")
+    dentro = [x for grupo in reparto.get("sublistas", []) for x in grupo.get("lineas", [])]
+    dentro += reparto.get("sin_asignar", [])
+    if any(str(x.get("linea_id")) == movida_id for x in dentro):
+        fallos += 1
+        print("   FALLO: la linea movida aparece en el reparto")
     if not any(x.get("pasillo") for x in cuerpo.get("lineas", [])):
         fallos += 1
         print("   FALLO: ninguna linea trae pasillo")

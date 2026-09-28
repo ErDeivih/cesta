@@ -404,7 +404,8 @@ function UnaLinea({ linea, guardando, cambiar }: {
   const tachada = linea.tachado_en !== null
 
   return (
-    <li className="flex flex-wrap items-center gap-2 rounded-lg border border-borde p-2">
+    <li className="grid gap-1 rounded-lg border border-borde p-2">
+      <div className="flex flex-wrap items-center gap-2">
       <Casilla
         etiqueta={
           <span className={cx(tachada && 'text-tinta-suave line-through')}>
@@ -450,6 +451,24 @@ function UnaLinea({ linea, guardando, cambiar }: {
           Quitar
         </Boton>
       </div>
+      </div>
+      {/* **La linea que apunta a otro producto, dicha.** El `grupo_id` es un numero que
+          el emparejador renumera en cada pasada, asi que esta linea puede estar
+          apuntando a un pintalabios cuando dice «leche entera»: medido el 28 de
+          septiembre de 2026, la lista ponia esa linea en el pasillo de higiene y
+          belleza y le ponia el precio del pintalabios. La API ya no la cuenta ni la
+          reparte (`catalogo.lineas_movidas`), y aqui se dice por que y se da la salida:
+          buscarla y volver a anadirla. */}
+      {linea.producto_movido && (
+        <p className="text-xs text-aviso">
+          Este producto ya no es el mismo en el catálogo: no lo cuento ni te digo dónde
+          comprarlo, porque el número al que apunta esta línea es hoy otra cosa.{' '}
+          <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
+            Búscalo y vuelve a añadirlo
+          </Link>
+          .
+        </p>
+      )}
     </li>
   )
 }

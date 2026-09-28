@@ -408,6 +408,14 @@ def estimacion(lineas: list[dict]) -> dict:
     mejor = _candidatos(peticiones, "")
     total = en_carro = sin_precio = 0
     for linea, peticion in zip(lineas, peticiones, strict=True):
+        # **Una linea que apunta a otro producto no se cuenta.** El `grupo_id` es un
+        # ordinal que se renumera en cada pasada, asi que esta linea puede estar
+        # apuntando a un pintalabios cuando dice «leche entera»: sumarle su precio
+        # seria meter un numero falso en el total. Cuenta como «sin precio», que ya
+        # es una cara que la pantalla sabe enseñar. Ver `catalogo.lineas_movidas`.
+        if linea.get("producto_movido"):
+            sin_precio += 1
+            continue
         clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
         precios = [v[1] for (k, _), v in mejor.items() if k == clave]
         if not precios:
