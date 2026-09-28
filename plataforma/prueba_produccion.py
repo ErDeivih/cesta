@@ -479,6 +479,57 @@ def main() -> int:
                   f"y la barra dice las que quedan por coger ({en_la_barra} contra "
                   f"{por_coger.count()})")
 
+        # ------------------------------------------------------------- en escritorio -----
+        print("\n== y en una pantalla de escritorio, que no la medía nadie")
+        # **Todo lo de arriba es un movil de 390 x 844, y la aplicacion tambien se usa en el
+        # ordenador del salon.** Hasta el 28 de septiembre de 2026 la unica mirada a lo ancho era
+        # una captura (`data/debug/captura.py --entero`) y el contraste, o sea que dos cosas que
+        # solo existen en pantalla grande -- la barra de secciones de arriba y las tablas **con
+        # sus columnas** en vez de apiladas -- no las comprobaba ninguna puerta. Se abre un
+        # contexto nuevo a 1440 x 900, se mira eso y que nada se deslice de lado.
+        ancho_ctx = navegador.new_context(viewport={"width": 1440, "height": 900},
+                                          locale="es-ES")
+        ancho = ancho_ctx.new_page()
+        ancho.on("pageerror", lambda e: consola.append(f"[escritorio] pageerror: {e}"))
+        for ruta, que in (("/", "la primera pantalla"), ("/buscar?q=leche%20entera",
+                                                         "los resultados"),
+                          ("/cesta", "la lista"), ("/panel?pestana=donde", "el panel"),
+                          ("/aprende/04-emparejar-productos.html", "un capitulo del material")):
+            ancho.goto(f"{BASE}{ruta}", wait_until="domcontentloaded")
+            with contextlib.suppress(Exception):
+                ancho.wait_for_load_state("networkidle", timeout=8000)
+            ancho.wait_for_timeout(900)
+            desliza = ancho.evaluate(
+                "() => document.documentElement.scrollWidth - window.innerWidth")
+            comprueba(desliza <= 1,
+                      f"{que}, a 1440 px, no se desliza de lado ({desliza} px)")
+        ancho.goto(f"{BASE}/buscar?q=leche%20entera", wait_until="domcontentloaded")
+        with contextlib.suppress(Exception):
+            ancho.wait_for_load_state("networkidle", timeout=8000)
+        ancho.wait_for_timeout(1200)
+        # La barra de secciones de arriba: en el movil esta abajo (`lg:hidden`), y aqui tiene que
+        # estar y llevar a los mismos sitios.
+        nav_ancho = ancho.locator("header nav[aria-label='Secciones'] a")
+        comprueba(nav_ancho.count() >= 5,
+                  f"en escritorio sale la barra de secciones de arriba ({nav_ancho.count()} "
+                  "destinos)")
+        comprueba(ancho.locator("body > div > nav[aria-label='Secciones']").count() == 0
+                  or not ancho.locator("body > div > nav[aria-label='Secciones']").first.is_visible(),
+                  "y la barra de abajo del movil no se pinta dos veces")
+        # Y la tabla, con sus columnas: en el movil se apila (una fila por linea) y en escritorio
+        # tiene que volver a ser una tabla, con su cabecera.
+        cabecera = ancho.locator("main thead th")
+        comprueba(cabecera.count() >= 3 and cabecera.first.is_visible(),
+                  f"y los resultados vuelven a ser una tabla con columnas "
+                  f"({cabecera.count()} cabeceras)")
+        # El material, a lo ancho: el indice lateral tiene que estar (en el movil se pliega).
+        ancho.goto(f"{BASE}/aprende/04-emparejar-productos.html", wait_until="domcontentloaded")
+        ancho.wait_for_timeout(900)
+        lateral = ancho.locator("aside.lateral")
+        comprueba(lateral.count() == 1 and lateral.first.is_visible(),
+                  "el indice lateral del material se ve en pantalla ancha")
+        ancho_ctx.close()
+
         print("\n== y la cuenta de prueba se borra")
         carga("/ajustes")
         comprueba("Darme de baja" in texto or "Darme de baja" in pagina.inner_text("main"),

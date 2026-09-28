@@ -37,6 +37,15 @@ con su frase, las tres pantallas nuevas del panel, la primera vez con una cuenta
 numero en la barra de abajo, y que la cuenta de prueba **se borra al final**
 (`DELETE /api/yo`): la base de casa no se queda con basura.
 
+**Y mide tambien el material de aprendizaje pulsandolo**, no solo leyendolo: que cada bloque de
+codigo tenga su boton de copiar y que al pulsarlo conteste (con el portapapeles o, por http, con
+«Cópialo a mano» y el codigo seleccionado), que el capitulo traiga sus migas de pan, y que la
+tarjeta de «siguiente» lleve al capitulo que anuncia. Y desde el 28 de septiembre de 2026 **una
+pasada de escritorio**, a 1440 x 900, porque hasta ese dia todo lo de esta puerta era un movil:
+ahi se comprueba que la barra de secciones de arriba sale y lleva a los seis destinos, que los
+resultados vuelven a ser **una tabla con sus columnas** en vez de filas apiladas, que el indice
+lateral del material se ve, y que ninguna de las cinco pantallas se desliza de lado.
+
 Existe por un fallo concreto y del 24 de septiembre de 2026: el dia que se cambio el montaje
 a `web/dist`, la API del contenedor devolvio **500** en `/api/ofertas-dudosas`
 
