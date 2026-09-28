@@ -11,6 +11,10 @@ Esto no mide si algo se entiende -- eso es la barra (a), y la cierra el dueño -
 puesto: mide **que funciona**. Cada comprobacion hace la accion como la hace una persona (tocar
 el boton, escribir en el campo) y mira el resultado en la pantalla.
 
+Y mide tambien **que lo que se despliega se note que se despliega**: los diez desplegables de la
+aplicacion llevan su flecha y gira al abrirse. Eso no lo encontro leer el codigo, lo encontro
+mirar una captura (ver `Resumen` en `componentes/ui.tsx`).
+
 La cuenta es desechable: se crea al empezar y se borra al terminar, y si una pasada anterior se
 corto a mitad, se borra antes de empezar (una pasada cortada dejaba la cuenta con su lista y la
 siguiente fallaba por el estado que habia dejado ella misma).
@@ -34,6 +38,13 @@ CAPTURAS = pathlib.Path("data/debug/capturas/funciones")
 
 FALLOS: list[str] = []
 HECHAS = 0
+
+# **Cuantas comprobaciones hace una pasada que va bien.** Es el numero que se cita en
+# `docs/OPERACION.md` y en `.stitch/DESIGN.md`, y la pasada lo comprueba al final: si alguien
+# anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
+# solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
+# pasadas ya salen con FALLO y el numero es lo de menos.
+COMPROBACIONES = 46
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -427,6 +438,43 @@ def main() -> int:
                   "un codigo que no esta lo dice, en vez de callarse")
         captura("escaner")
 
+        # ------------------------------------------------- lo que se despliega --------
+        print("\n== lo que se despliega: que se note que se despliega")
+        # **Esto lo encontro mirar una captura, no leer el codigo.** El marcador nativo del
+        # `<summary>` desaparece en cuanto se le pone `display: flex` (que hace falta para que
+        # mida 44 px), asi que los diez desplegables de la aplicacion eran texto suelto: en la
+        # cabecera, «Estado de las cadenas» parecia un encabezado sin nada debajo, y la caja de
+        # filtros del buscador parecia un segundo campo de texto. Ahora todos usan `Resumen`
+        # (`componentes/ui.tsx`) y llevan su flecha, que gira al abrirse.
+        F = """() => [...document.querySelectorAll('summary')].map((s) => {
+          const f = s.querySelector('.flecha')
+          return {
+            texto: (s.innerText || '').slice(0, 40),
+            flecha: f ? getComputedStyle(f).transform : null,
+            abierto: s.parentElement.open,
+            alto: Math.round(s.getBoundingClientRect().height),
+          }
+        })"""
+        for ruta in ("/", "/buscar?q=leche%20entera", "/panel/matching"):
+            carga(ruta)
+            resumenes = pagina.evaluate(F)
+            sin_flecha = [r["texto"] for r in resumenes if r["flecha"] is None]
+            bajos = [r["texto"] for r in resumenes if r["alto"] < 44]
+            comprueba(bool(resumenes) and not sin_flecha and not bajos,
+                      f"{ruta}: los {len(resumenes)} desplegables llevan su flecha y miden 44 px "
+                      f"(sin flecha: {sin_flecha}, bajos: {bajos})")
+        # Y la flecha dice en que estado esta: cerrada, sin girar; abierta, girada.
+        carga("/")
+        cerrada = pagina.evaluate(F)
+        pagina.locator("summary").first.click()
+        pagina.wait_for_timeout(1200)
+        abierta = pagina.evaluate(F)
+        giro = abierta[0]["flecha"] if abierta else None
+        comprueba(cerrada and cerrada[0]["flecha"] not in (None, giro)
+                  and abierta and abierta[0]["abierto"],
+                  f"la flecha gira al abrirse ({cerrada[0]['flecha'] if cerrada else '?'} -> {giro})")
+        captura("desplegable-abierto")
+
         # ------------------------------------------------------------ sin sesion -------
         print("\n== la cara sin sesion")
         suelta_ctx = navegador.new_context(viewport={"width": 390, "height": 844},
@@ -462,6 +510,13 @@ def main() -> int:
             for f in FALLOS:
                 print(f"     - {f}")
             print("\n   Lo que no funcione aqui, no funciona para nadie.")
+            return 1
+        if HECHAS != COMPROBACIONES:
+            # No es un fallo de la aplicacion: es que este numero se cita en los documentos.
+            print(f"\n   La pasada ha hecho **{HECHAS}** comprobaciones y lo escrito son "
+                  f"{COMPROBACIONES}.\n   Actualiza `COMPROBACIONES` aqui, `docs/OPERACION.md` "
+                  f"y `.stitch/DESIGN.md`\n   en el mismo cambio: si no, los documentos dicen "
+                  f"una cosa y la puerta hace otra.")
             return 1
         print("\n   TODAS LAS FUNCIONES CONTESTAN.")
         ctx.close()

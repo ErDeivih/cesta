@@ -19,7 +19,7 @@ import { esErrorApi, textoDeError } from '../api/cliente'
 import { euros, eurosUnidad, fecha, nombreCadena, porcentajeConSigno } from '../api/formato'
 import { SelloNutriscore } from '../componentes/Etiquetas'
 import { IconoCamara } from '../componentes/iconos'
-import { Aviso, Boton, Cargando, Etiqueta, Fallo, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 /** `BarcodeDetector` no esta en los tipos del DOM: es una API de navegador que
  *  solo tienen algunos (Chrome y derivados; Firefox y Safari no). Se declara lo
@@ -329,9 +329,9 @@ export function Escaner() {
 
           {hallado.nota != null && (
             <details className="mt-3">
-              <summary className="cursor-pointer text-xs text-sky-800 dark:text-sky-400">
+              <Resumen className="text-xs text-sky-800 dark:text-sky-400">
                 La nota del producto (dato en crudo)
-              </summary>
+              </Resumen>
               <pre className="mt-1 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
                 {JSON.stringify(hallado.nota, null, 2)}
               </pre>

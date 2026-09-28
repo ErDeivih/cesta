@@ -250,8 +250,13 @@ def test_los_objetivos_de_la_ficha_del_producto_tienen_44_px():
     19 px. La pantalla entró en la pasada de la puerta en el mismo cambio.
     """
     ficha = (APP / "src" / "paginas" / "Producto.tsx").read_text(encoding="utf-8")
-    assert re.search(r"<summary[^>]*min-h-\[44px\]", ficha), \
-        "el desplegable de ingredientes vuelve a tener su altura de texto (20 px)"
+    # El desplegable se pinta con `Resumen`, que ya trae los 44 px (y la flecha: ver
+    # `test_lo_que_se_despliega_lleva_su_flecha`). Lo que se vigila aqui es que **siga** pasando
+    # por ahi y no vuelva a ser un `<summary>` a mano con su altura de texto.
+    assert re.search(r"<Resumen[^>]*>\s*\n\s*Ingredientes", ficha), \
+        "el desplegable de ingredientes no usa el resumen de 44 px (volveria a medir 20 px)"
+    assert not re.search(r"<summary[^>]*min-h", ficha), \
+        "volvio el `<summary>` a mano"
     assert re.search(r"<Link to=\{`/producto/\$\{p\.fuente\}.*?min-h-\[44px\]", ficha, re.S), \
         "el enlace al producto de al lado vuelve a medir 19 px"
     # Y la puerta tiene que medir esta pantalla, que es de donde salió el fallo.
@@ -345,3 +350,50 @@ def test_la_puerta_mide_que_el_precio_no_se_vaya_de_la_pantalla():
     # Y la razon, escrita donde se lee.
     assert "52rem" in puerta or "deslizar en horizontal" in puerta, (
         "el caso que lo destapo tiene que estar contado al lado de la medida")
+
+
+def test_lo_que_se_despliega_lleva_su_flecha():
+    """Nada de `<summary>` sueltos: el marcador nativo desaparece con `display: flex`.
+
+    Lo encontro **mirar una captura**, no leer el codigo: en la cabecera, «Estado de las cadenas»
+    salia como una linea suelta con un hueco debajo -- parecia un encabezado sin nada -- y la caja
+    de filtros del buscador parecia un segundo campo de texto. La causa es una linea de CSS que no
+    se ve: el triangulo que el navegador pinta en un `<summary>` **desaparece en cuanto se le pone
+    `display: flex`**, que es justo lo que hace falta para que mida los 44 px de pulsar.
+
+    Ahora los diez desplegables de la aplicacion se pintan con `Resumen` (`componentes/ui.tsx`),
+    que pone la flecha, y una regla de `estilos.css` la gira al abrirse. Esto lo vigila leyendo:
+    que no vuelva a haber un `<summary>` a mano es lo unico que no puede comprobar la puerta,
+    porque la puerta solo ve las pantallas que visita.
+    """
+    fuente = list(APP.glob("src/**/*.tsx"))
+    assert fuente, "no encuentro el codigo de la aplicacion"
+    sueltos: list[str] = []
+    for fichero in fuente:
+        for linea in fichero.read_text(encoding="utf-8").splitlines():
+            # Solo la etiqueta de verdad, no la que se nombra dentro de un comentario: en este
+            # proyecto los comentarios citan `<summary>` al contar la medida que costo.
+            limpio = linea.strip()
+            if limpio.startswith("<summary"):
+                sueltos.append(f"{fichero.name}: {limpio[:60]}")
+    assert sueltos == ["ui.tsx: <summary"], (
+        f"hay desplegables escritos a mano, y esos no llevan flecha: {sueltos}")
+
+    ui = (APP / "src" / "componentes" / "ui.tsx").read_text(encoding="utf-8")
+    assert "export function Resumen(" in ui, "no existe el resumen con flecha"
+    assert 'className="flecha ml-auto shrink-0' in ui, "la flecha se perdio en el camino"
+    assert "list-none" in ui, (
+        "sin `list-none`, en Safari el triangulo nativo sigue saliendo **ademas** del nuestro")
+    assert 'aria-hidden' in ui.split("export function Resumen(")[1][:900], (
+        "la flecha es decorativa: si lleva texto visible, el lector de pantalla lee «▾»")
+
+    css = (APP / "src" / "estilos.css").read_text(encoding="utf-8")
+    assert "details[open] > summary .flecha" in css and "rotate(180deg)" in css, (
+        "la flecha no dice en que estado esta: abierta y cerrada se ven igual")
+    # Y la puerta lo mide ya pintado, en tres pantallas.
+    puerta = (RAIZ / "plataforma" / "prueba_funciones.py").read_text(encoding="utf-8")
+    assert "lo que se despliega: que se note que se despliega" in puerta, (
+        "la puerta no mira que los desplegables se noten")
+    assert "la flecha gira al abrirse" in puerta, (
+        "la puerta no comprueba que la flecha cambie al abrirse")
+

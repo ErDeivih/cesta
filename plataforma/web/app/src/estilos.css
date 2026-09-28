@@ -156,3 +156,22 @@
     align-items: center;
   }
 }
+
+/* --------------------------------------------------- la flecha de lo que se abre ---
+
+   Va aqui y no en una clase de Tailwind porque depende del estado del padre: el `open` lo lleva
+   el `<details>`, y una clase no puede mirar hacia arriba. Es lo unico que hace falta para que
+   la flecha diga en que estado esta -- ver `Resumen` en `ui.tsx`, y el por que: el marcador
+   nativo del `<summary>` desaparece cuando se le pone `display: flex`, asi que **los diez
+   desplegables de la aplicacion parecian texto suelto** (medido el 27 de septiembre de 2026 en
+   las capturas: «Estado de las cadenas» y la caja de filtros del buscador, que se leia como un
+   segundo campo de texto). */
+.flecha {
+  display: inline-block;
+  transition: transform 150ms ease;
+}
+
+details[open] > summary .flecha {
+  transform: rotate(180deg);
+}
+

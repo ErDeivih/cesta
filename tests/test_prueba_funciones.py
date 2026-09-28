@@ -95,6 +95,7 @@ def test_hace_el_recorrido_entero_y_no_solo_las_pantallas():
         "las busquedas recientes": "recientes",
         "el escaner": "/escaner",
         "la cara sin sesion": "sin sesion",
+        "lo que se despliega": "que se note que se despliega",
     }
     faltan = [que for que, aguja in funciones.items() if aguja not in FUENTE]
     assert not faltan, f"la puerta no ejercita: {faltan}"
@@ -150,7 +151,20 @@ def test_la_operacion_documenta_la_puerta():
         "docs/OPERACION.md no dice que existe esta puerta")
     assert "TODAS LAS FUNCIONES CONTESTAN." in operacion, (
         "la operacion no dice que salida se espera")
-    assert "42" in operacion, "la operacion no dice cuantas comprobaciones son"
+    # El numero sale de **una sola constante**, y la pasada la comprueba al final: si se anade
+    # una comprobacion, la puerta lo dice en vez de dejar los documentos mintiendo. Aqui se
+    # vigila que los documentos digan lo mismo que la constante.
+    constante = re.search(r"^COMPROBACIONES = (\d+)$", FUENTE, re.M)
+    assert constante, "la puerta no tiene el numero de comprobaciones en una constante"
+    puesto = [int(n) for n in re.findall(r"\*\*(\d+) comprobaciones\*\*", operacion)]
+    assert puesto, "la operacion no dice cuantas comprobaciones son"
+    assert puesto[0] == int(constante.group(1)), (
+        f"la operacion dice {puesto[0]} comprobaciones y la puerta dice "
+        f"{constante.group(1)}: se han separado")
+    assert "HECHAS != COMPROBACIONES" in FUENTE, (
+        "la puerta ya no comprueba que el numero de la pasada sea el que esta escrito")
     diseno = DISENO.read_text(encoding="utf-8")
     assert "plataforma.prueba_funciones" in diseno, (
         ".stitch/DESIGN.md no la cuenta entre las barras automaticas")
+    assert f"{constante.group(1)} comprobaciones" in diseno, (
+        ".stitch/DESIGN.md dice otro numero que la puerta")

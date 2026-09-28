@@ -25,7 +25,7 @@ import { Link } from 'react-router-dom'
 import { usePanelMatching } from '../api/consultas'
 import { esErrorApi } from '../api/cliente'
 import { fecha, numero } from '../api/formato'
-import { Aviso, Cargando, Dato, Etiqueta, Fallo, Selector, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
+import { Aviso, Cargando, Dato, Etiqueta, Fallo, Resumen, Selector, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 export function PanelMatching() {
   const [limite, setLimite] = useState(20)
@@ -242,9 +242,9 @@ export function PanelMatching() {
                     {/* Los rasgos son la explicabilidad: sin ellos, un par aceptado es una caja
                         negra. */}
                     <details className="mt-2">
-                      <summary className="flex min-h-[44px] cursor-pointer items-center text-xs text-sky-800 dark:text-sky-400">
+                      <Resumen className="text-xs text-sky-800 dark:text-sky-400">
                         Por qué: {Object.keys(p.features).length} rasgos
-                      </summary>
+                      </Resumen>
                       <ul className="mt-1 grid grid-cols-1 gap-0.5 text-xs">
                         {Object.entries(p.features).map(([k, v]) => (
                           <li key={k} className="flex justify-between gap-3">
@@ -273,9 +273,9 @@ export function PanelMatching() {
           <details className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
             {/* El desplegable tambien se pulsa: medido el 27 de septiembre de 2026, medía
                 **332 x 20 px**. Es la puerta a la respuesta en crudo, y de pie no se acierta. */}
-            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm">
+            <Resumen className="text-sm">
               Ver la respuesta en crudo
-            </summary>
+            </Resumen>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
               {JSON.stringify(d, null, 2)}
             </pre>

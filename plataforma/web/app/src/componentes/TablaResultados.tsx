@@ -32,7 +32,7 @@ import {
   SelloOferta,
   SelloRetirada,
 } from './Etiquetas'
-import { Etiqueta, TablaScroll, Td, Th } from './ui'
+import { Etiqueta, Resumen, TablaScroll, Td, Th } from './ui'
 
 /** Si la pantalla es de móvil. **La tabla de resultados no cabe en 390 px.**
  *
@@ -291,13 +291,16 @@ function BarraDeOrden({ orden, onOrden }: {
   const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
   return (
     <details className="mb-2">
-      <summary className="flex min-h-[44px] cursor-pointer items-center gap-2 text-xs uppercase tracking-wide text-tinta-suave">
+      <Resumen className="text-xs uppercase tracking-wide text-tinta-suave">
         Ordenar por
         <span className="font-semibold normal-case tracking-normal text-tinta">
           {puesto}
-          {cual !== 'orden_servidor' && (arriba ? ' ▴' : ' ▾')}
+          {/* El sentido, **con palabras y no con una flecha**: la flecha de esta linea es la del
+              desplegable (`Resumen`), y dos triangulos juntos se leen como uno solo mal puesto.
+              «De mayor a menor» no se puede confundir con nada. */}
+          {cual !== 'orden_servidor' && (arriba ? ' (de menor a mayor)' : ' (de mayor a menor)')}
         </span>
-      </summary>
+      </Resumen>
       <div className="flex flex-wrap items-center gap-2 pb-1">
         {botones.map(([id, texto]) => {
           const esElPuesto = cual === id

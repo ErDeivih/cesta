@@ -393,6 +393,49 @@ export function Vacio({ titulo, children, comoPagina = false }: {
   )
 }
 
+// ------------------------------------------------------------ desplegable ---
+
+/** El titulo de un `<details>`, con la flecha que dice que eso se abre.
+ *
+ *  **Faltaba, y se vio mirando una captura, no leyendo el codigo.** La cabecera de la aplicacion
+ *  enseña «Estado de las cadenas» y no hay nada que diga que eso se abre: en las capturas del
+ *  27 de septiembre de 2026 sale como una linea suelta con un hueco debajo, que es exactamente lo
+ *  que parece -- un encabezado sin nada. Y no es solo esa: **los diez desplegables de la
+ *  aplicacion** (los filtros del buscador, las columnas de la tabla, el porque de un
+ *  emparejamiento, los ingredientes, el detalle de una pasada...) tenian el mismo problema. En
+ *  `/buscar`, la caja de filtros parecia un segundo campo de texto.
+ *
+ *  La causa es una linea de CSS que no se ve: el marcador nativo del `<summary>` **desaparece** en
+ *  cuanto se le pone `display: flex` (que hace falta para que mida 44 px), asi que el triangulo
+ *  que el navegador pondria solo no se pinta. Se pinta uno, y gira al abrirse (`estilos.css`,
+ *  `details[open]`).
+ *
+ *  `ml-auto` deja la flecha al final de la linea cuando el resumen ocupa el ancho entero (la
+ *  cabecera), y no hace nada cuando el resumen mide lo que mide su texto.
+ */
+export function Resumen({ children, className }: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <summary
+      className={cx(
+        // `list-none`: en Safari el triangulo tambien sale con `display: flex`, y esta es la
+        // forma de quitarlo alli. El aria no lo necesita: `details`/`summary` ya lo anuncian.
+        'flex min-h-[44px] cursor-pointer list-none items-center gap-1.5',
+        className,
+      )}
+    >
+      {children}
+      {/* `text-base` y no el tamaño del texto de al lado: la flecha tiene que verse **cuando el
+          resumen es pequeño** (los que van en `text-xs`), que es donde mas falta hace. */}
+      <span aria-hidden className="flecha ml-auto shrink-0 text-base leading-none opacity-70">
+        ▾
+      </span>
+    </summary>
+  )
+}
+
 // ------------------------------------------------------------------ tabla ---
 
 /** Envoltorio de tabla: **en el móvil se apila, en pantalla ancha se desliza si hace falta**.

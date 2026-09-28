@@ -10,7 +10,7 @@
  */
 import type { Grupo } from '../tipos'
 import { numero } from '../api/formato'
-import { Aviso, Etiqueta } from './ui'
+import { Aviso, Etiqueta, Resumen } from './ui'
 
 /** Los nombres que podria tener el campo el dia que se implemente. */
 const POSIBLES_CAMPOS = [
@@ -130,9 +130,9 @@ export function ExplicacionEmparejamiento({ grupo }: { grupo: Grupo }) {
         </dl>
       ) : null}
       <details>
-        <summary className="cursor-pointer text-xs text-sky-800 dark:text-sky-400">
+        <Resumen className="text-xs text-sky-800 dark:text-sky-400">
           Ver el dato en crudo
-        </summary>
+        </Resumen>
         <pre className="mt-1 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
           {JSON.stringify(valor, null, 2)}
         </pre>

@@ -44,7 +44,7 @@ import { BotonFavorito } from '../componentes/BotonFavorito'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { ControlPesos } from '../componentes/ControlPesos'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
-import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Vacio, cx } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, Vacio, cx } from '../componentes/ui'
 import { IconoCodigoBarras } from '../componentes/iconos'
 import { PESOS_INICIALES, explicaPesos, puntuaAlternativas, type Alternativa, type Pesos } from '../logica/pesos'
 import type { Producto, PuntoSerie } from '../tipos'
@@ -374,12 +374,12 @@ export function Grupo() {
           </div>
           {columnas.length > CADENAS_A_LA_VISTA && (
             <details className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800">
-              <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold">
+              <Resumen className="text-sm font-semibold">
                 Ver {columnas.length - CADENAS_A_LA_VISTA === 1 ? 'la otra cadena' : `las otras ${columnas.length - CADENAS_A_LA_VISTA} cadenas`}
                 <span className="ml-2 text-xs font-normal text-tinta-suave">
                   {columnas.slice(CADENAS_A_LA_VISTA).map(([c]) => nombreCadena(c)).join(' · ')}
                 </span>
-              </summary>
+              </Resumen>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-[minmax(17rem,21rem)] sm:overflow-x-auto">
                 {columnas.slice(CADENAS_A_LA_VISTA).map(([cadena, lista], indice) => (
                   <ColumnaDeCadena
@@ -645,9 +645,9 @@ function FichaAlternativa({
             de 12 px con un `cursor-pointer` no es un objetivo: es una trampa, y es de las
             cosas que se pulsan con el carro al lado. Se le dan los 44 px del minimo, que
             aqui no se notan porque va al final de la tarjeta de cada alternativa. */}
-        <summary className="flex min-h-[44px] cursor-pointer items-center text-xs text-sky-800 dark:text-sky-400">
+        <Resumen className="text-xs text-sky-800 dark:text-sky-400">
           Por qué está en esta posición
-        </summary>
+        </Resumen>
         <ul className="mt-1 grid gap-0.5 text-xs">
           {componentes.map((c) => (
             <li key={c.clave} className="flex justify-between gap-2">

@@ -215,11 +215,22 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`, se crea al empezar
-y se borra al terminar), y hace **42 comprobaciones** tocando lo que toca una persona: el boton,
+y se borra al terminar), y hace **46 comprobaciones** tocando lo que toca una persona: el boton,
 el campo, el deslizador. Cada una dice que se miro y si contesto; el numero lo pone la propia
 puerta, para que un `FALLO` se pueda citar. Salida esperada:
 
     TODAS LAS FUNCIONES CONTESTAN.
+
+Entre ellas esta la ultima que ha entrado, y entro por algo que no se ve leyendo: **lo que se
+despliega tiene que notarse que se despliega**. Los diez desplegables de la aplicacion (el
+«Estado de las cadenas» de la cabecera, los filtros del buscador, el orden de los resultados, el
+«por que» de un emparejamiento, los ingredientes de una ficha...) salian como **texto suelto**,
+porque el triangulo que el navegador pinta en un `<summary>` **desaparece en cuanto se le pone
+`display: flex`** -- que es justo lo que hace falta para que mida los 44 px de pulsar. En una
+captura del 27 de septiembre de 2026, «Estado de las cadenas» parecia un encabezado sin nada
+debajo y la caja de filtros parecia un segundo campo de texto. Lo arregla `Resumen`
+(`componentes/ui.tsx`), que pinta la flecha, y una regla de `estilos.css` que la gira al
+abrirse; la puerta lo mide **ya pintado** en tres pantallas y en los dos estados.
 
 **Su primera pasada encontro cuatro cosas, y las cuatro eran de la puerta, no de la
 aplicacion** (un favorito no se puede pasar a una lista que no existe; «LO QUE HAS BUSCADO» se

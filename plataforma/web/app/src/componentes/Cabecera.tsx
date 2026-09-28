@@ -12,7 +12,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useEstado } from '../api/consultas'
 import { fecha, hace, nombreCadena } from '../api/formato'
 import { NavEscritorio } from './Nav'
-import { Etiqueta, cx } from './ui'
+import { Etiqueta, Resumen, cx } from './ui'
 
 export function Cabecera() {
   const { data, isPending, error } = useEstado()
@@ -103,9 +103,9 @@ export function Cabecera() {
                 el minimo de 44. Lo mismo con el enlace de al lado («Cesta»), que medía
                 **43 px de ancho**: un pixel por debajo, que es justo la clase de cosa que
                 no se ve leyendo el codigo. */}
-            <summary className="flex min-h-[44px] cursor-pointer items-center">
+            <Resumen className="text-xs">
               Estado de las cadenas
-            </summary>
+            </Resumen>
             <ul className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {data?.cadenas.map((c) => (
                 <li key={c.cadena} className="flex items-center gap-2">

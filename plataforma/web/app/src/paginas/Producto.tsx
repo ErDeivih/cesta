@@ -38,7 +38,7 @@ import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
-import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 export function Producto() {
   const { fuente = '', idFuente = '' } = useParams<{ fuente: string; idFuente: string }>()
@@ -554,9 +554,9 @@ export function Producto() {
                   se puede comer) y a 20 px no se acierta de pie con el carro en la otra mano.
                   Es la misma regla que la puerta comprueba ya pintada en las demás
                   pantallas. */}
-              <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-medium">
+              <Resumen className="text-sm font-medium">
                 Ingredientes
-              </summary>
+              </Resumen>
               <p className="mt-1 text-sm">{miembro.ingredientes}</p>
             </details>
           )}

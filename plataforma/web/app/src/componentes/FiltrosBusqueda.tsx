@@ -15,7 +15,7 @@ import { useId } from 'react'
 import { useSecciones } from '../api/consultas'
 import type { FiltrosBuscar } from '../api/consultas'
 import { nombreCadena, selloLegible } from '../api/formato'
-import { Casilla, Etiqueta, Selector, cx } from './ui'
+import { Casilla, Etiqueta, Resumen, Selector, cx } from './ui'
 
 /** Los ocho que acepta `catalogo.SELLOS_FILTRABLES` (docs/API.md). */
 export const SELLOS = [
@@ -65,13 +65,13 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
       open={cuantosPuestos > 0}
       className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
     >
-      <summary className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm font-medium">
+      <Resumen className="text-sm font-medium">
         Filtros
         {cuantosPuestos > 0 && <Etiqueta tono="info">{cuantosPuestos}</Etiqueta>}
         <span className="text-xs font-normal text-tinta-suave">
           cadena, pasillo, dieta, ofertas…
         </span>
-      </summary>
+      </Resumen>
 
       <div className="mt-3 grid gap-4">
         <fieldset>
