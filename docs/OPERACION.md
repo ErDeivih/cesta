@@ -214,18 +214,51 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
     uv run python -m plataforma.prueba_funciones --guardar-capturas
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
-mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`, se crea al empezar
-y se borra al terminar), y hace **46 comprobaciones** tocando lo que toca una persona: el boton,
-el campo, el deslizador. Cada una dice que se miro y si contesto; el numero lo pone la propia
-puerta, para que un `FALLO` se pueda citar. Salida esperada:
+mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **72 comprobaciones**
+tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
+contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
+citar. Salida esperada:
 
     TODAS LAS FUNCIONES CONTESTAN.
 
-Entre ellas esta la ultima que ha entrado, y entro por algo que no se ve leyendo: **lo que se
-despliega tiene que notarse que se despliega**. Los diez desplegables de la aplicacion (el
-«Estado de las cadenas» de la cabecera, los filtros del buscador, el orden de los resultados, el
-«por que» de un emparejamiento, los ingredientes de una ficha...) salian como **texto suelto**,
-porque el triangulo que el navegador pinta en un `<summary>` **desaparece en cuanto se le pone
+Lo que entro el 28 de septiembre de 2026, y por que cada cosa:
+
+- **Las diez pestañas del panel**, una por una y **pulsando la pestaña** (no navegando por la
+  direccion): las puertas median cuatro (`bajadas`, `indice`, `posicion`, `dudosas`) y las otras
+  seis -- `hoy`, `donde`, `cadenas`, `marcas`, `historico`, `movidos` -- no las habia abierto
+  nadie con un navegador.
+- **Ordenar los resultados**, que no lo media nada: que el orden cambie de verdad y que el
+  control diga el sentido **con palabras**. Al medirlo salio que **pulsar el que ya estaba puesto
+  no le daba la vuelta** (ver el commit), asi que la comprobacion mira lo unico que no se puede
+  fingir: el primer resultado de un orden es el ultimo del otro.
+- **Compartir por su usuario**, la otra via que no es el enlace, con sus dos caras: un usuario que
+  no existe lo dice, y compartir **contigo mismo** no te quita la lista (abajo, el fallo que
+  encontro).
+- **Darme de baja desde la pantalla.** Hasta hoy esta puerta borraba su cuenta con un `fetch` a
+  `DELETE /api/yo`: medía la API, no la pantalla. Ahora la hace como se hace de verdad -- abrir la
+  tarjeta, comprobar que el boton **esta apagado** sin escribir tu usuario, que «No, déjalo»
+  vuelve a dejarlo como estaba, y que con el tuyo se enciende y la cuenta desaparece. Deja una red
+  de seguridad por API para que la base de casa no se quede con basura si la pantalla falla.
+
+Y las dos cosas que esa ampliacion **encontro, que eran de la aplicacion**:
+
+1. **Compartir contigo mismo te quitaba la lista.** Escribir tu propio usuario en «Compartir con
+   quien ya tiene cuenta» actualizaba tu fila de `lista_acceso` a `escribe`: al invitar y al
+   borrar contestaba **403** («solo quien la creo puede invitar», «Solo quien la creo puede
+   borrarla»), la tarjeta de Compartir desaparecia -- solo se pinta para el dueno -- y no habia
+   forma de volver. La base ya no deja bajar al dueno de su papel (`almacen.comparte`, con un
+   `WHERE` en el `DO UPDATE`), la pantalla dice «Esa lista ya es tuya», y lo mide el punta a punta
+   (`plataforma/prueba_e2e.py`), que es lo unico que ejecuta el SQL de verdad.
+2. **El orden no se le podia dar la vuelta.** El boton de ordenar tenia `desc: !arriba` con
+   `arriba = orden[0]?.desc === false`, o sea `desc: false` otra vez: pulsar «Precio» dos veces
+   dejaba el mismo sentido y el boton parecia no hacer nada.
+
+Entre las demas esta la que entro antes y no se ve leyendo: **lo que se despliega tiene que
+notarse que se despliega**. Los diez desplegables de la aplicacion (el «Estado de las cadenas» de
+la cabecera, los filtros del buscador, el orden de los resultados, el «por que» de un
+emparejamiento, los ingredientes de una ficha...) salian como **texto suelto**, porque el
+triangulo que el navegador pinta en un `<summary>` **desaparece en cuanto se le pone
 `display: flex`** -- que es justo lo que hace falta para que mida los 44 px de pulsar. En una
 captura del 27 de septiembre de 2026, «Estado de las cadenas» parecia un encabezado sin nada
 debajo y la caja de filtros parecia un segundo campo de texto. Lo arregla `Resumen`

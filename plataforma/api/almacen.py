@@ -300,6 +300,25 @@ def papel_en(lista_id: str, usuario_id: str) -> str | None:
 
 def comparte(lista_id: str, con_usuario: str, quien_invita: str,
              papel: str = "escribe") -> dict | None:
+    """Mete a alguien en la lista por su usuario, o le cambia el papel.
+
+    **A quien creo la lista no se le cambia el papel, y esto costo una lista.** Medido el 28 de
+    septiembre de 2026 con la puerta de las funciones, escribiendo **tu propio usuario** en
+    «Compartir con quien ya tiene cuenta»: la fila de `lista_acceso` del dueno se actualizaba a
+    `escribe`, asi que la lista **dejaba de ser suya** sin decirlo. Lo que se midio en ese
+    momento, con la cuenta de la prueba:
+
+        GET  /api/listas          soy_dueno: true   papel: 'escribe'   (se contradicen)
+        PATCH (renombrar)         200
+        POST /invitacion          403 «solo quien la creo puede invitar»
+        DELETE (borrarla)         403 «Solo quien la creo puede borrarla.»
+
+    Y la tarjeta de Compartir desaparecia de la pantalla, porque solo se pinta para el dueno: o
+    sea que **se sale de ahi sin forma de volver**, con una lista que ya no se puede borrar ni
+    compartir. La causa era el `DO UPDATE` sin condicion: el `WHERE` de abajo deja en paz la
+    fila del dueno, y el papel que se devuelve es **el que quedo en la base**, no el que se
+    pidio -- que es lo que deja a la pantalla decir la verdad.
+    """
     with cursor() as cur:
         cur.execute("SELECT id, nombre FROM usuario WHERE usuario = %s",
                     (con_usuario.strip().lower(),))
@@ -310,8 +329,14 @@ def comparte(lista_id: str, con_usuario: str, quien_invita: str,
             INSERT INTO lista_acceso (lista_id, usuario_id, papel, invitado_por, aceptado_en)
             VALUES (%s, %s, %s, %s, now())
             ON CONFLICT (lista_id, usuario_id) DO UPDATE SET papel = EXCLUDED.papel
+            WHERE lista_acceso.papel <> 'dueno'
         """, (lista_id, otro["id"], papel, quien_invita))
-    return {"usuario": con_usuario, "nombre": otro["nombre"], "papel": papel}
+        cur.execute("""SELECT papel FROM lista_acceso
+                        WHERE lista_id = %s AND usuario_id = %s""",
+                    (lista_id, otro["id"]))
+        fila = cur.fetchone()
+    return {"usuario": con_usuario, "nombre": otro["nombre"],
+            "papel": fila["papel"] if fila else papel}
 
 
 def lineas_de(lista_id: str) -> list[dict]:

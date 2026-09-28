@@ -814,9 +814,19 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
       </form>
       {comparte.data && (
         <p className="mt-2 text-sm">
-          <Etiqueta tono="bien">
-            Ya está dentro {comparte.data.nombre || `@${comparte.data.usuario}`}
-          </Etiqueta>
+          {/* **Compartir contigo mismo no te quita la lista, y ahora se dice.** Medido el 28 de
+              septiembre de 2026: escribir tu propio usuario metia tu fila con papel «escribe»,
+              la tarjeta se cerraba -- solo se pinta para el dueno -- y la lista se quedaba sin
+              poder invitar ni borrar (403 en las dos). La base ya no deja bajar al dueno de su
+              papel, y aqui se dice que no hacia falta: «Ya está dentro Fulano» sonaba a que
+              habia pasado algo. */}
+          {comparte.data.papel === 'dueno' ? (
+            <Etiqueta tono="info">Esa lista ya es tuya, no hace falta compartirla</Etiqueta>
+          ) : (
+            <Etiqueta tono="bien">
+              Ya está dentro {comparte.data.nombre || `@${comparte.data.usuario}`}
+            </Etiqueta>
+          )}
         </p>
       )}
       {comparte.isError && (

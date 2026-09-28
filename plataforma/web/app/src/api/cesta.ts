@@ -418,7 +418,12 @@ export async function compartirCon(listaId: string, usuario: string,
     })
 }
 
-/** Quien acaba de entrar en la lista. */
+/** Quien acaba de entrar en la lista.
+ *
+ *  `papel` es **el que quedo en la base**, no el que se pidio: si le das a alguien que ya es el
+ *  dueno, la API contesta `dueno` y no cambia nada (ver `almacen.comparte`), y la pantalla lo
+ *  dice con otras palabras en vez de «Ya está dentro».
+ */
 export interface Compartido {
   usuario: string
   nombre: string | null

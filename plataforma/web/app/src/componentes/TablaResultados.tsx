@@ -309,11 +309,17 @@ function BarraDeOrden({ orden, onOrden }: {
               key={id}
               type="button"
               aria-pressed={esElPuesto}
-              onClick={() =>
-                esElPuesto && id !== 'orden_servidor'
-                  ? onOrden([{ id, desc: !arriba }])
+              onClick={() => {
+                // **Pulsar el que ya esta puesto le da la vuelta, y no lo hacia.** Estaba
+                // escrito `desc: !arriba` con `arriba = orden[0]?.desc === false`, que con el
+                // orden puesto sale `desc: !true = false`: o sea **volvia a poner el mismo
+                // sentido**, y el boton parecia no hacer nada. Lo midio la puerta de las
+                // funciones el 28 de septiembre de 2026, comparando el primer resultado de un
+                // orden con el ultimo del otro. Ahora se le da la vuelta al `desc` que hay.
+                return esElPuesto && id !== 'orden_servidor'
+                  ? onOrden([{ id, desc: !(orden[0]?.desc ?? true) }])
                   : onOrden([{ id, desc: false }])
-              }
+              }}
               className={
                 esElPuesto
                   ? 'min-h-[44px] rounded-lg border border-sky-700 bg-sky-700 px-3 text-sm font-medium text-white dark:border-sky-500'

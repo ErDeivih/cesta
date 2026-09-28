@@ -274,6 +274,44 @@ def main() -> int:
     # borrado, que es lo que no se ve en la pantalla: sus listas se van, **y la linea que
     # dejo en la lista de otra persona se queda**, sin autor. Eso es la migracion 005
     # (`anadido_por` con `SET NULL`): sin ella la baja respondia 500.
+    print("\n== compartir contigo mismo no te quita la lista")
+    # **El fallo que encontro la puerta de las funciones el 28 de septiembre de 2026.** Escribir
+    # tu propio usuario en «Compartir con quien ya tiene cuenta» actualizaba tu fila de
+    # `lista_acceso` a `escribe`: la lista dejaba de ser tuya sin decirlo (403 al invitar y al
+    # borrarla, y la tarjeta de Compartir desaparecia de la pantalla, o sea sin forma de
+    # volver). Se mira aqui porque esto **es lo unico que ejecuta el SQL de verdad**: las
+    # pruebas de `tests/` sustituyen PostgreSQL a proposito.
+    mio = almacen.crea_usuario("mismo-dueno", "Mismo Dueno", "clave-de-prueba-123")
+    mi_lista = almacen.crea_lista(mio["id"], "La mia", True)
+    main.app.dependency_overrides[main.usuario_actual] = lambda: mio
+    r = cliente.post(f"/api/listas/{mi_lista['id']}/compartir",
+                     json={"usuario": "mismo-dueno", "papel": "escribe"})
+    print(f"   POST /compartir con mi propio usuario -> {r.status_code} {r.json()}")
+    if r.status_code != 200 or r.json().get("papel") != "dueno":
+        fallos += 1
+        print("   FALLO: compartir con el dueno le cambia el papel")
+    with almacen.cursor() as cur:
+        cur.execute("SELECT papel FROM lista_acceso WHERE lista_id = %s AND usuario_id = %s",
+                    (mi_lista["id"], mio["id"]))
+        papel = cur.fetchone()["papel"]
+    if papel != "dueno":
+        fallos += 1
+        print(f"   FALLO: en la base mi papel es {papel!r}, no «dueno»")
+    r = cliente.post(f"/api/listas/{mi_lista['id']}/invitacion",
+                     json={"papel": "escribe", "usos": 1, "dias": 7})
+    print(f"   y sigo pudiendo invitar -> {r.status_code}")
+    if r.status_code != 201:
+        fallos += 1
+        print("   FALLO: despues de compartir conmigo mismo ya no puedo invitar")
+    r = cliente.delete(f"/api/listas/{mi_lista['id']}")
+    print(f"   y sigo pudiendo borrarla -> {r.status_code}")
+    if r.status_code != 200:
+        fallos += 1
+        print("   FALLO: despues de compartir conmigo mismo ya no puedo borrar mi lista")
+    main.app.dependency_overrides[main.usuario_actual] = lambda: yo
+    with almacen.cursor() as cur:
+        cur.execute("DELETE FROM usuario WHERE usuario = 'mismo-dueno'")
+
     print("\n== darse de baja: DELETE /api/yo")
     quien_se_va = almacen.crea_usuario("se-va", "Se va", "clave-de-prueba-123")
     suya = almacen.crea_lista(quien_se_va["id"], "Su casa", True)

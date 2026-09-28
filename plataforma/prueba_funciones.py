@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 46
+COMPROBACIONES = 72
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -311,9 +311,95 @@ def main() -> int:
         else:
             print("   (no hay selector de tienda: la lista no tiene reparto que decidir)")
 
+        # --------------------------------------------------------- compartir -------------
+        print("\n== compartir la lista: por su usuario, con sus dos caras")
+        # **La otra via de compartir, la que no pasa por el enlace.** El enlace lo mide la
+        # puerta del navegador con una segunda persona de verdad; esto es la tarjeta de
+        # «Compartir con quien ya tiene cuenta», que hasta hoy no tocaba nadie.
+        carga("/cesta")
+        campo_usuario = pagina.get_by_label("Su usuario")
+        comprueba(campo_usuario.count() == 1,
+                  "quien creo la lista puede meter a alguien por su usuario")
+        if campo_usuario.count():
+            # Cara 1: un usuario que no existe. Un nombre de usuario se escribe mal con una
+            # facilidad pasmosa, y callarse seria dejar creyendo que se ha compartido.
+            campo_usuario.fill("no-existe-esta-persona-9271")
+            pagina.get_by_role("button", name="Compartir").first.click()
+            comprueba(espera(lambda: "No he podido compartirla" in texto()),
+                      "un usuario que no existe lo dice, en vez de callarse")
+            # Cara 2: uno que existe. **Se usa la propia cuenta de la prueba**: compartir con
+            # un desconocido de verdad le meteria una lista ajena a alguien, y una puerta no
+            # puede tocarle la compra a nadie.
+            #
+            # **Y esto encontro un fallo de verdad el 28 de septiembre de 2026**: compartir
+            # contigo mismo te cambiaba el papel a `escribe`, la lista dejaba de ser tuya (403
+            # al invitar y al borrarla) y la tarjeta de Compartir desaparecia de la pantalla --
+            # sin forma de volver. Ahora la base no deja bajar al dueno de su papel, y la
+            # pantalla dice que no hacia falta compartirla.
+            campo_usuario.fill(USUARIO)
+            pagina.get_by_role("button", name="Compartir").first.click()
+            comprueba(espera(lambda: "ya es tuya" in texto()),
+                      "compartir contigo mismo dice que la lista ya es tuya")
+            captura("compartir-contigo-mismo")
+            carga("/cesta")
+            comprueba(pagina.get_by_label("Su usuario").count() == 1
+                      and "Compartir" in texto(),
+                      "y la lista sigue siendo tuya: la tarjeta de compartir sigue ahi")
+            comprueba("Quién está dentro" in texto(),
+                      "y la lista de quien esta dentro sigue ahi, con su papel")
+
         # ------------------------------------------------------------ el buscador -----
         print("\n== el buscador: filtros, orden, vistas guardadas, recientes")
         carga("/buscar?q=leche+entera")
+        # **El orden, que no lo media nadie.** El control dice en que orden esta puesto, y
+        # pulsar el que ya esta puesto le da la vuelta. Se comprueba lo unico que no se puede
+        # fingir: que la lista cambia de orden, y que el sentido que dice es el que hace.
+        def orden_de_los_resultados() -> list[str]:
+            return pagina.evaluate(
+                "() => [...document.querySelectorAll(\"main a[href^='/grupo/']\")]"
+                ".map((a) => a.getAttribute('href'))")
+
+        if pagina.get_by_role("button", name="Ordenar por").count() or pagina.get_by_text(
+                "Ordenar por").count():
+            antes_del_orden = orden_de_los_resultados()
+
+            def abre_el_orden() -> None:
+                """Abre el desplegable **solo si esta cerrado**.
+
+                Pulsar el resumen cuando ya esta abierto lo **cierra**: la segunda vuelta del
+                orden se quedo esperando un boton que acababa de esconder, y la pasada se corto
+                ahi (28 de septiembre de 2026).
+                """
+                if pagina.get_by_role("button", name=re.compile(r"^Precio")).count() == 0:
+                    pagina.get_by_text("Ordenar por").first.click()
+                    pagina.wait_for_timeout(800)
+
+            abre_el_orden()
+            precio = pagina.get_by_role("button", name=re.compile(r"^Precio"))
+            if precio.count():
+                precio.first.click()
+                pagina.wait_for_timeout(2500)
+                arriba = orden_de_los_resultados()
+                resumen = texto()
+                comprueba(arriba and arriba != antes_del_orden,
+                          "ordenar por precio cambia el orden de los resultados")
+                comprueba("de menor a mayor" in resumen,
+                          "y el control dice el sentido con palabras, no con una flecha")
+                # Volver a pulsarlo le da la vuelta (el desplegable sigue abierto).
+                abre_el_orden()
+                pagina.get_by_role("button", name=re.compile(r"^Precio")).first.click()
+                pagina.wait_for_timeout(2500)
+                abajo = orden_de_los_resultados()
+                comprueba("de mayor a menor" in texto(),
+                          "pulsarlo otra vez le da la vuelta al sentido")
+                # **Y el orden es de verdad**: el primero de uno es el ultimo del otro.
+                comprueba(bool(arriba and abajo) and arriba[0] == abajo[-1],
+                          f"el mas barato encabeza un orden y cierra el otro "
+                          f"({(arriba or ['?'])[0]} / {(abajo or ['?'])[-1]})")
+            else:
+                comprueba(False, "no encuentro el boton de ordenar por precio")
+        else:
+            comprueba(False, "no encuentro el control de ordenar")
         chip = pagina.locator("[aria-label='Cadena de los resultados'] button").first
         if chip.count():
             chip.click()
@@ -406,6 +492,39 @@ def main() -> int:
                       "«Solo lo mío» contesta lo tuyo")
         captura("panel-bajadas")
 
+        # ---------------------------------------------------- el panel entero ------------
+        print("\n== el panel entero: las diez pestanas, una por una")
+        # **Faltaban seis.** Las puertas median `bajadas`, `indice`, `posicion` y `dudosas`;
+        # `hoy`, `donde`, `cadenas`, `marcas`, `historico` y `movidos` no los abria nadie --
+        # seis pantallas que existen y que nadie habia visto contestar con el navegador.
+        # Se pulsan **las pestanas**, no se navega por la direccion: es lo que hace una
+        # persona, y de paso se mide que la barra de pestanas lleve a donde dice.
+        PESTANAS = (
+            ("Hoy", "La ingesta de hoy"),
+            ("Dónde comprar", "Dónde hacer la compra"),
+            ("Cadenas", "Quién gana y cuánto se mueve"),
+            ("Marcas", "Marca propia contra marca"),
+            ("Histórico", "guardado"),
+            ("Movidos", "Lo que se ha movido hoy"),
+            ("Bajadas", "bajado"),
+            ("Índice", "El nivel de precios de cada cadena"),
+            ("Posición", "En qué es cara cada cadena"),
+            ("Ofertas dudosas", "conviene mirar dos veces"),
+        )
+        carga("/panel")
+        for nombre, tiene_que_decir in PESTANAS:
+            pestana = pagina.get_by_role("tab", name=nombre, exact=True)
+            if not pestana.count():
+                comprueba(False, f"no encuentro la pestana «{nombre}» del panel")
+                continue
+            pestana.first.click()
+            # Se espera al texto y no a un tiempo fijo: estos paneles piden a la API y pintan
+            # cientos de filas, asi que leer antes del final mide «Cargando…».
+            visto = espera(lambda que=tiene_que_decir: que in texto(), 20.0)
+            comprueba(visto and "No he podido" not in texto(),
+                      f"la pestana «{nombre}» contesta ({tiene_que_decir!r})")
+        captura("panel-hoy")
+
         # ------------------------------------------------------------------ grupo ------
         print("\n== la ficha del grupo: los pesos")
         carga("/grupo/526")
@@ -492,13 +611,68 @@ def main() -> int:
                       f"sin sesion, {ruta} pide entrar y no se queda cargando")
         suelta_ctx.close()
 
-        # ------------------------------------------------------- la cuenta se borra ----
-        print("\n== y la cuenta de prueba se borra")
+        # ------------------------------------------- la baja, desde la pantalla ---------
+        print("\n== darme de baja, desde la pantalla")
+        # **La unica operacion que no se puede deshacer, y la unica que se hacia por detras.**
+        # Hasta hoy esta puerta borraba su cuenta con un `fetch` a `DELETE /api/yo`: medía la
+        # API, no la pantalla. Y la pantalla tiene una decision que hay que medir -- no basta
+        # con un «¿seguro?», hay que **escribir tu propio usuario** --, que es justo lo que
+        # este proyecto cambio respecto a la interfaz vieja (`app.js:1571-1603`).
         carga("/ajustes")
-        borrado = pagina.evaluate(
-            "async () => (await fetch('/api/yo', {method: 'DELETE',"
-            " credentials: 'same-origin'})).status")
-        comprueba(borrado == 200, f"la cuenta de prueba se borra ({borrado})")
+        abrir_baja = pagina.get_by_role("button", name="Quiero darme de baja")
+        comprueba(abrir_baja.count() == 1, "los ajustes tienen la puerta de salida")
+        if abrir_baja.count():
+            abrir_baja.first.click()
+            pagina.wait_for_timeout(1200)
+            confirmar = pagina.get_by_role("button", name="Darme de baja")
+            comprueba(confirmar.count() == 1 and confirmar.first.is_disabled(),
+                      "sin escribir tu usuario, el boton de la baja esta apagado")
+            campo_baja = pagina.get_by_label(f"Escribe {USUARIO} para confirmarlo")
+            comprueba(campo_baja.count() == 1,
+                      "y la confirmacion pide escribir tu propio usuario, no un «si»")
+            if campo_baja.count():
+                campo_baja.fill("otra-cosa")
+                pagina.wait_for_timeout(800)
+                comprueba(pagina.get_by_role(
+                    "button", name="Darme de baja").first.is_disabled(),
+                    "con otro nombre sigue apagado")
+                # Y se puede uno arrepentir antes de escribirlo.
+                dejalo = pagina.get_by_role("button", name="No, déjalo")
+                if dejalo.count():
+                    dejalo.first.click()
+                    pagina.wait_for_timeout(1000)
+                    comprueba(pagina.get_by_role(
+                        "button", name="Quiero darme de baja").count() == 1,
+                        "«No, déjalo» vuelve a dejarlo como estaba")
+                    pagina.get_by_role("button", name="Quiero darme de baja").first.click()
+                    pagina.wait_for_timeout(1200)
+                campo_baja = pagina.get_by_label(f"Escribe {USUARIO} para confirmarlo")
+                campo_baja.fill(USUARIO)
+                pagina.wait_for_timeout(800)
+                comprueba(not pagina.get_by_role(
+                    "button", name="Darme de baja").first.is_disabled(),
+                    "con el tuyo se enciende")
+                pagina.get_by_role("button", name="Darme de baja").first.click()
+                with contextlib.suppress(Exception):
+                    pagina.get_by_label("Clave").first.wait_for(timeout=25000)
+                carga("/cesta")
+                comprueba(pagina.get_by_label("Clave").count() == 1,
+                          "la baja deja la aplicacion pidiendo entrar")
+                quedan = pagina.evaluate(
+                    "async () => (await (await fetch('/api/yo',"
+                    " {credentials: 'same-origin'})).json()).usuario")
+                comprueba(quedan is None,
+                          f"y la cuenta no esta: la API ya no la conoce ({quedan!r})")
+        # Red de seguridad: si la pantalla no ha podido (o el paso de arriba ha fallado a
+        # medias), la cuenta se borra igual. La base de casa no se queda con basura de una
+        # prueba, y una pasada cortada dejaria la cuenta para la siguiente.
+        if pagina.evaluate(
+                "async () => (await (await fetch('/api/yo',"
+                " {credentials: 'same-origin'})).json()).usuario") is not None:
+            borrado = pagina.evaluate(
+                "async () => (await fetch('/api/yo', {method: 'DELETE',"
+                " credentials: 'same-origin'})).status")
+            print(f"   (la baja por la pantalla no la dejo limpia: se borra por la API, {borrado})")
 
         errores = [c for c in consola if "pageerror" in c or "Failed to fetch" in c]
         print(f"\n== el resultado\n   consola: {len(consola)} mensajes"
