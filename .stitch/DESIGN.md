@@ -131,5 +131,6 @@ No hay «me gusta más»: hay cuatro barras, y dos son automáticas.
 |---|---|
 | `uv run python -m plataforma.prueba_produccion` | la pantalla servida contesta y las cuatro preguntas tienen respuesta (automática) |
 | `uv run python -m plataforma.prueba_navegador` | el recorrido en un navegador de verdad, en un móvil de 390×844 (automática) |
+| `uv run python -m plataforma.prueba_funciones` | **cada función de la aplicación hecha de verdad** (42 comprobaciones: alta y baja, varias listas, favoritos, avisos, vistas guardadas, pesos, escáner, elegir tienda), con cuenta desechable (automática) |
 | `docs/PRUEBA-15-SEGUNDOS.md` | **la barra (a)**: una persona que no ha escrito esto contesta las cuatro preguntas en 15 segundos con el móvil. La cierra el dueño, no el código |
 | `uv run pytest` | 935 pruebas, 0 fallos, y el sitio de documentación con sus 13 pruebas |

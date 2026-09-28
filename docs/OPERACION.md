@@ -201,6 +201,44 @@ Las **dos cuentas** de esta prueba son fijas (`prueba-navegador` y `prueba-invit
 el mismo motivo: cada pasada corre contra la misma base. Se ha corrido **tres veces seguidas**
 con el mismo resultado (`TODO BIEN`), que es lo unico que hace fiable una puerta.
 
+## La tercera puerta: **cada funcion de la aplicacion, hecha de verdad**
+
+Las dos puertas del navegador de arriba miran lo que el encargo pide -- las cuatro preguntas y
+lo que se sirve -- y entre las dos **se recorren las pantallas, pero no se ejercita todo lo que
+la aplicacion sabe hacer**. El 27 de septiembre de 2026 se midio lo que quedaba sin tocar: el
+alta y la baja de una cuenta, varias listas a la vez, cambiarles el nombre, los favoritos, las
+vistas guardadas, las busquedas recientes, las cadenas cercanas, los pesos del «que te importa»
+y elegir tienda por linea. Para eso esta la tercera puerta:
+
+    uv run python -m plataforma.prueba_funciones
+    uv run python -m plataforma.prueba_funciones --guardar-capturas
+
+Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
+mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`, se crea al empezar
+y se borra al terminar), y hace **42 comprobaciones** tocando lo que toca una persona: el boton,
+el campo, el deslizador. Cada una dice que se miro y si contesto; el numero lo pone la propia
+puerta, para que un `FALLO` se pueda citar. Salida esperada:
+
+    TODAS LAS FUNCIONES CONTESTAN.
+
+**Su primera pasada encontro cuatro cosas, y las cuatro eran de la puerta, no de la
+aplicacion** (un favorito no se puede pasar a una lista que no existe; «LO QUE HAS BUSCADO» se
+pinta en mayusculas desde el estilo, asi que el texto del documento dice otra cosa; el
+interruptor de cadenas cercanas guarda lo contrario de lo que uno supone al leerlo; el escaner
+contesta «No tengo ese codigo» con otras palabras). Esta escrito aqui porque es la leccion: una
+puerta nueva falla primero por lo que ella misma da por hecho.
+
+La quinta fue mas fina y **tambien era de la puerta**: al borrar la lista seleccionada, el
+desplegable de listas se queda sin opciones durante un momento mientras se vuelve a pedir la
+lista de listas, y medir en ese hueco daba un fallo. La verdad se comprobo con
+`data/debug/borrar_lista.py`: en ese mismo instante la API ya contestaba `[('Casa', 1)]` y al
+recargar la pantalla enseñaba `['Casa (1)']`. O sea, el borrado estaba bien; la comprobacion
+ahora **recarga antes de mirar** y lo que mide es el estado asentado.
+
+Esta puerta **no** sustituye a las otras ni cierra la barra (a): mide si las funciones
+contestan, no si se entienden. Eso sigue siendo una persona con un movil en quince segundos
+(`docs/PRUEBA-15-SEGUNDOS.md`), y esa la cierra el dueño.
+
 ## Fase 1: todo en el PC, y el almacen tambien
 
 Medido el 6 sep 2026 en F:\aprendizaje\scrap: **158 GB libres de 209 GB**.

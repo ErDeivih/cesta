@@ -52,5 +52,6 @@ repetir, porque repetir crea otra.
 3. Traducirlas al código del proyecto (`plataforma/web/app`, React + Tailwind; y
    `plataforma/aprende.py` para el sitio de docs), sin romper la CSP. La traducción es **a mano**:
    se copia la composición, no el HTML.
-4. Medir cada cambio con `plataforma.prueba_produccion`, `plataforma.prueba_navegador` y `pytest`.
+4. Medir cada cambio con `plataforma.prueba_produccion`, `plataforma.prueba_navegador`,
+   `plataforma.prueba_funciones` y `pytest`.
    La barra (a) de los quince segundos la cierra el dueño.
