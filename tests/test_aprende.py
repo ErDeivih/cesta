@@ -366,6 +366,30 @@ def test_el_markdown_de_verdad_se_pinta(sitio):
         "copiar.js no esta buscando los bloques de codigo")
 
 
+def test_el_boton_de_copiar_tiene_salida_sin_portapapeles(sitio):
+    """Pulsar «Copiar» y que no pase nada es un callejon sin salida.
+
+    Medido con la puerta de produccion el 28 de septiembre de 2026: el sitio se sirve **por http**
+    (el 8080 del PC y la IP de Tailscale) y `navigator.clipboard` solo existe en contexto seguro,
+    asi que el boton contestaba **«No puedo»** y ahi se acababa -- con el comando delante, en un
+    movil, la salida era seleccionar el texto a mano. Es la misma decision que la cesta ya toma
+    con el enlace de invitacion: comprobar el portapapeles **antes** de usarlo y, si no esta,
+    dejar el texto seleccionado y decirlo.
+
+    La puerta de produccion mide el resultado ya pintado (que el boton conteste «Copiado» o
+    «Cópialo a mano», y que en el segundo caso haya texto seleccionado de verdad); esto vigila
+    que el guion siga teniendo las dos ramas.
+    """
+    salida, _paginas = sitio
+    guion = _leer(salida, "copiar.js")
+    assert "navigator.clipboard && navigator.clipboard.writeText" in guion, (
+        "el guion usa el portapapeles sin comprobar que exista: por http no existe")
+    assert "selectNodeContents" in guion and "addRange" in guion, (
+        "sin portapapeles no se selecciona el codigo: el boton dice que no puede y no deja "
+        "ninguna forma de copiarlo")
+    assert "Cópialo a mano" in guion, "y no lo dice"
+
+
 def test_el_sitio_no_pide_nada_por_red(sitio):
     """Se tiene que poder abrir con doble clic: ni fuentes, ni CDN, ni imagenes de fuera.
 

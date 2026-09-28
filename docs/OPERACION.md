@@ -100,6 +100,19 @@ Un `blockquote` cuya primera negrita sea una de las palabras conocidas sale dest
 Se hace **después** de pintar el markdown (markdown no tiene avisos) y el texto no se toca: solo
 se le pone clase. El artículo («La lección:» / «Lección:») da igual.
 
+### El botón de copiar, que por http no puede copiar
+
+El botón lo pone `copiar.js` (en fichero y no en línea, porque el CSP de Caddy prohíbe los scripts
+incrustados), y **el portapapeles solo existe en contexto seguro**: el material se sirve por http
+(el 8080 del PC y la IP de Tailscale), así que `navigator.clipboard` no está. Medido con la puerta
+de producción el 28 de septiembre de 2026: pulsar «Copiar» contestaba **«No puedo»** y ahí se
+acababa — con el comando delante, en el móvil, la salida era seleccionar el texto a mano.
+
+Ahora el guion **comprueba el portapapeles antes de usarlo** y, si no está (o lo niega), **deja el
+bloque seleccionado** y dice «Cópialo a mano». Es la misma decisión que la cesta ya tomaba con el
+enlace de invitación. Lo mide la puerta de producción ya pintado: que el botón conteste, y que en
+el segundo caso haya texto seleccionado de verdad (166 caracteres la primera vez que se midió).
+
 ### Regenerar y leerlo
 
 ```bash

@@ -1015,15 +1015,34 @@ for (const bloque of document.querySelectorAll('pre')) {
   // boton, asi que un bloque de codigo sin boton no paga el hueco.
   bloque.classList.add('con-copiar');
   boton.addEventListener('click', async () => {
-    const codigo = bloque.querySelector('code');
-    try {
-      await navigator.clipboard.writeText(codigo ? codigo.innerText : bloque.innerText);
-      boton.textContent = 'Copiado';
+    const codigo = bloque.querySelector('code') || bloque;
+    // **El portapapeles se comprueba antes de usarlo, y si no esta se selecciona el codigo.**
+    // Esto se sirve por http (el 8080 del PC y la IP de Tailscale), y `navigator.clipboard` solo
+    // existe en contexto seguro: medido con la puerta de produccion el 28 de septiembre de 2026,
+    // pulsar «Copiar» contestaba **«No puedo»** y ahi se acababa -- en un movil, con el comando
+    // delante, la salida era seleccionar el texto a mano. Es la misma decision que ya toma la
+    // cesta con el enlace de invitacion (`Cesta.tsx`: dejar el texto seleccionado y decirlo).
+    const texto = codigo.innerText;
+    const termina = (dicho) => {
+      boton.textContent = dicho;
       boton.classList.add('hecho');
-      setTimeout(() => { boton.textContent = 'Copiar'; boton.classList.remove('hecho'); }, 1500);
-    } catch (e) {
-      boton.textContent = 'No puedo';
+      setTimeout(() => { boton.textContent = 'Copiar'; boton.classList.remove('hecho'); }, 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        termina('Copiado');
+        return;
+      } catch (e) {
+        // Existe y aun asi lo ha negado (permiso denegado, ventana sin foco): al respaldo.
+      }
     }
+    const rango = document.createRange();
+    rango.selectNodeContents(codigo);
+    const seleccion = window.getSelection();
+    seleccion.removeAllRanges();
+    seleccion.addRange(rango);
+    termina('Cópialo a mano');
   });
   bloque.appendChild(boton);
 }

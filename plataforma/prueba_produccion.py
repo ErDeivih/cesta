@@ -185,6 +185,48 @@ def main() -> int:
                   "y los bloques de codigo")
         comprueba(pagina.locator("article aside.frase").count() == 1,
                   "y el capitulo abre con su «en una frase»")
+        # **Lo que se pulsa en el material, que no lo media nadie.** El boton de copiar lo pone
+        # un script (`copiar.js`, en fichero porque el CSP prohibe los incrustados), asi que si
+        # el script no corre no hay boton **y ninguna prueba de codigo se entera**: el HTML que
+        # genera `aprende.py` no lo lleva. Y las tarjetas de anterior/siguiente son la forma de
+        # recorrer el curso, que es para lo que existe el sitio.
+        cuantos_pre = pagina.locator("article pre").count()
+        copiar = pagina.locator("article pre .copiar")
+        comprueba(copiar.count() == cuantos_pre,
+                  f"cada bloque de codigo tiene su boton de copiar ({copiar.count()} de "
+                  f"{cuantos_pre})")
+        if copiar.count():
+            copiar.first.click()
+            with contextlib.suppress(Exception):
+                pagina.wait_for_function(
+                    "() => { const b = document.querySelector('article pre .copiar');"
+                    " return b && b.textContent !== 'Copiar'; }", timeout=8000)
+            dicho = copiar.first.inner_text()
+            # Los dos finales valen, **y el segundo es el normal por http**: el portapapeles
+            # necesita contexto seguro y el material se sirve por http. Lo que no vale es
+            # callarse, que es lo que hacia hasta el 28 de septiembre de 2026: decia «No puedo»
+            # y ahi se acababa, con el comando delante y sin nada seleccionado.
+            comprueba(dicho in ("Copiado", "Cópialo a mano"),
+                      f"y al pulsarlo contesta ({dicho!r})")
+            if dicho == "Cópialo a mano":
+                elegido = pagina.evaluate("() => window.getSelection().toString().length")
+                comprueba(elegido > 10,
+                          f"y deja el codigo seleccionado para copiarlo a mano ({elegido} "
+                          "caracteres)")
+        migas = pagina.locator("nav.migas a")
+        comprueba(migas.count() >= 2 and "Material" in pagina.locator("nav.migas").inner_text(),
+                  "el capitulo dice de donde viene (migas de pan)")
+        siguiente = pagina.locator("nav.paso a.paso-caja.despues").first
+        if siguiente.count():
+            destino = siguiente.get_attribute("href")
+            titulo = siguiente.inner_text()
+            siguiente.click()
+            with contextlib.suppress(Exception):
+                pagina.wait_for_url(f"**/aprende/{destino}", timeout=15000)
+            comprueba(f"/aprende/{destino}" in pagina.url and pagina.locator("main h1").count() == 1,
+                      f"y «siguiente» lleva al capitulo que anuncia ({titulo[:30]!r})")
+        else:
+            comprueba(False, "el capitulo no tiene tarjeta de «siguiente»")
         # El indice de la pagina (la columna de la derecha) apunta a los apartados. Se miro en
         # `aside.lateral` hasta el 24 de septiembre de 2026, y ahi no hay anclas: el lateral
         # enlaza paginas. El indice del capitulo vive en `aside.toc`.
