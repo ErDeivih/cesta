@@ -149,6 +149,35 @@ def test_la_frase_viene_del_servidor_y_no_se_recalcula():
         assert prohibido not in avisos, f"la pantalla esta escribiendo la frase ({prohibido})"
 
 
+def test_el_nombre_que_salto_se_guarda_y_es_el_que_se_enseña():
+    """La frase guardada y su sujeto tienen que ser de la misma epoca.
+
+    **El fallo, medido el 28 de septiembre de 2026** en la pantalla de avisos de la cuenta de
+    pruebas: «TWIX Barritas de chocolate con caramelo y galleta 10 uds. 50 g. -- esta al precio mas
+    bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona». Unas barritas no cuestan 0,96 EUR/l: esa
+    frase es de la leche entera, que es lo que el grupo 10226 era el dia que el aviso salto. El
+    nombre se lee del gold de hoy (`catalogo.tarjetas`) y la frase es de aquel dia, asi que sin
+    guardar el nombre la tarjeta mezcla dos epocas. La regla de la pantalla ya estaba escrita
+    («La frase es la del dia en que salto: entonces era verdad»); lo que faltaba era el sujeto.
+    """
+    migracion = (Path(__file__).resolve().parents[1] / "plataforma" / "sql"
+                 / "009_el_producto_del_aviso.sql")
+    assert migracion.exists(), "falta la migracion de la columna"
+    assert "salto_nombre" in migracion.read_text(encoding="utf-8")
+    almacen_fuente = (Path(__file__).resolve().parents[1] / "plataforma" / "api"
+                      / "almacen.py").read_text(encoding="utf-8")
+    assert "salto_nombre = %s" in almacen_fuente, "el vigilante no guarda el nombre"
+    assert "salto_nombre" in almacen_fuente.split("def alertas_de(")[1][:400], (
+        "la alerta no devuelve el nombre guardado")
+    vigilante = (Path(__file__).resolve().parents[1] / "plataforma" / "api"
+                 / "vigilante.py").read_text(encoding="utf-8")
+    assert 's.get("nombre")' in vigilante, "la pasada del vigilante no le pasa el nombre"
+    avisos = _leer(AVISOS)
+    assert "salto_nombre" in avisos, "la pantalla no usa el nombre que salto"
+    assert "deEntonces" in avisos, (
+        "la tarjeta de «salió y ya no está a ese precio» tiene que usar el nombre de entonces")
+
+
 def test_el_punto_cuenta_lo_que_ha_saltado_y_se_apaga_a_mano():
     nav = _leer(NAV)
     assert "useAvisosSinVer" in nav and "sinVer > 0" in nav, \

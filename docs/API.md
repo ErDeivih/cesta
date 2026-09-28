@@ -396,7 +396,7 @@ prometia algo. Es la misma clase de fallo que `nombre_visto` y que `novedades`, 
 
     sale  {"fecha_datos",
            "alertas": [{"id", "grupo_id", "tipo", "umbral_cent", "creada_en",
-                        "vista_en", "salto_en", "salto_texto",
+                        "vista_en", "salto_en", "salto_texto", "salto_nombre",
                         "nombre", "imagen", "precio_unidad_cent", "unidad",
                         "cadena_mas_barata", "fiable"}],
            "saltan":  [{"grupo_id", "nombre", "cadena", "precio_unidad_cent",
@@ -425,6 +425,20 @@ precios.
 de ese dia, y gold se reescribe cada manana, asi que recalcularla haria que el aviso que
 alguien vio ayer contara hoy otra cosa. Una alerta **salta una vez** (el `UPDATE` lleva
 `AND salto_en IS NULL`): un aviso que se repite todos los dias deja de leerse.
+
+**Y `salto_nombre`, por la misma razon: el sujeto de esa frase.** `nombre` (la tarjeta del grupo)
+se lee del gold de **hoy**, asi que una alerta que salto ayer podia enseñar dos epocas juntas.
+Medido el 28 de septiembre de 2026 en la pantalla de avisos de la cuenta de pruebas:
+
+    TWIX Barritas de chocolate con caramelo y galleta 10 uds. 50 g.
+    esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona
+
+Unas barritas no cuestan 0,96 EUR/l: esa frase es de la leche entera, que es lo que el grupo 10226
+era el dia que salto. Las alertas que saltaron **antes** de que existiera la columna vienen con
+`salto_nombre: null`, y entonces la pantalla usa el de hoy (que es lo que hacia): no se inventa un
+nombre que no se guardo. Lo vigilan `tests/test_alertas_pantalla.py` y el punta a punta, que siembra
+el caso (marca una alerta como saltada con otro nombre y comprueba que vuelve el guardado, no el del
+grupo de hoy).
 
     POST   /api/alertas              {"grupo_id", "tipo", "umbral_cent"}
     DELETE /api/alertas/{alerta_id}

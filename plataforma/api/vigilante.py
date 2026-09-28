@@ -70,7 +70,12 @@ def una_pasada() -> dict:
         # es otro. Sin guardarla, lo que alguien vio ayer diria hoy otra cosa.
         # `marca_alerta_saltada` devuelve False si otra pasada se adelanto: el UPDATE
         # lleva `AND salto_en IS NULL`, y asi lo que se cuenta es lo que se apunto.
-        if almacen.marca_alerta_saltada(s["alerta_id"], s["por_que"]):
+        # **Y con ella el nombre del producto**, por la misma razon: el nombre se lee del
+        # gold de hoy y la frase es del dia que salto. Sin guardarlo, la tarjeta enseña
+        # dos epocas juntas: medido el 28 de septiembre de 2026, «TWIX Barritas ... esta
+        # al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona», que es la
+        # frase de la leche entera.
+        if almacen.marca_alerta_saltada(s["alerta_id"], s["por_que"], s.get("nombre")):
             apuntadas += 1
     return {"miradas": len(pendientes), "saltan": len(saltan), "apuntadas": apuntadas}
 

@@ -732,7 +732,7 @@ def mas_comprados(limite: int = 72) -> list[dict]:
 def alertas_de(usuario_id: str) -> list[dict]:
     with cursor() as cur:
         cur.execute("""SELECT id, grupo_id, tipo, umbral_cent, creada_en, vista_en,
-                              salto_en, salto_texto
+                              salto_en, salto_texto, salto_nombre
                          FROM alerta WHERE usuario_id = %s
                         ORDER BY creada_en DESC""", (usuario_id,))
         return cur.fetchall()
@@ -783,8 +783,8 @@ def avisos_del_dia() -> dict:
         return dict(cur.fetchone())
 
 
-def marca_alerta_saltada(alerta_id: str, texto: str) -> bool:
-    """Apunta que esta alerta salto, y con que frase. False si ya estaba apuntada.
+def marca_alerta_saltada(alerta_id: str, texto: str, nombre: str | None = None) -> bool:
+    """Apunta que esta alerta salto, **con que frase y con que producto**. False si ya estaba.
 
     El `AND salto_en IS NULL` es lo que hace que dos pasadas seguidas del vigilante no
     cuenten lo mismo dos veces, y que lo que se cuenta sea **lo que se apunto** y no lo
@@ -793,10 +793,18 @@ def marca_alerta_saltada(alerta_id: str, texto: str) -> bool:
     **El texto se guarda y no se recalcula**: la frase se mide contra el gold de ese
     dia, y gold se reescribe cada manana. Sin guardarla, el aviso que alguien vio ayer
     contaria hoy otra cosa, o ninguna.
+
+    **Y el nombre del producto, por la misma razon.** El nombre se lee del gold de hoy
+    (`catalogo.tarjetas`) y la frase es del dia que salto: sin guardarlo, la tarjeta
+    enseñaba las dos epocas juntas. Medido el 28 de septiembre de 2026 en la pantalla de
+    avisos de la cuenta de pruebas: «TWIX Barritas de chocolate con caramelo y galleta 10
+    uds. 50 g. -- esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en
+    mercadona», que es la frase de la leche entera (el grupo 10226 era la leche el dia que
+    salto). Ver `sql/009_el_producto_del_aviso.sql`.
     """
     with cursor() as cur:
-        cur.execute("""UPDATE alerta SET salto_en = now(), salto_texto = %s
-                        WHERE id = %s AND salto_en IS NULL""", (texto, alerta_id))
+        cur.execute("""UPDATE alerta SET salto_en = now(), salto_texto = %s, salto_nombre = %s
+                        WHERE id = %s AND salto_en IS NULL""", (texto, nombre, alerta_id))
         return cur.rowcount > 0
 
 
@@ -819,9 +827,9 @@ def crea_alerta(usuario_id: str, grupo_id: int, tipo: str,
                  VALUES (%s, %s, %s, %s)
             ON CONFLICT (usuario_id, grupo_id, tipo) DO UPDATE
                     SET umbral_cent = EXCLUDED.umbral_cent, vista_en = NULL,
-                        salto_en = NULL, salto_texto = NULL
+                        salto_en = NULL, salto_texto = NULL, salto_nombre = NULL
               RETURNING id, grupo_id, tipo, umbral_cent, creada_en, vista_en,
-                        salto_en, salto_texto
+                        salto_en, salto_texto, salto_nombre
         """, (usuario_id, grupo_id, tipo, umbral_cent))
         return cur.fetchone()
 

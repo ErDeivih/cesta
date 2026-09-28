@@ -4120,3 +4120,26 @@ pasadas seguidas de hoy: `52699 de 52699 productos conservan el numero de ayer`.
 
 Lo vigilan `tests/test_grupos_ids.py` (7 casos: el catalogo en otro orden, un grupo que crece o
 mengua, uno que se parte, uno nuevo, un empate y la tabla que se guarda) y `tests/test_lineas_movidas.py`.
+
+
+### El aviso enseñaba dos epocas juntas: «TWIX ... 0,96 EUR/l»
+
+**Lo que llevo al fallo de los identificadores.** La pantalla de avisos decía:
+
+    TWIX Barritas de chocolate con caramelo y galleta 10 uds. 50 g.
+    esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona
+
+Unas barritas no cuestan 0,96 EUR/l. Esa frase es de **la leche entera**, que es lo que el grupo
+10226 era el día que el aviso saltó: el nombre del producto se lee del gold **de hoy**
+(`catalogo.tarjetas`) y la frase es **de aquel día** (`salto_texto`). La regla de la pantalla ya
+estaba escrita —*«La frase es la del día en que saltó: entonces era verdad»*—, pero le faltaba el
+sujeto.
+
+Ahora el vigilante guarda **también el nombre** (`sql/009_el_producto_del_aviso.sql`,
+`salto_nombre`), y la tarjeta de «Salió y ya no está a ese precio» usa ese nombre: el de entonces.
+Si el grupo es hoy otro producto, debajo lo dice («ese número es hoy «…»»), que es lo que pasó de
+verdad. Las alertas que saltaron antes de que existiera la columna vienen con `null` y se cae al
+nombre del grupo, que es lo que se hacía: no se inventa un nombre que no se guardó.
+
+Lo mide el punta a punta sembrando el caso (marca una alerta como saltada con otro nombre y
+comprueba que vuelve el guardado, no el del grupo de hoy) y `tests/test_alertas_pantalla.py`.

@@ -312,6 +312,41 @@ def main() -> int:
     # borrado, que es lo que no se ve en la pantalla: sus listas se van, **y la linea que
     # dejo en la lista de otra persona se queda**, sin autor. Eso es la migracion 005
     # (`anadido_por` con `SET NULL`): sin ella la baja respondia 500.
+    # **Y el producto que salto, guardado con la frase.** El nombre del grupo se lee del gold de
+    # hoy; la frase es del dia que salto. Sin guardar el nombre, la tarjeta enseña las dos epocas
+    # juntas: medido el 28 de septiembre de 2026 en la pantalla de avisos, «TWIX Barritas de
+    # chocolate ... esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona», que
+    # es la frase de la leche entera (el grupo 10226 era la leche el dia que salto). Aqui se
+    # siembra el caso a mano: se marca la alerta como saltada **con el nombre de otro producto** y
+    # se comprueba que la API devuelve ese nombre y no el del grupo de hoy.
+    print("\n== el producto que salto, guardado con la frase")
+    mio = almacen.alertas_de(yo["id"])[0]
+    # Se **vuelve a crear** la alerta: el `ON CONFLICT` la deja otra vez por saltar (y limpia
+    # `salto_texto` y `salto_nombre`), que es justo lo que hace falta para poder sembrar el caso.
+    # Sin eso, la pasada del vigilante de arriba ya la habia marcado y el `UPDATE` no la toca
+    # (`AND salto_en IS NULL`), que es lo correcto.
+    puesta = almacen.crea_alerta(yo["id"], int(mio["grupo_id"]), str(mio["tipo"]))
+    nombre_de_entonces = "El producto que era ese dia"
+    marcada = almacen.marca_alerta_saltada(str(puesta["id"]), "una frase de aquel dia",
+                                           nombre_de_entonces)
+    print(f"   la alerta se vuelve a marcar: {marcada}")
+    if not marcada:
+        fallos += 1
+        print("   FALLO: no se ha podido marcar la alerta como saltada")
+    cuerpo = pide("/api/alertas")
+    guardadas = [a for a in cuerpo.get("alertas", []) if str(a["id"]) == str(puesta["id"])]
+    apuntado = guardadas[0]["salto_nombre"] if guardadas else None
+    de_hoy = guardadas[0].get("nombre") if guardadas else None
+    print(f"   guardado: {apuntado!r}   el grupo hoy se llama: {de_hoy!r}")
+    if apuntado != nombre_de_entonces:
+        fallos += 1
+        print("   FALLO: el nombre que salto no se ha guardado (la pantalla enseñaria el de hoy)")
+    if apuntado and apuntado == de_hoy:
+        fallos += 1
+        print("   FALLO: el nombre guardado es el de hoy, no el del dia que salto")
+
+    print("\n== la numeracion de los grupos, y la tabla que la hace estable")
+
     print("\n== la numeracion de los grupos, y la tabla que la hace estable")
     # **El fichero que hace que un grupo conserve su numero entre pasadas.** El emparejador numera
     # los grupos por el orden en que aparecen los productos, y ese numero lo guardan las listas,

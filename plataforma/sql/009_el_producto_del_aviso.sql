@@ -1,0 +1,21 @@
+-- El producto que hizo saltar el aviso, guardado con la frase.
+--
+-- **Por que hace falta.** `salto_texto` guarda la frase del dia que salto, y con ella se enseñaba
+-- el **nombre del grupo de hoy**: dos epocas en la misma linea. Medido el 28 de septiembre de 2026
+-- en la pantalla de avisos de la cuenta de pruebas:
+--
+--     TWIX Barritas de chocolate con caramelo y galleta 10 uds. 50 g.
+--     esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en mercadona
+--
+-- Unas barritas no cuestan 0,96 EUR/l: esa frase es de la leche entera, que es lo que el grupo
+-- 10226 era el dia que el aviso salto. El nombre del grupo se lee del gold de hoy
+-- (`catalogo.tarjetas`), asi que cambia cuando cambia el grupo... y la frase, no: la frase es un
+-- documento historico y tiene que seguir diciendo lo que decia.
+--
+-- Con el nombre guardado, la tarjeta enseña **el producto que de verdad salto**, que es lo unico
+-- coherente con la frase que lleva al lado. La regla de la pantalla ya estaba escrita («La frase es
+-- la del dia en que salto: entonces era verdad»); lo que faltaba es el sujeto de esa frase.
+--
+-- Las filas que ya existen se quedan con `NULL`: no se inventa un nombre que no se guardo. La
+-- pantalla usa el del grupo cuando no lo hay, que es lo que hacia hasta hoy.
+ALTER TABLE alerta ADD COLUMN IF NOT EXISTS salto_nombre text;

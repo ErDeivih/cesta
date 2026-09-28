@@ -100,13 +100,16 @@ def _casi(monkeypatch, alertas_: list[dict]):
     # la anterior: verde por el motivo equivocado.
     alertas.olvida()
     pendientes = list(alertas_)
-    apuntadas: list[tuple[str, str]] = []
+    # `(alerta_id, frase, nombre del producto)`: el nombre viaja desde el 28 de septiembre de
+    # 2026, porque el de la tarjeta se lee del gold de hoy y la frase es del dia que salto
+    # (sin guardarlo, la pantalla enseñaba «TWIX ... 0,96 EUR/l», que es la frase de la leche).
+    apuntadas: list[tuple[str, str, str | None]] = []
     vistas: list = []
 
-    def marca(alerta_id, texto):
-        if any(a == alerta_id for a, _t in apuntadas):
+    def marca(alerta_id, texto, nombre=None):
+        if any(a == alerta_id for a, _t, _n in apuntadas):
             return False            # ya estaba apuntada: el UPDATE no cambia nada
-        apuntadas.append((alerta_id, texto))
+        apuntadas.append((alerta_id, texto, nombre))
         return True
 
     monkeypatch.setattr(almacen, "alertas_por_saltar", lambda: list(pendientes))
@@ -124,7 +127,7 @@ def test_una_alerta_que_se_cumple_se_apunta_sin_darla_por_vista(gold, monkeypatc
 
     r = vigilante.una_pasada()
     assert r == {"miradas": 1, "saltan": 1, "apuntadas": 1}
-    assert [a for a, _t in apuntadas] == ["a1"], \
+    assert [a for a, _t, _n in apuntadas] == ["a1"], \
         "la alerta que se cumple tiene que quedar apuntada"
     assert vistas == [], (
         "el vigilante ha tocado `vista_en`: eso es decir que alguien ha visto un aviso "
@@ -134,6 +137,10 @@ def test_una_alerta_que_se_cumple_se_apunta_sin_darla_por_vista(gold, monkeypatc
     texto = apuntadas[0][1]
     assert "90 dias" in texto and "aldi" in texto, \
         f"la frase guardada no explica el aviso: {texto!r}"
+    # **Y el nombre del producto que salto**, que es el sujeto de esa frase: el de la
+    # tarjeta se lee del gold de hoy, y la frase es de aquel dia.
+    nombre = apuntadas[0][2]
+    assert nombre, f"no se ha guardado el nombre del producto que salto: {nombre!r}"
 
 
 def test_una_alerta_que_no_se_cumple_no_se_apunta(gold, monkeypatch):
@@ -160,7 +167,7 @@ def test_una_alerta_salta_una_vez(gold, monkeypatch):
     assert segunda["apuntadas"] == 0, (
         "la segunda pasada ha vuelto a apuntar la misma alerta: el aviso saldria dos "
         "veces y dejaria de leerse")
-    assert [a for a, _t in apuntadas] == ["a1"]
+    assert [a for a, _t, _n in apuntadas] == ["a1"]
 
 
 def test_sin_alertas_pendientes_no_se_mira_nada(gold, monkeypatch):

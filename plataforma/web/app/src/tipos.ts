@@ -630,6 +630,15 @@ export interface Alerta {
   salto_en: string | null
   /** La frase, guardada cuando salto: se mide contra el gold de ese dia. */
   salto_texto: string | null
+  /** **El producto que salto**, guardado con la frase.
+   *
+   *  El nombre de la tarjeta (`nombre`, abajo) se lee del gold de hoy y la frase es del dia que
+   *  salto: sin este campo la pantalla enseñaba las dos epocas juntas. Medido el 28 de septiembre
+   *  de 2026: «TWIX Barritas de chocolate ... esta al precio mas bajo de los ultimos 90 dias:
+   *  0.96 EUR/l en mercadona», que es la frase de la leche entera (el grupo 10226 era la leche el
+   *  dia que salto). Las filas que saltaron antes de que existiera esta columna vienen con `null`,
+   *  y entonces la pantalla usa el nombre del grupo: no se inventa un nombre que no se guardo. */
+  salto_nombre?: string | null
   /** La tarjeta del grupo, que la API anade en `GET /api/alertas`.
    *
    *  Sin el nombre, la pantalla solo puede decir "producto", y un aviso que no dice

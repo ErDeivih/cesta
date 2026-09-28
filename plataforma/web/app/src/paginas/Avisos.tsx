@@ -51,10 +51,20 @@ export function promesa(a: Alerta): string {
  *  encima sobre un producto que si existe. Se dice lo unico que sabemos -- que es un
  *  producto de los que sigues -- y el enlace lleva a la ficha, que si sabe la verdad.
  */
-function Nombre({ a }: { a: Alerta }) {
+function Nombre({ a, deEntonces = false }: { a: Alerta; deEntonces?: boolean }) {
   // `min-h-[44px]` con `inline-flex`: medido en el navegador (23 sep 2026), estos enlaces
   // median **21 px de alto**, y son la forma de ir al producto del que habla el aviso.
-  if (!a.nombre) {
+  //
+  // **`deEntonces`: el nombre que salto, no el de hoy.** En las tarjetas que enseñan una frase
+  // guardada, el sujeto tiene que ser el mismo que el de la frase. Medido el 28 de septiembre de
+  // 2026: «TWIX Barritas ... esta al precio mas bajo de los ultimos 90 dias: 0.96 EUR/l en
+  // mercadona» -- la frase es de la leche entera, que es lo que ese grupo era el dia que salto.
+  // Si la fila es de antes de que existiera la columna, se cae al nombre del grupo, que es lo que
+  // se hacia hasta hoy: no se inventa nada.
+  const mostrado = (deEntonces && a.salto_nombre) || a.nombre
+  const cambiado = Boolean(deEntonces && a.salto_nombre && a.nombre
+                           && a.salto_nombre !== a.nombre)
+  if (!mostrado) {
     return (
       <Link to={`/grupo/${a.grupo_id}`}
             className="inline-flex min-h-[44px] flex-1 items-center text-tinta-suave underline">
@@ -63,10 +73,17 @@ function Nombre({ a }: { a: Alerta }) {
     )
   }
   return (
-    <Link to={`/grupo/${a.grupo_id}`}
-          className="inline-flex min-h-[44px] flex-1 items-center font-medium underline">
-      {a.nombre}
-    </Link>
+    <span className="min-w-0 flex-1">
+      <Link to={`/grupo/${a.grupo_id}`}
+            className="inline-flex min-h-[44px] items-center font-medium underline">
+        {mostrado}
+      </Link>
+      {cambiado && (
+        <span className="block text-xs text-tinta-suave">
+          ese número es hoy «{a.nombre}»
+        </span>
+      )}
+    </span>
   )
 }
 
@@ -150,7 +167,9 @@ export function Avisos() {
             {yaNo.map((a) => (
               <li key={a.id} className="flex flex-wrap items-start gap-2 rounded-lg border border-borde p-3">
                 <div className="min-w-[12rem] flex-1">
-                  <Nombre a={a} />
+                  {/* **El nombre que salto, no el de hoy.** Esta tarjeta enseña una frase
+                      guardada; el sujeto tiene que ser el mismo que el de la frase. */}
+                  <Nombre a={a} deEntonces />
                   <p className="mt-1 text-sm">{a.salto_texto ?? 'Saltó.'}</p>
                   <p className="mt-1 text-xs text-tinta-suave">
                     {a.salto_en && <>Saltó {hace(a.salto_en)} · {fecha(a.salto_en)}</>}
