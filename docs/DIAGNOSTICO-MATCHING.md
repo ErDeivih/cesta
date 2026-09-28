@@ -1211,9 +1211,24 @@ Diez pruebas en `tests/test_equivalencias.py`: que el id no depende de la
 posición, que la huella cambia si cambia el orden, que dos pasadas no se pisan,
 que las features dicen la verdad y que sin ninguna pasada no revienta.
 
-**Lo que queda de esta fase**: migrar las listas y los favoritos de PostgreSQL,
-que hoy apuntan a `grupo_id` (un número que cambia en cada pasada). Con
+**Lo que quedaba de esta fase**: migrar las listas y los favoritos de PostgreSQL,
+que apuntaban a `grupo_id` (un número que cambia en cada pasada). Con
 `producto_id` estable ya se puede; ver `docs/MODELO.md`.
+
+**Y dejo de hacer falta el 28 de septiembre de 2026, porque el numero dejo de cambiar.** El
+diagnostico era correcto y el sintoma se midio entero: de las 54 lineas de la lista de la cuenta
+de pruebas, **43** apuntaban a un grupo que ya no era su producto (la leche entera en el pasillo
+«Higiene y belleza», la estimacion diciendo 298,71 EUR cuando lo contable eran 10,56). Pero el
+sitio donde estaba el fallo no era PostgreSQL: era **el reparto de numeros del emparejador**, que
+los daba por orden de aparicion. Ahora se heredan de la pasada anterior (`core/grupos_ids`, con la
+numeracion de ayer en `data/gold/grupos_anterior.parquet`), y con los datos de verdad **52.699 de
+52.699 productos conservan su numero** aunque el catalogo venga al reves o barajado.
+
+Queda la mitad del problema, y es la que no se puede quitar: un grupo puede cambiar **de verdad**
+(un producto que se va, un grupo que se parte), y entonces su numero pasa a ser otro producto. Para
+eso esta la red de la linea movida -- la aplicacion lo detecta, lo dice y no suma el precio de
+otro (`docs/MODELO.md`) --, y la migracion a `producto_id` sigue siendo la salida larga si algun
+dia molesta.
 
 ---
 

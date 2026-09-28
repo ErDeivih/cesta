@@ -86,20 +86,33 @@ en otro sitio, y no hay integridad referencial entre las dos mitades. Es a
 proposito: si manana se rehace el emparejador y cambian los `grupo_id`, hay que
 poder migrar las listas con una consulta, no reconstruir una base de datos.
 
-> **Eso no es una hipotesis: pasa en cada pasada.** El emparejador numera los grupos **en el orden
-> en que aparecen los productos** (`core.matching.agrupar_enlaces`: el
-> `renombre.setdefault(raiz(i), len(renombre))`), asi que cualquier cambio del catalogo mueve los
+> **Eso no es una hipotesis: pasaba en cada pasada.** El emparejador numeraba los grupos **en el
+> orden en que aparecen los productos** (`core.matching.agrupar_enlaces`: el
+> `renombre.setdefault(raiz(i), len(renombre))`), asi que cualquier cambio del catalogo movia los
 > numeros. Medido el 28 de septiembre de 2026 con los datos de casa y la lista de la cuenta de
 > pruebas: **43 de sus 54 lineas apuntaban a un grupo que ya no era su producto** -- la leche
 > entera salia en el pasillo «Higiene y belleza», porque el grupo 526 es hoy una barra de labios
 > REVLON -- y la estimacion decia **298,71 EUR** cuando lo que se podia contar eran **10,56**: el
 > resto era un pintalabios a 10,66 EUR/ud por linea de leche.
 >
-> Hasta que la migracion este, la aplicacion **no miente**: una linea cuyo grupo ya no es su
-> producto se marca (`producto_movido`), se le quita el pasillo -- el pasillo tambien es del
-> grupo --, no entra en la estimacion ni en el reparto, y la pantalla lo dice con la salida a
-> mano: volver a buscarla. Ver `catalogo.lineas_movidas`, `tests/test_lineas_movidas.py` y la
-> comprobacion del punta a punta.
+> **Arreglado el 28 de septiembre de 2026, en el sitio donde estaba el fallo.** El numero ya no se
+> reparte por orden de aparicion: **se hereda** (`core/grupos_ids`). Cada grupo de hoy mira con que
+> grupo de ayer comparte mas productos y se queda con su numero; los grupos nuevos estrenan uno por
+> encima del mayor usado, y un id de ayer se da una sola vez, asi que dos grupos no pueden acabar
+> con el mismo. El pipeline guarda la numeracion de hoy en `data/gold/grupos_anterior.parquet` para
+> que la pasada de mañana pueda mirarla (sin ese fichero se numera como siempre: mirar hacia atras
+> no puede ser una condicion para que la pasada del dia funcione).
+>
+> Medido con los datos de verdad (`data/debug/ids_estables.py`), renumerando el catalogo como
+> pasaria entre dos dias: **52.699 de 52.699 productos conservan su numero** con el catalogo al
+> reves y barajado, y **47.179 de 47.179** con una cadena que pierde un tercio de su catalogo.
+>
+> Y lo que sigue: una referencia guardada puede cambiar de sentido **si el grupo cambia de
+> verdad** (un producto que se va, un grupo que se parte). Para eso esta la red de la linea
+> movida: la aplicacion **no miente** -- la marca (`producto_movido`), le quita el pasillo (que
+> tambien es del grupo), no la mete en la estimacion ni en el reparto, y dice con que salida
+> cuenta: volver a buscarla. Ver `catalogo.lineas_movidas`, `tests/test_lineas_movidas.py` y
+> `tests/test_grupos_ids.py`.
 
 **Lo que se guarda de las personas**: un nombre, una contrasena cifrada y unas
 preferencias. Ningun dato de pago, ninguna direccion, ningun correo salvo el de

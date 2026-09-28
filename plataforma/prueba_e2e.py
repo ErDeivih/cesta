@@ -57,6 +57,10 @@ def main() -> int:
     from fastapi.testclient import TestClient
 
     from plataforma.api import alertas, almacen, catalogo, main, vigilante
+    from plataforma.api.ajustes import AJUSTES
+    # El gold de verdad, por donde lo busca todo el mundo (`CESTA_GOLD`, que en el contenedor es
+    # `/datos/gold`): aqui no se escribe nada, solo se leen los grupos de hoy y la tabla de ayer.
+    gold = AJUSTES.gold
 
     print("== arrancando el almacen (aplica plataforma/sql/*.sql)")
     almacen.arranca()
@@ -308,8 +312,35 @@ def main() -> int:
     # borrado, que es lo que no se ve en la pantalla: sus listas se van, **y la linea que
     # dejo en la lista de otra persona se queda**, sin autor. Eso es la migracion 005
     # (`anadido_por` con `SET NULL`): sin ella la baja respondia 500.
-    print("\n== compartir contigo mismo no te quita la lista")
-    # **El fallo que encontro la puerta de las funciones el 28 de septiembre de 2026.** Escribir
+    print("\n== la numeracion de los grupos, y la tabla que la hace estable")
+    # **El fichero que hace que un grupo conserve su numero entre pasadas.** El emparejador numera
+    # los grupos por el orden en que aparecen los productos, y ese numero lo guardan las listas,
+    # los favoritos y los avisos: sin esta tabla, cada pasada deja esas referencias apuntando a
+    # otro producto (medido el 28 de septiembre de 2026: 43 de 54 lineas de una lista). Aqui se
+    # comprueba que esta y que **cuadra con los grupos de hoy**, que es lo que la hace util.
+    tabla_ayer = gold / "grupos_anterior.parquet"
+    if not tabla_ayer.exists():
+        fallos += 1
+        print(f"   FALLO: no esta {tabla_ayer.name}: la pasada de mañana renumeraria los grupos")
+    else:
+        import polars as pl
+        ayer = pl.read_parquet(tabla_ayer)
+        hoy = pl.read_parquet(gold / "grupos.parquet",
+                              columns=["fuente", "id_fuente", "grupo_id"])
+        print(f"   {tabla_ayer.name}: {ayer.height} productos, "
+              f"{ayer['grupo_id'].n_unique()} grupos")
+        claves = [f"{f}:{i}" for f, i in zip(hoy["fuente"].to_list(),
+                                             [str(x) for x in hoy["id_fuente"].to_list()],
+                                             strict=True)]
+        esperado = dict(zip(claves, hoy["grupo_id"].to_list(), strict=True))
+        apuntado = dict(zip(ayer["clave"].to_list(), ayer["grupo_id"].to_list(), strict=True))
+        iguales = sum(1 for k, v in esperado.items() if apuntado.get(k) == v)
+        print(f"   cuadra con los grupos de hoy en {iguales} de {len(esperado)} productos")
+        if iguales != len(esperado):
+            fallos += 1
+            print("   FALLO: la tabla de ayer no cuadra con los grupos de hoy")
+
+    print("\n== compartir contigo mismo no te quita la lista")    # **El fallo que encontro la puerta de las funciones el 28 de septiembre de 2026.** Escribir
     # tu propio usuario en «Compartir con quien ya tiene cuenta» actualizaba tu fila de
     # `lista_acceso` a `escribe`: la lista dejaba de ser tuya sin decirlo (403 al invitar y al
     # borrarla, y la tarjeta de Compartir desaparecia de la pantalla, o sea sin forma de

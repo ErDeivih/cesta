@@ -4079,3 +4079,44 @@ Alcampo al **-81,6 %**, **-78,2 %** y **-74,9 %**. Los tres estaban a **1,00 €
      entre dos dias (`movimientos.bajadas`), asi que un solo dia raro de la cadena es suficiente
      para salir el primero de la lista.
 
+
+
+### El numero del grupo se hereda, y las listas dejan de apuntar a otro producto
+
+**El fallo mas caro que ha tenido la aplicacion, y el mas silencioso.** El emparejador numeraba
+los grupos **por el orden en que aparecen los productos** (`core.matching.agrupar_enlaces`
+terminaba con `renombre.setdefault(raiz(i), len(renombre))`), asi que cualquier cambio del catalogo
+movia los numeros. Y ese numero no se queda dentro del pipeline: **las listas de la compra, los
+favoritos y los avisos lo guardan en PostgreSQL**.
+
+Medido el 28 de septiembre de 2026, con los datos de casa y la lista de la cuenta de pruebas:
+
+    54 lineas: 43 apuntaban a un grupo que ya no era su producto
+    el grupo 526 es hoy una barra de labios REVLON: la leche entera salia en el pasillo
+      «HIGIENE Y BELLEZA», con el precio de un pintalabios de 10,66 EUR/ud
+    la estimacion decia 298,71 EUR; lo que se podia contar de verdad: 10,56 EUR
+    y los avisos decian «TWIX ... 0,96 EUR/l», que es el precio de la leche
+
+Lo que llevo hasta aqui fue un aviso imposible: un pintalabios no cuesta 0,96 EUR/l. Los
+instrumentos del dia estan en `data/debug/alertas_de_prueba.py`, `grupos_de_alertas.py` y
+`lineas_movidas.py`.
+
+**Lo primero, dejar de mentir** (`catalogo.lineas_movidas`): una linea cuyo grupo ya no es su
+producto viene marcada (`producto_movido`), **sin pasillo** -- el pasillo tambien es del grupo --,
+fuera de la estimacion (cuenta en `sin_precio`), de `/donde` y de `/reparto`, y la pantalla lo dice
+con la salida a mano: volver a buscarla. El titular del 28 de septiembre paso de 298,71 EUR a
+12,48, con 43 lineas dichas.
+
+**Y lo segundo, arreglar la causa**, que no era PostgreSQL sino el reparto de numeros: ahora se
+**heredan** (`core/grupos_ids`). Cada grupo de hoy mira con que grupo de ayer comparte mas
+productos y se queda con su numero; los nuevos estrenan por encima del mayor usado; un id de ayer
+se da una sola vez, asi que dos grupos no pueden acabar con el mismo. El pipeline guarda la
+numeracion de hoy en `data/gold/grupos_anterior.parquet`; sin ese fichero se numera como siempre.
+
+Medido con los datos de verdad (`data/debug/ids_estables.py`), renumerando el catalogo como pasaria
+entre dos dias: **52.699 de 52.699** productos conservan su numero con el catalogo al reves y
+barajado, y **47.179 de 47.179** con una cadena que pierde un tercio de su catalogo. Y las dos
+pasadas seguidas de hoy: `52699 de 52699 productos conservan el numero de ayer`.
+
+Lo vigilan `tests/test_grupos_ids.py` (7 casos: el catalogo en otro orden, un grupo que crece o
+mengua, uno que se parte, uno nuevo, un empate y la tabla que se guarda) y `tests/test_lineas_movidas.py`.

@@ -18,7 +18,7 @@ import time
 
 import polars as pl
 
-from core import config
+from core import config, grupos_ids
 from core import equivalencias as eq
 from core.atributos import contradicciones
 from core.calidad import letras, por_precio, puntua
@@ -207,6 +207,22 @@ def externo_por_ean() -> dict[str, dict]:
     """).fetchall()
     return {k: {"ingredientes": ing, "nutriscore": ns, "nova": nova}
             for k, ing, ns, nova in filas if k and len(k) >= 8}
+
+
+def _grupos_de_ayer() -> pl.DataFrame | None:
+    """La numeracion de la pasada anterior, si esta.
+
+    Sin ella se numera como siempre: mirar hacia atras no puede ser una condicion para que la
+    pasada del dia funcione.
+    """
+    ruta = config.DATA / "gold" / "grupos_anterior.parquet"
+    if not ruta.exists():
+        return None
+    try:
+        return pl.read_parquet(ruta, columns=[grupos_ids.COLUMNA_CLAVE, "grupo_id"])
+    except Exception as exc:  # noqa: BLE001 - un fichero roto no puede parar la pasada
+        print(f"  (no he podido leer los grupos de ayer: {type(exc).__name__}: {exc})")
+        return None
 
 
 def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) -> list[int]:
@@ -505,6 +521,26 @@ def main(argv: list[str] | None = None) -> int:
     if ls is None:
         ls = enlaces(filas, umbral=a.umbral, usar_vectores=USAR_VECTORES)
     grupo = grupos_de(ls, filas)
+    # **Y el numero se hereda de la pasada anterior** (`core.grupos_ids`). El emparejador numera
+    # los grupos por el orden en que aparecen los productos, y ese numero lo guardan **las listas
+    # de la compra, los favoritos y los avisos** en PostgreSQL: sin esto, cada pasada deja esas
+    # referencias apuntando a otro producto. Medido el 28 de septiembre de 2026 con los datos de
+    # casa: de las 54 lineas de la lista de la cuenta de pruebas, **43** estaban asi, la leche
+    # entera salia en el pasillo «Higiene y belleza» (el grupo 526 es hoy un pintalabios) y la
+    # estimacion decia 298,71 EUR cuando lo contable eran 10,56.
+    anteriores = _grupos_de_ayer()
+    estable = grupos_ids.estabiliza(
+        pl.DataFrame({
+            "clave": [grupos_ids.clave_de(f["fuente"], str(f["id_fuente"])) for f in filas],
+            "grupo": pl.Series(grupo, dtype=pl.Int32),
+        }),
+        anteriores)
+    heredados = 0
+    if anteriores is not None and anteriores.height:
+        de_ayer = set(anteriores["grupo_id"].cast(pl.Int32).to_list())
+        heredados = sum(1 for g in estable["grupo_id"].to_list() if g in de_ayer)
+        print(f"  {heredados} de {estable.height} productos conservan el numero de ayer")
+    grupo = estable["grupo_id"].to_list()
     ingredientes = ingredientes_por_producto()
     externo = externo_por_ean()
     if not externo:
@@ -536,6 +572,11 @@ def main(argv: list[str] | None = None) -> int:
     ])
     from core.storage import write_parquet_file
     write_parquet_file(salida, config.DATA / "gold" / "grupos.parquet")
+    # Y la numeracion de hoy, para que la pasada de mañana pueda heredarla. Va **despues** de
+    # escribir los grupos y en su propio fichero: si esta pasada se corta a medias, lo que queda
+    # es la de ayer, que sigue siendo una numeracion valida.
+    write_parquet_file(grupos_ids.tabla_de(filas, estable["grupo_id"]),
+                       config.DATA / "gold" / "grupos_anterior.parquet")
     write_parquet_file(
         pl.DataFrame(
             {"i": [x[0] for x in ls], "j": [x[1] for x in ls],
