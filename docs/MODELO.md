@@ -106,6 +106,9 @@ poder migrar las listas con una consulta, no reconstruir una base de datos.
 > Medido con los datos de verdad (`data/debug/ids_estables.py`), renumerando el catalogo como
 > pasaria entre dos dias: **52.699 de 52.699 productos conservan su numero** con el catalogo al
 > reves y barajado, y **47.179 de 47.179** con una cadena que pierde un tercio de su catalogo.
+> Y con la **secuencia del dia entera** (pipeline + emparejador, que es lo que corre `ejecutar.bat`):
+> `52689 de 52699 productos conservan el numero de ayer`, y los **diez** que cambian son los que de
+> verdad se han movido de grupo en esa pasada.
 >
 > Y lo que sigue: una referencia guardada puede cambiar de sentido **si el grupo cambia de
 > verdad** (un producto que se va, un grupo que se parte). Para eso esta la red de la linea
