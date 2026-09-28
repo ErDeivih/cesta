@@ -969,6 +969,9 @@ function Indice({ cadenas }: { cadenas: string[] }) {
           (t, s) => t + (s.puntos[s.puntos.length - 1]?.recortados ?? 0),
           0,
         )
+        // Si alguna cadena tiene un eslabon que cubre mas de un dia, se enseña: el indice esta
+        // encadenado dia a dia y esos dias no se rastrearon.
+        const haySaltos = series.some((s) => s.puntos.some((p) => (p.dias_del_salto ?? 1) > 1))
         return (
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -1003,6 +1006,7 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                       <Th>Variación</Th>
                       <Th>Capturas</Th>
                       <Th>Productos</Th>
+                      {haySaltos && <Th>Salto</Th>}
                       {recortados > 0 && <Th>Recortados</Th>}
                     </tr>
                   </thead>
@@ -1023,6 +1027,17 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                               {numero(u?.recortados, 0)}
                             </Td>
                           )}
+                          {/* **Los dias que cubre el eslabon mas largo de esa cadena.** El indice
+                              esta encadenado dia a dia, y donde la cadena no se rastreo un dia el
+                              eslabon salta: la columna sale solo cuando hay algun salto (como
+                              «Recortados») y dice cual es el peor de cada cadena. `dias_del_salto`
+                              viajaba en `/api/indice` y **no lo pintaba nadie**: el dibujo hacia
+                              como si hubiera visto todos los dias. */}
+                          {haySaltos && (
+                            <Td className="cifra" etiqueta="salto">
+                              {numero(Math.max(...s.puntos.map((p) => p.dias_del_salto ?? 1)), 0)}
+                            </Td>
+                          )}
                         </tr>
                       )
                     })}
@@ -1033,6 +1048,13 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                 <p className="mt-2 text-xs text-tinta-suave">
                   «Recortados» son los relativos fuera del rango creíble: el índice no los usa. Si
                   fueran muchos, ese eslabón sería flojo y el índice estaría midiendo otra cosa.
+                </p>
+              )}
+              {haySaltos && (
+                <p className="mt-2 text-xs text-tinta-suave">
+                  «Salto» son los días que cubre el eslabón más largo de esa cadena. Donde pasa de
+                  1, la cadena no se rastreó ese día y el índice se movió sin haberlo visto: de esa
+                  semana se lee la tendencia, no el día.
                 </p>
               )}
             </Tarjeta>

@@ -86,6 +86,19 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
     )
   })
 
+  /* Los eslabones que cubren mas de un dia, de todas las series: el indice esta encadenado dia a
+     dia, y donde la cadena no se rastreo el eslabon salta. Se dicen **con sus dos fechas** -- «del
+     11 al 13» --, que es lo unico que permite ir a mirar por que falta ese dia; decir solo el dia
+     al que llega el eslabon deja la duda de cual es el que falta. */
+  const saltos = conPuntos.flatMap((s) =>
+    s.puntos.flatMap((p, i) =>
+      (p.dias_del_salto ?? 1) > 1
+        ? [{ cadena: s.cadena, dias: p.dias_del_salto, desde: s.puntos[i - 1]?.fecha ?? null,
+             hasta: p.fecha }]
+        : [],
+    ),
+  )
+
   const cadaCuanto = Math.ceil(fechas.length / 5)
   const ejeX = fechas.map((f, i) =>
     i % cadaCuanto === 0 || i === fechas.length - 1 ? (
@@ -136,6 +149,25 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
     return (
       <g key={s.cadena}>
         <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        {/* **El eslabón que cubre mas de un dia, marcado.** El indice esta encadenado dia a dia,
+            y donde la cadena no se rastreo un dia el eslabon salta: el dibujo hacia como si
+            hubiera visto todos los dias. La interfaz vieja lo decia (`app.js:1020`, «el eslabon
+            cubre N dias» en un `title`) y la nueva no lo pintaba: `dias_del_salto` viajaba en
+            `/api/indice` y se tiraba. Medido el 28 de septiembre de 2026: **cinco eslabones** de
+            la serie (Alcampo el 13 y el 23, Carrefour el 13, el 19 y el 23), de 2 y 3 dias. */}
+        {s.puntos
+          .filter((p) => (p.dias_del_salto ?? 1) > 1)
+          .map((p) => (
+            <circle
+              key={`salto-${p.fecha}`}
+              cx={x(p.fecha)}
+              cy={y(p.indice)}
+              r={4.5}
+              fill="none"
+              stroke={color}
+              strokeWidth={1.5}
+            />
+          ))}
         <circle cx={px} cy={y(ultimo.indice)} r={3.5} fill={color} />
         {guia}
         <text x={px + 10} y={(f?.yEtiqueta ?? y(ultimo.indice)) + 3.5} className="fill-current text-[9px]">
@@ -186,6 +218,24 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
       <p className="text-xs text-tinta-suave">
         Del {fechaLegible(fechas[0], true)} al {fechaLegible(fechas[fechas.length - 1], true)}. El
         dibujo ayuda a ver la tendencia; los números que se leen son los de la tabla.
+        {saltos.length > 0 && (
+          <>
+            {' '}
+            <strong className="font-medium">
+              {saltos.length === 1
+                ? 'Un eslabón cubre más de un día'
+                : `${saltos.length} eslabones cubren más de un día`}
+            </strong>{' '}
+            (los del círculo hueco): esos días no se rastrearon, así que el índice se movió sin
+            haberlos visto. Son{' '}
+            {saltos
+              .map((p) => `${nombreCadena(p.cadena)} ${p.desde
+                ? `del ${fechaLegible(p.desde, true)} al `
+                : ''}${fechaLegible(p.hasta, true)} (${numero(p.dias, 0)} días)`)
+              .join(', ')}
+            .
+          </>
+        )}
       </p>
     </div>
   )

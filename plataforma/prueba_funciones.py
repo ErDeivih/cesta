@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 79
+COMPROBACIONES = 80
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -602,6 +602,25 @@ def main() -> int:
             comprueba(visto and "No he podido" not in texto(),
                       f"la pestana «{nombre}» contesta ({tiene_que_decir!r})")
         captura("panel-hoy")
+
+        # **Un dato que viajaba y no lo pintaba nadie.** `dias_del_salto` viene en `/api/indice`
+        # desde el primer dia (los dias que cubre cada eslabon del indice encadenado) y la pantalla
+        # no lo decia: el dibujo hacia como si hubiera visto todos los dias. Medido el 28 de
+        # septiembre de 2026: **cinco eslabones** de 2 y 3 dias (Alcampo el 13 y el 23, Carrefour
+        # el 13, el 19 y el 23). La comprobacion **compara la pantalla con la API**, que es lo
+        # unico que no se puede fingir: si la API tiene saltos, la pantalla lo dice; y si no los
+        # tiene, no se inventa un aviso.
+        saltos = pagina.evaluate("""async () => {
+          const d = await (await fetch('/api/indice', {credentials: 'same-origin'})).json();
+          return (d.series || []).flatMap((s) => s.puntos || [])
+            .filter((p) => (p.dias_del_salto || 1) > 1).length;
+        }""")
+        carga("/panel?pestana=indice")
+        lo_dice = "más de un día" in texto()
+        comprueba((saltos == 0 and not lo_dice) or (saltos > 0 and lo_dice),
+                  f"el indice dice los eslabones que cubren mas de un dia ({saltos} en la API, "
+                  f"y la pantalla {'lo dice' if lo_dice else 'no lo dice'})")
+        captura("panel-indice")
 
         # ------------------------------------------------------------------ grupo ------
         print("\n== la ficha del grupo: los pesos")

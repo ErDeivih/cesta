@@ -244,7 +244,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **79 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **80 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:
@@ -256,7 +256,9 @@ Lo que entro el 28 de septiembre de 2026, y por que cada cosa:
 - **Las diez pestañas del panel**, una por una y **pulsando la pestaña** (no navegando por la
   direccion): las puertas median cuatro (`bajadas`, `indice`, `posicion`, `dudosas`) y las otras
   seis -- `hoy`, `donde`, `cadenas`, `marcas`, `historico`, `movidos` -- no las habia abierto
-  nadie con un navegador.
+  nadie con un navegador. Y en la del indice, **la pantalla comparada con la API**: si
+  `/api/indice` trae eslabones que cubren mas de un dia, la pantalla lo dice (`dias_del_salto`
+  viajaba desde el primer dia y no lo pintaba nadie).
 - **Ordenar los resultados**, que no lo media nada: que el orden cambie de verdad y que el
   control diga el sentido **con palabras**. Al medirlo salio que **pulsar el que ya estaba puesto
   no le daba la vuelta** (ver el commit), asi que la comprobacion mira lo unico que no se puede
