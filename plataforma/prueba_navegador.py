@@ -412,7 +412,16 @@ def _franja_util(pagina) -> tuple[int, int]:
 
 
 def _cabe_en_la_primera(pagina, elemento) -> tuple[bool, str]:
-    """Si el elemento se ve entero en la banda util, con la pantalla arriba del todo."""
+    """Si el elemento se ve entero en la banda util, con la pantalla arriba del todo.
+
+    **Si el elemento no esta, se dice; no se espera.** El 29 de septiembre de 2026 esta
+    funcion tumbo la puerta entera: `bounding_box()` de un localizador sin coincidencias
+    espera 30 s y despues lanza, asi que el proceso murio con la aplicacion bien y sin
+    imprimir ni un FALLO (el unico rastro era un `TimeoutError` en la salida de errores).
+    Un instrumento que mide lo que hay tiene que decir «no hay» cuando no hay.
+    """
+    if elemento.count() == 0:
+        return False, "no esta en la pantalla"
     caja = elemento.bounding_box()
     if caja is None:
         return False, "no tiene caja: no se esta pintando"
@@ -1783,9 +1792,27 @@ def main() -> int:
         # 27 de septiembre de 2026 porque **en el movil ya no hay cabecera**: las tablas se
         # apilan y el nombre de la columna va en cada celda (`Td etiqueta`).
         primera_fila = pagina.locator("main table tbody tr").first
-        dentro, donde = _cabe_en_la_primera(pagina, primera_fila)
-        comprueba(dentro,
-                  f"4: la primera fila de lo tuyo que ha bajado se ve sin desplazar ({donde})")
+        if pagina.locator("main table tbody tr").count():
+            dentro, donde = _cabe_en_la_primera(pagina, primera_fila)
+            comprueba(dentro,
+                      f"4: la primera fila de lo tuyo que ha bajado se ve sin desplazar ({donde})")
+        else:
+            # **Cuando «lo tuyo» está vacío, la pantalla contesta con el vacío, y eso también
+            # es contestar.** Medido el 29 de septiembre de 2026: la cuenta de la prueba tiene
+            # la lista con las líneas viejas (los grupos 526 y 10226, que hoy son un pintalabios
+            # y unas barritas), así que `solo_mios=true` no encuentra nada y el panel pinta
+            # «Nada de lo tuyo ha bajado en 7 días». La comprobación se cayó **esperando una
+            # tabla que no iba a venir** (`Locator.bounding_box: Timeout 30000ms`), y eso es un
+            # fallo de instrumento: lo que hay que medir es lo que contesta, sea la tabla o el
+            # vacío que la sustituye. Si no está ninguna de las dos, eso sí es un FALLO.
+            vacio = pagina.get_by_text(re.compile(r"Nada de lo tuyo ha (bajado|subido)"))
+            if vacio.count():
+                dentro, donde = _cabe_en_la_primera(pagina, vacio.first)
+                comprueba(dentro,
+                          f"4: lo tuyo esta vacio y la pantalla lo dice en la primera ({donde})")
+            else:
+                comprueba(False,
+                          "4: ni la tabla de lo tuyo que ha bajado ni el vacio que la sustituye")
 
         carga("/avisos")
         # La seccion de lo que ha bajado, que es la respuesta de la pregunta 4 en esta
