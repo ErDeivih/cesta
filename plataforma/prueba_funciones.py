@@ -516,6 +516,26 @@ def main() -> int:
                 "() => [...document.querySelectorAll(\"main a[href^='/grupo/']\")]"
                 ".map((a) => a.getAttribute('href'))")
 
+        def precios_visibles() -> list[int]:
+            """Los precios de los resultados, **en el orden en que se ven**, en centimos.
+
+            Se leen del DOM, que es donde se juzga un numero. En 390 px cada resultado es una
+            tarjeta y el precio vive en un `span.cifra` que **no** esta dentro del enlace del
+            nombre -- esta en la otra columna de la tarjeta --, asi que se leen todos en orden
+            de documento, que es el orden de las tarjetas. Se descartan «ahorras un 74 %» y los
+            €/kg, que llevan la misma clase: medido el 29 de septiembre de 2026, en `main` hay
+            117 elementos con la clase `cifra` y solo uno por tarjeta es un precio de venta.
+            """
+            dichos = pagina.evaluate(
+                "() => [...document.querySelectorAll('main span.cifra')]"
+                ".map((e) => e.innerText || '')")
+            salida = []
+            for dicho in dichos:
+                m = re.fullmatch(r"\s*(\d+),(\d{2})\s*€\s*", dicho.replace("\xa0", " "))
+                if m:
+                    salida.append(int(m.group(1)) * 100 + int(m.group(2)))
+            return salida
+
         if pagina.get_by_role("button", name="Ordenar por").count() or pagina.get_by_text(
                 "Ordenar por").count():
             antes_del_orden = orden_de_los_resultados()
@@ -537,6 +557,7 @@ def main() -> int:
                 precio.first.click()
                 pagina.wait_for_timeout(2500)
                 arriba = orden_de_los_resultados()
+                precios_arriba = precios_visibles()
                 resumen = texto()
                 comprueba(arriba and arriba != antes_del_orden,
                           "ordenar por precio cambia el orden de los resultados")
@@ -547,12 +568,32 @@ def main() -> int:
                 pagina.get_by_role("button", name=re.compile(r"^Precio")).first.click()
                 pagina.wait_for_timeout(2500)
                 abajo = orden_de_los_resultados()
+                precios_abajo = precios_visibles()
                 comprueba("de mayor a menor" in texto(),
                           "pulsarlo otra vez le da la vuelta al sentido")
                 # **Y el orden es de verdad**: el primero de uno es el ultimo del otro.
-                comprueba(bool(arriba and abajo) and arriba[0] == abajo[-1],
+                #
+                # Se comparan **los precios**, no los identificadores, y esto tiene fecha:
+                # el 29 de septiembre de 2026 esta comprobacion salio roja con la aplicacion
+                # bien. El precio mas bajo de «leche entera» eran 94 centimos y lo tenian
+                # **dos** grupos (15692 y 23164), asi que el de menor a mayor empezaba por
+                # uno y el de mayor a menor terminaba por el otro. Con un minimo empatado,
+                # pedir el mismo id es pedir un orden que no existe; lo que si se promete en
+                # pantalla es que el primero de un sentido y el ultimo del otro cuestan lo
+                # mismo, y que ese es el precio mas bajo de los que se ven.
+                #
+                # Y se exige que haya **un precio por resultado**: si la pantalla se dejara
+                # alguno sin pintar, los dos extremos podrian coincidir por casualidad.
+                cuadran = (len(precios_arriba) == len(arriba) == len(abajo) == len(precios_abajo))
+                comprueba(bool(precios_arriba and precios_abajo) and cuadran
+                          and precios_arriba[0] == precios_abajo[-1]
+                          and precios_arriba[0] == min(precios_arriba),
                           f"el mas barato encabeza un orden y cierra el otro "
-                          f"({(arriba or ['?'])[0]} / {(abajo or ['?'])[-1]})")
+                          f"({precios_arriba[0] if precios_arriba else '?'} centimos arriba / "
+                          f"{precios_abajo[-1] if precios_abajo else '?'} centimos abajo, "
+                          f"el mas bajo de {len(precios_arriba)}; "
+                          f"precios {len(precios_arriba)}/{len(arriba)} y "
+                          f"{len(precios_abajo)}/{len(abajo)} resultados)")
             else:
                 comprueba(False, "no encuentro el boton de ordenar por precio")
         else:
