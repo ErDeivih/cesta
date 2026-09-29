@@ -392,6 +392,30 @@ Lo encontro `data/debug/campos_sin_pintar.py`, que recorre los tipos de la API y
 **no usa ninguna pantalla**: hoy 255 declarados y 8 sin usar, de los que este era el unico que
 prometia algo. Es la misma clase de fallo que `nombre_visto` y que `novedades`, y ya van tres.
 
+### Lo que costaba leer `diario` tres veces · 29 sep 2026
+
+`/api/indice` y `/api/pulso` montan las parejas de cada captura con la anterior
+(`analisis._enlaces_sql`), y esa consulta **nombraba la vista `diario` tres veces**: una para los
+dias, una para la captura de hoy y otra para la anterior. Medido **dentro del contenedor** el 29 de
+septiembre de 2026 (2 hilos, 2,2 GiB; `data/debug/_sonda_contenedor.py`), con 24 capturas y
+1.135.124 filas de historico:
+
+    la consulta del indice, como estaba     34,3 s  ->  1,7 s
+    /api/indice por HTTP                    47,7 s  ->  1,5 s
+    /api/pulso por HTTP                     14,1 s  ->  1,6 s
+
+**No era el disco**: traer las 1.135.124 filas a una tabla temporal cuesta 1,0 s. Era el plan, que
+con dos hilos recorre el parquet una vez por cada referencia. Ahora `diario` se copia **una vez por
+conexion** a una tabla temporal (`analisis._diario_materializado`) y la captura anterior sale de una
+ventana en vez de una subconsulta correlacionada. El resultado es **el mismo, punto por punto**:
+comprobado contra la respuesta de la API de antes de tocar nada, y las dos formas dan las mismas 107
+filas.
+
+Se veia en la pantalla, no en un registro: `/api/indice` contestaba en 42,6 s y 28,7 s, la puerta del
+navegador espera 20 s, asi que la pestana «Indice» del panel se quedaba en «Cargando el indice…» y la
+comprobacion 63 salia roja. Desde casa la consulta tardaba 1,9 s y no se notaba: por eso la medida
+que vale es la de dentro del contenedor.
+
 ### `GET /api/alertas`
 
     sale  {"fecha_datos",

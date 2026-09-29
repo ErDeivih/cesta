@@ -129,6 +129,35 @@ def test_el_indice_dice_sobre_cuantos_productos_se_sostiene(gold):
     assert _indice_de(analisis.indice(), "dia")["puntos"][-1]["productos"] == 2
 
 
+def test_el_indice_lee_el_historico_una_vez_y_no_tres(gold):
+    """La copia del histórico, que es lo que arregló la pestaña «Índice» del panel.
+
+    La consulta nombraba la vista `diario` **tres veces** (los días, la captura de hoy y la
+    anterior), y dentro del contenedor de la API eso costaba **34,3 s** con 24 capturas y
+    1.135.124 filas; con el histórico copiado una vez a una tabla temporal, **1,7 s** y las
+    mismas 107 filas (medido el 29 de septiembre de 2026, 2 hilos y 2,2 GiB). Se veía en la
+    pantalla: `/api/indice` contestaba en 42,6 s, la puerta espera 20 s, y la pestaña se
+    quedaba en «Cargando el índice…».
+
+    Aquí no se fija un tiempo -- eso depende de la máquina -- sino la forma: que la captura
+    anterior salga de una ventana, que no haya subconsulta correlacionada y que la consulta
+    use la copia.
+    """
+    gold(_serie("dia", "1", [("2026-09-01", 100), ("2026-09-02", 110)]))
+
+    sql = analisis._enlaces_sql(None, "diario_d")
+    assert "lag(fecha) OVER (PARTITION BY fuente ORDER BY fecha)" in sql
+    assert "(SELECT max(" not in sql
+    assert sql.count("FROM diario_d") + sql.count("JOIN diario_d") == 3
+
+    assert _indice_de(analisis.indice(), "dia")["indice"] == pytest.approx(110.0)
+    con = catalogo.conexion()
+    assert analisis._diario_materializado(con) == "diario_d"      # la segunda vez no cuesta
+    copias = con.execute("SELECT count(*) FROM information_schema.tables"
+                         " WHERE table_name = 'diario_d'").fetchone()[0]
+    assert copias == 1
+
+
 # ------------------------------------------------------------------- el pulso --
 
 def test_el_pulso_separa_lo_que_baja_de_lo_que_sube(gold):

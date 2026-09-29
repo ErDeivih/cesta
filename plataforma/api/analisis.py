@@ -60,16 +60,45 @@ RECORTE_MAX = 3.0
 MINIMO_MOVIMIENTO_PCT = 0.5
 
 
-def _enlaces_sql(desde: str | None) -> str:
-    """Cada captura emparejada con la anterior de su propia cadena."""
+def _diario_materializado(con) -> str:
+    """Copia `diario` a una tabla temporal, una vez por conexión. Devuelve su nombre.
+
+    **Medido el 29 de septiembre de 2026, y la culpa no era del disco.** `diario` es una
+    vista sobre `precio_diario.parquet` (1.135.124 filas) y la consulta del índice la
+    referencia **tres veces**: en el contenedor de la API (2 hilos, 2,2 GiB) tardaba
+    **34,3 s**, mientras traer esas filas a una tabla temporal cuesta **1,0 s** y la misma
+    consulta sobre ella tarda **1,7 s** con las mismas 107 filas. Desde casa, con 12
+    núcleos y el fichero en caché, eso no se veía: allí la consulta tardaba 1,9 s
+    (`data/debug/indice_lento.py` y `data/debug/_sonda_contenedor.py`, que es el que corre
+    dentro del contenedor).
+
+    Y se veía en la pantalla: `/api/indice` contestaba en 42,6 s y 28,7 s (`/api/salud`,
+    0,09 s; `/api/posicion`, 0,70 s), la puerta del navegador espera 20 s, así que la
+    pestaña «Índice» del panel se quedaba en «Cargando el índice…» y la comprobación 63
+    salía roja. La tabla es de la conexión y `conexion()` la rehace cuando gold cambia,
+    así que no puede quedarse mirando datos viejos.
+    """
+    con.execute("CREATE TEMP TABLE IF NOT EXISTS diario_d AS "
+                "SELECT fuente, fecha, producto_id, precio_cent FROM diario")
+    return "diario_d"
+
+
+def _enlaces_sql(desde: str | None, tabla: str = "diario") -> str:
+    """Cada captura emparejada con la anterior de su propia cadena.
+
+    La captura anterior sale de una **ventana** sobre los días de la cadena, no de una
+    subconsulta correlacionada, y la tabla del histórico se pasa por parámetro para poder
+    darle la copia materializada de `_diario_materializado`. Las dos formas dicen lo mismo
+    y dan las mismas filas: comprobado hoy contra la consulta anterior (107 filas, y el
+    resultado punto por punto idéntico).
+    """
     filtro = f"WHERE fecha >= '{desde}'" if desde else ""
     return f"""
-    WITH dias AS (SELECT DISTINCT fuente, fecha FROM diario {filtro}),
+    WITH dias AS (SELECT DISTINCT fuente, fecha FROM {tabla} {filtro}),
     enlace AS (
-      SELECT a.fuente, a.fecha,
-             (SELECT max(b.fecha) FROM dias b
-               WHERE b.fuente = a.fuente AND b.fecha < a.fecha) AS previa
-        FROM dias a),
+      SELECT fuente, fecha,
+             lag(fecha) OVER (PARTITION BY fuente ORDER BY fecha) AS previa
+        FROM dias),
     par AS (
       SELECT e.fuente, e.fecha, e.previa,
              date_diff('day', strptime(e.previa, '%Y-%m-%d'),
@@ -77,8 +106,9 @@ def _enlaces_sql(desde: str | None) -> str:
              b.precio_cent AS antes, a.precio_cent AS hoy,
              a.precio_cent::DOUBLE / b.precio_cent AS rel
         FROM enlace e
-        JOIN diario a ON a.fuente = e.fuente AND a.fecha = e.fecha
-        JOIN diario b ON b.producto_id = a.producto_id AND b.fecha = e.previa
+        JOIN {tabla} a ON a.fuente = e.fuente AND a.fecha = e.fecha
+        JOIN {tabla} b ON b.fuente = e.fuente AND b.producto_id = a.producto_id
+                      AND b.fecha = e.previa
        WHERE e.previa IS NOT NULL AND a.precio_cent > 0 AND b.precio_cent > 0)
     """
 
@@ -92,7 +122,7 @@ def indice(desde: str | None = None) -> dict:
     """
     con = conexion()
     filas = con.execute(f"""
-        {_enlaces_sql(desde)}
+        {_enlaces_sql(desde, _diario_materializado(con))}
         SELECT fecha, fuente, any_value(salto) AS salto,
                count(*) FILTER (WHERE rel BETWEEN ? AND ?) AS n,
                count(*) FILTER (WHERE rel NOT BETWEEN ? AND ?) AS recortados,
@@ -137,7 +167,7 @@ def pulso(desde: str | None = None) -> dict:
     """
     con = conexion()
     filas = con.execute(f"""
-        {_enlaces_sql(desde)}
+        {_enlaces_sql(desde, _diario_materializado(con))}
         , m AS (SELECT *, 100.0 * (rel - 1) AS pct FROM par
                  WHERE rel BETWEEN ? AND ?)
         SELECT fecha, fuente, any_value(salto) AS salto, count(*) AS vistos,
