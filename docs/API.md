@@ -9,6 +9,17 @@ no hay CORS ni cookies que se pierdan entre puertos.
 
 Se puede ver viva y probar en `http://localhost:8080/api/docs`.
 
+**Y este documento se comprueba contra el codigo**, no se mantiene a mano:
+
+    uv run python data/debug/rutas_vs_docs.py
+
+Lee los decoradores de `plataforma/api/*.py` (incluidos los `APIRouter`, como el del panel) y las
+rutas nombradas aqui, y dice las dos diferencias que importan: **una ruta que existe y no esta
+escrita es una funcion que nadie encuentra, y una ruta escrita que no existe es un documento que
+miente**. El 30 de septiembre de 2026 encontro **cinco sin documentar** (`DELETE /api/yo`,
+`/api/producto/{cadena}/{id}`, `/api/salud`, `/api/secciones` y `compartir`), todas ya escritas
+aqui. Una mencion que el propio texto marca como «no esta» no cuenta como fallo: se distingue.
+
 ---
 
 ## Como estan montadas las dos mitades
@@ -71,6 +82,22 @@ delatar por el tiempo que ese usuario no esta dado de alta.
 
 ### `POST /api/salir`       borra la sesion y la cookie
 ### `GET /api/yo`           quien eres y tus preferencias; `{"usuario": null}` si no has entrado
+### `GET /api/salud`        `{"vivo": true, "fecha_datos": "..."}` — **sin sesion**
+
+`salud` es para lo que no tiene cuenta: el vigilante, los guiones y las puertas. Lo que contesta
+de verdad es **de qué día son los datos** (`fecha_datos`), que es lo que hay que mirar antes de
+creerse un precio. No dice nada de nadie.
+
+### `DELETE /api/yo`  — darme de baja
+
+    sale  {"listas_borradas": 2, "lineas_conservadas": 11} y borra la cookie
+
+Quien presta su ordenador para que otros guarden su lista de la compra tiene que darles la puerta
+de salida. Se lleva **sus listas propias, sus favoritos, sus avisos y sus sesiones**; lo que
+añadió a listas de otras personas **se queda, sin autor** (`anadido_por` a NULL), porque borrarlo
+vaciaría la compra de alguien que no ha pedido nada. La pantalla pide escribir tu propio usuario
+para confirmarlo (`docs/PANTALLAS.md` §9): es la única operación de la aplicación que no se puede
+deshacer.
 
 ### `POST /api/registrarse`
 
@@ -133,6 +160,19 @@ una vez en una ficha. Y es el ultimo recurso: primero se busca lo escrito.
 
 **Los productos sin grupo salen igual, marcados.** Son 32.486 de 51.781: el 63 % del
 catalogo. Esconderlos seria esconder casi todo.
+
+### `GET /api/secciones`
+
+    entra  ?cadenas=dia,alcampo   (opcional; sin sesion, son las cinco)
+    sale   {"secciones": [...], "fecha_datos"}
+
+**Los pasillos, en el orden en que se recorre una tienda** (`core.secciones.ORDEN`), que es lo
+que alimenta el filtro de pasillo del buscador y los encabezados de la lista. **Vacío mientras el
+scraper no haya escrito la columna `seccion` en gold, y la web lo dice** en vez de enseñar una
+pantalla en blanco: una lista de pasillos vacía es un dato, no un fallo.
+
+Sin `cadenas` y con sesión, se usan **las cadenas que esa persona tiene cerca** (su preferencia),
+igual que en el buscador: si no tiene un Aldi al lado, los pasillos de Aldi no le dicen nada.
 
 **`marca` se añadió el 22 de septiembre de 2026** y es la del miembro **más
 barato** del grupo, que es el que la fila enseña. No estaba, y la tabla del
@@ -216,6 +256,26 @@ grupos con 8 productos de 2 cadenas, 6 de ellos de la misma. La interfaz decía
 
 **`calidad` y `gama` nunca vienen los dos.** Es la regla mas importante de toda
 la API: una letra sacada del precio no se llama calidad. El 77 % de ellas lo son.
+
+### `GET /api/producto/{cadena}/{id_fuente}`
+
+    sale  {"fecha_datos", "encontrado": true,
+           "producto": {"producto_id": "dia:74397", "fuente": "dia", "id_fuente": "74397",
+                        "nombre", "marca", "cantidad", "unidad", "precio_cent",
+                        "precio_unidad_cent", "comparable", "nutriscore",
+                        "peso_escurrido_g", "precio_por_escurrido"},
+           "grupo_id": 3094, "comparacion": [{"fuente", "precio_cent",
+                                              "precio_unidad_cent", "diferencia_pct"}]}
+    mal   404 «No tengo ese producto.»
+
+**Un producto por su identificador _en la cadena_, no por el nuestro.** Lo que se puede sacar de
+la URL de un supermercado es su propio id, no el `grupo_id` del emparejador: por eso existe esta
+ruta, y por eso lo primero que devuelve es **el grupo entero** -- que es la pregunta que se hace
+alguien delante del estante: *¿está más barato en otro sitio?*.
+
+`comparacion` es **`null`, no una lista vacía, cuando el producto solo está en una cadena**:
+vacía se lee como «he mirado y no hay nada más barato», y `null` como «no puedo comparar». No es
+lo mismo, y la pantalla lo dice distinto.
 
 ### `GET /api/estado`
 
@@ -600,6 +660,18 @@ el numero del grupo.
 
 Caduca a los 7 dias y sirve para 3 personas, por defecto. Un enlace que dura para
 siempre acaba reenviado en un grupo que no era.
+
+### `POST /api/listas/{id}/compartir`  — meter a alguien por su `@usuario`
+
+    entra  {"usuario": "mama", "papel": "escribe" | "mira"}
+    sale   {"usuario", "nombre", "papel"}   el papel que quedo en la base, no el que se pidio
+    mal    403 no eres quien la creo    400 papel que no es escribe ni mira
+           404 «No hay nadie con ese usuario. Comprueba como se escribe, o mandale un enlace»
+
+El otro camino para repartir una lista, además del enlace: quien invita **escribe el usuario** de
+la otra persona (que ya tiene cuenta). El `papel` que devuelve es el que quedó guardado -- y a
+quien creó la lista **no se le cambia**, aunque se escriba su propio usuario: eso costó una lista
+el 28 de septiembre de 2026, y está contado entero en `almacen.comparte`.
 
 ---
 
