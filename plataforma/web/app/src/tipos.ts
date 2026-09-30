@@ -128,6 +128,9 @@ export interface Producto {
   /** Cuántas unidades exige la mecánica de la oferta (Alcampo lo publica en número). La ficha
    *  lo dice porque es una condición del precio: «2ª unidad −50 %» no es el precio de una. */
   promo_unidades?: number | null
+  /** **Viaja y no se pinta, y está mirado** (`data/debug/campos_sin_pintar.py`): el buscador
+   *  tiene el filtro «Sin alcohol» y la ficha enseña el grado (`grado_alcohol`), que dice más
+   *  que el booleano. El booleano decide el filtro y nada mas. */
   es_alcohol: boolean | null
   es_recall: boolean | null
   peso_variacion_pct: number | null
@@ -307,6 +310,8 @@ export interface Baja {
   promo_txt: string | null
   /** La bajada solo existe si tienes la tarjeta. Se ensena, marcada. */
   solo_con_tarjeta: boolean
+  /** **Viaja y no se pinta, y está mirado**: es el precio **de venta** de antes, y el panel
+   *  enseña el **precio por unidad** antes y después, que es lo comparable entre formatos. */
   precio_antes_cent: number | null
 }
 
@@ -553,6 +558,9 @@ export interface Lista {
   es_de_casa: boolean
   papel?: string
   lineas?: number
+  /** **Viaja y no se pinta, y está mirado**: cuándo se tocó por última vez. El desplegable
+   *  enseña el nombre y cuántas líneas tiene, que es lo que decide con cuál se trabaja; una
+   *  fecha ahí no cambia ninguna decisión. */
   actualizada?: string
 }
 
@@ -609,6 +617,9 @@ export interface Habitual {
   origen: 'tuyo' | 'de todos' | 'basico'
   /** Solo en las de `tuyo`: son la historia de esta persona. */
   veces?: number
+  /** **Viaja y no se pinta, y está mirado**: cuándo se compró la última vez. El mosaico ya
+   *  viene ordenado por el ranking con decaimiento (`almacen.historial_de`), así que la fecha
+   *  no añade nada a la decisión de tocar «Añadir». */
   ultima_vez?: string
 }
 
@@ -631,6 +642,9 @@ export interface Alerta {
   grupo_id: number
   tipo: 'baja_de' | 'minimo_90d' | 'cualquier_bajada'
   umbral_cent: number | null
+  /** **Viaja y no se pinta, y está mirado**: cuándo se pidió el aviso. Lo que la pantalla
+   *  enseña es **cuándo saltó** (`salto_en`) y su frase, que es lo que se viene a saber: la
+   *  fecha de la promesa no explica nada de lo que ha pasado. */
   creada_en: string
   vista_en: string | null
   salto_en: string | null
@@ -843,6 +857,9 @@ export interface PendienteDeDecidir {
   linea_id: string | null
   nombre: string
   cantidad: number
+  /** **Viaja y no se pinta, y está mirado**: «hay precio en alguna cadena». La pantalla usa
+   *  `coste_cent == null` y dice «no lo sé» (`RepartoEnTiendas`), que distingue lo mismo sin
+   *  afirmar de más: el precio de hoy puede no estar y el producto seguir en el catálogo. */
   hay_precio: boolean
   mas_barata: string | null
   coste_cent: number | null

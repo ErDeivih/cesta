@@ -126,6 +126,11 @@ export interface Persona {
   nombre: string | null
   /** `dueno` | `escribe` | `mira`. */
   papel: string
+  /** Cuándo entró. **Viaja y no se pinta, y está mirado**: la columna admite NULL, pero hoy no
+   *  lo escribe nadie -- los tres sitios que rellenan `lista_acceso` ponen `now()` (crear la
+   *  lista, compartir por usuario y aceptar un enlace) --, así que no hay estado «invitada y
+   *  todavía no ha entrado» que enseñar. Se probó a pintarlo el 30 de septiembre de 2026 y se
+   *  quitó el mismo día: una etiqueta para un estado que la API no produce es código muerto. */
   aceptado_en: string
 }
 

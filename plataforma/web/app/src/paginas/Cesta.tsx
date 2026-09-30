@@ -776,6 +776,19 @@ function nombreDelPapel(papel: string): string {
   return 'puede escribir'
 }
 
+/** Quién está dentro de la lista.
+ *
+ *  `aceptado_en` viaja en `GET /listas/{id}` desde el primer día (`almacen.quienes_en`) y **no
+ *  lo pinta nadie**, y está mirado por qué: **hoy nunca es NULL**. Los tres sitios que escriben
+ *  en `lista_acceso` lo ponen a `now()` -- crear la lista (`almacen.py:287`), compartir por
+ *  usuario (`:329`) y aceptar un enlace (`:1015`) --, así que no existe el estado «invitada y
+ *  todavía no ha entrado» que parecía pedir este campo: invitar por usuario **es** meter, y el
+ *  enlace se acepta al abrirlo (y si no se abre, no hay fila).
+ *
+ *  Se probó a pintarlo el 30 de septiembre de 2026 y se quitó el mismo día: una etiqueta para
+ *  un estado que la API no produce es código muerto que además **afirma** que hay un caso que
+ *  no hay. La decisión de fondo -- que invitar sea entrar -- está en `docs/AMIGOS.md`.
+ */
 function QuienEstaDentro({ personas }: { personas: Persona[] }) {
   return (
     <ul className="grid gap-1">
