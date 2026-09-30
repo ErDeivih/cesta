@@ -244,6 +244,17 @@ la primera pantalla se va al fondo -- y la pasada siguiente se pone roja por el 
 anterior, que es el defecto de instrumento que este proyecto ya ha pagado tres veces. Se poda antes
 de medir y se dice por consola cuantas lineas se han quitado.
 
+**Que ninguna pantalla se quede sin medir lo dice un instrumento, no la memoria**:
+
+    uv run python data/debug/rutas_vs_puerta.py
+
+Lee las rutas de `App.tsx` y todas las que recorren las tres puertas, y ensena las pantallas que
+existen y **por donde no ha pasado ninguna**. El 30 de septiembre de 2026 se hizo a mano y salieron
+**tres** (`/buscar`, `/favoritos` y la de «esa pantalla no existe»): la lista de la puerta se habia
+quedado atras segun crecian las pantallas. Ahora dice 0 en las dos direcciones -- y lo mismo al
+reves, que la puerta no visite una ruta que no es ninguna pantalla, que seria una prueba
+apuntando a un sitio que ya no existe.
+
 ## La tercera puerta: **cada funcion de la aplicacion, hecha de verdad**
 
 Las dos puertas del navegador de arriba miran lo que el encargo pide -- las cuatro preguntas y
