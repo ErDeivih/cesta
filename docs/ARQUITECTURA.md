@@ -69,7 +69,7 @@ dice en pantalla.
     Caddy                sirve la interfaz y hace de proxy a /api. HTTPS
                          automatico cuando haga falta.
     Docker Compose       empaqueta la plataforma. NO el scraper.
-    pytest               203 pruebas.
+    pytest               las pruebas del proyecto.
     ruff                 formato y avisos. Configurado en pyproject.toml.
 
 ### Lo que NO se usa, y por que
@@ -223,7 +223,7 @@ La API devuelve `calidad` **solo** si la letra viene de leer ingredientes, y
     plataforma\arrancar.bat cuenta <usuario> "<Nombre>"
     plataforma\respaldar.bat        respaldar PostgreSQL
 
-    uv run pytest                                   203 pruebas
+    uv run pytest                                   todas, en verde
     uv run ruff check .                             limpio
     uv run python -m projects.cesta.emparejar --medir   57 % de aciertos
     uv run python -m projects.cesta.verificar_docs      los .md cuadran

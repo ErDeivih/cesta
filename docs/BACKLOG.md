@@ -2439,7 +2439,7 @@ montaje de `docker-compose.yml:77` es la paridad de la interfaz, que es el punto
                                             sirve eso (docker-compose.yml:61).
                                             Los ficheros viejos siguen ahi como
                                             plan B.
-    tests/                                  640 pruebas. Las que guardan cosas
+    tests/                                  las pruebas. Las que guardan cosas
                                             que se rompen solas: test_interfaz
                                             (el sitio donde compila y el que se
                                             sirve), test_imagen_api (la API no
@@ -2824,7 +2824,7 @@ rompe cosas que ya hemos aprendido por las malas**:
 
 Comprobacion antes de dar nada por hecho:
 
-    uv run pytest                    180 pruebas, todas en verde
+    uv run pytest                    todas, en verde
     uv run ruff check plataforma/    limpio
 
 ---

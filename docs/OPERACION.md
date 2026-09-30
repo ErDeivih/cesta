@@ -90,7 +90,7 @@ en_una_frase: La idea del capítulo en una frase, para quien llega con prisa o d
 **La sección tiene que estar en `SECCIONES`** (`plataforma/aprende.py`); si no, el capítulo sale
 en «Otros» y el generador lo avisa por consola. El número del nombre del fichero manda en el
 orden dentro de su sección. No hay que tocar el generador ni el índice: aparece solo, y lo
-comprueban las 13 pruebas de `tests/test_aprende.py` (que un capítulo sin `seccion:` no pase, que
+comprueban las 20 pruebas de `tests/test_aprende.py` (que un capítulo sin `seccion:` no pase, que
 lleve su `en_una_frase:` y se pinte debajo del título, que los enlaces entre documentos se
 reescriban, que el índice de la página apunte a anclas que existen, que no haya ni un script ni
 un estilo en línea, y que la referencia liste los 60 documentos).

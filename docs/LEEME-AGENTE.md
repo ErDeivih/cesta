@@ -140,7 +140,7 @@ sirviendo lo de ayer y lo dice en pantalla.
 
 ## Comprobar que todo esta bien
 
-    uv run pytest                     246 pruebas
+    uv run pytest                     todas, en verde
     uv run ruff check .               limpio, todo el proyecto
     uv run python -m projects.cesta.verificar_docs
                                       los numeros de los documentos cuadran
