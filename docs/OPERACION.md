@@ -217,6 +217,27 @@ lo saltaba en silencio: el total decía 132 donde había 133. Ahora el dato que 
 pelado y el texto se compone al escribir el aviso. Es la misma lección de siempre en este
 proyecto: *una comprobación que no puede medir tiene que decirlo, no aprobar*.
 
+### Ninguna ruta de la API se queda sin que nadie la llame
+
+Medido el 30 de septiembre de 2026 con `data/debug/rutas_sin_prueba.py`: de las **46 rutas** de
+`plataforma/api/main.py`, **siete no las tocaba ninguna prueba** — las tres de `/api/favoritos`,
+`/api/preferencias`, `/api/producto/{cadena}/{id_fuente}`, `/api/invitacion/{codigo}` y
+`/api/salud`. Son funciones del encargo (seguir productos, invitaciones, ajustes, la ficha por el
+id de la cadena que usa la extensión), así que se escribieron las pruebas que faltaban en
+`tests/test_rutas_sin_prueba.py`, por HTTP y con el almacén sustituido —en `tests/` no hay
+PostgreSQL, eso lo ejecuta `prueba_e2e.py`—: trece pruebas que fijan la forma de lo que sale, la
+ventana de días, el favorito que ya no está en el catálogo, el 400 de seguir algo sin decir qué,
+el 404 de la invitación caducada y que `/api/salud` **no pida sesión**, que es lo único que la
+hace útil para un vigilante de fuera.
+
+Y como trece pruebas que pasan a la primera no son prueba de nada, se rompió el código a
+propósito tres veces (el id de la cadena, el 400 de la línea sin destino, el `desconocido` del
+favorito que ya no está): las tres veces falló la prueba que tenía que fallar.
+
+**Lo que el instrumento mide es que nadie las llama, no que no estén comprobadas.** El orden de
+los favoritos ya lo fijaba `test_favoritos_orden.py`, llamando a `_orden_de_favoritos`; lo que no
+miraba nadie era la ruta. Es la diferencia entre probar la cuenta y probar el mostrador.
+
 ## Y la interfaz, en un navegador de verdad
 
 Lo de arriba comprueba el servidor. La pantalla se comprueba con
