@@ -1771,10 +1771,22 @@ def main() -> int:
         comprueba(dentro,
                   f"1 y 3: la primera linea de la lista se ve sin desplazar ({donde})")
         if not dentro:
-            print("   lo que hay encima de la primera linea, con su alto:")
-            for caja in _encima_de(pagina, primera_linea.bounding_box()["y"] if
-                                   primera_linea.bounding_box() else 0):
-                print(f"     y={caja['y']:>6.0f}  alto={caja['h']:>5.0f}  {caja['t']}")
+            # **La caja se mide UNA vez.** Aqui se llamaba a `bounding_box()` dos veces --una
+            # para el `if` y otra para el `y`-- y la segunda caia con un `Timeout` de 30 s que
+            # se llevaba por delante la pasada entera: entre las dos llamadas React habia vuelto
+            # a pintar la lista y el localizador ya no existia. Un instrumento que revienta
+            # midiendo lo que va mal es el peor momento para reventar: la pasada se corta justo
+            # cuando acababa de encontrar algo. Medido el 30 de septiembre de 2026.
+            caja = None
+            with contextlib.suppress(Exception):
+                caja = primera_linea.bounding_box()
+            if caja:
+                print("   lo que hay encima de la primera linea, con su alto:")
+                for c in _encima_de(pagina, caja["y"]):
+                    print(f"     y={c['y']:>6.0f}  alto={c['h']:>5.0f}  {c['t']}")
+            else:
+                print("   (la primera linea desaparecio antes de poder medirla: "
+                      "la lista se volvio a pintar)")
 
         carga("/")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")

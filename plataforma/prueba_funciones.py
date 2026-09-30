@@ -667,11 +667,20 @@ def main() -> int:
         # ------------------------------------ el microfono y el escaner, en el buscador -----
         # **La mitad de la comprobacion del microfono es que NO este.** La regla del encargo
         # (tarea 3) es *«si el navegador no lo soporta, el boton no se dibuja: no se dibuja y
-        # falla al pulsarlo, no se dibuja»*. Chromium sin cabeza no trae `SpeechRecognition`,
-        # asi que lo primero se mide tal cual viene.
+        # falla al pulsarlo, no se dibuja»*. 
+        # Y esa regla se mide **preguntando antes si este navegador lo soporta**, en vez de
+        # darlo por hecho. El 30 de septiembre de 2026 esta comprobacion salio roja con la
+        # aplicacion bien: el comentario decia que "Chromium sin cabeza no trae
+        # SpeechRecognition", y en Windows si lo trae (webkitSpeechRecognition), asi que el
+        # boton se dibujaba **con razon**. Un instrumento que da por hecho el entorno y no lo
+        # mide acusa al codigo de lo que hace el navegador.
         carga("/buscar")
-        comprueba(pagina.get_by_role("button", name="Buscar hablando").count() == 0,
-                  "sin soporte del navegador, el microfono no se dibuja")
+        soporta_voz = pagina.evaluate(
+            "() => !!(window.SpeechRecognition || window.webkitSpeechRecognition)")
+        hay_micro = pagina.get_by_role("button", name="Buscar hablando").count()
+        comprueba(hay_micro == (1 if soporta_voz else 0),
+                  f"el microfono sale si el navegador lo soporta y no sale si no "
+                  f"(soporte: {soporta_voz}, botones: {hay_micro})")
         # Y el escaner (tarea 8): su pantalla existia desde antes, pero **no se llegaba a ella
         # desde el buscador**, que es donde se esta cuando se tiene el paquete en la mano.
         camara = pagina.get_by_role("link", name="Escanear un código de barras")

@@ -597,6 +597,48 @@ lo arreglaria. Era falso —WSL es la 3.0.1.0 y Docker Desktop 4.37.1 la acepta 
 (3.0.1.0) meets ECI requirement")— y el error no era de version sino de red. Un diagnostico
 escrito a partir del mensaje de error, sin probar la hipotesis, manda a la persona equivocada.
 
+### La aplicación, en pie **sin** el motor de Docker (30 de septiembre de 2026)
+
+Con el motor caído, la aplicación se puede levantar igual: lo único que aportaba Docker aquí era
+PostgreSQL, y **Ubuntu (WSL) ya lo tiene instalado**. Medido, y con las puertas corriendo así:
+
+    # 1. la base, dentro de Ubuntu (16.15, en el 5434), el rol de casa y la regla de pg_hba
+    wsl -d Ubuntu -u root -e bash /mnt/f/aprendizaje/scrap/data/debug/wsl_pg.sh
+    wsl -d Ubuntu -u root -e bash /mnt/f/aprendizaje/scrap/data/debug/wsl_pg_abrir.sh
+
+    # 2. la API, en Windows, contra esa base
+    $ip = (wsl -d Ubuntu -e hostname -I).Split()[0]
+    $env:CESTA_POSTGRES = "postgresql://cesta:prueba@${ip}:5434/cesta"
+    $env:CESTA_ORIGENES = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080"
+    uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8099
+
+    # 3. el front, en el servidor de desarrollo, apuntando a esa API
+    cd plataforma/web/app; $env:CESTA_API='http://127.0.0.1:8099'; npm run dev
+
+    # 4. las puertas
+    $env:CESTA_UI='http://localhost:5173'; uv run python -m plataforma.prueba_funciones
+
+**Las tres trampas, porque las tres cuestan una tarde:**
+
+1. **Windows no entra por `127.0.0.1`**, entra por la puerta de enlace de la red NAT de WSL
+   (`172.20.160.1`). Con `pg_hba.conf` mirando solo a `127.0.0.1`, psycopg contesta
+   `no pg_hba.conf entry for host "172.20.160.1"`. De ahí `wsl_pg_abrir.sh`. **Y la IP de WSL
+   cambia** al reiniciarse la máquina virtual: la base se busca con `hostname -I`, no con una IP
+   apuntada en un fichero.
+2. **`CESTA_ORIGENES` tiene que incluir el origen del front.** Por defecto solo admite
+   `http://localhost:8080`, y el servidor de desarrollo vive en el **5173**: sin esto, el
+   navegador bloquea el alta por CORS y una puerta que ejercita el alta **falla por el entorno y
+   parece un fallo de la aplicación**. Medido: con el origen puesto,
+   `access-control-allow-origin: http://localhost:5173`, y el alta pasa a la primera.
+3. **La red NAT de WSL se atasca de vez en cuando**: TCP abre, el saludo del protocolo contesta
+   (`53` = «S»), y aun así psycopg se queda en `ConnectionTimeout`. Se destasca tocando el enlace
+   —`ip link set dev eth0 mtu 1280`, sin cambiar nada de fondo— y vuelve a conectar en 0,03 s.
+   Antes de culpar al código, se prueba esto.
+
+**Lo que este camino no cubre:** `prueba_produccion` mide lo que sirve **Caddy** (el paquete
+compilado y las cabeceras del CSP), y eso sí necesita el motor. Y `prueba_e2e` levanta su propio
+PostgreSQL desechable en el 5434, que aquí está ocupado por el de WSL.
+
 ### Fallo 2: el motor de Docker Desktop (sin arreglar)
 
 Con WSL ya arrancando, el motor sigue sin levantar. Lo medido:
@@ -627,8 +669,9 @@ resetear nada.
 La ingesta y las herramientas de linea de orden (`pipeline`, `emparejar`, `verificar_ingesta`,
 `verificar_docs`, `pytest`) **no necesitan Docker**: solo la aplicacion servida, los contenedores y
 `prueba_e2e` (que levanta su propio PostgreSQL desechable en el 5434) lo necesitan. Con el motor
-parado se puede seguir midiendo el dato y escribiendo pruebas; lo que no se puede es **medir la
-interfaz**, que es justo lo que pide el encargo.
+parado se puede seguir midiendo el dato y escribiendo pruebas, y **desde el 30 de septiembre de
+2026 tambien la interfaz**: ver arriba, <<La aplicacion, en pie sin el motor de Docker>>. Ese dia
+las puertas corrieron asi, con la aplicacion servida por el servidor de desarrollo.
 
 **Lo que se toco en esta maquina, para poder deshacerlo:** `C:\Users\David\.wslconfig`
 (`networkingMode` a `nat`; `autoMemoryReclaim` y `sparseVhd` movidas a `[experimental]`). La copia

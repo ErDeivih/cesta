@@ -657,8 +657,14 @@ def cambiar(lista_id: str, linea_id: str, cambio: CambioLinea,
         momento = ahora
     resultado = almacen.cambia_linea(lista_id, linea_id, usuario["id"],
                                      tachado=cambio.tachado, cantidad=cambio.cantidad,
-                                     nota=cambio.nota, borrado=cambio.borrado,
+                                     borrado=cambio.borrado,
                                      en_carrito=cambio.en_carrito, momento=momento,
+                                     # Ausente = no tocar; `null` = quitarla. Es la misma
+                                     # regla que `cadena_elegida`, y aqui importa: la
+                                     # pantalla borra la nota mandando `null`.
+                                     nota=(cambio.nota
+                                           if "nota" in cambio.model_fields_set
+                                           else almacen.SIN_CAMBIAR),
                                      cadena_elegida=(cambio.cadena_elegida
                                                      if "cadena_elegida" in cambio.model_fields_set
                                                      else almacen.SIN_CAMBIAR))
@@ -777,8 +783,12 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
                 almacen.cambia_linea(
                     lista_id, c["id"], usuario["id"],
                     tachado=c.get("tachado"), cantidad=c.get("cantidad"),
-                    nota=c.get("nota"), borrado=c.get("borrado"),
+                    borrado=c.get("borrado"),
                     en_carrito=c.get("en_carrito"),
+                    # Ausente = no tocar la nota; `null` = quitarla. En la cola sin cobertura
+                    # el cambio viaja tal y como se hizo en el movil, asi que la misma regla
+                    # que `cadena_elegida`.
+                    nota=c.get("nota", almacen.SIN_CAMBIAR),
                     # Elegir tienda sin cobertura en el pasillo es justo uno de los
                     # cambios que hay que poder subir despues, asi que viaja en la cola
                     # como los demas. Ausente = no tocar; `null` = quitar la tienda.

@@ -404,7 +404,7 @@ deshacer una asignacion sin borrar la linea entera.
 
 def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
                  tachado: bool | None = None, cantidad: int | None = None,
-                 nota: str | None = None, borrado: bool | None = None,
+                 nota=SIN_CAMBIAR, borrado: bool | None = None,
                  en_carrito: bool | None = None,
                  cadena_elegida=SIN_CAMBIAR,
                  momento: datetime | None = None) -> dict | None:
@@ -430,7 +430,13 @@ def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
     if cantidad is not None:
         trozos.append("cantidad = %s")      # gana el ultimo, a proposito
         args.append(cantidad)
-    if nota is not None:
+    if nota is not SIN_CAMBIAR:
+        # **Ausente = no tocar; `None` = quitarla**, igual que `cadena_elegida`, y por la
+        # misma razon. Antes esto era `if nota is not None`, asi que la pantalla mandaba
+        # `nota: null` para dejar la linea sin nota y el servidor lo tomaba por un "no la
+        # toques": la nota se quedaba escrita y **sin decir nada**. Lo encontro la puerta de
+        # las funciones el 30 de septiembre de 2026, con el campo vaciado y la frase
+        # `2 bricks de los grandes` todavia en la lista.
         trozos.append("nota = %s")
         args.append(nota)
     if en_carrito is not None:

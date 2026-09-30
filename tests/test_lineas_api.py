@@ -73,3 +73,56 @@ def test_una_linea_con_producto_tambien_entra(monkeypatch):
         assert llamado
     finally:
         main.app.dependency_overrides.clear()
+
+
+# --- La nota: `null` quiere decir "quitala" ----------------------------------
+# Encontrado por la puerta de las funciones el 30 de septiembre de 2026: la pantalla
+# vaciaba el campo, pulsaba Guardar, y la nota seguia escrita en la lista. El front
+# mandaba `nota: null` y el servidor lo tomaba por un "no la toques", porque la
+# comprobacion era `if nota is not None`. `cadena_elegida` ya usaba un centinela para
+# distinguir "ausente" de "borralo"; la nota no. Esto lo fija en la ruta, que es donde
+# se ve sin base de datos: que se le pasa al almacen cuando el movil manda cada cosa.
+
+
+def _cliente_de_lineas(monkeypatch):
+    """Cliente con el almacen espiado: devuelve (cliente, lo que le llega)."""
+    visto: dict = {}
+
+    def cambia(*a, **k):
+        visto.clear()
+        visto.update(k)
+        return {"id": "l1"}
+
+    monkeypatch.setattr(almacen, "cambia_linea", cambia)
+    monkeypatch.setattr(main, "_acceso", lambda *a, **k: "dueno")
+    monkeypatch.setitem(main.app.dependency_overrides, main.usuario_actual,
+                        lambda: {"id": "u1", "usuario": "ana", "nombre": "Ana"})
+    return TestClient(main.app), visto
+
+
+def test_quitar_la_nota_se_le_dice_al_almacen(monkeypatch):
+    """`nota: null` es "quitala", y tiene que llegar al almacen como tal."""
+    cliente, visto = _cliente_de_lineas(monkeypatch)
+    r = cliente.patch("/api/listas/una-lista/lineas/l1", json={"nota": None})
+    assert r.status_code == 200, r.text
+    assert visto["nota"] is None, (
+        "con `nota: null` el almacen tiene que recibir None: si recibe el centinela, "
+        "la nota se queda escrita y la pantalla miente")
+
+
+def test_sin_mandar_la_nota_no_se_toca(monkeypatch):
+    """El otro lado: no mandarla no es borrarla, o cambiar la cantidad la borraria."""
+    cliente, visto = _cliente_de_lineas(monkeypatch)
+    r = cliente.patch("/api/listas/una-lista/lineas/l1", json={"cantidad": 2})
+    assert r.status_code == 200, r.text
+    assert visto["nota"] is almacen.SIN_CAMBIAR, (
+        "sin el campo `nota` el almacen no puede tocarla: cambiar la cantidad borraria "
+        "la nota sin que nadie lo haya pedido")
+
+
+def test_poner_la_nota_llega_entera(monkeypatch):
+    cliente, visto = _cliente_de_lineas(monkeypatch)
+    r = cliente.patch("/api/listas/una-lista/lineas/l1",
+                      json={"nota": "2 bricks de los grandes"})
+    assert r.status_code == 200, r.text
+    assert visto["nota"] == "2 bricks de los grandes"
