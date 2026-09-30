@@ -123,13 +123,18 @@ def main() -> int:
         # ---------------------------------------------------------------- la cuenta ---
         print("\n== la cuenta, de cero")
         entrar_o_crear()
-        if "No tienes ninguna lista" not in texto() and pagina.locator(
-                "input[type=checkbox]").count() > 0:
-            # Una pasada cortada a mitad deja la cuenta con su lista: se borra y se empieza.
+        # **Una pasada cortada a mitad deja la cuenta viva, y da igual como la deje.** El 30 de
+        # septiembre de 2026 esta condicion se quedo corta: pedia «tiene lista **con lineas**»,
+        # y una pasada que se cayo despues de vaciar la lista dejaba la cuenta ahi -- el alta no
+        # volvia a pasar (la pantalla ya no ofrecia «Créala»), la lista nueva salia con un
+        # «(1)» detras porque el nombre estaba cogido, y dos comprobaciones se pusieron rojas
+        # por la basura de la pasada anterior y no por el codigo. La cuenta de esta puerta es
+        # desechable: **si hay sesion, se borra**.
+        if pagina.get_by_label("Clave").count() == 0:
             borrado = pagina.evaluate(
                 "async () => (await fetch('/api/yo', {method: 'DELETE',"
                 " credentials: 'same-origin'})).status")
-            print(f"   (quedaba una cuenta a medias: se ha borrado, {borrado})")
+            print(f"   (la cuenta de la pasada anterior seguia ahi: se ha borrado, {borrado})")
             carga("/cesta")
         if pagina.get_by_role("button", name="Créala").count():
             pagina.get_by_role("button", name="Créala").first.click()
@@ -190,6 +195,72 @@ def main() -> int:
             comprueba(espera(lambda: lineas() == 1), "y «Deshacer» la trae de vuelta")
         else:
             comprueba(False, "no hay boton de deshacer")
+
+        # -------------------------------------- cerrar la compra (tarea 10) -----------------
+        # **La mitad que le faltaba al bucle**: la lista sabia lo que falta y no lo que se
+        # compro, asi que cada semana se empezaba de cero. Lo del carro se guarda como compra
+        # (con su precio) y sale de la lista; **lo que no se cogio se queda**, que es lo que
+        # hace que el boton sirva -- quien no encuentra el pan no quiere volver a apuntarlo.
+        #
+        # Se comprueba el viaje entero con dos cosas: una marcada (va al carro) y otra sin
+        # marcar (se queda). Y se mira **lo que queda en la lista**, que es donde este boton no
+        # puede fallar.
+        # Se siembra **una linea marcada** (la que va al carro) y se deja la que ya habia **sin
+        # marcar**, que es justo el caso que hay que comprobar: lo que no se cogio no se va.
+        carga("/cesta")
+        antes = lineas()
+        sembrada = pagina.evaluate("""async () => {
+          const listas = (await (await fetch('/api/listas', {credentials:'same-origin'})).json()).listas;
+          const casa = listas.find((l) => l.es_de_casa) || listas[0];
+          if (!casa) return null;
+          const r = await fetch(`/api/listas/${casa.id}/lineas`, {method:'POST',
+            credentials:'same-origin', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({id: crypto.randomUUID(), nombre: 'PAN QUE SI ME LLEVO',
+                                  grupo_id: null, producto_id: 'dia:74397'})});
+          return r.ok ? casa.id : null;
+        }""")
+        carga("/cesta")
+        comprueba(espera(lambda: lineas() == antes + 1),
+                  f"la puerta deja dos cosas en la lista para poder cerrar ({antes} -> {lineas()})")
+        casilla = pagina.get_by_role("checkbox", name=re.compile("PAN QUE SI ME LLEVO"))
+        comprueba(casilla.count() == 1,
+                  "y la sembrada se anuncia con su nombre (se puede marcar sin adivinar)")
+        if casilla.count():
+            casilla.first.click()
+            comprueba(espera(lambda: pagina.locator("input[type=checkbox]:checked").count() == 1),
+                      "se marca la que se lleva, y la otra se queda sin marcar")
+        cerrar = pagina.get_by_role("button", name="He terminado la compra")
+        comprueba(cerrar.count() == 1,
+                  "y con algo en el carro sale el boton de cerrar la compra")
+        if cerrar.count():
+            cerrar.first.click()
+            comprueba(espera(lambda: "¿Terminada?" in texto()),
+                      "cerrar pregunta antes, y dice cuantas cosas van a salir")
+            comprueba("No, déjalo" in texto(), "y se puede decir que no")
+            no = pagina.get_by_role("button", name="No, déjalo")
+            if no.count():
+                no.first.click()
+                comprueba(espera(lambda: "¿Terminada?" not in texto()),
+                          "«No, déjalo» no cierra la compra, vuelve a dejar el boton")
+            cerrar.first.click()
+            pagina.get_by_role("button", name="Sí, he terminado").first.click()
+            comprueba(espera(lambda: "Compra guardada" in texto()),
+                      "cerrar la compra dice lo que ha pasado "
+                      f"({[ln for ln in texto().splitlines() if 'Compra guardada' in ln][:1]})")
+            comprueba(espera(lambda: lineas() == antes),
+                      f"las del carro salen y lo demas se queda ({antes + 1} -> {lineas()})")
+            comprueba(espera(lambda: "PAN QUE SI ME LLEVO" not in texto()),
+                      "y la que iba en el carro ya no esta en la lista")
+        # Y se deja la lista como estaba: fuera la linea sembrada, que ya salio al cerrar.
+        if sembrada:
+            pagina.evaluate("""async (lista) => {
+              const detalle = await (await fetch(`/api/listas/${lista}`,
+                {credentials:'same-origin'})).json();
+              for (const ln of (detalle.lineas || []).filter((l) => l.nombre_visto.startsWith('PAN QUE SI'))) {
+                await fetch(`/api/listas/${lista}/lineas/${ln.id}`, {method:'DELETE',
+                  credentials:'same-origin'});
+              }
+            }""", sembrada)
 
         # ------------------------------------------- una linea que apunta a otro ---------
         # **El fallo mas caro de la aplicacion, y el mas silencioso.** El emparejador numera los

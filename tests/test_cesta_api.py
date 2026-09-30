@@ -237,9 +237,10 @@ def test_se_compara_con_lo_que_costaria_sin_decidir_nada():
 
 # --- el total en vivo, que es lo que se mira al ir anadiendo --------------
 
-def _linea(grupo_id, cantidad=1, carro=False, nombre="algo"):
+def _linea(grupo_id, cantidad=1, carro=False, nombre="algo", **extra):
+    """Una linea, con lo que traiga la prueba de mas: `id`, `cadena_elegida`, `producto_movido`…"""
     return {"grupo_id": grupo_id, "producto_id": None, "cantidad": cantidad,
-            "nombre_visto": nombre, "en_carrito": carro, "tachado_en": None}
+            "nombre_visto": nombre, "en_carrito": carro, "tachado_en": None} | extra
 
 
 def test_la_estimacion_coge_cada_cosa_donde_este_mas_barata():
@@ -285,6 +286,48 @@ def test_la_estimacion_de_una_lista_vacia_es_cero_y_no_revienta():
     e = cesta.estimacion([])
     assert e == {"total_cent": 0, "en_carrito_cent": 0, "por_recoger_cent": 0,
                  "lineas": 0, "sin_precio": 0}
+
+
+# --- el precio de cada linea, para guardarlo al cerrar la compra -------------
+# `coste_por_linea` existe por «He terminado la compra» (tarea 10): la compra se guarda **con
+# sus precios**, porque gold se reescribe cada dia y una compra sin su precio no se puede
+# volver a mirar. Lo que se vigila aqui es de quien es el precio que se guarda.
+
+def test_el_precio_de_una_linea_es_el_de_la_cadena_mas_barata():
+    filas = [(1, "alcampo", "alcampo:a", "Leche", 120),
+             (1, "dia", "dia:a", "Leche", 100)]
+    with _catalogo(filas):
+        c = cesta.coste_por_linea([_linea(1, id="l1")])
+    assert c["l1"] == {"cadena": "dia", "precio_cent": 100}
+
+
+def test_si_la_linea_tiene_tienda_decidida_se_guarda_ese_precio():
+    """**No es el mas barato: es el que se pago.** Si alguien decidio comprarlo en Alcampo
+    aunque en DIA este mas barato, apuntar el de DIA seria apuntar un precio que no se pago."""
+    filas = [(1, "alcampo", "alcampo:a", "Leche", 120),
+             (1, "dia", "dia:a", "Leche", 100)]
+    with _catalogo(filas):
+        c = cesta.coste_por_linea([_linea(1, id="l1", cadena_elegida="alcampo")])
+    assert c["l1"] == {"cadena": "alcampo", "precio_cent": 120}
+
+
+def test_una_linea_que_apunta_a_otro_producto_no_tiene_precio():
+    """Sumarle el precio del grupo al que apunta seria meter un numero falso en la compra."""
+    filas = [(1, "dia", "dia:a", "Pintalabios", 1066)]
+    with _catalogo(filas):
+        c = cesta.coste_por_linea([_linea(1, id="l1", nombre="Leche entera",
+                                          producto_movido=True)])
+    assert c["l1"] == {"cadena": None, "precio_cent": None}
+
+
+def test_una_linea_que_no_esta_en_el_catalogo_no_tiene_precio_y_no_es_un_cero():
+    with _catalogo([(1, "dia", "dia:a", "Leche", 100)]):
+        c = cesta.coste_por_linea([_linea(77, id="suelta", nombre="algo raro")])
+    assert c["suelta"] == {"cadena": None, "precio_cent": None}
+
+
+def test_sin_lineas_no_hay_precios_que_dar():
+    assert cesta.coste_por_linea([]) == {}
 
 
 # --- lo que cambia cuando entran amigos ---------------------------------

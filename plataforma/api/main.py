@@ -518,6 +518,54 @@ def borrar_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     return {"borrada": lista_id}
 
 
+@app.post("/api/listas/{lista_id}/cerrar")
+def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
+    """«He terminado la compra»: lo del carro se guarda como compra y sale de la lista.
+
+    Lo pidio el encargo (tarea 10) y es la mitad que le faltaba al bucle: hasta hoy la
+    lista sabia lo que **falta** y no lo que **se compro**. Lo que va en el carro son las
+    lineas marcadas (`en_carrito`), que son las que se tachan en el pasillo; **lo que no se
+    cogio se queda en la lista**, que es lo que hace que esto sirva: quien no encuentra el
+    pan no quiere volver a apuntarlo.
+
+    Los precios los pone `cesta.coste_por_linea`, que es quien puede mirar gold: aqui solo
+    hay PostgreSQL y el precio vive en los parquet. Se guarda la compra **con sus precios**,
+    porque gold se reescribe cada dia y una compra sin su precio no se puede volver a mirar.
+
+    Y si no hay nada en el carro, se dice: pulsar el boton sin haber tachado nada no puede
+    inventar una compra vacia. Devuelve cuantas lineas salieron, cuanto costo (con las que
+    no tienen precio contadas aparte, que **no** se tiran) y cuantas quedan en la lista.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    lineas = catalogo.con_pasillos(almacen.lineas_de(lista_id))
+    # **Las lineas que apuntan a otro producto no tienen precio, y hay que quitarselo aqui.**
+    # Sin esto, la compra guardaba el precio del grupo al que apunta la linea -- que hoy puede
+    # ser un pintalabios en una linea que dice «leche entera» -- y el total mentia. Es el mismo
+    # filtro que hace `ver_lista` antes de pintar, y tiene que estar en los dos sitios: lo que
+    # se guarda no puede ser menos honesto que lo que se enseña.
+    movidas = catalogo.lineas_movidas(lineas)
+    lineas = [_linea_movida(ln) if str(ln.get("id")) in movidas else ln for ln in lineas]
+    en_el_carro = [ln for ln in lineas if ln.get("en_carrito")]
+    if not en_el_carro:
+        raise HTTPException(409, "No hay nada en el carro: marca lo que te llevas y vuelve.")
+    hecho = almacen.cierra_compra(lista_id, usuario["id"], cesta.coste_por_linea(en_el_carro))
+    return hecho | {"total_cent": hecho["total_cent"]}
+
+
+@app.get("/api/listas/{lista_id}/compras")
+def ver_compras(lista_id: str, usuario: dict = Depends(usuario_actual)):
+    """Las ultimas compras de una lista, con lo que costaron.
+
+    Existe para que el dia que la pantalla lo pida no haya que decidir el modelo otra vez:
+    lo que se guarda al cerrar es lo que hace falta para contestar «¿cuanto me gaste la
+    ultima vez?». **No** hay `GET /api/compras/{id}` (el detalle linea a linea): la pantalla
+    no lo pide todavia y el detalle se puede reconstruir de `compra_linea` cuando haga falta.
+    """
+    _acceso(lista_id, usuario)
+    return {"compras": almacen.compras_de(lista_id),
+            "fecha_datos": catalogo.fecha_de_gold()}
+
+
 @app.patch("/api/listas/{lista_id}")
 def renombrar_lista(lista_id: str, datos: NombreLista,
                     usuario: dict = Depends(usuario_actual)):

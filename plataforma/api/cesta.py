@@ -428,3 +428,37 @@ def estimacion(lineas: list[dict]) -> dict:
     return {"total_cent": total, "en_carrito_cent": en_carro,
             "por_recoger_cent": total - en_carro, "lineas": len(lineas),
             "sin_precio": sin_precio}
+
+
+def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
+    """Lo que cuesta **cada linea**, por separado, para guardarlo al cerrar la compra.
+
+    Es la misma cuenta que `estimacion` -- el candidato mas barato de cada linea -- pero
+    linea a linea, que es lo que hace falta para guardar una compra con sus precios. La
+    diferencia es cual se elige: **si la linea tiene tienda decidida (`cadena_elegida`), se
+    guarda el precio de esa tienda**; si no la tiene, el mas barato de hoy. Guardar la mas
+    barata cuando alguien decidio comprarlo en DIA apuntaria un precio que no se pago.
+
+    Devuelve `{linea_id: {"cadena", "precio_cent"}}`, y `precio_cent` es **None** cuando no
+    hay precio que dar: la linea apunta a otro producto (`producto_movido`, el caso de
+    `catalogo.lineas_movidas`) o el producto no esta en el catalogo. Quien lo guarde lo
+    cuenta aparte -- un cero ahi seria afirmar que salio gratis.
+    """
+    salida: dict[str, dict] = {}
+    if not lineas:
+        return salida
+    peticiones = [Peticion(x.get("grupo_id"), x.get("producto_id"),
+                           x.get("cantidad", 1), x.get("nombre_visto", "")) for x in lineas]
+    mejor = _candidatos(peticiones, "")
+    for linea, peticion in zip(lineas, peticiones, strict=True):
+        cadena = precio = None
+        if not linea.get("producto_movido"):
+            clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
+            suyos = [(fuente, v[1]) for (k, fuente), v in mejor.items() if k == clave]
+            elegida = linea.get("cadena_elegida")
+            if elegida and any(f == elegida for f, _ in suyos):
+                cadena, precio = elegida, next(p for f, p in suyos if f == elegida)
+            elif suyos:
+                cadena, precio = min(suyos, key=lambda par: par[1])
+        salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio}
+    return salida

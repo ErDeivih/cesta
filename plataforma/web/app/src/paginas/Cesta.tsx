@@ -31,11 +31,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 
 import {
-  anadirLinea, borrarLista, cambiarLinea, compartirCon, crearInvitacion, crearLista,
-  entrar, misListas, registrarse, renombrarLista, revocarInvitaciones, salir, sincronizar,
-  verLista, donde, yo,
+  anadirLinea, borrarLista, cambiarLinea, cerrarCompra, compartirCon, crearInvitacion,
+  crearLista, entrar, misListas, registrarse, renombrarLista, revocarInvitaciones, salir,
+  sincronizar, verLista, donde, yo,
 } from '../api/cesta'
-import type { CambioDeCola, CambioLinea, Invitacion, Novedad, Persona } from '../api/cesta'
+import type {
+  CambioDeCola, CambioLinea, CierreDeCompra, Invitacion, Novedad, Persona,
+} from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
 import { euros, hace, nombreCadena } from '../api/formato'
 import {
@@ -620,6 +622,95 @@ function NombreDeLaLista({ lista, alHecho }: {
  *  - **El papel se dice con palabras.** `mira` a secas se lee como una orden, y
  *    `dueno` dice que eres, no lo que hiciste.
  */
+
+/** «He terminado la compra»: lo del carro se guarda como compra y sale de la lista.
+ *
+ *  Es la mitad que le faltaba al bucle de la semana: hasta hoy la lista sabia lo que
+ *  **falta** y no lo que **se compro**, asi que cada semana se empezaba de cero. Al
+ *  cerrarla, las lineas marcadas (las que iban en el carro) se guardan con su precio y
+ *  **lo que no se cogio se queda en la lista**: quien no encuentra el pan no quiere
+ *  volver a apuntarlo.
+ *
+ *  Tres decisiones, y las tres son de la pantalla:
+ *
+ *  - **Sin nada en el carro no se dibuja el boton.** Un boton que solo puede contestar
+ *    «no hay nada» es un boton que hace perder el tiempo justo cuando se esta de pie en
+ *    la caja.
+ *  - **Pregunta antes, y dice cuanto.** Que se van a quitar N cosas de la lista no se
+ *    puede descubrir despues: es una accion que no se deshace de un toque (las lineas se
+ *    archivan, y volver a apuntarlas es volver a apuntarlas).
+ *  - **Y dice lo que ha pasado, con las cuentas**: cuantas salieron, cuanto costo y
+ *    cuantas quedan. Las que se quedaron sin precio se dicen aparte, porque van en la
+ *    compra y no en el total -- contarlas como cero seria mentir en la cifra que se
+ *    acaba de guardar.
+ */
+function CerrarCompra({ listaId, enElCarro, papel }: {
+  listaId: string
+  enElCarro: number
+  papel: string
+}) {
+  const cliente = useQueryClient()
+  const [confirmando, setConfirmando] = useState(false)
+  const [hecho, setHecho] = useState<CierreDeCompra | null>(null)
+
+  const cerrar = useMutation({
+    mutationFn: () => cerrarCompra(listaId),
+    onSuccess: (r) => {
+      setHecho(r)
+      setConfirmando(false)
+      // Lo que cambia al cerrar: la lista (ya no estan esas lineas), el reparto y el
+      // mosaico de «lo de siempre» (el historial cuenta las lineas archivadas).
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+      cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+      cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
+      cliente.invalidateQueries({ queryKey: ['habituales'] })
+    },
+  })
+
+  // Quien solo mira no cierra nada, y quien no lleva nada en el carro tampoco tiene nada
+  // que cerrar.
+  if (papel === 'mira' || (enElCarro === 0 && !hecho)) return null
+
+  if (hecho) {
+    return (
+      <Aviso tono="bien" titulo={`Compra guardada: ${hecho.lineas} ${hecho.lineas === 1 ? 'cosa' : 'cosas'}, ${euros(hecho.total_cent)}`}>
+        {hecho.quedan > 0
+          ? `Te quedan ${hecho.quedan} por coger en la lista.`
+          : 'La lista se ha quedado vacía.'}
+        {hecho.sin_precio > 0 && (
+          <> {hecho.sin_precio} sin precio conocido, contadas aparte del total.</>
+        )}
+      </Aviso>
+    )
+  }
+
+  if (!confirmando) {
+    return (
+      <Boton variante="normal" onClick={() => setConfirmando(true)}>
+        He terminado la compra
+      </Boton>
+    )
+  }
+
+  return (
+    <Aviso tono="aviso" titulo={`¿Terminada? Se quitarán ${enElCarro} ${enElCarro === 1 ? 'cosa' : 'cosas'} de la lista`}>
+      <p className="mt-1">
+        Se guardan como compra, con su precio. Lo que no hayas cogido se queda en la lista.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Boton variante="principal" disabled={cerrar.isPending}
+               onClick={() => cerrar.mutate()}>
+          {cerrar.isPending ? 'Guardando…' : 'Sí, he terminado'}
+        </Boton>
+        <Boton variante="sutil" onClick={() => setConfirmando(false)}>No, déjalo</Boton>
+      </div>
+      {cerrar.isError && (
+        <p className="mt-2 text-sm">{textoDeError(cerrar.error)}</p>
+      )}
+    </Aviso>
+  )
+}
 
 /** `dueno` | `escribe` | `mira`, dichos en castellano. */
 function nombreDelPapel(papel: string): string {
@@ -1535,6 +1626,17 @@ export function Cesta() {
                   </span>{' '}
                   en el carro
                 </p>
+
+                {/* Y cuando ya esta todo cogido, cerrar: lo del carro se guarda y sale de
+                    la lista. Va al final del todo, despues del numero que se mira al
+                    tachar, que es el orden en que se hace. */}
+                <div className="mt-3">
+                  <CerrarCompra
+                    listaId={listaId as string}
+                    enElCarro={enElCarro.length}
+                    papel={detalle.data.papel}
+                  />
+                </div>
             </>
           </Tarjeta>
         </>

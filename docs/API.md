@@ -478,7 +478,32 @@ La cola de lo que se hizo sin cobertura, de golpe. Cada cambio con su hora.
 sigue. El movil manda lo que tenga guardado, y alguno puede referirse a una linea
 que la otra persona ya borro.
 
-### `GET /api/listas/{id}/donde`
+### `POST /api/listas/{id}/cerrar`   «He terminado la compra»
+
+    sale  {"compra_id": "…", "lineas": 4, "sin_precio": 1, "total_cent": 1240, "quedan": 2}
+
+Las lineas que estaban **en el carro** (`en_carrito`) se archivan -- marcadas, no borradas: se
+limpian a los 30 dias, como las demas -- y se guarda una `compra` con lo que costaron. **Lo que
+no se cogio se queda en la lista**, que es lo que hace que esto sirva: quien no encuentra el pan
+no quiere volver a apuntarlo.
+
+`total_cent` es la suma de `precio_cent * cantidad` de las lineas que **si** tienen precio;
+`sin_precio` son las otras, que **se guardan con el precio vacio** y no se tiran. Una linea sin
+precio es una que apunta a otro producto (`catalogo.lineas_movidas`) o un producto que ya no
+esta en el catalogo: tirarla borraria de la compra algo que si se compro, y contarla como cero
+mentiria en el total.
+
+El precio de cada linea lo pone `cesta.coste_por_linea`, y **si la linea tiene tienda decidida
+se guarda el de esa tienda**, no el mas barato. Los precios se guardan con la compra
+(`plataforma/sql/010_cerrar_la_compra.sql`) porque gold se reescribe cada dia: una compra sin su
+precio no se puede volver a mirar.
+
+Sin nada en el carro contesta **409** en vez de escribir una compra vacia, y el texto se pinta
+tal cual. Necesita poder escribir en la lista (403 si el papel es `mira`).
+
+---
+
+## `GET /api/listas/{id}/donde`
     max_tiendas   2 por defecto
     cadenas       las del usuario por defecto
 
@@ -832,17 +857,36 @@ No es una ruta aparte: se anade a cada producto de `/api/grupo` y `/api/ean`.
 cero se leeria como "malisimo" y seria mentira. Es justo lo que la OCU critica de
 Yuka y El CoCo.
 
-### Cerrar la compra  — tarea 10
+### Cerrar la compra  — tarea 10 · **HECHO el 30 de septiembre de 2026**
 
     POST /api/listas/{id}/cerrar
-      entra  {"cadena": "alcampo", "momento": "..."}
-      sale   {"compra_id", "lineas_guardadas", "quedan_por_coger"}
+      sale   {"compra_id", "lineas", "sin_precio", "total_cent", "quedan"}
 
-    GET /api/compras            las ultimas, con su total
-    GET /api/compras/{id}       el detalle
+    GET /api/listas/{id}/compras     las ultimas de esa lista, con su total
 
 Guarda lo que estaba en el carro, lo quita de la lista y deja lo que no se cogio.
-**Idempotente por lista y minuto**: pulsar dos veces no crea dos compras.
+
+**Lo que se hizo distinto de lo que estaba planeado aqui, y por que.** El plan decia
+`entra {"cadena": "alcampo", "momento": "..."}` y `sale {"compra_id", "lineas_guardadas",
+"quedan_por_coger"}`. Al construirlo salieron dos cosas:
+
+  - **No lleva `cadena` ni `momento`.** El boton dice «he terminado la compra» y cierra lo que
+    haya en el carro, sea de la tienda que sea: la lista se reparte por tiendas, pero la compra
+    la cierra una persona, una vez, y el desglose por tienda ya lo da `/reparto`. Un `momento`
+    que manda el movil solo sirve si el movil puede estar sin red al cerrar, y cerrar la compra
+    es una accion de casa (con red) -- a diferencia de tachar, que se hace en el pasillo.
+  - **Los nombres son los que se guardan**: `lineas`, `sin_precio`, `total_cent` y `quedan`.
+    `lineas_guardadas` no distingue las que no tienen precio, y `quedan_por_coger` es lo mismo
+    que `quedan`.
+
+**Idempotente de hecho, y por el motivo que importa**: pulsar dos veces no crea dos compras
+porque la segunda vez ya no hay nada en el carro y contesta **409**. No hace falta una regla de
+«misma lista y mismo minuto»: la lista de lineas que se archiva **es** la prueba de que ya se
+cerro, y una regla por tiempo dejaria cerrar dos veces lo mismo al minuto siguiente.
+
+`GET /api/compras/{id}` (el detalle) **no esta**: la pantalla no lo pide todavia, y el detalle
+se puede reconstruir de `compra_linea` cuando haga falta. Lo que si esta es el listado por
+lista, que es lo que contesta «¿cuanto me gaste la ultima vez?».
 
 ---
 

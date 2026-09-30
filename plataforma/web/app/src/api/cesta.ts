@@ -215,6 +215,25 @@ export async function borrarLista(listaId: string): Promise<void> {
   await escribe(`/listas/${encodeURIComponent(listaId)}`, 'DELETE')
 }
 
+export interface CierreDeCompra {
+  /** Cuantas lineas salieron de la lista (las que iban en el carro). */
+  lineas: number
+  /** De esas, cuantas se quedaron sin precio: van en la compra y **no** en el total. */
+  sin_precio: number
+  total_cent: number
+  /** Cuantas siguen en la lista, que son las que no se cogieron. */
+  quedan: number
+}
+
+/** «He terminado la compra»: lo del carro se guarda como compra y sale de la lista.
+ *
+ *  La API contesta 409 si no hay nada en el carro: pulsar el boton sin haber tachado nada
+ *  no puede inventar una compra vacia, y el texto del error se pinta tal cual. */
+export async function cerrarCompra(listaId: string): Promise<CierreDeCompra> {
+  return await escribe<CierreDeCompra>(
+    `/listas/${encodeURIComponent(listaId)}/cerrar`, 'POST')
+}
+
 /* ---------------------------------------------------------------- escribir -- */
 
 /** Escribe en la API y devuelve el JSON. `pide()` es solo GET.

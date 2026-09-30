@@ -510,6 +510,102 @@ def borra_lineas_de_tienda(lista_id: str, cadena: str, usuario_id: str,
         return cur.rowcount
 
 
+def cierra_compra(lista_id: str, usuario_id: str,
+                  precios: dict[str, dict] | None = None) -> dict:
+    """«He terminado la compra»: lo del carro se guarda y sale de la lista.
+
+    Las lineas que estaban **en el carro** (`en_carrito`) se archivan (marcadas, no
+    borradas: `limpiar_lineas_borradas` se las lleva a los 30 dias) y se guarda una
+    `compra` con lo que costo. **Lo que no se cogio se queda en la lista**, que es la
+    mitad que importa: quien no encuentra el pan no quiere volver a apuntarlo.
+
+    `precios` es `{linea_id: {"cadena": ..., "precio_cent": ...}}` y lo calcula quien
+    puede mirar gold (`cesta.coste_por_linea`): aqui solo hay PostgreSQL, y el precio
+    vive en los parquet. Una linea sin precio se guarda con `precio_cent` en NULL y se
+    cuenta en `sin_precio` -- tirarla borraria de la compra algo que si se compro, y
+    contarla como cero mentiria en el total.
+
+    Se hace **en una transaccion** (`cursor()`): o se archivan las lineas y se guarda la
+    compra, o no pasa nada. Media compra -- lineas fuera y sin registro -- seria peor que
+    no haber pulsado el boton.
+
+    Devuelve `{"compra_id", "lineas", "sin_precio", "total_cent", "quedan"}`. Si no hay
+    nada en el carro devuelve `lineas: 0` y **no escribe nada**: una compra vacia no es
+    una compra, y el boton se lo dice a quien lo pulse.
+    """
+    precios = precios or {}
+    with cursor() as cur:
+        cur.execute("""
+            SELECT id, grupo_id, producto_id, nombre_visto, cantidad, cadena_elegida
+              FROM lista_linea
+             WHERE lista_id = %s AND borrado_en IS NULL AND en_carrito
+             ORDER BY anadido_en
+        """, (lista_id,))
+        en_el_carro = cur.fetchall()
+        if not en_el_carro:
+            return {"compra_id": None, "lineas": 0, "sin_precio": 0, "total_cent": 0,
+                    "quedan": _cuantas_vivas(cur, lista_id)}
+
+        total = 0
+        sin_precio = 0
+        filas = []
+        for linea in en_el_carro:
+            suyo = precios.get(str(linea["id"])) or {}
+            cent = suyo.get("precio_cent")
+            if cent is None:
+                sin_precio += 1
+            else:
+                total += int(cent) * int(linea["cantidad"])
+            filas.append((str(linea["id"]), linea["grupo_id"], linea["producto_id"],
+                          linea["nombre_visto"], linea["cantidad"],
+                          suyo.get("cadena") or linea["cadena_elegida"], cent))
+
+        cur.execute("""
+            INSERT INTO compra (lista_id, usuario_id, lineas, sin_precio, total_cent)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (lista_id, usuario_id, len(filas), sin_precio, total))
+        compra_id = str(cur.fetchone()["id"])
+
+        cur.executemany("""
+            INSERT INTO compra_linea (compra_id, linea_id, grupo_id, producto_id, nombre,
+                                      cantidad, cadena, precio_cent)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, [(compra_id, *f) for f in filas])
+
+        cur.execute("""
+            UPDATE lista_linea SET borrado_en = now(), en_carrito = false, tocado_en = now()
+             WHERE lista_id = %s AND id = ANY(%s) AND borrado_en IS NULL
+        """, (lista_id, [f[0] for f in filas]))
+
+        return {"compra_id": compra_id, "lineas": len(filas), "sin_precio": sin_precio,
+                "total_cent": total, "quedan": _cuantas_vivas(cur, lista_id)}
+
+
+def _cuantas_vivas(cur, lista_id: str) -> int:
+    cur.execute("SELECT count(*) AS n FROM lista_linea WHERE lista_id = %s AND borrado_en IS NULL",
+                (lista_id,))
+    return int(cur.fetchone()["n"])
+
+
+def compras_de(lista_id: str, limite: int = 12) -> list[dict]:
+    """Las ultimas compras de una lista, con lo que costaron.
+
+    La pantalla no las enseña hoy; esto existe para que el dia que se pidan **no haya que
+    volver a decidir el modelo**: lo que se guarda al cerrar es lo que hace falta para
+    contestar «¿cuanto me gaste la ultima vez?» y «¿que compre?».
+    """
+    with cursor() as cur:
+        cur.execute("""
+            SELECT id, cerrada_en, lineas, sin_precio, total_cent
+              FROM compra WHERE lista_id = %s
+             ORDER BY cerrada_en DESC LIMIT %s
+        """, (lista_id, int(limite)))
+        return [{"compra_id": str(f["id"]), "cerrada_en": f["cerrada_en"].isoformat(),
+                 "lineas": f["lineas"], "sin_precio": f["sin_precio"],
+                 "total_cent": f["total_cent"]} for f in cur.fetchall()]
+
+
 def archiva_lista(lista_id: str, usuario_id: str) -> bool:
     """La lista desaparece de la pantalla. Solo quien la creo.
 

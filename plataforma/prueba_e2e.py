@@ -483,6 +483,46 @@ def main() -> int:
         fallos += 1
         print("   FALLO: se ha guardado la hora de llegada en vez de la del movil")
 
+    # ------------------------------------ cerrar la compra (tarea 10) --------------------
+    # **Lo que este boton no puede hacer mal es llevarse lo que no se cogio.** Se prueba con
+    # dos lineas de verdad en PostgreSQL: una marcada (va al carro y sale de la lista) y otra
+    # sin marcar (se queda). Y con una **sin precio**, que es el caso de una linea que apunta a
+    # otro producto: se guarda en la compra con su precio en NULL y se cuenta aparte, porque
+    # tirarla borraria de la compra algo que si se compro y contarla como cero mentiria en el
+    # total.
+    print("\n== cerrar la compra: lo del carro se guarda y sale, lo demas se queda")
+    dentro = almacen.anade_linea(str(lista["id"]), str(yo["id"]), str(uuid.uuid4()),
+                                 "Leche entera", grupo_id=None, producto_id="dia:74397")
+    fuera = almacen.anade_linea(str(lista["id"]), str(yo["id"]), str(uuid.uuid4()),
+                                "Pan que no me llevo", grupo_id=None, producto_id="dia:74397")
+    almacen.cambia_linea(str(lista["id"]), dentro["id"], str(yo["id"]), en_carrito=True)
+    r = cliente.post(f"/api/listas/{lista['id']}/cerrar")
+    hecho = r.json() if r.status_code == 200 else {}
+    print(f"   POST /cerrar -> {r.status_code}  {hecho}")
+    if r.status_code != 200:
+        fallos += 1
+        print("   FALLO: no se ha podido cerrar la compra")
+    vivos = {str(x["id"]) for x in almacen.lineas_de(str(lista["id"]))}
+    if str(dentro["id"]) in vivos:
+        fallos += 1
+        print("   FALLO: la linea que iba en el carro sigue en la lista")
+    if str(fuera["id"]) not in vivos:
+        fallos += 1
+        print("   FALLO: se ha llevado por delante la linea que no se cogio")
+    guardadas = almacen.compras_de(str(lista["id"]))
+    if not guardadas or guardadas[0]["lineas"] != 1:
+        fallos += 1
+        print(f"   FALLO: la compra no ha quedado guardada ({guardadas[:1]})")
+    else:
+        print(f"   y queda guardada: {guardadas[0]['lineas']} linea, "
+              f"{guardadas[0]['total_cent']} cent, {guardadas[0]['sin_precio']} sin precio")
+    # Y sin nada en el carro, el boton lo dice en vez de inventar una compra vacia (409).
+    r = cliente.post(f"/api/listas/{lista['id']}/cerrar")
+    print(f"   y con el carro vacio -> {r.status_code} {r.json().get('detail')!r}")
+    if r.status_code != 409:
+        fallos += 1
+        print("   FALLO: ha cerrado una compra sin nada en el carro")
+
     # **Sin sesion**: el filtro no puede saber que es "lo mio", y el campo tiene que
     # decir la verdad. Este es el fallo que encontro esta prueba.
     print("\n== y sin sesion, que el campo no mienta")

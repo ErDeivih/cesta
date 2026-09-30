@@ -122,8 +122,15 @@ def test_la_cuenta_es_desechable_y_no_deja_basura():
     assert 'USUARIO = "prueba-funciones"' in FUENTE
     assert "'/api/yo'" in FUENTE and "'DELETE'" in FUENTE, (
         "la puerta no borra su cuenta al terminar")
-    assert "quedaba una cuenta a medias" in FUENTE, (
-        "una pasada cortada deja la cuenta con lista y la siguiente falla por ese estado")
+    # **Y al empezar, si la pasada anterior se cayo.** El 30 de septiembre de 2026 esta
+    # comprobacion se quedo corta pidiendo solo «una cuenta con lista **y lineas**»: una pasada
+    # que se corta despues de vaciar la lista dejaba la cuenta viva, el alta no volvia a pasar
+    # (la pantalla ya no ofrecia «Créala») y la lista nueva salia con un «(1)» porque el nombre
+    # estaba cogido. Dos comprobaciones rojas por la basura de antes y no por el codigo.
+    assert "la cuenta de la pasada anterior seguia ahi" in FUENTE, (
+        "una pasada cortada deja la cuenta viva y la siguiente falla por ese estado")
+    assert 'pagina.get_by_label("Clave").count() == 0' in FUENTE, (
+        "la limpieza del principio tiene que ser «hay sesion», no «hay lista con lineas»")
 
 
 def test_mide_lo_que_se_sirve_y_en_un_movil():

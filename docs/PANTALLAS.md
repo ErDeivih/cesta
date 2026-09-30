@@ -368,7 +368,9 @@ codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
 **[hecho, pero llego tarde]** las novedades: se daban por hechas desde el 23 de
 septiembre de 2026 y **no se pintaban en ninguna pantalla** hasta el 28 (ver «Las
 novedades»). Agrupar por pasillos ya no esta en la lista de lo que falta: esta hecho.
-**[falta]** notas (tarea 5), cerrar compra (tarea 10)
+**[hecho] el 30 de septiembre de 2026: cerrar la compra** (tarea 10), que era la ultima mitad
+del bucle de la semana.
+**[falta]** notas (tarea 5)
 
 ### Lo que se ve
 
@@ -454,11 +456,46 @@ dos personas delante: una toca, la otra abre y se entera, y al volver a abrir de
 Y si hay cola pendiente: "3 cambios por subir". Al volver la red se suben solos
 y sale un aviso flotante.
 
-### Cerrar la compra **[falta — tarea 10]**
+### Cerrar la compra **[hecho el 30 de septiembre de 2026]**
 
-Un boton al final: "He terminado la compra". Guarda lo que iba en el carro como
-una compra, lo quita de la lista, y deja lo que no se cogio. Es lo que genera el
-historial del que vive todo lo de diciembre.
+Un boton al final del todo, debajo del numero que se mira al tachar:
+
+    He terminado la compra
+      -> ¿Terminada? Se quitarán 4 cosas de la lista
+         Se guardan como compra, con su precio. Lo que no hayas cogido se queda en la lista.
+         [ Sí, he terminado ]   [ No, déjalo ]
+      -> Compra guardada: 4 cosas, 12,40 €
+         Te quedan 2 por coger en la lista.
+
+**Guarda lo que iba en el carro como una compra, lo quita de la lista, y deja lo que no se
+cogió.** Eso ultimo es lo que hace que el boton sirva: quien no encuentra el pan no quiere
+volver a apuntarlo. Y **es lo que genera el historial** del que vive el mosaico de «lo de
+siempre» -- que ya contaba las lineas archivadas desde el 23 de septiembre, asi que el
+historial no necesitaba nada nuevo; lo que no se podia saber era **cuanto costo la compra**.
+
+Por eso la compra se guarda **con sus precios** (`plataforma/sql/010_cerrar_la_compra.sql`):
+el precio vive en gold y gold se reescribe cada dia, asi que una compra sin su precio no se
+puede volver a mirar. El precio de cada linea lo pone `cesta.coste_por_linea`, y **si la
+linea tiene tienda decidida se guarda el de esa tienda**, no el mas barato: apuntar el de
+DIA cuando alguien decidio comprarlo en Alcampo seria apuntar un precio que no se pago.
+
+Y **una linea sin precio no se tira**: se guarda con el precio vacio y se cuenta aparte
+(«4 cosas, 12,40 € · 1 sin precio conocido, contadas aparte del total»). Es el caso de una
+linea que apunta a otro producto -- el fallo que documenta la seccion de arriba --: tirarla
+borraria de la compra algo que si se compro, y contarla como cero mentiria en el total.
+
+Tres decisiones de la pantalla, y las tres estan medidas con la puerta:
+
+  - **Sin nada en el carro, el boton no se dibuja.** Un boton que solo puede contestar «no hay
+    nada» hace perder el tiempo justo cuando se esta de pie en la caja. Y la API lo dice
+    igual (409) si alguien lo llama a mano.
+  - **Pregunta antes, y dice cuantas cosas salen.** Se pueden quitar cuatro cosas de la lista
+    de un toque; descubrirlo despues no vale.
+  - **Lo comprueba `plataforma/prueba_funciones`** con dos lineas de verdad: una se marca (va
+    al carro y sale de la lista) y **la otra se queda**, que es donde este boton no puede
+    fallar. Medido el 30 de septiembre de 2026: «cerrar la compra dice lo que ha pasado
+    (`Compra guardada: 1 cosa, 1,10 €`)» y «las del carro salen y lo demas se queda (2 -> 1)».
+    El viaje entero por PostgreSQL lo comprueba `plataforma/prueba_e2e`.
 
 ---
 
