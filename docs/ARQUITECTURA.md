@@ -126,7 +126,7 @@ que justificarla. Lo que no se justifica, no entra.
     |  +- emparejar.py          silver -> gold
     |  +- limpiar.py            tira el crudo de mas de 30 dias
     |  +- resumen.py            que quedo en disco
-    |  +- verificar_docs.py     avisa si los numeros o las citas de los .md caducan
+    |  +- verificar_docs.py     avisa si las cifras, las citas o los comandos de los .md caducan
     |  +- sondear_fichas.py     sondeo de Alcampo y Aldi (sin lanzar)
     |  +- search.py reprocesar.py
     |

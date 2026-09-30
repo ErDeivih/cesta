@@ -13,6 +13,11 @@ from projects.cesta.verificar_docs import (
     _cita_viva,
     _citado,
     _citas,
+    _comando_existe,
+    _comandos,
+    _como_se_escribe,
+    _existe_fichero,
+    _existe_modulo,
     _miles,
 )
 
@@ -132,3 +137,72 @@ def test_una_ruta_que_no_acaba_igual_esta_movida():
         ]
     })
     assert _cita_viva("plataforma/web/zzz_almacen.py", 1, 0, buscar)[0] == "movida"
+
+
+# --- Los comandos que los documentos mandan ejecutar -------------------------
+
+
+def test_se_sacan_los_comandos_de_una_linea():
+    assert _comandos("uv run python -m projects.cesta.pipeline") == [
+        ("modulo", "projects.cesta.pipeline")
+    ]
+    assert _comandos("cd app; npm run build") == [("npm", "build")]
+
+
+def test_el_comando_de_uvicorn_se_guarda_sin_adorno():
+    # El fallo: se guardaba `"uvicorn plataforma.api.main:app"` y luego se partia
+    # por `:` para sacar el modulo, con lo que le llegaba
+    # `"uvicorn plataforma.api.main"`, contestaba "no es de casa" y **saltaba el
+    # comando sin medirlo**. El dato que se busca va pelado.
+    assert _comandos("uv run uvicorn plataforma.api.main:app --port 8099") == [
+        ("uvicorn", "plataforma.api.main:app")
+    ]
+
+
+def test_el_comando_de_uvicorn_se_mira_de_verdad():
+    propias = {"projects", "plataforma", "core"}
+    assert _comando_existe("uvicorn", "plataforma.api.main:app", propias, {}, set()) is True
+    assert _comando_existe("uvicorn", "plataforma.api.zzz:app", propias, {}, set()) is False
+    # Y uno que no es de casa sigue sin mirarse.
+    assert _comando_existe("uvicorn", "algo.de.fuera:app", propias, {}, set()) is None
+
+
+def test_el_texto_del_aviso_se_compone_al_final():
+    assert _como_se_escribe("npm", "build") == "npm run build"
+    assert _como_se_escribe("uvicorn", "plataforma.api.main:app") == (
+        "uvicorn plataforma.api.main:app"
+    )
+    assert _como_se_escribe("modulo", "projects.cesta.pipeline") == "projects.cesta.pipeline"
+
+
+def test_un_comando_de_mentira_no_es_un_comando():
+    # `python -m projects.cesta.<lo-que-sea>` y `...` son plantillas.
+    assert _comandos("uv run python -m projects.cesta.<modulo>") == []
+    assert _comandos("uv run python -m projects.cesta... ") == []
+
+
+def test_los_modulos_de_casa_se_miran():
+    propias = {"projects", "plataforma", "core"}
+    assert _existe_modulo("projects.cesta.pipeline", propias) is True
+    assert _existe_modulo("projects.cesta.zzz_no_existe", propias) is False
+
+
+def test_lo_que_no_es_de_casa_no_se_mira():
+    # `pytest`, `uvicorn`, `http.server`: avisar de esto seria avisar de todo el
+    # rato y ninguno de los avisos seria un fallo del repositorio.
+    propias = {"projects", "plataforma", "core"}
+    assert _existe_modulo("pytest", propias) is None
+    assert _existe_modulo("http.server", propias) is None
+    assert _existe_modulo("uvicorn", propias) is None
+
+
+def test_una_ruta_de_contenedor_no_se_mira():
+    assert _existe_fichero("/app/plataforma/api/main.py", {}) is None
+    assert _existe_fichero("$CARPETA/lo.py", {}) is None
+
+
+def test_un_fichero_citado_por_su_final_vale():
+    indice = {"zzz_pipeline.py": [RAIZ / "projects/cesta/zzz_pipeline.py"]}
+    assert _existe_fichero("zzz_pipeline.py", indice) is True
+    assert _existe_fichero("cesta/zzz_pipeline.py", indice) is True
+    assert _existe_fichero("otra_carpeta/zzz_pipeline.py", indice) is False

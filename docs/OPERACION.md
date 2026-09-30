@@ -200,6 +200,23 @@ ejemplo: al escribir la cabecera del control, `COMPROBACIONES` se fue de la lín
 cita de `COMPETENCIA-IMPLANTABLE.md` se quedó apuntando a otro sitio. El control dice *dónde
 mirar*, no *qué dice*; para lo segundo hay que leer.
 
+Y lo tercero que vigila son **los comandos que los documentos mandan ejecutar** (`python -m
+<módulo>`, `python <ruta>.py`, `npm run <script>` y `uvicorn <módulo>:<app>`): **134 hoy**, y esta
+misma frase lo subió de 133 a 134 al nombrar `projects.cesta.pipeline`. El número sale en cada
+pasada, así que aquí no hace falta escribirlo. Un documento que dice `uv run python -m
+projects.cesta.pipeline` está prometiendo que ese módulo existe; si se renombra, el documento
+sigue sonando igual de bien. Solo se miran los módulos de casa (lo primero es una carpeta del
+repositorio); los que empiezan por `pytest`, `uvicorn` o `http.server` se dejan estar: avisar de
+esos sería avisar de todo el rato y ninguno sería un fallo del repositorio. Las plantillas
+(`python -m projects.cesta.<lo-que-sea>`) tampoco se miran.
+
+**Este control se estrenó saltándose el comando de uvicorn sin medirlo.** Guardaba el comando ya
+escrito (`"uvicorn plataforma.api.main:app"`) y luego lo partía por `:` para sacar el módulo, con
+lo que la comprobación recibía `"uvicorn plataforma.api.main"`, contestaba «eso no es de casa» y
+lo saltaba en silencio: el total decía 132 donde había 133. Ahora el dato que se busca viaja
+pelado y el texto se compone al escribir el aviso. Es la misma lección de siempre en este
+proyecto: *una comprobación que no puede medir tiene que decirlo, no aprobar*.
+
 ## Y la interfaz, en un navegador de verdad
 
 Lo de arriba comprueba el servidor. La pantalla se comprueba con

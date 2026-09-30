@@ -49,8 +49,10 @@ lo mismo -- eso hay que mirarlo --, pero dice donde mirar, que es lo que faltaba
 """
 from __future__ import annotations
 
+import json
 import re
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 import duckdb
@@ -246,6 +248,131 @@ def comprobar_citas() -> tuple[int, list[str]]:
     return total, rotas
 
 
+# --- Los comandos que los documentos mandan ejecutar -------------------------
+# Un documento que dice `uv run python -m projects.cesta.pipeline` esta prometiendo
+# que ese modulo existe. Si el modulo se renombra, el documento sigue diciendo lo
+# mismo y suena igual de bien: nadie ejecuta los comandos escritos por ahi para
+# comprobarlo. Esto los saca y mira si llevan a algun sitio.
+COMANDOS = {
+    "modulo": re.compile(r"python -m ([A-Za-z_][\w.]*)"),
+    "fichero": re.compile(r"python ([A-Za-z_][\w./\\-]*\.py)"),
+    "npm": re.compile(r"npm run ([\w:-]+)"),
+    "uvicorn": re.compile(r"uvicorn ([\w.]+):([\w_]+)"),
+}
+
+NO_SE_MIRAN_ESTO = frozenset({"data", "node_modules", "dist", "docs", "assets"})
+
+
+def _carpetas_propias() -> set[str]:
+    return {
+        p.name for p in RAIZ.iterdir()
+        if p.is_dir() and not p.name.startswith(".") and p.name not in NO_SE_MIRAN_ESTO
+    }
+
+
+def _existe_modulo(nombre: str, propias: set[str]) -> bool | None:
+    """¿Existe ese modulo? `None` si no es de casa y no hay nada que mirar.
+
+    `pytest`, `uvicorn`, `http.server` y compania no son nuestros: mirarlos daria
+    avisos por todas partes y ninguno seria un fallo del repositorio.
+    """
+    piezas = nombre.split(".")
+    if piezas[0] not in propias:
+        return None
+    base = RAIZ.joinpath(*piezas)
+    return base.with_suffix(".py").is_file() or (base / "__init__.py").is_file()
+
+
+def _existe_fichero(citado: str, indice: dict[str, list[Path]]) -> bool | None:
+    """Igual, para `python ruta/al/fichero.py`."""
+    if "$" in citado or citado.startswith(("/", "\\")):
+        return None  # una ruta de dentro de un contenedor, o una variable
+    dicho = citado.replace("\\", "/")
+    if (RAIZ / dicho).is_file():
+        return True
+    return any(
+        p.relative_to(RAIZ).as_posix().endswith(dicho)
+        for p in indice.get(Path(dicho).name, [])
+    )
+
+
+def _comandos(linea: str) -> list[tuple[str, str]]:
+    """Los comandos que hay en una linea: (clase, dato que hay que buscar).
+
+    El dato es lo que se busca, **sin adorno**: el modulo, la ruta, el nombre del
+    script, `modulo:app`. La primera version devolvia el comando ya escrito
+    (`"uvicorn plataforma.api.main:app"`) y luego lo volvia a partir por `:` para
+    sacar el modulo; le pasaba `"uvicorn plataforma.api.main"` a la comprobacion,
+    que contestaba "esto no es de casa" y **saltaba el comando sin medirlo**. El
+    texto se compone al escribir el aviso, no al buscar: asi no hay dos formas de
+    decir lo mismo.
+    """
+    if "<" in linea or "NN" in linea or "..." in linea:
+        return []  # una plantilla, no un comando
+    fuera = []
+    for clase, patron in COMANDOS.items():
+        for m in patron.finditer(linea):
+            if clase != "uvicorn":
+                fuera.append((clase, m.group(1)))
+            else:
+                fuera.append(("uvicorn", f"{m.group(1)}:{m.group(2)}"))
+    return fuera
+
+
+def _como_se_escribe(clase: str, dato: str) -> str:
+    """El comando tal y como se lee en el documento, para el aviso."""
+    return f"npm run {dato}" if clase == "npm" else (
+        f"uvicorn {dato}" if clase == "uvicorn" else dato
+    )
+
+
+def _comando_existe(clase: str, dato: str, propias: set[str],
+                    indice: dict[str, list[Path]], npm: set[str]) -> bool | None:
+    """¿Ese comando lleva a algun sitio? `None` si no es de casa."""
+    if clase == "modulo":
+        return _existe_modulo(dato, propias)
+    if clase == "fichero":
+        return _existe_fichero(dato, indice)
+    if clase == "npm":
+        return dato in npm
+    # uvicorn: el dato es `modulo:app`
+    return _existe_modulo(dato.split(":")[0], propias)
+
+
+def _scripts_de_npm() -> set[str]:
+    scripts: set[str] = set()
+    for p in (RAIZ / "package.json",
+              RAIZ / "plataforma" / "web" / "app" / "package.json"):
+        if p.exists():
+            with suppress(OSError, json.JSONDecodeError):
+                scripts |= set(json.loads(p.read_text(encoding="utf-8")).get("scripts", {}))
+    return scripts
+
+
+def comprobar_comandos() -> tuple[int, list[str]]:
+    """Los comandos citados en los documentos, uno a uno."""
+    propias = _carpetas_propias()
+    indice = _indice_por_nombre()
+    npm = _scripts_de_npm()
+
+    total = 0
+    rotos: list[str] = []
+    for doc in sorted(set(_docs_con_citas())):
+        nombre_doc = doc.relative_to(RAIZ).as_posix()
+        for n, linea in enumerate(
+            doc.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+        ):
+            for clase, dato in _comandos(linea):
+                visto = _comando_existe(clase, dato, propias, indice, npm)
+                if visto is None:
+                    continue
+                total += 1
+                if not visto:
+                    texto = _como_se_escribe(clase, dato)
+                    rotos.append(f"{nombre_doc}:{n}  ({clase})  {texto}")
+    return total, rotos
+
+
 def _numeros() -> int:
     """Las cifras de los documentos contra el gold de hoy. Devuelve los avisos."""
     ruta = str(config.DATA / "gold" / "grupos.parquet").replace("\\", "/")
@@ -312,6 +439,22 @@ def main() -> int:
         print("  quita el numero de linea y deja el nombre.")
     else:
         print("  ok    todas apuntan a un fichero que esta y a una linea que llega")
+
+    # Y los comandos, que tampoco dependen del gold.
+    print()
+    total_cmd, rotos = comprobar_comandos()
+    print(f"Los comandos que los documentos mandan ejecutar: {total_cmd} de casa")
+    if rotos:
+        problemas += len(rotos)
+        print(f"  AVISO {len(rotos)} comando(s) que no llevan a ningun sitio:")
+        for r in rotos[:20]:
+            print(f"    {r}")
+        if len(rotos) > 20:
+            print(f"    ... y {len(rotos) - 20} mas")
+        print("  Corrige el comando o el nombre del modulo; si el modulo ya no esta,")
+        print("  cuenta en el documento que se fue y por que.")
+    else:
+        print("  ok    todos apuntan a un modulo, un fichero o un script que existe")
 
     return 1 if problemas else 0
 
