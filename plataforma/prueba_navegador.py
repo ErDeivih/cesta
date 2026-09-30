@@ -1309,6 +1309,15 @@ def main() -> int:
         # Y la pantalla del enlace de invitacion caducado, que es por donde entra quien recibe
         # un enlace viejo: no la medía ninguna pasada hasta el 27 de septiembre de 2026.
         rutas += ["/unirme/codigo-que-no-existe"]
+        # **Y las tres que faltaban, vistas el 30 de septiembre de 2026 leyendo las rutas de la
+        # aplicacion contra esta lista.** El buscador y favoritos son las dos pantallas donde se
+        # esta de pie -- el buscador es la pregunta 2 de la barra (a), y favoritos es la lista de
+        # quien compra siempre --, y **no las medía esta pasada**: el microfono, el boton del
+        # escaner y el selector de ventana que estrenan son justo lo que se toca con el pulgar.
+        # Y la pantalla de «esa pantalla no existe» (`path="*"`) tampoco: es la que ve quien
+        # llega con un enlace malo, y una pantalla que solo ve quien ya tiene un problema no
+        # puede ser la que nadie mide.
+        rutas += ["/buscar?q=leche+entera", "/favoritos", "/ruta-que-no-existe"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
             rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")

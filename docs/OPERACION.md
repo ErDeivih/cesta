@@ -15,7 +15,9 @@ es el de casa: el de Cesta no publica su 5432) y con el gold de verdad:
     uv run python -m plataforma.prueba_e2e
     docker rm -f cesta-prueba-db
 
-Aplica las seis migraciones, recorre las rutas nuevas y **falla con un mensaje claro** si
+Aplica **todas las migraciones de `plataforma/sql`** (diez el 30 de septiembre de 2026; antes
+decia «las seis», y ese número se quedó viejo al tercer fichero nuevo: por eso ahora se dice sin
+contar), recorre las rutas nuevas y **falla con un mensaje claro** si
 algo no cuadra. La primera vez que se corrio encontro dos fallos que las pruebas unitarias no
 podian ver: `/api/bajadas?solo_mios=true` sin sesion contestaba que habia filtrado sin
 filtrar, y **la API no arrancaba con dos listas de casa** (un indice que un fichero viejo

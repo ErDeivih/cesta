@@ -169,7 +169,10 @@ con `data/debug/quien_desborda.py`: dos documentos de la referencia medían **48
 ventana de 390**. En el material se parte donde haga falta (`overflow-wrap: anywhere` en el
 texto), y **el codigo no se parte: se desliza dentro de su bloque**, porque un comando con las
 lineas rotas deja de ser el comando que se copia. Lo vigilan las dos puertas: `prueba_navegador`
-en sus trece pantallas y `prueba_produccion` en seis paginas del material.
+en **todas las pantallas de la aplicación** (y en las diez pestañas del panel) y
+`prueba_produccion` en las páginas del material. Aquí decía «trece pantallas» y se quedó viejo el
+30 de septiembre de 2026, cuando la pasada sumó el buscador, favoritos y la pantalla de «esa
+pantalla no existe»: **en este documento un número que se puede contar mejor no se escribe**.
 
 **Los numeros que se leen pasan por `numero`, `euros` o `porcentaje`.** No por `toFixed`, que
 escribe el punto decimal en ingles: «Te aviso si baja de 3.89 €», «8.5 de 100», «2.3 g», todos
@@ -183,8 +186,8 @@ llaman de algo, campos con su etiqueta y **un solo `h1`** con los niveles sin hu
 27 de septiembre de 2026 con `data/debug/accesibilidad.py` en las dos superficies: salieron
 cinco casos -- Inicio, Buscar y el caso vacio de favoritos sin `h1`, la lista con un salto de
 `h2` a `h4`, y el documento de operacion con tres `h1` -- y el contraste del texto ya pintado,
-que era lo unico que ya se medía. Lo vigila `prueba_navegador.py` en las trece pantallas que
-recorre, y `prueba_produccion.py` en las cuatro del material.
+que era lo unico que ya se medía. Lo vigila `prueba_navegador.py` en todas las pantallas que
+recorre, y `prueba_produccion.py` en las del material.
 
 **El gris secundario es `text-tinta-suave`, no un `neutral-500` escrito a mano.** Es la regla que
 ya estaba en `estilos.css` («los colores con significado, en un solo sitio») y que se salto en
