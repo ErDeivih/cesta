@@ -9,10 +9,33 @@ No repite lo que ya está. Cuando una idea ya está contada en su sitio, la cita
 una línea y sigue.
 
     docs/COMPETENCIA.md             611 lineas   que hacen las otras apps
-    docs/FUNCIONALIDADES.md         255 lineas   el veredicto, A hacerlo ya ... G descartado
+    docs/FUNCIONALIDADES.md         270 lineas   el veredicto, A hacerlo ya ... G descartado
     docs/CADENAS.md                 272 lineas   que publica de verdad cada cadena
-    docs/BACKLOG.md               1.540 lineas   el trabajo pendiente, por tareas
+    docs/BACKLOG.md               4.155 lineas   el trabajo pendiente, por tareas
     docs/COMPETENCIA-IMPLANTABLE.md  este        detalle por funcionalidad y a implementar
+
+**Actualización del 30 de septiembre de 2026 — de qué dependía cada fila.** Este documento se
+escribió el 24, y la columna que decide dice en varias filas «si, **con la tarea 10**» o
+«necesita la **tarea 10** cerrada antes». **La tarea 10 está hecha** (cerrar la compra, el 30 de
+septiembre), así que esas filas **ya no están bloqueadas por ella**: lo que queda es el trabajo
+propio de cada una.
+
+Y el estado del resto de tareas que este documento cita, para no volver a leerlo entero:
+
+    tarea 1   agrupar la lista por pasillos            HECHO (27 sep)
+    tarea 3   la voz del buscador                      HECHO (30 sep)
+    tarea 5   notas de la linea y el aviso legal        HECHO (30 sep)
+    tarea 8   el escaner, tambien desde el buscador     HECHO (30 sep)
+    tarea 10  cerrar la compra                          HECHO (30 sep), con dos desvios:
+              `GET /listas/{id}/compras` en vez de `/api/compras`, y sin `cadena_elegida`
+              (la cadena que se guarda es la del precio) -- detalle en `docs/API.md`
+    tarea 9   la nota 0-100                             PENDIENTE, y pendiente de una
+              decision, no de codigo: `docs/API.md` tiene la forma y **los numeros medidos**
+              (el 74,2 % de los productos no tiene ningun dato con el que calcularla)
+
+Los numeros de lineas de arriba estaban viejos (`FUNCIONALIDADES.md` decia 255 y son 270;
+`BACKLOG.md` decia 1.540 y son 4.155) y se han contado otra vez hoy. Un recuento sin fecha es
+una promesa que el documento no puede cumplir.
 
 ---
 

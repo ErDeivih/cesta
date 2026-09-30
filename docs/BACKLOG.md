@@ -3178,27 +3178,37 @@ Si tocas `core/calidad.py`, vuelve a comprobarlo.
 
 ---
 
-## 10. Guardar el cierre de compra
+## 10. Guardar el cierre de compra · **HECHO el 30 de septiembre de 2026**
 
 **Por que.** Es barato ahora e imposible de recuperar despues. Sin esto, en
 diciembre no habra historial que mirar, y todo lo de la seccion D de
 `FUNCIONALIDADES.md` (despensa deducida, sugerencias, "sueles comprar leche cada
 nueve dias") no tendra con que funcionar.
 
-**Que hay que hacer.** Una tabla `compra`:
+**Lo que se hizo, y en que se aparta de lo que decia aqui** (el detalle, en `docs/API.md`
+y en `docs/PANTALLAS.md` §3):
 
-    compra        id, lista_id, cerrada_por, cerrada_en, cadena_elegida,
-                  total_estimado_cent
-    compra_linea  compra_id, grupo_id, producto_id, cantidad, precio_cent
-
-Y un boton "he terminado la compra" en la lista que: guarda las lineas que
-estaban en el carro, las quita de la lista, y deja las que no se cogieron.
+  - La tabla `compra` y `compra_linea` existen (`plataforma/sql/010_cerrar_la_compra.sql`),
+    con los precios **por linea** y `sin_precio` contado aparte. No hay `cadena_elegida`:
+    la cadena que se guarda es **la de la que se cogio el precio** (la decidida en la lista,
+    o la mas barata). Y no hay `total_estimado_cent`: el total es el sumando real.
+  - El boton esta en la lista, al final, y **solo se dibuja con algo en el carro**.
+  - El historial se consulta en **`GET /api/listas/{id}/compras`**, no en `/api/compras`:
+    una compra es de una lista, y pedir el detalle de todas las listas de todo el mundo
+    no lo necesita nadie. `GET /api/compras/{id}` (el detalle linea a linea) **no esta**.
+  - **Idempotente de hecho**: la segunda pulsacion encuentra el carro vacio y contesta 409.
+    No hace falta la regla de «misma lista y mismo minuto» -- la lista de lineas que se
+    archiva es la prueba de que ya se cerro, y una regla por tiempo dejaria cerrar dos veces
+    lo mismo al minuto siguiente.
 
 **Como se sabe que esta bien.**
 
-    - cerrar una compra vacia la parte "en el carro" y deja "por coger"
-    - el historial queda consultable en /api/compras
-    - cerrar dos veces no duplica (idempotente por lista y minuto)
+    - cerrar una compra vacia la parte "en el carro" y deja "por coger"   -> la puerta de
+      las funciones lo mide con dos lineas de verdad: una se marca y otra se queda
+    - el historial queda consultable                                     -> /listas/{id}/compras
+    - cerrar dos veces no duplica                                        -> 409 la segunda vez
+    - y lo que costo queda guardado                                      -> `compra.total_cent`,
+      con `sin_precio` aparte (una linea sin precio no se tira ni se cuenta como cero)
 
 ---
 

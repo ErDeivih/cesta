@@ -840,7 +840,7 @@ unidad comparable (kg/l/m; "ud" no) **y** dos cadenas o mas **y** sin contradicc
 de precio mayor de 30x dentro del grupo: con una sola cadena no hay comparacion que
 hacer, asi que es `false`.
 
-### La nota, dentro de la ficha  — tarea 9
+### La nota, dentro de la ficha  — tarea 9 · **falta, y falta por una decisión**
 
 No es una ruta aparte: se anade a cada producto de `/api/grupo` y `/api/ean`.
 
@@ -851,11 +851,44 @@ No es una ruta aparte: se anade a cada producto de `/api/grupo` y `/api/ean`.
              "ecologico": false,
              "tope_por_aditivo": false}   true si un aditivo de riesgo alto la topo
 
-    "nota": null    cuando no hay con que calcularla (el 76,9 % de los casos)
+    "nota": null    cuando no hay con que calcularla
 
 **`nota: null` es una respuesta, no un fallo.** La interfaz pone "no lo se". Un
 cero se leeria como "malisimo" y seria mentira. Es justo lo que la OCU critica de
 Yuka y El CoCo.
+
+**Con qué se cuenta, medido el 30 de septiembre de 2026** (`data/debug/nota_cobertura.py`, sobre
+los 52.467 productos de ese día):
+
+| dato | productos | % |
+|---|---:|---:|
+| `nutriscore` | 8.406 | 16,0 % |
+| `nova` (grado de procesado) | 7.764 | 14,8 % |
+| ingredientes (una lista de verdad) | 6.054 | 11,5 % |
+| aditivos (algún E-xxx en la lista) | 2.136 | 4,1 % |
+| sello ecológico o bio | 1.957 | 3,7 % |
+| **con alguno de esos datos: nota posible** | **13.533** | **25,8 %** |
+| **sin ninguno: `nota: null`** | **38.934** | **74,2 %** |
+
+Aqui decia «el 76,9 % de los casos» y hoy son **74,2 %**: el numero era de un dia con menos
+productos y nadie volvio a mirarlo. Se deja medido y con el comando al lado, que es lo que
+aguanta.
+
+**Y por eso no esta hecho: falta decidir los pesos, no el codigo.** La forma de la respuesta esta
+escrita arriba, pero como se combinan nutriscore, aditivos y sellos en un 0-100 **es una decision
+de producto**, y este proyecto no inventa una formula para que un numero parezca cientifico (un
+panel que enseña un 19,3 % sin decir sobre cuantos grupos no es un panel). Las dos salidas
+honestas:
+
+  1. **Adoptar una formula publicada.** El Nutri-Score lo es (Santé publique France), y ya lo
+     tenemos en el 16 % de los productos: la nota podria ser *ese* numero, con `de_que:
+     ["nutriscore"]` y los aditivos y el eco **al lado como hechos**, sin mezclarlos.
+  2. **Decidir los pesos** y escribirlos, con lo que la nota es tan explicable como el resto del
+     proyecto: `de_que` diria de donde sale cada trozo.
+
+Lo que **no** se puede hacer es un 0-100 con pesos elegidos para que quede bonito: tres de cada
+cuatro productos dirian «no lo sé» de todas formas, y ese es justo el dato que hace honesta esta
+pantalla.
 
 ### Cerrar la compra  — tarea 10 · **HECHO el 30 de septiembre de 2026**
 

@@ -74,7 +74,9 @@ Mejor que ellos porque sabemos la mecanica: no "hay promo" sino "llevando dos,
 ### A6 · Notas por linea
 
     esfuerzo   XS
-    datos      el campo `nota` ya existe en lista_linea y la interfaz no lo usa
+    datos      **HECHO el 30 de septiembre de 2026**: el campo `nota` existía en
+               `lista_linea` desde el primer día y la interfaz no lo usaba -- llegaba
+               en la respuesta y se tiraba. Ahora se apunta y se lee debajo de la línea.
     de donde   Bring!, Listonic
 
 "la de cristal", "si hay del grande".
