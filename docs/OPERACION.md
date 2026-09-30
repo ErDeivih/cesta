@@ -187,7 +187,18 @@ atributos `style`.
 
 Y una regla que no se salta: **las cifras del material las vigila `verificar_docs`**, que desde
 el 24 de septiembre de 2026 mira también las subcarpetas de `docs/` (antes solo miraba el
-primer nivel, así que el curso habría quedado sin vigilancia justo cuando más crece).
+primer nivel, así que el curso habría quedado sin vigilancia justo cuando más crece). Y desde el
+30 de septiembre de 2026 vigila además **las citas de código** —`almacen.py:287`,
+`src/tipos.ts:173`—: saca las citas con número de línea de `docs/`, `README.md`, `.stitch/` y
+`plataforma/LEEME.md` (713 el día que se escribió), y comprueba que el fichero esté donde la cita
+dice y que la línea citada llegue. Se encontró con las tres formas de romperse (fichero que no
+está, línea que no llega, ruta que apunta a otro sitio) metidas a mano en un documento de prueba,
+y las tres salieron.
+
+Lo que **no** puede ver es si la línea sigue tratando de lo mismo, y ese mismo día quedó un
+ejemplo: al escribir la cabecera del control, `COMPROBACIONES` se fue de la línea 55 a la 68 y la
+cita de `COMPETENCIA-IMPLANTABLE.md` se quedó apuntando a otro sitio. El control dice *dónde
+mirar*, no *qué dice*; para lo segundo hay que leer.
 
 ## Y la interfaz, en un navegador de verdad
 

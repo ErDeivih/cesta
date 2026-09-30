@@ -70,7 +70,7 @@ Comprobación antes de tocar nada (`COMANDOS.md`):
 ### Las consultas, para poder repetirlas
 
 **Las nueve cifras que el proyecto ya comprueba cada día** salen de
-`projects/cesta/verificar_docs.py:51-75` (`COMPROBACIONES`), y ese control **pasa
+`projects/cesta/verificar_docs.py:68-92` (`COMPROBACIONES`), y ese control **pasa
 hoy**:
 
     uv run python -m projects.cesta.verificar_docs

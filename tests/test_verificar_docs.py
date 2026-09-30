@@ -7,7 +7,14 @@ los documentos cuadran con los datos de hoy". No cuadraban: "123" estaba dentro
 de "1.234" en algun documento, y el "0" de las capas que no habian corrido estaba
 en todas partes.
 """
-from projects.cesta.verificar_docs import _citado, _miles
+from projects.cesta.verificar_docs import (
+    RAIZ,
+    _candidatos,
+    _cita_viva,
+    _citado,
+    _citas,
+    _miles,
+)
 
 
 def test_una_cifra_que_esta_de_verdad_cuenta():
@@ -45,3 +52,83 @@ def test_un_numero_de_dos_cifras_no_vale_como_vigilancia():
     # casualidad y la comprobacion salia en verde sin haber vigilado nada.
     assert not _citado("60", ["hay 60 categorias en el menu"])
     assert _citado("761", ["761 productos con certificado"])
+
+
+# --- Las citas de codigo (`almacen.py:287`) ----------------------------------
+# Una cita que se puede leer es una prueba; una que apunta a un fichero que no
+# esta o a una linea 1200 de un fichero de 900 es una promesa vacia, y suena
+# igual de bien que la buena.
+
+
+def _buscar_de_mentira(mapa):
+    def buscar(citado):
+        return mapa.get(citado, [])
+
+    return buscar
+
+
+def test_se_sacan_las_citas_con_su_tramo():
+    assert _citas("ver `almacen.py:287` y `app.js:1413-1418`") == [
+        ("almacen.py", 287, 0),
+        ("app.js", 1413, 1418),
+    ]
+
+
+def test_una_cita_normal_esta_viva():
+    buscar = _buscar_de_mentira({"almacen.py": [("plataforma/api/almacen.py", 1083, True)]})
+    assert _cita_viva("almacen.py", 287, 0, buscar)[0] == "ok"
+
+
+def test_la_ultima_linea_del_fichero_cuenta():
+    buscar = _buscar_de_mentira({"almacen.py": [("almacen.py", 1083, True)]})
+    assert _cita_viva("almacen.py", 1083, 0, buscar)[0] == "ok"
+
+
+def test_una_linea_que_no_llega_avisa():
+    buscar = _buscar_de_mentira({"almacen.py": [("almacen.py", 1083, True)]})
+    estado, detalle = _cita_viva("almacen.py", 999999, 0, buscar)
+    assert estado == "fuera"
+    assert "1083" in detalle
+
+
+def test_un_fichero_que_no_esta_avisa():
+    assert _cita_viva("no_existe.py", 12, 0, _buscar_de_mentira({}))[0] == "no esta"
+
+
+def test_un_tramo_manda_por_su_final():
+    # `app.js:1413-1418` necesita que exista la 1418, no solo la 1413.
+    buscar = _buscar_de_mentira({"app.js": [("app.js", 1415, True)]})
+    assert _cita_viva("app.js", 1413, 1418, buscar)[0] == "fuera"
+    assert _cita_viva("app.js", 1413, 0, buscar)[0] == "ok"
+
+
+def test_el_fichero_en_otra_ruta_no_es_lo_mismo():
+    # El lector no puede abrir `plataforma/web/almacen.py` si el fichero vive en
+    # `plataforma/api/`: la cita esta movida y hay que arreglarla.
+    buscar = _buscar_de_mentira({"almacen.py": [("plataforma/api/almacen.py", 1083, False)]})
+    assert _cita_viva("almacen.py", 287, 0, buscar)[0] == "movida"
+
+
+def test_una_cita_por_nombre_suelto_no_afirma_donde_esta():
+    # Las 521 citas por nombre del BACKLOG (`Producto.tsx:352`, `almacen.py:287`)
+    # estaban todas bien; la primera version las dio por movidas por resolverlas
+    # por nombre.
+    indice = {"zzz_almacen.py": [RAIZ / "plataforma/api/zzz_almacen.py"]}
+    assert [c[2] for c in _candidatos("zzz_almacen.py", indice)] == [True]
+
+
+def test_una_ruta_parcial_vale_si_acaba_igual():
+    # `src/tipos.ts:173` esta escrito desde la carpeta de la aplicacion: el
+    # lector lo encuentra igual, asi que la cita vale.
+    indice = {"zzz_tipos.ts": [RAIZ / "plataforma/web/app/src/zzz_tipos.ts"]}
+    assert [c[2] for c in _candidatos("src/zzz_tipos.ts", indice)] == [True]
+
+
+def test_una_ruta_que_no_acaba_igual_esta_movida():
+    # El fichero existe, pero no donde la cita dice.
+    buscar = _buscar_de_mentira({
+        "plataforma/web/zzz_almacen.py": [
+            (RAIZ / "plataforma/api/zzz_almacen.py", 100, False)
+        ]
+    })
+    assert _cita_viva("plataforma/web/zzz_almacen.py", 1, 0, buscar)[0] == "movida"

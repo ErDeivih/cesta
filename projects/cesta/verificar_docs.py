@@ -33,6 +33,19 @@ Una linea en COMPROBACIONES: la consulta que da el numero de verdad, y el texto
 tal y como aparece escrito en los documentos. Si el texto deja de encontrarse en
 ningun documento, tambien avisa: significa que alguien lo reescribio de otra
 forma y la vigilancia dejo de servir para algo.
+
+Y ademas de las cifras: las citas
+---------------------------------
+Los documentos no solo citan numeros; citan codigo, asi: `almacen.py:287`. Esa
+cita es la prueba de lo que se afirma, y envejece sola: el fichero se renombra,
+o la linea 1200 aparece en un fichero de 900 lineas. Nadie lo nota leyendo,
+porque el texto sigue sonando igual de bien.
+
+Desde el 30 de septiembre de 2026 este control tambien saca todas las citas con
+numero de linea de `docs/`, `README.md`, `.stitch/` y `plataforma/LEEME.md`, y
+comprueba dos cosas que si se pueden medir: que el fichero citado este donde
+dice, y que la linea citada llegue. No comprueba que la linea siga tratando de
+lo mismo -- eso hay que mirarlo --, pero dice donde mirar, que es lo que faltaba.
 """
 from __future__ import annotations
 
@@ -107,7 +120,134 @@ def _citado(escrito: str, textos) -> bool:
     return any(patron.search(t) for t in textos)
 
 
-def main() -> int:
+# --- Las citas de codigo: `almacen.py:287` -----------------------------------
+# Ver el porque en la cabecera. Aqui solo las reglas de la busqueda.
+def _docs_con_citas() -> list[Path]:
+    """Los documentos que citan ficheros y lineas.
+
+    Se miran tambien `README.md` y los disenos de `.stitch/`, que no llevan
+    cifras pero si citas de codigo.
+    """
+    fuera = [*(RAIZ / "docs").rglob("*.md"), RAIZ / "README.md",
+             RAIZ / "plataforma" / "LEEME.md"]
+    stitch = RAIZ / ".stitch"
+    if stitch.is_dir():
+        fuera += list(stitch.glob("*.md"))
+    return [p for p in fuera if p.exists()]
+
+# Un nombre de fichero acabado en extension conocida, dos puntos y un numero
+# (o dos, si es un tramo: `app.js:1413-1418`).
+REFERENCIA = re.compile(
+    r"([A-Za-z0-9_./\-]+\.(?:py|js|ts|tsx|jsx|sql|ya?ml|md|json|sh|css|html))"
+    r":(\d+)(?:-(\d+))?"
+)
+
+# Carpetas que no forman parte del proyecto que se cita: dentro de ellas hay
+# ficheros con los mismos nombres que los de verdad y la busqueda por nombre
+# suelto encontraria el de mentira.
+NO_SE_MIRAN = frozenset({
+    "node_modules", ".git", "data", "dist", ".venv", "__pycache__",
+    ".pytest_cache", ".mypy_cache", ".ruff_cache", "build",
+})
+
+def _cuantas_lineas(p: Path) -> int:
+    try:
+        return len(p.read_text(encoding="utf-8", errors="replace").splitlines())
+    except OSError:
+        return 0
+
+
+def _citas(texto: str):
+    """Las citas con linea que hay en un texto: (fichero, desde, hasta)."""
+    return [
+        (m.group(1), int(m.group(2)), int(m.group(3)) if m.group(3) else 0)
+        for m in REFERENCIA.finditer(texto)
+    ]
+
+
+def _cita_viva(citado: str, desde: int, hasta: int, buscar) -> tuple[str, str]:
+    """¿Se puede mirar esta cita? Devuelve el estado y con que se compara.
+
+    Estados: `ok` (el fichero esta donde dice y la linea llega), `movida` (el
+    fichero existe pero en otro sitio: el lector no lo abre con esa ruta),
+    `fuera` (el fichero es mas corto que la linea citada) y `no esta` (no hay
+    ningun fichero con ese nombre).
+
+    `buscar(nombre)` devuelve [(ruta, total_de_lineas, es_la_ruta_citada), ...],
+    para poder probar esto sin tocar el disco.
+    """
+    pedida = max(desde, hasta)
+    candidatos = buscar(citado)
+    if not candidatos:
+        return "no esta", ""
+    for ruta, total, directa in candidatos:
+        if pedida <= total:
+            return ("ok" if directa else "movida"), str(ruta)
+    ruta, total, _ = candidatos[0]
+    return "fuera", f"{ruta} tiene {total}"
+
+
+def _indice_por_nombre() -> dict[str, list[Path]]:
+    """Nombre suelto -> ficheros con ese nombre, para las citas sin ruta."""
+    indice: dict[str, list[Path]] = {}
+    for p in RAIZ.rglob("*"):
+        if not p.is_file():
+            continue
+        if any(parte in NO_SE_MIRAN for parte in p.parts):
+            continue
+        indice.setdefault(p.name, []).append(p)
+    return indice
+
+
+def _candidatos(citado: str, indice: dict[str, list[Path]]):
+    """Donde puede estar el fichero citado, y si la cita decia donde.
+
+    Una cita vale si el fichero que se encuentra **acaba** en lo que la cita
+    dice: los documentos escriben `almacen.py:287` a secas, y tambien
+    `src/tipos.ts:173` desde la carpeta de la aplicacion, y las dos formas
+    senalan un fichero que el lector encuentra. Se da por movida solo cuando el
+    fichero existe con ese nombre y **ninguna** ruta acaba en lo que la cita
+    afirma -- entonces la cita manda a un sitio donde no esta.
+
+    Las dos primeras versiones de esto avisaron de 523 citas buenas: primero por
+    resolver por nombre suelto, luego por no aceptar rutas parciales. Un aviso
+    falso por cada cita buena es la forma mas rapida de que nadie los mire.
+    """
+    directo = RAIZ / citado
+    if directo.is_file():
+        return [(directo, _cuantas_lineas(directo), True)]
+    dicho = citado.replace("\\", "/")
+    candidatos = []
+    for p in indice.get(Path(citado).name, []):
+        rel = p.relative_to(RAIZ).as_posix()
+        candidatos.append((p, _cuantas_lineas(p), rel.endswith(dicho)))
+    return candidatos
+
+
+def comprobar_citas() -> tuple[int, list[str]]:
+    """Todas las citas con linea de los documentos, una a una."""
+    indice = _indice_por_nombre()
+
+    def buscar(citado: str):
+        return _candidatos(citado, indice)
+
+    total = 0
+    rotas: list[str] = []
+    for doc in sorted(set(_docs_con_citas())):
+        nombre_doc = doc.relative_to(RAIZ).as_posix()
+        for n, linea in enumerate(
+            doc.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+        ):
+            for citado, desde, hasta in _citas(linea):
+                total += 1
+                estado, detalle = _cita_viva(citado, desde, hasta, buscar)
+                if estado != "ok":
+                    rotas.append(f"{nombre_doc}:{n}  {estado}: {citado}:{desde}  {detalle}")
+    return total, rotas
+
+
+def _numeros() -> int:
+    """Las cifras de los documentos contra el gold de hoy. Devuelve los avisos."""
     ruta = str(config.DATA / "gold" / "grupos.parquet").replace("\\", "/")
     if not Path(ruta).exists():
         print("No hay gold todavia. Ejecuta el pipeline antes.")
@@ -147,9 +287,33 @@ def main() -> int:
     if problemas:
         print(f"{problemas} cifra(s) posiblemente caducada(s). Revisa y corrige.")
         print("Si el numero nuevo es el bueno, cambialo en los documentos.")
-        return 1
-    print("Los numeros de los documentos cuadran con los datos de hoy.")
-    return 0
+    else:
+        print("Los numeros de los documentos cuadran con los datos de hoy.")
+    return problemas
+
+
+def main() -> int:
+    problemas = _numeros()
+
+    # Las citas de codigo no dependen del gold, asi que se comprueban siempre
+    # -- tambien cuando no hay datos, que es cuando mas documentos se escriben
+    # y menos se revisan.
+    print()
+    total, rotas = comprobar_citas()
+    print(f"Las citas de codigo de los documentos: {total} con numero de linea")
+    if rotas:
+        problemas += len(rotas)
+        print(f"  AVISO {len(rotas)} cita(s) que ya no se pueden mirar:")
+        for r in rotas[:20]:
+            print(f"    {r}")
+        if len(rotas) > 20:
+            print(f"    ... y {len(rotas) - 20} mas")
+        print("  Corrige el fichero, la linea o la ruta; si el fichero ya no esta,")
+        print("  quita el numero de linea y deja el nombre.")
+    else:
+        print("  ok    todas apuntan a un fichero que esta y a una linea que llega")
+
+    return 1 if problemas else 0
 
 
 if __name__ == "__main__":
