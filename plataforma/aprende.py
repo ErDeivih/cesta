@@ -383,6 +383,26 @@ def _capitulos(paginas: list[Pagina], seccion: str) -> list[Pagina]:
     return [p for p in paginas if p.curso and p.seccion == seccion]
 
 
+def numero_de(pagina: Pagina) -> str:
+    """El numero del capitulo, que ya viene en el nombre del fichero («15-scraping» -> 15).
+
+    No se inventa ni se renumera: es el que tiene el documento, y es el mismo que sale en la
+    direccion. Un capitulo que se renombre se renumera solo, y eso es lo que se quiere.
+    """
+    trozos = pagina.slug.split("-")
+    return trozos[0] if trozos and trozos[0].isdigit() else "·"
+
+
+def minutos_de(pagina: Pagina) -> str:
+    """Cuanto se tarda en leerlo, **a 200 palabras por minuto, y dicho como estimacion**.
+
+    Es una cuenta, no una medida: las palabras sí son las de verdad (`Pagina.palabras`, que
+    cuenta el documento entero). Por eso va con «≈» delante. Sirve para lo que sirve: decidir
+    si esto se lee ahora o se deja para el fin de semana.
+    """
+    return f"≈{max(1, round(pagina.palabras / 200))} min"
+
+
 # --------------------------------------------------------------------------- plantillas ---
 
 CABECERA = """<!doctype html>
@@ -637,16 +657,21 @@ def _portada(paginas: list[Pagina]) -> str:
     curso = [p for p in paginas if p.curso]
     total = sum(p.palabras for p in curso)
     bloques = []
-    for seccion in (*SECCIONES, SIN_SECCION):
+    for numero, seccion in enumerate((*SECCIONES, SIN_SECCION), 1):
         capitulos = _capitulos(paginas, seccion)
         if not capitulos:
             continue
         tarjetas = "".join(
-            f'<li><a href="{p.fichero}"><strong>{html.escape(p.titulo)}</strong>'
+            f'<li><a href="{p.fichero}">'
+            f'<span class="capitulo-meta">{numero_de(p)} · {minutos_de(p)}</span>'
+            f'<strong>{html.escape(p.titulo)}</strong>'
             f'<span>{html.escape(p.resumen)}</span></a></li>' for p in capitulos)
         bloques.append(
             f'<section class="bloque" id="{slug_de(seccion)}">'
-            f"<h2>{html.escape(seccion)}</h2><ul class=\"tarjetas\">{tarjetas}</ul></section>")
+            f'<h2><span class="modulo-numero">{numero:02d}</span> {html.escape(seccion)}'
+            f'<span class="modulo-cuenta">{len(capitulos)} '
+            f'{"capítulo" if len(capitulos) == 1 else "capítulos"}</span></h2>'
+            f'<ul class="tarjetas">{tarjetas}</ul></section>')
     return f"""<div class="portada">
   <h1>Aprender datos con un proyecto de verdad</h1>
   <p class="entrada">
@@ -939,7 +964,10 @@ blockquote p { max-width: var(--ancho); }
 .ruta-enlace { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: 3px; }
 .ruta-frase { margin: 0; font-size: .875rem; line-height: 1.5; color: var(--tinta-suave); }
 .bloque { margin: 2.5rem 0; }
-.bloque h2 { font-size: 1.2rem; border-top: 1px solid var(--borde); padding-top: 1.2rem; }
+.bloque h2 { font-size: 1.2rem; border-top: 1px solid var(--borde); padding-top: 1.2rem; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.modulo-numero { font-variant-numeric: tabular-nums; color: var(--tinta-suave); font-weight: 600; }
+.modulo-cuenta { margin-left: auto; font-size: .8rem; font-weight: 400; color: var(--tinta-suave); }
+.capitulo-meta { display: block; font-variant-numeric: tabular-nums; font-size: .78rem; color: var(--tinta-suave); margin-bottom: .2rem; }
 .tarjetas { list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; grid-template-columns: 1fr; }
 @media (min-width: 800px) { .tarjetas { grid-template-columns: 1fr 1fr; } }
 .tarjetas li a { display: block; padding: .9rem 1rem; border: 1px solid var(--borde); border-radius: .7rem; text-decoration: none; background: var(--panel); }

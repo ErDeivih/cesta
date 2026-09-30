@@ -29,8 +29,11 @@ argument», que no dice qué argumento.
 | pantalla 3 | «Portada · Aprender datos con un proyecto de verdad» — `projects/15743377346721964880/screens/bdbf0a85b5aa465395902e4bd4bcad1b` |
 | pantalla 4 | «Cesta · Ficha de Producto (Leche Entera)» — `projects/15743377346721964880/screens/a344f64aeb8543218120b87e39f2b33b` |
 | pantalla 5 | «Cesta · Panel de Matching» — `projects/15743377346721964880/screens/c38ca62d92794d43a55e5079c282e06e` |
-| los guiones | `.stitch/prompts/01-inicio.txt` … `05-panel-matching.txt`: **versionados**, porque el guion es la procedencia del diseño. Dicen quién usa la pantalla, qué datos reales tiene que enseñar y las reglas del proyecto (cifras en ancho fijo, 44 px, 109/57 px, tokens) |
+| pantalla 6 | «Cesta · Favoritos (Móvil)» — `projects/15743377346721964880/screens/2a2ed5e108444922839f97cbbe80f90a`, el 30 de septiembre de 2026 |
+| los guiones | `.stitch/prompts/01-inicio.txt` … `06-favoritos.txt`: **versionados**, porque el guion es la procedencia del diseño. Dicen quién usa la pantalla, qué datos reales tiene que enseñar y las reglas del proyecto (cifras en ancho fijo, 44 px, 109/57 px, tokens) |
 | **portadas al código** | `paginas/Inicio.tsx` (en `/`), `componentes/TablaResultados.tsx` + `paginas/Buscar.tsx` (resultados), `paginas/Grupo.tsx` (la ficha del grupo) y `paginas/PanelMatching.tsx` (los pares aceptados, como tarjetas), el 27 de septiembre de 2026. Portadas **a mano**: el HTML de Stitch trae `cdn.tailwindcss.com` y dos `<script>`, y la CSP de Caddy no lo permite (ver `docs/PANTALLAS.md`) |
+| **y la portada del sitio de docs** | `plataforma/aprende.py` (`_portada` + `RUTAS` + `_rutas`): el bloque «Por dónde empezar» con sus seis rutas, el temario por secciones y la referencia. Estaba portada y este cuadro no lo decía (corregido el 30 de septiembre de 2026, leyendo el código contra esta tabla) |
+| **y Favoritos** | `paginas/Favoritos.tsx`, el 30 de septiembre de 2026: la frase del orden, el selector de ventana, la cifra del cambio con su palabra y el bloque «Sin cambio que medir todavía». El cambio lo mide la API (`movimientos.cambios_de_grupos`), que es lo que la pantalla prometía y no hacía |
 
 La pantalla 2 salió con `deviceType: DESKTOP` aunque se pidió `MOBILE`, y la 1 con un lienzo de
 512 x 410: **el aparato que se pide no es el que se recibe**. Se usa como referencia de

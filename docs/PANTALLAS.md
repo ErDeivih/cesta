@@ -487,13 +487,53 @@ tiendas solo ahorra 0,80 €. No compensa el viaje."
 ## 5. Favoritos
 
 **[hecho]** la lista basica
-**[falta]** ordenar por lo que ha cambiado (necesita mas historico)
+**[hecho] el 30 de septiembre de 2026: ordenados por lo que ha cambiado**, con la cifra y con lo
+que no se puede comparar dicho. Lo que falta ya no es «mas historico» (hay 24 capturas): es
+decidir si la ventana de 90 dias se queda.
 
 Los pocos productos que se compran siempre. **No es una lista larga: es una
 pantalla de vigilancia.** Ordenados por lo que ha cambiado, no alfabeticamente:
 lo que ha bajado arriba, lo que ha subido debajo, lo quieto al final.
 
-    vacia   "Todavia no sigues nada. Busca un producto, abrelo y pulsa Seguir."
+    Favoritos                              [datos del 30 sept 2026]
+    Ordenados por lo que se han movido: primero lo que ha bajado, después lo que ha
+    subido, y al final lo que no se ha movido. Los precios son por unidad.
+    [ 7 días ][ 30 días ][ 90 días ]        <- la puesta, dicha: «Ventana activa: 7 días»
+    [ Añadir los 4 a la lista ]   Ver la lista
+
+    ┌──────────────────────────────────────────────────────┐
+    │ COSMIA Pastilla de jabón…      [ha bajado −53,1 % en 6 días] │
+    │ COSMIA                                                │
+    │ 12,78 €/kg      antes 27,22 €/kg                      │
+    │ en Alcampo · −12 % frente a la más cara               │
+    │ [ A la lista ]  [ Quitar ]                            │
+    └──────────────────────────────────────────────────────┘
+
+    Sin cambio que medir todavía
+    ┌──────────────────────────────────────────────────────┐
+    │ Yogur natural pack x 4               [sin comparar]   │
+    │ Todavía no hay dos capturas que comparar: se añadió hace poco. │
+    └──────────────────────────────────────────────────────┘
+
+**El orden y la cifra eran una promesa escrita y no cumplida.** El 30 de septiembre de 2026,
+leyendo el codigo contra su propio texto: la API decia «ordenados por lo que ha cambiado y no
+alfabeticamente» y devolvia los favoritos en el orden en que se anadieron, y la pantalla
+enseñaba el precio de hoy sin decir si habia cambiado. Ahora el cambio lo mide
+`movimientos.cambios_de_grupos` contra la captura anterior dentro de la ventana, y **lo que no
+se puede comparar se dice con su motivo** en vez de contar un 0 %: `sin historico`,
+`cambio de formato` o `ya no esta en el catalogo`. Los tres motivos estan medidos con la puerta
+(`plataforma/prueba_funciones`, con favoritos reales sembrados por `data/debug/favoritos.py`).
+
+**`dias_medidos` son los dias que hay, no los que se pidieron.** Un producto que lleva tres dias
+en el catalogo dice tres cuando se piden siete: decir «en 7 dias» seria afirmar que se comparo
+con una captura que no existe.
+
+**La composicion es de Stitch** (pantalla «Cesta · Favoritos (Movil)», 30 de septiembre de 2026,
+`.stitch/prompts/06-favoritos.txt`): la frase que explica el orden, el selector de ventana con
+la puesta dicha con palabras, la cifra del cambio **con su palabra** («ha bajado», no solo el
+color) y el bloque de los que no se pueden medir.
+
+    vacia   «No sigues ningún producto», con buscador y lista (desde el 27 sep 2026)
 
 ### Lo que se arreglo el 27 de septiembre de 2026
 

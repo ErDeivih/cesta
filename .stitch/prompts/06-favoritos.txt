@@ -1,0 +1,77 @@
+Diseña la pantalla de FAVORITOS de «Cesta», una aplicación móvil (390 x 844) que compara el precio
+por unidad del mismo producto entre cinco supermercados españoles (Alcampo, Aldi, Carrefour, DIA,
+Mercadona). Todo el texto en español. Claro y oscuro por preferencia del sistema.
+
+QUIÉN LA USA Y QUÉ VIENE A HACER
+La usa la madre del dueño, de pie y con una mano, y **casi siempre para lo mismo: ver si algo de
+lo que compra siempre se ha movido**. No es una lista de la compra ni un catálogo: son los pocos
+productos que siguen de cerca (entre tres y quince). La pantalla existe para **vigilar**, no para
+explorar, y por eso lo que contesta es «¿esto ha bajado o ha subido, y cuánto?» con los que han
+bajado primero.
+
+Hoy la pantalla **no ordena nada**: se pinta en el orden en que se añadieron. Ese es justo el
+problema que este diseño tiene que resolver.
+
+QUÉ TIENE QUE HABER, EN ESTE ORDEN
+  1. **Cabecera**: «Favoritos» y, al lado, la fecha de los datos («datos del 30 sept 2026»). La
+     fecha va siempre: un precio sin su fecha es un precio de hace un mes.
+  2. **La frase que explica la pantalla y su orden**, en una línea: *«Ordenados por lo que se han
+     movido en los últimos 7 días: primero lo que ha bajado, después lo que está igual, y al final
+     lo que ha subido. Los precios son por unidad, que es lo único comparable entre formatos.»*
+     Debajo, un selector de ventana con tres opciones (7 días, 30 días, 90 días) y la que está
+     puesta dicha **con palabras**, no con una flecha.
+  3. **Un botón de acción en la parte de arriba**: «Añadir los N a la lista» (lleva todo lo que
+     sigue a la lista de la compra de un toque) y, al lado, un enlace «Ver la lista». N = el
+     número de favoritos.
+  4. **Las tarjetas, una por producto**, ordenadas por el cambio de mayor bajada a mayor subida.
+     Cada tarjeta lleva, en este orden de importancia:
+        · el nombre del producto, y debajo la marca en texto pequeño
+        · **el cambio, que es lo que se viene a ver**: `−8,7 %` o `+3,2 %`, en ancho fijo, con la
+          palabra del sentido («ha bajado» / «ha subido» / «igual») porque **el color solo no
+          puede ser la única señal** (hay quien no lo distingue)
+        · el precio de ahora por unidad, grande: `1,05 €/l`, y al lado el de antes en pequeño y
+          tachado o con «antes»: `antes 1,15 €/l`
+        · la cadena donde está más barato, con su nombre real («DIA», «Mercadona»), y el ahorro si
+          lo hay («−34,4 % frente a la más cara»)
+        · dos botones: «A la lista» y «Quitar» (44 px los dos)
+     Datos reales de ejemplo (úsalos tal cual):
+        Leche entera · Central Lechera Asturiana · ha bajado −8,7 % · 1,05 €/l · antes 1,15 €/l ·
+        en DIA
+        Aceite de oliva virgen extra · ha subido +4,1 % · 3,98 €/l · antes 3,82 €/l · en Alcampo
+        Pan de molde · igual · 2,15 €/kg · en Mercadona
+        Café molido · ha bajado −18,0 % · 2,50 €/kg · antes 3,05 €/kg · en DIA
+  5. **Un grupo «Sin cambio que medir todavía»** al final, para los productos que se han añadido
+     hace poco o que no tienen histórico suficiente. Ahí la tarjeta **no dice 0 %**: dice
+     *«3 días de histórico: todavía no hay con qué comparar»*. Un cero es un hueco con forma de
+     respuesta.
+
+LO QUE SE VE CUANDO NO HAY NADA (diséñalo también, es una cara de la pantalla)
+    No sigues ningún producto
+    Aquí van los pocos que compras siempre, para ver si se mueven sin tener que buscarlos.
+    Se añaden desde la ficha de un producto, con el corazón.
+    [ Buscar un producto ]   [ Ver mi lista ]
+
+REGLAS DE DISEÑO (son del proyecto, no sugerencias)
+
+  · **Cifras en ancho fijo** (tabular-nums) siempre: los precios y los porcentajes se leen en
+    columna, y con ancho variable cada fila baila.
+  · Objetivos táctiles de **44 px mínimo**. Cabecera de **109 px** y barra inferior de **57 px**
+    (la barra lleva Inicio · Lista · Favoritos · Escáner · Avisos · Panel, con Favoritos marcado).
+  · Nada se desliza de lado: en 390 px, cada tarjeta apila sus datos. Nada de scroll horizontal.
+  · Tipografía del sistema (ui-sans-serif / system-ui). Nada de fuentes ni imágenes de internet.
+    Para la foto del producto, un hueco gris con la inicial si no hay imagen.
+  · Color: fondo `#fafafa` (oscuro `#262626`), texto `#16181b` (`#eceef0`), texto secundario
+    `#525252` (`#a3a3a3`), bordes `#e5e5e5` (`#404040`), bien `#059669` (`#10b981`), mal
+    `#b91c1c` (`#f87171`), aviso `#b45309` (`#fcd34d`). El color dice algo (sube, baja), nunca
+    decora.
+  · Nada de tarjetas dentro de tarjetas, ni sombras grandes, ni degradados.
+
+LO QUE NO SE PUEDE HACER
+  · Ni un `<script>` ni un `style="..."` en línea (la aplicación sirve con CSP `script-src 'self'`).
+  · Nada de dependencias de red en tiempo de ejecución.
+  · **No inventar un veredicto ni una tendencia.** Un «−8,7 %» es un dato; «va a seguir bajando» no
+    lo es. Tampoco se pinta una flecha verde de «buena compra»: subir no es malo ni bajar es bueno
+    sin saber qué se va a hacer con ello.
+  · No enseñar un porcentaje sin decir **sobre qué ventana** («−8,7 %» siempre con «en 7 días»).
+  · No mezclar el precio de venta con el precio por unidad sin decirlo: esta pantalla ordena y
+    compara **por unidad** (`€/l`, `€/kg`), que es lo único comparable entre formatos.

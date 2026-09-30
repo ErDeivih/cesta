@@ -49,6 +49,100 @@ MINIMO_PCT = 3.0
 TOLERANCIA_CANTIDAD = 0.02
 
 
+def cambios_de_grupos(grupos: list[int], dias: int = 7) -> dict[tuple[str, str], dict]:
+    """El cambio por unidad de cada producto de esos grupos, **haya cambiado o no**.
+
+    Es lo contrario de `bajadas`, y por eso es otra funcion y no un parametro mas: alli la
+    pregunta es «¿que ha bajado?», asi que hay filtro de sentido y un minimo por debajo del
+    cual es ruido; aqui es «¿como esta cada uno de los que sigo?», asi que **no se filtra
+    nada** y lo que no se puede comparar se dice en vez de dejar el producto fuera:
+
+      · `comparable: False, motivo: "sin historico"` -- no hay captura anterior en la ventana
+        (un favorito anadido hoy no tiene con que compararse, y un 0 % seria mentira)
+      · `comparable: False, motivo: "cambio de formato"` -- la unidad o la cantidad deducida no
+        coinciden. Comparar €/kg con €/ud, o un pack de 6 con uno de 12, no es comparar (ver
+        `TOLERANCIA_CANTIDAD`, que costo ocho falsas bajadas del -96,7 %).
+
+    Se devuelve por `(fuente, id_fuente)`: de un grupo se ensena **el producto de la cadena
+    mas barata**, y lo que se compara es ese producto **consigo mismo**, que es la regla del
+    proyecto. Comparar la historia de dos cadenas distintas no mide una bajada, mide un
+    cambio de surtido.
+
+    Existe por la pantalla de favoritos: su texto promete desde el primer dia «lo que ha
+    bajado arriba, lo que ha subido debajo, lo quieto al final» y no lo cumplia -- ordenaba
+    por cuando se anadio el favorito (visto el 30 de septiembre de 2026, leyendo el codigo
+    contra su propia documentacion).
+    """
+    if not grupos:
+        return {}
+    con = catalogo.conexion()
+    marcas = ",".join("?" * len(grupos))
+    filas = con.execute(f"""
+        WITH ventana AS (
+            SELECT max(fecha)::VARCHAR AS hoy,
+                   (max(fecha::DATE) - INTERVAL (?) DAY)::DATE::VARCHAR AS antes
+              FROM diario),
+        antes AS (
+            SELECT d.fuente, d.id_fuente,
+                   arg_min(d.precio_unidad_cent, d.fecha) AS precio_antes,
+                   arg_min(d.precio_cent, d.fecha) AS venta_antes,
+                   arg_min(d.unidad_canon, d.fecha) AS unidad_antes,
+                   min(d.fecha)::VARCHAR AS fecha_antes
+              FROM diario d, ventana v
+             WHERE d.fecha::VARCHAR >= v.antes AND d.fecha::VARCHAR < v.hoy
+               AND d.precio_unidad_cent > 0
+             GROUP BY d.fuente, d.id_fuente),
+        ahora AS (
+            SELECT d.fuente, d.id_fuente, d.precio_unidad_cent AS precio_hoy,
+                   d.precio_cent AS venta_hoy, d.unidad_canon, d.fecha::VARCHAR AS fecha_hoy
+              FROM diario d, ventana v
+             WHERE d.fecha::VARCHAR = v.hoy AND d.precio_unidad_cent > 0)
+        SELECT b.grupo_id, a.fuente, a.id_fuente, a.unidad_canon, a.precio_hoy,
+               a.fecha_hoy, n.precio_antes, n.unidad_antes, n.fecha_antes,
+               n.venta_antes, a.venta_hoy
+          FROM ahora a
+          JOIN buscable b USING (fuente, id_fuente)
+          LEFT JOIN antes n USING (fuente, id_fuente)
+         WHERE b.grupo_id IN ({marcas})
+    """, [dias, *grupos]).fetchall()
+
+    salida: dict[tuple[str, str], dict] = {}
+    for (g, fuente, id_fuente, unidad, precio_hoy, fecha_hoy, precio_antes, unidad_antes,
+         fecha_antes, venta_antes, venta_hoy) in filas:
+        registro = {
+            "grupo_id": g, "fuente": fuente, "unidad": unidad,
+            "precio_unidad_cent": round(precio_hoy, 2),
+            "dias": dias, "comparable": False, "motivo": "sin historico",
+            "precio_unidad_antes_cent": None, "variacion_pct": None,
+            "dias_medidos": None,
+        }
+        if precio_antes is not None:
+            mismo_formato = (unidad is not None and unidad == unidad_antes and venta_antes
+                             and venta_hoy
+                             and abs(venta_hoy / precio_hoy - venta_antes / precio_antes)
+                             <= TOLERANCIA_CANTIDAD * (venta_antes / precio_antes))
+            if mismo_formato:
+                medidos = _dias_entre(fecha_antes, fecha_hoy)
+                registro |= {
+                    "comparable": True, "motivo": None,
+                    "precio_unidad_antes_cent": round(precio_antes, 2),
+                    "variacion_pct": round(100 * (precio_hoy - precio_antes) / precio_antes, 1),
+                    "dias_medidos": medidos,
+                }
+            else:
+                registro["motivo"] = "cambio de formato"
+        salida[(fuente, id_fuente)] = registro
+    return salida
+
+
+def _dias_entre(desde: str, hasta: str) -> int:
+    """Los dias que hay entre dos fechas `YYYY-MM-DD` de verdad, no los que se pidieron."""
+    from datetime import date
+    a = date(*map(int, desde.split("-")))
+    b = date(*map(int, hasta.split("-")))
+    return (b - a).days
+
+
 def bajadas(dias: int = 7, cadenas: list[str] | None = None, limite: int = 60,
             subidas: bool = False, grupos: list[int] | None = None) -> list[dict]:
     """Lo que mas ha cambiado de precio en los ultimos `dias`.

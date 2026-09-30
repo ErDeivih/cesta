@@ -881,24 +881,112 @@ def alertas_vistas(cuerpo: dict, usuario: dict = Depends(usuario_actual)):
     return {"marcadas": almacen.marca_alertas_vistas(usuario["id"], ids)}
 
 
+def _orden_de_favoritos(f: dict) -> tuple:
+    """Lo que ha bajado arriba (y lo que más, primero), después lo que ha subido, y al final
+    lo que no se ha movido.
+
+    El orden lo decide **el signo de la variación**, no un umbral: un 0,4 % en el precio por
+    unidad es un movimiento de verdad (un céntimo en un euro), y llamarlo «igual» sería
+    esconder el dato. Lo que no se puede comparar va al final y con su motivo, no con un 0 %.
+    """
+    if not f.get("comparable"):
+        return (3, 0.0, f.get("nombre") or "")
+    pct = f.get("variacion_pct") or 0.0
+    if pct < 0:
+        return (0, pct, f.get("nombre") or "")          # la mayor bajada, primero
+    if pct > 0:
+        return (1, -pct, f.get("nombre") or "")         # la mayor subida, primero
+    return (2, 0.0, f.get("nombre") or "")              # quieto, detrás de los dos
+
+
+def _favorito_sin_catalogo(f: dict, que: str, dias: int) -> dict:
+    """Un favorito que ya no se puede resolver, dicho en vez de borrado.
+
+    Si alguien sigue un producto y ese producto desaparece del catálogo, la pantalla tiene que
+    poder decirlo —y dejar quitarlo—, no enseñar una lista más corta sin explicar por qué. Es
+    la misma regla que la línea movida de la lista: lo que no se puede enseñar se dice.
+    """
+    return {
+        "grupo_id": f.get("grupo_id"), "producto_id": f.get("producto_id"),
+        "nombre": None, "marca": None, "unidad": None, "precio_cent": None,
+        "precio_unidad_cent": None, "cadena": None, "imagen": None,
+        "ahorro_pct": None, "n_cadenas": 0,
+        "desconocido": True, "que": que, "anadido_en": str(f.get("anadido_en") or ""),
+        "comparable": False, "motivo": "ya no esta en el catalogo",
+        "variacion_pct": None, "precio_unidad_antes_cent": None,
+        "dias_medidos": None, "dias": dias,
+    }
+
+
 @app.get("/api/favoritos")
-def ver_favoritos(usuario: dict = Depends(usuario_actual)):
-    """Con el estado de hoy de cada uno, ordenados por lo que ha cambiado y no
-    alfabeticamente: lo que ha bajado arriba, lo que ha subido debajo, lo quieto
-    al final."""
+def ver_favoritos(dias: int = 7, usuario: dict = Depends(usuario_actual)):
+    """Los que sigues, con su estado de hoy **y ordenados por lo que se han movido**.
+
+    Lo que ha bajado arriba (y lo que más, primero), después lo que ha subido, y al final lo
+    que no se ha movido: es una pantalla de vigilancia, no un catálogo, y lo que se viene a
+    saber es «¿se ha movido algo de lo que compro siempre?».
+
+    **Esto estaba escrito aquí desde el primer día y no se hacía.** El 30 de septiembre de 2026
+    esta función decía «ordenados por lo que ha cambiado y no alfabéticamente: lo que ha bajado
+    arriba, lo que ha subido debajo, lo quieto al final» y lo que hacía era devolverlos en el
+    orden en que se añadieron: el texto prometía una cosa y el código otra. Ahora el orden y la
+    variación salen de `movimientos.cambios_de_grupos`, que además dice lo que **no se puede
+    comparar** (`comparable: false` con su `motivo`) en vez de contar un 0 %.
+
+    `dias` es la ventana (7 por defecto). `dias_medidos` dice los días que hay de verdad: un
+    producto que lleva tres días en el catálogo dice tres, no siete, y la pantalla lo enseña.
+
+    Y las dos formas de seguir algo -- un grupo (la ficha del grupo) o un producto concreto (la
+    ficha del producto) -- salen **con la misma forma**. Antes la de producto devolvía el sobre
+    entero de `catalogo.producto` y la pantalla pintaba una tarjeta sin nombre.
+    """
     favs = almacen.favoritos_de(usuario["id"])
+    grupos = [f["grupo_id"] for f in favs if f["grupo_id"] is not None]
+    cambios = movimientos.cambios_de_grupos(grupos, dias)
+    sin_medida = {"comparable": False, "motivo": "sin historico", "variacion_pct": None,
+                  "precio_unidad_antes_cent": None, "dias_medidos": None, "dias": dias}
+
     salida = []
     for f in favs:
         if f["grupo_id"] is not None:
             g = catalogo.grupo(f["grupo_id"])
-            if g:
-                salida.append({"grupo_id": f["grupo_id"], "nombre": g["nombre"],
-                               "precio_unidad_cent": g["productos"][0]["precio_unidad_cent"],
-                               "cadena": g["productos"][0]["fuente"],
-                               "unidad": g["unidad"], "ahorro_pct": g["ahorro_pct"]})
-        elif p := catalogo.producto(f["producto_id"]):
-            salida.append(p)
-    return {"favoritos": salida, "fecha_datos": catalogo.fecha_de_gold()}
+            if not g:
+                salida.append(_favorito_sin_catalogo(f, "grupo", dias))
+                continue
+            p = g["productos"][0]
+            item = {
+                "grupo_id": f["grupo_id"], "producto_id": p["producto_id"],
+                "nombre": p["nombre"], "marca": p["marca"], "unidad": p["unidad"],
+                "precio_cent": p["precio_cent"],
+                "precio_unidad_cent": p["precio_unidad_cent"],
+                "cadena": p["fuente"], "imagen": p["imagen"],
+                "ahorro_pct": g["ahorro_pct"], "n_cadenas": len(g["productos"]),
+            }
+        else:
+            p = catalogo.producto(f["producto_id"])
+            if not p:
+                salida.append(_favorito_sin_catalogo(f, "producto", dias))
+                continue
+            # `catalogo.producto` devuelve el producto **plano** (no un sobre con
+            # `producto` dentro, como `por_ean`): la primera version de esto ultimo
+            # buscaba `d["producto"]` y daba un 500 en cuanto un favorito apuntaba a un
+            # producto concreto.
+            item = {
+                "grupo_id": p.get("grupo_id"), "producto_id": p["producto_id"],
+                "nombre": p["nombre"], "marca": p["marca"], "unidad": p["unidad"],
+                "precio_cent": p["precio_cent"],
+                "precio_unidad_cent": p["precio_unidad_cent"],
+                "cadena": p["fuente"], "imagen": None,
+                "ahorro_pct": None, "n_cadenas": 1,
+            }
+        # La clave del cambio es `(cadena, id_fuente)`, y el `id_fuente` se saca del
+        # `producto_id` («fuente:id_fuente»), que es lo único que tienen las dos formas:
+        # `catalogo.grupo` lo trae suelto y `catalogo.producto` no.
+        item |= cambios.get(
+            (item["cadena"], str(item["producto_id"]).partition(":")[2]), sin_medida)
+        salida.append(item)
+    salida.sort(key=_orden_de_favoritos)
+    return {"favoritos": salida, "dias": dias, "fecha_datos": catalogo.fecha_de_gold()}
 
 
 @app.post("/api/favoritos", status_code=201)

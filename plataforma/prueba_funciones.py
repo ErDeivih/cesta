@@ -44,7 +44,7 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 87
+COMPROBACIONES = 92
 
 
 def comprueba(condicion: bool, queja: str) -> None:
@@ -370,7 +370,7 @@ def main() -> int:
             corazon.first.click()
             pagina.wait_for_timeout(2000)
         carga("/favoritos")
-        comprueba("Todavía no tienes favoritos" not in texto(),
+        comprueba("No sigues ningún producto" not in texto(),
                   "marcar un favorito lo deja en la pantalla de favoritos")
         comprueba(pagina.locator("select").count() == 1,
                   "con una lista, el desplegable de destino esta")
@@ -395,7 +395,7 @@ def main() -> int:
             quitar_fav.first.click()
             pagina.wait_for_timeout(2000)
             carga("/favoritos")
-            comprueba("Todavía no tienes favoritos" in texto(),
+            comprueba("No sigues ningún producto" in texto(),
                       "quitar el favorito deja la pantalla vacia")
         else:
             comprueba(False, "no hay boton de quitar el favorito")
@@ -430,6 +430,60 @@ def main() -> int:
             carga("/cesta")
             comprueba(lineas() == antes_todos + cuantos,
                       f"y quedan apuntados los {cuantos} ({antes_todos} -> {lineas()} lineas)")
+        # ------------------- el orden, que es lo que la pantalla promete desde el primer dia ---
+        # **Y no lo hacia.** El 30 de septiembre de 2026, leyendo el codigo contra su propia
+        # documentacion: la pantalla decia «primero lo que ha cambiado» y la API devolvia los
+        # favoritos en el orden en que se anadieron, con el precio de hoy y sin decir si habia
+        # cambiado. Ahora el cambio lo mide `movimientos.cambios_de_grupos`.
+        #
+        # Se comprueba lo que promete **sin depender de que hoy haya bajado algo**: el sentido
+        # de cada tarjeta esta en el DOM (`data-cambio`) y el orden tiene que ser bajadas,
+        # subidas, igual; lo que no se puede comparar va despues, con su motivo.
+        # Se marcan **uno que ha bajado y uno que ha subido**, y los elige la API en el momento
+        # (hoy son unos productos y manana otros): sin eso, con dos favoritos que no se han
+        # movido, la comprobacion del orden pasaria sin comprobar nada.
+        elegidos = pagina.evaluate("""async () => {
+            const coge = async (u) => (await (await fetch(u)).json()).resultados?.[0]?.grupo_id;
+            const baja = await coge('/api/bajadas?dias=7&limite=1');
+            const sube = await coge('/api/bajadas?dias=7&limite=1&subidas=true');
+            for (const g of [baja, sube]) {
+                if (g != null) await fetch('/api/favoritos', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({grupo_id: g})});
+            }
+            return {baja, sube};
+        }""")
+        print(f"   (marcados para el orden: ha bajado {elegidos.get('baja')}, "
+              f"ha subido {elegidos.get('sube')})")
+        carga("/favoritos")
+        cuantos_favs = int((re.search(r"Añadir los (\d+) a la lista", texto()) or [0, 0])[1])
+        sentidos = pagina.evaluate(
+            "() => [...document.querySelectorAll('[data-cambio]')]"
+            ".map((e) => e.getAttribute('data-cambio'))")
+        rango = {"baja": 0, "sube": 1, "igual": 2}
+        comprueba(sentidos == sorted(sentidos, key=lambda s: rango.get(s, 3))
+                  and (bool(sentidos) or cuantos_favs == 0),
+                  f"los favoritos van por lo que se han movido ({sentidos} de {cuantos_favs})")
+        comprueba(elegidos.get("baja") is None or elegidos.get("sube") is None
+                  or sentidos.index("baja") < sentidos.index("sube"),
+                  f"y el que ha bajado va antes que el que ha subido ({sentidos})")
+        dicen = sentidos + [t for t in pagina.locator("main").inner_text().split("\n")
+                            if t.strip() in ("sin comparar", "ya no está")]
+        comprueba(len(dicen) >= cuantos_favs,
+                  f"cada favorito dice su cambio o por que no se puede "
+                  f"({len(dicen)} de {cuantos_favs})")
+        # Y la ventana: se puede cambiar, y cambiar se dice con palabras (no con una flecha).
+        treinta = pagina.get_by_role("button", name="30 días")
+        if treinta.count():
+            treinta.first.click()
+            comprueba(espera(lambda: "Ventana activa: 30 días" in texto()),
+                      "cambiar la ventana se dice con palabras")
+            pagina.get_by_role("button", name="7 días").first.click()
+            comprueba(espera(lambda: "Ventana activa: 7 días" in texto()),
+                      "y volver a siete dias, tambien")
+        else:
+            comprueba(False, "no encuentro el selector de ventana de los favoritos")
+
         # Y se dejan los favoritos como estaban: una pasada no puede dejar basura que la
         # siguiente tenga que adivinar.
         carga("/favoritos")
@@ -440,7 +494,7 @@ def main() -> int:
             quitar.first.click()
             pagina.wait_for_timeout(1500)
         carga("/favoritos")
-        comprueba("Todavía no tienes favoritos" in texto(),
+        comprueba("No sigues ningún producto" in texto(),
                   "y quitarlos deja la pantalla de favoritos vacia")
 
         # ----------------------------------------------------------------- avisos ------

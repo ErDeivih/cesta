@@ -32,9 +32,22 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'DELETE',
   return undefined as T
 }
 
-export async function verFavoritos(): Promise<Favorito[]> {
-  const r = await pide<{ favoritos: Favorito[] }>('/favoritos')
-  return r.favoritos ?? []
+export interface RespuestaFavoritos {
+  favoritos: Favorito[]
+  /** La ventana con la que se ha medido el cambio. */
+  dias: number
+  fecha_datos?: string
+}
+
+/** Los favoritos, con su cambio medido en una ventana.
+ *
+ *  `dias` viaja a la API desde el 30 de septiembre de 2026: el cambio se mide **contra la
+ *  captura anterior dentro de esa ventana**, y cada favorito devuelve `dias_medidos`, que son
+ *  los dias que hay de verdad (un producto que lleva tres dias en el catalogo dice tres, no
+ *  siete). */
+export async function verFavoritos(dias = 7): Promise<RespuestaFavoritos> {
+  const r = await pide<RespuestaFavoritos>(`/favoritos?dias=${dias}`)
+  return { favoritos: r.favoritos ?? [], dias: r.dias ?? dias, fecha_datos: r.fecha_datos }
 }
 
 export function anadirFavorito(grupoId: number | null,

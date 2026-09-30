@@ -238,3 +238,59 @@ def test_un_stock_fuera_no_es_una_oferta(gold):
                    for f, v, u in dias])
     assert movimientos.ofertas_dudosas() == []
     assert movimientos.ofertas_sin_poder_juzgar()["sin_descuento_de_precio"] == 1
+
+
+# ------------------------------- el cambio de lo que sigue cada uno (favoritos) ------
+#
+# `bajadas` contesta «¿que ha bajado?» y filtra por sentido y por un minimo. La pantalla de
+# favoritos pregunta lo contrario -- «¿como esta cada uno de los que sigo?» --, y necesita
+# tambien los que **no** se han movido y los que **no se pueden comparar**. Eso es
+# `cambios_de_grupos`, y estas pruebas son su contrato.
+
+def test_el_cambio_de_un_grupo_que_sigue_igual(gold):
+    gold(_serie("dia", "20", [("2026-09-23", 250, 250.0), ("2026-09-30", 250, 250.0)]),
+         [{"fuente": "dia", "id": "20", "nombre": "Pan de molde", "grupo_id": 7}])
+    c = movimientos.cambios_de_grupos([7], dias=7)
+    assert c[("dia", "20")]["comparable"] is True
+    assert c[("dia", "20")]["variacion_pct"] == 0.0
+    assert c[("dia", "20")]["dias_medidos"] == 7
+
+
+def test_un_favorito_sin_historico_no_se_cuenta_como_un_cero(gold):
+    """Un favorito anadido hoy no tiene con que compararse, y un 0 % seria mentira."""
+    gold(_serie("dia", "21", [("2026-09-30", 250, 250.0)]),
+         [{"fuente": "dia", "id": "21", "nombre": "Pan de molde", "grupo_id": 7}])
+    c = movimientos.cambios_de_grupos([7], dias=7)
+    assert c[("dia", "21")]["comparable"] is False
+    assert c[("dia", "21")]["motivo"] == "sin historico"
+    assert c[("dia", "21")]["variacion_pct"] is None
+
+
+def test_un_cambio_de_formato_no_se_pinta_como_una_bajada_del_96(gold):
+    """El mismo caso que `bajadas` ya vigila, pero aqui no se puede tirar el producto.
+
+    Un envase de 30 unidades leido como uno un dia y como treinta al siguiente da un
+    -96,7 % que no es un precio. En la pantalla de favoritos el producto **no se puede
+    esconder** -- el que lo sigue lo sigue --, asi que se dice por que no se compara.
+    """
+    gold(_serie("alcampo", "22", [("2026-09-23", 594, 594.0), ("2026-09-30", 594, 19.8)]),
+         [{"fuente": "alcampo", "id": "22", "nombre": "Berberina", "grupo_id": 8}])
+    c = movimientos.cambios_de_grupos([8], dias=7)
+    assert c[("alcampo", "22")]["comparable"] is False
+    assert c[("alcampo", "22")]["motivo"] == "cambio de formato"
+    assert c[("alcampo", "22")]["variacion_pct"] is None
+
+
+def test_los_dias_que_se_dicen_son_los_que_hay_no_los_que_se_pidieron(gold):
+    """Pedir 7 dias con tres de historico no es comparar una semana: es comparar tres dias."""
+    gold(_serie("dia", "23", [("2026-09-27", 300, 300.0), ("2026-09-30", 270, 270.0)]),
+         [{"fuente": "dia", "id": "23", "nombre": "Cafe molido", "grupo_id": 9}])
+    c = movimientos.cambios_de_grupos([9], dias=7)
+    assert c[("dia", "23")]["dias"] == 7            # lo que se pidio
+    assert c[("dia", "23")]["dias_medidos"] == 3    # lo que hay
+    assert c[("dia", "23")]["variacion_pct"] == -10.0
+
+
+def test_sin_grupos_no_se_pregunta_nada(gold):
+    gold(_serie("dia", "24", [("2026-09-23", 100, 100.0), ("2026-09-30", 100, 100.0)]), [])
+    assert movimientos.cambios_de_grupos([], dias=7) == {}

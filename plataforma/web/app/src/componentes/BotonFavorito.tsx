@@ -21,7 +21,7 @@ export function BotonFavorito({ grupoId }: { grupoId: number }) {
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
   const favs = useQuery({
     queryKey: ['favoritos'],
-    queryFn: verFavoritos,
+    queryFn: () => verFavoritos(),
     enabled: sesion.data?.usuario != null,
     staleTime: 60_000,
   })
@@ -29,7 +29,7 @@ export function BotonFavorito({ grupoId }: { grupoId: number }) {
 
   if (!sesion.data?.usuario) return null
 
-  const dentro = (favs.data ?? []).some((f) => f.grupo_id === grupoId)
+  const dentro = (favs.data?.favoritos ?? []).some((f) => f.grupo_id === grupoId)
 
   return (
     <div className="flex items-center gap-2">

@@ -861,18 +861,38 @@ export interface RepartoTiendas {
   fecha_datos: string
 }
 
-/** Un favorito. La lista viene mezclada: los guardados por GRUPO traen el
- *  resumen del grupo, y los guardados por PRODUCTO traen la ficha del producto.
- *  Por eso casi todo es opcional: se pinta lo que venga, sin inventar el resto. */
+/** Un favorito.
+ *
+ *  Las dos formas de seguir algo -- un grupo (desde la ficha del grupo) y un
+ *  producto concreto (desde la ficha del producto) -- llegan **con la misma
+ *  forma**: desde el 30 de septiembre de 2026 la API las normaliza, y antes la de
+ *  producto llegaba con otro sobre. */
 export interface Favorito {
   grupo_id: number | null
   producto_id?: string | null
-  nombre: string
+  /** `null` cuando el favorito apunta a algo que ya no esta en el catalogo. */
+  nombre: string | null
   /** En los de grupo, la cadena mas barata de hoy. */
-  cadena?: string
-  fuente?: string
+  cadena?: string | null
+  fuente?: string | null
   unidad?: string | null
+  precio_cent?: number | null
   precio_unidad_cent?: number | null
-  ahorro_pct?: number
+  ahorro_pct?: number | null
   marca?: string | null
+  /** Cuantas cadenas lo tienen. 1 en los que se siguen por producto suelto. */
+  n_cadenas?: number
+  /** **Lo que se ha movido**, que es lo que se viene a mirar aqui. */
+  comparable?: boolean
+  /** `sin historico`, `cambio de formato` o `ya no esta en el catalogo`. */
+  motivo?: string | null
+  variacion_pct?: number | null
+  precio_unidad_antes_cent?: number | null
+  /** Los dias que hay **de verdad** entre las dos capturas comparadas. */
+  dias_medidos?: number | null
+  /** La ventana que se pidio (7, 30 o 90 dias). */
+  dias?: number
+  /** El favorito apunta a algo que ya no se puede resolver. */
+  desconocido?: boolean
+  que?: string
 }

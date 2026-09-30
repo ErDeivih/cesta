@@ -1,21 +1,23 @@
-/** Los favoritos: lo que se compra siempre, con el estado de hoy.
+/** Los favoritos: lo que se compra siempre, **por lo que se ha movido**.
  *
- *  Lo que hace util esta pantalla no es la lista, es **el orden**: la API los
- *  manda por lo que ha cambiado, no por alfabeto. Lo que ha bajado arriba, lo
- *  quieto al final. Una lista de la compra ordenada de la A a la Z hay que leerla
- *  entera para encontrar lo unico que importa.
+ *  Esta pantalla es de vigilancia, no un catalogo, y lo que se viene a saber es
+ *  «¿se ha movido algo de lo que compro siempre?». Por eso el orden y la cifra que
+ *  se enseña son el cambio: lo que ha bajado arriba (y lo que mas, primero),
+ *  despues lo que ha subido, y al final lo que no se ha movido.
+ *
+ *  **Eso se decia aqui desde el primer dia y no se hacia.** El 30 de septiembre de
+ *  2026, leyendo el codigo contra su propia documentacion: la API prometia ese orden
+ *  y devolvia los favoritos en el orden en que se anadieron, y la pantalla enseñaba
+ *  el precio de hoy sin decir si habia cambiado. Ahora el cambio lo mide
+ *  `movimientos.cambios_de_grupos` (contra la captura anterior dentro de la
+ *  ventana) y viene con lo que **no se puede comparar** dicho: `sin historico`,
+ *  `cambio de formato` o `ya no esta en el catalogo`.
+ *
+ *  El diseño de la composicion es de Stitch (`.stitch/prompts/06-favoritos.txt`,
+ *  pantalla «Cesta · Favoritos (Movil)», 30 de septiembre de 2026). Aqui se copia la
+ *  composicion; los numeros, los tokens y las areas de 44 px los pone el codigo.
  *
  *  Necesita sesion, como la cesta: los favoritos son de cada uno.
- *
- *  **Y desde el 25 de septiembre de 2026 esta pantalla sirve para algo mas que
- *  mirar**: el dueno pidio *"que sea facil anadir a una lista productos que ya estan
- *  en favoritos, esa seria la ventaja de tener favoritos configurado"*. Asi que cada
- *  tarjeta lleva un boton para pasarla a una lista, y arriba hay uno para pasar
- *  **todas** de golpe: montar la compra de la semana desde los favoritos es
- *  exactamente lo que se quiere poder hacer en dos toques.
- *
- *  Antes de eso, para anadir habia que usar la interfaz antigua o el movil; la
- *  pantalla solo sabia ver y quitar.
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -26,9 +28,17 @@ import { verFavoritos, quitarFavorito } from '../api/favoritos'
 import { anadirDesdeFavoritos, misListas } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
-import { eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
-import { Aviso, Boton, Cargando, Etiqueta, Fallo, Tarjeta, Vacio } from '../componentes/ui'
+import {
+  eurosUnidad, fecha, nombreCadena, porcentaje, porcentajeConSigno,
+} from '../api/formato'
+import { Aviso, Boton, Cargando, Etiqueta, Fallo, Tarjeta, Vacio, cx } from '../componentes/ui'
 import type { Favorito } from '../tipos'
+
+/** Las ventanas que se pueden pedir. Siete dias es la que contesta «¿esta mas caro
+ *  que la semana pasada?», que es la pregunta de la compra; treinta y noventa son
+ *  para mirar una tendencia, y noventa solo tiene sentido porque el historico ya
+ *  llega (24 capturas el 30 de septiembre de 2026). */
+const VENTANAS = [7, 30, 90]
 
 /** El desplegable de listas, con la ultima usada ya elegida.
  *
@@ -63,6 +73,86 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
   )
 }
 
+/** El cambio, dicho con palabras y con la cifra.
+ *
+ *  **La palabra va con el color, no en lugar del color**: quien no distingue el verde del
+ *  rojo tiene que poder leer «ha bajado». Y el porcentaje lleva siempre su ventana
+ *  («en 7 dias»), porque un −8,7 % sin decir sobre cuanto no es un dato, es un adorno.
+ *  Los dias que se dicen son los que hay **de verdad** (`dias_medidos`): un producto que
+ *  lleva tres dias en el catalogo dice tres. */
+function ElCambio({ f }: { f: Favorito }) {
+  if (!f.comparable) return null
+  const pct = f.variacion_pct ?? 0
+  const dias = f.dias_medidos ?? f.dias ?? 7
+  const sentido = pct < 0 ? 'baja' : pct > 0 ? 'sube' : 'igual'
+  return (
+    /* `data-cambio` es el gancho que usa la puerta para comprobar **el orden** sin depender de
+       que hoy haya bajado algo: el sentido esta en el DOM como dato, no solo como color (que
+       es justo lo que no puede distinguir quien no lo distingue). */
+    <span data-cambio={sentido}>
+      <Etiqueta tono={pct < 0 ? 'bien' : pct > 0 ? 'mal' : 'dato'}>
+        {sentido === 'igual' ? 'igual' : `ha ${sentido === 'baja' ? 'bajado' : 'subido'}`}{' '}
+        {pct === 0 ? '(0,0 %' : porcentajeConSigno(pct, 1)}
+        {` en ${dias} ${dias === 1 ? 'día' : 'días'}`}
+        {pct === 0 ? ')' : ''}
+      </Etiqueta>
+    </span>
+  )
+}
+
+/** Por que no se puede decir cuanto ha cambiado.
+ *
+ *  Un «0 %» aqui seria mentira: no es que no se haya movido, es que no hay con que
+ *  compararlo. Cada motivo se dice con su frase, y el del catalogo lleva ademas la salida
+ *  (quitarlo), que es lo unico que se puede hacer con el. */
+function SinMedida({ f, alQuitar, quitando }: {
+  f: Favorito
+  alQuitar: () => void
+  quitando: boolean
+}) {
+  const frase = f.desconocido
+    ? f.que === 'grupo'
+      ? 'Este grupo ya no está en el catálogo: puede que sus productos hayan desaparecido o que el emparejador los haya separado.'
+      : 'Este producto ya no está en el catálogo de su cadena.'
+    : f.motivo === 'cambio de formato'
+      ? 'Cambió el formato (la unidad o la cantidad), así que comparar el precio de hoy con el de antes no diría nada.'
+      : 'Todavía no hay dos capturas que comparar: se añadió hace poco.'
+  return (
+    <Tarjeta>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-medium">
+            {f.nombre ?? <span className="text-tinta-suave">Un producto que seguías</span>}
+          </p>
+          {f.marca && <p className="text-sm text-tinta-suave">{f.marca}</p>}
+        </div>
+        <Etiqueta tono={f.desconocido ? 'aviso' : 'dato'}>
+          {f.desconocido ? 'ya no está' : 'sin comparar'}
+        </Etiqueta>
+      </div>
+      <p className="mt-2 text-sm text-tinta-suave">{frase}</p>
+      {f.precio_unidad_cent != null && (
+        <p className="cifra mt-2 text-lg font-semibold">
+          {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {!f.desconocido && (
+          <Link
+            to={f.grupo_id != null ? `/grupo/${f.grupo_id}` : '/buscar'}
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+          >
+            {f.grupo_id != null ? 'Ver la ficha' : 'Buscar otro'}
+          </Link>
+        )}
+        <Boton variante="sutil" disabled={quitando} onClick={alQuitar}>
+          Quitar
+        </Boton>
+      </div>
+    </Tarjeta>
+  )
+}
+
 export function Favoritos() {
   const cliente = useQueryClient()
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
@@ -71,9 +161,10 @@ export function Favoritos() {
     queryFn: misListas,
     enabled: sesion.data?.usuario != null,
   })
+  const [ventana, setVentana] = useState(7)
   const favoritos = useQuery({
-    queryKey: ['favoritos'],
-    queryFn: verFavoritos,
+    queryKey: ['favoritos', ventana],
+    queryFn: () => verFavoritos(ventana),
     enabled: sesion.data?.usuario != null,
   })
   // La lista a la que se pasan. Empieza por la primera que haya y se queda con lo
@@ -139,8 +230,13 @@ export function Favoritos() {
     return <Fallo error={favoritos.error} reintentar={() => void favoritos.refetch()} />
   }
 
-  const lista = favoritos.data ?? []
+  const lista = favoritos.data?.favoritos ?? []
+  const fechaDatos = favoritos.data?.fecha_datos
   const nombreDeDestino = listas.data?.find((l) => l.id === elegida)?.nombre
+  // Los que se pueden ordenar por su cambio y los que no. La API ya los manda en el orden
+  // bueno; aqui solo se parten para poder decir **por que** los de abajo no tienen cifra.
+  const conCambio = lista.filter((f) => f.comparable)
+  const sinCambio = lista.filter((f) => !f.comparable)
 
   if (!lista.length) {
     return (
@@ -152,11 +248,10 @@ export function Favoritos() {
         {/* `h1` y no `p`: en el caso vacio esta tarjeta **es** la pantalla, y sin encabezado la
             pagina se quedaba sin titulo (lo midio `data/debug/accesibilidad.py`). El estilo es
             el mismo: lo que cambia es lo que oye quien navega por encabezados. */}
-        <h1 className="text-base font-semibold">Todavía no tienes favoritos</h1>
+        <h1 className="text-base font-semibold">No sigues ningún producto</h1>
         <p className="mt-2 text-sm text-tinta-suave">
-          Los favoritos son los productos que compras siempre. Aparecen aquí con el precio de
-          hoy y marcados cuando han bajado, y se añaden desde la ficha de un producto, con el
-          corazón.
+          Aquí van los pocos que compras siempre, para ver si se mueven sin tener que
+          buscarlos. Se añaden desde la ficha de un producto, con el corazón.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
@@ -179,10 +274,45 @@ export function Favoritos() {
   return (
     <div className="grid gap-4">
       <header className="grid gap-2">
-        <h1 className="text-xl font-semibold">Favoritos</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="text-xl font-semibold">Favoritos</h1>
+          {fechaDatos && <Etiqueta tono="dato">datos del {fecha(fechaDatos)}</Etiqueta>}
+        </div>
         <p className="text-sm text-tinta-suave">
-          Con el estado de hoy. Primero lo que ha cambiado.
+          Ordenados por lo que se han movido: primero lo que ha bajado, después lo que ha
+          subido, y al final lo que no se ha movido. Los precios son por unidad, que es lo
+          único comparable entre formatos.
         </p>
+
+        {/* La ventana, dicha con palabras y no con una flecha: «7 días» puesto y «Ventana
+            activa: 7 días» debajo, porque un botón pulsado se distingue por el color y el
+            color no puede ser la única señal. */}
+        <div
+          role="group"
+          aria-label="Ventana para medir el cambio"
+          className="flex flex-wrap gap-2"
+        >
+          {VENTANAS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={ventana === d}
+              onClick={() => setVentana(d)}
+              className={cx(
+                'min-h-[44px] rounded-lg border px-3 text-sm font-medium tabular-nums',
+                ventana === d
+                  ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-500 dark:text-neutral-900'
+                  : 'border-neutral-300 dark:border-neutral-600',
+              )}
+            >
+              {d} días
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-tinta-suave" aria-live="polite">
+          Ventana activa: {ventana} días
+        </p>
+
         {/* Lo que hace util tener favoritos: pasarlos a la lista de la compra. */}
         <div className="flex flex-wrap items-center gap-3">
           <ElegirLista listas={listas.data ?? []} valor={elegida}
@@ -194,11 +324,9 @@ export function Favoritos() {
           >
             {pasar.isPending ? 'Añadiendo…' : `Añadir los ${lista.length} a la lista`}
           </Boton>
-          {nombreDeDestino && (
-            <Link to="/cesta" className="text-sm underline">
-              Ver «{nombreDeDestino}»
-            </Link>
-          )}
+          <Link to="/cesta" className="text-sm underline">
+            {nombreDeDestino ? `Ver «${nombreDeDestino}»` : 'Ver la lista'}
+          </Link>
         </div>
         {dicho && <Aviso tono="bien" titulo={dicho}>Se puede cambiar de tienda dentro de la lista.</Aviso>}
         {pasar.isError && (
@@ -209,12 +337,12 @@ export function Favoritos() {
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {lista.map((f, n) => {
+        {conCambio.map((f, n) => {
           const clave = f.producto_id ?? `g${f.grupo_id ?? n}`
           const cadena = f.cadena ?? f.fuente ?? null
           return (
             <Tarjeta key={clave}>
-              <div className="flex items-start gap-2">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   {f.grupo_id != null ? (
                     <Link to={`/grupo/${f.grupo_id}`} className="font-medium underline">
@@ -227,17 +355,29 @@ export function Favoritos() {
                     <p className="text-sm text-tinta-suave">{f.marca}</p>
                   )}
                 </div>
-                {f.ahorro_pct != null && f.ahorro_pct > 0 && (
-                  <Etiqueta tono="bien">−{porcentaje(f.ahorro_pct, 0)}</Etiqueta>
-                )}
+                <ElCambio f={f} />
               </div>
 
               <p className="cifra mt-2 text-lg font-semibold">
                 {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+                {/* El de antes, tachado: es lo que hace legible la cifra del cambio -- de un
+                    −8,7 % no se sabe si es mucho o poco hasta que se ve de cuanto a cuanto. */}
+                {f.precio_unidad_antes_cent != null
+                  && f.precio_unidad_antes_cent !== f.precio_unidad_cent && (
+                  <span className="ml-2 text-sm font-normal text-tinta-suave line-through">
+                    antes {eurosUnidad(f.precio_unidad_antes_cent, f.unidad)}
+                  </span>
+                )}
               </p>
-              {cadena && (
-                <p className="text-sm text-tinta-suave">en {nombreCadena(cadena)}</p>
-              )}
+              <p className="text-sm text-tinta-suave">
+                {cadena && <>en {nombreCadena(cadena)}</>}
+                {f.ahorro_pct != null && f.ahorro_pct > 0 && (
+                  <> · −{porcentaje(f.ahorro_pct, 0)} frente a la más cara</>
+                )}
+                {f.n_cadenas != null && f.n_cadenas > 1 && (
+                  <> · {f.n_cadenas} cadenas</>
+                )}
+              </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 <Boton
@@ -263,6 +403,33 @@ export function Favoritos() {
           )
         })}
       </div>
+
+      {/* **El grupo de los que no se pueden comparar, al final y con su motivo.** Antes esto
+          no existia: un favorito sin historico se pintaba igual que los demas, con su precio y
+          sin decir nada del cambio, y eso se lee como «no se ha movido». */}
+      {sinCambio.length > 0 && (
+        <section className="grid gap-3" aria-label="Sin cambio que medir todavía">
+          <div>
+            <h2 className="text-base font-semibold">Sin cambio que medir todavía</h2>
+            <p className="text-sm text-tinta-suave">
+              Estos no se pueden comparar en la ventana de {ventana} días, y se dice por qué
+              en vez de enseñar un cero.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sinCambio.map((f, n) => (
+              <SinMedida
+                key={f.producto_id ?? `g${f.grupo_id ?? n}`}
+                f={f}
+                quitando={quitar.isPending}
+                alQuitar={() => quitar.mutate({
+                  grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+                })}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

@@ -580,10 +580,55 @@ siempre acaba reenviado en un grupo que no era.
 
 ## Favoritos y preferencias
 
-    GET    /api/favoritos    con el estado de hoy de cada uno
+    GET    /api/favoritos    con el estado de hoy de cada uno, y **por lo que se han movido**
     POST   /api/favoritos    {"grupo_id": 4125}
     DELETE /api/favoritos
     PUT    /api/preferencias {"clave": "cadenas_cerca", "valor": ["dia","alcampo"]}
+
+### `GET /api/favoritos?dias=7`
+
+    sale  {"dias": 7, "fecha_datos": "2026-09-30",
+           "favoritos": [
+             {"grupo_id": 19465, "producto_id": "alcampo:123", "nombre": "COSMIA Pastilla…",
+              "marca": "COSMIA", "unidad": "kg", "cadena": "alcampo",
+              "precio_cent": 114, "precio_unidad_cent": 1277.78, "ahorro_pct": 12,
+              "n_cadenas": 2,
+              "comparable": true, "motivo": null,
+              "variacion_pct": -53.1, "precio_unidad_antes_cent": 2722.22,
+              "dias": 7, "dias_medidos": 6}]}
+
+**El orden es la mitad de esta pantalla**, y no es alfabetico: primero lo que ha **bajado**
+(y lo que mas, primero), despues lo que ha **subido**, despues lo **quieto**, y al final lo que
+**no se puede comparar**. Es una pantalla de vigilancia -- «¿se ha movido algo de lo que compro
+siempre?» --, y una lista de favoritos ordenada de la A a la Z hay que leerla entera para
+encontrar lo unico que importa.
+
+**Y esto estaba escrito en el codigo desde el primer dia sin hacerse.** Medido el 30 de
+septiembre de 2026, leyendo la funcion contra su propia documentacion: decia «ordenados por lo
+que ha cambiado y no alfabeticamente» y devolvia los favoritos en el orden en que se anadieron,
+con el precio de hoy y sin decir si habia cambiado. Lo que falta en una pantalla no siempre es
+una pantalla: a veces es una promesa que ya estaba escrita.
+
+**Lo que no se puede comparar se dice, y son tres motivos distintos** (por eso `motivo` es
+texto y no un booleano):
+
+| `motivo` | que ha pasado | que se enseña |
+|---|---|---|
+| `sin historico` | no hay captura anterior en la ventana (se sigue desde hoy) | «todavia no hay con que comparar» |
+| `cambio de formato` | la unidad o la cantidad no coinciden entre los dos dias | «cambio el formato, comparar no diria nada» |
+| `ya no esta en el catalogo` | el grupo o el producto no estan en gold hoy | «ya no esta», y se puede quitar |
+
+Un `0 %` en esos tres casos seria mentira: no es que no se haya movido, es que no hay con que
+compararlo. **`dias_medidos` son los dias que hay de verdad**, no los que se pidieron: un
+producto que lleva tres dias en el catalogo dice tres cuando se piden siete, y la pantalla lo
+enseña asi. Y el cambio se mide **contra la captura anterior dentro de la ventana**, sobre el
+precio por unidad, **del mismo producto consigo mismo** (`movimientos.cambios_de_grupos`), que
+es la regla del proyecto: comparar la historia de dos cadenas distintas no mide una bajada, mide
+un cambio de surtido.
+
+**Las dos formas de seguir algo salen con la misma forma.** Un favorito de grupo (desde la ficha
+del grupo) y uno de producto (desde la ficha del producto) devuelven las mismas claves; antes la
+de producto devolvia el producto plano de `catalogo.producto` y la de grupo otra cosa.
 
 ---
 
