@@ -184,8 +184,21 @@ def comprueba(fila: dict, f: Fetcher) -> Veredicto:
     try:
         r = f.get(url, retries=2)
     except HTTPStatusError as exc:
-        v.estado = "404" if exc.status == 404 else "no se pudo"
-        v.detalle = f"HTTP {exc.status}"
+        # **Un 403 en una cadena con WAF es el WAF, no la red.** Medido el 29 de septiembre de
+        # 2026: el resumen decia `alcampo 0/8 coinciden (8 no se pudo)` y remataba con «8 sin
+        # comprobar: es la conexion, no el dato». Lo que pasaba es que la sesion cacheada ya no
+        # valia para las fichas de producto y Alcampo contestaba 403: eso no es la red, es el
+        # punto ciego de siempre. Y el mensaje importa, porque Alcampo es **el 45 % del catalogo**
+        # (23.635 de 52.348 productos): llamarlo «la conexion» tapa que su precio lleva tres dias
+        # sin comprobarse contra su propia pagina.
+        if exc.status == 404:
+            v.estado = "404"
+        elif fuente == CADENA_CON_WAF and exc.status in (403, 429, 503):
+            v.estado = "reto"
+        else:
+            v.estado = "no se pudo"
+        v.detalle = (f"HTTP {exc.status} (WAF)" if v.estado == "reto"
+                     else f"HTTP {exc.status}")
         return v
     except Exception as exc:  # noqa: BLE001
         v.detalle = str(exc)[:80]

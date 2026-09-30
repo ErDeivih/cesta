@@ -76,6 +76,29 @@ def test_un_fallo_de_red_no_acusa_al_dato():
     assert vp.comprueba(_fila(), f).estado == "no se pudo"
 
 
+def test_un_403_de_alcampo_es_el_waf_y_no_la_red():
+    """El 29 de septiembre de 2026 el resumen decía `alcampo 0/8 coinciden (8 no se pudo)`.
+
+    Y remataba con «8 sin comprobar: es la conexion, no el dato». Lo que pasaba es que la
+    sesión cacheada ya no valía para las fichas y Alcampo contestaba 403. Alcampo es el 45 %
+    del catálogo: contar ese 403 como un problema de red esconde que su precio lleva días sin
+    comprobarse contra su propia página.
+    """
+    f = _Fetcher(error=HTTPStatusError("https://x", 403, b""))
+    v = vp.comprueba(_fila(fuente="alcampo", url="https://www.compraonline.alcampo.es/p/1"), f)
+    assert v.estado == "reto"
+    assert v.detalle == "HTTP 403 (WAF)"
+    assert not v.bien
+
+
+def test_un_403_de_otra_cadena_sigue_siendo_un_fallo_de_red():
+    """El 403 solo es el WAF donde hay WAF. En las demás, un 403 es un 403."""
+    f = _Fetcher(error=HTTPStatusError("https://x", 403, b""))
+    v = vp.comprueba(_fila(fuente="dia"), f)
+    assert v.estado == "no se pudo"
+    assert v.detalle == "HTTP 403"
+
+
 def test_mercadona_se_pregunta_a_su_ficha_en_json():
     """Su tienda no trae precios en el HTML: los pide aparte."""
     cuerpo = b'{"id":"13294","price_instructions":{"unit_price":"1.60"}}'
