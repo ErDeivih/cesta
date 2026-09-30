@@ -1858,7 +1858,12 @@ def main() -> int:
             # **Y favoritos, desde el 30 de septiembre de 2026.** Es la pantalla que estrena
             # etiquetas de color (bajada en verde, subida en rojo, «sin comparar» en aviso), que
             # es justo donde un `dark:` que falte se ve; y hasta hoy no la miraba nadie.
-            for ruta in ("/", "/cesta", "/avisos", "/favoritos", "/grupo/526") + (
+            #
+            # **Y ajustes, el mismo dia**, porque estrena el aviso legal: un pie de pagina en
+            # `text-xs` es exactamente el sitio donde alguien se salta el minimo de contraste
+            # sin enterarse, y lo que se lee ahi (que no hay relacion con las cadenas, y de
+            # donde sale la nutricion) no es adorno.
+            for ruta in ("/", "/cesta", "/avisos", "/favoritos", "/ajustes", "/grupo/526") + (
                     (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)

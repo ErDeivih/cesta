@@ -404,6 +404,12 @@ function UnaLinea({ linea, guardando, cambiar }: {
   cambiar: (lineaId: string, cambio: CambioLinea) => void
 }) {
   const tachada = linea.tachado_en !== null
+  // La nota (tarea 5): el campo se abre **a peticion** porque la lista se lee de pie, y una
+  // caja de texto en cada linea seria ruido. Y se guarda al pulsar «Guardar», no al escribir:
+  // con una mano y en el pasillo, una peticion por letra es una cola de escrituras por una
+  // nota que quiza no se termina.
+  const [escribiendo, setEscribiendo] = useState(false)
+  const [borrador, setBorrador] = useState(linea.nota ?? '')
 
   return (
     <li className="grid gap-1 rounded-lg border border-borde p-2">
@@ -471,6 +477,57 @@ function UnaLinea({ linea, guardando, cambiar }: {
           .
         </p>
       )}
+
+      {/* **La nota de la linea** (tarea 5): «2 bricks de los grandes», «el del paquete azul».
+          Es lo que se apunta en el pasillo cuando el nombre no basta, y hasta hoy no habia
+          donde apuntarlo: el campo existe en la base desde el primer dia
+          (`lista_linea.nota`) y **no lo pintaba ninguna pantalla** -- el mismo tipo de hueco
+          que `novedades` y que el orden de los favoritos. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {linea.nota && !escribiendo && (
+          <p className="min-w-[8rem] flex-1 text-xs text-tinta-suave">
+            <span className="sr-only">Nota: </span>
+            {linea.nota}
+          </p>
+        )}
+        {escribiendo ? (
+          <>
+            <CampoTexto
+              etiqueta={`Nota para ${linea.nombre_visto}`}
+              value={borrador}
+              onChange={(e) => setBorrador(e.target.value)}
+              maxLength={200}
+              autoComplete="off"
+              className="min-w-[12rem] flex-1"
+            />
+            <Boton
+              compacto
+              disabled={guardando}
+              onClick={() => {
+                cambiar(linea.id, { nota: borrador.trim() || null })
+                setEscribiendo(false)
+              }}
+            >
+              Guardar
+            </Boton>
+            <Boton
+              compacto
+              variante="sutil"
+              onClick={() => {
+                setBorrador(linea.nota ?? '')
+                setEscribiendo(false)
+              }}
+            >
+              Cancelar
+            </Boton>
+          </>
+        ) : (
+          <Boton compacto variante="sutil" disabled={guardando}
+                 onClick={() => setEscribiendo(true)}>
+            {linea.nota ? 'Cambiar la nota' : 'Añadir una nota'}
+          </Boton>
+        )}
+      </div>
     </li>
   )
 }

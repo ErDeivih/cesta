@@ -191,6 +191,34 @@ export function Ajustes() {
           </div>
         )}
       </Tarjeta>
+
+      {/* **El aviso legal (tarea 5), y va aqui y no escondido en un pie.** Tres cosas que
+          quien usa esto tiene derecho a saber antes de fiarse de un numero:
+
+            · los precios son de las cadenas y pueden estar mal o cambiar -- la aplicacion
+              lee lo que ellas publican, y eso se dice;
+            · **no hay ninguna relacion con los supermercados**: ni patrocinio ni asociacion.
+              Sin esta frase, una aplicacion que nombra cinco cadenas y las compara parece
+              un producto de ellas;
+            · la nutricion viene de Open Food Facts y su licencia es ODbL, que **obliga a
+              citarla**;
+            · y los datos viven en el ordenador de casa, que es la mitad del proyecto.
+
+          Sin encabezado de seccion a proposito: es un pie de pagina, no una pantalla que
+          nadie viene a mirar. `text-xs` en vez de `text-sm` porque no se lee entero, se
+          consulta; y sigue por encima del minimo de contraste (lo mide la puerta). */}
+      <footer className="mt-2 border-t border-neutral-200 pt-4 text-xs text-tinta-suave dark:border-neutral-700">
+        <p>
+          Los precios son orientativos y pueden variar: los publica cada cadena y Cesta se
+          limita a leerlos. Cesta <strong>no está afiliada, asociada ni patrocinada</strong>{' '}
+          por ninguno de estos supermercados.
+        </p>
+        <p className="mt-2">
+          Los datos viven en el ordenador de casa y no salen de ahí. Información nutricional
+          de <a className="underline" href="https://openfoodfacts.org" rel="noreferrer noopener"
+                target="_blank">Open Food Facts</a>, bajo licencia ODbL.
+        </p>
+      </footer>
     </div>
   )
 }

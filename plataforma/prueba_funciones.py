@@ -185,6 +185,31 @@ def main() -> int:
         pagina.locator("input[type=checkbox]:checked").first.click()
         comprueba(espera(lambda: pagina.locator("input[type=checkbox]:checked").count() == 0),
                   "y destacharla la devuelve a «Por coger»")
+        # ------------------------------------------------ la nota de la linea (tarea 5) ---
+        # **El campo existia en la base desde el primer dia y no lo pintaba ninguna pantalla.**
+        # Es lo que se apunta en el pasillo cuando el nombre no basta -- «2 bricks de los
+        # grandes» --, y es el mismo tipo de hueco que `novedades` y que el orden de los
+        # favoritos: el dato viajaba y se tiraba.
+        apuntar = pagina.get_by_role("button", name="Añadir una nota")
+        comprueba(apuntar.count() >= 1, "la lista deja apuntar una nota en una linea")
+        if apuntar.count():
+            apuntar.first.click()
+            campo = pagina.get_by_label(re.compile("^Nota para "))
+            comprueba(campo.count() == 1, "y el campo dice de que linea es la nota")
+            if campo.count():
+                campo.first.fill("2 bricks de los grandes")
+                pagina.get_by_role("button", name=re.compile("^Guardar$")).first.click()
+                comprueba(espera(lambda: "2 bricks de los grandes" in texto()),
+                          "guardar la nota la deja escrita en su linea")
+                # Y se quita: una pasada no deja basura en la lista de la siguiente.
+                cambiar_nota = pagina.get_by_role("button", name="Cambiar la nota")
+                if cambiar_nota.count():
+                    cambiar_nota.first.click()
+                    campo = pagina.get_by_label(re.compile("^Nota para "))
+                    campo.first.fill("")
+                    pagina.get_by_role("button", name=re.compile("^Guardar$")).first.click()
+                    comprueba(espera(lambda: "2 bricks de los grandes" not in texto()),
+                              "y se puede dejar sin nota otra vez")
         # Quitar, y deshacer.
         quitar = pagina.locator("button[aria-label^='Quitar '][aria-label$=' de la lista']")
         quitar.first.click()
@@ -790,6 +815,20 @@ def main() -> int:
                       f"«Quitar todas» deja las cadenas sin marcar ({marcadas})")
         else:
             print("   (no hay cadenas marcadas: «Quitar todas» no se pinta, y eso es correcto)")
+
+        # ---------------------------------------------- el aviso legal (tarea 5) ----------
+        # Tres cosas que quien usa esto tiene derecho a saber antes de fiarse de un numero, y
+        # que hasta hoy **no estaban en ninguna pantalla**: que los precios son de las cadenas
+        # y pueden cambiar, que no hay ninguna relacion con los supermercados (una aplicacion
+        # que nombra cinco cadenas y las compara parece un producto de ellas), y de donde sale
+        # la nutricion -- Open Food Facts bajo ODbL, que **obliga a citarla**.
+        carga("/ajustes")
+        comprueba("no está afiliada" in texto() and "patrocinada" in texto(),
+                  "los ajustes dicen que no hay relación con las cadenas")
+        comprueba("Open Food Facts" in texto() and "ODbL" in texto(),
+                  "y de dónde sale la nutrición, con su licencia")
+        comprueba("orientativos" in texto(),
+                  "y que los precios pueden variar, que no los ponemos nosotros")
         salir = pagina.get_by_role("button", name="Salir").first
         if salir.count():
             salir.click()

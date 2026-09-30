@@ -560,6 +560,12 @@ export interface Lista {
 export interface Linea {  id: string
   nombre_visto: string
   cantidad: number
+  /** Lo que se apunta en el pasillo cuando el nombre no basta («2 bricks de los grandes»).
+   *
+   *  El campo existe en la base desde el primer dia (`lista_linea.nota`) y **no lo pintaba
+   *  ninguna pantalla** hasta el 30 de septiembre de 2026: llegaba en la respuesta y se
+   *  tiraba. Es el mismo tipo de hueco que `novedades` y que el orden de los favoritos. */
+  nota?: string | null
   grupo_id: number | null
   producto_id: string | null
   tachado_en: string | null

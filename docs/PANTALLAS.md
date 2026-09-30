@@ -369,8 +369,27 @@ codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
 septiembre de 2026 y **no se pintaban en ninguna pantalla** hasta el 28 (ver «Las
 novedades»). Agrupar por pasillos ya no esta en la lista de lo que falta: esta hecho.
 **[hecho] el 30 de septiembre de 2026: cerrar la compra** (tarea 10), que era la ultima mitad
-del bucle de la semana.
-**[falta]** notas (tarea 5)
+del bucle de la semana, y **las notas de la linea** (tarea 5).
+
+### Las notas de la linea **[hecho el 30 de septiembre de 2026]**
+
+Debajo de cada linea, un boton pequeño: **«Añadir una nota»**, y cuando la hay, la nota escrita
+y **«Cambiar la nota»**. Es lo que se apunta en el pasillo cuando el nombre no basta -- «2
+bricks de los grandes», «el del paquete azul» --, y hasta hoy **no habia donde apuntarlo**: el
+campo existe en la base desde el primer dia (`lista_linea.nota`) y llegaba en la respuesta de la
+API, pero **no lo pintaba ninguna pantalla**. Es el mismo tipo de hueco que `novedades` y que el
+orden de los favoritos, y ya van tres.
+
+Dos decisiones:
+
+  - **El campo se abre a peticion.** Una caja de texto en cada linea, siempre visible, es ruido
+    en la pantalla que se lee de pie veinte veces en el pasillo.
+  - **Se guarda al pulsar «Guardar», no al escribir.** Con una mano y en la tienda, una peticion
+    por letra es una cola de escrituras por una nota que quiza no se termina. La nota vacia
+    **quita** la nota (`nota: null`), que es distinto de no tocarla.
+
+Lo comprueba `plataforma/prueba_funciones`: que el boton esta, que el campo dice de que linea
+es, que al guardar la nota se lee en su linea, y que se puede dejar sin nota otra vez.
 
 ### Lo que se ve
 
@@ -798,7 +817,7 @@ de alto y el desplegable de la respuesta en crudo **332 x 20** (los dos, con la 
 ## 9. Ajustes
 
 **[hecho]** cadenas cercanas, reparto, salir
-**[falta]** el aviso legal (tarea 5)
+**[hecho] el 30 de septiembre de 2026: el aviso legal** (tarea 5).
 
     SUPERMERCADOS QUE TENGO CERCA
     Los que quites no salen en las busquedas ni deciden donde comprar.
@@ -818,6 +837,28 @@ de alto y el desplegable de la respuesta en crudo **332 x 20** (los dos, con la 
 
 El tema claro/oscuro sale del sistema. No hace falta un interruptor, y no hacen
 falta siete colores de acento.
+
+### El aviso legal, y por que va aqui
+
+Tres cosas que quien usa esto tiene derecho a saber antes de fiarse de un numero, y que
+**no estaban en ninguna pantalla** hasta el 30 de septiembre de 2026:
+
+  - **Los precios no los ponemos nosotros.** Los publica cada cadena y pueden estar mal o
+    cambiar; la aplicacion lee lo que ellas publican. Un numero sin esa frase se lee como una
+    promesa nuestra.
+  - **No hay ninguna relacion con los supermercados** -- ni patrocinio ni asociacion. Sin esta
+    frase, una aplicacion que nombra cinco cadenas y las compara parece un producto de ellas.
+  - **De donde sale la nutricion**: Open Food Facts, y su licencia es **ODbL**, que obliga a
+    citarla. No citarla no es un descuido de estilo: es incumplir la licencia.
+  - Y la mitad del proyecto que se explica sola: **los datos viven en el ordenador de casa**.
+
+Va en un pie de pagina, sin encabezado de seccion: no es una pantalla que nadie venga a mirar,
+es algo que se consulta. Para un pie vale un texto pequeño **si sigue por encima del minimo de
+contraste**, y eso lo mide la puerta: `/ajustes` entra en la prueba de contraste el mismo dia
+(con `/favoritos`, que estrena etiquetas de color).
+
+Lo comprueba `plataforma/prueba_funciones`: que la pantalla dice que no hay relacion con las
+cadenas, de donde sale la nutricion con su licencia, y que los precios pueden variar.
 
 ---
 
