@@ -597,6 +597,26 @@ lo arreglaria. Era falso —WSL es la 3.0.1.0 y Docker Desktop 4.37.1 la acepta 
 (3.0.1.0) meets ECI requirement")— y el error no era de version sino de red. Un diagnostico
 escrito a partir del mensaje de error, sin probar la hipotesis, manda a la persona equivocada.
 
+### Lo que midieron las puertas ese dia, corriendo asi
+
+Con la aplicacion levantada por el camino de arriba, las dos puertas del navegador midieron
+la aplicacion de verdad, en el movil de 390 x 844:
+
+    uv run python -m plataforma.prueba_funciones     115 de 115, TODAS LAS FUNCIONES CONTESTAN
+    uv run python -m plataforma.prueba_navegador     TODO BIEN (las cuatro preguntas, el
+                                                     contraste en los dos temas, el escaner
+                                                     con un codigo de verdad, los tiempos)
+
+**`prueba_funciones` encontro tres cosas y las tres se arreglaron ese dia**: quitar la nota de
+una linea no la quitaba (`nota: null` se tomaba por un "no la toques"), la puerta del navegador
+se caia midiendo la primera linea de la lista (dos `bounding_box()` seguidos, y el segundo
+reventaba si React volvia a pintar), y la comprobacion del microfono acusaba al codigo de lo
+que hace el navegador (en Windows si hay `webkitSpeechRecognition`).
+
+**`prueba_produccion` no se pudo correr**: mide lo que sirve **Caddy** --el paquete compilado
+y las cabeceras del CSP-- y en este equipo no hay ni Caddy ni motor. Es la unica de las tres
+que se queda pendiente de un reinicio de Windows.
+
 ### La aplicación, en pie **sin** el motor de Docker (30 de septiembre de 2026)
 
 Con el motor caído, la aplicación se puede levantar igual: lo único que aportaba Docker aquí era
