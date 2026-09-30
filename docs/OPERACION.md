@@ -233,6 +233,12 @@ un aviso falso: la matriz no promete ser el contrato entero, cuenta el dato que 
 cada cadena. Treinta y un avisos que no son fallos es la forma más rápida de que nadie mire los
 avisos.
 
+**Los cuatro controles de arriba pueden poner esta puerta en rojo, y la cadena de las 06:00 no se
+entera.** `projects/cesta/run.py` llama a `verificar_docs.main()` dentro de un `try`, **sin mirar
+lo que devuelve** —«esto avisa; no toca nada, y no hace fallar el día», dice allí mismo—, así que
+una cita rota o un campo renombrado salen en el registro y el día sigue. Es a propósito: un
+documento mal citado no es motivo para no recoger los precios de hoy.
+
 ### Ninguna ruta de la API se queda sin que nadie la llame
 
 Medido el 30 de septiembre de 2026 con `data/debug/rutas_sin_prueba.py`: de las **46 rutas** de
