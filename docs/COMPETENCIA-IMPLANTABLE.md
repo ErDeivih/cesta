@@ -155,13 +155,13 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Invitación por enlace que caduca | QueFalta, Bring! | enlace o `@usuario` | **si** (`API.md:267-274`) | si: `invitacion` con usos y caducidad (`plataforma/sql/002_invitaciones.sql:9-18`) | — |
 | Amigos por `@usuario` | QueFalta | buscador de personas | no | **no**: sois dos (`FUNCIONALIDADES.md:236`) | — |
 | Varios carritos con uno activo | QueFalta | "varios carritos y uno activo que se elige" | no | **no**: descartado (`FUNCIONALIDADES.md:237`) | — |
-| Orden por los pasillos del supermercado | QueFalta ("ordenada por las categorías del supermercado"), Bring! ("based on the aisles"), Listonic, AnyList ("reorganizar para que se adapten al diseño de tu tienda") | la lista se reordena sola al recorrer la tienda | **a medias**: `seccion` está en gold en **52.446 de 52.567** productos (medido) y el buscador ya filtra por ella; **la lista no se agrupa** | **si, con lo que hay**: `core/datos/secciones.yml` y `core.secciones.ORDEN` (BACKLOG.md:470-473). Solo falta agrupar en pantalla | S |
-| Mosaico de lo habitual, a un toque | Bring! ("tiles"), Listonic ("suggestions from shopping history"), Soysuper ("Minisúper") | cuadrícula con lo que compras siempre, sin escribir | no (**tarea 3.1**, `BACKLOG.md:543-552`) | **si**: `lista_linea.anadido_por` y `anadido_en` (`plataforma/sql/001_esquema.sql:93-94`) | S |
-| Añadir por voz | Listonic ("Voice input"), Soysuper ("Dicta tu lista"), EROSKI, OkLista | dictas y se rellena la lista | no (**tarea 3.2**, `BACKLOG.md:554-561`) | **si**: `SpeechRecognition` del navegador, cero datos y cero servidor | XS |
+| Orden por los pasillos del supermercado | QueFalta ("ordenada por las categorías del supermercado"), Bring! ("based on the aisles"), Listonic, AnyList ("reorganizar para que se adapten al diseño de tu tienda") | la lista se reordena sola al recorrer la tienda | **si**: `seccion` está en gold y **la lista se agrupa por pasillos desde el 27 de septiembre de 2026** (`porPasillo` en `Cesta.tsx`, con el encabezado pegado arriba) | hecho | — |
+| Mosaico de lo habitual, a un toque | Bring! ("tiles"), Listonic ("suggestions from shopping history"), Soysuper ("Minisúper") | cuadrícula con lo que compras siempre, sin escribir | **si**: `Mosaico.tsx` y `GET /api/habituales`, con `origen` en cada tarjeta, desde el 23 de septiembre de 2026 | hecho | — |
+| Añadir por voz | Listonic ("Voice input"), Soysuper ("Dicta tu lista"), EROSKI, OkLista | dictas y se rellena la lista | **en el buscador**: `componentes/Microfono.tsx` desde el 30 de septiembre de 2026 (rellena el campo, y **sin soporte del navegador no se dibuja**). Dictar y que se llene **la lista** no está | si, el resto es encadenar el micro con el alta de la línea | XS |
 | Sugerencias del historial de compra | Listonic ("based on shopping history"), Soysuper | propone lo que compras cada cierto tiempo | no (**tarea 3.3**, `BACKLOG.md:563-566`) | si, pero **necesita 30 días de listas hechas** (`BACKLOG.md:573`) | S |
 | Total estimado en vivo / presupuesto | QueFalta ("Total estimado en vivo"), Listonic ("Budget control"), AnyList (precios con total acumulado) | el total sube mientras añades | **si** (`API.md:211` `estimacion`) | si | — |
 | Presupuesto con límites por categoría | FamilyWall (Premium) | topes de gasto por tipo de producto | no | si, con las secciones ya en gold y el cierre de compra | S |
-| Notas por línea | Bring!, Listonic, AnyList ("marca, cantidad o una foto") | "la de cristal", "si hay del grande" | **a medias**: la columna existe — `plataforma/sql/001_esquema.sql:92` — y **la interfaz no la usa** (`BACKLOG.md:609`) | **si, hoy**: es pintar un campo que ya está | XS |
+| Notas por línea | Bring!, Listonic, AnyList ("marca, cantidad o una foto") | "la de cristal", "si hay del grande" | **si**: se apuntan, se leen y se quitan debajo de la línea desde el 30 de septiembre de 2026 (`UnaLinea` en `Cesta.tsx`) | hecho | — |
 | Foto en la línea | Bring!, Listonic, AnyList | una foto del producto exacto | **a medias**: `imagen` está en **52.567 de 52.567** (medido) | si, es pintar `imagen` en la línea | XS |
 | Etiquetas de urgencia | Bring!, OurGroceries ("a star might indicate... urgently needed") | marca de prioridad en el artículo | no | si: una columna y un color | XS |
 | Categorías automáticas al escribir | Listonic | clasifica sola lo que tecleas | **a medias**: `seccion` ya está en gold y es heredable por grupo (`BACKLOG.md:479-480`) | si | S |
@@ -1501,13 +1501,14 @@ apunta a una tarea existente, lo dice. La numeración sigue a `N28`.
 
 ---
 
-## N29. Ordenar la lista por pasillos, en la interfaz nueva
+## N29. Ordenar la lista por pasillos, en la interfaz nueva · **HECHO el 27 de septiembre de 2026**
 
 **Por que.** `seccion` ya está en gold al **99,8 %** (52.446 de 52.567 productos,
 medido) y `core.secciones.ORDEN` ya está en el orden en que se recorre una tienda.
-La tarea 1 dejó hecho el dato y la mitad de la pantalla; lo que falta es agrupar.
-Es la mejora que más se nota andando por el supermercado, y **desbloquea
-"Explorar" y el análisis por sección**.
+La tarea 1 dejó hecho el dato y la mitad de la pantalla; **lo que faltaba era agrupar, y se hizo
+ese mismo día** (`porPasillo` en `Cesta.tsx`, con el encabezado pegado arriba mientras dura su
+tanda; lo mide `prueba_navegador`). Es la mejora que más se nota andando por el supermercado, y
+**desbloquea "Explorar" y el análisis por sección**.
 
 **Que hay que hacer.**
 
