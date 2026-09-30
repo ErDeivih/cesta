@@ -117,6 +117,38 @@ def test_cada_comprobacion_dice_una_cosa_distinta():
     assert not repetidas, f"hay comprobaciones que dicen lo mismo: {repetidas}"
 
 
+def _cuantas_llamadas() -> int:
+    """Cuantas veces se llama a `comprueba` en la puerta, contadas con el arbol."""
+    return sum(
+        1 for nodo in ast.walk(ast.parse(FUENTE))
+        if isinstance(nodo, ast.Call) and isinstance(nodo.func, ast.Name)
+        and nodo.func.id == "comprueba"
+    )
+
+
+def test_el_numero_escrito_es_el_de_veces_que_se_llama_a_comprueba():
+    """El número se puede mantener sin correr la pasada, y eso se aprendió a la fuerza.
+
+    El 30 de septiembre de 2026 el motor de Docker estaba caído y la puerta no se podía correr:
+    `COMPROBACIONES` se había quedado en 92 con 23 comprobaciones nuevas dentro, así que la
+    siguiente pasada **habría salido roja por un número**, no por la aplicación. La relación se
+    pudo cerrar con evidencia: en `dedeac7` --la pasada en la que se midió el 92-- el fichero
+    tenía exactamente **92** llamadas a `comprueba`, y desde entonces entraron 23 sin quitar
+    ninguna, así que hoy son **115**.
+
+    Esta prueba convierte esa cuenta en una regla: el número escrito tiene que ser el de llamadas
+    que hay. Es la invariante que la propia puerta asume al final (`HECHAS != COMPROBACIONES`), y
+    comprobarla aquí significa que añadir una comprobación **rompe las pruebas** en el mismo
+    commit en que se añade, en vez de esperar a una pasada de veinte minutos para avisar.
+    """
+    constante = re.search(r"^COMPROBACIONES = (\d+)$", FUENTE, re.M)
+    assert constante, "la puerta no tiene el numero de comprobaciones en una constante"
+    llamadas = _cuantas_llamadas()
+    assert llamadas == int(constante.group(1)), (
+        f"la puerta tiene {llamadas} llamadas a `comprueba` y dice {constante.group(1)}: "
+        f"actualiza `COMPROBACIONES`, `docs/OPERACION.md` y `.stitch/DESIGN.md` en el mismo cambio")
+
+
 def test_la_cuenta_es_desechable_y_no_deja_basura():
     """La base de casa no se queda con cuentas de prueba."""
     assert 'USUARIO = "prueba-funciones"' in FUENTE

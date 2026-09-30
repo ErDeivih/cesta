@@ -340,7 +340,7 @@ y elegir tienda por linea. Para eso esta la tercera puerta:
 
 Abre la aplicacion **servida** (la misma `CESTA_UI`, por defecto `http://127.0.0.1:8080`) en el
 mismo movil de 390 x 844, con una cuenta **desechable** (`prueba-funciones`: se crea al empezar y
-se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **92 comprobaciones**
+se borra al terminar **desde la pantalla**, no por API -- ver abajo), y hace **115 comprobaciones**
 tocando lo que toca una persona: el boton, el campo, el deslizador. Cada una dice que se miro y si
 contesto; el numero lo pone la propia cuenta atras de la puerta, para que un `FALLO` se pueda
 citar. Salida esperada:
@@ -565,45 +565,74 @@ cambia el alcance del proyecto.
 
 ## Cuando el motor de Docker no arranca (30 de septiembre de 2026)
 
-La aplicacion entera vive en tres contenedores (`cesta-api-1`, `cesta-db-1`, `cesta-web-1`), y
-por debajo hay **WSL2**. Medido ese dia, despues de una manana de pasada, puertas y
-reconstrucciones, el motor se quedo mudo y esto es lo que se ve, en orden:
+La aplicacion entera vive en tres contenedores (`cesta-api-1`, `cesta-db-1`, `cesta-web-1`), y por
+debajo hay **WSL2**. Este dia el motor se quedo mudo, y por la tarde se separaron **dos fallos
+distintos** que la primera lectura habia mezclado.
 
-    docker ps
-      error during connect: ... open //./pipe/dockerDesktopLinuxEngine: The system cannot find
-      the file specified.
-    wsl -l -v
-      Ubuntu        Stopped   2
-      docker-desktop Stopped  2
+### Fallo 1: la red de la maquina virtual de WSL (arreglado)
+
+Lo que se veia al empezar:
+
     wsl -d Ubuntu -e /bin/true
       wsl: Error interno.
       Codigo de error: CreateInstance/CreateVm/ConfigureNetworking/0x8007054f
       wsl: No se pudo configurar la red (networkingMode Mirrored), revirtiendo a networkingMode None.
 
-Y de paso, dos avisos que salen siempre y que **no son la causa** pero apuntan a lo mismo:
+**La causa era `networkingMode=mirrored`** en `C:\Users\David\.wslconfig`: WSL no conseguia montar
+la red de la VM y no llegaba a arrancar. Con `networkingMode=nat` (el modo por defecto) arranca:
+medido, `wsl -d Ubuntu -e /bin/true` sale con **0**. `nat` es algo menos eficiente y puede dar
+guerra con el cortafuegos, que es por lo que estaba en `mirrored`, asi que **si algun dia se
+vuelve a poner, hay que acordarse de esto**.
 
-    wsl: Clave 'wsl2.autoMemoryReclaim' desconocida en C:\Users\David\.wslconfig:22
-    wsl: Clave 'wsl2.sparseVhd' desconocida en C:\Users\David\.wslconfig:25
+Y los dos avisos que salian siempre —`Clave 'wsl2.autoMemoryReclaim' desconocida`, `Clave
+'wsl2.sparseVhd' desconocida`— **no eran de una version de WSL mas nueva**: eran claves puestas en
+la seccion que no es. Van en `[experimental]`, no en `[wsl2]`. Movidas alli, los avisos
+desaparecen (medido). Estas dos claves tienen ademas fama de romper Docker dentro de WSL
+([ddev#5356](https://github.com/ddev/ddev/issues/5356),
+[docker/docs#18329](https://github.com/docker/docs/issues/18329)), asi que dejarlas bien puestas
+no es solo estetica.
 
-Son claves de una version de WSL mas nueva que la instalada: la maquina tiene un `.wslconfig`
-que pide cosas que su WSL no conoce. **`wsl --update` (con permisos de administrador) lo
-arregla**, y merece la pena hacerlo antes de que pase en mal momento.
+**La leccion, porque costo una tarde:** la primera version de esta receta decia que `wsl --update`
+lo arreglaria. Era falso —WSL es la 3.0.1.0 y Docker Desktop 4.37.1 la acepta ("WSL version
+(3.0.1.0) meets ECI requirement")— y el error no era de version sino de red. Un diagnostico
+escrito a partir del mensaje de error, sin probar la hipotesis, manda a la persona equivocada.
 
-**Lo que se intento, y no basto** (por orden, y ninguna necesita administrador):
+### Fallo 2: el motor de Docker Desktop (sin arreglar)
 
-    & "$env:ProgramFiles\Docker\Docker\DockerCli.exe" -Shutdown   # apaga bien
-    Start-Process "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"   # y se vuelve a abrir
-    wsl --shutdown                                                # resetea el subsistema
-    wsl -d Ubuntu -e /bin/true                                    # levanta la VM de WSL2 a mano
+Con WSL ya arrancando, el motor sigue sin levantar. Lo medido:
 
-El error es de red de la VM (`ConfigureNetworking`), no de Docker: por eso reiniciar Docker
-Desktop no lo arregla. **Lo que hace falta es reiniciar Windows**, y despues `wsl --update`.
+    docker ps / docker info        se quedan colgados: 16 intentos de 15 s, ni una respuesta
+    \\.\pipe\dockerDesktopLinuxEngine   existe (el named pipe esta), pero nadie contesta detras
+    wsl -l -v                      solo Ubuntu: la distro `docker-desktop` ya no esta registrada
+    %LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx   72 GB, sin tocar desde las 12:56
+    com.docker.backend             arriba y ocioso (9 s de CPU), con `forwards/list` caducando
+    registro                       `WSL2MonoDistroMigrationP2_1_1` cambia a true en cada arranque
 
-Lo que **no** hay que hacer mientras tanto: tocar `data/`. La ingesta y las herramientas de
-linea de orden (`pipeline`, `emparejar`, `verificar_ingesta`, `pytest`) **no necesitan Docker**:
-solo la aplicacion servida, los contenedores y `prueba_e2e` (que levanta su propio PostgreSQL
-desechable en el 5434) lo necesitan. Con el motor parado se puede seguir midiendo el dato; lo
-que no se puede es medir la interfaz.
+O sea: Docker Desktop abre, pero **no crea su maquina** (la distro `docker-desktop` desaparecio) y
+su backend se queda esperando. `DockerCli.exe -Shutdown` + relanzar, `wsl --shutdown`, matar todos
+los procesos de Docker y volver a empezar: nada de eso lo arregla, y **ya no es un fallo de red**:
+WSL arranca.
+
+**Lo que NO hay que hacer mientras tanto: un "reset to factory defaults" de Docker Desktop.**
+`docker_data.vhdx` son **72 GB** y ahi vive el PostgreSQL de la aplicacion: un reset se lo lleva
+por delante. Es la salida que ofrece la propia aplicacion cuando el motor no arranca, y en esta
+maquina es la peor.
+
+**Lo que queda, y necesita a una persona:** reiniciar Windows (que es lo que se dijo el primer dia,
+y sigue siendo el paso que falta) y, si vuelve a pasar, **actualizar Docker Desktop** antes que
+resetear nada.
+
+### Mientras el motor esta parado
+
+La ingesta y las herramientas de linea de orden (`pipeline`, `emparejar`, `verificar_ingesta`,
+`verificar_docs`, `pytest`) **no necesitan Docker**: solo la aplicacion servida, los contenedores y
+`prueba_e2e` (que levanta su propio PostgreSQL desechable en el 5434) lo necesitan. Con el motor
+parado se puede seguir midiendo el dato y escribiendo pruebas; lo que no se puede es **medir la
+interfaz**, que es justo lo que pide el encargo.
+
+**Lo que se toco en esta maquina, para poder deshacerlo:** `C:\Users\David\.wslconfig`
+(`networkingMode` a `nat`; `autoMemoryReclaim` y `sparseVhd` movidas a `[experimental]`). La copia
+de antes esta en `data/debug/wslconfig.antes.txt`.
 
 ---
 

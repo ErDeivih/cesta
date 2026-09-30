@@ -44,7 +44,14 @@ HECHAS = 0
 # anade o quita una, la puerta lo dice en vez de dejar los documentos mintiendo. Las ramas que
 # solo se corren cuando algo va mal (`no hay boton de deshacer`...) cuentan tambien, pero esas
 # pasadas ya salen con FALLO y el numero es lo de menos.
-COMPROBACIONES = 92
+# **Derivado, no medido, el 30 de septiembre de 2026, porque el motor de Docker estaba
+# caido y la pasada no se podia correr.** El 92 se midio en la pasada de dedeac7
+# (el fichero tenia entonces exactamente 92 llamadas a comprueba), y desde ahi
+# entraron 23 mas -- 10 del cierre de compra, 7 de las notas y el aviso legal, 6 del
+# microfono y el escaner -- sin quitar ninguna: 92 + 23 = 115, que es justo lo que
+# tiene el fichero. La proxima pasada lo confirma o lo desmiente, y si no cuadra lo
+# dice ella misma aqui abajo.
+COMPROBACIONES = 115
 
 
 def comprueba(condicion: bool, queja: str) -> None:
