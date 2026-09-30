@@ -1854,7 +1854,11 @@ def main() -> int:
             # veinte sitios de una misma pantalla (los pesos del «por que esta en esta
             # posicion»). Estaba a la vista de cualquiera menos de esta prueba, que miraba cuatro
             # rutas y esa no era una.
-            for ruta in ("/", "/cesta", "/avisos", "/grupo/526") + (
+            #
+            # **Y favoritos, desde el 30 de septiembre de 2026.** Es la pantalla que estrena
+            # etiquetas de color (bajada en verde, subida en rojo, «sin comparar» en aviso), que
+            # es justo donde un `dark:` que falte se ve; y hasta hoy no la miraba nadie.
+            for ruta in ("/", "/cesta", "/avisos", "/favoritos", "/grupo/526") + (
                     (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)
