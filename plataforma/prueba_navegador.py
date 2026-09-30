@@ -1863,7 +1863,11 @@ def main() -> int:
             # `text-xs` es exactamente el sitio donde alguien se salta el minimo de contraste
             # sin enterarse, y lo que se lee ahi (que no hay relacion con las cadenas, y de
             # donde sale la nutricion) no es adorno.
-            for ruta in ("/", "/cesta", "/avisos", "/favoritos", "/ajustes", "/grupo/526") + (
+            #
+            # **Y buscar**, que estrena el microfono y el boton del escaner: es la pantalla con
+            # mas controles de la aplicacion, y hasta hoy no la miraba esta prueba.
+            for ruta in ("/", "/cesta", "/buscar?q=leche+entera", "/avisos", "/favoritos",
+                         "/ajustes", "/grupo/526") + (
                     (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)

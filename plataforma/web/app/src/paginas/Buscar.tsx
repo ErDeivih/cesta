@@ -6,14 +6,16 @@
  *  son cinco peticiones y cinco repintados de cuarenta filas.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { FILTROS_VACIOS, consultaUtil, useBuscar, useEstado, type FiltrosBuscar } from '../api/consultas'
 import { fecha, nombreCadena } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
+import { Microfono } from '../componentes/Microfono'
 import { Mosaico } from '../componentes/Mosaico'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
+import { IconoCodigoBarras } from '../componentes/iconos'
 import { Aviso, Boton, Cargando, Esqueleto, Etiqueta, Fallo, Vacio, cx } from '../componentes/ui'
 import { cuantosFiltros, escribirFiltros, leerFiltros } from '../estado/filtrosUrl'
 import {
@@ -146,6 +148,22 @@ export function Buscar() {
             enterKeyHint="search"
             className="min-h-[48px] min-w-[16rem] flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-base dark:border-neutral-600 dark:bg-neutral-800"
           />
+          {/* **El microfono, si el navegador sabe** (tarea 3): sin soporte no se dibuja, que es
+              la regla del encargo («no se dibuja y falla al pulsarlo: no se dibuja»). El
+              componente se niega a pintarse el solo, asi que aqui no hay condicion. */}
+          <Microfono alDictar={(dicho) => setTexto(dicho)} />
+          {/* Y el escaner (tarea 8), que tenia su pantalla desde antes pero **no se llegaba a
+              el desde el buscador**, que es donde se esta cuando se tiene el paquete en la
+              mano. Es un enlace, no un boton con camara dentro: la camara necesita HTTPS y
+              permiso, y eso ya lo pide su pantalla (que sabe decir que no). */}
+          <Link
+            to="/escaner"
+            aria-label="Escanear un código de barras"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+          >
+            <IconoCodigoBarras width={18} height={18} />
+            <span className="sr-only sm:not-sr-only">Escanear</span>
+          </Link>
           {puestos > 0 && (
             <Boton variante="normal" onClick={quitarFiltros}>
               Quitar {puestos} {puestos === 1 ? 'filtro' : 'filtros'}

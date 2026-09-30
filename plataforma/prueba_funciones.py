@@ -657,6 +657,51 @@ def main() -> int:
 
         # ------------------------------------------------------------ el buscador -----
         print("\n== el buscador: filtros, orden, vistas guardadas, recientes")
+        # ------------------------------------ el microfono y el escaner, en el buscador -----
+        # **La mitad de la comprobacion del microfono es que NO este.** La regla del encargo
+        # (tarea 3) es *«si el navegador no lo soporta, el boton no se dibuja: no se dibuja y
+        # falla al pulsarlo, no se dibuja»*. Chromium sin cabeza no trae `SpeechRecognition`,
+        # asi que lo primero se mide tal cual viene.
+        carga("/buscar")
+        comprueba(pagina.get_by_role("button", name="Buscar hablando").count() == 0,
+                  "sin soporte del navegador, el microfono no se dibuja")
+        # Y el escaner (tarea 8): su pantalla existia desde antes, pero **no se llegaba a ella
+        # desde el buscador**, que es donde se esta cuando se tiene el paquete en la mano.
+        camara = pagina.get_by_role("link", name="Escanear un código de barras")
+        comprueba(camara.count() == 1, "el buscador lleva al escaner")
+        if camara.count():
+            camara.first.click()
+            comprueba(espera(lambda: "/escaner" in pagina.url),
+                      f"y lleva a su pantalla ({pagina.url.rsplit('/', 1)[-1]})")
+        # Con soporte (un reconocedor de mentira, inyectado **antes** de que cargue la pagina)
+        # el viaje entero: se pulsa, se dice «leche entera», y sale la busqueda sin tocar nada
+        # mas. El reconocedor de verdad no se puede probar aqui -- hace falta un microfono y
+        # permiso --, pero lo que hace **esta** aplicacion con lo que le llegue, si.
+        ctx.add_init_script("""
+          class ReconocedorDeMentira {
+            constructor() { this.lang = ''; this.continuous = false; this.interimResults = false; }
+            start() {
+              if (this.onresult) {
+                this.onresult({results: [[{transcript: 'leche entera'}]]});
+              }
+              if (this.onend) this.onend();
+            }
+            stop() {} abort() {}
+          }
+          window.SpeechRecognition = ReconocedorDeMentira;
+        """)
+        carga("/buscar")
+        micro = pagina.get_by_role("button", name="Buscar hablando")
+        comprueba(micro.count() == 1, "y con soporte, el microfono si se dibuja")
+        if micro.count():
+            micro.first.click()
+            comprueba(
+                espera(lambda: pagina.get_by_label("Buscar producto").input_value()
+                       == "leche entera"),
+                "pulsarlo escribe lo que se ha dicho en el campo "
+                f"({pagina.get_by_label('Buscar producto').input_value()!r})")
+            comprueba(espera(lambda: pagina.locator("a[href^='/grupo/']").count() >= 1),
+                      "y de ahi salen resultados sin tocar nada mas")
         carga("/buscar?q=leche+entera")
         # **El orden, que no lo media nadie.** El control dice en que orden esta puesto, y
         # pulsar el que ya esta puesto le da la vuelta. Se comprueba lo unico que no se puede

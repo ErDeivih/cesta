@@ -164,8 +164,8 @@ Usuario, contrasena, y el nombre de la app. Nada mas: no hay registro, no hay
 
 **[hecho]** el buscador, los filtros de cadena, los resultados con foto, **el mosaico de
 habituales** (`componentes/Mosaico.tsx`, 23 sep 2026)
-**[falta]** la voz (tarea 3), el escaner en el buscador (tarea 8; el escaner tiene su
-propia pantalla desde antes)
+**[hecho] el 30 de septiembre de 2026: la voz** (tarea 3) y **el escaner dentro del buscador**
+(tarea 8; el escaner tiene su propia pantalla desde antes).
 
 ### Los resultados, en un movil: dos lineas, y el precio a la vista
 
@@ -345,13 +345,37 @@ con su barra de color.
     rota    "No llego a casa ahora mismo. Tu lista sigue disponible en la
              pestana Lista."           <- dice que si funciona
 
-### El microfono **[falta — tarea 3]**
+### El microfono **[hecho el 30 de septiembre de 2026]**
 
-`SpeechRecognition` del navegador. Rellena el campo de busqueda y ya. **No es un
-asistente.** Si el navegador no lo soporta, **el boton no se dibuja**. No se
-dibuja y falla al pulsarlo: no se dibuja.
+`SpeechRecognition` del navegador (`componentes/Microfono.tsx`). Rellena el campo de busqueda y
+ya. **No es un asistente.** Si el navegador no lo soporta, **el boton no se dibuja**: no se
+dibuja y falla al pulsarlo, no se dibuja.
 
-### El escaner **[falta — tarea 8]**
+    [ 🎤 ]   +  «Escuchando… habla y se escribe en el campo»
+    [ 🎤 ]   +  «No te he oído. Prueba otra vez o escribe.»
+
+Cinco decisiones, y ninguna es de adorno:
+
+  - **Sin soporte no se dibuja**, y se mira el constructor **antes** de pintar nada. En Chromium
+    sin cabeza no existe, y por eso la puerta puede comprobar lo mas importante de todo esto:
+    que el boton **no esta** (`prueba_funciones`, «sin soporte del navegador, el microfono no se
+    dibuja»).
+  - **Se probo el camino entero con un reconocedor de mentira**, inyectado en el navegador antes
+    de que cargue la pagina. El reconocedor de verdad no se puede probar sin microfono ni
+    permiso, pero **lo que hace la aplicacion con lo que le llega, si**: se pulsa, dice «leche
+    entera», el campo se llena y salen resultados sin tocar nada mas.
+  - **Una frase por pulsacion** (`continuous = false`). Esto rellena un campo de busqueda, no
+    transcribe una conversacion; con el microfono abierto hay que acordarse de cerrarlo, y eso
+    no se le puede pedir a alguien que esta de pie con una mano.
+  - **Lo que pasa se dice con palabras**, en un `role="status"`: un boton que cambia de color no
+    distingue «te estoy oyendo» de «no he entendido nada».
+  - **Al cambiar de pantalla se para** (`abort()` al desmontar). Un microfono abierto detras de
+    otra pantalla es lo ultimo que espera nadie.
+
+El texto se le pasa **tal cual** al buscador, sin corregirlo: de las faltas ya se encarga
+`catalogo.corregir`, que es quien sabe hacerlo.
+
+### El escaner **[hecho]**, y desde el 30 de septiembre de 2026 **tambien desde el buscador**
 
 Abre la camara a pantalla completa con un marco en el centro. Al reconocer un
 codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
@@ -359,6 +383,12 @@ codigo, vibra (`navigator.vibrate`, si existe) y abre la ficha del punto 6.
     sin camara o sin permiso   el boton NO SE DIBUJA
     sin HTTPS                  tampoco: getUserMedia no funciona sin el
     codigo desconocido         pantalla 3 del punto 6, con salida al buscador
+
+Su pantalla existia desde antes; lo que faltaba es que **se llegara a ella desde el buscador**,
+que es donde se esta cuando se tiene el paquete en la mano. Ahora hay un boton con el icono del
+codigo de barras al lado del campo, y es un **enlace** y no un boton con camara dentro: la camara
+necesita HTTPS y permiso, y eso ya lo pide la pantalla del escaner, que sabe decir que no. Lo
+comprueba la puerta: que el enlace esta y que lleva a `/escaner`.
 
 ---
 
