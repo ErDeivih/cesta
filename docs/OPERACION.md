@@ -479,6 +479,50 @@ cambia el alcance del proyecto.
 
 ---
 
+## Cuando el motor de Docker no arranca (30 de septiembre de 2026)
+
+La aplicacion entera vive en tres contenedores (`cesta-api-1`, `cesta-db-1`, `cesta-web-1`), y
+por debajo hay **WSL2**. Medido ese dia, despues de una manana de pasada, puertas y
+reconstrucciones, el motor se quedo mudo y esto es lo que se ve, en orden:
+
+    docker ps
+      error during connect: ... open //./pipe/dockerDesktopLinuxEngine: The system cannot find
+      the file specified.
+    wsl -l -v
+      Ubuntu        Stopped   2
+      docker-desktop Stopped  2
+    wsl -d Ubuntu -e /bin/true
+      wsl: Error interno.
+      Codigo de error: CreateInstance/CreateVm/ConfigureNetworking/0x8007054f
+      wsl: No se pudo configurar la red (networkingMode Mirrored), revirtiendo a networkingMode None.
+
+Y de paso, dos avisos que salen siempre y que **no son la causa** pero apuntan a lo mismo:
+
+    wsl: Clave 'wsl2.autoMemoryReclaim' desconocida en C:\Users\David\.wslconfig:22
+    wsl: Clave 'wsl2.sparseVhd' desconocida en C:\Users\David\.wslconfig:25
+
+Son claves de una version de WSL mas nueva que la instalada: la maquina tiene un `.wslconfig`
+que pide cosas que su WSL no conoce. **`wsl --update` (con permisos de administrador) lo
+arregla**, y merece la pena hacerlo antes de que pase en mal momento.
+
+**Lo que se intento, y no basto** (por orden, y ninguna necesita administrador):
+
+    & "$env:ProgramFiles\Docker\Docker\DockerCli.exe" -Shutdown   # apaga bien
+    Start-Process "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"   # y se vuelve a abrir
+    wsl --shutdown                                                # resetea el subsistema
+    wsl -d Ubuntu -e /bin/true                                    # levanta la VM de WSL2 a mano
+
+El error es de red de la VM (`ConfigureNetworking`), no de Docker: por eso reiniciar Docker
+Desktop no lo arregla. **Lo que hace falta es reiniciar Windows**, y despues `wsl --update`.
+
+Lo que **no** hay que hacer mientras tanto: tocar `data/`. La ingesta y las herramientas de
+linea de orden (`pipeline`, `emparejar`, `verificar_ingesta`, `pytest`) **no necesitan Docker**:
+solo la aplicacion servida, los contenedores y `prueba_e2e` (que levanta su propio PostgreSQL
+desechable en el 5434) lo necesitan. Con el motor parado se puede seguir midiendo el dato; lo
+que no se puede es medir la interfaz.
+
+---
+
 # Rehacer el pasado sin tocar la red (17 de septiembre de 2026)
 
 Dos herramientas, y la diferencia entre ellas importa.
