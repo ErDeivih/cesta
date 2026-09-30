@@ -464,7 +464,7 @@ reparto va debajo; la pregunta «¿y donde lo compro?» sigue contestada en la p
 (`Inicio`), que ademas es donde se hace antes de salir de casa. Medido despues del cambio: la
 primera linea de la lista esta a **661 px**, dentro de la banda.
 
-### Agrupar por pasillos **[falta — tarea 1]**
+### Agrupar por pasillos **[hecho]**, y este titulo decia que no
 
 Dentro de "Por coger", subtitulos por seccion, en el orden en que se recorre una
 tienda:
@@ -475,6 +475,13 @@ tienda:
 
 Lo que no tenga seccion va al final, bajo "otros". **No se inventa una seccion**
 para que no quede feo.
+
+Está hecho desde el 27 de septiembre de 2026 (`porPasillo` en `Cesta.tsx`, con el encabezado
+**pegado arriba** mientras dura su tanda) y **este titulo llevaba desde entonces diciendo
+`[falta]`**, contradiciendo a la propia cabecera del §3, que dice que ya no está en la lista de
+lo que falta. Es el mismo desfase doc-código que apareció con `novedades`, con el orden de los
+favoritos y con el panel. Lo comprueba `prueba_navegador` («el encabezado de pasillo se queda
+pegado»).
 
 ### Las novedades
 
@@ -736,16 +743,19 @@ Dos reglas mas que se ven en esta pantalla y que costaron una captura:
     sin alergenos    no se pone la fila. No se pone "sin alergenos conocidos",
                      que se lee como "no lleva" y no es lo que sabemos.
 
-### Las cuatro respuestas del escaner **[falta — tarea 8]**
+### Las cuatro respuestas del escaner **[hecho]**, y este titulo decia que no
 
-La misma hoja, entrando por codigo de barras:
+La misma hoja, entrando por codigo de barras, y las cuatro estan en `Escaner.tsx`:
 
     1  LO CONOZCO Y PUEDO COMPARAR   (42 %)
        "3,45 € aqui. En Alcampo 2,89 (-16 %)" + ficha + anadir
+       -> «aquí es donde más barato está»
 
     2  LO CONOZCO, UNA SOLA CADENA
        "Lo tengo en DIA a 3,45 €. No lo encuentro en las demas."
        No inventar una comparacion que no existe.
+       -> «No puedo comparar»: *«Solo tenemos este producto en una cadena, así que no hay
+          con qué compararlo. No es lo mismo que «he mirado y no hay nada más barato»*.
 
     3  NO LO CONOZCO                 (lo normal en Alcampo y Aldi)
        "No tengo este codigo. Puede ser marca propia de Alcampo o Aldi,
@@ -754,6 +764,15 @@ La misma hoja, entrando por codigo de barras:
 
     4  SIN NUTRICION                 (54 % de los que conozco)
        El precio se ensena igual. Donde iria la nota, "no lo se".
+       -> `NO_LO_SE` de `api/formato.ts`, nunca un cero ni una nota gris.
+
+Y **lo comprueba la puerta**: «un codigo conocido contesta con el producto» y «un codigo que no
+esta lo dice, en vez de callarse» (`prueba_funciones`), más el recorrido del escáner en
+`prueba_navegador`.
+
+Lo que sí sigue faltando de esta pantalla es **la nota nueva (tarea 9)**: la de 0 a 100 con su
+`de_que` (nutriscore, aditivos, ecológico), que `docs/API.md` tiene especificada y que necesita
+una capa de cálculo que hoy no existe. Donde iría, la pantalla ya dice «no lo sé».
 
 ---
 
@@ -782,8 +801,28 @@ el boton pone "Copialo". Nadie se queda sin el enlace.
 
 ## 8. El panel
 
-**[hecho]** cadenas, movimiento, marca propia, lo que falta por historico
-**[falta]** secciones (bloqueado por tarea 1 y 2), productos
+**[hecho] las diez pestanas.** El 30 de septiembre de 2026 se leyo esta linea contra la pantalla
+y estaba vieja: decia «[falta] secciones (bloqueado por tarea 1 y 2), productos», y las dos
+cosas estan cubiertas por pestanas que existen y que la puerta recorre una por una.
+
+| pestana | que contesta |
+|---|---|
+| **Hoy** | la ingesta de hoy: cadenas, precios movidos, alarmas |
+| **Dónde comprar** | dónde hacer la compra, **pasillo a pasillo**, y los productos donde más se nota |
+| **Cadenas** | quién gana y cuánto se mueve |
+| **Marcas** | marca propia contra marca, **con su aviso de calidad** |
+| **Histórico** | días guardados y qué análisis faltan, con fechas |
+| **Movidos** | lo que se ha movido hoy, producto a producto |
+| **Bajadas** | lo que más ha bajado, con la ventana y el «solo lo mío» |
+| **Índice** | el nivel de precios de cada cadena, encadenado, con los saltos |
+| **Posición** | en qué es cara cada cadena, **sección a sección** |
+| **Ofertas dudosas** | lo que el histórico no sostiene |
+
+**«Secciones» es `Posición` y `Dónde comprar`** (las dos miran el catálogo por pasillo, una para
+saber dónde comprar y otra para saber en qué se es caro), y **«productos» son `Movidos`,
+`Bajadas` y `Ofertas dudosas`** (las tres listan productos concretos con su antes y su ahora). Lo
+que el §8 daba por bloqueado por las tareas 1 y 2 -- el trabajo de pasillos -- está hecho desde
+el 27 de septiembre, y por eso esta linea se quedó mintiendo.
 
 Es para David, no para su madre, y por eso va en su propia pestana.
 
