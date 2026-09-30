@@ -9,6 +9,7 @@ en todas partes.
 """
 from projects.cesta.verificar_docs import (
     RAIZ,
+    _campos_de_la_matriz,
     _candidatos,
     _cita_viva,
     _citado,
@@ -206,3 +207,56 @@ def test_un_fichero_citado_por_su_final_vale():
     assert _existe_fichero("zzz_pipeline.py", indice) is True
     assert _existe_fichero("cesta/zzz_pipeline.py", indice) is True
     assert _existe_fichero("otra_carpeta/zzz_pipeline.py", indice) is False
+
+
+# --- Los campos de la matriz de paridad --------------------------------------
+# `docs/PARIDAD-CAMPOS.md` es lo que se lee antes de prometer una pantalla. Sus
+# porcentajes son una foto con fecha y esta bien que lo sean; sus nombres de campo
+# son columnas del contrato, y si una columna se renombra la matriz sigue
+# nombrando la vieja.
+
+_MATRIZ_DE_MENTIRA = """
+# Un documento cualquiera
+
+Texto de relleno antes de la tabla, que no es ni un campo ni nada.
+
+```
+campo                alcampo      aldi      TOTAL
+(productos)            23793      2065      52002
+------------------------------------------------------------------------------
+nombre                  100%      100%       100%
+peso_neto_g               0%        0%         9%
+descripcion               0%       63%        11%*
+```
+
+Y una segunda tabla, que no es la matriz y no se mira:
+
+```
+item_variety   item_treatment_type
+```
+"""
+
+
+def test_los_campos_de_la_matriz_se_sacan_de_la_primera_tabla():
+    assert _campos_de_la_matriz(_MATRIZ_DE_MENTIRA) == [
+        "nombre", "peso_neto_g", "descripcion"]
+
+
+def test_la_cabecera_el_separador_y_el_recuento_no_son_campos():
+    campos = _campos_de_la_matriz(_MATRIZ_DE_MENTIRA)
+    assert "campo" not in campos
+    assert "(productos)" not in campos
+    assert not any(set(c) <= {"-"} for c in campos)
+
+
+def test_un_campo_con_asterisco_se_lee_sin_el():
+    # `descripcion` va con asterisco en el documento, que es una nota al pie.
+    campos = _campos_de_la_matriz(_MATRIZ_DE_MENTIRA)
+    assert "descripcion" in campos
+    assert "descripcion*" not in campos
+
+
+def test_la_segunda_tabla_del_documento_no_se_mira():
+    # La tabla de los campos que publica cada web (`item_variety`) no habla del
+    # contrato: comprobarla contra gold daria avisos que no son fallos.
+    assert "item_variety" not in _campos_de_la_matriz(_MATRIZ_DE_MENTIRA)

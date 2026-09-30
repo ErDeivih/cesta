@@ -217,6 +217,22 @@ lo saltaba en silencio: el total decía 132 donde había 133. Ahora el dato que 
 pelado y el texto se compone al escribir el aviso. Es la misma lección de siempre en este
 proyecto: *una comprobación que no puede medir tiene que decirlo, no aprobar*.
 
+### La matriz de paridad: los campos, contra gold
+
+`docs/PARIDAD-CAMPOS.md` se presenta como «el documento que hay que mirar antes de prometer una
+funcionalidad», y sus porcentajes son una foto con fecha, que es como debe ser. Los **nombres** de
+sus campos no son una foto: son columnas del contrato, y si una columna se renombra la matriz
+sigue nombrando la vieja. La puerta saca los campos de la matriz y comprueba que sean columnas de
+`data/gold/grupos.parquet`: los 23 lo son, medido el 30 de septiembre de 2026. Se comprobó que el
+control caza un renombrado renombrando uno a mano en el documento —la puerta salió con 1 y el
+documento se restauró— y el instrumento suelto es `data/debug/paridad_campos.py`.
+
+**Solo se mira en esa dirección, y a propósito.** El primer intento avisaba además de las 31
+columnas de gold que la matriz no nombra —`fuente`, `grupo_id`, `calidad`, los `promo_*`—, y era
+un aviso falso: la matriz no promete ser el contrato entero, cuenta el dato que se puede tener de
+cada cadena. Treinta y un avisos que no son fallos es la forma más rápida de que nadie mire los
+avisos.
+
 ### Ninguna ruta de la API se queda sin que nadie la llame
 
 Medido el 30 de septiembre de 2026 con `data/debug/rutas_sin_prueba.py`: de las **46 rutas** de

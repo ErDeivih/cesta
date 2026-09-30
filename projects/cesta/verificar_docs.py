@@ -373,6 +373,70 @@ def comprobar_comandos() -> tuple[int, list[str]]:
     return total, rotos
 
 
+# --- Los campos de la matriz de paridad --------------------------------------
+# `docs/PARIDAD-CAMPOS.md` se presenta como "el documento que hay que mirar antes
+# de prometer una funcionalidad". Sus porcentajes son una foto con fecha, y esta
+# bien que lo sean. Los NOMBRES de sus campos no son una foto: son columnas del
+# contrato, y si una columna se renombra la matriz sigue nombrando la vieja. Eso
+# se comprueba, y es lo unico que se comprueba aqui: en la otra direccion no,
+# porque la matriz no promete ser el contrato entero -- no nombra `fuente`,
+# `grupo_id`, `calidad` ni los `promo_*`, y no tiene por que.
+MATRIZ = RAIZ / "docs" / "PARIDAD-CAMPOS.md"
+NO_SON_CAMPOS = {"campo", "(productos)"}
+
+
+def _campos_de_la_matriz(texto: str) -> list[str]:
+    """Los campos de la primera tabla del documento, sin cabecera ni separador.
+
+    La matriz es el **primer bloque cercado** del documento. La primera version
+    buscaba el primero despues de la linea 10, que valia para el documento de
+    verdad y dejaba la funcion devolviendo nada con cualquier otro texto: la
+    prueba con una matriz corta lo delato.
+    """
+    lineas = texto.splitlines()
+    try:
+        inicio = next(i for i, linea in enumerate(lineas) if linea.strip() == "```")
+        fin = next(i for i in range(inicio + 1, len(lineas)) if lineas[i].strip() == "```")
+    except StopIteration:
+        return []
+    fuera = []
+    for linea in lineas[inicio + 1:fin]:
+        t = linea.strip()
+        if not t or t.startswith("-") or set(t) <= {"-", " "}:
+            continue
+        campo = re.split(r"\s+", t)[0].rstrip("*")
+        if campo not in NO_SON_CAMPOS:
+            fuera.append(campo)
+    return fuera
+
+
+def _columnas_de_gold(ruta: Path) -> list[str]:
+    con = duckdb.connect()
+    return [c[0] for c in con.execute(
+        f"DESCRIBE SELECT * FROM '{ruta.as_posix()}'").fetchall()]
+
+
+def comprobar_campos() -> int:
+    """Los campos que nombra la matriz, contra las columnas de gold."""
+    ruta = config.DATA / "gold" / "grupos.parquet"
+    print()
+    if not ruta.exists() or not MATRIZ.exists():
+        print("Los campos de la matriz de paridad: sin gold no se pueden comprobar.")
+        return 0
+    campos = _campos_de_la_matriz(MATRIZ.read_text(encoding="utf-8"))
+    columnas = _columnas_de_gold(ruta)
+    faltan = [c for c in campos if c not in columnas]
+    print(f"Los campos de la matriz de docs/PARIDAD-CAMPOS.md: {len(campos)}")
+    if not faltan:
+        print("  ok    todos son columnas de gold")
+        return 0
+    print(f"  AVISO {len(faltan)} campo(s) que gold no tiene: {', '.join(faltan)}")
+    print("  O el campo se renombro, o se fue. La matriz es lo que se lee antes de")
+    print("  prometer una pantalla: si nombra un campo que no esta, promete con un")
+    print("  dato que no existe.")
+    return len(faltan)
+
+
 def _numeros() -> int:
     """Las cifras de los documentos contra el gold de hoy. Devuelve los avisos."""
     ruta = str(config.DATA / "gold" / "grupos.parquet").replace("\\", "/")
@@ -421,6 +485,7 @@ def _numeros() -> int:
 
 def main() -> int:
     problemas = _numeros()
+    problemas += comprobar_campos()
 
     # Las citas de codigo no dependen del gold, asi que se comprueban siempre
     # -- tambien cuando no hay datos, que es cuando mas documentos se escriben

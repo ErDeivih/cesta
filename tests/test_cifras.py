@@ -47,6 +47,14 @@ def test_las_cifras_escritas_son_las_que_el_verificador_va_a_buscar(gold, tmp_pa
     Si el escritor y el comprobador tuvieran cada uno su SQL acabarían midiendo
     cosas distintas y el aviso volvería sin que nada estuviera mal. Comparten
     tabla justo para que esta prueba no pueda pasar por casualidad.
+
+    Se llama a `_numeros` y no a `main` desde el 30 de septiembre de 2026: la
+    puerta comprueba además las citas de código, los comandos de los documentos y
+    los campos de `docs/PARIDAD-CAMPOS.md`, y esas tres miran los ficheros **de
+    verdad** del repositorio. Aquí el gold se sustituye por uno de juguete de doce
+    columnas, así que la matriz de paridad no cuadraría —con razón— y la prueba
+    fallaría por algo que no es lo suyo. Lo que cierra el círculo es `_numeros`,
+    que es la mitad que compara cifras contra el gold.
     """
     gold([{"fuente": "dia", "ean": "1", "grupo_id": 1},
           {"fuente": "aldi", "ean": "2", "grupo_id": 1},
@@ -56,7 +64,7 @@ def test_las_cifras_escritas_son_las_que_el_verificador_va_a_buscar(gold, tmp_pa
     monkeypatch.setattr(verificar_docs, "DOCS", [destino])
 
     assert cifras.main() == 0
-    assert verificar_docs.main() == 0, destino.read_text(encoding="utf-8")
+    assert verificar_docs._numeros() == 0, destino.read_text(encoding="utf-8")
 
 
 def test_el_documento_lleva_la_fecha_de_la_ejecucion(gold, tmp_path, monkeypatch):
