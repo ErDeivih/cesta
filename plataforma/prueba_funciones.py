@@ -567,9 +567,25 @@ def main() -> int:
         comprueba(sentidos == sorted(sentidos, key=lambda s: rango.get(s, 3))
                   and (bool(sentidos) or cuantos_favs == 0),
                   f"los favoritos van por lo que se han movido ({sentidos} de {cuantos_favs})")
-        comprueba(elegidos.get("baja") is None or elegidos.get("sube") is None
-                  or sentidos.index("baja") < sentidos.index("sube"),
-                  f"y el que ha bajado va antes que el que ha subido ({sentidos})")
+        # **Solo se puede mirar si la lista trae de los dos.** El grupo que la API ofrece como
+        # "el que mas ha subido" puede salir `igual` en la pantalla si su precio no se ha movido
+        # lo bastante, y entonces no hay nada que ordenar: la comprobacion daba por hecho que
+        # habria un `sube` y el 1 de octubre de 2026 la lista era `['baja', 'igual', 'igual',
+        # 'igual']`, asi que esto reventaba con `ValueError: 'sube' is not in list` **y se llevaba
+        # por delante la pasada entera** por un caso que no estaba. Es el mismo defecto que el del
+        # microfono y el de la primera linea: un instrumento que da por hecho los datos en vez de
+        # mirarlos.
+        #
+        # Va en **una sola** llamada a `comprueba`, y no en dos ramas: una pasada buena ejecuta
+        # una, asi que dos ramas dejarian el contador en 116 con 115 hechas y la puerta se quejaria
+        # del numero. Lo delato la prueba que fija esa invariante, el mismo dia que se escribio.
+        de_los_dos = "baja" in sentidos and "sube" in sentidos
+        comprueba(
+            sentidos.index("baja") < sentidos.index("sube") if de_los_dos
+            else all(s in rango for s in sentidos),
+            f"y el que ha bajado va antes que el que ha subido ({sentidos})" if de_los_dos
+            else f"hoy no hay una bajada y una subida que comparar ({sentidos}): se mira que "
+                 f"cada favorito diga uno de los tres sentidos que existen")
         dicen = sentidos + [t for t in pagina.locator("main").inner_text().split("\n")
                             if t.strip() in ("sin comparar", "ya no está")]
         comprueba(len(dicen) >= cuantos_favs,

@@ -339,7 +339,7 @@ def main() -> int:
         # forma de llegar, en la pantalla que esta a un toque de la barra de abajo.
         carga("/favoritos")
         texto = pagina.inner_text("main")
-        comprueba("Todavía no tienes favoritos" in texto,
+        comprueba("No sigues ningún producto" in texto,
                   "los favoritos, con una cuenta nueva, dicen que no hay ninguno")
         comprueba(pagina.get_by_role("link", name="Buscar un producto").count() == 1,
                   "y dan por donde empezar, en vez de un callejon sin salida")
