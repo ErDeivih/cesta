@@ -51,11 +51,11 @@ excluye_producto:
     motivo: "fuera en esta primera version: no es reposicion del hogar"
     terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo de fregar", "cubo de basura", "cubo con escurridor", 
                "vaso de cristal", "vasos de cristal", "vasos reutilizables", "taza de ceramica",
-               "fiambrera", "tupper", "pelota para", "cuerda para", "mordedor"]
+               "fiambrera", "tupper", "cuerda para", "mordedor"]
   - id: prod-electronica
     motivo: "electronica y electrodomesticos: se compran de vez en cuando, no son cesta"
     terminos: ["televisor", "television", "smart tv", "monitor", "auricular", "altavoz",
-               "tablet", "ordenador", "portatil", "movil", "smartphone", "consola",
+               "ordenador", "portatil", "movil", "smartphone", "consola",
                "frigorifico",
                "nevera", "aspirador", "ventilador", "batidora", "cafetera",
                "tostadora", "robot de cocina", "aire acondicionado", "calefactor"]
@@ -72,7 +72,7 @@ excluye_producto:
                "cortacesped", "escalera", "candado", "cerradura"]
   - id: prod-juguetes-deporte
     motivo: "juguetes, deporte y automovil"
-    terminos: ["juguete", "peluche", "puzzle", "bicicleta", "patinete", "balon",
+    terminos: ["juguete", "puzzle", "bicicleta", "patinete", "balon",
                "raqueta", "pesas", "esterilla de yoga", "tienda de campaña", "saco de dormir",
                "aceite de motor", "limpiaparabrisas", "casco de moto", "baca"]
   - id: prod-libros-papeleria
@@ -90,7 +90,7 @@ excluye_producto:
                "silla de coche", "capazo", "andador", "chuponera esterilizadora"]
   - id: prod-menaje-duradero
     motivo: "menaje que se compra una vez y dura (no es consumible)"
-    terminos: ["sarten", "olla", "cazo", "tabla de cortar", "escurridor",
+    terminos: ["olla", "cazo", "tabla de cortar", "escurridor",
                "fiambrera", "tupper", "vaso de cristal", 
                "escoba", "cubo de fregar"]
 
@@ -195,7 +195,8 @@ reglas_categoria:
     prioridad: 30
     estado: excluido
     motivo: "bazar duradero: no es cesta familiar"
-    segmentos: ["hogar-y-decoracion", "textil-hogar", "muebles",
+    segmentos: ["menaje", "cocina-y-menaje", "utensilios-de-cocina",
+                "hogar-y-decoracion", "textil-hogar", "muebles",
                 "jardin", "bricolaje", "herramientas",
                 "ferreteria", "automovil", "moto", "coche", "taller", "piscina", "camping",
                 "viaje", "maletas"]

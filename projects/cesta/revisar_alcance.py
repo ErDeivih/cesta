@@ -101,13 +101,20 @@ def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, st
         # curar en la politica: con `p in plano`, "pan" casa con "pantalon" y "leche" con "leche
         # solar", y la lista traia un delineador de ojos y una crema solar como si fueran comida.
         # Una lista asi no sirve para decidir si la politica esta bien.
-        palabras = [p for p in alcance._palabras(f"{nombre} {categoria}")
-                    if p not in _DE_FOLLETO]
-        if any(p in palabras for p in _NO_COMIDA):
+        # **Dos señales: comida en el nombre y pasillo de comida.** El aviso existe para decir
+        # "la politica esta excluyendo comida", y eso es justo lo que comprueba: que el nombre del
+        # producto hable de comida **y** que su pasillo sea de comida. Con una sola señal salian
+        # sesenta cosas que no lo son -- un batido suplemento con sabor a chocolate, un aceite
+        # para el pelo, caramelos de la tos -- y perseguirlas una a una era la via sin salida de
+        # las seis rondas anteriores. Seis palabras de folleto se filtran: dentro de un folleto
+        # cabe de todo.
+        del_nombre = [p for p in alcance._palabras(nombre or "") if p not in _DE_FOLLETO]
+        del_pasillo = [p for p in alcance._palabras(categoria or "") if p not in _DE_FOLLETO]
+        if any(p in del_nombre for p in _NO_COMIDA):
             continue
         # Y se dice **que palabra** lo disparo: sin eso, ajustar es adivinar.
-        disparo = next((p for p in _COMIDA if p in palabras), None)
-        if disparo:
+        disparo = next((p for p in _COMIDA if p in del_nombre), None)
+        if disparo and any(p in del_pasillo for p in _COMIDA):
             termino = d.evidencias.get("termino")
             fuera.append((fuente, nombre,
                           f"{d.regla_id}" + (f' por "{termino}"' if termino else "")
