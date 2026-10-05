@@ -49,7 +49,7 @@ excluye_producto:
   # vez y dura. Se declaran aqui para que se vean y se puedan cambiar en un sitio.
   - id: prod-fuera-en-esta-version
     motivo: "fuera en esta primera version: no es reposicion del hogar"
-    terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo de fregar", "cubo de basura", "cubo con escurridor", "cubos",
+    terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo de fregar", "cubo de basura", "cubo con escurridor", 
                "vaso de cristal", "vasos de cristal", "vasos reutilizables", "taza de ceramica",
                "fiambrera", "tupper", "pelota para", "cuerda para", "mordedor"]
   - id: prod-electronica
@@ -91,7 +91,7 @@ excluye_producto:
   - id: prod-menaje-duradero
     motivo: "menaje que se compra una vez y dura (no es consumible)"
     terminos: ["sarten", "olla", "cazo", "tabla de cortar", "escurridor",
-               "fiambrera", "tupper", "vaso de cristal", "cubo",
+               "fiambrera", "tupper", "vaso de cristal", 
                "escoba", "cubo de fregar"]
 
 # ---------------------------------------------------------------------------------------------

@@ -64,7 +64,9 @@ _COMIDA = ("fresco", "frescos", "fruta", "frutas", "verdura", "verduras", "horta
            "legumbre", "legumbres", "aceite", "aceites", "salsa", "salsas", "congelado",
            "congelados", "helado", "helados", "embutido", "embutidos", "charcuteria", "galletas",
            "cereales", "huevos", "pollo", "cerdo", "vacuno", "chocolate", "mermelada", "pan",
-           "azucar", "harina", "especias", "frutos")
+           # "frutos" a secas sacaba una vela de frutos rojos: se pide la pareja.
+           "frutos secos",
+           "azucar", "harina", "especias")
 
 # Palabras que **no** son comida aunque aparezcan en la misma frase o en un folleto de
 # alimentacion. Sin esto, el aviso marcaba champu, apositos y colonia.
@@ -72,7 +74,15 @@ _NO_COMIDA = ("champu", "jabon", "gel", "desodorante", "tinte", "crema", "serum"
               "detergente", "limpiador", "ambientador", "insecticida", "repelente", "suavizante",
               "lejia", "maquillaje", "solar", "aposito", "apositos", "compresa", "compresas",
               "panal", "panales", "perfume", "colonia", "mascarilla", "cepillo", "moldear", "papel",
-              "bolsas", "pilas", "recambio", "fregona", "estropajo", "bayeta", "tampones")
+              "bolsas", "pilas", "recambio", "fregona", "estropajo", "bayeta", "tampones",
+              "complemento", "barritas", "gominolas", "colageno", "spray", "higiene",
+              "auditiva", "aromatica", "vela", "velas")
+
+# Palabras de un folleto o de una campana: dentro de ellos cabe de todo, asi que no
+# sirven como señal de que algo sea comida.
+_DE_FOLLETO = frozenset({"folleto", "folletos", "promocion", "promociones", "oferta",
+                         "ofertas", "campana", "campanas", "stock", "fuera", "novedades",
+                         "recomendados", "destacados", "oportunidades"})
 
 
 def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
@@ -91,7 +101,8 @@ def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, st
         # curar en la politica: con `p in plano`, "pan" casa con "pantalon" y "leche" con "leche
         # solar", y la lista traia un delineador de ojos y una crema solar como si fueran comida.
         # Una lista asi no sirve para decidir si la politica esta bien.
-        palabras = alcance._palabras(f"{nombre} {categoria}")
+        palabras = [p for p in alcance._palabras(f"{nombre} {categoria}")
+                    if p not in _DE_FOLLETO]
         if any(p in palabras for p in _NO_COMIDA):
             continue
         # Y se dice **que palabra** lo disparo: sin eso, ajustar es adivinar.
