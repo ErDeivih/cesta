@@ -47,7 +47,20 @@ alimentarios nuevos.
 
 | | paquete | depende de | qué se ve cuando está | estado |
 |---|---|---|---|---|
-| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo; informe por fuente de incluidos/excluidos/pendientes | **EN CURSO** — política v1, clasificador, 19 pruebas de aceptación y ejecución seca funcionando. Medido sobre los 53.139 productos de hoy: **47.570 entran, 3.162 salen (6,0 %), 2.407 a revisar** (Alcampo 7,2 % fuera · Carrefour 6,9 % · Aldi 2,8 % · Mercadona 2,3 % · DIA 2,0 %). **Una rama excluida ya no veta una captura incluida** (`core/cobertura.py` filtra lo excluido antes de comparar ramas, con `revisar` dentro): es el arreglo que devuelve a Alcampo su captura. El informe de ramas ya dice **que 5 ramas no tienen un solo producto de cesta** (Hogar y Decoración de Alcampo 133 · Fitoterapia y parafarmacia de Mercadona 55 · Bricolaje de Alcampo 45 · Juguetes de Alcampo 35 · parafarmacia de Aldi 30): la primera es **exactamente la que tumbo la captura de Alcampo hoy**, y son las candidatas a dejar de pedirse. Falta aplicarlo dentro de los colectores y contar las peticiones realizadas |
+| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo; informe por fuente de incluidos/excluidos/pendientes | **EN CURSO** — política v1, clasificador, 19 pruebas de aceptación y ejecución seca funcionando. Medido sobre los 53.139 productos de hoy: **47.570 entran, 3.162 salen (6,0 %), 2.407 a revisar** (Alcampo 7,2 % fuera · Carrefour 6,9 % · Aldi 2,8 % · Mercadona 2,3 % · DIA 2,0 %). **Una rama excluida ya no veta una captura incluida** (`core/cobertura.py` filtra lo excluido antes de comparar ramas, con `revisar` dentro): es el arreglo que devuelve a Alcampo su captura. El informe de ramas ya dice **que 5 ramas no tienen un solo producto de cesta** (Hogar y Decoración de Alcampo 133 · Fitoterapia y parafarmacia de Mercadona 55 · Bricolaje de Alcampo 45 · Juguetes de Alcampo 35 · parafarmacia de Aldi 30): la primera es **exactamente la que tumbo la captura de Alcampo hoy**, y son las candidatas a dejar de pedirse. **Aplicado en Alcampo** (2026-10-05): el colector ya no pide las ramas sin producto de cesta, solo salta lo excluido (nunca lo que hay que revisar) y si el clasificador falla pide igual. Falta el resto de cadenas y contar las peticiones realizadas |
+
+### T01 en detalle, cadena por cadena (lo que pide el contrato)
+
+| cadena | qué hay que hacer | estado |
+|---|---|---|
+| **Alcampo** | filtrar árbol, categorías hijas y términos de búsqueda; volver a clasificar antes de bronze | **HECHO** (ramas que no se piden) · falta el filtro de producto |
+| **Aldi** | separar surtido de consumo y bazar temporal; **no consultar los detalles del bazar solo porque estén en el sitemap** (es donde más peticiones se ahorran) | PENDIENTE |
+| **Carrefour** | sitemap de supermercado, ramas permitidas y validación final de cada ficha: `supermercado` en la URL no garantiza consumible | PENDIENTE |
+| **DIA** | categorías permitidas y filtro de producto, manteniendo alimentación animal y hogar | PENDIENTE |
+| **Mercadona** | recorrer el surtido habitual y clasificar producto a producto, sin asumir que todo lo que publique un día pertenece al alcance | PENDIENTE |
+
+Y en las cinco, lo mismo: **una rama excluida nunca veta una captura incluida**, y el producto se
+clasifica otra vez antes de escribir bronze para no colar cruces de categoría.
 
 ### Entrega E2 — Identidad y ofertas
 
@@ -124,4 +137,6 @@ alimentarios nuevos.
 | fecha | qué se hizo |
 |---|---|
 | 2026-10-05 | **T01, primera mitad**: politica de alcance, clasificador y ejecucion seca. Tres rondas de medicion (11,8 % -> 9,0 % -> **6,0 % fuera**), con un fallo del emparejador encontrado por el camino (los terminos con guion no casaban). Y la regla "una rama excluida no veta una captura incluida", que es lo que desbloquea Alcampo |
+| 2026-10-05 | **T01 en Alcampo**: el colector deja de pedir las ramas sin producto de cesta (Hogar y Decoración, que fue la que tumbó la captura del día). Cuatro pruebas, con las dos cautelas: solo se salta lo excluido y ante la duda se pide |
+| 2026-10-05 | informe de ramas: 5 ramas sin un solo producto de cesta, la primera la de Alcampo con sus 133 |
 | 2026-10-05 | muro creado; auditoría de ChatGPT verificada en esta máquina (los 6 números y el instrumento, con su prueba) |
