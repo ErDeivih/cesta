@@ -993,6 +993,17 @@ def main() -> int:
                   f"de los {anterior} del ultimo bronze: eso no es un catalogo "
                   f"incompleto, es una captura rota. Se conserva el anterior")
     if df is not None and guardar:
+        # **Otra vez la clasificacion, ahora sobre el producto** (T01). Una rama puede
+        # estar bien y colar bazar dentro: esta es la ultima puerta antes del catalogo.
+        # Se quita lo EXCLUIDO y se deja lo que hay que REVISAR (media despensa de
+        # Alcampo sale en revisar, y quitarla seria perder comida). Es la misma funcion
+        # que usa el control de cobertura, para que colector y control no discrepen.
+        # Ver `docs/CESTA-DATOS-Y-COMPARACION.md` 1.
+        en_alcance = cobertura.solo_cesta_familiar(df)
+        if en_alcance.height != df.height:
+            print(f"  {df.height - en_alcance.height} productos fuera de alcance: no se "
+                  f"guardan", flush=True)
+            df = en_alcance
         write_parquet(df, "bronze", FUENTE)
         _apuntar_alcance()
         filas = df.to_dicts()
