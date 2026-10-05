@@ -36,7 +36,7 @@ from collections import Counter
 
 import polars as pl
 
-from core import config
+from core import alcance, config
 
 # Una rama tiene que ser lo bastante grande para que su desaparicion signifique
 # algo. Por debajo de esto, que un dia no salga es ruido normal del catalogo.
@@ -76,9 +76,35 @@ def _rama(categoria: str | None, fuente: str) -> str:
     return categoria.split("/")[0].strip()
 
 
-def por_rama(df: pl.DataFrame, fuente: str) -> dict[str, int]:
+def solo_cesta_familiar(df: pl.DataFrame) -> pl.DataFrame:
+    """Quita las filas que la politica de alcance excluye (`core/alcance.py`).
+
+    **Esto es lo que desbloquea una captura entera.** El 5 de octubre de 2026 el colector de
+    Alcampo rechazo 23.859 productos con 0 errores porque una rama de decoracion venia hundida
+    ("Hogar y Decoracion: 133 -> 31"). Esa rama es bazar, y con el contrato ni se pide: el
+    contrato lo dice con estas palabras, *"una rama excluida nunca veta una captura incluida"*.
+
+    **`revisar` se queda.** Lo que se quita es lo excluido; un producto sin clasificar puede ser
+    perfectamente comida (media despensa de Alcampo sale en `revisar`), y callarlo seria peor que
+    el ruido que ahorra.
+    """
+    if df.is_empty() or "categoria" not in df.columns:
+        return df
+    nombres = (df["nombre"].to_list() if "nombre" in df.columns else [""] * df.height)
+    categorias = df["categoria"].to_list()
+    excluida = [alcance.clasificar_alcance(n, c).estado == alcance.EXCLUIDO
+                for n, c in zip(nombres, categorias, strict=False)]
+    if not any(excluida):
+        return df
+    return df.filter(~pl.Series("excluida", excluida))
+
+
+def por_rama(df: pl.DataFrame, fuente: str, *, solo_alcance: bool = True) -> dict[str, int]:
+    """Cuantos productos hay en cada rama. De la cesta familiar, salvo que se pida todo."""
     if "categoria" not in df.columns or df.is_empty():
         return {}
+    if solo_alcance:
+        df = solo_cesta_familiar(df)
     return dict(Counter(_rama(c, fuente) for c in df["categoria"].to_list()))
 
 

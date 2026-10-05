@@ -34,6 +34,36 @@ def bronze(tmp_path, monkeypatch):
     return escribe
 
 
+def test_una_rama_de_bazar_hundida_no_veta_la_captura(bronze):
+    """El caso real de Alcampo del 5 de octubre de 2026.
+
+    La captura del dia traia 23.859 productos con 0 errores y se rechazo porque "Hogar y
+    Decoracion" caia de 133 a 31. Esa rama es bazar: con la politica de alcance ni se pide, y
+    **una rama excluida no puede vetar una captura incluida mejores alimentos**.
+    """
+    bronze({"Frescos": 2646, "Alimentacion": 3647, "Hogar y Decoracion": 133})
+    hoy = _frame({"Frescos": 2600, "Alimentacion": 3600, "Hogar y Decoracion": 31})
+
+    assert cobertura.revisa(hoy, "alcampo") == [], (
+        "el bazar hundido no puede rechazar la captura: es justo lo que dejo a Alcampo sin datos")
+
+    # Y el contraste, que es lo que demuestra que el filtro es lo que cambia el resultado: sin
+    # filtrar, el control **si** protesta.
+    sin_filtrar = cobertura.por_rama(hoy, "alcampo", solo_alcance=False)
+    antes_sin_filtrar = cobertura.por_rama(
+        _frame({"Frescos": 2646, "Alimentacion": 3647, "Hogar y Decoracion": 133}),
+        "alcampo", solo_alcance=False)
+    assert sin_filtrar["Hogar y Decoracion"] < antes_sin_filtrar["Hogar y Decoracion"] * 0.5
+
+
+def test_una_rama_de_comida_hundida_si_avisa(bronze):
+    """Lo otro: si lo que se hunde es comida, el control tiene que seguir protestando."""
+    bronze({"Frescos": 2646, "Alimentacion": 3647})
+    hoy = _frame({"Frescos": 91, "Alimentacion": 3600})
+    caidas = cobertura.revisa(hoy, "alcampo")
+    assert caidas, "una rama de frescos hundida tiene que seguir dando la voz"
+
+
 def test_el_caso_real_de_frescos(bronze):
     bronze({"Frescos": 2646, "Alimentacion": 3647, "Bebidas": 2394})
     hoy = _frame({"Frescos": 91, "Alimentacion": 3433, "Bebidas": 2419})

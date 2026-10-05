@@ -118,8 +118,30 @@ def version() -> int:
     return int(politica().get("version", 0))
 
 
+@lru_cache(maxsize=300_000)
+def _clasifica_memorizada(nombre: str, categoria: str) -> DecisionAlcance:
+    """`clasificar_alcance` sin contexto y memorizada. Ver `_clasifica`."""
+    return _clasifica(nombre, categoria, None)
+
+
 def clasificar_alcance(nombre: str | None, categoria: str | None = None,
                        contexto: dict | None = None) -> DecisionAlcance:
+    """El estado de un producto. Sin contexto, el resultado se memoriza.
+
+    Clasificar el catalogo son decenas de miles de llamadas, y 30 dias de capturas mas de un
+    millon: el mismo par (nombre, categoria) se repite dia tras dia, asi que la cache es lo que
+    hace que el control de cobertura tarde segundos y no minutos. Con `contexto` se calcula sin
+    memorizar (el contexto es un diccionario y no se puede usar como clave).
+
+    **No modificar las evidencias de lo que devuelve**: son las del cache.
+    """
+    if contexto is None:
+        return _clasifica_memorizada(nombre or "", categoria or "")
+    return _clasifica(nombre, categoria, contexto)
+
+
+def _clasifica(nombre: str | None, categoria: str | None,
+               contexto: dict | None) -> DecisionAlcance:
     """El estado de un producto dentro del catalogo familiar.
 
     `nombre` es el titulo tal y como lo publica la cadena y `categoria` su ruta de categoria
