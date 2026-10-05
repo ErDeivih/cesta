@@ -47,7 +47,7 @@ alimentarios nuevos.
 
 | | paquete | depende de | qué se ve cuando está | estado |
 |---|---|---|---|---|
-| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo; informe por fuente de incluidos/excluidos/pendientes | **EN CURSO** — política v1, clasificador, 19 pruebas de aceptación y ejecución seca funcionando. Medido sobre los 53.139 productos de hoy: **47.570 entran, 3.162 salen (6,0 %), 2.407 a revisar** (Alcampo 7,2 % fuera · Carrefour 6,9 % · Aldi 2,8 % · Mercadona 2,3 % · DIA 2,0 %). **Una rama excluida ya no veta una captura incluida** (`core/cobertura.py` filtra lo excluido antes de comparar ramas, con `revisar` dentro): es el arreglo que devuelve a Alcampo su captura. El informe de ramas ya dice **que 5 ramas no tienen un solo producto de cesta** (Hogar y Decoración de Alcampo 133 · Fitoterapia y parafarmacia de Mercadona 55 · Bricolaje de Alcampo 45 · Juguetes de Alcampo 35 · parafarmacia de Aldi 30): la primera es **exactamente la que tumbo la captura de Alcampo hoy**, y son las candidatas a dejar de pedirse. **Aplicado en Alcampo** (2026-10-05): el colector ya no pide las ramas sin producto de cesta, solo salta lo excluido (nunca lo que hay que revisar) y si el clasificador falla pide igual. Falta el resto de cadenas y contar las peticiones realizadas |
+| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo | **EN CURSO (parcial, y a propósito)**: política **v2** con la frontera que fijó el dueño, clasificador, ejecución seca y **comprobación de seguridad a CERO** (561 → 0). Aplicado en **Alcampo** (ramas y producto) y **Carrefour** (ramas). Catálogo: 53.139 → **47.541 entran, 3.191 salen (6,0 %), 2.407 a revisar**. Pendientes con condición concreta en `docs/CESTA-CIERRE-T01.md`: DIA y Mercadona (mismo patrón), **Aldi** (decisión del sitemap), el informe de peticiones realizadas y la verificación en vivo con la captura siguiente |
 
 ### T01 en detalle, cadena por cadena (lo que pide el contrato)
 
@@ -132,7 +132,33 @@ clasifica otra vez antes de escribir bronze para no colar cruces de categoría.
 
 ---
 
+## Por dónde seguir, en orden
+
+1. **T02 — Oferta trazable y publicación consistente** (lo siguiente, y antes que T03 por decisión
+   del dueño: corregir identidad sin conservar fechas, procedencia y versiones dejaría comparaciones
+   aparentemente exactas pero desactualizadas). Archivos: `schemas.py`, `storage.py`, `pipeline.py`,
+   `emparejar.py`, `catalogo.py`, `cifras.py`, `cobertura_diaria.py`. Y en paralelo, preparar reglas
+   y pruebas de identidad **sin** regenerar identificadores ni migrar listas.
+2. **T01, lo que falta**: DIA y Mercadona (mismo patrón que Carrefour; 2,0 % y 2,4 % fuera), la
+   decisión de Aldi (su sitemap no lleva categoría), el informe de peticiones realizadas, y la
+   verificación en vivo con la captura de Alcampo.
+3. Después, T03 a T10 en el orden del muro.
+
+**Lo que no se puede saltar** (está en el contrato y en las reglas de la casa): cada paquete cierra
+con sus pruebas de aceptación pasando, su plantilla rellenada, el muro actualizado y los documentos
+en el mismo commit que el código. Y la regla central: **elegir un producto concreto no autoriza
+sustituirlo por otro más barato.**
+
 ## Bitácora
+
+| fecha | qué se hizo |
+|---|---|
+| 2026-10-05 | **T01 completo en su parte verificable**: política v2 (frontera del dueño: menaje de un solo uso y bayetas dentro; bombillas, cubos, vasos reutilizables y juguetes de mascota fuera), clasificador con prioridad y palabras enteras, ejecución seca con informe por cadena y rama, y **comprobación de seguridad de comida excluida a cero** |
+| 2026-10-05 | **La política, dentro de los colectores**: Alcampo deja de pedir las ramas sin producto de cesta (Hogar y Decoración, la que tumbó su captura) y clasifica el producto antes de bronze; Carrefour no pide sus categorías de bazar |
+| 2026-10-05 | **Apagada y vuelta a enganchar**, en ese orden: la comprobación de seguridad encontró 561 alimentos excluidos, se desenganchó hasta arreglarlo, y se volvió a enganchar con el número a cero. Política y comprobación en el mismo commit que el código |
+| 2026-10-05 | Cierre parcial de T01 con su plantilla (`docs/CESTA-CIERRE-T01.md`), con lo que falta dicho con nombre y su condición |
+| 2026-10-05 | De paso: el aviso de cobertura diaria, el ratchet del barrido de Alcampo (de 7 a 30 días de ventana) y la regla de que una rama excluida no veta una captura incluida |
+
 
 | fecha | qué se hizo |
 |---|---|
