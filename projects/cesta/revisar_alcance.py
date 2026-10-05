@@ -1,15 +1,22 @@
 """Ejecucion seca del alcance: que pediria y que excluiria, sobre el catalogo que ya hay.
 
 **No toca la red.** Clasifica lo que ya esta en gold con la politica de `core/datos/alcance.yml`
-y dice, por cadena, cuantos productos entran, cuantos salen y por que. Es la primera mitad de
-T01: sirve para ver la lista real antes de cambiar nada, y para que la frontera del "consumible"
-se fije con numeros delante en vez de a ojo.
+y dice: por cadena, cuantos productos entran, cuantos salen y por que; y **que ramas se quedan
+sin un solo producto de cesta**, que son las candidatas a dejar de pedirse.
 
     uv run python -m projects.cesta.revisar_alcance
+    uv run python -m projects.cesta.revisar_alcance --ramas
     uv run python -m projects.cesta.revisar_alcance --fuente alcampo --ejemplos 12
 
-Cuando la politica este aplicada dentro de los colectores, esto sigue valiendo para comprobar el
-efecto de un cambio de reglas sin lanzar una pasada: es el mismo clasificador.
+La parte de "peticiones estimadas frente a realizadas" que pide la aceptacion de T01 (**informe
+por fuente de incluidos, excluidos, pendientes, peticiones estimadas y posteriormente
+realizadas**) se completa cuando la politica este **dentro** de los colectores: entonces lo
+realizado se puede contar de verdad. Aqui se estima lo que se dejaria de pedir, que es la mitad
+que se puede medir hoy y la que decide si merece la pena el cambio.
+
+Detalle deliberado: las ramas se leen del primer nivel de la categoria de cada cadena, con el
+mismo criterio que el control de cobertura (`core/cobertura._rama`), para que las cuentas de los
+dos instrumentos se puedan comparar.
 """
 from __future__ import annotations
 
@@ -20,6 +27,7 @@ from collections import Counter, defaultdict
 import duckdb
 
 from core import alcance, config
+from core.cobertura import _rama
 
 
 def _catalogo() -> list[tuple[str, str, str]]:
@@ -33,9 +41,26 @@ def _catalogo() -> list[tuple[str, str, str]]:
     return [(f, n or "", c) for f, n, c in filas]
 
 
+def ramas_sin_cesta(clasificados: dict[tuple[str, str], Counter]) -> list[tuple[str, str, int]]:
+    """Las ramas donde **no hay ni un solo producto incluido**: (fuente, rama, excluidos).
+
+    Son las candidatas a dejar de pedirse. Una rama con algo dentro no se toca: se sigue pidiendo
+    y se filtra producto a producto, porque una rama mixta casi nunca es basura entera.
+    """
+    fuera = []
+    for (fuente, rama), cuenta in sorted(clasificados.items()):
+        if cuenta[alcance.INCLUIDO] == 0 and cuenta[alcance.EXCLUIDO] > 0:
+            fuera.append((fuente, rama, cuenta[alcance.EXCLUIDO]))
+    return sorted(fuera, key=lambda t: -t[2])
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--fuente", help="mirar solo una cadena")
+    ap.add_argument("--ramas", action="store_true",
+                    help="ensenar las ramas que se quedan sin un solo producto de cesta")
+    ap.add_argument("--minimo", type=int, default=1,
+                    help="productos excluidos minimos para listar una rama")
     ap.add_argument("--ejemplos", type=int, default=6, help="ejemplos por cadena y estado")
     a = ap.parse_args()
 
@@ -54,16 +79,16 @@ def main() -> int:
           f"(sin tocar la red)\n".replace(",", "."))
 
     por_fuente: dict[str, Counter] = defaultdict(Counter)
-    motivos: dict[str, Counter] = defaultdict(Counter)
+    por_rama: dict[tuple[str, str], Counter] = defaultdict(Counter)
     ejemplos: dict[tuple[str, str], list[str]] = defaultdict(list)
     for fuente, nombre, categoria in filas:
         d = alcance.clasificar_alcance(nombre, categoria)
         por_fuente[fuente][d.estado] += 1
-        motivos[fuente][d.regla_id] += 1
+        por_rama[(fuente, _rama(categoria, fuente))][d.estado] += 1
         if len(ejemplos[(fuente, d.estado)]) < a.ejemplos:
             # **La regla y la palabra que decidieron**, no solo el resultado: sin esto, corregir
-            # un falso positivo es adivinar. Se aprendio en la primera pasada, con seis productos
-            # excluidos por una palabra del titulo que resultaba ser de comida.
+            # un falso positivo es adivinar (se aprendio con seis productos excluidos por una
+            # palabra del titulo que resultaba ser de comida).
             termino = d.evidencias.get("termino")
             ejemplos[(fuente, d.estado)].append(
                 f"{nombre[:50]}  [{categoria[:38]}]  <- {d.regla_id}"
@@ -83,23 +108,27 @@ def main() -> int:
           f"{total[alcance.REVISAR]:>11,}{100 * total[alcance.EXCLUIDO] / n:>9.1f}%"
           .replace(",", "."))
 
-    print("\n  por que salen (las cinco reglas que mas):")
-    todos = Counter()
-    for fuente in por_fuente:
-        todos.update(motivos[fuente])
-    reglas = {r["id"]: r for r in (alcance.politica().get("excluye_producto", [])
-                                   + alcance.politica().get("reglas_categoria", [])
-                                   + alcance.politica().get("revisar_categoria", []))}
-    for regla_id, cuantos in todos.most_common(5):
-        motivo = reglas.get(regla_id, {}).get("motivo", "")
-        print(f"    {cuantos:>7,}  {regla_id:<28} {motivo}".replace(",", "."))
+    sin_cesta = [t for t in ramas_sin_cesta(por_rama) if t[2] >= a.minimo]
+    if sin_cesta:
+        print(f"\n  ramas sin un solo producto de cesta ({len(sin_cesta)}): candidatas a dejar "
+              f"de pedirse")
+        for fuente, rama, cuantos in sin_cesta[:25]:
+            print(f"    {cuantos:>6,}  {fuente:<11} {rama[:60]}".replace(",", "."))
+        if len(sin_cesta) > 25:
+            print(f"    ... y {len(sin_cesta) - 25} mas")
+        print("    (las peticiones que se ahorran se contaran cuando la politica este dentro de "
+              "los colectores: es la parte de 'realizadas' de la aceptacion de T01)")
 
+    if a.ramas:
+        return 0
+
+    print()
     for fuente in sorted(por_fuente):
         for estado in (alcance.EXCLUIDO, alcance.REVISAR):
             lista = ejemplos.get((fuente, estado), [])
             if not lista:
                 continue
-            print(f"\n  {fuente} / {estado} (ejemplos):")
+            print(f"  {fuente} / {estado} (ejemplos):")
             for ejemplo in lista:
                 print(f"    {ejemplo}")
     return 0
