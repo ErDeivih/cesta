@@ -388,8 +388,8 @@ def hay_que_barrer(truncadas: int, filas: int, anterior: int | None, *,
                    margen: float = MARGEN_BAJON) -> bool:
     """¿Toca recorrer los terminos del buscador?
 
-    `anterior` es el tamaño de la **última captura buena** —el mayor de la última semana,
-    no la de ayer: ver `_filas_ultimo_bronze`—; `None` o 0 si es la primera.
+    `anterior` es el tamaño de la **última captura buena** —el mayor del último mes, no la
+    de ayer: ver `_filas_ultimo_bronze`—; `None` o 0 si es la primera.
     """
     if truncadas:
         return True
@@ -622,7 +622,18 @@ def _sin_repetidos(filas: list[dict]) -> tuple[list[dict], int]:
     return list(vistos.values()), len(filas) - len(vistos)
 
 
-def _filas_ultimo_bronze(dias: int = 7) -> int:
+# Cuantos dias hacia atras se busca la captura buena con la que comparar.
+#
+# **Eran siete, y la semana era el ratchet.** Ver `_filas_ultimo_bronze`: con una semana de
+# capturas cortas, el mayor de esos siete dias pasa a ser la referencia y el barrido que tapa el
+# agujero se apaga solo. Medido el 5 de octubre de 2026: Alcampo bajo de 37.019 filas de bronze a
+# 24.120 en dos dias, y despues a **cero durante cuatro**, y el barrido no se disparo ni una vez.
+# Treinta dias es la capacidad real de la cadena, no su ultima semana mala, y equivocarse cuesta
+# un barrido, que tiene presupuesto propio.
+DIAS_DE_REFERENCIA = 30
+
+
+def _filas_ultimo_bronze(dias: int = DIAS_DE_REFERENCIA) -> int:
     """El catálogo **más grande de los últimos días**: la última captura BUENA.
 
     No el más reciente, y eso es un arreglo del 26 de septiembre de 2026 con su medición
@@ -634,9 +645,17 @@ def _filas_ultimo_bronze(dias: int = 7) -> int:
     por construcción. Un catálogo degradado se convertía en la referencia contra la que
     medirse, y a partir de ahí todo parecía normal.
 
-    Lo bueno se mide hacia atrás: el mayor de la última semana. El día que el catálogo
-    encoja de verdad, esto lo notará una vez y luego la propia semana se habrá movido; y
-    si se equivoca, cuesta lo que dura el barrido, que tiene presupuesto propio.
+    Aquel arreglo miró **una semana** hacia atrás, y la semana resultó ser el mismo ratchet
+    con más paciencia: del 26 de septiembre al 1 de octubre todas las capturas estuvieron
+    entre 23.635 y 24.120, así que el mayor de los siete días era una captura corta y el
+    barrido tampoco se disparaba. Del 2 al 5 de octubre no hubo captura ninguna. Ahora se
+    mira **un mes** (`DIAS_DE_REFERENCIA`), que es lo que la cadena sabe traer de verdad.
+
+    Lo bueno se mide hacia atrás y con ventana larga. Si el catálogo encoje de verdad --una
+    cadena que deja de vender algo--, esto lo notará, y el barrido correrá sin encontrar
+    nada nuevo hasta que alguien lo mire: cuesta lo que dura el barrido, que tiene
+    presupuesto propio y se corta solo. Lo que no puede costar es quedarse una semana con
+    media tienda sin que nada lo diga.
     """
     carpeta = config.DATA / "bronze" / f"fuente={FUENTE}"
     partes = sorted(carpeta.glob("fecha=*/part.parquet"))[-dias:]

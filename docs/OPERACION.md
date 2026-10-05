@@ -623,10 +623,31 @@ primeras veces.
 **Lo que queda de aquello, y es lo siguiente que hay que mirar:** el propio colector decide si
 barrer las categorias que faltan comparando con `_filas_ultimo_bronze()`, que es **el maximo de
 las ultimas siete capturas**. Desde el momento en que una captura se queda corta, esa captura
-corta pasa a ser la vara y el barrido que recuperaria lo perdido **no se dispara nunca**: es el
-mismo ratchet que dejo a Alcampo degradado una semana, dentro del colector. La prueba
-`test_la_referencia_es_el_mayor_de_la_semana_y_no_el_ultimo` lleva desde el 5 de octubre en rojo
-diciendo exactamente eso.
+corta pasa a ser la vara y el barrido que recuperaria lo perdido **no se dispara nunca**:
+el mismo ratchet que dejo a Alcampo degradado una semana, dentro del colector.
+
+**Arreglado el mismo dia.** Aquella referencia miraba **una semana** hacia atras, y la semana
+resulto ser el ratchet con mas paciencia: del 26 de septiembre al 1 de octubre todas las capturas
+estuvieron entre 23.635 y 24.120, asi que el mayor de los siete dias era una captura corta. Ahora
+la ventana es de **30 dias** (`alcampo.DIAS_DE_REFERENCIA`), que es lo que la cadena sabe traer.
+Medido, con el bronze de verdad:
+
+    con 7 dias   la referencia son 24.120 filas   -> el barrido NO se dispara
+    con 30 dias  la referencia son 37.019 filas   -> el barrido SI se dispara
+
+Si el catalogo encoje de verdad --una cadena que deja de vender algo--, el barrido correra sin
+encontrar nada nuevo hasta que alguien lo mire; cuesta lo que dura el barrido, que tiene
+presupuesto propio y se corta solo. Lo que no puede costar es quedarse una semana con media
+tienda sin que nada lo diga. La prueba que lo fija es
+`test_la_referencia_es_el_mayor_de_la_ventana_y_no_el_ultimo`, y comprueba la ventana y el
+resultado sobre el bronze de verdad.
+
+**Y una cosa que la auditoria de secciones hace y conviene saber:** cuando aparece una rama nueva,
+la seccion la propone **a partir de su propia rama**, asi que un congelado que sigue el convenio
+--el pescado congelado va con el pescado-- sale propuesto con la seccion de `congelados`. Es lo
+que paso el 5 de octubre con `congelados/masas` de Carrefour, que DIA manda a `panaderia`: la
+prueba del convenio lo caza el mismo dia, y se corrige a mano en `core/datos/secciones.yml` (una
+linea), que es como esta pensado -- las dudosas salen para que las ponga una persona.
 
 ## La marca del dia: que quiere decir "ha ido bien"
 

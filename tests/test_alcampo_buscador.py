@@ -25,21 +25,31 @@ def test_un_bajon_manda_al_buscador():
     assert alcampo.hay_que_barrer(0, 23_924, 28_977) is True
 
 
-def test_la_referencia_es_el_mayor_de_la_semana_y_no_el_ultimo():
+def test_la_referencia_es_el_mayor_de_la_ventana_y_no_el_ultimo():
     """**El segundo fallo, el del 26 de septiembre de 2026.** Ese dia la condicion ya
     estaba arreglada y el barrido **volvio a no ejecutarse**: la referencia era el bronze
     mas reciente, que era el ya degradado de esa misma manana (23.932), asi que
     `filas < anterior * 0,95` era falso por construccion. Un catalogo degradado se
     convertia en la vara con la que medirse.
 
-    Se mira el bronze de verdad de este arbol: la ultima captura BUENA tiene que ser la de
-    28.977 (el 24 de septiembre), no la degradada de despues.
+    Se mira el bronze de verdad de este arbol: la ultima captura BUENA tiene que ser una
+    grande (37.019 el 24 de septiembre, 28.977 ya deduplicada), no la degradada de despues.
+
+    **Y el 1 de octubre se aprendio la segunda mitad**: aquel arreglo miraba solo **una
+    semana** hacia atras, y la semana resulto ser el mismo ratchet con mas paciencia. Del 26
+    de septiembre al 1 de octubre todas las capturas estuvieron entre 23.635 y 24.120, asi
+    que el mayor de los siete dias era una captura corta y el barrido tampoco se disparaba;
+    del 2 al 5 de octubre no hubo captura ninguna. La ventana es de **30 dias**
+    (`alcampo.DIAS_DE_REFERENCIA`).
     """
     with mock.patch.object(alcampo.config, "DATA", Path("data").resolve()):
         anterior = alcampo._filas_ultimo_bronze()
     if anterior == 0:
         import pytest
         pytest.skip("no hay bronze de Alcampo en este arbol")
+    assert alcampo.DIAS_DE_REFERENCIA >= 30, (
+        "con una semana de ventana, una semana mala se convierte en la referencia y el "
+        "barrido se apaga solo: es el ratchet que dejo a Alcampo degradado y luego a cero")
     assert anterior >= 28_000, (
         f"la ultima captura buena sale {anterior}: si ronda los 23.900, se esta mirando "
         f"la captura degradada y el barrido no se disparara")
