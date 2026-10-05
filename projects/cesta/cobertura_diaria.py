@@ -150,7 +150,11 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"  {fuente}: {v['filas']:,} filas contra {v['referencia']:,} de referencia "
                   f"({v['pct']}%).".replace(",", "."))
-    print("\nMira el registro del dia: `data/ejecuciones.log` dice que cadena fallo y por que.")
+    print("\n**Ojo con la diferencia, que no es lo mismo:** sin bronze puede querer decir dos cosas"
+          "\n  - que la cadena no trajo nada, o"
+          "\n  - que **si trajo y el propio colector no lo guardo**, porque el control de cobertura"
+          "\n    de dentro vio ramas enteras hundidas y prefirio conservar la captura anterior."
+          "\nEl registro del dia lo distingue: `data/ejecuciones.log`.")
     return 1
 
 
