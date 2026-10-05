@@ -153,14 +153,14 @@ reglas_categoria:
                 "bolsas-de-basura", "esponjas", "bayetas", "estropajos", "lejia",
                 "utensilios-de-limpieza", "insecticidas", "ambientadores", "ambientador"]
   - id: cat-mascotas
-    prioridad: 20
+    prioridad: 35
     estado: incluido
     familia: mascotas
     motivo: "alimentacion y consumibles de mascota"
     segmentos: ["mascotas", "perros", "gatos", "alimentacion-animal", "animales",
                 "pienso", "comida-para", "comida-para-perros", "comida-para-gatos"]
   - id: cat-bebe
-    prioridad: 20
+    prioridad: 35
     estado: incluido
     familia: bebe
     motivo: "alimentacion y consumibles de bebe"
@@ -196,7 +196,7 @@ reglas_categoria:
     estado: excluido
     motivo: "bazar duradero: no es cesta familiar"
     segmentos: ["hogar-y-decoracion", "textil-hogar", "decoracion", "muebles",
-                "menaje", "cocina-y-menaje", "jardin", "bricolaje", "herramientas",
+                "jardin", "bricolaje", "herramientas",
                 "ferreteria", "automovil", "moto", "coche", "taller", "piscina", "camping",
                 "viaje", "maletas"]
   - id: cat-excluye-electronica
@@ -218,7 +218,7 @@ reglas_categoria:
     estado: excluido
     motivo: "moda, textil y calzado: el contrato excluye textil y no es cesta"
     segmentos: ["moda", "moda-infantil", "ropa", "textil", "calzado", "zapatos", "zapatillas",
-                "complementos", "bolsos", "carteras", "joyas", "relojes", "gafas-de-sol",
+                "bolsos", "carteras", "joyas", "relojes", "gafas-de-sol",
                 "lenceria", "calcetines", "pijamas", "banadores"]
   - id: cat-excluye-salud
     prioridad: 30

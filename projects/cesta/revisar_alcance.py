@@ -56,14 +56,23 @@ def ramas_sin_cesta(clasificados: dict[tuple[str, str], Counter]) -> list[tuple[
 
 # Palabras que dicen "esto es comida". Sirven solo para vigilar la politica, no para clasificar:
 # si un producto **excluido** cae en una categoria de estas, algo se ha torcido.
-_COMIDA = ("fresco", "fruta", "verdura", "hortaliza", "carne", "carnicer", "pescad", "marisco",
-           "lacteo", "leche", "yogur", "queso", "panader", "bolleri", "despensa", "alimenta",
-           "bebida", "agua", "refresco", "zumo", "cafe", "conserva", "pasta", "arroz",
-           "legumbre", "aceite", "salsa", "congelado", "helado", "embutido", "charcuter")
-# Palabras que **no** son comida aunque su categoria sea un folleto de alimentacion.
-_NO_COMIDA = ("champu", "jabon", "gel", "desodorante", "tinte", "crema", "serum",
-              "champu", "pasta de dientes", "colutorio", "detergente", "limpiador",
-              "ambientador", "insecticida", "repelente", "suavizante", "lejia")
+_COMIDA = ("fresco", "frescos", "fruta", "frutas", "verdura", "verduras", "hortaliza",
+           "hortalizas", "carne", "carnes", "carniceria", "pescado", "pescaderia", "marisco",
+           "mariscos", "lacteo", "lacteos", "leche", "yogur", "yogures", "queso", "quesos",
+           "panaderia", "bolleria", "despensa", "alimentacion", "bebida", "bebidas", "refresco",
+           "refrescos", "zumo", "zumos", "cafe", "conserva", "conservas", "pasta", "arroz",
+           "legumbre", "legumbres", "aceite", "aceites", "salsa", "salsas", "congelado",
+           "congelados", "helado", "helados", "embutido", "embutidos", "charcuteria", "galletas",
+           "cereales", "huevos", "pollo", "cerdo", "vacuno", "chocolate", "mermelada", "pan",
+           "azucar", "harina", "especias", "frutos")
+
+# Palabras que **no** son comida aunque aparezcan en la misma frase o en un folleto de
+# alimentacion. Sin esto, el aviso marcaba champu, apositos y colonia.
+_NO_COMIDA = ("champu", "jabon", "gel", "desodorante", "tinte", "crema", "serum", "colutorio",
+              "detergente", "limpiador", "ambientador", "insecticida", "repelente", "suavizante",
+              "lejia", "maquillaje", "solar", "aposito", "apositos", "compresa", "compresas",
+              "panal", "panales", "perfume", "colonia", "mascarilla", "cepillo", "papel",
+              "bolsas", "pilas", "recambio", "fregona", "estropajo", "bayeta", "tampones")
 
 
 def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
