@@ -60,6 +60,10 @@ _COMIDA = ("fresco", "fruta", "verdura", "hortaliza", "carne", "carnicer", "pesc
            "lacteo", "leche", "yogur", "queso", "panader", "bolleri", "despensa", "alimenta",
            "bebida", "agua", "refresco", "zumo", "cafe", "conserva", "pasta", "arroz",
            "legumbre", "aceite", "salsa", "congelado", "helado", "embutido", "charcuter")
+# Palabras que **no** son comida aunque su categoria sea un folleto de alimentacion.
+_NO_COMIDA = ("champu", "jabon", "gel ", "desodorante", "tinte", "crema", "serum",
+              "champu", "pasta de dientes", "colutorio", "detergente", "limpiador",
+              "ambientador", "insecticida", "repelente", "suavizante", "lejia")
 
 
 def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
@@ -74,7 +78,11 @@ def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, st
         d = alcance.clasificar_alcance(nombre, categoria)
         if d.estado != alcance.EXCLUIDO:
             continue
-        plano = (categoria or "").lower()
+        # **El nombre tambien, no solo la categoria**: un champu dentro de un folleto de
+        # alimentacion esta bien excluido, y mirando solo la categoria salia como fallo.
+        plano = f"{nombre} {categoria}".lower()
+        if any(p in plano for p in _NO_COMIDA):
+            continue
         if any(p in plano for p in _COMIDA):
             termino = d.evidencias.get("termino")
             fuera.append((fuente, nombre,

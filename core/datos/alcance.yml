@@ -56,7 +56,7 @@ excluye_producto:
     motivo: "electronica y electrodomesticos: se compran de vez en cuando, no son cesta"
     terminos: ["televisor", "television", "smart tv", "monitor", "auricular", "altavoz",
                "tablet", "ordenador", "portatil", "movil", "smartphone", "consola",
-               "freidora de aire", "frigorifico",
+               "frigorifico",
                "nevera", "aspirador", "ventilador", "batidora", "cafetera",
                "tostadora", "robot de cocina", "aire acondicionado", "calefactor"]
   - id: prod-muebles-decoracion
@@ -68,7 +68,7 @@ excluye_producto:
   - id: prod-bricolaje-jardin
     motivo: "bricolaje, herramientas y jardin"
     terminos: ["taladro", "destornillador", "martillo", "llave inglesa", 
-               "pintura", "manguera", "maceta", "sustrato", "semillas",
+               "pintura", "manguera", "maceta", "sustrato", 
                "cortacesped", "escalera", "candado", "cerradura"]
   - id: prod-juguetes-deporte
     motivo: "juguetes, deporte y automovil"
@@ -92,7 +92,7 @@ excluye_producto:
     motivo: "menaje que se compra una vez y dura (no es consumible)"
     terminos: ["sarten", "olla", "cazo", "cuchillo", "tabla de cortar", "escurridor",
                "fiambrera", "tupper", "vaso de cristal", "cubo",
-               "fregona", "escoba", "cubo de fregar"]
+               "escoba", "cubo de fregar"]
 
 # ---------------------------------------------------------------------------------------------
 # 2. Reglas de categoria: se comparan con los **segmentos** de la ruta, no con el titulo.
@@ -149,7 +149,7 @@ reglas_categoria:
     familia: limpieza
     motivo: "limpieza y lavado del hogar"
     segmentos: ["limpieza", "drogueria-y-limpieza", "limpieza-y-hogar", "lavado",
-                "detergentes", "lavavajillas", "suavizantes", "limpiadores",
+                "detergentes", "suavizantes", "limpiadores",
                 "bolsas-de-basura", "esponjas", "bayetas", "estropajos", "lejia",
                 "utensilios-de-limpieza", "insecticidas", "ambientadores", "ambientador"]
   - id: cat-mascotas
@@ -247,7 +247,7 @@ incluye_producto:
     motivo: "menaje de un solo uso y material de limpieza que se repone"
     terminos: ["vasos de plastico", "vasos desechables", "platos de papel", "platos desechables",
                "cubiertos desechables", "cubiertos de plastico", "pajitas", "bolsas de basura",
-               "bolsas de congelacion", "papel de aluminio", "film transparente", "bayetas",
+               "bolsas de congelacion", "papel de aluminio", "film transparente", "bayetas", "recambio de fregona", "recambios de fregona",
                "estropajos", "friegasuelos", "pilas", "ambientador", "insecticida"]
   - id: prod-papel-higienico
     estado: incluido
