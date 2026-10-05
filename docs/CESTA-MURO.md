@@ -47,7 +47,7 @@ alimentarios nuevos.
 
 | | paquete | depende de | qué se ve cuando está | estado |
 |---|---|---|---|---|
-| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo; informe por fuente de incluidos/excluidos/pendientes | **PENDIENTE** |
+| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo; informe por fuente de incluidos/excluidos/pendientes | **EN CURSO** — política v1, clasificador, 19 pruebas de aceptación y ejecución seca funcionando. Medido sobre los 53.139 productos de hoy: **47.570 entran, 3.162 salen (6,0 %), 2.407 a revisar** (Alcampo 7,2 % fuera · Carrefour 6,9 % · Aldi 2,8 % · Mercadona 2,3 % · DIA 2,0 %). Falta aplicarlo dentro de los colectores y el informe de peticiones |
 
 ### Entrega E2 — Identidad y ofertas
 

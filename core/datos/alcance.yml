@@ -1,0 +1,263 @@
+# Politica de alcance del catalogo: que es "cesta familiar" y que no.
+#
+# Version 1, 5 de octubre de 2026. Contrato: docs/CESTA-DATOS-Y-COMPARACION.md 1.
+#
+# **Este fichero es la politica, y se versiona con el codigo.** No es el mapa de secciones
+# (`core/datos/secciones.yml`, que dice a que pasillo va cada cosa): esto dice si un producto
+# entra en el catalogo, y con que motivo.
+#
+# Como se compara, y de donde viene cada regla:
+#
+#   1. **Primero el producto, para excluir.** Un televisor dentro de "Promociones" sigue siendo
+#      un televisor: las reglas de `excluye_producto` ganan a la categoria.
+#   2. **Despues la categoria**, comparando **segmentos completos** de la ruta, nunca subcadenas
+#      del titulo: la leccion es que "panales" contiene "pan" y los pañales acabaron en panaderia.
+#      El texto se normaliza (minusculas, sin tildes) antes de comparar.
+#   3. **Despues el producto, para incluir** (pañal, arena de gato, papel higienico...), que es
+#      como se salvan los productos cuyo pasillo no es fiable.
+#   4. **Y si no hay nada claro, `revisar`.** Un caso sin clasificar no se recomienda solo.
+#
+# Estado: `incluido` | `excluido` | `revisar`
+#
+# **`prioridad`**, y por que hace falta: se miran TODOS los segmentos de la ruta y gana la regla
+# de prioridad mas alta (a igualdad, la mas especifica). Asi "Mascotas > Perros > Alimentacion"
+# es mascotas (20) y no despensa (20 por la hoja generica), porque la familia especifica manda;
+# y "Folleto y Promociones > Renueva la decoracion de tu hogar" es bazar (30) y no mixta (1),
+# que es el agujero por el que entro el bazar medido el 5 de octubre de 2026.
+
+version: 1
+
+# Familias del contrato. Son la unidad con la que se mide la cobertura y con la que despues se
+# compara de verdad (T03): "leche" es una familia, "Asturiana entera brik 1 l" es un articulo.
+familias:
+  frescos:              "Fruta, verdura, setas, huevos, carne, pescado y marisco"
+  despensa:             "Pan, galletas, cereales, pasta, arroz, legumbres, conservas, salsas, aceites, especias"
+  refrigerados:         "Lacteos, alternativas vegetales, embutidos, platos preparados, helados"
+  bebidas:              "Agua, cafe, te, zumos y refrescos"
+  alcohol:              "Cerveza, vino y licores (categoria ocultable, nunca mezclada con bebidas)"
+  higiene:              "Gel, champu, higiene bucal, desodorante, compresas, tampones, papel higienico, cosmetica"
+  limpieza:             "Detergentes, lavavajillas, limpiadores, bolsas de basura, esponjas y recambios"
+  bebe:                 "Alimentacion, pañales, toallitas y consumibles de cuidado"
+  mascotas:             "Comida, arena y consumibles de higiene"
+  hogar_consumible:     "Papel de cocina, servilletas, aluminio, film, bolsas alimentarias, pilas"
+
+# ---------------------------------------------------------------------------------------------
+# 1. Productos que se excluyen aunque su categoria diga otra cosa.
+# ---------------------------------------------------------------------------------------------
+excluye_producto:
+  - id: prod-electronica
+    motivo: "electronica y electrodomesticos: se compran de vez en cuando, no son cesta"
+    terminos: ["televisor", "television", "smart tv", "monitor", "auricular", "altavoz",
+               "tablet", "ordenador", "portatil", "movil", "smartphone", "consola",
+               "freidora de aire", "frigorifico",
+               "nevera", "aspirador", "ventilador", "batidora", "cafetera",
+               "tostadora", "robot de cocina", "aire acondicionado", "calefactor"]
+  - id: prod-muebles-decoracion
+    motivo: "muebles, decoracion y textil duradero"
+    terminos: ["sofa", "funda", "armario", "estanteria", "mesa", "silla", "colchon",
+               "cortina", "alfombra", "lampara", "espejo", "cuadro", "cojin", "manta",
+               "sabana", "toalla de bano", "edredon", "perchero", "zapatero"]
+  - id: prod-bricolaje-jardin
+    motivo: "bricolaje, herramientas y jardin"
+    terminos: ["taladro", "destornillador", "martillo", "llave inglesa", "sierra",
+               "pintura", "manguera", "maceta", "sustrato", "semillas",
+               "cortacesped", "escalera", "candado", "cerradura"]
+  - id: prod-juguetes-deporte
+    motivo: "juguetes, deporte y automovil"
+    terminos: ["juguete", "peluche", "puzzle", "bicicleta", "patinete", "balon",
+               "raqueta", "pesas", "esterilla de yoga", "tienda de campaña", "saco de dormir",
+               "aceite de motor", "limpiaparabrisas", "casco de moto", "baca"]
+  - id: prod-libros-papeleria
+    motivo: "libros y papeleria general (el cuaderno no es papel higienico)"
+    terminos: ["libro", "novela", "cuaderno", "boligrafo", "lapiz", "rotulador",
+               "cuaderno de", "agenda", "mochila escolar", "carpeta", "folios", "grapadora"]
+  - id: prod-accesorios-duraderos-mascota
+    motivo: "accesorios duraderos de mascota (la cama no se gasta como la comida)"
+    terminos: ["cama para", "cama de", "caseta", "transportin", "jaula", "comedero",
+               "bebedero", "correa", "collar", "arnes", "juguete para", "rascador",
+               "arenero", "fuente de agua para"]
+  - id: prod-accesorios-bebe-duraderos
+    motivo: "carrito, cuna y similares no son consumibles"
+    terminos: ["carrito", "cuna", "moises", "trona", "hamaca", "parque para bebe",
+               "silla de coche", "capazo", "andador", "chuponera esterilizadora"]
+  - id: prod-menaje-duradero
+    motivo: "menaje que se compra una vez y dura (no es consumible)"
+    terminos: ["sarten", "olla", "cazo", "cuchillo", "tabla de cortar", "escurridor",
+               "fiambrera", "tupper", "vaso de cristal", "jarra", "cubo",
+               "fregona", "escoba", "cubo de fregar"]
+
+# ---------------------------------------------------------------------------------------------
+# 2. Reglas de categoria: se comparan con los **segmentos** de la ruta, no con el titulo.
+# ---------------------------------------------------------------------------------------------
+reglas_categoria:
+  # ---- incluidos -----------------------------------------------------------------------------
+  - id: cat-frescos
+    prioridad: 20
+    estado: incluido
+    familia: frescos
+    motivo: "fruta, verdura, carne, pescado y huevos"
+    segmentos: ["frescos", "fruta", "frutas", "verdura", "verduras", "hortalizas", "setas",
+                "carne", "carniceria", "charcuteria", "pescado", "pescaderia", "marisco",
+                "huevos", "pollos", "aves", "conejo", "caza"]
+  - id: cat-despensa
+    prioridad: 20
+    estado: incluido
+    familia: despensa
+    motivo: "despensa seca"
+    segmentos: ["despensa", "alimentacion", "panaderia", "pan", "bolleria", "galletas",
+                "cereales", "pasta", "arroz", "legumbres", "harinas", "harina", "conservas",
+                "salsas", "aceites", "aceite", "especias", "azucar", "cacao", "cafe",
+                "infusiones", "dulces", "chocolates", "aperitivos", "snacks", "frutos secos",
+                "mermeladas", "miel", "postres", "reposteria", "masas", "turrones",
+                "polvorones", "panettones", "oktoberfest"]
+  - id: cat-refrigerados
+    prioridad: 20
+    estado: incluido
+    familia: refrigerados
+    motivo: "lacteos, refrigerados y congelados"
+    segmentos: ["lacteos", "leche", "yogures", "quesos", "huevos-y-lacteos", "refrigerados",
+                "embutidos", "jamon", "platos preparados", "congelados", "helados",
+                "pizzas", "vegetal", "bebidas-vegetales", "ahumados", "salazones"]
+  - id: cat-bebidas
+    prioridad: 20
+    estado: incluido
+    familia: bebidas
+    motivo: "agua, refrescos, zumos y bebidas calientes"
+    segmentos: ["bebidas", "agua", "aguas", "refrescos", "zumos", "cervezas", "vinos",
+                "vinagres", "licores", "espumosos", "sidras", "bebidas-energeticas",
+                "isotonicas", "batidos", "gaseosa"]
+  - id: cat-higiene
+    prioridad: 20
+    estado: incluido
+    familia: higiene
+    motivo: "higiene y cuidado personal de reposicion"
+    segmentos: ["higiene", "cuidado-personal", "cuidado-personal-e-higiene", "perfumeria",
+                "drogueria", "belleza", "cosmetica", "higiene-bucal", "gel", "champu",
+                "desodorante", "afeitado", "depilacion", "compresas", "tampones",
+                "papel-higienico", "pañales", "panales", "toallitas", "bebe"]
+  - id: cat-limpieza
+    prioridad: 20
+    estado: incluido
+    familia: limpieza
+    motivo: "limpieza y lavado del hogar"
+    segmentos: ["limpieza", "drogueria-y-limpieza", "limpieza-y-hogar", "lavado",
+                "detergentes", "lavavajillas", "suavizantes", "limpiadores",
+                "bolsas-de-basura", "esponjas", "bayetas", "estropajos", "lejia",
+                "utensilios-de-limpieza", "insecticidas", "ambientadores", "ambientador"]
+  - id: cat-mascotas
+    prioridad: 20
+    estado: incluido
+    familia: mascotas
+    motivo: "alimentacion y consumibles de mascota"
+    segmentos: ["mascotas", "perros", "gatos", "alimentacion-animal", "animales",
+                "pienso", "comida-para", "comida-para-perros", "comida-para-gatos"]
+  - id: cat-bebe
+    prioridad: 20
+    estado: incluido
+    familia: bebe
+    motivo: "alimentacion y consumibles de bebe"
+    segmentos: ["bebe", "bebes", "puericultura", "papillas", "potitos", "leche-de-continuacion"]
+  - id: cat-hogar-consumible
+    prioridad: 20
+    estado: incluido
+    familia: hogar_consumible
+    motivo: "consumible de cocina y de casa"
+    segmentos: ["papel-de-cocina", "servilletas", "aluminio", "film", "papel-film",
+                "bolsas-alimentarias", "pilas", "consumibles"]
+
+  - id: cat-limpieza-ropa
+    prioridad: 35
+    estado: incluido
+    familia: limpieza
+    motivo: "cuidado de la ropa es limpieza, no moda (suavizante, detergente, quitamanchas)"
+    segmentos: ["cuidado-de-la-ropa", "cuidado-de-la-ropa-y-lavado", "lavado", "suavizante",
+                "detergente", "quitamanchas", "lejia", "lavavajillas", "pastillas-lavadora"]
+  - id: cat-higiene-dermocosmetica
+    prioridad: 35
+    estado: incluido
+    familia: higiene
+    motivo: "cosmetica de reposicion, aunque la cadena la ponga en parafarmacia"
+    segmentos: ["dermocosmetica", "cosmetica", "facial", "crema-facial", "crema-hidratante",
+                "agua-micelar", "protector-solar", "maquillaje", "higiene-bucal",
+                "colutorio", "enjuague-bucal", "labial", "dermofarmacia",
+                "limpieza-y-hogar", "papel-de-cocina"]
+
+  # ---- excluidos -----------------------------------------------------------------------------
+  - id: cat-excluye-bazar
+    prioridad: 30
+    estado: excluido
+    motivo: "bazar duradero: no es cesta familiar"
+    segmentos: ["hogar-y-decoracion", "textil-hogar", "decoracion", "muebles",
+                "menaje", "cocina-y-menaje", "jardin", "bricolaje", "herramientas",
+                "ferreteria", "automovil", "moto", "coche", "taller", "piscina", "camping",
+                "viaje", "maletas"]
+  - id: cat-excluye-electronica
+    prioridad: 30
+    estado: excluido
+    motivo: "electronica y electrodomesticos"
+    segmentos: ["electronica", "electrodomesticos", "informatica", "telefonia", "television",
+                "sonido", "imagen", "climatizacion", "pequeno-electrodomestico",
+                "gran-electrodomestico"]
+  - id: cat-excluye-juguetes-deporte
+    prioridad: 30
+    estado: excluido
+    motivo: "juguetes, deporte y ocio"
+    segmentos: ["juguetes", "juguete", "ocio", "deporte", "deportes", "aire-libre",
+                "fitness", "bicicletas", "papeleria", "libros", "libreria", "escolar",
+                "oficina", "musica", "videojuegos", "fiestas", "disfraces"]
+  - id: cat-excluye-moda
+    prioridad: 30
+    estado: excluido
+    motivo: "moda, textil y calzado: el contrato excluye textil y no es cesta"
+    segmentos: ["moda", "moda-infantil", "ropa", "textil", "calzado", "zapatos", "zapatillas",
+                "complementos", "bolsos", "carteras", "joyas", "relojes", "gafas-de-sol",
+                "lenceria", "calcetines", "pijamas", "banadores"]
+  - id: cat-excluye-salud
+    prioridad: 30
+    estado: excluido
+    motivo: "medicamentos y finalidad medica: primera version fuera, se conserva la higiene comun"
+    segmentos: ["farmacia", "parafarmacia", "medicamentos", "botiquin", "ortopedia",
+                "optica", "audifonos"]
+  - id: cat-excluye-tabaco
+    prioridad: 30
+    estado: excluido
+    motivo: "tabaco y accesorios"
+    segmentos: ["tabaco", "estanco", "picadura", "vapeo", "vaper", "cigarrillos"]
+
+# ---------------------------------------------------------------------------------------------
+# 3. Reglas de producto para incluir, cuando el pasillo no es fiable o no lo hay.
+#    Aqui SI son terminos del titulo, pero se comparan **palabra a palabra**, nunca subcadenas.
+# ---------------------------------------------------------------------------------------------
+incluye_producto:
+  - id: prod-papel-higienico
+    estado: incluido
+    familia: higiene
+    motivo: "papel higienico es consumible (el cuaderno no)"
+    terminos: ["papel higienico", "papel de cocina", "servilletas", "toallitas",
+               "compresas", "tampones", "panales", "panal", "aluminio", "film transparente",
+               "bolsas de basura", "pilas"]
+  - id: prod-mascotas-consumible
+    estado: incluido
+    familia: mascotas
+    motivo: "comida y arena de mascota son consumibles"
+    terminos: ["arena para gato", "arena de gato", "pienso", "comida para perro",
+               "comida para gato", "alimento para perro", "alimento para gato",
+               "snacks para perro", "snacks para gato", "lata de perro", "lata de gato"]
+  - id: prod-bebe-consumible
+    estado: incluido
+    familia: bebe
+    motivo: "pañal y toallita son consumibles de bebe"
+    terminos: ["panal", "panales", "toallitas", "papilla", "potito", "leche de continuacion"]
+
+# ---------------------------------------------------------------------------------------------
+# 4. Categorias que existen en las cadenas y hay que mirar producto a producto.
+#    Una categoria mixta NO se excluye entera a ciegas: se revisa.
+# ---------------------------------------------------------------------------------------------
+revisar_categoria:
+  - id: rev-mixtas
+    prioridad: 1
+    motivo: "categoria mixta: mezcla consumible y bazar, se decide producto a producto"
+    segmentos: ["novedades-y-recomendados", "promociones", "ofertas", "folletos",
+                "oportunidades", "mas-vendidos", "recomendados", "destacados",
+                "sin-gluten", "ecologico", "vegano", "sin-lactosa", "integral",
+                "navidad", "surtido", "packs", "cestas", "regalo"]
