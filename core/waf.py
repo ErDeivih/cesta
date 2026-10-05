@@ -133,6 +133,31 @@ def es_reto(html: str) -> bool:
     return "gokuProps" in html or "awsWafCookieDomainList" in html
 
 
+def contenido(page, intentos: int = 4, espera_ms: int = 800) -> str | None:
+    """El HTML de la pagina, aguantando a que deje de navegar. `None` si no se pudo.
+
+    **Por que existe esto.** El 2 de octubre de 2026 el barrido de Alcampo se perdio entero, y
+    el 5 y el 6 tampoco trajo nada, por una carrera de una linea:
+
+        page.goto(url_prueba, wait_until="domcontentloaded")   # protegido
+        page.wait_for_timeout(3000)                            # "que el reto se resuelva"
+        html = page.content()                                  # <-- el reto recarga AQUI
+
+    Cuando el reto de AWS WAF recarga la pagina justo en ese momento, leer el contenido lanza
+    `Page.content: Unable to retrieve content because the page is navigating and changing the
+    content`; el `except` de arriba solo envolvia el `goto`, asi que la excepcion subia hasta el
+    colector, el dia terminaba con `FALLO: Error: Page.content` **y no se escribia ni una
+    captura**. Ahora se intenta unas cuantas veces y, si de verdad no se puede, se dice `None` y
+    el bucle de fuera vuelve a probar: quedarse sin leer una vez no puede costar el dia.
+    """
+    for _ in range(intentos):
+        try:
+            return page.content()
+        except Exception:  # noqa: BLE001
+            page.wait_for_timeout(espera_ms)
+    return None
+
+
 def guardada(dominio: str) -> dict:
     """Sesion en cache, si sigue fresca. {} si no hay o ha caducado."""
     f = _fichero(dominio)
@@ -196,8 +221,8 @@ def obtener(dominio: str, url_prueba: str, headless: bool | None = None,
                 page.wait_for_timeout(2000)
                 continue
             page.wait_for_timeout(3000)          # que el reto se resuelva y recargue
-            html = page.content()
-            if not es_reto(html) and "__INITIAL_STATE__" in html:
+            html = contenido(page)
+            if html and not es_reto(html) and "__INITIAL_STATE__" in html:
                 sesion = {
                     "cookies": {c["name"]: c["value"] for c in ctx.cookies()},
                     "user_agent": page.evaluate("navigator.userAgent"),

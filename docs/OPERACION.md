@@ -563,6 +563,89 @@ cambia el alcance del proyecto.
 
 ---
 
+## Cuanto trajo cada cadena (5 de octubre de 2026)
+
+Alcampo llevaba **cuatro dias sin traer una sola captura** y ningun control lo decia. La culpa no
+era de un control mal hecho, sino de que los tres que habia miran otra cosa:
+
+    verificar_ingesta    coherencia: lo que la cadena declaro, lo guardamos. Una cadena que no
+                         llega a declarar nada es coherente consigo misma y pasa sin una queja.
+    core.cobertura       rama por rama, contra el bronze ANTERIOR. Caza "hoy falta Frescos
+                         entero" (el caso del 18 de septiembre), pero una bajada lenta se mide
+                         contra si misma: desde que la captura de ayer viene corta, la corta es
+                         la vara.
+    core.cobertura       las cadenas que DIJERON ir bien y no dejaron fichero. Bien pensado, pero
+      .sin_bronze        deja fuera justo el otro caso: la cadena que falla y no escribe nada.
+
+Asi que se anadio **`projects/cesta/cobertura_diaria.py`**, que responde a una pregunta distinta:
+*¿trajo cada cadena lo que esa cadena sabe traer?*
+
+    uv run python -m projects.cesta.cobertura_diaria
+    uv run python -m projects.cesta.cobertura_diaria --fecha 2026-10-02 --dias 30
+
+  - **La referencia es el maximo de una ventana larga (30 dias), no la captura de ayer ni la
+    mediana.** Con la mediana, una captura corta se acaba dando por buena: es el error que dejo a
+    Alcampo degradado una semana. Se avisa por debajo del **90 %** de esa referencia.
+  - **Se mira cada cadena, haya dicho lo que haya dicho.** Que una cadena falle y no traiga nada
+    es lo que hay que ver, no una razon para no mirar.
+  - **Los huecos se cuentan contra el calendario**, no contra las fechas que hay en disco: un dia
+    sin fichero no aparece en la serie, y contarlo por la serie daba cero huecos justo en el caso
+    que esto existe para cazar.
+  - Corre en la cadena diaria (`run.py`, junto a `verificar_docs`) y **avisa sin hacer fallar el
+    dia**: una cadena corta no es motivo para no recoger las otras cuatro.
+
+Lo que dijo el primer dia que se ejecuto:
+
+    cadena          filas  referencia      %   huecos   veredicto
+    alcampo             0      37.019   0.0%     7/30   sin datos
+    aldi            2.536       2.306 110.0%     2/30   ok
+    carrefour      16.588      16.644  99.7%     7/30   ok
+    dia             5.855       5.880  99.6%     3/30   ok
+    mercadona       4.319       4.339  99.5%     2/30   ok
+
+### Y por que Alcampo llego a cero
+
+Del 24 de septiembre al 1 de octubre bajo de **37.019 a 24.120** filas de bronze -- sin que
+ninguna rama se hundiera de golpe, que es lo unico que miraba el control de entonces -- y del 2 al
+5 de octubre no trajo **nada**. El 2, el 3 y el 5 el registro dice:
+
+    === fallaron: alcampo ===
+    [alcampo] FALLO: Error: Page.content: Unable to retrieve content because the page is
+              navigating and changing the content
+
+Ese error era **nuestro** y de una linea: en `core/waf.py` se leia el contenido de la pagina justo
+despues de que el reto del WAF la recargara, el `except` solo envolvia el `goto`, y la excepcion
+subia hasta el colector: el dia terminaba en fallo **y sin escribir ni una captura**. Arreglado
+con `core.waf.contenido()`, que reintenta la lectura y, si de verdad no puede, devuelve `None`
+para que el bucle vuelva a probar. Dos pruebas lo fijan con una pagina de mentira que falla las
+primeras veces.
+
+**Lo que queda de aquello, y es lo siguiente que hay que mirar:** el propio colector decide si
+barrer las categorias que faltan comparando con `_filas_ultimo_bronze()`, que es **el maximo de
+las ultimas siete capturas**. Desde el momento en que una captura se queda corta, esa captura
+corta pasa a ser la vara y el barrido que recuperaria lo perdido **no se dispara nunca**: es el
+mismo ratchet que dejo a Alcampo degradado una semana, dentro del colector. La prueba
+`test_la_referencia_es_el_mayor_de_la_semana_y_no_el_ultimo` lleva desde el 5 de octubre en rojo
+diciendo exactamente eso.
+
+## La marca del dia: que quiere decir "ha ido bien"
+
+Dos ficheros distintos, y confundirlos cuesta una tarde:
+
+    data/ejecucion_en_curso.txt   lo escribe `run.py` al empezar y lo borra al terminar. Si sigue
+                                  ahi, la pasada anterior **no llego al final** (la mataron), y la
+                                  siguiente lo dice en voz alta.
+    data/ultima_ejecucion.txt     lo escribe `ejecutar.bat` **solo si el codigo de salida es 0**.
+                                  Es el que hace que la tarea no repita noventa minutos.
+
+Y "codigo 0" quiere decir **que el pipeline corrio con algo fresco dentro**, no que colaboraran las
+cinco cadenas: esta razonado en `run.py` (`_veredicto`) y es a proposito. Reintentar noventa
+minutos no arregla que un WAF corte, y con la regla contraria el dia no se marcaba nunca y la
+tarea lo reintentaba en cada inicio de sesion para acabar igual. **Un dia a medias se ve, no se
+reintenta**: en el resumen, en el registro (`=== fallaron: alcampo ===`) y ahora tambien en el
+aviso de cobertura. El comentario de `ejecutar.bat` decia "si el dia ha ido bien" a secas, que se
+lee como "si van las cinco" y no es eso; desde el 5 de octubre dice lo que quiere decir.
+
 ## Cuando el motor de Docker no arranca (30 de septiembre de 2026)
 
 La aplicacion entera vive en tres contenedores (`cesta-api-1`, `cesta-db-1`, `cesta-web-1`), y por

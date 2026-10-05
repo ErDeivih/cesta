@@ -305,6 +305,23 @@ def _main() -> int:
         except Exception as exc:  # noqa: BLE001
             print(f"[documentos] no se pudieron verificar: {exc}")
 
+        # **Cuanto trajo cada cadena, comparado con lo que esa cadena sabe traer.**
+        #
+        # Esto falta desde siempre y se noto el 5 de octubre de 2026: Alcampo llevaba **cuatro
+        # dias sin traer una sola captura** y ningun control lo decia. `verificar_ingesta`
+        # comprueba coherencia --lo que la cadena declaro, lo guardamos-- y una cadena que no
+        # llega a declarar nada es coherente consigo misma; y el control de cobertura que ya
+        # habia (`core/cobertura.py`) compara rama por rama contra el bronze **anterior**, asi
+        # que desde que una captura viene corta, la corta es la vara de medir. Alcampo bajo de
+        # 37.019 filas a 24.120 en dos dias sin que saltara nada.
+        #
+        # Avisa y no hace fallar el dia, como el de los documentos: una cadena corta no es
+        # motivo para no recoger las otras cuatro.
+        try:
+            importlib.import_module("projects.cesta.cobertura_diaria").main()
+        except Exception as exc:  # noqa: BLE001
+            print(f"[cobertura] no se pudo mirar cuanto trajo cada cadena: {exc}")
+
         # Las cadenas abren ramas nuevas cada semana y nadie se entera. El 21 de
         # septiembre de 2026 Carrefour trajo 24 productos en 16 categorias que
         # el dia anterior no existian -- sandias y melones, fiambre de pavo,

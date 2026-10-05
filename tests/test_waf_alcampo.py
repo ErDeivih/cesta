@@ -127,3 +127,48 @@ def test_el_colector_reintenta_con_la_misma_sesion_antes_del_navegador():
         "demasiados reintentos: la espera crece con cada corte y se topa en 90s, "
         "asi que insistir sale mas caro que renovar la sesion")
 
+
+# --- Leer la pagina mientras navega ------------------------------------------
+# El 2 de octubre de 2026 el barrido de Alcampo se perdio entero por esto: el reto del WAF
+# recarga la pagina justo cuando se lee, `page.content()` lanza
+# `Page.content: Unable to retrieve content because the page is navigating...`, el `except`
+# solo envolvia el `goto`, la excepcion subia al colector y el dia acababa con
+# `FALLO: Error: Page.content` y **sin una sola captura**. Y siguio pasando el 5 y el 6.
+
+
+class _PaginaQueSeAtasca:
+    """Una pagina que falla al leer las primeras veces y luego contesta."""
+
+    def __init__(self, fallos: int, html: str = "<html>datos</html>"):
+        self.fallos = fallos
+        self.html = html
+        self.lecturas = 0
+        self.esperas = 0
+
+    def content(self) -> str:
+        self.lecturas += 1
+        if self.lecturas <= self.fallos:
+            raise RuntimeError(
+                "Page.content: Unable to retrieve content because the page is navigating "
+                "and changing the content")
+        return self.html
+
+    def wait_for_timeout(self, _ms: int) -> None:
+        self.esperas += 1
+
+
+def test_una_pagina_que_navega_se_relee_hasta_que_deja():
+    """Dos fallos y a la tercera contesta: no se pierde la lectura."""
+    pagina = _PaginaQueSeAtasca(fallos=2)
+    assert waf.contenido(pagina) == "<html>datos</html>"
+    assert pagina.lecturas == 3, (
+        "no se reintento la lectura: una recarga del reto en el momento justo se lleva el dia")
+    assert pagina.esperas == 2, "reintentar sin esperar no deja que la navegacion termine"
+
+
+def test_si_de_verdad_no_se_puede_leer_se_dice_none():
+    """Y entonces el bucle de fuera vuelve a probar, en vez de reventar la pasada."""
+    pagina = _PaginaQueSeAtasca(fallos=99)
+    assert waf.contenido(pagina, intentos=3, espera_ms=0) is None
+    assert pagina.lecturas == 3
+

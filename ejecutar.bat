@@ -11,9 +11,14 @@ REM    5. el resumen de lo que ha quedado en disco
 REM
 REM  UNA VEZ AL DIA. Si ya se hizo hoy, sale enseguida sin tocar nada: asi la
 REM  tarea puede dispararse al encender el ordenador y en cada inicio de sesion
-REM  sin repetir noventa minutos de trabajo. La marca solo se escribe si el dia
-REM  ha ido bien, de modo que un dia fallido se reintenta al siguiente arranque
-REM  (y como el crudo ya esta en cache, ese reintento cuesta minutos, no horas).
+REM  sin repetir noventa minutos de trabajo. La marca se escribe cuando el dia ha
+REM  ido bien, y "bien" quiere decir **que el pipeline ha corrido con algo fresco
+REM  dentro**: que una cadena no colabore NO es un dia perdido, porque reintentar
+REM  noventa minutos no arregla que un WAF corte (ver `_veredicto` en
+REM  `projects/cesta/run.py`, y `docs/OPERACION.md`). Un dia a medias se ve en el
+REM  resumen y en el aviso de cobertura, que dice que cadena trajo menos de lo
+REM  suyo; lo que se reintenta al siguiente arranque es un dia que NO llego a
+REM  correr el pipeline (y como el crudo ya esta en cache, cuesta minutos).
 REM
 REM    ejecutar.bat            una vez al dia
 REM    ejecutar.bat --forzar   otra vez hoy, a proposito
@@ -52,11 +57,13 @@ echo ############ !HOY! %time% ############ >> "data\ejecuciones.log"
 uv run python -m projects.cesta.run >> "data\ejecuciones.log" 2>&1
 set CODIGO=!errorlevel!
 
-REM La marca solo se pone si el dia ha ido bien. Un dia a medias se reintenta.
+REM La marca se pone si el dia ha ido bien, y el codigo 0 significa "el pipeline corrio
+REM con algo fresco dentro" -- no "colaboraron las cinco cadenas". Si el pipeline no
+REM llego a correr, o no trajo nada fresco, se reintenta en el proximo arranque.
 if !CODIGO!==0 (
   echo !HOY!> "%MARCA%"
 ) else (
-  echo Cesta: la ejecucion de !HOY! termino con fallos; se reintentara en el proximo arranque.
+  echo Cesta: la ejecucion de !HOY! no llego a dejar el dato fresco; se reintentara en el proximo arranque.
 )
 
 powershell -NoProfile -Command "Get-Content 'data\ejecuciones.log' -Tail 24"
