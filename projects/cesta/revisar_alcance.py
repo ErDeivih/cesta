@@ -54,6 +54,35 @@ def ramas_sin_cesta(clasificados: dict[tuple[str, str], Counter]) -> list[tuple[
     return sorted(fuera, key=lambda t: -t[2])
 
 
+# Palabras que dicen "esto es comida". Sirven solo para vigilar la politica, no para clasificar:
+# si un producto **excluido** cae en una categoria de estas, algo se ha torcido.
+_COMIDA = ("fresco", "fruta", "verdura", "hortaliza", "carne", "carnicer", "pescad", "marisco",
+           "lacteo", "leche", "yogur", "queso", "panader", "bolleri", "despensa", "alimenta",
+           "bebida", "agua", "refresco", "zumo", "cafe", "conserva", "pasta", "arroz",
+           "legumbre", "aceite", "salsa", "congelado", "helado", "embutido", "charcuter")
+
+
+def alimentos_excluidos(filas: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    """Productos **excluidos** que caen en una categoria de comida: tendria que estar vacio.
+
+    Lo pidio el dueno antes de activar ninguna exclusion: *"reducir catalogo no debe eliminar
+    alimentos o consumibles validos"*. Si sale algo aqui, la politica se ha pasado de larga y se
+    ve **con el nombre y la regla delante**, no como un porcentaje.
+    """
+    fuera = []
+    for fuente, nombre, categoria in filas:
+        d = alcance.clasificar_alcance(nombre, categoria)
+        if d.estado != alcance.EXCLUIDO:
+            continue
+        plano = (categoria or "").lower()
+        if any(p in plano for p in _COMIDA):
+            termino = d.evidencias.get("termino")
+            fuera.append((fuente, nombre,
+                          f"{d.regla_id}" + (f' por "{termino}"' if termino else "")
+                          + f" :: {categoria[:48]}"))
+    return fuera
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--fuente", help="mirar solo una cadena")
@@ -62,6 +91,8 @@ def main() -> int:
     ap.add_argument("--minimo", type=int, default=1,
                     help="productos excluidos minimos para listar una rama")
     ap.add_argument("--ejemplos", type=int, default=6, help="ejemplos por cadena y estado")
+    ap.add_argument("--seguridad", action="store_true",
+                    help="solo la comprobacion de que no se excluye comida")
     a = ap.parse_args()
 
     try:
@@ -118,6 +149,17 @@ def main() -> int:
             print(f"    ... y {len(sin_cesta) - 25} mas")
         print("    (las peticiones que se ahorran se contaran cuando la politica este dentro de "
               "los colectores: es la parte de 'realizadas' de la aceptacion de T01)")
+
+    seguridad = alimentos_excluidos(filas)
+    print()
+    if seguridad:
+        print(f"  **AVISO: {len(seguridad)} alimentos o consumibles validos excluidos** "
+              f"(la politica se ha pasado):")
+        for fuente, nombre, detalle in seguridad[:12]:
+            print(f"    {fuente:<11} {nombre[:44]}  {detalle}")
+        print("    Reducir catalogo no puede llevarse comida: revisa la politica antes de seguir.")
+    else:
+        print("  seguridad: ningun producto de categoria de comida queda excluido")
 
     if a.ramas:
         return 0

@@ -172,31 +172,3 @@ def test_si_de_verdad_no_se_puede_leer_se_dice_none():
     assert waf.contenido(pagina, intentos=3, espera_ms=0) is None
     assert pagina.lecturas == 3
 
-
-# --- El alcance dentro del colector (T01) -----------------------------------------------------
-# El 5 de octubre de 2026 este colector rechazo 23.859 productos con 0 errores porque venia corta
-# una rama de decoracion. Con la politica de alcance esa rama no tiene ni un producto de cesta.
-
-
-def test_el_bazar_no_se_pide():
-    assert alcampo._fuera_de_alcance({"name": "Hogar y Decoración"}) is True
-    assert alcampo._fuera_de_alcance({"name": "Juguetes"}) is True
-    assert alcampo._fuera_de_alcance({"name": "Bricolaje"}) is True
-    assert alcampo._fuera_de_alcance({"rama": "Hogar y Decoración", "name": "Textil hogar"}) is True
-
-
-def test_la_comida_si_se_pide():
-    assert alcampo._fuera_de_alcance({"name": "Frescos"}) is False
-    assert alcampo._fuera_de_alcance({"rama": "Frescos", "name": "Pescaderia"}) is False
-    assert alcampo._fuera_de_alcance({"name": "Droguería"}) is False
-
-
-def test_lo_que_hay_que_revisar_tambien_se_pide():
-    """Media despensa de Alcampo sale en `revisar`: saltarsela seria perder comida."""
-    assert alcampo._fuera_de_alcance({"name": "Desayuno y Merienda"}) is False
-
-
-def test_si_no_se_sabe_se_pide_igual():
-    """Ante la duda, una peticion de mas es barata; perder la captura cuesta el dia."""
-    assert alcampo._fuera_de_alcance({}) is False
-    assert alcampo._fuera_de_alcance({"name": None, "rama": None}) is False

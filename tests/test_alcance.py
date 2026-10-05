@@ -135,3 +135,46 @@ def test_las_familias_del_contrato_estan_declaradas():
 ])
 def test_la_tabla_del_contrato(nombre, categoria, esperado):
     assert alcance.clasificar_alcance(nombre, categoria).estado == esperado
+
+
+# --- La frontera del consumible que decidio el dueno (5 de octubre de 2026) -------------------
+# El criterio es **la compra habitual y reposicion del hogar**, no la seccion donde la cadena
+# coloque el producto: por eso las pilas entran aunque vivan en bazar, y las bayetas entran aunque
+# no sean de un solo uso.
+
+
+@pytest.mark.parametrize("nombre, categoria", [
+    ("Pilas alcalinas AA 8 unidades", "Hogar > Pilas y cargadores"),
+    ("Bolsas de basura 30 l, 20 unidades", "Drogueria > Limpieza Hogar"),
+    ("Papel de cocina jumbo 2 rollos", "Drogueria > Limpieza Hogar"),
+    ("Servilletas de papel 100 unidades", "Hogar > Mesa"),
+    ("Insecticida hormigas 500 ml", "Drogueria > Limpieza Hogar"),
+    ("Ambientador automático naranjos", "Drogueria > Limpieza Hogar"),
+    ("Bayetas de microfibra 4 unidades", "Drogueria > Utensilios de limpieza"),
+    ("Vasos de plastico 50 unidades", "Hogar > Fiesta y desechables"),
+    ("Comida para perro adulto 3 kg", "Mascotas > Perros"),
+    ("Arena para gato aglomerante 10 l", "Mascotas > Gatos"),
+])
+def test_lo_que_se_repone_entra(nombre, categoria):
+    assert alcance.clasificar_alcance(nombre, categoria).estado == alcance.INCLUIDO
+
+
+@pytest.mark.parametrize("nombre, categoria", [
+    ("Bombilla LED 9 W casquillo E27", "Hogar > Iluminacion"),
+    ("Cubo de fregar con escurridor", "Hogar > Limpieza"),
+    ("Vasos de cristal 6 unidades", "Hogar > Mesa"),
+    ("Fiambrera hermética 1 l", "Hogar > Menaje"),
+    ("Juguete para perro hueso de goma", "Mascotas > Juguetes"),
+])
+def test_lo_que_dura_no_entra_en_esta_version(nombre, categoria):
+    assert alcance.clasificar_alcance(nombre, categoria).estado == alcance.EXCLUIDO
+
+
+def test_la_frontera_esta_versionada():
+    """El dueno lo pidio asi: configurable, versionada y con pruebas. Es decision de alcance, no
+    una definicion universal, y se cambia en un sitio."""
+    assert alcance.version() >= 2
+    ids = {r["id"] for r in alcance.politica()["incluye_producto"]}
+    ids |= {r["id"] for r in alcance.politica()["excluye_producto"]}
+    assert "prod-menaje-de-un-solo-uso" in ids
+    assert "prod-fuera-en-esta-version" in ids

@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import polars as pl
 
-from core import alcance, cobertura, config
+from core import cobertura, config
 from core.fetch import Fetcher, HTTPStatusError
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -228,41 +228,17 @@ def categorias(f: Fetcher) -> list[tuple[str, str]]:
     if not mapas:
         raise ValueError("el indice de sitemaps no contiene categorias")
     salida = []
-    saltadas = 0        # categorias de bazar no pedidas (T01)
     for numero, url in enumerate(mapas):
         xml = _sitemap(f, url, f"sitemap-categorias-{numero}")
         for categoria_url in _LOC.findall(xml):
             if m := _CATEGORIA.search(categoria_url):
-                # **El bazar no se pide** (T01). Ver `_fuera_de_alcance`.
-                if _fuera_de_alcance(m.group(1)):
-                    saltadas += 1
-                    continue
                 salida.append((m.group(2), m.group(1)))
-    if saltadas:
-        print(f"  {saltadas} categorias fuera de alcance: no se han pedido", flush=True)
     return list(dict.fromkeys(salida))
 
 
 # La categoria que Carrefour dice haber servido. Cuando no coincide con la que
 # pedimos, esa direccion ya no existe y nos han dado la de su padre.
 _SERVIDA = re.compile(r'"navigation_id":"(cat\d+)"')
-
-
-def _fuera_de_alcance(slug: str) -> bool:
-    """¿Esta categoria es bazar? Entonces ni se pide su listado.
-
-    La categoria viene en la URL (`supermercado/<slug>/<catId>/c`), asi que se sabe **antes** de
-    pedir el listado, que es justo lo que hace falta para ahorrar peticiones. Y con esto no puede
-    pasar lo de Alcampo el 5 de octubre de 2026: una rama de bazar hundida **no veta una captura
-    incluida**, porque ni entra en la captura.
-
-    **Solo se salta lo excluido, nunca lo que hay que revisar**, y si el clasificador falla se pide
-    igual: una peticion de mas es barata; perder una rama de comida, no.
-    """
-    try:
-        return alcance.clasificar_alcance(None, slug.replace("-", " ")).estado == alcance.EXCLUIDO
-    except Exception:  # noqa: BLE001
-        return False
 
 
 def listado(f: Fetcher, cat_id: str, slug: str = "c", offset: int = 0) -> dict:

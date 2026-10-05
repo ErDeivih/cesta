@@ -18,7 +18,7 @@ from urllib.parse import quote, urlencode
 
 import polars as pl
 
-from core import alcance, cobertura, config, waf
+from core import cobertura, config, waf
 from core.fetch import Fetcher, HTTPStatusError
 from core.promos import fechas
 from core.runlog import check_drift, log_run
@@ -680,25 +680,6 @@ def _fetcher() -> Fetcher:
                    cookies=s.get("cookies"), headers=cabeceras)
 
 
-def _fuera_de_alcance(cat: dict) -> bool:
-    """¿Esta rama es bazar? Entonces ni se pide.
-
-    El 5 de octubre de 2026 este colector **rechazo una captura de 23.859 productos con 0
-    errores** porque venia corta la rama "Hogar y Decoracion" (133 -> 31). Con la politica de
-    `core/datos/alcance.yml` esa rama no tiene ni un producto de cesta: 133 excluidos, 0
-    incluidos, medido con `revisar_alcance --ramas`.
-
-    **Solo lo excluido se salta, nunca lo que hay que revisar**: media despensa de Alcampo sale en
-    `revisar` y saltarsela seria perder comida. Y **si el clasificador falla, se pide igual**: una
-    peticion de mas es barata; perder la captura cuesta el dia entero.
-    """
-    try:
-        ruta = " > ".join(p for p in (cat.get("rama"), cat.get("name")) if p)
-        return alcance.clasificar_alcance(None, ruta).estado == alcance.EXCLUIDO
-    except Exception:  # noqa: BLE001
-        return False
-
-
 def main() -> int:
     t0, errores, filas, truncadas = time.monotonic(), 0, [], 0
     try:
@@ -727,7 +708,6 @@ def main() -> int:
         print(f"  {len(cats)} categorias iniciales")
 
     sin_estado, renovaciones, reintentos, detener = [], 0, 0, False
-    ramas_saltadas = 0        # ramas de bazar que no se han pedido (T01)
     pendientes = deque(cats)
     categorias_vistas: set[str] = set()
     while pendientes:
@@ -736,11 +716,6 @@ def main() -> int:
         if not cat_id or cat_id in categorias_vistas:
             continue
         categorias_vistas.add(cat_id)
-        # **El bazar no se pide.** Ver `_fuera_de_alcance`: evita que una rama de decoracion
-        # pueda tumbar el dia, y de paso se le ahorran peticiones al WAF.
-        if _fuera_de_alcance(cat):
-            ramas_saltadas += 1
-            continue
         while True:
             try:
                 productos, hijas = productos_de_categoria(f, cat)
@@ -843,9 +818,6 @@ def main() -> int:
         # justo al final cuando el silencio parece que el proceso se ha colgado,
         # porque quedan pocas categorias y ya no se llega al siguiente multiplo.
         paso = 50 if len(pendientes) > 60 else 10
-        if ramas_saltadas and len(categorias_vistas) % paso == 0:
-            print(f"  (y {ramas_saltadas} ramas fuera de alcance: no se han "
-                  f"pedido)", flush=True)
         if len(categorias_vistas) % paso == 0:
             print(f"  progreso: {len(categorias_vistas)} categorias vistas, "
                   f"{len(pendientes)} en cola, {len(filas)} productos", flush=True)
@@ -993,17 +965,6 @@ def main() -> int:
                   f"de los {anterior} del ultimo bronze: eso no es un catalogo "
                   f"incompleto, es una captura rota. Se conserva el anterior")
     if df is not None and guardar:
-        # **Otra vez la clasificacion, ahora sobre el producto** (T01). Una rama puede
-        # estar bien y colar bazar dentro: esta es la ultima puerta antes del catalogo.
-        # Se quita lo EXCLUIDO y se deja lo que hay que REVISAR (media despensa de
-        # Alcampo sale en revisar, y quitarla seria perder comida). Es la misma funcion
-        # que usa el control de cobertura, para que colector y control no discrepen.
-        # Ver `docs/CESTA-DATOS-Y-COMPARACION.md` 1.
-        en_alcance = cobertura.solo_cesta_familiar(df)
-        if en_alcance.height != df.height:
-            print(f"  {df.height - en_alcance.height} productos fuera de alcance: no se "
-                  f"guardan", flush=True)
-            df = en_alcance
         write_parquet(df, "bronze", FUENTE)
         _apuntar_alcance()
         filas = df.to_dicts()

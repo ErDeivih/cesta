@@ -25,7 +25,7 @@
 # y "Folleto y Promociones > Renueva la decoracion de tu hogar" es bazar (30) y no mixta (1),
 # que es el agujero por el que entro el bazar medido el 5 de octubre de 2026.
 
-version: 1
+version: 2
 
 # Familias del contrato. Son la unidad con la que se mide la cobertura y con la que despues se
 # compara de verdad (T03): "leche" es una familia, "Asturiana entera brik 1 l" es un articulo.
@@ -45,6 +45,13 @@ familias:
 # 1. Productos que se excluyen aunque su categoria diga otra cosa.
 # ---------------------------------------------------------------------------------------------
 excluye_producto:
+  # **Fuera en esta primera version** (decision del 5 de octubre de 2026): lo que se compra una
+  # vez y dura. Se declaran aqui para que se vean y se puedan cambiar en un sitio.
+  - id: prod-fuera-en-esta-version
+    motivo: "fuera en esta primera version: no es reposicion del hogar"
+    terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo", "cubos",
+               "vaso de cristal", "vasos de cristal", "vasos reutilizables", "taza de ceramica",
+               "fiambrera", "tupper", "pelota para", "cuerda para", "mordedor"]
   - id: prod-electronica
     motivo: "electronica y electrodomesticos: se compran de vez en cuando, no son cesta"
     terminos: ["televisor", "television", "smart tv", "monitor", "auricular", "altavoz",
@@ -54,12 +61,13 @@ excluye_producto:
                "tostadora", "robot de cocina", "aire acondicionado", "calefactor"]
   - id: prod-muebles-decoracion
     motivo: "muebles, decoracion y textil duradero"
-    terminos: ["sofa", "funda", "armario", "estanteria", "mesa", "silla", "colchon",
-               "cortina", "alfombra", "lampara", "espejo", "cuadro", "cojin", "manta",
-               "sabana", "toalla de bano", "edredon", "perchero", "zapatero"]
+    # Sin sustantivos sueltos que choquen con comida: "mesa" excluia el vino de mesa y "manta" el pescado a la manta. El mueble ya lo excluye su rama, que es la señal fiable.
+    terminos: ["sofa", "funda", "armario", "estanteria", "silla", "colchon",
+               "cortina", "alfombra", "lampara", "cojin", "manta",
+               "toalla de bano", "edredon", "perchero", "zapatero"]
   - id: prod-bricolaje-jardin
     motivo: "bricolaje, herramientas y jardin"
-    terminos: ["taladro", "destornillador", "martillo", "llave inglesa", "sierra",
+    terminos: ["taladro", "destornillador", "martillo", "llave inglesa", 
                "pintura", "manguera", "maceta", "sustrato", "semillas",
                "cortacesped", "escalera", "candado", "cerradura"]
   - id: prod-juguetes-deporte
@@ -78,12 +86,12 @@ excluye_producto:
                "arenero", "fuente de agua para"]
   - id: prod-accesorios-bebe-duraderos
     motivo: "carrito, cuna y similares no son consumibles"
-    terminos: ["carrito", "cuna", "moises", "trona", "hamaca", "parque para bebe",
+    terminos: ["carrito", "moises", "cuna de bebe", "cuna para bebe", "cuna colecho", "trona", "hamaca", "parque para bebe",
                "silla de coche", "capazo", "andador", "chuponera esterilizadora"]
   - id: prod-menaje-duradero
     motivo: "menaje que se compra una vez y dura (no es consumible)"
     terminos: ["sarten", "olla", "cazo", "cuchillo", "tabla de cortar", "escurridor",
-               "fiambrera", "tupper", "vaso de cristal", "jarra", "cubo",
+               "fiambrera", "tupper", "vaso de cristal", "cubo",
                "fregona", "escoba", "cubo de fregar"]
 
 # ---------------------------------------------------------------------------------------------
@@ -229,6 +237,18 @@ reglas_categoria:
 #    Aqui SI son terminos del titulo, pero se comparan **palabra a palabra**, nunca subcadenas.
 # ---------------------------------------------------------------------------------------------
 incluye_producto:
+  # **Menaje de un solo uso y material de limpieza que se repone** (decision del 5 de octubre de
+  # 2026). Lo de un solo uso se gasta; la bayeta y el estropajo no son de un solo uso pero se
+  # reponen igual, y por eso entran. La frontera es "compra habitual y reposicion del hogar", no
+  # la seccion donde la cadena lo coloque: las pilas estan aqui aunque vivan en bazar.
+  - id: prod-menaje-de-un-solo-uso
+    estado: incluido
+    familia: hogar_consumible
+    motivo: "menaje de un solo uso y material de limpieza que se repone"
+    terminos: ["vasos de plastico", "vasos desechables", "platos de papel", "platos desechables",
+               "cubiertos desechables", "cubiertos de plastico", "pajitas", "bolsas de basura",
+               "bolsas de congelacion", "papel de aluminio", "film transparente", "bayetas",
+               "estropajos", "friegasuelos", "pilas", "ambientador", "insecticida"]
   - id: prod-papel-higienico
     estado: incluido
     familia: higiene
