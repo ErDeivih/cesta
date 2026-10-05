@@ -49,7 +49,7 @@ excluye_producto:
   # vez y dura. Se declaran aqui para que se vean y se puedan cambiar en un sitio.
   - id: prod-fuera-en-esta-version
     motivo: "fuera en esta primera version: no es reposicion del hogar"
-    terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo", "cubos",
+    terminos: ["bombilla", "bombillas", "tubo led", "regleta de enchufes", "cubo de fregar", "cubo de basura", "cubo con escurridor", "cubos",
                "vaso de cristal", "vasos de cristal", "vasos reutilizables", "taza de ceramica",
                "fiambrera", "tupper", "pelota para", "cuerda para", "mordedor"]
   - id: prod-electronica
@@ -77,7 +77,7 @@ excluye_producto:
                "aceite de motor", "limpiaparabrisas", "casco de moto", "baca"]
   - id: prod-libros-papeleria
     motivo: "libros y papeleria general (el cuaderno no es papel higienico)"
-    terminos: ["libro", "novela", "cuaderno", "boligrafo", "lapiz", "rotulador",
+    terminos: ["novela", "cuaderno", "boligrafo", "lapiz", "rotulador",
                "cuaderno de", "agenda", "mochila escolar", "carpeta", "folios", "grapadora"]
   - id: prod-accesorios-duraderos-mascota
     motivo: "accesorios duraderos de mascota (la cama no se gasta como la comida)"
@@ -90,7 +90,7 @@ excluye_producto:
                "silla de coche", "capazo", "andador", "chuponera esterilizadora"]
   - id: prod-menaje-duradero
     motivo: "menaje que se compra una vez y dura (no es consumible)"
-    terminos: ["sarten", "olla", "cazo", "cuchillo", "tabla de cortar", "escurridor",
+    terminos: ["sarten", "olla", "cazo", "tabla de cortar", "escurridor",
                "fiambrera", "tupper", "vaso de cristal", "cubo",
                "escoba", "cubo de fregar"]
 
@@ -195,7 +195,7 @@ reglas_categoria:
     prioridad: 30
     estado: excluido
     motivo: "bazar duradero: no es cesta familiar"
-    segmentos: ["hogar-y-decoracion", "textil-hogar", "decoracion", "muebles",
+    segmentos: ["hogar-y-decoracion", "textil-hogar", "muebles",
                 "jardin", "bricolaje", "herramientas",
                 "ferreteria", "automovil", "moto", "coche", "taller", "piscina", "camping",
                 "viaje", "maletas"]

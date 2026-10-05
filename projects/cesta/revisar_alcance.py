@@ -71,7 +71,7 @@ _COMIDA = ("fresco", "frescos", "fruta", "frutas", "verdura", "verduras", "horta
 _NO_COMIDA = ("champu", "jabon", "gel", "desodorante", "tinte", "crema", "serum", "colutorio",
               "detergente", "limpiador", "ambientador", "insecticida", "repelente", "suavizante",
               "lejia", "maquillaje", "solar", "aposito", "apositos", "compresa", "compresas",
-              "panal", "panales", "perfume", "colonia", "mascarilla", "cepillo", "papel",
+              "panal", "panales", "perfume", "colonia", "mascarilla", "cepillo", "moldear", "papel",
               "bolsas", "pilas", "recambio", "fregona", "estropajo", "bayeta", "tampones")
 
 
