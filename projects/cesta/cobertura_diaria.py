@@ -105,13 +105,21 @@ def veredicto(serie: dict[str, int], hoy: str, dias: int = DIAS_DE_VENTANA,
             "dias_sin_datos": dias_sin_datos, "veredicto": estado}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    """`argv` explicito para poder llamarlo desde la cadena diaria sin leer sus argumentos.
+
+    **Esto no es adorno.** En `run.py` se llama asi: `...cobertura_diaria").main([])`. Con un
+    `main()` a secas, `argparse` leeria el `sys.argv` de `run.py`, y un argumento que no conociera
+    lanzaria `SystemExit` -- que **no** es una `Exception`, asi que el `except` de la cadena no lo
+    cogería y se llevaria por delante la pasada entera. Un aviso que puede tumbar el dia deja de
+    ser un aviso.
+    """
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--fecha", help="el dia a mirar (por defecto, hoy)")
     ap.add_argument("--dias", type=int, default=DIAS_DE_VENTANA,
                     help="tamano de la ventana con la que se compara")
     ap.add_argument("--minimo-pct", type=float, default=MINIMO_PCT)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     hoy = a.fecha or dt.date.today().isoformat()
     series = filas_por_dia()

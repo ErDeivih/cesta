@@ -81,3 +81,19 @@ def test_sin_referencia_no_se_puede_decir_nada():
     assert v["referencia"] == 0
     assert v["dias_sin_datos"] == 7
     assert v["veredicto"] == "sin datos"
+
+
+def test_la_cadena_diaria_lo_llama_sin_leer_sus_argumentos():
+    """`main([])` y no `main()`: si leyera el `sys.argv` de la pasada, un argumento que no
+    conociera lanzaria `SystemExit` --que no es una `Exception`-- y se llevaria por delante el
+    dia entero. Un aviso que puede tumbar la pasada deja de ser un aviso."""
+    import inspect
+
+    from projects.cesta import run
+
+    firma = inspect.signature(cobertura_diaria.main)
+    assert "argv" in firma.parameters, (
+        "main() no acepta una lista de argumentos, asi que lee el sys.argv de quien lo llame")
+    fuente = inspect.getsource(run)
+    assert '.main([])' in fuente, (
+        "la cadena diaria lo llama con main() a secas: cualquier argumento suyo mata la pasada")

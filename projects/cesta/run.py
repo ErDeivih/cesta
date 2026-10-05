@@ -318,7 +318,11 @@ def _main() -> int:
         # Avisa y no hace fallar el dia, como el de los documentos: una cadena corta no es
         # motivo para no recoger las otras cuatro.
         try:
-            importlib.import_module("projects.cesta.cobertura_diaria").main()
+            # Con `[]` a proposito: sin argumentos, `argparse` leeria el `sys.argv` de esta
+            # pasada, y un argumento que no conociera lanzaria `SystemExit` -- que no es una
+            # `Exception` y el `except` de aqui abajo no lo coge. Un aviso que puede tumbar el
+            # dia deja de ser un aviso.
+            importlib.import_module("projects.cesta.cobertura_diaria").main([])
         except Exception as exc:  # noqa: BLE001
             print(f"[cobertura] no se pudo mirar cuanto trajo cada cadena: {exc}")
 
