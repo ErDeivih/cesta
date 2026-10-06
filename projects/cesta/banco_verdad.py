@@ -137,6 +137,14 @@ def informe() -> int:
         muestra = list(csv.DictReader(f))
     etiquetas = _lee_etiquetas()
 
+    # **El estado se recalcula ahora, no se lee de la muestra.** La muestra guarda el estado del
+    # dia en que se saco (es lo que permite estratificar), y leerlo hacia que el banco siguiera
+    # diciendo "cuatro falsos descartes" despues de arreglarlos: no podia ensenar el efecto de un
+    # arreglo, que es justo para lo que existe.
+    for fila in muestra:
+        fila["estado_politica"] = alcance.clasificar_alcance(
+            fila["nombre"], fila["categoria"]).estado
+
     etiquetadas = [f for f in muestra if f["id"] in etiquetas]
     sin_etiquetar = len(muestra) - len(etiquetadas)
     print(f"Muestra: {len(muestra)} fichas · etiquetadas: {len(etiquetadas)} · "

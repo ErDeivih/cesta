@@ -91,6 +91,26 @@ def _segmentos(ruta: str) -> list[str]:
     return list(reversed(trozos))
 
 
+def _raiz(palabra: str) -> str:
+    """La palabra sin su marca de plural. **Solo para comparar**, nunca para mostrar.
+
+    Medido el 6 de octubre de 2026 con el banco de verdad: la politica tiene los terminos en
+    singular y las cadenas nombran sus pasillos en plural, asi que **"pescado" no casaba con
+    "pescados-y-mariscos"**, ni "golosina" con "golosinas", ni "gato" con "gatos". Eran 16 fichas
+    de comida esperando en `revisar` por una "s" -- y no se veia, porque el sintoma era "sin
+    clasificacion suficiente".
+
+    Se corta la "s" (y "es") solo en palabras de mas de tres letras: asi "pan" no se convierte en
+    "pa" ni "mes" en "me". No es un lematizador ni pretende serlo: es quitar el plural, que es lo
+    unico que hace falta aqui.
+    """
+    # **Solo la "s".** Quitar "-es" daba "carn" para "carnes", y entonces no casaba con el termino
+    # "carne": el arreglo fallaba justo en las palabras que acaban en "-es". Se vio en las pruebas.
+    if len(palabra) > 3 and palabra.endswith("s"):
+        return palabra[:-1]
+    return palabra
+
+
 def _casa(termino: str, _texto: str, palabras: list[str]) -> bool:
     """¿Estan TODAS las palabras del termino entre las del texto?
 
@@ -107,14 +127,17 @@ def _casa(termino: str, _texto: str, palabras: list[str]) -> bool:
     propias = [p for p in re.split(r"[^a-z0-9ñ]+", _sin_tildes(termino)) if p]
     if not propias:
         return False
+    # **Por raiz, en los dos lados**: la politica dice "pescado" y la cadena "pescados". Ver `_raiz`.
+    raices = [_raiz(p) for p in palabras]
     if len(propias) == 1:
-        return propias[0] in palabras
+        return _raiz(propias[0]) in raices
     # **Contigua y en orden.** Un termino de varias palabras es una *frase*, y exigir solo que
     # esten todas las palabras en cualquier orden lo convertia en otra cosa: "cubo de basura"
     # casaba con "Bolsa de basura para cubo alto". Se descubrio el 6 de octubre de 2026 con tres
     # falsos descartes reales en el catalogo (una bolsa de basura, un absorbeolores y una barrita).
     largo = len(propias)
-    return any(palabras[i:i + largo] == propias for i in range(len(palabras) - largo + 1))
+    propias_raiz = [_raiz(p) for p in propias]
+    return any(raices[i:i + largo] == propias_raiz for i in range(len(raices) - largo + 1))
 
 
 @lru_cache(maxsize=1)
@@ -149,6 +172,26 @@ def clasificar_alcance(nombre: str | None, categoria: str | None = None,
     return _clasifica(nombre, categoria, contexto)
 
 
+def _inclusion_que_gana(pol: dict, regla_id: str, nombre: str, palabras_nombre: list[str],
+                        ev: dict, ver: int) -> DecisionAlcance | None:
+    """Si la politica declara que una inclusion le gana a **esa** exclusion, la devuelve.
+
+    Existe por un fallo medido con el banco de verdad el 6 de octubre de 2026: la excepcion estaba
+    solo en el paso de la categoria, y hay exclusiones que se resuelven antes, en el del producto,
+    asi que no llegaba a mirarse. Tenerlo en un solo sitio es lo que evita que la politica sepa
+    cosas distintas segun por donde pase la ficha.
+    """
+    for regla in pol.get("incluye_producto", []):
+        if regla_id not in (regla.get("gana_a_exclusion") or []):
+            continue
+        for termino in regla["terminos"]:
+            if _casa(termino, nombre, palabras_nombre):
+                return DecisionAlcance(INCLUIDO, regla.get("familia"), regla["motivo"],
+                                       regla["id"], ver,
+                                       {**ev, "termino": termino, "gana_a": regla_id})
+    return None
+
+
 def _clasifica(nombre: str | None, categoria: str | None,
                contexto: dict | None) -> DecisionAlcance:
     """El estado de un producto dentro del catalogo familiar.
@@ -169,6 +212,11 @@ def _clasifica(nombre: str | None, categoria: str | None,
     for regla in pol.get("excluye_producto", []):
         for termino in regla["terminos"]:
             if _casa(termino, nombre, palabras_nombre):
+                # Antes de excluir: **¿la politica declara que algo le gana a esta exclusion?**
+                # (lo desechable le gana a los duraderos; una hierba fresca, a la regla de jardin).
+                excepcion = _inclusion_que_gana(pol, regla["id"], nombre, palabras_nombre, ev, ver)
+                if excepcion is not None:
+                    return excepcion
                 return DecisionAlcance(EXCLUIDO, None, regla["motivo"], regla["id"], ver,
                                        {**ev, "termino": termino})
 
@@ -208,14 +256,10 @@ def _clasifica(nombre: str | None, categoria: str | None,
             # El caso que lo exige es real: la barrita proteica de Aldi llega con la categoria
             # "parafarmacia" y nada mas, y es comida de reposicion.
             if ganadora.estado == EXCLUIDO:
-                for regla in pol.get("incluye_producto", []):
-                    if ganadora.regla_id not in (regla.get("gana_a_exclusion") or []):
-                        continue
-                    for termino in regla["terminos"]:
-                        if _casa(termino, nombre, palabras_nombre):
-                            return DecisionAlcance(
-                                INCLUIDO, regla.get("familia"), regla["motivo"], regla["id"], ver,
-                                {**ev, "termino": termino, "gana_a": ganadora.regla_id})
+                excepcion = _inclusion_que_gana(pol, ganadora.regla_id, nombre, palabras_nombre,
+                                                ev, ver)
+                if excepcion is not None:
+                    return excepcion
             return ganadora
 
     # 3. El producto, para incluir (papel higienico, arena de gato, pañales...).

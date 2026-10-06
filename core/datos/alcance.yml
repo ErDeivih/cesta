@@ -121,7 +121,8 @@ reglas_categoria:
     motivo: "fruta, verdura, carne, pescado y huevos"
     segmentos: ["frescos", "fruta", "frutas", "verdura", "verduras", "hortalizas", "setas",
                 "carne", "carniceria", "charcuteria", "pescado", "pescaderia", "marisco",
-                "huevos", "pollos", "aves", "conejo", "caza"]
+                "huevos", "pollos", "aves", "conejo", "caza", "barbacoa", "parrilla",
+                "hierbas-aromaticas", "hierbas"]
   - id: cat-despensa
     prioridad: 20
     estado: incluido
@@ -132,7 +133,8 @@ reglas_categoria:
                 "salsas", "aceites", "aceite", "especias", "azucar", "cacao", "cafe",
                 "infusiones", "dulces", "chocolates", "aperitivos", "snacks", "frutos secos",
                 "mermeladas", "miel", "postres", "reposteria", "masas", "turrones",
-                "polvorones", "panettones", "oktoberfest"]
+                "polvorones", "panettones", "oktoberfest", "golosinas", "caramelos",
+                "chicles", "regaliz", "chucherias"]
   - id: cat-refrigerados
     prioridad: 20
     estado: incluido
@@ -149,6 +151,15 @@ reglas_categoria:
     segmentos: ["bebidas", "agua", "aguas", "refrescos", "zumos", "cervezas", "vinos",
                 "vinagres", "licores", "espumosos", "sidras", "bebidas-energeticas",
                 "isotonicas", "batidos", "gaseosa"]
+  - id: cat-alcohol
+    prioridad: 20
+    estado: incluido
+    familia: alcohol
+    motivo: "alcohol: familia propia, nunca mezclada con bebidas (contrato, seccion 1)"
+    # Mercadona llama "Bodega" a su pasillo de vinos y cervezas, y esas fichas caian en revision.
+    segmentos: ["bodega", "cerveza", "cervezas", "vino", "vinos", "licores", "espumosos",
+                "destilados", "whisky", "ginebra", "vodka", "ron", "sidra", "cava"]
+
   - id: cat-higiene
     prioridad: 20
     estado: incluido
@@ -157,7 +168,8 @@ reglas_categoria:
     segmentos: ["higiene", "cuidado-personal", "cuidado-personal-e-higiene", "perfumeria",
                 "drogueria", "belleza", "cosmetica", "higiene-bucal", "gel", "champu",
                 "desodorante", "afeitado", "depilacion", "compresas", "tampones",
-                "papel-higienico", "pañales", "panales", "toallitas", "bebe"]
+                "papel-higienico", "pañales", "panales", "toallitas", "bebe",
+                "cuidado-del-cabello", "cabello", "peluqueria"]
   - id: cat-limpieza
     prioridad: 20
     estado: incluido
@@ -173,7 +185,9 @@ reglas_categoria:
     familia: mascotas
     motivo: "alimentacion y consumibles de mascota"
     segmentos: ["mascotas", "perros", "gatos", "alimentacion-animal", "animales",
-                "pienso", "comida-para", "comida-para-perros", "comida-para-gatos"]
+                "pienso", "comida-para", "comida-para-perros", "comida-para-gatos",
+                "perro", "gato", "comida-de-gato", "comida-de-perro",
+                "alimentacion-animal"]
   - id: cat-bebe
     prioridad: 35
     estado: incluido
@@ -285,6 +299,10 @@ incluye_producto:
     estado: incluido
     familia: hogar_consumible
     motivo: "menaje de un solo uso y material de limpieza que se repone"
+    # Medido al arreglar los plurales: "Hogar > Fiesta y desechables" casa con "fiestas" (regla de
+    # fiestas, exclusion) y le ganaba a esta inclusion. Los vasos de plastico son menaje de un solo
+    # uso, asi que esta regla declara que le gana a esa exclusion, y solo a esa.
+    gana_a_exclusion: ["cat-excluye-juguetes-deporte"]
     terminos: ["vasos de plastico", "vasos desechables", "platos de papel", "platos desechables",
                "cubiertos desechables", "cubiertos de plastico", "pajitas", "bolsas de basura",
                "bolsas de congelacion", "papel de aluminio", "film transparente", "bayetas", "recambio de fregona", "recambios de fregona",
@@ -315,6 +333,39 @@ incluye_producto:
     terminos: ["barrita", "barritas", "batido", "batidos", "complemento alimenticio",
                "complementos alimenticios", "proteina", "proteinas", "proteico", "proteica",
                "gominolas", "colageno", "creatina", "aminoacidos", "suplemento"]
+  # **Consumibles domesticos que la cadena guarda en parafarmacia.** Medido con el banco de
+  # verdad: los apositos y los preservativos salian excluidos por el pasillo "parafarmacia". Son
+  # reposicion de casa -- curitas y preservativos se compran en el super -- y ganan **solo** a esa
+  # exclusion: un medicamento no lleva ninguna de estas palabras.
+  - id: prod-botiquin-domestico
+    estado: incluido
+    familia: higiene
+    motivo: "botiquin de reposicion: apositos, curitas, tiritas"
+    gana_a_exclusion: ["cat-excluye-salud"]
+    terminos: ["aposito", "apositos", "curita", "curitas", "tirita", "tiritas",
+               "preservativo", "preservativos", "esparadrapo"]
+  # **Lo que se declara desechable es consumible, y le gana a las reglas de duraderos.** El caso
+  # que lo exigio lo introdujo mi propio arreglo de ayer: al cerrar la fuga de bebe anadi
+  # "cambiador", y "Cambiador multiusos desechable" se gasta. Se declara el significado -- si el
+  # titulo dice desechable, se tira -- en vez de ajustar el termino al nombre de una ficha. Y solo
+  # gana a los duraderos: una decoracion de fiesta desechable sigue fuera, que es bazar.
+  - id: prod-desechable
+    estado: incluido
+    familia: hogar_consumible
+    motivo: "desechable: se gasta, aunque su pasillo lo tenga por duradero"
+    gana_a_exclusion: ["prod-accesorios-bebe-duraderos", "prod-menaje-duradero",
+                       "prod-accesorios-duraderos-mascota", "prod-fuera-en-esta-version",
+                       "prod-muebles-decoracion"]
+    terminos: ["desechable", "desechables", "de un solo uso", "un solo uso"]
+  # **Hierbas frescas**: llegan con la palabra del envase ("maceta"), que es de jardin. La planta
+  # viva de alimentacion entra; el tiesto de ceramica, no.
+  - id: prod-hierbas-frescas
+    estado: incluido
+    familia: frescos
+    motivo: "hierbas aromaticas frescas: alimentacion, aunque vengan en maceta"
+    gana_a_exclusion: ["prod-bricolaje-jardin"]
+    terminos: ["albahaca", "perejil", "cilantro", "hierbabuena", "menta fresca", "romero",
+               "tomillo", "oregano fresco", "salvia", "cebollino", "hierba luisa"]
   - id: prod-bebe-consumible
     estado: incluido
     familia: bebe

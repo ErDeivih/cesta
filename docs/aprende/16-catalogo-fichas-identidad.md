@@ -239,3 +239,43 @@ casa con `gatos`).
   del dueño, que es la que tendría que cerrar los empates.
 - El banco mide el alcance. No mide identidad (T03) ni fichas (T11): cada problema necesita su
   propio banco, y fingir que uno sirve para todo es la forma de no medir ninguno.
+
+
+### Lo que el banco ha encontrado, y lo que ha cambiado (6 de octubre de 2026)
+
+Con las 37 primeras etiquetas, el banco midió **4 falsos descartes de 20** y **0 bazar aceptado de
+14**, con 17 fichas esperando decisión. Después de corregir lo que esas etiquetas señalaban:
+
+    falsos descartes   4 -> 0
+    bazar aceptado     0 -> 0
+    pendientes        17 -> 5
+
+Los cuatro falsos descartes y su arreglo: **maceta** (el envase) excluía una albahaca fresca de
+alimentación; **parafarmacia** excluía apósitos y preservativos, que son reposición de casa; y
+**cambiador** —término que yo mismo añadí para cerrar la fuga de bebé— excluía un cambiador
+desechable. Los tres primeros llevaban semanas ahí.
+
+Los pendientes eran un hueco de vocabulario, no casos raros: **la política no entendía plurales**.
+«pescados-y-mariscos» no casaba con `pescado`, ni «golosinas» con `golosina`, ni «gatos» con `gato`.
+Dieciséis fichas de comida esperaban en `revisar` por una «s», y el síntoma que se veía era «sin
+clasificación suficiente», que no dice nada.
+
+### Tres cosas que este trabajo enseña, y ninguna es de vocabulario
+
+1. **Un arreglo puede introducir el error de al lado.** Al cerrar la fuga de 233 accesorios
+   duraderos de bebé añadí el término «cambiador», y con él salió del catálogo un cambiador
+   desechable. Lo cazó el banco **en la primera pasada**, el mismo día. Sin banco, ese error habría
+   viajado como «mejora».
+2. **Una excepción tiene que valer donde se decide.** La política permite declarar que una inclusión
+   le gana a una exclusión concreta (`gana_a_exclusion`). La puse solo en el paso de la categoría, y
+   la mitad de las exclusiones se resuelven antes, en el paso del producto: la excepción no llegaba
+   a mirarse. Se unificó en un ayudante, `_inclusion_que_gana`, para que la política no sepa cosas
+   distintas según por dónde pase la ficha.
+3. **Un banco que no puede enseñar el efecto de un arreglo no sirve.** El informe comparaba contra
+   el estado guardado en la muestra —una foto del día en que se sacó—, así que seguía diciendo
+   «cuatro falsos descartes» después de arreglarlos. Ahora recalcula el estado al vuelo.
+
+Y la lección de método que ya apareció tres veces esta semana: **cortar por la mitad una palabra o
+una línea miente**. Quitar «-es» convertía «carnes» en «carn» y el plural dejaba de casar; y un
+`count` sobre una línea sin su salto de línea contaba dos veces `cat-higiene`, porque
+`cat-higiene-dermocosmetica` empieza igual.

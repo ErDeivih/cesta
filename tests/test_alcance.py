@@ -264,3 +264,66 @@ def test_la_cuna_de_queso_no_es_una_cuna():
     d = alcance.clasificar_alcance("AUCHAN Queso de cabra tierno cuña 500 g",
                                    "Frescos > Quesos > Queso de cabra")
     assert d.entra, "un queso salio del catalogo por la palabra cuna"
+
+
+# --- Hallazgos del banco de verdad, 6 de octubre de 2026 ---------------------------------------
+# Cada caso es una ficha real, etiquetada a mano, que estaba mal clasificada: los cuatro falsos
+# descartes y el hueco de vocabulario que destaparon las 37 primeras etiquetas.
+
+
+def test_los_cuatro_falsos_descartes_del_banco():
+    """Lo que el banco midio: 4 de 20 etiquetadas como cesta salian del catalogo."""
+    casos = [
+        ("Albahaca ecológica Carrefour Bio maceta 1 ud",
+         "frescos/verduras-y-hortalizas/hierbas-aromaticas", "hierba fresca en maceta"),
+        ("Apósitos hidrocoloides adhesivos para ampollas y rozaduras",
+         "Fitoterapia y parafarmacia", "botiquin de reposicion"),
+        ("Preservativos sensitive On", "Fitoterapia y parafarmacia", "higiene de reposicion"),
+        ("Cambiador multiusos desechable Deliplus", "Bebé", "desechable, se gasta"),
+    ]
+    for nombre, categoria, porque in casos:
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.entra, f"{porque}: {nombre} salio {d.estado} ({d.regla_id})"
+
+
+def test_los_negativos_de_esos_cuatro_casos():
+    """Arreglar un falso descarte no puede abrir la puerta a lo que si es bazar o medicina."""
+    fuera = [
+        ("Maceta de cerámica blanca 20 cm", "Hogar y Decoración > Jardín"),
+        ("Sustrato universal 25 l", "drogueria-y-limpieza/bazar"),
+        ("Ibuprofeno 400 mg 20 comprimidos", "Parafarmacia > Medicamentos"),
+        ("Gasas estériles 10x10 cm 20 unidades", "Parafarmacia > Botiquín"),
+        ("Cambiador de bebé de tela lavable", "Bebé > Cambiadores"),
+    ]
+    for nombre, categoria in fuera:
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.estado == alcance.EXCLUIDO, f"{nombre} ({categoria}) salio {d.estado}"
+
+
+def test_la_politica_entiende_plurales():
+    """El hueco que destapo el banco: 16 fichas de comida esperaban en revision por una "s".
+
+    La politica tiene los terminos en singular y las cadenas nombran sus pasillos en plural.
+    """
+    for nombre, categoria, familia in (
+        ("Palitos de surimi refrigerados Krissia 180 g",
+         "https://www.dia.es/pescados-y-mariscos/...", "frescos"),
+        ("Golosinas ositos de oro Haribo 150 g", "infantil/golosinas-y-caramelos", "despensa"),
+        ("Caramelos blandos con forma de cherries", "golosinas-y-caramelos", "despensa"),
+        ("Trozos en salsa para gatos con pescado", "comida-de-gato", "mascotas"),
+        ("Vino blanco El Coto DO Rioja", "Bodega", "alcohol"),
+        ("Gel extra fuerte", "cuidado-del-cabello", "higiene"),
+    ):
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.entra, f"{nombre} ({categoria}) salio {d.estado}"
+        assert d.familia_id == familia, f"{nombre}: familia {d.familia_id}, esperada {familia}"
+
+
+def test_quitar_el_plural_no_destroza_palabras_cortas():
+    """El corte de la "s" solo en palabras largas: "pan" no es "pa"."""
+    assert alcance._raiz("pan") == "pan"
+    assert alcance._raiz("mes") == "mes"
+    assert alcance._raiz("pescados") == "pescado"
+    assert alcance._raiz("golosinas") == "golosina"
+    assert alcance._raiz("carnes") == "carne"
+    assert alcance._raiz("gato") == "gato"
