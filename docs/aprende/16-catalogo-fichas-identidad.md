@@ -379,3 +379,55 @@ política y en el banco de verdad —como los plurales y los pasillos que faltab
 Es la lección de método que más veces ha aparecido esta semana: **medir antes de construir**. La
 propuesta de combinar menú y caché por identificador era razonable sobre el papel; con el número
 delante, su valor para Aldi es cero y el trabajo está en otro sitio.
+
+
+## T11 · La ficha ya está llegando y se está tirando (6 de octubre de 2026)
+
+### El problema
+
+La pregunta era de dónde sacar ingredientes, alérgenos y nutrición. El orden que fija la ampliación
+es el contrario al instinto: **primero la matriz por fuente y campo**, porque puede que el dato ya
+venga en la respuesta guardada y solo falte extraerlo. Pedirlo otra vez sería trabajo tirado y
+peticiones de más.
+
+### El instrumento
+
+    uv run python -m projects.cesta.matriz_fichas --muestra 25
+
+Sin red: lee las respuestas crudas ya guardadas (muestra determinista por cadena) y las columnas
+que de verdad tienen valor en bronze, y cruza las dos cosas. Tres estados: **publicado y extraído**,
+**publicado y no extraído**, y **no en la muestra**. La ampliación pide exactamente eso: *«no
+convertir todos estos estados en `null` sin motivo»*.
+
+### Lo que dice (25 respuestas por cadena, 6 de octubre de 2026)
+
+| cadena | publicado y **no** extraído (señal en el crudo) |
+|---|---|
+| Alcampo | descripción 100 % · GTIN 92 % · base nutricional 48 % · origen 48 % · piezas 40 % · envase 20 % · **ingredientes 16 %** · ración 12 % · peso neto 8 % · nutrientes 4 % |
+| Aldi | piezas 56 % · base nutricional 48 % · ración 48 % · certificaciones 92 % · ingredientes 4 % · energía 4 % |
+| Carrefour | peso neto **100 %** · origen **100 %** · advertencias 100 % · descripción 100 % · piezas 96 % · nutrientes 36 % · **ingredientes 20 %** · alérgenos 4 % · traza 4 % |
+| DIA | ración 100 % · peso neto 100 % · piezas 100 % · certificaciones 100 % · advertencias 96 % · **alérgenos 52 %** · peso escurrido 4 % |
+| Mercadona | ingredientes 4 % |
+
+**La conclusión cambia el trabajo:** no hay que ir a buscar las fichas, hay que **dejar de
+tirarlas**. El dato entra en la respuesta y se pierde en el parseo, que es donde está el esfuerzo de
+T11 — y donde no hace falta ni una petición nueva para Alcampo, Carrefour, DIA y Aldi.
+
+### Limitaciones, que son la mitad del dato
+
+- **Ver la palabra no prueba que exista el dato.** La propia ampliación lo advierte: que aparezca
+  `ingredientes` en el HTML no demuestra que haya una tabla del producto. Por eso «en crudo» es una
+  **cota inferior** y sirve para descartar y priorizar, no para afirmar.
+- **La muestra mezcla tipos de respuesta.** En una misma cadena hay listados de categoría y fichas
+  de producto; el 4 % de Mercadona o DIA es casi seguro que son listados sin ficha dentro. Antes de
+  programar extracciones hay que separar los dos tipos y volver a medir.
+- **Un campo derivado no tiene palabra en el crudo.** `conservacion` aparece «extraído» con 0 % en
+  crudo porque el colector lo calcula a partir de los sellos (`core/sellos.py`), no lo copia.
+- **25 respuestas por cadena** distinguen «viene mucho» de «no viene», y nada más fino que eso.
+
+### Lo siguiente de T11, en este orden
+
+1. Separar fichas de listados en la muestra y volver a medir (es la limitación que más pesa).
+2. Extraer los campos que ya llegan, con su procedencia y su fecha, y **sin sustituir un valor
+   bueno por un fallo temporal**.
+3. Solo después, decidir si hace falta pedir algo más a alguna cadena.
