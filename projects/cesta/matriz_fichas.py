@@ -59,6 +59,44 @@ CAMPOS: dict[str, list[str]] = {
 }
 
 
+CLAVES_NOMBRE = ("name", "title", "nombre", "product_name", "description")
+CLAVES_ID = ("id", "sku", "ean", "gtin", "barcode", "objectID", "productId", "retailerProductId")
+
+
+def objetos_de_producto(dato, salida: list | None = None, limite: int = 4000) -> list[dict]:
+    """Los objetos de un JSON que parecen **un producto** y no una categoria o un listado.
+
+    Un producto tiene nombre y algo que lo identifique; una categoria tambien puede tener nombre,
+    asi que se pide ademas que traiga alguna señal de producto (precio, identificador de barras,
+    unidad de medida). No pretende ser exacto: pretende que el denominador sean productos y no
+    respuestas, que era el error de la primera version.
+    """
+    salida = [] if salida is None else salida
+    if len(salida) >= limite:
+        return salida
+    if isinstance(dato, dict):
+        tiene_nombre = any(k in dato for k in CLAVES_NOMBRE)
+        tiene_id = any(k in dato for k in CLAVES_ID)
+        señales = ("price", "precio", "unit", "unidad", "ean", "gtin", "barcode", "pack")
+        if tiene_nombre and tiene_id and any(k in dato for k in señales):
+            salida.append(dato)
+        for valor in dato.values():
+            objetos_de_producto(valor, salida, limite)
+    elif isinstance(dato, list):
+        for valor in dato:
+            objetos_de_producto(valor, salida, limite)
+    return salida
+
+
+def _json_de(texto: str):
+    import json
+
+    try:
+        return json.loads(texto)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _normaliza(texto: str) -> str:
     reemplazos = str.maketrans("áéíóúàèìòùäëïöüñç", "aeiouaeiouaeiounc")
     return texto.lower().translate(reemplazos)
@@ -130,18 +168,41 @@ def main(argv: list[str] | None = None) -> int:
         muestra = _muestra(ficheros, a.muestra)
         textos = [_texto_de(f) for f in muestra]
         errores = sum(1 for t in textos if t.startswith("__error__"))
+        # **Sobre productos, si el crudo es JSON.** Los textos se guardan normalizados para buscar
+        # las señales; los productos se buscan en el JSON, que es donde hay objetos que comparar.
+        import json as _json
+
+        productos: list[str] = []
+        es_html = 0
+        for texto in textos:
+            if texto.startswith("__error__"):
+                continue
+            if texto.lstrip()[:1] in "{[":
+                dato = _json_de(texto)
+                objetos = objetos_de_producto(dato) if dato is not None else []
+                if objetos:
+                    productos.extend(_json.dumps(o, ensure_ascii=False) for o in objetos)
+                else:
+                    productos.append(texto)
+            else:
+                es_html += 1
+                productos.append(texto)
+        if es_html and not productos:
+            print("  (crudo HTML: la cuenta va por respuesta, no por producto)")
         columnas, filas = columnas_bronze(fuente)
         print(f"\n=== {fuente} ===")
+        cual = "productos" if len(productos) != len(muestra) else "respuestas"
         print(f"  crudo: {len(ficheros):,} respuestas, miradas {len(muestra)}"
+              f" -> {len(productos):,} {cual} (denominador)"
               f"{f', {errores} ilegibles' if errores else ''}"
               f" · bronze: {filas:,} filas, {len(columnas)} columnas con algun valor"
               .replace(",", "."))
         print(f"  {'campo':<17}{'en crudo':>10}{'en bronze':>11}   estado")
         for campo, señales in CAMPOS.items():
-            vistas = sum(1 for t in textos if any(s in _normaliza(t) for s in señales))
+            vistas = sum(1 for t in productos if any(s in _normaliza(t) for s in señales))
             extraido = any(_normaliza(c).replace("_", " ") in " ".join(
                 _normaliza(x) for x in señales) or _normaliza(c) in señales for c in columnas)
-            pct = 100 * vistas / len(textos)
+            pct = 100 * vistas / max(len(productos), 1)
             if extraido:
                 estado = "publicado y extraido"
             elif vistas:

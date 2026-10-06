@@ -431,3 +431,35 @@ T11 — y donde no hace falta ni una petición nueva para Alcampo, Carrefour, DI
 2. Extraer los campos que ya llegan, con su procedencia y su fecha, y **sin sustituir un valor
    bueno por un fallo temporal**.
 3. Solo después, decidir si hace falta pedir algo más a alguna cadena.
+
+
+### Corrección del 6 de octubre, media hora después: el denominador cambia la respuesta
+
+La primera medición contaba **respuestas**, y eso mezclaba dos cosas distintas: un listado de
+categoría (trae cientos de productos y casi ninguna ficha) y la ficha de un producto. Se arregló
+contando **productos**: se recorren los objetos del JSON y se buscan los que parecen un producto
+(tienen nombre, identificador y algo de precio o unidad).
+
+El resultado cambia, y hay que decirlo:
+
+| | contando respuestas | contando productos |
+|---|---|---|
+| Alcampo · ingredientes | 16 % | **0 %** de 2.582 productos |
+| Alcampo · GTIN | 92 % | **1 %** |
+| Alcampo · base nutricional | 48 % | **5 %** |
+| Alcampo · descripción | 100 % | 100 % (esta sí) |
+
+Lo que la primera cifra decía era «en algunas respuestas de Alcampo aparece la palabra
+ingredientes», y lo que de verdad pasa es que **Alcampo descarga listados con los datos de escaparate
+—nombre, precio, marca, descripción, imagen— y la ficha no viene ahí**. Para Alcampo, T11 sí
+necesita pedir la ficha; pero eso ahora es una conclusión **medida**, no una suposición.
+
+En cambio Aldi y Carrefour sostienen la lectura anterior: sus respuestas de detalle traen bases
+nutricionales (48 % y 16 %), ingredientes (4 % y 20 %) y alérgenos, y nada de eso se extrae.
+
+**La lección, que es de estadística y no de scraping:** un porcentaje sin denominador claro no dice
+nada, y cambiar el denominador puede darle la vuelta a la conclusión. La primera medición no era
+falsa: era una respuesta a otra pregunta. Queda aquí la corrección en vez de borrar la anterior,
+porque el error es justo lo que hay que aprender.
+
+Y sigue en pie la limitación de siempre: **ver la palabra no prueba que exista el dato**.
