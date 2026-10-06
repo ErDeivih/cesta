@@ -442,7 +442,7 @@ contando **productos**: se recorren los objetos del JSON y se buscan los que par
 
 El resultado cambia, y hay que decirlo:
 
-| | contando respuestas | contando productos |
+| Alcampo | contando respuestas | contando productos |
 |---|---|---|
 | Alcampo · ingredientes | 16 % | **0 %** de 2.582 productos |
 | Alcampo · GTIN | 92 % | **1 %** |
