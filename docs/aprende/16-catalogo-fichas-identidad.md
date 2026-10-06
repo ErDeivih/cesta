@@ -463,3 +463,39 @@ falsa: era una respuesta a otra pregunta. Queda aquí la corrección en vez de b
 porque el error es justo lo que hay que aprender.
 
 Y sigue en pie la limitación de siempre: **ver la palabra no prueba que exista el dato**.
+
+
+## T12 · Lidl, con la cobertura parcial dicha por delante (6 de octubre de 2026)
+
+### Qué se ha hecho
+
+`projects/cesta/collectors/lidl.py` lee la página pública de ofertas semanales de Lidl —la misma que
+la sonda de la ampliación— y la convierte en filas de bronze, con el esquema del proyecto y pasando
+por el alcance.
+
+    uv run python -m projects.cesta.collectors.lidl --html <fichero> --region 28   # sin red
+    uv run python -m projects.cesta.collectors.lidl --web --region 28              # robots + 1 página
+
+### Las cuatro cosas que no hace, y por qué son las importantes
+
+1. **No se llama catálogo.** Es una página de ofertas: se guarda y se muestra como **«ofertas
+   conocidas de Lidl»**, con un fichero de cobertura (`data/cobertura/lidl-<fecha>.json`) que dice
+   `ofertas_semanales_parcial` y lleva el aviso. No se declara a Lidl ganador de una cesta si le
+   faltan productos, y que un producto no esté en la campaña **no** significa que se haya retirado.
+2. **No inventa EAN.** La ficha trae `ians` e identificadores internos; ninguno es un código de
+   barras comprobado, así que `ean` va vacío. Un EAN inventado envenena las comparaciones de T03.
+3. **No confunde el precio tachado con el precio.** Lo que se cobra va en `precio_cent` y el
+   anterior en `precio_anterior_nativo_cent`. Anunciar una bajada que no existe es lo más fácil de
+   hacer mal con estos datos.
+4. **No finge stock.** Esta fuente no dice stock; el estado de una región no es disponibilidad.
+
+Y **no entra en la tarea de las 06:00**: la pasada diaria *descubre* las cadenas, así que escribir
+bronze habría hecho que empezara a lanzar este colector sola. Escribir está detrás de `--escribir`,
+que es una decisión y no un descuido — y hay una prueba que lo fija.
+
+### Prueba reproducible
+
+    uv run pytest tests/test_lidl_colector.py -q      # 11 pruebas, sin red
+
+La más útil: la fila se valida contra `ProductoRaw`, el esquema del proyecto. Es la puerta que
+impide que un colector nuevo meta columnas raras o tipos cambiados.
