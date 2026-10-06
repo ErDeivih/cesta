@@ -1,4 +1,14 @@
-# Lidl: por que no hay colector (reconocimiento del 7 sep 2026)
+# Lidl: reconocimiento histórico y actualización
+
+## Actualización verificada el 6 de octubre de 2026
+
+La conclusión de septiembre que sigue abajo **no debe usarse para descartar Lidl**.
+La página pública de ofertas semanales entrega JSON en `data-grid-data`: se han extraído
+76 fichas/variantes (70 productos padre), con precios regionales y condiciones de club.
+Existe un piloto probado, `projects/cesta/sondear_lidl.py`, aún sin integración en la ingesta.
+Ver [resultado, límites y trabajo de integración](CESTA-AMPLIACION-2026-10-06.md).
+
+## Reconocimiento del 7 de septiembre de 2026 (conservado como histórico)
 
 Resumen en una linea: **lidl.es no publica precios de alimentacion**, asi que un
 scraper de su web no serviria para lo que queremos.

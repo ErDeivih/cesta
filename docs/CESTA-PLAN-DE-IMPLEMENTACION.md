@@ -27,6 +27,10 @@ Es ofrecer decisiones de compra correctas sobre un catálogo relevante.
 Evidencia de partida: [auditoría del 5 de octubre](AUDITORIA-CESTA-2026-10-05.md).
 La auditoría registra fallos; los tres documentos anteriores deciden cómo resolverlos.
 
+Ampliación solicitada el 6 de octubre: [fichas completas, Lidl, comparación automática y
+aprendizaje](CESTA-AMPLIACION-2026-10-06.md). Incluye resultados medidos, dos instrumentos
+probados y paquetes T11/T12 pendientes de integración; no declara T01 ni T03 terminados.
+
 ## Decisiones cerradas para evitar otra ronda de ambigüedad
 
 - Todo el proyecto se centra en cesta familiar. El bazar duradero queda fuera del catálogo
