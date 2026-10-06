@@ -20,7 +20,7 @@ from pathlib import Path
 import polars as pl
 from selectolax.parser import HTMLParser
 
-from core import cobertura, config, envases, peticiones, sellos
+from core import alcance, cobertura, config, envases, peticiones, sellos
 from core.fetch import Fetcher
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -56,6 +56,19 @@ def categorias(f: Fetcher) -> list[dict]:
     save_raw(FUENTE, "categories", r.body)
     raices = json.loads(r.body).get("results", [])
     return [hija for raiz in raices for hija in raiz.get("categories", [])]
+
+
+def _fuera_de_alcance(cat: dict) -> bool:
+    """¿Esta categoria es bazar? Mercadona publica su nombre en el indice, antes de pedirla.
+
+    Es la misma decision que en las otras cadenas, con la señal que esta trae: el nombre de la
+    categoria de nivel 2. **Solo se salta lo excluido** y ante la duda se pide.
+    """
+    try:
+        nombre = " ".join(str(cat.get(k) or "") for k in ("name", "category_name", "slug"))
+        return alcance.clasificar_alcance(None, nombre).estado == alcance.EXCLUIDO
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def productos_de_categoria(f: Fetcher, cat_id: int) -> list[dict]:
@@ -257,6 +270,10 @@ def main(detalles_max: int | None = None) -> int:
     vacias = 0
     productos_catalogo = []
     for cat in cats:
+        # **El bazar no se pide** (T01). Ver `_fuera_de_alcance`.
+        if _fuera_de_alcance(cat):
+            peticiones.evita(FUENTE)   # categoria de bazar: no se pide
+            continue
         try:
             productos = productos_de_categoria(f, cat["id"])
             if not productos:

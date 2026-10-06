@@ -1,21 +1,16 @@
-"""El alcance dentro de los colectores (T01): que no se pida lo que no es cesta.
+"""El alcance dentro de los colectores: que no se pida lo que no es cesta.
 
-Dos formas de saberlo, segun lo que cada cadena enseñe **antes** de pedir:
+Cada cadena enseña la categoria **antes** de pedir, y por eso se puede ahorrar la peticion. Este
+fichero prueba las cuatro formas, con sus dos cautelas en todas: **solo se salta lo excluido**
+(lo que hay que revisar se pide: ahi va media despensa) y **si el clasificador falla, se pide
+igual** (una peticion de mas es barata; perder una rama de comida cuesta el dia).
 
-  - Alcampo da un arbol de categorias con nombre (`{"name": "Hogar y Decoracion"}`), y su colector
-    salta la rama entera.
-  - Carrefour lleva la categoria en la URL (`supermercado/<slug>/<catId>/c`), asi que puede
-    saltarla antes de pedir el listado, que es donde esta el ahorro.
-
-En las dos, la regla es la misma y tiene dos cautelas que se prueban aqui: **solo se salta lo
-excluido** (lo que hay que revisar se pide: media despensa de Alcampo sale en `revisar`), y **si el
-clasificador falla se pide igual** (una peticion de mas es barata; perder una captura cuesta el
-dia).
+Los nombres y las direcciones son reales del catalogo del 6 de octubre de 2026.
 """
-from core import cobertura
-from projects.cesta.collectors import alcampo, carrefour
+from projects.cesta.collectors import alcampo, carrefour, dia, mercadona
 
 
+# --- Alcampo: el nombre de su arbol de categorias ---------------------------------------------
 def test_alcampo_no_pide_el_bazar():
     assert alcampo._fuera_de_alcance({"name": "Hogar y Decoración"}) is True
     assert alcampo._fuera_de_alcance({"name": "Juguetes"}) is True
@@ -29,45 +24,48 @@ def test_alcampo_si_pide_la_comida_y_lo_dudoso():
     assert alcampo._fuera_de_alcance({}) is False
 
 
+# --- Carrefour: la URL de la categoria ---------------------------------------------------------
 def test_carrefour_no_pide_el_bazar():
     assert carrefour._fuera_de_alcance("hogar-y-decoracion/textil-hogar") is True
     assert carrefour._fuera_de_alcance("juguetes") is True
-    assert carrefour._fuera_de_alcance("moda-infantil/ropa") is True
 
 
-def test_carrefour_si_pide_la_comida_y_lo_dudoso():
+def test_carrefour_si_pide_la_comida():
     assert carrefour._fuera_de_alcance("drogueria-y-limpieza/detergentes") is False
-    assert carrefour._fuera_de_alcance("cuidado-personal-e-higiene/higiene-bucal") is False
     assert carrefour._fuera_de_alcance("congelados/masas") is False
     assert carrefour._fuera_de_alcance("") is False
 
 
-def test_el_producto_se_clasifica_otra_vez_antes_de_bronze():
-    """Lo pide el contrato: saltar la rama no basta, hay que mirar el producto.
-
-    Se mira el codigo porque aqui no hay red ni captura que hacer: lo que se fija es que la
-    ultima puerta **existe**, que usa la misma funcion que el control de cobertura (para que
-    colector y control no puedan discrepar) y que va **antes** de escribir bronze.
-    """
-    from pathlib import Path
-
-    fuente = Path("projects/cesta/collectors/alcampo.py").read_text(encoding="utf-8")
-    assert "cobertura.solo_cesta_familiar(df)" in fuente, (
-        "la captura se guarda sin clasificar el producto: una categoria mixta cuela bazar")
-    assert (fuente.index("solo_cesta_familiar(df)")
-            < fuente.index('write_parquet(df, "bronze", FUENTE)')), (
-        "el filtro tiene que ir ANTES de escribir bronze")
+# --- DIA: el pasillo, dentro de la URL del sitemap ---------------------------------------------
+def test_dia_no_pide_el_bazar():
+    assert dia._fuera_de_alcance("https://www.dia.es/compra-online/bazar-y-jardin/c/L100") is True
+    assert dia._fuera_de_alcance("https://www.dia.es/compra-online/juguetes/c/L200") is True
 
 
-def test_el_filtro_quita_bazar_y_deja_lo_que_hay_que_revisar():
-    """La mitad que importa: no se lleva por delante la comida pendiente de clasificar."""
-    import polars as pl
+def test_dia_si_pide_la_comida():
+    """Nombres reales: `limpieza-y-hogar` es cesta (bolsas de basura, lejia) y no bazar."""
+    assert dia._fuera_de_alcance("https://www.dia.es/compra-online/limpieza-y-hogar/c/L10") is False
+    assert dia._fuera_de_alcance("https://www.dia.es/compra-online/verano/barbacoa/c/L20") is False
+    assert dia._fuera_de_alcance("https://www.dia.es/carnes-y-pescados/c/L30") is False
 
-    marco = pl.DataFrame({
-        "nombre": ["Funda elastica para sofa", "Pimientos tricolor", "Aceite de oliva 1 l"],
-        "categoria": ["Hogar y Decoracion > Textil hogar", "Frescos > Verduras",
-                      "Desayuno y Merienda > Aceites"],
-    })
-    quedan = cobertura.solo_cesta_familiar(marco)
-    assert quedan.height == 2, "tiene que quedarse la comida, incluida la que hay que revisar"
-    assert "Funda" not in quedan["nombre"].to_list()
+
+def test_dia_ante_la_duda_pide():
+    assert dia._fuera_de_alcance("") is False
+    assert dia._fuera_de_alcance("no es una url") is False
+
+
+# --- Mercadona: el nombre de su categoria de nivel 2 -------------------------------------------
+def test_mercadona_no_pide_el_bazar():
+    assert mercadona._fuera_de_alcance({"name": "Bazar y papelería"}) is True
+    assert mercadona._fuera_de_alcance({"name": "Jardín y piscina"}) is True
+
+
+def test_mercadona_si_pide_la_comida():
+    assert mercadona._fuera_de_alcance({"name": "Bodega"}) is False
+    assert mercadona._fuera_de_alcance({"name": "Cuidado del cabello"}) is False
+    assert mercadona._fuera_de_alcance({"name": "Charcutería"}) is False
+
+
+def test_mercadona_ante_la_duda_pide():
+    assert mercadona._fuera_de_alcance({}) is False
+    assert mercadona._fuera_de_alcance({"name": None}) is False

@@ -339,3 +339,43 @@ afirmar cuántas peticiones ahorra la política, en lugar de suponerlo.
 El contador mide peticiones **enviadas**, incluyendo reintentos y las que acabaron en error: es lo
 que se le pide al servidor de la cadena, que es lo que importa para no abusar de él. No mide
 bytes ni tiempo, que son otra conversación.
+
+
+## DIA, Mercadona y la pregunta de Aldi (6 de octubre de 2026)
+
+### DIA y Mercadona: cada una enseña la categoría a su manera
+
+El mismo trabajo que en Alcampo y Carrefour —no pedir el bazar, saltarlo **antes** de la petición—
+con la señal que cada cadena trae:
+
+| cadena | de dónde se sabe | cuándo se sabe |
+|---|---|---|
+| Alcampo | el nombre de su árbol de categorías | al recorrer el árbol |
+| Carrefour | la URL (`/supermercado/<pasillo>/<catId>/c`) | antes del listado |
+| **DIA** | la URL del sitemap (`/compra-online/<pasillo>/…`) | antes del listado |
+| **Mercadona** | el nombre de su categoría de nivel 2 | antes de pedirla |
+
+Las dos cautelas son las mismas en las cuatro y están probadas: **solo se salta lo excluido**
+(lo que hay que revisar se pide) y **si el clasificador falla, se pide igual**.
+
+### Aldi: la medición dice que no hay nada que ahorrar
+
+Antes de rediseñar un colector que corre a diario, se midió cuánto ahorraría. Sobre los 2.536
+productos de Aldi:
+
+    entran 2.268 · salen 38 · a revisar 230
+    categorías enteras de bazar (se podrían no pedir): 1  ->  1 producto
+    ahorro máximo por esa vía: 1 de 2.536 peticiones (0,0 %)
+
+**Conclusión: no se rediseña.** El sitemap de Aldi publica identificadores sin categoría, así que el
+bazar no se puede distinguir antes de pedir el detalle; y las 230 fichas en revisión **hay que
+pedirlas igual** para poder juzgarlas. Tocar el descubrimiento de Aldi costaría riesgo en la tarea
+de las 06:00 a cambio de cero peticiones.
+
+**Y su problema real es otro:** Aldi es la cadena que llega sin pasillo. Sus 230 revisiones no son
+un problema de peticiones, son de **clasificación con lo que trae el nombre**. Eso se arregla en la
+política y en el banco de verdad —como los plurales y los pasillos que faltaban—, no en el colector.
+
+Es la lección de método que más veces ha aparecido esta semana: **medir antes de construir**. La
+propuesta de combinar menú y caché por identificador era razonable sobre el papel; con el número
+delante, su valor para Aldi es cero y el trabajo está en otro sitio.

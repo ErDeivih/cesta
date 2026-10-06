@@ -14,11 +14,12 @@ import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import polars as pl
 from selectolax.parser import HTMLParser
 
-from core import cobertura, config, envases, peticiones, sellos
+from core import alcance, cobertura, config, envases, peticiones, sellos
 from core.fetch import Fetcher, HTTPStatusError
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -30,6 +31,23 @@ BASE = "https://www.dia.es"
 FUENTE = "dia"
 PASO_MAESTRO = 250   # cada cuantas fichas se guarda y se informa
 MASTER = config.DATA / "master" / "dia.json.gz"
+
+
+def _fuera_de_alcance(url: str) -> bool:
+    """¿Esta categoria es bazar? Se sabe por la URL, antes de pedir el listado.
+
+    DIA publica sus categorias en el sitemap como `/compra-online/<pasillo>/.../c/L123`, asi que el
+    pasillo se lee de la propia direccion: es el sitio donde el ahorro de peticiones es real, porque
+    se decide **antes** de pedir.
+
+    **Solo se salta lo excluido, nunca lo que hay que revisar**, y si el clasificador falla se pide
+    igual: una peticion de mas es barata.
+    """
+    try:
+        texto = urlsplit(url).path.replace("/", " ").replace("-", " ")
+        return alcance.clasificar_alcance(None, texto).estado == alcance.EXCLUIDO
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def categorias(f: Fetcher) -> list[str]:
@@ -419,6 +437,10 @@ def main(detalles_max: int | None = None) -> int:
     paginas = 0
     categorias_obsoletas = 0
     for posicion, cat_url in enumerate(cats, start=1):
+        # **El bazar no se pide** (T01). Ver `_fuera_de_alcance`.
+        if _fuera_de_alcance(cat_url):
+            peticiones.evita(FUENTE)   # categoria de bazar: no se pide
+            continue
         try:
             primera = listado(f, cat_url)
             paginas += 1
