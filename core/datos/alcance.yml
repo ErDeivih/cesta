@@ -54,11 +54,15 @@ excluye_producto:
                "fiambrera", "tupper", "cuerda para", "mordedor"]
   - id: prod-electronica
     motivo: "electronica y electrodomesticos: se compran de vez en cuando, no son cesta"
-    terminos: ["televisor", "television", "smart tv", "monitor", "auricular", "altavoz",
-               "ordenador", "portatil", "movil", "smartphone", "consola",
-               "frigorifico",
-               "nevera", "aspirador", "ventilador", "batidora", "cafetera",
-               "tostadora", "robot de cocina", "aire acondicionado", "calefactor"]
+    # **Sin los aparatos que se nombran como uso.** El 6 de octubre de 2026 se midio que
+    # "Absorbeolores frigorifico XL Croc Odor" salia excluido por `frigorifico`: el aparato era
+    # para lo que sirve, no lo que se vende. Su pasillo ("Electrodomesticos") ya lo excluye, asi
+    # que las palabras solo hacian dano: se van frigorifico, nevera, aspirador, ventilador,
+    # batidora, cafetera y tostadora (una bolsa para aspirador y unas capsulas para cafetera son
+    # consumibles y entraban por el titulo del aparato).
+    terminos: ["televisor", "television", "smart tv", "monitor", "ordenador", "portatil",
+               "movil", "smartphone", "consola", "robot de cocina",
+               "aire acondicionado", "calefactor"]
   - id: prod-muebles-decoracion
     motivo: "muebles, decoracion y textil duradero"
     # Sin sustantivos sueltos que choquen con comida: "mesa" excluia el vino de mesa y "manta" el pescado a la manta. El mueble ya lo excluye su rama, que es la señal fiable.
@@ -86,8 +90,19 @@ excluye_producto:
                "arenero", "fuente de agua para"]
   - id: prod-accesorios-bebe-duraderos
     motivo: "carrito, cuna y similares no son consumibles"
-    terminos: ["carrito", "moises", "cuna de bebe", "cuna para bebe", "cuna colecho", "trona", "hamaca", "parque para bebe",
-               "silla de coche", "capazo", "andador", "chuponera esterilizadora"]
+    # **Nunca la palabra suelta "cuna"**: sin tildes, "cuña" (de queso) es "cuna", y la lista de
+    # comprobacion la cazo marcando quesos. Van frases.
+    terminos: ["carrito", "cochecito", "moises", "cuna de bebe", "cuna para bebe", "cuna colecho",
+               "cuna de viaje", "cuna de paseo", "minicuna", "trona", "hamaca", "parque para bebe",
+               "silla de coche", "silla de paseo", "capazo", "andador", "corralito", "cambiador",
+               "portabebe", "portabebes", "mochila portabebe", "sacaleches", "vigilabebes",
+               "esterilizador", "calientabiberones", "chuponera esterilizadora",
+               "sabana para cochecito", "protector de cuna", "colchon de cuna"]
+  - id: prod-calzado
+    motivo: "calzado: no es cesta familiar, y hay cadenas que no publican su rama"
+    terminos: ["bota", "botas", "zapatilla", "zapatillas", "sandalia", "sandalias",
+               "zueco", "zuecos", "chancla", "chanclas", "bambas", "alpargata", "alpargatas",
+               "zapato", "zapatos", "calzado", "botin", "botines"]
   - id: prod-menaje-duradero
     motivo: "menaje que se compra una vez y dura (no es consumible)"
     terminos: ["olla", "cazo", "tabla de cortar", "escurridor",
@@ -190,6 +205,30 @@ reglas_categoria:
                 "colutorio", "enjuague-bucal", "labial", "dermofarmacia",
                 "limpieza-y-hogar", "papel-de-cocina"]
 
+  - id: cat-dietetica
+    prioridad: 35
+    estado: incluido
+    familia: despensa
+    motivo: "dietetica, nutricion deportiva y sin gluten: comida de reposicion, no parafarmacia"
+    # Medido el 6 de octubre de 2026: la "Barrita proteica sabor brownie" de Aldi salia excluida
+    # por estar en parafarmacia, y en Alcampo y Carrefour caia en `revisar`. Son barritas,
+    # batidos y complementos: se compran y se gastan.
+    segmentos: ["dietetica", "dietetica-y-control-de-peso", "nutricion-deportiva",
+                "nutricion-y-deporte", "herbolario", "complementos-alimenticios",
+                "barritas", "batidos", "sin-gluten", "sin-lactosa", "sin-gluten-sin-lactosa",
+                "alimentacion-especial", "bebe-y-nutricion"]
+
+  - id: cat-excluye-bebe-duradero
+    prioridad: 40
+    estado: excluido
+    motivo: "accesorios duraderos de bebe (cuna, cochecito, trona): se compran una vez"
+    # Medido el 6 de octubre de 2026: 233 accesorios duraderos entraban por la familia "Bebe"
+    # (prioridad 35), que ganaba a todo. Prioridad 40 para que el pasillo concreto del durable
+    # pueda mas que la familia, que es lo que la familia significa: alimentacion y consumibles.
+    segmentos: ["cunas", "cuna", "minicuna", "paseo-del-bebe", "paseo",
+                "habitacion-del-bebe", "habitacion", "ropa-de-cuna", "movilidad",
+                "entretenimiento-del-bebe", "juguetes-del-bebe", "parques-y-corralitos"]
+
   # ---- excluidos -----------------------------------------------------------------------------
   - id: cat-excluye-bazar
     prioridad: 30
@@ -264,6 +303,18 @@ incluye_producto:
     terminos: ["arena para gato", "arena de gato", "pienso", "comida para perro",
                "comida para gato", "alimento para perro", "alimento para gato",
                "snacks para perro", "snacks para gato", "lata de perro", "lata de gato"]
+  # **Comida de reposicion que la cadena aparca en parafarmacia.** La barrita proteica de Aldi
+  # llega con la categoria "parafarmacia" y nada mas: sin esto, ninguna regla de pasillo puede
+  # salvarla. Se declara a que exclusiones le gana, y solo a esas: un medicamento no tiene ninguna
+  # de estas palabras, asi que sigue fuera.
+  - id: prod-dietetica
+    estado: incluido
+    familia: despensa
+    motivo: "barritas, batidos y complementos: comida de reposicion, aunque este en parafarmacia"
+    gana_a_exclusion: ["cat-excluye-salud"]
+    terminos: ["barrita", "barritas", "batido", "batidos", "complemento alimenticio",
+               "complementos alimenticios", "proteina", "proteinas", "proteico", "proteica",
+               "gominolas", "colageno", "creatina", "aminoacidos", "suplemento"]
   - id: prod-bebe-consumible
     estado: incluido
     familia: bebe

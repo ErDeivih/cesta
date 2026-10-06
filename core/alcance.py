@@ -105,7 +105,16 @@ def _casa(termino: str, _texto: str, palabras: list[str]) -> bool:
     panaderia). El texto entero no hace falta y ya no se usa: lo que importa son sus palabras.
     """
     propias = [p for p in re.split(r"[^a-z0-9ñ]+", _sin_tildes(termino)) if p]
-    return bool(propias) and all(p in palabras for p in propias)
+    if not propias:
+        return False
+    if len(propias) == 1:
+        return propias[0] in palabras
+    # **Contigua y en orden.** Un termino de varias palabras es una *frase*, y exigir solo que
+    # esten todas las palabras en cualquier orden lo convertia en otra cosa: "cubo de basura"
+    # casaba con "Bolsa de basura para cubo alto". Se descubrio el 6 de octubre de 2026 con tres
+    # falsos descartes reales en el catalogo (una bolsa de basura, un absorbeolores y una barrita).
+    largo = len(propias)
+    return any(palabras[i:i + largo] == propias for i in range(len(palabras) - largo + 1))
 
 
 @lru_cache(maxsize=1)
@@ -192,6 +201,21 @@ def _clasifica(nombre: str | None, categoria: str | None,
         # Una categoria mixta no descarta el producto, pero tampoco decide: si no hay una regla
         # mejor, se sigue hacia el producto, y si tampoco, se revisa.
         if not (ganadora.estado == REVISAR and ganadora.regla_id == "rev-mixtas"):
+            # **Una inclusion de producto puede ganarle a una exclusion de categoria, pero solo
+            # si la politica lo declara regla a regla** (`gana_a_exclusion`). No se generaliza
+            # --"un juguete que mencione comida podria entrar por error" (ampliacion del 6 de
+            # octubre de 2026)--: es "esta comida concreta le gana a esta exclusion concreta".
+            # El caso que lo exige es real: la barrita proteica de Aldi llega con la categoria
+            # "parafarmacia" y nada mas, y es comida de reposicion.
+            if ganadora.estado == EXCLUIDO:
+                for regla in pol.get("incluye_producto", []):
+                    if ganadora.regla_id not in (regla.get("gana_a_exclusion") or []):
+                        continue
+                    for termino in regla["terminos"]:
+                        if _casa(termino, nombre, palabras_nombre):
+                            return DecisionAlcance(
+                                INCLUIDO, regla.get("familia"), regla["motivo"], regla["id"], ver,
+                                {**ev, "termino": termino, "gana_a": ganadora.regla_id})
             return ganadora
 
     # 3. El producto, para incluir (papel higienico, arena de gato, pañales...).

@@ -178,3 +178,89 @@ def test_la_frontera_esta_versionada():
     ids |= {r["id"] for r in alcance.politica()["excluye_producto"]}
     assert "prod-menaje-de-un-solo-uso" in ids
     assert "prod-fuera-en-esta-version" in ids
+
+
+# --- Los cuatro falsos descartes medidos el 6 de octubre de 2026 (ampliacion) ------------------
+# Casos **reales del catalogo**, con la cadena y su pasillo tal y como los publica. Cada uno con su
+# negativo: la leccion es que arreglar un falso descarte no puede abrir la puerta a lo que si es
+# bazar.
+
+
+def test_una_frase_de_la_politica_tiene_que_ser_contigua():
+    """`cubo de basura` es una frase, no las palabras cubo+de+basura en cualquier orden.
+
+    Antes casaba con "Bolsa de basura para cubo alto" (DIA): las palabras estaban todas, pero la
+    frase no. Y la bolsa de basura es cesta; el cubo, no.
+    """
+    assert alcance.clasificar_alcance(
+        "Bolsa de basura para cubo alto 30 l.", "Drogueria > Bolsas de basura").entra
+    # Y el cubo de verdad sigue fuera: ahi la frase si esta, al principio del titulo.
+    assert alcance.clasificar_alcance("Cubo de basura 10 l.", "").estado == alcance.EXCLUIDO
+
+
+def test_un_aparato_mencionado_como_uso_no_excluye_el_producto():
+    """El absorbeolores es para el frigorifico; no es un frigorifico."""
+    d = alcance.clasificar_alcance("Absorbeolores frigorífico XL Croc Odor 140 g.",
+                                  "drogueria-y-limpieza/ambientadores")
+    assert d.entra, f"un consumible de limpieza salio {d.estado} por la palabra del aparato"
+    # El aparato de verdad sigue fuera, por su pasillo.
+    assert alcance.clasificar_alcance(
+        "Frigorífico combi no frost 300 l.", "Electrodomesticos > Gran electrodomestico"
+    ).estado == alcance.EXCLUIDO
+
+
+def test_la_dietetica_es_comida_de_reposicion():
+    """Medido: la barrita proteica de Aldi salia excluida por estar en parafarmacia."""
+    for nombre, categoria in (
+        ("Barrita proteica sabor brownie", "parafarmacia"),
+        ("BICENTURY Barrita proteica de chocolate brownie 57 g.",
+         "Sin Gluten / Sin Lactosa, Nutrición deportiva"),
+        ("Batido de proteína sabor vainilla", "Parafarmacia > Dietética y control de peso"),
+    ):
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.entra, f"{nombre} ({categoria}) salio {d.estado}"
+    # Y un medicamento sigue fuera.
+    assert alcance.clasificar_alcance(
+        "Ibuprofeno 400 mg 20 comprimidos", "Parafarmacia > Medicamentos").estado == alcance.EXCLUIDO
+
+
+def test_el_calzado_no_es_cesta_ni_aunque_la_cadena_no_diga_su_rama():
+    """Aldi publica "Botas de trekking" sin categoria: por titulo tiene que salir fuera."""
+    assert alcance.clasificar_alcance("Botas de trekking", "").estado == alcance.EXCLUIDO
+    assert alcance.clasificar_alcance("Zapatillas de deporte júnior", "").estado == alcance.EXCLUIDO
+    # Negativo: la bota de vino no es calzado, y una palomita de maiz menos.
+    assert alcance.clasificar_alcance("Palomitas de maíz con mantequilla", "").estado != alcance.EXCLUIDO
+
+
+def test_el_bebe_durable_no_entra_pero_su_consumible_si():
+    """Medido: 233 accesorios duraderos de bebe entraban por la familia "Bebe" (prioridad 35).
+
+    Nombres reales del catalogo del 6 de octubre de 2026. Y el negativo importa tanto como el
+    positivo: la alimentacion, las toallitas y los pañales de bebe tienen que seguir entrando.
+    """
+    for nombre, categoria in (
+        ("Cuna de viaje plegable, color gris grafito", "Bebé > Cunas > Cunas"),
+        ("Cochecito de paseo Versa combi dúo INTERBABY", "Bebé > Paseo del bebé > Sillas"),
+        ("Sábana bajera para cochecito bebé, 40x80cm", "Bebé > Paseo del bebé > Accesorios"),
+        ("Protector de cuna liso, color blanco, INTERBABY", "Bebé > Cunas > Ropa de cuna"),
+        ("Mochila portabebé, entre 3,5 y 15 kg, Go4 BEBE", "Bebé > Paseo del bebé > Mochilas"),
+        ("Trona evolutiva de madera", ""),
+    ):
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.estado == alcance.EXCLUIDO, f"{nombre} ({categoria}) salio {d.estado}"
+
+    for nombre, categoria in (
+        ("Papilla de frutas variadas 250 g", "Bebé > Alimentación infantil"),
+        ("Toallitas húmedas sin perfume 72 unidades", "Bebé > Higiene y cuidado bebé"),
+        ("Pañales talla 4, 40 unidades", "Bebé > Higiene y cuidado bebé"),
+        ("Leche de continuación etapa 2, 800 g", "Bebé > Alimentación infantil"),
+    ):
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.entra, f"un consumible de bebe salio {d.estado}: {nombre} ({categoria})"
+
+
+def test_la_cuna_de_queso_no_es_una_cuna():
+    """La trampa de las tildes, otra vez: "cuña" -> "cuna" al normalizar. Por eso van frases."""
+    d = alcance.clasificar_alcance("AUCHAN Queso de cabra tierno cuña 500 g",
+                                   "Frescos > Quesos > Queso de cabra")
+    assert d.entra, "un queso salio del catalogo por la palabra cuna"
