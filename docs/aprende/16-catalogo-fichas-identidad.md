@@ -186,3 +186,56 @@ puso el dueño. Ramas sin un solo producto de cesta: de 12 a 1.
 - Las prioridades (20, 30, 35, 40) son decisiones explicadas, no una verdad universal: se cambian
   en un sitio y el informe dice el efecto en segundos.
 - Quedan **3 productos sin nombre** en gold, que ningún control estaba contando.
+
+
+## Banco de verdad del alcance (6 de octubre de 2026)
+
+### El problema
+
+El control decía «cero alimentos excluidos» y a la vez enseñaba tres falsos descartes. Un control
+que comparte vocabulario y supuestos con lo que vigila puede **confirmar sus propios errores**.
+
+### El método (y por qué así)
+
+    uv run python -m projects.cesta.banco_verdad muestrear --por-estrato 4   # 186 fichas
+    uv run python -m projects.cesta.banco_verdad informe
+
+1. **Muestra estratificada** por cadena y estado, y dentro de los incluidos por familia, con
+   **semilla fija**: la misma muestra hoy y dentro de un mes, para que la diferencia entre dos
+   mediciones sea de la política y no del muestreo.
+2. **Fichero ciego** (`para-etiquetar.csv`) sin la columna del veredicto: quien etiqueta lee nombre
+   y categoría, no lo que dice el clasificador. Hay una prueba que lo comprueba.
+3. **Etiquetas humanas** con motivo, autor y fecha (`etiquetas.csv`). Y `duda` es una respuesta
+   legítima: forzar un sí o un no en un caso límite es como se fabrican los números bonitos.
+4. **Dos errores, dos cuentas**: falso descarte (cesta que la política tira) y bazar aceptado (no
+   cesta que entra como cesta) van separados, cada uno con su denominador. Y `revisar` se cuenta
+   aparte, porque no es un error: es una pregunta pendiente.
+
+### Primeros resultados (37 etiquetas de 186, 6 de octubre de 2026)
+
+    falsos descartes     4 de 20 cesta      (albahaca en maceta, apósitos, preservativos,
+                                             cambiador desechable)
+    bazar aceptado       0 de 14 no cesta
+    dudas                3
+    pendientes          17 (16 cesta, 1 no cesta)
+
+Los cuatro falsos descartes y su causa: **maceta** excluye una hierba fresca de alimentación;
+**parafarmacia** excluye apósitos y preservativos, que son consumibles domésticos; y **cambiador**
+—término añadido el mismo día para cerrar la fuga de bebé— excluye un cambiador **desechable**.
+Los tres primeros llevaban meses ahí sin que nadie los viera.
+
+Y los 16 pendientes son un hueco de vocabulario, no casos raros: **plurales** («pescados-y-mariscos»
+no casa con `pescado`; «golosinas» no está), **pasillos sin declarar** («Bodega» de Mercadona,
+«cuidado-del-cabello», «barbacoa») y **singular contra plural** en mascotas («comida-de-gato» no
+casa con `gatos`).
+
+### Limitaciones, dichas
+
+- La primera tanda se etiquetó **sabiendo el estrato** (se hizo para cazar falsos descartes). Las
+  siguientes serán ciegas de verdad, y entonces la comparación entre tandas dirá si hay sesgo.
+- 37 de 186: los porcentajes son de esas 37, no del catálogo. El informe lo dice en su primera
+  línea y no deja mezclarlos.
+- Las etiquetas son **mías, leyendo nombre y categoría**: no son una revisión humana independiente
+  del dueño, que es la que tendría que cerrar los empates.
+- El banco mide el alcance. No mide identidad (T03) ni fichas (T11): cada problema necesita su
+  propio banco, y fingir que uno sirve para todo es la forma de no medir ninguno.
