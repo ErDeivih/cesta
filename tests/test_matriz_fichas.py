@@ -39,8 +39,8 @@ def test_normaliza_tildes_y_mayusculas():
 
 def test_lee_un_crudo_comprimido_y_no_revienta_con_uno_roto(tmp_path):
     bueno = tmp_path / "bueno.json.gz"
-    bueno.write_bytes(gzip.compress('{"name": "Leche", "ingredients": "leche"}'
-                                    .encode("utf-8")))
+    bueno.write_bytes(gzip.compress(b'{"name": "Leche", "ingredients": "leche"}'
+))
     assert "ingredients" in matriz._texto_de(bueno)
     roto = tmp_path / "roto.json.gz"
     roto.write_bytes(b"esto no es gzip")
