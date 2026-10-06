@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 
 from curl_cffi import requests
 
+from core import peticiones
+
 DEFAULT_IMPERSONATE = "chrome131"
 
 
@@ -88,6 +90,9 @@ class Fetcher:
         for attempt in range(retries):
             self._wait()
             try:
+                # **Contar el acto de pedir, no restar filas de dos dias.** Una resta confunde
+                # "la cadena publico menos" con "pedimos menos". Ver `core/peticiones.py`.
+                peticiones.pide(url)
                 r = self.session.request(method, url, timeout=timeout,
                                          headers=headers, **kw)
                 # El 403 NO se reintenta aqui, y eso costo una medicion.

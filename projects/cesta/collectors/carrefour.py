@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import polars as pl
 
-from core import alcance, cobertura, config
+from core import alcance, cobertura, config, peticiones
 from core.fetch import Fetcher, HTTPStatusError
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -236,6 +236,7 @@ def categorias(f: Fetcher) -> list[tuple[str, str]]:
                 # **El bazar no se pide** (T01). Ver `_fuera_de_alcance`.
                 if _fuera_de_alcance(m.group(1)):
                     saltadas += 1
+                    peticiones.evita(FUENTE)   # categoria de bazar: no se pide
                     continue
                 salida.append((m.group(2), m.group(1)))
     if saltadas:
@@ -417,6 +418,8 @@ def _por_que_fallan(fallidas, ultimo_fallo) -> str:
 
 def main() -> int:
     t0, errores = time.monotonic(), 0
+    # Deja el recuento del dia escrito al terminar el proceso:
+    peticiones.registra_al_salir(FUENTE)
     f = Fetcher(rate_per_sec=config.RITMO[FUENTE])
     try:
         cats = categorias(f)

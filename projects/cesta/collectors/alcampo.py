@@ -18,7 +18,7 @@ from urllib.parse import quote, urlencode
 
 import polars as pl
 
-from core import alcance, cobertura, config, waf
+from core import alcance, cobertura, config, peticiones, waf
 from core.fetch import Fetcher, HTTPStatusError
 from core.promos import fechas
 from core.runlog import check_drift, log_run
@@ -676,6 +676,8 @@ def _fetcher() -> Fetcher:
     """
     s = waf.para(DOMINIO, URL_PRUEBA)
     cabeceras = {"User-Agent": s["user_agent"]} if s.get("user_agent") else None
+    # Deja el recuento del dia escrito al terminar el proceso:
+    peticiones.registra_al_salir(FUENTE)
     return Fetcher(rate_per_sec=config.RITMO[FUENTE],
                    cookies=s.get("cookies"), headers=cabeceras)
 
@@ -740,6 +742,7 @@ def main() -> int:
         # pueda tumbar el dia, y de paso se le ahorran peticiones al WAF.
         if _fuera_de_alcance(cat):
             ramas_saltadas += 1
+            peticiones.evita(FUENTE)   # rama de bazar: no se pide
             continue
         while True:
             try:

@@ -20,7 +20,7 @@ from pathlib import Path
 import polars as pl
 from selectolax.parser import HTMLParser
 
-from core import cobertura, config, envases, sellos
+from core import cobertura, config, envases, peticiones, sellos
 from core.fetch import Fetcher
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -34,6 +34,8 @@ MASTER = config.DATA / "master" / "mercadona.json.gz"
 
 def sesion() -> Fetcher:
     """Fetcher con el almacen ya fijado por codigo postal."""
+    # Deja el recuento del dia escrito al terminar el proceso:
+    peticiones.registra_al_salir(FUENTE)
     f = Fetcher(rate_per_sec=config.RITMO[FUENTE])
     f.put(
         f"{BASE}/postal-codes/actions/change-pc/",

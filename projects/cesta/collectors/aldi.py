@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 import polars as pl
 
-from core import certificados, cobertura, config, sellos
+from core import certificados, cobertura, config, peticiones, sellos
 from core.fetch import Fetcher
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -249,6 +249,8 @@ def a_registro(p: dict) -> dict:
 
 def main() -> int:
     t0 = time.monotonic()
+    # Deja el recuento del dia escrito al terminar el proceso:
+    peticiones.registra_al_salir(FUENTE)
     f = Fetcher(rate_per_sec=config.RITMO[FUENTE])
 
     cats, ids = rastrear(f)

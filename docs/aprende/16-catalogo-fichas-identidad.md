@@ -279,3 +279,63 @@ Y la lección de método que ya apareció tres veces esta semana: **cortar por l
 una línea miente**. Quitar «-es» convertía «carnes» en «carn» y el plural dejaba de casar; y un
 `count` sobre una línea sin su salto de línea contaba dos veces `cat-higiene`, porque
 `cat-higiene-dermocosmetica` empieza igual.
+
+
+## Contar las peticiones de verdad (6 de octubre de 2026)
+
+### El problema
+
+La ampliación pide *«medir peticiones realmente evitadas, no inferirlas restando filas de dos días
+con distinta disponibilidad»*. Restar filas de dos días es lo que **parece** una medida: si un día
+la cadena publica menos, la resta lo llama ahorro.
+
+### El método
+
+Se cuenta **el acto**, donde ocurre, y son tres cosas distintas:
+
+| número | dónde se cuenta | qué significa |
+|---|---|---|
+| `peticiones` | `core/fetch.py`, al enviar | peticiones HTTP enviadas, por host |
+| `cache` | `core/storage.py`, al leer | respuestas que ya estaban guardadas y **no** generaron petición |
+| `evitadas` | el colector, al decidir | decisiones de **no pedir** por política (una rama de bazar) |
+
+Separar `cache` de `peticiones` es lo que permite distinguir **ahorro** de **avería**: sin esa
+columna, «menos peticiones» puede ser que la cadena se cayó.
+
+Y lo que no hace: **no estima lo que habría pasado**. «Evitadas» es un recuento de decisiones, no
+una predicción de lo que la cadena habría servido. Se dice en el propio informe.
+
+### Dos decisiones de ingeniería
+
+1. **El recuento se escribe al salir del proceso** (`atexit`), no al final del colector. Son cinco
+   cadenas en cinco procesos y la tarea diaria las lanza por separado: un contador que hay que
+   acordarse de cerrar es un contador que un día no se cierra.
+2. **Si no hay recuento, se dice «sin recuento»; no se escribe un cero.** Un fichero con ceros
+   parecería una captura que fue bien y no pidió nada, y no es lo mismo que no haber corrido. El
+   informe lo imprime así (`no hay ningún recuento de ese día`).
+
+### Una medición que salió mal, y por qué se cuenta
+
+Al ejecutar el informe apareció un recuento de Carrefour con **0 peticiones y 2 lecturas de caché**
+del día en curso. No era una captura: lo había escrito **una prueba** al recorrer el camino de la
+caché, y el informe del día lo habría leído como una cadena que corrió y no pidió nada.
+
+Arreglarlo en el informe (filtrando) habría escondido el problema; se arregló donde nace:
+`registra_al_salir` no registra nada si corre pytest. **Un instrumento que ensucia el dato que mide
+es peor que no tenerlo.**
+
+### Primer resultado honesto
+
+    uv run python -m projects.cesta.peticiones
+    Peticiones del 2026-10-06
+      no hay ningún recuento de ese día. Ninguna cadena lo dejó escrito
+
+Las cinco cadenas de hoy corrieron **antes** de que el contador existiera, así que hoy no hay nada
+que medir y se dice así. La primera medida real es la pasada siguiente, y esa será la que permita
+afirmar cuántas peticiones ahorra la política, en lugar de suponerlo.
+
+### Limitación
+
+El contador mide peticiones **enviadas**, incluyendo reintentos y las que acabaron en error: es lo
+que se le pide al servidor de la cadena, que es lo que importa para no abusar de él. No mide
+bytes ni tiempo, que son otra conversación.

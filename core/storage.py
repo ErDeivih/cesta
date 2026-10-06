@@ -8,7 +8,7 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 
-from core import config
+from core import config, peticiones
 
 ROOT = config.DATA
 
@@ -153,6 +153,9 @@ def load_raw_bytes(source: str, key: str, *, day: date | None = None) -> bytes |
     )
     if not candidatos:
         return None
+    # Se sirve de la copia guardada: **no hay peticion**. Sin contarlo, "menos peticiones" no
+    # distingue ahorro de averia. Ver `core/peticiones.py`.
+    peticiones.de_cache(source)
     return gzip.decompress(candidatos[-1].read_bytes())
 
 

@@ -18,7 +18,7 @@ from pathlib import Path
 import polars as pl
 from selectolax.parser import HTMLParser
 
-from core import cobertura, config, envases, sellos
+from core import cobertura, config, envases, peticiones, sellos
 from core.fetch import Fetcher, HTTPStatusError
 from core.runlog import check_drift, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
@@ -405,6 +405,8 @@ def main(detalles_max: int | None = None) -> int:
     t0 = time.monotonic()
     errores = 0
     try:
+        # Deja el recuento del dia escrito al terminar el proceso:
+        peticiones.registra_al_salir(FUENTE)
         f = Fetcher(rate_per_sec=config.RITMO[FUENTE])
         cats = categorias(f)
     except Exception as exc:  # noqa: BLE001
