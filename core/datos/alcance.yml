@@ -85,9 +85,12 @@ excluye_producto:
                "cuaderno de", "agenda", "mochila escolar", "carpeta", "folios", "grapadora"]
   - id: prod-accesorios-duraderos-mascota
     motivo: "accesorios duraderos de mascota (la cama no se gasta como la comida)"
-    terminos: ["cama para", "cama de", "caseta", "transportin", "jaula", "comedero",
+    terminos: ["cama para", "cama de", "caseta", "transportin", "comedero",
                "bebedero", "correa", "collar", "arnes", "juguete para", "rascador",
-               "arenero", "fuente de agua para"]
+               "arenero", "fuente de agua para",
+               # "jaula" suelta sacaba los huevos de gallina en jaulas (medido el 6 de
+               # octubre de 2026, al empezar a entender plurales): frases, no palabras.
+               "jaula para", "jaula de transporte", "jaula de mascota", "jaulas para"]
   - id: prod-accesorios-bebe-duraderos
     motivo: "carrito, cuna y similares no son consumibles"
     # **Nunca la palabra suelta "cuna"**: sin tildes, "cuña" (de queso) es "cuna", y la lista de

@@ -327,3 +327,23 @@ def test_quitar_el_plural_no_destroza_palabras_cortas():
     assert alcance._raiz("golosinas") == "golosina"
     assert alcance._raiz("carnes") == "carne"
     assert alcance._raiz("gato") == "gato"
+
+
+def test_los_huevos_en_jaulas_no_son_una_jaula_de_mascota():
+    """Regresion que introdujo el arreglo de plurales y cazo el control de seguridad.
+
+    Al entender plurales, "jaula" (accesorios de mascota) empezo a casar con "en jaulas" del titulo
+    de los huevos: seis fichas de huevos salieron del catalogo. La palabra suelta se cambio por
+    frases.
+    """
+    for nombre, categoria in (
+        ("GRANJAS VILLARREAL Huevos de gallina en jaulas acondicionadas, 12 uds",
+         "Leche, Huevos, Lácteos, Yogures y Bebidas vegetales"),
+        ("PITAS Huevos de gallinas en jaulas acondicionadas, 30 uds",
+         "Campañas > Todo a un EURO > Leche, huevos, y lácteos"),
+    ):
+        d = alcance.clasificar_alcance(nombre, categoria)
+        assert d.entra, f"huevos fuera del catalogo por la palabra jaula: {d.regla_id}"
+    # Y una jaula de mascota de verdad sigue fuera.
+    assert alcance.clasificar_alcance(
+        "Jaula para conejo con bandeja, 80 cm", "").estado == alcance.EXCLUIDO
