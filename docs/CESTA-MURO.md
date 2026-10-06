@@ -47,7 +47,7 @@ alimentarios nuevos.
 
 | | paquete | depende de | qué se ve cuando está | estado |
 |---|---|---|---|---|
-| **T01** | Política familiar y presupuesto de extracción (`core/alcance.py`, `core/datos/alcance.yml`, los cinco colectores, `reprocesar.py`, `cobertura.py`, `run.py`) | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo | **EN CURSO (parcial, y a propósito)**: política **v2** con la frontera que fijó el dueño, clasificador, ejecución seca y **comprobación de seguridad a CERO** (561 → 0). Aplicado en **Alcampo** (ramas y producto) y **Carrefour** (ramas). Catálogo: 53.139 → **47.541 entran, 3.191 salen (6,0 %), 2.407 a revisar**. Pendientes con condición concreta en `docs/CESTA-CIERRE-T01.md`: DIA y Mercadona (mismo patrón), **Aldi** (decisión del sitemap), el informe de peticiones realizadas y la verificación en vivo con la captura siguiente |
+| **T01** | Alcance de consumibles y presupuesto de extracción | — | el bazar sale del catálogo y del recorrido; se piden menos cosas y con motivo | **HECHO (2026-10-06)**: política v2 con la frontera del dueño, clasificador por frases contiguas, **banco de verdad** con 0 falsos descartes y 0 bazar aceptado sobre 37 etiquetas, y las cuatro cadenas que saben la categoría antes de pedir dejan de pedir bazar (Alcampo, Carrefour, DIA, Mercadona). Catálogo: 50.642 entran · 303 salen · 714 a revisar. **Aldi no se toca, y está medido**: saltarse su bazar ahorra 1 petición de 2.536 |
 
 ### T01 en detalle, cadena por cadena (lo que pide el contrato)
 
@@ -66,8 +66,8 @@ clasifica otra vez antes de escribir bronze para no colar cruces de categoría.
 
 | | paquete | depende de | qué se ve cuando está | estado |
 |---|---|---|---|---|
-| **T02** | Oferta trazable y publicación consistente (`schemas.py`, `storage.py`, `pipeline.py`, `emparejar.py`, `catalogo.py`, `cifras.py`, `cobertura_diaria.py`) | T01 | cada precio de pantalla se puede rastrear hasta su observación; captura real, zona, tienda, disponibilidad, retirada, versión; publicación por manifiesto atómico | **PENDIENTE** |
-| **T03** | Identidad y banco de referencia por familias (`core/identidad.py`, `atributos.py`, `matching.py`, `equivalencias.py`, `emparejar.py` + banco de casos) | T01–T02 | «artículo exacto» / «familia» / «alternativa» son cosas distintas; banco de 390 pares (30 por familia); **cero falsos idénticos en los casos obligatorios** | **PENDIENTE** |
+| **T02** | Oferta trazable y publicación por versiones | E1 | cada catálogo dice con qué capturas y con qué reglas se publicó | **PRIMERA VERSIÓN HECHA (2026-10-06)**: `core/manifiesto.py` escribe `data/gold/manifiesto.json` al final de la pasada, con la versión y la **huella sha256 de la política**, la captura y las filas de cada cadena, la huella de cada fichero publicado, la cobertura declarada y avisos. Escritura atómica y no puede tumbar el día. Falta que la aplicación lo enseñe |
+| **T03** | Identidad exacta (artículo / familia / alternativa) | T02 | dos cadenas solo se comparan cuando son el mismo producto o cuando alguien eligió la alternativa | **SIN EMPEZAR**. El laboratorio de comparación que dejó la ampliación (17.549 pares evaluados: 10.999 con contradicción, 1.014 candidatos por GTIN) es **diagnóstico**, no el algoritmo de producción. Es el corazón de que las comparaciones sean correctas |
 
 ### Entrega E3 — Lista fiel a la elección
 
@@ -153,6 +153,11 @@ sustituirlo por otro más barato.**
 
 | fecha | qué se hizo |
 |---|---|
+| 2026-10-06 | **T01 cerrado de verdad**: banco de verdad con 37 etiquetas (4 falsos descartes a 0 y 0 bazar aceptado), hueco de vocabulario de los plurales corregido, y las cuatro cadenas que saben la categoría antes de pedir dejan de pedir bazar. **Aldi medido y descartado**: 1 petición de 2.536 |
+| 2026-10-06 | **Contador de peticiones**: enviadas, de caché y evitadas, contadas donde ocurren; y una prueba que impide que una ejecución de prueba ensucie el recuento del día |
+| 2026-10-06 | **T02**: manifiesto de publicación con la huella de la política, las capturas, las huellas de gold y la cobertura declarada |
+| 2026-10-06 | **T11 medido**: la ficha ya llega en Carrefour, DIA y Aldi y se tira al parsear; en Alcampo no llega. La primera medición contaba respuestas y su corrección está escrita al lado |
+| 2026-10-06 | **T12**: colector de Lidl con cobertura parcial explícita, 11 pruebas sin red y el escribir bronze detrás de una bandera, porque la pasada descubre las cadenas |
 | 2026-10-05 | **T01 completo en su parte verificable**: política v2 (frontera del dueño: menaje de un solo uso y bayetas dentro; bombillas, cubos, vasos reutilizables y juguetes de mascota fuera), clasificador con prioridad y palabras enteras, ejecución seca con informe por cadena y rama, y **comprobación de seguridad de comida excluida a cero** |
 | 2026-10-05 | **La política, dentro de los colectores**: Alcampo deja de pedir las ramas sin producto de cesta (Hogar y Decoración, la que tumbó su captura) y clasifica el producto antes de bronze; Carrefour no pide sus categorías de bazar |
 | 2026-10-05 | **Apagada y vuelta a enganchar**, en ese orden: la comprobación de seguridad encontró 561 alimentos excluidos, se desenganchó hasta arreglarlo, y se volvió a enganchar con el número a cero. Política y comprobación en el mismo commit que el código |
@@ -166,3 +171,42 @@ sustituirlo por otro más barato.**
 | 2026-10-05 | **T01 en Alcampo**: el colector deja de pedir las ramas sin producto de cesta (Hogar y Decoración, que fue la que tumbó la captura del día). Cuatro pruebas, con las dos cautelas: solo se salta lo excluido y ante la duda se pide |
 | 2026-10-05 | informe de ramas: 5 ramas sin un solo producto de cesta, la primera la de Alcampo con sus 133 |
 | 2026-10-05 | muro creado; auditoría de ChatGPT verificada en esta máquina (los 6 números y el instrumento, con su prueba) |
+
+| **T11** | Ficha de producto completa e incremental | T02 | ingredientes, alérgenos, nutrientes con su base, pesos, origen y envase, con evidencia por campo | **MEDIDO, NO EXTRAÍDO (2026-10-06)**: `matriz_fichas.py` dice qué llega y qué se tira. Carrefour trae peso neto y origen en el 100 % de las fichas, DIA alérgenos en el 52 %, Aldi bases nutricionales en el 48 %, Alcampo ingredientes en el 0 % de sus 2.582 productos (solo escaparate). Lo que hay que hacer es **dejar de tirarlo**, no pedirlo otra vez |
+
+| **T12** | Lidl con cobertura parcial explícita | T02 | «ofertas conocidas de Lidl», nunca «catálogo completo» | **COLECTOR HECHO, SIN ACTIVAR (2026-10-06)**: `collectors/lidl.py` lee su página pública de ofertas (robots.txt primero, una página), no inventa EAN, no confunde el precio tachado y no finge stock. 11 pruebas sin red. Escribir bronze está detrás de `--escribir` porque la pasada **descubre** las cadenas. La primera captura real, pendiente de hacer a mano |
+
+
+## Traspaso: qué está hecho, qué está medido y qué falta (6 de octubre de 2026)
+
+### Hecho y probado
+
+| pieza | qué hace | dónde |
+|---|---|---|
+| Política de alcance v2 | la frontera que fijó el dueño, versionada con el código | `core/datos/alcance.yml`, `core/alcance.py` |
+| Banco de verdad | 37 etiquetas humanas, muestra ciega y reproducible; mide falsos descartes y bazar aceptado **por separado** | `projects/cesta/banco_verdad.py`, `docs/banco-verdad/` |
+| Contador de peticiones | enviadas, servidas de caché y **evitadas por política**, contadas donde ocurren | `core/peticiones.py`, `projects/cesta/peticiones.py` |
+| Manifiesto de publicación (T02) | con qué capturas, con qué reglas y con qué cobertura se publicó | `core/manifiesto.py` |
+| Colector de Lidl (T12) | ofertas conocidas, cobertura parcial declarada | `projects/cesta/collectors/lidl.py` |
+| Matriz de fichas (T11) | qué campos llegan, qué se extrae y qué se tira | `projects/cesta/matriz_fichas.py` |
+| Cuatro cadenas sin bazar | Alcampo, Carrefour, DIA y Mercadona no piden lo excluido | `projects/cesta/collectors/` |
+
+**El catálogo del 6 de octubre de 2026**: 51.659 productos de 5 cadenas → **50.642 entran, 303 salen (0,6 %), 714 a revisar**. Un día antes eran 2.098 en revisión: la diferencia es el hueco de vocabulario (plurales y pasillos) que destapó el banco.
+
+### Medido, y por eso decidido
+
+- **Aldi no se rediseña**: saltarse su bazar ahorra **1 petición de 2.536** (0,0 %). Su problema real son las 230 fichas en revisión, que es clasificación y no peticiones.
+- **T11**: la ficha **ya llega** en Carrefour, DIA y Aldi y se tira al parsear; en Alcampo no llega (solo escaparate). La primera medición contaba respuestas y daba una conclusión falsa; contando productos, la conclusión cambia y está escrita con su corrección al lado.
+- **Lidl**: la sonda y el colector funcionan sobre la página pública; falta la primera captura real, que hay que hacer **a mano y a la vista**.
+
+### Lo que falta, en orden
+
+1. **T03 · identidad exacta** — es lo que gobierna que las comparaciones sean correctas. Normalizar sin borrar diferencias, candidatos por GTIN y por marca+familia+formato, veto de contradicciones, decisión con evidencia, sin fusiones transitivas, métricas por familia y **publicación en sombra** antes de tocar listas. El laboratorio es diagnóstico.
+2. **T11 · extraer lo que ya llega** — empezando por peso neto y origen de Carrefour (100 %) y alérgenos de DIA (52 %), con procedencia y fecha por campo, y sin sustituir un valor bueno por un fallo temporal.
+3. **La primera medición real de peticiones** — el contador ya está dentro; la pasada siguiente dirá cuántas ahorra la política, en lugar de suponerlo.
+4. **T12 · la primera captura de Lidl** y, solo después, decidir si entra en la tarea diaria.
+5. T04 a T10, en el orden del muro.
+
+### Las reglas que no se saltan
+
+Cada paquete cierra con sus pruebas de aceptación pasando, su plantilla rellenada, el muro actualizado y los documentos **en el mismo commit** que el código. La tarea de las 06:00 no se rompe. Se trabaja contra copia. **Elegir un producto concreto no autoriza sustituirlo por otro más barato.** Y lo que no se sabe se dice: ni un cero donde no hay dato, ni una comprobación que aprueba sin mirar.
