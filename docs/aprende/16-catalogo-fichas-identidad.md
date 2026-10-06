@@ -499,3 +499,51 @@ que es una decisión y no un descuido — y hay una prueba que lo fija.
 
 La más útil: la fila se valida contra `ProductoRaw`, el esquema del proyecto. Es la puerta que
 impide que un colector nuevo meta columnas raras o tipos cambiados.
+
+
+## T02 · Lo que se publica, con qué capturas y con qué reglas (6 de octubre de 2026)
+
+### El problema
+
+Se podía saber **qué** hay en gold, pero no **con qué**: qué capturas, de qué día, con qué versión
+de la política de alcance y con qué cobertura declarada. Sin eso, dos catálogos distintos parecen el
+mismo, y una comparación puede ser exacta y estar comparando cosas diferentes.
+
+### El manifiesto
+
+`core/manifiesto.py` escribe `data/gold/manifiesto.json` al final de la pasada (después del
+emparejador, que es lo último que toca gold). Lleva:
+
+    version_manifiesto, fecha, generado_en
+    politica_alcance: {version, sha256 del yml}      <- con qué reglas se publicó
+    fuentes: {cadena: {captura, filas, de_hoy}}      <- con qué capturas
+    ficheros: {nombre: {sha256, filas, bytes}}       <- qué se publicó exactamente
+    cobertura_declarada: {lidl: {cobertura, aviso}}  <- qué se avisa de lo parcial
+    avisos: [...falta publicar..., ...sin captura de hoy...]
+
+### Tres decisiones que importan
+
+1. **La huella de la política va dentro.** Es lo que permite decir «este catálogo se publicó con
+   estas reglas»; si cambia una regla, cambia el manifiesto. Es el enlace entre T01 y T02 que la
+   ampliación pide.
+2. **Se escribe de forma atómica** (fichero temporal y renombrado). Un manifiesto a medias es peor
+   que no tenerlo, porque **parece** una publicación válida.
+3. **No puede tumbar el día.** Va en un `try`: si falla, se avisa y se sigue. El día se mide por el
+   dato, no por el manifiesto; lo único que no se puede es publicar sin decir qué pasó.
+
+### Una cadena que no corrió es un aviso, no un cero
+
+    avisos: ["alcampo: sin captura de hoy (la ultima es 2026-10-05)"]
+
+Es la misma regla que en el contador de peticiones y en el banco de verdad: **lo que no se sabe se
+dice, no se rellena con un cero**, porque un cero se lee como «no había nada» y no como «no lo sé».
+
+### Prueba reproducible
+
+    uv run python -m core.manifiesto --ver     # lo enseña sin escribir
+    uv run pytest tests/test_manifiesto.py -q  # 7 pruebas
+
+### Limitación
+
+El manifiesto firma el **contenido** de gold, no certifica que ese contenido sea correcto: eso es
+T03 y el banco de verdad. Un manifiesto dice «esto es lo que hay y con qué», no «esto está bien».

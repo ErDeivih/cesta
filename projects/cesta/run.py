@@ -238,6 +238,13 @@ def _main() -> int:
     if not (args.sin_pipeline or args.sin_emparejar):
         try:
             importlib.import_module("projects.cesta.emparejar").main([])
+            # **El manifiesto de publicacion** (T02): que se publica, con que capturas, con que
+            # reglas y con que cobertura. Va despues del emparejador, que es lo ultimo que toca
+            # gold. Y no puede tumbar el dia: si falla, se avisa y se sigue.
+            try:
+                importlib.import_module("core.manifiesto").escribe()
+            except Exception as exc:  # noqa: BLE001
+                print(f"[manifiesto] no se pudo escribir: {type(exc).__name__}: {exc}")
         except Exception as exc:  # noqa: BLE001
             print(f"[emparejar] FALLO: {exc}")
             fallos.append("emparejar")
