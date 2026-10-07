@@ -70,6 +70,39 @@ en las pruebas.
   identidad exacta.** El GTIN valido es la via fuerte, pero hay que comprobar ademas la presentacion;
   eso es exactamente lo que hace el motor y lo que antes no se comprobaba.
 
+### La sombra, medida sobre el catálogo entero (8 de octubre de 2026)
+
+`uv run python -m projects.cesta.identidad_sombra --guardar` · informe en `data/identidad-sombra/`
+
+| medida | valor |
+|---|---|
+| productos del catálogo | **51.915** |
+| con GTIN válido | **25.294** (48,7 %) |
+| grupos exactos por GTIN válido | **1.627** |
+| de ellos, multi-cadena | **1.589** |
+| probables por bloque (contados aparte, **no** son identidad) | **4.259** |
+| en cuarentena (mismo GTIN, presentación incompatible) | **266** |
+
+**La comparación con el emparejador que está en uso** —sus grupos son **componentes conexas** de las
+22.750 aristas de `enlaces.parquet`, no filas con identificador—:
+
+| medida | valor |
+|---|---|
+| grupos actuales multi-cadena | **6.545** |
+| **se partirían al aplicar GTIN válido** | **2.222 (34 %)** |
+| sobreviven como exactos (un GTIN, varias cadenas) | **4.045 (62 %)** |
+| sin GTIN comparable | **278** |
+
+**Uno de cada tres grupos que hoy se presentan como «el mismo producto» no lo es.** Los ejemplos del
+informe enseñan los tres tipos de error: dos tamaños del mismo caramelo (`20 uds` frente a `10 uds
+120 g`), una marca blanca junto a una marca (`Zumo de naranja light` de Alcampo frente a `Don Simón`),
+y dos marcas distintas de desmaquillante (`Avène` frente a `Garnier`). No son casos de borde.
+
+**Lo que esto autoriza a decir:** la identidad nueva separaría esos 2.222 y confirmaría los 4.045 con
+evidencia en vez de por parecido de nombre. **Lo que no autoriza:** activarlo. Nada se publica hasta
+que la sombra esté revisada, y la revisión de las 266 cuarentenas —donde una de las dos fichas miente—
+es parte de esa revisión.
+
 ### Pendiente, en orden, sin repetir lo hecho
 
 1. **S04, resto**: candidatos por bloque (marca+familia+formato), **banco independiente** y
