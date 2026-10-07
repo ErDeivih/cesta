@@ -307,6 +307,28 @@ esta muestra, no una propiedad de la cadena.
 pendientes. Cada ficha cerrada deja su hash del contenido útil, su versión de parser y su próxima
 revisión a 30 días.
 
+
+## S03 · ¿Resuelve la ficha lo que el *slug* no pudo? (7 de octubre de 2026)
+
+Lidl dejó **4.363 direcciones a revisión** porque su *slug* no dice nada. El contrato dice que esos se
+resuelven **con la ficha y no con el slug**, y eso hay que demostrarlo. Comparación sobre las
+6 fichas ya leídas y guardadas, sin pedir nada a la red:
+
+| resultado | fichas |
+|---|---|
+| el *slug* y la ficha coinciden | 5 |
+| **la ficha cambia la decisión** | **1** |
+| sin *slug* con el que comparar | 0 |
+
+Casos donde el *slug* callaba o se equivocaba:
+
+- `100272773`: incluido → **revisar** (None) · 4rain Depósito de agua "VASO 2in1 Decor", Volumen 220 Litros
+
+**Lo que esto permite decir:** con 1 fichas, la ficha aporta decisión donde el
+*slug* no la tenía. **Lo que no permite:** extrapolar a las 4.363 ni a la cadena. La
+muestra es diminuta y no está estratificada; el valor está en que **el mecanismo
+funciona**, no en el porcentaje.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
