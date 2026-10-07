@@ -200,6 +200,34 @@ cola** —pedir ficha a quien le falta, renovarla a quien le vence y no volver a
 correcta y en plazo— y el informe diario de cobertura por fuente y familia. Hasta entonces esto es
 memoria escrita, no renovación.
 
+### Lo que trae la ficha de Lidl, medido (7 de octubre de 2026)
+
+Leído el fixture guardado (`data/lidl-ficha-ejemplo.html`), sin red. Trae **tres** bloques de datos
+estructurados, y solo uno es del producto:
+
+    [0] @type=Product        name, brand, description, gtin13, sku, image, offers, url
+    [1] @type=Organization   LIDL
+    [2] @type=Organization   Lidl (con el programa de socio)
+
+**Tres consecuencias, y las tres cambian el plan:**
+
+1. **Hay `gtin13`.** La ficha de producto **sí trae código de barras**, que la página de ofertas no
+   traía. Eso alimenta directamente la identidad de S04: un GTIN válido y con procedencia es la vía
+   fuerte para decir «este es el mismo producto en otra cadena».
+2. **`sku` (11000174) no es un EAN.** Es el identificador interno. El contrato lo prohíbe
+   expresamente y ahora está visto en el dato, no supuesto: confundirlos envenenaría las
+   comparaciones.
+3. **No trae ingredientes ni nutrición.** El JSON-LD da identidad, descripción y ofertas; la ficha
+   nutricional tendrá que salir del **cuerpo HTML** o de otra fuente. Para T11 esto significa que las
+   fichas de Lidl darán identidad y precio, y habrá que medir aparte cuánta nutrición publica.
+
+Y dos cuidados que ya están escritos para el lector: la `description` viene con **HTML** (hay que
+sanitizarla, no pintarla) y `offers` es una **lista** (varias condiciones: normal y club, con fechas).
+
+**Pendiente inmediato**: escribir el lector sobre el fixture (producto → campos de bronze) con
+`gtin13` validado, `sku` **nunca** como EAN, `description` saneada y las condiciones de `offers`
+separadas. Y después medir cuánta nutrición hay en el HTML de la ficha, sin darla por hecha.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
