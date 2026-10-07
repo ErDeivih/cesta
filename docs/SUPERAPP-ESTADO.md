@@ -29,6 +29,70 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
+
+El objetivo **no está cumplido y sigue activo**: de los trece paquetes hay cuatro tocados y nueve sin
+empezar. Lo que sigue es el estado real, sin adornos, y una valoración en los tres ejes que el encargo
+separa a propósito: **función**, **calidad y cobertura del dato** y **operación y seguridad**. Un build
+verde no certifica los otros dos.
+
+### Estado por paquete
+
+| paquete | estado | una línea |
+|---|---|---|
+| **S00** baseline | **hecho** | cambios heredados verificados y preservados; 1.195 pruebas de partida |
+| **S01** publicación versionada | **hecho** | versión con puntero atómico, `rutas()` fija la versión por petición, rollback y concurrencia probados; catálogo real adoptado como primera versión |
+| **S02** cola de fichas | **hecho** | SQLite con estados, *lease* con vencimiento, hash, evidencia y próxima revisión; inventario de **79.915** desde bronze en 75,7 s; informe de cobertura |
+| **S03** Lidl | **en curso** | sitemap medido (6.622 → 691 incluidas, 1.568 de bazar evitadas, 4.363 a revisión) · ficha real y lector de JSON-LD con **GTIN validado** · **la cola pide fichas** (28 con ficha y hash, 5.026 pendientes) · cobertura de nutrición sobre 26 (0/26) · medidor con pruebas |
+| **S04** identidad | **sin empezar** | el laboratorio de la ampliación es diagnóstico, no el algoritmo; el matching actual sigue siendo el anterior |
+| **S05** selector único | **sin empezar** | primer arreglo ya localizado: **`_candidatos` recibe `fecha_tope` y no la aplica**, y sus llamantes pasan cadena vacía |
+| **S06** armazón | **sin empezar** | sin menú lateral todavía; las correcciones a las referencias de Stitch están listadas (sin 11 px, sin datos ficticios, sin recursos externos) |
+| **S07–S12** | **sin empezar** | Compra, Recetas, Calorías, puentes, gráficas y ensayo integral |
+
+### Valoración honesta de preparación para un despliegue futuro
+
+**Función: no.** No hay interfaz nueva construida. Las tres aplicaciones (Compra, Recetas, Calorías)
+**no existen como tales**: siguen sin menú lateral, sin rutas separadas y sin las pantallas del
+contrato. Lo que sí funciona es la **tripas de datos** que las sostendrá. Un despliegue hoy no tendría
+nada que enseñar al usuario.
+
+**Calidad y cobertura del dato: parcial, y con lo que falta medido.** El alcance, la cola, el
+inventario y la publicación versionada están hechos y probados. Pero **la nutrición no está**: en Lidl
+0 de 26 fichas la publican, y en el catálogo actual está a cero en Alcampo, Carrefour y Aldi. **La
+identidad exacta (S04) no ha empezado**, así que las comparaciones entre cadenas siguen apoyadas en el
+emparejador anterior: la regla del encargo —no sustituir un producto concreto sin elección explícita—
+está en el contrato y **no implementada**. Y de las 79.915 fichas del inventario, **28 tienen ficha**.
+
+**Operación y seguridad: sin verificar para un despliegue.** No hay despliegue público (correcto,
+estaba fuera de alcance), **no hay credenciales en el repositorio**, y las peticiones se han hecho con
+presupuesto, ritmo, robots respetado y sin bucles. Pero **no se ha probado ninguna copia de seguridad
+restaurada**, **no se ha hecho el ensayo de dos cuentas** contra filtración, y la plataforma web **no
+está levantada**. Eso es exactamente lo que S12 pide y no se ha hecho.
+
+**Conclusión:** el proyecto está **más cerca que al empezar la etapa** —hay cimientos de datos
+medidos, con pruebas y con límites escritos— y **no está listo para un despliegue**, ni público ni
+doméstico serio. La distancia no es de semanas de trabajo: es de construir S06 a S12 y de cerrar S03 y
+S04.
+
+### Lo que falta, en orden, con el primer paso concreto
+
+1. **S03, cerrar**: estratificar la muestra de fichas por familia (los 5.026 pendientes están en orden
+   de identificador, que no es una muestra) y resolver los 4.363 a revisión **con la ficha**.
+2. **S04, identidad exacta**: candidatos por GTIN —los de Lidl ya se validan— y por marca+familia+
+   formato, veto de contradicciones, abstención como resultado válido, banco independiente y
+   **publicación en sombra** antes de tocar nada de listas.
+3. **S05**: aplicar `fecha_tope` en `_candidatos` y en todos sus llamantes, que hoy pasan cadena vacía.
+4. **S06**: el armazón con menú lateral, respetando `SUPERAPP-01` y las correcciones a Stitch.
+5. **S07 a S12**: las tres aplicaciones, los puentes, las gráficas y el ensayo integral.
+
+### Cómo retomar
+
+Primero **`uv run pytest -q` y `uv run ruff check .`** (la última suite completa verificada es
+**1.243**). Después leer este fichero de arriba abajo: lleva la bitácora de commits de la etapa, lo que
+está medido con su número, las decisiones cerradas que no se vuelven a preguntar y los límites dichos
+al lado de cada cifra. La única dependencia externa es **Docker**, que hoy está parado, y solo hace
+falta para verificar recorridos de interfaz.
+
 ## Paquete actual
 
 **S03 · Lidl — PRIMERA MITAD HECHA.** Siguiente: **las fichas de los 5.054 candidatos** (S03, segunda mitad).
