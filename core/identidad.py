@@ -188,6 +188,31 @@ def decide(a: Producto, b: Producto) -> dict:
     return {"estado": ABSTIENE, "motivos": ["sin evidencia suficiente"], "evidencia": evidencia}
 
 
+def candidatos_por_gtin(productos: list[Producto]) -> dict[str, list[Producto]]:
+    """Los grupos **exactos**: mismo GTIN valido. Es la unica via que autoriza a decir "el mismo"."""
+    indice: dict[str, list[Producto]] = {}
+    for p in productos:
+        if p.gtin:
+            indice.setdefault(p.gtin, []).append(p)
+    return {g: miembros for g, miembros in indice.items() if len(miembros) > 1}
+
+
+def candidatos_por_bloque(productos: list[Producto]) -> dict[tuple, list[Producto]]:
+    """Los **probables**: misma marca, misma familia y misma presentacion, sin GTIN que confirme.
+
+    No son identidad: son candidatos para proponer y para que alguien decida. Se separan de los
+    exactos a proposito, porque juntarlos es exactamente el error que este paquete persigue.
+    """
+    bloque: dict[tuple, list[Producto]] = {}
+    for p in productos:
+        if p.gtin or not p.marca_normalizada or not p.familia:
+            continue
+        clave = (p.marca_normalizada, p.familia, p.atributos.get("cantidad"),
+                 p.atributos.get("unidad"), p.atributos.get("envases") or 1)
+        bloque.setdefault(clave, []).append(p)
+    return {c: miembros for c, miembros in bloque.items() if len(miembros) > 1}
+
+
 class Cuarentena(RuntimeError):
     """Un grupo que no se puede ampliar sin romper la regla de identidad."""
 
