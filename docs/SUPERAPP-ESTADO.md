@@ -13,7 +13,7 @@ No se mezclan las tres.
 
 ## Paquete actual
 
-**S00 · Congelar baseline — HECHO.** Siguiente: **S01 · Publicación versionada**.
+**S01 · Publicación versionada — HECHO.** Siguiente: **S02 · Cola de fichas**.
 
 ## Baseline (S00)
 
@@ -44,7 +44,7 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
 | ID | estado | nota |
 |---|---|---|
 | S00 baseline | **terminado** | commit `e50f04c`, puertas ejecutadas |
-| S01 publicación versionada | pendiente | empieza por lo que ya existe: `core/manifiesto.py` |
+| S01 publicación versionada | **terminado** | `core/publicacion.py`: versión con puntero atómico, `rutas()` fija la versión de una petición y fallback al catálogo suelto; 8 pruebas de aceptación |
 | S02 cola de fichas | pendiente | depende de S01 |
 | S03 Lidl por sitemap y fichas | pendiente | depende de S02; fuentes medidas en SUPERAPP-02 §5 |
 | S04 identidad y banco independiente | pendiente | depende de S02 |
@@ -97,15 +97,29 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
   cuando se levante o con el servidor de desarrollo.
 - Sin medir todavía: `plataforma/web/app` `npm run build` y `npm run test:cocina` en este baseline.
 
+## S01 · Publicación versionada — HECHO (7 de octubre de 2026)
+
+`core/publicacion.py`. Cómo cumple su criterio:
+
+| exigencia de S01 | cómo se cumple |
+|---|---|
+| caída entre escrituras no mezcla versiones | cada publicación escribe en `data/gold/v<fecha-hora>/` y el **puntero** (`actual.json`) se cambia con `os.replace` **solo** cuando están todos los ficheros; si falla, la carpeta a medias se retira y el puntero no se mueve |
+| rollback probado | las versiones no se borran; `fijar(version)` vuelve a una anterior y rechaza una incompleta |
+| concurrencia probada | `rutas()` resuelve la versión **una vez** y devuelve todos los caminos de esa misma publicación: una petición no puede mezclar `grupos` de una con `enlaces` de otra |
+| no romper lo que hay | sin puntero se lee el catálogo suelto de siempre (fallback conservador) |
+
+Publicar **no borra** y una versión existente **no se sobrescribe**. 8 pruebas de aceptación en
+`tests/test_publicacion.py`.
+
+**Pendiente dentro de S01**: el pipeline todavía escribe los ficheros sueltos; hay que hacerlo
+publicar por versiones y que la API lea con `rutas()`. Se hace al entrar en S02/S05, para no tocar
+la tarea de las 06:00 a la vez que se cambia la lectura.
+
 ## Siguiente paso concreto
 
-**S01 · Publicación versionada.** Punto de partida real, no desde cero: `core/manifiesto.py` ya
-escribe `data/gold/manifiesto.json` con la huella de la política, las capturas y la cobertura.
-Lo que falta para su criterio de aceptación:
-
-1. Que un fallo **entre** escrituras no mezcle versiones: hoy el manifiesto es atómico, pero los
-   ficheros de gold se escriben uno a uno. Hace falta un directorio de versión y un puntero que se
-   cambie al final.
-2. Lectores que fijen **una versión por petición** (`storage.py` y la API).
-3. Pruebas de rollback y de concurrencia: dos peticiones simultáneas ven la misma versión; una
-   publicación interrumpida no deja un catálogo a medias servido.
+**S02 · Cola de fichas.** Crear el registro por `(fuente, id_fuente, variante, ámbito)` con
+`discovered_at`, `last_seen_at`, `detail_fetched_at`, `next_check_at`, hash del contenido útil,
+versión de parser, intentos y resultado; estados (`pendiente`, `en_curso` con lease, `correcto`,
+`parcial`, `no_publicado`, `bloqueado`, `error_temporal`, `no_encontrado`, `excluido`); reanudación
+sin duplicar; y el inventario de cobertura que hoy no existe. Empezar por el **crudo histórico**,
+que ya está descargado, antes de pedir nada.
