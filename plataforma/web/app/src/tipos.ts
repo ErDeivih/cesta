@@ -831,6 +831,11 @@ export interface FilaEnTienda {
   promo: string | null
   /** «Llevando 3 en vez de 2, 0,50 EUR menos por unidad»: la oferta explicada. */
   sugerencia: string | null
+  /** Si el producto propuesto es el que se pidio: `exacto`, `probable`, `alternativa`, `cuarentena`
+   *  o `abstiene`. `null` cuando la API no puede afirmar nada, que no es lo mismo que decir que si. */
+  identidad?: string | null
+  /** Por que no es el mismo, en palabras. Es lo que permite juzgarlo en vez de confiar. */
+  motivo?: string | null
   /** Lo mismo en las otras tiendas, de mas barata a mas cara. */
   opciones: OpcionEnTienda[]
   /** La tienda en la que esta puesta. */

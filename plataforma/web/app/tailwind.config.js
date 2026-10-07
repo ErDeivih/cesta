@@ -38,6 +38,7 @@ export default {
         secundaria: 'var(--secundaria)',
         terracota: 'var(--terracota)',
         'borde-fuerte': 'var(--borde-fuerte)',
+        error: 'var(--error)',
         aviso: 'var(--aviso)',
         bien: 'var(--bien)',
         'bien-suave': 'var(--bien-suave)',

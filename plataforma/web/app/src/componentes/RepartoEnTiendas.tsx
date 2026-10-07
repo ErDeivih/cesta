@@ -28,6 +28,7 @@ import { useState } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { AvisoIdentidad } from './AvisoIdentidad'
 import { ponerTienda, reparto as pedirReparto } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { euros } from '../api/formato'
@@ -318,6 +319,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
                   </p>
                 )}
                 {f.sugerencia && <p className="text-xs text-tinta-suave">{f.sugerencia}</p>}
+                <AvisoIdentidad identidad={f.identidad} motivo={f.motivo} />
                 <ElegirTienda fila={f} listaId={listaId} deshabilitado={soloMirar}
                               alCambiar={refresca} />
               </li>

@@ -26,6 +26,7 @@
     --secundaria: #536158;  /* texto auxiliar (5,74:1 sobre marfil) */
     --terracota: #a94d36;   /* acento de marca y seccion activa (4,86:1) */
     --borde-fuerte: #8a8578; /* si delimita un control: el suave da 1,43:1 */
+    --error: #a12626;       /* lo que hay que mirar: 7,02:1 sobre marfil */
   }
 
   @media (prefers-color-scheme: dark) {
@@ -43,6 +44,7 @@
     --secundaria: #adb8ae;
     --terracota: #e08a6f;
     --borde-fuerte: #6f7a73;
+    --error: #f08a7a;
     }
   }
 
