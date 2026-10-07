@@ -13,7 +13,7 @@ No se mezclan las tres.
 
 ## Paquete actual
 
-**S01 · Publicación versionada — HECHO.** Siguiente: **S02 · Cola de fichas**.
+**S02 · Cola de fichas — EN CURSO.** Núcleo hecho; falta medir el inventario real y enganchar los colectores.
 
 ## Baseline (S00)
 
@@ -45,7 +45,7 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
 |---|---|---|
 | S00 baseline | **terminado** | commit `e50f04c`, puertas ejecutadas |
 | S01 publicación versionada | **terminado** | `core/publicacion.py`: versión con puntero atómico, `rutas()` fija la versión de una petición y fallback al catálogo suelto; 8 pruebas de aceptación |
-| S02 cola de fichas | pendiente | depende de S01 |
+| S02 cola de fichas | **núcleo hecho** | `core/inventario.py` en SQLite: alta idempotente, lease con vencimiento, estados del contrato, próxima revisión, hash y evidencia; enganche desde bronze histórico. Falta: medir el inventario real y que los colectores consulten la cola |
 | S03 Lidl por sitemap y fichas | pendiente | depende de S02; fuentes medidas en SUPERAPP-02 §5 |
 | S04 identidad y banco independiente | pendiente | depende de S02 |
 | S05 selector único y optimizador | pendiente | depende de S04 |
