@@ -243,7 +243,12 @@ reglas_categoria:
     # Medido el 6 de octubre de 2026: 233 accesorios duraderos entraban por la familia "Bebe"
     # (prioridad 35), que ganaba a todo. Prioridad 40 para que el pasillo concreto del durable
     # pueda mas que la familia, que es lo que la familia significa: alimentacion y consumibles.
-    segmentos: ["cunas", "cuna", "minicuna", "paseo-del-bebe", "paseo",
+    # **Sin la palabra suelta `cuna`.** Medido el 7 de octubre de 2026: sin tildes, "cuña" es
+    # "cuna", asi que un queso curado en cuña salia del catalogo por este pasillo. Los
+    # duraderos de bebe van por frases ("cuna de viaje", "protector de cuna", "minicuna"...),
+    # que ya cubren lo que tiene que quedar fuera. Es la tercera vez que esta trampa aparece
+    # en el proyecto; esta vez se quita la palabra en vez de anadir una excepcion.
+    segmentos: ["minicuna", "paseo-del-bebe", "paseo",
                 "habitacion-del-bebe", "habitacion", "ropa-de-cuna", "movilidad",
                 "entretenimiento-del-bebe", "juguetes-del-bebe", "parques-y-corralitos"]
 

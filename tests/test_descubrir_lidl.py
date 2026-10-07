@@ -6,8 +6,6 @@ una direccion del sitemap no se trate como prueba de que la pagina vive.
 """
 from __future__ import annotations
 
-import pytest
-
 from projects.cesta import descubrir_lidl as lidl
 
 SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>
@@ -46,12 +44,6 @@ def test_el_recuento_son_direcciones_y_lo_dice():
     assert datos["cobertura"] == "catalogo_publico_descubierto"
 
 
-@pytest.mark.xfail(reason=(
-    "FALLO CONOCIDO, no escondido: 'cat-excluye-bebe-duradero' tiene el termino suelto 'cuna', y al "
-    "normalizar sin tildes 'cuña' se convierte en 'cuna', asi que un queso curado en cuña sale del "
-    "catalogo. Arreglo pendiente: quitar la palabra suelta y dejar el pasillo por frases, "
-    "comprobando que la cuna de bebe sigue fuera. Medido el 7 de octubre de 2026."),
-    strict=False)
 def test_un_alimento_no_se_excluye_por_su_direccion():
     """Excluir comida por un slug es el error caro: lo que no esta claro va a revision."""
     for url in ("https://www.lidl.es/p/queso-curado-cuña/p11000777",
