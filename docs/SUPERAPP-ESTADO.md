@@ -259,6 +259,29 @@ host y día, guardar hash del contenido útil y versión de parser, próxima rev
 cuánta nutrición publica Lidl en el **cuerpo HTML**, sin darla por hecha · resolver los 4.363 a
 revisión **con la ficha, no con el slug** · informe por fuente y familia.
 
+## S03 · ¿Publica Lidl nutrición? Medido, y con reservas (7 de octubre de 2026)
+
+Sobre el fixture guardado, buscando **estructuras** y no palabras sueltas (que es la advertencia del
+propio encargo):
+
+| búsqueda | resultado |
+|---|---|
+| campos de una tabla nutricional española (energía, grasas, saturadas, hidratos, azúcares, proteínas, fibra, sal, kcal, kJ…) | **1 de 12**, y el que aparece es `kj` ×2 |
+| bases que hacen interpretable una tabla (`por 100 g`, `100 ml`, porción con peso) | ninguna base real; `porción`/`ración` son texto de interfaz |
+| señales de ingredientes (la palabra, harina, azúcar, aceite, cacao) | **0 de 6** — en un producto que **es una galleta** |
+
+**Conclusión provisional: la ficha de producto de Lidl no publica la ficha nutricional.** Da
+identidad (GTIN válido), nombre, marca, descripción, imagen y ofertas; la nutrición no está.
+
+**Y el límite de esta medición, que importa tanto como el resultado:** es **un** producto. Un producto
+no es la fuente. Para poder decir «Lidl publica poca nutrición» hacen falta **varias fichas
+estratificadas** (frescos, envasados, droguería) y contarlo como cobertura, no como conclusión de
+catálogo. Mientras tanto se dice **una ficha medida**, no una tendencia.
+
+**Consecuencia para T11**: si se confirma, Lidl aportará **identidad y precio** a la plataforma y su
+nutrición será una **limitación de fuente** que se declara —no se rellena desde otra fuente sin
+decirlo, y no se presenta como dato propio—.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
