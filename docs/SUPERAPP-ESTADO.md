@@ -282,6 +282,31 @@ catálogo. Mientras tanto se dice **una ficha medida**, no una tendencia.
 nutrición será una **limitación de fuente** que se declara —no se rellena desde otra fuente sin
 decirlo, y no se presenta como dato propio—.
 
+## S03 · Cobertura de nutrición sobre seis fichas (7 de octubre de 2026)
+
+Ya no es un producto. El colector guarda ahora **una copia por producto** (`data/fichas-lidl/<id>.html`),
+así que las fichas se acumulan y el análisis es **offline y repetible**. Sobre las seis primeras,
+sacadas de la cola con presupuesto:
+
+| medida | resultado |
+|---|---|
+| fichas guardadas | **6** |
+| **con datos estructurados de producto** | **6/6** — el lector las lee todas |
+| con tabla nutricional (3+ campos) | **0/6** |
+| con base interpretable (`por 100 g`) | **0/6** |
+| con ingredientes (2+ señales) | **0/6** |
+
+**Qué permite decir esto:** la ficha de producto de Lidl es **fiable para identidad** (GTIN, nombre,
+marca, descripción, imagen, ofertas) y **no trae la ficha nutricional** en las seis medidas.
+
+**Qué no permite decir:** que sea así en todo el surtido. Son **seis fichas de 5.046 candidatos**, y
+la muestra no está estratificada por familia (frescos, envasados, droguería). Se dice cobertura de
+esta muestra, no una propiedad de la cadena.
+
+**Progreso de la cola con estas rondas**: `correcto` pasó de 0 a **8**, y quedan **5.046**
+pendientes. Cada ficha cerrada deja su hash del contenido útil, su versión de parser y su próxima
+revisión a 30 días.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos

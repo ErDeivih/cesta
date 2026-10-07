@@ -138,6 +138,13 @@ def descarga(url: str = URL_OBSERVADA, destino: Path | None = None) -> str:
     copia = destino or COPIA_LOCAL
     copia.parent.mkdir(parents=True, exist_ok=True)
     copia.write_text(html, encoding="utf-8")
+    # **Una copia por producto.** Las fichas se acumulan para poder medirlas despues sin red: es lo
+    # que pide el encargo (aprovechar el crudo) y lo que hace repetible cualquier analisis.
+    encontrado = re.search(r"/p(\d+)", url)
+    if encontrado:
+        carpeta = RAIZ / "data" / "fichas-lidl"
+        carpeta.mkdir(parents=True, exist_ok=True)
+        (carpeta / f"{encontrado.group(1)}.html").write_text(html, encoding="utf-8")
     return html
 
 
