@@ -228,6 +228,37 @@ sanitizarla, no pintarla) y `offers` es una **lista** (varias condiciones: norma
 `gtin13` validado, `sku` **nunca** como EAN, `description` saneada y las condiciones de `offers`
 separadas. Y después medir cuánta nutrición hay en el HTML de la ficha, sin darla por hecha.
 
+## S03 · El lector de fichas, funcionando sobre una ficha real (7 de octubre de 2026)
+
+`projects/cesta/ficha_lidl.py` lee el JSON-LD de la ficha y lo convierte en campos del proyecto. Sobre
+la ficha real guardada (`data/lidl-ficha-ejemplo.html`):
+
+    nombre: Galletas rellenas · marca: SONDEY · descripción: Rellenas de crema de chocolate.
+    id_fuente: 11000174 (sku, identificador interno)
+    ean: 4056489574392   <- GTIN válido, dígito de control comprobado
+    precio_cent: None    <- y no se ha inventado
+    condiciones: 1 oferta con availability=InStoreOnly y SIN importe
+
+**Dos hallazgos que cambian el plan:**
+
+1. **La ficha de producto de Lidl da códigos de barras de verdad.** El `gtin13` pasa la validación del
+   dígito de control, así que **S04 tiene por fin una vía fuerte de identidad** con una cadena: GTIN
+   válido y con procedencia. Y queda visto en el dato que `sku` no es un EAN.
+2. **Esa ficha no publica precio.** Su oferta dice `availability: InStoreOnly` y no trae importe. El
+   lector devolvió vacío en vez de inventar un precio, que es exactamente la distinción del encargo:
+   **reunir fichas y disponer de precios actuales son trabajos diferentes**. La aplicación podrá
+   conocer un producto de Lidl sin fingir que sabe cuánto cuesta hoy.
+
+**Decisiones del lector, cada una con su prueba:** `gtin13` validado (el que no cuadra no se usa pero
+tampoco se tira en silencio: se guarda aparte), `sku` jamás como EAN, `description` convertida a texto
+en vez de pintada, y **dos condiciones de oferta no se funden en un precio**. Nueve pruebas en el
+fichero, seis nuevas. Suite completa: **1.233 en verde**.
+
+**Pendiente inmediato de S03**: la cola mandando (pedir fichas a los 691 incluidos con presupuesto por
+host y día, guardar hash del contenido útil y versión de parser, próxima revisión a 30 días) · medir
+cuánta nutrición publica Lidl en el **cuerpo HTML**, sin darla por hecha · resolver los 4.363 a
+revisión **con la ficha, no con el slug** · informe por fuente y familia.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
