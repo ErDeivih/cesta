@@ -24,8 +24,11 @@ import sys
 from collections import Counter
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.robotparser import RobotFileParser
 
 from core import alcance
+
+RAIZ = Path(__file__).resolve().parents[2]
 
 RE_LOC = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.IGNORECASE)
 # Las fichas de producto de Lidl acaban en `/p<slug>/p<id>`; el resto son categorias y editoriales.
@@ -95,15 +98,63 @@ def informe(urls: list[str]) -> dict:
                       "la pagina viva.")}
 
 
+SITEMAP_URL = "https://www.lidl.es/p/export/ES/es/product_sitemap.xml.gz"
+ROBOTS_URL = "https://www.lidl.es/robots.txt"
+COPIA_LOCAL = RAIZ / "data" / "lidl-sitemap.xml"
+
+
+def descarga(destino: Path | None = None, *, permitir_web: bool = True) -> bytes:
+    """Baja el sitemap **una vez**, comprobando antes robots.txt, y lo deja guardado.
+
+    Devuelve el XML ya descomprimido. Guarda dos copias: el crudo del proyecto (con su fecha, por los
+    mecanismos de siempre) y una copia XML legible para repetir el analisis sin red.
+    """
+    import gzip
+
+    from core import config, peticiones
+    from core.fetch import Fetcher
+    from core.storage import save_raw
+
+    if not permitir_web:
+        raise RuntimeError("descarga desactivada")
+    peticiones.registra_al_salir("lidl")
+    f = Fetcher(rate_per_sec=config.RITMO.get("lidl", 1.0))
+    robots = f.get(ROBOTS_URL)
+    reglas = RobotFileParser()
+    reglas.parse(robots.body.decode("utf-8", "replace").splitlines())
+    if not reglas.can_fetch("CestaResearch", SITEMAP_URL):
+        raise RuntimeError("la politica publicada de la web no permite esa ruta")
+    respuesta = f.get(SITEMAP_URL)
+    save_raw("lidl", "sitemap-productos", respuesta.body)
+    crudo = respuesta.body
+    xml = gzip.decompress(crudo) if crudo[:2] == b"\x1f\x8b" else crudo
+    copia = destino or COPIA_LOCAL
+    copia.parent.mkdir(parents=True, exist_ok=True)
+    copia.write_bytes(xml)
+    return xml
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--xml", type=Path, required=True, help="sitemap ya descargado (sin red)")
+    entrada = ap.add_mutually_exclusive_group(required=True)
+    entrada.add_argument("--xml", type=Path, help="sitemap ya descargado (sin red)")
+    entrada.add_argument("--web", action="store_true",
+                         help="robots.txt y UNA peticion; guarda el sitemap para repetir sin red")
     ap.add_argument("--ejemplos", type=int, default=3, help="ejemplos por estado")
     a = ap.parse_args(argv)
-    if not a.xml.exists():
-        print(f"no esta {a.xml}: este instrumento lee un sitemap guardado, no lo descarga")
-        return 1
-    datos = informe(urls_de_sitemap(a.xml.read_bytes()))
+    if a.web:
+        try:
+            xml = descarga()
+        except Exception as exc:  # noqa: BLE001  (si no se puede bajar, se dice y se para)
+            print(f"no se pudo bajar el sitemap: {type(exc).__name__}: {exc}")
+            return 1
+        print(f"sitemap bajado y guardado en {COPIA_LOCAL.relative_to(RAIZ).as_posix()}")
+    else:
+        if not a.xml.exists():
+            print(f"no esta {a.xml}: sin --web este instrumento lee un sitemap guardado")
+            return 1
+        xml = a.xml.read_bytes()
+    datos = informe(urls_de_sitemap(xml))
     cuenta = datos["cuenta"]
     print(f"direcciones: {cuenta.get('urls', 0):,} · fichas de producto: {cuenta.get('fichas', 0):,}"
           f" · identificadores distintos: {cuenta.get('identificadores', 0):,}"

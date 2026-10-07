@@ -46,7 +46,7 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
 | S00 baseline | **terminado** | commit `e50f04c`, puertas ejecutadas |
 | S01 publicación versionada | **terminado** | `core/publicacion.py`: versión con puntero atómico, `rutas()` fija la versión de una petición y fallback al catálogo suelto; 8 pruebas de aceptación |
 | S02 cola de fichas | **núcleo hecho y medido** | `core/inventario.py` en SQLite: alta idempotente, lease con vencimiento, estados del contrato, próxima revisión, hash y evidencia; enganche desde bronze histórico. Falta: medir el inventario real y que los colectores consulten la cola |
-| S03 Lidl por sitemap y fichas | **en curso** | `projects/cesta/descubrir_lidl.py`: lee un sitemap guardado, separa fichas de categorías, clasifica por *slug* con la política (bazar inequívoco fuera, comida nunca fuera por su URL) e informa en direcciones y no en alimentos. Falta: recorrer el inventario real y las fichas |
+| S03 Lidl por sitemap y fichas | **en curso**: sitemap medido (6.622 direcciones, 691 incluidas, 1.568 excluidas, 4.363 a revisión) | `projects/cesta/descubrir_lidl.py`: lee un sitemap guardado, separa fichas de categorías, clasifica por *slug* con la política (bazar inequívoco fuera, comida nunca fuera por su URL) e informa en direcciones y no en alimentos. Falta: recorrer el inventario real y las fichas |
 | S04 identidad y banco independiente | pendiente | depende de S02 |
 | S05 selector único y optimizador | pendiente | depende de S04 |
 | S06 armazón y sistema visual | pendiente | **no depende de S01**; puede ir en paralelo |
@@ -148,6 +148,34 @@ de cobertura, en lugar de contar filas de un día.
 **Instrumento añadido**: `projects/cesta/informe_inventario.py`, el panel de cobertura por fuente
 (descubiertos, sin ficha, con ficha, con contenido útil registrado y vencidas, más las edades por
 tramos). Es lo que pide SUPERAPP-02 §8, es de solo lectura y no toca la pasada diaria.
+
+## S03 · Lidl, primera medida real (7 de octubre de 2026)
+
+`projects/cesta/descubrir_lidl.py` bajó el sitemap público **una vez** (robots.txt primero, una sola
+petición, y el XML guardado para repetir el análisis sin red) y lo clasificó por el *slug* de cada
+dirección. Resultado:
+
+| medida | valor |
+|---|---|
+| direcciones en el sitemap | **6.622** |
+| fichas de producto (no son categorías) | 6.622 |
+| **incluidas por la política** | **691** |
+| **excluidas (bazar inequívoco)** | **1.568** |
+| **a revisión (la URL no decide)** | **4.363** |
+
+**Lo que esto demuestra, que es justo lo que el encargo avisaba de no suponer:** 6.622 direcciones
+**no** son 6.622 alimentos. Solo 691 entran sin más; 1.568 son bazar claro —carros de jardín,
+colchones hinchables, tijeras de podar— y **se evitan sin pedir ni una ficha**, que es el objetivo de
+esta mitad del paquete. Y **4.363 no se pueden decidir desde la dirección**: el sitemap de Lidl usa
+slugs largos y a menudo en alemán, y forzar una decisión ahí sería inventar.
+
+**Lo que no dice:** nada sobre el surtido. Es **catálogo público descubierto**, con cobertura
+desconocida, y una dirección tampoco prueba que la página viva (el encargo documenta un 404 en el
+mismo sitemap). La cobertura real la dirá la otra mitad de S03: las fichas.
+
+**Pendiente de S03**: (1) las fichas de ese inventario, con cola y presupuesto, para resolver los
+4.363 y traer ingredientes y nutrición; (2) el informe por fuente y familia; (3) las ofertas
+semanales como segunda corriente, sin confundir «producto conocido» con «precio de hoy».
 
 **Pendiente dentro de S02** (es lo que lo hará útil de verdad): que los colectores **consulten la
 cola** —pedir ficha a quien le falta, renovarla a quien le vence y no volver a pedir la que está
