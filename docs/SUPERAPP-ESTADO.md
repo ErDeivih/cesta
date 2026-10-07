@@ -46,7 +46,7 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
 | S00 baseline | **terminado** | commit `e50f04c`, puertas ejecutadas |
 | S01 publicación versionada | **terminado** | `core/publicacion.py`: versión con puntero atómico, `rutas()` fija la versión de una petición y fallback al catálogo suelto; 8 pruebas de aceptación |
 | S02 cola de fichas | **núcleo hecho y medido** | `core/inventario.py` en SQLite: alta idempotente, lease con vencimiento, estados del contrato, próxima revisión, hash y evidencia; enganche desde bronze histórico. Falta: medir el inventario real y que los colectores consulten la cola |
-| S03 Lidl por sitemap y fichas | pendiente | depende de S02; fuentes medidas en SUPERAPP-02 §5 |
+| S03 Lidl por sitemap y fichas | **en curso** | `projects/cesta/descubrir_lidl.py`: lee un sitemap guardado, separa fichas de categorías, clasifica por *slug* con la política (bazar inequívoco fuera, comida nunca fuera por su URL) e informa en direcciones y no en alimentos. Falta: recorrer el inventario real y las fichas |
 | S04 identidad y banco independiente | pendiente | depende de S02 |
 | S05 selector único y optimizador | pendiente | depende de S04 |
 | S06 armazón y sistema visual | pendiente | **no depende de S01**; puede ir en paralelo |
