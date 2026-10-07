@@ -145,6 +145,10 @@ de cobertura, en lugar de contar filas de un día.
    **Cambio de contrato declarado**: `enganche()` devolvía altas procesadas y ahora devuelve
    **productos distintos**, que es el dato que interesa; su prueba lo explica.
 
+**Instrumento añadido**: `projects/cesta/informe_inventario.py`, el panel de cobertura por fuente
+(descubiertos, sin ficha, con ficha, con contenido útil registrado y vencidas, más las edades por
+tramos). Es lo que pide SUPERAPP-02 §8, es de solo lectura y no toca la pasada diaria.
+
 **Pendiente dentro de S02** (es lo que lo hará útil de verdad): que los colectores **consulten la
 cola** —pedir ficha a quien le falta, renovarla a quien le vence y no volver a pedir la que está
 correcta y en plazo— y el informe diario de cobertura por fuente y familia. Hasta entonces esto es
