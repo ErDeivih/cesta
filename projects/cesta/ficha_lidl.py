@@ -55,16 +55,15 @@ def sin_html(texto: str) -> str:
 
 
 def gtin_valido(codigo) -> str | None:
-    """El GTIN si tiene 13 digitos y el digito de control cuadra; None si no.
+    """El GTIN si es valido; None si no.
 
-    No es un adorno: un GTIN valido con procedencia es lo que permite afirmar identidad en S04, y uno
-    que no cuadra **no se usa**. Se valida aqui para que no entre en el catalogo como si valiera.
+    **Delega en `core.identidad`.** Antes habia dos validaciones del mismo codigo -- esta y la de
+    identidad -- y dos implementaciones de la misma regla acaban discrepando el dia que alguien
+    arregle una. Aqui se queda el nombre porque el lector de fichas lo usa, pero la verdad es una.
     """
-    digitos = re.sub(r"\D", "", str(codigo or ""))
-    if len(digitos) != 13:
-        return None
-    suma = sum(int(d) * (3 if i % 2 else 1) for i, d in enumerate(digitos[:12]))
-    return digitos if (10 - suma % 10) % 10 == int(digitos[12]) else None
+    from core.identidad import normaliza_gtin
+
+    return normaliza_gtin(codigo)
 
 
 def productos_de(html: str) -> list[dict]:

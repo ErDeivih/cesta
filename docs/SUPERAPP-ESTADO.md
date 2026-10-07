@@ -56,7 +56,7 @@ por la pantalla de cocina con un `modo`, que es lo que el encargo manda eliminar
 página** (el del armazon y el de las páginas heredadas): el arreglo es bajar a `h2` los heredados al
 tocarlos.
 
-**Lo siguiente, en orden:** S04 (identidad exacta con GTIN validado y publicacion en sombra), S05
+**S04 está en curso**: el nucleo de decision (`core/identidad.py`) con GTIN validado, presentacion comprobada, cuarentena, abtencion y sin cierre transitivo, con sus pruebas. Falta: banco independiente, candidatos por bloque, sombra y su enganche.\n\n**Lo siguiente, en orden:** S04 (identidad exacta con GTIN validado y publicacion en sombra), S05
 (`fecha_tope` aplicado en `_candidatos` y sus llamantes), S07 (recorridos completos de Compra), S08 y
 S09 (partir cocina, con persistencia), y S02-S03 por lotes.
 
