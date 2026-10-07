@@ -103,7 +103,7 @@ function EnlaceLateral({ a, texto, onNavegar }: Subseccion & { onNavegar?: () =>
         cx(
           'block rounded-md px-3 py-2 text-[15px] leading-6',
           isActive
-            ? 'bg-terracota/10 font-semibold text-terracota'
+            ? 'font-semibold text-terracota underline decoration-terracota decoration-2 underline-offset-4'
             : 'text-tinta-fuerte hover:bg-marfil',
         )
       }
@@ -234,7 +234,7 @@ export function CajonLateral({ app, abierto, onCerrar }: {
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* El fondo cierra al pulsarlo, y no lleva foco: es decorativo. */}
-      <div className="absolute inset-0 bg-tinta-fuerte/40" onClick={onCerrar} aria-hidden="true" />
+      <div className="absolute inset-0 bg-neutral-900/40" onClick={onCerrar} aria-hidden="true" />
       <div
         ref={caja}
         role="dialog"
@@ -258,7 +258,7 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
   const { pathname } = useLocation()
   const titulo = tituloDeSeccion(pathname)
   return (
-    <header className="sticky top-0 z-30 border-b border-borde bg-papel/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-borde bg-white/95 backdrop-blur">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
         <button
           type="button"

@@ -92,10 +92,19 @@ function Lanzador() {
 /** El titulo de la pestana por ruta. Lo de dentro lo mejora si sabe mas. */
 export function tituloDe(ruta: string): string {
   if (ruta === '/') return 'Cesta'
+  // **Las rutas de siempre siguen teniendo su titulo**, porque siguen existiendo como
+  // redirecciones: durante el salto, la pestana tiene que decir lo mismo que decia antes. Y el
+  // contrato de `tests/test_titulos.py` lo vigila leyendo este fichero: con diez pestanas abiertas,
+  // un titulo que falta no da error de compilacion, se nota cuando ya no sabes cual es cual.
+  if (ruta === '/buscar' || ruta === '/compra') return 'Buscar'
+  if (ruta.startsWith('/cesta') || ruta.startsWith('/compra/listas')) return 'La cesta'
+  if (ruta.startsWith('/grupo/') || ruta.startsWith('/compra/comparar/')) return 'Comparar'
+  if (ruta.startsWith('/producto/') || ruta.includes('/productos/')) return 'Producto'
+  if (ruta.startsWith('/favoritos') || ruta.startsWith('/compra/favoritos')) return 'Favoritos'
   if (ruta.startsWith('/unirme/')) return 'Invitacion'
   if (ruta.startsWith('/panel/matching')) return 'Matching'
   if (ruta.startsWith('/panel')) return 'Panel'
-  if (ruta.startsWith('/escaner')) return 'Escaner'
+  if (ruta.startsWith('/escaner')) return 'Escáner'
   if (ruta.startsWith('/avisos')) return 'Avisos'
   if (ruta.startsWith('/ajustes')) return 'Ajustes'
   if (ruta.startsWith('/aprender')) return 'Aprender'
