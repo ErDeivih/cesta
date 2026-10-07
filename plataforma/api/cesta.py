@@ -16,6 +16,7 @@ producto, abarata el par. Sin eso, el reparto sale peor que el real.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from itertools import combinations
 
 from core.promos import lee as lee_promo
@@ -81,7 +82,7 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         """, sueltos).fetchall()
 
     # La promocion vigente de cada producto, del ultimo silver.
-    promos = _promos_vigentes({f[3] for f in filas})
+    promos = _promos_vigentes({f[3] for f in filas}, fecha_tope)
 
     mejor: dict = {}
     for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable in filas:
@@ -92,7 +93,12 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     return mejor
 
 
-def _ultima_fecha_silver() -> str | None:
+def _fecha_de_hoy() -> str:
+    """La fecha de referencia de una peticion: hoy. En un sitio, para que sea la misma siempre."""
+    return date.today().isoformat()
+
+
+def _ultima_fecha_silver(hasta: str | None = None) -> str | None:
     """La fecha de la ultima particion que hay escrita en silver, o `None`.
 
     Se mira **en el disco y no en los ficheros**: el nombre de la carpeta ya lo dice
@@ -117,6 +123,10 @@ def _ultima_fecha_silver() -> str | None:
     ultima: str | None = None
     for ruta in silver.glob("fuente=*/fecha=*"):
         fecha = ruta.name.removeprefix("fecha=")
+        # **El tope.** Una particion posterior a la fecha de referencia no se elige: sus ofertas
+        # todavia no estaban vigentes, y aplicarlas seria enseñar un precio que aun no existe.
+        if hasta and fecha > hasta:
+            continue
         if ultima is None or fecha > ultima:
             ultima = fecha
     return ultima
@@ -128,7 +138,7 @@ def _ultima_fecha_silver() -> str | None:
 _PROMOS_POR_FECHA: dict[str, dict[str, str]] = {}
 
 
-def _promos_vigentes(producto_ids: set[str]) -> dict[str, str]:
+def _promos_vigentes(producto_ids: set[str], fecha_tope: str | None = None) -> dict[str, str]:
     """El texto de oferta de cada producto, si lo hay.
 
     Vive en silver y no en gold, porque gold se queda con lo que sirve para
@@ -138,7 +148,7 @@ def _promos_vigentes(producto_ids: set[str]) -> dict[str, str]:
     if not producto_ids:
         return {}
     try:
-        fecha = _ultima_fecha_silver()
+        fecha = _ultima_fecha_silver(fecha_tope)
         if fecha is None:
             return {}
         tabla = _PROMOS_POR_FECHA.get(fecha)
@@ -194,7 +204,7 @@ def donde_comprar(peticiones: list[Peticion],
         return {"una_tienda": [], "repartido": None, "lineas": 0}
     disponibles = [c for c in (cadenas or CADENAS) if c in CADENAS]
     max_t = max_tiendas or AJUSTES.max_tiendas
-    mejor = _candidatos(peticiones, "")
+    mejor = _candidatos(peticiones, _fecha_de_hoy())
 
     # Cada cadena, por su cuenta.
     por_cadena: dict[str, list[Eleccion | None]] = {}
@@ -284,7 +294,7 @@ def reparto_por_tienda(peticiones: list[Peticion],
     el par, y con `cantidad=1` no se aplica.
     """
     disponibles = [c for c in (cadenas or CADENAS) if c in CADENAS]
-    mejor = _candidatos(peticiones, "")
+    mejor = _candidatos(peticiones, _fecha_de_hoy())
     sublistas: dict[str, list[dict]] = {}
     sin_encontrar: dict[str, list[str]] = {}
     sin_asignar: list[dict] = []
@@ -405,7 +415,7 @@ def estimacion(lineas: list[dict]) -> dict:
                 "lineas": 0, "sin_precio": 0}
     peticiones = [Peticion(x.get("grupo_id"), x.get("producto_id"),
                            x.get("cantidad", 1), x.get("nombre_visto", "")) for x in lineas]
-    mejor = _candidatos(peticiones, "")
+    mejor = _candidatos(peticiones, _fecha_de_hoy())
     total = en_carro = sin_precio = 0
     for linea, peticion in zip(lineas, peticiones, strict=True):
         # **Una linea que apunta a otro producto no se cuenta.** El `grupo_id` es un
@@ -449,7 +459,7 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
         return salida
     peticiones = [Peticion(x.get("grupo_id"), x.get("producto_id"),
                            x.get("cantidad", 1), x.get("nombre_visto", "")) for x in lineas]
-    mejor = _candidatos(peticiones, "")
+    mejor = _candidatos(peticiones, _fecha_de_hoy())
     for linea, peticion in zip(lineas, peticiones, strict=True):
         cadena = precio = None
         if not linea.get("producto_movido"):
