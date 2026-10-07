@@ -29,36 +29,58 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
-## Resumen vigente (7 de octubre de 2026, tarde)
+## Resumen vigente (7 de octubre de 2026, noche)
 
-**S06 está hecho.** Lo que hay ahora mismo, y se puede ver:
+### Entregables de estas tres rondas
 
-    /                 lanzador sobrio: tres accesos y "continuar donde estabas"
-    /compra           buscar, listas, favoritos, ficha, comparar y gasto
-    /recetas          su armazon, su menu y sus rutas (secciones internas: S08)
-    /calorias         su armazon, su menu y sus rutas (secciones internas: S09)
-    /escaner /avisos /panel /ajustes /aprender   pantallas transversales, sin aplicacion activa
+**S06 · armazon y sistema visual — HECHO.** Lanzador en `/` con tres accesos y "continuar donde
+estabas"; `/compra`, `/recetas` y `/calorias` con su layout, su cabecera y sus subsecciones; menu
+lateral de 248 px desde 1024 px con las tres aplicaciones siempre visibles; cajon de 288 px en movil
+con foco atrapado, Escape, fondo inerte y el foco de vuelta al boton; y **las direcciones antiguas
+siguen funcionando con su query**.
 
-Menu lateral de 248 px desde 1024 px con **las tres aplicaciones siempre visibles** y solo las
-subsecciones de la activa; cajon de 288 px en movil con foco atrapado, Escape para cerrar, fondo
-inerte y el foco de vuelta al boton. Direcciones visuales de `SUPERAPP-01` en los dos temas. **Las
-rutas antiguas siguen funcionando, con su query**, asi que los enlaces de escaner y las invitaciones
-no se rompen.
+**S04 · identidad exacta — NUCLEO HECHO.** `core/identidad.py` decide entre dos fichas: `exacto`,
+`probable`, `alternativa`, `cuarentena` o `abstiene`, con sus motivos y su evidencia. GTIN validado
+**y** presentacion comprobada; mismo GTIN incompatible va a cuarentena; GTIN distinto no se fusiona
+por texto; gramos contra mililitros abstiene; el pack cambia el producto; y **sin cierre
+transitivo**: un grupo solo se amplia si el candidato es compatible con todos sus miembros.
 
-**Verificado, no leido:** `uv run python -m plataforma.prueba_suite` — **23 comprobaciones en un
-navegador de verdad** (navegacion entre las tres aplicaciones, lateral ausente a 390 px y presente a
-1280, foco que entra en el cajon y no se escapa con Tab, Escape que cierra y devuelve el foco, recarga
-en ruta profunda sin cajon abierto, `/buscar?q=leche` que acaba en `/compra` con la busqueda, y cero
-errores de pagina). Capturas en `data/capturas-s06/`.
+### Evidencia
 
-**Pendiente dicho, y es de S08 y S09:** las secciones internas de Recetas y Calorias siguen servidas
-por la pantalla de cocina con un `modo`, que es lo que el encargo manda eliminar. Y hay **dos `h1` por
-página** (el del armazon y el de las páginas heredadas): el arreglo es bajar a `h2` los heredados al
-tocarlos.
+    uv run python -m plataforma.prueba_suite     # 23 comprobaciones en navegador, 0 fallos
+    uv run pytest -q                            # 1.254 pruebas, 0 fallos
+    uv run ruff check .                          # limpio
+    cd plataforma/web/app && npm run build       # correcto
 
-**S04 está en curso**: el nucleo de decision (`core/identidad.py`) con GTIN validado, presentacion comprobada, cuarentena, abtencion y sin cierre transitivo, con sus pruebas. Falta: banco independiente, candidatos por bloque, sombra y su enganche.\n\n**Lo siguiente, en orden:** S04 (identidad exacta con GTIN validado y publicacion en sombra), S05
-(`fecha_tope` aplicado en `_candidatos` y sus llamantes), S07 (recorridos completos de Compra), S08 y
-S09 (partir cocina, con persistencia), y S02-S03 por lotes.
+Capturas de S06 en `data/capturas-s06/`. La suite completa encontro dos contratos heredados que S06
+habia roto -- titulos de ruta y colores del tema -- y los dos quedaron arreglados **en el codigo**, no
+en las pruebas.
+
+### Lo que NO se puede afirmar todavia, dicho con precision
+
+- **S03 sigue EN CURSO.** Le faltan sus criterios de aceptacion: muestreo de fichas **por familia**,
+  resolucion de los 4.363 a revision con la ficha, e informe por fuente y familia. El sitemap medido
+  (6.622 direcciones) y los 28 leidos no cierran el paquete.
+- **"Sin ficha" en la cola nueva no significa "sin datos historicos".** La cola lleva lo visitado con
+  el lector nuevo; el catalogo ya tenia ingredientes de DIA y Mercadona de antes. Son dos cosas
+  distintas y el informe de cobertura las cuenta por separado.
+- **El 0/26 de nutricion describe esa muestra**, no la cadena: veintiseis fichas, sobre todo
+  envasado, leidas con este lector. Para generalizar hace falta estratificar.
+- **Que el parser entienda una ficha, o que un GTIN tenga el digito de control correcto, no demuestra
+  identidad exacta.** El GTIN valido es la via fuerte, pero hay que comprobar ademas la presentacion;
+  eso es exactamente lo que hace el motor y lo que antes no se comprobaba.
+
+### Pendiente, en orden, sin repetir lo hecho
+
+1. **S04, resto**: candidatos por bloque (marca+familia+formato), **banco independiente** y
+   **publicacion en sombra** (propuestas y comparacion contra el emparejador actual, **sin tocar
+   nada**). Activar comparaciones nuevas no ocurre hasta que la sombra este medida.
+2. **S05**: aplicar `fecha_tope` en `_candidatos` y en **todos** sus llamantes, que hoy pasan cadena
+   vacia; vigencia, cantidad, tienda y condiciones de club en todos los endpoints, y coste de las
+   unidades pedidas antes de elegir la mejor oferta.
+3. **S07**: recorridos completos de Compra con producto exacto y alternativa explicita.
+4. **S08 y S09**: partir la pantalla de cocina, con persistencia propia y privacidad del diario.
+5. **S02-S03** por lotes acotados, y **S10-S12** al final.
 
 ## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
 
