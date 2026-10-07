@@ -60,6 +60,10 @@ export function Cabecera() {
         <Link to="/" className="inline-flex min-h-[44px] min-w-[44px] items-center text-lg font-bold tracking-tight">
           Cesta
         </Link>
+        <nav aria-label="Recetas y alimentación" className="flex flex-wrap gap-2 text-sm">
+          <Link to="/recetas" className="inline-flex min-h-[44px] items-center rounded-lg px-3 hover:bg-sky-50 dark:hover:bg-neutral-800">Recetas</Link>
+          <Link to="/calorias" className="inline-flex min-h-[44px] items-center rounded-lg px-3 hover:bg-sky-50 dark:hover:bg-neutral-800">Calorías</Link>
+        </nav>
 
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {isPending && 'Mirando de qué día son los precios…'}

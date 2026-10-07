@@ -1,5 +1,17 @@
 # Stitch, conectado a este proyecto
 
+## Rediseño de la suite — 7 de octubre de 2026
+
+Proyecto privado nuevo: `10604576992569971315`, «Cesta - Tres aplicaciones - 2026-10-07».
+Se obtuvieron y revisaron referencias de Compra, Recetas y Calorías. Capturas,
+HTML, respuestas y prompts están en esta carpeta con fecha `2026-10-07`.
+El encargo vigente empieza en [SUPERAPP-00](../docs/SUPERAPP-00-EMPEZAR-AQUI.md);
+las correcciones de las maquetas están en [SUPERAPP-03](../docs/SUPERAPP-03-INVESTIGACION.md).
+El sistema de diseño vigente lo fija [SUPERAPP-01](../docs/SUPERAPP-01-DISENO-Y-PRODUCTO.md).
+El proyecto y los artefactos de septiembre descritos abajo se conservan como histórico.
+
+## Proyecto anterior
+
 **Proyecto de Stitch:** `15743377346721964880` («Cesta - comparador de supermercados», privado),
 creado el 27 de septiembre de 2026. Endpoint MCP: `https://stitch.googleapis.com/mcp`, con cabecera
 `X-Goog-Api-Key` (la clave **no** se escribe aquí: se lee de `data/debug/stitch_key.txt`, que está

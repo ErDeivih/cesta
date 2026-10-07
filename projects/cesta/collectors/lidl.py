@@ -26,9 +26,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
+from urllib.parse import urljoin
 from urllib.robotparser import RobotFileParser
 
 import polars as pl
@@ -50,9 +52,47 @@ def _centimos(valor) -> int | None:
         numero = float(valor)
     except (TypeError, ValueError):
         return None
-    if numero < 0:
+    if isinstance(valor, bool) or not math.isfinite(numero) or numero < 0:
         return None
     return round(numero * 100)      # round de un argumento ya da un entero
+
+
+def _detalle_precio(valor) -> dict:
+    """La web usa currentPrice.price numerico y club.price.price; aceptar ambos."""
+    if not isinstance(valor, dict):
+        return {}
+    while isinstance(valor.get("price"), dict):
+        valor = valor["price"]
+    return valor
+
+
+def _fecha(valor):
+    if not isinstance(valor, str):
+        return None
+    try:
+        d = datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        return d.astimezone(timezone.utc) if d.tzinfo else None
+    except ValueError:
+        return None
+
+
+def _seleccion(precios, instante=None):
+    if not isinstance(precios, dict):
+        return {}, False
+    for clave, club in (("currentPrice", False), ("currentLidlPlusPrice", True)):
+        p = _detalle_precio(precios.get(clave))
+        if _centimos(p.get("price")) is None:
+            continue
+        if instante is not None:
+            inicio, fin = _fecha(p.get("startDate")), _fecha(p.get("endDate"))
+            exclusivo = _fecha(p.get("endDateExclusive"))
+            # Fechas rotas no habilitan una oferta. Sin fechas queda pendiente, no vigente.
+            if not inicio or not (fin or exclusivo) or instante < inicio:
+                continue
+            if (exclusivo and instante >= exclusivo) or (fin and instante > fin):
+                continue
+        return p, club
+    return {}, False
 
 
 def _precio_de(precios: dict | None) -> tuple[int | None, int | None, bool]:
@@ -64,21 +104,28 @@ def _precio_de(precios: dict | None) -> tuple[int | None, int | None, bool]:
     """
     if not isinstance(precios, dict):
         return None, None, False
-    club = bool(precios.get("currentLidlPlusPrice"))
-    actual = precios.get("currentPrice") or precios.get("currentLidlPlusPrice") or {}
-    anterior = precios.get("oldPrice") or precios.get("strikethroughPrice") or {}
-    precio = _centimos((actual or {}).get("price", {}).get("price")
-                       if isinstance(actual, dict) else None)
-    viejo = _centimos((anterior or {}).get("price", {}).get("price")
-                      if isinstance(anterior, dict) else None)
+    actual, club = _seleccion(precios)
+    anterior = actual.get("oldPrice", (actual.get("discount") or {}).get("deletedPrice"))
+    if anterior is None:
+        anterior = precios.get("oldPrice", precios.get("strikethroughPrice"))
+    if isinstance(anterior, dict):
+        anterior = _detalle_precio(anterior).get("price")
+    precio = _centimos(actual.get("price"))
+    viejo = _centimos(anterior)
     return precio, viejo, club
 
 
-def a_registro(oferta: dict, region: str) -> dict:
+def a_registro(oferta: dict, region: str, instante: datetime | None = None) -> dict:
     """Una ficha de Lidl a una fila de bronze. Lo que no se sabe, se deja vacio y no se rellena."""
     precios = precios_region(oferta, region)
     precio, anterior, club = _precio_de(precios.get("precios"))
-    cantidad = oferta.get("basePrice") or {}
+    detalle, club_elegible = _seleccion(precios.get("precios"), instante)
+    if instante is not None:
+        precio = _centimos(detalle.get("price"))
+        club = club_elegible
+        # El anterior debe pertenecer a la oferta elegida, no a otra vencida.
+        anterior = _centimos(detalle.get("oldPrice", (detalle.get("discount") or {}).get("deletedPrice")))
+    cantidad = detalle.get("packaging") or oferta.get("basePrice") or {}
     marca = oferta.get("brand") or {}
     return {
         "fuente": FUENTE,
@@ -91,25 +138,32 @@ def a_registro(oferta: dict, region: str) -> dict:
         "formato_txt": cantidad.get("text") if isinstance(cantidad, dict) else None,
         "precio_cent": precio,
         "precio_anterior_nativo_cent": anterior,
-        "unidad_ref_nativa": "EUR/ud" if club else None,
-        "categoria": oferta.get("campaignName") or oferta.get("category"),
-        "url": oferta.get("canonicalUrl"),
+        "promo_club": club,
+        "promo": bool(club or detalle.get("discount")),
+        "promo_txt": "Precio condicionado a Lidl Plus" if club else None,
+        "promo_hasta": _fecha(detalle.get("endDateExclusive") or detalle.get("endDate")),
+        "categoria": ((oferta.get("keyfacts") or {}).get("wonCategoryPrimary")
+                      or oferta.get("campaignName") or
+                      (oferta.get("category") if isinstance(oferta.get("category"), str) else None)),
+        "url": urljoin("https://www.lidl.es", oferta.get("canonicalUrl") or ""),
+        "imagen": oferta.get("image"),
         # Publicado no es lo mismo que en stock: esta fuente no dice stock, y no se finge.
-        "disponible": True,
-        "capturado_en": datetime.now(timezone.utc),
+        "disponible": None,
+        "capturado_en": instante or datetime.now(timezone.utc),
     }
 
 
-def captura(html: str, region: str, hoy: date | None = None) -> tuple[pl.DataFrame, dict]:
+def captura(html: str, region: str, hoy: date | None = None,
+            instante: datetime | None = None) -> tuple[pl.DataFrame, dict]:
     """De HTML a (bronze, resumen de cobertura). Aplica el alcance y cuenta lo que no se guarda."""
     ofertas = extraer(html)
     filas, fuera, revision = [], 0, 0
     for oferta in ofertas:
-        registro = a_registro(oferta, region)
+        registro = a_registro(oferta, region, instante)
         decision = alcance.clasificar_alcance(registro["nombre"], registro["categoria"])
         if decision.estado == alcance.EXCLUIDO:
             fuera += 1
-            peticiones.evita(FUENTE)
+            # La respuesta ya se descargo: excluir una fila no evita una peticion.
             continue
         if decision.estado == alcance.REVISAR:
             revision += 1
@@ -127,6 +181,8 @@ def captura(html: str, region: str, hoy: date | None = None) -> tuple[pl.DataFra
         "guardados": marco.height,
         "fuera_de_alcance": fuera,
         "en_revision": revision,
+        "con_precio": marco["precio_cent"].count(),
+        "precios_con_vigencia_comprobada": instante is not None,
         # Lo que hay que ensenar en la aplicacion, con estas palabras y no otras.
         "aviso": ("ofertas conocidas de Lidl, no su catalogo completo: no certifica stock, ni "
                   "identidad de producto, ni que un producto ausente se haya retirado"),
@@ -153,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="identificador de region observado en regionsV2 (no un codigo postal)")
     a = ap.parse_args(argv)
 
+    argumentos = argv if argv is not None else sys.argv[1:]
+    if a.escribir and not any(v == "--region" or v.startswith("--region=") for v in argumentos):
+        ap.error("Para publicar debes elegir --region explicitamente; no se asume Madrid")
+
     if a.web:
         peticiones.registra_al_salir(FUENTE)
         f = Fetcher(rate_per_sec=config.RITMO.get(FUENTE, 1.0))
@@ -165,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         html = a.html.read_text(encoding="utf-8")
 
-    marco, resumen = captura(html, a.region)
+    marco, resumen = captura(html, a.region, instante=datetime.now(timezone.utc))
     print(f"  ofertas conocidas de Lidl ({resumen['cobertura']}): {marco.height} guardadas de "
           f"{resumen['fichas_leidas']} fichas leidas, {resumen['fuera_de_alcance']} fuera de "
           f"alcance, {resumen['en_revision']} en revision")
@@ -173,6 +233,9 @@ def main(argv: list[str] | None = None) -> int:
     # **Escribir es una decision, no un descuido.** La pasada diaria descubre las cadenas, asi que
     # un bronze de Lidl la haria lanzar este colector sola, con cobertura parcial. Ver la cabecera.
     if a.escribir:
+        if not resumen["con_precio"]:
+            print("  no se publica: no hay precios regionales con vigencia comprobada")
+            return 1
         write_parquet(marco, "bronze", FUENTE)
         # El fichero de cobertura: lo que la aplicacion tiene que poder ensenar junto al dato.
         destino = config.DATA / "cobertura"

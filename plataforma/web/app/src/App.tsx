@@ -6,6 +6,7 @@ import { NavAbajo } from './componentes/Nav'
 import { SUFIJO } from './componentes/Titulo'
 import { Vacio } from './componentes/ui'
 import { Ajustes } from './paginas/Ajustes'
+import { Cocina, CocinaProvider } from './paginas/Cocina'
 import { Avisos } from './paginas/Avisos'
 import { Buscar } from './paginas/Buscar'
 import { Cesta } from './paginas/Cesta'
@@ -35,6 +36,8 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/cesta')) return 'La cesta'
   if (ruta.startsWith('/favoritos')) return 'Favoritos'
   if (ruta.startsWith('/ajustes')) return 'Ajustes'
+  if (ruta.startsWith('/recetas')) return 'Recetas'
+  if (ruta.startsWith('/calorias')) return 'Calorías'
   if (ruta.startsWith('/panel/matching')) return 'Matching'
   if (ruta.startsWith('/panel')) return 'Panel'
   if (ruta.startsWith('/avisos')) return 'Avisos'
@@ -56,7 +59,7 @@ export function App() {
   }, [pathname])
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <CocinaProvider><div className="flex min-h-screen flex-col">
       <Cabecera />
       <main className="mx-auto w-full max-w-app flex-1 px-4 pb-28 pt-4 lg:pb-10">
         <Routes>
@@ -75,6 +78,8 @@ export function App() {
           <Route path="/unirme/:codigo" element={<Unirse />} />
           <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/ajustes" element={<Ajustes />} />
+          <Route path="/recetas" element={<Cocina modo="recetas" />} />
+          <Route path="/calorias" element={<Cocina modo="calorias" />} />
           <Route path="/panel" element={<Panel />} />
           <Route path="/panel/matching" element={<PanelMatching />} />
           <Route
@@ -91,6 +96,6 @@ export function App() {
         </Routes>
       </main>
       <NavAbajo />
-    </div>
+    </div></CocinaProvider>
   )
 }

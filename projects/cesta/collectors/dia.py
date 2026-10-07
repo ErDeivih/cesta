@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 import re
 import time
 from datetime import datetime, timezone
@@ -164,15 +165,15 @@ def _peso_neto(p: dict) -> int | None:
 def _nutricion(p: dict) -> tuple[str | None, str | None]:
     """La tabla nutricional en JSON, y por cuanto esta expresada.
 
-    Se devuelve None cuando no hay ni energia ni proteinas: media tabla es peor
-    que ninguna, porque se ensena como si estuviera completa.
+    Se conserva una tabla parcial sin inventar los nutrientes ausentes. Quien
+    la consulte debe distinguir desconocido de cero y comprobar la base.
     """
     tabla = {}
     for campo, nuestro in _NUTRIENTES.items():
         n = _numero(p.get(campo))
-        if n is not None:
+        if n is not None and math.isfinite(n) and n >= 0:
             tabla[nuestro] = n
-    if "energia_kj" not in tabla and "proteinas" not in tabla:
+    if not tabla:
         return None, None
     medida = _numero(p.get("nutri_size"))
     unidad = _valor(p.get("nutri_measurement_unit")) or ""

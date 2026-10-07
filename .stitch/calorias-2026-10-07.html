@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cesta — Calorías / Mi diario</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ba1a1a",
+            "tertiary-fixed": "#d7e6db",
+            "on-error-container": "#93000a",
+            "inverse-on-surface": "#f4f0e8",
+            "tertiary-container": "#2a372f",
+            "primary": "#00241d",
+            "on-tertiary": "#ffffff",
+            "secondary-fixed": "#ffdad2",
+            "surface-dim": "#dddad2",
+            "tertiary-fixed-dim": "#bbcabf",
+            "surface-tint": "#43655c",
+            "primary-fixed": "#c5eade",
+            "on-error": "#ffffff",
+            "on-surface": "#1c1c17",
+            "inverse-primary": "#aacec3",
+            "on-secondary": "#ffffff",
+            "surface-container": "#f1ede5",
+            "on-surface-variant": "#414846",
+            "primary-container": "#183a32",
+            "inverse-surface": "#31302b",
+            "surface-container-low": "#f7f3eb",
+            "surface-container-high": "#ece8e0",
+            "primary-fixed-dim": "#aacec3",
+            "on-primary": "#ffffff",
+            "secondary-container": "#ff8f74",
+            "background": "#fdf9f1",
+            "on-tertiary-container": "#91a096",
+            "secondary": "#9c432d",
+            "on-primary-fixed": "#00201a",
+            "on-secondary-fixed": "#3c0700",
+            "on-background": "#1c1c17",
+            "outline-variant": "#c1c8c4",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed-dim": "#ffb4a2",
+            "on-secondary-fixed-variant": "#7d2c18",
+            "on-primary-container": "#81a499",
+            "on-tertiary-fixed-variant": "#3c4a41",
+            "on-primary-fixed-variant": "#2b4d44",
+            "outline": "#717976",
+            "surface-variant": "#e6e2da",
+            "on-tertiary-fixed": "#111e17",
+            "error-container": "#ffdad6",
+            "surface": "#fdf9f1",
+            "surface-container-highest": "#e6e2da",
+            "surface-bright": "#fdf9f1",
+            "on-secondary-container": "#762713",
+            "tertiary": "#15221b"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "margin": "2rem",
+            "space-sm": "0.5rem",
+            "gutter": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-xl-mobile": ["Fraunces"],
+            "body-md": ["IBM Plex Sans"],
+            "headline-md": ["Fraunces"],
+            "body-lg": ["IBM Plex Sans"],
+            "headline-lg": ["Fraunces"],
+            "tabular-md": ["IBM Plex Sans"],
+            "label-sm": ["IBM Plex Sans"],
+            "headline-xl": ["Fraunces"],
+            "disclaimer-xs": ["IBM Plex Sans"]
+          },
+          "fontSize": {
+            "headline-xl-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-lg": ["22px", {"lineHeight": "28px", "fontWeight": "400"}],
+            "tabular-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "label-sm": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+            "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+            "disclaimer-xs": ["11px", {"lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .tnum { font-feature-settings: "tnum" 1, "zero" 1; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .paper-shadow {
+      box-shadow: 2px 2px 0px 0px rgba(24, 58, 50, 0.05);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-on-surface bg-[#F4F0E8] antialiased selection:bg-secondary selection:text-surface-container-lowest">
+<div class="mx-auto max-w-[1440px] flex min-h-screen relative">
+<!-- SIDEBAR: Shared SideNavBar (Active on 'Calorías' with sub-navigation) -->
+<aside class="fixed top-0 left-0 bottom-0 w-[248px] flex flex-col justify-between p-space-md z-40 bg-primary-container text-primary-fixed border-r border-outline-variant/30">
+<!-- Top Brand & Monogram -->
+<div>
+<div class="flex items-center gap-space-sm px-space-xs pb-space-lg pt-space-xs border-b border-surface-container-lowest/10">
+<div class="w-9 h-9 rounded-lg bg-surface/10 flex items-center justify-center text-surface-container-lowest font-headline-md text-headline-md border border-surface-container-lowest/20">
+            C
+          </div>
+<div class="flex flex-col">
+<span class="text-headline-lg font-headline-lg tracking-tight text-surface-container-lowest leading-none">Cesta</span>
+<span class="text-disclaimer-xs font-disclaimer-xs uppercase tracking-widest text-on-primary-container mt-1">Archivo del Hogar</span>
+</div>
+</div>
+<!-- CTA: Registrar Entrada -->
+<div class="mt-space-lg mb-space-lg">
+<button class="w-full h-[44px] px-space-md bg-secondary text-surface-container-lowest rounded-lg font-label-sm text-label-sm flex items-center justify-center gap-space-xs hover:bg-[#853926] active:scale-[0.99] transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Registrar Entrada</span>
+</button>
+</div>
+<!-- Primary Navigation Modules -->
+<nav class="space-y-space-xs">
+<!-- Compra -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="text-body-md font-body-md">Compra</span>
+</a>
+<!-- Recetas -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+<span class="text-body-md font-body-md">Recetas</span>
+</a>
+<!-- Calorías (ACTIVE) -->
+<div class="space-y-1">
+<div class="flex items-center justify-between px-space-md py-space-sm rounded bg-surface/10 text-surface-container-lowest font-medium border-l-2 border-secondary">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+<span class="text-body-md font-body-md">Calorías</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</div>
+<!-- Sub-navigation under Calorías -->
+<div class="pl-space-xl pr-space-xs space-y-1 pt-1 pb-2">
+<a class="flex items-center gap-2 py-1.5 px-2 rounded font-label-sm text-label-sm text-surface-container-lowest bg-surface-container-lowest/10 font-medium" href="#">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+<span>Mi diario</span>
+</a>
+<a class="flex items-center gap-2 py-1.5 px-2 rounded font-label-sm text-label-sm text-on-primary-container hover:text-surface-container-lowest transition-colors" href="#">
+<span>Mis alimentos</span>
+</a>
+<a class="flex items-center gap-2 py-1.5 px-2 rounded font-label-sm text-label-sm text-on-primary-container hover:text-surface-container-lowest transition-colors" href="#">
+<span>Tendencias</span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+<!-- Footer navigation and Disclaimer Tag -->
+<div class="pt-space-md border-t border-surface-container-lowest/10 space-y-space-xs">
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span class="text-label-sm font-label-sm">Ajustes</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help_center</span>
+<span class="text-label-sm font-label-sm">Aprender</span>
+</a>
+<div class="pt-2 px-space-md">
+<span class="inline-block border border-surface-container-lowest/20 rounded px-1.5 py-0.5 text-disclaimer-xs font-disclaimer-xs uppercase tracking-wider text-on-primary-container">
+            MAQUETA — DATOS DE EJEMPLO
+          </span>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT AREA (Occupies remaining width, aligned strictly to desktop viewport) -->
+<main class="ml-[248px] w-[1192px] min-h-screen flex flex-col px-8 py-7">
+<!-- HEADER MASTHEAD -->
+<header class="pb-6 border-b border-outline-variant">
+<div class="flex items-center justify-between mb-3">
+<!-- Breadcrumb trail -->
+<nav class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant">
+<span>Cesta</span>
+<span class="text-outline-variant">/</span>
+<span class="text-primary font-medium">Cuaderno de Calorías</span>
+</nav>
+<!-- System Disclaimer Tag -->
+<span class="border border-outline-variant bg-[#EAE4D7] px-2 py-0.5 rounded text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider">
+            Maqueta — datos de ejemplo
+          </span>
+</div>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
+<div>
+<h1 class="text-headline-xl font-headline-xl text-primary tracking-tight">Diario de Alimentación</h1>
+<p class="mt-1 text-body-md font-body-md text-on-surface-variant max-w-2xl">
+              Anotaciones de ingesta y preparaciones cotidianas. Un registro personal sin metas forzadas ni advertencias.
+            </p>
+</div>
+<!-- Date Navigation Control & Privacy badge -->
+<div class="flex flex-col items-end gap-2">
+<!-- Privacy Reassurance Badge -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#EAE4D7] border border-outline-variant text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-primary">lock</span>
+<span>Solo tú puedes ver este diario</span>
+</div>
+<!-- Date Switcher Bar (min 44px ergonomics) -->
+<div class="inline-flex items-center bg-[#FBF9F4] border border-outline-variant rounded-lg p-0.5 paper-shadow">
+<button class="h-[40px] px-3 text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:bg-[#EAE4D7] rounded transition-colors flex items-center gap-1" title="Día anterior">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+<span>Ayer</span>
+</button>
+<div class="h-5 w-[1px] bg-outline-variant"></div>
+<div class="px-4 py-2 text-center">
+<span class="text-body-md font-body-md font-medium text-primary">Jueves, 24 de Octubre de 2024</span>
+</div>
+<div class="h-5 w-[1px] bg-outline-variant"></div>
+<button class="h-[40px] px-3 text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:bg-[#EAE4D7] rounded transition-colors flex items-center gap-1" title="Día posterior">
+<span>Mañana</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+<button class="ml-1 h-[36px] px-3 text-label-sm font-label-sm bg-primary text-surface-container-lowest rounded hover:bg-[#224D43] transition-colors font-medium">
+                Hoy
+              </button>
+</div>
+</div>
+</div>
+</header>
+<!-- OBSERVATION SECTION (Last 7 Days Bar Chart) -->
+<section class="mt-6">
+<div class="bg-[#FBF9F4] border border-outline-variant rounded-lg p-6 paper-shadow">
+<div class="flex items-center justify-between pb-4 border-b border-outline-variant">
+<div>
+<h2 class="text-headline-md font-headline-md text-primary">Observación de los últimos 7 días</h2>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-0.5">Visión contextual retrospectiva. No calculamos porcentajes de cumplimiento ni balances de deuda.</p>
+</div>
+<a class="text-label-sm font-label-sm text-primary hover:text-secondary flex items-center gap-1 transition-colors font-medium underline underline-offset-4 decoration-outline-variant" href="#">
+<span>Ver tabla de datos detallada</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Weekly Bars Visualisation -->
+<div class="pt-6 pb-2">
+<div class="grid grid-cols-7 gap-4 items-end h-[160px] px-4">
+<!-- Vie 18: 1.820 kcal -->
+<div class="flex flex-col items-center h-full justify-end group">
+<span class="text-label-sm font-label-sm tnum text-on-surface-variant mb-2">1.820</span>
+<div class="w-full max-w-[56px] bg-[#EAE4D7] border border-outline-variant rounded-t transition-all group-hover:bg-[#d8d0c2]" style="height: 104px;"></div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface font-medium">Vie 18</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">kcal</span>
+</div>
+</div>
+<!-- Sáb 19: 2.140 kcal -->
+<div class="flex flex-col items-center h-full justify-end group">
+<span class="text-label-sm font-label-sm tnum text-on-surface-variant mb-2">2.140</span>
+<div class="w-full max-w-[56px] bg-[#EAE4D7] border border-outline-variant rounded-t transition-all group-hover:bg-[#d8d0c2]" style="height: 122px;"></div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface font-medium">Sáb 19</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">kcal</span>
+</div>
+</div>
+<!-- Dom 20: 1.950 kcal -->
+<div class="flex flex-col items-center h-full justify-end group">
+<span class="text-label-sm font-label-sm tnum text-on-surface-variant mb-2">1.950</span>
+<div class="w-full max-w-[56px] bg-[#EAE4D7] border border-outline-variant rounded-t transition-all group-hover:bg-[#d8d0c2]" style="height: 112px;"></div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface font-medium">Dom 20</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">kcal</span>
+</div>
+</div>
+<!-- Lun 21: 1.690 kcal -->
+<div class="flex flex-col items-center h-full justify-end group">
+<span class="text-label-sm font-label-sm tnum text-on-surface-variant mb-2">1.690</span>
+<div class="w-full max-w-[56px] bg-[#EAE4D7] border border-outline-variant rounded-t transition-all group-hover:bg-[#d8d0c2]" style="height: 96px;"></div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface font-medium">Lun 21</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">kcal</span>
+</div>
+</div>
+<!-- Mar 22: GAP - Sin registrar -->
+<div class="flex flex-col items-center h-full justify-end">
+<div class="text-center mb-2 px-1">
+<span class="text-disclaimer-xs font-disclaimer-xs text-on-surface-variant italic leading-tight block">Pausa natural</span>
+</div>
+<div class="w-full max-w-[56px] h-[32px] border-2 border-dashed border-outline-variant rounded-t bg-[#F4F0E8]/50 flex items-center justify-center">
+<span class="text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">—</span>
+</div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface-variant">Mar 22</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-on-surface-variant italic">Sin registrar</span>
+</div>
+</div>
+<!-- Mié 23: PARCIAL - 1.250 kcal -->
+<div class="flex flex-col items-center h-full justify-end group">
+<div class="text-center mb-2">
+<span class="text-label-sm font-label-sm tnum text-on-surface-variant block">1.250</span>
+</div>
+<div class="w-full max-w-[56px] bg-[#EAE4D7]/70 border border-dashed border-outline-variant rounded-t flex flex-col justify-end" style="height: 72px;">
+<div class="h-1 bg-outline-variant w-full"></div>
+</div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-on-surface font-medium">Mié 23</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-secondary italic">Registro parcial</span>
+</div>
+</div>
+<!-- Jue 24 (Hoy): 1.765 kcal (ACTIVE BAR) -->
+<div class="flex flex-col items-center h-full justify-end">
+<div class="text-center mb-2 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-label-sm font-label-sm tnum font-semibold text-primary">1.765</span>
+</div>
+<div class="w-full max-w-[56px] bg-primary rounded-t border border-primary relative flex items-center justify-center" style="height: 102px;">
+<span class="text-surface-container-lowest text-[10px] tracking-widest font-mono rotate-90">HOY</span>
+</div>
+<div class="mt-2 text-center">
+<span class="block text-label-sm font-label-sm text-primary font-bold">Jue 24</span>
+<span class="block text-disclaimer-xs font-disclaimer-xs text-primary font-medium">kcal (en curso)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- DAILY MEAL ENTRIES (Desayuno, Comida, Cena) -->
+<section class="mt-6 space-y-5">
+<!-- CARD 1: DESAYUNO -->
+<article class="bg-[#FBF9F4] border border-outline-variant rounded-lg p-5 paper-shadow">
+<!-- Meal Header -->
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<h3 class="text-headline-md font-headline-md text-primary">Desayuno</h3>
+<span class="px-2 py-0.5 rounded bg-[#EAE4D7] text-disclaimer-xs font-disclaimer-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                08:30
+              </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Subtotal registrado:</span>
+<span class="text-tabular-md font-tabular-md tnum text-primary font-semibold">385 kcal</span>
+</div>
+</div>
+<!-- Food items table / ledger rows -->
+<div class="divide-y divide-outline-variant/60">
+<!-- Row 1 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Tostada de pan de masa madre con aceite de oliva virgen extra</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">60 g</span>
+<span>·</span>
+<span>5,2 g P</span>
+<span>·</span>
+<span>34,0 g C</span>
+<span>·</span>
+<span>11,5 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">265 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Café con leche entera de caserío</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">180 ml</span>
+<span>·</span>
+<span>5,8 g P</span>
+<span>·</span>
+<span>8,6 g C</span>
+<span>·</span>
+<span>6,5 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">120 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Meal actions row (min 44px) -->
+<div class="mt-3 pt-3 border-t border-outline-variant flex items-center gap-3">
+<button class="h-[44px] px-4 bg-primary text-surface-container-lowest rounded hover:bg-[#224D43] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Añadir alimento</span>
+</button>
+<button class="h-[44px] px-4 border border-outline-variant rounded text-on-surface hover:bg-[#EAE4D7] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+<span>Usar receta guardada</span>
+</button>
+</div>
+</article>
+<!-- CARD 2: COMIDA (ALMUERZO) -->
+<article class="bg-[#FBF9F4] border border-outline-variant rounded-lg p-5 paper-shadow">
+<!-- Meal Header -->
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<h3 class="text-headline-md font-headline-md text-primary">Comida</h3>
+<span class="px-2 py-0.5 rounded bg-[#EAE4D7] text-disclaimer-xs font-disclaimer-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                14:15
+              </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Subtotal conocido:</span>
+<span class="text-tabular-md font-tabular-md tnum text-primary font-semibold">820 kcal*</span>
+<span class="text-disclaimer-xs font-disclaimer-xs text-secondary italic">(*con datos pendientes)</span>
+</div>
+</div>
+<!-- Food items table / ledger rows -->
+<div class="divide-y divide-outline-variant/60">
+<!-- Row 1 (Sin dato distinctly marked) -->
+<div class="py-3 flex items-center justify-between bg-[#F4F0E8]/40 hover:bg-[#EAE4D7]/50 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<div class="flex items-center gap-2">
+<p class="text-body-md font-body-md text-on-surface font-medium">Guiso casero de verduras de huerta</p>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded border border-outline-variant text-[11px] font-medium text-secondary bg-[#FAF3F0]">
+                    Dato pendiente
+                  </span>
+</div>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">320 g</span>
+<span>·</span>
+<span class="italic text-on-surface-variant">Macros: Sin dato</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md italic text-on-surface-variant px-2 py-0.5 rounded border border-dashed border-outline-variant">Sin dato</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+<span>Completar</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Lomo de lubina al horno con patata panadera</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">220 g</span>
+<span>·</span>
+<span>38,0 g P</span>
+<span>·</span>
+<span>22,0 g C</span>
+<span>·</span>
+<span>14,0 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">390 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Rebanada de hogaza de centeno</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">50 g</span>
+<span>·</span>
+<span>4,1 g P</span>
+<span>·</span>
+<span>26,2 g C</span>
+<span>·</span>
+<span>1,1 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">135 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Meal actions row -->
+<div class="mt-3 pt-3 border-t border-outline-variant flex items-center gap-3">
+<button class="h-[44px] px-4 bg-primary text-surface-container-lowest rounded hover:bg-[#224D43] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Añadir alimento</span>
+</button>
+<button class="h-[44px] px-4 border border-outline-variant rounded text-on-surface hover:bg-[#EAE4D7] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+<span>Usar receta guardada</span>
+</button>
+</div>
+</article>
+<!-- CARD 3: CENA -->
+<article class="bg-[#FBF9F4] border border-outline-variant rounded-lg p-5 paper-shadow">
+<!-- Meal Header -->
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<h3 class="text-headline-md font-headline-md text-primary">Cena</h3>
+<span class="px-2 py-0.5 rounded bg-[#EAE4D7] text-disclaimer-xs font-disclaimer-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                21:10
+              </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Subtotal registrado:</span>
+<span class="text-tabular-md font-tabular-md tnum text-primary font-semibold">560 kcal</span>
+</div>
+</div>
+<!-- Food items table / ledger rows -->
+<div class="divide-y divide-outline-variant/60">
+<!-- Row 1 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Tortilla abierta de dos huevos camperos con espinacas</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">180 g</span>
+<span>·</span>
+<span>16,5 g P</span>
+<span>·</span>
+<span>2,4 g C</span>
+<span>·</span>
+<span>23,0 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">290 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="py-3 flex items-center justify-between hover:bg-[#EAE4D7]/40 px-2 rounded transition-colors">
+<div class="flex-1 pr-4">
+<p class="text-body-md font-body-md text-on-surface font-medium">Compota casera de manzana reineta templada</p>
+<div class="flex items-center gap-3 mt-0.5 text-label-sm font-label-sm text-on-surface-variant tnum">
+<span class="text-on-surface">150 g</span>
+<span>·</span>
+<span>0,6 g P</span>
+<span>·</span>
+<span>31,0 g C</span>
+<span>·</span>
+<span>0,4 g G</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-tabular-md font-tabular-md tnum font-semibold text-primary">130 kcal</span>
+<button class="h-[44px] px-3.5 border border-outline-variant rounded hover:bg-[#EAE4D7] text-label-sm font-label-sm text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Editar</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Meal actions row -->
+<div class="mt-3 pt-3 border-t border-outline-variant flex items-center gap-3">
+<button class="h-[44px] px-4 bg-primary text-surface-container-lowest rounded hover:bg-[#224D43] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Añadir alimento</span>
+</button>
+<button class="h-[44px] px-4 border border-outline-variant rounded text-on-surface hover:bg-[#EAE4D7] text-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+<span>Usar receta guardada</span>
+</button>
+</div>
+</article>
+</section>
+<!-- BOTTOM SUMMARY FOOTER CARD -->
+<footer class="mt-6 mb-8">
+<div class="bg-[#FBF9F4] border border-outline-variant rounded-lg p-6 paper-shadow">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<!-- Summary metrics -->
+<div class="space-y-2">
+<div class="flex items-baseline gap-3">
+<h4 class="text-headline-md font-headline-md text-primary">Resumen de la jornada</h4>
+<div class="flex items-baseline gap-1.5">
+<span class="text-tabular-md font-tabular-md text-on-surface-variant">Total conocido acumulado:</span>
+<span class="text-2xl font-semibold tnum text-primary font-tabular-md">1.765 kcal</span>
+</div>
+</div>
+<!-- Macronutrient balance breakdown -->
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-label-sm font-label-sm text-on-surface">
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#183A32]"></span>
+<strong class="font-medium">Proteínas:</strong> <span class="tnum font-tabular-md">69,6 g</span>
+</span>
+<span class="text-outline-variant">|</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#A94D36]"></span>
+<strong class="font-medium">Carbohidratos:</strong> <span class="tnum font-tabular-md">126,2 g</span>
+</span>
+<span class="text-outline-variant">|</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#536158]"></span>
+<strong class="font-medium">Grasas:</strong> <span class="tnum font-tabular-md">56,5 g</span>
+</span>
+</div>
+<!-- Note about incomplete item -->
+<p class="text-disclaimer-xs font-disclaimer-xs text-secondary flex items-center gap-1 pt-1 italic">
+<span class="material-symbols-outlined text-[14px]">info</span>
+                1 plato pendiente de análisis nutricional etiquetado como "Sin dato"
+              </p>
+</div>
+<!-- Footer Action Controls (min 44px) -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="h-[44px] px-4 border border-outline-variant rounded text-on-surface hover:bg-[#EAE4D7] text-label-sm font-label-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Exportar día (CSV/PDF)</span>
+</button>
+<button class="h-[44px] px-5 bg-secondary text-surface-container-lowest rounded hover:bg-[#853926] text-label-sm font-label-sm font-medium flex items-center gap-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span>+ Registro rápido</span>
+</button>
+</div>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

@@ -57,11 +57,14 @@ def test_la_tabla_completa_se_guarda_como_json():
     assert _maestro_de_ficha(f)["nutricion_por"] == "100g"
 
 
-def test_media_tabla_es_peor_que_ninguna():
-    # Si no hay ni energia ni proteinas, no se guarda nada: media tabla se
-    # ensena como si estuviera completa y eso enganya.
+def test_tabla_parcial_se_conserva_sin_inventar_el_resto():
     f = _ficha(sugars={"value": 1.3, "uom": "g"})
-    assert _maestro_de_ficha(f)["nutricion"] is None
+    assert json.loads(_maestro_de_ficha(f)["nutricion"]) == {"azucares": 1.3}
+
+
+def test_nutrientes_invalidos_no_se_publican():
+    f = _ficha(sugars=-1, protein=float("nan"), fat=float("inf"), salt=0)
+    assert json.loads(_maestro_de_ficha(f)["nutricion"]) == {"sal": 0}
 
 
 def test_con_solo_proteinas_si_se_guarda():

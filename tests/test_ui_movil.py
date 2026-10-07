@@ -147,7 +147,8 @@ def test_las_cadenas_se_pintan_con_su_nombre_y_no_con_el_identificador():
                 or "nombreCadena" in linea:
             return False
         for encontrado in crudo.finditer(linea):
-            if linea[encontrado.start() - 1:encontrado.start()] == "=":
+            # Interpolacion de un identificador en JS no es texto JSX visible.
+            if linea[encontrado.start() - 1:encontrado.start()] in ("=", "$"):
                 continue
             return True
         return False
@@ -475,4 +476,3 @@ def test_lo_que_se_despliega_lleva_su_flecha():
         "la puerta no mira que los desplegables se noten")
     assert "la flecha gira al abrirse" in puerta, (
         "la puerta no comprueba que la flecha cambie al abrirse")
-

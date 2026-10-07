@@ -25,7 +25,7 @@
 # y "Folleto y Promociones > Renueva la decoracion de tu hogar" es bazar (30) y no mixta (1),
 # que es el agujero por el que entro el bazar medido el 5 de octubre de 2026.
 
-version: 2
+version: 3
 
 # Familias del contrato. Son la unidad con la que se mide la cobertura y con la que despues se
 # compara de verdad (T03): "leche" es una familia, "Asturiana entera brik 1 l" es un articulo.
@@ -40,6 +40,7 @@ familias:
   bebe:                 "Alimentacion, pañales, toallitas y consumibles de cuidado"
   mascotas:             "Comida, arena y consumibles de higiene"
   hogar_consumible:     "Papel de cocina, servilletas, aluminio, film, bolsas alimentarias, pilas"
+  hogar_reutilizable:   "Recipientes y menaje reutilizable de uso cotidiano, separado de alimentacion"
 
 # ---------------------------------------------------------------------------------------------
 # 1. Productos que se excluyen aunque su categoria diga otra cosa.
@@ -294,6 +295,15 @@ reglas_categoria:
 #    Aqui SI son terminos del titulo, pero se comparan **palabra a palabra**, nunca subcadenas.
 # ---------------------------------------------------------------------------------------------
 incluye_producto:
+  # Ampliacion expresa del propietario: reutilizables cotidianos, no todo el bazar.
+  - id: prod-reutilizables-cotidianos
+    estado: incluido
+    familia: hogar_reutilizable
+    motivo: "menaje reutilizable cotidiano autorizado; no alimentario"
+    gana_a_exclusion: ["prod-fuera-en-esta-version", "prod-menaje-duradero", "cat-excluye-bazar"]
+    terminos: ["fiambrera", "tupper", "vaso de cristal", "vasos reutilizables",
+               "taza de ceramica", "botella reutilizable", "bolsa reutilizable",
+               "cubiertos reutilizables", "recipiente hermetico"]
   # **Menaje de un solo uso y material de limpieza que se repone** (decision del 5 de octubre de
   # 2026). Lo de un solo uso se gasta; la bayeta y el estropajo no son de un solo uso pero se
   # reponen igual, y por eso entran. La frontera es "compra habitual y reposicion del hogar", no

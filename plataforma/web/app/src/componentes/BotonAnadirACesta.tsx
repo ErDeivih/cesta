@@ -13,10 +13,8 @@
  *  - **Sin sesion no se pinta**, igual que el boton de favoritos: un boton que al pulsarlo pide
  *    entrar es una promesa que no se puede cumplir en el pasillo, con una mano y el carro en la
  *    otra.
- *  - **Se anade el GRUPO**, no el producto de una cadena concreta: `grupo_id` y `producto_id` a
- *    null, como hace la interfaz vieja (`anade`, app.js:614). Es lo que necesita
- *    `/listas/{id}/donde` para poder comparar las cinco cadenas; con un producto fijo la lista
- *    solo sabria de una.
+ *  - Desde una ficha se conserva el producto exacto. Desde un grupo se conserva el grupo.
+ *    No sustituir la eleccion concreta antes de disponer de identidades verificadas.
  *  - **No se pregunta si el grupo ya esta en la lista.** Habria que pedir `GET /listas/{id}`, y
  *    esa llamada **marca la visita** (`marca_visita`, main.py:376): los avisos de "lo que ha
  *    puesto la otra persona" se calculan contra esa marca, asi que mirar una ficha los gastaria.
@@ -30,8 +28,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { anadirLinea, crearLista, misListas, yo } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { Boton, Etiqueta } from './ui'
+import { referenciaLinea } from '../estado/referenciaLinea'
 
-export function BotonAnadirACesta({ grupoId, nombre }: { grupoId: number; nombre: string }) {
+export function BotonAnadirACesta({ grupoId, productoId, nombre }: { grupoId?: number; productoId?: string; nombre: string }) {
   const cliente = useQueryClient()
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
   const listas = useQuery({
@@ -49,7 +48,7 @@ export function BotonAnadirACesta({ grupoId, nombre }: { grupoId: number; nombre
   const anade = useMutation({
     mutationFn: async () => {
       const lista = destino ?? (await crearLista('Casa', true))
-      await anadirLinea(lista.id, { nombre, grupo_id: grupoId, producto_id: null })
+      await anadirLinea(lista.id, { nombre, ...referenciaLinea(grupoId, productoId) })
       return lista.id
     },
     onSuccess: (listaId) => {

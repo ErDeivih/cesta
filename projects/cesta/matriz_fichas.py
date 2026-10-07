@@ -10,9 +10,9 @@ se esta guardando**, que es trabajo tirado si se pide otra vez a la cadena.
 
   - **Extraido**: se mira lo que hay en bronze, columna a columna, con su porcentaje de relleno.
   - **En el crudo**: se busca la señal del campo en la **respuesta guardada** de esa cadena (muestra
-    determinista). Es una **cota inferior**: que aparezca la palabra `ingredientes` en el HTML no
-    demuestra que haya una tabla del producto -- lo dice la propia ampliacion -- asi que esto sirve
-    para **descartar** ("no viene") y para priorizar, no para afirmar que el dato esta.
+    determinista). Es una heuristica textual con falsos positivos y negativos, no una cota
+    inferior: una palabra puede venir del CSS, del menu o de otro producto. Solo sirve para
+    priorizar inspecciones, no para confirmar presencia ni ausencia del dato de un producto.
   - **No en la muestra**: ni extraido ni visto en el crudo de la muestra. Puede ser que la cadena no
     lo publique, o que la muestra no lo coja: con 40 respuestas por cadena, eso no se distingue.
 
@@ -204,14 +204,15 @@ def main(argv: list[str] | None = None) -> int:
                 _normaliza(x) for x in señales) or _normaliza(c) in señales for c in columnas)
             pct = 100 * vistas / max(len(productos), 1)
             if extraido:
-                estado = "publicado y extraido"
+                estado = "columna relacionada con valor; verificar correspondencia"
             elif vistas:
-                estado = "**PUBLICADO Y NO EXTRAIDO**"
+                estado = "mencion textual; dato de producto NO confirmado"
             else:
                 estado = "no en la muestra"
             print(f"  {campo:<17}{pct:>9.0f}%{('si' if extraido else 'no'):>11}   {estado}")
     print("\n  Como se lee: 'en crudo' es la proporcion de respuestas de la muestra donde aparece la\n"
-          "  señal del campo. Es una COTA INFERIOR: ver la palabra no prueba que exista el dato, y su\n"
+          "  señal del campo. NO es cobertura de producto ni cota inferior: puede haber falsos positivos.\n"
+          "  Ver la palabra no prueba que exista el dato, y su\n"
           "  ausencia puede ser de la muestra (40 respuestas) y no de la cadena. 'En bronze' es lo que\n"
           "  de verdad se esta guardando hoy.")
     return 0

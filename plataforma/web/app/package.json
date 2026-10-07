@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "vista-previa": "vite preview",
-    "tipos": "tsc --noEmit"
+    "tipos": "tsc --noEmit",
+    "test:cocina": "node --test tests/cocina.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.2",

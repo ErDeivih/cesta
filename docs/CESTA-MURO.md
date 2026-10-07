@@ -1,5 +1,15 @@
 # El muro: todo lo que hay que hacer, en orden
 
+> Encargo ampliado del 7 de octubre: empezar por
+> [SUPERAPP-00-EMPEZAR-AQUI.md](SUPERAPP-00-EMPEZAR-AQUI.md).
+> Define tres aplicaciones separadas, nueva dirección visual, renovación de
+> fichas de todas las cadenas y ampliación de descubrimiento Lidl. Es un plan de
+> ejecución con criterios, no una declaración de paquetes terminados.
+
+> Revisión adicional del 6 de octubre: [superapp, correcciones y siguiente entrega](CESTA-REVISION-SUPERAPP-2026-10-06.md).
+> Incluye prueba real de Lidl, alcance v3 para reutilizables y prototipo local de
+> recetas/calorías. No cierra T02, T03 ni T11, ni autoriza despliegue público.
+
 Este es el tablero de trabajo del encargo **Cesta familiar**. Se actualiza **en cada entrega**: un
 paquete no se marca hecho por escribir la propuesta, sino cuando pasa sus pruebas de aceptación y
 el documento de resultado va en el mismo commit que el código.

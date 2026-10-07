@@ -162,8 +162,6 @@ def test_lo_que_se_repone_entra(nombre, categoria):
 @pytest.mark.parametrize("nombre, categoria", [
     ("Bombilla LED 9 W casquillo E27", "Hogar > Iluminacion"),
     ("Cubo de fregar con escurridor", "Hogar > Limpieza"),
-    ("Vasos de cristal 6 unidades", "Hogar > Mesa"),
-    ("Fiambrera hermética 1 l", "Hogar > Menaje"),
     ("Juguete para perro hueso de goma", "Mascotas > Juguetes"),
 ])
 def test_lo_que_dura_no_entra_en_esta_version(nombre, categoria):

@@ -44,6 +44,7 @@ export function Producto() {
   const { fuente = '', idFuente = '' } = useParams<{ fuente: string; idFuente: string }>()
   const navega = useNavigate()
   const consulta = useProducto(fuente, idFuente)
+  const productoIdExacto = `${fuente}:${idFuente}`
 
   const producto = consulta.data?.producto
   const grupo = consulta.data?.grupo ?? null
@@ -237,11 +238,10 @@ export function Producto() {
               comparar», y la pantalla no tenía ese añadir. Se usa el mismo botón que la ficha
               del grupo (`componentes/BotonAnadirACesta.tsx`): dos copias habrían acabado en dos
               comportamientos. */}
-          {grupo && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <BotonAnadirACesta grupoId={grupo.grupo_id} nombre={producto.nombre} />
-            </div>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <BotonAnadirACesta key={productoIdExacto} productoId={productoIdExacto} nombre={producto.nombre} />
+            <p className="text-sm text-tinta-suave">Añade este artículo de esta cadena, sin sustituirlo por otra marca.</p>
+          </div>
           {grupo && (
             <div className="mt-2">
               <Campana grupoId={grupo.grupo_id} />

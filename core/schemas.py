@@ -184,7 +184,7 @@ class ProductoRaw(BaseModel):
     precio_cent: int | None = Field(default=None, ge=0)
     precio_ref_nativo_cent: int | None = Field(default=None, ge=0)
     unidad_ref_nativa: str | None = None
-    disponible: bool = True
+    disponible: bool | None = None
     categoria: str | None = None
     url: str | None = None
     capturado_en: datetime

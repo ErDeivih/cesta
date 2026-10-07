@@ -268,6 +268,18 @@ mapa:
     "Bricolaje > Ferretería": hogar                                    # nueva 2026-09-24
     "Juguetes > Juguetes por Marcas": hogar                            # nueva 2026-09-24
     "Juguetes > Juguetes baratos": hogar                               # nueva 2026-09-25
+    "Bricolaje > Electricidad y alumbrado": hogar                      # nueva 2026-09-27
+    "Jardín y terraza > Ofertas Online": desayuno-dulces               # nueva 2026-09-27
+    "Bricolaje > Pilas": hogar                                         # nueva 2026-10-01
+    "Jardín y terraza > Artículos de Playa y Piscina": desayuno-dulces # nueva 2026-10-01
+    "Jardín y terraza > Camping": desayuno-dulces                      # nueva 2026-10-01
+    "Jardín y terraza > Mesas y sillas jardín": desayuno-dulces        # nueva 2026-10-01
+    "Juguetes > Construcción y bloques": hogar                         # nueva 2026-10-01
+    "Jardín y terraza > Gardenstar Alcampo": desayuno-dulces           # nueva 2026-10-01
+    "Juguetes > Videojuegos": hogar                                    # nueva 2026-10-01
+    "Juguetes > Juguetes electrónicos": hogar                          # nueva 2026-10-01
+    "Juguetes > Juguetes de imitación": hogar                          # nueva 2026-10-01
+    "Campañas > Productos de Aragón": promociones                      # nueva 2026-10-06
   aldi:
     "cuidado-facial-y-corporal": higiene-belleza                          # 106
     "yogures-y-postres-lacteos": lacteos-huevos                           # 97
@@ -693,6 +705,34 @@ mapa:
     "la-despensa/yogures-y-postres/yogur-natural-y-sabores": lacteos-huevos # nueva 2026-09-26
     "cuidado-personal-e-higiene/depilacion-y-afeitado/afeitado": higiene-belleza # nueva 2026-09-26
     "bebe/alimentacion-infantil/postres-bolsitas-y-yogures-infantiles": despensa # nueva 2026-09-26
+    "frescos/charcuteria/salchichas": carniceria                       # nueva 2026-09-27
+    "cuidado-personal-e-higiene/depilacion-y-afeitado/maquinillas-y-recambios": higiene-belleza # nueva 2026-09-28
+    "cuidado-personal-e-higiene/cuidado-del-cabello/tinte": higiene-belleza # nueva 2026-09-28
+    "bebidas/aguas-y-zumos": bebidas                                   # nueva 2026-10-01
+    "la-despensa/lacteos/leche": lacteos-huevos                        # nueva 2026-10-01
+    "bebidas/cava-y-champagne": bebidas                                # nueva 2026-10-02
+    "cuidado-personal-e-higiene/bano-e-higiene-corporal/colonias": higiene-belleza # nueva 2026-10-02
+    "frescos/charcuteria/jamon-serrano-e-iberico-pieza": carniceria    # nueva 2026-10-05
+    "congelados/masas": panaderia                                     # nueva 2026-10-05
+    "parafarmacia/complementos-alimenticios/nutricion-deportiva": parafarmacia # nueva 2026-10-05
+    "frescos/charcuteria/chorizo-lomo-y-otros": carniceria             # nueva 2026-10-05
+    "cuidado-personal-e-higiene/cuidado-y-proteccion-corporal/crema-y-cuidado-del-cuerpo": higiene-belleza # nueva 2026-10-05
+    "cuidado-personal-e-higiene/depilacion-y-afeitado/crema-y-cera-depilatoria": higiene-belleza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/escobas-mopas-y-recogedores": droguería-limpieza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/plumeros-rodillos-y-otros-utiles": droguería-limpieza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/guantes": droguería-limpieza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/bayetas-microfibra": droguería-limpieza # nueva 2026-10-05
+    "cuidado-personal-e-higiene/depilacion-y-afeitado": higiene-belleza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/estropajos": droguería-limpieza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/fregonas": droguería-limpieza # nueva 2026-10-05
+    "cuidado-personal-e-higiene/depilacion-y-afeitado/after-shave": higiene-belleza # nueva 2026-10-05
+    "drogueria-y-limpieza/utensilios-de-limpieza/cubos-de-fregar-y-barrenos": droguería-limpieza # nueva 2026-10-05
+    "parafarmacia/cuidado-e-higiene-facial": parafarmacia              # nueva 2026-10-06
+    "la-despensa/panaderia-bolleria-y-pasteleria/bolleria": panaderia  # nueva 2026-10-07
+    "cuidado-personal-e-higiene/bienestar-sexual/preservativos": higiene-belleza # nueva 2026-10-07
+    "congelados/patatas": congelados                                   # nueva 2026-10-07
+    "parafarmacia/complementos-alimenticios": parafarmacia             # nueva 2026-10-07
+    "bebidas/vinos/estuches-de-vino": bebidas                          # nueva 2026-10-07
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77
@@ -950,6 +990,8 @@ mapa:
 
   # ---- mercadona — 26 claves, 4317 productos ----
     "frutas/frutas-congeladas": frutas-verduras                        # nueva, 21 sep
+    "chocolates-y-golosinas/turrones-y-dulces-de-navidad": desayuno-dulces # nueva 2026-10-01
+    "pescados-y-mariscos/rebozado": pescaderia                         # nueva 2026-10-01
   mercadona:
     "Cuidado facial y corporal": higiene-belleza                          # 458
     "Limpieza y hogar": droguería-limpieza                                # 345

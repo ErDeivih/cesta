@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cesta — Recetas / Mi recetario</title>
+<!-- Google Fonts: Fraunces & IBM Plex Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&amp;family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary": "#9c432d",
+            "surface-dim": "#dddad2",
+            "inverse-primary": "#aacec3",
+            "on-tertiary-fixed": "#111e17",
+            "on-surface-variant": "#414846",
+            "inverse-on-surface": "#f4f0e8",
+            "surface-tint": "#43655c",
+            "on-error-container": "#93000a",
+            "inverse-surface": "#31302b",
+            "surface": "#fdf9f1",
+            "tertiary": "#15221b",
+            "on-secondary-container": "#762713",
+            "on-tertiary-container": "#91a096",
+            "tertiary-fixed-dim": "#bbcabf",
+            "error": "#ba1a1a",
+            "primary": "#00241d",
+            "on-surface": "#1c1c17",
+            "tertiary-container": "#2a372f",
+            "surface-container-high": "#ece8e0",
+            "primary-fixed-dim": "#aacec3",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed": "#3c0700",
+            "secondary-container": "#ff8f74",
+            "secondary-fixed": "#ffdad2",
+            "on-background": "#1c1c17",
+            "on-primary-fixed-variant": "#2b4d44",
+            "on-primary-fixed": "#00201a",
+            "on-primary-container": "#81a499",
+            "surface-container-low": "#f7f3eb",
+            "primary-container": "#183a32",
+            "on-tertiary-fixed-variant": "#3c4a41",
+            "on-secondary-fixed-variant": "#7d2c18",
+            "error-container": "#ffdad6",
+            "tertiary-fixed": "#d7e6db",
+            "primary-fixed": "#c5eade",
+            "surface-container": "#f1ede5",
+            "outline-variant": "#c1c8c4",
+            "surface-variant": "#e6e2da",
+            "outline": "#717976",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "background": "#fdf9f1",
+            "surface-bright": "#fdf9f1",
+            "secondary-fixed-dim": "#ffb4a2",
+            "surface-container-highest": "#e6e2da",
+            "on-error": "#ffffff",
+            "surface-container-lowest": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "2.5rem",
+            "margin": "2rem",
+            "gutter": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Fraunces", "serif"],
+            "body-md": ["IBM Plex Sans", "sans-serif"],
+            "label-sm": ["IBM Plex Sans", "sans-serif"],
+            "headline-lg": ["Fraunces", "serif"],
+            "headline-xl-mobile": ["Fraunces", "serif"],
+            "disclaimer-xs": ["IBM Plex Sans", "sans-serif"],
+            "body-lg": ["IBM Plex Sans", "sans-serif"],
+            "headline-xl": ["Fraunces", "serif"],
+            "tabular-md": ["IBM Plex Sans", "sans-serif"]
+          },
+          "fontSize": {
+            "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-lg": ["22px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "disclaimer-xs": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "tabular-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-full bg-background text-on-surface antialiased font-body-md text-body-md selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- ========================================================================= -->
+<!-- 1. LEFT SIDEBAR: Shared Component SideNavBar (248px fixed)                -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 bottom-0 w-[248px] flex flex-col justify-between p-space-md z-40 bg-primary-container border-r border-outline-variant/30 text-surface-container-lowest">
+<!-- Top Brand & Monogram -->
+<div class="flex flex-col gap-space-lg">
+<div class="flex items-center gap-space-sm pb-space-md border-b border-outline-variant/20">
+<div class="w-10 h-10 rounded border border-outline-variant/30 bg-tertiary-container flex items-center justify-center text-secondary-fixed">
+<span class="material-symbols-outlined text-headline-lg font-normal" data-icon="auto_stories">auto_stories</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-lg font-headline-lg tracking-tight text-surface-container-lowest">Cesta</span>
+<span class="text-disclaimer-xs font-disclaimer-xs tracking-wider text-on-primary-container uppercase">Archivo del Hogar</span>
+</div>
+</div>
+<!-- Main Triad Modules Navigation -->
+<nav aria-label="Navegación principal" class="flex flex-col gap-space-xs">
+<!-- Module 1: Compra (Inactive) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#compra">
+<span class="material-symbols-outlined text-headline-md" data-icon="receipt_long">receipt_long</span>
+<span class="text-body-md font-body-md">Compra</span>
+</a>
+<!-- Module 2: Recetas (Active, highlighted with secondary terracotta marker) -->
+<div class="flex flex-col gap-1">
+<a class="flex items-center justify-between px-space-md py-space-sm rounded bg-surface/10 text-surface-container-lowest font-medium border-l-2 border-secondary" href="#recetas">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-headline-md text-secondary-fixed" data-icon="menu_book">menu_book</span>
+<span class="text-body-md font-body-md font-medium text-surface-container-lowest">Recetas</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</a>
+<!-- Sub-navigation under Recetas -->
+<div class="ml-8 pl-3 border-l border-outline-variant/20 flex flex-col gap-1 py-1">
+<a class="flex items-center gap-2 py-1.5 text-label-sm font-label-sm text-surface-container-lowest font-medium" href="#recetario">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed"></span>
+<span>Mi recetario</span>
+</a>
+<a class="flex items-center gap-2 py-1.5 text-label-sm font-label-sm text-on-primary-container hover:text-surface-container-lowest transition-colors" href="#plan-semanal">
+<span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
+<span>Plan semanal</span>
+</a>
+</div>
+</div>
+<!-- Module 3: Calorías (Inactive) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-primary-container hover:text-surface-container-lowest hover:bg-surface/5 transition-colors" href="#calorias">
+<span class="material-symbols-outlined text-headline-md" data-icon="monitoring">monitoring</span>
+<span class="text-body-md font-body-md">Calorías</span>
+</a>
+<!-- Primary CTA from Shared Spec -->
+<div class="pt-space-md">
+<button class="w-full h-11 flex items-center justify-center gap-space-xs bg-surface/10 hover:bg-surface/15 text-surface-container-lowest border border-outline-variant/30 rounded text-label-sm font-label-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm" data-icon="post_add">post_add</span>
+<span>Registrar Entrada</span>
+</button>
+</div>
+</nav>
+</div>
+<!-- Sidebar Footer -->
+<div class="flex flex-col gap-space-md pt-space-md border-t border-outline-variant/20">
+<div class="flex flex-col gap-space-xs">
+<a class="flex items-center gap-space-sm px-space-md py-1.5 rounded text-on-primary-container hover:text-surface-container-lowest text-label-sm font-label-sm transition-colors" href="#ajustes">
+<span class="material-symbols-outlined text-body-md" data-icon="settings">settings</span>
+<span>Ajustes</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-1.5 rounded text-on-primary-container hover:text-surface-container-lowest text-label-sm font-label-sm transition-colors" href="#aprender">
+<span class="material-symbols-outlined text-body-md" data-icon="help_center">help_center</span>
+<span>Aprender</span>
+</a>
+</div>
+<!-- Archival Disclaimer Badge -->
+<div class="px-space-md py-1.5 border border-outline-variant/20 rounded bg-tertiary-container/40 flex items-center justify-between">
+<span class="text-disclaimer-xs font-disclaimer-xs text-on-primary-container tracking-wider">DATOS DE DEMOSTRACIÓN</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 2. MAIN CONTENT AREA (Offset ml-[248px], max-w-[1192px] contained)       -->
+<!-- ========================================================================= -->
+<div class="ml-[248px] min-h-screen bg-background flex flex-col">
+<!-- Top Contextual Masthead Bar -->
+<header class="sticky top-0 z-30 bg-surface-container-low border-b border-outline-variant/40 px-gutter py-space-md">
+<div class="max-w-[1192px] mx-auto flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<!-- Titles & Context description -->
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-space-sm">
+<span class="text-disclaimer-xs font-disclaimer-xs uppercase tracking-widest text-on-surface-variant">TOMO II · COCINA DE TEMPORADA</span>
+<span class="text-outline-variant">/</span>
+<span class="px-1.5 py-0.5 border border-outline-variant rounded text-disclaimer-xs font-disclaimer-xs uppercase tracking-wider text-on-surface-variant bg-surface-container">
+              DATOS DE DEMOSTRACIÓN
+            </span>
+</div>
+<h1 class="text-headline-xl font-headline-xl text-primary tracking-tight">Mi recetario</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl">
+            Cuaderno familiar de cocina, guisos de temporada y preparaciones de la casa.
+          </p>
+</div>
+<!-- Utility Toolbar -->
+<div class="flex flex-wrap items-center gap-space-sm self-start md:self-end">
+<!-- Search input -->
+<div class="relative min-w-[220px]">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-body-md" data-icon="search">search</span>
+<input class="w-full h-11 pl-9 pr-3 rounded border border-outline-variant bg-surface-container-lowest text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary transition-colors" placeholder="Buscar receta o ingrediente..." type="text"/>
+</div>
+<!-- Filter Dropdown 1: Tiempo -->
+<button class="h-11 px-3.5 rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-label-sm font-label-sm text-on-surface flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm text-on-surface-variant" data-icon="hourglass_empty">hourglass_empty</span>
+<span>Tiempo: Todos</span>
+<span class="material-symbols-outlined text-label-sm text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</button>
+<!-- Filter Dropdown 2: Ingrediente -->
+<button class="h-11 px-3.5 rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-label-sm font-label-sm text-on-surface flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm text-on-surface-variant" data-icon="nutrition">nutrition</span>
+<span>Ingrediente: Todos</span>
+<span class="material-symbols-outlined text-label-sm text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</button>
+<!-- Primary Action Button: + Nueva receta -->
+<button class="h-11 px-space-md rounded bg-secondary hover:bg-on-secondary-container text-on-secondary font-medium text-label-sm font-label-sm flex items-center gap-1.5 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm" data-icon="add">add</span>
+<span>+ Nueva receta</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 3. TWO-COLUMN WORKSPACE (Contained max-w-[1192px], margin-x auto)        -->
+<!-- ========================================================================= -->
+<main class="flex-1 max-w-[1192px] w-full mx-auto px-gutter py-space-lg">
+<div class="grid grid-cols-12 gap-gutter items-start">
+<!-- ------------------------------------------------------------------- -->
+<!-- LEFT COLUMN: Library / Catálogo (~380px -> 4 cols on xl)            -->
+<!-- ------------------------------------------------------------------- -->
+<section aria-label="Catálogo de recetas" class="col-span-12 lg:col-span-5 xl:col-span-4 flex flex-col gap-space-md">
+<!-- Library Header -->
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant">
+<div class="flex items-baseline gap-2">
+<h2 class="text-headline-md font-headline-md text-primary">Recetas guardadas</h2>
+<span class="text-label-sm font-label-sm text-on-surface-variant tabular-nums">(6 platos)</span>
+</div>
+<button class="text-label-sm font-label-sm text-on-surface-variant hover:text-primary flex items-center gap-1" type="button">
+<span>Por temporada</span>
+<span class="material-symbols-outlined text-label-sm" data-icon="swap_vert">swap_vert</span>
+</button>
+</div>
+<!-- Recipe Cards List -->
+<div class="flex flex-col gap-space-sm" role="list">
+<!-- Item 1: Selected card (Lentejas pardinas) -->
+<article class="relative p-space-md rounded bg-surface-container-lowest border-2 border-secondary shadow-[2px_2px_0px_0px_rgba(24,58,50,0.08)] cursor-pointer transition-all" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Legumbres
+                </span>
+<span class="material-symbols-outlined text-secondary text-body-md" data-icon="bookmark" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary hover:text-secondary transition-colors">
+                Lentejas pardinas con verduras de huerto
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  45 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  4 comensales
+                </span>
+</div>
+</article>
+<!-- Item 2: Arroz meloso -->
+<article class="p-space-md rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high cursor-pointer transition-colors" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Arroces
+                </span>
+<span class="material-symbols-outlined text-on-surface-variant text-body-md" data-icon="bookmark_border">bookmark_border</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface">
+                Arroz meloso de sepia y alcachofas
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  35 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  4 comensales
+                </span>
+</div>
+</article>
+<!-- Item 3: Crema templada -->
+<article class="p-space-md rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high cursor-pointer transition-colors" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Cremas y sopas
+                </span>
+<span class="material-symbols-outlined text-on-surface-variant text-body-md" data-icon="bookmark_border">bookmark_border</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface">
+                Crema templada de calabaza asada y salvia
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  30 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  2 comensales
+                </span>
+</div>
+</article>
+<!-- Item 4: Tortilla abierta -->
+<article class="p-space-md rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high cursor-pointer transition-colors" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Huevos
+                </span>
+<span class="material-symbols-outlined text-on-surface-variant text-body-md" data-icon="bookmark_border">bookmark_border</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface">
+                Tortilla abierta de hierbas de corral
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  15 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  2 comensales
+                </span>
+</div>
+</article>
+<!-- Item 5: Merluza al vapor -->
+<article class="p-space-md rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high cursor-pointer transition-colors" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Pescados
+                </span>
+<span class="material-symbols-outlined text-on-surface-variant text-body-md" data-icon="bookmark_border">bookmark_border</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface">
+                Merluza al vapor sobre puerros confitados
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  25 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  2 comensales
+                </span>
+</div>
+</article>
+<!-- Item 6: Manzanas asadas -->
+<article class="p-space-md rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high cursor-pointer transition-colors" role="listitem">
+<div class="flex items-start justify-between gap-space-sm mb-1">
+<span class="px-2 py-0.5 rounded bg-surface-container text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider border border-outline-variant">
+                  Postres
+                </span>
+<span class="material-symbols-outlined text-on-surface-variant text-body-md" data-icon="bookmark_border">bookmark_border</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface">
+                Manzanas asadas al horno con canela en rama
+              </h3>
+<div class="flex items-center gap-3 mt-2 pt-2 border-t border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="schedule">schedule</span>
+                  40 min
+                </span>
+<span class="text-outline-variant">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-label-sm" data-icon="group">group</span>
+                  4 comensales
+                </span>
+</div>
+</article>
+</div>
+</section>
+<!-- ------------------------------------------------------------------- -->
+<!-- RIGHT COLUMN: Selected Recipe Detail (~780px wide card on #FBF9F4)  -->
+<!-- ------------------------------------------------------------------- -->
+<main class="col-span-12 lg:col-span-7 xl:col-span-8 bg-surface-container-lowest border border-outline-variant rounded p-space-lg flex flex-col gap-space-lg shadow-[2px_2px_0px_0px_rgba(24,58,50,0.06)]">
+<!-- Detail Header & Meta -->
+<div class="flex flex-col gap-space-sm border-b border-outline-variant pb-space-lg">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
+                REC-108 · Cocina de invierno · Legumbres de la tierra
+              </span>
+<span class="text-disclaimer-xs font-disclaimer-xs px-2 py-0.5 rounded bg-surface-container border border-outline-variant text-on-surface-variant">
+                HOJA N.º 42
+              </span>
+</div>
+<h2 class="text-headline-xl font-headline-xl text-primary leading-tight">
+              Lentejas pardinas con verduras de huerto
+            </h2>
+<!-- Editorial Intro Note in Italics -->
+<blockquote class="italic text-body-lg font-body-lg text-on-surface/90 border-l-2 border-secondary pl-space-md py-1 bg-surface-container-low/60 rounded-r">
+              «Guiso reposado de invierno según la costumbre de la abuela. Las pardinas no precisan remojo prolongado si el grano es tierno; la clave reside en pochar con sosiego el puerro hasta que rinda su dulzor.»
+            </blockquote>
+<!-- Timers, Tags & Nutritional Note (Strictly archival, no guilt metrics) -->
+<div class="flex flex-wrap items-center gap-space-sm pt-2">
+<div class="flex items-center gap-1.5 px-3 py-1 rounded bg-surface-container border border-outline-variant text-label-sm font-label-sm text-on-surface">
+<span class="material-symbols-outlined text-label-sm text-secondary" data-icon="timer">timer</span>
+<span>45 min fuego suave</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 rounded bg-surface-container border border-outline-variant text-label-sm font-label-sm text-on-surface">
+<span class="material-symbols-outlined text-label-sm text-on-surface-variant" data-icon="hourglass_bottom">hourglass_bottom</span>
+<span>10 min reposo</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-outline-variant/60 bg-surface text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-disclaimer-xs text-on-surface-variant" data-icon="info">info</span>
+<span>Datos nutricionales incompletos</span>
+</div>
+</div>
+<!-- Bridges Bar with 3 Prominent 44px Buttons & Servings Controller -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-md">
+<!-- 3 Prominent 44px Buttons -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Action 1: Cocinar ahora (Forest green primary) -->
+<button class="h-11 px-space-md rounded bg-primary-container hover:bg-primary text-surface-container-lowest font-medium text-label-sm font-label-sm flex items-center gap-2 transition-colors focus:ring-2 focus:ring-secondary" type="button">
+<span class="material-symbols-outlined text-body-lg" data-icon="skillet">skillet</span>
+<span>Cocinar ahora</span>
+</button>
+<!-- Action 2: Planificar semana -->
+<button class="h-11 px-space-md rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface text-label-sm font-label-sm flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-body-lg text-on-surface-variant" data-icon="calendar_today">calendar_today</span>
+<span>Planificar semana</span>
+</button>
+<!-- Action 3: Preparar lista -->
+<button class="h-11 px-space-md rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface text-label-sm font-label-sm flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-body-lg text-on-surface-variant" data-icon="shopping_basket">shopping_basket</span>
+<span>Preparar lista</span>
+</button>
+</div>
+<!-- Servings Controller: Raciones [ - ] 2 [ + ] -->
+<div class="flex items-center gap-space-xs bg-surface-container border border-outline-variant rounded p-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant px-2">Raciones:</span>
+<button aria-label="Reducir comensales" class="w-8 h-8 rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm" data-icon="remove">remove</span>
+</button>
+<span class="w-7 text-center font-tabular-md text-tabular-md font-semibold text-primary">2</span>
+<button aria-label="Aumentar comensales" class="w-8 h-8 rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-label-sm" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Two-Column Split Inside Detail: Ingredientes & Pasos -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-lg items-start">
+<!-- Left Sub-column: Ingredientes necesarios (~40%) -->
+<div class="md:col-span-5 flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-1 border-b border-outline-variant">
+<h3 class="text-headline-md font-headline-md text-primary">Ingredientes</h3>
+<span class="text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider">Para 2 raciones</span>
+</div>
+<!-- Archival ledger checkable items list -->
+<ul aria-label="Lista de ingredientes" class="flex flex-col divide-y divide-outline-variant/40">
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-1" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-1">
+<span class="font-medium">160 g</span> Lentejas pardinas de La Armuña
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-2" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-2">
+<span class="font-medium">1</span> Puerro fino <span class="text-on-surface-variant">(parte blanca)</span>
+</label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-3" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-3">
+<span class="font-medium">1</span> Zanahoria mediana
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-4" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-4">
+<span class="font-medium">1</span> Diente de ajo morado
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-5" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-5">
+<span class="font-medium">1 cdta.</span> Pimentón dulce de La Vera
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-6" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-6">
+<span class="font-medium">2 cdas.</span> Aceite de oliva virgen extra
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-7" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-7">
+<span class="font-medium">750 ml</span> Caldo suave de verduras
+                  </label>
+</li>
+<li class="py-2.5 flex items-start gap-3">
+<input class="mt-0.5 w-[18px] h-[18px] rounded text-primary-container border-outline-variant focus:ring-secondary focus:ring-offset-0 cursor-pointer" id="ing-8" type="checkbox"/>
+<label class="text-body-md font-body-md text-on-surface cursor-pointer select-none" for="ing-8">
+<span class="font-medium">1 hoja</span> Laurel seco y sal marina
+                  </label>
+</li>
+</ul>
+<!-- Despensa note -->
+<div class="p-3 bg-surface-container rounded border border-outline-variant flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-body-md mt-0.5" data-icon="inventory_2">inventory_2</span>
+<p class="text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">
+                  Disponibles en despensa del hogar: laurel, pimentón y sal marina. Los demás granos se cotejan en la lista de compra.
+                </p>
+</div>
+</div>
+<!-- Right Sub-column: Pasos de elaboración (~60%) -->
+<div class="md:col-span-7 flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-1 border-b border-outline-variant">
+<h3 class="text-headline-md font-headline-md text-primary">Pasos de elaboración</h3>
+<span class="text-disclaimer-xs font-disclaimer-xs text-on-surface-variant uppercase tracking-wider">Orden canónico</span>
+</div>
+<!-- Numbered Steps -->
+<div class="flex flex-col gap-space-md">
+<!-- Paso 1 -->
+<div class="flex items-start gap-space-md p-space-md rounded bg-surface-container/40 border border-outline-variant/60">
+<div class="w-7 h-7 rounded border border-outline-variant bg-surface-container-lowest text-primary font-headline-md flex items-center justify-center shrink-0">
+                    1
+                  </div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<h4 class="text-body-md font-body-md font-semibold text-primary">Sofrito pausado</h4>
+<span class="text-disclaimer-xs font-disclaimer-xs text-secondary font-medium">12 min</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                      Picar puerro y ajo bien finos. Pochar en la cazuela con el aceite de oliva a fuego suave, tapando ligeramente para que sude hasta quedar transparente y tierno sin tomar color dorado.
+                    </p>
+</div>
+</div>
+<!-- Paso 2 -->
+<div class="flex items-start gap-space-md p-space-md rounded bg-surface-container/40 border border-outline-variant/60">
+<div class="w-7 h-7 rounded border border-outline-variant bg-surface-container-lowest text-primary font-headline-md flex items-center justify-center shrink-0">
+                    2
+                  </div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<h4 class="text-body-md font-body-md font-semibold text-primary">Aroma y zanahoria</h4>
+<span class="text-disclaimer-xs font-disclaimer-xs text-secondary font-medium">3 min</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                      Añadir la zanahoria cortada en medias lunas finas. Incorporar la cucharadita de pimentón dulce retirando brevemente del calor directo para evitar que se queme o amargue el fondo.
+                    </p>
+</div>
+</div>
+<!-- Paso 3 -->
+<div class="flex items-start gap-space-md p-space-md rounded bg-surface-container/40 border border-outline-variant/60">
+<div class="w-7 h-7 rounded border border-outline-variant bg-surface-container-lowest text-primary font-headline-md flex items-center justify-center shrink-0">
+                    3
+                  </div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<h4 class="text-body-md font-body-md font-semibold text-primary">Cocción lenta</h4>
+<span class="text-disclaimer-xs font-disclaimer-xs text-secondary font-medium">30 min</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                      Incorporar las lentejas previamente lavadas y la hoja de laurel seco. Cubrir con el caldo frío de verduras y cocinar a fuego lento con la cazuela semicubierta sin remover violentamente para no romper la piel.
+                    </p>
+</div>
+</div>
+<!-- Paso 4 -->
+<div class="flex items-start gap-space-md p-space-md rounded bg-surface-container/40 border border-outline-variant/60">
+<div class="w-7 h-7 rounded border border-outline-variant bg-surface-container-lowest text-primary font-headline-md flex items-center justify-center shrink-0">
+                    4
+                  </div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<h4 class="text-body-md font-body-md font-semibold text-primary">Reposo del caldero</h4>
+<span class="text-disclaimer-xs font-disclaimer-xs text-secondary font-medium">5 min</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                      Apagar el fuego, rectificar de sal marina y dejar reposar tapado cinco minutos antes de servir en fuente de barro caliente.
+                    </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detail Archival Footer Line -->
+<footer class="pt-space-md border-t border-outline-variant flex flex-wrap items-center justify-between gap-2 text-disclaimer-xs font-disclaimer-xs text-on-surface-variant">
+<span class="tracking-wide">Cuaderno de cocina familiar · Tomo II · Asiento de registro doméstico</span>
+<span class="px-2 py-0.5 rounded border border-outline-variant bg-surface-container uppercase">
+              Maqueta — datos de ejemplo
+            </span>
+</footer>
+</main>
+</div>
+</main>
+</div>
+</body></html>
