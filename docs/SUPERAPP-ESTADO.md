@@ -11,9 +11,27 @@ No se mezclan las tres.
 
 ---
 
+## Bitácora de la sesión SUPERAPP (commits, con lo que hizo cada uno)
+
+| commit | qué dejó |
+|---|---|
+| `e50f04c` | **S00**: baseline congelado. Los cambios heredados se verifican y se preservan; 1.195 pruebas |
+| `5b66bf2` | Fichero de estado vivo: plan S00–S12, decisiones cerradas, correcciones a las referencias de Stitch |
+| `dcde817` | **S01**: publicación por versiones (carpeta por versión, puntero atómico, `rutas()` fija la versión por petición, rollback) + catálogo actual adoptado como primera versión |
+| `247a9cc` | **S02 núcleo**: cola de fichas en SQLite (estados, *lease* con vencimiento, hash, evidencia, reenganche sin duplicar) |
+| `9f06396` | **S02 medido**: inventario de 74.861 fichas desde bronze en 75,7 s (antes: sin terminar) |
+| `6bfdfd1` y `fb4dc6a` | **S02 instrumento**: informe de cobertura por fuente con deuda de cola y edades |
+| `240bad4` | **S03 primera mitad**: descubridor de Lidl (sitemap guardado, clasificación por *slug*, sin red) |
+| `42683e7` | La «cuna» suelta fuera de la política: tercera vez que la trampa de las tildes mordía; queda cubierta por pruebas |
+| `edb4d2d` | **S03 medido**: el sitemap real, 6.622 direcciones → 691 incluidas, 1.568 de bazar evitadas, 4.363 a revisión |
+| `e09f5d3` | **Puente S03→S02**: lo descubierto entra en la cola con su evidencia; el bazar no genera trabajo |
+
+**Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
+escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
+
 ## Paquete actual
 
-**S02 · Cola de fichas — EN CURSO.** Núcleo hecho; falta medir el inventario real y enganchar los colectores.
+**S03 · Lidl — PRIMERA MITAD HECHA.** Siguiente: **las fichas de los 5.054 candidatos** (S03, segunda mitad).
 
 ## Baseline (S00)
 
@@ -184,7 +202,35 @@ memoria escrita, no renovación.
 
 ## Siguiente paso concreto
 
-**S02 · Cola de fichas.** Crear el registro por `(fuente, id_fuente, variante, ámbito)` con
+**S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
+y 4.363 a revisión) con su evidencia, y 1.568 direcciones de bazar quedaron fuera sin generar trabajo.
+Lo que falta, en este orden:
+
+1. **Un lector de ficha de Lidl** a partir de una ficha guardada (fixtures primero, sin red), con lo
+   que publique: marca, título, descripción, ingredientes, alérgenos, nutrición con su base, peso,
+   envase y procedencia. Lo que no publique queda `no_publicado`, no `null` sin motivo.
+2. **La cola manda**: pedir ficha solo a los `pendiente`, con presupuesto por host y por día, guardar
+   el hash del contenido útil y la versión del parser, y dejar `proxima_revision` a 30 días (7 si hay
+   conflicto). Reanudable y sin duplicar, como ya está probado en S02.
+3. **Resolver los 4.363 a revisión** con lo que diga la ficha, no con el *slug*: es la única forma
+   honesta de saber si esos productos son de la cesta.
+4. **Informe por fuente y familia** (descubiertos, incluidos, excluidos, ambiguos, visitados, vivos,
+   con GTIN, con nutrición, con precio vigente y errores), sin declarar cobertura completa.
+
+**Antes de eso, una comprobación de una línea**: pasar `uv run pytest -q` y `uv run ruff check .`, y
+confirmar que siguen verdes. La última suite completa verificada es **1.223**.
+
+### Lo que queda del encargo, sin adornos
+
+- **Terminado y verificado**: S00, S01, S02 (núcleo, inventario y cobertura) y la primera mitad de S03.
+- **Sin empezar**: S04 (identidad exacta, con el laboratorio como diagnóstico y no como sustituto),
+  S05 (selector único: **`_candidatos` recibe `fecha_tope` y no la aplica**, y sus llamantes pasan
+  cadena vacía — es el primer arreglo concreto del paquete), S06 (armazón con menú lateral, sin los
+  11 px de Stitch ni datos ficticios), S07 a S12.
+- **Decisión pendiente del dueño**: ninguna que bloquee. Cuando toque verificar recorridos completos
+  de interfaz hará falta **Docker arrancado** (hoy está parado y la plataforma no responde).
+
+## Detalle histórico: S02 · Cola de fichas. Crear el registro por `(fuente, id_fuente, variante, ámbito)` con
 `discovered_at`, `last_seen_at`, `detail_fetched_at`, `next_check_at`, hash del contenido útil,
 versión de parser, intentos y resultado; estados (`pendiente`, `en_curso` con lease, `correcto`,
 `parcial`, `no_publicado`, `bloqueado`, `error_temporal`, `no_encontrado`, `excluido`); reanudación
