@@ -173,7 +173,7 @@ slugs largos y a menudo en alemán, y forzar una decisión ahí sería inventar.
 desconocida, y una dirección tampoco prueba que la página viva (el encargo documenta un 404 en el
 mismo sitemap). La cobertura real la dirá la otra mitad de S03: las fichas.
 
-**Pendiente de S03**: (1) las fichas de ese inventario, con cola y presupuesto, para resolver los
+**Puente hecho (7 de octubre de 2026)**: lo descubierto se da de alta en la cola de fichas (`--registrar`), con su evidencia; los incluidos y los que quedan a revisión entran como candidatos, y el bazar inequívoco se cuenta pero **no genera trabajo**. Así el recorrido completo queda: sitemap → inventario → informe de cobertura.\n\n**Pendiente de S03**: (1) las fichas de ese inventario, con cola y presupuesto, para resolver los
 4.363 y traer ingredientes y nutrición; (2) el informe por fuente y familia; (3) las ofertas
 semanales como segunda corriente, sin confundir «producto conocido» con «precio de hoy».
 

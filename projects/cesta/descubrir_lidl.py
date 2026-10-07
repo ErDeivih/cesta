@@ -91,7 +91,7 @@ def informe(urls: list[str]) -> dict:
             cuenta[{"incluido": "incluidas", "excluido": "excluidas",
                     "revisar": "revision"}[estado]] += 1
     cuenta["identificadores"] = len(identificadores)
-    return {"cuenta": dict(cuenta), "por_estado": por_estado,
+    return {"cuenta": dict(cuenta), "por_estado": por_estado, "origen": "sitemap-productos",
             "cobertura": "catalogo_publico_descubierto",
             "aviso": ("son direcciones, no alimentos ni surtido: el sitemap no clasifica, y un "
                       "prefijo de identificador no es un pasillo. Una direccion tampoco prueba que "
@@ -134,6 +134,39 @@ def descarga(destino: Path | None = None, *, permitir_web: bool = True) -> bytes
     return xml
 
 
+def registra_en_inventario(con, datos: dict, *, fuente: str = "lidl", dia=None,
+                          evidencia: str | None = None) -> dict:
+    """Da de alta en la cola de fichas lo que merece una ficha, y cuenta lo que no.
+
+    Entran los **incluidos** y los que quedan **a revision** (son candidatos: no se sabe y hay que ir a
+    mirar). No entran los excluidos por bazar inequivoco: apuntarlos seria dejar trabajo para pedir
+    fichas que no se van a pedir. Se cuentan aparte, que es informacion, no trabajo.
+    """
+    import re
+
+    from core import inventario
+
+    altas = {"incluido": 0, "revisar": 0, "excluido_no_registrado": 0, "sin_identificador": 0}
+    for estado, urls in datos.get("por_estado", {}).items():
+        for url in urls:
+            if estado == "excluido":
+                altas["excluido_no_registrado"] += 1
+                continue
+            partes = desglosa(url) if "desglosa" in globals() else None
+            if partes is None:
+                encontrado = re.search(r"/p(?P<id>\d+)", url)
+                if not encontrado:
+                    altas["sin_identificador"] += 1
+                    continue
+                identificador = encontrado.group("id")
+            else:
+                identificador = partes[1]
+            inventario.alta(con, fuente, identificador, url=url, dia=dia,
+                            evidencia=evidencia or datos.get("origen"))
+            altas[estado] = altas.get(estado, 0) + 1
+    return altas
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     entrada = ap.add_mutually_exclusive_group(required=True)
@@ -141,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
     entrada.add_argument("--web", action="store_true",
                          help="robots.txt y UNA peticion; guarda el sitemap para repetir sin red")
     ap.add_argument("--ejemplos", type=int, default=3, help="ejemplos por estado")
+    ap.add_argument("--registrar", action="store_true",
+                    help="dar de alta en la cola de fichas lo que merece ficha")
     a = ap.parse_args(argv)
     if a.web:
         try:
@@ -167,6 +202,15 @@ def main(argv: list[str] | None = None) -> int:
         for url in ejemplos:
             print(f"    {estado:<9} {url[:96]}")
     print(f"  {datos['aviso']}")
+    if getattr(a, "registrar", False):
+        from core import inventario
+
+        con = inventario.conecta()
+        altas = registra_en_inventario(con, datos)
+        con.close()
+        print(f"  registrados en la cola: {altas['incluido']} incluidos y "
+              f"{altas['revisar']} a revision · no registrados por bazar: "
+              f"{altas['excluido_no_registrado']}")
     return 0
 
 

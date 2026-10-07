@@ -64,3 +64,25 @@ def test_el_bazar_inequivoco_no_gasta_detalle():
 def test_una_categoria_no_es_una_ficha_y_no_se_clasifica_como_producto():
     estado, motivo = lidl.clasifica("https://www.lidl.es/h/lacteos-quesos-y-huevos/h10095761")
     assert estado == "no_es_ficha" and motivo
+
+
+def test_lo_descubierto_entra_en_la_cola_y_el_bazar_no(tmp_path):
+    """El puente que faltaba: el informe se convierte en trabajo, y el bazar no genera trabajo.
+
+    Entran incluidos y a revision (los segundos son candidatos: no se sabe, hay que mirar). Los
+    excluidos por bazar inequivoco se cuentan pero no se registran: apuntarlos seria dejar pedidos
+    de fichas que no se van a pedir.
+    """
+    from core import inventario
+
+    con = inventario.conecta(tmp_path / "inventario.sqlite")
+    datos = lidl.informe(lidl.urls_de_sitemap(SITEMAP))
+    altas = lidl.registra_en_inventario(con, datos)
+    registradas = con.execute("SELECT count(*) FROM fichas").fetchone()[0]
+    assert altas["excluido_no_registrado"] == 1
+    assert registradas == datos["cuenta"]["incluidas"] + datos["cuenta"].get("revision", 0)
+    # Idempotente: volver a pasar no duplica ni una fila.
+    lidl.registra_en_inventario(con, datos)
+    assert con.execute("SELECT count(*) FROM fichas").fetchone()[0] == registradas
+    # Y con evidencia: se sabe de donde salio cada ficha.
+    assert con.execute("SELECT count(*) FROM fichas WHERE evidencia IS NOT NULL").fetchone()[0] > 0
