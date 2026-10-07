@@ -18,6 +18,14 @@
     --aviso: #b45309; /* texto de aviso, legible sobre blanco */
     --bien: #059669; /* borde de lo que ha salido bien */
     --bien-suave: #ecfdf5; /* fondo de lo que ha salido bien */
+    /* Direccion visual de SUPERAPP-01: archivo domestico, no panel generico. */
+    --marfil: #f4f0e8;      /* lienzo calido */
+    --papel: #fbf9f4;       /* formularios y superficies */
+    --bosque: #183a32;      /* navegacion y accion principal */
+    --tinta: #202724;       /* texto principal (13,42:1 sobre marfil) */
+    --secundaria: #536158;  /* texto auxiliar (5,74:1 sobre marfil) */
+    --terracota: #a94d36;   /* acento de marca y seccion activa (4,86:1) */
+    --borde-fuerte: #8a8578; /* si delimita un control: el suave da 1,43:1 */
   }
 
   @media (prefers-color-scheme: dark) {
@@ -28,6 +36,13 @@
       --aviso: #fcd34d;
       --bien: #10b981;
       --bien-suave: #022c22;
+    --marfil: #14181a;
+    --papel: #1c2224;
+    --bosque: #cfe3d8;
+    --tinta: #eef1ee;
+    --secundaria: #adb8ae;
+    --terracota: #e08a6f;
+    --borde-fuerte: #6f7a73;
     }
   }
 

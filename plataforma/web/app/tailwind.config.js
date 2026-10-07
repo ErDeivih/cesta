@@ -15,7 +15,10 @@ export default {
       fontFamily: {
         // Fuente del sistema: la app se sirve desde casa y no quiero que la
         // primera pintada dependa de fonts.googleapis.com.
-        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: ['IBM Plex Sans', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto',
+               'Helvetica', 'Arial', 'sans-serif'],
+        // Fraunces 600 para titulos cortos; Georgia mientras no se sirva el WOFF2 local.
+        serif: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       colors: {
@@ -27,6 +30,14 @@ export default {
         'tinta-suave': 'var(--tinta-suave)',
         fondo: 'var(--fondo)',
         borde: 'var(--borde)',
+        // Direccion visual de SUPERAPP-01 (valores en estilos.css, en los dos temas).
+        marfil: 'var(--marfil)',
+        papel: 'var(--papel)',
+        bosque: 'var(--bosque)',
+        'tinta-fuerte': 'var(--tinta)',
+        secundaria: 'var(--secundaria)',
+        terracota: 'var(--terracota)',
+        'borde-fuerte': 'var(--borde-fuerte)',
         aviso: 'var(--aviso)',
         bien: 'var(--bien)',
         'bien-suave': 'var(--bien-suave)',
