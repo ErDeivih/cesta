@@ -41,11 +41,11 @@ function Detalle({ id, alCerrar }: { id: number; alCerrar: () => void }) {
   const [version, setVersion] = useState<number | null>(null)
   const { data, isPending, error } = useReceta(id, version)
 
-  if (isPending) return <Tarjeta><p className="text-[15px]">Leyendo la receta...</p></Tarjeta>
+  if (isPending) return <Tarjeta><p className="text-[16px]">Leyendo la receta...</p></Tarjeta>
   if (error) {
     return (
       <Tarjeta>
-        <p className="text-[15px] text-error">{textoDeError(error)}</p>
+        <p className="text-[16px] text-error">{textoDeError(error)}</p>
       </Tarjeta>
     )
   }
@@ -70,7 +70,7 @@ function Detalle({ id, alCerrar }: { id: number; alCerrar: () => void }) {
           id="version"
           value={version ?? data.version}
           onChange={(e) => setVersion(Number(e.target.value))}
-          className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+          className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
         >
           {/* Del 1 a la ultima: la lista sale de la propia receta, asi que no hay nada que inventar. */}
           {Array.from({ length: data.version }, (_, i) => i + 1).map((n) => (
@@ -148,7 +148,7 @@ function Alta() {
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             required
-            className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+            className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] text-secundaria">
@@ -158,7 +158,7 @@ function Alta() {
             min={1}
             value={raciones}
             onChange={(e) => setRaciones(Number(e.target.value))}
-            className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte tabular-nums"
+            className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] text-secundaria">
@@ -168,7 +168,7 @@ function Alta() {
             onChange={(e) => setIngredientes(e.target.value)}
             rows={4}
             placeholder={'600 g patatas\n5 ud huevos'}
-            className="rounded-md border border-borde-fuerte bg-papel p-2 text-[15px] leading-[22px] text-tinta-fuerte"
+            className="rounded-md border border-borde-fuerte bg-papel p-2 text-[16px] leading-[22px] text-tinta-fuerte"
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] text-secundaria">
@@ -177,7 +177,7 @@ function Alta() {
             value={preparacion}
             onChange={(e) => setPreparacion(e.target.value)}
             rows={3}
-            className="rounded-md border border-borde-fuerte bg-papel p-2 text-[15px] leading-[22px] text-tinta-fuerte"
+            className="rounded-md border border-borde-fuerte bg-papel p-2 text-[16px] leading-[22px] text-tinta-fuerte"
           />
         </label>
         {crear.error && <p className="text-[14px] text-error">{textoDeError(crear.error)}</p>}
@@ -209,8 +209,8 @@ export function Recetario() {
         <Alta />
       </div>
 
-      {isPending && <p className="text-[15px] text-secundaria">Leyendo el recetario...</p>}
-      {error && <p className="text-[15px] text-error">{textoDeError(error)}</p>}
+      {isPending && <p className="text-[16px] text-secundaria">Leyendo el recetario...</p>}
+      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
 
       {data && data.recetas.length === 0 && (
         <Vacio titulo="Todavia no hay recetas">

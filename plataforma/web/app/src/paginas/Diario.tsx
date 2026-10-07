@@ -64,7 +64,7 @@ function Alta({ fecha }: { fecha: string }) {
             <select
               value={comida}
               onChange={(e) => setComida(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
             >
               {COMIDAS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -74,7 +74,7 @@ function Alta({ fecha }: { fecha: string }) {
             <input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
             />
           </label>
           <label className="flex flex-col gap-1 text-[13px] text-secundaria">
@@ -83,7 +83,7 @@ function Alta({ fecha }: { fecha: string }) {
               value={kcal}
               onChange={(e) => setKcal(e.target.value)}
               inputMode="decimal"
-              className="min-h-[44px] w-28 rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-28 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
             />
           </label>
           <label className="flex flex-col gap-1 text-[13px] text-secundaria">
@@ -91,7 +91,7 @@ function Alta({ fecha }: { fecha: string }) {
             <select
               value={fuente}
               onChange={(e) => setFuente(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
             >
               {FUENTES.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
@@ -108,7 +108,7 @@ function Alta({ fecha }: { fecha: string }) {
               <input
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
-                className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte tabular-nums"
+                className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
               />
             </label>
           )}
@@ -146,7 +146,7 @@ export function Diario() {
             type="date"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte tabular-nums"
+            className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
           />
         </label>
         <button
@@ -158,8 +158,8 @@ export function Diario() {
         </button>
       </div>
 
-      {isPending && <p className="text-[15px] text-secundaria">Leyendo el diario...</p>}
-      {error && <p className="text-[15px] text-error">{textoDeError(error)}</p>}
+      {isPending && <p className="text-[16px] text-secundaria">Leyendo el diario...</p>}
+      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
 
       {data && (
         <Tarjeta>
@@ -203,7 +203,7 @@ export function Diario() {
                 <li key={e.id}>
                   <Tarjeta>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[15px] text-tinta-fuerte">
+                      <span className="text-[16px] text-tinta-fuerte">
                         {e.tipo === 'receta' ? `Receta ${e.referencia} (v${e.version})` : e.referencia || 'sin nombre'}
                       </span>
                       <span className="text-[13px] tabular-nums text-secundaria">

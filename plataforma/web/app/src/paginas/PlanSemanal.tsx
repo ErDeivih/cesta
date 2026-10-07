@@ -50,7 +50,7 @@ function PonerEnUnDia({ fecha, alPoner }: { fecha: string; alPoner: () => void }
         <select
           value={recetaId}
           onChange={(e) => setRecetaId(e.target.value)}
-          className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte"
+          className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
         >
           <option value="">Elige una receta</option>
           {recetas.map((r) => (
@@ -67,7 +67,7 @@ function PonerEnUnDia({ fecha, alPoner }: { fecha: string; alPoner: () => void }
           min={1}
           value={comensales}
           onChange={(e) => setComensales(Number(e.target.value))}
-          className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[15px] text-tinta-fuerte tabular-nums"
+          className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
         />
       </label>
       <Boton
@@ -105,8 +105,8 @@ export function PlanSemanal() {
         releer tal cual dentro de un mes, aunque las recetas hayan cambiado.
       </p>
 
-      {isPending && <p className="text-[15px] text-secundaria">Leyendo el plan...</p>}
-      {error && <p className="text-[15px] text-error">{textoDeError(error)}</p>}
+      {isPending && <p className="text-[16px] text-secundaria">Leyendo el plan...</p>}
+      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
 
       <ul className="flex flex-col gap-2">
         {dias.map((fecha) => {
@@ -132,7 +132,7 @@ export function PlanSemanal() {
                 ) : (
                   <ul className="mt-1 flex flex-col gap-1">
                     {lineas.map((l) => (
-                      <li key={`${l.nombre}-${l.version}`} className="text-[15px] text-tinta-fuerte">
+                      <li key={`${l.nombre}-${l.version}`} className="text-[16px] text-tinta-fuerte">
                         {l.nombre}{' '}
                         <span className="text-[13px] text-secundaria tabular-nums">
                           v{l.version} · para {l.comensales}

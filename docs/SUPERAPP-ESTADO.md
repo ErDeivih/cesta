@@ -29,104 +29,43 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
-## Resumen vigente (7 de octubre de 2026, noche)
+## Resumen vigente (8 de octubre de 2026) · cierre de la etapa
 
-### Entregables de estas tres rondas
+### Entregado en esta etapa, con su evidencia
 
-**S06 · armazon y sistema visual — HECHO.** Lanzador en `/` con tres accesos y "continuar donde
-estabas"; `/compra`, `/recetas` y `/calorias` con su layout, su cabecera y sus subsecciones; menu
-lateral de 248 px desde 1024 px con las tres aplicaciones siempre visibles; cajon de 288 px en movil
-con foco atrapado, Escape, fondo inerte y el foco de vuelta al boton; y **las direcciones antiguas
-siguen funcionando con su query**.
+| paquete | que hay | evidencia |
+|---|---|---|
+| **S06** armazon | lanzador, `/compra`, `/recetas` y `/calorias` con layout, menu lateral, cajon movil con foco atrapado y Escape, y rutas antiguas que conservan su query | **23 comprobaciones en navegador** (`uv run python -m plataforma.prueba_suite`), capturas en `data/capturas-s06/` |
+| **S04** identidad | `core/identidad.py`: GTIN validado **y** presentacion comprobada, cuarentena, abtencion, sin cierre transitivo · candidatos exactos por GTIN y probables aparte · **sombra publicada** | 15 pruebas · sombra medida sobre **51.915 productos**: 1.627 grupos exactos (1.589 multi-cadena), 4.259 probables, **266 cuarentenas**, y **2.222 de los 6.545 grupos actuales se partirian** |
+| **S05** vigencia | `fecha_tope` aplicada en `_candidatos` **y en sus cuatro llamantes**, que pasaban cadena vacia | 3 pruebas, una de ellas lee el codigo para que no vuelva a quedar ninguno |
+| **S07** alternativa explicita | cada `Eleccion` sale con `identidad` y `motivo`; el aviso se pinta en la lista | 6 pruebas del servidor + el aviso visible en `RepartoEnTiendas` |
+| **S08** Recetas | `core/recetas.py` (versionado autocontenido, archivar que no borra, plan que fija version) · API · **recetario con selector de version y plan semanal** | 11 pruebas + 5 de API + pantallas construidas |
+| **S09** Calorias | `core/diario.py` (fuente del dato, conocido vs completo, **compra que no es consumo**) · API · **pantalla del diario** | 10 pruebas + 6 de API + pantalla construida |
+| montaje | prueba que distingue "la funcion existe" de "el endpoint se alcanza", para los dos routers nuevos y lo viejo | 3 pruebas sobre el OpenAPI de la aplicacion |
 
-**S08 · Recetas — ALMACENAMIENTO HECHO.** `core/recetas.py`: receta, version y plan en un SQLite
-local. Cada version es **autocontenida** -- guarda sus raciones, su preparacion y sus ingredientes
-**copiados** -- para que el diario pueda citar una version y esa version no se mueva nunca. Archivar no
-borra, y el plan **fija la version**. 11 pruebas.
+**Suite completa: 1.292 pruebas, 0 fallos.** Ruff limpio salvo **una sugerencia** en
+`plataforma/api/cesta.py` que no se aplica sola. Arbol limpio en cada commit de la etapa.
 
-**S09 · Calorias — ALMACENAMIENTO HECHO.** `core/diario.py`: entradas con fecha, comida, tipo,
-referencia, version y **de donde sale el dato**. El subtotal se llama `conocido` y no `total`, porque un
-total se lee como "lo que comi hoy" y eso solo es cierto cuando el dia esta completo; el dia dice
-ademas **cuantas entradas no traen dato** y una entrada sin dato **no aporta cero**. Y **una compra no
-se puede registrar como consumo**: no esta escrito en un comentario, `apunta` lo rechaza. 10 pruebas.
+### Lo que falta de verdad, sin adornos
 
-**S04 · identidad exacta — NUCLEO HECHO.** `core/identidad.py` decide entre dos fichas: `exacto`,
-`probable`, `alternativa`, `cuarentena` o `abstiene`, con sus motivos y su evidencia. GTIN validado
-**y** presentacion comprobada; mismo GTIN incompatible va a cuarentena; GTIN distinto no se fusiona
-por texto; gramos contra mililitros abstiene; el pack cambia el producto; y **sin cierre
-transitivo**: un grupo solo se amplia si el candidato es compatible con todos sus miembros.
+1. **S10 a S12 sin empezar**: puentes explicitos e idempotentes, graficas con medida y universo
+   declarados, y el **ensayo integral**. Lo mas gordo de lo que queda es el ensayo con **datos reales,
+   dos usuarios, recuperacion de errores y copia de seguridad restaurada**: nada de eso se ha probado.
+2. **Las 266 cuarentenas** de la sombra sin revisar: son los casos donde el mismo GTIN aparece con
+   presentaciones incompatibles, o sea donde **una de las dos fichas miente**. Nada se activa antes.
+3. **S03 sigue EN CURSO**: falta estratificar la muestra de fichas por familia, resolver los 4.363 a
+   revision con la ficha, e informe por fuente y familia. Los 28 leidos y el sitemap medido no lo cierran.
+4. **Lo visible que queda**: el detalle por receta, y las secciones de *mis alimentos* y *tendencias*,
+   siguen en la pantalla de cocina compartida con un `modo`, que es lo que el encargo manda eliminar.
+5. **La comparacion de la sombra con el emparejador** ya esta hecha, pero **activar la identidad nueva
+   no se ha hecho ni se debe hacer** hasta revisar las cuarentenas.
 
-### Evidencia
+### La siguiente accion concreta
 
-    uv run python -m plataforma.prueba_suite     # 23 comprobaciones en navegador, 0 fallos
-    uv run pytest -q                            # 1.254 pruebas, 0 fallos
-    uv run ruff check .                          # limpio
-    cd plataforma/web/app && npm run build       # correcto
-
-Capturas de S06 en `data/capturas-s06/`. La suite completa encontro dos contratos heredados que S06
-habia roto -- titulos de ruta y colores del tema -- y los dos quedaron arreglados **en el codigo**, no
-en las pruebas.
-
-### Lo que NO se puede afirmar todavia, dicho con precision
-
-- **S03 sigue EN CURSO.** Le faltan sus criterios de aceptacion: muestreo de fichas **por familia**,
-  resolucion de los 4.363 a revision con la ficha, e informe por fuente y familia. El sitemap medido
-  (6.622 direcciones) y los 28 leidos no cierran el paquete.
-- **"Sin ficha" en la cola nueva no significa "sin datos historicos".** La cola lleva lo visitado con
-  el lector nuevo; el catalogo ya tenia ingredientes de DIA y Mercadona de antes. Son dos cosas
-  distintas y el informe de cobertura las cuenta por separado.
-- **El 0/26 de nutricion describe esa muestra**, no la cadena: veintiseis fichas, sobre todo
-  envasado, leidas con este lector. Para generalizar hace falta estratificar.
-- **Que el parser entienda una ficha, o que un GTIN tenga el digito de control correcto, no demuestra
-  identidad exacta.** El GTIN valido es la via fuerte, pero hay que comprobar ademas la presentacion;
-  eso es exactamente lo que hace el motor y lo que antes no se comprobaba.
-
-### La sombra, medida sobre el catálogo entero (8 de octubre de 2026)
-
-`uv run python -m projects.cesta.identidad_sombra --guardar` · informe en `data/identidad-sombra/`
-
-| medida | valor |
-|---|---|
-| productos del catálogo | **51.915** |
-| con GTIN válido | **25.294** (48,7 %) |
-| grupos exactos por GTIN válido | **1.627** |
-| de ellos, multi-cadena | **1.589** |
-| probables por bloque (contados aparte, **no** son identidad) | **4.259** |
-| en cuarentena (mismo GTIN, presentación incompatible) | **266** |
-
-**La comparación con el emparejador que está en uso** —sus grupos son **componentes conexas** de las
-22.750 aristas de `enlaces.parquet`, no filas con identificador—:
-
-| medida | valor |
-|---|---|
-| grupos actuales multi-cadena | **6.545** |
-| **se partirían al aplicar GTIN válido** | **2.222 (34 %)** |
-| sobreviven como exactos (un GTIN, varias cadenas) | **4.045 (62 %)** |
-| sin GTIN comparable | **278** |
-
-**Uno de cada tres grupos que hoy se presentan como «el mismo producto» no lo es.** Los ejemplos del
-informe enseñan los tres tipos de error: dos tamaños del mismo caramelo (`20 uds` frente a `10 uds
-120 g`), una marca blanca junto a una marca (`Zumo de naranja light` de Alcampo frente a `Don Simón`),
-y dos marcas distintas de desmaquillante (`Avène` frente a `Garnier`). No son casos de borde.
-
-**Lo que esto autoriza a decir:** la identidad nueva separaría esos 2.222 y confirmaría los 4.045 con
-evidencia en vez de por parecido de nombre. **Lo que no autoriza:** activarlo. Nada se publica hasta
-que la sombra esté revisada, y la revisión de las 266 cuarentenas —donde una de las dos fichas miente—
-es parte de esa revisión.
-
-### Pendiente, en orden, sin repetir lo hecho
-
-1. **La superficie de API de S08 y S09**: sin endpoints, las pantallas propias no tienen de donde
-   leer. El almacenamiento esta hecho y probado; lo que falta es exponerlo y luego pintarlo.
-2. **S04, resto**: candidatos por bloque (marca+familia+formato), **banco independiente** y
-   **publicacion en sombra** (propuestas y comparacion contra el emparejador actual, **sin tocar
-   nada**). Activar comparaciones nuevas no ocurre hasta que la sombra este medida.
-3. **S05**: aplicar `fecha_tope` en `_candidatos` y en **todos** sus llamantes, que hoy pasan cadena
-   vacia; vigencia, cantidad, tienda y condiciones de club en todos los endpoints, y coste de las
-   unidades pedidas antes de elegir la mejor oferta.
-4. **S07b**: recorridos completos de Compra con producto exacto y alternativa explicita.
-5. **S08b y S09b**: las pantallas propias -- partir la pantalla de cocina, con persistencia propia y privacidad del diario.
-6. **S02-S03** por lotes acotados, y **S10-S12** al final.
+**Revisar las 266 cuarentenas**, una a una, mirando las dos fichas: es lo que desbloquea decidir sobre la
+identidad nueva, y es trabajo de datos puro que no depende de nadie. Si se quiere avanzar en visible
+antes, lo de mas valor es **terminar de partir la pantalla de cocina** (detalle por receta, alimentos y
+tendencias), porque es lo ultimo que queda de la arquitectura antigua.
 
 ## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
 
