@@ -15,6 +15,7 @@ Es una **cota inferior**, no una promesa: ver la palabra no prueba que exista la
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -41,6 +42,78 @@ def estructura_de(html: str) -> dict:
         "bytes": len(html),
         "bloques_ldjson": len(RE_LDJSON.findall(html)),
         **{nombre: any(s in plano for s in señales) for nombre, señales in SENALES.items()},
+    }
+
+
+RE_BLOQUE = re.compile(r'<script[^>]*application/ld\+json[^>]*>(.*?)</script>', re.S | re.I)
+RE_ETIQUETA = re.compile(r"<[^>]+>")
+
+
+def sin_html(texto: str) -> str:
+    """La descripcion de la ficha viene con etiquetas: se convierte a texto, no se pinta."""
+    return " ".join(RE_ETIQUETA.sub(" ", texto or "").split())
+
+
+def gtin_valido(codigo) -> str | None:
+    """El GTIN si tiene 13 digitos y el digito de control cuadra; None si no.
+
+    No es un adorno: un GTIN valido con procedencia es lo que permite afirmar identidad en S04, y uno
+    que no cuadra **no se usa**. Se valida aqui para que no entre en el catalogo como si valiera.
+    """
+    digitos = re.sub(r"\D", "", str(codigo or ""))
+    if len(digitos) != 13:
+        return None
+    suma = sum(int(d) * (3 if i % 2 else 1) for i, d in enumerate(digitos[:12]))
+    return digitos if (10 - suma % 10) % 10 == int(digitos[12]) else None
+
+
+def productos_de(html: str) -> list[dict]:
+    """Los bloques `@type=Product` del HTML. Los `Organization` de la cadena se ignoran."""
+    salida = []
+    for bloque in RE_BLOQUE.findall(html):
+        try:
+            dato = json.loads(bloque.strip())
+        except Exception:  # noqa: BLE001  (un bloque ilegible no invalida la ficha)
+            continue
+        for elemento in (dato if isinstance(dato, list) else [dato]):
+            if isinstance(elemento, dict) and elemento.get("@type") == "Product":
+                salida.append(elemento)
+    return salida
+
+
+def lee(html: str, *, url: str | None = None) -> dict:
+    """El primer producto de la ficha, en campos que el proyecto entiende.
+
+    Lo que no se sabe queda vacio, y `gtin_invalido` guarda el codigo que **no** paso la validacion:
+    ausencia y codigo erroneo son cosas distintas y se representan distinto.
+    """
+    productos = productos_de(html)
+    if not productos:
+        raise ValueError("la ficha no trae ningun bloque de producto")
+    p = productos[0]
+    marca = p.get("brand")
+    ofertas = p.get("offers") or []
+    if isinstance(ofertas, dict):
+        ofertas = [ofertas]
+    # Un solo importe inequivoco: si hay mas de una condicion, no se elige por el usuario.
+    importes = {round(float(o["price"]) * 100) for o in ofertas
+                if isinstance(o, dict) and str(o.get("price", "")).replace(".", "", 1).isdigit()}
+    codigo = p.get("gtin13")
+    if isinstance(codigo, list):
+        codigo = codigo[0] if codigo else None
+    return {
+        "fuente": "lidl",
+        "id_fuente": str(p.get("sku") or ""),
+        "nombre": p.get("name"),
+        "marca": (marca or {}).get("name") if isinstance(marca, dict) else marca,
+        "descripcion": sin_html(p.get("description")),
+        # `gtin13` validado; `sku` (identificador interno) jamas como EAN.
+        "ean": gtin_valido(codigo),
+        "gtin_invalido": codigo if (codigo and not gtin_valido(codigo)) else None,
+        "url": p.get("url") or url,
+        "imagen": (p.get("image") or [None])[0] if isinstance(p.get("image"), list) else p.get("image"),
+        "precio_cent": importes.pop() if len(importes) == 1 else None,
+        "condiciones": ofertas,
     }
 
 

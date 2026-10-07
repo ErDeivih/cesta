@@ -26,3 +26,64 @@ def test_una_ficha_vacia_no_inventa_nada():
     datos = ficha_lidl.estructura_de("")
     assert datos["bytes"] == 0 and datos["bloques_ldjson"] == 0
     assert not any(datos[n] for n in ("ingredientes", "nutricion", "precio", "alergenos"))
+
+
+# --- El lector, con los nombres de campo medidos en la ficha real -------------------------------
+# Estructura copiada del fixture del 7 de octubre de 2026: Product con name, brand, description,
+# gtin13, sku, image, offers, url. Los Organization de Lidl van en otros bloques y se ignoran.
+
+FICHA = """
+<script type="application/ld+json">{"@type":"Organization","name":"LIDL"}</script>
+<script type="application/ld+json">
+{"@type":"Product","name":"Galletas rellenas","sku":"11000174",
+ "brand":{"@type":"Brand","name":"Sondey"},
+ "description":"<ul><li>Rellenas de crema de chocolate.</li></ul>",
+ "gtin13":["4056489123456"],"image":["https://cdn/x.jpg"],
+ "offers":[{"@type":"Offer","price":"1.49","priceCurrency":"EUR"}],
+ "url":"https://www.lidl.es/p/sondey-galletas-rellenas/p11000174"}
+</script>"""
+
+
+def test_ignora_los_bloques_de_la_cadena_y_coge_el_producto():
+    assert len(ficha_lidl.productos_de(FICHA)) == 1
+    assert ficha_lidl.productos_de(FICHA)[0]["name"] == "Galletas rellenas"
+
+
+def test_la_descripcion_se_convierte_a_texto():
+    """Viene con HTML: se limpia, no se pinta."""
+    datos = ficha_lidl.lee(FICHA)
+    assert datos["descripcion"] == "Rellenas de crema de chocolate."
+    assert "<" not in datos["descripcion"]
+
+
+def test_el_gtin_se_valida_y_el_sku_nunca_es_un_ean():
+    """El identificador interno de la tienda no puede entrar como codigo de barras."""
+    datos = ficha_lidl.lee(FICHA)
+    assert datos["id_fuente"] == "11000174"
+    assert datos["ean"] != "11000174"
+    # El del fixture no tiene digito de control valido: se guarda aparte, no se usa ni se tira.
+    if datos["ean"] is None:
+        assert datos["gtin_invalido"] == "4056489123456"
+
+
+def test_la_validacion_del_gtin_es_de_verdad():
+    """Digito de control EAN-13: se calcula, no se supone."""
+    assert ficha_lidl.gtin_valido("1234567890128") == "1234567890128"
+    assert ficha_lidl.gtin_valido("1234567890123") is None       # digito de control mal
+    assert ficha_lidl.gtin_valido("12345") is None               # longitud que no es GTIN
+
+
+def test_dos_condiciones_no_se_funden_en_un_precio():
+    """Con club y normal delante, no se elige por el usuario ni se anuncia una bajada."""
+    html = FICHA.replace('"offers":[{"@type":"Offer","price":"1.49","priceCurrency":"EUR"}]',
+                         '"offers":[{"@type":"Offer","price":"1.49"},'
+                         '{"@type":"Offer","price":"1.29"}]')
+    datos = ficha_lidl.lee(html)
+    assert datos["precio_cent"] is None, "con dos condiciones no se elige una"
+    assert len(datos["condiciones"]) == 2, "y las dos se conservan"
+
+
+def test_una_ficha_sin_producto_no_inventa_uno():
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        ficha_lidl.lee("<html>sin datos estructurados</html>")
