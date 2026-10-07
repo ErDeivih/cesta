@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from datetime import date
 from itertools import combinations
 
+from core import identidad
 from core.promos import lee as lee_promo
 
 from .ajustes import AJUSTES
@@ -56,6 +57,12 @@ class Eleccion:
     # «repartir en dos tiendas» pueda poner la tienda de **cada** linea y no de todas
     # (con `lineas` vacio la API las pone todas en una sola, que es otra cosa).
     linea_id: str | None = None
+    # **Si el producto propuesto es el que se pidio, y si no, por que.** La regla del encargo hecha
+    # dato: `exacto` es el mismo producto; `probable`, que lo parece sin GTIN que lo confirme; y
+    # `alternativa`, `cuarentena` o `abstiene` significan que NO es el mismo y que sustituirlo exige
+    # una eleccion explicita de quien compra.
+    identidad: str | None = None
+    motivo: str | None = None
 
 
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
@@ -67,7 +74,7 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     if grupos:
         filas += con.execute(f"""
             SELECT grupo_id, NULL, fuente, fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean
               FROM grupos
              WHERE grupo_id IN ({','.join('?' * len(grupos))}) AND precio_cent > 0
         """, grupos).fetchall()
@@ -75,7 +82,7 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         filas += con.execute(f"""
             SELECT NULL, fuente || ':' || id_fuente, fuente,
                    fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean
               FROM grupos
              WHERE fuente || ':' || id_fuente IN ({','.join('?' * len(sueltos))})
                AND precio_cent > 0
@@ -85,11 +92,23 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     promos = _promos_vigentes({f[3] for f in filas}, fecha_tope)
 
     mejor: dict = {}
-    for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable in filas:
+    canonico: dict = {}
+    for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
         actual = mejor.get(clave)
         if actual is None or precio < actual[1]:
-            mejor[clave] = (pid, precio, nombre, promos.get(pid))
+            # Seis campos: los cuatro de siempre, **el GTIN de esta fila** -- que es el producto que
+            # se va a proponer -- y el canonico del grupo, que se rellena al final.
+            mejor[clave] = (pid, precio, nombre, promos.get(pid), ean, None)
+        # **El canonico es el de menor identificador**, y no el primero que devuelva el SQL: asi la
+        # referencia es la misma entre ejecuciones, que es lo que hace reproducible el veredicto.
+        if clave not in canonico or str(pid) < str(canonico[clave][0]):
+            canonico[clave] = (pid, nombre, ean)
+    for clave, (pid, nombre, ean) in canonico.items():
+        actual = mejor.get(clave)
+        if actual is not None:
+            mejor[clave] = (*actual[:5], identidad.Producto(
+                fuente=clave[1], id_fuente=str(pid), nombre=nombre, gtin=ean))
     return mejor
 
 
@@ -177,7 +196,13 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     hallado = mejor.get(clave)
     if hallado is None:
         return None
-    pid, precio, nombre, promo_txt = hallado
+    pid, precio, nombre, promo_txt, ean, referencia = (list(hallado) + [None, None])[:6]
+    # **El veredicto, antes de proponer nada.** Si no es el mismo producto, el coste que sigue es el
+    # de una alternativa, y eso tiene que viajar en la respuesta para que nadie lo sustituya callando.
+    veredicto = None
+    if referencia is not None:
+        propuesto = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre, gtin=ean)
+        veredicto = identidad.decide(referencia, propuesto)
     mecanica = lee_promo(promo_txt)
     sin_oferta = peticion.cantidad * precio
     coste = mecanica.coste(peticion.cantidad, precio)
@@ -193,7 +218,10 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
                 sugerencia = (f"llevando {n} en vez de {peticion.cantidad}, "
                               f"{ahorro / 100:.2f} EUR menos por unidad")
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
-                    promo_txt if mecanica.util else None, sugerencia, peticion.id)
+                    promo_txt if mecanica.util else None, sugerencia,
+                    linea_id=peticion.id,
+                    identidad=veredicto["estado"] if veredicto else None,
+                    motivo="; ".join(veredicto["motivos"]) if veredicto else None)
 
 
 def donde_comprar(peticiones: list[Peticion],
