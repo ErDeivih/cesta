@@ -45,7 +45,7 @@ def test_las_edades_van_por_tramos_y_las_sin_fecha_aparte(con):
                         ahora=datetime(2026, 10, 1, 10, 0))
     inventario.alta(con, "dia", "vieja")
     inventario.terminar(con, ("dia", "vieja", "", ""), inventario.CORRECTO,
-                        ahora=datetime(2026, 1, 1, 10, 0))
+                        ahora=datetime(2025, 1, 1, 10, 0))
     inventario.alta(con, "dia", "nunca")
     datos = informe.informe(con, hoy=date(2026, 10, 7))
     assert datos["edades"]["menos de una semana"] == 1
