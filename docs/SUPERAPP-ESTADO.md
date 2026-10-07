@@ -329,6 +329,37 @@ Casos donde el *slug* callaba o se equivocaba:
 muestra es diminuta y no está estratificada; el valor está en que **el mecanismo
 funciona**, no en el porcentaje.
 
+## S03 · El lote acotado, y la cobertura sobre 26 fichas (7 de octubre de 2026)
+
+La muestra de seis era anecdótica. Se han leído **20 fichas más** con la cola, en un solo lote acotado:
+
+| medida | valor |
+|---|---|
+| fichas del lote | **20** |
+| correctas / sin publicar / error de red | **20 / 0 / 0** |
+| tiempo | **35,5 s** (ritmo del proyecto, robots respetado) |
+| estado de la cola tras el lote | **correcto=28 · pendiente=5.026** |
+| fichas guardadas en total | **26** |
+
+**Cobertura de nutrición sobre 26 fichas** (el cuádruple que antes, y por eso vale más):
+
+| medida | resultado |
+|---|---|
+| **con datos estructurados de producto** | **26/26** — el lector las lee todas |
+| con tabla nutricional (3+ campos) | **0/26** |
+| con base interpretable (`por 100 g`) | **0/26** |
+| con ingredientes (2+ señales) | **0/26** |
+
+**Lo que ahora se puede decir con más fundamento:** la ficha de producto de Lidl es **fiable para
+identidad** en todas las leídas (y da GTIN válido) y, en **26 de 26**, **no trae la ficha
+nutricional**. Veinte fichas seguidas sin un solo error de red ni una sin datos estructurados también
+dice algo del instrumento: el lector y la cola aguantan un lote.
+
+**Lo que sigue sin poder decirse:** que valga para todo el surtido. Siguen siendo **26 de 5.026
+candidatos** y la muestra **no está estratificada por familia** (frescos, envasados, droguería): lo
+leído son los primeros identificadores de la cola, que es una muestra cómoda y no una muestra
+representativa. Para la afirmación sobre la cadena hace falta estratificar.
+
 ## Siguiente paso concreto
 
 **S03 · segunda mitad: las fichas de Lidl.** Los 5.054 candidatos están ya en la cola (691 incluidos
