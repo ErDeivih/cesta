@@ -26,6 +26,7 @@ from . import (
     analisis,
     catalogo,
     cesta,
+    diario,
     habituales,
     movimientos,
     panel,
@@ -55,6 +56,7 @@ app = FastAPI(title="Cesta", version="1.0", lifespan=ciclo,
               docs_url="/api/docs", openapi_url="/api/openapi.json")
 app.include_router(panel.rutas)
 app.include_router(recetas.rutas)
+app.include_router(diario.rutas)
 app.add_middleware(CORSMiddleware, allow_origins=list(AJUSTES.origenes),
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
