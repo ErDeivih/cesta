@@ -34,7 +34,7 @@ export default {
         marfil: 'var(--marfil)',
         papel: 'var(--papel)',
         bosque: 'var(--bosque)',
-        'tinta-fuerte': 'var(--tinta)',
+        'tinta-fuerte': 'var(--tinta-fuerte)',
         secundaria: 'var(--secundaria)',
         terracota: 'var(--terracota)',
         'borde-fuerte': 'var(--borde-fuerte)',
