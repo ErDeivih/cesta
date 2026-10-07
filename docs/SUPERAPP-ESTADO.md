@@ -29,6 +29,37 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (7 de octubre de 2026, tarde)
+
+**S06 está hecho.** Lo que hay ahora mismo, y se puede ver:
+
+    /                 lanzador sobrio: tres accesos y "continuar donde estabas"
+    /compra           buscar, listas, favoritos, ficha, comparar y gasto
+    /recetas          su armazon, su menu y sus rutas (secciones internas: S08)
+    /calorias         su armazon, su menu y sus rutas (secciones internas: S09)
+    /escaner /avisos /panel /ajustes /aprender   pantallas transversales, sin aplicacion activa
+
+Menu lateral de 248 px desde 1024 px con **las tres aplicaciones siempre visibles** y solo las
+subsecciones de la activa; cajon de 288 px en movil con foco atrapado, Escape para cerrar, fondo
+inerte y el foco de vuelta al boton. Direcciones visuales de `SUPERAPP-01` en los dos temas. **Las
+rutas antiguas siguen funcionando, con su query**, asi que los enlaces de escaner y las invitaciones
+no se rompen.
+
+**Verificado, no leido:** `uv run python -m plataforma.prueba_suite` — **23 comprobaciones en un
+navegador de verdad** (navegacion entre las tres aplicaciones, lateral ausente a 390 px y presente a
+1280, foco que entra en el cajon y no se escapa con Tab, Escape que cierra y devuelve el foco, recarga
+en ruta profunda sin cajon abierto, `/buscar?q=leche` que acaba en `/compra` con la busqueda, y cero
+errores de pagina). Capturas en `data/capturas-s06/`.
+
+**Pendiente dicho, y es de S08 y S09:** las secciones internas de Recetas y Calorias siguen servidas
+por la pantalla de cocina con un `modo`, que es lo que el encargo manda eliminar. Y hay **dos `h1` por
+página** (el del armazon y el de las páginas heredadas): el arreglo es bajar a `h2` los heredados al
+tocarlos.
+
+**Lo siguiente, en orden:** S04 (identidad exacta con GTIN validado y publicacion en sombra), S05
+(`fecha_tope` aplicado en `_candidatos` y sus llamantes), S07 (recorridos completos de Compra), S08 y
+S09 (partir cocina, con persistencia), y S02-S03 por lotes.
+
 ## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
 
 El objetivo **no está cumplido y sigue activo**: de los trece paquetes hay cuatro tocados y nueve sin
