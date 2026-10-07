@@ -103,9 +103,11 @@ def test_el_enganche_levanta_el_inventario_del_bronze_historico(tmp_path, con):
         dia = tmp_path / "bronze" / "fuente=dia" / f"fecha={fecha}"
         dia.mkdir(parents=True)
         pl.DataFrame({"id_fuente": ids, "nombre": ["x", "y"]}).write_parquet(dia / "p.parquet")
-    procesadas = inventario.enganche(con, tmp_path / "bronze")
-    assert procesadas == 4                       # cuatro altas procesadas
-    assert con.execute("SELECT count(*) FROM fichas").fetchone()[0] == 3   # tres productos distintos
+    # Devuelve **productos distintos**, no altas procesadas: es el dato que interesa y el que
+    # evita el error de contar 30 dias del mismo producto como 30 productos.
+    registrados = inventario.enganche(con, tmp_path / "bronze", progreso=False)
+    assert registrados == 3
+    assert con.execute("SELECT count(*) FROM fichas").fetchone()[0] == 3
     fila = con.execute("SELECT * FROM fichas WHERE id_fuente='b'").fetchone()
     assert fila["descubierto_en"] == "2026-10-05" and fila["visto_en"] == "2026-10-06"
     assert fila["evidencia"], "cada ficha tiene que decir de donde salio"

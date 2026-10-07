@@ -197,26 +197,33 @@ def resumen(con: sqlite3.Connection) -> dict:
     return salida
 
 
-def enganche(con: sqlite3.Connection, ruta_bronze: Path | None = None) -> int:
-    """Alta masiva desde **bronze historico**: el inventario de lo ya descubierto, sin pedir nada.
+def enganche(con: sqlite3.Connection, ruta_bronze: Path | None = None,
+             *, progreso: bool = True) -> int:
+    """Levanta el inventario desde **bronze historico**: la union de todas las capturas, sin red.
 
     El crudo guardado nombra sus ficheros por el hash de la clave, asi que no se puede recorrer hacia
-    atras; bronze si conserva `fuente` e `id_fuente`. Esto es la union de todas las capturas: un
-    producto que aparecio una vez queda registrado con su primera y su ultima fecha.
+    atras; bronze si conserva `fuente` e `id_fuente`. Se recorre **una vez** y se acumula en memoria
+    la primera y la ultima fecha de cada producto, y luego se escribe una vez por fuente: un *upsert*
+    por (dia, producto) eran millones de escrituras para guardar dos fechas.
+
+    Devuelve el numero de **productos distintos** registrados, que es el dato que interesa.
     """
     import polars as pl
 
     base = ruta_bronze or (RAIZ / "data" / "bronze")
-    total = 0
+    # (fuente, id) -> [primera fecha, ultima fecha, evidencia]
+    visto: dict[tuple[str, str], list[str]] = {}
     for carpeta in sorted(base.glob("fuente=*")):
         fuente = carpeta.name.split("=", 1)[1]
         dias = sorted(d for d in carpeta.iterdir() if d.is_dir())
         for numero, dia in enumerate(dias, start=1):
             fecha = dia.name.split("=", 1)[1]
-            print(f"  {fuente}: {numero}/{len(dias)} ({fecha})", flush=True)
+            if progreso:
+                print(f"  {fuente}: {numero}/{len(dias)} ({fecha})", flush=True)
             for fichero in sorted(dia.glob("*.parquet")):
                 try:
-                    marco = pl.read_parquet(fichero, columns=["id_fuente", "nombre"])
+                    identificadores = pl.read_parquet(
+                        fichero, columns=["id_fuente"])["id_fuente"].to_list()
                 except Exception:  # noqa: BLE001  (una captura ilegible no para el inventario)
                     continue
                 try:
@@ -225,11 +232,35 @@ def enganche(con: sqlite3.Connection, ruta_bronze: Path | None = None) -> int:
                     # El bronze puede estar en una copia o en un temporal: la evidencia se guarda
                     # igual, con su ruta completa, en vez de reventar por no ser de casa.
                     etiqueta = fichero.as_posix()
-                ids = {str(i) for i in marco["id_fuente"].to_list() if i}
-                alta_muchas(con, fuente, sorted(ids), dia=date.fromisoformat(fecha),
-                            evidencia=etiqueta)
-                total += len(ids)
-    return total
+                for identificador in identificadores:
+                    if not identificador:
+                        continue
+                    clave = (fuente, str(identificador))
+                    fila = visto.get(clave)
+                    if fila is None:
+                        visto[clave] = [fecha, fecha, etiqueta]
+                    else:
+                        if fecha < fila[0]:
+                            fila[0] = fecha
+                        if fecha > fila[1]:
+                            fila[1] = fecha
+
+    # Una escritura por fuente, con sus dos fechas ya resueltas.
+    por_fuente: dict[str, list[tuple]] = {}
+    for (fuente, identificador), (primera, ultima, etiqueta) in visto.items():
+        por_fuente.setdefault(fuente, []).append(
+            (fuente, identificador, PENDIENTE, primera, ultima, etiqueta))
+    for filas in por_fuente.values():
+        con.executemany(
+            """INSERT INTO fichas (fuente, id_fuente, variante, ambito, estado,
+                                   descubierto_en, visto_en, evidencia)
+               VALUES (?, ?, '', '', ?, ?, ?, ?)
+               ON CONFLICT (fuente, id_fuente, variante, ambito) DO UPDATE SET
+                   descubierto_en = min(descubierto_en, excluded.descubierto_en),
+                   visto_en = max(visto_en, excluded.visto_en),
+                   evidencia = coalesce(excluded.evidencia, fichas.evidencia)""",
+            filas)
+    return len(visto)
 
 
 if __name__ == "__main__":

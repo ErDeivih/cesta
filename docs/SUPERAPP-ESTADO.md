@@ -45,7 +45,7 @@ revocarse fuera del repositorio; aquí no se guardan ni se piden.
 |---|---|---|
 | S00 baseline | **terminado** | commit `e50f04c`, puertas ejecutadas |
 | S01 publicación versionada | **terminado** | `core/publicacion.py`: versión con puntero atómico, `rutas()` fija la versión de una petición y fallback al catálogo suelto; 8 pruebas de aceptación |
-| S02 cola de fichas | **núcleo hecho** | `core/inventario.py` en SQLite: alta idempotente, lease con vencimiento, estados del contrato, próxima revisión, hash y evidencia; enganche desde bronze histórico. Falta: medir el inventario real y que los colectores consulten la cola |
+| S02 cola de fichas | **núcleo hecho y medido** | `core/inventario.py` en SQLite: alta idempotente, lease con vencimiento, estados del contrato, próxima revisión, hash y evidencia; enganche desde bronze histórico. Falta: medir el inventario real y que los colectores consulten la cola |
 | S03 Lidl por sitemap y fichas | pendiente | depende de S02; fuentes medidas en SUPERAPP-02 §5 |
 | S04 identidad y banco independiente | pendiente | depende de S02 |
 | S05 selector único y optimizador | pendiente | depende de S04 |
@@ -114,6 +114,41 @@ Publicar **no borra** y una versión existente **no se sobrescribe**. 8 pruebas 
 **Pendiente dentro de S01**: el pipeline todavía escribe los ficheros sueltos; hay que hacerlo
 publicar por versiones y que la API lea con `rutas()`. Se hace al entrar en S02/S05, para no tocar
 la tarea de las 06:00 a la vez que se cambia la lectura.
+
+## S02 · Cola de fichas — núcleo hecho y medido (7 de octubre de 2026)
+
+`core/inventario.py` + `tests/test_inventario.py` (9 pruebas). Lo que aporta y lo que se midió:
+
+| cosa | valor |
+|---|---|
+| **inventario levantado del bronze histórico** | **74.861 fichas**, sin una sola petición de red |
+| alcampo | 43.603 |
+| carrefour | 17.283 |
+| dia | 6.292 |
+| mercadona | 4.477 |
+| aldi | 3.206 |
+| tiempo del enganche | **75,7 s** (antes: más de 710 s de CPU y sin terminar) |
+
+**Ese 74.861 no es el surtido de ningún supermercado**: es lo **descubierto** en el histórico, la unión
+de todas las capturas. Hoy el catálogo tiene 51.659 productos, así que el inventario es un 45 % más
+grande: son productos que aparecieron en alguna captura y no están en la de hoy. Es justo para lo que
+existe el inventario —no perder de vista lo que un día se vio— y es el denominador honesto para hablar
+de cobertura, en lugar de contar filas de un día.
+
+**Dos fallos propios que se corrigieron aquí, y cómo se encontraron:**
+
+1. La evidencia reventaba si el bronze estaba fuera del repositorio (lo cazó la prueba del enganche
+   con un bronze temporal: justo donde se prueba).
+2. El enganche hacía un *upsert* por **(día, producto)**: millones de escrituras para guardar dos
+   fechas, porque bronze guarda la misma ficha treinta días seguidos. Se agregó en memoria
+   (primera y última fecha por producto) y se escribe una vez por fuente: de no terminar a 75,7 s.
+   **Cambio de contrato declarado**: `enganche()` devolvía altas procesadas y ahora devuelve
+   **productos distintos**, que es el dato que interesa; su prueba lo explica.
+
+**Pendiente dentro de S02** (es lo que lo hará útil de verdad): que los colectores **consulten la
+cola** —pedir ficha a quien le falta, renovarla a quien le vence y no volver a pedir la que está
+correcta y en plazo— y el informe diario de cobertura por fuente y familia. Hasta entonces esto es
+memoria escrita, no renovación.
 
 ## Siguiente paso concreto
 
