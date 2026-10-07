@@ -29,6 +29,7 @@ from . import (
     habituales,
     movimientos,
     panel,
+    recetas,
     registro,
     vigilante,
 )
@@ -53,6 +54,7 @@ async def ciclo(app: FastAPI):
 app = FastAPI(title="Cesta", version="1.0", lifespan=ciclo,
               docs_url="/api/docs", openapi_url="/api/openapi.json")
 app.include_router(panel.rutas)
+app.include_router(recetas.rutas)
 app.add_middleware(CORSMiddleware, allow_origins=list(AJUSTES.origenes),
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
