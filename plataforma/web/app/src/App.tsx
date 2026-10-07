@@ -26,6 +26,7 @@ import { Buscar } from './paginas/Buscar'
 import { Cesta } from './paginas/Cesta'
 import { Cocina, CocinaProvider } from './paginas/Cocina'
 import { Escaner } from './paginas/Escaner'
+import { Diario } from './paginas/Diario'
 import { Favoritos } from './paginas/Favoritos'
 import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
@@ -169,7 +170,7 @@ export function App() {
         />
         <Route
           path="/calorias"
-          element={<LayoutSuite app="calorias"><Cocina modo="calorias" /></LayoutSuite>}
+          element={<LayoutSuite app="calorias"><Diario /></LayoutSuite>}
         />
         <Route
           path="/calorias/alimentos"
