@@ -46,20 +46,64 @@ def catalogo() -> list[identidad.Producto]:
     return salida
 
 
-def grupos_actuales() -> dict[str, set[str]]:
-    """Los grupos del emparejador en uso, por su columna de identificador."""
+def componentes_actuales() -> dict[int, set[int]]:
+    """Los grupos del emparejador en uso, calculados como componentes conexas de sus aristas.
+
+    `enlaces.parquet` trae `(i, j, parecido, nivel)`: son aristas entre **posiciones de fila** de
+    `grupos.parquet`, no filas con identificador de grupo. Se agrupan con union-find, que para 22.750
+    aristas es instantaneo y no necesita recursion.
+    """
     ruta = RAIZ / "data" / "gold" / "enlaces.parquet"
     if not ruta.exists():
         return {}
-    marco = pl.read_parquet(ruta)
-    columna = next((c for c in marco.columns
-                    if c.lower() in ("grupo_id", "grupo", "cluster", "grupo_identidad")), None)
-    if columna is None or "fuente" not in marco.columns:
-        return {}
-    por_grupo: dict[str, set[str]] = {}
-    for grupo, fuente in marco.select([columna, "fuente"]).iter_rows():
-        por_grupo.setdefault(str(grupo), set()).add(str(fuente))
-    return {g: f for g, f in por_grupo.items() if len(f) > 1}
+    marco = pl.read_parquet(ruta, columns=["i", "j"])
+    padre: dict[int, int] = {}
+
+    def raiz(x: int) -> int:
+        padre.setdefault(x, x)
+        while padre[x] != x:
+            padre[x] = padre[padre[x]]
+            x = padre[x]
+        return x
+
+    for i, j in marco.iter_rows():
+        ri, rj = raiz(int(i)), raiz(int(j))
+        if ri != rj:
+            padre[rj] = ri
+
+    componentes: dict[int, set[int]] = {}
+    for nodo in list(padre):
+        componentes.setdefault(raiz(nodo), set()).add(nodo)
+    return {k: v for k, v in componentes.items() if len(v) > 1}
+
+
+def comparar_con_el_actual(productos: list[identidad.Producto],
+                           componentes: dict[int, set[int]]) -> dict:
+    """Que le pasaria a cada grupo de hoy si se aplicara la identidad nueva.
+
+    Se apoya en que la posicion de `productos` es la fila de `grupos.parquet`, que es a lo que apuntan
+    los indices de las aristas.
+    """
+    se_parten = sobreviven = sin_gtin = 0
+    ejemplos = []
+    for miembros in componentes.values():
+        if any(indice >= len(productos) for indice in miembros):
+            continue
+        gtimes = {productos[i].gtin for i in miembros if productos[i].gtin}
+        cadenas = {productos[i].fuente for i in miembros}
+        if len(gtimes) > 1:
+            se_parten += 1
+            if len(ejemplos) < 5:
+                ejemplos.append({
+                    "cadenas": sorted(cadenas), "gtins": sorted(gtimes)[:4],
+                    "productos": [productos[i].nombre for i in sorted(miembros)][:4]})
+        elif len(gtimes) == 1 and len(cadenas) > 1:
+            sobreviven += 1
+        else:
+            sin_gtin += 1
+    return {"componentes_actuales": len(componentes), "se_parten": se_parten,
+            "sobreviven_como_exactos": sobreviven, "sin_gtin_comparable": sin_gtin,
+            "ejemplos_que_se_parten": ejemplos}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -74,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Cadenas por grupo exacto: los que de verdad permiten comparar precios.
     multi = {g: m for g, m in exactos.items() if len({p.fuente for p in m}) > 1}
-    actuales = grupos_actuales()
+    comparacion = comparar_con_el_actual(productos, componentes_actuales())
 
     # **Cuarentena**: un grupo exacto con presentaciones incompatibles dentro. Es lo que hay que mirar.
     cuarentena = []
@@ -88,11 +132,6 @@ def main(argv: list[str] | None = None) -> int:
                                        "estado": veredicto["estado"],
                                        "motivos": veredicto["motivos"]})
 
-    # **Lo que se partiria**: grupos actuales que mezclan GTIN distintos.
-    por_grupo_gtin: dict[str, set[str]] = {}
-    indice = {f"{p.fuente}|{p.id_fuente}": p.gtin for p in productos}
-    for grupo, fuentes in actuales.items():
-        pass
     informe = {
         "fecha": date.today().isoformat(),
         "productos": len(productos),
@@ -102,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
         "grupos_exactos_multi_cadena": len(multi),
         "probables_por_bloque": len(probables),
         "en_cuarentena": len(cuarentena),
-        "grupos_actuales_multi_cadena": len(actuales),
+        "comparacion_con_el_actual": comparacion,
         "familias": dict(Counter(p.familia for p in productos).most_common(8)),
         "aviso": ("Sombra: propone y compara, no publica ni modifica nada. Los grupos exactos solo "
                   "usan GTIN valido; los probables se cuentan aparte y no son identidad."),
@@ -115,8 +154,15 @@ def main(argv: list[str] | None = None) -> int:
           .replace(",", "."))
     print(f"  en cuarentena (mismo GTIN con presentacion incompatible): "
           f"{informe['en_cuarentena']:,}".replace(",", "."))
-    print(f"  grupos del emparejador actual, multi-cadena: {informe['grupos_actuales_multi_cadena']:,}"
+    print(f"  grupos del emparejador actual (componentes conexas): "
+          f"{comparacion['componentes_actuales']:,}".replace(",", "."))
+    print(f"    SE PARTIRIAN al aplicar GTIN valido: {comparacion['se_parten']:,}"
           .replace(",", "."))
+    print(f"    sobreviven como exactos (un GTIN, varias cadenas): "
+          f"{comparacion['sobreviven_como_exactos']:,}".replace(",", "."))
+    print(f"    sin GTIN comparable: {comparacion['sin_gtin_comparable']:,}".replace(",", "."))
+    for caso in comparacion["ejemplos_que_se_parten"][:3]:
+        print(f"      se parte {caso['cadenas']}: {caso['productos'][:2]}")
     for caso in cuarentena[:5]:
         print(f"    cuarentena {caso['gtin']}: {caso['a']} vs {caso['b']} -- {caso['motivos'][0]}")
 

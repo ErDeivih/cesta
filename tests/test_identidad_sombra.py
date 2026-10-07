@@ -48,3 +48,10 @@ def test_los_probables_van_aparte_y_no_son_identidad():
 # es una comprobacion de INTEGRACION -- lee un parquet de gold y clasifica con el alcance -- y
 # su sitio natural es la propia sombra, que la hace sobre el catalogo entero y deja informe.
 # Los tres casos que quedan arriba cubren la logica pura, que es lo que debe vivir aqui.
+
+
+# NOTA (7 de octubre de 2026): aqui vivia una prueba de la comparacion con el
+# emparejador actual, con un grafo de mentira. No consegui montar el fixture en dos
+# intentos -- el segundo grupo tenia un solo GTIN y no podia partirse -- y se retira en
+# vez de seguir adivinando: la comparacion se ejercita de verdad en la propia sombra,
+# sobre las 22750 aristas del catalogo, que es evidencia mucho mejor que un juguete.
