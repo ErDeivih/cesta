@@ -31,6 +31,7 @@ import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
 import { PanelMatching } from './paginas/PanelMatching'
 import { Producto } from './paginas/Producto'
+import { Recetario } from './paginas/Recetario'
 import { Unirse } from './paginas/Unirse'
 
 const CLAVE_ULTIMO = 'cesta.ultimo'
@@ -156,7 +157,7 @@ export function App() {
         {/* Recetas y Calorias: armazon, menu y rutas. Sus secciones internas, en S08 y S09. */}
         <Route
           path="/recetas"
-          element={<LayoutSuite app="recetas"><Cocina modo="recetas" /></LayoutSuite>}
+          element={<LayoutSuite app="recetas"><Recetario /></LayoutSuite>}
         />
         <Route
           path="/recetas/plan"
