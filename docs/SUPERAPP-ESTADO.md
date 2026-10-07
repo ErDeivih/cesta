@@ -39,6 +39,17 @@ lateral de 248 px desde 1024 px con las tres aplicaciones siempre visibles; cajo
 con foco atrapado, Escape, fondo inerte y el foco de vuelta al boton; y **las direcciones antiguas
 siguen funcionando con su query**.
 
+**S08 · Recetas — ALMACENAMIENTO HECHO.** `core/recetas.py`: receta, version y plan en un SQLite
+local. Cada version es **autocontenida** -- guarda sus raciones, su preparacion y sus ingredientes
+**copiados** -- para que el diario pueda citar una version y esa version no se mueva nunca. Archivar no
+borra, y el plan **fija la version**. 11 pruebas.
+
+**S09 · Calorias — ALMACENAMIENTO HECHO.** `core/diario.py`: entradas con fecha, comida, tipo,
+referencia, version y **de donde sale el dato**. El subtotal se llama `conocido` y no `total`, porque un
+total se lee como "lo que comi hoy" y eso solo es cierto cuando el dia esta completo; el dia dice
+ademas **cuantas entradas no traen dato** y una entrada sin dato **no aporta cero**. Y **una compra no
+se puede registrar como consumo**: no esta escrito en un comentario, `apunta` lo rechaza. 10 pruebas.
+
 **S04 · identidad exacta — NUCLEO HECHO.** `core/identidad.py` decide entre dos fichas: `exacto`,
 `probable`, `alternativa`, `cuarentena` o `abstiene`, con sus motivos y su evidencia. GTIN validado
 **y** presentacion comprobada; mismo GTIN incompatible va a cuarentena; GTIN distinto no se fusiona
@@ -105,15 +116,17 @@ es parte de esa revisión.
 
 ### Pendiente, en orden, sin repetir lo hecho
 
-1. **S04, resto**: candidatos por bloque (marca+familia+formato), **banco independiente** y
+1. **La superficie de API de S08 y S09**: sin endpoints, las pantallas propias no tienen de donde
+   leer. El almacenamiento esta hecho y probado; lo que falta es exponerlo y luego pintarlo.
+2. **S04, resto**: candidatos por bloque (marca+familia+formato), **banco independiente** y
    **publicacion en sombra** (propuestas y comparacion contra el emparejador actual, **sin tocar
    nada**). Activar comparaciones nuevas no ocurre hasta que la sombra este medida.
-2. **S05**: aplicar `fecha_tope` en `_candidatos` y en **todos** sus llamantes, que hoy pasan cadena
+3. **S05**: aplicar `fecha_tope` en `_candidatos` y en **todos** sus llamantes, que hoy pasan cadena
    vacia; vigencia, cantidad, tienda y condiciones de club en todos los endpoints, y coste de las
    unidades pedidas antes de elegir la mejor oferta.
-3. **S07**: recorridos completos de Compra con producto exacto y alternativa explicita.
-4. **S08 y S09**: partir la pantalla de cocina, con persistencia propia y privacidad del diario.
-5. **S02-S03** por lotes acotados, y **S10-S12** al final.
+4. **S07b**: recorridos completos de Compra con producto exacto y alternativa explicita.
+5. **S08b y S09b**: las pantallas propias -- partir la pantalla de cocina, con persistencia propia y privacidad del diario.
+6. **S02-S03** por lotes acotados, y **S10-S12** al final.
 
 ## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
 
