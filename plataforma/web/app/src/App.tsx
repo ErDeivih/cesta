@@ -33,6 +33,7 @@ import { Panel } from './paginas/Panel'
 import { PanelMatching } from './paginas/PanelMatching'
 import { Producto } from './paginas/Producto'
 import { Recetario } from './paginas/Recetario'
+import { PlanSemanal } from './paginas/PlanSemanal'
 import { Unirse } from './paginas/Unirse'
 
 const CLAVE_ULTIMO = 'cesta.ultimo'
@@ -162,7 +163,7 @@ export function App() {
         />
         <Route
           path="/recetas/plan"
-          element={<LayoutSuite app="recetas"><Cocina modo="recetas" /></LayoutSuite>}
+          element={<LayoutSuite app="recetas"><PlanSemanal /></LayoutSuite>}
         />
         <Route
           path="/recetas/:recetaId"

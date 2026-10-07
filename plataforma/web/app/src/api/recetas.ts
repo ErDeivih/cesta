@@ -110,3 +110,27 @@ export function useArchivarReceta() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['recetas'] }),
   })
 }
+
+export type LineaPlan = {
+  fecha: string
+  comensales: number
+  version: number
+  receta_id: number
+  nombre: string
+}
+
+export function usePlan(desde: string, hasta: string) {
+  return useQuery({
+    queryKey: ['plan', desde, hasta],
+    queryFn: () => pide<{ plan: LineaPlan[] }>('/recetas/plan', { desde, hasta }),
+  })
+}
+
+export function usePlanificar() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (datos: { fecha: string; receta_id: number; comensales: number }) =>
+      conCuerpo('/recetas/plan', 'POST', datos),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['plan'] }),
+  })
+}
