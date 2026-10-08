@@ -63,15 +63,11 @@ app.add_middleware(CORSMiddleware, allow_origins=list(AJUSTES.origenes),
 
 # ------------------------------------------------------------ quien llama ---
 
-def usuario_actual(peticion: Request) -> dict:
-    yo = almacen.quien(peticion.cookies.get(COOKIE))
-    if yo is None:
-        raise HTTPException(401, "Hay que entrar primero.")
-    return yo
-
-
-def usuario_opcional(peticion: Request) -> dict | None:
-    return almacen.quien(peticion.cookies.get(COOKIE))
+# **La sesion vive en `sesion.py`** y se reexporta aqui por dos razones: los routers no pueden
+# importar de `main` sin ciclo, y `main.usuario_actual` tiene que seguir existiendo porque las pruebas
+# del proyecto lo usan como punto de sustitucion. Es el mismo objeto, no una copia: si fueran dos, el
+# `dependency_overrides` de las pruebas sustituiria una y la aplicacion usaria la otra.
+from .sesion import COOKIE, usuario_actual, usuario_opcional  # noqa: E402
 
 
 # ----------------------------------------------------------------- entrar ---
