@@ -33,6 +33,7 @@ import { Panel } from './paginas/Panel'
 import { PanelMatching } from './paginas/PanelMatching'
 import { Producto } from './paginas/Producto'
 import { Recetario } from './paginas/Recetario'
+import { RecetaDetalle } from './paginas/RecetaDetalle'
 import { PlanSemanal } from './paginas/PlanSemanal'
 import { Unirse } from './paginas/Unirse'
 
@@ -167,7 +168,7 @@ export function App() {
         />
         <Route
           path="/recetas/:recetaId"
-          element={<LayoutSuite app="recetas"><Cocina modo="recetas" /></LayoutSuite>}
+          element={<LayoutSuite app="recetas"><RecetaDetalle /></LayoutSuite>}
         />
         <Route
           path="/calorias"
