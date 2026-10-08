@@ -24,12 +24,15 @@ from __future__ import annotations
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 ENSAYO = "cesta-prueba-db"
 COPIA = "cesta-copia-db"
 PUERTO_ENSAYO = "127.0.0.1:5434:5432"
 PUERTO_COPIA = "127.0.0.1:5435:5432"
-VOLCADO = "copia-de-cesta.sql"
+# **En `data/`, que esta ignorado**: un volcado de una base desechable en la raiz del
+# repositorio es basura, y de la que parece una copia de verdad.
+VOLCADO = "data/copia-de-cesta.sql"
 FALLOS: list[str] = []
 
 
@@ -139,6 +142,8 @@ def main() -> int:
         corre(["docker", "rm", "-f", nombre], timeout=120)
         print(f"   {nombre}: retirado")
 
+    # Y el volcado se retira: era para comprobar que se restaura, no para guardarlo.
+    Path(VOLCADO).unlink(missing_ok=True)
     print(f"\n== {'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLO(S)'}")
     return 1 if FALLOS else 0
 
