@@ -177,3 +177,23 @@ def archivar(receta_id: int, archivada: bool = True,
         return {"id": receta_id, "archivada": archivada}
     finally:
         con.close()
+
+
+@rutas.delete("/plan")
+def quitar_plan(fecha: str = Query(...), receta_id: int = Query(...),
+                usuario: dict = Depends(usuario_actual)) -> dict:
+    """Quitar una receta de un dia. **Va al final a proposito y no puede chocar**: no hay ninguna otra ruta
+    DELETE en este router, asi que la trampa del orden de rutas no aplica aqui.
+
+    Responde 404 si no habia nada que quitar, que es lo mismo que hace el resto: no se dice "hecho" cuando no
+    se ha hecho nada.
+    """
+    con = _con()
+    try:
+        if not recetas.quitar_del_plan(con, usuario["id"], fecha, receta_id):
+            raise HTTPException(status_code=404, detail="ese dia no tiene esa receta planificada")
+        return {"quitada": receta_id, "fecha": fecha}
+    except ValueError as fallo:
+        raise HTTPException(status_code=400, detail=str(fallo)) from fallo
+    finally:
+        con.close()

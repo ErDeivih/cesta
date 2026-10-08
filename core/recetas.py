@@ -273,3 +273,17 @@ def plan(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> l
             ORDER BY p.fecha, r.nombre""", (desde, hasta, propietario)).fetchall()
     return [{"fecha": f[0], "comensales": f[1], "version": f[2], "receta_id": f[3],
              "nombre": f[4]} for f in filas]
+
+
+def quitar_del_plan(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int) -> bool:
+    """Quita una receta de un dia **del plan de quien pregunta**. Devuelve si habia algo que quitar.
+
+    Comprueba lo de siempre -- que la receta sea tuya, con `_de_quien` -- y ademas que la linea sea de ese
+    dia: sin lo segundo, un error de tecleo en la fecha borraria el plan de otro dia y no se notaria.
+    """
+    if _de_quien(con, propietario, receta_id) is None:
+        return False
+    date.fromisoformat(fecha)
+    cur = con.execute("DELETE FROM plan WHERE fecha = ? AND receta_id = ?", (fecha, receta_id))
+    con.commit()
+    return cur.rowcount > 0
