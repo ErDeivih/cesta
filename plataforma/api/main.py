@@ -12,6 +12,7 @@ cuenta, y hoy a esa pagina solo se llega desde Tailscale. Se cierra con
 """
 from __future__ import annotations
 
+import json
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -371,6 +372,19 @@ def ficha_de_producto(cadena: str, id_fuente: str):
 
 
 @app.get("/api/estado")
+def _version_del_catalogo() -> str | None:
+    """La version publicada, leida del puntero.
+
+    Sin importar core.publicacion: ese modulo trae polars -- publica DataFrames -- y la imagen de la API no
+    lo lleva, que es una restriccion con prueba propia. Leer un JSON pequeno no justifica arrastrar una
+    libreria de datos entera.
+    """
+    try:
+        return json.loads((AJUSTES.gold / "actual.json").read_text(encoding="utf-8"))["version"]
+    except (OSError, KeyError, ValueError):
+        return None
+
+
 def estado():
     """De que dia es cada cadena y que falta.
 
@@ -386,6 +400,9 @@ def estado():
     hoy = catalogo.fecha_de_gold()
     return {
         "fecha_datos": hoy,
+        # **De que catalogo salen esos precios.** `fecha_datos` dice el dia; esto dice la version, que es
+        # lo que permite atar un precio a su origen y distinguir dos respuestas del mismo dia.
+        "version_catalogo": _version_del_catalogo(),
         "dias_precio_valido": AJUSTES.dias_precio_valido,
         "cadenas": [{"cadena": f[0], "productos": f[1], "ultimo_dia": f[2],
                      "al_dia": f[2] == hoy} for f in filas],
