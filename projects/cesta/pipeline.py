@@ -766,6 +766,20 @@ def main() -> int:
         aprende.main([])
     except Exception as exc:  # noqa: BLE001
         print(f"  material: no se pudo regenerar /aprende ({type(exc).__name__}: {exc})")
+    # **Y se publica lo que se acaba de escribir.** Sin esto, gold se reescribe en su sitio y el
+    # puntero se queda en la ultima version que alguien publico a proposito: el 13 de octubre de
+    # 2026 eso dejo `data/gold` en el 8 y `actual.json` en el 7, y `/api/estado` lo declaro
+    # incoherente -- con razon. Adoptar los ficheros sueltos es justo el caso para el que
+    # `publicar()` acepta no recibir marcos.
+    #
+    # Va al final y con su `try`, como el resto de esta cola: si no se puede publicar, el dato ya
+    # esta escrito y el puntero se queda donde estaba, que deja la incoherencia **visible**.
+    try:
+        from core import publicacion
+
+        publicacion.publicar()
+    except Exception as exc:  # noqa: BLE001
+        print(f"  publicacion: no se pudo publicar ({type(exc).__name__}: {exc})")
     print("pipeline: hecho")
     return 0
 
