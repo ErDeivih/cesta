@@ -69,6 +69,10 @@ class Eleccion:
     # **Si esta eleccion puede contar en un total exacto.** Un aviso no es una autorizacion: si no es el
     # producto que se pidio y nadie lo ha autorizado, cuenta cero para el total y se dice por que.
     autorizada: bool = True
+    # **La opcion que se puede ofrecer**, cuando esta no es el producto pedido: la mas barata de las que
+    # no son exactas, con su motivo. `None` si no hay ninguna. Ofrecerla es lo que evita el callejon sin
+    # salida: se dice que no cuenta, y se dice que se puede pedir en su lugar.
+    alternativa: dict | None = None
 
 
 def _coste_para(cantidad: int, precio_cent: int, promo_txt: str | None) -> int:
@@ -282,6 +286,13 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
         propuesto = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre,
                                       gtin=ean, marca=marca)
         veredicto = identidad.decide(referencia, propuesto)
+    # **La alternativa, si la hay.** Se lee la que ya eligio `_candidatos`: recalcularla aqui seria tener
+    # dos sitios donde se decide lo mismo.
+    guardada = mejor.get((*clave, "alternativa"))
+    alternativa = None
+    if guardada is not None:
+        alternativa = {"producto_id": guardada[0], "nombre": guardada[2],
+                       "coste_cent": guardada[7], "fuente": fuente}
     mecanica = lee_promo(promo_txt)
     sin_oferta = peticion.cantidad * precio
     coste = mecanica.coste(peticion.cantidad, precio)
@@ -305,7 +316,7 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
                     linea_id=peticion.id,
                     identidad=veredicto["estado"] if veredicto else None,
                     motivo="; ".join(veredicto["motivos"]) if veredicto else None,
-                    autorizada=autorizada)
+                    autorizada=autorizada, alternativa=alternativa)
 
 
 def donde_comprar(peticiones: list[Peticion],
