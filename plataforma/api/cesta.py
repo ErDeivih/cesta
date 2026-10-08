@@ -784,6 +784,35 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
             elif suyos:
                 cadena, precio = min(suyos, key=lambda par: par[1])
         salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio}
+
+    # **Y la parte de cada linea, repartida.** La promocion se decide **aqui**, que es donde se conoce: el
+    # cierre solo tiene que escribir el numero. Se agrupa por producto efectivo y cadena elegida -- dos lineas
+    # a la misma tienda comparten oferta, a tiendas distintas no -- y el total del grupo se reparte
+    # conservando la suma exacta: parte entera, y los centimos sobrantes de uno en uno a mayor fraccion.
+    grupos: dict[tuple, list[str]] = {}
+    for linea, peticion in zip(lineas, peticiones, strict=True):
+        suyo = salida.get(str(linea.get("id"))) or {}
+        if suyo.get("precio_cent") is None or not peticion.cantidad:
+            continue
+        esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+        grupos.setdefault((esperada, suyo.get("cadena")), []).append(str(linea.get("id")))
+    for indices in grupos.values():
+        primera = salida[indices[0]]
+        unidades = sum(int(next(x["cantidad"] for x in lineas if str(x.get("id")) == i))
+                       for i in indices)
+        unitario = primera["precio_cent"]
+        promo = next((v[3] for k, v in mejor.items()
+                      if k[1] == primera["cadena"] and v[1] == unitario), None)
+        total_grupo = lee_promo(promo).coste(unidades, unitario)
+        cantidades = [int(next(x["cantidad"] for x in lineas if str(x.get("id")) == i)) for i in indices]
+        partes = [(total_grupo * c) // unidades for c in cantidades]
+        resto = total_grupo - sum(partes)
+        orden = sorted(range(len(indices)),
+                       key=lambda k: (-((total_grupo * cantidades[k]) % unidades), k))
+        for k in orden[:resto]:
+            partes[k] += 1
+        for k, i in enumerate(indices):
+            salida[i]["coste_cent"] = partes[k]
     return salida
 
 

@@ -561,7 +561,11 @@ def cierra_compra(lista_id: str, usuario_id: str,
             if cent is None:
                 sin_precio += 1
             else:
-                total += int(cent) * int(linea["cantidad"])
+                # **La parte que le toca, repartida en `cesta`.** Si no viene, unitario x cantidad, que es el
+                # mismo numero cuando la linea va sola. Con esto el 3x2 llega a la caja: antes se cobraba
+                # unitario x cantidad por linea, sin ofertas, y el registro no cuadraba con lo enseñado.
+                parte = suyo.get("coste_cent")
+                total += int(parte) if parte is not None else int(cent) * int(linea["cantidad"])
             filas.append((str(linea["id"]), linea["grupo_id"], linea["producto_id"],
                           linea["nombre_visto"], linea["cantidad"],
                           suyo.get("cadena") or linea["cadena_elegida"], cent))

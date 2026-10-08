@@ -298,7 +298,7 @@ def test_el_precio_de_una_linea_es_el_de_la_cadena_mas_barata():
              (1, "dia", "dia:a", "Leche", 100)]
     with _catalogo(filas):
         c = cesta.coste_por_linea([_linea(1, id="l1")])
-    assert c["l1"] == {"cadena": "dia", "precio_cent": 100}
+    assert c["l1"] == {"cadena": "dia", "precio_cent": 100, "coste_cent": 100}, c["l1"]
 
 
 def test_si_la_linea_tiene_tienda_decidida_se_guarda_ese_precio():
@@ -308,7 +308,7 @@ def test_si_la_linea_tiene_tienda_decidida_se_guarda_ese_precio():
              (1, "dia", "dia:a", "Leche", 100)]
     with _catalogo(filas):
         c = cesta.coste_por_linea([_linea(1, id="l1", cadena_elegida="alcampo")])
-    assert c["l1"] == {"cadena": "alcampo", "precio_cent": 120}
+    assert c["l1"] == {"cadena": "alcampo", "precio_cent": 120, "coste_cent": 120}, c["l1"]
 
 
 def test_una_linea_que_apunta_a_otro_producto_no_tiene_precio():
