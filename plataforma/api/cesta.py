@@ -331,18 +331,29 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
     """La mejor combinacion de hasta `max_tiendas`, si gana a ir a una sola."""
     if max_tiendas < 2 or len(por_cadena) < 2:
         return None
-    completas = [x for x in una_tienda if not x["faltan"]]
+    # **Completa de verdad**: sin lineas sin resolver y sin lineas resueltas pero no autorizadas. Si no,
+    # el ahorro se mediria contra un total que no se puede comprar.
+    completas = [x for x in una_tienda if not x["faltan"] and not x["sin_autorizar"]]
     referencia = completas[0]["total_cent"] if completas else None
 
     mejor = None
     for combo in combinations(sorted(por_cadena), min(max_tiendas, len(por_cadena))):
-        total, eleccion, faltan = 0, [], []
+        total, eleccion, faltan, sin_autorizar = 0, [], [], []
         for i, p in enumerate(peticiones):
             opciones = [por_cadena[c][i] for c in combo if por_cadena[c][i]]
             if not opciones:
                 faltan.append(p.nombre)
                 continue
-            e = min(opciones, key=lambda x: x.coste_cent)
+            # **Solo se elige entre lo autorizado.** Lo resuelto pero no autorizado no compite: se
+            # propone aparte, con su motivo, y no suma.
+            autorizadas = [e for e in opciones if e.autorizada]
+            if not autorizadas:
+                e = min(opciones, key=lambda x: x.coste_cent)
+                sin_autorizar.append({"linea": p.nombre, "cadena": e.fuente,
+                                      "coste_cent": e.coste_cent, "identidad": e.identidad,
+                                      "motivo": e.motivo})
+                continue
+            e = min(autorizadas, key=lambda x: x.coste_cent)
             total += e.coste_cent
             eleccion.append(e)
         if not eleccion:
@@ -350,8 +361,12 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
         usadas = sorted({e.fuente for e in eleccion})
         if len(usadas) < 2:
             continue                       # no es un reparto, es una tienda
-        if mejor is None or (len(faltan), total) < (len(mejor["faltan"]), mejor["total_cent"]):
+        # `sin_autorizar` entra en la comparacion: un reparto que resuelve todo sin autorizar nada no
+        # puede ganar a uno que lo tiene exacto.
+        if mejor is None or (len(faltan), len(sin_autorizar), total) < (
+                len(mejor["faltan"]), len(mejor["sin_autorizar"]), mejor["total_cent"]):
             mejor = {"cadenas": usadas, "total_cent": total, "faltan": faltan,
+                     "sin_autorizar": sin_autorizar,
                      "productos": [_serializa(e) for e in eleccion],
                      "reparto": {c: sum(1 for e in eleccion if e.fuente == c) for c in usadas}}
     if mejor is None:
