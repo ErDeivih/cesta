@@ -136,9 +136,10 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # conviene es la SUMA de todas sus lineas, no la de la ultima: pedir 2 y 3 es pedir 5.
     cantidades = _cantidades_por_referencia(peticiones)
 
-    # **Primera pasada: el canonico de cada grupo.** Es el de menor identificador, y no el primero que
-    # devuelva el SQL, para que la referencia sea la misma entre ejecuciones.
-    canonico: dict = {}
+    # **Una referencia por grupo, la misma en todas las cadenas.** Antes la clave incluia la
+    # cadena, asi que la referencia se movia con la tienda: el mismo candidato podia salir exacto
+    # en una y alternativa en otra, y los veredictos de dos cadenas no eran comparables.
+    canonico = _canonico_de(filas)
     for gid, pid_suelto, fuente, pid, nombre, _precio, _punit, _fiable, ean, marca in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
@@ -150,9 +151,9 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
         coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
-        referencia = identidad.Producto(fuente=clave[1], id_fuente=str(canonico[clave][0]),
-                                        nombre=canonico[clave][1], gtin=canonico[clave][2],
-                                        marca=canonico[clave][3])
+        referencia = identidad.Producto(fuente=clave[1], id_fuente=str(canonico[clave[0]][0]),
+                                        nombre=canonico[clave[0]][1], gtin=canonico[clave[0]][2],
+                                        marca=canonico[clave[0]][3])
         esta = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca)
         # Sin GTIN ni presentacion que afirmar, el motor se abstiene; y `None` cuenta como "nada que
         # afirmar", que es lo mismo que hacia antes de este cambio.
@@ -693,3 +694,19 @@ def _es_la_confirmada(peticion: Peticion, alternativa) -> bool:
     if confirmada_cadena is None or peticion.autorizado_cadena is None:
         return False
     return str(confirmada_cadena) == str(peticion.autorizado_cadena)
+
+
+def _canonico_de(filas) -> dict:
+    """El producto de referencia de cada grupo: **uno por grupo**, no uno por grupo y cadena.
+
+    Es el de identificador mas bajo, y no el primero que devuelva el SQL, para que la referencia sea
+    la misma entre ejecuciones. Y es el mismo en todas las cadenas a proposito: la referencia no puede
+    depender de donde este el candidato, o el mismo producto saldria exacto en una tienda y alternativa
+    en otra, y los veredictos de dos cadenas no se podrian comparar.
+    """
+    canonico: dict = {}
+    for gid, pid_suelto, _fuente, pid, nombre, _precio, _punit, _fiable, ean, marca in filas:
+        clave = gid if gid is not None else pid_suelto
+        if clave not in canonico or str(pid) < str(canonico[clave][0]):
+            canonico[clave] = (pid, nombre, ean, marca)
+    return canonico
