@@ -1171,6 +1171,8 @@ def _vigencia_del_catalogo() -> dict:
 
 @app.post("/api/listas/{lista_id}/lineas/{linea_id}/autorizar")
 def autorizar_linea(lista_id: str, linea_id: str, autorizado: bool = Query(default=True),
+                    producto: str | None = Query(default=None),
+                    cadena: str | None = Query(default=None),
                     usuario: dict = Depends(usuario_actual)) -> dict:
     """Confirmar (o retirar) la sustitucion propuesta para **una** linea de la lista.
 
@@ -1185,11 +1187,15 @@ def autorizar_linea(lista_id: str, linea_id: str, autorizado: bool = Query(defau
     Guardarla en la peticion la ata a la pantalla; por lista, al dia entero. La linea es lo unico que no cambia
     de significado.
 
-    **Y no se guarda que alternativa se autorizo**: la elige el motor cada vez, con los precios de hoy.
-    Guardar la de ayer dejaria autorizada una sustitucion que ya no se ofrece.
+    **Y se guarda QUE alternativa se acepto**: el producto y la cadena que llegan en la peticion. Antes
+    solo se guardaba el si, y el motor podia proponer otro producto manana manteniendo la autorizacion.
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
-    tocada = almacen.autoriza_linea(lista_id, linea_id, usuario["id"], autorizado)
+    try:
+        tocada = almacen.autoriza_linea(lista_id, linea_id, usuario["id"], autorizado,
+            producto=producto, cadena=cadena)
+    except ValueError as fallo:
+        raise HTTPException(status_code=400, detail=str(fallo)) from fallo
     if tocada is None:
         # 404 y no 403: una linea que no existe y una de otra lista se contestan **igual**, para no decir
         # cuales existen. Es la regla de siempre.
