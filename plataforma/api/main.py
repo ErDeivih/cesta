@@ -403,6 +403,7 @@ def estado():
         # **De que catalogo salen esos precios.** `fecha_datos` dice el dia; esto dice la version, que es
         # lo que permite atar un precio a su origen y distinguir dos respuestas del mismo dia.
         "version_catalogo": _version_del_catalogo(),
+        "vigencia_precio": _vigencia_del_catalogo(),
         "dias_precio_valido": AJUSTES.dias_precio_valido,
         "cadenas": [{"cadena": f[0], "productos": f[1], "ultimo_dia": f[2],
                      "al_dia": f[2] == hoy} for f in filas],
@@ -1106,3 +1107,37 @@ def borrarme(peticion: Request, respuesta: Response,
 @app.get("/api/salud")
 def salud():
     return {"vivo": True, "fecha_datos": catalogo.fecha_de_gold()}
+
+
+def _vigencia(fecha_precio: str, publicado_en: str) -> dict:
+    """Si la fecha del precio **pertenece** a esa publicacion. Pura: se prueba con texto.
+
+    Compara solo el **dia**: el catalogo se publica a una hora, y los precios son de dias. Un precio del mismo
+    dia que la publicacion es coherente; uno posterior, no.
+    """
+    if not fecha_precio or not publicado_en:
+        return {"comprobable": False, "motivo": "falta la fecha del precio o la de publicacion"}
+    dia_publicacion = publicado_en[:10]
+    coherente = fecha_precio <= dia_publicacion
+    return {
+        "comprobable": True,
+        "coherente": coherente,
+        "fecha_datos": fecha_precio,
+        "publicado_en": dia_publicacion,
+        "motivo": ("la fecha del precio pertenece a esta publicacion" if coherente
+                   else "el precio es POSTERIOR a la publicacion del catalogo: o el puntero esta viejo, o "
+                        "gold se escribio por detras"),
+    }
+
+
+def _vigencia_del_catalogo() -> dict:
+    """Los valores de verdad: el dia de los precios y el momento de la publicacion.
+
+    Se lee el puntero a mano, como `_version_del_catalogo`, por la misma razon: importar `core.publicacion`
+    arrastraria polars, y la imagen de la API no lo lleva.
+    """
+    try:
+        puntero = json.loads((AJUSTES.gold / "actual.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"comprobable": False, "motivo": "no hay catalogo publicado"}
+    return _vigencia(catalogo.fecha_de_gold(), str(puntero.get("publicado_en") or ""))
