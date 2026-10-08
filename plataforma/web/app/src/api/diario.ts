@@ -37,6 +37,9 @@ export type Dia = {
   entradas: Entrada[]
   comidas: Record<string, Entrada[]>
   conocido: Conocido
+  /** **Cobertura por nutriente**: de cuantas entradas sale cada numero. Sin esto, "600 kcal" se
+   *  lee como el dia entero. */
+  cobertura: Record<string, { con_dato: number; total: number; completa: boolean }>
   sin_dato: number[]
   completo: boolean
 }

@@ -14,6 +14,14 @@ import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import type { NuevaEntrada } from '../api/diario'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
+const NOMBRE_NUTRIENTE: Record<string, string> = {
+  kcal: 'energia',
+  proteinas_g: 'proteinas',
+  grasas_g: 'grasas',
+  hidratos_g: 'hidratos',
+}
+
+
 const COMIDAS = ['desayuno', 'media manana', 'comida', 'merienda', 'cena', 'otras']
 const FUENTES = ['etiqueta', 'ficha', 'estimado', 'desconocido']
 
@@ -177,6 +185,27 @@ export function Diario() {
               Este dia <strong>no esta completo</strong>: falta el dato de {faltan}{' '}
               {faltan === 1 ? 'entrada' : 'entradas'}. Lo de arriba es lo que se sabe, no lo que comiste.
             </p>
+          )}
+
+          {/* **La cobertura, nutriente a nutriente.** El total de energia puede estar completo y faltar
+              las proteinas: decir "3 de 4 entradas" es lo que impide leer el numero de arriba como si
+              fuera el dia entero. Y un nutriente que no trae nadie se dice con la palabra, no con un 0. */}
+          {data.cobertura && (
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {Object.entries(data.cobertura).map(([nutriente, c]) => (
+                <li key={nutriente} className="text-[13px] text-secundaria tabular-nums">
+                  {NOMBRE_NUTRIENTE[nutriente] ?? nutriente}:{' '}
+                  {c.con_dato === 0 ? (
+                    <span className="text-aviso">sin dato</span>
+                  ) : (
+                    <>
+                      {c.con_dato} de {c.total}
+                      {c.completa ? '' : ' entradas'}
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
           {data.completo && total > 0 && (
             <p className="mt-1 text-[14px] text-secundaria">
