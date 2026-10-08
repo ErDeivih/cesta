@@ -1237,3 +1237,64 @@ def _con_autorizacion(lineas: list[dict], lista_id: str) -> list[dict]:
                         "autorizado_producto": suyo.get("producto"),
                         "autorizado_cadena": suyo.get("cadena")})
     return salida
+
+
+# ------------------------------------------------------------- el puente del plan ---
+
+def _ruta_recetas():
+    """Donde vive el recetario. Se pregunta al modulo de recetas, no se adivina la ruta."""
+    from .recetas import ruta_base as _ruta
+
+    return _ruta()
+
+
+@app.get("/api/listas/{lista_id}/desde-el-plan")
+def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(...),
+                    usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La vista previa**: que ingredientes del plan entrarian en la lista, sin tocar la lista.
+
+    Cada ingrediente viene de **la version que el plan guardo**, no de la ultima: si la receta cambio
+    despues, el plan sigue diciendo lo que se planifico, y la lista tiene que recibir eso.
+
+    Los que **ya estan** se dicen aparte, con su nombre. Es lo que hace falta para que pulsar dos veces
+    no duplique: el puente tiene que ser idempotente, y para eso hay que saber que hay puesto.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=False)
+    planificadas, ya_en_la_lista = _del_plan(lista_id, usuario["id"], desde, hasta)
+    entrarian = [x for x in planificadas if x["nombre"].lower() not in ya_en_la_lista]
+    return {"entrarian": entrarian, "ya_estaban": sorted(
+        x["nombre"] for x in planificadas if x["nombre"].lower() in ya_en_la_lista),
+        "total": len(entrarian), "desde": desde, "hasta": hasta}
+
+
+def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[list[dict], set[str]]:
+    """Los ingredientes que el plan pide en esas fechas, y los nombres que ya estan en la lista.
+
+    **Un solo sitio para el calculo.** La vista previa y la accion que escriba tienen que decir lo mismo,
+    y la unica forma de garantizarlo es que sea el mismo codigo: separarlos es como se acaba con una previa
+    que miente.
+    """
+    from core import recetas as _recetas
+
+    ya = {str(x.get("nombre_visto") or "").lower() for x in almacen.lineas_de(lista_id)}
+    recetario = _recetas.conecta(_ruta_recetas())
+    try:
+        plan = _recetas.plan(recetario, propietario, desde, hasta)
+        ingredientes: list[dict] = []
+        for linea in plan:
+            receta = _recetas.leer(recetario, propietario, linea["receta_id"],
+                                   version=linea.get("version"))
+            if receta is None:
+                continue
+            for uno in receta["ingredientes"]:
+                ingredientes.append({
+                    "nombre": uno.get("texto") or "",
+                    "cantidad": uno.get("cantidad"),
+                    "unidad": uno.get("unidad"),
+                    "receta": receta["nombre"],
+                    "version": receta["version"],
+                    "fecha": linea["fecha"],
+                })
+    finally:
+        recetario.close()
+    return ingredientes, ya
