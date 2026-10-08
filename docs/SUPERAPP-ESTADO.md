@@ -50,6 +50,61 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (12 de octubre de 2026) · relevo: tres condiciones cerradas y lo que falta
+
+### Cerrado, con sus dos puertas
+
+Las condiciones **1 (aislamiento), 2 (identidad y coste) y 3 (pantallas y persistencia)** están cerradas. Su
+detalle está en los resúmenes de los días 9, 10 y 11, más abajo. La **condición 2** se cerró con la
+**autorización de la sustitución persistida por línea**: migración `011_autorizar_la_alternativa.sql`, dos
+funciones en `almacen.py`, un endpoint para confirmar que pide permiso de **escritura**, y la autorización
+leída de la base en los sitios que calculan precios.
+
+**La puerta, a partir de ahora, son dos cosas:** `uv run ruff check .` y `uv run pytest -q`. Las dos limpias.
+Los dos `NameError` en producción que aparecieron los vio **ruff**, no la suite.
+
+### La condición 4 ha encontrado dos fallos reales, y uno está arreglado
+
+El **ensayo de punta a punta** (`plataforma/prueba_e2e.py`) es lo que los encontró. Los dos existían **con la
+suite en verde**, porque las pruebas de `tests/` sustituyen PostgreSQL y no ejecutan esos caminos:
+
+| fallo | estado |
+|---|---|
+| `/api/estado` devolvía una cadena suelta: el decorador envolvía a un ayudante insertado entre el decorador y su función | **arreglado** (`351c679`), con prueba de forma vista roja antes |
+| la **lista de la compra** y el **cierre de compra** reventaban con `too many values to unpack`: `mejor` tiene claves `(grupo_o_producto, fuente)` y `(grupo_o_producto, "alternativa")`, y los dos lectores descomponían la clave como un par | **arreglado** (`15fddb4`) y **confirmado** por el ensayo: `estimacion sin reventar: True` |
+
+Ese segundo fallo enseña lo que más vale de estas rondas: mi primer intento de arreglo fue **incorrecto** (dejó
+9 pruebas en rojo y la puerta lo paró) porque **la prueba y el arreglo partían de la misma suposición** sobre la
+forma de la clave. Se arregló al **observar** la forma real, leyendo dónde se construye `clave` en
+`_candidatos`. **Primero se observa, después se escribe la prueba, y solo entonces se arregla.**
+
+### Pendiente, con nombre
+
+1. **Una expectativa desactualizada en el ensayo.** `cerrar la compra` imprime «la compra no ha quedado
+   guardada» **y a continuación la compra guardada**, con el mismo `compra_id` y sus dos líneas. La compra sí
+   se guarda: lo que está viejo es la comprobación. Se pone al día **comparando con la evidencia que ella misma
+   imprime**, no retocando la aserción para que pase.
+2. **Reconstruir la imagen de la API.** El ensayo ejecuta el código del árbol, así que lleva los arreglos; **la
+   plataforma servida en el 8080 se construyó antes y sigue teniendo el fallo de la lista.** Va antes de dar la
+   condición 4 por cerrada.
+3. **Los tres huecos del ensayo**: copia de seguridad **restaurada** (no existe ningún `pg_dump`/restore),
+   **dos cuentas** contra base real (el aislamiento se prueba con PostgreSQL sustituido) y **la autorización de
+   verdad** (confirmar → recargar → sigue autorizada, que es el recorrido que hasta esta semana no existía).
+4. **Puentes idempotentes con vista previa** y **gráficas con medida, cobertura y universo**, las otras dos
+   piezas de la condición 4.
+
+### El método que funciona, por si la próxima sesión empieza de cero
+
+- **Observar antes de suponer.** Casi todas las rondas perdidas fueron por anclar o comparar sobre un recuerdo.
+- **Ficheros enteros o edición por número de línea leído**, nunca parches sobre fragmentos recordados.
+- **Ejecutar con `subprocess` y lista de argumentos** escribe SQL y código dentro de contenedores sin pelearse
+  con el entrecomillado de PowerShell, que ha partido cinco comandos esta sesión.
+- **Un rojo puede ser la prueba**: ha pasado seis veces. Se mira qué afirma antes de tocar el código.
+- **Lo que las pruebas no ejecutan, el análisis estático sí lo ve**; y lo que está registrado y servido solo lo
+  ve **usar la aplicación**.
+
+**Suite: 1.424 pruebas, 0 fallos.** Ruff limpio. La plataforma servida, pendiente de reconstruir.
+
 ## Resumen vigente (11 de octubre de 2026) · un fallo que solo se veía usando la aplicación
 
 **Lo que pasó, porque es lo más útil de esta etapa.** `/api/estado` devolvía **solo la cadena de la versión**
