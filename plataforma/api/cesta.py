@@ -129,11 +129,9 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
 
     # **La cantidad que se pide de cada referencia.** Si la misma apareciera en dos lineas con
     # cantidades distintas, manda la ultima: es una decision, no un descuido.
-    cantidades: dict = {}
-    for peticion in peticiones:
-        referencia = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
-        if referencia is not None:
-            cantidades[referencia] = max(1, int(peticion.cantidad))
+    # **Las lineas del mismo producto se compran juntas.** La cantidad que decide que oferta
+    # conviene es la SUMA de todas sus lineas, no la de la ultima: pedir 2 y 3 es pedir 5.
+    cantidades = _cantidades_por_referencia(peticiones)
 
     # **Primera pasada: el canonico de cada grupo.** Es el de menor identificador, y no el primero que
     # devuelva el SQL, para que la referencia sea la misma entre ejecuciones.
@@ -627,3 +625,19 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
                 cadena, precio = min(suyos, key=lambda par: par[1])
         salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio}
     return salida
+
+
+
+def _cantidades_por_referencia(peticiones: list[Peticion]) -> dict:
+    """Cuantas unidades se compran de cada referencia, **sumando todas sus lineas**.
+
+    Dos lineas del mismo producto no son dos compras: son una compra de mas unidades, y las ofertas que
+    dependen de la cantidad se aplican a lo que se lleva. Quedarse con la ultima -- que es lo que hacia antes,
+    con un comentario que lo llamaba decision -- elige el candidato con un numero que no es el que se paga.
+    """
+    cantidades: dict = {}
+    for peticion in peticiones:
+        referencia = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
+        if referencia is not None:
+            cantidades[referencia] = cantidades.get(referencia, 0) + max(1, int(peticion.cantidad))
+    return cantidades
