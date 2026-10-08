@@ -114,6 +114,26 @@ el grupo no bastaba). Se dice cual es cual: una prueba que no vio un rojo **fija
 reventado en ejecucion. La suite **no lo vio** (esa linea solo corre contra PostgreSQL) y el lint si:
 `F821 Undefined name cent`. Es la misma clase de fallo que puso la puerta del lint en este proyecto.
 
+### Por que este objetivo se detiene aqui, y que significa
+
+El objetivo de coste tiene un **tope de 140 rondas** y se agoto: **se detiene por su propio limite, no por haber
+terminado**. Conviene que quien siga lo sepa, porque el estado no es «hecho» ni «abandonado»:
+
+- **El trabajo de codigo esta cerrado y probado**: los tres casos, los cinco sitios que suman dinero, la
+  autorizacion en la lista, la revocacion, los puentes, el estado de la eleccion, la cuenta de la caja con prueba
+  y el ensayo con la invariante del coste. Catorce commits, `066089d` a `62683ca`, con `ruff` limpio y la suite en
+  verde en cada uno.
+- **Lo que falta necesita el motor de Docker**, caido desde la ronda 111 sin responder
+  (`dockerDesktopLinuxEngine`: el *pipe* no existe). Son tres cosas, las tres escritas y listas: el **ensayo**
+  (con la invariante del coste dentro), la **restauracion** en entorno separado y la **publicacion** con la
+  imagen servida.
+- **Y despues**: las graficas (medida, cobertura y universo) y los recorridos de las tres aplicaciones.
+
+**Ninguna condicion se declara cerrada.** La regla del dueno lo impide -- *no cerrar identidad y coste con pruebas
+de seleccion o persistencia aisladas* -- y el cierre real contra PostgreSQL **no lo ha ejecutado nadie**. Eso es
+exactamente lo que hay: codigo terminado y probado hasta donde el entorno ha dejado, y una verificacion esperando
+a que el motor vuelva.
+
 ### Lo que queda
 
 1. **El ensayo y la restauracion**, con los contratos nuevos. **Bloqueado por el entorno**: Docker no responde
