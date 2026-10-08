@@ -496,6 +496,14 @@ def main() -> int:
     fuera = almacen.anade_linea(str(lista["id"]), str(yo["id"]), str(uuid.uuid4()),
                                 "Pan que no me llevo", grupo_id=None, producto_id="dia:74397")
     almacen.cambia_linea(str(lista["id"]), dentro["id"], str(yo["id"]), en_carrito=True)
+    # **Las lineas que de verdad iban marcadas, contadas antes de pulsar.** La compra tiene
+    # que llevarse exactamente estas. Se cuentan aqui en vez de comparar con un numero escrito
+    # a mano, que ata la prueba al estado en que estaba la lista el dia que se escribio.
+    iban_en_el_carro = {str(x["id"]) for x in almacen.lineas_de(str(lista["id"]))
+                      if x.get("en_carrito")}
+    if str(dentro["id"]) not in iban_en_el_carro:
+        fallos += 1
+        print("   FALLO: la linea marcada no cuenta como que va en el carro")
     r = cliente.post(f"/api/listas/{lista['id']}/cerrar")
     hecho = r.json() if r.status_code == 200 else {}
     print(f"   POST /cerrar -> {r.status_code}  {hecho}")
@@ -509,13 +517,21 @@ def main() -> int:
     if str(fuera["id"]) not in vivos:
         fallos += 1
         print("   FALLO: se ha llevado por delante la linea que no se cogio")
+    # **La compra, por su identificador.** No la primera de la lista: la que se acaba de
+    # cerrar, que es la que el cierre devolvio.
     guardadas = almacen.compras_de(str(lista["id"]))
-    if not guardadas or guardadas[0]["lineas"] != 1:
+    guardada = next((c for c in guardadas
+                    if str(c.get("compra_id")) == str(hecho.get("compra_id"))), None)
+    if guardada is None:
         fallos += 1
-        print(f"   FALLO: la compra no ha quedado guardada ({guardadas[:1]})")
+        print(f"   FALLO: la compra {hecho.get('compra_id')} no ha quedado guardada")
+    elif guardada["lineas"] != len(iban_en_el_carro):
+        fallos += 1
+        print(f"   FALLO: la compra dice {guardada['lineas']} lineas y en el carro iban"
+              f" {len(iban_en_el_carro)}")
     else:
-        print(f"   y queda guardada: {guardadas[0]['lineas']} linea, "
-              f"{guardadas[0]['total_cent']} cent, {guardadas[0]['sin_precio']} sin precio")
+        print(f"   y queda guardada con su identificador: {guardada['lineas']} lineas, "
+              f"{guardada['total_cent']} cent, {guardada['sin_precio']} sin precio")
     # Y sin nada en el carro, el boton lo dice en vez de inventar una compra vacia (409).
     r = cliente.post(f"/api/listas/{lista['id']}/cerrar")
     print(f"   y con el carro vacio -> {r.status_code} {r.json().get('detail')!r}")
