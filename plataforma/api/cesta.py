@@ -301,6 +301,11 @@ def _promos_vigentes(producto_ids: set[str], fecha_tope: str | None = None) -> d
     return {k: v for k, v in tabla.items() if k in producto_ids}
 
 
+def esperada_de(peticion: Peticion) -> tuple:
+    """La identidad de una peticion, para agrupar compras: el grupo y el producto concreto, si consta."""
+    return _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+
+
 def _agrupa_y_reparte(elecciones: list[Eleccion]) -> list[Eleccion]:
     """El coste de una compra se calcula **por grupo** y se reparte entre sus lineas.
 
@@ -678,8 +683,42 @@ def estimacion(lineas: list[dict]) -> dict:
                            autorizado_producto=x.get("autorizado_producto"),
                            autorizado_cadena=x.get("autorizado_cadena")) for x in lineas]
     mejor = _candidatos(peticiones, _fecha_de_hoy())
-    total = en_carro = sin_precio = 0
+    # **El candidato de cada linea.** El mas barato, que es el modelo de esta cuenta.
+    candidatas: list = []
     for linea, peticion in zip(lineas, peticiones, strict=True):
+        if linea.get("producto_movido"):
+            candidatas.append(None)
+            continue
+        esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+        opciones = [(v[1], k[1], v[3]) for k, v in mejor.items()
+                    if k[0] == esperada and k[-1] != "alternativa"]
+        candidatas.append(min(opciones) if opciones else None)
+    # **Agrupar por producto efectivo Y cadena, y repartir.** Dos lineas a la misma tienda comparten la
+    # oferta; a tiendas distintas no se agrupan, porque seria inventarle un descuento a una compra que no
+    # existe. La suma de las lineas es siempre el total del grupo.
+    grupos: dict[tuple, list[int]] = {}
+    for indice, (_linea, peticion, candidata) in enumerate(
+            zip(lineas, peticiones, candidatas, strict=True)):
+        if candidata is None or not peticion.cantidad:
+            continue
+        grupos.setdefault((candidata[1], esperada_de(peticion)), []).append(indice)
+    reparto: dict[int, int] = {}
+    for indices in grupos.values():
+        if len(indices) < 2:
+            continue
+        primera = candidatas[indices[0]]
+        unidades = sum(peticiones[i].cantidad for i in indices)
+        total_grupo = lee_promo(primera[2]).coste(unidades, primera[0])
+        partes = [(total_grupo * peticiones[i].cantidad) // unidades for i in indices]
+        resto = total_grupo - sum(partes)
+        orden = sorted(range(len(indices)),
+                       key=lambda k: (-((total_grupo * peticiones[indices[k]].cantidad) % unidades), k))
+        for k in orden[:resto]:
+            partes[k] += 1
+        for k, indice in enumerate(indices):
+            reparto[indice] = partes[k]
+    total = en_carro = sin_precio = 0
+    for indice, (linea, peticion) in enumerate(zip(lineas, peticiones, strict=True)):
         # **Una linea que apunta a otro producto no se cuenta.** El `grupo_id` es un
         # ordinal que se renumera en cada pasada, asi que esta linea puede estar
         # apuntando a un pintalabios cuando dice «leche entera»: sumarle su precio
@@ -688,13 +727,16 @@ def estimacion(lineas: list[dict]) -> dict:
         if linea.get("producto_movido"):
             sin_precio += 1
             continue
-        clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
-        precios = [v[1] for k, v in mejor.items()
-                   if k[0] == clave and k[-1] != "alternativa"]
-        if not precios:
+        # **Por la llave del motor, no por el grupo.** La llave lleva el producto concreto cuando la linea
+        # lo pide, y comparar contra el grupo dejaba esas lineas en «sin precio»: en silencio, y en la
+        # pantalla de la lista. `_llave_candidato(...)[0]` no depende de la cadena.
+        candidata = candidatas[indice]
+        if candidata is None:
             sin_precio += 1
             continue
-        coste = min(precios) * peticion.cantidad
+        # Del reparto si su grupo tiene mas de una linea; entera si va sola, que es el mismo numero.
+        coste = reparto.get(
+            indice, lee_promo(candidata[2]).coste(peticion.cantidad, candidata[0]))
         total += coste
         if linea.get("en_carrito") or linea.get("tachado_en"):
             en_carro += coste
