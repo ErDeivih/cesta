@@ -72,22 +72,31 @@ escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan,
 (`uv run python -m plataforma.prueba_suite`) no se ha pasado desde el aislamiento; necesita el servidor
 de desarrollo levantado.
 
-**Condición 2 — identidad solicitada y selección del coste: EN CURSO.** Cinco casos de aceptación
-medidos contra el código de hoy antes de tocarlo, para saber qué falta exactamente.
+**Condición 2 — identidad solicitada y selección del coste: EN CURSO.** Los cinco casos de
+aceptación, uno a uno, con lo que falta dicho al lado:
 
-## Resumen vigente (8 de octubre de 2026) · cierre de la etapa
-
-### Entregado en esta etapa, con su evidencia
-
-| paquete | que hay | evidencia |
+| caso | estado | donde |
 |---|---|---|
-| **S06** armazon | lanzador, `/compra`, `/recetas` y `/calorias` con layout, menu lateral, cajon movil con foco atrapado y Escape, y rutas antiguas que conservan su query | **23 comprobaciones en navegador** (`uv run python -m plataforma.prueba_suite`), capturas en `data/capturas-s06/` |
-| **S04** identidad | `core/identidad.py`: GTIN validado **y** presentacion comprobada, cuarentena, abtencion, sin cierre transitivo · candidatos exactos por GTIN y probables aparte · **sombra publicada** | 15 pruebas · sombra medida sobre **51.915 productos**: 1.627 grupos exactos (1.589 multi-cadena), 4.259 probables, **266 cuarentenas**, y **2.222 de los 6.545 grupos actuales se partirian** |
-| **S05** vigencia | `fecha_tope` aplicada en `_candidatos` **y en sus cuatro llamantes**, que pasaban cadena vacia | 3 pruebas, una de ellas lee el codigo para que no vuelva a quedar ninguno |
-| **S07** alternativa explicita | cada `Eleccion` sale con `identidad` y `motivo`; el aviso se pinta en la lista | 6 pruebas del servidor + el aviso visible en `RepartoEnTiendas` |
-| **S08** Recetas | `core/recetas.py` (versionado autocontenido, archivar que no borra, plan que fija version) · API · **recetario con selector de version y plan semanal** | 11 pruebas + 5 de API + pantallas construidas |
-| **S09** Calorias | `core/diario.py` (fuente del dato, conocido vs completo, **compra que no es consumo**) · API · **pantalla del diario** | 10 pruebas + 6 de API + pantalla construida |
-| montaje | prueba que distingue "la funcion existe" de "el endpoint se alcanza", para los dos routers nuevos y lo viejo | 3 pruebas sobre el OpenAPI de la aplicacion |
+| **A** grupo antiguo con dos marcas incompatibles | **hecho**: mismo GTIN con marcas distintas → **cuarentena** (no alternativa: una de las dos fichas miente); sin GTIN son dos productos; marca vacía no inventa conflicto; comparación normalizada | `core/identidad.py`, `cesta.py` (la marca viaja del catálogo al motor), `tests/test_marca_en_identidad.py` (5) |
+| **B** alternativa más barata **no autorizada** | **regla, total por cadena y reparto hechos**: `Eleccion.autorizada`, `Peticion.autorizado` por línea, `_total_autorizado` con `pendientes`; el total de cada cadena y el reparto eligen y suman **solo lo autorizado**, y `sin_autorizar` **entra en el orden** | `cesta.py`, `tests/test_total_autorizado.py` (5), `test_total_en_la_api.py` (4), `test_reparto_autorizado.py` (3) |
+| **C** dos unidades donde el envase caro gana por promoción | **hecho**: se elige por **coste final de las unidades pedidas** (150 frente a 180), con la regla en una función pura | `cesta.py::_coste_para`, `tests/test_seleccion_por_coste.py` (5) |
+| **D** precio o promoción futura | **parcial**: `fecha_tope` corta particiones posteriores de promoción (S05); **falta** comprobar la **fecha del precio y la versión del catálogo** | `tests/test_ofertas_vigentes.py` (3) |
+| **E** variantes bajo el mismo GTIN | **parcial**: el motor las distingue por cantidad y las no exactas no suman; **falta** que la **selección** no descarte la variante exacta cuando la más barata del mismo grupo es otra | `core/identidad.py` |
+
+**Lo que queda de la condición 2, nombrado y en orden:**
+
+1. **La mezcla de variantes dentro de una cadena**: hoy `_candidatos` retiene **una** fila por
+   `(grupo, cadena)` —la más barata— y el veredicto se calcula después, así que si la más barata es una
+   variante distinta y en la misma cadena hay la exacta un poco más cara, **se pierde la exacta**. La
+   selección tiene que quedarse con la más barata **autorizada** y, aparte, con la más barata no
+   autorizada para poder ofrecerla.
+2. **La persistencia de la autorización en la línea**: hoy `Peticion.autorizado` viaja en la petición;
+   falta guardarlo en la línea de la lista para que sobreviva a una recarga. **Depende de PostgreSQL**
+   (la lista vive en `almacen`), y con Docker parado no se puede probar de verdad: se hará cuando la base
+   esté levantada, y no se declara hecho antes.
+3. **La pantalla que ofrece las alternativas**: `pendientes` y `sin_autorizar` ya viajan en la respuesta;
+   falta pintarlas para aceptarlas línea a línea.
+4. **D, resto**: fecha del precio y versión del catálogo, además de la partición de promoción.
 
 **Suite completa: 1.292 pruebas, 0 fallos.** Ruff limpio salvo **una sugerencia** en
 `plataforma/api/cesta.py` que no se aplica sola. Arbol limpio en cada commit de la etapa.
