@@ -1361,3 +1361,59 @@ def previa_de_la_compra(lista_id: str, compra_id: str | None = None,
             sin_dato.append(linea["nombre"])
     return {"compra_id": la_compra, "anotarian": anotarian, "sin_dato": sin_dato,
             "cobertura": {"con_dato": len(anotarian), "total": len(lineas)}}
+
+
+class DesdeLaCompra(BaseModel):
+    """Lo que la persona confirma que se comio, de su ultima compra."""
+
+    fecha: str
+    comida: str
+    lineas: list[str] = []
+
+
+@app.post("/api/listas/{lista_id}/desde-la-compra", status_code=201)
+def anotar_de_la_compra(datos: DesdeLaCompra, lista_id: str,
+                        usuario: dict = Depends(usuario_actual)) -> dict:
+    """Anota en el diario **lo que la persona confirma** de su ultima compra.
+
+    El diario rechaza el tipo `compra` a proposito -- comprar no es comer --, asi que esto anota `alimento` y
+    solo lo que se pide: la compra propone, la persona decide.
+
+    **La referencia es el identificador de la linea de compra**, y por eso anotar dos veces la misma linea no
+    deja dos entradas: se mira antes si esa referencia ya esta en ese dia.
+
+    **No se inventan calorias.** La nutricion del catalogo se guarda como texto y sacar los numeros de ahi es
+    otra pieza; la entrada se anota sin ellas y el diario dice «sin dato», que es la verdad.
+    """
+    from core import diario as _diario
+
+    from .diario import ruta_base as _ruta_diario
+
+    _acceso(lista_id, usuario, hace_falta_escribir=False)
+    compras = almacen.compras_de(lista_id, limite=1)
+    if not compras:
+        raise HTTPException(404, "Esta lista no tiene ninguna compra cerrada.")
+    lineas = {str(x["linea_id"]): x for x in almacen.lineas_de_compra(str(compras[0]["compra_id"]))}
+    pedidas = [str(x) for x in datos.lineas] or list(lineas)
+    ajenas = [x for x in pedidas if x not in lineas]
+
+    con = _diario.conecta(_ruta_diario())
+    try:
+        ya = {str(x.get("referencia")) for x in _diario.dia(con, usuario["id"], datos.fecha)["entradas"]}
+        anotadas = 0
+        ya_estaban: list[str] = []
+        sin_nutricion: list[str] = []
+        for linea_id in pedidas:
+            if linea_id not in lineas:
+                continue
+            nombre = lineas[linea_id]["nombre"]
+            if linea_id in ya:
+                ya_estaban.append(nombre)
+                continue
+            _diario.apunta(con, usuario["id"], datos.fecha, datos.comida, tipo=_diario.ALIMENTO,
+                           referencia=linea_id, nota=f"de la compra: {nombre}")
+            anotadas += 1
+    finally:
+        con.close()
+    return {"anotadas": anotadas, "ya_estaban": ya_estaban, "ajenas": ajenas,
+            "sin_nutricion": sin_nutricion}
