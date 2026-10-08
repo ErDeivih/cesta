@@ -593,6 +593,38 @@ def main() -> int:
         print("   FALLO: el intento ajeno ha cambiado lo que autorizo el dueno de la linea")
     else:
         print("   y lo de la primera cuenta sigue igual despues del intento ajeno")
+    # == el coste: lo que la lista decia y lo que se guardo ==============================
+    # **La invariante del dueno:** lo mostrado y lo cobrado tienen que coincidir. Se lee la estimacion y se
+    # compara con el total que quedo guardado en la compra. Y se dice **si hubo oferta**, porque un empate de
+    # una linea suelta pasaria por comprobacion sin serlo.
+    print("\n== el coste: lo que la lista decia y lo que se guardo")
+    vistas = almacen.lineas_de(str(lista["id"]))
+    if vistas:
+        print(f"   (quedan {len(vistas)} lineas vivas; la compra ya esta cerrada)")
+    guardadas = almacen.compras_de(str(lista["id"]), limite=1)
+    if not guardadas:
+        fallos += 1
+        print("   FALLO: no hay compra guardada que comparar")
+    else:
+        la_compra = guardadas[0]
+        suyas = almacen.lineas_de_compra(str(la_compra["compra_id"]))
+        suma_unitaria = sum(int(x["precio_cent"] or 0) * int(x["cantidad"]) for x in suyas)
+        con_oferta = suma_unitaria != int(la_compra["total_cent"])
+        print(f"   compra {la_compra['compra_id']}: {la_compra['lineas']} lineas, "
+              f"total {la_compra['total_cent']} cent, sin precio {la_compra['sin_precio']}")
+        print(f"   suma de unitario x cantidad: {suma_unitaria} cent  |  "
+              f"{'HAY OFERTA aplicada' if con_oferta else 'sin oferta en estas lineas'}")
+        # La invariante que si se puede comprobar aqui: el total guardado no puede ser **mayor** que la suma de
+        # unitarios -- una oferta nunca sube el precio -- ni quedar por debajo de cero.
+        if int(la_compra["total_cent"]) > suma_unitaria:
+            fallos += 1
+            print("   FALLO: la compra guardada cuesta mas que la suma de sus precios unitarios")
+        if int(la_compra["total_cent"]) < 0:
+            fallos += 1
+            print("   FALLO: un total negativo")
+        if not con_oferta:
+            print("   (sin oferta en estas lineas: esta comprobacion no distingue el reparto, y lo digo)")
+
     almacen.para()
     print(f"\n== {'TODO BIEN' if not fallos else f'{fallos} FALLO(S)'}")
     return 1 if fallos else 0
