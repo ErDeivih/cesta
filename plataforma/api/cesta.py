@@ -43,6 +43,9 @@ class Peticion:
     # **Autorizacion explicita de sustituir ESTA linea.** Va por linea y no por lista a proposito: se
     # autoriza una sustitucion concreta, no "lo que haga falta" en toda la compra.
     autorizado: bool = False
+    # **Que se acepto**, no solo que se acepto: el producto y la cadena que la persona confirmo.
+    autorizado_producto: str | None = None
+    autorizado_cadena: str | None = None
 
 
 @dataclass
@@ -307,8 +310,12 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
                               f"{ahorro / 100:.2f} EUR menos por unidad")
     # **Cuenta si es el producto pedido, si no hay nada que afirmar, o si se autorizo.** Cualquier otra
     # cosa -- alternativa, cuarentena, abtencion -- no suma: se enseña, se explica y se ofrece aparte.
+    # **Un si de ayer no vale para la sustitucion de hoy.** El motor elige la alternativa
+    # cada vez, con los precios de hoy: si propone otro producto, o el mismo en otra cadena,
+    # la confirmacion no cuenta para esta y se pide nueva. Es lo que impide dar por aceptado
+    # un cambio que nadie acepto.
     autorizada = (veredicto is None or veredicto["estado"] == identidad.EXACTO
-                  or peticion.autorizado)
+                  or _es_la_confirmada(peticion, alternativa))
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
                     promo_txt if mecanica.util else None, sugerencia,
                     linea_id=peticion.id,
@@ -641,3 +648,38 @@ def _cantidades_por_referencia(peticiones: list[Peticion]) -> dict:
         if referencia is not None:
             cantidades[referencia] = cantidades.get(referencia, 0) + max(1, int(peticion.cantidad))
     return cantidades
+
+
+def _es_la_confirmada(peticion: Peticion, alternativa) -> bool:
+    """Si la sustitucion que confirmo la persona **es la que el motor propone ahora**.
+
+    Tres cosas tienen que darse, y ninguna sobra:
+
+      - que haya un si;
+      - que conste **que** se acepto -- un si sin producto no se puede honrar, y la base lo
+        rechaza desde la migracion 012 --;
+      - y que coincida con la alternativa de ahora, en **producto y cadena**.
+
+    Si el motor propone otra cosa, esto devuelve `False` y la linea vuelve a pedir confirmacion:
+    es una sustitucion distinta, aunque se parezca.
+    """
+    if not peticion.autorizado or alternativa is None:
+        return False
+    if not peticion.autorizado_producto:
+        return False
+
+    def campo(cosa, nombre):
+        """La alternativa puede llegar como diccionario o como objeto: se lee sin suponer cual."""
+        if isinstance(cosa, dict):
+            return cosa.get(nombre)
+        return getattr(cosa, nombre, None)
+
+    if str(campo(alternativa, "producto_id")) != str(peticion.autorizado_producto):
+        return False
+    # **La cadena, con los dos nombres.** La alternativa la llama `fuente` -- es la cadena de
+    # la que sale el precio -- y leer solo `cadena` fue mi error: la comparacion salia siempre
+    # falsa y no contaba ninguna confirmacion, ni la buena.
+    confirmada_cadena = campo(alternativa, "cadena") or campo(alternativa, "fuente")
+    if confirmada_cadena is None or peticion.autorizado_cadena is None:
+        return False
+    return str(confirmada_cadena) == str(peticion.autorizado_cadena)

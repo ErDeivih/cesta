@@ -14,9 +14,9 @@ GTIN_A = "4056489574392"
 GTIN_B = "8412345678905"
 
 
-def peticion(autorizado=False, cantidad=1):
+def peticion(autorizado=False, cantidad=1, producto=None, cadena=None):
     return cesta.Peticion(grupo_id=1, producto_id=None, cantidad=cantidad,
-                          nombre="Leche entera 1 l", id="l1", autorizado=autorizado)
+                 nombre="Leche entera 1 l", id="l1", autorizado=autorizado, autorizado_producto=producto, autorizado_cadena=cadena)
 
 
 def fila(pid, precio, ean, gtin_canonico, marca=None):
@@ -39,8 +39,12 @@ def test_una_alternativa_mas_barata_no_suma_si_nadie_la_autoriza():
 
 
 def test_la_misma_alternativa_si_suma_cuando_se_autoriza():
-    mejor = {(1, "dia"): fila("p2", 149, GTIN_B, GTIN_A)}
-    eleccion = cesta._resolver(peticion(autorizado=True), "dia", mejor)
+    # **Con su alternativa**, que es lo que el motor ofrece aparte. Sin ella no hay nada que
+    # confirmar: `_resolver` la lee de `(*clave, "alternativa")` y sin esa entrada es None.
+    fila_alternativa = fila("p2", 149, GTIN_B, GTIN_A)
+    mejor = {(1, "dia"): fila_alternativa,
+             (1, "dia", "alternativa"): fila_alternativa}
+    eleccion = cesta._resolver(peticion(autorizado=True, producto="p2", cadena="dia"), "dia", mejor)
     assert eleccion.autorizada is True
     total = cesta._total_autorizado([eleccion])
     assert total["total_cent"] == 149 and total["completo"] is True
