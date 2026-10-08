@@ -371,7 +371,6 @@ def ficha_de_producto(cadena: str, id_fuente: str):
     return {"fecha_datos": catalogo.fecha_de_gold(), "producto": p, "grupo": g}
 
 
-@app.get("/api/estado")
 def _version_del_catalogo() -> str | None:
     """La version publicada, leida del puntero.
 
@@ -385,6 +384,7 @@ def _version_del_catalogo() -> str | None:
         return None
 
 
+@app.get("/api/estado")
 def estado():
     """De que dia es cada cadena y que falta.
 
