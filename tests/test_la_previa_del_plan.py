@@ -65,3 +65,46 @@ def test_la_previa_no_toca_la_lista(tmp_path, monkeypatch):
     cliente.get("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07")
     main.app.dependency_overrides.clear()
     assert anadidas == [], anadidas
+
+def test_la_accion_mete_lo_que_la_previa_dijo(tmp_path, monkeypatch):
+    """Lo que la previa anuncia es lo que la accion escribe: comparten el calculo."""
+    _recetario_con_plan(tmp_path, monkeypatch)
+    en_la_lista = []
+
+    def anade(lista_id, usuario_id, linea_id, nombre, grupo_id=None, producto_id=None,
+              cantidad=1, nota=None, cadena_elegida=None):
+        fila = {"id": linea_id, "nombre_visto": nombre, "nota": nota, "cantidad": cantidad}
+        en_la_lista.append(fila)
+        return fila
+
+    monkeypatch.setattr(main.almacen, "anade_linea", anade)
+    cliente = _cliente(monkeypatch, en_la_lista)
+    previa = cliente.get("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07").json()
+    r = cliente.post("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07")
+    main.app.dependency_overrides.clear()
+    assert r.status_code == 201, r.text
+    assert r.json()["anadidos"] == previa["total"] == 1, (r.json(), previa)
+    assert en_la_lista[0]["nombre_visto"] == "lentejas"
+    # **Una unidad, y el detalle en la nota**: la lista cuenta envases, la receta habla en gramos.
+    assert en_la_lista[0]["cantidad"] == 1, en_la_lista[0]
+    assert "400" in (en_la_lista[0]["nota"] or ""), en_la_lista[0]
+
+
+def test_pulsar_dos_veces_no_duplica(tmp_path, monkeypatch):
+    _recetario_con_plan(tmp_path, monkeypatch)
+    en_la_lista = []
+
+    def anade(lista_id, usuario_id, linea_id, nombre, grupo_id=None, producto_id=None,
+              cantidad=1, nota=None, cadena_elegida=None):
+        fila = {"id": linea_id, "nombre_visto": nombre, "nota": nota}
+        en_la_lista.append(fila)
+        return fila
+
+    monkeypatch.setattr(main.almacen, "anade_linea", anade)
+    cliente = _cliente(monkeypatch, en_la_lista)
+    primera = cliente.post("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07").json()
+    segunda = cliente.post("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07").json()
+    main.app.dependency_overrides.clear()
+    assert len(en_la_lista) == 1, f"ha dejado {len(en_la_lista)} lineas donde cabe una"
+    assert primera["anadidos"] == 1 and segunda["anadidos"] == 0, (primera, segunda)
+    assert segunda["ya_estaban"] == ["lentejas"], segunda

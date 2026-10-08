@@ -1298,3 +1298,35 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
     finally:
         recetario.close()
     return ingredientes, ya
+
+
+@app.post("/api/listas/{lista_id}/desde-el-plan", status_code=201)
+def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(...),
+                   usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La accion**: mete en la lista lo que la vista previa dijo que entraria.
+
+    Comparte el calculo con la previa a proposito: si fueran dos codigos, uno de los dos mentiria.
+
+    **La cantidad va a la nota, no al campo de cantidad.** La lista cuenta unidades de un producto y la
+    receta habla en gramos: poner 400 en `cantidad` diria «400 envases». Se anade una unidad y el detalle
+    se guarda donde se lee.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    planificadas, ya = _del_plan(lista_id, usuario["id"], desde, hasta)
+    anadidos = 0
+    ya_estaban: list[str] = []
+    for uno in planificadas:
+        nombre = uno["nombre"]
+        if nombre.lower() in ya:
+            ya_estaban.append(nombre)
+            continue
+        detalle = f"del plan: {uno['receta']}"
+        if uno.get("cantidad") is not None:
+            detalle += f" ({uno['cantidad']} {uno.get('unidad') or ''})".rstrip()
+        almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()), nombre,
+                            None, None, 1, detalle)
+        # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
+        # dejar dos lineas, y eso se decide dentro de esta misma pasada.
+        ya.add(nombre.lower())
+        anadidos += 1
+    return {"anadidos": anadidos, "ya_estaban": ya_estaban}
