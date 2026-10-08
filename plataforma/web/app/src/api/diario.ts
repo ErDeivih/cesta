@@ -97,3 +97,21 @@ export function useBorrarEntrada(fecha: string) {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['diario'] }),
   })
 }
+
+export type DiaResumen = {
+  fecha: string
+  entradas: number
+  con_dato: number
+  /** **`null` cuando ninguna entrada del dia trae energia.** No es cero: es que no se sabe. */
+  kcal_conocida: number | null
+  sin_dato: number
+  completo: boolean
+}
+
+export function useRango(desde: string, hasta: string) {
+  const cuenta = useClaveDeCuenta()
+  return useQuery({
+    queryKey: ['diario-rango', cuenta, desde, hasta],
+    queryFn: () => pide<{ dias: DiaResumen[] }>('/diario/rango', { desde, hasta }),
+  })
+}
