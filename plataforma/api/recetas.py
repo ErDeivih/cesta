@@ -125,10 +125,11 @@ def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
 
 @rutas.get("/{receta_id}")
 def leer(receta_id: int, version: int | None = None,
+         raciones: int | None = Query(default=None, ge=1),
          usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        hallada = recetas.leer(con, usuario["id"], receta_id, version=version)
+        hallada = recetas.leer(con, usuario["id"], receta_id, version=version, raciones=raciones)
     finally:
         con.close()
     if hallada is None:

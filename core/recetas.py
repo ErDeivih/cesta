@@ -131,8 +131,31 @@ def crear(con: sqlite3.Connection, propietario: str, nombre: str, raciones: int 
     return receta_id
 
 
+def escala(ingredientes: list[dict], de_raciones: int, a_raciones: int) -> list[dict]:
+    """Los ingredientes para `a_raciones` en vez de para `de_raciones`.
+
+    **Lo que no tiene cantidad, no la gana.** Un ingrediente anotado como "sal" sigue sin cantidad: la
+    regla de tres no se puede aplicar a lo que no se sabe, e inventarle un cero seria convertir un dato
+    que falta en un dato falso.
+
+    Se redondea a dos decimales, y sin miedo: media unidad de huevo es raro de leer pero es la verdad.
+    Redondear a 2 seria comodo y mentira; quien cocina decide, con el numero delante.
+    """
+    if de_raciones < 1 or a_raciones < 1:
+        raise ValueError("las raciones son al menos una")
+    factor = a_raciones / de_raciones
+    escalados = []
+    for uno in ingredientes:
+        copia = dict(uno)
+        cantidad = copia.get("cantidad")
+        if isinstance(cantidad, (int, float)):
+            copia["cantidad"] = round(cantidad * factor, 2)
+        escalados.append(copia)
+    return escalados
+
+
 def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
-         version: int | None = None) -> dict | None:
+         version: int | None = None, raciones: int | None = None) -> dict | None:
     """La receta **si es tuya**, con su contenido. Sin version, la ultima; con ella, **esa**."""
     receta = _de_quien(con, propietario, receta_id)
     if receta is None:
@@ -146,12 +169,20 @@ def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
                            (receta_id, version)).fetchone()
     if fila is None:
         return None
+    ingredientes = json.loads(fila["ingredientes"])
+    # **Las dos cifras.** Si se piden otras raciones, se devuelven los ingredientes escalados y las dos
+    # cantidades: la de la receta y la pedida. Ensenar solo una obligaria a adivinar de donde sale.
+    pedidas = raciones if raciones is not None else fila["raciones"]
+    if raciones is not None and raciones != fila["raciones"]:
+        ingredientes = escala(ingredientes, fila["raciones"], raciones)
     return {
         "id": receta["id"], "nombre": receta["nombre"], "creada": receta["creada"],
         "archivada": bool(receta["archivada"]), "version": fila["numero"],
-        "raciones": fila["raciones"], "preparacion": fila["preparacion"],
+        "raciones": pedidas, "raciones_receta": fila["raciones"],
+        "escalada": pedidas != fila["raciones"],
+        "preparacion": fila["preparacion"],
         "minutos": fila["minutos"], "etiquetas": fila["etiquetas"],
-        "ingredientes": json.loads(fila["ingredientes"]), "version_creada": fila["creada"],
+        "ingredientes": ingredientes, "version_creada": fila["creada"],
     }
 
 
