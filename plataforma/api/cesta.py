@@ -301,6 +301,28 @@ def _promos_vigentes(producto_ids: set[str], fecha_tope: str | None = None) -> d
     return {k: v for k, v in tabla.items() if k in producto_ids}
 
 
+def _es_de_fiar(peticion: Peticion, candidata, mejor: dict) -> bool:
+    """Si la cantidad de esta linea puede entrar en un grupo al que se le aplica una oferta.
+
+    **Si el candidato es el producto pedido, si. Si es una sustitucion, solo con la confirmacion en la mano.**
+    Es la misma regla que `_resolver` usa para decidir si algo cuenta, aqui porque `estimacion` lee `mejor`
+    directamente y no pasa por alli.
+
+    Sin esto, la lista aplicaba descuentos a cantidades que esperaban autorizacion: un ahorro que nadie ha
+    aceptado, enseñado como si lo estuviera.
+    """
+    elegida = mejor.get(_llave_candidato(peticion.grupo_id, peticion.producto_id, candidata[1]))
+    if elegida is not None and len(elegida) > 8 and elegida[8]:
+        return True
+    guardada = mejor.get((*_llave_candidato(peticion.grupo_id, peticion.producto_id, candidata[1]),
+                          "alternativa"))
+    if guardada is None:
+        return False
+    alternativa = {"producto_id": guardada[0], "nombre": guardada[2], "coste_cent": guardada[7],
+                   "fuente": candidata[1], "precio_cent": guardada[1], "promo": guardada[3]}
+    return _es_la_confirmada(peticion, alternativa)
+
+
 def esperada_de(peticion: Peticion) -> tuple:
     """La identidad de una peticion, para agrupar compras: el grupo y el producto concreto, si consta."""
     return _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
@@ -741,6 +763,10 @@ def estimacion(lineas: list[dict]) -> dict:
             zip(lineas, peticiones, candidatas, strict=True)):
         if candidata is None or not peticion.cantidad:
             continue
+        # **Solo lo exacto o lo confirmado entra en el grupo de la oferta.** Una cantidad
+        # pendiente de autorizacion no lleva descuento: nadie ha aceptado esa sustitucion.
+        if not _es_de_fiar(peticion, candidata, mejor):
+            continue
         grupos.setdefault((candidata[1], esperada_de(peticion)), []).append(indice)
     reparto: dict[int, int] = {}
     for indices in grupos.values():
@@ -775,8 +801,14 @@ def estimacion(lineas: list[dict]) -> dict:
             sin_precio += 1
             continue
         # Del reparto si su grupo tiene mas de una linea; entera si va sola, que es el mismo numero.
-        coste = reparto.get(
-            indice, lee_promo(candidata[2]).coste(peticion.cantidad, candidata[0]))
+        # **Sin oferta si la cantidad no es de fiar, ni agrupada ni sola.** Una sustitucion pendiente de
+        # confirmacion se cobra a precio de catalogo: aplicar su 3x2 seria enseñar un ahorro que nadie ha
+        # aceptado.
+        if not _es_de_fiar(peticion, candidata, mejor):
+            coste = peticion.cantidad * candidata[0]
+        else:
+            coste = reparto.get(
+                indice, lee_promo(candidata[2]).coste(peticion.cantidad, candidata[0]))
         total += coste
         if linea.get("en_carrito") or linea.get("tachado_en"):
             en_carro += coste
