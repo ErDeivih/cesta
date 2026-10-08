@@ -36,7 +36,6 @@ from . import (
 )
 from .ajustes import AJUSTES
 
-COOKIE = "cesta_sesion"
 
 
 @asynccontextmanager
