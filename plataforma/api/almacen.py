@@ -1108,21 +1108,26 @@ def autorizacion_de(lista_id: str) -> dict[str, bool]:
 
 
 def autoriza_linea(lista_id: str, linea_id: str, usuario_id: str,
-                   autorizado: bool = True) -> str | None:
+                   autorizado: bool = True, producto: str | None = None,
+                   cadena: str | None = None) -> str | None:
     """Confirma o desconfirma la sustitucion de **una** linea. Devuelve su id, o `None` si no existe.
 
     `usuario_id` se pide y se exige, como en todo lo demas: la decision es de una persona, y quien la toma se
     guarda con ella (`autorizado_en`) para poder decir cuando se tomo -- que es lo primero que se pregunta
     cuando una lista lleva semanas abierta y el total no cuadra.
 
-    **No se guarda QUE alternativa se autorizo.** La elige el motor cada vez, con los precios de hoy: guardar
-    la de ayer dejaria autorizada una sustitucion que ya no se ofrece.
+    **Se guarda QUE alternativa se acepto**: el producto y la cadena. Antes no se guardaba, y el
+    argumento era que el motor la elige cada vez con los precios de hoy: eso cubre que cambie el PRECIO,
+    no que cambie el PRODUCTO. Con el producto guardado, una sustitucion distinta pide confirmacion nueva.
     """
+    if autorizado and not producto:
+        raise ValueError("para autorizar hay que decir QUE producto se acepta")
+
     with cursor() as cur:
         cur.execute("""
-            UPDATE lista_linea SET autorizado = %s, autorizado_en = now()
+            UPDATE lista_linea SET autorizado = %s, autorizado_en = now(), autorizado_producto = %s, autorizado_cadena = %s
              WHERE id = %s AND lista_id = %s AND borrado_en IS NULL
             RETURNING id
-        """, (autorizado, linea_id, lista_id))
+        """, (autorizado, producto, cadena, linea_id, lista_id))
         fila = cur.fetchone()
     return str(fila["id"]) if fila else None
