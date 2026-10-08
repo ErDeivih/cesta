@@ -550,6 +550,49 @@ def main() -> int:
         fallos += 1
         print("   FALLO: dice que ha filtrado por 'lo mio' y no ha filtrado")
 
+    # == dos cuentas: aislamiento y autorizacion, con almacenamiento real ===============
+    print("\n== dos cuentas: lo de uno no lo ve el otro, y la autorizacion es de quien la toma")
+    otro = almacen.crea_usuario("la-otra", "La otra", "clave-de-prueba-123")
+    # Una linea **con su producto pedido**, para poder confirmar QUE se acepta: un si sin producto no se
+    # puede honrar, y la base lo rechaza desde la migracion 012.
+    mia = almacen.anade_linea(str(lista["id"]), str(yo["id"]), str(uuid.uuid4()),
+                              "Leche entera", grupo_id=None, producto_id="dia:74397")
+    r = cliente.post(f"/api/listas/{lista['id']}/lineas/{mia['id']}/autorizar",
+                     params={"producto": "dia:74397", "cadena": "dia"})
+    print(f"   {yo['usuario']} confirma su sustitucion -> {r.status_code}")
+    if r.status_code != 200:
+        fallos += 1
+        print("   FALLO: no se pudo confirmar la sustitucion")
+    # **Y se recarga la lista**: lo confirmado tiene que volver con su producto y su cadena.
+    r = cliente.get(f"/api/listas/{lista['id']}")
+    cuerpo = r.json() if r.status_code == 200 else {}
+    recargada = next((x for x in cuerpo.get("lineas", []) if str(x["id"]) == str(mia["id"])), None)
+    if recargada is None:
+        fallos += 1
+        print("   FALLO: la linea no vuelve al recargar la lista")
+    elif not recargada.get("autorizado") or recargada.get("autorizado_producto") != "dia:74397" \
+            or recargada.get("autorizado_cadena") != "dia":
+        fallos += 1
+        print(f"   FALLO: lo confirmado no vuelve entero al recargar ({recargada.get('autorizado_producto')},"
+              f" {recargada.get('autorizado_cadena')})")
+    else:
+        print("   y al recargar vuelve entero: autorizado por dia:74397 en dia")
+    # **La otra cuenta**, contra la misma linea: 404 y no 403, que diria que existe.
+    main.app.dependency_overrides[main.usuario_actual] = lambda: otro
+    r = cliente.post(f"/api/listas/{lista['id']}/lineas/{mia['id']}/autorizar",
+                     params={"producto": "dia:1", "cadena": "dia"})
+    print(f"   {otro['usuario']} intenta autorizar la linea de {yo['usuario']} -> {r.status_code}")
+    if r.status_code != 404:
+        fallos += 1
+        print("   FALLO: a la otra cuenta se le contesta otra cosa que 404, o ha podido tocar lo ajeno")
+    # Y lo de `yo` sigue como estaba.
+    main.app.dependency_overrides[main.usuario_actual] = lambda: yo
+    autorizadas = almacen.autorizacion_de(str(lista["id"]))
+    if (autorizadas.get(str(mia["id"])) or {}).get("producto") != "dia:74397":
+        fallos += 1
+        print("   FALLO: el intento ajeno ha cambiado lo que autorizo el dueno de la linea")
+    else:
+        print("   y lo de la primera cuenta sigue igual despues del intento ajeno")
     almacen.para()
     print(f"\n== {'TODO BIEN' if not fallos else f'{fallos} FALLO(S)'}")
     return 1 if fallos else 0
