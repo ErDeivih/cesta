@@ -745,8 +745,15 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
         # siendo valida: el grupo es la referencia, el nombre es una comodidad.
         g = catalogo.grupo(grupo_id) or {}
         nombre = g.get("nombre") or f"Producto {grupo_id}"
+        # **Y el miembro que se enseno**, no solo el grupo. La ficha muestra el mas barato por
+        # unidad y el motor compara contra el de identificador mas bajo: son productos distintos
+        # en cuanto los precios no acompanan. Guardar el mostrado es lo que hace que la referencia
+        # sea **lo que se pidio**, y el motor ya lo honra desde la ronda 77.
+        mostrado = (g.get("productos") or [{}])[0]
+        producto_id = (f"{mostrado['fuente']}:{mostrado['id_fuente']}"
+                       if mostrado.get("fuente") and mostrado.get("id_fuente") else None)
         almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()),
-                            nombre, grupo_id, None, 1, None)
+                            nombre, grupo_id, producto_id, 1, None)
         puestos += 1
     for producto_id in datos.producto_ids:
         p = catalogo.producto(producto_id) or {}
