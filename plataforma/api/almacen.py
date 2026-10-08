@@ -516,6 +516,24 @@ def borra_lineas_de_tienda(lista_id: str, cadena: str, usuario_id: str,
         return cur.rowcount
 
 
+def _lo_que_se_paga(cent, parte, cantidad) -> int | None:
+    """Cuanto suma una linea en la caja, o `None` si no hay precio que dar.
+
+    **La parte repartida manda.** `cesta` decide la promocion por grupo de compra y reparte el total entre las
+    lineas, asi que ese numero es el que se paga. Si no viene -- una llamada antigua, o un sitio que aun no lo
+    pasa -- se calcula `unitario x cantidad`, que es el mismo numero cuando la linea va sola.
+
+    **Y no se inventa un cero.** Sin precio, devuelve `None`: el cierre lo cuenta aparte (`sin_precio`), porque
+    un cero ahi afirmaria que salio gratis.
+
+    Esto vivia dentro del cierre, donde no se podia probar sin PostgreSQL; y era justo donde estaba el fallo:
+    se cobraba unitario x cantidad por linea, sin ofertas, mientras la pantalla ya decia otra cosa.
+    """
+    if cent is None:
+        return None
+    return int(parte) if parte is not None else int(cent) * int(cantidad)
+
+
 def cierra_compra(lista_id: str, usuario_id: str,
                   precios: dict[str, dict] | None = None) -> dict:
     """«He terminado la compra»: lo del carro se guarda y sale de la lista.
@@ -557,15 +575,14 @@ def cierra_compra(lista_id: str, usuario_id: str,
         filas = []
         for linea in en_el_carro:
             suyo = precios.get(str(linea["id"])) or {}
+            # `cent` se guarda para la fila: la tabla tiene el precio **unitario**, aunque el total sume la
+            # parte repartida.
             cent = suyo.get("precio_cent")
-            if cent is None:
+            cuanto = _lo_que_se_paga(cent, suyo.get("coste_cent"), linea["cantidad"])
+            if cuanto is None:
                 sin_precio += 1
             else:
-                # **La parte que le toca, repartida en `cesta`.** Si no viene, unitario x cantidad, que es el
-                # mismo numero cuando la linea va sola. Con esto el 3x2 llega a la caja: antes se cobraba
-                # unitario x cantidad por linea, sin ofertas, y el registro no cuadraba con lo enseñado.
-                parte = suyo.get("coste_cent")
-                total += int(parte) if parte is not None else int(cent) * int(linea["cantidad"])
+                total += cuanto
             filas.append((str(linea["id"]), linea["grupo_id"], linea["producto_id"],
                           linea["nombre_visto"], linea["cantidad"],
                           suyo.get("cadena") or linea["cadena_elegida"], cent))
