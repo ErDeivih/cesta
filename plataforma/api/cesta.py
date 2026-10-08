@@ -136,6 +136,17 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # conviene es la SUMA de todas sus lineas, no la de la ultima: pedir 2 y 3 es pedir 5.
     cantidades = _cantidades_por_referencia(peticiones)
 
+    # **Que producto pidio cada linea, cuando lo dice.** La clave puede ser el grupo, pero
+    # si la persona registro el producto concreto, la referencia tiene que ser ESE producto.
+    pedido: dict = {}
+    for peticion in peticiones:
+        suya = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
+        if suya is not None and peticion.producto_id:
+            pedido[suya] = peticion.producto_id
+
+    # La ficha de cada fila por su identificador, para buscar la del producto pedido.
+    fichas = {fila[3]: (fila[3], fila[4], fila[8], fila[9]) for fila in filas}
+
     # **Una referencia por grupo, la misma en todas las cadenas.** Antes la clave incluia la
     # cadena, asi que la referencia se movia con la tienda: el mismo candidato podia salir exacto
     # en una y alternativa en otra, y los veredictos de dos cadenas no eran comparables.
@@ -151,9 +162,11 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
         coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
-        referencia = identidad.Producto(fuente=clave[1], id_fuente=str(canonico[clave[0]][0]),
-                                        nombre=canonico[clave[0]][1], gtin=canonico[clave[0]][2],
-                                        marca=canonico[clave[0]][3])
+        # **La referencia: lo pedido si consta, y si no el canonico del grupo.** Es la misma ficha
+        # para todas las cadenas, porque la identidad se compara por GTIN y no por donde este.
+        cual = fichas.get(pedido.get(clave[0])) or canonico[clave[0]]
+        referencia = identidad.Producto(fuente=clave[1], id_fuente=str(cual[0]),
+                                        nombre=cual[1], gtin=cual[2], marca=cual[3])
         esta = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca)
         # Sin GTIN ni presentacion que afirmar, el motor se abstiene; y `None` cuenta como "nada que
         # afirmar", que es lo mismo que hacia antes de este cambio.
