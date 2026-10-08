@@ -50,6 +50,57 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (15 de octubre de 2026) · los tres casos de coste, cerrados en los cinco sitios
+
+**El dueño reprodujo tres fallos** y los dejo escritos en `docs/SUPERAPP-REVISION-COSTES-2026-10-08.md`, con
+orden de cerrarlos **antes** de las graficas. Los tres estan corregidos, **cada uno con prueba de comportamiento
+vista roja antes**, y —esto es lo que costo mas— **en los cinco sitios donde el proyecto suma dinero**.
+
+| caso | era | quedo | commits |
+|---|---|---|---|
+| **1. seleccion conjunta, cobro separado** | la promocion se aplicaba **por linea** y luego se sumaban los costes ya separados: un 3x2 daba **200** en una linea de tres y **300** en dos de una y dos | **agrupar** por producto efectivo + tienda (solo lo autorizado), aplicar la promocion **una vez** sobre el grupo, y **repartir** conservando la suma exacta. Redondeo escrito: parte entera, y el resto **de uno en uno** a mayor fraccion, a igualdad la que va antes | `066089d`, `4901dda`, `74a6db0`, `a90d7a2` |
+| **2. autorizacion de B aplicada a A** | `_es_la_confirmada` validaba B, pero la eleccion se construia con `hallado` (el canonico A): `confirmado=dia:B; elegido=dia:A; coste=200` | la **eleccion efectiva** se decide **antes** de cobrar: con sustitucion confirmada, lo devuelto y cobrado es **la alternativa** —su producto, su nombre, **su precio y su oferta**— y `autorizada` sale de esa misma decision | `066089d` |
+| **3. referencias distintas dentro del mismo grupo** | `pedido[grupo] = producto_id` se pisaba entre lineas y las cantidades se sumaban por grupo | llave **por linea** cuando se pide un articulo concreto, **gana el pedido** si esta entre las filas con precio, y si **no esta el motor se abstiene** — el canonico no sustituye su identidad | `066089d` |
+
+### Los cinco sitios que suman dinero
+
+Aqui esta lo que mas tiempo llevo, y por una razon que conviene no repetir: **el arreglo valia donde lo probaba y
+faltaba donde no miraba**. Fueron apareciendo de uno en uno.
+
+| donde | que hace | commit |
+|---|---|---|
+| `donde_comprar` | el total por tienda | `066089d` |
+| `estimacion` | el numero de la lista | `4901dda` |
+| `coste_por_linea` | lo que se **guarda** al cerrar (y la parte repartida de cada linea) | `64a7c03`, `74a6db0` |
+| **el cierre** (`almacen.py`) | **la caja**: el total que se cuenta. Escribia `unitario x cantidad` por linea, **sin ofertas** | `74a6db0` |
+| `reparto_por_tienda` | el reparto entre tiendas — su docstring **ya prometia** «con las ofertas aplicadas» y no las aplicaba | `a90d7a2` |
+
+**La leccion, para el proximo cambio de precio:** lo primero no es arreglar el sitio que tienes delante, es
+**contar cuantos sitios calculan un precio**. Aqui eran cinco, y los encontre de uno en uno a lo largo de seis
+rondas.
+
+### Dos regresiones mias, cazadas por pruebas que escribi para eso
+
+- La llave nueva dejo **lineas con producto concreto mostrandose «sin precio»** en la lista y **guardandose sin
+  precio** al cerrar: silencioso, en pantalla y en el registro. Lo cazaron las pruebas de `estimacion` y de
+  `coste_por_linea` (`4901dda`, `64a7c03`).
+- Un **reemplazo global** de `(1, "dia")` en cinco ficheros de prueba rompio diez pruebas, porque en varios esa
+  forma no era la llave. **Revertido**, y sustituido por arreglos leidos fichero a fichero.
+
+**Y los dobles de diez pruebas dejaron de estar en paso** con la llave nueva: un doble no debe componer la llave a
+mano, sino llamar a `_llave_candidato`. Es la **tercera** vez en la sesion que esa leccion muerde.
+
+### Lo que queda
+
+1. **El ensayo y la restauracion**, con los contratos nuevos. **Bloqueado por el entorno**: Docker no responde
+   (`dockerDesktopLinuxEngine` no existe), y no se puede fingir. Es lo unico que puede decir si el cierre cuadra
+   contra PostgreSQL de verdad — y por eso **la condicion sigue ABIERTA**: todo lo de arriba esta probado con
+   dobles, que es lo que ha permitido trabajar sin motor.
+2. **La publicacion y la imagen servida**, cuando el motor vuelva.
+3. **Las graficas** (medida, cobertura y universo) y **los recorridos** de las tres aplicaciones.
+
+**No se declara cerrada ninguna condicion.** Suite en verde y `ruff` limpio en cada commit; nada desplegado.
+
 ## Resumen vigente (14 de octubre de 2026) · los cuatro defectos, cerrados y probados
 
 **Los cuatro defectos que impedían cerrar identidad y coste están corregidos**, cada uno con pruebas de
