@@ -553,6 +553,11 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
     lineas = catalogo.con_pasillos(almacen.lineas_de(lista_id))
+    # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
+    # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
+    # sustitucion que nadie ha confirmado.
+    _autorizadas = almacen.autorizacion_de(lista_id)
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     # **Las lineas que apuntan a otro producto no tienen precio, y hay que quitarselo aqui.**
     # Sin esto, la compra guardaba el precio del grupo al que apunta la linea -- que hoy puede
     # ser un pintalabios en una linea que dice «leche entera» -- y el total mentia. Es el mismo
@@ -614,6 +619,11 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     # con los dos. Y **no se reordena nada aqui**: la pantalla es la que sabe
     # cuantas secciones tiene la lista y en que orden se pintan.
     lineas = catalogo.con_pasillos(almacen.lineas_de(lista_id))
+    # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
+    # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
+    # sustitucion que nadie ha confirmado.
+    _autorizadas = almacen.autorizacion_de(lista_id)
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     # **Y si el grupo ya no es el producto que la linea dice, se dice.** El
     # `grupo_id` es un ordinal que el emparejador renumera en cada pasada, asi que
     # una linea puede estar apuntando a otra cosa: sin esta marca, la pantalla
@@ -710,6 +720,7 @@ def en_tienda(lista_id: str, datos: EnTienda, usuario: dict = Depends(usuario_ac
         return {"puestas": cuantas, "cadena": datos.cadena}
     # Sin `lineas`: toda la lista, que es el boton de «todo en DIA».
     todas = [x["id"] for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     return {"puestas": almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], todas),
             "cadena": datos.cadena}
 
@@ -761,6 +772,11 @@ def reparto(lista_id: str, cadenas: str | None = None,
     """
     _acceso(lista_id, usuario)
     lineas = [x for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
+    # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
+    # sustitucion que nadie ha confirmado.
+    _autorizadas = almacen.autorizacion_de(lista_id)
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     # Las que apuntan a otro producto no se reparten: se estaria decidiendo la tienda
     # de un producto que no es el que dice la linea. Se quedan fuera del reparto y la
     # pantalla las señala en la lista (`producto_movido`).
@@ -821,6 +837,11 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
             # la otra no seria una lista que cambia de forma segun por donde haya
             # entrado el dato.
             "lineas": catalogo.con_pasillos(almacen.lineas_de(lista_id))}
+    # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
+    # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
+    # sustitucion que nadie ha confirmado.
+    _autorizadas = almacen.autorizacion_de(lista_id)
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
 
 
 @app.post("/api/listas/{lista_id}/compartir")
@@ -883,6 +904,11 @@ def donde(lista_id: str, cadenas: str | None = None, max_tiendas: int | None = N
     """Donde sale mas barata esta lista. Con las ofertas puestas."""
     _acceso(lista_id, usuario)
     lineas = [x for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
+    # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
+    # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
+    # sustitucion que nadie ha confirmado.
+    _autorizadas = almacen.autorizacion_de(lista_id)
+    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     # Igual que en el reparto: una linea que apunta a otro producto no se compara, no
     # sea que «donde sale mas barata» conteste con el precio de otra cosa.
     movidas = catalogo.lineas_movidas(lineas)
@@ -1141,3 +1167,34 @@ def _vigencia_del_catalogo() -> dict:
     except (OSError, ValueError):
         return {"comprobable": False, "motivo": "no hay catalogo publicado"}
     return _vigencia(catalogo.fecha_de_gold(), str(puntero.get("publicado_en") or ""))
+
+
+
+# ------------------------------------------------------------- autorizar una sustitucion ---
+
+@app.post("/api/listas/{lista_id}/lineas/{linea_id}/autorizar")
+def autorizar_linea(lista_id: str, linea_id: str, autorizado: bool = Query(default=True),
+                    usuario: dict = Depends(usuario_actual)) -> dict:
+    """Confirmar (o retirar) la sustitucion propuesta para **una** linea de la lista.
+
+    **Por que existe.** La alternativa la propone el motor, y hasta ahora la confirmacion viajaba en el cuerpo
+    de la peticion: al recargar se perdia y habia que volver a decidir. Una decision que hay que tomar dos
+    veces es una decision que el sistema no se cree.
+
+    **Por que `hace_falta_escribir=True`.** Autorizar cambia la lista para todos los que la comparten, asi que
+    no basta con poder mirarla: se pide la misma puerta que para cualquier escritura, con su papel.
+
+    **Por que se guarda por linea y no por peticion.** La decision es sobre **ese producto en esa lista**.
+    Guardarla en la peticion la ata a la pantalla; por lista, al dia entero. La linea es lo unico que no cambia
+    de significado.
+
+    **Y no se guarda que alternativa se autorizo**: la elige el motor cada vez, con los precios de hoy.
+    Guardar la de ayer dejaria autorizada una sustitucion que ya no se ofrece.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    tocada = almacen.autoriza_linea(lista_id, linea_id, usuario["id"], autorizado)
+    if tocada is None:
+        # 404 y no 403: una linea que no existe y una de otra lista se contestan **igual**, para no decir
+        # cuales existen. Es la regla de siempre.
+        raise HTTPException(status_code=404, detail="esa linea no esta en esa lista")
+    return {"linea_id": tocada, "autorizado": autorizado}

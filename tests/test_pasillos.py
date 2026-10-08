@@ -189,6 +189,10 @@ def test_la_ruta_de_la_lista_manda_el_pasillo_en_cada_linea(gold, monkeypatch):
     """El contrato que consume la pantalla, probado entero y sin PostgreSQL."""
     gold()
     monkeypatch.setattr(almacen, "lineas_de", lambda lista_id: _lineas_falsas())
+    monkeypatch.setattr(almacen, "autorizacion_de", lambda lista_id: {})
+    # **La autorizacion, sustituida como las demas.** El endpoint la pide para decidir que cuenta
+    # en el total, y sin sustituirla iria al almacen de verdad, que aqui no esta arrancado.
+    monkeypatch.setattr(almacen, "autorizacion_de", lambda lista_id: {})
     monkeypatch.setattr(almacen, "novedades", lambda lista_id, usuario_id: [])
     monkeypatch.setattr(almacen, "marca_visita", lambda lista_id, usuario_id: None)
     monkeypatch.setattr(almacen, "quienes_en", lambda lista_id: [])
@@ -219,6 +223,7 @@ def test_sin_pasillos_la_ruta_devuelve_lo_de_siempre(gold, monkeypatch):
     """Con gold sin la columna, la respuesta es la de ayer: ni pasillos ni errores."""
     gold(con_seccion=False)
     monkeypatch.setattr(almacen, "lineas_de", lambda lista_id: _lineas_falsas())
+    monkeypatch.setattr(almacen, "autorizacion_de", lambda lista_id: {})
     monkeypatch.setattr(almacen, "novedades", lambda lista_id, usuario_id: [])
     monkeypatch.setattr(almacen, "marca_visita", lambda lista_id, usuario_id: None)
     monkeypatch.setattr(almacen, "quienes_en", lambda lista_id: [])
