@@ -50,6 +50,43 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (10 de octubre de 2026) · condición 3 cerrada
+
+**Condición 3 — pantallas y comportamiento persistente: CERRADA.** Pieza a pieza, con su evidencia:
+
+| pieza | estado | dónde |
+|---|---|---|
+| el detalle por receta lee la receta **persistida de su ruta**, con **404 real** y versiones accesibles | hecho | `paginas/RecetaDetalle.tsx`, `tests/test_detalle_receta.py` |
+| el módulo compartido **fuera** de las rutas de recetas y calorías | hecho | las tres secciones de recetas, el diario y las tendencias tienen pantalla propia |
+| editar una receta, diciendo que **crea versión nueva** | hecho | `componentes/FormularioReceta.tsx`, `tests/test_editar_receta.py` |
+| **errores al archivar**, con el motivo de la API | hecho | `paginas/Recetario.tsx`, `tests/test_archivar_errores.py` |
+| **plan modificable**, incluido **quitar** una receta de un día | hecho | `quitar_del_plan` + `DELETE /plan`, `tests/test_quitar_del_plan.py` |
+| **cálculo de raciones**, servidor y pantalla, con **las dos cifras** | hecho | `core/recetas.escala`, `tests/test_raciones.py`, `test_raciones_en_pantalla.py` |
+| S09: **cobertura por nutriente**, y un nutriente sin dato se dice con la palabra | hecho | `paginas/Diario.tsx`, `tests/test_cobertura_en_pantalla.py` |
+| S09: **tendencias con huecos en vez de ceros**, y sin media inventada | hecho | `paginas/Tendencias.tsx`, `tests/test_tendencias.py` |
+| la versión del diario: **enlace verificado** y **procedencia** (`vinculada` / `manual` / `perdida`) | hecho | `plataforma/api/diario.py`, `tests/test_procedencia_diario.py` |
+
+**Comprobación en navegador: hecha, 23 comprobaciones y 0 fallos** (`uv run python -m plataforma.prueba_suite`,
+con el servidor de desarrollo en 5173). Y **no es una comprobación vieja**: `/recetas` y `/calorias` ya
+renderizan las pantallas nuevas, así que verifica que **cargan en un navegador real con cero errores de
+página**, además de navegación, teclado, foco atrapado, Escape, móvil a 390 y escritorio a 1280, recarga en
+ruta profunda y las direcciones antiguas con su query. Capturas en `data/capturas-s06/`.
+
+**Lo que esa comprobación NO es, dicho para no confundirlo:** no es un recorrido funcional completo. No crea
+una receta ni anota un día. Eso es el **ensayo integral de S12** —datos reales, **dos cuentas** y **copia
+restaurada**—, que sigue pendiente.
+
+**Suite: 1.408 pruebas, 0 fallos.** Ruff limpio, `tsc` limpio, `npm run build` correcto.
+
+**Lo que queda del objetivo:**
+
+1. **D, segunda mitad**: que la fecha de cada precio **pertenezca** a la versión del catálogo (la versión ya se
+   informa en `/api/estado` desde la ronda 17).
+2. **La persistencia** de la autorización de sustitución en la línea: necesita **PostgreSQL** levantado, y se
+   levanta cuando toque esa pieza.
+3. **Condición 4**: puentes explícitos e idempotentes con vista previa, gráficas con **medida, cobertura y
+   universo**, y el **ensayo integral** con dos cuentas y copia restaurada.
+
 ## Resumen vigente (9 de octubre de 2026) · condiciones de la revisión
 
 **Condición 1 — aislamiento por usuario: CERRADA.**
