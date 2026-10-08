@@ -102,6 +102,18 @@ mano, sino llamar a `_llave_candidato`. Es la **tercera** vez en la sesion que e
 **Dos de esas pruebas pasaron a la primera** (revocacion, puentes) y **una necesito dos pasos** (la autorizacion:
 el grupo no bastaba). Se dice cual es cual: una prueba que no vio un rojo **fija** comportamiento, no lo caza.
 
+### Y las ultimas piezas, con una comprobacion que no encontro nada (y por eso vale)
+
+| que | por que | commit |
+|---|---|---|
+| **La cuenta de la caja, en una funcion con nombre** | `_lo_que_se_paga(cent, parte, cantidad)`: la parte repartida manda, sin parte se calcula unitario x cantidad, y **sin precio devuelve None** -- un cero afirmaria que salio gratis. Estaba dentro del cierre, sin prueba posible sin PostgreSQL, y era donde vivia el fallo | `edcc001` |
+| **El ensayo, con la invariante del coste** | el ensayo pasaba **sin mirar el coste**: una firma en blanco. Ahora comprueba que lo guardado no cueste mas que la suma de sus unitarios, y **dice si hubo oferta** -- para que un pase trivial no se lea como verificacion | `3ccad84` |
+| **El cliente no calcula dinero** | se busco el sexto sitio donde pudiera romperse la regla: `formato.ts` tiene `euros()` y `eurosUnidad()`, que **formatean** (`cent / 100`), y no hay ni un `reduce` ni una multiplicacion de precios. **Los cinco sitios que suman son todos del servidor** | -- |
+
+**`ruff` volvio a ganarse su sitio:** al sacar la cuenta de la caja deje `cent` sin definir y el cierre habria
+reventado en ejecucion. La suite **no lo vio** (esa linea solo corre contra PostgreSQL) y el lint si:
+`F821 Undefined name cent`. Es la misma clase de fallo que puso la puerta del lint en este proyecto.
+
 ### Lo que queda
 
 1. **El ensayo y la restauracion**, con los contratos nuevos. **Bloqueado por el entorno**: Docker no responde
