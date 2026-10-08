@@ -323,7 +323,7 @@ def _es_de_fiar(peticion: Peticion, candidata, mejor: dict) -> bool:
     return _es_la_confirmada(peticion, alternativa)
 
 
-def esperada_de(peticion: Peticion) -> tuple:
+def _esperada_de(peticion: Peticion) -> tuple:
     """La identidad de una peticion, para agrupar compras: el grupo y el producto concreto, si consta."""
     return _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
 
@@ -772,7 +772,7 @@ def estimacion(lineas: list[dict]) -> dict:
         # pendiente de autorizacion no lleva descuento: nadie ha aceptado esa sustitucion.
         if not _es_de_fiar(peticion, candidata, mejor):
             continue
-        grupos.setdefault((candidata[1], esperada_de(peticion)), []).append(indice)
+        grupos.setdefault((candidata[1], _esperada_de(peticion)), []).append(indice)
     reparto: dict[int, int] = {}
     for indices in grupos.values():
         if len(indices) < 2:
