@@ -65,6 +65,20 @@ class Eleccion:
     motivo: str | None = None
 
 
+def _coste_para(cantidad: int, precio_cent: int, promo_txt: str | None) -> int:
+    """Lo que cuesta **la cantidad que se pide** con esa promocion. Es la regla de la eleccion.
+
+    **Por que no basta el precio unitario.** Para dos unidades, un envase de 1,00 EUR con "2a unidad -50%"
+    cuesta 150 cent y uno de 0,90 EUR sin promocion cuesta 180: el mas barato por unidad es el **mas caro**
+    al pagar. Retener el menor precio unitario antes de mirar la promocion descarta la oferta buena.
+
+    Es una funcion aparte porque es pura: se prueba con numeros, sin base de datos ni peticiones.
+    """
+    if not promo_txt:
+        return cantidad * precio_cent
+    return lee_promo(promo_txt).coste(cantidad, precio_cent)
+
+
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     """Por cada linea y cadena, el producto mas barato que la resuelve."""
     con = conexion()
@@ -91,15 +105,25 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # La promocion vigente de cada producto, del ultimo silver.
     promos = _promos_vigentes({f[3] for f in filas}, fecha_tope)
 
+    # **La cantidad que se pide de cada referencia.** Si la misma apareciera en dos lineas con
+    # cantidades distintas, manda la ultima: es una decision, no un descuido.
+    cantidades: dict = {}
+    for peticion in peticiones:
+        referencia = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
+        if referencia is not None:
+            cantidades[referencia] = max(1, int(peticion.cantidad))
+
     mejor: dict = {}
     canonico: dict = {}
     for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
         actual = mejor.get(clave)
-        if actual is None or precio < actual[1]:
+        # **Coste final de lo que se pide**, no precio unitario del envase.
+        coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
+        if actual is None or coste < actual[7]:
             # Seis campos: los cuatro de siempre, **el GTIN de esta fila** -- que es el producto que
             # se va a proponer -- y el canonico del grupo, que se rellena al final.
-            mejor[clave] = (pid, precio, nombre, promos.get(pid), ean, None, marca)
+            mejor[clave] = (pid, precio, nombre, promos.get(pid), ean, None, marca, coste)
         # **El canonico es el de menor identificador**, y no el primero que devuelva el SQL: asi la
         # referencia es la misma entre ejecuciones, que es lo que hace reproducible el veredicto.
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
@@ -108,7 +132,8 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         actual = mejor.get(clave)
         if actual is not None:
             mejor[clave] = (*actual[:5], identidad.Producto(
-                fuente=clave[1], id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca), marca)
+                fuente=clave[1], id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca), marca,
+                actual[7])
     return mejor
 
 
@@ -196,7 +221,7 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     hallado = mejor.get(clave)
     if hallado is None:
         return None
-    pid, precio, nombre, promo_txt, ean, referencia, marca = [*hallado, None, None, None][:7]
+    pid, precio, nombre, promo_txt, ean, referencia, marca, _coste_elegido = [*hallado, None, None, None, None][:8]
     # **El veredicto, antes de proponer nada.** Si no es el mismo producto, el coste que sigue es el
     # de una alternativa, y eso tiene que viajar en la respuesta para que nadie lo sustituya callando.
     veredicto = None
