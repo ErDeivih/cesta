@@ -1330,3 +1330,34 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         ya.add(nombre.lower())
         anadidos += 1
     return {"anadidos": anadidos, "ya_estaban": ya_estaban}
+
+@app.get("/api/listas/{lista_id}/desde-la-compra")
+def previa_de_la_compra(lista_id: str, compra_id: str | None = None,
+                        usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La vista previa de consumir**: que lineas de la ultima compra se podrian anotar y con que datos.
+
+    No escribe nada: el diario rechaza el tipo `compra` a proposito -- comprar no es comer --, asi que esto
+    **propone** y la persona confirma.
+
+    **Y dice la cobertura**, que es lo que hace que esto no mienta: las lineas cuyo producto **no** declara
+    nutricion en el catalogo se devuelven aparte, con su nombre. Anotar las que se puede y callar las demas
+    convertiria un dato que falta en una comida que parece completa.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=False)
+    compras = almacen.compras_de(lista_id, limite=1)
+    if not compras:
+        return {"compra_id": None, "anotarian": [], "sin_dato": [], "cobertura": {"con_dato": 0, "total": 0}}
+    la_compra = compra_id or str(compras[0]["compra_id"])
+    lineas = almacen.lineas_de_compra(la_compra)
+    anotarian: list[dict] = []
+    sin_dato: list[str] = []
+    for linea in lineas:
+        ficha = catalogo.producto(linea["producto_id"]) if linea.get("producto_id") else None
+        nutricion = (ficha or {}).get("nutricion")
+        if nutricion:
+            anotarian.append({"linea_id": str(linea["linea_id"]), "nombre": linea["nombre"],
+                              "producto_id": linea["producto_id"], "fuente_dato": "catalogo"})
+        else:
+            sin_dato.append(linea["nombre"])
+    return {"compra_id": la_compra, "anotarian": anotarian, "sin_dato": sin_dato,
+            "cobertura": {"con_dato": len(anotarian), "total": len(lineas)}}

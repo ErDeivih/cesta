@@ -1136,3 +1136,18 @@ def autoriza_linea(lista_id: str, linea_id: str, usuario_id: str,
         """, (autorizado, producto, cadena, linea_id, lista_id))
         fila = cur.fetchone()
     return str(fila["id"]) if fila else None
+
+def lineas_de_compra(compra_id: str) -> list[dict]:
+    """Las lineas que quedaron guardadas en una compra, con su nombre y su producto.
+
+    **No se guarda nutricion en una compra**, y no es un olvido: una compra es de precios. Los datos de
+    nutricion viven en el catalogo, y quien los junte es el puente, no esto.
+    """
+    with cursor() as cur:
+        cur.execute("""
+            SELECT id, linea_id, grupo_id, producto_id, nombre, precio_cent, cadena
+              FROM compra_linea
+             WHERE compra_id = %s
+             ORDER BY nombre
+        """, (compra_id,))
+        return [dict(f, id=str(f["id"])) for f in cur.fetchall()]
