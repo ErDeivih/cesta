@@ -6,6 +6,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { ErrorApi, pide } from './cliente'
+import { useClaveDeCuenta } from './cuenta'
 
 export type Entrada = {
   id: number
@@ -74,8 +75,9 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'DELETE', cuerpo?: un
 }
 
 export function useDia(fecha: string) {
+  const cuenta = useClaveDeCuenta()
   return useQuery({
-    queryKey: ['diario', fecha],
+    queryKey: ['diario', cuenta, fecha],
     queryFn: () => pide<Dia>(`/diario/${fecha}`),
   })
 }
@@ -84,7 +86,7 @@ export function useApuntar() {
   const cliente = useQueryClient()
   return useMutation({
     mutationFn: (datos: NuevaEntrada) => conCuerpo('/diario', 'POST', datos),
-    onSuccess: (_r, datos) => cliente.invalidateQueries({ queryKey: ['diario', datos.fecha] }),
+    onSuccess: (_r, datos) => cliente.invalidateQueries({ queryKey: ['diario'] }),
   })
 }
 
@@ -92,6 +94,6 @@ export function useBorrarEntrada(fecha: string) {
   const cliente = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => conCuerpo(`/diario/entrada/${id}`, 'DELETE'),
-    onSuccess: () => cliente.invalidateQueries({ queryKey: ['diario', fecha] }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['diario'] }),
   })
 }

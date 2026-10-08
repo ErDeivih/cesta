@@ -7,6 +7,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { ErrorApi, pide } from './cliente'
+import { useClaveDeCuenta } from './cuenta'
 
 export type Ingrediente = {
   texto: string
@@ -69,16 +70,18 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'PUT', cuerpo: unknow
 }
 
 export function useRecetas(incluirArchivadas = false) {
+  const cuenta = useClaveDeCuenta()
   return useQuery({
-    queryKey: ['recetas', incluirArchivadas],
+    queryKey: ['recetas', cuenta, incluirArchivadas],
     queryFn: () => pide<{ recetas: ResumenReceta[] }>('/recetas', { incluir_archivadas: incluirArchivadas }),
   })
 }
 
 /** Una receta concreta. Con `version`, **esa** version: es lo que permite ver que la vieja no se mueve. */
 export function useReceta(id: number | null, version?: number | null) {
+  const cuenta = useClaveDeCuenta()
   return useQuery({
-    queryKey: ['receta', id, version ?? 'ultima'],
+    queryKey: ['receta', cuenta, id, version ?? 'ultima'],
     enabled: id !== null,
     queryFn: () => pide<Receta>(`/recetas/${id}`, { version: version ?? undefined }),
   })
@@ -120,8 +123,9 @@ export type LineaPlan = {
 }
 
 export function usePlan(desde: string, hasta: string) {
+  const cuenta = useClaveDeCuenta()
   return useQuery({
-    queryKey: ['plan', desde, hasta],
+    queryKey: ['plan', cuenta, desde, hasta],
     queryFn: () => pide<{ plan: LineaPlan[] }>('/recetas/plan', { desde, hasta }),
   })
 }

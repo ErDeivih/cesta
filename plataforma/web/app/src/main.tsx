@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 
 import { App } from './App'
+import { VigilaCuenta } from './api/cuenta'
 import { ErrorApi } from './api/cliente'
 import './estilos.css'
 
@@ -36,6 +37,9 @@ createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={cliente}>
       <BrowserRouter>
+        {/* **Vaciar la cache cuando cambia la cuenta.** Va antes que la aplicacion
+            para que no haya ni un render con datos de la sesion anterior. */}
+        <VigilaCuenta />
         <App />
       </BrowserRouter>
     </QueryClientProvider>
