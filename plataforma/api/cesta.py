@@ -773,9 +773,11 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
     for linea, peticion in zip(lineas, peticiones, strict=True):
         cadena = precio = None
         if not linea.get("producto_movido"):
-            clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
+            # **Por la llave del motor**, no por el grupo: la llave lleva el producto concreto cuando la
+            # linea lo pide, y comparar contra el grupo dejaba esas lineas guardandose **sin precio**.
+            esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
             suyos = [(k[1], v[1]) for k, v in mejor.items()
-                     if k[0] == clave and k[-1] != "alternativa"]
+                     if k[0] == esperada and k[-1] != "alternativa"]
             elegida = linea.get("cadena_elegida")
             if elegida and any(f == elegida for f, _ in suyos):
                 cadena, precio = elegida, next(p for f, p in suyos if f == elegida)
