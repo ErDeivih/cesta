@@ -50,6 +50,74 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (14 de octubre de 2026) · los cuatro defectos, cerrados y probados
+
+**Los cuatro defectos que impedían cerrar identidad y coste están corregidos**, cada uno con pruebas de
+comportamiento y **vistas rojas antes** de tocar el código:
+
+| # | defecto | arreglo | commit |
+|---|---|---|---|
+| 1 | la autorización guardaba un sí/no, no **qué** alternativa se aceptó | migración `012` (producto y cadena, con una regla en la base que rechaza un sí sin producto), `autoriza_linea` que lo exige y lo guarda, endpoint que lo recibe, cruce único a las líneas, y `_es_la_confirmada` que **pide confirmación nueva si el motor propone otra** | `6f5c04d`, `6daf219`, `e2b97a8`, `1416867`, `b8baeb1`, `1b882aa` |
+| 2 | el canónico se construía por `(grupo, fuente)` | una referencia **por grupo, igual en todas las cadenas**; **el producto pedido manda** cuando la línea lo registra (por producto o por grupo); y **el alta guarda el miembro que enseña la ficha** | `565e7cf`, `b2c5d04`, `5a13436`, `2e75ddd` |
+| 3 | dos líneas del mismo producto se pisaban | las cantidades **se suman**: pedir 2 y 3 es pedir 5 | `b7fd14a` |
+| 4 | la publicación no publicaba | la pasada **publica lo que escribe**, así que el puntero deja de quedarse viejo | `25ee6bc` |
+
+**Lo que se midió al arreglar el 2, y conviene no perder:** la ficha enseña el miembro **más barato por
+unidad** y el motor comparaba contra el de **identificador más bajo**; son productos distintos en cuanto los
+precios no acompañan. Se arregló **guardando** el miembro mostrado, no unificando la regla: «el más barato»
+cambia con los precios todos los días, y atar la identidad al precio habría sido peor que el defecto.
+
+### El orden del dueño: tres de cuatro verificados, y los puentes hechos
+
+| # | punto | estado |
+|---|---|---|
+| 1 | el ensayo reparado: la compra **por su identificador** y por **las líneas realmente marcadas** | **verificado** (`TODO BIEN`) |
+| 2 | aislamiento y autorización con **dos cuentas** y almacenamiento real | **verificado** (`TODO BIEN`) |
+| 3 | **copia y restauración** en un entorno separado, comprobando su contenido | **verificado** (`TODO BIEN`; `plataforma/prueba_copia.py`) |
+| 4 | puentes con confirmación e idempotencia, y las gráficas | **puentes hechos**; **gráficas: plan asentado** |
+
+Los puentes, todos con pruebas de comportamiento:
+
+- **favoritos → lista**: ya **no duplica**, y dice cuántas había (`dde6742`).
+- **plan → lista**: **vista previa** (`4a82d81`) y **acción** (`b7faa4d`), compartiendo el cálculo. Los
+  ingredientes salen de **la versión que el plan guardó**, y la cantidad va **a la nota** —la lista cuenta
+  envases y la receta habla en gramos—.
+- **consumir → diario**: **previa con la cobertura dicha** (`7b1be32`) y **acción** (`54d8289`), idempotente
+  por el identificador de la línea de compra, y **sin inventar calorías**: la previa dice si hay datos de
+  nutrición, no cuántos, y sacar los números del texto es otra pieza.
+
+**Y el diario rechaza el tipo `compra` a propósito** —*comprar no es comer*—, que es la razón de que este
+puente **proponga** en vez de copiar.
+
+### Lo que queda
+
+1. **Las gráficas**: que la serie lleve **medida** (precio por unidad), **cobertura** (cuántos puntos y sobre
+   qué tramo, y callar si son pocos) y **universo** (el grupo o producto y las cadenas que entran), y que
+   `Chispa.tsx` —una chispa **sin ejes**— los enseñe como **texto accesible**. El principio ya está escrito en
+   `alertas.py`: *«sin histórico suficiente no se inventa un mínimo: se calla»*.
+2. **El recorrido completo de las tres aplicaciones**, que es lo que queda del criterio de cierre. El ensayo
+   con dos cuentas y copia restaurada está superado; **«usables de punta a punta» no se demuestra con pruebas
+   de unidad**, y por eso **ninguna condición se ha declarado cerrada**.
+3. La **publicación**: la pasada ya publica desde `25ee6bc`, pero el catálogo servido seguirá diciendo
+   incoherente hasta que corra una pasada (o alguien publique una vez).
+
+### El método que ha funcionado, y el que no
+
+- **Observar antes de suponer.** Casi todas las rondas perdidas fueron por suponer un nombre, una forma o una
+  aridad. Cuatro veces bastó con **preguntarle al módulo** (o al catálogo) en vez de recordarlo.
+- **Compilar el texto nuevo ANTES de escribirlo**, y **abortar sin escribir** si algo no cuadra: ha evitado
+  dejar el árbol roto cinco veces.
+- **Un invariante entre pasos** cuando el cambio es grande: comprobar que las claves no cambian antes de
+  seguir. *Compilar demuestra la sintaxis, no que el bucle siga haciendo lo mismo.*
+- **Ejecutar con `subprocess` y lista de argumentos** para escribir dentro de contenedores: PowerShell partió
+  cinco comandos con comillas y acentos graves.
+- **Un rojo puede ser la prueba**: ha pasado seis veces, y una de ellas me llevó a **revertir un arreglo que
+  estaba bien**. La regla vale también antes de revertir.
+- **Lo escrito no está verificado.** La primera ejecución del guion de la copia encontró un `TypeError` mío;
+  el ensayo de punta a punta encontró tres fallos que 1.400 pruebas no veían.
+
+**Suite: en verde, `ruff` limpio.** Medida en `54d8289` y posteriores.
+
 ## Resumen vigente (13 de octubre de 2026) · corrección: la condición 2 NO está cerrada
 
 **Este documento dijo que la condición 2 estaba cerrada y no lo está.** El dueño contrastó los informes con el
