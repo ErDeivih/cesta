@@ -1,33 +1,22 @@
-"""S08, superficie de API: el recetario, para que la pantalla tenga de donde leer.
+"""La API de recetas: **personal, y con la sesion delante de todo**.
 
-**Por que los manejadores no usan `Depends` para la conexion.** Porque asi se pueden **llamar
-directamente** desde una prueba, sin levantar un servidor ni un cliente HTTP. El proyecto ya prueba asi
-lo demas, y una funcion que solo se puede probar arrancando la aplicacion entera es una funcion que se
-prueba menos.
+Cada endpoint depende de `usuario_actual`, y el propietario sale **solo de la sesion**: nunca del cuerpo
+de la peticion. Cuando algo no es tuyo se responde **404 y no 403**, porque un 403 confirmaria que ese
+identificador existe y es de otra persona.
 
-**Que expone, y con que reglas:**
-
-  - `GET /api/recetas` -- el recetario, sin el contenido entero.
-  - `POST /api/recetas` -- una receta nueva, con su version 1.
-  - `GET /api/recetas/{id}?version=N` -- la receta; sin `version`, la ultima. **Con `version`, esa**,
-    que es lo que permite releer lo de la semana pasada igual que estaba.
-  - `PUT /api/recetas/{id}` -- cambiar: **crea version nueva**, no reescribe. Lo que no se manda se
-    hereda copiado.
-  - `POST /api/recetas/{id}/archivar` -- sale del recetario sin borrarse.
-  - `GET /api/recetas/plan?desde&hasta` y `POST /api/recetas/plan` -- el plan semanal, que **fija la
-    version** al ponerlo.
-
-**La puerta de la base se puede cambiar** (`ruta_base`). No es un adorno de testabilidad: es lo que
-permite que las pruebas usen su propio fichero y no toquen el de verdad.
+Los manejadores no usan `Depends` para la conexion, para poder llamarse directamente desde una prueba;
+la sesion, en cambio, **si** es una dependencia, y por eso la prueba del anonimo recibe 401 de verdad.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core import recetas
+
+from .sesion import usuario_actual
 
 rutas = APIRouter(prefix="/api/recetas", tags=["recetas"])
 
@@ -88,55 +77,58 @@ def _como_filas(ingredientes: list[IngredienteIn] | None) -> list[dict] | None:
 
 
 @rutas.get("")
-def listar(incluir_archivadas: bool = False) -> dict:
+def listar(incluir_archivadas: bool = False,
+           usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        return {"recetas": recetas.listar(con, incluir_archivadas=incluir_archivadas)}
+        return {"recetas": recetas.listar(con, usuario["id"], incluir_archivadas=incluir_archivadas)}
     finally:
         con.close()
 
 
 @rutas.post("", status_code=201)
-def crear(datos: RecetaIn) -> dict:
+def crear(datos: RecetaIn, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        rid = recetas.crear(con, datos.nombre, raciones=datos.raciones,
+        rid = recetas.crear(con, usuario["id"], datos.nombre, raciones=datos.raciones,
                             preparacion=datos.preparacion,
                             ingredientes=_como_filas(datos.ingredientes),
                             minutos=datos.minutos, etiquetas=datos.etiquetas)
-        return {"id": rid, "receta": recetas.leer(con, rid)}
+        return {"id": rid, "receta": recetas.leer(con, usuario["id"], rid)}
     finally:
         con.close()
 
 
 @rutas.get("/plan")
-def plan(desde: str = Query(...), hasta: str = Query(...)) -> dict:
+def plan(desde: str = Query(...), hasta: str = Query(...),
+         usuario: dict = Depends(usuario_actual)) -> dict:
     """Va **antes** que `/{receta_id}`: si no, FastAPI leeria "plan" como un identificador."""
     con = _con()
     try:
-        return {"plan": recetas.plan(con, desde, hasta)}
+        return {"plan": recetas.plan(con, usuario["id"], desde, hasta)}
     finally:
         con.close()
 
 
 @rutas.post("/plan", status_code=201)
-def planificar(datos: PlanIn) -> dict:
+def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        recetas.planificar(con, datos.fecha, datos.receta_id, comensales=datos.comensales,
-                           version=datos.version)
-        return {"plan": recetas.plan(con, datos.fecha, datos.fecha)}
+        recetas.planificar(con, usuario["id"], datos.fecha, datos.receta_id,
+                           comensales=datos.comensales, version=datos.version)
+        return {"plan": recetas.plan(con, usuario["id"], datos.fecha, datos.fecha)}
     except ValueError as fallo:
-        raise HTTPException(status_code=400, detail=str(fallo)) from fallo
+        raise HTTPException(status_code=404, detail=str(fallo)) from fallo
     finally:
         con.close()
 
 
 @rutas.get("/{receta_id}")
-def leer(receta_id: int, version: int | None = None) -> dict:
+def leer(receta_id: int, version: int | None = None,
+         usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        hallada = recetas.leer(con, receta_id, version=version)
+        hallada = recetas.leer(con, usuario["id"], receta_id, version=version)
     finally:
         con.close()
     if hallada is None:
@@ -145,15 +137,29 @@ def leer(receta_id: int, version: int | None = None) -> dict:
     return hallada
 
 
-@rutas.put("/{receta_id}")
-def cambiar(receta_id: int, datos: CambioIn) -> dict:
+@rutas.get("/{receta_id}/versiones")
+def versiones(receta_id: int, usuario: dict = Depends(usuario_actual)) -> dict:
+    """Las versiones de una receta tuya. De una que no lo es, **404 y no una lista vacia**: una lista
+    vacia diria "existe y no tiene versiones", que es informacion que no te toca."""
     con = _con()
     try:
-        numero = recetas.actualizar(con, receta_id, nombre=datos.nombre, raciones=datos.raciones,
-                                    preparacion=datos.preparacion,
+        if recetas.leer(con, usuario["id"], receta_id) is None:
+            raise HTTPException(status_code=404, detail=f"no hay receta {receta_id}")
+        return {"versiones": recetas.versiones(con, usuario["id"], receta_id)}
+    finally:
+        con.close()
+
+
+@rutas.put("/{receta_id}")
+def cambiar(receta_id: int, datos: CambioIn, usuario: dict = Depends(usuario_actual)) -> dict:
+    con = _con()
+    try:
+        numero = recetas.actualizar(con, usuario["id"], receta_id, nombre=datos.nombre,
+                                    raciones=datos.raciones, preparacion=datos.preparacion,
                                     ingredientes=_como_filas(datos.ingredientes),
                                     minutos=datos.minutos, etiquetas=datos.etiquetas)
-        return {"version": numero, "receta": recetas.leer(con, receta_id, version=numero)}
+        return {"version": numero,
+                "receta": recetas.leer(con, usuario["id"], receta_id, version=numero)}
     except ValueError as fallo:
         raise HTTPException(status_code=404, detail=str(fallo)) from fallo
     finally:
@@ -161,12 +167,12 @@ def cambiar(receta_id: int, datos: CambioIn) -> dict:
 
 
 @rutas.post("/{receta_id}/archivar")
-def archivar(receta_id: int, archivada: bool = True) -> dict:
+def archivar(receta_id: int, archivada: bool = True,
+             usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        if recetas.leer(con, receta_id) is None:
+        if not recetas.archivar(con, usuario["id"], receta_id, archivada=archivada):
             raise HTTPException(status_code=404, detail=f"no hay receta {receta_id}")
-        recetas.archivar(con, receta_id, archivada=archivada)
         return {"id": receta_id, "archivada": archivada}
     finally:
         con.close()

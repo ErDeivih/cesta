@@ -37,7 +37,6 @@ from . import (
 from .ajustes import AJUSTES
 
 
-
 @asynccontextmanager
 async def ciclo(app: FastAPI):
     almacen.arranca()

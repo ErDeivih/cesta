@@ -1,30 +1,19 @@
-"""S08: las recetas, guardadas y versionadas. La base que Recetas y Calorias comparten.
+"""Las recetas, guardadas, versionadas **y de quien son**.
 
-**Por que versionado y no "editar".** El encargo lo pide para el diario -- *"conservara alimentos y
-recetas versionados"* -- y la razon es de sentido comun: si una receta se puede reescribir, el dia que
-alguien cambio la cantidad de azucar **cambia lo que comiste el mes pasado**. Con versiones, cada
-version es **autocontenida**: guarda sus raciones, su preparacion y sus ingredientes copiados, no una
-referencia a los de ahora. El diario cita una version y esa version ya no se mueve.
+**Privacidad, implementada.** Cada receta tiene propietario, y **todas** las operaciones lo exigen:
+crear, leer, listar, ver sus versiones, cambiar, archivar, planificar y leer el plan. El propietario
+viene de la sesion; este modulo no acepta que se lo dicte el cuerpo de una peticion.
 
-**Que se guarda, y por que asi:**
+**Versiones y plan heredan el permiso de la receta.** No se guardan permisos aparte: se llega a ellos
+por `receta_id` y lo primero es comprobar que la receta es tuya. Dos reglas separadas acabarian
+discrepando el dia que alguien toque una.
 
-  - **La receta** es la identidad (el nombre, cuando nacio, si esta archivada).
-  - **La version** es el contenido (raciones, preparacion, minutos, etiquetas, ingredientes). Se lee
-    siempre por version, y "la ultima" es una consulta, no un campo que haya que ir manteniendo.
-  - **Los ingredientes** se guardan como JSON dentro de la version, y llevan texto y cantidad propias
-    porque una receta se escribe antes de saber en que cadena se comprara. Cuando se enlacen a un
-    producto, se guardara el enlace **y** el texto: si el catalogo cambia, la receta sigue diciendo lo
-    que decia.
-  - **El plan** es una fecha, una receta, una version y cuantos comen. Fijar la version permite que el
-    plan de la semana pasada se pueda releer tal cual.
+**Lo historico, sin dueno, queda conservado e inaccesible.** La migracion anade la columna y deja NULL
+lo anterior; como toda consulta exige coincidencia, NULL nunca casa. No se le asigna al primero que
+entre: eso seria inventarse una propiedad.
 
-**Privacidad, que es requisito y no adorno:** esto vive en un fichero local (`data/recetas.sqlite`),
-no sale de la maquina, y el modulo no escribe en ningun registro el contenido de una receta. Nada de
-esto viaja a ningun servicio.
-
-**Lo que NO hace todavia, y se dice:** no hay pantalla propia -- eso es la mitad visible de S08 -- ni
-puente con la lista de la compra, ni diario de consumo. Lo que hay es el almacenamiento, con sus
-pruebas, que es lo que las tres cosas necesitan debajo.
+**Cada version es autocontenida**: guarda sus raciones, su preparacion y sus ingredientes **copiados**,
+para que el diario pueda citar una version y esa version no se mueva nunca.
 """
 from __future__ import annotations
 
@@ -35,6 +24,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 BASE = RAIZ / "data" / "recetas.sqlite"
+TABLA = "receta"
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS receta (
@@ -64,6 +54,20 @@ CREATE TABLE IF NOT EXISTS plan (
 """
 
 
+def _migra(con: sqlite3.Connection) -> None:
+    """Anade la columna de propietario **si falta**, sin tocar los datos que ya haya.
+
+    El indice se crea **aqui y no en el esquema**: en una base antigua la columna todavia no existe, y
+    un `CREATE INDEX` sobre ella reventaria antes de que este `ALTER TABLE` pudiera anadirla. Es el fallo
+    que cazo la prueba de migracion del diario, aplicado ahora desde el principio.
+    """
+    columnas = {f[1] for f in con.execute(f"PRAGMA table_info({TABLA})").fetchall()}
+    if "propietario" not in columnas:
+        con.execute(f"ALTER TABLE {TABLA} ADD COLUMN propietario TEXT")
+    con.execute("CREATE INDEX IF NOT EXISTS receta_por_dueno ON receta (propietario, archivada, nombre)")
+    con.commit()
+
+
 def conecta(ruta: Path | str | None = None) -> sqlite3.Connection:
     """Abre (y crea si hace falta) el fichero local de recetas."""
     destino = Path(ruta) if ruta else BASE
@@ -71,6 +75,7 @@ def conecta(ruta: Path | str | None = None) -> sqlite3.Connection:
     con = sqlite3.connect(destino)
     con.row_factory = sqlite3.Row
     con.executescript(ESQUEMA)
+    _migra(con)
     return con
 
 
@@ -87,7 +92,6 @@ def _ingredientes_para_guardar(ingredientes: list[dict] | None) -> str:
             "texto": str(uno["texto"]).strip(),
             "cantidad": uno.get("cantidad"),
             "unidad": uno.get("unidad"),
-            # El enlace al catalogo es opcional: la receta se escribe antes de saber donde se compra.
             "producto_id": uno.get("producto_id"),
             "grupo_id": uno.get("grupo_id"),
             "fuente": uno.get("fuente"),
@@ -95,16 +99,27 @@ def _ingredientes_para_guardar(ingredientes: list[dict] | None) -> str:
     return json.dumps(limpios, ensure_ascii=False)
 
 
-def crear(con: sqlite3.Connection, nombre: str, raciones: int = 2, preparacion: str = "",
-          ingredientes: list[dict] | None = None, minutos: int | None = None,
+def _de_quien(con: sqlite3.Connection, propietario: str, receta_id: int) -> sqlite3.Row | None:
+    """La receta **si es de quien pregunta**. Es la puerta de todo lo demas."""
+    if not propietario:
+        raise ValueError("una receta necesita dueno: el recetario es personal")
+    return con.execute("SELECT * FROM receta WHERE id = ? AND propietario = ?",
+                       (receta_id, propietario)).fetchone()
+
+
+def crear(con: sqlite3.Connection, propietario: str, nombre: str, raciones: int = 2,
+          preparacion: str = "", ingredientes: list[dict] | None = None, minutos: int | None = None,
           etiquetas: str = "", ahora: datetime | None = None) -> int:
-    """Una receta nueva, con su version 1. Devuelve su identificador."""
+    """Una receta nueva, con su version 1, **de quien la crea**."""
+    if not propietario:
+        raise ValueError("una receta necesita dueno: el recetario es personal")
     if not nombre.strip():
         raise ValueError("una receta sin nombre no se puede buscar despues")
     if raciones < 1:
         raise ValueError("las raciones son al menos una")
     momento = _ahora(ahora)
-    cur = con.execute("INSERT INTO receta (nombre, creada) VALUES (?, ?)", (nombre.strip(), momento))
+    cur = con.execute("INSERT INTO receta (nombre, creada, propietario) VALUES (?, ?, ?)",
+                      (nombre.strip(), momento, propietario))
     receta_id = int(cur.lastrowid)
     con.execute(
         """INSERT INTO version (receta_id, numero, raciones, preparacion, minutos, etiquetas,
@@ -116,9 +131,10 @@ def crear(con: sqlite3.Connection, nombre: str, raciones: int = 2, preparacion: 
     return receta_id
 
 
-def leer(con: sqlite3.Connection, receta_id: int, version: int | None = None) -> dict | None:
-    """La receta con su contenido. Sin numero de version, la ultima; con el, **esa** version."""
-    receta = con.execute("SELECT * FROM receta WHERE id = ?", (receta_id,)).fetchone()
+def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
+         version: int | None = None) -> dict | None:
+    """La receta **si es tuya**, con su contenido. Sin version, la ultima; con ella, **esa**."""
+    receta = _de_quien(con, propietario, receta_id)
     if receta is None:
         return None
     if version is None:
@@ -139,29 +155,28 @@ def leer(con: sqlite3.Connection, receta_id: int, version: int | None = None) ->
     }
 
 
-def versiones(con: sqlite3.Connection, receta_id: int) -> list[int]:
+def versiones(con: sqlite3.Connection, propietario: str, receta_id: int) -> list[int]:
+    """Las versiones de una receta tuya. De una que no lo es, ninguna."""
+    if _de_quien(con, propietario, receta_id) is None:
+        return []
     return [f[0] for f in con.execute(
         "SELECT numero FROM version WHERE receta_id = ? ORDER BY numero", (receta_id,)).fetchall()]
 
 
-def actualizar(con: sqlite3.Connection, receta_id: int, *, nombre: str | None = None,
+def actualizar(con: sqlite3.Connection, propietario: str, receta_id: int, *, nombre: str | None = None,
                raciones: int | None = None, preparacion: str | None = None,
                ingredientes: list[dict] | None = None, minutos: int | None = None,
                etiquetas: str | None = None, ahora: datetime | None = None) -> int:
-    """Cambiar una receta **crea una version nueva**. Devuelve el numero de la version creada.
-
-    Lo que no se dice se hereda de la version anterior, y se **copia**: la version nueva queda
-    completa por si misma. Asi, el dia que el diario cite la version 2, la 2 seguira diciendo lo mismo
-    aunque manana se cambie la 3.
-    """
-    anterior = leer(con, receta_id)
+    """Cambiar una receta tuya **crea una version nueva**. Devuelve el numero de la version creada."""
+    anterior = leer(con, propietario, receta_id)
     if anterior is None:
         raise ValueError(f"no hay receta {receta_id}")
     if nombre is not None:
         if not nombre.strip():
             raise ValueError("una receta sin nombre no se puede buscar despues")
-        con.execute("UPDATE receta SET nombre = ? WHERE id = ?", (nombre.strip(), receta_id))
-    siguiente = max(versiones(con, receta_id), default=0) + 1
+        con.execute("UPDATE receta SET nombre = ? WHERE id = ? AND propietario = ?",
+                    (nombre.strip(), receta_id, propietario))
+    siguiente = max(versiones(con, propietario, receta_id), default=0) + 1
     con.execute(
         """INSERT INTO version (receta_id, numero, raciones, preparacion, minutos, etiquetas,
                                 ingredientes, creada)
@@ -178,34 +193,39 @@ def actualizar(con: sqlite3.Connection, receta_id: int, *, nombre: str | None = 
     return siguiente
 
 
-def listar(con: sqlite3.Connection, incluir_archivadas: bool = False) -> list[dict]:
-    """El recetario: nombre, ultima version y raciones, sin traer el contenido entero."""
+def listar(con: sqlite3.Connection, propietario: str,
+           incluir_archivadas: bool = False) -> list[dict]:
+    """El recetario **de quien pregunta**: nombre, ultima version y raciones, sin el contenido entero."""
     sql = """SELECT r.id, r.nombre, r.creada, r.archivada, v.numero, v.raciones, v.minutos,
                     v.etiquetas
                FROM receta r
                JOIN version v ON v.receta_id = r.id
-              WHERE v.numero = (SELECT max(numero) FROM version WHERE receta_id = r.id)"""
+              WHERE v.numero = (SELECT max(numero) FROM version WHERE receta_id = r.id)
+                AND r.propietario = ?"""
     if not incluir_archivadas:
         sql += " AND r.archivada = 0"
     return [{"id": f["id"], "nombre": f["nombre"], "creada": f["creada"],
              "archivada": bool(f["archivada"]), "version": f["numero"],
              "raciones": f["raciones"], "minutos": f["minutos"], "etiquetas": f["etiquetas"]}
-            for f in con.execute(sql + " ORDER BY r.nombre").fetchall()]
+            for f in con.execute(sql + " ORDER BY r.nombre", (propietario,)).fetchall()]
 
 
-def archivar(con: sqlite3.Connection, receta_id: int, archivada: bool = True) -> None:
-    """Archivar no borra: una receta que se comio sigue existiendo para el diario que la cita."""
-    con.execute("UPDATE receta SET archivada = ? WHERE id = ?", (1 if archivada else 0, receta_id))
+def archivar(con: sqlite3.Connection, propietario: str, receta_id: int,
+             archivada: bool = True) -> bool:
+    """Archivar **la tuya**. Archivar no borra: el diario que la cita sigue teniendo que poder leerla."""
+    cur = con.execute("UPDATE receta SET archivada = ? WHERE id = ? AND propietario = ?",
+                      (1 if archivada else 0, receta_id, propietario))
     con.commit()
+    return cur.rowcount > 0
 
 
-def planificar(con: sqlite3.Connection, fecha: str, receta_id: int, comensales: int = 2,
-               version: int | None = None) -> None:
-    """Poner una receta en un dia. **Se fija la version**: el plan viejo se relee tal cual."""
+def planificar(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int,
+               comensales: int = 2, version: int | None = None) -> None:
+    """Poner **una receta tuya** en un dia. Se fija la version: el plan viejo se relee tal cual."""
     if comensales < 1:
         raise ValueError("los comensales son al menos uno")
-    date.fromisoformat(fecha)  # una fecha que no es fecha es un error que se ve aqui y no en la pantalla
-    actual = leer(con, receta_id)
+    date.fromisoformat(fecha)
+    actual = leer(con, propietario, receta_id)
     if actual is None:
         raise ValueError(f"no hay receta {receta_id}")
     con.execute("INSERT OR REPLACE INTO plan (fecha, receta_id, version, comensales) VALUES (?,?,?,?)",
@@ -213,12 +233,12 @@ def planificar(con: sqlite3.Connection, fecha: str, receta_id: int, comensales: 
     con.commit()
 
 
-def plan(con: sqlite3.Connection, desde: str, hasta: str) -> list[dict]:
-    """Lo planificado entre dos fechas, con la receta y la version que se fijo."""
+def plan(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> list[dict]:
+    """Lo planificado **por ti** entre dos fechas. El JOIN con la receta es lo que aplica el permiso."""
     filas = con.execute(
         """SELECT p.fecha, p.comensales, p.version, r.id, r.nombre
              FROM plan p JOIN receta r ON r.id = p.receta_id
-            WHERE p.fecha BETWEEN ? AND ?
-            ORDER BY p.fecha, r.nombre""", (desde, hasta)).fetchall()
+            WHERE p.fecha BETWEEN ? AND ? AND r.propietario = ?
+            ORDER BY p.fecha, r.nombre""", (desde, hasta, propietario)).fetchall()
     return [{"fecha": f[0], "comensales": f[1], "version": f[2], "receta_id": f[3],
              "nombre": f[4]} for f in filas]
