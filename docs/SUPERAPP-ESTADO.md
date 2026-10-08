@@ -90,6 +90,18 @@ rondas.
 **Y los dobles de diez pruebas dejaron de estar en paso** con la llave nueva: un doble no debe componer la llave a
 mano, sino llamar a `_llave_candidato`. Es la **tercera** vez en la sesion que esa leccion muerde.
 
+### Cuatro piezas mas, despues de escribir esto
+
+| que | por que | commit |
+|---|---|---|
+| **La oferta no se aplica a cantidades pendientes de autorizacion** | la condicion del dueno estaba a medias: primero no entraban en el grupo, pero una linea **sola** seguia cobrando su 3x2. Ni agrupada ni sola: precio de catalogo | `ba46c28` |
+| **Revocacion y desaparicion de B** | los dos casos que la revision pedia y no estaban cubiertos: una confirmacion revocada deja de contar, y si B no esta queda **pendiente** sin sustituir por A | `794d922` |
+| **Los puentes en la cuenta de la lista** | las lineas del plan y de consumir **no tienen producto**: no tienen precio (se dice) y **no entran en ningun grupo de compra**, asi que no se llevan la oferta de otra | `da4afc6` |
+| **El estado de la eleccion** | la revision pedia *«definir el estado de eleccion y reflejarlo en la respuesta y en la pantalla»*: con la sustitucion confirmada, `identidad` dice **`confirmada`**, y como es el campo que la pantalla ya enseña, llega alli sin tocar ninguna pantalla | `be602a1` |
+
+**Dos de esas pruebas pasaron a la primera** (revocacion, puentes) y **una necesito dos pasos** (la autorizacion:
+el grupo no bastaba). Se dice cual es cual: una prueba que no vio un rojo **fija** comportamiento, no lo caza.
+
 ### Lo que queda
 
 1. **El ensayo y la restauracion**, con los contratos nuevos. **Bloqueado por el entorno**: Docker no responde
