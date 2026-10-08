@@ -50,6 +50,31 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (9 de octubre de 2026) · condiciones de la revisión
+
+**Condición 1 — aislamiento por usuario: CERRADA.**
+
+| qué | evidencia |
+|---|---|
+| Recetas: propietario **obligatorio** en crear, leer, listar, versiones, cambiar, archivar, planificar y plan | `core/recetas.py`, con el propietario como parámetro **sin valor por defecto** |
+| Versiones y plan **heredan** el permiso de la receta (se llega por `receta_id` y lo primero es comprobar que es tuya) | `core/recetas.py`, `plataforma/api/recetas.py` |
+| Diario: propietario obligatorio en apuntar, día, borrar y rango | `core/diario.py` |
+| **401** para el anónimo en todos los endpoints de las dos aplicaciones | `tests/test_aislamiento.py` |
+| **B contra A**: no enumera, no lee, no cambia, no archiva, no ve versiones, no planifica; borrar adivinando el identificador da **404**, no 403 | `tests/test_aislamiento.py` |
+| El propietario **no se puede dictar** en el cuerpo de la petición | `tests/test_aislamiento.py` |
+| Migración `ALTER TABLE ADD COLUMN`, **repetida 3 veces**, conservando el histórico (700 kcal, 6 raciones) con propietario **NULL** y **sin asignárselo a nadie** | `tests/test_aislamiento.py` |
+| La **caché** se vacía al cambiar de cuenta y el vigilante va antes que la aplicación | `api/cuenta.ts`, `main.tsx`, `tests/test_cache_por_cuenta.py` |
+| El usuario dentro de la clave en las cuatro pantallas nuevas | `api/recetas.ts`, `api/diario.ts` |
+
+**Suite: 1.326 pruebas, 0 fallos.** Ruff limpio, `tsc` limpio, `npm run build` correcto.
+
+**Pendiente de verificación, dicho para no confundirlo:** la comprobación **en navegador**
+(`uv run python -m plataforma.prueba_suite`) no se ha pasado desde el aislamiento; necesita el servidor
+de desarrollo levantado.
+
+**Condición 2 — identidad solicitada y selección del coste: EN CURSO.** Cinco casos de aceptación
+medidos contra el código de hoy antes de tocarlo, para saber qué falta exactamente.
+
 ## Resumen vigente (8 de octubre de 2026) · cierre de la etapa
 
 ### Entregado en esta etapa, con su evidencia
