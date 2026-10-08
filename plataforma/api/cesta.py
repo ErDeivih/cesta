@@ -40,6 +40,9 @@ class Peticion:
     # pueda quitarla o cambiarla de tienda sin adivinar por el nombre (dos lineas
     # pueden llamarse igual: "leche" y "leche").
     id: str | None = None
+    # **Autorizacion explicita de sustituir ESTA linea.** Va por linea y no por lista a proposito: se
+    # autoriza una sustitucion concreta, no "lo que haga falta" en toda la compra.
+    autorizado: bool = False
 
 
 @dataclass
@@ -63,6 +66,9 @@ class Eleccion:
     # una eleccion explicita de quien compra.
     identidad: str | None = None
     motivo: str | None = None
+    # **Si esta eleccion puede contar en un total exacto.** Un aviso no es una autorizacion: si no es el
+    # producto que se pidio y nadie lo ha autorizado, cuenta cero para el total y se dice por que.
+    autorizada: bool = True
 
 
 def _coste_para(cantidad: int, precio_cent: int, promo_txt: str | None) -> int:
@@ -216,6 +222,27 @@ def _promos_vigentes(producto_ids: set[str], fecha_tope: str | None = None) -> d
     return {k: v for k, v in tabla.items() if k in producto_ids}
 
 
+def _total_autorizado(elecciones: list[Eleccion]) -> dict:
+    """El total de lo autorizado, y **lo que falta** con su motivo.
+
+    Un total que esconde lo que no pudo contar es peor que un total mas bajo: el primero miente y el
+    segundo se puede explicar. Por eso devuelve las dos cosas juntas y no solo la suma.
+
+    Las que no cuentan no se tiran: van en `pendientes`, que es de donde sale la propuesta de alternativas
+    que quien compra puede aceptar linea a linea.
+    """
+    cuenta = [e for e in elecciones if e.autorizada]
+    pendientes = [e for e in elecciones if not e.autorizada]
+    return {
+        "total_cent": sum(e.coste_cent for e in cuenta),
+        "lineas_contadas": len(cuenta),
+        "pendientes": [{"linea_id": e.linea_id, "fuente": e.fuente, "nombre": e.nombre,
+                        "coste_cent": e.coste_cent, "identidad": e.identidad, "motivo": e.motivo}
+                       for e in pendientes],
+        "completo": not pendientes,
+    }
+
+
 def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     clave = (peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, fuente)
     hallado = mejor.get(clave)
@@ -243,11 +270,16 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
             if ahorro > 0:
                 sugerencia = (f"llevando {n} en vez de {peticion.cantidad}, "
                               f"{ahorro / 100:.2f} EUR menos por unidad")
+    # **Cuenta si es el producto pedido, si no hay nada que afirmar, o si se autorizo.** Cualquier otra
+    # cosa -- alternativa, cuarentena, abtencion -- no suma: se enseña, se explica y se ofrece aparte.
+    autorizada = (veredicto is None or veredicto["estado"] == identidad.EXACTO
+                  or peticion.autorizado)
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
                     promo_txt if mecanica.util else None, sugerencia,
                     linea_id=peticion.id,
                     identidad=veredicto["estado"] if veredicto else None,
-                    motivo="; ".join(veredicto["motivos"]) if veredicto else None)
+                    motivo="; ".join(veredicto["motivos"]) if veredicto else None,
+                    autorizada=autorizada)
 
 
 def donde_comprar(peticiones: list[Peticion],
