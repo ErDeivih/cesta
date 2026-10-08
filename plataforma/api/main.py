@@ -69,7 +69,6 @@ app.add_middleware(CORSMiddleware, allow_origins=list(AJUSTES.origenes),
 # `dependency_overrides` de las pruebas sustituiria una y la aplicacion usaria la otra.
 from .sesion import COOKIE, usuario_actual, usuario_opcional  # noqa: E402
 
-
 # ----------------------------------------------------------------- entrar ---
 
 class Credenciales(BaseModel):

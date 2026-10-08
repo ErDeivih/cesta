@@ -1,24 +1,22 @@
-"""S09, superficie de API: el diario, para que la pantalla de Calorias tenga de donde leer.
+"""La API del diario: **personal, y con la sesion delante de todo**.
 
-**Las reglas del encargo, traducidas a respuestas HTTP**, que es donde se pueden cumplir de verdad:
+Cada endpoint depende de `usuario_actual`, y el propietario que se pasa al almacen sale **solo de la
+sesion**: nunca del cuerpo de la peticion. Si saliera del cuerpo, el aislamiento seria decorativo --
+bastaria con pedir el diario de otro poniendo su nombre en el JSON --.
 
-  - **Una compra no se registra como consumo**: responde 400 con su motivo. No es una validacion de
-    formulario, es la regla escrita en el codigo.
-  - **Una receta se anota con su version**: sin ella, releer el diario de la semana pasada no seria
-    posible, asi que se rechaza.
-  - **El dia devuelve el subtotal `conocido` y las entradas `sin_dato` por separado**, para que la
-    pantalla pueda decir "esto es lo que se sabe" en vez de enseñar un total que parece completo.
-
-**Privacidad:** la base es local y este modulo no registra en ningun sitio lo que alguien come.
+Cuando algo no es tuyo se responde **404, no 403**: un 403 confirmaria que ese identificador existe y es
+de otra persona, que es informacion que quien pregunta no tiene por que obtener.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core import diario
+
+from .sesion import usuario_actual
 
 rutas = APIRouter(prefix="/api/diario", tags=["diario"])
 
@@ -53,47 +51,46 @@ class EntradaIn(BaseModel):
 
 
 @rutas.get("/rango")
-def rango(desde: str = Query(...), hasta: str = Query(...)) -> dict:
+def rango(desde: str = Query(...), hasta: str = Query(...),
+          usuario: dict = Depends(usuario_actual)) -> dict:
     """Va **antes** que `/{fecha}`: si no, FastAPI leeria "rango" como una fecha."""
     con = _con()
     try:
-        return {"dias": diario.rango(con, desde, hasta)}
+        return {"dias": diario.rango(con, usuario["id"], desde, hasta)}
     finally:
         con.close()
 
 
 @rutas.post("", status_code=201)
-def apuntar(datos: EntradaIn) -> dict:
+def apuntar(datos: EntradaIn, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
         entrada_id = diario.apunta(
-            con, datos.fecha, datos.comida, tipo=datos.tipo, referencia=datos.referencia,
-            version=datos.version, cantidad_g=datos.cantidad_g, kcal=datos.kcal,
-            proteinas_g=datos.proteinas_g, grasas_g=datos.grasas_g,
+            con, usuario["id"], datos.fecha, datos.comida, tipo=datos.tipo,
+            referencia=datos.referencia, version=datos.version, cantidad_g=datos.cantidad_g,
+            kcal=datos.kcal, proteinas_g=datos.proteinas_g, grasas_g=datos.grasas_g,
             hidratos_g=datos.hidratos_g, fuente_dato=datos.fuente_dato, nota=datos.nota)
-        return {"id": entrada_id, "dia": diario.dia(con, datos.fecha)}
+        return {"id": entrada_id, "dia": diario.dia(con, usuario["id"], datos.fecha)}
     except ValueError as fallo:
-        # 400 y no 500: lo que ha fallado es lo que se ha pedido, y el motivo se devuelve entero para
-        # que la pantalla pueda explicarlo (una compra no es consumo, o falta la version de la receta).
         raise HTTPException(status_code=400, detail=str(fallo)) from fallo
     finally:
         con.close()
 
 
 @rutas.get("/{fecha}")
-def dia(fecha: str) -> dict:
+def dia(fecha: str, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        return diario.dia(con, fecha)
+        return diario.dia(con, usuario["id"], fecha)
     finally:
         con.close()
 
 
 @rutas.delete("/entrada/{entrada_id}")
-def borrar(entrada_id: int) -> dict:
+def borrar(entrada_id: int, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        if not diario.borrar(con, entrada_id):
+        if not diario.borrar(con, usuario["id"], entrada_id):
             raise HTTPException(status_code=404, detail=f"no hay entrada {entrada_id}")
         return {"borrada": entrada_id}
     finally:
