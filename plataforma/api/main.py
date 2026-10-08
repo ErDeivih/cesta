@@ -720,7 +720,6 @@ def en_tienda(lista_id: str, datos: EnTienda, usuario: dict = Depends(usuario_ac
         return {"puestas": cuantas, "cadena": datos.cadena}
     # Sin `lineas`: toda la lista, que es el boton de «todo en DIA».
     todas = [x["id"] for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
     return {"puestas": almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], todas),
             "cadena": datos.cadena}
 
@@ -840,8 +839,6 @@ def sincronizar(lista_id: str, cambios: list[dict], usuario: dict = Depends(usua
     # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
     # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
     # sustitucion que nadie ha confirmado.
-    _autorizadas = almacen.autorizacion_de(lista_id)
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
 
 
 @app.post("/api/listas/{lista_id}/compartir")
