@@ -145,6 +145,16 @@ def _no_comparable(motivos: list[str]) -> bool:
     return any("no comparable" in m for m in motivos)
 
 
+def _marcas_incompatibles(a: Producto, b: Producto) -> bool:
+    """Dos marcas conocidas y distintas. Con marca vacia no se afirma nada.
+
+    La marca se compara **normalizada** (minusculas y espacios de sobra fuera) porque "Hacendado" y
+    "hacendado " son la misma marca escrita de dos maneras, y eso no es un conflicto: es ruido.
+    """
+    return bool(a.marca_normalizada) and bool(b.marca_normalizada) \
+        and a.marca_normalizada != b.marca_normalizada
+
+
 def decide(a: Producto, b: Producto) -> dict:
     """El veredicto entre dos fichas, con su evidencia. Nunca "exacto" sin GTIN valido.
 
@@ -156,8 +166,19 @@ def decide(a: Producto, b: Producto) -> dict:
                  "marca_a": a.marca_normalizada, "marca_b": b.marca_normalizada,
                  "presentacion": {"a": a.atributos, "b": b.atributos}}
 
+    evidencia["marcas_incompatibles"] = _marcas_incompatibles(a, b)
+
     if a.gtin and b.gtin:
         if a.gtin == b.gtin:
+            # **El mismo codigo con marcas distintas no es identidad: es una de las dos fichas
+            # mintiendo.** O el codigo esta mal en una, o la marca esta mal. Va a cuarentena, que es
+            # donde se pone lo que no cuadra, y no a alternativa, que seria decir que son dos productos
+            # cuando dicen ser el mismo.
+            if _marcas_incompatibles(a, b):
+                return {"estado": CUARENTENA,
+                        "motivos": [f"mismo GTIN con marcas distintas "
+                                    f"({a.marca_normalizada} y {b.marca_normalizada})"],
+                        "evidencia": evidencia}
             if compatible:
                 return {"estado": EXACTO, "motivos": ["mismo GTIN valido y presentacion compatible"],
                         "evidencia": evidencia}
@@ -167,6 +188,12 @@ def decide(a: Producto, b: Producto) -> dict:
         # **GTIN distinto no se fusiona por texto.** Podran ser alternativas elegidas, nunca lo mismo.
         return {"estado": ALTERNATIVA,
                 "motivos": ["GTIN distinto: no se fusiona por parecido de nombre"],
+                "evidencia": evidencia}
+
+    if _marcas_incompatibles(a, b):
+        # Sin GTIN no hay nada que confirme identidad, y dos marcas distintas son dos productos.
+        return {"estado": ALTERNATIVA,
+                "motivos": [f"marcas distintas ({a.marca_normalizada} y {b.marca_normalizada})"],
                 "evidencia": evidencia}
 
     if not compatible and not _no_comparable(motivos):
