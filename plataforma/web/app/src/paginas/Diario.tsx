@@ -180,7 +180,8 @@ export function Diario() {
           )}
           {data.completo && total > 0 && (
             <p className="mt-1 text-[14px] text-secundaria">
-              Todas las entradas traen dato: el subtotal es el dia entero.
+              Todas las entradas anotadas tienen calorías. El subtotal solo incluye lo registrado;
+              comprueba que hayas anotado todas tus comidas.
             </p>
           )}
         </Tarjeta>

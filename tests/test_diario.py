@@ -107,3 +107,29 @@ def test_el_rango_dice_que_dias_estan_completos(con):
     assert dias["2026-10-01"]["completo"] is True
     assert dias["2026-10-02"]["completo"] is False
     assert dias["2026-10-02"]["kcal_conocida"] == 500
+
+
+def test_macronutrientes_sin_calorias_conservan_su_cobertura(con):
+    diario.apunta(con, "2026-10-08", "comida", proteinas_g=12, grasas_g=0)
+    diario.apunta(con, "2026-10-08", "cena", kcal=300, proteinas_g=8)
+    resumen = diario.dia(con, "2026-10-08")
+    assert resumen["conocido"]["proteinas_g"] == 20
+    assert resumen["conocido"]["grasas_g"] == 0
+    assert resumen["conocido"]["hidratos_g"] is None
+    assert resumen["cobertura"]["proteinas_g"] == {
+        "con_dato": 2, "total": 2, "completa": True}
+    assert resumen["cobertura"]["kcal"]["completa"] is False
+    assert resumen["cobertura"]["grasas_g"]["con_dato"] == 1
+
+
+def test_rango_sin_energia_no_inventa_cero(con):
+    diario.apunta(con, "2026-10-08", "comida")
+    assert diario.rango(con, "2026-10-08", "2026-10-08")[0]["kcal_conocida"] is None
+
+
+@pytest.mark.parametrize("campo", ["kcal", "cantidad_g", "proteinas_g", "grasas_g", "hidratos_g"])
+@pytest.mark.parametrize("valor", [float("nan"), float("inf"), float("-inf")])
+def test_no_se_guardan_numeros_no_finitos(con, campo, valor):
+    with pytest.raises(ValueError, match="finitas"):
+        diario.apunta(con, "2026-10-08", "comida", **{campo: valor})
+    assert diario.dia(con, "2026-10-08")["entradas"] == []

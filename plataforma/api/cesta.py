@@ -196,7 +196,7 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     hallado = mejor.get(clave)
     if hallado is None:
         return None
-    pid, precio, nombre, promo_txt, ean, referencia = (list(hallado) + [None, None])[:6]
+    pid, precio, nombre, promo_txt, ean, referencia = [*hallado, None, None][:6]
     # **El veredicto, antes de proponer nada.** Si no es el mismo producto, el coste que sigue es el
     # de una alternativa, y eso tiene que viajar en la respuesta para que nadie lo sustituya callando.
     veredicto = None

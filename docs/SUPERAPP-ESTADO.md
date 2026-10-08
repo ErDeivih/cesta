@@ -1,5 +1,26 @@
 # SUPERAPP · Estado del trabajo
 
+## Revisión posterior — 8 de octubre de 2026
+
+Leer [la revisión del código y correcciones](SUPERAPP-REVISION-2026-10-08.md)
+antes de continuar desde `a32957e`. Se corrigieron subtotales independientes
+por nutriente, ausencia frente a cero en el rango, números no finitos y el
+mensaje que equiparaba entradas registradas con toda la ingesta del día.
+Las correcciones permanecen en el árbol de trabajo, sin commit de esta revisión.
+
+Prioridades detectadas: routers de Recetas/Diario sin sesión ni propietario;
+referencia de identidad por cadena en lugar de referencia solicitada;
+alternativas que siguen entrando en costes; candidato seleccionado antes de
+evaluar la promoción por cantidad. Estos hallazgos impiden considerar S07–S09
+terminados y deben resolverse antes del ensayo multiusuario o de activar identidad.
+Las pantallas propias ya construidas se conservan. La verificación de esta
+revisión se registra en SUPERAPP-REVISION-2026-10-08, sin reutilizar cifras previas.
+
+Verificación posterior ejecutada: **1.318 pruebas aprobadas**, ruff limpio,
+build frontend correcto y seis pruebas de cocina aprobadas. Persisten dos
+avisos de dependencias y el aviso de tamaño del paquete frontend. No se
+ejecutó el ensayo de navegador ni se probaron cuentas contra las bases reales.
+
 Encargo vigente: `docs/SUPERAPP-00-EMPEZAR-AQUI.md` (7 de octubre de 2026), con
 `SUPERAPP-01` (diseño y producto), `SUPERAPP-02` (datos, Lidl e identidad) y `SUPERAPP-03`
 (investigación y límites). Este fichero es el estado vivo: se actualiza **antes de cada pausa**
