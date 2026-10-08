@@ -571,8 +571,13 @@ def estimacion(lineas: list[dict]) -> dict:
     if not lineas:
         return {"total_cent": 0, "en_carrito_cent": 0, "por_recoger_cent": 0,
                 "lineas": 0, "sin_precio": 0}
+    # **Y lo que la linea dice que se confirmo.** Sin esto, la comparacion de la sustitucion ve `None`
+    # y no cuenta ninguna confirmacion: el dato estaba guardado y se quedaba a medio camino.
     peticiones = [Peticion(x.get("grupo_id"), x.get("producto_id"),
-                           x.get("cantidad", 1), x.get("nombre_visto", "")) for x in lineas]
+                           x.get("cantidad", 1), x.get("nombre_visto", ""),
+                           autorizado=bool(x.get("autorizado")),
+                           autorizado_producto=x.get("autorizado_producto"),
+                           autorizado_cadena=x.get("autorizado_cadena")) for x in lineas]
     mejor = _candidatos(peticiones, _fecha_de_hoy())
     total = en_carro = sin_precio = 0
     for linea, peticion in zip(lineas, peticiones, strict=True):
@@ -616,8 +621,13 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
     salida: dict[str, dict] = {}
     if not lineas:
         return salida
+    # **Y lo que la linea dice que se confirmo.** Sin esto, la comparacion de la sustitucion ve `None`
+    # y no cuenta ninguna confirmacion: el dato estaba guardado y se quedaba a medio camino.
     peticiones = [Peticion(x.get("grupo_id"), x.get("producto_id"),
-                           x.get("cantidad", 1), x.get("nombre_visto", "")) for x in lineas]
+                           x.get("cantidad", 1), x.get("nombre_visto", ""),
+                           autorizado=bool(x.get("autorizado")),
+                           autorizado_producto=x.get("autorizado_producto"),
+                           autorizado_cadena=x.get("autorizado_cadena")) for x in lineas]
     mejor = _candidatos(peticiones, _fecha_de_hoy())
     for linea, peticion in zip(lineas, peticiones, strict=True):
         cadena = precio = None
