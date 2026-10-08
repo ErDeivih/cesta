@@ -25,6 +25,10 @@ export type Receta = {
   archivada: boolean
   version: number
   raciones: number
+  /** Las raciones que tiene la receta guardada. Distinta de `raciones`
+   *  cuando se ha pedido para otras: son las dos cifras, y sin las dos no se sabe de donde sale. */
+  raciones_receta?: number
+  escalada?: boolean
   preparacion: string
   minutos: number | null
   etiquetas: string
@@ -78,12 +82,14 @@ export function useRecetas(incluirArchivadas = false) {
 }
 
 /** Una receta concreta. Con `version`, **esa** version: es lo que permite ver que la vieja no se mueve. */
-export function useReceta(id: number | null, version?: number | null) {
+export function useReceta(id: number | null, version?: number | null,
+                     raciones?: number | null) {
   const cuenta = useClaveDeCuenta()
   return useQuery({
-    queryKey: ['receta', cuenta, id, version ?? 'ultima'],
+    queryKey: ['receta', cuenta, id, version ?? 'ultima', raciones ?? 'receta'],
     enabled: id !== null,
-    queryFn: () => pide<Receta>(`/recetas/${id}`, { version: version ?? undefined }),
+    queryFn: () => pide<Receta>(`/recetas/${id}`,
+      { version: version ?? undefined, raciones: raciones ?? undefined }),
   })
 }
 
