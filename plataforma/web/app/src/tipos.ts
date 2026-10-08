@@ -834,6 +834,10 @@ export interface FilaEnTienda {
   /** Si el producto propuesto es el que se pidio: `exacto`, `probable`, `alternativa`, `cuarentena`
    *  o `abstiene`. `null` cuando la API no puede afirmar nada, que no es lo mismo que decir que si. */
   identidad?: string | null
+  /** Si esta linea cuenta en el total. `false` significa que se enseña y no suma. */
+  autorizada?: boolean
+  /** La opcion que se puede pedir en su lugar: nombre, precio y cadena. */
+  alternativa?: { producto_id: string; nombre: string; coste_cent: number; fuente: string } | null
   /** Por que no es el mismo, en palabras. Es lo que permite juzgarlo en vez de confiar. */
   motivo?: string | null
   /** Lo mismo en las otras tiendas, de mas barata a mas cara. */

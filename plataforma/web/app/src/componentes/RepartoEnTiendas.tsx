@@ -319,7 +319,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
                   </p>
                 )}
                 {f.sugerencia && <p className="text-xs text-tinta-suave">{f.sugerencia}</p>}
-                <AvisoIdentidad identidad={f.identidad} motivo={f.motivo} />
+                <AvisoIdentidad identidad={f.identidad} motivo={f.motivo} alternativa={f.alternativa} />
                 <ElegirTienda fila={f} listaId={listaId} deshabilitado={soloMirar}
                               alCambiar={refresca} />
               </li>
