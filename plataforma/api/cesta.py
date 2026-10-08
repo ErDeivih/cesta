@@ -299,20 +299,29 @@ def donde_comprar(peticiones: list[Peticion],
 
     una_tienda = []
     for fuente, elecciones in por_cadena.items():
-        tiene = [e for e in elecciones if e]
+        resueltas = [e for e in elecciones if e]
         faltan = [p.nombre for p, e in zip(peticiones, elecciones, strict=True) if not e]
-        if not tiene:
+        if not resueltas:
             continue
+        # **Solo cuenta lo autorizado.** Lo resuelto pero no autorizado -- alternativa, cuarentena,
+        # abtencion -- se sigue enseñando con su precio, pero no suma: un aviso no es un permiso.
+        total = _total_autorizado(resueltas)
         una_tienda.append({
             "cadena": fuente,
-            "total_cent": sum(e.coste_cent for e in tiene),
-            "total_sin_ofertas_cent": sum(e.coste_sin_oferta_cent for e in tiene),
-            "encontrados": len(tiene),
+            "total_cent": total["total_cent"],
+            "total_sin_ofertas_cent": sum(e.coste_sin_oferta_cent for e in resueltas if e.autorizada),
+            "encontrados": len(resueltas),
+            "contadas": total["lineas_contadas"],
+            "sin_autorizar": len(total["pendientes"]),
+            "pendientes": total["pendientes"],
             "faltan": faltan,          # por su nombre, no como un numero
-            "productos": [_serializa(e) for e in tiene],
+            "productos": [_serializa(e) for e in resueltas],
         })
-    # Primero las que lo tienen todo, y dentro de esas la mas barata.
-    una_tienda.sort(key=lambda x: (len(x["faltan"]), x["total_cent"]))
+    # Primero las que lo tienen todo, y dentro de esas la mas barata. **`sin_autorizar` entra en el
+    # orden a proposito:** una cadena que resuelve todas las lineas pero no autoriza ninguna no puede
+    # colocarse por delante de una que si las tiene exactas, que es lo que pasaba ordenando solo por
+    # `faltan`.
+    una_tienda.sort(key=lambda x: (len(x["faltan"]), x["sin_autorizar"], x["total_cent"]))
 
     repartido = _mejor_reparto(peticiones, por_cadena, max_t, una_tienda)
     return {"una_tienda": una_tienda, "repartido": repartido, "lineas": len(peticiones)}

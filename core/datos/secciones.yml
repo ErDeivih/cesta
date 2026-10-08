@@ -280,6 +280,7 @@ mapa:
     "Juguetes > Juguetes electrónicos": hogar                          # nueva 2026-10-01
     "Juguetes > Juguetes de imitación": hogar                          # nueva 2026-10-01
     "Campañas > Productos de Aragón": promociones                      # nueva 2026-10-06
+    "Campañas > Campaña Madrid 2026": promociones                      # nueva 2026-10-08
   aldi:
     "cuidado-facial-y-corporal": higiene-belleza                          # 106
     "yogures-y-postres-lacteos": lacteos-huevos                           # 97
