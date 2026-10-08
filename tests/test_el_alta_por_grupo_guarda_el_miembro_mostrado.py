@@ -19,6 +19,9 @@ def _prepara(monkeypatch, grupo):
         return {"id": linea_id}
 
     monkeypatch.setattr(main.almacen, "anade_linea", anade)
+    # **Y las lineas que ya hay**, que el endpoint lee para no duplicar: sin sustituirla iria al
+    # almacen de verdad, que aqui no esta arrancado. El doble va en paso con lo que se pide.
+    monkeypatch.setattr(main.almacen, "lineas_de", lambda lista_id: [])
     monkeypatch.setattr(main.catalogo, "grupo", lambda grupo_id: grupo)
     monkeypatch.setattr(main, "_acceso", lambda *a, **k: "dueno")
     main.app.dependency_overrides[main.usuario_actual] = lambda: {

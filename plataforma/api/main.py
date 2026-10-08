@@ -736,8 +736,17 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
     _acceso(lista_id, usuario, hace_falta_escribir=True)
     if not datos.grupo_ids and not datos.producto_ids:
         raise HTTPException(422, "No has dicho que favoritos anadir.")
+    # **Idempotente: lo que ya esta en la lista no se vuelve a poner.** Pulsar dos veces el
+    # mismo favorito no puede dejar dos lineas, y la respuesta dice que ha hecho -- `anadidos` y
+    # `ya_estaban` --, que es la mitad de una vista previa: la otra mitad es decirlo antes.
+    ya_en_la_lista = {(x.get("grupo_id"), x.get("producto_id"))
+                     for x in almacen.lineas_de(lista_id)}
     puestos = 0
+    ya_estaban = 0
     for grupo_id in datos.grupo_ids:
+        if (grupo_id, None) in ya_en_la_lista:
+            ya_estaban += 1
+            continue
         # El nombre que se guarda en la linea es **el del producto**, no el numero
         # del grupo: `nombre_visto` se pinta tal cual en la lista y "Favorito 4821"
         # no le sirve a nadie de pie en el supermercado. Si el grupo ya no esta en
@@ -756,11 +765,14 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
                             nombre, grupo_id, producto_id, 1, None)
         puestos += 1
     for producto_id in datos.producto_ids:
+        if (producto_id, None) in ya_en_la_lista:
+            ya_estaban += 1
+            continue
         p = catalogo.producto(producto_id) or {}
         almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()),
                             p.get("nombre") or producto_id, None, producto_id, 1, None)
         puestos += 1
-    return {"anadidos": puestos}
+    return {"anadidos": puestos, "ya_estaban": ya_estaban}
 
 
 @app.get("/api/listas/{lista_id}/reparto")
