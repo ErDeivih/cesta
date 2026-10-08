@@ -50,6 +50,54 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (11 de octubre de 2026) · un fallo que solo se veía usando la aplicación
+
+**Lo que pasó, porque es lo más útil de esta etapa.** `/api/estado` devolvía **solo la cadena de la versión**
+(`"20261007-161518"`) en vez del objeto de estado, **desde la ronda 17**. La causa: al insertar el ayudante
+`_version_del_catalogo` lo puse **entre** `@app.get("/api/estado")` y `def estado():`, y un decorador envuelve
+**a la función siguiente**. La ruta quedó atada al ayudante y **`estado()` nunca se registró**.
+
+**Por qué la suite no lo vio, y esto es lo que hay que recordar.** Mis pruebas de esa ruta comprobaban que el
+texto `"version_catalogo": _version_del_catalogo()` estaba **escrito en el fichero**… y lo estaba. El módulo
+importa sin error. La función es correcta. **El fallo existía solo en el registro de la ruta**, que es un hecho
+de ejecución. Resultado: **1.413 pruebas en verde y el endpoint roto en la plataforma servida.**
+
+**Cómo se encontró:** usando la aplicación. La comprobación en navegador de la ronda 31 pasó por `/api/estado`,
+y a partir de ahí la cadena de descarte fue: no es el proxy (los dos caminos coinciden), no es una imagen vieja
+(huellas del fichero idénticas), es **a qué función está atada la ruta**.
+
+**Cómo se cerró:** con la disciplina del proyecto. Primero la prueba, y **vista roja** contra el código roto
+(3 fallos, uno de ellos comprobando directamente a qué función está atada la ruta); después el arreglo —el
+decorador movido encima de `def estado():`—; y **vista verde**. Una prueba que no se ha visto roja no prueba
+nada.
+
+**Y comprobado en lo que de verdad se sirve**, tras reconstruir la imagen:
+
+| camino | respuesta |
+|---|---|
+| host, 8080 (Caddy) | `dict` con las cinco claves, `fecha_datos: 2026-10-08`, **5 cadenas**, `version_catalogo: 20261007-161518` |
+| dentro, 8000 (la API) | el mismo `dict` con las mismas claves |
+
+Así que lo de las rondas 17 y 33 (versión del catálogo y vigencia del precio) está **vivo**, no solo en el
+repositorio.
+
+**Corrección de una nota mía desactualizada:** el estado decía que Docker estaba parado y que había que
+levantar PostgreSQL cuando tocara esa pieza. **Llevaba 36 horas levantado** (`cesta-api-1`, `cesta-db-1` y
+`cesta-web-1`, los tres sanos), y esa nota hizo perder una ronda. No hay nada que levantar.
+
+**La lección, en una línea:** una prueba que **lee el código** no sustituye a una que **llama al endpoint**.
+Hay fallos —este— que solo existen en lo que está registrado y servido, y para esos hacen falta la prueba de
+forma, la comprobación en navegador y la plataforma real.
+
+**Suite: 1.416 pruebas, 0 fallos.** Ruff limpio, `tsc` limpio, build correcto.
+
+**Lo que queda del objetivo:**
+
+1. **La persistencia** de la autorización de sustitución en la línea: último punto de la condición 2, sin
+   obstáculo (PostgreSQL está levantado).
+2. **Condición 4**: puentes explícitos e idempotentes con vista previa, gráficas con **medida, cobertura y
+   universo**, y el **ensayo integral** con datos reales, **dos cuentas** y **copia restaurada**.
+
 ## Resumen vigente (10 de octubre de 2026) · condición 3 cerrada
 
 **Condición 3 — pantallas y comportamiento persistente: CERRADA.** Pieza a pieza, con su evidencia:
