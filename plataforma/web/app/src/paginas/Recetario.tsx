@@ -245,6 +245,12 @@ export function Recetario() {
                     Archivar
                   </button>
                 )}
+                  {/* **El error, si falla.** Archivar puede fallar -- la sesion, la red -- y hasta ahora
+                      se pulsaba y no pasaba nada visible, que es lo mismo que hacer creer que si
+                      funciono. */}
+                  {archivar.error && !r.archivada && (
+                    <p className="mt-1 text-[13px] text-error">{textoDeError(archivar.error)}</p>
+                  )}
               </Tarjeta>
               {abierta === r.id && <div className="mt-2"><Detalle id={r.id} alCerrar={() => setAbierta(null)} /></div>}
             </li>
