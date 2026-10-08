@@ -85,6 +85,18 @@ def _coste_para(cantidad: int, precio_cent: int, promo_txt: str | None) -> int:
     return lee_promo(promo_txt).coste(cantidad, precio_cent)
 
 
+def _prefiere(exacta_nueva: bool, coste_nuevo: int, exacta_actual: bool, coste_actual: int) -> bool:
+    """Si la fila nueva sustituye a la que ya estaba en ese hueco.
+
+    **Una exacta gana siempre a una que no lo es**, aunque cueste mas: la regla del encargo es que elegir un
+    producto concreto no autoriza a sustituirlo, y para el total la alternativa no cuenta de todas formas,
+    asi que preferirla solo servia para perder el producto bueno. Entre dos del mismo tipo, la mas barata.
+    """
+    if exacta_nueva != exacta_actual:
+        return exacta_nueva
+    return coste_nuevo < coste_actual
+
+
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     """Por cada linea y cadena, el producto mas barato que la resuelve."""
     con = conexion()
@@ -119,27 +131,41 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         if referencia is not None:
             cantidades[referencia] = max(1, int(peticion.cantidad))
 
-    mejor: dict = {}
+    # **Primera pasada: el canonico de cada grupo.** Es el de menor identificador, y no el primero que
+    # devuelva el SQL, para que la referencia sea la misma entre ejecuciones.
     canonico: dict = {}
-    for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
+    for gid, pid_suelto, fuente, pid, nombre, _precio, _punit, _fiable, ean, marca in filas:
         clave = (gid if gid is not None else pid_suelto, fuente)
-        actual = mejor.get(clave)
-        # **Coste final de lo que se pide**, no precio unitario del envase.
-        coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
-        if actual is None or coste < actual[7]:
-            # Seis campos: los cuatro de siempre, **el GTIN de esta fila** -- que es el producto que
-            # se va a proponer -- y el canonico del grupo, que se rellena al final.
-            mejor[clave] = (pid, precio, nombre, promos.get(pid), ean, None, marca, coste)
-        # **El canonico es el de menor identificador**, y no el primero que devuelva el SQL: asi la
-        # referencia es la misma entre ejecuciones, que es lo que hace reproducible el veredicto.
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
             canonico[clave] = (pid, nombre, ean, marca)
-    for clave, (pid, nombre, ean, marca) in canonico.items():
+
+    # **Segunda pasada: la eleccion.** Aqui se puede comparar cada fila con el canonico, asi que una
+    # variante barata ya no puede tapar a la exacta.
+    mejor: dict = {}
+    for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
+        clave = (gid if gid is not None else pid_suelto, fuente)
+        coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
+        referencia = identidad.Producto(fuente=clave[1], id_fuente=str(canonico[clave][0]),
+                                        nombre=canonico[clave][1], gtin=canonico[clave][2],
+                                        marca=canonico[clave][3])
+        esta = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca)
+        # Sin GTIN ni presentacion que afirmar, el motor se abstiene; y `None` cuenta como "nada que
+        # afirmar", que es lo mismo que hacia antes de este cambio.
+        veredicto = identidad.decide(referencia, esta)
+        exacta = veredicto["estado"] == identidad.EXACTO
+        # El canonico se guarda como ficha del motor para que `_resolver` no tenga que reconstruirlo.
+        fila = (pid, precio, nombre, promos.get(pid), ean, referencia, marca, coste)
         actual = mejor.get(clave)
-        if actual is not None:
-            mejor[clave] = (*actual[:5], identidad.Producto(
-                fuente=clave[1], id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca), marca,
-                actual[7])
+        if actual is None or _prefiere(exacta, coste, actual[8], actual[7]):
+            # Campos: identificador, precio, nombre, oferta, GTIN de esta fila, canonico del grupo,
+            # marca, coste final y si es exacta.
+            mejor[clave] = (*fila, exacta)
+        # **La alternativa no se tira.** Si la que se queda no es exacta, o si esta lo es y otra no, se
+        # guarda la mas barata de las que no lo son para poder ofrecerla aparte.
+        if not exacta:
+            alternativa = mejor.get((*clave, "alternativa"))
+            if alternativa is None or coste < alternativa[7]:
+                mejor[(*clave, "alternativa")] = (*fila, False)
     return mejor
 
 
