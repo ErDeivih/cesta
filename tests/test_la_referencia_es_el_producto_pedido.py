@@ -45,7 +45,7 @@ def test_con_producto_pedido_la_referencia_es_ese_producto(monkeypatch):
     peticion = cesta.Peticion(grupo_id=1, producto_id="dia:5", cantidad=1, nombre="Leche")
     referencias = _referencias(cesta._candidatos([peticion], cesta._fecha_de_hoy()))
     assert referencias, "no se eligio ningun candidato"
-    assert referencias[(1, "dia")] == "dia:5", (
+    assert referencias[cesta._llave_candidato(1, "dia:5", "dia")] == "dia:5", (
         f"la referencia es {referencias[(1, 'dia')]} y la linea pide dia:5")
 
 

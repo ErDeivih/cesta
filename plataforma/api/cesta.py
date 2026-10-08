@@ -15,7 +15,7 @@ producto, abarata el par. Sin eso, el reparto sale peor que el real.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from itertools import combinations
 
@@ -104,6 +104,23 @@ def _prefiere(exacta_nueva: bool, coste_nuevo: int, exacta_actual: bool, coste_a
     return coste_nuevo < coste_actual
 
 
+def _llave(peticion: Peticion) -> tuple:
+    """La identidad que pide la linea: **el grupo y el producto concreto, si consta**."""
+    return (peticion.grupo_id, peticion.producto_id)
+
+
+def _llave_candidato(dueno, pedida, fuente) -> tuple:
+    """**La llave de `mejor`, en un solo sitio.** El que guarda y el que busca pasan por aqui.
+
+    **Sin producto concreto, la llave es la del grupo** -- `(grupo, cadena)` --: una linea que pide el grupo
+    tiene por identidad el grupo, y esa es la forma que ya usaba el motor. Con producto concreto la llave lo
+    lleva dentro, y ahi esta el arreglo del caso 3: dos articulos del mismo grupo dejan de pisarse.
+    """
+    if pedida is None:
+        return (dueno, fuente)
+    return ((dueno, pedida), fuente)
+
+
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     """Por cada linea y cadena, el producto mas barato que la resuelve."""
     con = conexion()
@@ -136,13 +153,8 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # conviene es la SUMA de todas sus lineas, no la de la ultima: pedir 2 y 3 es pedir 5.
     cantidades = _cantidades_por_referencia(peticiones)
 
-    # **Que producto pidio cada linea, cuando lo dice.** La clave puede ser el grupo, pero
-    # si la persona registro el producto concreto, la referencia tiene que ser ESE producto.
-    pedido: dict = {}
-    for peticion in peticiones:
-        suya = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
-        if suya is not None and peticion.producto_id:
-            pedido[suya] = peticion.producto_id
+    # **Que pide cada linea.** El grupo y, si consta, el producto concreto.
+    claves: set = {_llave(p) for p in peticiones}
 
     # La ficha de cada fila por su identificador, para buscar la del producto pedido.
     fichas = {fila[3]: (fila[3], fila[4], fila[8], fila[9]) for fila in filas}
@@ -156,15 +168,29 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
             canonico[clave] = (pid, nombre, ean, marca)
 
+    # **Una copia de cada fila por llave que sirva**, despues de la pasada del canonico -- que lee diez
+    # campos y la expansion añade uno --. Y **abstencion**: si se pide un producto concreto que no esta entre
+    # las filas con precio, su llave no se crea; el canonico no sustituye su identidad.
+    por_llave: list = []
+    for fila in filas:
+        dueno_fila = fila[0] if fila[0] is not None else fila[1]
+        for pedida in [k[1] for k in claves if k[0] == dueno_fila]:
+            if pedida is not None and pedida not in {f[3] for f in filas}:
+                continue
+            por_llave.append((*fila, pedida))
+    filas = por_llave
+
     # **Segunda pasada: la eleccion.** Aqui se puede comparar cada fila con el canonico, asi que una
     # variante barata ya no puede tapar a la exacta.
     mejor: dict = {}
-    for gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca in filas:
-        clave = (gid if gid is not None else pid_suelto, fuente)
-        coste = _coste_para(cantidades.get(clave[0], 1), precio, promos.get(pid))
+    for (gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca,
+         pedida) in filas:
+        dueno = gid if gid is not None else pid_suelto
+        clave = _llave_candidato(dueno, pedida, fuente)
+        coste = _coste_para(cantidades.get(dueno, 1), precio, promos.get(pid))
         # **La referencia: lo pedido si consta, y si no el canonico del grupo.** Es la misma ficha
         # para todas las cadenas, porque la identidad se compara por GTIN y no por donde este.
-        cual = fichas.get(pedido.get(clave[0])) or canonico[clave[0]]
+        cual = fichas.get(pedida) or canonico[dueno]
         referencia = identidad.Producto(fuente=clave[1], id_fuente=str(cual[0]),
                                         nombre=cual[1], gtin=cual[2], marca=cual[3])
         esta = identidad.Producto(fuente=fuente, id_fuente=str(pid), nombre=nombre, gtin=ean, marca=marca)
@@ -175,7 +201,15 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         # El canonico se guarda como ficha del motor para que `_resolver` no tenga que reconstruirlo.
         fila = (pid, precio, nombre, promos.get(pid), ean, referencia, marca, coste)
         actual = mejor.get(clave)
-        if actual is None or _prefiere(exacta, coste, actual[8], actual[7]):
+        # **Si la linea pidio un producto concreto y esta entre las filas con precio, gana ESE.** El
+        # «mas barato del grupo» es la regla de la linea que pide el grupo sin mas; aplicarsela a la que
+        # pidio un articulo seria sustituirle lo que pidio sin que nadie lo haya aceptado.
+        es_la_pedida = pedida is not None and str(pid) == str(pedida)
+        actual_es_la_pedida = (actual is not None and pedida is not None
+                               and str(actual[0]) == str(pedida))
+        if (actual is None or (es_la_pedida and not actual_es_la_pedida)
+                or (es_la_pedida == actual_es_la_pedida
+                    and _prefiere(exacta, coste, actual[8], actual[7]))):
             # Campos: identificador, precio, nombre, oferta, GTIN de esta fila, canonico del grupo,
             # marca, coste final y si es exacta.
             mejor[clave] = (*fila, exacta)
@@ -267,6 +301,43 @@ def _promos_vigentes(producto_ids: set[str], fecha_tope: str | None = None) -> d
     return {k: v for k, v in tabla.items() if k in producto_ids}
 
 
+def _agrupa_y_reparte(elecciones: list[Eleccion]) -> list[Eleccion]:
+    """El coste de una compra se calcula **por grupo** y se reparte entre sus lineas.
+
+    **Agrupar** por producto efectivo y cadena, y **solo con lo autorizado**: un aviso no es un permiso, asi que
+    no se aplican descuentos con cantidades pendientes de autorizacion. Dos cadenas no se agrupan nunca.
+
+    **Repartir** el total del grupo conservando la suma exacta: en proporcion a las unidades, parte entera para
+    cada linea, y los centimos sobrantes de uno en uno a mayor fraccion -- a igualdad, la que va antes.
+
+    Sin esto la promocion se aplicaba **por linea** y luego se sumaban los costes ya separados: un 3x2 daba 200
+    centimos en una linea de tres y 300 en dos lineas de una y dos. La misma compra, dos precios.
+    """
+    grupos: dict[tuple, list[int]] = {}
+    for indice, eleccion in enumerate(elecciones):
+        if not eleccion.autorizada or not eleccion.unidades:
+            continue
+        grupos.setdefault((eleccion.producto_id, eleccion.fuente), []).append(indice)
+
+    repartidas = list(elecciones)
+    for indices in grupos.values():
+        if len(indices) < 2:
+            continue
+        primera = elecciones[indices[0]]
+        unidades = sum(elecciones[i].unidades for i in indices)
+        unitario = primera.coste_sin_oferta_cent // primera.unidades
+        total = lee_promo(primera.promo_txt).coste(unidades, unitario)
+        partes = [(total * elecciones[i].unidades) // unidades for i in indices]
+        resto = total - sum(partes)
+        orden = sorted(range(len(indices)),
+                       key=lambda k: (-((total * elecciones[indices[k]].unidades) % unidades), k))
+        for k in orden[:resto]:
+            partes[k] += 1
+        for k, indice in enumerate(indices):
+            repartidas[indice] = replace(elecciones[indice], coste_cent=partes[k])
+    return repartidas
+
+
 def _total_autorizado(elecciones: list[Eleccion]) -> dict:
     """El total de lo autorizado, y **lo que falta** con su motivo.
 
@@ -289,7 +360,7 @@ def _total_autorizado(elecciones: list[Eleccion]) -> dict:
 
 
 def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
-    clave = (peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, fuente)
+    clave = _llave_candidato(*_llave(peticion), fuente)
     hallado = mejor.get(clave)
     if hallado is None:
         return None
@@ -306,8 +377,22 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     guardada = mejor.get((*clave, "alternativa"))
     alternativa = None
     if guardada is not None:
+        # **Con su precio unitario y su oferta**, no solo con el coste del grupo: es lo que hace falta
+        # para poder devolverla y cobrarla como efectiva.
         alternativa = {"producto_id": guardada[0], "nombre": guardada[2],
-                       "coste_cent": guardada[7], "fuente": fuente}
+                       "coste_cent": guardada[7], "fuente": fuente,
+                       "precio_cent": guardada[1], "promo": guardada[3]}
+    # **La eleccion efectiva, antes de cobrar.** Si hay sustitucion confirmada, lo que se devuelve y se cobra
+    # es ESA alternativa -- su producto, su nombre, su precio y su oferta --, no el canonico que el motor
+    # propone hoy. Con la confirmacion validada y la eleccion tomada de `hallado`, lo aceptado y lo cobrado
+    # eran dos productos distintos: el fallo que reprodujo el dueno (`confirmado=dia:B; elegido=dia:A`).
+    confirmada = _es_la_confirmada(peticion, alternativa)
+    if confirmada and alternativa is not None:
+        pid = alternativa["producto_id"]
+        nombre = alternativa["nombre"]
+        precio = alternativa["precio_cent"]
+        promo_txt = alternativa.get("promo")
+
     mecanica = lee_promo(promo_txt)
     sin_oferta = peticion.cantidad * precio
     coste = mecanica.coste(peticion.cantidad, precio)
@@ -329,7 +414,7 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     # la confirmacion no cuenta para esta y se pide nueva. Es lo que impide dar por aceptado
     # un cambio que nadie acepto.
     autorizada = (veredicto is None or veredicto["estado"] == identidad.EXACTO
-                  or _es_la_confirmada(peticion, alternativa))
+                  or confirmada)
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
                     promo_txt if mecanica.util else None, sugerencia,
                     linea_id=peticion.id,
@@ -355,7 +440,7 @@ def donde_comprar(peticiones: list[Peticion],
 
     una_tienda = []
     for fuente, elecciones in por_cadena.items():
-        resueltas = [e for e in elecciones if e]
+        resueltas = _agrupa_y_reparte([e for e in elecciones if e])
         faltan = [p.nombre for p, e in zip(peticiones, elecciones, strict=True) if not e]
         if not resueltas:
             continue
