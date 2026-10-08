@@ -442,10 +442,15 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     # un cambio que nadie acepto.
     autorizada = (veredicto is None or veredicto["estado"] == identidad.EXACTO
                   or confirmada)
+    # **El estado de la eleccion, dicho.** Si la confirmacion manda, lo que hay no es «una alternativa
+    # propuesta» sino **una sustitucion aceptada**: el producto devuelto ya es el de la persona, y la etiqueta
+    # tiene que decir eso y no lo que el motor proponia antes de que nadie aceptara nada.
+    estado = "confirmada" if (confirmada and alternativa is not None) else (
+        veredicto["estado"] if veredicto else None)
     return Eleccion(pid, nombre, fuente, peticion.cantidad, coste, sin_oferta,
                     promo_txt if mecanica.util else None, sugerencia,
                     linea_id=peticion.id,
-                    identidad=veredicto["estado"] if veredicto else None,
+                    identidad=estado,
                     motivo="; ".join(veredicto["motivos"]) if veredicto else None,
                     autorizada=autorizada, alternativa=alternativa)
 
