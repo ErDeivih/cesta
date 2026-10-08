@@ -17,7 +17,8 @@ from fastapi.testclient import TestClient
 
 from core import diario, recetas
 from plataforma.api import diario as api_diario
-from plataforma.api import main, recetas as api_recetas, sesion
+from plataforma.api import main, sesion
+from plataforma.api import recetas as api_recetas
 
 ANA = {"id": "ana", "usuario": "ana", "nombre": "Ana"}
 LUIS = {"id": "luis", "usuario": "luis", "nombre": "Luis"}
