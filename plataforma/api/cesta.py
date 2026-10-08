@@ -580,7 +580,8 @@ def estimacion(lineas: list[dict]) -> dict:
             sin_precio += 1
             continue
         clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
-        precios = [v[1] for (k, _), v in mejor.items() if k == clave]
+        precios = [v[1] for k, v in mejor.items()
+                   if k[0] == clave and k[-1] != "alternativa"]
         if not precios:
             sin_precio += 1
             continue
@@ -617,7 +618,8 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
         cadena = precio = None
         if not linea.get("producto_movido"):
             clave = peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id
-            suyos = [(fuente, v[1]) for (k, fuente), v in mejor.items() if k == clave]
+            suyos = [(k[1], v[1]) for k, v in mejor.items()
+                     if k[0] == clave and k[-1] != "alternativa"]
             elegida = linea.get("cadena_elegida")
             if elegida and any(f == elegida for f, _ in suyos):
                 cadena, precio = elegida, next(p for f, p in suyos if f == elegida)
