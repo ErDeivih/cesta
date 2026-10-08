@@ -1100,11 +1100,16 @@ def autorizacion_de(lista_id: str) -> dict[str, bool]:
     """
     with cursor() as cur:
         cur.execute("""
-            SELECT id, autorizado
+            SELECT id, autorizado, autorizado_producto, autorizado_cadena
               FROM lista_linea
              WHERE lista_id = %s AND borrado_en IS NULL
         """, (lista_id,))
-        return {str(f["id"]): bool(f["autorizado"]) for f in cur.fetchall()}
+        # **Que se confirmo, no solo que se confirmo.** El si solo no se puede honrar: hace falta
+        # el producto, y la cadena para distinguir la misma ficha en dos tiendas.
+        return {str(fila["id"]): {"autorizado": bool(fila["autorizado"]),
+                                     "producto": fila["autorizado_producto"],
+                                     "cadena": fila["autorizado_cadena"]}
+                    for fila in cur.fetchall()}
 
 
 def autoriza_linea(lista_id: str, linea_id: str, usuario_id: str,

@@ -556,8 +556,7 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
     # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
     # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
     # sustitucion que nadie ha confirmado.
-    _autorizadas = almacen.autorizacion_de(lista_id)
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
+    lineas = _con_autorizacion(lineas, lista_id)
     # **Las lineas que apuntan a otro producto no tienen precio, y hay que quitarselo aqui.**
     # Sin esto, la compra guardaba el precio del grupo al que apunta la linea -- que hoy puede
     # ser un pintalabios en una linea que dice «leche entera» -- y el total mentia. Es el mismo
@@ -622,8 +621,7 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
     # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
     # sustitucion que nadie ha confirmado.
-    _autorizadas = almacen.autorizacion_de(lista_id)
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
+    lineas = _con_autorizacion(lineas, lista_id)
     # **Y si el grupo ya no es el producto que la linea dice, se dice.** El
     # `grupo_id` es un ordinal que el emparejador renumera en cada pasada, asi que
     # una linea puede estar apuntando a otra cosa: sin esta marca, la pantalla
@@ -774,8 +772,7 @@ def reparto(lista_id: str, cadenas: str | None = None,
     # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
     # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
     # sustitucion que nadie ha confirmado.
-    _autorizadas = almacen.autorizacion_de(lista_id)
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
+    lineas = _con_autorizacion(lineas, lista_id)
     # Las que apuntan a otro producto no se reparten: se estaria decidiendo la tienda
     # de un producto que no es el que dice la linea. Se quedan fuera del reparto y la
     # pantalla las señala en la lista (`producto_movido`).
@@ -904,8 +901,7 @@ def donde(lista_id: str, cadenas: str | None = None, max_tiendas: int | None = N
     # **Lo autorizado se lee de la base, no del cuerpo de la peticion.** Es lo que hace que una
     # confirmacion sobreviva a recargar la pantalla, y lo que impide que el total cuente una
     # sustitucion que nadie ha confirmado.
-    _autorizadas = almacen.autorizacion_de(lista_id)
-    lineas = [{**ln, "autorizado": _autorizadas.get(str(ln.get("id")), False)} for ln in lineas]
+    lineas = _con_autorizacion(lineas, lista_id)
     # Igual que en el reparto: una linea que apunta a otro producto no se compara, no
     # sea que «donde sale mas barata» conteste con el precio de otra cosa.
     movidas = catalogo.lineas_movidas(lineas)
@@ -1201,3 +1197,24 @@ def autorizar_linea(lista_id: str, linea_id: str, autorizado: bool = Query(defau
         # cuales existen. Es la regla de siempre.
         raise HTTPException(status_code=404, detail="esa linea no esta en esa lista")
     return {"linea_id": tocada, "autorizado": autorizado}
+
+
+def _con_autorizacion(lineas: list[dict], lista_id: str) -> list[dict]:
+    """Las lineas, cada una con **lo que se confirmo** para ella.
+
+    Un solo sitio para esto, usado por todos los que calculan precios. Antes eran cinco copias del
+    mismo cruce, y una copia que se queda atras es exactamente el fallo que tuvo `mejor`: dos
+    lectores que dejaron de coincidir con lo que leian.
+
+    Las lineas historicas no aparecen autorizadas: la columna nace en falso y **no consta** que
+    nadie autorizara nada, que es distinto de que se rechazara.
+    """
+    confirmado = almacen.autorizacion_de(lista_id)
+    salida = []
+    for linea in lineas:
+        suyo = confirmado.get(str(linea.get("id"))) or {}
+        salida.append({**linea,
+                        "autorizado": bool(suyo.get("autorizado")),
+                        "autorizado_producto": suyo.get("producto"),
+                        "autorizado_cadena": suyo.get("cadena")})
+    return salida

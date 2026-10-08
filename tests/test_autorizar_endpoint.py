@@ -31,7 +31,9 @@ def test_autorizar_pide_permiso_de_ESCRITURA():
 def test_la_autorizacion_se_lee_de_la_base():
     fuente = _fuente()
     assert "almacen.autorizacion_de(lista_id)" in fuente
-    assert "_autorizadas.get(str(ln.get(\"id\")), False)" in fuente
+    # El cruce vive en un solo sitio: el ayudante.
+    assert "_con_autorizacion(lineas, lista_id)" in fuente
+    assert fuente.count("almacen.autorizacion_de(lista_id)") == 1
 
 
 def test_no_se_distingue_entre_no_existe_y_no_es_tuya():
@@ -43,5 +45,7 @@ def test_no_se_distingue_entre_no_existe_y_no_es_tuya():
 def test_la_autorizacion_entra_en_todos_los_sitios_que_calculan_precios():
     """La estimacion de la lista y el reparto por tiendas: los dos deciden con `autorizada`."""
     fuente = _fuente()
-    assert fuente.count("almacen.autorizacion_de(lista_id)") >= 2, \
-        "el cruce tiene que estar en todos los sitios donde se reunen las lineas"
+    assert fuente.count("lineas = _con_autorizacion(lineas, lista_id)") >= 4, \
+        "los sitios que reunen lineas para calcular precios pasan todos por el ayudante"
+    assert fuente.count("almacen.autorizacion_de(lista_id)") == 1, \
+        "la autorizacion se lee en un solo sitio: si se lee en varios, pueden separarse"
