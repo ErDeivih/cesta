@@ -18,7 +18,9 @@ export function RecetaDetalle() {
   const { recetaId } = useParams()
   const id = recetaId ? Number(recetaId) : null
   const [version, setVersion] = useState<number | null>(null)
-  const { data, isPending, error } = useReceta(id, version)
+  /** Para cuantas raciones se quieren los ingredientes. Vacio = las de la receta. */
+  const [raciones, setRaciones] = useState<number | null>(null)
+  const { data, isPending, error } = useReceta(id, version, raciones)
 
   if (isPending) {
     return <p className="text-[15px] text-secundaria">Leyendo la receta...</p>
@@ -53,6 +55,30 @@ export function RecetaDetalle() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        {/* **Para cuantas raciones.** El servidor ya escalaba; sin este campo, el trabajo estaba hecho y
+            no se veia. A 16 px por el contrato de movil: por debajo, el navegador hace zoom al enfocar. */}
+        <label className="flex items-center gap-2 text-[13px] text-secundaria" htmlFor="raciones">
+          Para
+          <input
+            id="raciones"
+            type="number"
+            min={1}
+            value={raciones ?? data.raciones_receta ?? data.raciones}
+            onChange={(e) => {
+              const cuantas = Number(e.target.value)
+              // Vacio o cero es "las de la receta": no se manda una escala que no se ha pedido.
+              setRaciones(cuantas >= 1 ? cuantas : null)
+            }}
+            className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+          />
+          raciones
+        </label>
+        {/* **Las dos cifras.** Sin esto, quien mira una receta escalada creeria que es de seis. */}
+        {data.escalada && (
+          <span className="text-[13px] text-aviso tabular-nums">
+            Calculado para {data.raciones}; la receta es de {data.raciones_receta}.
+          </span>
+        )}
         <label className="text-[13px] text-secundaria" htmlFor="version">
           Version
         </label>

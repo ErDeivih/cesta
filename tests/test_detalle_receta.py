@@ -31,7 +31,7 @@ def test_la_ruta_del_detalle_ya_no_sirve_el_modulo_compartido():
 def test_el_detalle_lee_la_receta_de_la_ruta_y_no_un_estado_de_paso():
     detalle = _leer("paginas/RecetaDetalle.tsx")
     assert "useParams()" in detalle, "el identificador sale de la direccion"
-    assert "useReceta(id, version)" in detalle, "y la receta se pide a la API con ese identificador"
+    assert "useReceta(id, version, raciones)" in detalle, "y la receta se pide a la API con ese identificador"
 
 
 def test_el_404_se_distingue_de_un_fallo():
