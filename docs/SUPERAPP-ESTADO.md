@@ -50,6 +50,28 @@ No se mezclan las tres.
 **Lo que la puerta ha parado**: seis commits que habrían metido una regresión o una prueba mal
 escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan, no se commitea.
 
+## Resumen vigente (13 de octubre de 2026) · corrección: la condición 2 NO está cerrada
+
+**Este documento dijo que la condición 2 estaba cerrada y no lo está.** El dueño contrastó los informes con el
+código y la plataforma en marcha y encontró **cuatro defectos**. La culpa del cierre prematuro es mía, y lo que
+importa es que el estado lo diga: **ninguna condición se da por cerrada hasta que estos comportamientos estén
+probados.**
+
+| # | defecto | estado |
+|---|---|---|
+| 1 | la autorización guarda un sí/no por línea y **no qué alternativa** se aceptó: el motor puede cambiar de producto y seguir autorizado | **pendiente** (necesita migración `012` con producto y cadena confirmados) |
+| 2 | `_candidatos` sigue construyendo el canónico por `(grupo, fuente)`: **no compara contra el producto solicitado** | **pendiente** (es la primera frase del encargo y sigue en pie) |
+| 3 | dos líneas del mismo producto con cantidades distintas **se pisaban** al elegir candidato | **CORREGIDO** (`b7fd14a`), con prueba vista roja primero |
+| 4 | `/api/estado` declara `coherente: false`: precios del 8 con publicación del 7 | **pendiente** (detectar ya funcionaba; falta resolver la publicación) |
+
+**Y una nota sobre el defecto 3, porque enseña:** no era un descuido, estaba **escrito como decisión** —*«si la
+misma apareciera en dos lineas con cantidades distintas, manda la ultima: es una decision, no un descuido»*—.
+El razonamiento no se sostenía: dos líneas del mismo producto se compran juntas, así que la oferta que conviene
+se decide con **las unidades totales**. La prueba que lo fija no compara números, compara **el candidato
+elegido**: pedir 2 y 3 tiene que dar el mismo que pedir 5.
+
+**Cifra de la suite: 1.428 pruebas, 0 fallos, ruff limpio** (medida en `b7fd14a`, no después).
+
 ## Resumen vigente (12 de octubre de 2026) · relevo: tres condiciones cerradas y lo que falta
 
 ### Cerrado, con sus dos puertas
