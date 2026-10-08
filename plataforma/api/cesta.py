@@ -524,6 +524,39 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
     return mejor
 
 
+def _reparte_filas(filas: list[dict]) -> list[dict]:
+    """Reparte el coste de una sublista entre sus lineas, por producto efectivo.
+
+    **Una sublista ya es una tienda**, asi que dentro de ella el grupo de compra es el producto: dos lineas del
+    mismo producto comparten la oferta. Y a tiendas distintas no se agrupa nunca, porque no hay donde.
+
+    Misma regla de redondeo que en el resto: parte entera para cada linea, y los centimos sobrantes de uno en uno
+    a mayor fraccion -- a igualdad, la que va antes --, para que la suma sea siempre el total del grupo.
+    """
+    grupos: dict[str, list[int]] = {}
+    for indice, fila in enumerate(filas):
+        if fila.get("coste_cent") is None or not fila.get("cantidad"):
+            continue
+        grupos.setdefault(str(fila.get("producto_id")), []).append(indice)
+    repartidas = [dict(f) for f in filas]
+    for indices in grupos.values():
+        if len(indices) < 2:
+            continue
+        primera = filas[indices[0]]
+        unidades = sum(filas[i]["cantidad"] for i in indices)
+        unitario = primera["coste_sin_oferta_cent"] // primera["cantidad"]
+        total_grupo = lee_promo(primera.get("promo")).coste(unidades, unitario)
+        partes = [(total_grupo * filas[i]["cantidad"]) // unidades for i in indices]
+        resto = total_grupo - sum(partes)
+        orden = sorted(range(len(indices)),
+                       key=lambda k: (-((total_grupo * filas[indices[k]]["cantidad"]) % unidades), k))
+        for k in orden[:resto]:
+            partes[k] += 1
+        for k, i in enumerate(indices):
+            repartidas[i]["coste_cent"] = partes[k]
+    return repartidas
+
+
 def reparto_por_tienda(peticiones: list[Peticion],
                        asignadas: list[str | None],
                        cadenas: list[str] | None = None) -> dict:
@@ -594,6 +627,10 @@ def reparto_por_tienda(peticiones: list[Peticion],
         # su nombre") aplicada a lo que ya se ha decidido.
         if not filas and not sin_encontrar.get(cadena):
             continue
+        # **El coste, repartido por grupo de compra dentro de la sublista.** Su docstring ya prometia «con
+        # las ofertas aplicadas»: esto es lo que la cumple. El ahorro se recalcula sobre lo repartido, para
+        # que la explicacion no contradiga al precio.
+        filas = _reparte_filas(filas)
         gastado = sum(f["coste_cent"] for f in filas)
         sin_oferta = sum(f["coste_sin_oferta_cent"] for f in filas)
         salida.append({
@@ -614,6 +651,9 @@ def reparto_por_tienda(peticiones: list[Peticion],
             "sin_encontrar": sin_encontrar.get(cadena, []),
         })
     salida.sort(key=lambda x: (-x["total_cent"], x["cadena"]))
+    # **El total de la lista, la suma de las sublistas.** Con el reparto hecho, sumar las lineas por separado
+    # daria otro numero; y el total tiene que ser lo que de verdad se va a pagar.
+    total = sum(x["total_cent"] for x in salida)
 
     # Lo que costaria si no se hubiera decidido nada: es la comparacion honesta
     # («asi pagas 41,20; todo en DIA serian 39,80»), y sale de la funcion de al lado.
