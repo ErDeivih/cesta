@@ -12,6 +12,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { textoDeError, esErrorApi } from '../api/cliente'
 import { useReceta } from '../api/recetas'
+import { FormularioReceta } from '../componentes/FormularioReceta'
 import { Tarjeta, Vacio } from '../componentes/ui'
 
 export function RecetaDetalle() {
@@ -129,6 +130,7 @@ export function RecetaDetalle() {
           </p>
         </Tarjeta>
       )}
+      <FormularioReceta receta={data} />
     </div>
   )
 }
