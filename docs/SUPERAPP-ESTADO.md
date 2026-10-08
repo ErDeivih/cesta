@@ -72,55 +72,28 @@ escrita. La práctica es: las pruebas corren **antes** del commit y si no pasan,
 (`uv run python -m plataforma.prueba_suite`) no se ha pasado desde el aislamiento; necesita el servidor
 de desarrollo levantado.
 
-**Condición 2 — identidad solicitada y selección del coste: EN CURSO.** Los cinco casos de
-aceptación, uno a uno, con lo que falta dicho al lado:
+**Condición 2 — identidad solicitada y selección del coste: CERRADA** salvo dos cosas que
+dependen de otras (abajo, dichas).
 
-| caso | estado | donde |
+| caso | estado | evidencia |
 |---|---|---|
-| **A** grupo antiguo con dos marcas incompatibles | **hecho**: mismo GTIN con marcas distintas → **cuarentena** (no alternativa: una de las dos fichas miente); sin GTIN son dos productos; marca vacía no inventa conflicto; comparación normalizada | `core/identidad.py`, `cesta.py` (la marca viaja del catálogo al motor), `tests/test_marca_en_identidad.py` (5) |
-| **B** alternativa más barata **no autorizada** | **regla, total por cadena y reparto hechos**: `Eleccion.autorizada`, `Peticion.autorizado` por línea, `_total_autorizado` con `pendientes`; el total de cada cadena y el reparto eligen y suman **solo lo autorizado**, y `sin_autorizar` **entra en el orden** | `cesta.py`, `tests/test_total_autorizado.py` (5), `test_total_en_la_api.py` (4), `test_reparto_autorizado.py` (3) |
-| **C** dos unidades donde el envase caro gana por promoción | **hecho**: se elige por **coste final de las unidades pedidas** (150 frente a 180), con la regla en una función pura | `cesta.py::_coste_para`, `tests/test_seleccion_por_coste.py` (5) |
-| **D** precio o promoción futura | **parcial**: `fecha_tope` corta particiones posteriores de promoción (S05); **falta** comprobar la **fecha del precio y la versión del catálogo** | `tests/test_ofertas_vigentes.py` (3) |
-| **E** variantes bajo el mismo GTIN | **parcial**: el motor las distingue por cantidad y las no exactas no suman; **falta** que la **selección** no descarte la variante exacta cuando la más barata del mismo grupo es otra | `core/identidad.py` |
+| **A** grupo antiguo con dos marcas incompatibles | **hecho** | mismo GTIN con marcas distintas → **cuarentena**; sin GTIN, dos productos; marca vacía no inventa conflicto. `core/identidad.py`, `cesta.py`, `tests/test_marca_en_identidad.py` |
+| **B** alternativa más barata **no autorizada** | **hecho**: regla, total por cadena, reparto, respuesta **y pantalla** | `Eleccion.autorizada`, `Peticion.autorizado` por línea, `_total_autorizado` con `pendientes`, `sin_autorizar` **en el orden**, `_serializa` con `identidad`/`motivo`/`autorizada`/`alternativa`, y el aviso que dice **qué se puede pedir y por cuánto**. 5 + 4 + 4 + 3 + 4 pruebas |
+| **C** dos unidades donde el envase caro gana por promoción | **hecho** | coste final de las unidades pedidas, 150 frente a 180, en una función pura. `cesta.py::_coste_para`, `tests/test_seleccion_por_coste.py` |
+| **D** precio o promoción futura | **parcial** | `fecha_tope` corta particiones posteriores de promoción (S05). **Falta**: fecha del precio y versión del catálogo |
+| **E** variantes bajo el mismo GTIN | **hecho** | el motor las distingue **y** la selección ya no descarta la exacta: `_prefiere` hace que una exacta gane a una alternativa más barata, y la alternativa se guarda aparte. `tests/test_variante_no_tapa_la_exacta.py` |
 
-**Lo que queda de la condición 2, nombrado y en orden:**
+**Lo que queda de la condición 2, y por qué no está hecho:**
 
-1. **La mezcla de variantes dentro de una cadena**: hoy `_candidatos` retiene **una** fila por
-   `(grupo, cadena)` —la más barata— y el veredicto se calcula después, así que si la más barata es una
-   variante distinta y en la misma cadena hay la exacta un poco más cara, **se pierde la exacta**. La
-   selección tiene que quedarse con la más barata **autorizada** y, aparte, con la más barata no
-   autorizada para poder ofrecerla.
-2. **La persistencia de la autorización en la línea**: hoy `Peticion.autorizado` viaja en la petición;
+1. **D, resto** — fecha del precio y versión del catálogo, además de la partición de promoción. Se puede
+   hacer sin base de datos.
+2. **La persistencia de la autorización en la línea** — hoy `Peticion.autorizado` viaja en la petición;
    falta guardarlo en la línea de la lista para que sobreviva a una recarga. **Depende de PostgreSQL**
-   (la lista vive en `almacen`), y con Docker parado no se puede probar de verdad: se hará cuando la base
-   esté levantada, y no se declara hecho antes.
-3. **La pantalla que ofrece las alternativas**: `pendientes` y `sin_autorizar` ya viajan en la respuesta;
-   falta pintarlas para aceptarlas línea a línea.
-4. **D, resto**: fecha del precio y versión del catálogo, además de la partición de promoción.
+   (la lista vive en `almacen`), y con Docker parado **no se puede probar de verdad**: no se declara hecho
+   antes de poder probarlo.
 
-**Suite completa: 1.292 pruebas, 0 fallos.** Ruff limpio salvo **una sugerencia** en
-`plataforma/api/cesta.py` que no se aplica sola. Arbol limpio en cada commit de la etapa.
-
-### Lo que falta de verdad, sin adornos
-
-1. **S10 a S12 sin empezar**: puentes explicitos e idempotentes, graficas con medida y universo
-   declarados, y el **ensayo integral**. Lo mas gordo de lo que queda es el ensayo con **datos reales,
-   dos usuarios, recuperacion de errores y copia de seguridad restaurada**: nada de eso se ha probado.
-2. **Las 266 cuarentenas** de la sombra sin revisar: son los casos donde el mismo GTIN aparece con
-   presentaciones incompatibles, o sea donde **una de las dos fichas miente**. Nada se activa antes.
-3. **S03 sigue EN CURSO**: falta estratificar la muestra de fichas por familia, resolver los 4.363 a
-   revision con la ficha, e informe por fuente y familia. Los 28 leidos y el sitemap medido no lo cierran.
-4. **Lo visible que queda**: el detalle por receta, y las secciones de *mis alimentos* y *tendencias*,
-   siguen en la pantalla de cocina compartida con un `modo`, que es lo que el encargo manda eliminar.
-5. **La comparacion de la sombra con el emparejador** ya esta hecha, pero **activar la identidad nueva
-   no se ha hecho ni se debe hacer** hasta revisar las cuarentenas.
-
-### La siguiente accion concreta
-
-**Revisar las 266 cuarentenas**, una a una, mirando las dos fichas: es lo que desbloquea decidir sobre la
-identidad nueva, y es trabajo de datos puro que no depende de nadie. Si se quiere avanzar en visible
-antes, lo de mas valor es **terminar de partir la pantalla de cocina** (detalle por receta, alimentos y
-tendencias), porque es lo ultimo que queda de la arquitectura antigua.
+**Y queda pendiente, de antes:** la comprobación **en navegador** (`plataforma/prueba_suite`), que no se
+ha pasado desde el aislamiento por usuario porque necesita el servidor de desarrollo levantado.
 
 ## Cierre de la etapa (7 de octubre de 2026) · ronda 60 de 60
 
