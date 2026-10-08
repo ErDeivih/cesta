@@ -546,7 +546,13 @@ def _serializa(e: Eleccion) -> dict:
             "unidades": e.unidades, "coste_cent": e.coste_cent,
             "coste_sin_oferta_cent": e.coste_sin_oferta_cent,
             "promo": e.promo_txt, "sugerencia": e.sugerencia,
-            "linea_id": e.linea_id}
+            "linea_id": e.linea_id,
+            # **El veredicto y lo que se ofrece.** Sin esto, todo el trabajo de identidad y de
+            # autorizacion se quedaba dentro del servidor y la pantalla no podia decir nada.
+            "identidad": e.identidad,
+            "motivo": e.motivo,
+            "autorizada": e.autorizada,
+            "alternativa": e.alternativa}
 
 
 def estimacion(lineas: list[dict]) -> dict:
