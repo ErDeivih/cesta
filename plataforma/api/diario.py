@@ -65,6 +65,30 @@ def rango(desde: str = Query(...), hasta: str = Query(...),
 def apuntar(datos: EntradaIn, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
+        # **La receta se comprueba ANTES de guardarla.** Una version que no existe, o de otra persona, no se
+        # anota: se dice que no. Es lo que cierra las referencias inventadas, y el propietario sale de la
+        # sesion como en todo lo demas.
+        if datos.tipo == diario.RECETA:
+            from core import recetas as _recetas
+
+            from .recetas import ruta_base as _ruta_recetario
+
+            if not str(datos.referencia or "").isdigit():
+                raise HTTPException(status_code=400,
+                                    detail="una receta se anota con el numero de su receta")
+            recetario = _recetas.conecta(_ruta_recetario())
+            try:
+                version = int(datos.version) if str(datos.version or "").isdigit() else None
+                hallada = _recetas.leer(recetario, usuario["id"], int(str(datos.referencia)),
+                                        version=version)
+            finally:
+                recetario.close()
+            if hallada is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="esa receta o esa version no existe para ti: no se anota una referencia "
+                           "inventada")
+
         entrada_id = diario.apunta(
             con, usuario["id"], datos.fecha, datos.comida, tipo=datos.tipo,
             referencia=datos.referencia, version=datos.version, cantidad_g=datos.cantidad_g,
@@ -81,7 +105,7 @@ def apuntar(datos: EntradaIn, usuario: dict = Depends(usuario_actual)) -> dict:
 def dia(fecha: str, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
-        return diario.dia(con, usuario["id"], fecha)
+        return _con_procedencia(diario.dia(con, usuario["id"], fecha), usuario["id"])
     finally:
         con.close()
 
@@ -95,3 +119,45 @@ def borrar(entrada_id: int, usuario: dict = Depends(usuario_actual)) -> dict:
         return {"borrada": entrada_id}
     finally:
         con.close()
+
+
+def _con_procedencia(dia: dict, propietario: str) -> dict:
+    """Marca cada entrada con **de donde viene**, comprobando el enlace ahora mismo.
+
+    Tres valores, y los tres dicen algo distinto:
+
+      - `manual`: no es una receta; es lo que alguien anoto.
+      - `vinculada`: es una receta y **su version existe y es tuya**: el enlace esta vivo.
+      - `perdida`: es una receta y esa version **ya no esta**. Entonces se dice, en vez de seguir contando
+        como si el enlace valiera.
+
+    Se calcula al leer a proposito. Guardarlo en una columna obligaria a mantenerlo, y una columna que se
+    queda vieja dice "vinculada" de algo que ya no lo esta.
+    """
+    entradas = dia.get("entradas") or []
+    recetas_usadas = {str(e.get("referencia")) for e in entradas if e.get("tipo") == "receta"}
+    if not recetas_usadas:
+        for entrada in entradas:
+            entrada["procedencia"] = "manual"
+        return dia
+
+    from core import recetas as _recetas
+
+    from .recetas import ruta_base as _ruta_recetario
+
+    con = _recetas.conecta(_ruta_recetario())
+    try:
+        for entrada in entradas:
+            if entrada.get("tipo") != "receta":
+                entrada["procedencia"] = "manual"
+                continue
+            referencia = str(entrada.get("referencia") or "")
+            version = entrada.get("version")
+            viva = False
+            if referencia.isdigit():
+                viva = _recetas.leer(con, propietario, int(referencia),
+                                     version=int(version) if str(version or "").isdigit() else None)
+            entrada["procedencia"] = "vinculada" if viva else "perdida"
+    finally:
+        con.close()
+    return dia
