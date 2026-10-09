@@ -89,6 +89,58 @@ export function SelloEcoscore({ valor }: { valor: string | null | undefined }) {
 }
 
 
+/** Los siete nutrientes por 100 g, en el orden en que se lee una etiqueta de verdad. */
+const NUTRIENTES: { campo: keyof Producto; nombre: string; unidad: string }[] = [
+  { campo: 'kcal_100g', nombre: 'Energia', unidad: 'kcal' },
+  { campo: 'grasas_100g', nombre: 'Grasas', unidad: 'g' },
+  { campo: 'grasas_sat_100g', nombre: 'de las cuales saturadas', unidad: 'g' },
+  { campo: 'hidratos_100g', nombre: 'Hidratos de carbono', unidad: 'g' },
+  { campo: 'azucares_100g', nombre: 'de los cuales azucares', unidad: 'g' },
+  { campo: 'proteinas_100g', nombre: 'Proteinas', unidad: 'g' },
+  { campo: 'sal_100g', nombre: 'Sal', unidad: 'g' },
+]
+
+const NUMERO = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 })
+
+
+export function FichaNutrientes({ producto }: { producto: Producto }) {
+  const conDato = NUTRIENTES.filter(({ campo }) => typeof producto[campo] === 'number')
+  if (conDato.length === 0) {
+    // Ausencia de dato, no dato malo -- y es el caso NORMAL: 42.266 de 53.044 productos no los traen.
+    return (
+      <Etiqueta
+        tono="dato"
+        titulo="Ni la cadena ni Open Food Facts publican la tabla nutricional de este producto"
+      >
+        sin datos nutricionales
+      </Etiqueta>
+    )
+  }
+  return (
+    <div className="rounded border border-neutral-200 p-2 dark:border-neutral-700">
+      <p className="mb-1 text-xs font-semibold">Por 100 g</p>
+      <dl className="grid grid-cols-2 gap-x-3 text-xs">
+        {conDato.map(({ campo, nombre, unidad }) => {
+          const valor = producto[campo] as number
+          const kcal = campo === 'kcal_100g'
+          return (
+            <div key={campo} className={`flex items-baseline justify-between gap-2 ${kcal ? 'col-span-2 font-semibold' : ''}`}>
+              <dt className={kcal ? '' : 'text-tinta-suave'}>{nombre}</dt>
+              <dd className="cifra">
+                {NUMERO.format(valor)} {unidad}
+              </dd>
+            </div>
+          )
+        })}
+      </dl>
+      <p className="mt-1 text-[11px] text-tinta-suave">
+        Datos de Open Food Facts. Pueden faltar o ser aproximados.
+      </p>
+    </div>
+  )
+}
+
+
 export function SelloComparable({ cadenas }: { cadenas: number }) {
   if (cadenas >= 2) {
     return (
