@@ -972,3 +972,47 @@ los devuelve -- pero el ultimo metro, que se vean, no esta comprobado.
 4. **El umbral con el que se mide no es la regla con la que se arregla.** Se eligio 20 centimos para mirar y
    se acabo tratando como "imposible"; despues se puso 10 para todo y habria borrado 573 piezas baratas bien
    calculadas (300 bastoncillos por 1,09 EUR son 0,363 centimos cada uno).
+
+
+
+---
+
+## 10 de octubre de 2026 — la presentacion de los datos de Open Food Facts
+
+### Hecho y verificado
+
+| commit | que | evidencia |
+|---|---|---|
+| `18f215c` | sello del Eco-Score, **siete grados** (de `a` a `f`, mas `a-plus` y `not-applicable`), `A+` con ancho para dos caracteres, procedencia en el `title`, y estado vacio con la voz de la casa | `tsc` |
+| `4a4951b` | los ocho campos (Eco-Score + siete nutrientes) en `ResultadoBusqueda` y `Producto`, y el sello en la fila de resultados | `tsc` |
+| `81015f6` | **un solo bloque de nutricion en la ficha**: el de la cadena y, si no publica ninguno, el de OFF con su forma y su procedencia. Los campos tambien en `ProductoSuelto` | `tsc` |
+
+### El quinto duplicado, y el primero que se borra
+
+La ficha **ya tenia un bloque de nutricion** (`miembro.nutricion`, con `filasNutricion()` y `NO_LO_SE`):
+el de la cadena, es decir el de DIA, los 3.954 productos que lo publican. **Escribi `FichaNutrientes` sin
+mirar la pantalla, con otra forma** -- un `dl` con borde propio -- que al lado del `ul` existente se leeria
+como un bloque ajeno. **Se ha borrado** y en su lugar se ha extendido el bloque que ya habia: cuando la
+cadena no publica nutricion y OFF si, se ensena la de OFF con **la misma forma**, la misma base dicha y el
+mismo `NO_LO_SE`, y nunca los dos a la vez.
+
+Eso es lo que hace que **10.778 productos de Carrefour, Mercadona, Alcampo y Aldi** -- cadenas que no
+publican nada nutricional -- dejen de tener ese apartado vacio.
+
+**Los ocho campos viven en tres tipos**, y los tres los nombro `tsc` al fallar, no yo al suponer:
+`ResultadoBusqueda` (la fila), `Producto` (la ficha del grupo) y `ProductoSuelto` (esta pantalla).
+
+### Docker: sigue caido, comprobado de tres formas
+
+`docker ps` falla; **ningun puerto escuchando** en 5432/5434/5435; y `Test-Path` sobre el named pipe
+`dockerDesktopLinuxEngine` dice que **no existe**. Bloquea las cuatro comprobaciones ordenadas, la
+verificacion de la migracion 013, la publicacion, y **ver en pantalla las tres piezas nuevas**. El objetivo
+**no** esta bloqueado: lo esta esa parte de su verificacion. Todo lo anterior es codigo, medicion y tipos.
+
+### Leccion de estas siete rondas
+
+**Leer la pantalla antes de escribir la pieza.** `tsc` valida tipos, **no duplicados**: `FichaNutrientes`
+compilaba, tipaba bien y no rompia nada -- solo leyendo la ficha se veia que la nutricion ya estaba puesta.
+Es la quinta vez en la sesion que se construye algo que el proyecto ya tenia (el orden de los pasillos, el
+enriquecido de OFF, el tipo de fila, los campos en el tipo equivocado, y este bloque), y la primera en que
+el arreglo es **borrar** en vez de integrar.
