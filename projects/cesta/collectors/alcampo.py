@@ -52,6 +52,18 @@ _UNIDAD = {
     "fop.price.per.piece": ("ud", 1), "fop.price.per.each": ("ud", 1),
     "fop.price.per.dozen": ("ud", 1 / 12),
     "per_kilo": ("kg", 1), "per_litre": ("l", 1), "per_unit": ("ud", 1),
+    # **Los nombres de `unitName`.** Su API manda dos formas para lo mismo y el mapa solo tenia la de
+    # `unit`; `unitName` llega en mayusculas ("PER_100ML") y se busca en minusculas. Sin estas, la
+    # etiqueta no se reconocia, el factor se quedaba en 1 y el valor pasaba sin escalar: medido el
+    # 9 de octubre de 2026, **190.732 filas de Alcampo (29,8 %) sin unidad de referencia**.
+    #
+    # Cada una se mapea igual que su gemela `fop.*`: son sinonimos, no reglas nuevas.
+    "per_100ml": ("l", 10), "per_100g": ("kg", 10), "per_100gram": ("kg", 10),
+    "per_kg": ("kg", 1), "per_l": ("l", 1), "per_liter": ("l", 1),
+    "per_g": ("kg", 1000), "per_gram": ("kg", 1000), "per_ml": ("l", 1000),
+    "per_m": ("m", 1), "per_meter": ("m", 1), "per_metro": ("m", 1),
+    "per_piece": ("ud", 1), "per_each": ("ud", 1), "per_dozen": ("ud", 1 / 12),
+    "per_ud": ("ud", 1), "per_unidad": ("ud", 1),
 }
 
 
