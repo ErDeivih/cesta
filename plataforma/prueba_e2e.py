@@ -625,6 +625,62 @@ def main() -> int:
         if not con_oferta:
             print("   (sin oferta en estas lineas: esta comprobacion no distingue el reparto, y lo digo)")
 
+    # == el recorrido real del coste: estimacion, cierre e historico ======================
+    # **La oferta es obligatoria.** No se espera a que el catalogo del dia traiga una: se busca un producto con
+    # `3x2` y, si no hay ninguno, **falla** -- un escenario sin oferta no demuestra nada del reparto.
+    print("\n== el coste, de punta a punta: estimacion, cierre e historico")
+    from plataforma.api import cesta as _cesta
+
+    con_oferta = _cesta.conexion().execute(
+        "SELECT fuente || ':' || id_fuente, precio_cent, promo_txt FROM grupos "
+        "WHERE promo_txt = '3x2' AND precio_cent > 0 LIMIT 1").fetchall()
+    if not con_oferta:
+        fallos += 1
+        print("   FALLO: no hay ningun producto con 3x2 en el catalogo, y el escenario con oferta es obligatorio")
+    else:
+        pid, unitario, promo = con_oferta[0][0], int(con_oferta[0][1]), con_oferta[0][2]
+        print(f"   producto de prueba: {pid} a {unitario} cent, oferta {promo}")
+        mias = cliente.post("/api/listas", json={"nombre": "coste 3x2"}).json()
+        la_lista = str(mias["id"])
+        tres = almacen.anade_linea(la_lista, str(yo["id"]), str(uuid.uuid4()), "Prueba 3x2",
+                                   grupo_id=None, producto_id=pid, cantidad=3)
+        almacen.cambia_linea(la_lista, tres["id"], str(yo["id"]), en_carrito=True)
+        # **La estimacion, sobre LAS LINEAS DEL CARRITO.** No sobre la lista entera: si quedara algo pendiente,
+        # la comparacion seria contra un numero que no se cierra.
+        carrito = [x for x in almacen.lineas_de(la_lista) if x.get("en_carrito")]
+        antes = _cesta.estimacion(carrito)["total_cent"]
+        partes = _cesta.coste_por_linea(carrito)
+        suma_partes = sum(int(v["coste_cent"] or 0) for v in partes.values())
+        print(f"   estimacion del carrito: {antes} cent  |  suma de las partes: {suma_partes} cent")
+        respuesta = cliente.post(f"/api/listas/{la_lista}/cerrar").json()
+        print(f"   respuesta del cierre: {respuesta}")
+        guardadas = almacen.compras_de(la_lista, limite=5)
+        mia = next((c for c in guardadas if str(c["compra_id"]) == str(respuesta.get("compra_id"))), None)
+        if mia is None:
+            fallos += 1
+            print(f"   FALLO: la compra {respuesta.get('compra_id')} no aparece en el historico")
+        else:
+            suyas = almacen.lineas_de_compra(str(mia["compra_id"]))
+            # Total: estimacion, respuesta e historico, los tres el mismo numero.
+            for etiqueta, valor in (("respuesta", respuesta.get("total_cent")),
+                                    ("historico", mia["total_cent"])):
+                if int(valor) != int(antes):
+                    fallos += 1
+                    print(f"   FALLO: la estimacion dijo {antes} y {etiqueta} dice {valor}")
+            # Por linea: identidad y cantidad de cada una, y que las partes sumen el total guardado.
+            if len(suyas) != len(carrito):
+                fallos += 1
+                print(f"   FALLO: se guardaron {len(suyas)} lineas y en el carrito iban {len(carrito)}")
+            for guardada in suyas:
+                print(f"   guardada: {guardada['nombre']} x{guardada['cantidad']} "
+                      f"a {guardada['precio_cent']} cent en {guardada['cadena']}")
+            if suma_partes != int(mia["total_cent"]):
+                fallos += 1
+                print(f"   FALLO: las partes suman {suma_partes} y el total guardado es {mia['total_cent']}")
+            if int(antes) >= sum(int(x["precio_cent"] or 0) * int(x["cantidad"]) for x in suyas):
+                fallos += 1
+                print("   FALLO: el escenario no aplico la oferta: es obligatorio que la aplique")
+
     almacen.para()
     print(f"\n== {'TODO BIEN' if not fallos else f'{fallos} FALLO(S)'}")
     return 1 if fallos else 0
