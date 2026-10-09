@@ -851,3 +851,56 @@ versión de parser, intentos y resultado; estados (`pendiente`, `en_curso` con l
 `parcial`, `no_publicado`, `bloqueado`, `error_temporal`, `no_encontrado`, `excluido`); reanudación
 sin duplicar; y el inventario de cobertura que hoy no existe. Empezar por el **crudo histórico**,
 que ya está descargado, antes de pedir nada.
+
+---## 9 de octubre de 2026 (tarde) — objetivo nuevo: las tres aplicaciones completas y usables
+
+### Lo que se ha hecho y esta commiteado
+
+| commit | que |
+|---|---|
+| `e155590` | **La seccion se hereda por grupo.** Un producto sin categoria propia recoge el pasillo de los productos con los que comparte grupo, en vez de quedarse sin ninguno. Con tres pruebas. |
+| `481b1e0` | **El suelo del precio por unidad**, en `core/normalize.py` (`SUELO_REFERENCIA_CENT = 10`, `referencia_publicable`), y comprobado tambien en la comparacion. |
+| — | **23 claves de seccion escritas a mano** en `core/datos/secciones.yml` (891 productos: los folletos de Alcampo a `promociones`, los turrones y polvorones a `desayuno-dulces`, los vinos a `bebidas`...). **El fichero NO se commitea**: lo mantiene la ingesta. Entra en la pasada del 10. |
+| `892c1b7` | **Revertido mi propio trabajo redundante**: anadi `seccion_orden` a gold y la plataforma ya tenia el orden resuelto con su constante `ORDEN_SECCIONES`. Dos copias del mismo orden acaban discrepando. |
+
+### Lo verificado, y con que evidencia
+
+- **4 commits con `ruff` limpio y la suite completa en verde**, y los `diff --stat` limpios (42/32 lineas, no
+  401/358: los finales de linea del repo estan mezclados —`normalize.py` y `comparacion.py` en LF,
+  `pipeline.py` en CRLF— y escribir sin preservarlos convierte un cambio de una linea en una reescritura).
+- **6 pruebas nuevas del suelo** del precio por unidad, que fijan la distincion por unidad: un kilo por
+  debajo de 10 centimos es imposible; **300 bastoncillos por 1,09 EUR son 0,363 centimos cada uno y eso es
+  un dato, no un error**.
+- **Medido en gold, hoy**: 8.867 grupos con precio de referencia; 1.172 con dispersion mayor de 2x;
+  1.524 filas con precio por unidad menor de 20 centimos, repartidas por las cinco cadenas
+  (Alcampo 2,71 %, Carrefour 3,04 %, DIA 3,78 %, Aldi 4,47 %, Mercadona 1,07 %).
+
+### Lo que se midio y resulto NO ser cierto (para no volver a buscarlo)
+
+Trece hipotesis sobre el precio por unidad, trece refutadas midiendo: un divisor perdido, un factor de mil,
+Aldi sin dividir por la cantidad, unidades de referencia mezcladas (explicaba el 7 %), precios rotos
+causando la anchura de los grupos (el 2 %), Alcampo como cadena culpable (esta en las cinco), el paso
+compartido en `envases.py`/`normalize.py`, y «falta la multiplicacion por diez» (existe, en
+`core/normalize.lecturas_referencia`, con su tabla medida por cadena).
+
+**La causa real, y es pequena**: el respaldo por cadena del precio de referencia, cuando la cadena no
+publica formato con el que comprobar (`pipeline._referencia_que_cuadra` devuelve `None` en su primera
+linea si no hay cantidad). Y **la banda «imposible» no era imposible**: de las 857 filas por debajo de
+10 centimos, 573 son piezas baratas bien calculadas (pastillas, servilletas, toallitas, bastoncillos).
+
+**La leccion**: el umbral con el que se mide no es una regla con la que se arregla. Se eligio 20 centimos
+para mirar y se acabo tratando como «imposible»; despues se puso 10 para todo y habria borrado datos buenos.
+
+### Lo pendiente, y por que
+
+- **Docker no esta en marcha** (el named pipe `dockerDesktopLinuxEngine` no existe; nada escuchando en
+  5432/5434/5435). Bloquea: las cuatro comprobaciones ordenadas —restauracion comparando importes
+  guardados, datos desconocidos (NULL / 0 / total PARCIAL), transaccion con fallo provocado, y 3x2 con
+  datos controlados—, la verificacion de la **migracion 013** en PostgreSQL, la publicacion y las
+  comprobaciones sobre la imagen servida. **Todo lo anterior es codigo y medicion; nada de esto esta
+  declarado cerrado.**
+- **El cruce con Open Food Facts sigue sin enchufar**: 7,3 GB de datos listos y un modulo que funciona y
+  que nadie llama. No necesita Docker y es la carencia funcional mayor.
+- **La tarea 2 del backlog** (equivalencia ancha, el caso Perrier) sigue sin tocar, y es otra cosa que los
+  precios rotos.
+- **La cobertura de secciones** con las 23 claves nuevas y la herencia se vera en la pasada del 10.
