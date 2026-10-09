@@ -154,6 +154,62 @@ def escala(ingredientes: list[dict], de_raciones: int, a_raciones: int) -> list[
     return escalados
 
 
+# Las unidades que se pueden pasar a gramos **sin inventar nada**: un gramo es un gramo y un kilo son mil.
+# El mililitro necesita una densidad y la unidad suelta un peso, asi que se quedan fuera a proposito.
+GRAMOS_POR_UNIDAD = {"g": 1.0, "gr": 1.0, "grs": 1.0, "gramo": 1.0, "gramos": 1.0,
+                     "kg": 1000.0, "kilo": 1000.0, "kilos": 1000.0, "kilogramo": 1000.0}
+
+CAMPOS_DE_LA_FICHA = ("kcal_100g", "proteinas_100g", "grasas_100g", "hidratos_100g")
+
+
+def _gramos_de(ingrediente: dict) -> float | None:
+    """Los gramos de un ingrediente, o `None` si su unidad no se puede pasar sin suponer."""
+    cantidad = ingrediente.get("cantidad")
+    if not isinstance(cantidad, (int, float)) or cantidad != cantidad or cantidad <= 0:
+        return None
+    factor = GRAMOS_POR_UNIDAD.get(str(ingrediente.get("unidad") or "").strip().lower())
+    return None if factor is None else cantidad * factor
+
+
+def nutricion(ingredientes: list[dict], productos: dict[int, dict]) -> dict:
+    """Kcal y macronutrientes de una receta, y cuantos ingredientes se han podido identificar.
+
+    `productos` va **por indice de ingrediente**: `{2: {"kcal_100g": 45.0, ...}}`. Solo esos suman. Un
+    ingrediente sin producto, o con una unidad que no se puede pasar a gramos, **no aporta cero**: se
+    cuenta en `sin_identificar` o en `sin_cantidad`, y el total se enseña sabiendo cuanto falta.
+    """
+    totales = {campo: 0.0 for campo in CAMPOS_DE_LA_FICHA}
+    hay = {campo: False for campo in CAMPOS_DE_LA_FICHA}
+    identificados = sin_identificar = sin_cantidad = 0
+    for indice, ingrediente in enumerate(ingredientes):
+        producto = productos.get(indice)
+        if not producto:
+            sin_identificar += 1
+            continue
+        gramos = _gramos_de(ingrediente)
+        if gramos is None:
+            sin_cantidad += 1
+            continue
+        for campo in CAMPOS_DE_LA_FICHA:
+            por_100 = producto.get(campo)
+            if isinstance(por_100, (int, float)) and por_100 == por_100 and por_100 >= 0:
+                totales[campo] += float(por_100) * gramos / 100
+                hay[campo] = True
+        identificados += 1
+    return {
+        # Cada nutriente se suma por separado, y **sin dato no es cero**: es `None`.
+        "kcal": round(totales["kcal_100g"], 1) if hay["kcal_100g"] else None,
+        "proteinas_g": round(totales["proteinas_100g"], 1) if hay["proteinas_100g"] else None,
+        "grasas_g": round(totales["grasas_100g"], 1) if hay["grasas_100g"] else None,
+        "hidratos_g": round(totales["hidratos_100g"], 1) if hay["hidratos_100g"] else None,
+        # **Las dos cifras van juntas**, como en el diario: lo que se sabe y lo que falta.
+        "identificados": identificados,
+        "sin_identificar": sin_identificar,
+        "sin_cantidad": sin_cantidad,
+        "completo": identificados == len(ingredientes),
+    }
+
+
 def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
          version: int | None = None, raciones: int | None = None) -> dict | None:
     """La receta **si es tuya**, con su contenido. Sin version, la ultima; con ella, **esa**."""
