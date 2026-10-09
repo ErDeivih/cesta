@@ -101,6 +101,37 @@ def apuntar(datos: EntradaIn, usuario: dict = Depends(usuario_actual)) -> dict:
         con.close()
 
 
+class FichaIn(BaseModel):
+    """Una cantidad de un producto, con lo que la ficha dice de el por 100 g.
+
+    Los valores van en el cuerpo porque el cliente ya los tiene de la ficha; **la cuenta la hace el
+    servidor**, para que la regla de "lo que no se sabe no es cero" viva en un solo sitio.
+    """
+
+    fecha: str
+    comida: str
+    referencia: str
+    gramos: float = Field(gt=0)
+    producto: dict
+    nota: str = ""
+
+
+@rutas.post("/desde-ficha", status_code=201)
+def desde_ficha(datos: FichaIn, usuario: dict = Depends(usuario_actual)) -> dict:
+    """Anota una cantidad de un producto del catalogo, calculada de sus valores por 100 g.
+
+    De los nutrientes que la ficha no traiga **no se anota cero**: se anota `None`, y el dia lo cuenta
+    como desconocido. Es lo mismo que hace el diario con una entrada tecleada a mano.
+    """
+    try:
+        entrada = diario.apunta_de_ficha(
+            _con(), usuario["id"], datos.fecha, datos.comida, producto=datos.producto,
+            gramos=datos.gramos, referencia=datos.referencia, nota=datos.nota)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
+    return {"entrada": entrada}
+
+
 @rutas.get("/{fecha}")
 def dia(fecha: str, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
