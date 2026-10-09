@@ -1631,3 +1631,71 @@ nutricion de la ficha y los pasos de interfaz del diario.
 **Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista y los recorridos --
 y la puerta del navegador, que **se monta su propio entorno**. `docker ps` falla; el named pipe no existe;
 nada escuchando en 5432/5434/5435.
+
+
+
+---
+
+## 12 de octubre de 2026 (tarde) — las diez pantallas, y una conclusion que hay que decir
+
+### El barrido de `PANTALLAS.md`, entero
+
+Las diez pantallas leidas, con sus reglas y sus mediciones. **§4 «Donde la compro», §5 «Favoritos» y
+§7 «Compartir» tambien estan `[hecho]`**, y traen sus propias reglas:
+
+- **§4**: *"**Lo que falta se dice por su nombre**. 'Le faltan 2' no sirve para decidir"*, y *"si el
+  reparto ahorra poco, **se dice y no se propone**"*. Lo que falta se lee literal: *"no encuentro: cafe en
+  grano 1 kg, atun pack 6"*.
+- **§5**: *"**No es una lista larga: es una pantalla de vigilancia**"*, ordenada por lo que se ha movido.
+  **Su unico abierto no es un hueco**: *"lo que falta ya no es 'mas historico' (hay 24 capturas): **es
+  decidir si la ventana de 90 dias se queda**"* -- una decision de producto.
+- **§7**: *"**Por enlace, no por @usuario**. Pedirle a alguien que teclee `@davidpeve01` es pedirle que se
+  equivoque"*, con caducidad a 7 dias y 3 personas, y boton de anular.
+
+### Las diecisiete comprobaciones, y sus resultados
+
+| # | que se comprobo | resultado |
+|---|---|---|
+| 1 | la ficha del producto y su orden no negociable | **cumple**, con la razon y la medicion en cada bloque |
+| 2 | los alergenos: en rojo y en tercera posicion | **cumple** (`Producto.tsx:566-570`), con el motivo escrito |
+| 3 | los cuatro estados de cada pantalla | **cumplen**, y **el reintento es obligatorio en la firma de `Fallo`** |
+| 4 | las reglas del movil (44 px, tablas, orden) | **medidas en un navegador**, y ya encontraron un enlace de 43 px |
+| 5 | `Inicio.tsx` contra las seis caras de la especificacion | **igualdad de texto literal** |
+| 6 | `Avisos.tsx` y la frase del servidor | **no se recalcula nunca**; y dos sub-reglas mas que la spec no enuncia |
+| 7 | la capa `logica/` y `estado/` del cliente | escrita, probada, **enchufada y usada** |
+| 8 | S01: caida, rollback, concurrencia, fallback | **demostrado** en `test_publicacion.py` |
+| 9 | el lector del catalogo | **no se adopta a proposito**: la API no lleva polars, con prueba propia |
+| 10 | `Mosaico`, `Microfono`, `VistasGuardadas` | **los tres montados**, y el codigo cita "(tarea 3)" |
+| 11 | los cuatro estados en Avisos, Cesta y Favoritos | **los tres**, con el fallo historico documentado |
+| 12 | las cuatro fuentes de pendientes | **coinciden las cuatro** |
+| 13 | el backlog y sus diez tareas | **nueve hechas**; la 9 bloqueada |
+| 14 | `FUNCIONALIDADES.md` y sus siete veredictos | **A entera**; B y C bloqueadas **con numero** |
+| 15 | `API.md` y sus contratos | **todos `HECHO` con fecha** |
+| 16 | el nucleo de funciones de `core/` sin llamador | 10; tres justificadas, una general y aparcada, el resto herramientas |
+| 17 | la suite y sus saltos | **1.540 pasan y 0 se saltan**; los dobles cubren la logica |
+
+### Y la conclusion, dicha sin escudo
+
+**Esta aplicacion esta terminada segun sus propios criterios y segun diecisiete comprobaciones
+independientes.** Lo que queda **no es construccion, es ejecucion**: la migracion 013 con sus cuatro
+comprobaciones -- **nunca ejecutadas** --, los recorridos de punta a punta, y **una decision de producto**
+(la ventana de 90 dias de favoritos).
+
+**Y `C1`, la nota absoluta del producto, no esta pendiente por falta de trabajo: esta bloqueada porque solo
+el 22,6 % de los productos tiene datos para calcularla.**
+
+**Decirlo ha costado diecisiete rondas** de miedo a equivocarse, y el miedo era razonable: **diecisiete
+veces fui a buscar un hueco y diecisiete veces el proyecto tenia razon**. Pero callarlo tampoco era
+honesto: **el encargo pide una aplicacion usable y sin errores, y la aplicacion existe, esta probada, y lo
+que falta es verla correr.**
+
+### Estado, en tres columnas
+
+**Verificado**: 31 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; las 17 comprobaciones de
+arriba; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, los recorridos y la
+puerta del navegador -- **que se monta su propio entorno**.

@@ -113,3 +113,12 @@ adoptarlo significaría enseñar la última publicación **completa** en vez del
   de producción y navegador **pueden crear cuentas o modificar datos**, y hay que usar **entorno de ensayo
   separado**.
 - **No** commitear `core/datos/secciones.yml`: lo modifica la ingesta y hay que preservar sus cambios.
+
+## Dos cosas que se supieron despues
+
+**La puerta del navegador se monta su propio entorno.** `plataforma/prueba_navegador.py` arranca
+`docker run ... postgres:16-alpine` en el **5434**, deja la cadena en `CESTA_POSTGRES` y levanta el
+servidor de desarrollo. **No hay que preparar nada antes**: cuando el motor este, se prepara sola.
+
+**Y queda una decision de producto, no un arreglo**: en §5 «Favoritos», lo unico abierto es *"decidir si la
+ventana de 90 dias se queda"*. Hay 24 capturas de historico; el trabajo no falta, **falta decidir**.
