@@ -51,6 +51,16 @@ export interface ResultadoBusqueda {
   productos: number
   nutriscore: Nutriscore
   imagen: string | null
+  /** Eco-Score de Open Food Facts: de `a` a `f`, mas `a-plus` y `not-applicable`. */
+  ecoscore: string | null
+  /** Nutrientes por 100 g, de Open Food Facts. Null es "no lo sabemos", nunca cero. */
+  kcal_100g: number | null
+  hidratos_100g: number | null
+  proteinas_100g: number | null
+  grasas_100g: number | null
+  grasas_sat_100g: number | null
+  azucares_100g: number | null
+  sal_100g: number | null
   con_oferta: boolean
   /** Oferta que solo existe con la tarjeta: no baja lo que pagas en caja. */
   con_oferta_club: boolean
@@ -87,6 +97,16 @@ export interface Producto {
   gama: Letra | null
   nutriscore: Nutriscore
   nova: number | null
+  /** Eco-Score de Open Food Facts: de `a` a `f`, mas `a-plus` y `not-applicable`. */
+  ecoscore: string | null
+  /** Nutrientes por 100 g, de Open Food Facts. Null es "no lo sabemos", nunca cero. */
+  kcal_100g: number | null
+  hidratos_100g: number | null
+  proteinas_100g: number | null
+  grasas_100g: number | null
+  grasas_sat_100g: number | null
+  azucares_100g: number | null
+  sal_100g: number | null
   ean: string | null
   imagen: string | null
   alergenos: string | null

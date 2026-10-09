@@ -29,6 +29,7 @@ import {
   SelloComparable,
   SelloDudoso,
   SelloNutriscore,
+  SelloEcoscore,
   SelloOferta,
   SelloRetirada,
 } from './Etiquetas'
@@ -395,6 +396,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
               <SelloDudoso dudoso={fila.dudoso} />
               <SelloComparable cadenas={fila.cadenas} />
               <SelloNutriscore valor={fila.nutriscore} />
+              <SelloEcoscore valor={fila.ecoscore} />
             </div>
           </div>
         </div>
