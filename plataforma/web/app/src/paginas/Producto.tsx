@@ -40,6 +40,9 @@ import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../comp
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
+const NUMERO = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 })
+
+
 export function Producto() {
   const { fuente = '', idFuente = '' } = useParams<{ fuente: string; idFuente: string }>()
   const navega = useNavigate()
@@ -170,6 +173,28 @@ export function Producto() {
    *
    *  `null` cuando no hay nada que ahorrar -- este es el más barato de los comparables,
    *  o el grupo no tiene con qué compararlo --: un *"te ahorras 0,00 €"* es ruido. */
+  // Los nutrientes de Open Food Facts, en el orden en que se lee una etiqueta de verdad. Null es
+  // "no lo sabemos", nunca cero: la guarda de la extraccion ya dejo fuera lo imposible.
+  const filasOff = useMemo(() => {
+    const campos: [keyof typeof producto, string, string][] = [
+      ['kcal_100g', 'Energia', 'kcal'],
+      ['grasas_100g', 'Grasas', 'g'],
+      ['grasas_sat_100g', 'de las cuales saturadas', 'g'],
+      ['hidratos_100g', 'Hidratos de carbono', 'g'],
+      ['azucares_100g', 'de los cuales azucares', 'g'],
+      ['proteinas_100g', 'Proteinas', 'g'],
+      ['sal_100g', 'Sal', 'g'],
+    ]
+    return campos
+      .map(([clave, texto, unidad]) => ({
+        clave,
+        texto,
+        unidad,
+        valor: typeof producto[clave] === 'number' ? (producto[clave] as number) : null,
+      }))
+      .filter((f) => f.valor !== null)
+  }, [producto])
+
   const masBarato = (() => {
     if (!grupo || producto.precio_unidad_cent === null) return null
     const mio = producto.precio_unidad_cent
@@ -565,6 +590,30 @@ export function Producto() {
             <p className="mt-3 text-sm text-neutral-700 dark:text-neutral-300">
               {miembro.descripcion}
             </p>
+          )}
+
+          {/* **Cuando la cadena no publica nutricion, la de Open Food Facts.** Cuatro de las
+              cinco cadenas no publican ninguna: solo DIA. Y 10.778 productos si tienen los valores
+              por 100 g de OFF, asi que sin esto la ficha de un producto de Carrefour, Mercadona,
+              Alcampo o Aldi no ensena nada nutricional. Misma forma que el bloque de al lado, misma
+              base dicha, mismo NO_LO_SE: es la misma informacion de otra fuente, no otra cosa. */}
+          {!miembro.nutricion && filasOff.length > 0 && (
+            <div className="mt-3">
+              <h3 className="text-sm font-semibold">Nutrición (por 100 g)</h3>
+              <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
+                {filasOff.map((f) => (
+                  <li key={f.clave} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
+                    <span className="text-neutral-600 dark:text-neutral-400">{f.texto}</span>
+                    <span className="cifra font-medium">
+                      {f.valor === null ? NO_LO_SE : `${NUMERO.format(f.valor)} ${f.unidad}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400">
+                Datos de Open Food Facts. Pueden faltar o ser aproximados.
+              </p>
+            </div>
           )}
 
           {miembro.nutricion && (
