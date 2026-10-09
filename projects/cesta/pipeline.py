@@ -505,9 +505,19 @@ def _anota_seccion(out: pl.DataFrame) -> pl.DataFrame:
     heredable = (out.filter(pl.col("seccion").is_not_null())
                     .group_by("grupo_id")
                     .agg(pl.col("seccion").first().alias("_heredada")))
-    return (out.join(heredable, on="grupo_id", how="left")
-               .with_columns(pl.coalesce(["seccion", "_heredada"]).alias("seccion"))
-               .drop("_heredada"))
+    out = (out.join(heredable, on="grupo_id", how="left")
+              .with_columns(pl.coalesce(["seccion", "_heredada"]).alias("seccion"))
+              .drop("_heredada"))
+
+    # **Y el sitio en el recorrido, que tambien cruza a gold.** El cliente sabe *que* pasillos hay, pero no en
+    # que orden se recorre la tienda: `ORDEN` vive en `core/secciones.py` y la plataforma no importa el modulo
+    # del scraper. Se escribe aqui, como numero, y el orden es el del recorrido -- no el alfabetico.
+    #
+    # Se calcula **despues** de la herencia, para que el que hereda el pasillo herede tambien su sitio.
+    sitio = {nombre: n for n, nombre in enumerate(secciones.ORDEN)}
+    return out.with_columns(pl.Series("seccion_orden",
+                                      [sitio.get(s) for s in out["seccion"].to_list()],
+                                      dtype=pl.Int16))
 
 
 def _marca_ofertas_de_tarjeta(out: pl.DataFrame) -> pl.DataFrame:
