@@ -1060,3 +1060,70 @@ pieza: el orden de los pasillos, el enriquecido de OFF, el tipo de fila, los cam
 el bloque de nutricion de la ficha, el tope de dispersion y el umbral por seccion. Y en esta ultima, el
 proyecto no solo la tenia: tenia **la medicion de que no funciona** -- escribirla habria costado 388
 segundos de emparejador para descubrir lo que dice un docstring.
+
+
+
+---
+
+## 10 de octubre de 2026 (tarde) — el fallo de Alcampo, y las tres aplicaciones
+
+### El mayor defecto de datos arreglado en este tramo: **129.668 filas de Alcampo**
+
+**Medido**: de las 639.629 filas de Alcampo en silver, **190.732 (29,8 %) salian sin unidad de
+referencia**, y **129.668 (20,3 %) ademas con un precio que la cadena SI habia mandado**, distinto del
+precio. Sin unidad, el factor se queda en 1 y el valor pasa sin escalar.
+
+**La causa, exacta**: `_UNIDAD` tenia la familia `fop.price.per.*` y tres nombres sueltos, pero **no las
+formas de `unitName`** (`PER_100ML`, `PER_100G`, `PER_KG`...) que la cadena manda en mayusculas y que se
+buscan en minusculas. Un diccionario de 17 entradas al que le faltaban 17 mas.
+
+**Arreglado** (`062bb3e`): 17 sinonimos, **cada uno mapeado igual que su gemela `fop.*`**, con 12 pruebas
+que incluyen una etiqueta desconocida (que **sigue sin inventarse**: `(None, 1.0)`).
+
+**Acotado**: las otras cadenas **no lo tienen** -- Carrefour 0, DIA 1, Mercadona 0, y Aldi 353 de 69.987
+(el 0,5 %, porque la mayoria de sus filas sin unidad no traen precio que escalar). La razon de que sea de
+Alcampo y de nadie mas: es **la unica cadena que publica el precio por unidad etiquetado**; las otras dan
+un numero (`basePriceValue`, `price_per_unit`, `bulk_price`) y no hay etiqueta que interpretar.
+
+**Pendiente**: cuantas de las 129.668 ganan unidad cuando el colector vuelva a correr.
+
+**Y la leccion, que es la mas util de la sesion**: se busco este fallo durante **cuarenta rondas** con un
+umbral de "precio por unidad imposible" (< 20 centimos) y se encontraron **1.524 filas**. El fallo afectaba
+a **129.668**. **El umbral con el que se busca decide que se encuentra**: un precio por 100 g leido como
+por kilo da 1,8 centimos donde tocaban 18 -- entra en la banda y se ve --, pero el mismo error en un
+producto de 3,50 EUR da 35 centimos donde tocan 3,50 EUR, **que no es imposible: es falso, y nadie lo
+miraba**.
+
+### La tarea 2 del backlog: cumplida, sin construir nada
+
+Los tres frenos ya existian y el cuarto estaba medido y descartado. Ver la seccion anterior: `ANCHO_MAXIMO
+= 3.0` por unidad y solo con precios fiables, la invariante del reparto (con los pares de mismo EAN
+exentos, 38 duplicados legitimos), y el eje que el nombre declara. El **umbral por seccion**
+(`matching.pesos_por_pasillo`) se escribio el 22 de septiembre, se midio, y **no sirve**: el grupo mayor
+baja de 97 a 80 y la tasa de anchos empeora, porque **los puentes los abre el canal de trigramas**.
+
+### Las tres aplicaciones tienen ya su logica
+
+| | commit | que |
+|---|---|---|
+| calorias/diario | `a6fe871` | **`de_ficha` y `apunta_de_ficha`**: de los nutrientes por 100 g a una entrada del diario, nutriente a nutriente, `fuente='ficha'`, y **sin rellenar con ceros lo que no sabemos**. 150 g de 485 kcal/100 g = 727,5 kcal, probado. |
+| recetas | `054b311` | **`nutricion(ingredientes, productos)`**: las calorias de una receta, **separadas del emparejamiento** (que acierta 3 de 16), solo g y kg pasan a gramos, y un ingrediente sin identificar **no aporta cero** -- se cuenta aparte y el total dice cuanto falta. |
+
+Las dos siguen la doctrina que el diario ya tenia escrita: *«ausencia no es cero»*, *«las dos cifras van
+juntas»*, y *«lo que no tiene cantidad, no la gana»*.
+
+### El estado, en tres columnas
+
+**Verificado por pruebas y tipos**: los 20 commits del objetivo; los frenos del emparejador (3 invariantes
+a cero, 65 % de aciertos medido); el cruce con OFF (13.056 productos: Nutri-Score 8.461, ingredientes
+8.288, Eco-Score 13.049, nutrientes 10.778); la aritmetica del diario y de la receta; y `tsc` limpio en el
+cliente.
+
+**Escrito, SIN VER EN PANTALLA**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+unico de nutricion en la ficha, y **los pasos de interfaz del diario y de la receta** (elegir producto y
+gramos; ensenar las calorias con sus dos cifras).
+
+**Esperando a Docker**: las cuatro comprobaciones ordenadas, la verificacion de la **migracion 013**, la
+publicacion, y **los recorridos de punta a punta de las tres aplicaciones** -- el criterio de cierre del
+encargo. El motor no esta en marcha: `docker ps` falla, **ningun puerto escuchando** en 5432/5434/5435, y
+el named pipe `dockerDesktopLinuxEngine` no existe.
