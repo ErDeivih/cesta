@@ -123,34 +123,6 @@ def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
         con.close()
 
 
-class NutricionIn(BaseModel):
-    """Los productos que el que llama ha podido confirmar, **por indice de ingrediente**.
-
-    Va por indice y no por nombre a proposito: emparejar nombres con productos es un problema aparte, y
-    aqui no se adivina. Lo que no venga confirmado no suma, y la respuesta lo dice.
-    """
-
-    raciones: int | None = None
-    productos: dict[int, dict] = Field(default_factory=dict)
-
-
-@rutas.post("/{receta_id}/nutricion")
-def nutricion_de(receta_id: int, datos: NutricionIn,
-                 usuario: dict = Depends(usuario_actual)) -> dict:
-    """Kcal y macronutrientes de una receta, y cuantos ingredientes se han podido identificar.
-
-    **Las dos cifras van juntas**, como en el diario: lo que se sabe y lo que falta. Un ingrediente sin
-    producto confirmado, o con una unidad que no se puede pasar a gramos, **no aporta cero**.
-    """
-    receta = recetas.leer(_con(), usuario["id"], receta_id, raciones=datos.raciones)
-    if receta is None:
-        raise HTTPException(404, "Esa receta no existe o no es tuya.")
-    ingredientes = receta.get("ingredientes") or []
-    return {"receta_id": receta_id, "raciones": receta.get("raciones"),
-            "ingredientes": len(ingredientes),
-            **recetas.nutricion(ingredientes, datos.productos)}
-
-
 @rutas.get("/{receta_id}")
 def leer(receta_id: int, version: int | None = None,
          raciones: int | None = Query(default=None, ge=1),

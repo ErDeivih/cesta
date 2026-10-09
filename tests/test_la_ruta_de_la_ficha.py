@@ -30,22 +30,6 @@ def test_la_ruta_de_recetas_sigue_publicada():
     assert "/api/recetas" in _rutas_publicadas()
 
 
-def test_la_ruta_de_nutricion_de_una_receta_esta_publicada():
-    assert "/api/recetas/{receta_id}/nutricion" in _rutas_publicadas()
-
-
-def test_la_nutricion_de_una_receta_usa_el_modulo():
-    """La cuenta es la de `core.recetas.nutricion`, no una copia: dos cuentas acabarian discrepando."""
-    from core.recetas import nutricion
-
-    ingredientes = [{"nombre": "patatas", "cantidad": 600, "unidad": "g"},
-                    {"nombre": "algo raro", "cantidad": 100, "unidad": "g"}]
-    r = nutricion(ingredientes, {0: {"kcal_100g": 77.0}})
-    assert r["kcal"] == 462.0
-    assert r["sin_identificar"] == 1        # lo que no se identifica no suma, y se dice
-    assert r["completo"] is False
-
-
 def test_la_aritmetica_del_endpoint_es_la_del_modulo():
     """El endpoint no calcula: llama. Si esto se separara, habria dos cuentas de lo mismo."""
     from core import diario
