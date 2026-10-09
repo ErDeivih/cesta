@@ -22,11 +22,16 @@ def externo():
     return datos
 
 
-def test_trae_las_cuatro_cosas(externo):
-    """Ingredientes, Nutri-Score, NOVA y Eco-Score. Si falta una clave no es un dato que falte: es un
-    nombre mal escrito, y por eso se comprueba el nombre y no solo que haya algo."""
+CLAVES = ("ingredientes", "nutriscore", "nova", "ecoscore", "kcal_100g", "hidratos_100g",
+          "proteinas_100g", "grasas_100g", "grasas_sat_100g", "azucares_100g", "sal_100g")
+
+
+def test_trae_todo_lo_que_la_ficha_necesita(externo):
+    """Once claves: lo de siempre mas los siete nutrientes por 100 g. Si falta una, no es un dato que
+    falte: es un nombre mal escrito, y por eso se comprueba el nombre y no solo que haya algo."""
     muestra = list(externo.values())[:400]
-    assert all(set(v) == {"ingredientes", "nutriscore", "nova", "ecoscore"} for v in muestra)
+    for v in muestra:
+        assert set(v) == set(CLAVES), sorted(set(v) ^ set(CLAVES))
 
 
 def test_el_ecoscore_cubre_mas_que_el_nutriscore(externo):
@@ -35,6 +40,29 @@ def test_el_ecoscore_cubre_mas_que_el_nutriscore(externo):
     eco = sum(1 for v in externo.values() if v.get("ecoscore"))
     nut = sum(1 for v in externo.values() if v.get("nutriscore"))
     assert eco > nut, (eco, nut)
+
+
+def test_trae_los_nutrientes_por_100g(externo):
+    """Kilocalorias, hidratos, proteinas, grasas, saturadas, azucares y sal. El valor esta en el campo
+    `100g` de la estructura y `value` es nulo: por eso la primera consulta devolvia cero."""
+    campos = ("kcal_100g", "hidratos_100g", "proteinas_100g", "grasas_100g",
+              "grasas_sat_100g", "azucares_100g", "sal_100g")
+    muestra = list(externo.values())[:400]
+    for campo in campos:
+        assert campo in muestra[0], campo
+    assert any(v.get("kcal_100g") is not None for v in muestra), "ninguna kilocaloria en la muestra"
+
+
+def test_los_nutrientes_son_numeros_plausibles(externo):
+    """Un valor por 100 g no puede ser negativo ni absurdo. 900 kcal son las del aceite puro: por encima
+    de eso no hay alimento, y si aparece es que el campo se ha leido de otro sitio."""
+    kcal = [v["kcal_100g"] for v in externo.values() if v.get("kcal_100g") is not None]
+    assert kcal, "no hay ninguna kilocaloria"
+    assert min(kcal) >= 0 and max(kcal) <= 900, (min(kcal), max(kcal))
+    for campo in ("hidratos_100g", "proteinas_100g", "grasas_100g", "grasas_sat_100g",
+                  "azucares_100g", "sal_100g"):
+        valores = [v[campo] for v in externo.values() if v.get(campo) is not None]
+        assert valores and min(valores) >= 0 and max(valores) <= 100, (campo, max(valores))
 
 
 def test_un_grado_es_una_etiqueta_corta(externo):

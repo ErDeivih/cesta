@@ -203,16 +203,51 @@ def externo_por_ean() -> dict[str, dict]:
         return {}
     import duckdb
 
+    # **Los nutrientes por 100 g, y el campo es `100g`.** `value` es nulo en todas las filas: la primera
+    # consulta filtraba por ahi y devolvia cero sin decir por que. Se despliega el array y se pivotan los
+    # nutrientes que la ficha necesita, cada uno a su columna.
+    #
+    # Medido el 9 de octubre de 2026, sobre los productos que cruzan con nuestro catalogo: kilocalorias,
+    # hidratos, proteinas, grasas, saturadas, azucares y sal. Son justo los que cuatro de las cinco cadenas
+    # NO publican -- solo DIA da algo de nutricion (3.954 de sus 5.792).
     filas = duckdb.connect().execute(f"""
-        SELECT ltrim(regexp_replace(code, '[^0-9]', '', 'g'), '0') AS k,
-               ingredients_text, nutriscore_grade, nova_group, ecoscore_grade
-        FROM read_parquet('{fichero}')
-        WHERE code IS NOT NULL
+        SELECT k,
+               any_value(ingredients_text) AS ing,
+               any_value(nutriscore_grade) AS ns,
+               any_value(nova_group)       AS nova,
+               any_value(ecoscore_grade)   AS eco,
+               -- **Y solo numeros publicables.** Los topes no son umbrales elegidos: 100 g por 100 g
+               -- es el limite de la materia, y 900 kcal las del aceite puro, que es lo mas energetico
+               -- que existe. Open Food Facts trae valores fuera de ahi -- es una base comunitaria -- y
+               -- publicar "1.200 kcal por 100 g" seria peor que no publicar nada: es el dato con el que
+               -- alguien decide que come.
+               max(CASE WHEN n.name = 'energy-kcal'   AND n."100g" BETWEEN 0 AND 900
+                        THEN n."100g" END) AS kcal,
+               max(CASE WHEN n.name = 'carbohydrates' AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS hidratos,
+               max(CASE WHEN n.name = 'proteins'      AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS proteinas,
+               max(CASE WHEN n.name = 'fat'           AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS grasas,
+               max(CASE WHEN n.name = 'saturated-fat' AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS grasas_sat,
+               max(CASE WHEN n.name = 'sugars'        AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS azucares,
+               max(CASE WHEN n.name = 'salt'          AND n."100g" BETWEEN 0 AND 100
+                        THEN n."100g" END) AS sal
+          FROM (SELECT ltrim(regexp_replace(code, '[^0-9]', '', 'g'), '0') AS k, *,
+                       unnest(nutriments) AS n
+                  FROM read_parquet('{fichero}')
+                 WHERE code IS NOT NULL) t
+         GROUP BY k
     """).fetchall()
-    # **El Eco-Score tambien**, y es el campo con mas cobertura de los cuatro: 13.049 productos de los
-    # 13.056 que cruzan, mas que el Nutri-Score (8.461). Estaba descargado y no lo leia nadie.
-    return {k: {"ingredientes": ing, "nutriscore": ns, "nova": nova, "ecoscore": eco}
-            for k, ing, ns, nova, eco in filas if k and len(k) >= 8}
+    # **El Eco-Score tambien**, y es el campo con mas cobertura de los cuatro: 13.049 de los 13.056 que
+    # cruzan, mas que el Nutri-Score (8.461). Estaba descargado y no lo leia nadie.
+    return {k: {"ingredientes": ing, "nutriscore": ns, "nova": nova, "ecoscore": eco,
+                "kcal_100g": kcal, "hidratos_100g": hid, "proteinas_100g": pro,
+                "grasas_100g": gra, "grasas_sat_100g": gs, "azucares_100g": azu, "sal_100g": sal}
+            for k, ing, ns, nova, eco, kcal, hid, pro, gra, gs, azu, sal in filas
+            if k and len(k) >= 8}
 
 
 def _grupos_de_ayer() -> pl.DataFrame | None:
