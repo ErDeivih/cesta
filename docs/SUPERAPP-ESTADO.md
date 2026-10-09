@@ -1016,3 +1016,47 @@ compilaba, tipaba bien y no rompia nada -- solo leyendo la ficha se veia que la 
 Es la quinta vez en la sesion que se construye algo que el proyecto ya tenia (el orden de los pasillos, el
 enriquecido de OFF, el tipo de fila, los campos en el tipo equivocado, y este bloque), y la primera en que
 el arreglo es **borrar** en vez de integrar.
+
+
+
+---
+
+## 10 de octubre de 2026 — la tarea 2 del backlog: nada que construir
+
+### Lo que se ha medido
+
+**La linea base del emparejador, hoy**: `emparejar --medir` da **1.163 de 1.786 pares con el mismo EAN
+encontrados, el 65 %** (el backlog dice 57 %: ha cambiado). 21.342 enlaces, 40.547 grupos, y **las tres
+invariantes a cero violaciones** (eje contradictorio 0, grupos de 11+ 0, cadena repetida sin EAN 0). Cada
+medicion completa cuesta **388 segundos**.
+
+**Los grupos anchos**: 1.082 de unos 40.000 (**2,7 %**), repartidos por las cinco cadenas por igual. Se
+descartaron tres causas antes de tocar nada: los precios imposibles (quitarlos baja de 1.172 a 1.145, el
+2 %), las unidades de referencia mezcladas (85 grupos, el 7 %), y **«es de una cadena»** -- Alcampo es el
+mas barato en el 51 % de los grupos y solo en el 24 % de los anchos, asi que esta **infra**representado.
+
+### Lo que ya existia, y por eso no se ha escrito nada
+
+| freno | donde | medicion |
+|---|---|---|
+| tope de dispersion | `matching.ANCHO_MAXIMO = 3.0`, por unidad de medida y solo con precios fiables | escrito y calibrado |
+| invariante del reparto | un grupo correcto no puede tener dos productos de la misma cadena, **salvo que compartan EAN** (38 duplicados legitimos en gold) | 2-4 miembros: 9,8 % con cadena repetida; 5-10: 94,8 %; 11+: **100 %** |
+| el eje que el nombre declara | `virgen` contra `virgen extra`, `con azucar` contra `sin azucar`; **si uno no declara nada, no bloquea** | 49 grupos, y hoy **0** |
+| **umbral por seccion** | `matching.pesos_por_pasillo` | **escrito, medido y descartado**: el grupo mayor baja de 97 a 80 y la tasa de anchos **empeora** (6,28 % a 6,38 %), porque **los puentes los abre el canal de trigramas, no el de palabras** |
+
+**Conclusion: la tarea 2 esta cumplida y no hay nada que anadir.** Los 1.082 grupos anchos que quedan son el
+**suelo** de este enfoque: lo que esos frenos no pueden quitar sin romper emparejamientos buenos. Y el
+numero del backlog (405) no sale porque el catalogo y el emparejador han cambiado desde que se escribio.
+
+**Lo que si aportan mis medidas, y el codigo no tenia**: el **precio** de apretar. Con 3x se evitan 261
+grupos a cambio de 9 aciertos probables (28 a 1 a favor); con 5x, 103 a cambio de 6. Y la exencion del mismo
+EAN no es una tolerancia: **dos productos con el mismo codigo de barras son el mismo producto**, y si sus
+precios se llevan mucho el problema es del dato, no del grupo.
+
+### Leccion
+
+**Antes de escribir un freno, buscar el freno.** Van siete veces en esta sesion que el proyecto ya tenia la
+pieza: el orden de los pasillos, el enriquecido de OFF, el tipo de fila, los campos en el tipo equivocado,
+el bloque de nutricion de la ficha, el tope de dispersion y el umbral por seccion. Y en esta ultima, el
+proyecto no solo la tenia: tenia **la medicion de que no funciona** -- escribirla habria costado 388
+segundos de emparejador para descubrir lo que dice un docstring.
