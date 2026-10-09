@@ -1546,3 +1546,88 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 **Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista y los recorridos.
 `docker ps` falla; el named pipe no existe; nada escuchando en 5432/5434/5435.
+
+
+
+---
+
+## 12 de octubre de 2026 — las cuatro fuentes coinciden, y los estados no pueden romperse
+
+### Los pendientes del proyecto estan declarados en CUATRO sitios, y los cuatro dicen lo mismo
+
+| documento | lo que declara |
+|---|---|
+| `PANTALLAS.md` | **24 `[hecho]`, 1 `[falta]`** -- y esa esta **bloqueada** |
+| `BACKLOG.md` | **10 tareas**, 9 hechas; la 9 es la bloqueada |
+| `FUNCIONALIDADES.md` | **A** hecha entera; **B** y **C** bloqueadas **con numero** |
+| `API.md` | contratos para las tareas del backlog -- **todos `HECHO` con fecha** |
+
+**El estado queda cerrado por cuadruplicado, y no por deduccion.** Y lo que las cuatro declaran es: **un
+solo pendiente real -- la nota del producto, C1, "puntuacion absoluta estilo Yuka" -- y esta bloqueado por
+cobertura**, porque solo el **22,6 %** de los productos tiene con que calcularla. **B1** ("hay uno mejor y
+mas barato") esta bloqueado por otra razon medida: **189 grupos cuyos pares mezclan formatos** -- *"patatas
+de bolsa con patatas congeladas"*, el error que la OCU le achaca a Yuka -- y eso es la frontera
+**exactos vs formatos** del paquete **S04**.
+
+**`API.md` merece leerse entero**: cada endpoint lleva su motivo, no su firma. `DELETE /api/listas/{id}`
+**archiva** porque *"borrar de verdad una lista compartida le quitaria la compra a otra persona de un
+toque"*. Y el panel de matching **no escribe nada y hay una prueba de ello** (`test_el_panel_solo_lee`),
+porque el encargo dice *"no hay validacion humana, nunca"*.
+
+### La puerta del navegador se levanta su propio entorno
+
+`plataforma/prueba_navegador.py` (1.856 lineas) **no necesita preparacion**: arranca
+`docker run ... postgres:16-alpine` en el **5434**, deja la cadena en `CESTA_POSTGRES`, y levanta el
+servidor de desarrollo. **Cuando el motor vuelva, la puerta se monta el entorno sola.**
+
+**Y lo que mide, medido de verdad**:
+
+- **el minimo de 44 px**, con un filtro en el navegador (`t.w < 44 || t.h < 44`). **Ya encontro fallos
+  reales**: el enlace «Cesta» de la cabecera media **43 px, un pixel por debajo**;
+- **que ninguna tabla se deslice de lado**, comparando `scrollWidth` con `clientWidth` -- y el motivo
+  escrito: *"una tabla de seis columnas con 52rem de ancho minimo: en un movil habia que deslizar"*;
+- **el orden** de los elementos, con un gancho `data-cambio`;
+- **la cara rota de trece pantallas**, metiendo un 500 en el endpoint de cada una.
+
+**Y la geometria no se supone**: *"la cabecera deja 109 px y la barra de abajo mide 57, asi que la banda
+util son 678 px de 844"*.
+
+### Y los cuatro estados no pueden romperse: el reintento esta en la firma
+
+```
+Avisos.tsx:124     <Fallo error={...} reintentar={() => void consulta.refetch()} />
+Cesta.tsx:1321     <Fallo error={...} reintentar={() => void listas.refetch()} />
+Favoritos.tsx:230  <Fallo error={...} reintentar={() => void favoritos.refetch()} />
+```
+
+**`reintentar` es un argumento obligatorio del componente `Fallo`**: no se puede pintar el error sin dar
+salida. La regla -- *"la rota dice que ha pasado y deja reintentar"* -- **no es una convencion que alguien
+tenga que recordar: es la firma de un componente**, asi que **el fallo de favoritos no puede repetirse en
+una pantalla que lo use**.
+
+**Y el fallo historico esta documentado donde ocurrio** (`Favoritos.tsx:225`): *"se arreglo alli el 23 de
+septiembre de 2026: un cartel que dice «No he podido traerlos» y ..."*, con la puerta ampliada el 27.
+
+### Decimocuarta correccion, y la conclusion de la racha
+
+Catorce veces he ido a buscar un hueco. **Catorce veces el proyecto tenia razon**: o estaba hecho, o estaba
+hecho por otro camino, o estaba hecho **a proposito de otra manera** y con el motivo escrito al lado.
+
+**Este proyecto no tiene huecos por descuido: tiene decisiones con motivo escrito.** Y mi error sistemico
+ha sido el mismo catorce veces -- **suponer antes de leer** --, con el coste bajando a medida que
+aprendia: la primera vez escribi un cambio que habria servido datos de ayer; la ultima, perdi una ronda
+porque mi comando no caso con los ficheros.
+
+### Estado, en tres columnas
+
+**Verificado**: 30 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; los frenos del
+emparejador; el cruce con OFF (13.056 productos); la puerta de S01 completa; la ruta del diario contra
+`app.openapi()`; los alergenos en rojo y en tercera posicion; el orden de la hoja del grupo; la capa
+`logica/` del cliente en uso y con sus reglas; los cuatro estados garantizados por firma; `tsc`.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista y los recorridos --
+y la puerta del navegador, que **se monta su propio entorno**. `docker ps` falla; el named pipe no existe;
+nada escuchando en 5432/5434/5435.
