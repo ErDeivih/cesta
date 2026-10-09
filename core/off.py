@@ -214,10 +214,13 @@ def enriquecer_por_ean(con: duckdb.DuckDBPyConnection, tabla_productos: str) -> 
         CREATE OR REPLACE TABLE producto_enriquecido AS
         SELECT p.*,
                o.ingredients_text        AS off_ingredientes,
+               -- **La imagen de OFF no se trae**: las cinco cadenas ya publican la suya
+               -- (100 % de cobertura, medido el 8 de octubre), asi que no rellena ningun hueco -- y
+               -- era lo unico que rompia esta consulta: el subconjunto espanol no tiene esa columna
+               -- y la funcion se caia al ejecutarse. Por eso nadie la llamaba.
                o.nutriscore_grade        AS off_nutriscore,
                o.nova_group              AS off_nova,
                o.ecoscore_grade          AS off_ecoscore,
-               o.image_url               AS off_imagen,
                CASE WHEN o.code IS NULL THEN NULL ELSE 'externo' END AS proc_nutricion
         FROM {tabla_productos} p
         LEFT JOIN read_parquet('{LOCAL}') o
