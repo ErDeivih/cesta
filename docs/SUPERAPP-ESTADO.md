@@ -1772,3 +1772,82 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 **Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, los recorridos -- y
 **las cinco mitades de cliente**, que son lo que hay que construir cuando se pueda ver.
+
+
+
+---
+
+## 13 de octubre de 2026 — la autorizacion, acotada, y una lectura mia que estaba mal
+
+### La correccion primero, porque el traspaso tiene que decir la verdad aunque me deje mal
+
+En el tramo anterior escribi que *"`revocadas` y `marcadas` **si se leen** en `Cesta.tsx`"*, y lo presente
+como indicio de que la autorizacion podia estar cableada por otro camino. **Era falso.** Leidas las lineas:
+
+    Cesta.tsx:687   las lineas marcadas (las que iban en el carro) se guardan con su precio...
+    Cesta.tsx:1080  {revocadas ? `Anulados ${revocadas}.` : 'No habia ninguno.'} A quien ya...
+
+**`marcadas` son las lineas marcadas como "en el carro"** (el cierre de compra, tarea 10) y **`revocadas`
+es la revocacion de las INVITACIONES**, no de las alternativas. **Los nombres coincidian; el significado,
+no.** No hay tercera via: **la autorizacion de una sustitucion no tiene mitad de cliente.**
+
+### El endpoint de autorizar, que es la pieza mejor documentada del trabajo de octubre
+
+`main.py:1187`, **`POST /api/listas/{lista_id}/lineas/{linea_id}/autorizar`**, con **cuatro decisiones y su
+motivo escrito**:
+
+- **"Por que existe"**: *"la alternativa la propone el motor, y hasta ahora la confirmacion viajaba en la
+  peticion: al recargar se perdia y habia que volver a decidir. **Una decision que hay que tomar [varias]
+  veces es una decision que el sistema no se cree.**"*
+- **"Por que `hace_falta_escribir=True`"**: *"autorizar cambia la lista para todos los que la comparten...
+  se pide la misma puerta que para cualquier escritura, con su papel."*
+- **"Por que se guarda por linea y no por peticion"**: *"la decision es sobre ese producto en esa lista...
+  **la linea es lo unico que no [cambia] de significado**."*
+- **"Y se guarda QUE alternativa se acepto"**: *"antes solo se guardaba el si, y **el motor podia proponer
+  otro producto manana manteniendo la autorizacion**."*
+
+**Y `_con_autorizacion` (`main.py:1221`) es "un solo sitio" para el cruce**: *"antes eran **cinco copias del
+mismo cruce**, y **una copia que se queda atras es exactamente el fallo que tuvo `mejor`**: dos lectores
+que dejaron de coincidir con lo que leian."* Con la regla de las historicas: *"la columna nace en falso y
+**no consta que nadie autorizara nada, que es distinto de que se rechazara**"*, y la de seguridad: **404 y
+no 403**, *"una linea que no existe y una de otra lista se contestan igual, para no decir cuales existen"*.
+
+### Los cinco huecos, confirmados por dos barridos independientes
+
+| hueco | paquete | donde esta la mitad que falta |
+|---|---|---|
+| `POST /api/listas/{id}/desde-el-plan` + GET | **S10** | puente recetas -> lista, con previa y consentimiento |
+| `POST /api/listas/{id}/desde-la-compra` + GET | **S10** | puente compra -> lista; **es el que calcula `sin_nutricion`** |
+| `POST .../lineas/{id}/autorizar` | **S05** | **acotado**: un boton por linea, en la lista, que llame y lea 3 campos |
+| `sin_nutricion` | encargo | cobertura de nutrientes junto al dato (doctrina del diario) |
+| `POST /desde-ficha` | mio | la ruta de la ronda 120; el paso de cliente necesita la app |
+
+**Y `GET /api/salud` queda fuera de la lista a proposito**: sin sesion, para el vigilante. **No es un
+hueco.**
+
+**`API.md` no menciona la autorizacion ni una vez** -- su seccion final son contratos de las tareas del
+`BACKLOG.md`, y esto es del trabajo del 8-9 de octubre, posterior. **Hueco de documentacion, no de codigo**
+-- pero quien venga a hacer la mitad de cliente no tiene contrato donde mirar.
+
+### Lo que estos tramos han dejado, y lo que no
+
+**Dejado**: el barrido inverso y el de campos, **con codigo y repetibles**; el guion del retorno
+(`docs/DOCKER-RETORNO.md`); la especificacion entera leida y resumida aqui; y **la lista de los cinco
+huecos, con nombre, paquete y criterio de aceptacion**.
+
+**No dejado, a proposito**: **ninguna de las cinco mitades esta construida.** Son funcionalidad de producto
+con criterio escrito -- *"vista previa y **consentimiento explicito**"* -- y **verificarlas necesita el
+motor**. Ya he escrito dos veces algo que no podia ver (el lector del catalogo y la nutricion de recetas) y
+**las dos tuve que revertirlo**.
+
+### Estado, en tres columnas
+
+**Verificado**: 33 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; el barrido inverso (71
+rutas, 7 sin cliente, en tres clases); el barrido de campos (91 claves, 5 sin leer); las 17 comprobaciones
+del tramo anterior; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker, por orden**: la 013; las cuatro comprobaciones del encargo; el escenario determinista;
+**las cinco mitades de cliente**; y los recorridos, que son el criterio de cierre.
