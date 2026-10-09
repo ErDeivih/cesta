@@ -1376,3 +1376,83 @@ recorridos de punta a punta** (S07/S08/S09 y S12). `docker ps` falla, ningun pue
 **Y la decision que NO tomo yo solo**: si el lector de datos debe pasar a leer la version publicada en vez
 de los ficheros sueltos. **Es correcto por la logica de S01 y cambia lo que ve el usuario**, asi que es una
 decision de producto y va con su medicion delante (hoy los sueltos son mas nuevos que la publicacion).
+
+
+
+---
+
+## 11 de octubre de 2026 (tarde) — la capa del cliente esta enchufada, y el retorno guionizado
+
+### La capa `logica/` del cliente no tiene ni un huerfano
+
+Se comprobo lo que llevo toda la sesion comprobando -- *quien la llama* -- y **esta todo en uso**:
+
+| funcion | quien la usa |
+|---|---|
+| `calcular(receta, raciones)` | **`Cocina.tsx:38`** -- la nutricion de receta **no solo estaba escrita: estaba funcionando** |
+| `fraseDePrecio` | `Grupo.tsx:283` y `Producto.tsx:300` |
+| `puntuaAlternativas`, `explicaPesos` | `Grupo.tsx:124,154` |
+| `loQueDiceLaCurva` | `Producto.tsx:108` |
+
+**Y hay un detalle que vale mas que la lista**: en `Producto.tsx:108` la llamada es
+`loQueDiceLaCurva(historico.bloqueado ? [] : historico.serie)`. Con el historico bloqueado se pasa **una
+serie vacia**, asi que la funcion devuelve su estado de "nada que decir" **en vez de una frase inventada**.
+Es la regla de `frase.ts` -- *"si el grupo no es de fiar, NO se inventa la frase"* -- **aplicada por quien
+llama**, que es donde de verdad se puede incumplir.
+
+**Conclusion de esta busqueda: no hay nada que arreglar.** La parte que se puede inspeccionar sin el motor
+--los datos, la logica del cliente, la del servidor y S01-- **esta entera**.
+
+### Septima correccion seguida, y la que mas me ensena
+
+Se anuncio como "el pendiente numero uno" que la suite estuviera saltandose pruebas contra PostgreSQL.
+**Era falso**: `1.540 passed` y **`pytest -rs` no lista ni un solo `SKIPPED`**. Las pruebas que nombran
+PostgreSQL **corren y usan dobles**, que es como el encargo dice que se cerro el trabajo de coste.
+
+**Siete correcciones seguidas**, y la causa es siempre la misma: mi primera hipotesis ante un hueco es *"no
+esta hecho"*, y en este proyecto la respuesta correcta ha sido *"esta hecho, o por otro camino, o a proposito
+de otra manera"* **siete de siete veces**. Queda escrito porque es lo que mas cuesta y lo mas barato de
+corregir: **mirar antes de suponer, y sobre todo antes de anunciar.**
+
+**Y de ahi sale la distincion que ordena el retorno**: **los dobles prueban la logica** (1.540 pruebas,
+hoy) y **el motor prueba la fontaneria** (tipos, restricciones, transacciones, restauracion). Lo segundo
+**no se puede sustituir por lo primero**.
+
+### El retorno, guionizado: `docs/DOCKER-RETORNO.md`
+
+Escrito **con el motor caido**, para que el primer dia que arranque no se gaste ni una ronda decidiendo por
+donde empezar. Siete pasos, cada uno con **que se espera** y **que significa si falla**:
+
+1. **`uv run pytest -q`** -- si falla, una prueba que hoy pasa con dobles **depende de verdad del motor**.
+2. **La migracion 013**, que nunca se ha ejecutado: que `importe_cent` exista y que **las filas antiguas
+   queden en NULL, no reconstruidas**.
+3. **Las cuatro comprobaciones ordenadas**: restauracion al centimo, desconocidos (NULL / 0 / PARCIAL),
+   transaccion a medias, y el 3x2 **con datos controlados**.
+4. **El escenario determinista** de las cuatro superficies.
+5. **Los recorridos**: `prueba_navegador.py` (1.856), `prueba_e2e.py` (650), `prueba_copia.py` (124).
+6. **`/api/estado`**, que se puede consultar **en proceso con `TestClient`**, sin servidor.
+7. **La decision que no se toma solo**: si el lector sirve la version publicada o los ficheros mas nuevos.
+
+**Y los cuatro "no"**: no comprobar Docker mas de una vez por ronda; no cerrar una condicion con dobles
+**mas** lectura de codigo; **no ejecutar `prueba_produccion.py` sin leerlo** (puede crear cuentas o modificar
+datos); y no commitear `core/datos/secciones.yml`.
+
+### El pendiente numero uno, dicho sin rodeos
+
+**La migracion 013 y las cuatro comprobaciones ordenadas son lo unico del encargo que no se puede verificar
+sin el motor, y a diferencia de todo lo demas, NUNCA SE HA EJECUTADO NI UNA VEZ.** Todo lo que se puede
+preparar sin el motor esta preparado: la logica, los datos, S01, la capa del cliente y el guion. Lo que
+queda es **ejecutarlo**.
+
+### Estado, en tres columnas
+
+**Verificado**: 28 commits; **1.540 pruebas Python, 0 saltos**, y **6 del cliente**; los frenos del
+emparejador (3 invariantes a cero, 65 % de aciertos); el cruce con OFF (13.056 productos); la puerta de S01
+completa; la ruta del diario contra `app.openapi()`; la capa `logica/` del cliente **en uso**; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, la publicacion y los
+recorridos de las tres aplicaciones. `docker ps` falla, el named pipe no existe y no hay nada escuchando en
+5432/5434/5435.
