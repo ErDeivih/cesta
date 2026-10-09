@@ -193,6 +193,10 @@ def externo_por_ean() -> dict[str, dict]:
     Es lo que iguala a las cadenas que no publican ingredientes: Carrefour no
     publica ninguno y aqui gana 4.751. Y es la unica fuente de Nutri-Score que
     hay, porque no lo da ningun supermercado.
+
+    Trae cuatro cosas: ingredientes, Nutri-Score, NOVA y **Eco-Score**. El Eco-Score
+    es el que mas cobertura tiene de los cuatro (13.049 de los 13.056 que cruzan)
+    y hasta el 9 de octubre de 2026 no lo leia nadie: se descargaba y se tiraba.
     """
     fichero = config.DATA / "externo" / "off_es.parquet"
     if not fichero.exists():
@@ -201,12 +205,14 @@ def externo_por_ean() -> dict[str, dict]:
 
     filas = duckdb.connect().execute(f"""
         SELECT ltrim(regexp_replace(code, '[^0-9]', '', 'g'), '0') AS k,
-               ingredients_text, nutriscore_grade, nova_group
+               ingredients_text, nutriscore_grade, nova_group, ecoscore_grade
         FROM read_parquet('{fichero}')
         WHERE code IS NOT NULL
     """).fetchall()
-    return {k: {"ingredientes": ing, "nutriscore": ns, "nova": nova}
-            for k, ing, ns, nova in filas if k and len(k) >= 8}
+    # **El Eco-Score tambien**, y es el campo con mas cobertura de los cuatro: 13.049 productos de los
+    # 13.056 que cruzan, mas que el Nutri-Score (8.461). Estaba descargado y no lo leia nadie.
+    return {k: {"ingredientes": ing, "nutriscore": ns, "nova": nova, "ecoscore": eco}
+            for k, ing, ns, nova, eco in filas if k and len(k) >= 8}
 
 
 def _grupos_de_ayer() -> pl.DataFrame | None:
