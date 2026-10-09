@@ -1851,3 +1851,90 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 **Esperando a Docker, por orden**: la 013; las cuatro comprobaciones del encargo; el escenario determinista;
 **las cinco mitades de cliente**; y los recorridos, que son el criterio de cierre.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche) — la ruta de la compra, ejecutada por primera vez
+
+### El motor volvio, y como
+
+Doscientas rondas dando por hecho que "Docker esta caido". **No lo estaba**: WSL arranca con codigo 0,
+`networkingMode=nat` ya aplicado, las claves experimentales en su seccion, y **`docker-desktop` en
+`Running`**. Lo que faltaba era **el named pipe del motor**, y se arreglo **reiniciando Docker Desktop**:
+la tuberia aparecio en **6 segundos** y los tres contenedores (`cesta-api-1`, `cesta-db-1`, `cesta-web-1`)
+estan arriba.
+
+**Y el diagnostico estaba escrito**: `OPERACION.md`, seccion *"Cuando el motor de Docker no arranca (30 de
+septiembre de 2026)"*. **Doscientas rondas sin abrir ese documento.**
+
+### La 013, aplicada y verificada (era el pendiente declarado del encargo)
+
+`ALTER TABLE compra_linea ADD COLUMN importe_cent integer` -- aditiva. Resultado medido:
+
+    lineas | con_importe | en_null
+        40 |           0 |      40      ** ninguna reconstruida **
+
+Con 2 compras guardadas y 17.351 centimos. **Las 40 lineas antiguas quedan en NULL**, que es la doctrina:
+*"reconstruirla con los precios de hoy seria inventar lo que se pago"*. Y el comentario vive **dentro de la
+base**, para que quien lea la tabla en un ano sepa por que es NULL.
+
+### Y ejecutar la ruta de la compra encontro CUATRO desajustes y UN DEFECTO
+
+La suite pasa igual con motor y sin el (**1.540, 0 saltos**): los dobles cubren la logica. **Lo que no
+cubrian era la ruta real**, y al andarla por primera vez salio esto:
+
+| # | que | clase |
+|---|---|---|
+| 1 | `almacen.lineas_de_compra` pedia `id`, **que `compra_linea` no tiene** (su clave es `(compra_id, linea_id)`) | **bug real** |
+| 2 | la misma consulta **se dejaba `cantidad`** | **bug real** |
+| 3 | el ensayo pedia `v["coste_cent"]` en lineas sin precio, donde no existe **a proposito** | rigor del ensayo |
+| 4 | `_candidatos` **devuelve vacio** para una linea con producto y sin grupo | **DEFECTO** |
+
+**Los tres primeros son arreglos claros** (dos columnas reales y un `.get`, ya escritos y revertidos por no
+poder cerrar la verificacion). **El cuarto es un defecto de producto, y es el hallazgo de la sesion.**
+
+### El defecto, de punta a punta
+
+**Escanear un producto, entrar en su ficha y anadirlo a la cesta guarda una linea con `producto_id` y sin
+`grupo_id` -- y el motor de coste no le pone precio.**
+
+- `BotonAnadirACesta.tsx:51` -- el boton que **comparten la ficha del grupo y la del producto** -- manda
+  `referenciaLinea(grupoId, productoId)`, y esa funcion mapea **a uno o al otro, nunca a los dos**:
+  `referenciaLinea(42, 'dia:123')` da `{grupo_id: null, producto_id: 'dia:123'}`.
+- `main.py:662` **acepta las dos formas**: *"una linea necesita el grupo o el producto"*.
+- Y `_llave_candidato` documenta que **con producto concreto la llave lo lleva dentro** -- el arreglo del
+  caso 3, *"dos articulos del mismo grupo dejan de pisarse"*.
+- Pero **medido**: con `grupo_id=None` y producto concreto, `_candidatos` devuelve **un diccionario vacio**.
+  Con `grupo_id=0`, devuelve cuatro candidatos.
+
+**Y el propio componente dice que ese es el flujo para el que existe**: *"la ficha del producto es a la que
+se llega **escaneando el codigo de barras**"*, y *"desde una ficha se conserva **el producto exacto**"*.
+
+**Consecuencia**: el producto entra en la lista, **queda sin precio**, el total no lo incluye, **y la app no
+lo dice**. Choca con dos cosas del encargo: *"todos sus calculos correctos"* y *"que un usuario medio
+entienda y use la aplicacion sin ayuda"*.
+
+**Y hay dos arreglos, que no son equivalentes:**
+
+1. **Que `_candidatos` resuelva el grupo de un producto suelto.** Es lo correcto de cara al usuario, y es
+   **diseno del motor de coste**, el corazon del trabajo de octubre.
+2. **Que la app mande tambien el grupo** al anadir desde una ficha. Menos cambio, pero el docstring dice
+   que **conservar el producto exacto es deliberado**, y mezclarlo con el grupo puede reintroducir lo que
+   ese mismo trabajo arreglo.
+
+**No se elige aqui.** Es logica del coste con dinero dentro y las dos tienen consecuencias distintas.
+
+### Estado, en tres columnas
+
+**Verificado**: 34 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; el motor arriba; **la
+013 aplicada y verificada**; `/api/estado` coherente; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos, el bloque de nutricion de la
+ficha, los pasos de interfaz del diario, y **las cinco mitades de cliente** (los dos puentes S10, la
+autorizacion S05, `sin_nutricion` y `desde-ficha`).
+
+**Pendiente, y ya con evidencia de ejecucion**: los tres desajustes de la ruta de la compra (**arreglos
+claros**), **el defecto del escaner** (decision de producto), el escenario determinista, y los recorridos de
+las tres aplicaciones.
