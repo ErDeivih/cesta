@@ -1456,3 +1456,93 @@ nutricion de la ficha y los pasos de interfaz del diario.
 **Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, la publicacion y los
 recorridos de las tres aplicaciones. `docker ps` falla, el named pipe no existe y no hay nada escuchando en
 5432/5434/5435.
+
+
+
+---
+
+## 11 de octubre de 2026 (noche) — la especificacion entera, leida por fin
+
+### Los cuatro documentos que definen el estado, y que no se habian abierto
+
+| documento | que es | lo que aporta |
+|---|---|---|
+| `SUPERAPP-00-EMPEZAR-AQUI.md` | **el encargo**, 7 de octubre | **13 paquetes S00-S12** con dependencias y criterio de aceptacion |
+| `BACKLOG.md` | **246 KB, 17 de septiembre** | **10 tareas** con el porque, el donde y **como se sabe que esta bien** |
+| `FUNCIONALIDADES.md` | 10 KB | **7 veredictos**: hacerlo ya, despues, la nota, diciembre, lo que se llena solo, mas adelante y **lo descartado con motivo** |
+| `PANTALLAS.md` | 944 lineas | **24 `[hecho]` y 1 `[falta]`**, con la tarea del backlog que lo cubre |
+
+**`BACKLOG.md` esta escrito "para quien coja el proyecto a partir de aqui, sea persona o agente"** -- y
+llevaba 172 rondas siendo su destinatario sin abrirlo. Su cabecera dice la regla que mas me ha costado:
+*"**Los numeros son medidos, no estimados.** Si al ejecutar una tarea el numero no sale, es que algo ha
+cambiado: hay que volver a medir antes de seguir."*
+
+### El estado que el propio proyecto declara
+
+**Las diez tareas del backlog, cruzadas con lo verificado:**
+
+| | tarea | estado |
+|---|---|---|
+| 1 | secciones comunes | **hecha** -- `secciones.yml`, 23 claves, 4 sin mapear documentadas |
+| 2 | grupos demasiado anchos | **hecha y medida** -- `ANCHO_MAXIMO = 3.0`, 3 invariantes a cero, 65 % |
+| 3 | anadir sin escribir | **hecha** -- `Mosaico` + `Microfono` en `Buscar.tsx`, citada como "(tarea 3)" |
+| 4 | la oferta mientras anades | en **B** de `FUNCIONALIDADES.md` |
+| 5 | notas por linea y aviso legal | **hecha** -- `[hecho el 30 de septiembre de 2026]` |
+| 6 | Open Food Facts | **hecha** -- 10.778 nutrientes, 8.461 Nutri-Score, 8.288 ingredientes |
+| 7 | fichas de Alcampo y Aldi | **hecha** -- 17 etiquetas nuevas; de ahi salieron las 129.668 filas |
+| 8 | escaner de barras | **hecha** -- *"las cuatro respuestas del escaner [hecho]"* |
+| 9 | **la nota del producto, rehecha** | **bloqueada** -- ver C1 |
+| 10 | guardar el cierre de compra | **hecha** -- `importe_cent` por linea, migracion 013 |
+
+**Y `FUNCIONALIDADES.md` reparte el resto en veredictos**: **A** (hacerlo ya) esta **hecho entero**;
+**B** dice de si mismo: *"Todas estas **producirian resultados vergonzosos hoy**. No es que falte
+programarlas: **es que darian respuestas malas**."*
+
+### Los dos pendientes, y por que estan bloqueados (medido, no supuesto)
+
+**B1 -- "Hay uno mejor y ademas mas barato"**: `189 grupos` con un par mejor-y-mas-barato y 50,6 % de
+diferencia, pero *"los ejemplos actuales **mezclan patatas de bolsa con patatas congeladas**. Es el error
+que la OCU le achaca a Yuka"*. **Arreglar la anchura de los grupos era necesario y NO suficiente**: lo que
+bloquea es **mezclar formatos**, que es la frontera "exactos vs formatos" del paquete **S04**.
+(B2 tiene el mismo mal: *"el agua con gas sale con un 167 % de diferencia porque el grupo mete Perrier con
+la marca blanca. **Mide la anchura del grupo, no el ahorro.**"*)
+
+**C1 -- Puntuacion absoluta estilo Yuka** (la tarea 9): formula `60 % Nutri-Score + 30 % aditivos + 10 %
+ecologico`, con tope 49/100 si hay un aditivo de riesgo alto. **Bloqueada por cobertura**: solo el
+**22,6 %** de nuestros productos tienen con que calcularla. Y el motivo de fondo, medido por el propio
+proyecto: *"nuestra letra A/B/C de hoy es una posicion **dentro del grupo**, y cuando no hay ingredientes
+cae a ordenar por precio: **el 76,9 % de las letras son el precio disfrazado**"*.
+**Lo que hay que conservar**: *"un producto sin datos **no saca un cero: saca "no lo se"**, que es lo que la
+OCU echa en falta en Yuka y El CoCo"*.
+
+### Duodecima correccion
+
+Se anuncio que **B1 podria estar desbloqueado** porque su categoria decia "despues de arreglar los grupos
+anchos" y los grupos anchos estan arreglados. **Falso**: el documento lo desmiente **en su primera linea**
+-- *"producirian resultados vergonzosos hoy"* -- y el bloqueo real es otro (los formatos mezclados).
+
+**Doce correcciones seguidas.** Mi pesimismo sobre lo que falta es tan poco fiable como mi optimismo:
+las once primeras veces supuse que faltaba algo que estaba hecho, y esta supuse que algo hecho estaba
+desbloqueado. **La unica medida que ha funcionado siempre es la que el proyecto ya tiene escrita.**
+
+### Y lo unico que nunca se ha ejecutado
+
+**La migracion 013 y las cuatro comprobaciones ordenadas.** Todo lo demas esta hecho, medido, demostrado
+o bloqueado por una razon con numero. El guion esta en `docs/DOCKER-RETORNO.md`.
+
+**Y las notas de la ficha, verificadas en este tramo**: los alergenos **van en rojo y en tercera posicion**
+(`Producto.tsx:566-570`), con el motivo escrito al lado -- *"es lo unico de esta pantalla que puede hacer
+dano a alguien"* --; y la hoja del grupo (`Grupo.tsx`, 711 lineas) sigue el orden del §6 con la razon y la
+medicion en cada bloque.
+
+### Estado, en tres columnas
+
+**Verificado**: 30 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; los frenos del
+emparejador; el cruce con OFF (13.056 productos); la puerta de S01 completa; la ruta del diario contra
+`app.openapi()`; los alergenos en rojo y el orden de la hoja; la capa `logica/` del cliente en uso; `tsc`.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista y los recorridos.
+`docker ps` falla; el named pipe no existe; nada escuchando en 5432/5434/5435.
