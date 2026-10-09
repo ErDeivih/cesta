@@ -1127,3 +1127,67 @@ gramos; ensenar las calorias con sus dos cifras).
 publicacion, y **los recorridos de punta a punta de las tres aplicaciones** -- el criterio de cierre del
 encargo. El motor no esta en marcha: `docker ps` falla, **ningun puerto escuchando** en 5432/5434/5435, y
 el named pipe `dockerDesktopLinuxEngine` no existe.
+
+
+
+---
+
+## 10 de octubre de 2026 (noche) — las rutas que faltaban, y una decision de diseno fundada
+
+### Las dos rutas, enchufadas
+
+| commit | ruta | que hace |
+|---|---|---|
+| `6c05b68` | `POST /api/diario/desde-ficha` | usa `apunta_de_ficha`: recibe los valores por 100 g y los gramos, y **la cuenta la hace el servidor** para que la regla de "lo que no se sabe no es cero" viva en un solo sitio |
+| `d17a360` | `POST /api/recetas/{id}/nutricion` | usa `nutricion`: devuelve kcal y macros **con sus dos cifras** (lo conocido y cuantos ingredientes faltan). **Hace la cuenta y no empareja**: recibe lo que el que llama pudo confirmar |
+
+**Leccion de metodo, y van cinco de la misma familia.** La primera prueba de ruta que escribi fallaba
+**incluso para las rutas que ya existian**, y el motivo era mi forma de mirar: `app.routes` **no aplana**
+los routers incluidos -- aparecen como objetos anidados con el `path` vacio y sus rutas dentro. La
+comprobacion buena es **`app.openapi()["paths"]`**, que es el contrato que la aplicacion publica y se
+construye sin servidor ni Docker.
+
+Las cinco, para no repetirlas: `seccion` contra `pasillo` en el cliente; el umbral de 20 centimos; `@app.`
+contra `@rutas.`; `app.routes` contra `app.openapi()`; y los cinco mas anchos como muestra. **Siempre el
+mismo error: buscar con mis palabras en vez de con las del proyecto.**
+
+### Y por que los ingredientes de una receta los elige la persona
+
+**Medido con datos controlados** (el corpus de recetas esta **vacio**: `data/recetas.sqlite` tiene 0 filas
+en `receta` y 0 en `plan`, asi que no hay nada real contra lo que medir):
+
+    patatas           -> Tortilla de patatas con cebolla     MAL
+    cebolla           -> Tortilla de patatas con cebolla     MAL
+    aceite de oliva   -> Aceite de oliva virgen              bien
+    harina de trigo   -> Harina de espelta integral          bien
+    pechuga de pollo  -> Pechuga de pollo Dia Nuestra        bien
+    leche entera      -> Leche entera                        bien
+    tomate            -> Tomate triturado extra              dudoso
+    arroz             -> Arroz basmati                       dudoso
+
+**Seis de ocho caen en la familia correcta, y dos fallan de la peor manera**: "patatas" y "cebolla"
+devuelven **la misma tortilla**, porque la busqueda empareja **palabras** y "tortilla de patatas con
+cebolla" las contiene todas. No es un caso raro: es lo primero que escribe cualquiera.
+
+**Y los resultados de la busqueda no traen `seccion` ni `kcal_100g`**, asi que ni un acierto alimentaria a
+`nutricion` sin una segunda consulta por `fuente` e `id_fuente`.
+
+**Decision**: el que cocina **elige el producto** (busca y toca el que quiere) y `nutricion` hace la
+cuenta. Es la regla de la casa -- *nunca se acepta a ciegas* -- aplicada a un numero que la gente usa para
+decidir que come. Y es mejor producto: **esa persona sabe si el tomate es fresco o de bote**, y ninguna
+heuristica lo sabe. El "emparejamiento" es **un paso de interfaz, no un algoritmo**.
+
+### El estado, en tres columnas
+
+**Verificado por pruebas y tipos**: los 23 commits; los frenos del emparejador (3 invariantes a cero, 65 %
+de aciertos); el cruce con OFF (13.056 productos); la aritmetica del diario y de la receta; las dos rutas
+nuevas, contra `app.openapi()`; y `tsc` limpio en el cliente.
+
+**Escrito, SIN VER EN PANTALLA**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+unico de nutricion de la ficha, y **los pasos de interfaz** del diario (elegir producto y gramos) y de la
+receta (elegir los ingredientes y ver las dos cifras).
+
+**Esperando a Docker**: las cuatro comprobaciones ordenadas, la verificacion de la **migracion 013**, la
+publicacion, y **los recorridos de punta a punta de las tres aplicaciones** -- el criterio de cierre. El
+motor no esta en marcha: `docker ps` falla, ningun puerto escuchando en 5432/5434/5435, y el named pipe
+`dockerDesktopLinuxEngine` no existe.
