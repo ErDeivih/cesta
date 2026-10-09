@@ -1699,3 +1699,76 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 **Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, los recorridos y la
 puerta del navegador -- **que se monta su propio entorno**.
+
+
+
+---
+
+## 12 de octubre de 2026 (noche) — el barrido inverso: que endpoints existen y no se llaman
+
+### El metodo, que nadie habia aplicado
+
+El **28 de septiembre de 2026** el proyecto se hizo a mano una pregunta que encontro tres huecos:
+*"**¿que campos viajan y no se pintan?**"*. **Esa pregunta se puede hacer un nivel mas arriba** -- *¿que
+endpoints existen y no se llaman?* -- y **nadie la habia hecho**. Aqui queda hecha, y con codigo: se sacan
+las rutas de `plataforma/api/*.py`, se compara **el ultimo tramo estatico** de cada una contra todo
+`plataforma/web/app/src`, y lo que no aparece es una mitad sin cliente.
+
+**Resultado: 71 rutas en la API, 7 sin mencion en el cliente.** Y no son siete lo mismo.
+
+### Las siete, en tres clases
+
+| ruta | fichero | clase |
+|---|---|---|
+| `GET /api/salud` | `main.py` | **legitima**: sin sesion, para el vigilante. No es un hueco |
+| `POST /desde-ficha` | `diario.py` | **mia**: la escribi en la ronda 120; el paso de cliente necesita la app |
+| `GET` y `POST /api/listas/{id}/desde-el-plan` | `main.py` | **S10**: puente, mitad de cliente ausente |
+| `GET` y `POST /api/listas/{id}/desde-la-compra` | `main.py` | **S10**: puente, y **este es el que calcula `sin_nutricion`** |
+| `POST /api/listas/{id}/lineas/{linea_id}/autorizar` | `main.py` | **S05**: la autorizacion de una sustitucion |
+
+**Y las cinco que faltan encajan con lo que el propio encargo dice de si mismo**: *"el trabajo de coste del
+8-9 de octubre esta cerrado y **probado con dobles**"*. **Con dobles**: la autorizacion en la lista, la
+eleccion efectiva y el estado de la eleccion estan probados **en el servidor**, y **la mitad de cliente es
+exactamente lo que los recorridos de punta a punta ejercitarian**. No es trabajo olvidado: es **la parte que
+solo se puede verificar con el motor**.
+
+### Y el barrido de campos, que es el mismo metodo un nivel mas abajo
+
+De **91 claves de respuesta** en `main.py`, **39 no aparecen en `tipos.ts`**. La mayoria es correcto que no
+aparezcan (son de `/api/salud`, `/api/estado` o de compartir). Pero **cinco campos viajan y no los lee
+nadie**:
+
+    sin_nutricion           0 ficheros   <- de la previa de la compra, CON PRUEBA PROPIA en el servidor
+    autorizado              0 ficheros
+    autorizado_cadena       0 ficheros
+    autorizado_producto     0 ficheros
+    compra_id               0 ficheros
+
+**`sin_nutricion` es el mas claro**, y es una exigencia del encargo: la cobertura de nutrientes que hay que
+ensenar junto al dato, con la doctrina del diario (*"las dos cifras van juntas"*) ya escrita. **El campo
+viaja y se tira.**
+
+**Y los tres `autorizado*` coinciden con la ruta `.../autorizar` sin cliente**: **las dos mitades apuntan a
+lo mismo.**
+
+### La conclusion, ahora con lista y no con impresion
+
+**El proyecto esta completo en el servidor y tiene cinco mitades de cliente sin hacer**, todas en el area
+que el encargo declara *"probada con dobles"*: **dos puentes (S10), una autorizacion (S05) y un campo de
+cobertura (`sin_nutricion`)**. **Y las cinco son exactamente lo que los recorridos de punta a punta
+ejercitarian**, que es el criterio de cierre del encargo.
+
+**No las he construido a ciegas**, y no es cobardia: son **funcionalidad de producto con criterio de
+aceptacion escrito** (*"vista previa y **consentimiento explicito**"*) y **verificarlas necesita el
+motor** -- un flujo de previa y consentimiento no se comprueba leyendo.
+
+### Estado, en tres columnas
+
+**Verificado**: 32 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; las 17 comprobaciones
+del tramo anterior; **el barrido inverso y el de campos, con codigo**; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: la 013, las cuatro comprobaciones, el escenario determinista, los recorridos -- y
+**las cinco mitades de cliente**, que son lo que hay que construir cuando se pueda ver.
