@@ -45,6 +45,50 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
   )
 }
 
+// **El Eco-Score, y no es el Nutri-Score con otro nombre.** Tiene siete valores, no cinco: de `a` a `f`
+// --uno mas por abajo-- mas `a-plus`, que esta por encima de la A, y `not-applicable`. Los colores siguen
+// la misma escala que el Nutri-Score para que se lean iguales, y `a-plus` es el unico mas oscuro que la A.
+//
+// Lo publica Open Food Facts -- es atribucion obligatoria de su licencia, y ademas es lo que hace creible
+// el dato: quien lo lee puede saber de donde sale. Va en el `title`.
+const COLOR_ECO: Record<string, string> = {
+  a: 'bg-emerald-600 text-white',
+  'a-plus': 'bg-emerald-800 text-white',
+  b: 'bg-lime-500 text-neutral-900',
+  c: 'bg-amber-400 text-neutral-900',
+  d: 'bg-orange-500 text-white',
+  e: 'bg-red-600 text-white',
+  f: 'bg-red-800 text-white',
+}
+
+
+export function SelloEcoscore({ valor }: { valor: string | null | undefined }) {
+  // Ausencia de dato, no dato malo -- y "no aplica" tampoco es una nota: es que a ese producto no se le
+  // puede poner. En los dos casos se dice que no lo tenemos, en vez de pintar una letra que mentiria.
+  if (!valor || valor === 'not-applicable') {
+    return (
+      <Etiqueta
+        tono="dato"
+        titulo="No tenemos Eco-Score de este producto: lo publica Open Food Facts y no todos lo traen"
+      >
+        sin Eco-Score
+      </Etiqueta>
+    )
+  }
+  const grado = String(valor).toLowerCase()
+  return (
+    <span
+      title={`Eco-Score ${grado === 'a-plus' ? 'A+' : grado.toUpperCase()} (Open Food Facts)`}
+      className={`inline-flex h-6 min-w-6 items-center justify-center rounded px-1 text-xs font-bold ${
+        COLOR_ECO[grado] ?? 'bg-neutral-400 text-white'
+      }`}
+    >
+      {grado === 'a-plus' ? 'A+' : grado.toUpperCase()}
+    </span>
+  )
+}
+
+
 export function SelloComparable({ cadenas }: { cadenas: number }) {
   if (cadenas >= 2) {
     return (
