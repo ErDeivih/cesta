@@ -904,3 +904,71 @@ para mirar y se acabo tratando como «imposible»; despues se puso 10 para todo 
 - **La tarea 2 del backlog** (equivalencia ancha, el caso Perrier) sigue sin tocar, y es otra cosa que los
   precios rotos.
 - **La cobertura de secciones** con las 23 claves nuevas y la herencia se vera en la pasada del 10.
+
+
+
+---
+
+## 9-10 de octubre de 2026 — profundidad de datos: Open Food Facts de punta a punta
+
+### Hecho y verificado (con que evidencia)
+
+| commit | que | como se ha comprobado |
+|---|---|---|
+| `e155590` | la seccion se hereda por grupo | 3 pruebas |
+| `481b1e0` | suelo del precio por unidad (solo kg/l) | 6 pruebas |
+| `892c1b7` | revertido un `seccion_orden` mio que duplicaba `ORDEN_SECCIONES` | diff limpio (2 lineas) |
+| `3275780` | **el cruce con OFF se caia**: pedia `image_url`, que el subconjunto espanol no tiene | llamada real: 355.038 codigos |
+| `95ca04e` | **Eco-Score** extraido de OFF (99,9 % de su base lo tiene) | 354.831 codigos |
+| `26c9d76` | Eco-Score cruza a gold y la API lo sirve | 55 pruebas de la ficha |
+| `17f2470` | **nutrientes por 100 g** con guarda de cordura | 732 valores fuera de rango descartados |
+| `9b65da1` | los siete nutrientes cruzan a gold y la API | 10.778 productos |
+| `18f215c` | **sello del Eco-Score** en el cliente, 7 grados | `tsc --noEmit` |
+| `4a4951b` | los ocho campos en los dos tipos y el sello en la fila | `tsc --noEmit` |
+
+**Medido, no estimado**: el cruce alcanza **13.056 productos**; dan **Nutri-Score 8.461**,
+**ingredientes 8.288** (4.758 de Carrefour, que no publica ninguno), **Eco-Score 13.049** y
+**nutrientes por 100 g 10.778**. Cuatro de las cinco cadenas **no publican nutricion**: solo DIA da algo.
+
+**Y dos cosas que se midieron y resultaron NO ser ciertas**, para no volver a buscarlas: el Eco-Score no
+tiene cinco grados como el Nutri-Score, tiene **siete** (de `a` a `f`, mas `a-plus` y `not-applicable`); y
+el valor por 100 g de `nutriments` esta en el campo **`100g`**, no en `value`, que es nulo en todas las
+filas -- la primera consulta filtraba por ahi y devolvia cero sin decir por que.
+
+### Hecho, pero SIN VER EN PANTALLA
+
+**El sello del Eco-Score y los ocho campos estan escritos y pasan `tsc`, pero nadie los ha visto
+funcionando**: Docker no esta en marcha, asi que la aplicacion no se puede levantar. Estan enchufados a la
+fila de resultados (`TablaResultados.tsx`) y al tipo de la ficha (`Producto`), y los datos cruzan y la API
+los devuelve -- pero el ultimo metro, que se vean, no esta comprobado.
+
+### Pendiente, y por que
+
+- **La tabla nutricional en la ficha**: NO existe (no hay ningun componente que pinte nutricion; si hay un
+  filtro `conNutricion` en la busqueda, que filtra por un dato que luego no se ensena). No se ha escrito
+  porque **no tiene hermano que copiar** y sin la aplicacion en marcha se escribriria a ciegas. Las
+  kilocalorias son el dato con el que alguien decide que come: aqui no se inventa una pantalla.
+- **Docker caido** (el named pipe `dockerDesktopLinuxEngine` no existe; nada escuchando en 5432/5434/5435).
+  Bloquea: las cuatro comprobaciones ordenadas --restauracion comparando importes, datos desconocidos
+  (NULL / 0 / total PARCIAL), transaccion con fallo provocado, y 3x2 con datos controlados--, la
+  verificacion de la **migracion 013**, la publicacion y las comprobaciones sobre la imagen servida.
+- **`projects/cesta/emparejar.py` tiene dos implementaciones de lo mismo**: `externo_por_ean` (la que
+  funciona y da datos a la aplicacion) y `core/off.py::enriquecer_por_ean` (rota hasta el 9 de octubre,
+  arreglada sin necesidad). Hay que reconciliarlas o borrar una: dos copias acaban discrepando.
+- **La tarea 2 del backlog** (equivalencia ancha, el caso Perrier) sigue sin tocar. Medido: 1.172 grupos
+  con mas de 2x de dispersion, y **no** los causan los precios rotos (quitarlos baja a 1.145).
+- **Los recorridos de las tres aplicaciones**, que es el criterio de cierre del objetivo.
+
+### Metodo: cuatro cosas que costaron rondas y conviene no repetir
+
+1. **Los ficheros de este repo tienen finales de linea mezclados.** `pipeline.py` y `tipos.ts` en CRLF;
+   `normalize.py` en LF. Escribir sin preservarlos convierte un cambio de una linea en una reescritura de
+   1.626. Y al **leer** hay que normalizar (`\r\n` -> `\n`) o **ninguna** comparacion de texto coincide --
+   y el error que aparece ("el ancla no es unica") es mentira: no coincide ninguna.
+2. **Cada lenguaje tiene su puerta**: `ruff` y `pytest` para Python, `tsc --noEmit` para el cliente. Use
+   `compile()` de Python sobre un `.tsx` y perdi una ronda.
+3. **Preguntar "¿esto ya esta enchufado?" antes de "¿por que no se usa?"**. La segunda me llevo a arreglar
+   una pieza duplicada que no hacia falta; la primera me llevo en dos rondas al unico campo de OFF sin leer.
+4. **El umbral con el que se mide no es la regla con la que se arregla.** Se eligio 20 centimos para mirar y
+   se acabo tratando como "imposible"; despues se puso 10 para todo y habria borrado 573 piezas baratas bien
+   calculadas (300 bastoncillos por 1,09 EUR son 0,363 centimos cada uno).
