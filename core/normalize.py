@@ -225,6 +225,30 @@ def lecturas_referencia(fuente: str, precio_cent: int | None,
     return ((valor, ref_uni),)
 
 
+# Un precio por unidad por debajo de esto no existe en un supermercado. No es un umbral de negocio: es el
+# suelo por debajo del cual el dato solo puede venir de una lectura equivocada.
+SUELO_REFERENCIA_CENT = 10
+
+
+def referencia_publicable(ref_cent) -> bool:
+    """Si la referencia no se ha podido verificar, un valor imposible no se publica.
+
+    Cuando `pipeline._referencia_que_cuadra` no confirma la lectura se queda la convencion de la cadena, y
+    casi siempre acierta (154 de 173 medidas en Aldi). Pero en los productos **sin formato con el que
+    comprobar** -- los que llegan sin cantidad -- el respaldo publica a veces la lectura equivocada:
+    medido el 9 de octubre de 2026, 1.524 filas (2,9 %) con precios por unidad de 2 a 19 centimos, en las
+    cinco cadenas (1,07 %-4,47 %). Y 675 de las 857 peores son de drogueria, higiene y bebe, donde la
+    cadena publica por lavado, dosis o pastilla.
+
+    Las dos unicas guardas que habia eran "no es nulo" y "es mayor que cero", asi que un precio de dos
+    centimos por kilo pasaba hasta el comparador -- que llego a anunciar ahorros del 229.833 %.
+
+    **No se inventa: se deja vacio**, que es la cara que la aplicacion ya sabe tratar. Ver
+    docs/BACKLOG.md, tarea 2.
+    """
+    return ref_cent is not None and ref_cent >= SUELO_REFERENCIA_CENT
+
+
 def nombre_limpio(nombre: str, marca: str | None = None) -> str:
     """Quita marca, formato y ruido. Base para el matching por nombre."""
     t = _sin_tildes(str(nombre).lower())

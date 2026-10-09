@@ -18,11 +18,13 @@ import polars as pl
 from core import alcohol, config, derive, promos, secciones, sellos
 from core.normalize import (
     CANONICAS,
+    SUELO_REFERENCIA_CENT,  # noqa: F401  (se reexporta: lo usan las pruebas)
     _sin_tildes,
     lecturas_referencia,
     nombre_limpio,
     normaliza_referencia,
     parse_formato,
+    referencia_publicable,
 )
 from core.storage import write_parquet, write_parquet_file
 
@@ -43,30 +45,6 @@ def _referencia_que_cuadra(lecturas, precio, cantidad, unidad):
         if u == unidad and cand > 0 and abs(precio / cantidad - cand) / cand < 0.05:
             return (cand, u)
     return None
-
-
-# Un precio por unidad por debajo de esto no existe en un supermercado. No es un umbral de negocio: es
-# el suelo por debajo del cual el dato solo puede venir de una lectura equivocada.
-SUELO_REFERENCIA_CENT = 10
-
-
-def _referencia_publicable(ref_cent) -> bool:
-    """Si no se ha podido verificar la referencia, un valor imposible no se publica.
-
-    Cuando `_referencia_que_cuadra` no confirma la lectura se queda la convencion de la cadena, y casi
-    siempre acierta (154 de 173 medidas en Aldi). Pero en los productos **sin formato con el que
-    comprobar** -- los que llegan sin cantidad -- el respaldo publica a veces la lectura equivocada:
-    medido el 9 de octubre de 2026, 1.524 filas (2,9 %) con precios por unidad de 2 a 19 centimos,
-    repartidas por las cinco cadenas (1,07 %-4,47 %).
-
-    Las dos unicas guardas que habia sobre este campo eran "no es nulo" y "es mayor que cero", asi que
-    un precio de dos centimos por kilo pasaba hasta el comparador, los grupos de equivalencia y el
-    panel de diferencias por seccion.
-
-    **No se inventa: se deja vacio**, que es la cara que la aplicacion ya sabe tratar en la ficha, en la
-    lista y en la comparacion. Ver docs/BACKLOG.md, tarea 2.
-    """
-    return ref_cent is not None and ref_cent >= SUELO_REFERENCIA_CENT
 
 
 def _cargar_bronze() -> pl.DataFrame | None:
@@ -243,7 +221,7 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
         # **Y si no se ha podido verificar y el valor es imposible, no se publica.** El respaldo por
         # cadena acierta casi siempre, pero en los productos sin formato con el que comprobar deja
         # pasar lecturas equivocadas: 1.524 filas medidas con precios por unidad de 2 a 19 centimos.
-        elif not _referencia_publicable(ref_cent):
+        elif not referencia_publicable(ref_cent):
             ref_cent, ref_uni = None, None
 
         # El formato dice el tamano de UNA unidad y el nombre dice cuantas van

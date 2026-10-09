@@ -33,6 +33,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from core.normalize import SUELO_REFERENCIA_CENT
+
 if TYPE_CHECKING:
     import polars as pl
 
@@ -69,8 +71,14 @@ def unidad_dominante(df: pl.DataFrame) -> pl.DataFrame:
     # a la segunda a cargar las herramientas de la primera.
     import polars as pl
 
+    # **Y el suelo, no solo "mayor que cero".** El docstring de arriba cuenta que aqui se llego a
+    # anunciar un ahorro del 229.833 %: un precio por unidad imposible pasa las dos guardas -- no es
+    # nulo y es mayor que cero -- y de ahi entra en la comparacion y en el panel. Medido el 9 de octubre
+    # de 2026: 857 filas por debajo de 10 centimos, el 79 % de drogueria, higiene y bebe, donde la
+    # cadena publica por lavado, dosis o pastilla. Se escribe una vez en el pipeline y se comprueba
+    # tambien donde se usa: un dato malo no debe pasar porque quien lo escribio no lo viera.
     base = df.filter(pl.col("precio_unidad_cent").is_not_null()
-                     & (pl.col("precio_unidad_cent") > 0)
+                     & (pl.col("precio_unidad_cent") >= SUELO_REFERENCIA_CENT)
                      & pl.col("unidad_canon").is_not_null())
     manda = (base.group_by(["grupo_id", "unidad_canon"])
                  .agg(pl.col("fuente").n_unique().alias("cadenas"),
