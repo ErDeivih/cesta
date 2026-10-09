@@ -208,28 +208,18 @@ def preparar_subconjunto_es(con: duckdb.DuckDBPyConnection | None = None,
     return LOCAL
 
 
-def enriquecer_por_ean(con: duckdb.DuckDBPyConnection, tabla_productos: str) -> None:
-    """Cruza por EAN. Cubre Mercadona, DIA y Carrefour de golpe."""
-    con.execute(f"""
-        CREATE OR REPLACE TABLE producto_enriquecido AS
-        SELECT p.*,
-               o.ingredients_text        AS off_ingredientes,
-               -- **La imagen de OFF no se trae**: las cinco cadenas ya publican la suya
-               -- (100 % de cobertura, medido el 8 de octubre), asi que no rellena ningun hueco -- y
-               -- era lo unico que rompia esta consulta: el subconjunto espanol no tiene esa columna
-               -- y la funcion se caia al ejecutarse. Por eso nadie la llamaba.
-               o.nutriscore_grade        AS off_nutriscore,
-               o.nova_group              AS off_nova,
-               o.ecoscore_grade          AS off_ecoscore,
-               CASE WHEN o.code IS NULL THEN NULL ELSE 'externo' END AS proc_nutricion
-        FROM {tabla_productos} p
-        LEFT JOIN read_parquet('{LOCAL}') o
-          -- Los dos lados se normalizan: OFF guarda el codigo como texto y a
-          -- veces con ceros por delante, y nosotros los quitamos al limpiar.
-          -- Comparar en crudo perdia emparejamientos buenos sin avisar.
-          ON ltrim(regexp_replace(o.code, '[^0-9]', '', 'g'), '0')
-           = ltrim(regexp_replace(CAST(p.ean AS VARCHAR), '[^0-9]', '', 'g'), '0')
-    """)
+# **Aqui vivia `enriquecer_por_ean`, y se ha quitado el 10 de octubre de 2026.** Era una segunda
+# implementacion del mismo cruce que hace `projects/cesta/emparejar.py::externo_por_ean`, que es la que
+# funciona y la que da datos a la aplicacion; esta no la llamaba nadie y estaba rota (pedia `image_url`,
+# que el subconjunto espanol no tiene) hasta que se arreglo sin necesidad. Dos implementaciones de lo
+# mismo acaban discrepando, y esta ademas gastaba una consulta de 355.000 filas si alguien la usaba.
+#
+# Lo que si se conserva de su idea: la procedencia (`proc_nutricion = 'externo'`). Es lo que permite que
+# la ficha diga de donde viene cada dato -- y la atribucion de Open Food Facts es obligatoria.
+#
+# Lo que sigue vivo aqui: `descargar_volcado`, `preparar_subconjunto_es` y `candidatos_por_nombre` (el
+# unico camino para Alcampo y Aldi, que no publican EAN; devuelve candidatos para revision, nunca asigna).
+
 
 
 def candidatos_por_nombre(con: duckdb.DuckDBPyConnection, nombre_limpio: str,
