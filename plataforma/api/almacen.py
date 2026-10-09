@@ -585,7 +585,7 @@ def cierra_compra(lista_id: str, usuario_id: str,
                 total += cuanto
             filas.append((str(linea["id"]), linea["grupo_id"], linea["producto_id"],
                           linea["nombre_visto"], linea["cantidad"],
-                          suyo.get("cadena") or linea["cadena_elegida"], cent))
+                          suyo.get("cadena") or linea["cadena_elegida"], cent, cuanto))
 
         cur.execute("""
             INSERT INTO compra (lista_id, usuario_id, lineas, sin_precio, total_cent)
@@ -596,8 +596,8 @@ def cierra_compra(lista_id: str, usuario_id: str,
 
         cur.executemany("""
             INSERT INTO compra_linea (compra_id, linea_id, grupo_id, producto_id, nombre,
-                                      cantidad, cadena, precio_cent)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                                      cantidad, cadena, precio_cent, importe_cent)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, [(compra_id, *f) for f in filas])
 
         cur.execute("""
@@ -1166,7 +1166,7 @@ def lineas_de_compra(compra_id: str) -> list[dict]:
     """
     with cursor() as cur:
         cur.execute("""
-            SELECT id, linea_id, grupo_id, producto_id, nombre, precio_cent, cadena
+            SELECT id, linea_id, grupo_id, producto_id, nombre, precio_cent, cadena, importe_cent
               FROM compra_linea
              WHERE compra_id = %s
              ORDER BY nombre
