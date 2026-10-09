@@ -838,7 +838,12 @@ def grupo(grupo_id: int) -> dict | None:
                   "grado_alcohol", "promo_hasta", "promo_club",
                   "promo_solo_online", "es_alcohol",
                   "es_recall", "peso_variacion_pct", "distintivo", "advertencias",
-                  "unidades_pack"))
+                  "unidades_pack",
+                  # El Eco-Score es el campo que mejor cubre Open Food Facts -- 354.831 de sus
+                  # 355.038 codigos, el 99,9 % -- y hasta el 9 de octubre de 2026 se descargaba y
+                  # no lo leia nadie. Va aqui, con las demas: la cadena que se interpola en el
+                  # SELECT pide "solo si estan", asi que un gold de antes sigue funcionando.
+                  "ecoscore"))
     # **Por nombre, no por posicion.** Aqui habia indices (`f[35]`, `f[36]`...) y el dia que
     # alguien anadio una columna a `nuevas` -- `es_recall` entro despues -- los de detras se
     # quedaron **uno a la izquierda** sin que nada avisara. Medido el 24 de septiembre de 2026
@@ -885,6 +890,7 @@ def grupo(grupo_id: int) -> dict | None:
                        and f["calidad_origen"].startswith("ingredientes") else None,
             "gama": f["calidad"] if f["calidad_origen"] == "precio" else None,
             "nutriscore": f["nutriscore"], "nova": f["nova"], "ean": f["ean"],
+            "ecoscore": f["ecoscore"],
             "imagen": f["imagen"], "alergenos": f["alergenos"],
             "ingredientes": f["ingredientes"],
             "origen": f["origen"], "promo": f["promo_txt"], "url": f["url"],

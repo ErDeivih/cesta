@@ -563,6 +563,8 @@ def main(argv: list[str] | None = None) -> int:
                   for f in filas]
     nova = [(externo.get(_ean(f.get("ean")) or "") or {}).get("nova")
             for f in filas]
+    ecoscore = [(externo.get(_ean(f.get("ean")) or "") or {}).get("ecoscore")
+                for f in filas]
 
     salida = df.with_columns([
         pl.Series("grupo_id", grupo, dtype=pl.Int32),
@@ -573,6 +575,7 @@ def main(argv: list[str] | None = None) -> int:
         pl.col("unidad_canon").is_in(UNIDADES_FIABLES).fill_null(False)
           .alias("comparacion_fiable"),
         pl.Series("nova", nova, dtype=pl.Int32),
+        pl.Series("ecoscore", ecoscore, dtype=pl.Utf8),
         pl.Series("cantidad", [f["cantidad"] for f in filas], dtype=pl.Float64),
         pl.Series("unidad_canon", [f["unidad_canon"] for f in filas], dtype=pl.Utf8),
     ])
