@@ -1191,3 +1191,94 @@ receta (elegir los ingredientes y ver las dos cifras).
 publicacion, y **los recorridos de punta a punta de las tres aplicaciones** -- el criterio de cierre. El
 motor no esta en marcha: `docker ps` falla, ningun puerto escuchando en 5432/5434/5435, y el named pipe
 `dockerDesktopLinuxEngine` no existe.
+
+
+
+---
+
+## 10-11 de octubre de 2026 — el encargo por paquetes, y la capa que no habia leido
+
+### Lo primero: el encargo estaba escrito y no lo habia leido
+
+**`docs/SUPERAPP-00-EMPEZAR-AQUI.md`** (7 de octubre de 2026) es **el encargo de ejecucion**, y contiene
+**13 paquetes S00-S12** con dependencias y criterio de aceptacion cada uno. Es la pieza de contexto que ha
+faltado durante 135 rondas. Lo esencial:
+
+| ID | trabajo | se acepta cuando |
+|---|---|---|
+| S00 | congelar baseline, `CESTA-MURO.md` | estado git, comandos y cifras fechadas |
+| **S01** | **publicacion versionada, `core/manifiesto.py`, storage y lectores** | **crash entre escrituras no mezcla versiones; rollback y concurrencia probados** |
+| S02 | cola de fichas, collectors, inventario de cobertura | todo producto con estado, proxima revision y evidencia |
+| S03 | Lidl por sitemap, fichas y ofertas | informe por fuente y familia; una ausencia no es una retirada |
+| S04 | identidad, banco independiente, matching y API | exactos, formatos y alternativas separados; metricas por familia |
+| S05 | selector unico y optimizador, `api/cesta.py` | fechas, tienda, club y cantidad en todos los endpoints |
+| S06 | armazon y sistema visual, `App.tsx`, `Nav.tsx` | tres layouts, drawer, teclado, responsive y CSP |
+| S07 | Compra: busqueda, ficha, favoritos, listas, reparto | recorrido real con producto exacto y alternativa explicita |
+| S08 | Recetas: biblioteca, editor, modo cocina, planificador | varias recetas, recarga, edicion, raciones |
+| S09 | Calorias: diario propio y tendencias | alimento/receta versionados; dias incompletos; no compras como comidas |
+| S10 | puentes entre aplicaciones | repetir no duplica; vista previa y consentimiento |
+| S11 | graficas, aprendizaje y rendimiento | cada grafica define medida y universo; tabla accesible |
+| S12 | ensayo integral y cierre | datos reales, dos cuentas, backup restaurado, movil/escritorio |
+
+**Y el documento fija decisiones cerradas** que coinciden con lo que yo fui deduciendo midiendo: *"un
+ingrediente generico no es un producto comercial exacto"* (mi medicion: "patatas" devuelve una tortilla),
+*"comprar no es consumir"*, *"priorizar precision a cantidad; la abstencion es resultado valido"*, y
+*"Calorias es privada por persona, aunque Compra sea compartida por hogar"*.
+
+**Comandos que el encargo nombra y que conviene usar**: `uv run pytest -q`, `uv run ruff check .`, y **en
+`plataforma/web/app`: `npm run build` y `npm run test:cocina`**. El segundo **no se ejecuto hasta la ronda
+136**, y por eso se escribieron cuatro piezas sin saber que ya existian.
+
+### Una capa entera del cliente que no conocia: `logica/` y `estado/`
+
+Casi 500 lineas **con sus reglas escritas y sus pruebas propias**:
+
+- **`logica/pesos.ts`** (227) -- como se ordenan las alternativas. Cinco reglas, entre ellas: *"`calidad` y
+  `gama` son excluyentes... nunca se suman"* (verificado: el contrato de `/api/grupo` lo garantiza por
+  construccion), *"la nota se reparte solo entre lo que se sabe: un cero se lee como 'malo' y seria
+  mentira"*, y *"una promo ausente es un cero de verdad, porque 'no hay promocion' es un dato, no un hueco"*.
+- **`logica/frase.ts`** (88) -- *"si el grupo no es de fiar, NO se inventa la frase... una tabla se mira con
+  desconfianza, **una frase se cree**"*.
+- **`logica/curva.ts`** (111) -- *"nunca se dice 'los ultimos 90 dias' si no los tenemos"*.
+- **`estado/cocina.ts`** (38) -- la nutricion de una receta: `validarReceta`, `calcular`, `listaReceta`, con
+  **`valor` y `faltantes` por nutriente**, cero real y ausencia en `null`.
+- **`estado/referenciaLinea.ts`** -- la eleccion exacta frente al grupo.
+
+### Y un duplicado mio, revertido
+
+Escribi `core/recetas.nutricion` y su ruta `/api/recetas/{id}/nutricion` **sin haber leido `estado/cocina.ts`,
+que ya hacia lo mismo** -- y ademas admite `100ml`, que mi version rechazaba. Revertidos los dos commits
+(`9721d29`). **Se queda la del diario** (`de_ficha`, `apunta_de_ficha` y `POST /api/diario/desde-ficha`):
+no la duplica nadie, y su forma -- valor y faltantes por nutriente -- es la misma que la del cliente, asi
+que las dos aplicaciones quedan coherentes.
+
+**Es el segundo duplicado que borro y el quinto que reconcilio. La causa, en las cinco, ha sido la misma:
+escribir antes de leer.**
+
+### Las dos rutas que si se quedan
+
+| commit | ruta | que hace |
+|---|---|---|
+| `6c05b68` | `POST /api/diario/desde-ficha` | usa `apunta_de_ficha`; la cuenta en el servidor |
+| `9721d29` | (reversion de la de recetas) | el cliente ya la hacia |
+
+**Y la leccion de comprobacion**: `app.routes` **no aplana** los routers incluidos (aparecen como objetos
+anidados con el `path` vacio); el contrato publicado es **`app.openapi()["paths"]`**, y se construye sin
+servidor ni Docker. Es la comprobacion que vale para saber si una ruta esta de verdad enchufada.
+
+### Estado, en tres columnas
+
+**Verificado**: 25 commits; 1.540 pruebas Python y 6 del cliente en verde; los frenos del emparejador (3
+invariantes a cero, 65 % de aciertos); el cruce con OFF (13.056 productos); la aritmetica del diario; la
+ruta del diario contra `app.openapi()`; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha, y los pasos de interfaz del diario.
+
+**Esperando a Docker**: las cuatro comprobaciones ordenadas, la verificacion de la **013**, la publicacion,
+y **los recorridos de punta a punta** (S07/S08/S09 y S12 del encargo). El motor no esta en marcha: `docker
+ps` falla, ningun puerto escuchando en 5432/5434/5435, y el named pipe no existe.
+
+**Y lo que dice el encargo que NO hay que hacer**: *"no sustituir implementacion por ampliar este plan otra
+vez"* y *"no parar simplemente por terminar un paquete; tampoco declarar todo completo cuando quedan
+fallos"*.
