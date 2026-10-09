@@ -125,6 +125,55 @@ def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *
     return int(cur.lastrowid)
 
 
+# Los nutrientes que la ficha trae por 100 g, y el campo del diario al que van. El orden es el de una
+# etiqueta de verdad, y la clave es la de `ProductoSuelto` en el cliente.
+NUTRIENTES_DE_FICHA = (
+    ("kcal_100g", "kcal"),
+    ("proteinas_100g", "proteinas_g"),
+    ("grasas_100g", "grasas_g"),
+    ("hidratos_100g", "hidratos_g"),
+)
+
+
+def de_ficha(producto: dict, gramos: float) -> dict:
+    """Los nutrientes de una cantidad, a partir de los valores por 100 g del producto.
+
+    **Se calcula nutriente a nutriente, no en bloque.** Si el producto trae kilocalorias pero no proteinas,
+    la entrada lleva las kilocalorias y deja las proteinas en `None`: es lo que sabe. Rellenar con ceros
+    seria afirmar que no lleva proteina, y eso no lo sabemos.
+
+    De una cantidad negativa o no finita no se calcula nada: son las mismas reglas que `apunta` comprueba,
+    y aqui se paran antes.
+    """
+    if gramos is None or gramos != gramos or gramos in (float("inf"), float("-inf")) or gramos < 0:
+        raise ValueError("los gramos tienen que ser un numero finito y no negativo")
+    valores = {}
+    for campo_100g, campo_diario in NUTRIENTES_DE_FICHA:
+        por_100 = producto.get(campo_100g)
+        if por_100 is None or por_100 != por_100 or por_100 < 0:
+            valores[campo_diario] = None        # no es cero: es que no lo sabemos
+        else:
+            valores[campo_diario] = round(float(por_100) * gramos / 100, 1)
+    if all(v is None for v in valores.values()):
+        raise ValueError("el producto no trae ningun nutriente: no hay nada que anotar")
+    return valores
+
+
+def apunta_de_ficha(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *,
+                    producto: dict, gramos: float, referencia: str,
+                    nota: str = "", ahora: datetime | None = None) -> int:
+    """Anota lo que se comio de un producto del catalogo, con lo que la ficha sabe de el.
+
+    La fuente es `ficha`, que ya estaba en el vocabulario: lo que se anota **no se ha leido de una
+    etiqueta a mano**, viene de los valores por 100 g del producto -- los de la cadena o los de Open Food
+    Facts. La `nota` deja dicho sobre cuantos gramos se ha calculado, para poder releerlo.
+    """
+    valores = de_ficha(producto, gramos)
+    return apunta(con, propietario, fecha, comida, referencia=referencia, cantidad_g=gramos,
+                  fuente_dato=FICHA, ahora=ahora,
+                  nota=(nota or f"{gramos:g} g, calculado de los valores por 100 g").strip(), **valores)
+
+
 def borrar(con: sqlite3.Connection, propietario: str, entrada_id: int) -> bool:
     """Quitar una entrada **solo si es tuya**. Si no lo es, no se borra y se dice que no estaba."""
     cur = con.execute("DELETE FROM entrada WHERE id = ? AND propietario = ?",
