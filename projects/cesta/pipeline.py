@@ -491,7 +491,23 @@ def _anota_seccion(out: pl.DataFrame) -> pl.DataFrame:
     categorias = out["categoria"].to_list()
     valores = [secciones.seccion_de(f, c)
                for f, c in zip(fuentes, categorias, strict=True)]
-    return out.with_columns(pl.Series("seccion", valores, dtype=pl.Utf8))
+    out = out.with_columns(pl.Series("seccion", valores, dtype=pl.Utf8))
+
+    # **Y se hereda por grupo.** Si un miembro del grupo tiene seccion y otro no, se le pasa: es el mismo
+    # producto, asi que va al mismo pasillo. Es lo que recoge a los que llegan **sin categoria** -- 149
+    # productos de Aldi el 9 de octubre -- y a los que su cadena emite con la categoria rota (DIA, que la manda
+    # como URL). Sin esto, un producto que el resto del grupo tiene colocado se queda sin pasillo.
+    #
+    # Va aqui y no en el emparejador porque aqui esta el resultado ya con `grupo_id`: una pasada, sin tocar los
+    # enlaces.
+    if "grupo_id" not in out.columns:
+        return out
+    heredable = (out.filter(pl.col("seccion").is_not_null())
+                    .group_by("grupo_id")
+                    .agg(pl.col("seccion").first().alias("_heredada")))
+    return (out.join(heredable, on="grupo_id", how="left")
+               .with_columns(pl.coalesce(["seccion", "_heredada"]).alias("seccion"))
+               .drop("_heredada"))
 
 
 def _marca_ofertas_de_tarjeta(out: pl.DataFrame) -> pl.DataFrame:
