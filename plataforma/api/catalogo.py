@@ -843,7 +843,11 @@ def grupo(grupo_id: int) -> dict | None:
                   # 355.038 codigos, el 99,9 % -- y hasta el 9 de octubre de 2026 se descargaba y
                   # no lo leia nadie. Va aqui, con las demas: la cadena que se interpola en el
                   # SELECT pide "solo si estan", asi que un gold de antes sigue funcionando.
-                  "ecoscore"))
+                  "ecoscore",
+                  # Los nutrientes por 100 g, de Open Food Facts. Cuatro de las cinco cadenas no
+                  # publican nutricion: esto es lo que hace que la aplicacion de calorias calcule.
+                  "kcal_100g", "hidratos_100g", "proteinas_100g", "grasas_100g",
+                  "grasas_sat_100g", "azucares_100g", "sal_100g"))
     # **Por nombre, no por posicion.** Aqui habia indices (`f[35]`, `f[36]`...) y el dia que
     # alguien anadio una columna a `nuevas` -- `es_recall` entro despues -- los de detras se
     # quedaron **uno a la izquierda** sin que nada avisara. Medido el 24 de septiembre de 2026
@@ -891,6 +895,11 @@ def grupo(grupo_id: int) -> dict | None:
             "gama": f["calidad"] if f["calidad_origen"] == "precio" else None,
             "nutriscore": f["nutriscore"], "nova": f["nova"], "ean": f["ean"],
             "ecoscore": f["ecoscore"],
+            # Por 100 g. La ficha dira tambien por racion cuando haya racion; el dato base es este.
+            "kcal_100g": f["kcal_100g"], "hidratos_100g": f["hidratos_100g"],
+            "proteinas_100g": f["proteinas_100g"], "grasas_100g": f["grasas_100g"],
+            "grasas_sat_100g": f["grasas_sat_100g"], "azucares_100g": f["azucares_100g"],
+            "sal_100g": f["sal_100g"],
             "imagen": f["imagen"], "alergenos": f["alergenos"],
             "ingredientes": f["ingredientes"],
             "origen": f["origen"], "promo": f["promo_txt"], "url": f["url"],

@@ -600,6 +600,15 @@ def main(argv: list[str] | None = None) -> int:
             for f in filas]
     ecoscore = [(externo.get(_ean(f.get("ean")) or "") or {}).get("ecoscore")
                 for f in filas]
+    # **Y los nutrientes por 100 g**, los siete que la ficha necesita. Cuatro de las cinco cadenas no
+    # publican nutricion ninguna -- solo DIA da algo, 3.954 de sus 5.792 -- asi que esto es de donde va a
+    # comer la aplicacion de calorias. Medido el 9 de octubre de 2026: 10.778 de nuestros productos
+    # cruzan, y vienen con la guarda de cordura puesta en la extraccion (nada negativo, y los topes
+    # fisicos: 100 g por 100 g y 900 kcal).
+    NUTRIENTES = ("kcal_100g", "hidratos_100g", "proteinas_100g", "grasas_100g",
+                  "grasas_sat_100g", "azucares_100g", "sal_100g")
+    nutrientes = {c: [(externo.get(_ean(f.get("ean")) or "") or {}).get(c) for f in filas]
+                  for c in NUTRIENTES}
 
     salida = df.with_columns([
         pl.Series("grupo_id", grupo, dtype=pl.Int32),
@@ -611,6 +620,7 @@ def main(argv: list[str] | None = None) -> int:
           .alias("comparacion_fiable"),
         pl.Series("nova", nova, dtype=pl.Int32),
         pl.Series("ecoscore", ecoscore, dtype=pl.Utf8),
+        *[pl.Series(c, nutrientes[c], dtype=pl.Float64) for c in NUTRIENTES],
         pl.Series("cantidad", [f["cantidad"] for f in filas], dtype=pl.Float64),
         pl.Series("unidad_canon", [f["unidad_canon"] for f in filas], dtype=pl.Utf8),
     ])
