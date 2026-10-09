@@ -94,10 +94,6 @@ COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon"
             # pasillos ni lista ordenada por el recorrido de la tienda. Ver
             # `pipeline._anota_seccion`.
             "seccion",
-            # **Y su sitio en el recorrido de la tienda.** El cliente sabe que pasillos hay, pero no en que
-            # orden se recorren, y no puede importar el modulo del scraper. Sin esta columna, la lista no se
-            # puede ordenar como se camina el supermercado -- y `df.select(COLUMNAS)` la tiraria.
-            "seccion_orden",
             # Lo que se fue anadiendo al contrato entre el 15 y el 17 de
             # septiembre y se quedaba en silver. El contrato tenia 40 columnas y
             # esta tupla 17: nueve campos recien conquistados a las cadenas
