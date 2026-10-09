@@ -1282,3 +1282,97 @@ ps` falla, ningun puerto escuchando en 5432/5434/5435, y el named pipe no existe
 **Y lo que dice el encargo que NO hay que hacer**: *"no sustituir implementacion por ampliar este plan otra
 vez"* y *"no parar simplemente por terminar un paquete; tampoco declarar todo completo cuando quedan
 fallos"*.
+
+
+
+---
+
+## 11 de octubre de 2026 — S01, la frontera de polars, y tres falsos positivos mios
+
+### S01 tiene su criterio de aceptacion YA DEMOSTRADO
+
+`tests/test_publicacion.py` se titula **"Puerta de S01"** y cubre las cuatro frases del criterio, **con
+ejecuciones de verdad sobre un directorio temporal** (su cabecera lo dice: *"ninguna se apoya en mirar el
+codigo"*):
+
+| prueba | que demuestra |
+|---|---|
+| `test_una_caida_entre_escrituras_no_mezcla_versiones` | **hace fallar `write_parquet` en el segundo fichero**: el puntero no se mueve y la carpeta a medias se retira |
+| `test_rollback_a_la_version_anterior` | volver atras apunta a una anterior, y las dos versiones siguen ahi |
+| `test_una_peticion_ve_una_sola_version` | concurrencia: todos los caminos de una peticion comparten carpeta, y la anterior sigue apuntando a la suya |
+| `test_sin_version_publicada_se_lee_el_catalogo_suelto` | el fallback conservador |
+
+**Y el pipeline ya publica** (`pipeline.py:800-805`, al final de la pasada, con su `try`) y **la API ya
+informa de la version** (`/api/estado` devuelve `version_catalogo: 20261009-122845`). Asi que S01 no esta
+"construido y sin adoptar": esta **adoptado en la escritura y probado en las cuatro frases**.
+
+### Y el lector NO se adopta, por una razon que tiene prueba propia
+
+`main.py:374` y `main.py:1171` leen `data/gold/actual.json` **a mano**, y dicen por que:
+
+> *"Sin importar `core.publicacion`: ese modulo trae **polars** -- publica DataFrames -- y **la imagen de la
+> API no lo lleva, que es una restriccion con prueba propia**. Leer un JSON pequeno no justifica arrastrar
+> una libreria de datos entera."*
+
+**No es un duplicado descuidado: es una frontera deliberada.** La misma leccion que `comparacion.py`
+documenta desde el otro lado (polars en la API causo reinicios de `cesta-api` el 21 de septiembre de 2026).
+
+**Si algun dia se quiere una sola lectura del puntero**, el camino NO es importar `publicacion` en la API:
+es **sacar la lectura a un modulo pequeno sin polars** que usen los dos. Mismo objetivo moviendo el codigo,
+no anadiendo una dependencia. **Queda apuntado, no hecho: hoy no hay ningun sintoma que lo pida.**
+
+### Y tres falsos positivos mios, seguidos
+
+Las tres veces **el codigo tenia razon y yo no**:
+
+1. **El lector por el puntero** (rondas 146-147). Escribi el cambio -- vistas por `publicacion.ruta` y el
+   sello por la version publicada -- y **la suite se cayo**: las pruebas de alertas, entre otras. El motivo:
+   `data/gold` tiene ficheros sueltos **mas nuevos (12:35) que la version publicada (12:28)**, asi que
+   adoptar el lector **habria servido datos de siete minutos antes**. Revertido sin dejar rastro.
+   **Ese cambio no era inerte: cambiaba los datos servidos.**
+2. **"La publicacion esta rota"** (rondas 148-150). Al ver la diferencia 12:28/12:35 supuse una pasada que
+   no habia publicado. **Falso**: `/api/estado` responde `vigencia_precio = {comprobable: True,
+   coherente: True}` porque **la comprobacion es por fecha, no por hora**, y los dos son del 2026-10-09.
+   No hay nada roto.
+3. **"El puntero se lee dos veces: unifiquemoslo"** (rondas 151-152). **Falso**: las dos lecturas a mano
+   son **una frontera con polars que tiene prueba propia**, y esta escrita en el propio docstring.
+
+**Y la leccion, que es la mas util de este tramo**: medir antes de escribir **no me ha ahorrado
+equivocarme; me ha ahorrado dejar el error dentro**. Tres rondas, tres cambios que no se hicieron. El
+coste han sido rondas de lectura; el ahorro, tres commits que habrian empeorado el sistema.
+
+### Lo que si quedo hecho en este tramo
+
+| commit | que |
+|---|---|
+| `6c05b68` | `POST /api/diario/desde-ficha`, con **la cuenta en el servidor**; comprobado contra `app.openapi()["paths"]` |
+| `9721d29` | revertida la nutricion de recetas que **duplicaba `estado/cocina.ts`** del cliente |
+
+**Y la comprobacion de rutas que vale**: `app.routes` **no aplana** los routers incluidos (objetos
+anidados, `path` vacio); el contrato publicado es **`app.openapi()["paths"]`**, sin servidor ni Docker.
+
+### Y una capa del cliente que hay que leer antes de escribir nada ahi
+
+`plataforma/web/app/src/logica/` y `estado/`, casi 500 lineas **con sus reglas y sus pruebas**:
+`pesos.ts` (calidad y gama excluyentes; la nota se reparte solo entre lo que se sabe; una promo ausente es
+un cero de verdad), `frase.ts` (*"si el grupo no es de fiar, NO se inventa la frase"*), `curva.ts`
+(*"nunca se dice 'los ultimos 90 dias' si no los tenemos"*), `cocina.ts` (nutricion de receta, con `valor`
+y `faltantes` por nutriente) y `referenciaLinea.ts`. **Y el comando que las ejecuta, que el encargo nombra
+y que no se uso hasta la ronda 136: `npm run test:cocina`** (6 pruebas).
+
+### Estado, en tres columnas
+
+**Verificado**: 26 commits; **1.540 pruebas Python** y **6 del cliente** en verde; los frenos del
+emparejador (3 invariantes a cero, 65 % de aciertos); el cruce con OFF (13.056 productos); la puerta de S01
+(caida, rollback, concurrencia, fallback); la ruta del diario contra `app.openapi()`; `tsc` limpio.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha y los pasos de interfaz del diario.
+
+**Esperando a Docker**: las cuatro comprobaciones ordenadas, la verificacion de la **013**, y **los
+recorridos de punta a punta** (S07/S08/S09 y S12). `docker ps` falla, ningun puerto escuchando en
+5432/5434/5435 y el named pipe no existe.
+
+**Y la decision que NO tomo yo solo**: si el lector de datos debe pasar a leer la version publicada en vez
+de los ficheros sueltos. **Es correcto por la logica de S01 y cambia lo que ve el usuario**, asi que es una
+decision de producto y va con su medicion delante (hoy los sueltos son mas nuevos que la publicacion).
