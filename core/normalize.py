@@ -225,12 +225,19 @@ def lecturas_referencia(fuente: str, precio_cent: int | None,
     return ((valor, ref_uni),)
 
 
-# Un precio por unidad por debajo de esto no existe en un supermercado. No es un umbral de negocio: es el
-# suelo por debajo del cual el dato solo puede venir de una lectura equivocada.
+# Un precio por kilo o por litro por debajo de esto no existe en un supermercado. No es un umbral de
+# negocio: es el suelo por debajo del cual el dato solo puede venir de una lectura equivocada.
 SUELO_REFERENCIA_CENT = 10
 
+# **Y solo se aplica al peso y al volumen.** Medido el 9 de octubre de 2026: de las 287 filas por debajo
+# de 10 centimos en drogueria, higiene y bebe, la mayoria son bastoncillos, discos de algodon y toallitas
+# con la aritmetica **correcta** -- 300 bastoncillos por 1,09 EUR son 0,363 centimos cada uno. Por unidad
+# no hay suelo: una pieza suelta puede costar una fraccion de centimo. Y por metro tampoco, porque no hay
+# medida que lo sostenga, y donde no hay dato no se inventa un umbral.
+UNIDADES_CON_SUELO = ("kg", "l")
 
-def referencia_publicable(ref_cent) -> bool:
+
+def referencia_publicable(ref_cent, unidad: str | None = None) -> bool:
     """Si la referencia no se ha podido verificar, un valor imposible no se publica.
 
     Cuando `pipeline._referencia_que_cuadra` no confirma la lectura se queda la convencion de la cadena, y
@@ -246,7 +253,11 @@ def referencia_publicable(ref_cent) -> bool:
     **No se inventa: se deja vacio**, que es la cara que la aplicacion ya sabe tratar. Ver
     docs/BACKLOG.md, tarea 2.
     """
-    return ref_cent is not None and ref_cent >= SUELO_REFERENCIA_CENT
+    if ref_cent is None:
+        return False
+    if unidad not in UNIDADES_CON_SUELO:
+        return True
+    return ref_cent >= SUELO_REFERENCIA_CENT
 
 
 def nombre_limpio(nombre: str, marca: str | None = None) -> str:

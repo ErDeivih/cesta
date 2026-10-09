@@ -1,45 +1,47 @@
-"""El suelo del precio por unidad: un valor imposible no se publica.
+"""El suelo del precio por unidad depende de la unidad de referencia.
 
-El respaldo por cadena del precio de referencia acierta casi siempre, pero cuando la cadena no publica
-formato con el que comprobar deja pasar lecturas equivocadas. Medido: 1.524 filas (2,9 %) con precios
-por unidad de 2 a 19 centimos, en las cinco cadenas.
+Un suelo unico de 10 centimos habria borrado datos buenos: una caja de 300 bastoncillos por 1,09 EUR son
+0,363 centimos por pieza, y eso es correcto. Lo que no existe es un kilo de nada por dos centimos.
 
-Lo que se prueba aqui es la regla sola, sin motor: un valor imposible no se publica, uno plausible si,
-y **uno vacio sigue vacio** -- "no lo se" no se convierte en "no vale".
+Medido el 9 de octubre de 2026: de las 287 filas por debajo de 10 centimos en drogueria, higiene y bebe,
+la mayoria son bastoncillos, discos de algodon y toallitas con la aritmetica correcta.
 """
 from __future__ import annotations
 
 from core.normalize import SUELO_REFERENCIA_CENT, referencia_publicable
 
 
-def test_un_precio_imposible_no_se_publica():
-    # Los valores medidos en gold por debajo del suelo: 2, 3, 4 y 9 centimos por unidad.
+def test_por_kilo_o_litro_un_precio_imposible_no_se_publica():
+    # Los valores medidos en gold por debajo del suelo, con unidad de peso o volumen.
     for imposible in (2, 3, 4, 9):
-        assert not referencia_publicable(imposible), imposible
+        assert not referencia_publicable(imposible, "kg"), imposible
+        assert not referencia_publicable(imposible, "l"), imposible
 
 
-def test_un_precio_plausible_se_publica():
-    # Un brick de leche a 0,60 EUR/l, un kilo de patatas a 1,20, un kilo de azafran a 6.875.
+def test_por_kilo_o_litro_un_precio_plausible_se_publica():
     for plausible in (60, 120, 6_875):
-        assert referencia_publicable(plausible), plausible
+        assert referencia_publicable(plausible, "kg"), plausible
+        assert referencia_publicable(plausible, "l"), plausible
 
 
-def test_el_suelo_no_es_un_umbral_de_barato():
-    """19 centimos por unidad es posible -- un sobre, una bolsita, una pastilla -- y se publica.
+def test_por_unidad_no_hay_suelo_porque_la_pieza_puede_costar_menos_de_un_centimo():
+    """300 bastoncillos por 1,09 EUR: 0,363 centimos cada uno. Es un dato, no un error."""
+    assert referencia_publicable(0.363, "ud")
+    assert referencia_publicable(1, "ud")
+    assert referencia_publicable(19, "ud")
 
-    La medicion cortaba en 20 centimos porque era un umbral de *medida*; el suelo de correccion es 10 y
-    filtra lo imposible, no lo barato. La distincion importa: si el suelo subiera, empezaria a borrar
-    datos buenos.
-    """
-    assert referencia_publicable(19)
-    assert referencia_publicable(SUELO_REFERENCIA_CENT)
+
+def test_por_metro_ni_por_unidad_desconocida_tampoco_se_filtra():
+    """Donde no hay medida que lo sostenga, no se inventa un umbral."""
+    assert referencia_publicable(2, "m")
+    assert referencia_publicable(2, None)
 
 
 def test_lo_desconocido_sigue_desconocido():
-    """Sin dato no se inventa: vacio se queda vacio."""
-    assert not referencia_publicable(None)
+    assert not referencia_publicable(None, "kg")
+    assert not referencia_publicable(None, "ud")
 
 
 def test_el_suelo_esta_declarado_y_es_bajo():
-    """El suelo es bajo a proposito: no filtra barato, filtra imposible."""
+    """10 centimos por kilo o litro: filtra lo imposible, no lo barato."""
     assert SUELO_REFERENCIA_CENT == 10

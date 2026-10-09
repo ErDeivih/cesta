@@ -221,7 +221,7 @@ def a_silver(df: pl.DataFrame) -> pl.DataFrame:
         # **Y si no se ha podido verificar y el valor es imposible, no se publica.** El respaldo por
         # cadena acierta casi siempre, pero en los productos sin formato con el que comprobar deja
         # pasar lecturas equivocadas: 1.524 filas medidas con precios por unidad de 2 a 19 centimos.
-        elif not referencia_publicable(ref_cent):
+        elif not referencia_publicable(ref_cent, ref_uni):
             ref_cent, ref_uni = None, None
 
         # El formato dice el tamano de UNA unidad y el nombre dice cuantas van

@@ -77,9 +77,14 @@ def unidad_dominante(df: pl.DataFrame) -> pl.DataFrame:
     # de 2026: 857 filas por debajo de 10 centimos, el 79 % de drogueria, higiene y bebe, donde la
     # cadena publica por lavado, dosis o pastilla. Se escribe una vez en el pipeline y se comprueba
     # tambien donde se usa: un dato malo no debe pasar porque quien lo escribio no lo viera.
+    # **El suelo solo por kilo o por litro.** Por unidad no: 300 bastoncillos por 1,09 EUR son 0,363
+    # centimos cada uno y eso es correcto, no un error. Es la misma regla que `normalize.referencia_
+    # publicable`, escrita aqui como filtro porque este lado trabaja con columnas.
     base = df.filter(pl.col("precio_unidad_cent").is_not_null()
-                     & (pl.col("precio_unidad_cent") >= SUELO_REFERENCIA_CENT)
-                     & pl.col("unidad_canon").is_not_null())
+                     & (pl.col("precio_unidad_cent") > 0)
+                     & pl.col("unidad_canon").is_not_null()
+                     & ((~pl.col("unidad_canon").is_in(["kg", "l"]))
+                        | (pl.col("precio_unidad_cent") >= SUELO_REFERENCIA_CENT)))
     manda = (base.group_by(["grupo_id", "unidad_canon"])
                  .agg(pl.col("fuente").n_unique().alias("cadenas"),
                       pl.len().alias("n"))
