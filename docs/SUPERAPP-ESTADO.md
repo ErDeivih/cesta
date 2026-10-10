@@ -2276,3 +2276,60 @@ quedan** (dos menos que ayer).
 **Esperando**: **la decision sobre la linea de texto libre** -- la tabla exige destino, el puente
 quiere lineas escritas a mano; hoy se rechazan con honestidad y **esta dicho en pantalla**.
 **Y el estado vacio del diario**: no dice que se pueda llenar desde una compra.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche, tercera parte) -- el puente de la compra al diario
+
+### La cuarta mitad de cliente
+
+`POST/GET .../desde-la-compra` llevaba desde octubre **construido y sin una sola llamada** -- el
+hermano del puente del plan, con el mismo dise?o: *"la compra propone, la persona confirma"*, la
+idempotencia por `linea_id` como referencia, y **"no se inventan calorias: la entrada se anota sin
+ellas y el diario dice ?sin dato?, que es la verdad"**.
+
+Ahora tiene su puerta: **una tarjeta en el diario** -- *"De la compra al diario"* -- con **"Ver que se
+puede anotar"**, la previa (que se anotaria, con sus kcal; **y aparte lo que no trae nutricion, con su
+nombre**), la cobertura, el **selector de comida** -- los mismos huecos que la pantalla ya ense?a -- y
+**"Si, anotarlo"**. Al anotar se invalida `['diario']`, asi que el dia se actualiza solo.
+
+**Es la unica de las cuatro mitades que ademas rellena un hueco del producto**: hasta hoy el diario
+solo se podia llenar escribiendo, y su estado vacio -- *"sin dato ? de 0 de 0 entradas"* -- no decia
+que existiera otra via.
+
+### Verificado en el navegador, los dos caminos que se pueden
+
+    sin compra cerrada:  ?Esta lista todavia no tiene ninguna compra cerrada, asi que no hay nada que
+                          anotar.?                                   -> y NO hay boton de anotar
+    con la compra:       cerrar -> 200 {lineas: 5, sin_precio: 0, total_cent: 1023}
+                         PREVIA: ?Se anotarian 0 de 5:
+                                  5 no traen nutricion en el catalogo, asi que se anotarian como
+                                  ?sin dato?: Huevos, Leche entera, Leche entera, Leche entera,
+                                  Patatas.?                          -> y NO hay boton de anotar
+
+**Las dos veces que no hay nada que anotar, se dice y no se ofrece un boton que no puede hacer nada.**
+Y **las cinco lineas no traen nutricion en el catalogo**, asi que *"0 de 5"* es la verdad: **el puente
+no inventa calorias ni presenta una comida incompleta como completa.**
+
+### Y lo que NO se ha podido verificar, dicho
+
+**El camino que anota de verdad no se ha ejercitado**: hace falta una linea de compra cuyo producto
+**si** declare nutricion en el catalogo, y las cinco de esta lista no la declaran. **Es una condicion
+del escenario, no del codigo** -- el endpoint esta escrito y probado con dobles -- pero **queda
+pendiente**, y no se dice que este hecho.
+
+### Estado, en tres columnas
+
+**Verificado**: **42 commits**; **1.543 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio,
+`ruff` limpio; las cinco comprobaciones del encargo; el recorrido de las tres aplicaciones con datos;
+**`S10` entero**; y **el puente de la compra en sus dos caminos vacios**.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **las dos mitades de cliente que
+quedan** (tres menos que ayer).
+
+**Esperando**: **la decision sobre la linea de texto libre**; **el camino que anota de verdad** en el
+puente de la compra -- hace falta un producto con nutricion en el catalogo --; y **el boton de
+autorizar**, que es la tercera mitad.

@@ -8,7 +8,10 @@
  *  desconocido. Es la unica manera de que el subtotal signifique algo.
  */
 import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { anotarDeLaCompra, misListas, previaDeLaCompra } from '../api/cesta'
+import type { PreviaDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import type { NuevaEntrada } from '../api/diario'
@@ -31,6 +34,109 @@ function hoy(): string {
   const mes = String(ahora.getMonth() + 1).padStart(2, '0')
   const dia = String(ahora.getDate()).padStart(2, '0')
   return `${ahora.getFullYear()}-${mes}-${dia}`
+}
+
+/** **Lo que ya has comprado, al diario.** Hasta hoy el diario solo se podia llenar escribiendo a mano,
+ *  y la compra que ya esta hecha no decia nada.
+ *
+ *  **La compra propone y la persona confirma**: la previa ense?a que se anotaria, **y aparte lo que no
+ *  trae nutricion, con su nombre** -- *anotar las que se puede y callar las demas convertiria un dato
+ *  que falta en una comida que parece completa*. Y **la cobertura** dice cuantas de cuantas.
+ */
+function DeLaCompra({ fecha }: { fecha: string }) {
+  const cliente = useQueryClient()
+  const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
+  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  const [comida, setComida] = useState('comida')
+  const [previa, setPrevia] = useState<PreviaDeLaCompra | null>(null)
+  const [anotadas, setAnotadas] = useState<number | null>(null)
+
+  const ver = useMutation({
+    mutationFn: () => previaDeLaCompra(listaId as string),
+    onSuccess: (p) => { setPrevia(p); setAnotadas(null) },
+  })
+  const anotar = useMutation({
+    mutationFn: () => anotarDeLaCompra(listaId as string, fecha, comida),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: ['diario'] })
+      setAnotadas(previa?.anotarian.length ?? 0)
+      setPrevia(null)
+    },
+  })
+
+  if (listaId === null) return null
+  return (
+    <Tarjeta>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[16px] text-tinta-fuerte">De la compra al diario</span>
+        <Boton onClick={() => ver.mutate()} disabled={ver.isPending}>
+          Ver que se puede anotar
+        </Boton>
+      </div>
+
+      {anotadas !== null && (
+        <p className="mt-2 text-[15px] text-tinta-fuerte">
+          {anotadas === 1 ? 'Se ha anotado 1.' : `Se han anotado ${anotadas}.`}
+        </p>
+      )}
+
+      {previa && (
+        <div className="mt-2 flex flex-col gap-2">
+          {previa.compra_id === null ? (
+            <p className="text-[15px] text-secundaria">
+              Esta lista todavia no tiene ninguna compra cerrada, asi que no hay nada que anotar.
+            </p>
+          ) : (
+            <>
+              <p className="text-[15px] text-tinta-fuerte">
+                {previa.cobertura.total === 0
+                  ? 'No hay nada que anotar.'
+                  : `Se anotarian ${previa.anotarian.length} de ${previa.cobertura.total}:`}
+              </p>
+              <ul className="flex flex-col gap-1">
+                {previa.anotarian.map((x) => (
+                  <li key={x.linea_id} className="text-[15px] text-tinta-fuerte">
+                    {x.nombre}
+                    {x.kcal !== null && (
+                      <span className="text-[13px] text-secundaria tabular-nums"> {x.kcal} kcal</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {previa.sin_dato.length > 0 && (
+                <p className="text-[14px] text-secundaria">
+                  {previa.sin_dato.length === 1
+                    ? 'Uno no trae nutricion en el catalogo, asi que se anotaria como ?sin dato?: '
+                    : `${previa.sin_dato.length} no traen nutricion en el catalogo, asi que se anotarian como ?sin dato?: `}
+                  {previa.sin_dato.join(', ')}.
+                </p>
+              )}
+              {previa.anotarian.length > 0 && (
+                <>
+                  <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+                    Comida
+                    <select
+                      value={comida}
+                      onChange={(e) => setComida(e.target.value)}
+                      className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
+                    >
+                      {COMIDAS.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </label>
+                  <Boton onClick={() => anotar.mutate()} disabled={anotar.isPending}>
+                    Si, anotarlo
+                  </Boton>
+                </>
+              )}
+            </>
+          )}
+          {(ver.error || anotar.error) && (
+            <p className="text-[14px] text-error">{textoDeError(ver.error ?? anotar.error)}</p>
+          )}
+        </div>
+      )}
+    </Tarjeta>
+  )
 }
 
 function Alta({ fecha }: { fecha: string }) {
@@ -168,6 +274,8 @@ export function Diario() {
 
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el diario...</p>}
       {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
+
+      <DeLaCompra fecha={fecha} />
 
       {data && (
         <Tarjeta>

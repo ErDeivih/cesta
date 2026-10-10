@@ -185,6 +185,33 @@ export async function previaDelPlan(listaId: string, desde: string,
   return await pide<PreviaDelPlan>(`/listas/${listaId}/desde-el-plan`, { desde, hasta })
 }
 
+/** **La vista previa de consumir**: que lineas de la ultima compra se podrian anotar en el diario.
+ *
+ *  `anotarian` son las que tienen datos; **`sin_dato`** las que no, con su nombre -- *anotar las que
+ *  se puede y callar las demas convertiria un dato que falta en una comida que parece completa*.
+ *  Y `cobertura` dice cuantas traen dato de cuantas, que es lo que hace que esto no mienta.
+ */
+export interface PreviaDeLaCompra {
+  compra_id: string | null
+  anotarian: { linea_id: string; nombre: string; kcal: number | null
+               proteinas_g: number | null; grasas_g: number | null
+               hidratos_g: number | null; cantidad: number | null }[]
+  sin_dato: string[]
+  cobertura: { con_dato: number; total: number }
+}
+
+export async function previaDeLaCompra(listaId: string,
+                                       compraId?: string): Promise<PreviaDeLaCompra> {
+  return await pide<PreviaDeLaCompra>(`/listas/${listaId}/desde-la-compra`,
+                                      compraId ? { compra_id: compraId } : undefined)
+}
+
+export async function anotarDeLaCompra(listaId: string, fecha: string, comida: string,
+                                       lineas: string[] = []): Promise<unknown> {
+  return await escribe(`/listas/${listaId}/desde-la-compra`, 'POST',
+                       { fecha, comida, lineas })
+}
+
 export async function traerDelPlan(listaId: string, desde: string, hasta: string): Promise<unknown> {
   const q = `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`
   return await escribe(`/listas/${listaId}/desde-el-plan?${q}`, 'POST', {})
