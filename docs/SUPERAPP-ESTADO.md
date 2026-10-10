@@ -2391,3 +2391,68 @@ de nutricion de la ficha, los pasos de interfaz del diario, y **una mitad de cli
 la propuesta en una compra, que es lo que promete el docstring de `Peticion` y **nadie ha visto con los
 ojos**; **la decision sobre la linea de texto libre**; y **el camino que anota de verdad** en el puente
 de la compra.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche, quinta parte) -- el coste, medido con los ojos
+
+### La agrupacion, en vivo y con el catalogo real
+
+    A) UNA linea de tres  ->  total = 1255
+    B) TRES lineas de una  ->  total = 1255      (y dos lineas mas)
+    la diferencia: 0 centimos
+
+**El invariante del grupo, con productos y ofertas de verdad**: *las unidades se repartan como se
+repartan, el 3x2 se forma igual y el numero no cambia*. Es la comprobacion 4 del encargo, que se habia
+hecho con dobles a 200 centimos, y ahora esta hecha contra el catalogo.
+
+Y la oferta por cantidad tambien: **Carrefour 1190 frente a 1785 de tarifa** -- *1190 = 595 x 2* --,
+mientras DIA, que no tiene oferta, cobra 780 = 260 x 3.
+
+### La compra guardada, y la aritmetica que la explica
+
+    compra f3c439de: 3 lineas
+       Patatas  cant=1  importe=595  cadena=carrefour  grupo=6803
+       Patatas  cant=1  importe=260  cadena=dia        grupo=6803
+       Patatas  cant=1  importe=260  cadena=dia        grupo=6803
+
+    conocidos=3 desconocidos=0        suma = 1115        total = 1115     -> CUADRA
+
+**595 + 260 + 260 = 1115**, y **la comprobacion 1 del encargo queda satisfecha sobre una compra recien
+hecha**: las lineas con importe conocido suman exactamente el total.
+
+**Y el motor tiene razon donde yo sospeche un defecto**: una linea se compro en Carrefour a 595 y dos
+en DIA a 260, porque **un 3x2 necesita tres unidades en la MISMA cadena** y en Carrefour solo habia
+una. Cobrar la oferta ahi seria el error, no lo contrario.
+
+### Dos cosas aprendidas que no estaban escritas
+
+1. **La tienda elegida manda sobre la cadena autorizada.** Una linea con `cadena_elegida=carrefour` y
+   `autorizado_cadena=dia` se cobra **a precio de Carrefour**. Precedencia sensata, ahora medida.
+2. **`almacen` habla en identificadores y el API en sesiones.** `almacen.listas_de("usuario")` revienta
+   con `invalid input syntax for type uuid`; hay que pasar el id. No estaba escrito en ningun sitio.
+
+### Y dos retractaciones mias, dichas
+
+- **El 1115 no era una incoherencia**: era una resta que no habia hecho. ?Ni Carrefour ni DIA? era
+  falso: es **las dos**, y la suma cuadra al centimo.
+- **Mi sonda del grupo dio un falso verde**: `None == None` es `True`, y dijo ?el mismo numero por los
+  dos caminos? cuando los dos eran un error. **Es el mismo defecto que critique en
+  `prueba_transaccion.py` una hora antes.** Las sondas siguientes llevan `assert` sobre el numero de
+  lineas y sobre el total positivo, y **han evitado tres conclusiones falsas en tres rondas**.
+
+### Estado, en tres columnas
+
+**Verificado**: **44 commits**; **1.543 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio,
+`ruff` limpio; las cinco comprobaciones del encargo; el recorrido de las tres aplicaciones con datos;
+**las tres puertas del producto, las tres con un dedo**; y **el trabajo de coste medido con los ojos**:
+la agrupacion (1255 = 1255), la oferta (1190 = 595x2), la identidad por linea, la autorizacion, la
+precedencia de la tienda, y el importe por linea de la 013 sumando el total.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **una mitad de cliente**.
+
+**Esperando**: **la decision sobre la linea de texto libre**; y **el camino que anota de verdad** en el
+puente de la compra.
