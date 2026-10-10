@@ -593,6 +593,67 @@ def main() -> int:
         print("   FALLO: el intento ajeno ha cambiado lo que autorizo el dueno de la linea")
     else:
         print("   y lo de la primera cuenta sigue igual despues del intento ajeno")
+
+    # == la revocacion: el mismo boton, al reves ==========================================
+    # **Confirmar y revocar van por la misma puerta** (`autorizado: bool = Query(default=True)`),
+    # que es lo correcto: una sola ruta para decir si y no, con el estado en la base.
+    print("\n== y se puede revocar: la linea vuelve a pedir confirmacion")
+    # **Sobre una linea PROPIA, no sobre `mia`.** Dos guiones comparten esta base a proposito, y
+    # `prueba_copia` comprueba al final que la confirmacion de `mia` sobrevive al volcado y a la
+    # restauracion: revocarla aqui la dejaba vacia y la restauracion salia en rojo **por mi causa**.
+    # Un escenario no puede consumir lo que otra prueba verifica. Medido el 13 de octubre de 2026.
+    revocable = almacen.anade_linea(str(lista["id"]), str(yo["id"]), str(uuid.uuid4()),
+                                    "Leche semidesnatada", grupo_id=None, producto_id="dia:74398")
+    cliente.post(f"/api/listas/{lista['id']}/lineas/{revocable['id']}/autorizar",
+                 params={"producto": "dia:74398", "cadena": "dia"})
+    r = cliente.get(f"/api/listas/{lista['id']}")
+    cuerpo = r.json() if r.status_code == 200 else {}
+    antes = next((x for x in cuerpo.get("lineas", []) if str(x["id"]) == str(revocable["id"])), {})
+    print(f"   la segunda linea queda confirmada: {bool(antes.get('autorizado'))}")
+    if not antes.get("autorizado"):
+        fallos += 1
+        print("   FALLO: la segunda linea no se confirmo, asi que no hay nada que revocar")
+
+    r = cliente.post(f"/api/listas/{lista['id']}/lineas/{revocable['id']}/autorizar",
+                     params={"producto": "dia:74398", "cadena": "dia", "autorizado": "false"})
+    print(f"   {yo['usuario']} revoca su sustitucion -> {r.status_code}")
+    if r.status_code != 200:
+        fallos += 1
+        print("   FALLO: no se pudo revocar la sustitucion")
+    r = cliente.get(f"/api/listas/{lista['id']}")
+    cuerpo = r.json() if r.status_code == 200 else {}
+    revocada = next((x for x in cuerpo.get("lineas", []) if str(x["id"]) == str(revocable["id"])),
+                    None)
+    if revocada is None:
+        fallos += 1
+        print("   FALLO: la linea desaparece de la lista al revocar, en vez de pedir confirmacion")
+    elif revocada.get("autorizado"):
+        fallos += 1
+        print(f"   FALLO: sigue autorizada despues de revocar "
+              f"({revocada.get('autorizado_producto')})")
+    else:
+        print("   y al recargar vuelve a pedir confirmacion, como antes de confirmarla")
+
+    # == la alternativa: aparece cuando el motor la propone, y no cuando no la tiene ======
+    # **Con datos controlados**, para que no dependa del catalogo de esta manana: un producto que
+    # existe tiene que dar candidatos; uno que no existe, ninguno. Si el motor inventara una
+    # alternativa para algo que no conoce, la pantalla ofreceria un cambio que no puede honrar.
+    print("\n== la alternativa, con datos controlados")
+    from plataforma.api import cesta
+
+    pide = cesta.Peticion(None, "dia:74397", 1, "Leche entera")
+    hay = cesta._candidatos([pide], cesta._fecha_de_hoy())
+    alternativas = [k for k in hay if k[-1] == "alternativa"]
+    print(f"   con un producto que existe: {len(hay)} candidatos, {len(alternativas)} alternativas")
+    if not hay:
+        fallos += 1
+        print("   FALLO: un producto del catalogo no da ningun candidato")
+    inventada = cesta.Peticion(None, "dia:no-existe-12345", 1, "Inventado")
+    nada = cesta._candidatos([inventada], cesta._fecha_de_hoy())
+    print(f"   con un producto que no existe: {len(nada)} candidatos")
+    if nada:
+        fallos += 1
+        print("   FALLO: el motor propone algo para un producto que no existe en el catalogo")
     # == el coste: lo que la lista decia y lo que se guardo ==============================
     # **La invariante del dueno:** lo mostrado y lo cobrado tienen que coincidir. Se lee la estimacion y se
     # compara con el total que quedo guardado en la compra. Y se dice **si hubo oferta**, porque un empate de

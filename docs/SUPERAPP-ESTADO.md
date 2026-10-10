@@ -1992,3 +1992,60 @@ nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitades d
 
 **Esperando**: la comprobacion #4 (el 3x2 **con datos controlados**) y el escenario determinista de las
 cuatro superficies. **Las cinco mitades de cliente y los recorridos, cuando haya pantalla.**
+
+
+
+---
+
+## 13 de octubre de 2026 (manana) -- las cinco comprobaciones del encargo, cerradas
+
+### Lo que se pidio, y lo que hay
+
+| | comprobacion | evidencia de ejecucion |
+|---|---|---|
+| 1 | **la migracion 013** | 40 lineas, 0 con valor, **40 en NULL** (PostgreSQL) |
+| 2 | **datos desconocidos** | NULL en la base; el 0 probado en `_lo_que_se_paga` (con prueba cruzada en `test_habituales`); y la pantalla lo dice: *"N sin precio conocido, contadas aparte del total"* |
+| 3 | **la transaccion del cierre** | `prueba_transaccion.py`: fallo forzado a mitad -> **0 compras nuevas, 2 lineas en el carro, 0 archivadas** |
+| 4 | **el 3x2 con datos controlados** | `test_promos.py`: una linea de tres y dos de una y dos -> **200 y 200**; y el reparto conserva el total (67+133) |
+| 5 | **el escenario determinista** | `prueba_copia`: **TODO BIEN**, con la confirmacion (recarga + volcado + restauracion) y los dos casos nuevos dentro |
+
+**Y las cinco se han ejecutado, no leido.** La suite sigue **1.542 en verde y 0 saltos** sin motor, que es la
+propiedad que permite correrla en cualquier momento.
+
+### Lo que se anadio al escenario, y el caso que faltaba
+
+**La confirmacion ya estaba** (`prueba_e2e.py:559-595`), con la comprobacion que mas importa: *"se recarga la
+lista: lo confirmado tiene que volver con su producto y su cadena"*. **Faltaban dos casos**, y el encargo decia
+que el escenario estaba *"ya escrito"*: era verdad a medias, y se midio antes de decirlo.
+
+- **la revocacion** va por **la misma ruta** que la confirmacion -- `autorizado: bool = Query(default=True)` --,
+  que es la decision correcta: **una sola puerta para decir si y no**, con el estado en la base.
+- **la desaparicion de la alternativa**, con datos controlados: un producto que existe da candidatos, y uno que
+  no existe **no puede dar ninguno**. Si el motor inventara una alternativa para algo que no conoce, la pantalla
+  ofreceria un cambio que no puede honrar.
+
+### Y el hallazgo de metodo: en una prueba, el estado es parte del contrato
+
+La primera version de la revocacion **revocaba la misma linea que `prueba_copia` audita**, y la restauracion
+salio en rojo: *"la confirmacion restaurada -> '', se esperaba dia:74397|dia"*. **No era un defecto del
+producto: era mi cambio consumiendo lo que otra prueba verifica.** Los dos guiones **comparten la base
+desechable a proposito** -- es lo que permite que la restauracion compruebe datos reales -- y **un escenario no
+puede consumir el estado que otro necesita**. Ahora la revocacion va sobre **una segunda linea propia**.
+
+**Es el mismo aprendizaje que el falso verde, un escalon mas arriba.** En una prueba, tocar el estado sin mirar
+quien lo usa rompe a otro.
+
+### Estado, en tres columnas
+
+**Verificado**: **38 commits**; **1.542 pruebas Python, 0 saltos** y **6 del cliente**; **la migracion 013**;
+**la restauracion** (26.647 bytes, 9 lineas, 2 compras, `dia:74397|dia`); **la transaccion del cierre**; **el 3x2
+controlado**; **la confirmacion, la revocacion y la desaparicion de la alternativa**; y las **cinco copias de la
+regla del dueno**, ya diciendo lo mismo.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitades de cliente**.
+
+**Esperando -- y esto es lo que queda del encargo**: **las tres aplicaciones completas y usables por alguien no
+tecnico**. El trabajo de coste esta cerrado y probado; **el producto, no**. Falta la pantalla: **un recorrido de
+punta a punta por cada app**, con sus estados vacios, sus errores y su movil, medidos -- que es lo que
+`prueba_navegador.py` mide y lo que los recorridos de las tres apps tienen que recorrer.
