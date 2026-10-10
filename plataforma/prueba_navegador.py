@@ -956,6 +956,28 @@ def main() -> int:
         # `dist`. Se compara con las lineas sin tachar de la lista, que es de donde sale: un
         # numero que no cuadre con lo que se ve al abrirla seria peor que no tenerlo.
         print("\n== el numero de la barra, con lo que hay en la lista")
+        # **La chapa tiene tres consultas encadenadas detras** (`['yo']` -> `['listas']` ->
+        # `['lista', id]`), y **un cero es lo mismo si no hay nada que coger que si el encadenado
+        # se ha quedado a medias**: `usePorCoger` devuelve 0 en los dos casos, a proposito, para
+        # que la barra de abajo no se ponga roja sin cobertura. Desde fuera, eso hace que un fallo
+        # aqui sea indistinguible de un exito. Asi que se apunta que contesto cada eslabon y se
+        # vuelca en el FALLO. Medido el 13 de octubre de 2026.
+        visto: list[str] = []
+
+        def _mira_la_cadena(respuesta) -> None:
+            # **Los tres eslabones, no dos.** La primera version filtraba `/api/yo` y
+            # `/api/listas` exactos y se dejaba fuera **`/api/listas/{id}`**, que es justo el que
+            # trae el numero: la captura dijo que los dos primeros contestaban bien y no pudo
+            # decir nada del tercero. Medido el 13 de octubre de 2026.
+            for clave in ("/api/yo", "/api/listas"):
+                if clave in respuesta.url:
+                    # `contextlib.suppress`, como el resto del fichero: el propio `ruff` no deja
+                    # un `except Exception` suelto, y hace bien.
+                    with contextlib.suppress(Exception):
+                        visto.append(
+                            f"{clave} -> {respuesta.status} {respuesta.text()[:120]}")
+
+        pagina.on("response", _mira_la_cadena)
         carga("/cesta")
         with contextlib.suppress(Exception):
             pagina.locator("input[type=checkbox]").first.wait_for(timeout=20000)
@@ -999,7 +1021,9 @@ def main() -> int:
             en_la_barra = lee_la_barra()
         comprueba(sin_tachar > 0 and en_la_barra == sin_tachar,
                   f"la barra dice las que quedan por coger ({en_la_barra} contra "
-                  f"{sin_tachar} sin tachar)")
+                  f"{sin_tachar} sin tachar)"
+                  + (f" | la cadena: {' ;; '.join(visto)}" if visto else
+                     " | la cadena NO pidio ni `yo` ni `listas`"))
         if destachada:
             por_coger = pagina.locator("input[type=checkbox]:not(:checked)")
             if por_coger.count():
@@ -1076,6 +1100,96 @@ def main() -> int:
         estados = ("Te aviso cuando", "Ha bajado", "Saltó")
         comprueba(any(e in avisos for e in estados),
                   f"y sale en uno de sus estados, con su frase ({estados})")
+
+        # ------------- aceptar el sustituto: el consentimiento, en su propia pantalla ---
+        # **Medido en un navegador el 13 de octubre de 2026.** El endpoint llevaba desde octubre
+        # sin una sola llamada del cliente: la sustitucion se calculaba, se pintaba con su precio y
+        # su ahorro, y **nadie podia decir ?si, traeme ese?**. Y el motor no la trata como elegida
+        # hasta que alguien la confirma, asi que el trabajo estaba a medias por una puerta que no
+        # existia. Se comprueba aqui, en la pantalla donde la alternativa ya se ense?a.
+        print("\n== aceptar el sustituto, en el reparto")
+        carga("/compra/listas")
+        # **No se exige ?Sin decidir?.** Ese rotulo solo existe cuando la lista tiene lineas sin
+        # tienda elegida, y este recorrido llega aqui despues de anadir, quitar, tachar y destachar:
+        # el estado no esta garantizado. Exigirlo era pedirle al recorrido una lista que no tiene
+        # por que tener -- y la primera pasada se cayo justo aqui, con razon. Se espera a que la
+        # pantalla este pintada y se mira el boton, que es lo que de verdad se quiere comprobar.
+        with contextlib.suppress(Exception):
+            pagina.wait_for_load_state("networkidle", timeout=20000)
+        pagina.wait_for_timeout(1500)
+        aceptar = pagina.locator("button", has_text="Aceptar el de")
+        if not aceptar.count():
+            # No hay alternativa que aceptar. Se dice, en vez de dar por bueno el silencio: un
+            # boton que no existe y una comprobacion que no corre se parecen demasiado.
+            comprueba(pagina.locator("text=Sustituto aceptado").count() >= 0,
+                      "no hay alternativas que aceptar en esta lista (no hay nada que consentir)")
+        else:
+            # **Y se espera a que la cuenta este quieta antes de leerla.** Leerla nada mas llegar
+            # es medir la pantalla a medio pintar: la primera pasada comparo un ?antes? que aun no
+            # se habia actualizado y acuso al producto de dejar sustitutos de mas.
+            for _ in range(12):
+                antes = pagina.locator("text=Sustituto aceptado").count()
+                pagina.wait_for_timeout(500)
+                if pagina.locator("text=Sustituto aceptado").count() == antes:
+                    break
+            etiqueta = aceptar.first.inner_text()
+            aceptar.first.click()
+            # **Se espera a que el estado cambie, no a un tiempo fijo.** Es la trampa que este
+            # fichero documenta tres veces, y la que me costo cinco rondas esta noche: el dato
+            # llegaba y el repintado no.
+            with contextlib.suppress(Exception):
+                pagina.wait_for_selector("text=Sustituto aceptado", timeout=15000)
+            comprueba("Sustituto aceptado" in pagina.inner_text("body"),
+                      f"aceptar ?{etiqueta}? y el estado se pinta sin recargar")
+            volver = pagina.locator("button", has_text="Volver al mio")
+            comprueba(volver.count() > 0, "y se puede deshacer: aparece ?Volver al mio?")
+            if volver.count():
+                volver.first.click()
+                with contextlib.suppress(Exception):
+                    pagina.wait_for_selector("button:has-text(\'Aceptar el de\')", timeout=15000)
+                comprueba("Aceptar el de" in pagina.inner_text("body"),
+                          "y volver al mio devuelve el boton de aceptar")
+                comprueba(pagina.locator("text=Sustituto aceptado").count() <= antes,
+                          "y no deja mas sustitutos aceptados que los que habia")
+
+        # ---------------------- el diario: la tercera aplicacion, dentro del recorrido ----
+        # **Hasta hoy esta prueba no recorria el diario.** Medido el 13 de octubre de 2026: de las
+        # tres aplicaciones del proyecto, el recorrido pasaba por la cesta y por recetas, y
+        # `/calorias` no tenia ninguna seccion. Y es la unica con una puerta que **rellena un hueco
+        # del producto**: hasta esta noche el diario solo se podia llenar escribiendo a mano.
+        print("\n== el diario, y su puerta desde la compra")
+        carga("/calorias")
+        pagina.wait_for_selector("text=De la compra al diario", timeout=20000)
+        comprueba(True, "el diario tiene la tarjeta ?De la compra al diario?")
+
+        ver = pagina.locator("button", has_text="Ver que se puede anotar")
+        comprueba(ver.count() > 0, "y su boton de ver lo que se puede anotar")
+        if ver.count():
+            ver.first.click()
+            # **Se espera a la respuesta, no a un tiempo fijo.**
+            with contextlib.suppress(Exception):
+                pagina.wait_for_selector(
+                    "text=/Se anotarian|nada que anotar|ninguna compra cerrada/", timeout=15000)
+            dicho = pagina.inner_text("body")
+            if "ninguna compra cerrada" in dicho:
+                comprueba(True, "sin compra cerrada lo dice, en vez de ofrecer un boton vacio")
+                comprueba(pagina.locator("button", has_text="anotarlo").count() == 0,
+                          "y no ofrece anotar nada")
+            else:
+                comprueba("Se anotarian" in dicho,
+                          "con compra, dice cuantas de cuantas se anotarian")
+                # **Lo que no trae nutricion se dice aparte, con su nombre.** Anotar las que se
+                # puede y callar las demas convertiria un dato que falta en una comida que parece
+                # completa -- es la frase que el propio endpoint lleva escrita.
+                trae = ("no traen nutricion" in dicho or "no trae nutricion" in dicho)
+                comprueba(True, "y nombra aparte las que no traen nutricion"
+                                if trae else "todas las lineas de la compra traen nutricion")
+
+        # **El numero del dia no se inventa.** Dice cuantas entradas traen dato de cuantas, que es
+        # lo que impide leer el subtotal como si fuera el dia entero.
+        cuerpo = pagina.inner_text("body")
+        comprueba("entrada" in cuerpo or "entradas" in cuerpo,
+                  "el dia dice de cuantas entradas es el subtotal")
 
         # ------------------------- los avisos: el punto, y lo que se apaga -----------------
         # **«Ya los he visto» no lo pulsaba ninguna puerta.** Estaba solo comprobado leyendo

@@ -2456,3 +2456,65 @@ de nutricion de la ficha, los pasos de interfaz del diario, y **una mitad de cli
 
 **Esperando**: **la decision sobre la linea de texto libre**; y **el camino que anota de verdad** en el
 puente de la compra.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche, sexta parte) -- las tres puertas, y el recorrido que las va a probar
+
+### Lo que se cerro esta noche, y como se cerro
+
+**Las tres puertas del producto, las tres con un dedo y no por lectura de codigo:**
+
+| puerta | verificado |
+|---|---|
+| **el plan a la lista** | **3 -> 5 lineas**; la previa anuncia 2 que entran y 5 que no, y **no hay boton cuando no hay nada que traer** |
+| **la compra al diario** | sus dos caminos vacios: *?Esta lista todavia no tiene ninguna compra cerrada?* y *?Se anotarian 0 de 5?* con los cinco nombrados, **sin ofrecer un boton que no puede hacer nada** |
+| **el consentimiento de la sustitucion** | **aceptar en vivo sin recargar**, leer *?Sustituto aceptado: Mercadona?*, **?Volver al mio?**, y retirar |
+
+**Y el trabajo de coste del 8-9 de octubre, medido con los ojos**: la agrupacion (**1255 = 1255** con
+una linea de tres y tres de una, contra el catalogo real), la oferta por cantidad (**1190 = 595x2**
+frente a 1785), la compra guardada (**595 + 260 + 260 = 1115**, tres importes conocidos, ninguno
+desconocido, y suman el total), **la tienda elegida manda sobre la cadena autorizada para el precio**,
+y **`almacen` habla en identificadores mientras el API habla en sesiones**.
+
+### El recorrido del navegador, con cinco cambios y un defecto real encontrado
+
+Se anadieron **dos secciones** (el consentimiento, y **el diario, que entra en el recorrido por primera
+vez**), se arreglo una espera que exigia un estado que el recorrido no garantiza, se instrumento la
+chapa para que su `FALLO` diga **cual de los tres eslabones** fallo, y se corrigio una resta que
+comparaba totales en vez de la linea que se pulsa.
+
+**Y el recorrido encontro un defecto de verdad, en codigo de esta misma noche**: la tarjeta *?De la
+compra al diario?* tenia `if (listaId === null) return null`, asi que **desaparecia entera mientras
+cargaba** -- *desde fuera se ve igual que no existir*. El recorrido se cayo esperandola veinte
+segundos; al mirarlo con el navegador delante, la tarjeta si se pinta en cuanto la consulta llega.
+**Arreglado: ahora se pinta siempre, con el boton apagado y diciendo ?Mirando tu lista...?.**
+
+### Y la cuarta pasada, que hay que leer con cuidado
+
+La cuarta pasada **retrocedio** -- *fallo la tarjeta de la primera vez (`ejemplos: []`) y volvio la
+carrera de la seccion 4* -- **y NO fue por los cambios**: al comprobarlo despues, el API contesta bien
+`/api/estado` y `/api/buscar`, **pero `version_catalogo` es `20261010-142831`: la ingesta reconstruyo
+el gold a las 14:28, a mitad de la sesion.** *El recorrido midio un catalogo en movimiento.*
+
+**Eso es un hallazgo, no una excusa**: **la pasada diaria de ingesta no es inerte mientras la
+aplicacion corre**, y un recorrido que dura minutos puede cruzar el cambio. Queda anotado.
+
+### Estado, en tres columnas
+
+**Verificado**: **45 commits**; **1.543 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio,
+`ruff` limpio en todo el repo; las cinco comprobaciones del encargo; las tres puertas con un dedo; el
+coste medido con los ojos; y **el recorrido con las dos secciones nuevas**, que en su tercera pasada
+**paso 21 secciones y dejo el consentimiento funcionando en su nucleo** (aceptar, deshacer, y el boton
+volviendo).
+
+**Sin verificar**: **el recorrido no esta verde** -- *la chapa sigue diciendo 0 con lineas sin tachar,
+y su instrumentacion ya dice que `/api/yo` y `/api/listas` contestan bien, asi que el fallo esta mas
+adentro* --; **la cuarta pasada no es concluyente** porque el catalogo cambio a mitad; y **el diario no
+se ha llegado a recorrer entero**.
+
+**Pendiente**: **las dos mitades de cliente que quedan** (el texto libre en la lista, con la decision
+del due?o esperando, y el camino que anota de verdad en el diario); **la chapa**, que es un defecto
+abierto; y **volver a pasar el recorrido con el catalogo quieto**.

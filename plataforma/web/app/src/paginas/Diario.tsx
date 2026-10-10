@@ -64,15 +64,26 @@ function DeLaCompra({ fecha }: { fecha: string }) {
     },
   })
 
-  if (listaId === null) return null
+  // **No se esconde mientras carga.** Antes esto era `if (listaId === null) return null`, y la
+  // tarjeta desaparecia entera hasta que llegara `['listas']`: desde fuera se ve igual que no
+  // existir, y el recorrido del navegador se cayo esperandola veinte segundos. Medido el 13 de
+  // octubre de 2026: la tarjeta SI se pinta -- con su boton y sin un solo error -- en cuanto la
+  // consulta llega. Lo que no se puede hacer todavia se dice, como en el resto de la aplicacion.
+  const sinLista = listaId === null
   return (
     <Tarjeta>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[16px] text-tinta-fuerte">De la compra al diario</span>
-        <Boton onClick={() => ver.mutate()} disabled={ver.isPending}>
+        <Boton onClick={() => listaId && ver.mutate()} disabled={sinLista || ver.isPending}>
           Ver que se puede anotar
         </Boton>
       </div>
+
+      {sinLista && (
+        <p className="mt-2 text-[15px] text-secundaria">
+          {listas.isPending ? 'Mirando tu lista?' : 'Todavia no tienes ninguna lista.'}
+        </p>
+      )}
 
       {anotadas !== null && (
         <p className="mt-2 text-[15px] text-tinta-fuerte">
