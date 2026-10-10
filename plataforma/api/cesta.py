@@ -174,7 +174,13 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     por_llave: list = []
     for fila in filas:
         dueno_fila = fila[0] if fila[0] is not None else fila[1]
-        for pedida in [k[1] for k in claves if k[0] == dueno_fila]:
+        # **El emparejamiento, por las dos vias.** `k` es `(grupo, producto)`, y `dueno_fila` es de
+        # quien es la fila: el grupo, o el producto cuando no hay grupo. Comparando solo `k[0]`, una
+        # peticion de producto sin grupo (`k[0]` es `None`) no casaba nunca: la fila no entraba y
+        # `mejor` salia vacio. Es el caso del ESCANER. Medido el 13 de octubre de 2026.
+        for pedida in [k[1] for k in claves
+                       if k[0] == dueno_fila
+                       or (k[1] is not None and k[1] == dueno_fila)]:
             if pedida is not None and pedida not in {f[3] for f in filas}:
                 continue
             por_llave.append((*fila, pedida))
@@ -311,10 +317,10 @@ def _es_de_fiar(peticion: Peticion, candidata, mejor: dict) -> bool:
     Sin esto, la lista aplicaba descuentos a cantidades que esperaban autorizacion: un ahorro que nadie ha
     aceptado, enseñado como si lo estuviera.
     """
-    elegida = mejor.get(_llave_candidato(peticion.grupo_id, peticion.producto_id, candidata[1]))
+    elegida = mejor.get(_llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, candidata[1]))
     if elegida is not None and len(elegida) > 8 and elegida[8]:
         return True
-    guardada = mejor.get((*_llave_candidato(peticion.grupo_id, peticion.producto_id, candidata[1]),
+    guardada = mejor.get((*_llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, candidata[1]),
                           "alternativa"))
     if guardada is None:
         return False
@@ -756,7 +762,7 @@ def estimacion(lineas: list[dict]) -> dict:
         if linea.get("producto_movido"):
             candidatas.append(None)
             continue
-        esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+        esperada = _llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, None)[0]
         opciones = [(v[1], k[1], v[3]) for k, v in mejor.items()
                     if k[0] == esperada and k[-1] != "alternativa"]
         candidatas.append(min(opciones) if opciones else None)
@@ -775,8 +781,9 @@ def estimacion(lineas: list[dict]) -> dict:
         grupos.setdefault((candidata[1], _esperada_de(peticion)), []).append(indice)
     reparto: dict[int, int] = {}
     for indices in grupos.values():
-        if len(indices) < 2:
-            continue
+        # **Una linea sola con tres unidades ES un 3x2.** Antes se saltaban los grupos de una sola
+        # linea, con un comentario que decia *"entera si va sola, que es el mismo numero"*: era falso
+        # en cuanto la oferta depende de la cantidad. Medido el 13 de octubre de 2026.
         primera = candidatas[indices[0]]
         unidades = sum(peticiones[i].cantidad for i in indices)
         total_grupo = lee_promo(primera[2]).coste(unidades, primera[0])
@@ -852,7 +859,7 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
         if not linea.get("producto_movido"):
             # **Por la llave del motor**, no por el grupo: la llave lleva el producto concreto cuando la
             # linea lo pide, y comparar contra el grupo dejaba esas lineas guardandose **sin precio**.
-            esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+            esperada = _llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, None)[0]
             suyos = [(k[1], v[1]) for k, v in mejor.items()
                      if k[0] == esperada and k[-1] != "alternativa"]
             elegida = linea.get("cadena_elegida")
@@ -871,7 +878,7 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
         suyo = salida.get(str(linea.get("id"))) or {}
         if suyo.get("precio_cent") is None or not peticion.cantidad:
             continue
-        esperada = _llave_candidato(peticion.grupo_id, peticion.producto_id, None)[0]
+        esperada = _llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, None)[0]
         grupos.setdefault((esperada, suyo.get("cadena")), []).append(str(linea.get("id")))
     for indices in grupos.values():
         primera = salida[indices[0]]

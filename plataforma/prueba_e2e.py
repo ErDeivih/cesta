@@ -650,7 +650,7 @@ def main() -> int:
         carrito = [x for x in almacen.lineas_de(la_lista) if x.get("en_carrito")]
         antes = _cesta.estimacion(carrito)["total_cent"]
         partes = _cesta.coste_por_linea(carrito)
-        suma_partes = sum(int(v["coste_cent"] or 0) for v in partes.values())
+        suma_partes = sum(int(v.get("coste_cent") or 0) for v in partes.values())
         print(f"   estimacion del carrito: {antes} cent  |  suma de las partes: {suma_partes} cent")
         respuesta = cliente.post(f"/api/listas/{la_lista}/cerrar").json()
         print(f"   respuesta del cierre: {respuesta}")

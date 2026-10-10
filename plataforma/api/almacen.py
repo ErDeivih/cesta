@@ -1166,9 +1166,13 @@ def lineas_de_compra(compra_id: str) -> list[dict]:
     """
     with cursor() as cur:
         cur.execute("""
-            SELECT id, linea_id, grupo_id, producto_id, nombre, precio_cent, cadena, importe_cent
+            SELECT linea_id, grupo_id, producto_id, nombre, cantidad, precio_cent, cadena,
+                   importe_cent
               FROM compra_linea
              WHERE compra_id = %s
              ORDER BY nombre
         """, (compra_id,))
-        return [dict(f, id=str(f["id"])) for f in cur.fetchall()]
+        # **Las columnas que existen, todas.** Medido el 13 de octubre de 2026: pedia un `id` que la
+        # tabla no tiene --su clave es `(compra_id, linea_id)`-- y se dejaba `cantidad`, que hace falta
+        # para `precio x cantidad`. Nunca se habia ejecutado.
+        return [dict(f, id=str(f["linea_id"])) for f in cur.fetchall()]
