@@ -96,6 +96,7 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
   const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
   const [previa, setPrevia] = useState<PreviaDelPlan | null>(null)
   const [traido, setTraido] = useState(0)
+  const [fuera, setFuera] = useState<string[]>([])
 
   const ver = useMutation({
     mutationFn: () => previaDelPlan(listaId as string, desde, hasta),
@@ -107,6 +108,7 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
       cliente.invalidateQueries({ queryKey: ['listas'] })
       cliente.invalidateQueries({ queryKey: ['lista', listaId] })
       setTraido(previa?.total ?? 0)
+      setFuera(previa?.sin_catalogo ?? [])
       setPrevia(null)
     },
   })
@@ -121,9 +123,13 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
         </Boton>
       </div>
 
-      {traido > 0 && (
+      {(traido > 0 || fuera.length > 0) && (
         <p className="mt-2 text-[15px] text-tinta-fuerte">
           {traido === 1 ? 'Ha entrado 1 ingrediente.' : `Han entrado ${traido} ingredientes.`}
+          {fuera.length > 0 && (traido > 0 ? ' ' : '') +
+            (fuera.length === 1
+              ? 'Uno se ha quedado fuera: no esta en el catalogo.'
+              : `${fuera.length} se han quedado fuera: no estan en el catalogo.`)}
         </p>
       )}
 
@@ -160,15 +166,31 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
             </p>
           )}
 
+          {/* **Lo que no puede entrar, se dice.** Un ingrediente escrito a mano no esta enlazado con
+              el catalogo y no se puede anadir: antes se prometia y la accion reventaba. Medido el 13
+              de octubre de 2026. */}
+          {previa.sin_catalogo.length > 0 && (
+            <p className="text-[14px] text-secundaria">
+              {previa.sin_catalogo.length === 1
+                ? 'Uno no se puede anadir, porque no esta enlazado con el catalogo: '
+                : `${previa.sin_catalogo.length} no se pueden anadir, porque no estan enlazados con el catalogo: `}
+              {previa.sin_catalogo.join(', ')}.
+            </p>
+          )}
+
           {previa.total > 0 && (
             <Boton onClick={() => traer.mutate()} disabled={traer.isPending}>
               Si, traerlo a la lista
             </Boton>
           )}
-          {(ver.error || traer.error) && (
-            <p className="text-[14px] text-error">{textoDeError(ver.error ?? traer.error)}</p>
-          )}
         </div>
+      )}
+
+      {/* **El error, FUERA del bloque de la previa.** Estaba dentro, y al confirmar yo limpiaba la
+          previa: un fallo al traer se veia exactamente igual que no haber pulsado nada. Medido el 13
+          de octubre de 2026 -- un 500 invisible. */}
+      {(ver.error || traer.error) && (
+        <p className="mt-2 text-[14px] text-error">{textoDeError(ver.error ?? traer.error)}</p>
       )}
     </Tarjeta>
   )

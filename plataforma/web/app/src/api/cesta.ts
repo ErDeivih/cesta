@@ -171,6 +171,10 @@ export interface PreviaDelPlan {
   entrarian: { nombre: string; cantidad: number | null; unidad: string | null
                receta: string; version: number; fecha: string }[]
   ya_estaban: string[]
+  /** **Los que NO pueden entrar**, con su nombre: un ingrediente escrito a mano no esta enlazado con
+   *  el catalogo, y la tabla exige `linea_con_destino`. Antes se prometian igual y la accion
+   *  reventaba con un 500. Medido el 13 de octubre de 2026. */
+  sin_catalogo: string[]
   total: number
   desde: string
   hasta: string

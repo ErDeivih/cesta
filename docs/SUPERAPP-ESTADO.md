@@ -2212,3 +2212,67 @@ quedan** (una menos).
 quiere lineas de texto; **hoy se rechazan con honestidad**, que es lo conservador y lo reversible.
 **Y en mi tarjeta del plan**: que ensene **los que no pueden entrar** -- el API ya los manda -- y que
 **un fallo al traer se vea** fuera del bloque de la previa.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche, segunda parte) -- S10 cerrado, con un dedo
+
+### El recorrido entero, medido en el navegador
+
+    la lista antes:               3 lineas
+    PREVIA:  ?Entrarian 2 ingredientes:
+                Huevos 6 unidad ? de Tortilla enlazada
+                Patatas 700 g ? de Tortilla enlazada
+              5 no se pueden anadir, porque no estan enlazados con el catalogo:
+                Aceite de oliva, Cebolla, Huevos, Patatas, Sal.
+              Si, traerlo a la lista?
+    tras confirmar:               5 lineas -> ['Leche entera', 'Huevos', 'Patatas', ...]
+    PREVIA otra vez: ?No hay nada que traer: lo del plan ya esta en la lista.
+                      Ya estaban en la lista, y no se repiten: Huevos, Huevos, Patatas, Patatas.
+                      3 no se pueden anadir: Aceite de oliva, Cebolla, Sal.?
+                    **y NO hay boton de confirmar: nada que traer**
+
+**La idempotencia de `S10` no esta solo probada con `TestClient`: esta comprobada con la mano**, y
+**es imposible duplicar porque el boton no existe cuando no hay nada que traer**. La lista crecio
+exactamente en los dos ingredientes enlazados, y los escritos a mano se dicen en vez de prometerse.
+
+**Y un detalle fino que se ve en la previa**: ?Huevos? y ?Patatas? salen **en las dos listas** -- en
+`entrarian`, por la receta enlazada, y en `sin_catalogo`, por la escrita a mano -- y la lista los
+recibe **una vez**: el puente no duplica por nombre, y entra por la receta que si puede.
+
+### Y el puente hermano NO tiene el defecto
+
+Se miro por si el 500 de esta manana era un patron. **No lo es**: `POST .../desde-la-compra` **no
+escribe en la lista, escribe en el diario**, asi que no pasa por `linea_con_destino`. Y sus tres
+reglas estan escritas y son las correctas:
+
+  - *"la compra propone, la persona decide"*;
+  - *"la referencia es el identificador de la linea de compra, y por eso anotar dos veces no deja dos
+    entradas"*;
+  - *"**no se inventan calorias** (...) la entrada se anota sin ellas y **el diario dice ?sin dato?,
+    que es la verdad**"*.
+
+**Esa tercera es la que explica lo que se midio en el diario veinte rondas antes** -- ?energia: sin
+dato?, ?de 0 de 0 entradas? --: **no es un descuido del calculo, es una decision escrita en el
+endpoint.**
+
+**Y de ahi sale una funcionalidad mas, con su contrato ya leido**: **el puente de la compra al
+diario**, que es **la cuarta mitad de cliente que falta** y **la unica que ademas rellena un hueco**:
+hoy el diario solo se puede llenar escribiendo a mano.
+
+### Estado, en tres columnas
+
+**Verificado**: **41 commits**; **1.543 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio,
+`ruff` limpio; las cinco comprobaciones del encargo; el recorrido de las tres aplicaciones con datos;
+**y `S10` entero: previa veraz, accion sin 500, idempotencia con un dedo, y el "no se puede" dicho en
+pantalla**.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **las tres mitades de cliente que
+quedan** (dos menos que ayer).
+
+**Esperando**: **la decision sobre la linea de texto libre** -- la tabla exige destino, el puente
+quiere lineas escritas a mano; hoy se rechazan con honestidad y **esta dicho en pantalla**.
+**Y el estado vacio del diario**: no dice que se pueda llenar desde una compra.
