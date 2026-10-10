@@ -102,3 +102,27 @@ def test_sugiere_llevar_una_mas_solo_cuando_baja_el_precio_unitario():
     assert unidades_optimas(lee("2ª unidad -50%"), 2) == 2   # ya esta aprovechada
     assert unidades_optimas(lee("-30%"), 2) == 2          # no depende de cuantas
     assert unidades_optimas(lee("Novedad Alcampo"), 2) == 2
+
+# ------------------------------------------------------------------- el 3x2, con datos controlados ---
+#
+# **Los numeros son mios, no del catalogo.** El ensayo de punta a punta prueba el 3x2 con un producto
+# real (589 centimos, oferta 3x2), y por eso depende de que una cadena publique un 3x2 esa manana.
+# Esto no: es la cuenta, con numeros fijos. Es la diferencia entre probar el motor y probar el catalogo.
+#
+# Y son **las dos formas que pide el encargo**: una linea de tres, y dos lineas de una y dos, **las dos
+# persistiendo exactamente 200 centimos en total**. Medido el 13 de octubre de 2026.
+
+
+def test_el_3x2_con_datos_controlados_da_200_las_dos_formas():
+    """Una linea de tres, y dos lineas de una y dos: el mismo total."""
+    promo = lee("3x2")
+    assert promo.coste(3, 100) == 200, "una linea de tres"
+    assert promo.coste(1 + 2, 100) == 200, "dos lineas de una y dos"
+
+
+def test_el_reparto_conserva_el_total_al_centimo():
+    """Las partes de un grupo suman el total: 67 + 133 = 200."""
+    from plataforma.api.almacen import _lo_que_se_paga
+
+    partes = [_lo_que_se_paga(100, 67, 1), _lo_que_se_paga(100, 133, 2)]
+    assert sum(partes) == 200, partes
