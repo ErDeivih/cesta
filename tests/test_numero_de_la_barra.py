@@ -27,9 +27,16 @@ def test_la_barra_dice_cuantas_quedan_por_coger():
     """El numero en el icono de la cesta, y solo cuando hay algo que decir."""
     nav = NAV.read_text(encoding="utf-8")
     assert "usePorCoger" in nav, "la barra no pide las que quedan por coger"
-    assert "a === '/cesta' && porCoger > 0" in nav, (
-        "la chapa no esta en la cesta, o se pinta tambien con cero (un cero en la barra "
-        "es ruido)")
+    # **Sin congelar la ruta.** Antes esto buscaba la cadena literal `a === '/cesta' && porCoger > 0`,
+    # y cuando la ruta paso a ser `/compra/listas` la prueba **siguio en verde mientras la chapa ya no
+    # se pintaba**: comprobaba que el codigo decia lo que decia, no que la aplicacion hiciera lo que
+    # promete. Medido el 13 de octubre de 2026 -- treinta rondas despues, y lo encontro un navegador.
+    # Ahora se comprueba lo que **no depende de una ruta**: que la chapa vive en el enlace de la lista
+    # y que **con cero no se pinta**. El comportamiento lo mide `prueba_navegador`, que es donde se
+    # puede medir.
+    assert "porCoger > 0" in nav, (
+        "la chapa se pintaria tambien con cero, y un cero en la barra es ruido")
+    assert "/listas" in nav, "la chapa no esta en el enlace de la lista"
     assert "por coger" in nav, (
         "el numero tiene que ir tambien en palabras, para quien no ve el color")
 

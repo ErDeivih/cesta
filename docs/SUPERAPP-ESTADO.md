@@ -2134,3 +2134,81 @@ de nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitade
 **Esperando**: **el recorrido con datos de `/recetas` y `/calorias`** -- las dos aplicaciones del
 encargo que solo tienen medida su pantalla vacia --; **la decision sobre donde vive el numero de la
 chapa**; y **el arreglo de la comprobacion de 44 px**.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche) -- el puente de S10: estaba construido y muerto
+
+### Que se encontro, y como
+
+**`S10` pide puentes con vista previa e idempotencia**, y el API los tiene desde octubre:
+`GET/POST /api/listas/{id}/desde-el-plan` y `.../desde-la-compra`, con su contrato escrito -- *"cada
+ingrediente viene de la version que el plan guardo"*, *"los que ya estan se dicen aparte"*, *"un solo
+sitio para el calculo"*. **Y el cliente no llamaba a ninguno**: cero referencias. **El detalle de la
+receta no tiene boton de anadir a la cesta porque nadie construyo la puerta, no porque falte la
+funcion.**
+
+**Al construirla aparecio lo demas, y es peor que no tener puerta:**
+
+    POST .../desde-el-plan  ->  500 Internal Server Error
+    psycopg.errors.CheckViolation: ... violates check constraint "linea_con_destino"
+    DETAIL: Failing row contains (..., null, null, Huevos, 1, del plan: Tortilla...)
+                                      ^     ^
+                                  grupo_id  producto_id
+
+**La accion mandaba la linea con los dos destinos a `NULL`** -- y la tabla exige uno: es la misma
+restriccion que hace que `POST /listas/{id}/lineas` conteste 422. **Un ingrediente escrito a mano no
+tiene destino, y eso es el caso normal.** Y **la vista previa prometia los cuatro ingredientes** que
+no podian entrar: *"una previa que miente"*, que es justo lo que el propio modulo avisa tres lineas
+antes de reventar.
+
+### Lo que se arreglo
+
+1. **`_del_plan` arrastra el destino** (`producto_id`, `grupo_id`): antes lo tiraba, y sin el la previa
+   no puede saber que se puede anadir.
+2. **La previa dice la verdad**: `entrarian` solo lo que tiene destino, y **`sin_catalogo`** con los
+   nombres de los que no -- *lo que no se puede, se dice*.
+3. **La accion manda el destino de verdad** y **salta** los que no lo tienen, en vez de mandarlos a la
+   base para que revienten. Devuelve `sin_catalogo` tambien.
+4. **La mitad de interfaz que faltaba**: una tarjeta en el plan de la semana con **?Ver que entraria?**
+   -- la previa, con cantidad, unidad y de que receta viene, **y aparte lo que ya estaba** -- y
+   **?Si, traerlo a la lista?**: vista previa y consentimiento explicito, en ese orden.
+
+**Verificado con `TestClient` contra la base de verdad** (no con dobles): previa `total: 0`,
+`sin_catalogo: [los cuatro]`; **POST 201 sin 500**; la lista intacta; **y dos veces seguidas da lo
+mismo** -- la idempotencia de `S10`, comprobada por primera vez desde que se escribio.
+
+### Y la leccion que lo tapo treinta rondas
+
+**`tests/test_numero_de_la_barra.py` comprobaba una cadena dentro del codigo fuente**:
+
+    assert "a === '/cesta' && porCoger > 0" in nav
+
+**Esa condicion era la que estaba muerta** -- `/cesta` ya no existe -- y **la prueba estaba verde**:
+no comprobaba que la aplicacion hiciera lo que promete, **comprobaba que el codigo dijera lo que
+decia**. Es exactamente la frontera del encargo: *probado con evidencia, **no por lectura de codigo***.
+**Ahora comprueba lo que no depende de una ruta** -- que la chapa vive en el enlace de la lista y que
+**con cero no se pinta** -- y el comportamiento lo mide `prueba_navegador`, en un navegador.
+
+**Y las tres pruebas del puente fijaban el comportamiento roto**: su recetario de prueba creaba el
+ingrediente **sin destino**, asi que esperaban que entrara algo que la base rechaza. Se les ha dado
+destino, **y se ha anadido el caso que faltaba y que es el real**: *un ingrediente escrito a mano no
+entra y se dice*.
+
+### Estado, en tres columnas
+
+**Verificado**: **40 commits**; **1.543 pruebas Python en verde, 0 saltos** (una mas que antes: el caso
+del ingrediente a mano) y **6 del cliente**, `tsc` limpio, `ruff` limpio; las cinco comprobaciones del
+encargo; el recorrido de las tres aplicaciones con datos; **y el puente de `S10`: previa veraz, accion
+sin 500, idempotencia**.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **las cuatro mitades de cliente que
+quedan** (una menos).
+
+**Esperando**: **la decision sobre la linea de texto libre** -- la tabla exige destino y el puente
+quiere lineas de texto; **hoy se rechazan con honestidad**, que es lo conservador y lo reversible.
+**Y en mi tarjeta del plan**: que ensene **los que no pueden entrar** -- el API ya los manda -- y que
+**un fallo al traer se vea** fuera del bloque de la previa.

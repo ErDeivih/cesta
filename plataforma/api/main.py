@@ -1261,10 +1261,20 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     """
     _acceso(lista_id, usuario, hace_falta_escribir=False)
     planificadas, ya_en_la_lista = _del_plan(lista_id, usuario["id"], desde, hasta)
-    entrarian = [x for x in planificadas if x["nombre"].lower() not in ya_en_la_lista]
-    return {"entrarian": entrarian, "ya_estaban": sorted(
+    # **Solo lo que se puede anadir de verdad.** Un ingrediente sin producto y sin grupo no puede
+    # entrar: la tabla lo prohibe (`linea_con_destino`). Prometerlo era una previa que miente.
+    pueden = [x for x in planificadas
+              if x["nombre"].lower() not in ya_en_la_lista
+              and (x.get("producto_id") is not None or x.get("grupo_id") is not None)]
+    sin_destino = sorted(x["nombre"] for x in planificadas
+                         if x["nombre"].lower() not in ya_en_la_lista
+                         and x.get("producto_id") is None and x.get("grupo_id") is None)
+    return {"entrarian": pueden, "ya_estaban": sorted(
         x["nombre"] for x in planificadas if x["nombre"].lower() in ya_en_la_lista),
-        "total": len(entrarian), "desde": desde, "hasta": hasta}
+        # **Y lo que no se puede, se dice.** Es la regla de la casa: un cero callado no; una lista
+        # de lo que falta, si.
+        "sin_catalogo": sin_destino,
+        "total": len(pueden), "desde": desde, "hasta": hasta}
 
 
 def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[list[dict], set[str]]:
@@ -1291,6 +1301,13 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
                     "nombre": uno.get("texto") or "",
                     "cantidad": uno.get("cantidad"),
                     "unidad": uno.get("unidad"),
+                    # **El destino, que antes se tiraba.** Sin el, la previa no puede saber si un
+                    # ingrediente se puede anadir, y la tabla exige `linea_con_destino`: medido el
+                    # 13 de octubre de 2026, el puente mandaba `None, None` y la base lo rechazaba
+                    # con un 500. Un ingrediente escrito a mano **no tiene destino**, y eso hay que
+                    # poder decirlo en vez de prometerlo.
+                    "producto_id": uno.get("producto_id"),
+                    "grupo_id": uno.get("grupo_id"),
                     "receta": receta["nombre"],
                     "version": receta["version"],
                     "fecha": linea["fecha"],
@@ -1315,21 +1332,28 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
     planificadas, ya = _del_plan(lista_id, usuario["id"], desde, hasta)
     anadidos = 0
     ya_estaban: list[str] = []
+    sin_destino: list[str] = []
     for uno in planificadas:
         nombre = uno["nombre"]
         if nombre.lower() in ya:
             ya_estaban.append(nombre)
             continue
+        # **Lo que no tiene destino no se manda.** Antes se mandaba con `None, None` y la base lo
+        # rechazaba con un 500: el puente no metia nada y no lo decia.
+        if uno.get("producto_id") is None and uno.get("grupo_id") is None:
+            sin_destino.append(nombre)
+            continue
         detalle = f"del plan: {uno['receta']}"
         if uno.get("cantidad") is not None:
             detalle += f" ({uno['cantidad']} {uno.get('unidad') or ''})".rstrip()
         almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()), nombre,
-                            None, None, 1, detalle)
+                            uno.get("grupo_id"), uno.get("producto_id"), 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
         ya.add(nombre.lower())
         anadidos += 1
-    return {"anadidos": anadidos, "ya_estaban": ya_estaban}
+    return {"anadidos": anadidos, "ya_estaban": ya_estaban,
+            "sin_catalogo": sorted(sin_destino)}
 
 @app.get("/api/listas/{lista_id}/desde-la-compra")
 def previa_de_la_compra(lista_id: str, compra_id: str | None = None,

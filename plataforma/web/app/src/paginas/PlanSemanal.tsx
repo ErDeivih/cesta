@@ -8,8 +8,11 @@
  *  en un dia que ya paso es empezar por lo que no se puede decidir.
  */
 import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { textoDeError } from '../api/cliente'
+import { misListas, previaDelPlan, traerDelPlan } from '../api/cesta'
+import type { PreviaDelPlan } from '../api/cesta'
 import { usePlan, usePlanificar, useRecetas } from '../api/recetas'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
@@ -87,6 +90,90 @@ function PonerEnUnDia({ fecha, alPoner }: { fecha: string; alPoner: () => void }
   )
 }
 
+function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
+  const cliente = useQueryClient()
+  const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
+  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  const [previa, setPrevia] = useState<PreviaDelPlan | null>(null)
+  const [traido, setTraido] = useState(0)
+
+  const ver = useMutation({
+    mutationFn: () => previaDelPlan(listaId as string, desde, hasta),
+    onSuccess: (p) => { setPrevia(p); setTraido(0) },
+  })
+  const traer = useMutation({
+    mutationFn: () => traerDelPlan(listaId as string, desde, hasta),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+      setTraido(previa?.total ?? 0)
+      setPrevia(null)
+    },
+  })
+
+  if (listaId === null) return null
+  return (
+    <Tarjeta>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[16px] text-tinta-fuerte">Del plan a la lista</span>
+        <Boton onClick={() => ver.mutate()} disabled={ver.isPending}>
+          Ver que entraria
+        </Boton>
+      </div>
+
+      {traido > 0 && (
+        <p className="mt-2 text-[15px] text-tinta-fuerte">
+          {traido === 1 ? 'Ha entrado 1 ingrediente.' : `Han entrado ${traido} ingredientes.`}
+        </p>
+      )}
+
+      {previa && (
+        <div className="mt-2 flex flex-col gap-2">
+          {previa.total === 0 ? (
+            <p className="text-[15px] text-secundaria">
+              No hay nada que traer: lo del plan ya esta en la lista.
+            </p>
+          ) : (
+            <>
+              <p className="text-[15px] text-tinta-fuerte">
+                {previa.total === 1 ? 'Entraria 1 ingrediente:' : `Entrarian ${previa.total} ingredientes:`}
+              </p>
+              <ul className="flex flex-col gap-1">
+                {previa.entrarian.map((x) => (
+                  <li key={`${x.receta}-${x.nombre}-${x.fecha}`} className="text-[15px] text-tinta-fuerte">
+                    {x.nombre}
+                    {x.cantidad !== null && (
+                      <span className="text-[13px] text-secundaria tabular-nums">
+                        {' '}{x.cantidad} {x.unidad ?? ''}
+                      </span>
+                    )}
+                    <span className="text-[13px] text-secundaria"> ? de {x.receta}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {previa.ya_estaban.length > 0 && (
+            <p className="text-[14px] text-secundaria">
+              Ya estaban en la lista, y no se repiten: {previa.ya_estaban.join(', ')}.
+            </p>
+          )}
+
+          {previa.total > 0 && (
+            <Boton onClick={() => traer.mutate()} disabled={traer.isPending}>
+              Si, traerlo a la lista
+            </Boton>
+          )}
+          {(ver.error || traer.error) && (
+            <p className="text-[14px] text-error">{textoDeError(ver.error ?? traer.error)}</p>
+          )}
+        </div>
+      )}
+    </Tarjeta>
+  )
+}
+
 export function PlanSemanal() {
   const dias = laSemana()
   const [abierto, setAbierto] = useState<string | null>(null)
@@ -104,6 +191,8 @@ export function PlanSemanal() {
         Cada receta se guarda con la version que tenia el dia que se puso. Por eso este plan se puede
         releer tal cual dentro de un mes, aunque las recetas hayan cambiado.
       </p>
+
+      <TraerALaLista desde={dias[0]} hasta={dias[dias.length - 1]} />
 
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el plan...</p>}
       {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}

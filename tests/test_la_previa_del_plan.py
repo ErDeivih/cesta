@@ -16,7 +16,12 @@ def _recetario_con_plan(tmp_path, monkeypatch):
     api_recetas.ruta_base(tmp_path / "recetas.sqlite")
     con = nucleo.conecta(tmp_path / "recetas.sqlite")
     rid = nucleo.crear(con, "ana", "Lentejas", raciones=4,
-                       ingredientes=[{"texto": "lentejas", "cantidad": 400, "unidad": "g"}])
+                       # **Con destino**: un ingrediente enlazado con el catalogo si se puede
+                       # anadir a la lista. La tabla exige `linea_con_destino`. Medido el 13 de
+                       # octubre de 2026: sin esto, el puente no metia nada -- correctamente -- y
+                       # esta prueba lo daba por malo.
+                       ingredientes=[{"texto": "lentejas", "cantidad": 400, "unidad": "g",
+                                      "producto_id": "dia:1000"}])
     nucleo.planificar(con, "ana", "2026-10-05", rid, comensales=4)
     # **Y se cambia la receta despues**: el plan tiene que seguir mandando la version 1.
     nucleo.actualizar(con, "ana", rid, ingredientes=[{"texto": "lentejas", "cantidad": 999, "unidad": "g"}])
@@ -108,3 +113,37 @@ def test_pulsar_dos_veces_no_duplica(tmp_path, monkeypatch):
     assert len(en_la_lista) == 1, f"ha dejado {len(en_la_lista)} lineas donde cabe una"
     assert primera["anadidos"] == 1 and segunda["anadidos"] == 0, (primera, segunda)
     assert segunda["ya_estaban"] == ["lentejas"], segunda
+
+
+def test_un_ingrediente_escrito_a_mano_no_entra_y_se_dice(tmp_path, monkeypatch):
+    """**El caso que rompia el puente.** Una receta escrita a mano tiene ingredientes que no estan
+    enlazados con el catalogo, y la tabla exige `linea_con_destino`: no se pueden anadir. Antes se
+    mandaban igual y la base los rechazaba con un **500** -- y la vista previa prometia cuatro
+    ingredientes que no podian entrar. Medido el 13 de octubre de 2026.
+
+    Ahora no entra, **no se manda a la base**, y **se dice**: la regla de la casa.
+    """
+    api_recetas.ruta_base(tmp_path / "recetas.sqlite")
+    con = nucleo.conecta(tmp_path / "recetas.sqlite")
+    rid = nucleo.crear(con, "ana", "A mano", raciones=2,
+                       ingredientes=[{"texto": "sal", "cantidad": 1, "unidad": "pizca"}])
+    nucleo.planificar(con, "ana", "2026-10-05", rid, comensales=2)
+    con.close()
+
+    anadidas = []
+    monkeypatch.setattr(main.almacen, "anade_linea",
+                        lambda *a, **k: anadidas.append(a) or {"id": "x"})
+    monkeypatch.setattr(main, "_acceso", lambda *a, **k: "dueno")
+    main.app.dependency_overrides[main.usuario_actual] = lambda: {
+        "id": "ana", "usuario": "ana", "nombre": "Ana"}
+    cliente = _cliente(monkeypatch, [])
+    previa = cliente.get(
+        "/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07").json()
+    r = cliente.post("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07")
+    main.app.dependency_overrides.clear()
+
+    assert previa["total"] == 0, previa
+    assert previa["sin_catalogo"] == ["sal"], previa
+    assert r.status_code == 201, r.text
+    assert r.json()["anadidos"] == 0 and r.json()["sin_catalogo"] == ["sal"], r.json()
+    assert anadidas == [], "no se puede mandar a la base una linea sin destino"

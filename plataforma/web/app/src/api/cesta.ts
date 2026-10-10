@@ -161,6 +161,31 @@ export interface DetalleLista {
   novedades?: Novedad[]
 }
 
+/** **Lo que el plan meteria en la lista, sin tocar la lista.**
+ *
+ *  Contesta las dos preguntas que hacen falta para no duplicar: **que entraria** y **que ya esta**.
+ *  El calculo es el mismo que el de la accion -- `_del_plan`, en el API -- porque una previa que
+ *  miente es peor que no tener previa.
+ */
+export interface PreviaDelPlan {
+  entrarian: { nombre: string; cantidad: number | null; unidad: string | null
+               receta: string; version: number; fecha: string }[]
+  ya_estaban: string[]
+  total: number
+  desde: string
+  hasta: string
+}
+
+export async function previaDelPlan(listaId: string, desde: string,
+                                    hasta: string): Promise<PreviaDelPlan> {
+  return await pide<PreviaDelPlan>(`/listas/${listaId}/desde-el-plan`, { desde, hasta })
+}
+
+export async function traerDelPlan(listaId: string, desde: string, hasta: string): Promise<unknown> {
+  const q = `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`
+  return await escribe(`/listas/${listaId}/desde-el-plan?${q}`, 'POST', {})
+}
+
 export async function verLista(id: string): Promise<DetalleLista> {
   return await pide<DetalleLista>(`/listas/${encodeURIComponent(id)}`)
 }
