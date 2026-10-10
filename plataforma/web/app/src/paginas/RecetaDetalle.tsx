@@ -50,7 +50,7 @@ export function RecetaDetalle() {
         <h2 className="font-serif text-[24px] leading-8 font-semibold text-tinta-fuerte">
           {data.nombre}
         </h2>
-        <Link to="/recetas/plan" className="min-h-[44px] text-[14px] text-secundaria underline">
+        <Link to="/recetas/plan" className="min-h-[44px] min-w-[44px] text-[14px] text-secundaria underline">
           Planificar
         </Link>
       </div>

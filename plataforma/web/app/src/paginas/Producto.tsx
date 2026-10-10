@@ -504,7 +504,7 @@ export function Producto() {
                               paquete en la mano, y de pie no se acierta. La marca va dentro
                               del mismo enlace para que el objetivo sea el nombre entero. */}
                           <Link to={`/producto/${p.fuente}/${p.id_fuente}`}
-                                className="inline-flex min-h-[44px] items-center underline">
+                                className="inline-flex min-h-[44px] min-w-[44px] items-center underline">
                             {p.nombre}
                           </Link>
                           {p.marca && (

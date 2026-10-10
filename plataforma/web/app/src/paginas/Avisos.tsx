@@ -67,7 +67,7 @@ function Nombre({ a, deEntonces = false }: { a: Alerta; deEntonces?: boolean }) 
   if (!mostrado) {
     return (
       <Link to={`/grupo/${a.grupo_id}`}
-            className="inline-flex min-h-[44px] flex-1 items-center text-tinta-suave underline">
+            className="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center text-tinta-suave underline">
         Un producto que sigues
       </Link>
     )
@@ -75,7 +75,7 @@ function Nombre({ a, deEntonces = false }: { a: Alerta; deEntonces?: boolean }) 
   return (
     <span className="min-w-0 flex-1">
       <Link to={`/grupo/${a.grupo_id}`}
-            className="inline-flex min-h-[44px] items-center font-medium underline">
+            className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium underline">
         {mostrado}
       </Link>
       {cambiado && (
@@ -148,7 +148,7 @@ export function Avisos() {
             {saltan.map((s) => (
               <li key={s.alerta_id} className="rounded-lg border border-borde p-3">
                 <Link to={`/grupo/${s.grupo_id}`}
-                      className="inline-flex min-h-[44px] items-center font-medium underline">
+                      className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium underline">
                   {s.nombre}
                 </Link>
                 <p className="mt-1 text-sm">{s.por_que}</p>

@@ -556,7 +556,7 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline"
       >
         + Lista nueva
       </button>
@@ -571,7 +571,7 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
         onChange={(e) => setNombre(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') crear.mutate() }}
         placeholder="La del sábado"
-        className="min-h-[44px]"
+        className="min-h-[44px] min-w-[44px]"
       />
       <Boton variante="principal" disabled={crear.isPending} onClick={() => crear.mutate()}>
         Crear
@@ -618,7 +618,7 @@ function NombreDeLaLista({ lista, alHecho }: {
             autoFocus
             onChange={(e) => setNombre(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') renombrar.mutate() }}
-            className="min-h-[44px]"
+            className="min-h-[44px] min-w-[44px]"
           />
           <Boton variante="principal" disabled={renombrar.isPending}
                  onClick={() => renombrar.mutate()}>Guardar</Boton>
@@ -631,22 +631,22 @@ function NombreDeLaLista({ lista, alHecho }: {
           {lista.es_de_casa && <Etiqueta tono="dato">de casa</Etiqueta>}
           {puede && (
             <span className="flex flex-wrap gap-2 text-xs">
-              <button type="button" className="min-h-[44px] underline"
+              <button type="button" className="min-h-[44px] min-w-[44px] underline"
                       onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}>
                 Cambiar el nombre
               </button>
               {confirmando ? (
                 <>
-                  <button type="button" className="min-h-[44px] underline"
+                  <button type="button" className="min-h-[44px] min-w-[44px] underline"
                           disabled={borrar.isPending}
                           onClick={() => borrar.mutate()}>
                     Sí, quitar esta lista
                   </button>
-                  <button type="button" className="min-h-[44px] underline"
+                  <button type="button" className="min-h-[44px] min-w-[44px] underline"
                           onClick={() => setConfirmando(false)}>No</button>
                 </>
               ) : (
-                <button type="button" className="min-h-[44px] underline"
+                <button type="button" className="min-h-[44px] min-w-[44px] underline"
                         onClick={() => setConfirmando(true)}>
                   Quitar la lista
                 </button>
@@ -1382,10 +1382,10 @@ export function Cesta() {
             Van como enlaces y no como botones porque no hacen nada: llevan a otra
             pantalla, y en el navegador eso se abre en una pestana nueva si se
             quiere. */}
-        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline">
+        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline">
           Favoritos
         </Link>
-        <Link to="/ajustes" className="inline-flex min-h-[44px] items-center text-sm text-tinta-suave underline">
+        <Link to="/ajustes" className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline">
           Ajustes
         </Link>
         <button

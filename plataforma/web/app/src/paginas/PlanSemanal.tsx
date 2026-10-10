@@ -121,7 +121,7 @@ export function PlanSemanal() {
                   <button
                     type="button"
                     onClick={() => setAbierto(abierto === fecha ? null : fecha)}
-                    className="min-h-[44px] text-[14px] text-secundaria underline"
+                    className="min-h-[44px] min-w-[44px] text-[14px] text-secundaria underline"
                   >
                     {abierto === fecha ? 'Cerrar' : 'Poner algo'}
                   </button>

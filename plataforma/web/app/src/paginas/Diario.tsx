@@ -106,7 +106,7 @@ function Alta({ fecha }: { fecha: string }) {
           </label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] items-center gap-2 text-[14px] text-tinta-fuerte">
+          <label className="flex min-h-[44px] min-w-[44px] items-center gap-2 text-[14px] text-tinta-fuerte">
             <input type="checkbox" checked={esReceta} onChange={(e) => setEsReceta(e.target.checked)} />
             Es una receta
           </label>
@@ -160,7 +160,7 @@ export function Diario() {
         <button
           type="button"
           onClick={() => setFecha(hoy())}
-          className="min-h-[44px] text-[14px] text-secundaria underline"
+          className="min-h-[44px] min-w-[44px] text-[14px] text-secundaria underline"
         >
           Hoy
         </button>
@@ -243,7 +243,7 @@ export function Diario() {
                     <button
                       type="button"
                       onClick={() => borrar.mutate(e.id)}
-                      className="mt-1 min-h-[44px] text-[13px] text-secundaria underline"
+                      className="mt-1 min-h-[44px] min-w-[44px] text-[13px] text-secundaria underline"
                     >
                       Quitar
                     </button>

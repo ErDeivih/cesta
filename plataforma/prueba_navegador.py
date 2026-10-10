@@ -522,10 +522,23 @@ def main() -> int:
         def carga(ruta: str = "/") -> None:
             _carga(pagina, ruta)
 
-        # ---------------------------------------------- abrir: la fecha y el buscador ---
+        # ---------------------------------------------- abrir: la portada y el buscador ---
+        # **La raiz es la portada de las tres aplicaciones, no la compra.** Medido en un navegador
+        # el 13 de octubre de 2026: la portada enlaza `/compra`, `/recetas`, `/calorias` y
+        # `/ajustes`, y **no tiene ningun campo de texto**; el buscador con su marcador vive en
+        # `/compra` (y en `/buscar`). El recorrido entra **como entra una persona**: mira la
+        # portada y pulsa ?Compra?. Es un toque mas, y el reloj lo cuenta.
         print("\n== abrir la aplicacion")
         t0 = time.monotonic()
         carga("/")
+        portada = pagina.inner_text("body")
+        comprueba("Tres aplicaciones" in portada, "la portada dice que hay tres aplicaciones")
+        for nombre, destino in (("Compra", "/compra"), ("Recet", "/recetas"), ("Calor", "/calorias")):
+            enlace = pagina.locator(f"a[href='{destino}']")
+            comprueba(enlace.count() >= 1, f"la portada ofrece {nombre} y lleva a {destino}")
+        with contextlib.suppress(Exception):
+            pagina.locator("a[href='/compra']").first.click()
+            pagina.wait_for_url("**/compra", timeout=15000)
         tiempos.append(("abrir la aplicacion", time.monotonic() - t0))
         # **Se espera a que la cabecera conteste, no a un tiempo fijo.** La fecha viene de
         # `/api/estado`, y la primera peticion despues de reconstruir el contenedor es lenta
@@ -533,13 +546,19 @@ def main() -> int:
         # comprobacion se puso roja con la aplicacion bien porque leyo «Mirando de qué día son
         # los precios…». Es la misma trampa que este fichero documenta tres veces: leer antes
         # del estado final.
-        with contextlib.suppress(Exception):
-            pagina.wait_for_function(
-                "() => document.body.innerText.includes('Datos del')"
-                " || document.body.innerText.includes('no contesta')", timeout=20000)
+        # **La fecha se comprueba DONDE ESTAN LOS PRECIOS, no al abrir.** Medido en el navegador el
+        # 13 de octubre de 2026: `/compra` recien abierta **no tiene ningun precio a la vista** (el
+        # buscador esta vacio y solo hay ejemplos), asi que no hay fecha que dar -- y cuando la hay,
+        # la pantalla dice *"40 resultados ? datos del 9 oct 2026"*, **en minuscula**, mientras esta
+        # comprobacion buscaba `"Datos del"` con mayuscula. Se puso roja con la aplicacion bien: es la
+        # misma trampa que este fichero ya documenta con *"Mirando de que dia son los precios"*.
         cuerpo = pagina.inner_text("body")
-        comprueba("Datos del" in cuerpo, "la cabecera dice de que dia son los precios")
-        comprueba(pagina.get_by_placeholder("leche entera, atún, papel de cocina…").count() == 1,
+        with contextlib.suppress(Exception):
+            # Se espera a que el campo exista: mirarlo en el instante es lo que hacia que
+            # esta comprobacion alternara entre pasadas. Y **por posicion, no por marcador**,
+            # que es lo que ha envejecido a esta prueba cinco veces.
+            pagina.locator("input").first.wait_for(timeout=20000)
+        comprueba(pagina.locator("input").count() >= 1,
                   "el buscador se ve en la primera pantalla, sin buscar el boton")
         # **Buscar es escribir, no mandar.** Medido en un navegador el 27 de septiembre de 2026:
         # la primera pantalla nueva solo buscaba al mandar el formulario, y el buscador de
@@ -553,8 +572,15 @@ def main() -> int:
             pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=15000)
             aparece = True
         comprueba(aparece, "escribir busca: los resultados salen debajo, sin pulsar nada")
+        con_precios = pagina.inner_text("body")
+        comprueba("datos del" in con_precios.lower(),
+                  "y la fecha de los precios va CON ellos, que es donde hace falta")
+        # **Anclado en lo que hay hoy, no en la redaccion de ayer.** Medido el 13 de octubre de 2026:
+        # esas dos frases ya no existen en la pantalla; lo que hay son **40 filas de producto
+        # enlazadas** (`a[href^='/grupo/']`), que es por donde se abre un producto entero.
         comprueba(pagina.get_by_text("Abrir en el buscador").count() >= 1
-                  or pagina.get_by_text("Ver todos los resultados").count() >= 1,
+                  or pagina.get_by_text("Ver todos los resultados").count() >= 1
+                  or len(pagina.query_selector_all("a[href^='/grupo/']")) >= 1,
                   "y hay por donde abrirlo entero")
         campo.fill("")
         pagina.wait_for_timeout(600)
@@ -632,7 +658,9 @@ def main() -> int:
 
         # -------------------------------------------------- pregunta 2: ¿esto esta caro? --
         print("\n== 'esto que tengo en la mano, esta caro?'")
-        carga("/")
+        # **Por `/compra`, no por `/`.** Medido en el navegador el 13 de octubre de 2026: la raiz es
+        # el lanzador de las tres aplicaciones y **no tiene buscador**; el campo esta en `/compra`.
+        carga("/compra")
         t0 = time.monotonic()
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
         # Se espera a que el resultado exista de verdad: esperar un numero fijo de
@@ -706,9 +734,19 @@ def main() -> int:
         # una prueba -- y es exactamente lo que este proyecto llama "una respuesta que no se
         # ve". Ahora, por debajo de 640 px, son filas de dos lineas.
         print("\n== los resultados, sin deslizar nada en horizontal (27 sep 2026)")
-        carga("/buscar?q=leche+entera")
+        # **Tecleando, como una persona.** Antes se entraba por `/buscar?q=leche+entera`, y medido en
+        # el navegador el 13 de octubre de 2026 eso **ya no busca nada**: `/buscar` es hoy una
+        # redireccion a `/compra` (App.tsx:212) y el parametro `q` no llega a producir resultados --
+        # la seccion media una pagina sin resultados, y por eso daba 0 cifras y 0 cadenas.
+        # Y el campo se coge **por posicion, no por su marcador**: el marcador lleva caracteres que mi
+        # propia salida deforma, y anclarse a el es lo que ha envejecido a esta prueba cinco veces.
+        carga("/compra")
+        campo_buscar = pagina.locator("input").first
         with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
+            campo_buscar.wait_for(timeout=30000)
+            campo_buscar.fill("leche entera")
+        with contextlib.suppress(Exception):
+            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=25000)
         desliza = pagina.evaluate("""() => {
           const caja = document.querySelector('.tabla-scroll');
           if (caja) return {ancho: caja.scrollWidth, cabe: caja.clientWidth, quien: 'la tabla'};
@@ -725,7 +763,7 @@ def main() -> int:
         comprueba(bool(cajas) and not fuera,
                   f"y el precio, que es la respuesta, dentro de la pantalla "
                   f"({len(fuera)} de {len(cajas)} se salian de {ancho} px)")
-        comprueba(pagina.get_by_text("Por unidad").count() >= 1,
+        comprueba(pagina.get_by_text(re.compile("por unidad", re.I)).count() >= 1,
                   "con las dos columnas de precio dichas por su nombre")
         chips = pagina.locator("[aria-label='Cadena de los resultados'] button")
         comprueba(chips.count() >= 5,
@@ -938,15 +976,27 @@ def main() -> int:
         # comprobacion leyo 22 y dio el numero por malo. La chapa es un `span` con
         # `aria-hidden` y solo digitos; el texto de verdad, para quien no ve el color, va en
         # el `sr-only` que hay al lado.
-        en_la_barra = pagina.evaluate("""() => {
+        # **Se espera al numero.** Medido el 13 de octubre de 2026: la prueba destacha y lee
+        # la chapa inmediatamente, y la invalidacion de la consulta dispara un refetch que aun
+        # no ha llegado -- la chapa ensena el valor anterior. Es la trampa que este fichero
+        # documenta tres veces: leer antes del estado final.
+        def lee_la_barra() -> int:
+            return pagina.evaluate("""() => {
           const a = [...document.querySelectorAll('nav a')]
-            .find(x => x.getAttribute('href') === '/cesta');
+            .find(x => (x.getAttribute('href') || '').includes('listas'));
           if (!a) return -1;
           const chapa = [...a.querySelectorAll('span[aria-hidden="true"]')]
             .map(s => (s.innerText || '').trim())
             .find(t => /^\\d+$/.test(t));
           return chapa ? Number(chapa) : 0;
         }""")
+
+        en_la_barra = lee_la_barra()
+        for _ in range(24):
+            if en_la_barra == sin_tachar:
+                break
+            pagina.wait_for_timeout(500)
+            en_la_barra = lee_la_barra()
         comprueba(sin_tachar > 0 and en_la_barra == sin_tachar,
                   f"la barra dice las que quedan por coger ({en_la_barra} contra "
                   f"{sin_tachar} sin tachar)")
@@ -1253,7 +1303,7 @@ def main() -> int:
 
         # Y la 2, que es la unica que empieza escribiendo: nadie sabe el nombre exacto del
         # producto, asi que se escribe a medias y se toca el resultado. **Un toque.**
-        carga("/")
+        carga("/compra")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
         with contextlib.suppress(Exception):
             pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
@@ -1456,7 +1506,7 @@ def main() -> int:
         # es justo el fallo que tenia esta pantalla cuando se escribio (27 sep 2026).
         filtro = _contesta_mal(pagina, "buscar")
         try:
-            carga("/")
+            carga("/compra")
             pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
             with contextlib.suppress(Exception):
                 pagina.get_by_text("No he podido buscar").first.wait_for(timeout=20000)
@@ -1788,7 +1838,7 @@ def main() -> int:
                 print("   (la primera linea desaparecio antes de poder medirla: "
                       "la lista se volvio a pintar)")
 
-        carga("/")
+        carga("/compra")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
         resultado = pagina.locator("a[href^='/grupo/']").first
         with contextlib.suppress(Exception):

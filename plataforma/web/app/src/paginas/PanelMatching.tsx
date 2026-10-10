@@ -333,7 +333,7 @@ function EnlaceProducto({
       {nombre ? (
         <Link
           to={`/producto/${fuente}/${id}`}
-          className="inline-flex min-h-[44px] items-center underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center underline"
         >
           {nombre}
         </Link>

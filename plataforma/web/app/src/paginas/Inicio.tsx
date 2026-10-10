@@ -64,7 +64,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
         </p>
         <Link
           to="/buscar"
-          className="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+          className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
         >
           Ver lo de siempre y añadir
         </Link>
@@ -112,7 +112,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
       )}
       <Link
         to="/cesta"
-        className="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+        className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
       >
         Ver la lista entera y tachar
       </Link>
@@ -184,7 +184,7 @@ function Buscador() {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             placeholder="leche entera, atún, papel de cocina…"
-            className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-base dark:border-neutral-700 dark:bg-neutral-900"
+            className="min-h-[44px] min-w-[44px] w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-base dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
         <button
@@ -222,7 +222,7 @@ function Buscador() {
                   <li key={`${f.grupo_id ?? 'suelto'}-${f.nombre}`}>
                     <Link
                       to={f.grupo_id === null ? `/buscar?q=${encodeURIComponent(diferido)}` : `/grupo/${f.grupo_id}`}
-                      className="flex min-h-[44px] items-baseline justify-between gap-2 py-2"
+                      className="flex min-h-[44px] min-w-[44px] items-baseline justify-between gap-2 py-2"
                     >
                       <span className="min-w-0 truncate text-sm">{f.nombre}</span>
                       <span className="shrink-0 text-right text-sm">
@@ -244,7 +244,7 @@ function Buscador() {
               </ul>
               <Link
                 to={`/buscar?q=${encodeURIComponent(diferido)}`}
-                className="mt-1 inline-flex min-h-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+                className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
               >
                 {todos.length > resultados.length
                   ? 'Ver todos los resultados'
@@ -350,7 +350,7 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
         <p className="mt-2 text-xs">
           <Link
             to="/panel?pestana=bajadas"
-            className="inline-flex min-h-[44px] items-center font-semibold text-sky-800 underline dark:text-sky-300"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center font-semibold text-sky-800 underline dark:text-sky-300"
           >
             y <span className="cifra">{numero(bajadas.length - 3, 0)}</span> más bajadas
           </Link>

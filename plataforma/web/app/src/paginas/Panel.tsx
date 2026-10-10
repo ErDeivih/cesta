@@ -99,7 +99,7 @@ export function Panel() {
         <h1 className="text-xl font-bold">Panel</h1>
         <Link
           to="/panel/matching"
-          className="inline-flex min-h-[44px] items-center text-sm underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm underline"
         >
           Panel de matching →
         </Link>
@@ -1255,7 +1255,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                                septiembre de 2026: 28 de estos, entre 145 x 19 y 248 x 39. */
                             <Link
                               to={`/grupo/${x.grupo_id}`}
-                              className="inline-flex min-h-[44px] items-center underline"
+                              className="inline-flex min-h-[44px] min-w-[44px] items-center underline"
                             >
                               {x.nombre}
                             </Link>

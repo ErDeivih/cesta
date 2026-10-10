@@ -137,7 +137,7 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
 
               <Boton
                 variante={dentro ? 'sutil' : 'normal'}
-                className="mt-auto min-h-[44px]"
+                className="mt-auto min-h-[44px] min-w-[44px]"
                 disabled={anade.isPending}
                 title={dentro ? 'Ya esta en la lista: la cantidad se cambia en la cesta.' : undefined}
                 onClick={() => {

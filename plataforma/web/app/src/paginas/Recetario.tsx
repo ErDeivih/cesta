@@ -57,7 +57,7 @@ function Detalle({ id, alCerrar }: { id: number; alCerrar: () => void }) {
         <h2 className="font-serif text-[24px] leading-8 font-semibold text-tinta-fuerte">
           {data.nombre}
         </h2>
-        <button type="button" onClick={alCerrar} className="min-h-[44px] text-[14px] text-secundaria underline">
+        <button type="button" onClick={alCerrar} className="min-h-[44px] min-w-[44px] text-[14px] text-secundaria underline">
           Cerrar
         </button>
       </div>
@@ -227,7 +227,7 @@ export function Recetario() {
                   <button
                     type="button"
                     onClick={() => setAbierta(r.id === abierta ? null : r.id)}
-                    className="min-h-[44px] text-left font-serif text-[19px] leading-7 text-tinta-fuerte"
+                    className="min-h-[44px] min-w-[44px] text-left font-serif text-[19px] leading-7 text-tinta-fuerte"
                   >
                     {r.nombre}
                   </button>
@@ -240,7 +240,7 @@ export function Recetario() {
                   <button
                     type="button"
                     onClick={() => archivar.mutate(r.id)}
-                    className="mt-1 min-h-[44px] text-[13px] text-secundaria underline"
+                    className="mt-1 min-h-[44px] min-w-[44px] text-[13px] text-secundaria underline"
                   >
                     Archivar
                   </button>

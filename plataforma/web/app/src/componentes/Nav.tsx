@@ -106,7 +106,7 @@ function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { 
                 <span className="sr-only">{sinVer} sin ver</span>
               </>
             )}
-            {a === '/cesta' && porCoger > 0 && (
+            {a.endsWith('/listas') && porCoger > 0 && (
               <>
                 {/* Con el numero dentro, no un punto: **aqui el cuanto es la
                     pregunta**. «¿Voy tachando bien?» se contesta sabiendo cuantas

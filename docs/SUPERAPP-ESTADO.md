@@ -2049,3 +2049,88 @@ nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitades d
 tecnico**. El trabajo de coste esta cerrado y probado; **el producto, no**. Falta la pantalla: **un recorrido de
 punta a punta por cada app**, con sus estados vacios, sus errores y su movil, medidos -- que es lo que
 `prueba_navegador.py` mide y lo que los recorridos de las tres apps tienen que recorrer.
+
+
+
+---
+
+## 13 de octubre de 2026 (tarde) -- el recorrido del navegador, puesto al dia
+
+### Lo que se arreglo en la prueba, y por que
+
+**Siete cosas**, y **ninguna era el producto**: la prueba se habia quedado anclada a lo que la
+aplicacion decia ayer. Se midio cada una antes de tocarla.
+
+  1. **`carga("/")` en cuatro secciones.** La raiz es hoy el **lanzador** de las tres aplicaciones
+     (`App.tsx:135`), sin buscador; el buscador vive en `/compra`. El recorrido entra como una
+     persona: mira la portada y pulsa ?Compra?.
+  2. **`"Datos del"` con mayuscula** donde la pantalla dice `datos del` ? y ademas **se exigia en la
+     pantalla vacia**, donde no hay ningun precio a la vista y por tanto no hay fecha que dar. Ahora
+     se comprueba **donde estan los precios**.
+  3. **`?Abrir en el buscador?` y `?Ver todos los resultados?`**: esas frases ya no existen. Lo que
+     hay son **40 filas enlazadas** (`a[href^='/grupo/']`).
+  4. **`Por unidad`** contra `POR UNIDAD`: otra vez la caja de la letra.
+  5. **`/buscar?q=leche+entera`**: `/buscar` es hoy una redireccion a `/compra` y **`q` ya no busca
+     nada** -- la seccion media una pagina sin resultados y por eso daba 0 cifras y 0 cadenas. Ahora
+     **teclea, como una persona**, y coge el campo **por posicion, no por su marcador**.
+  6. **`href === '/cesta'`** en la comprobacion de la chapa: el enlace de la lista es
+     `/compra/listas`. **`if (!a) return -1`** -- el `-1` del mensaje era **el centinela de ?no
+     encontre el enlace?**, no el numero de la barra.
+  7. **La lectura de la chapa y la del buscador no esperaban.** El buscador alternaba entre pasadas
+     (pasaba, fallaba, pasaba); ahora espera y **ya no alterna**. La chapa se reintenta 12 s.
+
+### Y un defecto de verdad, que si era del producto
+
+**`Nav.tsx:109` comparaba `a === '/cesta'`** y el armazon le pasa **`/compra/listas`**
+(`Suite.tsx:50`). Esa ruta ya no existe -- es una redireccion -- **asi que la condicion no se cumplia
+nunca**. Corregido a **`a.endsWith('/listas')`**, para que el proximo renombrado no lo apague.
+
+**Y queda una segunda mitad, que es decision del dueno**: la chapa del numero **vive en
+`Nav.tsx`, que exporta `NavEscritorio` y lo monta `Cabecera.tsx`** -- y `<Cabecera>` se monta en un
+solo sitio, `Inicio.tsx`, que **no es la ruta `/`**. En movil, `Suite.tsx` sustituyo la barra de abajo
+por un cajon, siguiendo `SUPERAPP-01`. **Asi que la regla ?el numero desde cualquier pantalla? y el
+armazon nuevo no encajan como estan escritos**, y **el numero solo se lee en el encabezado de la
+propia lista** (`Cesta.tsx`: ?Por coger 2?, medido). **Propuesta**: llevarlo al cajon, junto a
+?Listas?, que es lo unico que se ve en todas las pantallas.
+
+### 32 botones de texto, cuadrados
+
+Medido en un movil de 390 x 844: **?Hoy? y ?Quitar? median 25 y ~40 px de ancho** -- `min-h-[44px]`
+sin `min-w`. **Es el mismo caso que `Cabecera.tsx` documenta** (un enlace de 43 px: *?un pixel por
+debajo del minimo, que es lo que no se ve en el codigo?*). **32 sitios** llevan ya `min-w-[44px]`, en
+las tres aplicaciones, y **el diff son 152 lineas en 16 ficheros**. `tsc` limpio.
+
+### Y tres falsas alarmas, que valen tanto como el arreglo
+
+**Medir el tamano de un elemento no dice que sea pulsable.** Se contaron como fallo: **un enlace
+?Saltar al contenido? de 1x1** (esta `sr-only` a proposito, aparece al enfocar con el teclado);
+**una casilla de 13x13** dentro de una **etiqueta de 44 px**; y **cinco casillas de tachar de 16x16**
+dentro de **etiquetas de 306 x 44** -- y esto ultimo **se probo pulsando la esquina de la etiqueta**,
+no leyendo el codigo. **Resultado medido: las tres aplicaciones no tienen ningun objetivo tactil por
+debajo de 44 px** salvo los que estan dentro de etiquetas grandes.
+
+**Y la comprobacion de 44 px que ya tiene `prueba_navegador.py` usa la misma medida ingenua**, asi
+que **cuenta enlaces ocultos y casillas envueltas**: merece el mismo arreglo -- **medir la caja que se
+pulsa, no el elemento**.
+
+### Y un tropiezo mio, con su causa encontrada
+
+**`Path.write_text` en Windows convierte `\n` en CRLF.** Dos veces deje dos ficheros con el diff
+entero reescrito (**3.979 lineas** en uno de 1.973). La regla, desde aqui: **`write_bytes`
+preservando el fin de linea que se lee**, o `newline=""`. Se restauro convirtiendo el fichero actual
+al fin de linea de `HEAD`.
+
+### Estado, en tres columnas
+
+**Verificado**: **39 commits**; **1.542 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio;
+las cinco comprobaciones del encargo (013, datos desconocidos, la transaccion, el 3x2 controlado y el
+escenario determinista); y **el recorrido del navegador: 15 de 16 secciones limpias en base nueva**
+-- y **con base nueva es como hay que correrlo**: reutilizar el contenedor acumula estado y hace
+fallar la tarjeta de la primera vez.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitades de cliente**.
+
+**Esperando**: **el recorrido con datos de `/recetas` y `/calorias`** -- las dos aplicaciones del
+encargo que solo tienen medida su pantalla vacia --; **la decision sobre donde vive el numero de la
+chapa**; y **el arreglo de la comprobacion de 44 px**.
