@@ -1938,3 +1938,57 @@ autorizacion S05, `sin_nutricion` y `desde-ficha`).
 **Pendiente, y ya con evidencia de ejecucion**: los tres desajustes de la ruta de la compra (**arreglos
 claros**), **el defecto del escaner** (decision de producto), el escenario determinista, y los recorridos de
 las tres aplicaciones.
+
+
+
+---
+
+## 13 de octubre de 2026 (madrugada) ? la transaccion del cierre, demostrada
+
+### Tu comprobacion #3, cerrada con evidencia de ejecucion
+
+`plataforma/prueba_transaccion.py`, nuevo. **Pasa, y con el fallo forzado en el punto exacto:**
+
+    mis lineas, en el carro antes de cerrar: 2
+    el cierre fallo como debia: RuntimeError: fallo forzado a mitad del cierre
+       compras nuevas de este cierre: 0
+       mis lineas que siguen en el carro: 2
+       mis lineas archivadas: 0
+    == TODO BIEN
+
+**Asi que `cierra_compra` es atomico**: el `with cursor()` hace lo que su docstring promete -- *"o se
+archivan las lineas y se guarda la compra, o no pasa nada"* -- **y ahora esta demostrado con un fallo real,
+no solo afirmado**. La atomicidad estaba escrita y **sin probar**: `test_aislamiento.py` mira `commit()`,
+`test_publicacion.py` prueba el rollback de la publicacion, y **nadie habia forzado nunca un fallo a mitad
+del cierre de una compra**.
+
+### Y cuatro cosas que ense?o el camino, que valen mas que la prueba
+
+1. **Un `@contextmanager` se envuelve por el GENERADOR, no por el cursor.** Mi primer proxy llamaba al
+   `__exit__` del cursor; **quien hace commit o rollback es el generador**, asi que la transaccion no se
+   cerraba nunca y el error que salia era `the cursor is closed`, no el mio. **El fallo llegaba tarde y las
+   aserciones median un escenario roto.**
+2. **Escribi un falso verde.** El guion decia `== TODO BIEN` **con dos fallos en pantalla**, porque el
+   veredicto miraba solo el codigo de salida. **Un falso verde en una prueba es peor que no tenerla.** Ahora
+   el veredicto **lee los fallos**.
+3. **Los nombres de la base, medidos**: la tabla de usuarios es **`usuario`** (no `persona`), y el dueno de
+   una lista es **`dueno_id`**. Y **el esquema lo crea la aplicacion al arrancar** -- por eso el ensayo tiene
+   que correr antes de preguntar nada a un contenedor nuevo.
+4. **Medir el delta, no el total.** El ensayo deja sus propias listas y compras: contar ?las compras de esa
+   lista? mezclaba las suyas con las mias. **Lo que importa es cuantas aparecen POR ESTE cierre.**
+
+**Y `consulta` concatena stdout y stderr**, asi que **un error de SQL llega como si fuera un valor**: por eso
+el guion ahora comprueba que lo que recibe **tiene forma de uuid** antes de usarlo, en vez de seguir con basura.
+
+### Estado, en tres columnas
+
+**Verificado**: 36 commits; **1.540 pruebas Python, 0 saltos** y **6 del cliente**; **la migracion 013** (40
+lineas, 0 reconstruidas); **la restauracion** (26.647 bytes, 9 lineas y 2 compras, y la confirmacion
+conserva producto y cadena); **la transaccion del cierre** (0 compras, 2 lineas en el carro, 0 archivadas);
+y las cinco copias de la regla del dueno, ya diciendo lo mismo.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque de
+nutricion de la ficha, los pasos de interfaz del diario, y **las cinco mitades de cliente**.
+
+**Esperando**: la comprobacion #4 (el 3x2 **con datos controlados**) y el escenario determinista de las
+cuatro superficies. **Las cinco mitades de cliente y los recorridos, cuando haya pantalla.**
