@@ -797,8 +797,16 @@ def reparto(lista_id: str, cadenas: str | None = None,
     # pantalla las señala en la lista (`producto_movido`).
     movidas = catalogo.lineas_movidas(lineas)
     lineas = [x for x in lineas if str(x["id"]) not in movidas]
+    # **Y lo que la linea dice que se confirmo, que aqui se perdia.** `estimacion` y
+    # `coste_por_linea` ya lo pasan -- esta escrito alli desde el trabajo de coste -- y este sitio
+    # no: asi que la sustitucion aceptada no llegaba al reparto, que es **la pantalla donde se
+    # acepta**. Medido el 13 de octubre de 2026: el POST devolvia `autorizado: true` y el reparto
+    # seguia diciendo `false`.
     peticiones = [cesta.Peticion(x["grupo_id"], x["producto_id"], x["cantidad"],
-                                 x["nombre_visto"], x["id"]) for x in lineas]
+                                 x["nombre_visto"], x["id"],
+                                 autorizado=bool(x.get("autorizado")),
+                                 autorizado_producto=x.get("autorizado_producto"),
+                                 autorizado_cadena=x.get("autorizado_cadena")) for x in lineas]
     elegidas = [x.get("cadena_elegida") for x in lineas]
     prefs = almacen.preferencias_de(usuario["id"])
     lista_cadenas = ([c.strip() for c in cadenas.split(",")] if cadenas

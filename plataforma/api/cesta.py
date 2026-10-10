@@ -720,7 +720,15 @@ def _sin_asignar(peticion: Peticion, hay: dict, barata: str | None, hay_precio: 
             "hay_precio": hay_precio, "mas_barata": barata,
             "coste_cent": hay[barata].coste_cent if barata else None,
             "producto_id": hay[barata].producto_id if barata else None,
-            "opciones": _opciones(hay)}
+            "opciones": _opciones(hay),
+            # **Lo que la persona ya decidio sobre esta linea**, que la peticion trae y aqui se
+            # perdia: sin esto, la pantalla que ense?a la alternativa no puede saber si esta
+            # aceptada, y el boton de consentir no tiene donde mirar. Medido el 13 de octubre de
+            # 2026. Va por linea y no por lista: *autoriza una sustitucion concreta, no "lo que
+            # haga falta" en toda la compra*.
+            "autorizado": peticion.autorizado,
+            "autorizado_producto": peticion.autorizado_producto,
+            "autorizado_cadena": peticion.autorizado_cadena}
 
 
 def _serializa(e: Eleccion) -> dict:

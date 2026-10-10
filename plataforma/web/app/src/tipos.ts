@@ -902,7 +902,15 @@ export interface PendienteDeDecidir {
   hay_precio: boolean
   mas_barata: string | null
   coste_cent: number | null
+  producto_id: string | null
   opciones: OpcionEnTienda[]
+  /** **Lo que la persona ya decidio sobre esta linea.** Va por linea y no por lista: autoriza una
+   *  sustitucion concreta, no "lo que haga falta" en toda la compra. Y `autorizado_producto` dice
+   *  **que** se acepto, no solo que se acepto. Medido el 13 de octubre de 2026: viajaban en la
+   *  peticion y no llegaban a la pantalla. */
+  autorizado: boolean
+  autorizado_producto: string | null
+  autorizado_cadena: string | null
 }
 
 /** La respuesta de `GET /listas/{id}/reparto`: la lista partida por lo decidido. */

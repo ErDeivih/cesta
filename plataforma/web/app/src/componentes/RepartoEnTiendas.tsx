@@ -33,6 +33,7 @@ import { ponerTienda, reparto as pedirReparto } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { euros } from '../api/formato'
 import { Aviso, Boton, Etiqueta, Tarjeta, cx } from './ui'
+import { autorizarLinea } from '../api/cesta'
 import type { OpcionEnTienda, RepartoTiendas } from '../tipos'
 
 /** Lo mínimo que necesita el selector de tienda de una línea. */
@@ -42,6 +43,11 @@ interface Elegible {
   opciones: OpcionEnTienda[]
   mas_barata: string
   elegida?: string
+  /** El producto que la propuesta elegiria, y **lo que la persona ya acepto**. */
+  producto_id?: string | null
+  autorizado?: boolean
+  autorizado_producto?: string | null
+  autorizado_cadena?: string | null
 }
 
 /** Los nombres de las cadenas, como se escriben. */
@@ -72,6 +78,16 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
   const poner = useMutation({
     mutationFn: (cadena: string | null) =>
       ponerTienda(listaId, { cadena, lineas: fila.linea_id ? [fila.linea_id] : [] }),
+    onSuccess: alCambiar,
+  })
+  // **El consentimiento, que no es lo mismo que elegir tienda.** `poner` escribe `cadena_elegida`
+  // -- "esto lo compro en DIA" -- y esto escribe `autorizado`, que es lo que el motor mira para
+  // decidir si la linea es exacta o confirmada. Una sustitucion sin confirmar no lleva su descuento.
+  const consentir = useMutation({
+    mutationFn: (si: boolean) =>
+      autorizarLinea(listaId, fila.linea_id as string, si,
+                     si ? (fila.producto_id ?? null) : null,
+                     si ? fila.mas_barata : null),
     onSuccess: alCambiar,
   })
   const opciones = fila.opciones ?? []
@@ -116,6 +132,42 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
           quitar de {nombreDeCadena(fila.elegida)}
         </button>
       )}
+
+      {/* **Aceptar o retirar el sustituto.** Solo cuando la mas barata no es la que se pidio: si
+          coincide, no hay nada que consentir. Y son la misma puerta, como el endpoint. */}
+      {fila.linea_id && fila.mas_barata && fila.autorizado !== true && (
+        <button
+          type="button"
+          disabled={deshabilitado || consentir.isPending}
+          onClick={() => consentir.mutate(true)}
+          className="min-h-[44px] min-w-[44px] rounded-lg border border-emerald-700 px-2 text-xs text-emerald-800 dark:border-emerald-500 dark:text-emerald-300"
+        >
+          Aceptar el de {nombreDeCadena(fila.mas_barata)}
+        </button>
+      )}
+      {fila.autorizado === true && (
+        <>
+          <span className="text-xs text-emerald-800 dark:text-emerald-300">
+            Sustituto aceptado
+            {fila.autorizado_cadena ? `: ${nombreDeCadena(fila.autorizado_cadena)}` : ''}
+          </span>
+          <button
+            type="button"
+            disabled={deshabilitado || consentir.isPending}
+            onClick={() => consentir.mutate(false)}
+            className="min-h-[44px] min-w-[44px] px-2 text-xs underline"
+          >
+            Volver al mio
+          </button>
+        </>
+      )}
+      {/* **El error, a la vista.** Sin esto un fallo al consentir se ve igual que no haber pulsado,
+          que es exactamente lo que me paso en la tarjeta del plan y no he aplicado aqui. Medido el
+          13 de octubre de 2026: el boton se pulsaba, no cambiaba nada, y no habia forma de saber si
+          fallaba la peticion o el refresco. */}
+      {consentir.error && (
+        <Aviso tono="mal" titulo="No he podido cambiarlo">{String(consentir.error)}</Aviso>
+      )}
     </div>
   )
 }
@@ -136,7 +188,12 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
   })
 
   const refresca = () => {
-    void cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
+    // **`refetchQueries`, no `invalidateQueries`.** Invalidad marca la consulta como obsoleta, pero
+    // **no siempre vuelve a pedirla**: si tiene `staleTime`, el repintado puede no llegar. Y eso es
+    // exactamente lo que pasaba -- aceptar dejaba el dato bien en el API (medido: `autorizado: true`
+    // en el reparto y en la lista) y el boton seguia diciendo ?Aceptar el de DIA? hasta recargar.
+    // Medido el 13 de octubre de 2026. `refetchQueries` pide y repinta, que es lo que se quiere.
+    void cliente.refetchQueries({ queryKey: ['reparto', listaId] })
     void cliente.invalidateQueries({ queryKey: ['lista', listaId] })
     void cliente.invalidateQueries({ queryKey: ['listas'] })
   }
@@ -361,9 +418,19 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
                   )}
                 </div>
                 <ElegirTienda
+                  // **La fila entera, no campo a campo.** Aqui se copiaban cuatro campos y se
+                  // quedaban fuera `producto_id` y los tres `autorizado*`: el boton de consentir
+                  // pulsaba, el POST contestaba 200, el refresco invalidaba lo correcto... y el
+                  // boton seguia diciendo ?Aceptar el de Mercadona?, porque **el estado no llegaba
+                  // a la pantalla**. Es el mismo hueco que habia en `main.py:800`, una capa mas
+                  // arriba. Medido el 13 de octubre de 2026, septima vez hoy del mismo patron.
                   fila={{
                     linea_id: p.linea_id, nombre: p.nombre, opciones: p.opciones,
                     mas_barata: p.mas_barata ?? '',
+                    producto_id: p.producto_id,
+                    autorizado: p.autorizado,
+                    autorizado_producto: p.autorizado_producto,
+                    autorizado_cadena: p.autorizado_cadena,
                   }}
                   listaId={listaId}
                   deshabilitado={soloMirar}

@@ -217,6 +217,23 @@ export async function traerDelPlan(listaId: string, desde: string, hasta: string
   return await escribe(`/listas/${listaId}/desde-el-plan?${q}`, 'POST', {})
 }
 
+/** **El consentimiento de una sustitucion.** La misma puerta para decir si y no.
+ *
+ *  No es lo mismo que elegir tienda: `ponerTienda` escribe `cadena_elegida` -- *"esto lo compro en
+ *  DIA"* --, y esto escribe `autorizado`, que es lo que el motor mira para decidir si la linea es
+ *  **exacta o confirmada**. Una sustitucion sin confirmar **no lleva su descuento**: por eso esta
+ *  llamada no es un adorno, es lo que convierte una propuesta en una compra. Medido el 13 de octubre
+ *  de 2026: el cliente no llamaba a `autorizar` ni una vez, y el endpoint llevaba desde octubre.
+ */
+export async function autorizarLinea(listaId: string, lineaId: string, autorizado: boolean,
+                                     producto?: string | null,
+                                     cadena?: string | null): Promise<unknown> {
+  const q = new URLSearchParams({ autorizado: autorizado ? 'true' : 'false' })
+  if (producto) q.set('producto', producto)
+  if (cadena) q.set('cadena', cadena)
+  return await escribe(`/listas/${listaId}/lineas/${lineaId}/autorizar?${q}`, 'POST', {})
+}
+
 export async function verLista(id: string): Promise<DetalleLista> {
   return await pide<DetalleLista>(`/listas/${encodeURIComponent(id)}`)
 }

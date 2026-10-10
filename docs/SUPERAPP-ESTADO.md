@@ -2333,3 +2333,61 @@ quedan** (tres menos que ayer).
 **Esperando**: **la decision sobre la linea de texto libre**; **el camino que anota de verdad** en el
 puente de la compra -- hace falta un producto con nutricion en el catalogo --; y **el boton de
 autorizar**, que es la tercera mitad.
+
+
+
+---
+
+## 13 de octubre de 2026 (noche, cuarta parte) -- el consentimiento de la sustitucion
+
+### La tercera puerta, y la cadena de ocho eslabones que hizo falta
+
+El endpoint `POST .../lineas/{id}/autorizar?autorizado=true|false&producto=?&cadena=?` existia desde
+octubre, con su puerta doble -- *"la misma para decir si y no"* -- y **el cliente no lo llamaba ni una
+vez**. Al construir el boton, la sustitucion aceptada **no llegaba a la pantalla**, y no fue un
+eslabon: fueron ocho, todos del mismo patron con disfraces distintos.
+
+| # | eslabon | que pasaba |
+|---|---|---|
+| 1 | los tipos del cliente | los tres `autorizado*` no estaban |
+| 2 | `_sin_asignar` (API) | no mandaba los tres campos en el reparto |
+| 3 | **`main.py:800`** | **no los pasaba al construir las `Peticion`** -- y `estimacion` y `coste_por_linea` **si**, desde el trabajo de coste |
+| 4 | **el mapeo de la fila** | se copiaban cuatro campos a mano y **se perdian tres** |
+| 5 | la llamada del cliente | no existia |
+| 6 | el boton | no existia |
+| 7 | el error del boton | **se tragaba los fallos** -- el mismo defecto que en la tarjeta del plan |
+| 8 | **el refresco** | **`invalidateQueries` marca obsoleto pero no siempre vuelve a pedir** |
+
+**El 3 y el 4 son el mismo hueco en dos capas** -- la API y el cliente --, y se encontraron midiendo:
+el `POST` contestaba **200** con los tres parametros exactos, la respuesta de red lo demostro, y aun
+asi el boton no cambiaba. **Descartado el dato y descartado el refresco, el culpable era el mapeo.**
+
+**Y el 8 se arreglo cambiando una palabra**: `invalidateQueries` -> **`refetchQueries`**, que pide y
+repinta. **Verificado en el navegador: aceptar sin recargar y el texto ?Sustituto aceptado? aparece.**
+
+### Lo que queda escrito para quien siga
+
+**Ocho eslabones, y en ninguno se adivino**: cada uno se vio con la respuesta de red delante, con las
+lineas del codigo, o comparando antes y despues de una recarga. **Es mas lento que probar a cambiar
+cosas, y es la unica forma de no romper lo que ya estaba bien** -- en esta cadena habia tres piezas
+correctas (`estimacion`, `coste_por_linea`, y el propio `refresca`) que parecian sospechosas.
+
+**Y una nota honesta**: los recuentos de botones antes y despues de pulsar **no cambian** en la ultima
+medicion, y **no se usan como evidencia** porque la linea aceptada de una prueba anterior confunde la
+cuenta. **La evidencia es que el texto pasa de `False` a `True` sin recargar.**
+
+### Estado, en tres columnas
+
+**Verificado**: **43 commits**; **1.543 pruebas Python, 0 saltos** y **6 del cliente**, `tsc` limpio,
+`ruff` limpio; las cinco comprobaciones del encargo; el recorrido de las tres aplicaciones con datos;
+**las tres puertas del producto, las tres con un dedo**: el plan a la lista (3 -> 5 lineas, sin
+duplicar), la compra al diario (sus dos caminos vacios, sin ofrecer lo que no puede), y **el
+consentimiento de la sustitucion (aceptar en vivo, leer, y volver)**.
+
+**Escrito, sin ver en pantalla**: el sello del Eco-Score, los ocho campos en los tres tipos, el bloque
+de nutricion de la ficha, los pasos de interfaz del diario, y **una mitad de cliente** (eran cinco).
+
+**Esperando**: **la medicion del coste con una oferta por cantidad** -- si aceptar convierte de verdad
+la propuesta en una compra, que es lo que promete el docstring de `Peticion` y **nadie ha visto con los
+ojos**; **la decision sobre la linea de texto libre**; y **el camino que anota de verdad** en el puente
+de la compra.
