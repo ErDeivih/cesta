@@ -206,17 +206,20 @@ def evalua(alertas: list[dict]) -> list[dict]:
     """
     if not alertas:
         return []
-    grupos = sorted({int(a["grupo_id"]) for a in alertas})
+    # **El grupo de HOY, no el que se guardo al crear la alerta.** *Es el arreglo: la clave guardada es un
+    # ordinal que se renumera, y el `ean` dice de que producto se habla.*
+    por_alerta = {id(a): _grupo_de_hoy(a) for a in alertas}
+    grupos = sorted({por_alerta[id(a)] for a in alertas})
     mejores = _mejor_de_cada_grupo(grupos)
     quiere_bajada = [a for a in alertas if a["tipo"] == "cualquier_bajada"]
-    claves = sorted({(mejores[int(a["grupo_id"])]["cadena"],
-                      mejores[int(a["grupo_id"])]["id_fuente"])
-                     for a in quiere_bajada if int(a["grupo_id"]) in mejores})
+    claves = sorted({(mejores[por_alerta[id(a)]]["cadena"],
+                      mejores[por_alerta[id(a)]]["id_fuente"])
+                     for a in quiere_bajada if por_alerta[id(a)] in mejores})
     bajadas = _bajadas_de_verdad(claves)
 
     saltan = []
     for a in alertas:
-        mejor = mejores.get(int(a["grupo_id"]))
+        mejor = mejores.get(por_alerta[id(a)])
         if not mejor:
             continue
         bajada = bajadas.get((mejor["cadena"], mejor["id_fuente"]))
@@ -251,6 +254,41 @@ _memoria: dict = {"sello": None, "veredicto": {}}
 _DE_QUIEN_PREGUNTA = ("alerta_id", "tipo", "umbral_cent", "por_que")
 
 
+def _grupo_de_hoy(alerta: dict) -> int:
+    """**El grupo del producto, hoy** -- resolviendo por `ean` cuando se sabe.
+
+    *`grupo_id` es un ordinal que el emparejador renumera en cada pasada: una alerta creada para el grupo
+    11627 puede estar vigilando otro producto. El `ean` no cambia.* **Esa es toda la razon de esta
+    funcion.**
+
+    **Y si no se puede resolver, se usa el guardado.** *Las alertas anteriores a la migracion 016 no tienen
+    `ean`, y una que no se encuentre en el catalogo de hoy -- el producto descatalogado -- tampoco: en los
+    dos casos la alerta sigue funcionando **como funcionaba**, que es lo conservador. Perder el aviso seria
+    peor que darlo con la clave vieja.*
+    """
+    guardado = int(alerta["grupo_id"])
+    ean = alerta.get("ean")
+    if not ean:
+        return guardado
+    try:
+        from plataforma.api import catalogo
+
+        hallado = catalogo.por_ean(str(ean)) or {}
+    except Exception:  # noqa: BLE001
+        return guardado
+    # **`por_ean` puede devolver un producto, no un grupo**: se aceptan las dos formas y, si no hay grupo,
+    # se sigue con el guardado. *Una alerta no puede quedarse sin vigilar porque el catalogo cambie de
+    # forma.*
+    for clave in ("grupo_id", "grupo"):
+        valor = hallado.get(clave)
+        if valor:
+            try:
+                return int(valor)
+            except (TypeError, ValueError):
+                break
+    return guardado
+
+
 def olvida() -> None:
     """Tira lo recordado. Para las pruebas y para el dia que gold cambie de golpe."""
     _memoria["sello"] = None
@@ -259,7 +297,11 @@ def olvida() -> None:
 
 def _clave(alerta: dict) -> tuple:
     """La pregunta, sin quien la hace."""
-    return (int(alerta["grupo_id"]), str(alerta["tipo"]), alerta.get("umbral_cent"))
+    # **La clave usa el `ean` cuando lo hay.** *Es lo que hace que dos alertas del mismo producto -- una
+    # creada antes de una renumeracion y otra despues -- compartan el veredicto en vez de calcularse dos
+    # veces, que es para lo que existe la memoria.*
+    identidad = alerta.get("ean") or int(alerta["grupo_id"])
+    return (identidad, str(alerta["tipo"]), alerta.get("umbral_cent"))
 
 
 def evalua_con_memoria(alertas: list[dict]) -> list[dict]:

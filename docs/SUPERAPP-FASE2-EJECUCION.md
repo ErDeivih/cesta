@@ -29,19 +29,20 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 **Los diez contrastados**, y **uno de ellos -- el #9 -- ha resultado ser un defecto localizado**: `alerta` ligada al ordinal. *Del #10 falta el ensayo con navegador (no la medición).*
 
-## El arreglo de `alerta`, especificado
+## El arreglo de `alerta`: **hecho** (ronda 49)
 
-**Lo unico de esta fase que hace algo mal hoy.** *Medido y acotado a tres piezas:*
+**Lo unico de esta fase que hacía algo mal hoy, y ya no.** *Las cuatro piezas, hechas:*
 
-| pieza | sitio |
+| pieza | estado |
 |---|---|
-| migración `016`: `ADD COLUMN IF NOT EXISTS ean text` | `plataforma/sql/` |
-| escribir el `ean` al dar de alta | `almacen.py:959` (único INSERT) |
-| resolver el `ean` al grupo **de hoy** al evaluar | `alertas.py` + **`catalogo.por_ean` (ya existe, `catalogo.py:1207`)** |
-| prueba: una alerta sobrevive a una renumeración | `tests/` |
+| migración `016`: `ean text` + `COMMENT` | **aplicada y verificada** (la columna existe, con su comentario) |
+| escribir el `ean` al dar de alta | `almacen.py:959`, resuelto con `catalogo.grupo` (import perezoso) |
+| resolver el `ean` al grupo **de hoy** al evaluar | `alertas._grupo_de_hoy`, usado en las tres decisiones de `evalua` y en `_clave` |
+| prueba | `tests/test_fase2_f01_alerta_identidad.py`, **6 pruebas** |
 
-*La fila que existe se queda con `ean` nulo y su `salto_nombre` como ancla: rellenarla con lo que hay hoy
-escribiría un dato estable **equivocado**.*
+*La fila que existe se queda con `ean` nulo y su `salto_nombre` como ancla* — **es una decisión, no un
+olvido: rellenarla con lo que el grupo contiene hoy escribiría un dato estable equivocado.** *Y su
+`salto_nombre` sigue diciendo de qué producto era.*
 
 ## Siguiente acción
 

@@ -954,16 +954,41 @@ def crea_alerta(usuario_id: str, grupo_id: int, tipo: str,
         raise ValueError(f"tipo de alerta desconocido: {tipo}")
     if tipo == "baja_de" and not umbral_cent:
         raise ValueError("una alerta 'baja_de' necesita un umbral")
+    # **Y de que producto es, que es lo que no se guardaba.** *`grupo_id` es un ordinal que el
+    # emparejador renumera en cada pasada: la alerta quedaba diciendo «vigila el grupo 11627», y ese
+    # numero puede pasar a ser otro producto.* **El `ean` no cambia.**
+    #
+    # *Se resuelve aqui y no en quien llama* para que no haya dos sitios que puedan olvidarse: **el mismo
+    # sitio que da de alta la alerta anota la identidad estable.** *Y el import es perezoso porque
+    # `catalogo` importa `almacen` -- acoplarlos arriba seria un ciclo.*
+    from plataforma.api import catalogo
+
+    ean = None
+    try:
+        ficha = catalogo.grupo(grupo_id) or {}
+        miembros = ficha.get("productos") or ficha.get("cadenas") or []
+        if isinstance(miembros, list):
+            for m in miembros:
+                if isinstance(m, dict) and m.get("ean"):
+                    ean = str(m["ean"])
+                    break
+    except Exception:  # noqa: BLE001
+        # **Que no se pueda resolver no puede impedir crear la alerta.** *Se guarda sin `ean` -- como las
+        # de antes de la 016 -- y la alerta sigue funcionando como funcionaba.*
+        ean = None
+
     with cursor() as cur:
         cur.execute("""
-            INSERT INTO alerta (usuario_id, grupo_id, tipo, umbral_cent)
-                 VALUES (%s, %s, %s, %s)
+            INSERT INTO alerta (usuario_id, grupo_id, tipo, umbral_cent, ean)
+                 VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (usuario_id, grupo_id, tipo) DO UPDATE
-                    SET umbral_cent = EXCLUDED.umbral_cent, vista_en = NULL,
+                    SET umbral_cent = EXCLUDED.umbral_cent,
+                        ean = COALESCE(EXCLUDED.ean, alerta.ean),
+                        vista_en = NULL,
                         salto_en = NULL, salto_texto = NULL, salto_nombre = NULL
               RETURNING id, grupo_id, tipo, umbral_cent, creada_en, vista_en,
-                        salto_en, salto_texto, salto_nombre
-        """, (usuario_id, grupo_id, tipo, umbral_cent))
+                        salto_en, salto_texto, salto_nombre, ean
+        """, (usuario_id, grupo_id, tipo, umbral_cent, ean))
         return cur.fetchone()
 
 
