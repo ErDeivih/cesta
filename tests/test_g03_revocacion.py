@@ -140,7 +140,7 @@ def test_revocar_una_linea_que_no_es_no_toca_ninguna(con_almacen, limpio):
     """**Y no se puede revocar por aproximacion**: un identificador que no es de esa lista no cambia
     nada. Si esto fallara, la revocacion estaria tocando por posicion o por parecido."""
     with _cliente() as cliente:
-        lista_id, ids = _tres_lineas(cliente)
+        lista_id, _ = _tres_lineas(cliente)
         antes = almacen.autorizacion_de(lista_id)
 
         r = cliente.post(f"/api/listas/{lista_id}/lineas/00000000-0000-0000-0000-000000000000/autorizar",
