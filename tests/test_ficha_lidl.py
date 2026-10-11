@@ -87,3 +87,19 @@ def test_una_ficha_sin_producto_no_inventa_uno():
     import pytest as _pytest
     with _pytest.raises(ValueError):
         ficha_lidl.lee("<html>sin datos estructurados</html>")
+
+
+def test_la_ficha_de_un_alimento_NO_trae_contenido_y_esta_escrito():
+    """**La limitacion, fijada con una prueba.** *G08 pide ingredientes, nutricion y alergenos; el
+    JSON-LD de Lidl no los publica -- y no es un parser incompleto: es una fuente que no los da.*
+
+    Medido sobre las galletas: el bloque `Product` trae **las mismas nueve claves que un
+    electrodomestico** (@type, brand, description, gtin13, image, name, offers, sku, url).
+
+    *Si algun dia Lidl los publica, **esta prueba cae y avisa** -- que es para lo que sirve.*
+    """
+    p = ficha_lidl.productos_de(FICHA)[0]
+    assert p["name"] == "Galletas rellenas", "es un alimento, no un electrodomestico"
+    for clave in ("ingredients", "nutrition", "allergens", "additionalProperty"):
+        assert clave not in p, f"Lidl ya publica {clave}: hay que extraerlo y anadirlo al hash"
+    assert set(p) >= {"name", "brand", "description", "gtin13", "image", "offers", "sku", "url"}

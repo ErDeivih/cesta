@@ -92,3 +92,34 @@ def test_reanudar_no_repite_la_que_ya_esta_correcta(con):
     cuenta = fichas_lidl.procesa(con, 5, fetch=lambda url: FICHA,
                                 ahora=datetime(2026, 11, 7, 11, 0))
     assert cuenta["leidas"] == 3, "vencida la revision, se vuelve a mirar"
+
+
+def _datos(**cambios):
+    base = {"nombre": "Galletas rellenas", "marca": "Sondey", "ean": "4056489123459",
+            "gtin_invalido": None, "descripcion": "Rellenas de crema de chocolate.",
+            "url": "https://www.lidl.es/p/x/p1", "imagen": "https://cdn/x.jpg",
+            "precio_cent": 149}
+    base.update(cambios)
+    return base
+
+
+def test_el_hash_no_cambia_si_cambia_el_precio():
+    """**El precio no es parte de la ficha.** *Antes si lo era: una oferta nueva marcaba «la ficha
+    cambio», y la columna que existe para vigilar la ficha vigilaba el escaparate.*"""
+    assert fichas_lidl._hash_util(_datos()) == fichas_lidl._hash_util(_datos(precio_cent=99))
+
+
+def test_el_hash_cambia_si_cambia_el_gtin_invalido():
+    """**Cuando el codigo no valida, `ean` es `None` y el codigo vive en `gtin_invalido`.**
+
+    Hashear `ean` a secas dejaba que **dos fichas con GTIN invalido distinto** dieran el mismo hash.
+    """
+    a = fichas_lidl._hash_util(_datos(ean=None, gtin_invalido="4056489123456"))
+    b = fichas_lidl._hash_util(_datos(ean=None, gtin_invalido="4056489123450"))
+    assert a != b, "dos codigos invalidos distintos no pueden compartir huella"
+
+
+def test_el_hash_cambia_si_cambian_la_descripcion_o_la_imagen():
+    """Los dos campos de contenido que la fuente **si** publica."""
+    assert fichas_lidl._hash_util(_datos()) != fichas_lidl._hash_util(_datos(descripcion="Otra cosa"))
+    assert fichas_lidl._hash_util(_datos()) != fichas_lidl._hash_util(_datos(imagen="https://cdn/y.jpg"))

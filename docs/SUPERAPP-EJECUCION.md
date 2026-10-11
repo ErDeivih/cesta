@@ -770,6 +770,44 @@ implementado* --, `carpetas_caducadas(30) == 0` -- *nada caducado hoy* -- y `--e
 
 **Y con esto G07 queda entero: 165, 166, 167, 168, 169 y 170.**
 
+### G08: el hash de Lidl, **y la limitacion de la fuente medida**
+
+**El defecto que el documento nombraba**, confirmado y arreglado con lo que hay:
+
+    antes:  ("nombre", "marca", "ean", "precio_cent", "descripcion")
+    ahora:  ("nombre", "marca", "ean", "gtin_invalido", "descripcion", "url", "imagen")
+
+- **fuera `precio_cent`**: *el precio **no es parte de la ficha**, asi que una oferta nueva marcaba «la
+  ficha cambio» -- la columna que existe para vigilar la ficha vigilaba el escaparate.*
+- **dentro `gtin_invalido`, `url` e `imagen`**, que si lo son. *Y `ean` a secas no bastaba: cuando el
+  codigo no valida, `ean` es `None` y el codigo vive en `gtin_invalido`, asi que **dos fichas con GTIN
+  invalido distinto daban el mismo hash**.*
+- **`PARSER_VERSION` a `lidl-jsonld-2`**, para que los hashes viejos no se comparen con los nuevos.
+
+**Y LA PREGUNTA DE FONDO, CERRADA Y MEDIDA.** Se persiguio cuatro rondas: *¿`lee` no extrae
+ingredientes porque el parser esta incompleto?* **No.** El bloque `@type=Product` de Lidl trae **nueve
+claves** -- `@type, brand, description, gtin13, image, name, offers, sku, url` -- y **no publica
+ingredientes, nutricion ni alergenos, NI SIQUIERA EN UN ALIMENTO**: medido sobre una ficha de galletas
+(«Galletas rellenas», Sondey). *Las mismas nueve claves que una licuadora.*
+
+    Asi que el hash no se arregla anadiendo campos: **no hay campos que anadir.**
+    No es un parser incompleto, **es una fuente que no los da.**
+
+**Para tenerlos hay que parsear el HTML de la ficha -- donde `estructura_de` ve la palabra
+«ingrediente» como senal, y su docstring avisa de que es «cota inferior» -- o ir a fuente
+complementaria** (G08 puntos 176 y 181: *GTIN y presentacion compatibles antes de vincular*).
+
+**Cuatro pruebas nuevas.** *Tres del hash*: el precio no lo cambia, el GTIN invalido si, y la
+descripcion y la imagen tambien. *Y una **fija la limitacion***: la ficha de un alimento **no** trae
+ingredientes, nutricion ni alergenos -- *y **si algun dia los trae, la prueba cae y avisa***, que es
+para lo que sirve.
+
+**Y un hallazgo de paso, medido**: de las **27 fichas guardadas en `data/fichas-lidl/`, NINGUNA es
+alimentaria** -- *woks, juguetes, textil, jardin, bano, menaje* --. **Es el «exceso de bazar» que G08
+nombra en su punto 183 y el alcance que G09 prohibe en su 188.** *Y `core/alcance.py` existe, con
+`clasificar_alcance` memorizado y politica en `alcance.yml`: la pregunta abierta es **quien llena la
+cola de Lidl y si le aplica el filtro**.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

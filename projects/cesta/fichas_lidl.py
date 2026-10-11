@@ -27,12 +27,26 @@ from datetime import datetime
 from core import inventario
 from projects.cesta import ficha_lidl
 
-PARSER_VERSION = "lidl-jsonld-1"
+PARSER_VERSION = "lidl-jsonld-2"
+
+
+# **Que campos vigila el hash, y por que esos.** El hash existe para detectar que **la ficha**
+# cambio. Antes hasheaba `precio_cent`, que **no es parte de la ficha** -- un producto estable con una
+# oferta nueva marcaba «la ficha cambio» -- y dejaba fuera `gtin_invalido`, `url` e `imagen`, que si
+# lo son. *Y `ean` a secas no bastaba: cuando el codigo no valida, `ean` es `None` y el codigo vive en
+# `gtin_invalido`, asi que dos fichas con GTIN invalido **distinto** daban el mismo hash.*
+#
+# **Y lo que este hash NO puede vigilar, medido.** El bloque `@type=Product` de Lidl trae nueve
+# claves -- `@type, brand, description, gtin13, image, name, offers, sku, url` -- y **no publica
+# ingredientes, nutricion ni alergenos**, ni siquiera en un alimento: comprobado sobre una ficha de
+# galletas. *Asi que no hay campos de contenido que hashear: no es un parser incompleto, es una fuente
+# que no los da.* Para tenerlos hay que **parsear el HTML** de la ficha o ir a **fuente
+# complementaria** (G08, puntos 176 y 181: GTIN y presentacion compatibles antes de vincular).
+CAMPOS_DE_FICHA = ("nombre", "marca", "ean", "gtin_invalido", "descripcion", "url", "imagen")
 
 
 def _hash_util(datos: dict) -> str:
-    util = "|".join(str(datos.get(k) or "") for k in
-                    ("nombre", "marca", "ean", "precio_cent", "descripcion"))
+    util = "|".join(str(datos.get(k) or "") for k in CAMPOS_DE_FICHA)
     return hashlib.sha256(util.encode()).hexdigest()[:16]
 
 
