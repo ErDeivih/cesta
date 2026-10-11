@@ -164,3 +164,61 @@ def test_el_resumen_distingue_capturado_procesado_y_publicado():
     pos_publicado = fuente.index("publicado: v")
     assert pos_publicado > pos_fechas, (
         "lo publicado se compara con el silver, asi que se calcula despues de leer las fechas")
+
+
+# ---------------------------------------------------------------------------------------------
+# Inyectar fallos entre las cuatro etapas: pipeline, matching, manifiesto y publicacion.
+# ---------------------------------------------------------------------------------------------
+
+
+def test_una_publicacion_que_falla_deja_servida_la_version_anterior(gold):
+    """**El invariante que F03 pide**: *«la ultima version valida sigue servida»*.
+
+    *Un dia que no consigue publicar no puede dejar a quien compra sin catalogo, ni servirle una version
+    a medias.* Se publica una, y despues se intenta publicar con el gold **incompleto** -- que es lo que
+    pasa si el pipeline muere a mitad, o si el emparejador se lleva por delante un fichero.
+    """
+    primera = publicacion.adoptar(datetime(2026, 10, 7, 10, 0, 0))
+    servido_antes = publicacion.ruta("grupos.parquet").read_bytes()
+
+    # **Falla la publicacion**: falta un fichero del gold.
+    (gold / "grupos.parquet").unlink()
+    with pytest.raises(publicacion.PublicacionIncompleta):
+        publicacion.publicar(None, momento=datetime(2026, 10, 8, 10, 0, 0))
+
+    # **El puntero no se ha movido**, y lo servido es lo de antes, byte a byte.
+    assert publicacion.version_actual() == primera, "un fallo al publicar no puede mover el puntero"
+    assert publicacion.ruta("grupos.parquet").read_bytes() == servido_antes
+
+
+def test_una_publicacion_que_falla_no_deja_carpeta_a_medias(gold):
+    """*Nada a medias: quien lee no puede ver ni un fichero de un intento fallido.*
+
+    **Porque una carpeta a medias no es solo basura**: si el puntero llegara a apuntar ahi, se serviria
+    un catalogo incompleto. *Se retira entera y el puntero sigue donde estaba.*
+    """
+    publicacion.adoptar(datetime(2026, 10, 7, 10, 0, 0))
+    antes = set(publicacion.versiones())
+
+    (gold / "enlaces.parquet").unlink()
+    with pytest.raises(publicacion.PublicacionIncompleta):
+        publicacion.publicar(None, momento=datetime(2026, 10, 8, 10, 0, 0))
+
+    assert set(publicacion.versiones()) == antes, "no puede quedar una version nueva a medias"
+
+
+def test_el_veredicto_del_dia_ve_las_cuatro_etapas():
+    """**La otra mitad de inyectar fallos**: que el fallo **llegue al veredicto**, no solo al registro.
+
+    *Un `print` no es un veredicto.* Las cuatro etapas de F03 -- pipeline, matching, manifiesto y
+    publicacion -- tienen que poder dejar el dia en rojo. *El manifiesto es la excepcion declarada: no
+    puede tumbar el dia, porque es documentacion; y por eso su fallo se avisa y se sigue.*
+    """
+    fuente = (__import__("pathlib").Path(__file__).resolve().parents[1]
+              / "projects" / "cesta" / "run.py").read_text(encoding="utf-8")
+
+    for etapa in ("pipeline", "emparejar", "publicacion"):
+        assert f'fallos.append("{etapa}")' in fuente, (
+            f"un fallo de {etapa} tiene que llegar al veredicto del dia, no quedarse en un print")
+    # Y el manifiesto, que si puede fallar sin tumbar el dia, se avisa en su propio sitio.
+    assert "[manifiesto] no se pudo escribir" in fuente
