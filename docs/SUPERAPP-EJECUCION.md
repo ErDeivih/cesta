@@ -374,6 +374,30 @@ mismo principio: «subtotal no convierte ausencias en ceros conocidos».*
 ocho puntos (evolucion por tienda, alternativas, gasto pagado, reparto, inflacion; y en Calorias y
 Recetas, cobertura por nutriente y coste distinguiendo cantidad usada de envase).
 
+### G05: la tabla accesible, con los huecos dentro -- y una prueba que me paró
+
+**La aceptacion pide «tabla accesible de los mismos datos», y aqui «los mismos» incluye lo que no
+hay**: una tabla que omitiera las fechas sin precio haria **invisible justo el hueco que la chispa ha
+dejado de tapar** al no conectar los puntos. `filasDeChispa` vive en `logica/chispa.ts` -- puro y
+probado -- y devuelve `{fecha, valor, texto}`: **el hueco es una fila con `valor: null` y texto «sin
+dato»**, nunca 0 ni vacio. El `<details>` lleva su `<table>`, `caption` para lectores de pantalla y
+cifras tabuladas, y **el resumen y el `aria-label` dicen cuantos dias no tienen dato**.
+
+**Once pruebas en el cliente** (10 + la de la tabla).
+
+**Y una prueba me paro, con razon.** `test_ui_movil.py:435` -- *«Nada de `<summary>` sueltos»* -- cayo
+en cuanto escribi uno a mano:
+
+    E  AssertionError: hay desplegables escritos a mano, y esos no llevan flecha:
+       ['Chispa.tsx: <summary className="cursor-pointer text-xs text-tinta…']
+
+**Su motivo esta documentado y es una linea de CSS que no se ve**: el triangulo que el navegador pinta
+en un `<summary>` **desaparece en cuanto se le pone `display: flex`**, que es justo lo que hace falta
+para que mida los 44 px de pulsar. Por eso los diez desplegables de la aplicacion se pintan con
+`Resumen` (`componentes/ui.tsx`), que pone la flecha. *Y el comentario de la prueba dice como se
+encontro: **mirando una captura, no leyendo el codigo**.* **Se cambia a `Resumen` y las cuatro puertas
+pasan.** *Es la suite haciendo su trabajo sobre codigo mio equivocado, que es lo que debe pasar.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

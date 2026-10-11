@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
-import { aMs, serieDeChispa } from '../src/logica/chispa.ts'
+import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -79,4 +79,16 @@ test('un valor no finito es un hueco, no un cero', () => {
   ])
   assert.deepEqual(s.ys, [null, null])
   assert.equal(s.dibujados, 2)
+})
+test('la tabla lista los huecos, y los lee como «sin dato»', () => {
+  const filas = filasDeChispa([
+    { fecha: '2026-01-01', valor: 1.5 },
+    { fecha: '2026-01-02', valor: null },
+    { fecha: '2026-01-03', valor: 1.8 },
+  ], '€')
+  assert.equal(filas.length, 3, 'el hueco es una fila, no se omite')
+  assert.equal(filas[1].valor, null)
+  assert.equal(filas[1].texto, 'sin dato')
+  assert.equal(filas[0].texto, '1.5 €')
+  assert.equal(filas[2].texto, '1.8 €')
 })

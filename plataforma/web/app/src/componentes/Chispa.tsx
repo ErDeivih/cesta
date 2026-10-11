@@ -13,7 +13,8 @@
  *  (minimo, maximo, media) van siempre escritos al lado.
  */
 import { useEffect, useRef, useState } from 'react'
-import { serieDeChispa, type PuntoChispa } from '../logica/chispa'
+import { filasDeChispa, serieDeChispa, type PuntoChispa } from '../logica/chispa'
+import { Resumen } from './ui'
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 
@@ -118,12 +119,52 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
     )
   }
 
+  const filas = filasDeChispa(puntos)
+  const huecos = filas.filter((f) => f.valor === null).length
+
   return (
-    <div
-      ref={contenedor}
-      className="w-full"
-      role="img"
-      aria-label={`${etiqueta}: ${puntos.length} días de histórico`}
-    />
+    <div className="w-full">
+      {/* La chispa es el adorno; **el dato esta aqui**, y en una tabla que se puede leer con un
+          lector de pantalla y con el teclado. La aceptacion de G05 lo pide: *«tabla accesible de los
+          mismos datos»*.
+          **Los huecos van dentro**, y se leen «sin dato»: una tabla que los omitiera escondería
+          justo lo que la chispa ha dejado de tapar al no conectar los puntos. */}
+      <div
+        ref={contenedor}
+        className="w-full"
+        role="img"
+        aria-label={`${etiqueta}: ${puntos.length} días de histórico` +
+          (huecos > 0 ? `, ${huecos} sin dato` : '')}
+      />
+      <details className="mt-1">
+        {/* **`Resumen` y no un `<summary>` a mano**: con `display: flex` -- que hace falta para
+            los 44 px de pulsar -- el navegador deja de pintar su triangulo, y un desplegable sin
+            flecha parece un encabezado suelto. Lo vigila `test_ui_movil.py`, y con razon: *lo
+            encontraron mirando una captura, no leyendo el codigo.* */}
+        <Resumen className="text-xs text-tinta-suave">
+          {`Ver los ${puntos.length} días como tabla` +
+            (huecos > 0 ? ` (${huecos} sin dato)` : '')}
+        </Resumen>
+        <table className="mt-1 w-full text-xs tabular-nums">
+          <caption className="sr-only">{`${etiqueta}: precio por día`}</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="text-left font-medium">Día</th>
+              <th scope="col" className="text-right font-medium">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f) => (
+              <tr key={f.fecha}>
+                <td className="text-left">{f.fecha}</td>
+                <td className={`text-right ${f.valor === null ? 'text-tinta-suave' : ''}`}>
+                  {f.texto}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </div>
   )
 }

@@ -62,3 +62,28 @@ export function serieDeChispa(puntos: PuntoChispa[]): SerieDeChispa {
     dibujable: validos.length > 0,
   }
 }
+
+/** Una fila de la tabla accesible: **los huecos van incluidos y se ven como huecos.**
+ *
+ *  La aceptacion de G05 pide «tabla accesible de los mismos datos», y aqui «los mismos» incluye lo
+ *  que no hay: *una tabla que omitiera las fechas sin precio haria invisible justo el hueco que la
+ *  chispa ha dejado de tapar*. Por eso el hueco es una fila con `valor: null` y su texto lo dice.
+ */
+export interface FilaDeChispa {
+  fecha: string
+  valor: number | null
+  /** Lo que se lee en la celda. **Un hueco se lee como «sin dato», nunca como 0 ni vacio.** */
+  texto: string
+}
+
+export function filasDeChispa(puntos: PuntoChispa[], unidad = ''): FilaDeChispa[] {
+  const sufijo = unidad ? ` ${unidad}` : ''
+  return puntos.map((p) => {
+    const hay = p.valor !== null && Number.isFinite(p.valor)
+    return {
+      fecha: p.fecha,
+      valor: hay ? (p.valor as number) : null,
+      texto: hay ? `${p.valor}${sufijo}` : 'sin dato',
+    }
+  })
+}
