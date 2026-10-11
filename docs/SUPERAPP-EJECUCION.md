@@ -190,6 +190,42 @@ dataclass se cortó en `linea_id`, y sin `autorizada` mis dos pruebas del total 
 no el código*. **Un total que esconde lo que no pudo contar es peor que un total más bajo**: por eso
 `pendientes` viaja con su motivo, y por eso la línea revocada **no es un hueco**.
 
+### G03, las tres puertas del cierre: medida, y con la conclusión contraria a mi hipótesis
+
+Iba a demostrar que **revocar cambia el precio que se archiva** al cerrar. **No lo cambia, y está bien
+que no lo cambie:**
+
+```
+cesta.py:867   if not linea.get("producto_movido"):                    ← una movida no recibe precio
+cesta.py:872       suyos = [... if k[-1] != "alternativa"]              ← el cierre descarta sustitutos
+```
+
+**El cierre no archiva sustitutos.** Archiva **el producto que el grupo es hoy**, con la tienda
+decidida mandando sobre el más barato. *Es de precios y guarda lo que se compró, no lo que se aceptó*:
+**no hay nada que revocar en esa puerta.** La frase del documento —«estimación, reparto y cierre no
+pueden seguir usando el producto revocado»— **se cumple de tres formas distintas**:
+
+| puerta | cómo | estado |
+|---|---|---|
+| estimación | la revocada **deja de contar** y pasa a `pendientes` con su motivo | ✓ medido |
+| reparto | `_es_la_confirmada` devuelve `False` **por el primer camino** | ✓ medido |
+| **cierre** | **nunca usó el sustituto**; archiva el producto del grupo, o **nada** si la línea se movió | ✓ medido |
+
+**Y ahí el cierre sí tiene algo que demostrar, y lo demuestra**: **una línea movida se archiva con
+`precio_cent` en NULL** —*con y sin autorización*—, que va a `sin_precio`: *un cero ahí sería afirmar
+que salió gratis*.
+
+**Qué es una línea movida** (`catalogo.py:798`): la que dice un nombre que **ya no es** el de ningún
+producto de su grupo. **El síntoma de que `grupo_id` es un ordinal que el emparejador renumera en cada
+pasada** —*medido el 28 de septiembre de 2026 con datos de casa: la leche entera salía en el pasillo
+de higiene y belleza, con el precio del pintalabios*—. **La migración al `producto_id` estable está
+apuntada desde el 22 de septiembre** (`docs/MODELO.md`, `docs/DIAGNOSTICO-MATCHING.md` §21) y **es el
+paquete G10**. Anotado aquí porque G03 lo ha tocado de lado.
+
+**Observación para G10, no afirmación**: `coste_por_linea` construye `Peticion`es con `autorizado` y
+`autorizado_producto` **y después descarta las alternativas por la llave**. *Ese dato entra en
+`_candidatos` y no se usa para el precio.* Puede ser correcto; **no lo afirmo**.
+
 **La segunda lista de casa responde 409, no 500.** La base impone `lista_de_casa_por_dueno` --una
 lista de casa por persona, que es la regla correcta: es el eje que alimenta el contador del menú, el
 puente de la compra y las alertas-- y la API no la atrapaba: crear la segunda salía como «Internal
