@@ -156,6 +156,11 @@ def main() -> int:
             en_pantalla_despues = precios_en_pantalla()
             print(f"        precios en la pantalla: {en_pantalla_despues}")
 
+            # **Y hay que exigir las DOS cosas.** *La primera version solo comparaba las listas, y una
+            # lista **vacia** es distinta de una con precios: el ensayo pasaba sin haber leido nada.* **Es
+            # el mismo error que llevo toda la fase cazando -- el instrumento dando por bueno lo vacio.***
+            comprueba(bool(en_pantalla_despues),
+                      "la segunda busqueda ensena precios (no una lista vacia)")
             comprueba(en_pantalla_despues != en_pantalla_antes,
                       "la PANTALLA ensena los precios de la version nueva tras publicar")
 
@@ -165,15 +170,20 @@ def main() -> int:
             # por funcion --, pero **la aceptacion los nombra uno a uno** y no basta con suponerlo.* Se
             # piden por el proxy, con una publicacion en medio, y se comprueba que contestan y que no
             # mezclan.
-            # **Y aqui esta el limite, medido**: `/api/listas` contesta **401** sin sesion. *La busqueda
-            # no necesitaba autenticarse; los recorridos de lista si.* **No se persigue el flujo de
-            # entrada con el contexto que queda**: se registra como lo que es -- un recorrido **no
-            # medido** -- en vez de darlo por bueno.
+            # **Entrar primero.** *La busqueda no necesitaba sesion; los recorridos de lista si -- `/api/listas`
+            # contestaba 401 --.* **El patron es el del ensayo del diario**: `POST /api/entrar` con la sesion
+            # del propio contexto, y registrarse si la cuenta no existe.
+            import time as _time
+
+            usuario = f"f03_{int(_time.time() * 1000) % 100000000}"
+            r = contexto.request.post(f"{BASE}/api/registrarse",
+                                      data={"nombre": "Prueba F03", "usuario": usuario,
+                                            "clave": "clave-de-prueba-123"})
+            comprueba(r.ok or r.status in (400, 409),
+                      f"hay cuenta para el recorrido ({r.status})")
+
             r = pagina.request.get(f"{BASE}/api/listas")
-            if r.status == 401:
-                print("        /api/listas -> 401 SIN SESION: los recorridos de lista necesitan entrar, "
-                      "y NO SE HAN MEDIDO")
-            comprueba(r.status in (200, 401), f"/api/listas por el proxy -> {r.status}")
+            comprueba(r.status != 401, f"/api/listas con sesion -> {r.status} (antes daba 401)")
             listas = r.json() if r.ok else []
             if isinstance(listas, dict):
                 listas = listas.get("listas") or []

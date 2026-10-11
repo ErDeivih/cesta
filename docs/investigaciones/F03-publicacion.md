@@ -904,3 +904,62 @@ compartir el mecanismo no es haberlo medido**, y por eso quedan dichos como no m
 
 **Y el paso siguiente es concreto**: *entrar en el ensayo -- el del diario ya lo hace, y esta ahi para
 copiarlo -- y repetir los tres con una publicacion a mitad.*
+
+
+---
+
+## 25. La sesion, y **un falso positivo que el ensayo tenia**
+
+*(Ronda 61.)*
+
+### Entrar: hecho
+
+*Se copio el patron del ensayo del diario* -- `POST /api/entrar` con la sesion del propio contexto, y
+registrarse si la cuenta no existe --:
+
+```
+ok   hay cuenta para el recorrido (201)
+ok   /api/listas con sesion -> 200 (antes daba 401)
+```
+
+**Asi que el 401 no era un limite de la aplicacion: era que el ensayo no entraba.** *La busqueda no
+necesitaba sesion; los recorridos de lista si.* **Con la sesion puesta, `/api/listas` contesta 200.** *Y el
+recorrido de la previa se salta **porque la cuenta nueva no tiene listas** -- que es un dato, no un fallo.*
+
+### Y el ensayo tenia un falso positivo, que es el error de esta fase entero
+
+*En una ejecucion anterior, la segunda lectura de la pantalla devolvio `[]` -- **vacia** -- y el ensayo
+**PASO** igual:*
+
+```python
+comprueba(en_pantalla_despues != en_pantalla_antes, ...)   # [] != [13,81...] -> True
+```
+
+**Una lista vacia es distinta de una con precios, asi que la asercion se cumplia sin haber leido nada.**
+*El ensayo pasaba midiendo el vacio.*
+
+**Corregido, y exige las dos cosas:**
+
+```python
+comprueba(bool(en_pantalla_despues), "la segunda busqueda ensena precios (no una lista vacia)")
+comprueba(en_pantalla_despues != en_pantalla_antes, "la PANTALLA ensena los precios de la version nueva")
+```
+
+**Y con eso vuelve a pasar, ahora con precios de verdad**: `15,81 EUR` antes y `16,81 EUR` despues.
+
+*Es exactamente el patron que llevo toda la fase encontrando -- **el instrumento dando por bueno lo que no
+ha medido** --, esta vez dentro de una prueba que yo mismo acabo de escribir. Y lo que lo caza es mirar el
+resultado, no la asercion.*
+
+### Lo que queda de F03, al cerrar
+
+| recorrido | estado |
+|---|---|
+| **busqueda** | **medido en el navegador**, con precios reales que cambian al publicar |
+| **previa de lista** | **el ensayo entra y `/api/listas` contesta 200**; *la cuenta nueva no tiene listas, asi que **no se ha ejercido la previa*** |
+| **sustitucion** | **no medido** |
+| **alta en el diario** | **no medido** -- *el ensayo del diario ya lo prueba, pero no durante una publicacion* |
+| respuesta individual no mezcla versiones | **medido en el servidor** |
+
+**El paso siguiente, concreto**: *dar de alta una lista en el ensayo -- o usar una de las que ya existen en
+la base -- y ejercer la previa con una publicacion a mitad.*
