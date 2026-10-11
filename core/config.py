@@ -62,7 +62,12 @@ RITMO = {
     # nocturna no le importa a nadie.
     "alcampo": 0.15,
     "dia": 1.0,          # Akamai: sin prisa
-    "carrefour": 1.0,    # el Crawl-delay 60 de robots.txt solo es para TwengaBot
+    "carrefour": 1.0,    # el Crawl-delay 60 de robots.txt solo es para TwengaBot,
+    # **Lidl estaba sin declarar.** `ficha_lidl.descarga` usaba `RITMO.get("lidl", 1.0)`,
+    # asi que su ritmo era un valor por defecto que nadie habia elegido ni podia revisar.
+    # Declarado con el mismo 1.0 que se estaba aplicando: **no cambia lo que pasa, cambia
+    # que se pueda ver y discutir.**
+    "lidl": 1.0,
 }
 
 # Alcampo protege su catalogo con AWS WAF: sin la cookie aws-waf-token las paginas

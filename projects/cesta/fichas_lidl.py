@@ -24,10 +24,21 @@ import hashlib
 import sys
 from datetime import datetime
 
-from core import inventario
+from core import config, inventario
 from projects.cesta import ficha_lidl
 
 PARSER_VERSION = "lidl-jsonld-2"
+
+# **Cuantas fichas por ejecucion, y por que ese numero.** El limite era 3, y con la cola real
+# -- **5.026 pendientes de Lidl** -- eso son **1.677 dias: cuatro anos y medio** para cubrir una
+# sola cadena. *Tres fichas por ejecucion no acreditan cobertura: es la «cifra artificial» que
+# G09 nombra en su titulo y lo que G08 pide calcular en su punto 179.*
+#
+# A 1 peticion por segundo (el ritmo declarado en `config.RITMO`), 1.000 fichas son ~17 minutos
+# de red. *La recoleccion diaria entera dura unos 90, asi que esto es una quinta parte y cabe.*
+# **Y el plazo se dice en vez de suponerlo**: `--limite` lo cambia, y el resumen imprime lo que
+# queda y los dias que faltan al ritmo actual.
+LIMITE_POR_EJECUCION = 1000
 
 
 # **Que campos vigila el hash, y por que esos.** El hash existe para detectar que **la ficha**
@@ -86,8 +97,9 @@ def procesa(con, limite: int = 3, *, fetch=None, ahora: datetime | None = None) 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--limite", type=int, default=3,
-                    help="cuantas fichas como maximo en esta ejecucion (no hay bucle hasta agotar)")
+    ap.add_argument("--limite", type=int, default=LIMITE_POR_EJECUCION,
+                    help=f"cuantas fichas como maximo en esta ejecucion (por defecto "
+                         f"{LIMITE_POR_EJECUCION}; no hay bucle hasta agotar)")
     a = ap.parse_args(argv)
     con = inventario.conecta()
     cuenta = procesa(con, a.limite)
@@ -95,6 +107,13 @@ def main(argv: list[str] | None = None) -> int:
           f"sin publicar {cuenta['no_publicado']} · error de red {cuenta['error_temporal']}")
     res = inventario.resumen(con).get("lidl", {})
     print("  cola de Lidl: " + "  ".join(f"{k}={v}" for k, v in sorted(res.items())))
+    # **Y lo que falta, con su plazo.** *Un contador sin fecha no dice si el trabajo avanza.*
+    pendientes = int(res.get("pendiente", 0) or 0)
+    if pendientes and a.limite > 0:
+        dias = -(-pendientes // max(a.limite, 1))          # techo, sin decimales
+        ritmo = config.RITMO.get("lidl", 1.0)
+        print(f"  quedan {pendientes:,} fichas de Lidl: a {a.limite} por ejecucion son {dias:,} "
+              f"ejecuciones (~{dias * (a.limite / ritmo) / 3600:.1f} h de red)".replace(",", "."))
     con.close()
     return 0
 

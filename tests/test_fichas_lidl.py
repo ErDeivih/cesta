@@ -123,3 +123,44 @@ def test_el_hash_cambia_si_cambian_la_descripcion_o_la_imagen():
     """Los dos campos de contenido que la fuente **si** publica."""
     assert fichas_lidl._hash_util(_datos()) != fichas_lidl._hash_util(_datos(descripcion="Otra cosa"))
     assert fichas_lidl._hash_util(_datos()) != fichas_lidl._hash_util(_datos(imagen="https://cdn/y.jpg"))
+
+
+def test_lidl_esta_en_la_recoleccion_diaria_y_su_ritmo_esta_declarado():
+    """**G09, punto 189**: *«`ORDEN` actual sin Lidl debe resolverse»*.
+
+    `_en_paralelo` resuelve por nombre de modulo (`collectors.<nombre>`), asi que Lidl
+    **entraba con una palabra y no estaba**. *Y su ritmo era un `RITMO.get("lidl", 1.0)`
+    implicito: un valor que nadie habia elegido y que no se podia revisar.*
+    """
+    from core import config
+    from projects.cesta import run
+
+    assert "lidl" in run.ORDEN, "Lidl tiene colector, descubrimiento, cola y parser"
+    assert run.ORDEN[-1] == "lidl", "y va al final: ORDEN tambien es el orden de los resultados"
+    assert "lidl" in config.RITMO, "un ritmo que no esta escrito no se puede revisar"
+
+
+def test_el_limite_por_ejecucion_no_es_una_cifra_artificial():
+    """**Y esto es lo que G09 llama «no una cifra artificial».**
+
+    El limite era **3**. Con la cola real -- **5.026 pendientes de Lidl** -- son 1.676
+    ejecuciones: **cuatro anos y medio** para una sola cadena. *Tres fichas por ejecucion no
+    acreditan cobertura: es lo que G08 pide calcular en su punto 179.*
+    """
+    from projects.cesta import fichas_lidl
+
+    assert fichas_lidl.LIMITE_POR_EJECUCION >= 100, (
+        "un limite que tarda anos en cubrir la cola no es un presupuesto")
+    # A 1 peticion/s, el limite tiene que caber en una ventana de trabajo humana.
+    horas = fichas_lidl.LIMITE_POR_EJECUCION / 1.0 / 3600
+    assert horas <= 2, f"{fichas_lidl.LIMITE_POR_EJECUCION} fichas son {horas:.1f} h de red"
+
+
+def test_el_resumen_dice_cuanto_queda_sin_prometer_plazo_si_no_se_piden_fichas():
+    """*Un contador sin fecha no dice si el trabajo avanza; y `--limite 0` es legitimo:
+    pedir la cola sin pedir fichas.*"""
+    from pathlib import Path
+
+    fuente = Path("projects/cesta/fichas_lidl.py").read_text(encoding="utf-8")
+    assert "quedan" in fuente and "ejecuciones" in fuente, "el resumen dice cuanto queda y su plazo"
+    assert "a.limite > 0" in fuente, "y con --limite 0 no promete un plazo"

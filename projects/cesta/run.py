@@ -32,7 +32,12 @@ from core.runlock import ejecucion_exclusiva
 # Orden a proposito para el modo en fila: primero los lentos. En paralelo el orden
 # solo decide quien arranca antes, pero se conserva porque tambien es el orden en
 # que se leen los resultados.
-ORDEN = ["carrefour", "dia", "mercadona", "aldi", "alcampo"]
+# **Lidl entra aqui, y por eso**: tiene colector (`collectors/lidl.py`), descubrimiento
+# (`descubrir_lidl.py`), cola de fichas y parser, y `ORDEN` no lo incluia -- que es la
+# primera mitad del punto 189 de G09. *`_en_paralelo` resuelve por nombre de modulo
+# (`collectors.<nombre>`), asi que anadirlo es una palabra; y va **al final** porque
+# `ORDEN` tambien es el orden de lectura de los resultados.*
+ORDEN = ["carrefour", "dia", "mercadona", "aldi", "alcampo", "lidl"]
 
 _QUIEN = threading.local()
 

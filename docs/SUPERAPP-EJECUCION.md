@@ -893,6 +893,51 @@ entra bazar.*
 lo dice con esas palabras: *«`ORDEN` actual sin Lidl debe resolverse o reemplazarse por una planificacion
 explicita que realmente lo ejecute»*.
 
+### G09, punto 189: **Lidl entra, y con presupuesto**
+
+**Las tres piezas, y lo que se midio para decidir cada una.**
+
+**(1) Lidl esta en `ORDEN`.** `_en_paralelo` resuelve el colector por nombre de modulo
+(`importlib.import_module(f"projects.cesta.collectors.{nombre}")`), asi que **entraba con una
+palabra y no estaba**; va **al final**, porque `ORDEN` tambien es el orden de lectura de los
+resultados.
+
+**(2) Su ritmo esta declarado.** Era un `RITMO.get("lidl", 1.0)` **implicito**: un valor que nadie
+habia elegido y que no se podia revisar. Declarado con el mismo 1.0 -- *no cambia lo que pasa, cambia
+que se pueda ver y discutir*.
+
+**(3) Y el presupuesto, que es la «cifra artificial» del titulo.** `--limite` valia **3**, y la cola
+real de Lidl son **5.026 pendientes**: **1.676 ejecuciones, cuatro anos y medio** para una sola cadena.
+*Es lo que G08 pide calcular en su 179 («tres fichas por ejecucion no acreditan cobertura completa»).*
+
+    LIMITE_POR_EJECUCION = 1000
+    a 1000 por ejecucion:  6 ejecuciones  (~1,7 h de red)      <-- 6 dias
+    con el limite viejo 3: 1.676          (4,6 anos)
+
+**Y el resumen lo dice en vez de callarlo**: *«quedan 5.026 fichas de Lidl: a 1000 por ejecucion son 6
+ejecuciones (~1,7 h de red)»*. *Un contador sin fecha no dice si el trabajo avanza.* Y con
+`--limite 0` -- pedir la cola sin pedir fichas -- **no promete plazo**.
+
+**La ventana, medida en el log y no supuesta.** `data/ejecuciones.log`: **`[alcampo] terminado en
+5982s`** -- *1 h 40 min, y a su ritmo de 0,15 peticiones/s son ~900 peticiones*. **Las cadenas corren en
+paralelo, asi que la pasada dura lo que la mas lenta: Alcampo.** *Con lo que Lidl a 1.000 fichas
+(1,7 h) **se solapa** y casi no alarga la pasada.* El «unos 90 minutos» de la cabecera de `run.py`
+esta desfasado: **la ventana la marca Alcampo, con 100.**
+
+**Y el informe de cobertura** (`informe_inventario.py`, y el resumen de la pasada) es de lo mejor del
+proyecto: por cadena, contra el maximo de 30 dias, con huecos y veredicto, **y con la advertencia que
+evita la conclusion facil**: *«sin bronze puede querer decir dos cosas: que la cadena no trajo nada, o
+que **si trajo y el propio colector no lo guardo**; el registro del dia lo distingue:
+`data/ejecuciones.log`».*
+
+**Y el estado real de las fichas, medido por el propio instrumento del proyecto**: **79.915
+descubiertos, 79.887 sin ficha, 28 con ficha** -- *cinco de las seis cadenas a cero*. **No es un
+problema de Lidl: es que el sistema de fichas, en conjunto, casi no ha corrido.**
+
+**Tres pruebas nuevas** fijan lo que se decidio: `lidl` en `ORDEN` **y al final**, su ritmo declarado,
+el limite con su hora de red, y que el resumen dice cuanto queda **sin prometer plazo con
+`--limite 0`**.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
