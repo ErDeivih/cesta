@@ -1265,6 +1265,31 @@ de `version` es texto -- y mi tipo la declaraba **lista**, que era mi suposicion
 formas** (`etiquetasDeUna` las normaliza), *que es arreglarlo aceptando la forma del servidor y no
 cambiando la suya.* **Septima vez que una herramienta corrige una suposicion mia hoy.**
 
+### G12, punto 221: **la pantalla de previa** -- y con esto G12 queda cerrado
+
+**Para enseñar la previa hacia falta poder leerla sin escribir**, asi que hay dos endpoints y no uno:
+el `POST` escribe, y el **`GET /api/recetas/{id}/a-la-lista` calcula y no toca nada**. *La
+consolidacion y los envases son logica de servidor (Python), asi que no se duplican en la pantalla.*
+
+**Y la previa enseña lo que NO se puede comprar**, que es la mitad de su valor: *«sin cantidad, no se
+compra: sal» y «no se pudieron juntar: tomate: kg y ud» -- saber por que faltan lineas es mejor que
+ver una lista mas corta y no entenderlo.*
+
+**Dos pasos a proposito**: *se pide la previa -- que no escribe -- y solo despues se confirma.*
+**Y el resultado dice cual de las dos cosas paso**: *«anadido a la lista» o **«ya estaba en la lista:
+no se ha duplicado»***, que es la idempotencia del 221 **dicha en la pantalla** en vez de escondida.
+
+**Y tres suposiciones mias que `tsc` corrigio**, las tres de la misma forma -- *dar por hecho la forma
+de lo que devuelve otro*:
+
+    etiquetas del servidor   son STRING, no lista      -> se aceptan las dos formas
+    misListas                devuelve Lista[] directo  -> no {listas: [...]}
+    el id del detalle        es number | null          -> hay que guardarlo
+
+*Y una cuarta, de mi herramienta*: **`git grep … | Select-Object -First 8` corto la respuesta** y me
+hizo creer que `conCuerpo` no estaba definido en el fichero, **cuando estaba**. *Es la tercera vez hoy
+que truncar una lista me esconde lo que buscaba, y la leccion ya la tenia escrita desde la ronda 201.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

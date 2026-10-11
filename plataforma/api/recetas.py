@@ -182,6 +182,42 @@ def _con_precios(hallada: dict) -> None:
         ing["unidad_canon"] = producto.get("unidad_canon")
 
 
+@rutas.get("/{receta_id}/a-la-lista")
+def previa(receta_id: int, version: int | None = None,
+           usuario: dict = Depends(usuario_actual)) -> dict:
+    """**Que se compraria, sin comprar nada.** *Es la previa del 221, y no escribe.*
+
+    *Y hace falta que exista*: el `POST` escribe, asi que **enseñar la previa antes de decidir exige
+    un sitio que la calcule y no toque nada.** *La consolidacion y los envases son logica de servidor
+    (Python), no de pantalla, asi que no se duplica en el cliente.*
+
+    **Y devuelve tambien lo que NO se puede comprar** -- *lo que no tiene cantidad y lo que no se pudo
+    consolidar -- con su motivo.* *Es la mitad del valor de una previa: saber que la sal no se compra
+    porque no se sabe cuanto, en vez de ver una lista sin sal y no entender por que.*
+    """
+    from dataclasses import asdict
+
+    from core import previa_compra
+
+    con = _con()
+    try:
+        hallada = recetas.leer(con, usuario["id"], receta_id, version=version)
+    finally:
+        con.close()
+    if hallada is None:
+        raise HTTPException(status_code=404, detail=f"no hay receta {receta_id}")
+    _con_precios(hallada)
+    previa = previa_compra.previa_de_compra(hallada.get("ingredientes") or [])
+    return {
+        "version": hallada.get("version"),
+        "raciones": hallada.get("raciones"),
+        "lineas": [asdict(ln) for ln in previa.lineas],
+        "sin_cantidad": previa.sin_cantidad,
+        "sin_consolidar": previa.sin_consolidar,
+        "nota": previa.nota,
+    }
+
+
 @rutas.post("/{receta_id}/a-la-lista", status_code=201)
 def a_la_lista(receta_id: int, datos: ALaLista,
                usuario: dict = Depends(usuario_actual)) -> dict:

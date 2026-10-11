@@ -144,3 +144,53 @@ export function usePlanificar() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['plan'] }),
   })
 }
+
+/** Una linea de la previa de compra. *Lo que habria que comprar, no lo que dice la receta.* */
+export interface LineaDePrevia {
+  clave: string
+  texto: string
+  producto_id: string | null
+  cantidad: number
+  unidad: string
+  envases: number | null
+  tamano_envase: number | null
+  sobrante: number | null
+  de_donde: string[]
+}
+
+export interface PreviaDeCompra {
+  version: number
+  raciones: number
+  lineas: LineaDePrevia[]
+  /** **Lo que NO se puede comprar, y por que.** *Sin cantidad, o en unidades incompatibles.* */
+  sin_cantidad: string[]
+  sin_consolidar: string[]
+  nota: string
+}
+
+/** **Que se compraria. No escribe nada.** *Se mira antes de decidir.* */
+export function usePreviaDeCompra(recetaId: number | null, version?: number | null) {
+  return useQuery({
+    queryKey: ['previa', recetaId, version ?? null],
+    queryFn: () =>
+      pide<PreviaDeCompra>(
+        `/api/recetas/${recetaId}/a-la-lista` + (version ? `?version=${version}` : ''),
+      ),
+    enabled: recetaId !== null,
+  })
+}
+
+/**
+ * **Pasa la receta a la lista.** *Repetir no duplica: el servidor lleva la cuenta por operacion
+ * -- receta, version y semana -- y la semana la calcula el.*
+ *
+ * *Y por eso **no manda ni el propietario ni la semana**: los dos son del servidor.*
+ */
+export function usePasarALista(recetaId: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (listaId: string) =>
+      conCuerpo(`/recetas/${recetaId}/a-la-lista`, 'POST', { lista_id: listaId }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['listas'] }),
+  })
+}
