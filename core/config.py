@@ -94,8 +94,10 @@ RAMAS_EXCLUIDAS_ALCAMPO: set[str] = {
     "deportes y maletas",      #   164
 }
 
-# cuantos dias de crudo se conservan sin comprimir mas (0 = para siempre)
-RETENCION_RAW_DIAS = 0
+# *Aqui vivia `RETENCION_RAW_DIAS = 0`, con el comentario «0 = para siempre», y **no la leia
+# nadie**: la poda usa `DIAS_RAW`, mas arriba. Quien abriera este fichero para saber cuanto crudo se
+# guarda leia «para siempre» y se lo creia, con `limpiar.py` tirando a los 30 dias.* Una constante
+# muerta que se lee como politica es peor que no tenerla.
 
 
 def ahora_local() -> datetime:

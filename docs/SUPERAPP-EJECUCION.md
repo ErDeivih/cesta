@@ -744,6 +744,32 @@ sus bytes**, **no hay version ni carpeta a medias**; y despues **`adoptar()` pub
 
 **Y con eso el punto 169 queda completo: cinco de cinco.**
 
+### G07, punto 170: el cerrojo, la poda, y **una constante que no leia nadie**
+
+**Cuatro exigencias, y las cuatro estan.**
+
+| 170 exige | y hay |
+|---|---|
+| **bloqueo de ejecucion** | ✓✓ **`core/runlock.py`**: cerrojo **del sistema operativo** (`msvcrt.locking` en Windows, `fcntl.flock` en Linux), no bloqueante, mensaje claro -- *«ya hay otra ejecucion de cesta en marcha»* --, liberado en `finally`, **con dos pruebas** (`test_runlock.py`) y **tomado de verdad** (`run.py:30`) |
+| **escrituras atomicas** | ✓✓ *`publicacion` y `manifiesto`: temporal y `os.replace`* |
+| **no añadir tareas diarias duplicadas** | ✓ *la marca diaria de `ejecutar.bat`, con el motivo escrito* |
+| **respetar la retencion sin borrar crudo necesario** | ✓✓ *`limpiar.py`: por dias, `--ensayo` para ver que borraria, **y `storage.comprueba_borrable` como cinturon** -- «es la unica del proyecto que llama a `rmtree` y el dia que alguien le cambie la raiz por descuido conviene que reviente aqui y no en bronze»* |
+
+**Y el defecto que traia**: `config.py` tenia **dos** constantes para la retencion. **La documentada**
+-- `RETENCION_RAW_DIAS = 0`, con el comentario ***«0 = para siempre»*** -- **no la leia nadie**: `git
+grep` solo devolvia su definicion. La que manda es **`DIAS_RAW = int(os.environ.get("SCRAP_DIAS_RAW",
+"30"))`**, documentada en dos sitios y usada por la poda.
+
+*Quien abriera `config.py` para saber cuanto crudo se guarda leia «para siempre» y se lo creia, con
+`limpiar.py` tirando a los 30 dias.* **Una constante muerta que se lee como politica es peor que no
+tenerla.** Retirada; y los documentos y la poda **tenian razon los dos**: el arreglo era **borrar una
+constante**, no tocar el comportamiento.
+
+**Verificado sobre datos reales**: `carpetas_caducadas(0) == []` -- *«0 = para siempre» si esta
+implementado* --, `carpetas_caducadas(30) == 0` -- *nada caducado hoy* -- y `--ensayo` no propone nada.
+
+**Y con esto G07 queda entero: 165, 166, 167, 168, 169 y 170.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
