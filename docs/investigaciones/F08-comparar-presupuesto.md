@@ -655,3 +655,75 @@ parte principal medida.** *Y lo que **no** queda hecho son **dos cosas que nadie
 
 **Dos huecos, y el segundo lo encuentro al cerrar** -- *que es la forma en que han aparecido casi todos en esta
 fase: **mirando el conjunto despues de medir las partes.***
+
+
+---
+
+## 11. `C07`: **«maximo de tiendas» y «ahorro neto», hechos; «coste de desplazamiento», no existe**
+
+*(Ronda 114.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:95`): *«**Maximo de tiendas** y **coste de
+desplazamiento optativo**; **ahorro neto definido**, oraculo multi-tienda.»* **Y son tres piezas, no una:**
+
+| lo que pide | **estado** |
+|---|---|
+| **oraculo multi-tienda** | **hecho, y es de F06**: `core/oraculo_reparto.py` |
+| **maximo de tiendas** | **hecho**: `AJUSTES.max_tiendas`, con `CESTA_MAX_TIENDAS` (por defecto **2**) |
+| **ahorro neto definido** | **hecho**: `_mejor_reparto` elige *«la mejor combinacion de hasta `max_tiendas`, **si gana a ir a una sola**»* |
+| **coste de desplazamiento optativo** | **NO EXISTE** |
+
+### La pieza que si esta, y esta bien
+
+```
+ajustes.py:19      max_tiendas: int
+ajustes.py:41      max_tiendas=int(os.environ.get("CESTA_MAX_TIENDAS", "2"))
+cesta.py:471       max_t = max_tiendas or AJUSTES.max_tiendas
+cesta.py:531       def _asignaciones(peticiones, por_cadena, cadenas, max_tiendas)
+cesta.py:544           for combo in combinations(cadenas, min(max_tiendas, len(cadenas))):
+cesta.py:552       """La mejor combinacion de hasta `max_tiendas`, si gana a ir a una sola.
+cesta.py:572           **el optimo** entre las asignaciones de como mucho `max_tiendas` tiendas
+cesta.py:600       if max_tiendas < 2 or len(por_cadena) < 2: ...
+oraculo_reparto.py:36   oraculo(peticiones, oferta, max_tiendas=2)
+oraculo_reparto.py:135      if len(usadas) > max_tiendas:
+```
+
+**Es configurable** (*variable de entorno, por defecto 2*), **lo usa el optimizador de verdad**
+(`combinations` sobre las cadenas), **y el oraculo lo respeta** -- *o sea, que **el tope y el oraculo estan de
+acuerdo**, que es lo que hace que el oraculo sirva para juzgar al optimizador.*
+
+**Y el «ahorro neto» tambien esta, y con la definicion dicha**: *«si **gana a ir a una sola**».* **Eso **es**
+una definicion de ahorro neto: la diferencia contra el caso de una tienda** -- *que es la comparacion que
+importa, porque ir a una es lo que hace todo el mundo.*
+
+### Y la pieza que no esta
+
+**«Coste de desplazamiento optativo» no aparece en ninguna parte**: *28 menciones en la busqueda, y **las 28
+eran de `max_tiendas`**.* **No hay gasolina, ni kilometros, ni «coste de ir»** -- *ni como campo, ni como
+parametro, ni en la pantalla.*
+
+**Y es un hueco distinto de los otros dos**, porque **no es que falte un dato: es que falta una **decision**.**
+
+> *¿Cuanto cuesta ir a una tienda?* **No es un numero que este en ningun catalogo**: *depende de donde viva
+> cada persona, de si va andando o en coche, y de si de todas formas pasaba por alli.* **Meter un «coste de
+> desplazamiento» es pedirle a alguien un dato suyo, y el criterio dice «**optativo**» precisamente por eso.**
+
+**Asi que `C07` queda con tres piezas y una que no puede venir de los datos** -- *y esa es la clase de hueco que
+se dice, no que se rellena con un cero.*
+
+### Y F08, cerrado del todo
+
+| criterio | **estado** |
+|---|---|
+| **`C06`** -- identidad/formato, ambito, fecha, cantidad, coste parcial | **entero** |
+| **`C07`** -- oraculo, maximo de tiendas, ahorro neto | **hecho**; **coste de desplazamiento: NO EXISTE**, y es una decision |
+| **`C08`** -- condiciones, vigencia, no elegible | **cubierto en cuatro sitios**, con el club a media peso |
+| **`C09`** -- pagado y cobertura | **hecho**; **«previsto» NO EXISTE** |
+| **`C10`** -- copiar necesidades, no precios | **por estructura** |
+
+**Y los cinco casos de la aceptacion, cubiertos.** *Lo que F08 deja son **tres cosas que nadie ha pedido
+todavia**, y las tres son **decisiones del dueno**, no medidas:*
+
+1. **que es «presupuesto»** -- *la estimacion, lo pagado, o un numero que se ponga la persona*
+2. **cuanto cuesta ir a una tienda** -- *y por eso el criterio dice «optativo»*
+3. **que se copia del historico** -- *que ya esta resuelto: necesidades, no precios*
+
+**Dos decisiones y un cierre, y ninguna es un descuido.**
