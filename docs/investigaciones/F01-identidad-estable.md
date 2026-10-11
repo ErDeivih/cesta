@@ -270,3 +270,54 @@ lo que el grupo invita a hacer -- esa diferencia es exactamente lo que hace falt
 «se parecen» no son lo mismo cuando alguien va a pagar por ello.*
 
 **No he comprobado si la interfaz lo dice.** *Es una pantalla, y es lo siguiente que hay que mirar.*
+
+
+---
+
+## 9. Y la pantalla **si** distingue «es la misma» de «se parecen» -- en la linea
+
+*(Ronda 45.)* Pregunte si la interfaz distingue la identidad exacta de la aproximacion. **Si, y hay un
+componente dedicado:**
+
+```
+plataforma/web/app/src/componentes/AvisoIdentidad.tsx
+   1   /** El aviso de que una linea se resuelve con otro producto, o con uno que no se puede confirmar.
+   3    *  **Solo aparece cuando hay algo que decir.** Con `exacto` o sin veredicto no pinta nada: un aviso
+   4    *  que sale siempre deja de leerse.
+   6    *  **Y distingue los dos casos que importan.** `probable` es "parece el mismo, pero no tengo el
+   7    *  codigo que lo confirme": pide prudencia. `alternativa`, `cuarentena` o `abstiene` es "esto no es lo
+   8    *  que pediste": pide una decision.
+  11    *  El encargo es explicito en esto: *elegir un producto concreto no autoriza a sustituirlo por otro
+  12    *  mas barato*, y una sustitucion que no se ve es exactamente lo que hay que evitar.
+  25   if (CONFIRMADO.has(identidad)) return null          // exacto, null, undefined
+  37      'Puede que sea el mismo producto, pero no hay codigo que lo confirme.'     <- probable
+  38      'Ojo: esta linea se resuelve con otro producto, no con el que pediste.'    <- el resto
+```
+
+**Y la API alimenta ese veredicto**: `cesta.py:205 veredicto = identidad.decide(...)` y
+`cesta.py:206 exacta = veredicto["estado"] == identidad.EXACTO` ✓
+
+**Asi que mi sospecha de la ronda 44 era infundada, y lo digo claro**: *el motor distingue, **y la pantalla
+tambien** -- con dos mensajes distintos, no uno naranja para todo, y con la razon escrita de por que: «un
+aviso que sale siempre deja de leerse».*
+
+### Y lo que queda, ahora acotado a una cosa concreta
+
+**El aviso es de la linea de una lista, no de la ficha del grupo.** *Y mi pregunta era por la ficha: si
+alguien abre el grupo 11627 y ve cuatro marcas, ¿se le dice que tres de ellas no son el mismo producto, o se
+le presentan como equivalentes?*
+
+**No lo he comprobado.** *`/api/grupo/{grupo_id}` y la pantalla que lo pinta no se han leido.* **Asi que la
+pregunta baja de «¿distingue la app?» -- que ya tiene respuesta, y es si -- a «¿lo dice tambien en la ficha
+del grupo?», que es una pantalla concreta.**
+
+### Y el hallazgo #9 queda asi
+
+| | |
+|---|---|
+| `alerta` ligada al ordinal | **defecto real, 1 alerta, con daño medido** (el nombre guardado ya no describe al grupo) |
+| la causa | **explicada**: via debil sin GTIN, declarada en el codigo |
+| el motor | **distingue exacto de probable**, con cuarentena para el GTIN incompatible |
+| la pantalla de la linea | **lo dice**, con dos mensajes distintos |
+| **la ficha del grupo** | **sin comprobar** |
+| **la migracion de `alerta`** | **pendiente**: darle identidad estable por `ean` |
