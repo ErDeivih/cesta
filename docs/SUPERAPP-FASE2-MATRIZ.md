@@ -100,7 +100,7 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 | **F09** recetario | **cerrado** | `R01` hecho, `R03`/`R04` medidos y pasan (9 pruebas), **`R02` no existe** (importar: tres capas lo confirman). |
 | **F10** plan y cocina | **medido** | `R07` hecho (`previa_compra`); **`R05` no existe** (ni pasos ni temporizadores: *«no hay pasos que pasar»*); `R06` exige fecha. **Un defecto fijado**: `kg/g` no se suman. |
 | **F11** despensa | **medido** | **`R08` no existe** (cuatro capas); **`R09` hecho** (`costeReceta`, con los dos números); `R10` depende de `R08`. |
-| **F12** calorías | **en curso** | `N01`/`N04` (la clave de operación), `N06` (versión obligatoria, con `raise`) y `N02` (la cámara como botón) **hechos**. Faltan **`N03`** (porciones) y **`N05`** (alimentos propios). |
+| **F12** calorías | **en curso** | `N01`/`N04` (la clave de operación), `N02` (el escáner: texto principal y cámara como botón), `N05` (fuente declarada: `NOT NULL` y conjunto cerrado de cuatro, con `raise`) y `N06` (versión obligatoria) **hechos**. Faltan **`N03`** (porciones) y **`N05`** (alimentos propios). |
 | **F13–F16** | **sin empezar** | *Van después, según sus dependencias.* |
 
 **Los cuatro criterios que la fase ha encontrado sin cumplir, y su clase:**
