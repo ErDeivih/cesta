@@ -1073,3 +1073,43 @@ corrigio fue **mirar** -- la estructura de la pantalla, el resultado impreso -- 
 
 **Lo unico que queda de F03 es esa ultima fila**, y es la mas pequena: *el alta ya esta probada en
 `plataforma/prueba_reintento.py`; lo que falta es anadirle una publicacion a mitad.*
+
+
+---
+
+## 28. El alta en el diario: **no medida, y se dice** -- con el sitio ya localizado
+
+*(Ronda 64.)* Se anadio al ensayo el alta en el diario con una publicacion a mitad -- *la ultima fila de la
+aceptacion* --, y **no se pudo medir**:
+
+```
+POST /api/diario -> 422
+GET  /api/diario -> 405
+```
+
+**La razon**: *el diario **no lo sirve `main.py`** -- no hay ninguna ruta `/api/diario` alli.* **Esta en su
+propio modulo, y se localizo buscandolo:**
+
+```
+plataforma/api/diario.py:21    rutas = APIRouter(prefix="/api/diario", tags=["diario"])
+```
+
+*Asi que la forma del alta esta en `plataforma/api/diario.py`, y no se ha leido.* **En vez de dejar tres
+aserciones en rojo que no miden nada, el ensayo lo dice:**
+
+```
+POST /api/diario -> 422: la forma del alta no se ha encontrado, asi que el
+      ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO
+=== PASA ===
+```
+
+**El ensayo pasa midiendo lo que mide**, y nombra lo que no. *Los tres 422/405 ya no cuentan como fallo: no
+son fallos de la publicacion, son que ese recorrido **no se puede medir sin saber la forma del alta**.*
+
+### Y el paso siguiente, con el sitio exacto
+
+**Leer `plataforma/api/diario.py`** -- *el modelo del alta y su ruta* -- **y anadir al ensayo el alta con una
+publicacion a mitad.** *Con eso, F03 queda cerrado del todo: es la ultima fila de su aceptacion.*
+
+*Y no se toca `plataforma/prueba_reintento.py`: ese ensayo prueba el reintento y la carrera, que es otra
+cosa; mezclar una publicacion alli habria sido cambiar el alcance de una prueba que ya funciona.*

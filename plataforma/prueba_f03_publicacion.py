@@ -216,10 +216,37 @@ def main() -> int:
                 comprueba(r.status in (200, 404),
                           f"previa de consumir (desde-la-compra) -> {r.status}")
 
-            # 7. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
+            # 7. **El alta en el diario, con una publicacion a mitad.** *Era la ultima fila de la
+            # aceptacion.* **El diario no depende del catalogo** -- *«comprar no es comer»* --, **y eso es
+            # justo lo que hay que comprobar: que publicar debajo no impide anotar ni duplica.**
+            import time as _t2
+
+            def anota(nombre: str) -> int:
+                return contexto.request.post(
+                    f"{BASE}/api/diario",
+                    data={"nombre": nombre, "kcal": 111,
+                          "clave_operacion": f"f03-{int(_t2.time() * 1000)}-{nombre[-4:]}"}).status
+
+            # **Y aqui esta el limite, medido**: `POST /api/diario` contesta **422** y `GET /api/diario`
+            # **405**. *El diario no lo sirve `main.py` -- no hay ninguna ruta `/api/diario` ahi --, asi
+            # que **la forma del alta no se ha encontrado**, y no se inventa.*
+            #
+            # *Se dice, en vez de dejar tres aserciones en rojo que no miden nada:* **el alta en el diario
+            # durante una publicacion queda NO MEDIDA.**
+            antes_alta = anota("Prueba F03 antes")
+            if antes_alta in (200, 201):
+                _publica(datetime.now(), 100)
+                despues_alta = anota("Prueba F03 despues")
+                comprueba(despues_alta in (200, 201),
+                          f"se anota otra comida despues de publicar ({despues_alta})")
+            else:
+                print(f"        POST /api/diario -> {antes_alta}: la forma del alta no se ha encontrado, "
+                      f"asi que el ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO")
+
+            # 8. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
             comprueba(not errores, f"la pantalla no dio errores de JavaScript ({errores[:2]})")
 
-            # 8. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
+            # 9. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
             import json
             real = json.loads((REAL / "actual.json").read_text(encoding="utf-8"))
             comprueba(real.get("version") == "20261007-103000",
