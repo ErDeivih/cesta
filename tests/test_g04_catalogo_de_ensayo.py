@@ -342,3 +342,98 @@ def test_una_v2_sin_el_producto_en_una_cadena_lo_deja_con_una(con_almacen=None):
             assert set(v1["fuente"].to_list()) == {"dia", "alcampo"}
         finally:
             publicacion.GOLD, publicacion.PUNTERO = guardado
+
+# --- y ahora, que la APLICACION lo lea -------------------------------------
+
+@pytest.fixture()
+def app_leyendo_el_ensayo(tmp_path, monkeypatch):
+    """**La aplicacion lee el catalogo de ensayo, y esto es lo que lo consigue.**
+
+    La API no lee por versiones: lee **DuckDB sobre los parquet de `AJUSTES.gold`** (`catalogo.py:1`)
+    y deriva `buscable` de ellos en cada conexion. Asi que la palanca es `AJUSTES.gold`, **no**
+    `publicacion.GOLD` -- son dos constantes en dos modulos, y la aplicacion usa la segunda.
+
+    **`Ajustes` esta congelado** (`FrozenInstanceError` al asignar), asi que se entra por
+    `object.__setattr__`, que es lo que hace falta para apuntar el ensayo sin tocar el catalogo del
+    producto. Y se restaura al terminar.
+    """
+    from plataforma.api import catalogo
+    from plataforma.api.ajustes import AJUSTES
+
+    oro = tmp_path / "gold"
+    oro.mkdir()
+    original = AJUSTES.gold
+    object.__setattr__(AJUSTES, "gold", oro)
+    monkeypatch.setattr(publicacion, "GOLD", oro)
+    monkeypatch.setattr(publicacion, "PUNTERO", oro / "actual.json")
+    try:
+        yield oro
+    finally:
+        object.__setattr__(AJUSTES, "gold", original)
+        catalogo.reiniciar()
+
+
+def _suelta(oro: Path, datos: dict[str, pl.DataFrame]) -> None:
+    """**Deja los seis parquet sueltos donde la API los mira.** `publicar` los escribe en la carpeta
+    de la version; la aplicacion lee los sueltos, asi que el ensayo se deja en las dos formas."""
+    for nombre, marco in datos.items():
+        marco.write_parquet(oro / nombre)
+
+
+def test_la_aplicacion_busca_en_el_catalogo_de_ensayo_y_no_en_el_real(app_leyendo_el_ensayo):
+    """**La puerta del recorrido.** Si esto no pasara, todo lo demas mediria el catalogo real."""
+    from plataforma.api import catalogo
+
+    oro = app_leyendo_el_ensayo
+    _suelta(oro, publica_v1())
+    catalogo.reiniciar()
+
+    hallados = catalogo.buscar("Barrita de ensayo")
+    assert hallados, "la busqueda no encuentra el producto del ensayo"
+    # **`buscar` devuelve PRODUCTOS, no filas de cadena**: el mismo producto esta en DIA y en
+    # Alcampo, y la busqueda devuelve **el producto**. Los precios por cadena salen de la ficha.
+    # *Darlo por hecho al reves fue mi fallo de la ronda anterior, no del codigo.*
+    assert len(hallados) == 1, f"un producto, y salieron {len(hallados)}: {hallados[:3]}"
+    assert hallados[0].get("nombre") == PRODUCTO, hallados[0]
+    assert hallados[0].get("precio_cent") in (150, 220), hallados[0].get("precio_cent")
+
+
+def test_publicar_v2_cambia_lo_que_la_aplicacion_sirve(app_leyendo_el_ensayo):
+    """**El punto 2, con la aplicacion delante**: el catalogo cambia y lo servido cambia con el.
+
+    Y hace falta `catalogo.reiniciar()`: la conexion se cachea por el `mtime` de `grupos.parquet`, y
+    **una prueba que no lo tenga en cuenta mediria la cache, no la publicacion.**
+    """
+    from plataforma.api import catalogo
+
+    oro = app_leyendo_el_ensayo
+    _suelta(oro, publica_v1())
+    catalogo.reiniciar()
+    encuentra = catalogo.buscar("Barrita de ensayo")
+    assert len(encuentra) == 1, encuentra
+    antes = encuentra[0].get("precio_cent")
+    assert antes in (150, 220), antes
+
+    # **V2**: el precio de DIA cambia de 150 a 120. Se deja publicado Y suelto, que es lo que la API ve.
+    publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+    datos_v2 = publica_v2()
+    publicacion.publicar(datos_v2, momento=_momento(SELLO_V2))
+    _suelta(oro, datos_v2)
+    catalogo.reiniciar()
+
+    despues = catalogo.buscar("Barrita de ensayo")
+    assert len(despues) == 1, despues
+    assert despues[0].get("precio_cent") == 120, (
+        f"la aplicacion sigue sirviendo lo viejo: {despues[0].get('precio_cent')}")
+    # **Y las dos versiones siguen publicadas**: publicar no borra.
+    assert publicacion.versiones() == [SELLO_V1, SELLO_V2], publicacion.versiones()
+
+    # **Los precios POR CADENA**, que es donde estan los dos: la busqueda da el producto, y la
+    # ficha da lo que cuesta en cada cadena. Aqui se ve que V2 cambio **uno** y no el otro.
+    ficha = catalogo.grupo(GRUPO)
+    por_cadena = {}
+    for fila in (ficha if isinstance(ficha, list) else ficha.get("productos", [ficha])):
+        if isinstance(fila, dict) and fila.get("fuente"):
+            por_cadena[fila["fuente"]] = fila.get("precio_cent")
+    assert por_cadena.get("dia") == 120, f"la ficha no trae el precio nuevo de DIA: {por_cadena}"
+    assert por_cadena.get("alcampo") == 220, f"y el que no cambio, no cambia: {por_cadena}"

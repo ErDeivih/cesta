@@ -263,6 +263,32 @@ incompleta**. *Pasaba igual, pero medía mi escritura en vez de la funcion.* Aho
 publicar V2»* -- y su parte de aplicacion: **el fixture publica contra un `GOLD` temporal, y la API
 sigue leyendo el suyo**, asi que el recorrido con el catalogo cambiando debajo **no esta recorrido**.
 
+### G04, el recorrido: **la aplicacion lee el catalogo de ensayo**
+
+**La palanca es `AJUSTES.gold`, no `publicacion.GOLD`** -- *son dos constantes en dos modulos, y la
+aplicacion usa la segunda*. La API lee **DuckDB sobre los parquet de `AJUSTES.gold`** (`catalogo.py:1`)
+y **deriva `buscable` de ellos en cada conexion**, asi que el ensayo es **una sola cosa que apuntar**.
+Y `Ajustes` esta **congelado** (`FrozenInstanceError`), asi que se entra por `object.__setattr__`.
+
+**Y un hecho del proyecto que sale de aqui**: **el mecanismo de publicacion por versiones existe, esta
+probado, y la aplicacion todavia no lee versiones.** *Lo dice el propio modulo: «sin version publicada
+se lee el catalogo suelto de siempre (fallback conservador): asi esto entra sin romper nada y se puede
+adoptar cuando convenga»*. **Es una pieza preparada y aun no adoptada** -- anotado, no es un defecto.
+
+| comprobado | |
+|---|---|
+| con `AJUSTES.gold` en el ensayo, la busqueda devuelve **mi** producto | ✓ **y no los 51.609 reales** |
+| **`buscar` devuelve PRODUCTOS, no filas de cadena** | ✓ *una fila; los precios por cadena salen de la ficha* |
+| **la ficha** (`catalogo.grupo`) da los precios **por cadena** | ✓ `{dia: 150, alcampo: 220}` |
+| publicar **V2** cambia **uno** y no el otro | ✓ **`{dia: 120, alcampo: 220}`** |
+| `catalogo.reiniciar()` es lo que hace releer | ✓ *la conexion se cachea por el `mtime` de `grupos.parquet`* |
+| y las dos versiones siguen publicadas | ✓ |
+
+**Y dos aserciones mias que estaban mal, dichas para que no se repitan**: di por hecho que la busqueda
+devuelve una fila **por cadena** -- devuelve **un producto** -- y me construi un diccionario por
+`nombre`, que como los dos nombres son iguales **se quedo con uno y ocultaba el resultado**. *El
+codigo hacia lo sensato; el que no lo entendia era yo.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
