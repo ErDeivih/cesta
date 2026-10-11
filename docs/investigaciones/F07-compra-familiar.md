@@ -350,3 +350,59 @@ pendiente, y ahora se sabe exactamente donde medirlo: **`Cesta.tsx`, con un nave
 `POST /lineas`.* **Y el ensayo de F03 (`plataforma/prueba_f03_publicacion.py`) ya monta lo que hace falta**:
 *un navegador, una cuenta con sesión, una lista creada, y la pantalla de `/compra` con su buscador.*
 **Anadirle un contador de toques es trabajo pequeno y con el andamio hecho.**
+
+
+---
+
+## 7. **El numero: cuatro toques.** Y la lista de casa ya viene creada
+
+*(Ronda 93.)* Pasos medidos **de verdad**, con un navegador y una cuenta vacia:
+`plataforma/prueba_f07_pasos.py`.
+
+```
+=== TOQUES DEL RECORRIDO DE CUENTA VACIA: 4 ===
+        toque  1: abrir la app
+        toque  2: escribir 'Gofres' en el buscador
+        toque  3: pulsar buscar
+        toque  4: anadir el producto a la lista
+=== PASA ===
+```
+
+### Y tres cosas que salieron al medirlo, que no sabia
+
+**1. `/compra` ES la pantalla de busqueda.** *El titulo es **`'Buscar · Cesta'`*** -- *asi que el recorrido
+empieza buscando, y no hay que navegar a ningun sitio.* *Eso quita un toque que yo contaba.*
+
+**2. La lista de casa ya viene creada.** *El ensayo dijo, literalmente:* **«no hay boton de crear lista: puede
+que ya venga creada»** -- *y es que **viene creada**.* **Asi que el paso 2 del servidor (`POST /listas`) no
+cuesta ningun toque al usuario**: *existe antes de que lo pida.*
+
+> *Que es exactamente lo que decia el comentario de `main.py:518`, que lei en §5 y no acabe de entender hasta
+> ahora: **«la lista de casa es el eje de la aplicacion: alimenta el contador del menu, el puente de la compra
+> y las alertas»**.* **Si es el eje, se crea sola -- y por eso el usuario no la crea.**
+
+**3. Los resultados traen un solo elemento pulsable**, y es el nombre del producto. *Doce resultados, y cada uno
+se anade pulsandolo.* **Un toque por producto, que es lo que hay que medir para una compra entera.**
+
+### Y los dos numeros, que son distintos y los dos hacen falta
+
+| | cuenta | **que mide** |
+|---|---|---|
+| **servidor** (§5) | **4 peticiones** | *`registrarse` → `POST /listas` → `buscar` → `POST /lineas`* |
+| **pulgar** (§7) | **4 toques** | *abrir · escribir · buscar · anadir* |
+
+**Y no coinciden por casualidad**: *la lista de casa se crea **sin toque** (la crea el servidor al entrar), y
+«abrir la app» no es una peticion.* **Coinciden en numero y no en contenido, que es justo la razon de contarlos
+por separado** -- *decir «cuatro» a secas habria sido cierto y no habria dicho nada.*
+
+### Y F07 queda con sus seis filas, ya casi todas con numero
+
+| lo que pide su criterio | estado |
+|---|---|
+| **dos sesiones, sin pisarse** | **medido**: *el tachado cumple; **la cantidad es un defecto**, fijado con `xfail`* |
+| **lista por pasillos** | **el dato esta, la funcion no**; *falta decidir de que tienda* |
+| **recorrido de cuenta vacia** | **4 toques**, medidos en un navegador |
+| **medir pasos** | **hecho**: 4 y 4, y son cosas distintas |
+| **tarea movil con una mano** | *medido a 390x844 en el ensayo*; **falta que lo haga una mano de verdad** |
+| **recarga** | **cubierta** por el ensayo de F03 |
+| C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
