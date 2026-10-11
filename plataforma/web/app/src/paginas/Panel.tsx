@@ -32,6 +32,7 @@ import {
 } from '../api/consultas'
 import { euros, eurosUnidad, fecha, nombreCadena, numero, porcentaje, porcentajeConSigno } from '../api/formato'
 import { GraficoIndice } from '../componentes/GraficoIndice'
+import { LoQueHasPagado } from '../componentes/LoQueHasPagado'
 import { Aviso, Cargando, Dato, Etiqueta, Fallo, Selector, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 const PESTANAS = [
@@ -260,6 +261,13 @@ function Hoy() {
               </ul>
             </Aviso>
           )}
+
+          {/* **Primero el dinero.** La pagina se llama «Gasto y ahorro» y hasta hoy no
+              tenia gasto: sus secciones eran todas del catalogo. Lo que has pagado sale de
+              las compras que cerraste, y va con su cobertura -- *cuantas lineas se quedaron
+              sin precio* --, porque un total parcial sin su aviso es una mentira por
+              omision. */}
+          <LoQueHasPagado />
 
           <Tarjeta titulo="Qué entró por cadena" sub="Sobre cuántos productos se ha contado cada cosa">
             <TablaScroll etiqueta="Ingesta por cadena" minAncho="40rem">

@@ -499,6 +499,28 @@ puede probar sin montar el navegador**. *Deberia poder, y es el mismo arreglo.*
 no avisa de nada; un total parcial se dice **con** lo que le falta; el singular de una linea; y el
 periodo legible, incluida la fila sin periodo.
 
+### G05, el gasto: **la seccion, en pantalla** -- el punto, cerrado
+
+`componentes/LoQueHasPagado.tsx`, montado **el primero** en `/compra/analisis`. *La pagina se llama
+«Gasto y ahorro» y hasta hoy no tenia gasto: sus diez secciones eran del catalogo.*
+
+- **el gasto es de la lista de casa**, que es la que tiene compras -- *la misma regla que el puente del
+  diario* --, y sale de `useGasto(listaId, periodo)`;
+- **conmutador mes / semana**, porque G05 pide «semanal/mensual» y los dos estan medidos;
+- **la tabla la pinta `TablaScroll`**, con `caption` y `etiqueta` en cada celda: *es donde se lee, y es
+  la tabla accesible de los mismos datos que G05 pide para cada grafica*;
+- **y las dos mitades juntas, nunca una sin la otra**: el total **y** «faltan N lineas sin precio» en la
+  misma fila. *Un total parcial sin su aviso es una mentira por omision; un aviso sin el total no
+  informa.*
+- **`null` se dice «No se sabe»** y nunca «0,00 €»: *un cero se lee «ese mes no gaste nada», y el numero
+  sale mas bajo de lo real, redondo y creible.*
+
+*El total lo suma el servidor (`core/gasto.py`, puro y probado); la decision de que se puede decir vive
+en `logica/gasto.ts` (puro y probado, 5 pruebas); **el componente solo compone**.*
+
+**Y con esto, el punto del gasto pagado de G05 queda cerrado**: regla, endpoint, cobertura de lineas,
+medida de punta a punta, regla de presentacion y seccion en pantalla.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
