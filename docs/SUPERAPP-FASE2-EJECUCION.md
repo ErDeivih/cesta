@@ -281,3 +281,21 @@ que se permite** de valor.*
 
 **Ninguna de las cinco es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
 son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
+
+---
+
+## Lo que ya no falta -- y lo unico que queda de cada cosa
+
+*Actualizado el 11 de octubre de 2026, despues de las rondas 158-170.*
+
+| lo que era un hueco | **lo que hay hoy** | **lo que falta** |
+|---|---|---|
+| **`R02` importar recetas** | **las tres piezas de logica**: fuente permitida, borrador (*la previa que **no escribe***) y **lector de `application/ld+json`** -- *19 pruebas* | **la lista de fuentes** (*la 5.a decision*) **y la pantalla** |
+| **`R05` modo cocina** | **entero del servidor para abajo**: `core/cocina.py` (*10 pruebas*), tabla `018`, y **5 endpoints** | *la pantalla (F14)* |
+| **`R08` despensa** | **entero del servidor para abajo**: `core/despensa.py` (*9 pruebas*), tabla `017`, y **3 endpoints** | *la pantalla (F14)* |
+| **la paginacion del buscador** | **hecha** (*4 pruebas*) | *nada* -- *y **destapo** que el orden de `buscar` no es total (4.a decision)* |
+
+**Y lo que hay que decir de esto, que es lo unico que importa**: *los cuatro eran **«no existe»** al empezar la
+fase, y **ninguno era un defecto**: eran **funciones que nadie habia escrito**.* **Hoy tres tienen la logica
+hecha, probada y con las reglas del proyecto puestas en el camino** -- *y a las tres les falta **lo mismo**: la
+pantalla, que es **F14** y no una decision.*

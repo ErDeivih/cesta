@@ -307,9 +307,9 @@ medido.*
 paquete, `§3` los ensayos, `§4` el veredicto con los cinco estados, y `§5` esto. **Falta el ensayo integral**:
 *correr las puertas todas juntas -- `ruff`, la suite, `tsc`, el build -- y dejar el resultado escrito con fecha.*
 
-### 3. **Las cuatro funciones que no existen** -- *y son la fase 3*
+### 3. **Las cuatro funciones que no existian** -- *y hoy dos estan enteras del servidor para abajo*
 
-**`R02` (importar recetas), `R05` (modo cocina), `R08` (despensa) y la paginacion del buscador.** *Las cuatro
+**`R02` tiene sus tres piezas de logica** (*fuente permitida, borrador y lector de `ld+json`, 19 pruebas*) **y le falta la lista de fuentes** -- la 5.a decision; **`R05` y `R08` estan enteras del servidor para abajo** (*logica + tabla + ruta*, con 10 y 9 pruebas y 5 y 3 endpoints); *y **la paginacion esta hecha**.* **A los tres les falta lo mismo: la pantalla, que es F14.**
 tienen nombre, criterio y casos de aceptacion descritos en su informe.* **El encargo pone las mejoras funcionales
 **despues** de los cierres, y estos lo son.**
 
