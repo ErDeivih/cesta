@@ -151,3 +151,50 @@ operativa —«no se está sirviendo»— desde un detalle de versionado, **sin 
 versiones, ¿para qué se publican?* Las respuestas posibles —que el versionado sea para el manifiesto y la
 auditoría, que falte conectar `catalogo` a `rutas()`, o que sea deuda a medio terminar— **no las elijo
 yo**: quedan como la primera cosa que hay que decidir en F03.
+
+
+---
+
+## 7. La pregunta que abrí en la ronda 14 **ya estaba contestada**, y la contesté mal
+
+Escribí: *«si la aplicación no lee versiones, ¿para qué se publican? […] no las elijo yo: quedan como la
+primera cosa que hay que decidir.»*
+
+**Estaba en el proyecto, con su motivo, y no lo leí.** `docs/SUPERAPP-ESTADO.md:645-647`, en el cierre de
+S01:
+
+> **Pendiente dentro de S01**: el pipeline todavía escribe los ficheros sueltos; **hay que hacerlo
+> publicar por versiones y que la API lea con `rutas()`**. Se hace al entrar en S02/S05, **para no tocar
+> la tarea de las 06:00 a la vez que se cambia la lectura**.
+
+**Así que no es un defecto escondido: es un pendiente declarado, con su razón de ordenación** — *cambiar
+la tarea de las 06:00 y la ruta de lectura a la vez es justo lo que no se quiere*.
+
+**Y el documento avisa además del riesgo técnico**: *«importar `publicacion` en la API»* traería **polars**
+a la API, que *«causó reinicios de `cesta-api` el 21 de septiembre»*. El camino que el propio documento
+apunta: **«sacar la lectura a un módulo pequeño sin polars que usen los dos»**. Y termina con una frase
+que conviene citar entera: *«Queda apuntado, no hecho: hoy no hay ningún síntoma que lo pida.»*
+
+**Lo que sí es mío, y sigue en pie**: la tabla de S01 afirma *«concurrencia probada: `rutas()` resuelve la
+versión **una vez** y devuelve todos los caminos»*, y **eso está probado pero no usado** — *la prueba mide
+la función, no que la petición la use*. **Un cierre por «probado» sobre una función sin consumidores es
+exactamente el patrón que esta fase existe para encontrar**; el documento ya lo dice en prosa, pero la
+tabla lo lee como cumplido.
+
+**Y la lección de método, que me la llevo**: *presenté como pregunta abierta algo que el proyecto había
+escrito y decidido aplazar.* **Antes de declarar un hueco, hay que leer el fichero de estado** — que es
+justo lo que el encargo pide cuando dice «contrastar los cierres anteriores con los criterios y pruebas
+reales».
+
+---
+
+## 8. Lo que queda de F03, ya sin preguntas abiertas
+
+1. **Cambiar la lectura de la API a `rutas()`** — el pendiente declarado de S01 —, **sin meter polars en
+   la API**: *el camino que el propio documento apunta es un módulo pequeño sin polars que usen los dos.*
+   *Ese cambio es lo que hace verdadera la frase «respuesta individual no mezcla versiones», que hoy se
+   cumple por trivialidad.*
+2. **Los dos recorridos de navegador** de V1 fija y V2 publicada durante el uso.
+3. **Reanudar desde crudo sin rescrapear todo**, con `load_raw_bytes`.
+4. **Y una decisión de tabla, no de código**: la fila de S01 que da «concurrencia probada» por `rutas()`
+   —*probado, sí; usado, no*— **debería decir lo que dice la prosa**.
