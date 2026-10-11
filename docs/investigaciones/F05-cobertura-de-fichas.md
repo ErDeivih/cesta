@@ -674,3 +674,50 @@ escribe.**
 **Asi que la cobertura de fichas no es cero: es 6.331 de Dia y 0 de Mercadona, y el resto sin maestro.**
 *Lo que la cola de 79.887 mide es **otra cosa** -- refresco y fichas de cadenas que no las traen en el
 listado --, y decirlo como «cobertura de fichas» mezclaba dos cosas distintas.*
+
+
+---
+
+## 16. Que es la cola de 79.887, medido antes de escribir un ejecutor
+
+*(Ronda 67.)* Iba a escribir el ejecutor de fichas de una segunda cadena. **Mire primero que es la cola** --
+*y es la leccion de toda esta fase aplicada a tiempo.*
+
+```
+core/inventario.py:200   def enganche(con, ruta_bronze=None, *, progreso=True) -> int:
+                 :202       «Levanta el inventario desde **bronze historico**: la union de todas las
+                 :203       capturas, sin red.»
+                 :205       «bronze si conserva `fuente` e `id_fuente`. Se recorre **una vez**»
+                 :209       «Devuelve el numero de **productos distintos** registrados.»
+```
+
+**Asi que la cola se levanta de bronze** -- *todos los productos vistos en cualquier captura, sin pedir
+nada* -- **y lo que guarda es «que productos existen y cuando se miro cada uno».**
+
+### Y con eso, la cola queda explicada
+
+| pieza | que es |
+|---|---|
+| **el colector** | captura **listados** -- *y para Dia y Mercadona, ademas, las fichas que va viendo* |
+| **bronze** | lo que el colector guardo: fuente e id_fuente |
+| **la cola** | la union de todo eso: **79.887 productos distintos**, pendientes de ficha |
+| **lo que falta** | **visitar la ficha de cada uno**, que es una peticion por producto |
+
+**No es que la cola este sin arrancar: es que su trabajo es una visita por producto, y esa visita solo existe
+para Lidl** (`fichas_lidl.py`).
+
+### Y lo que el colector ya hace, que conviene no perder de vista
+
+**`collectors/dia.py` SI pide la ficha** -- `ficha(f, sku_id)` en `/api/v1/product/<sku_id>` -- **y extrae la
+tabla** con `_nutricion`. *Por eso el maestro de Dia tiene **6.331 productos con nutricion** (§15).* **Lo que
+no hace es pedirla para los 79.887: las pide para los que recorre.**
+
+**Asi que la pregunta de F05 no es «falta un ejecutor»: es «que productos merecen la visita»** -- *porque
+pedir 79.887 fichas es una operacion de red de verdad, con su presupuesto, y eso es una decision, no un
+modulo que se escribe por inercia.*
+
+### Y lo que se puede hacer sin esa decision
+
+**Medir cuantos de los 79.887 tienen ya su dato por otra via.** *Dia tiene 6.331 con tabla y Mercadona 4.494
+con ingredientes: **si esos productos estan tambien en la cola como pendientes, hay fichas ya obtenidas que
+cuentan como deuda**.* **Eso es un `SELECT` contra el catalogo, sin red, y es lo siguiente.**
