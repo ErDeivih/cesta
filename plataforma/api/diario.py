@@ -48,6 +48,10 @@ class EntradaIn(BaseModel):
     hidratos_g: float | None = Field(default=None, ge=0)
     fuente_dato: str = diario.DESCONOCIDO
     nota: str = ""
+    # **La clave de la operacion.** El cliente la genera al enviar y la repite si reintenta: un
+    # doble clic o una respuesta perdida devuelven **la entrada que ya hay** en vez de crear otra.
+    # Dos comidas legitimas llevan claves distintas y se registran las dos.
+    clave_operacion: str | None = None
 
 
 @rutas.get("/rango")
@@ -93,7 +97,8 @@ def apuntar(datos: EntradaIn, usuario: dict = Depends(usuario_actual)) -> dict:
             con, usuario["id"], datos.fecha, datos.comida, tipo=datos.tipo,
             referencia=datos.referencia, version=datos.version, cantidad_g=datos.cantidad_g,
             kcal=datos.kcal, proteinas_g=datos.proteinas_g, grasas_g=datos.grasas_g,
-            hidratos_g=datos.hidratos_g, fuente_dato=datos.fuente_dato, nota=datos.nota)
+            hidratos_g=datos.hidratos_g, fuente_dato=datos.fuente_dato, nota=datos.nota,
+            clave_operacion=datos.clave_operacion)
         return {"id": entrada_id, "dia": diario.dia(con, usuario["id"], datos.fecha)}
     except ValueError as fallo:
         raise HTTPException(status_code=400, detail=str(fallo)) from fallo

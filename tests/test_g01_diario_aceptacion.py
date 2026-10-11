@@ -149,3 +149,48 @@ def test_el_dia_de_una_persona_no_ve_el_de_otra(tmp_path):
     # **Y no se puede borrar lo de otra persona ni sabiendo su identificador.**
     assert diario.borrar(con, "luis", de_a) is False
     assert len(diario.dia(con, "ana", "2026-10-11")["entradas"]) == 1
+
+# --- 6. la idempotencia por operacion --------------------------------------
+
+def test_la_misma_operacion_dos_veces_no_duplica(tmp_path):
+    """Un doble clic, o un reintento con la respuesta perdida, **no** crean otra entrada.
+
+    Y no se consigue mirando si se parece a otra: se consigue con **la clave que manda quien
+    envia**. Es la unica que distingue un reintento de una comida nueva.
+    """
+    con = diario.conecta(tmp_path / "diario.db")
+    primera = diario.apunta(con, "david", "2026-10-11", "comida", kcal=300.0,
+                            clave_operacion="op-abc")
+    segunda = diario.apunta(con, "david", "2026-10-11", "comida", kcal=300.0,
+                            clave_operacion="op-abc")
+    assert primera == segunda, "la segunda devuelve la entrada que ya habia, no una nueva"
+    assert len(diario.dia(con, "david", "2026-10-11")["entradas"]) == 1
+    assert diario.dia(con, "david", "2026-10-11")["conocido"]["kcal"] == pytest.approx(300.0)
+
+
+def test_dos_operaciones_distintas_con_lo_mismo_son_dos(tmp_path):
+    """Dos meriendas iguales de verdad: el documento pide que **se puedan** registrar."""
+    con = diario.conecta(tmp_path / "diario.db")
+    a = diario.apunta(con, "david", "2026-10-11", "merienda", kcal=100.0, clave_operacion="op-1")
+    b = diario.apunta(con, "david", "2026-10-11", "merienda", kcal=100.0, clave_operacion="op-2")
+    assert a != b
+    assert len(diario.dia(con, "david", "2026-10-11")["entradas"]) == 2
+
+
+def test_sin_clave_sigue_funcionando_como_antes(tmp_path):
+    """La clave es opcional: quien no la mande se comporta como siempre. Los registros viejos,
+    que no la tienen, no pueden chocar entre si."""
+    con = diario.conecta(tmp_path / "diario.db")
+    diario.apunta(con, "david", "2026-10-11", "comida", kcal=100.0)
+    diario.apunta(con, "david", "2026-10-11", "comida", kcal=100.0)
+    assert len(diario.dia(con, "david", "2026-10-11")["entradas"]) == 2
+
+
+def test_la_clave_no_cruza_entre_personas(tmp_path):
+    """Cada uno con su clave: la de uno no devuelve la entrada del otro."""
+    con = diario.conecta(tmp_path / "diario.db")
+    de_ana = diario.apunta(con, "ana", "2026-10-11", "comida", kcal=300.0, clave_operacion="op-x")
+    de_luis = diario.apunta(con, "luis", "2026-10-11", "comida", kcal=900.0, clave_operacion="op-x")
+    assert de_ana != de_luis
+    assert diario.dia(con, "ana", "2026-10-11")["conocido"]["kcal"] == pytest.approx(300.0)
+    assert diario.dia(con, "luis", "2026-10-11")["conocido"]["kcal"] == pytest.approx(900.0)

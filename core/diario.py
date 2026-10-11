@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS entrada (
     fuente_dato TEXT NOT NULL,
     nota      TEXT,
     creada    TEXT NOT NULL,
-    propietario TEXT
+    propietario TEXT,
+    clave_operacion TEXT
 );
 """
 
@@ -67,6 +68,10 @@ def _migra(con: sqlite3.Connection) -> None:
     columnas = {f[1] for f in con.execute(f"PRAGMA table_info({TABLA})").fetchall()}
     if "propietario" not in columnas:
         con.execute(f"ALTER TABLE {TABLA} ADD COLUMN propietario TEXT")
+    if "clave_operacion" not in columnas:
+        con.execute(f"ALTER TABLE {TABLA} ADD COLUMN clave_operacion TEXT")
+    con.execute("CREATE UNIQUE INDEX IF NOT EXISTS entrada_por_clave ON entrada "
+                "(propietario, clave_operacion) WHERE clave_operacion IS NOT NULL")
     con.execute("CREATE INDEX IF NOT EXISTS entrada_por_dueno ON entrada "
                 "(propietario, fecha, comida, id)")
     con.commit()
@@ -83,6 +88,7 @@ def conecta(ruta: Path | str | None = None) -> sqlite3.Connection:
 
 
 def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *,
+            clave_operacion: str | None = None,
            tipo: str = ALIMENTO, referencia: str | None = None, version: str | None = None,
            cantidad_g: float | None = None, kcal: float | None = None,
            proteinas_g: float | None = None, grasas_g: float | None = None,
@@ -113,6 +119,17 @@ def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *
             raise ValueError("ni las cantidades ni la energia pueden ser no finitas")
         if valor < 0:
             raise ValueError("ni las cantidades ni la energia pueden ser negativas")
+
+    # **Si esa operacion ya se hizo, se devuelve la entrada que hay.** No se busca por nombre, fecha
+    # ni nutrientes -- eso prohibiria dos meriendas iguales --, sino por **la clave que manda quien
+    # envia**, que es la unica que distingue un reintento de una comida nueva.
+    if clave_operacion:
+        previa = con.execute(
+            f"SELECT id FROM {TABLA} WHERE propietario = ? AND clave_operacion = ?",
+            (propietario, clave_operacion)).fetchone()
+        if previa is not None:
+            return int(previa[0])
+
     cur = con.execute(
         """INSERT INTO entrada (fecha, comida, tipo, referencia, version, cantidad_g, kcal,
                                 proteinas_g, grasas_g, hidratos_g, fuente_dato, nota, creada,
@@ -121,6 +138,9 @@ def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *
         (fecha, comida, tipo, referencia, version, cantidad_g, kcal, proteinas_g, grasas_g,
          hidratos_g, fuente_dato, nota, (ahora or datetime.now()).isoformat(timespec="seconds"),
          propietario))
+    if clave_operacion:
+        con.execute(f"UPDATE {TABLA} SET clave_operacion = ? WHERE id = ?",
+                    (clave_operacion, cur.lastrowid))
     con.commit()
     return int(cur.lastrowid)
 

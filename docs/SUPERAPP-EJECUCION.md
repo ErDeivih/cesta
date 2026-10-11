@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | idempotencia por operación del alta |
+| G01 Diario efectivo | `en curso` | ver abajo | el formulario manda la clave de operación |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -48,6 +48,9 @@ completo, no una compilación.**
 | **`sin_nutricion` se rellena**: el puente anota sin nutrición y **ahora lo dice**, que era la mitad que faltaba de su propia promesa. *Medido: `sin_nutricion: []` mientras la entrada no llevaba un solo nutriente, y el fichero lo enseñaba* | `plataforma/api/main.py` — arreglo | 11 oct 2026 |
 | **Las tres pruebas del recibo contra el almacén real**: las cuatro claves, `anotadas + ya_estaban == 1`, **la segunda vez no anota y lo dice**, una línea ajena **se devuelve en `ajenas`**, y **el recibo y el día dicen lo mismo sobre la nutrición** | `tests/test_g01_recibo_del_puente.py` — **3 pasan** (5,8 s, con `CESTA_POSTGRES` al 5434) | 11 oct 2026 |
 | **El diario real, comprobado intacto** (mtime 10-10 13:44) tras sospechar que un ensayo lo había tocado | `data/diario.sqlite` | 11 oct 2026 |
+| **Idempotencia por operación, en el almacén y el contrato**: `clave_operacion` opcional, índice único **parcial** por dueño+clave, y repetirla devuelve **la entrada que ya hay** | `core/diario.py`, `plataforma/api/diario.py` — 4 pruebas | 11 oct 2026 |
+| Que **dos operaciones distintas con lo mismo son dos**, que **sin clave se comporta como antes**, y que **la clave no cruza entre personas** | `tests/test_g01_diario_aceptacion.py` — **15 pasan** | 11 oct 2026 |
+| **La columna `unidad` ya existía** en el esquema del diario: desbloquea el caso `ml`/`g` sin migración nueva | `core/diario.py:47` | 11 oct 2026 |
 
 **Lo que ya existía y se conserva**: `tests/test_de_la_ficha_al_diario.py` (la cuenta de la ficha y
 lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valores por 100 g, que
@@ -62,10 +65,10 @@ hace la cuenta **en el servidor**.
 
 Sin esa variable **se salta diciendo qué hacer**, no conecta al 5432 por defecto.
 
-1. **Idempotencia por operación del alta.** El puente ya es idempotente por `referencia` (probado),
-   pero el **alta manual** no tiene clave: un doble clic o un reintento con la respuesta perdida
-   duplica. *Acción: clave por operación, **sin** deduplicar por nombre+fecha+nutrientes -- eso ya
-   está probado que debe permitir dos comidas legítimas iguales.*
+1. **El formulario todavía no manda la clave.** El almacén y el contrato ya la aceptan y están
+   probados, pero `Diario.tsx:Alta` no la genera: **la función existe y no está enganchada**, así que
+   hoy un doble clic sigue duplicando. *Acción: `crypto.randomUUID()` al enviar, **estable mientras
+   se reintenta la misma operación** y nueva en cada alta distinta.*
 2. **El puente compra→diario usaba el número de la previa**, no el recibo: `Diario.tsx:62` hace
    `setAnotadas(previa?.anotarian.length ?? 0)`. *Acción: consumir `ReciboDeAlta`/lo que devuelva
    `anotarDeLaCompra`, y decir cuántas se anotaron de verdad.*
