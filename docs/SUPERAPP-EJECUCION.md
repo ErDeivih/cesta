@@ -1187,6 +1187,31 @@ en vez de simularlo.**
 -- y di por hecho que estaba en `core`.* **Decimoctava vez, y la misma forma: leer una capa y concluir
 sobre otra.**
 
+### G12, punto 221: **el endpoint, y la idempotencia por partida doble**
+
+    POST /api/recetas/{receta_id}/a-la-lista      cuerpo: {lista_id} y NADA MAS
+
+**El cliente no manda ni el propietario ni la semana.** *El propietario es `usuario["id"]` -- el de la
+sesion -- y la semana la calcula `traspaso.semana_de()`.* **Si los mandara el cliente, dos pestanas con
+fechas distintas escribirian dos veces la misma compra**, y es la regla que G12 pide en su 223 y G13 en
+su 227.
+
+**Y la idempotencia esta dos veces, por dos caminos distintos:**
+
+1. **`core/traspaso`**: la operacion `(receta, version, semana)` ya consta -> **no se escribe nada** y se
+   devuelve lo que paso la primera vez.
+2. **`almacen.anade_linea` ya era un upsert** -- *«el id lo trae el movil. **Si llega dos veces, no se
+   duplica: se actualiza**»* -- **y el id de cada linea es determinista**: `uuid5` de la clave de la
+   operacion y del ingrediente. *Repetir produce los mismos ids, y el upsert los actualiza.*
+
+**La segunda red no es desconfianza: es que las dos cosas protegen de fallos distintos.** *`traspaso`
+evita el trabajo; el upsert evita la linea duplicada si algo se cuela entre la comprobacion y la
+escritura.*
+
+**Y la puerta de la lista se comprueba con lo que ya existia**: *`almacen.listas_de(usuario["id"])`*,
+sin importar `_acceso` de `main.py` -- **que seria circular** --. *Y la de la receta la sigue poniendo
+`recetas._de_quien`.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

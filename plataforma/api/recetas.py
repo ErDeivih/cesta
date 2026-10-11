@@ -35,6 +35,11 @@ def _con():
     return recetas.conecta(_ruta_base)
 
 
+class ALaLista(BaseModel):
+    """**Lo unico que manda el cliente.** *El propietario y la semana los pone el servidor.*"""
+    lista_id: str
+
+
 class IngredienteIn(BaseModel):
     texto: str = Field(min_length=1)
     cantidad: float | None = None
@@ -175,6 +180,58 @@ def _con_precios(hallada: dict) -> None:
         ing["precio_cent"] = producto.get("precio_cent")
         ing["precio_unidad_cent"] = producto.get("precio_unidad_cent")
         ing["unidad_canon"] = producto.get("unidad_canon")
+
+
+@rutas.post("/{receta_id}/a-la-lista", status_code=201)
+def a_la_lista(receta_id: int, datos: ALaLista,
+               usuario: dict = Depends(usuario_actual)) -> dict:
+    """**G12, punto 221: pasar una receta a la lista, y repetir no duplica.**
+
+    *El cuerpo trae `lista_id` y nada mas*: **ni el propietario ni la semana**, porque los dos los pone
+    el servidor -- *el propietario es `usuario["id"]` y la semana la calcula `traspaso.semana_de()`*.
+    **Si los mandara el cliente, dos pestañas con fechas distintas escribirian dos veces la misma
+    compra**, y es la regla que G12 pide en su 223 y G13 en su 227: *no confiar en lo que manda el
+    cliente como identidad ni como propietario.*
+
+    **Y el id de cada linea es determinista** -- `uuid5` de la clave de la operacion y del ingrediente
+    -- asi que **la idempotencia esta dos veces**: `traspaso` impide la segunda operacion, y
+    `almacen.anade_linea` **ya es un upsert** (*«el id lo trae el movil; si llega dos veces, no se
+    duplica: se actualiza»*), que es la segunda red por si algo se cuela.
+    """
+    import uuid
+
+    from core import traspaso
+
+    from . import almacen
+
+    # **La lista tiene que ser suya.** *No se importa `_acceso` de `main.py` -- seria circular -- y
+    # se comprueba con lo que ya existe: `listas_de` devuelve las listas de quien pregunta.*
+    from . import almacen as _almacen
+
+    suyas = {str(lst["id"]) for lst in _almacen.listas_de(usuario["id"])}
+    if datos.lista_id not in suyas:
+        raise HTTPException(status_code=404, detail="no hay lista " + datos.lista_id)
+
+    def insertar(lineas) -> str:
+        for ln in lineas:
+            # **El id sale de la clave**: repetir la operacion produce los mismos ids, y el upsert
+            # los actualiza en vez de anadir. *Y con `grupo_id`/`producto_id` cuando el ingrediente
+            # los tenia: sin ellos la linea queda «Pendiente de identificar», que es la verdad.*
+            base = f"{datos.lista_id}|{ln.clave}"
+            almacen.anade_linea(
+                datos.lista_id, usuario["id"], str(uuid.uuid5(uuid.NAMESPACE_URL, base)),
+                ln.texto, None, int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
+                round(ln.cantidad) or 1, None, None)
+        return datos.lista_id
+
+    con = _con()
+    try:
+        return traspaso.pasar_a_lista(con, usuario["id"], receta_id, insertar=insertar)
+    except ValueError as fallo:
+        # *Receta de otro, o version que no existe: **404**, no un 500 con el motivo dentro.*
+        raise HTTPException(status_code=404, detail=str(fallo)) from fallo
+    finally:
+        con.close()
 
 
 @rutas.get("/{receta_id}/versiones")
