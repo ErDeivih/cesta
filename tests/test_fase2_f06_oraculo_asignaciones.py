@@ -16,8 +16,6 @@ from __future__ import annotations
 
 import random
 
-import pytest
-
 from core.oraculo_reparto import SIN_OFERTA, Linea, Oferta, coste_del_conjunto, oraculo
 from core.promos import lee as lee_promo
 from plataforma.api import cesta
@@ -293,28 +291,27 @@ def _al_azar(rnd):
     return peticiones, oferta
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "F06 (fase 2), hallazgo abierto: `_mejor_reparto` reparte con la **parte** que a cada linea le "
-        "toca **suponiendo que todas las lineas van a esa tienda**, y esa parte solo existe si se "
-        "queda. Medido el 13 de octubre de 2026: **9 discrepancias en 176 escenarios** (5%), todas con "
-        "el motor mas caro que el optimo. El caso minimo: l1(p2,2u) a aldi, l2(p1,3u) y l3(p1,1u) en "
-        "alcampo a 1,20 con 3x2 -- la parte de l3 en alcampo es 90 (frente a 100 en aldi) y por eso el "
-        "motor la manda alli, pero esa parte de 90 sale de un grupo de 4 unidades que **solo se forma "
-        "si l3 se queda**: con l3 fuera, alcampo son 240 y aldi 100, total 415 contra los 435 que "
-        "propone. *Es la frase de F06 al pie de la letra: «no elegir partes de un descuento calculado "
-        "sobre una cesta que al final no se compra en esa tienda»*. **Cuando se arregle -- enumerando "
-        "asignaciones en cestas pequenas, o llamando heuristica a la heuristica -- esta prueba pasara "
-        "y el `strict` obligara a quitar la marca.**"
-    ),
-)
 def test_doscientos_escenarios_al_azar_coinciden(monkeypatch):
-    """**«Discrepancias cero» con mayusculas.** *Cuatro casos elegidos a mano no demuestran nada: se
-    eligen los que uno ya sabe que pasan.* Con semilla fija, para que un fallo se pueda reproducir.
+    """**«Discrepancias cero» con mayusculas**, y **la prueba que encontro el defecto**.
 
-    **Y es la prueba que encontro el defecto**: 9 escenarios de 176 donde el motor propone pagar mas de
-    lo que hay. *Se deja marcada, no borrada ni rebajada: el criterio de F06 sigue siendo el criterio.*
+    *Cuatro casos elegidos a mano no demuestran nada: se eligen los que uno ya sabe que pasan.* Con
+    semilla fija, para que un fallo se pueda reproducir.
+
+    **Nacio marcada `xfail(strict=True)`, y con razon**: el 13 de octubre de 2026 encontro **9
+    discrepancias en 176 escenarios** (5%), todas con el motor mas caro que el optimo, porque
+    `_mejor_reparto` repartia con la «parte» que a cada linea le tocaba **suponiendo que todas iban a
+    esa tienda** -- *una parte que solo existe si la linea se queda*. **El caso minimo**:
+
+        l1(p2,2u) -> aldi | l2(p1,3u) y l3(p1,1u) en alcampo a 1,20 con 3x2
+        motor   435 (la parte de l3 en alcampo era 90, frente a 100 en aldi)
+        optimo  415 (con l3 fuera, alcampo son 240 y aldi 100)
+
+    *Es la frase de F06 al pie de la letra: «no elegir partes de un descuento calculado sobre una cesta
+    que al final no se compra en esa tienda».*
+
+    **Y ahora pasa**, porque `_mejor_reparto` puntua **cada asignacion con el conjunto que de verdad va
+    a cada tienda** y **enumera cuando cabe**. *La marca se quito al arreglarlo, que era exactamente
+    para lo que estaba: el `strict` obligaba a quitarla en cuanto la prueba pasara.*
     """
     rnd = random.Random(20261013)
     discrepancias = []
@@ -334,3 +331,50 @@ def test_doscientos_escenarios_al_azar_coinciden(monkeypatch):
     assert casos > 150, f"el barrido tiene que llegar a los casos: {casos}"
     assert not discrepancias, (
         f"{len(discrepancias)} discrepancias en {casos} escenarios:\n  " + "\n  ".join(discrepancias[:6]))
+
+
+def test_el_reparto_dice_si_su_respuesta_es_exhaustiva(monkeypatch):
+    """**«Heuristica se llama heuristica».** *F06 lo pide con esas palabras.*
+
+    Por debajo del limite se enumera y la respuesta **es** el optimo; por encima se usa la heuristica y
+    **la respuesta lo dice**. *Sin eso, quien lee `repartido` no puede saber si esta mirando el mejor
+    reparto posible o una aproximacion -- y F06 pide publicar garantias y limites.*
+    """
+    peticiones, oferta = _al_azar(random.Random(7))
+    salida = _compara(monkeypatch, peticiones, oferta)
+    repartido = salida["motor"]["repartido"]
+    if repartido is None:
+        return
+    assert repartido["exhaustivo"] is True, (
+        f"una cesta de {len(peticiones)} lineas cabe en la exploracion exhaustiva, y tiene que decirlo: "
+        f"{repartido}")
+
+
+def test_una_cesta_grande_no_se_enumera_y_se_dice(monkeypatch):
+    """*El limite, por el otro lado: con muchas lineas **no** se promete el optimo.*
+
+    **3 cadenas y 12 lineas son 531.441 asignaciones**, por encima del limite de 200.000. *Y es
+    importante que entonces no se prometa: una lista de la compra de verdad no cabe en el producto
+    cartesiano, y decir «exhaustivo» cuando no lo es seria peor que decir «heuristica».*
+
+    *Los precios estan puestos para que partir interese* -- las lineas pares son mas baratas en
+    alcampo y las impares en dia --, **porque si el reparto no ahorrara el motor devolveria `None` y la
+    prueba no probaria nada.**
+    """
+    n = 12
+    peticiones = [cesta.Peticion(grupo_id=1, producto_id=None, cantidad=1, nombre=f"p{i % 3}", id=f"l{i}")
+                  for i in range(n)]
+    oferta = {
+        "alcampo": {f"l{i}": (100 if i % 2 == 0 else 150, SIN_OFERTA) for i in range(n)},
+        "dia": {f"l{i}": (150 if i % 2 == 0 else 100, SIN_OFERTA) for i in range(n)},
+        "aldi": {f"l{i}": (200, SIN_OFERTA) for i in range(n)},
+    }
+
+    salida = _compara(monkeypatch, peticiones, oferta)
+    repartido = salida["motor"]["repartido"]
+    assert repartido is not None, f"partir ahorra y tiene que proponerlo: {salida['motor']}"
+    assert repartido["exhaustivo"] is False, (
+        f"3 cadenas y {n} lineas son 531.441 asignaciones: por encima del limite, y hay que decirlo")
+    assert repartido["total_cent"] == salida["verdad_mejor"], (
+        f"aunque sea heuristica, en este caso tiene que acertar: {repartido} vs "
+        f"{salida['verdad_mejor']}")

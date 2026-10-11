@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import date
-from itertools import combinations
+from itertools import combinations, product
 
 from core import identidad
 from core.promos import lee as lee_promo
@@ -479,20 +479,12 @@ def donde_comprar(peticiones: list[Peticion],
     una_tienda = []
     for fuente, elecciones in por_cadena.items():
         resueltas = _agrupa_y_reparte([e for e in elecciones if e])
-        # **Y las agrupadas vuelven a `por_cadena`, que es lo que compara el reparto.**
-        #
-        # *Antes se quedaban solo aqui: `una_tienda` se calculaba **agrupado** y `_mejor_reparto`
-        # comparaba con los costes de **linea** -- dos numeros distintos para la misma compra, que es
-        # justo lo que el criterio de F06 prohibe con sus palabras: «suma de partes igual al total».*
-        #
-        # **Medido el 13 de octubre de 2026**, con dos lineas del mismo producto a 1,00 EUR y 3x2 en
-        # alcampo y una tercera linea a 0,50 EUR en dia: agrupado son 3,00 + 0,50 = **3,50**, por linea
-        # 4,00 + 0,50 = 4,50. El motor devolvia 4,50 con **`ahorro_cent = -50`** y
-        # `merece_la_pena = False`, asi que **descartaba el reparto que ahorra 0,50 EUR** y le decia a
-        # quien compra que no partiera la lista. *Reproducido en
-        # `tests/test_fase2_f06_reparto_agrupado.py`.*
-        pendientes = iter(resueltas)
-        por_cadena[fuente] = [next(pendientes) if e else None for e in elecciones]
+        # **`por_cadena` se queda SIN agrupar, y es a proposito.** *Aqui se agrupo para `una_tienda`
+        # --que es una tienda entera--, pero el reparto no puede usar esas partes: la parte de una
+        # linea solo existe si todas las lineas van a esa tienda.* **El reparto agrupa el suyo, con el
+        # conjunto que de verdad va a cada tienda** (`_mejor_reparto`). *Escribirlas aqui fue el arreglo
+        # de la ronda anterior y era a medias: quito la incoherencia entre los dos numeros y dejo la
+        # parte circular, que es lo que encontro el oraculo.*
         faltan = [p.nombre for p, e in zip(peticiones, elecciones, strict=True) if not e]
         if not resueltas:
             continue
@@ -520,8 +512,60 @@ def donde_comprar(peticiones: list[Peticion],
     return {"una_tienda": una_tienda, "repartido": repartido, "lineas": len(peticiones)}
 
 
+# **Cuanto se enumera antes de rendirse.** El producto cartesiano crece con las lineas -- 6 cadenas y
+# 8 lineas son 1,7 millones --, asi que la exploracion exhaustiva de verdad no cabe para una lista de
+# la compra de verdad. *Por debajo del limite se enumera y el resultado es el optimo; por encima se usa
+# la heuristica, y la respuesta lo dice.*
+_LIMITE_EXHAUSTIVO = 200_000
+
+
+def _coste_con_lo_agrupado(elecciones: list[Eleccion]) -> int:
+    """**Lo que cuesta un conjunto que se compra junto.**
+
+    *Se agrupa por producto y se suman las partes: es la misma cuenta que `una_tienda` hace para una
+    tienda entera, aplicada al conjunto de verdad que va a esa tienda.*
+    """
+    return sum(e.coste_cent for e in _agrupa_y_reparte(list(elecciones)))
+
+
+def _asignaciones(peticiones, por_cadena, cadenas, max_tiendas):
+    """**Las asignaciones que se van a puntuar**: todas si caben, y las de la heuristica si no.
+
+    *Cuando caben se devuelve el optimo y `exhaustivo` es cierto. Cuando no, se recorren los conjuntos
+    de tiendas y se manda cada linea a la mas barata **dentro de ese conjunto** -- la heuristica de
+    siempre --, que es una respuesta peor y se dice.*
+    """
+    if len(cadenas) ** len(peticiones) <= _LIMITE_EXHAUSTIVO:
+        for combinacion in product(cadenas, repeat=len(peticiones)):
+            if len(set(combinacion)) <= max_tiendas:
+                yield combinacion
+        return
+
+    for combo in combinations(cadenas, min(max_tiendas, len(cadenas))):
+        yield tuple(
+            min((c for c in combo if por_cadena[c][i]),
+                key=lambda c: por_cadena[c][i].coste_cent, default=combo[0])
+            for i in range(len(peticiones)))
+
+
 def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | None:
-    """La mejor combinacion de hasta `max_tiendas`, si gana a ir a una sola."""
+    """La mejor combinacion de hasta `max_tiendas`, si gana a ir a una sola.
+
+    **Cada asignacion se puntua con el conjunto que de verdad va a cada tienda.** *Antes se repartia con
+    la «parte» que a cada linea le tocaba **suponiendo que todas las lineas iban a esa tienda**, y esa
+    parte solo existe si la linea se queda: el motor mandaba una linea a la tienda donde su parte era
+    menor, con una parte que salia de un grupo que se deshacia al mandarla alli.*
+
+    *Es la frase de F06 al pie de la letra* -- **«no elegir partes de un descuento calculado sobre una
+    cesta que al final no se compra en esa tienda»** --, y estaba medido: **9 discrepancias en 176
+    escenarios** contra el oraculo exhaustivo `core/oraculo_reparto.py`. *Caso minimo: `l1`(2u)→aldi,
+    `l2`(3u) y `l3`(1u) en alcampo a 1,20 con 3x2; la parte de `l3` en alcampo era 90 frente a 100 en
+    aldi, pero salia de un grupo de cuatro unidades que solo se forma si `l3` se queda. El motor decia
+    **435** y el optimo es **415**.*
+
+    **Y se dice si la respuesta es exhaustiva o heuristica**: `exhaustivo` viaja en el resultado.
+    *Heuristica se llama heuristica.*
+    """
     if max_tiendas < 2 or len(por_cadena) < 2:
         return None
     # **Completa de verdad**: sin lineas sin resolver y sin lineas resueltas pero no autorizadas. Si no,
@@ -529,31 +573,40 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
     completas = [x for x in una_tienda if not x["faltan"] and not x["sin_autorizar"]]
     referencia = completas[0]["total_cent"] if completas else None
 
+    cadenas = sorted(por_cadena)
+    exhaustivo = len(cadenas) ** len(peticiones) <= _LIMITE_EXHAUSTIVO
+
     mejor = None
-    for combo in combinations(sorted(por_cadena), min(max_tiendas, len(por_cadena))):
-        total, eleccion, faltan, sin_autorizar = 0, [], [], []
+    for combinacion in _asignaciones(peticiones, por_cadena, cadenas, max_tiendas):
+        usadas = sorted(set(combinacion))
+        if len(usadas) < 2:
+            continue                       # no es un reparto, es una tienda
+
+        por_tienda: dict[str, list[Eleccion]] = {}
+        faltan: list[str] = []
+        sin_autorizar: list[dict] = []
         for i, p in enumerate(peticiones):
-            opciones = [por_cadena[c][i] for c in combo if por_cadena[c][i]]
-            if not opciones:
+            e = por_cadena[combinacion[i]][i] if combinacion[i] in por_cadena else None
+            if e is None:
                 faltan.append(p.nombre)
                 continue
             # **Solo se elige entre lo autorizado.** Lo resuelto pero no autorizado no compite: se
             # propone aparte, con su motivo, y no suma.
-            autorizadas = [e for e in opciones if e.autorizada]
-            if not autorizadas:
-                e = min(opciones, key=lambda x: x.coste_cent)
+            if not e.autorizada:
                 sin_autorizar.append({"linea": p.nombre, "cadena": e.fuente,
                                       "coste_cent": e.coste_cent, "identidad": e.identidad,
                                       "motivo": e.motivo})
                 continue
-            e = min(autorizadas, key=lambda x: x.coste_cent)
-            total += e.coste_cent
-            eleccion.append(e)
-        if not eleccion:
+            por_tienda.setdefault(combinacion[i], []).append(e)
+
+        if not por_tienda:
             continue
-        usadas = sorted({e.fuente for e in eleccion})
+        eleccion = [e for es in por_tienda.values() for e in es]
+        # **La cuenta de verdad**: cada tienda agrupa **lo que de verdad se lleva**.
+        total = sum(_coste_con_lo_agrupado(es) for es in por_tienda.values())
+        usadas = sorted(por_tienda)
         if len(usadas) < 2:
-            continue                       # no es un reparto, es una tienda
+            continue
         # `sin_autorizar` entra en la comparacion: un reparto que resuelve todo sin autorizar nada no
         # puede ganar a uno que lo tiene exacto.
         if mejor is None or (len(faltan), len(sin_autorizar), total) < (
@@ -561,7 +614,8 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
             mejor = {"cadenas": usadas, "total_cent": total, "faltan": faltan,
                      "sin_autorizar": sin_autorizar,
                      "productos": [_serializa(e) for e in eleccion],
-                     "reparto": {c: sum(1 for e in eleccion if e.fuente == c) for c in usadas}}
+                     "reparto": {c: len(es) for c, es in sorted(por_tienda.items())},
+                     "exhaustivo": exhaustivo}
     if mejor is None:
         return None
     if referencia is not None:

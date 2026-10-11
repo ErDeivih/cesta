@@ -157,24 +157,66 @@ está escrito en ningún sitio qué promete `_mejor_reparto` y qué no.
 
 ---
 
-## 5. Los dos límites de alcance, que también hay que publicar
+## 5. El arreglo: cada asignación se puntúa con **su** conjunto
+
+**El reparto dejó de usar «partes».** `_mejor_reparto` recibe las elecciones **sin agrupar** y, para
+cada asignación, **agrupa lo que de verdad va a cada tienda** y suma:
+
+```python
+def _coste_con_lo_agrupado(elecciones):
+    return sum(e.coste_cent for e in _agrupa_y_reparte(list(elecciones)))
+```
+
+*Es la misma cuenta que `una_tienda` hace para una tienda entera, aplicada al conjunto real.*
+
+**Y se enumera cuando cabe.** F06 pide el óptimo para cestas pequeñas y honestidad para las grandes:
+
+```
+_LIMITE_EXHAUSTIVO = 200_000
+
+por debajo   producto cartesiano de tiendas -> el optimo, y exhaustivo = True
+por encima   la heuristica de siempre       -> exhaustivo = False, y la respuesta lo dice
+```
+
+*El límite está puesto con números*: 6 cadenas y 8 líneas son 1,7 millones de asignaciones.
+
+> **Y el write-back de la ronda anterior se quitó.** *Escribir en `por_cadena` las elecciones ya
+> agrupadas fue el arreglo de entonces y era **a medias**: quitó la incoherencia entre los dos números
+> y dejó la parte circular, que es justo lo que el oráculo encontró. Ahora `por_cadena` se queda sin
+> agrupar a propósito, y quien agrupa es el reparto.*
+
+**El resultado, medido**: el barrido de 200 escenarios pasa de **9 discrepancias** a **cero**, y el
+`xfail(strict=True)` que las fijaba **saltó como `XPASS` al arreglarlo** — *que era exactamente para lo
+que estaba: la marca se quita en cuanto la prueba pasa.* **Y los 41 tests de reparto que ya existían
+—autorización, invariantes, reparto entre tiendas, el oráculo de G11— siguen pasando.**
+
+---
+
+## 6. Los dos límites de alcance, que también hay que publicar
 
 **a) El `umbral`.** `umbral` («5 € dto comprando 20 €») se aplica hoy **a los productos de esa promoción
 dentro de la tienda**. Medido: dos líneas *distintas* de 12 € con esa oferta dan **2400 céntimos** en el
 motor y darían **1900** si el umbral fuera del ticket entero. *El texto del folleto no dice de qué es el
-umbral, y el motor ha elegido una lectura sin publicarla.* **El oráculo lo excluye a propósito**: mientras
-no se decida, incluirlo sería elegir una de las dos lecturas y llamarla verdad.
+umbral, y el motor ha elegido una lectura sin publicarla.* **El oráculo lo excluye a propósito**:
+mientras no se decida, incluirlo sería elegir una de las dos lecturas y llamarla verdad.
 
-**b) El banco de matching.** Positivos/negativos duros por familia/cadena, precisión/recall/abstención
+**b) La heurística por encima del límite.** Con más de ~200.000 asignaciones **no se promete el óptimo**,
+y la respuesta lo dice con `exhaustivo: False`. *Es lo que F06 pide con «heurística se llama heurística»,
+y la prueba comprueba **los dos lados**: que una cesta grande **no** se declara exhaustiva y que una
+pequeña **sí**.*
+
+**c) El banco de matching.** Positivos/negativos duros por familia/cadena, precisión/recall/abstención
 **con denominadores**, y *«mismo GTIN no ignora contradicciones; distinto GTIN no demuestra engaño»*.
 **Sin empezar.**
 
 ---
 
-## 6. Lo que queda de F06
+## 7. Lo que queda de F06
 
-1. **Arreglar las 9 discrepancias** — enumeración exhaustiva en cestas pequeñas, y heurística declarada
-   como tal en las grandes.
-2. **Publicar garantía y límite** del algoritmo.
-3. **Decidir y decir el alcance del umbral.**
-4. **El banco de matching**, sin empezar.
+1. **Publicar la garantía y el límite** de `_mejor_reparto` en el documento del algoritmo —*hoy está en
+   el código y en este informe, pero no donde se lee el algoritmo*.
+2. **Decidir y decir el alcance del umbral.**
+3. **El banco de matching**, sin empezar.
+4. *Y una pregunta abierta que conviene no perder*: el límite exhaustivo es un número de asignaciones,
+   **no de tiempo**. *Si alguna vez se mide que 200.000 asignaciones tardan demasiado, el número tendrá
+   que bajar y habrá que decirlo.*
