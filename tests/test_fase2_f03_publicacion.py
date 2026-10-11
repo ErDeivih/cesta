@@ -225,3 +225,25 @@ def test_el_veredicto_del_dia_ve_las_cuatro_etapas():
             f"un fallo de {etapa} tiene que llegar al veredicto del dia, no quedarse en un print")
     # Y el manifiesto, que si puede fallar sin tumbar el dia, se avisa en su propio sitio.
     assert "[manifiesto] no se pudo escribir" in fuente
+
+
+def test_el_resumen_dice_de_que_cadenas_hay_crudo_reanudable():
+    """**La mitad de «capturado» que faltaba.** *F03 pide que se pueda **reanudar desde crudo sin
+    rescrapear todo**, y el resumen decia lo **procesado** (silver) pero no de donde hay **captura
+    guardada** -- que no es lo mismo: una cadena puede tener silver de hoy y no tener crudo.*
+
+    *`load_raw_bytes` sirve de la copia guardada sin hacer la peticion, pero solo si existe: saber de
+    que cadenas existe es lo que convierte «reanudar» en una decision y no en una esperanza.*
+
+    **Se lee la fuente, como las otras dos del resumen**: *es lo unico comprobable sin montar un `raw/`
+    de mentira, y fija las frases que importan.*
+    """
+    fuente = (__import__("pathlib").Path(__file__).resolve().parents[1]
+              / "projects" / "cesta" / "resumen.py").read_text(encoding="utf-8")
+
+    assert "def _crudo_de_hoy()" in fuente, "el resumen tiene que saber de donde hay captura"
+    assert "reanudable sin red:" in fuente, "y decirlo"
+    assert "ninguna captura de hoy" in fuente, (
+        "y decir cuando no hay ninguna, en vez de callarse la linea")
+    # **Y mira el disco, no la red**: es lo que hace que sea barato y honesto.
+    assert 'storage.ROOT / "raw"' in fuente

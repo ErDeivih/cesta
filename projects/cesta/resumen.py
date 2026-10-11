@@ -124,6 +124,25 @@ def ahorro(catalogo: pl.DataFrame) -> pl.DataFrame:
         .alias("dif_pct"))
 
 
+def _crudo_de_hoy() -> list[tuple[str, int]]:
+    """**De que cadenas hay captura de hoy, y cuantas.** *Para poder reanudar sin volver a pedirlo.*
+
+    *`load_raw_bytes` sirve de la copia guardada **sin hacer la peticion**, pero solo si existe.*
+    **Saber de que cadenas existe es lo que convierte «reanudar» en una decision y no en una
+    esperanza** -- y es la mitad del criterio de F03 que el resumen no decia.
+
+    *Se mira el disco, no la red: `data/raw/fuente=<cadena>/fecha=<hoy>/`.*
+    """
+    from core import storage
+
+    hoy = str(config.hoy_local())
+    salida = []
+    for carpeta in sorted((storage.ROOT / "raw").glob(f"fuente=*/fecha={hoy}")):
+        cuantas = sum(1 for _ in carpeta.glob("*.json.gz"))
+        salida.append((carpeta.parent.name.removeprefix("fuente="), cuantas))
+    return salida
+
+
 def main(argv: list[str] | None = None) -> int:
     hoy = str(config.hoy_local())
     print(f"=== resumen {hoy} ===")
@@ -132,6 +151,17 @@ def main(argv: list[str] | None = None) -> int:
     if not fechas:
         print("  no hay silver todavia")
         return 1
+    # **Y el crudo de hoy, que es lo que se puede reanudar sin red.** *La linea de arriba dice lo que
+    # se ha **procesado** (silver); esta dice de donde hay **captura guardada** -- y las dos cosas no
+    # son lo mismo: una cadena puede tener silver de hoy y no tener crudo, o al reves.*
+    reanudables = _crudo_de_hoy()
+    if reanudables:
+        total = sum(n for _c, n in reanudables)
+        detalle = ", ".join(f"{c} {n}" for c, n in reanudables)
+        print(f"  reanudable sin red: {total} capturas de hoy en {len(reanudables)} cadenas ({detalle})")
+    else:
+        print("  reanudable sin red: ninguna captura de hoy")
+
     viejas = [f"{c} ({d})" for c, d in fechas if d != hoy]
     print(f"  cadenas: {len(fechas)}"
           + (f" | SIN REFRESCAR HOY: {', '.join(viejas)}" if viejas else " | todas de hoy"))
