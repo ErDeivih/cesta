@@ -1212,6 +1212,24 @@ escritura.*
 sin importar `_acceso` de `main.py` -- **que seria circular** --. *Y la de la receta la sigue poniendo
 `recetas._de_quien`.*
 
+### G12, punto 221: **el id determinista, a una funcion que se puede probar**
+
+**La segunda red del 221 estaba dentro del endpoint**, en dos lineas: *`uuid5` de la lista y la clave
+del ingrediente.* **Y un id que cambia entre dos llamadas iguales seria justo el fallo que esa red
+tiene que impedir** -- *asi que no puede quedarse sin prueba.* Se extrae a `traspaso.id_de_linea()`, y
+con eso **se prueba sin base de datos ni servidor**: *el mismo dato da el mismo id; otra lista es otra
+linea; otro ingrediente es otra linea; y tiene forma de uuid.*
+
+**Y por que el proyecto no puede permitirse no probar esto**: *`almacen.anade_linea` **ya es un
+upsert** -- «el id lo trae el movil; si llega dos veces, no se duplica: se actualiza» --, asi que
+**toda la proteccion contra la linea duplicada depende de que el id sea el mismo**.* **Si cambiara,
+el upsert no actualizaria: anadiria**, y la lista tendria la compra dos veces.
+
+*Y el patron de prueba de API de este proyecto no es `TestClient`:* `test_cesta_api.py` lo dice en su
+cabecera -- *«estas pruebas no tocan PostgreSQL ni la red: prueban la parte que decide cuanto cuesta la
+compra, que es donde un error se traduce en dinero»* -- **y llama a las funciones directamente.** *Asi
+que la verificacion del endpoint va por ahi: por la funcion que decide.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

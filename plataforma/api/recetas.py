@@ -198,8 +198,6 @@ def a_la_lista(receta_id: int, datos: ALaLista,
     `almacen.anade_linea` **ya es un upsert** (*«el id lo trae el movil; si llega dos veces, no se
     duplica: se actualiza»*), que es la segunda red por si algo se cuela.
     """
-    import uuid
-
     from core import traspaso
 
     from . import almacen
@@ -217,9 +215,8 @@ def a_la_lista(receta_id: int, datos: ALaLista,
             # **El id sale de la clave**: repetir la operacion produce los mismos ids, y el upsert
             # los actualiza en vez de anadir. *Y con `grupo_id`/`producto_id` cuando el ingrediente
             # los tenia: sin ellos la linea queda «Pendiente de identificar», que es la verdad.*
-            base = f"{datos.lista_id}|{ln.clave}"
             almacen.anade_linea(
-                datos.lista_id, usuario["id"], str(uuid.uuid5(uuid.NAMESPACE_URL, base)),
+                datos.lista_id, usuario["id"], traspaso.id_de_linea(datos.lista_id, ln.clave),
                 ln.texto, None, int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
                 round(ln.cantidad) or 1, None, None)
         return datos.lista_id

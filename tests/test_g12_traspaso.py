@@ -96,3 +96,18 @@ def test_la_semana_la_calcula_el_servidor_y_es_el_lunes():
     assert traspaso.semana_de(date(2026, 10, 14)) == "2026-10-12"   # miercoles -> lunes
     assert traspaso.semana_de(date(2026, 10, 12)) == "2026-10-12"   # lunes -> lunes
     assert traspaso.semana_de(date(2026, 10, 18)) == "2026-10-12"   # domingo -> el lunes anterior
+
+
+def test_el_id_de_la_linea_es_determinista_y_distingue():
+    """**La segunda red del 221.** *Si el id sale de la operacion, repetirla actualiza en vez de anadir.*
+
+    *Y no se prueba con base de datos ni servidor: es una funcion pura, y un id que cambia entre dos
+    llamadas iguales seria justo el fallo que esto tiene que impedir.*
+    """
+    a = traspaso.id_de_linea("lista-1", "p1|g")
+    b = traspaso.id_de_linea("lista-1", "p1|g")
+    assert a == b, "el mismo dato da el mismo id"
+    # Y distingue lo que tiene que distinguir: la lista y el ingrediente.
+    assert a != traspaso.id_de_linea("lista-2", "p1|g"), "otra lista es otra linea"
+    assert a != traspaso.id_de_linea("lista-1", "p2|g"), "otro ingrediente es otra linea"
+    assert len(a) == 36, "y tiene forma de uuid"

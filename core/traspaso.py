@@ -53,6 +53,23 @@ def semana_de(hoy: date | None = None) -> str:
     return (hoy - timedelta(days=hoy.weekday())).isoformat()
 
 
+def id_de_linea(lista_id: str, clave: str) -> str:
+    """**El id determinista de una linea traspasada.** *Y por eso repetir no duplica.*
+
+    `almacen.anade_linea` **ya es un upsert** -- *«el id lo trae el movil; si llega dos veces, no se
+    duplica: se actualiza»* --, asi que si el id sale de la operacion, **repetirla produce los mismos
+    ids y el upsert los actualiza en vez de anadir**. *Es la segunda red: `traspaso` evita el trabajo,
+    y esto evita la linea duplicada si algo se cuela entre la comprobacion y la escritura.*
+
+    **Es una funcion y no dos lineas dentro del endpoint a proposito**: asi se puede probar que es
+    determinista **sin base de datos ni servidor**, que es lo unico que este proyecto no puede
+    permitirse no probar de un id.
+    """
+    import uuid
+
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{lista_id}|{clave}"))
+
+
 def _migra(con: sqlite3.Connection) -> None:
     """La tabla de operaciones. *Con la clave unica: es ella la que impide el duplicado.*"""
     con.execute("""
