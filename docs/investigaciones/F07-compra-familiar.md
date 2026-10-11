@@ -575,3 +575,65 @@ comando habia encontrado, en vez de fiarme de mi resumen de lo que el comando de
 | **C03** | *orden editable por lista/tienda* | *el dato esta, la funcion no* |
 | **C04** | *preferencia contra necesidad* | *sin medir* |
 | **C05** | *sugerir no es afirmar* | *sin medir* |
+
+
+---
+
+## 11. `C04`: **la separacion es estructural** -- dos tablas y dos columnas, no una convencion
+
+*(Ronda 98.)* *Esta vez mire **las dos capas en el mismo comando**, que es la leccion de la ronda 97.*
+
+**El criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:92`): *«Anadir frecuentes **sin confundir preferencia con
+necesidad**; estados **necesito/no necesito** y **carrito/comprado**.»*
+
+### Las dos capas, medidas
+
+**Capa del dato** -- `information_schema`, en el Postgres de verdad:
+
+```
+favorito:     usuario_id, grupo_id, producto_id, anadido_en
+lista_linea:  id, lista_id, grupo_id, producto_id, nombre_visto, cantidad, nota,
+              anadido_por, anadido_en, tachado_por, tachado_en, borrado_en, tocado_en,
+              en_carrito, cadena_elegida, autorizado, autorizado_en, ...
+```
+
+**Capa de la pantalla** -- `GET /api/habituales`, y *«el mosaico de lo habitual: "lo de siempre", para
+anadir...»* (`Mosaico.tsx`), con `LoQueSeCompra.tsx` al lado.
+
+### Y la separacion no es una convencion: **es la forma de la base**
+
+| lo que el criterio pide | **como esta** |
+|---|---|
+| **preferencia** | **la tabla `favorito`**, con `usuario_id` y el producto -- *y **nada mas*** |
+| **necesidad** | **la tabla `lista_linea`**, con su lista y su cantidad |
+| **carrito** | **`en_carrito`**, una columna |
+| **comprado** | **`tachado_en`** (y `borrado_en`), **otra columna** |
+
+**Asi que marcar un favorito no anade nada a ninguna lista** -- *son tablas distintas y ninguna escribe en la
+otra.* **Y «en el carro» y «tachado» son dos columnas separadas**, no un estado con dos nombres.
+
+**Es la quinta comprobacion de esta investigacion en que el proyecto ya habia resuelto lo que yo iba a
+proponer** -- *y esta es la mas limpia de las cinco: **la distincion esta en el esquema**, que es donde una
+distincion no se puede olvidar.*
+
+### Y lo que NO queda medido, que es lo unico que podria faltar
+
+**El esquema separa preferencia de necesidad. Que la pantalla no las mezcle en la cabeza de quien la usa es otra
+cosa** -- *y esa no se mide con un `SELECT`.* *El nombre del componente ayuda (`Mosaico`, «lo de siempre»,
+frente a la lista), pero **«el nombre del componente ayuda» es exactamente el tipo de razonamiento que me ha
+fallado tres veces esta sesion** (§4, §10 y la ronda 96).*
+
+**Asi que queda dicho como lo que es**: *la separacion **estructural** esta **medida y es correcta**; la
+**de la pantalla**, sin medir, y para eso hace falta mirarla con un navegador y una lista con favoritos.*
+
+### Y C01-C05, con lo que hay de verdad
+
+| ID | lo que pide | estado |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **medido**: *el tachado gana el primero; **la cantidad es un defecto**, fijado* |
+| **C01b** | *ni exponer listas de otro hogar* | **medido y PASA** |
+| **C02** | *guardado sin catalogo* | **medido** |
+| **C02b** | *precio desconocido visible* | **medido y PASA** |
+| **C03** | *orden por pasillo / una mano / recarga* | **el orden ESTA HECHO** (§4 corregido); *«editable» falta*; 4 toques; recarga por F03 |
+| **C04** | *preferencia contra necesidad* | **la separacion estructural, medida y correcta** (dos tablas, dos columnas); *la pantalla, sin medir* |
+| **C05** | *sugerir no es afirmar* | *sin medir* |
