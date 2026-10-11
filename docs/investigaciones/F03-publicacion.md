@@ -412,3 +412,50 @@ los datos reales y no desplegar; y una publicacion no es un despliegue, pero si 
 
 **Queda como la primera cosa que hay que decidir, con los numeros delante**: *el puntero esta en
 `20261007-103000`, el gold es del 11, y `/api/estado` lleva desde entonces diciendo que no cuadra.*
+
+
+---
+
+## 15. El bloqueo del recorrido de navegador **no era tal**
+
+*(Ronda 23.)* Ayer escribi que el ensayo de navegador de V2 publicada *«exige publicar una version real,
+que es la decision material que no me toca tomar»*. **Lo medi y no hace falta: `CESTA_GOLD` es una
+variable de entorno.**
+
+```python
+# plataforma/api/ajustes.py:27
+gold=_ruta("CESTA_GOLD", raiz / "data" / "gold"),
+```
+
+**Asi que se puede levantar un API contra un gold de ensayo sin tocar el de casa**, que es exactamente lo
+que hace falta para el recorrido. *Tercera vez en esta fase que doy por bloqueado algo que no lo estaba
+-- y la tercera que lo cazo midiendo.*
+
+### La receta, para que el proximo no vuelva a empezar por aqui
+
+    # 1. Un gold de ensayo, copiado del real (o construido), y su V1 publicada
+    $sandbox = "F:\aprendizaje\scrap\data\debug\gold-f03"
+    Copy-Item data\gold\*.parquet $sandbox\
+    $env:CESTA_GOLD = $sandbox
+    uv run python -c "from core import publicacion; print(publicacion.publicar(None))"
+
+    # 2. Un API apuntando AHI, y no al de casa
+    $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
+    $env:CESTA_GOLD=$sandbox
+    uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8101
+
+    # 3. Vite apuntando a ese API, y el ensayo con patchright
+    cd plataforma\web\app; $env:CESTA_API='http://127.0.0.1:8101'; npm run dev
+    $env:CESTA_UI='http://localhost:5173'; uv run python -m plataforma.<el ensayo>
+
+**Lo que el ensayo tiene que comprobar**, y es lo que pide el criterio: *con **V1** fija, buscar y abrir
+la previa de una lista; **publicar V2** a mitad; y que la respuesta individual **no mezcle** versiones
+-- ni la busqueda, ni la previa, ni el alta de receta o comida --, y que el historial y el consumo
+antiguos **no cambien**.*
+
+**Y una cosa que la pieza ya construida deja hecha**: `version_vigente` y la conmutacion de `catalogo`
+hacen que **cada conexion lea una version**, asi que lo que el ensayo tiene que demostrar **desde fuera**
+es que ningun manejador pide conexion dos veces. *El limite esta escrito en
+`test_una_conexion_ve_una_sola_version`.*
+
+**No se ha montado en esta ronda, y no se da por hecho.**
