@@ -207,3 +207,61 @@ oferta que depende de cuantas compres no se puede juzgar con el precio de una**.
 **Seis de los siete, y el septimo es texto de pantalla.** *Y `F13` deja **trece piezas** encontradas ya resueltas
 y con el motivo escrito -- que es la cuenta que esta fase puede dar sin exagerar: **el proyecto ya sabia lo que
 este encargo viene a comprobar.***
+
+
+---
+
+## 4. «Fechas duplicadas»: **la tabla `grupos` no tiene fecha** -- la tiene el nombre del gold
+
+*(Ronda 157.)* El ultimo caso de la aceptacion de `F13` que se puede mirar sin navegador.
+
+### Lo que hay, medido
+
+**`grupos` tiene **62 columnas**, y **ninguna es una fecha ni una version**:**
+
+```
+fuente, id_fuente, nombre, marca, cantidad, unidad_canon, ean, precio_cent,
+precio_unidad_cent, precio_ref_canon_cent, unidad_ref_canon, cantidad_fiable, imagen,
+alergenos, ingredientes, origen, promo_txt, categoria, url, seccion, sellos,
+sellos_origen, certificados, conservacion, es_marca_propia, nutricion, nutricion_por,
+tipo_producto, envase, peso_escurrido_g, peso_neto_g, dias_caducidad, descripcion,
+grado_alcohol, promo, promo_hasta, promo_club, promo_solo_online, es_recall,
+es_alcohol, peso_variacion_pct, distintivo, advertencias, precio_comparable,
+proc_precio_unidad, unidades_pack, promo_unidades_minimas, grupo_id, calidad,
+calidad_origen, calidad_nota, nutriscore, comparacion_fiable, nova, ecoscore,
+kcal_100g, hidratos_100g, proteinas_100g, grasas_100g, grasas_sat_100g,
+azucares_100g, sal_100g
+```
+
+****No hay `fecha`, ni `version`, ni `gold`.** *Y eso **no es un olvido**: la tabla es **una foto**, y **la fecha
+es la del gold** -- *`fecha_datos` y `version_catalogo` salen de `/api/estado`, y **el nombre del directorio del
+gold los lleva dentro** (`v20261011-214900`).*
+
+**Asi que «fechas duplicadas» **no puede** ser «dos filas con la misma fecha»: **no hay fecha por fila**.** *Solo
+puede ser **dos fotos con la misma fecha** -- *y por eso el caso es de la **serie de golds**, no de la tabla.*
+
+### Y una heuristica mia que acerto la mitad
+
+**Busque columnas con `fech|dia|version|gold|...` y salio **una**: `dias_caducidad`.** *Y mi script imprimio «HAY
+DUPLICADOS»* -- *porque `52.087` filas y `228` valores distintos no son iguales.*
+
+**Y es falso: `dias_caducidad` es **una duracion, no una fecha**.** *«240 dias», «480», «360» -- y **47.641
+`None`**, que es **correcto**: la mayoria de los productos **no declaran** cuanto duran.* *Un campo de duracion
+**tiene** que repetirse; **eso no es un duplicado, es un valor.***
+
+**La leccion es la de siempre, y esta vez la caza fue mia y a tiempo**: *la heuristica encontro la columna **por
+el nombre** y **no por lo que es**.* **«Fechas duplicadas» habla de fechas; `dias_caducidad` habla de dias.**
+
+### Y `F13`, con esto
+
+| lo que pide `F13` | **estado** |
+|---|---|
+| **las siete cosas declaradas** | **todas** |
+| **«tabla equivalente»** y **«huecos reales»** | **hechos**, con sus palabras |
+| **«datos controlados exactos»** | *el grafico **no calcula ni un dato*** |
+| **«filtro que cambia universo explicado»** | **el filtro esta**; *que lo explique, por medir en pantalla* |
+| **«fechas duplicadas»** | **no aplica a la tabla**: *`grupos` **no tiene fecha por fila**; es un caso **de la serie de golds*** |
+| **campos nutricionales** | *por medir* -- *con la cobertura del **22,8 %** ya medida en `N03`* |
+
+**Y con esto `F13` queda cerrado en todo lo que se puede cerrar sin navegador** -- *que es todo menos «que el
+filtro explique el cambio de universo», que es **texto de pantalla**.*
