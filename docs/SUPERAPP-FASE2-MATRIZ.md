@@ -168,14 +168,37 @@ confirma el arreglo (1→1).*
 - **Las fichas de producto.** *La cola medida es **72.319 pendientes / 7.593 correctas** (`data/inventario.sqlite`); esta linea decia 79.887 y 28, y **no he vuelto a medir esos dos numeros**, asi que se dejan los mios y se dice que discrepanan.* **Cualquier cifra de nutrición o de
   ingredientes que se enseñe hoy cubre el 0,04 % del catálogo**, y *la ausencia no es una limitación de
   fuente: es trabajo sin ejecutar.*
-- **Usar la app con la API caída.** *No medido.*
-- **La publicación**: funciona y está probada por API, pero **falta el recorrido de navegador**, y
+- **Usar la app con la API caida.** *Medido en F15, y **mejor de lo que parecia**: la aplicacion **arranca y recuerda** (pantalla y busquedas recientes en `localStorage`), y **las mutaciones no fallan: se pausan** -- `Cesta.tsx:1207`, «React Query *pausa* una mutacion cuando `navigator.onLine`». *Lo que no hay es dato cacheado de la compra: **sin red no se consulta nada**.*
+- **La publicación**: **cerrada en F03** -- `plataforma/prueba_f03_publicacion.py` **PASA** (19,81 -> 20,81 EUR, con el alta en el diario a mitad de la publicacion). *Queda una cosa de operacion*: 
   **`/api/estado` lleva desde el 7 de octubre declarando el catálogo incoherente** porque el puntero no
   se ha movido. *Publicar lo arregla y es reversible; es una decisión de operación, no de código.*
 
-**El veredicto, en una frase**: **para hacer la compra y llevar el diario, esto sirve hoy y está
-probado; para mirar nutrición, todavía no, y la razón es que no se ha ejecutado el trabajo, no que no se
-pueda saber.**
+### Los cinco estados, con sus ejemplos -- porque «no está» no es una sola cosa
+
+**El criterio de F16 pide distinguir cinco estados, y la distincion que mas importa es la tercera:**
+
+| estado | **que significa** | **ejemplos medidos** |
+|---|---|---|
+| **implementado** | *esta, y se puede usar* | `previa_compra` (la previa que no escribe), `costeReceta` (los dos numeros), la clave de operacion |
+| **probado** | *esta **y hay una prueba que lo demuestra*** | `R03`/`R04` (9 pruebas), `kg+kg` = 1,5, la publicacion, la concurrencia del diario |
+| **limite demostrado de fuente** | ***no esta porque la fuente no lo da*** | **nutricion: 22,8 %** (11.064 de 48.606); **Alcampo y Aldi, 0**; Mercadona sin tablas |
+| **pendiente** | *no esta, y se puede hacer* | `R02` importar, `R05` cocina, `R08` despensa, el «previsto» de `C09`, **la paginacion** |
+| **descartado por decision** | *no se hara, y esta dicho por que* | *las **tres decisiones** del tablero, si el dueno dice que no* |
+
+**Y «limite de fuente» no es «pendiente»**, *que es lo que esta fase ha tenido que aprender:* **`porcion` tiene
+0 productos** -- *y eso **no es un hueco**: es que **la base que no tendria tamano no la usa nadie**.* **Un cero
+medido y un cero supuesto se parecen en un informe y no se parecen en nada.**
+
+### Y la cuenta que esta fase puede dar sin exagerar
+
+**Quince piezas aparecieron ya resueltas y con el motivo escrito**, y **cuatro funciones no existen**
+(`R02`, `R05`, `R08`, la paginacion), **una regresion se encontro y se arreglo** (`prefers-reduced-motion`,
+verificada hasta el bundle), y **cuatro defectos reales** se midieron y quedaron **con su prueba**.
+
+**El veredicto, en una frase**: **para hacer la compra y llevar el diario, esto sirve hoy y esta probado -- con
+navegador, no solo con el motor; para mirar nutricion, cubre el 22,8 % y el resto es limite de la fuente o
+trabajo sin ejecutar; y para lo que falta, el tablero dice cual de las tres decisiones es la que desbloquea
+mas.**
 
 ---
 
