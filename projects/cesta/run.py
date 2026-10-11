@@ -232,7 +232,15 @@ def _main() -> int:
 
     if not args.sin_pipeline:
         try:
-            importlib.import_module("projects.cesta.pipeline").main()
+            # **El resultado no se tira.** *Antes esta linea era
+            # `importlib.import_module("projects.cesta.pipeline").main()`, sin mirar lo que devolvia:
+            # un pipeline que no habia podido **publicar** devolvia 0 y el veredicto del dia no se
+            # enteraba.* El pipeline publica al final, y si no puede, **el puntero se queda atras** --
+            # que es una incoherencia visible en `/api/estado`, pero solo si alguien la mira.
+            bien = importlib.import_module("projects.cesta.pipeline").main() == 0
+            if not bien:
+                print("[pipeline] el dia no se ha publicado")
+                fallos.append("pipeline")
         except Exception as exc:  # noqa: BLE001
             print(f"[pipeline] FALLO: {exc}")
             fallos.append("pipeline")

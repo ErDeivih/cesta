@@ -803,6 +803,13 @@ def main() -> int:
         publicacion.publicar()
     except Exception as exc:  # noqa: BLE001
         print(f"  publicacion: no se pudo publicar ({type(exc).__name__}: {exc})")
+        # **Y se dice en el codigo de salida.** *El dato esta escrito y el puntero se queda donde
+        # estaba, que deja la incoherencia **visible** en `/api/estado` -- pero solo si alguien la
+        # mira.* Devolver 0 aqui era decir que el dia estaba hecho cuando **la version del dia no se
+        # publico**: medido el 13 de octubre de 2026, este `try` se tragaba el fallo y `main()`
+        # devolvia 0. *Y quien llama, `run.py`, tampoco miraba el resultado.* Las dos cosas arregladas.
+        print("pipeline: el dato esta escrito, pero la version NO se ha publicado")
+        return 1
     print("pipeline: hecho")
     return 0
 
