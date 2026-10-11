@@ -714,3 +714,49 @@ http://localhost:5174/                -> 200
 **La pantalla, con la configuracion ya en pie**: *abrir `http://localhost:5174`, buscar, abrir la previa de
 una lista, sustituir y anotar en el diario -- **con el API sirviendo la V3 (181 cent)** -- y comprobar que
 lo que se ve es coherente.* **Es el ultimo paso de F03, y ya no tiene bloqueos.**
+
+
+---
+
+## 21. **El recorrido, en un navegador de verdad** -- y lo que aun no hace
+
+*(Ronda 57.)* `plataforma/prueba_f03_publicacion.py`. **PASA**, y esto es lo que midio:
+
+```
+la pantalla carga (titulo: 'Cesta')                          ok
+/api/estado por el proxy del cliente -> 200                  ok
+      version servida: 20261004-080000
+/api/buscar por el proxy -> 200
+      precios: [181, 181, 191, 194, 196]
+v20261004-090000 (+100) publicada CON EL NAVEGADOR ABIERTO
+      precios: [281, 281, 291, 294, 296]
+una peticion nueva sirve la version nueva                    ok
+publicar cambia lo que el cliente sirve, SIN REINICIAR NADA  ok
+la pantalla no dio errores de JavaScript                     ok
+el puntero del catalogo REAL sigue intacto                   ok
+```
+
+**Un navegador de verdad** -- Chromium por `patchright`, movil 390x844, `has_touch` -- **contra el cliente
+real** que sirve Vite, **leyendo por su proxy**, con el sandbox publicado en el API del 8102.
+
+### Lo que demuestra
+
+1. **El cliente real sirve un catalogo publicado**, y su proxy funciona: *la peticion sale del origen del
+   cliente, con sus cabeceras y su contexto.*
+2. **Publicar con el navegador abierto cambia lo que sirve, sin reiniciar nada.** *Los precios pasan de
+   `[181, 181, 191...]` a `[281, 281, 291...]` -- exactamente los +100 que se publicaron.*
+3. **Y no rompe la pantalla**: ningun error de JavaScript.
+4. **Y el catalogo de casa queda intacto**, comprobado dentro del propio ensayo.
+
+### Y lo que NO hace, que es la mitad de la aceptacion
+
+**No pulsa la interfaz.** *Lee por el proxy del cliente, que es mas que una peticion HTTP pelada -- hay
+origen, cookies y contexto de navegador -- **pero no navega por las pantallas**.*
+
+**Lo que falta de F03, con precision**: *un recorrido de persona -- **buscar, abrir la previa de una lista,
+sustituir y anotar en el diario** -- con una publicacion a mitad, comprobando que lo que ve no mezcla dos
+versiones.* **Eso son pulsaciones, y no se ha hecho.**
+
+*Y hay una razon para no darlo por cubierto con lo de arriba*: **la garantia de «una conexion, una version»
+esta probada en el servidor (§12 y §17), pero que **la pantalla** no mezcle dos respuestas de dos peticiones
+distintas depende de como pida el cliente -- y eso no se ha mirado.**
