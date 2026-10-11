@@ -966,6 +966,56 @@ min medidos en `data/ejecuciones.log`, con las cadenas en paralelo, asi que Lidl
 presupuesto nuevo y volver a medir**, y es exactamente lo que el 191 pide: *«no exigir mismo numero que
 Aldi: demostrar cobertura accesible y **publicar limitaciones**».*
 
+### G10, cerrado: **identidad automatica fiable, con abstencion** -- los siete puntos
+
+**Ninguno hubo que construirlo.** *Los siete estaban, y el trabajo ha sido leerlos y medir el 197.*
+
+| punto | y hay |
+|---|---|
+| **196** separar exacto / familia / alternativa | ✓ `identidad.py` con `EXACTO`/`PROBABLE` y la regla **«nunca "exacto" sin GTIN valido»** |
+| **197** atributos criticos por familia | ✓✓ **`core/atributos.py` + `contradicciones`**, aplicado **como veto antes de cualquier otra senal** en `emparejar.py` y `pipeline.py` |
+| **198** el probable fuera del selector de exactos | ✓ `cesta.py:206`: `exacta = veredicto["estado"] == identidad.EXACTO` |
+| **199** banco independiente, estratificado, a ciegas | ✓✓✓ **dos bancos**: `banco_de_pares.py` (463 lineas, dos clases, negativos dificiles por construccion) y `banco_verdad.py` (237, **etiquetas humanas sin leer el veredicto**) |
+| **200** sombra y comparacion con el motor anterior | ✓✓ **`identidad_sombra.py`**: *«propone y compara, no publica ni modifica»*, escribe en `data/identidad-sombra/` |
+| **201** el exacto no autoriza sustituir por barato | ✓✓ *«solo lo exacto o lo confirmado entra en el grupo de la oferta»* |
+| **202** identificadores estables | ✓✓ **`core/grupos_ids.py`** estabiliza el ordinal por clave contra la tabla de ayer; y `producto_id` acompana en `lista_linea`, `compra_linea` y `favorito` |
+
+**Lo que el 197 pide, medido.** El banco construye sus negativos como *«misma marca, misma unidad
+y codigos distintos»* -- **el par que un emparejador por nombre junta** -- y el informe da:
+
+    sin la marca           precision 0.703   recall 0.758   error 0.23
+    marca igual            precision 1.000   recall 1.000   error 0.00
+
+*El atributo critico no solo existe: **separa perfecto, y su efecto esta cuantificado**.*
+
+**Y el techo del recall, medido aparte** (`bloqueo.py`): el emparejador compara lo que cae en el mismo
+bloque `(unidad_canon, round(cantidad, 3))`, y **un par que no cae en el mismo bloque no se puede
+encontrar nunca**. *8 de septiembre de 2026, sobre 1.767 pares ciertos: 579 caian en bloques
+distintos; la respuesta fue una segunda pasada sin bloque con el liston mas alto, y el medidor separa
+**los tres motivos** porque el arreglo de cada uno es distinto.* **Saber si el 65 % es una nota del
+matcher o un techo estructural es la primera pregunta de cualquier trabajo de emparejamiento.**
+
+**Y un LLM descartado con numeros** (`banco_de_pares.py`): *`gemma-3-4b-it`, 40 pares, dos enunciados
+-- «¿son comparables?» 78 %, «¿son EXACTAMENTE el mismo producto?» 52 % -- y el veredicto: **«es un
+esceptico**, encuentra una diferencia en cualquier texto y dice que no; filtra errores de maravilla y
+destrozaria el recall»*. **Un modelo descartado con su motivo medido, no con una impresion.**
+
+**Y una frase que vale para todo el proyecto**, de `banco_verdad.py`: *«el 6 de octubre de 2026 el
+control decia "cero alimentos excluidos" y a la vez mostraba tres falsos descartes reales. **Un control
+que comparte vocabulario con lo que vigila puede confirmar sus propios errores, y eso no es medir: es
+repetir.**»*
+
+### G11, abierto: **coste y reparto, un oraculo independiente**
+
+Su 206 dice *«conservar los controles ya anadidos de 3x2, reparto de centimos, igualdad
+lista/cierre/historico y migracion 013»* -- y **de esos cuatro ya hay rastro**: el reparto de centimos
+en `cesta.py` («por que no basta el precio unitario»), la igualdad lista/cierre en `core/gasto.py`, y
+la migracion 013 vista en G05.
+
+**Y su 210 es el trabajo nuevo y el mas bonito del encargo**: *«construir un oraculo por enumeracion
+exhaustiva en cestas pequenas, **independiente del codigo de produccion**»*. *Un oraculo independiente
+es justo lo que este proyecto hace bien con `banco_verdad`: la misma idea, aplicada al dinero.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
