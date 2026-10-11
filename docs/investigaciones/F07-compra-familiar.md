@@ -452,3 +452,56 @@ ellos son de la clase que mas importa:**
 **Lo siguiente de F07 no es estudiar a Bring!: es `C01b`, que es seguridad y es el unico que puede hacer
 dano.** *Y se prueba como los demas: **dos sesiones de dos hogares distintos, y comprobar que la una no ve la
 lista de la otra*** -- *que es `papel_en`, y es una prueba de una funcion.*
+
+
+---
+
+## 9. `C01b`, medido: **lo de seguridad pasa** -- y con las dos distinciones que importan
+
+*(Ronda 95.)* `tests/test_fase2_f07_otro_hogar.py`, seis pruebas contra Postgres. **El resultado:**
+
+```
+6 passed
+```
+
+| lo que se comprobo | resultado |
+|---|---|
+| **el dueno tiene su lista y el de otro hogar no** (`papel_en`) | **pasa** |
+| **un hogar ajeno no pasa el guardian** (`_acceso`) | **pasa** -- *403 o 404* |
+| **el dueno si pasa** | **pasa** |
+| **leer no es escribir** -- *`hace_falta_escribir` en los dos sentidos* | **pasa** |
+| **un identificador que no es UUID da 404, no 500** | **pasa** |
+| **una lista que no existe, tambien** | **pasa** |
+
+### Y las dos distinciones que hacen que esto valga
+
+**1. Se prueban las DOS piezas, no una.** *`papel_en` podria contestar bien **y las rutas no usarlo** -- y
+entonces la lista se expondria igual.* **Por eso estan las dos: la funcion y el guardian que la usa.**
+
+**2. Se prueba que el guardian deja pasar al dueno.** *Sin esa prueba, las otras pasarian **porque el guardian
+no deja pasar a nadie*** -- que es la forma mas tonta de tener razon.* **Es el mismo error que la lista vacia
+que contaba como distinta (§25 de F03): el instrumento dando por bueno lo que no ha medido.**
+
+### Y una cosa que aparece y conviene guardar
+
+**El guardian distingue leer de escribir** (`hace_falta_escribir`), **y ademas convierte un identificador que no
+es UUID en un 404 en vez de un 500.** *Su comentario lo cuenta: se vio el 18-sep-2026 pidiendo `/api/listas/None`,
+y Postgres rechazaba el texto al compararlo con una columna `uuid`, **asi que la peticion salia como 500 con su
+traza en el log**.*
+
+**Es la tercera vez en esta fase que aparece el mismo defecto**: *el 500 de la lista de casa duplicada, el 422 de
+las lineas, y este 404.* **Los tres son «la restriccion hacia su trabajo y el mensaje culpaba al servidor»** --
+*que es la frase que el propio codigo tiene escrita, y que es mejor que cualquier resumen mio.*
+
+### Y C01-C05, con C01 entero
+
+| ID | lo que pide | estado |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **medido** (§3): *el tachado gana el primero; **la cantidad es un defecto*** |
+| **C01b** | *ni exponer listas de otro hogar* | **medido y pasa** (§9) |
+| **C02 / C02b** | *sin catalogo* / *precio desconocido visible* | *lo primero medido; lo segundo no* |
+| **C03** | *orden por pasillo* | *el dato esta, la funcion no* |
+| **C04 / C05** | *preferencia contra necesidad* / *sugerir no es afirmar* | *sin medir* |
+
+**De las dos mitades de C01, una tiene un defecto fijado y la otra pasa.** *Y la de seguridad -- que era la que
+podia hacer dano -- **esta bien hecha**, con las dos piezas y con el caso del dueno comprobado.*
