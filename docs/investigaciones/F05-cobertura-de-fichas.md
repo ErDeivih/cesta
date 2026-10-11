@@ -1467,3 +1467,71 @@ NO ALIMENTO (aproximado)    2.516 grupos ·    170 con kcal
 **Es el hallazgo mas grande de la fase, y es una columna que estaba a la vista.** *Lo que lo escondia era
 **haber decidido de antemano donde mirar**: el maestro, el crudo, la cola -- **tres sitios** -- y no haber
 listado nunca las columnas del sitio que se sirve.*
+
+
+---
+
+## 31. De donde salen las calorias: **Open Food Facts cruzado por codigo de barras**
+
+*(Ronda 83.)* Seguida la columna desde la aplicacion hasta quien la escribe:
+
+```
+plataforma/web/app/src/paginas/Producto.tsx:181   ['kcal_100g', 'Energia', 'kcal']   <- LA APP LO ENSENA
+plataforma/api/catalogo.py:865,915                lee kcal_100g de `grupos`
+projects/cesta/emparejar.py:247                   "kcal_100g": kcal, ...             <- LO ESCRIBE
+```
+
+**Y el origen, en `emparejar.py`:**
+
+```python
+emparejar.py:238   ... ltrim(regexp_replace(code, '[^0-9]', '', 'g'), '0') AS k ...
+emparejar.py:240   FROM read_parquet('{fichero}')
+emparejar.py:224   max(CASE WHEN n.name = 'energy-kcal' AND n."100g" BETWEEN 0 AND 900
+                            THEN n."100g" END) AS kcal,
+```
+
+**Es Open Food Facts, cruzado por codigo de barras.** *No sale de ningun maestro de cadena, ni del crudo, ni
+de la cola* -- **de una base de datos comunitaria, unida por EAN.**
+
+### Y llevaba escrito en el codigo todo el tiempo
+
+```
+emparejar.py:212   # NO publican -- solo DIA da algo de nutricion (3.954 de sus 5.792).
+```
+
+**Es la misma frase que yo he tardado 82 rondas en medir**, *y estaba en un comentario a doce lineas del
+`SELECT` que escribe la columna.* **No es que el proyecto lo escondiera: es que yo no lo habia leido.**
+
+### Y el proyecto ya tomo la decision dificil, y bien
+
+```python
+# **Y solo numeros publicables.** Los topes no son umbrales elegidos: 100 g por 100 g
+# es el limite de la materia, y 900 kcal las del aceite puro, que es lo mas energetico
+# que existe. Open Food Facts trae valores fuera de ahi -- es una base comunitaria -- y
+# publicar "1.200 kcal por 100 g" seria peor que no publicar nada: es el dato con el que
+# alguien decide que come.
+```
+
+**Los topes son limites fisicos, no umbrales elegidos** -- *100 g por 100 g, y 900 kcal porque el aceite puro
+es lo mas energetico que existe.* **Y el motivo esta dicho**: *«es el dato con el que alguien decide que come».*
+
+**Es exactamente lo que el encargo pide** -- *no inventar nutricion* --, **y ya estaba resuelto**: *OFF es
+comunitaria, asi que se acota por fisica y se descarta lo imposible.*
+
+### Y el cuadro de F05, ya completo
+
+| fuente del dato | quien la trae | cobertura medida |
+|---|---|---|
+| **Open Food Facts**, por EAN | **`emparejar.py`** | **Carrefour 40,2 % · Dia 48,9 % · Mercadona 45,1 %** |
+| **la ficha de la cadena** | *el colector (Dia) o un ejecutor (Lidl, Carrefour)* | *Dia 6.331 en su maestro; Carrefour sin ejecutar* |
+| **la cola de fichas** | *pendiente* | 72.322 pendientes |
+
+**Asi que hay DOS caminos y los dos estan vivos**: *el comunitario, que ya sirve nutricion para casi la mitad
+del catalogo, y el de la fuente, que la trae para quien la publique.*
+
+**Y la conclusion de F05 cambia de signo**: *no es «no hay nutricion» -- **es que la hay por dos vias, y la
+cobertura de la segunda es la que no estaba medida.*** **La primera se mide con un `SELECT` sobre `kcal_100g`,
+que es lo que acabo de hacer.**
+
+*Y esto cierra el paquete: **lo que queda no es cobertura, es decision** -- si merece la pena pedir 17.283
+fichas de Carrefour cuando Open Food Facts ya da el 40 % de sus grupos.*
