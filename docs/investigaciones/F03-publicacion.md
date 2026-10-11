@@ -337,3 +337,38 @@ pedirla.* **Queda escrito en la prueba, que es donde se va a leer.**
 se resuelve en una linea y las cinco `CREATE VIEW` salen de ella -- y la lectura del codigo, no esta
 prueba.* Lo que esta prueba fija es el **contrato de fuera**: una conexion, una version. *Y fallaria si
 `conexion()` se rehiciera en cada lectura.*
+
+
+---
+
+## 13. «Reanudar desde crudo», que **ya estaba hecho y probado** — y yo lo liste como pendiente
+
+*(Ronda 20.)* He cerrado varias rondas diciendo que faltaba *«reanudar desde crudo sin rescrapear todo,
+con `load_raw_bytes`»*. **Lo medi y no falta: esta hecho y probado.** *Es el mismo error de la ronda 15
+--dar por hueco lo que no habia comprobado--, esta vez con una lista de pendientes en vez de con una
+pregunta.*
+
+**Lo que hay, medido:**
+
+- **`core/storage.py`**: `save_raw` / `load_raw_bytes` -- *«la ultima captura de hoy para reanudar una
+  ejecucion interrumpida sin red»* --, con **pruebas propias** (`tests/test_storage.py`).
+- **Las cuatro cadenas lo usan**: `alcampo.py`, `aldi.py` (dos veces), `carrefour.py`, `dia.py` (dos).
+- **Y el caso dificil esta resuelto y probado.** `alcampo._cache_limpia` no sirve de la cache un reto del
+  WAF, y su docstring cuenta por que:
+
+  > *«El reto se guardaba como si fuera catalogo, y a partir de ahi la categoria quedaba envenenada: la
+  > ejecucion siguiente la leia del disco, veia el reto y se paraba sin llegar a pedir nada por la red.
+  > Renovar la cookie no arreglaba nada porque nunca se volvia a pedir. **De ahi la pasada del 7 sep que
+  > "corto" tras 6.623 productos en ocho segundos sin una sola peticion.**»*
+
+  *Y `_guardar` tampoco guarda un reto, asi que la cache no se puede envenenar hacia adelante y las
+  entradas viejas se ignoran.* **Las dos mitades tienen prueba**: `test_un_reto_ya_cacheado_se_ignora_y_se_
+  vuelve_a_pedir` y `test_el_crudo_bueno_se_sirve_de_la_cache`.
+
+**Asi que lo que queda de F03 es mas estrecho de lo que yo decia**: *no* es la reanudacion, es **que el
+resumen diga de que cadenas hay crudo reanudable** -- que es la parte de «capturado/procesado/publicado»
+que todavia no esta -- y **los dos recorridos de navegador**.
+
+**Y la leccion, que ya es la segunda vez**: *antes de apuntar un pendiente en el tablero hay que medirlo.*
+**Un pendiente inventado cuesta lo mismo que un cierre inventado**: los dos hacen que el tablero deje de
+servir para decidir.
