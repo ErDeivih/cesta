@@ -480,6 +480,25 @@ es la mitad de lo que G05 pide.
 **Lo que falta**: la **seccion en pantalla** (`/compra/analisis`), con el total y su cobertura al lado y
 `null` dicho como que no se sabe. *El endpoint ya devuelve todo lo que necesita.*
 
+### G05: la regla del gasto en la pantalla, **y un import que no debia estar**
+
+`logica/gasto.ts` decide que se puede decir de un periodo: `totalConocido`, `importeEnCentimos`,
+`textoDeLoQueFalta` y `textoDePeriodo`. **Y `null` no es `0`**: *un «0,00 €» se lee «ese mes no gaste
+nada», y lo que pasa es que no se sabe* -- el numero sale mas bajo de lo real, redondo y creible.
+
+**La primera version importaba `numero` de `api/formato`, y con eso el fichero de pruebas del cliente
+NO LLEGABA NI A CARGAR** (`pass 0, fail 1`). *El formato de un numero no es logica de negocio: ahora el
+modulo devuelve **el numero y su condicion**, y el «150,00 €» lo compone quien pinta.* Es la misma
+disciplina que `logica/chispa.ts`, que **no importa nada** y por eso se prueba en un segundo.
+
+**Y queda anotado un hallazgo de la misma clase**: `logica/curva.ts` **si** importa `api/formato`, asi
+que **su regla de negocio -- la de la unidad, que es la que se nego a afirmar un minimo -- hoy no se
+puede probar sin montar el navegador**. *Deberia poder, y es el mismo arreglo.*
+
+**Cinco pruebas nuevas (20 en el cliente)**: sin total conocido no es un cero; un cero sabido si lo es y
+no avisa de nada; un total parcial se dice **con** lo que le falta; el singular de una linea; y el
+periodo legible, incluida la fila sin periodo.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

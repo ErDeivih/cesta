@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
 import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
+import { importeEnCentimos, textoDeLoQueFalta, textoDePeriodo, totalConocido } from '../src/logica/gasto.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -130,4 +131,52 @@ test('el punto descartado por fecha no decide que la serie mezcla', () => {
   ])
   assert.equal(s.dibujable, true, 'el de ud no se dibuja, asi que no mezcla nada')
   assert.deepEqual(s.unidades, ['kg'])
+})
+
+// --- G05: el gasto, y la regla de que `null` no es `0` -----------------------
+
+test('un periodo sin total conocido NO es un cero: no se sabe', () => {
+  const fila = {
+    periodo: '2026-10', total_cent: null, compras: 2,
+    con_importe: 0, sin_importe: 2, lineas_sin_precio: 4, completo: false,
+  }
+  assert.equal(totalConocido(fila), false, 'y por eso se dice, no se pinta un 0')
+  assert.equal(importeEnCentimos(fila), null)
+  assert.equal(textoDeLoQueFalta(fila), 'faltan 4 lineas sin precio')
+})
+
+test('un cero SABIDO si es conocido: se pinta y no se avisa de nada', () => {
+  const fila = {
+    periodo: '2026-10', total_cent: 0, compras: 1,
+    con_importe: 1, sin_importe: 0, lineas_sin_precio: 0, completo: true,
+  }
+  assert.equal(totalConocido(fila), true, 'algo que salio gratis es un cero sabido')
+  assert.equal(importeEnCentimos(fila), 0)
+  assert.equal(textoDeLoQueFalta(fila), null)
+})
+
+test('un total parcial se dice CON lo que le falta', () => {
+  const fila = {
+    periodo: '2026-10', total_cent: 15000, compras: 3,
+    con_importe: 2, sin_importe: 1, lineas_sin_precio: 2, completo: false,
+  }
+  assert.equal(totalConocido(fila), true)
+  assert.equal(importeEnCentimos(fila), 15000)
+  assert.equal(textoDeLoQueFalta(fila), 'faltan 2 lineas sin precio',
+    'el numero esta y se dice que no esta completo: las dos cosas')
+})
+
+test('una sola linea que falta se dice en singular', () => {
+  const fila = {
+    periodo: '2026-W41', total_cent: 500, compras: 1,
+    con_importe: 1, sin_importe: 0, lineas_sin_precio: 1, completo: false,
+  }
+  assert.equal(textoDeLoQueFalta(fila), 'falta 1 linea sin precio')
+})
+
+test('el periodo se dice legible, y una fila sin periodo lo dice', () => {
+  const base = { total_cent: 0, compras: 1, con_importe: 1, sin_importe: 0, completo: true }
+  assert.equal(textoDePeriodo({ ...base, periodo: '2026-10' }, false), 'octubre de 2026')
+  assert.equal(textoDePeriodo({ ...base, periodo: '2026-W41' }, true), '2026 · semana 41')
+  assert.equal(textoDePeriodo({ ...base, periodo: null }, false), 'Sin fecha')
 })
