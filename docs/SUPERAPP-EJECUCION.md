@@ -14,7 +14,7 @@ completo, no una compilación.**
 | G01 Diario efectivo | **`cerrado`** | recorrido medido en 390 y 1440 | **G02: texto libre útil en la lista** |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
-| G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
+| G04 Dos recorridos | `en curso` | — | depende de G01–G03 |
 | G05 Gráficas | `pendiente` | — | depende de G01 para nutrición |
 | G06 Acabado de las tres apps | `pendiente` | — | puede avanzar por pantallas |
 | G07 Publicación diaria | `pendiente` | — | auditar `publicacion.publicar()` dentro del pipeline |
@@ -171,7 +171,37 @@ existente, falta una medición*.
    después de aplicar seis, y *escribe el fichero al final*. **Es el mismo defecto que diagnostiqué en
    la ronda 8.** Ahora **verifica todas las anclas antes de escribir**, y así entró a la primera.
 
-**Y la revocación en el cálculo, medida sin base de datos.** `donde_comprar` seria lo natural de
+### G03, cerrado: la revocación por línea, y la pantalla medida por precio y por id
+
+**La aceptación, en los dos anchos y con dos líneas distintas**:
+
+    MOVIL 390  · tortilla (fila de DIA 2,60)     → cambiadas: 1 · ¿solo esa?: True
+               · la suya: aut=False, cad=None · las otras 3 aceptadas · tras recargar: aguanta
+    1440       · rustique (fila de Alcampo 8,72) → cambiadas: 1 · ¿solo esa?: True
+               · la suya: aut=False, cad=None · las otras 2 aceptadas · tras recargar: aguanta
+
+**`cambiadas == [esa]`** falla si cambian dos y falla si no cambia ninguna. *Es la afirmación que el
+documento pedía —**«un contador global no acredita esto»**— y la única que no puede pasar por
+accidente.*
+
+**El control, por su nombre y su línea**: `RepartoEnTiendas.tsx:138` **«Aceptar el de {cadena}»** y
+`:148` **«Volver al mío»**. *No se llama «Revocar» ni «Autorizar», y por eso no lo encontré buscando
+esas palabras durante once rondas.*
+
+**Y cómo se atribuye un botón a su línea cuando la pantalla no lo dice**: **por el precio**. *La fila
+de la tortilla lleva DIA 2,60 · Aldi 2,99 · Alcampo 5,18 · Carrefour 5,95, y el rustique Alcampo 8,72:
+**los mismos números que medí del catálogo en otra ronda y por otra vía**.* Cuando el nombre no
+atribuye —el contenedor del botón envuelve sólo los botones de tienda— **el precio sí**.
+
+**Las tres puertas, medidas**: estimación (`_total_autorizado`, filtrando por `Eleccion.autorizada`),
+reparto (`_es_la_confirmada`), y cierre (`coste_por_linea`, que **no archiva sustitutos**: *no hay nada
+que revocar en esa puerta*).
+
+**Y una nota que va a G10**: **una línea movida puede tener la autorización puesta y no tiene botón
+para quitarla** —*no tiene fila de reparto, así que no hay control*—. *No es un defecto grave: el
+cierre la archiva sin precio y la pantalla la señala. Pero es un estado alcanzable sin salida visible.*
+
+**Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
 
