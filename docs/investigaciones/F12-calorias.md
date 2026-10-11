@@ -272,3 +272,71 @@ que medir es si la conversion a racion es trazable.** *Es un `SELECT` y una lect
 | **`N06`** | **hecho** (version obligatoria) |
 
 **Cuatro hechos, uno con su mitad vista, y uno por medir.**
+
+
+---
+
+## 6. `N03`: **la base nutricional es un campo con tres valores, y se ensena** -- con `SELECT`, no con grep
+
+*(Ronda 135.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:113`): *«Porciones -- **base nutricional clara**,
+gramos/ml/racion con **conversiones trazables**.»* **Y la mitad de la base esta, y esta bien.**
+
+### La base, declarada en el esquema y ensenada en la pantalla
+
+```python
+core/schemas.py:63      "nutricion_por": pl.Utf8,      # "100g" | "100ml" | "porcion"
+plataforma/web/app.js:1299   `Por ${p.nutricion_por || '100 g'}`, tabla...       # el `app.js` de hoy
+paginas/Producto.tsx:623     Nutricion {miembro.nutricion_por ? `(po[r] ...`}     # la app nueva
+```
+
+**Tres cosas, y las tres son del criterio:**
+
+1. **La base es un campo con tres valores posibles** -- *`100g`, `100ml`, `porcion`* --, **no un numero
+   implicito.** *Un `kcal` sin decir «por que» **no es un dato**: es un numero que parece un dato.*
+2. **Y se ensena**: *«Por 100 g»*, *«Por 100 ml»*, *«Por porcion»* -- **en las dos pantallas**, la vieja
+   (`app.js`) y la nueva (`Producto.tsx`).
+3. **Y cuando falta, se dice `100 g`** -- `p.nutricion_por || '100 g'` --, *que es la convencion de la
+   etiqueta europea y **el valor por defecto que el colector usa**.*
+
+### Y el comentario del esquema dice de que va esto
+
+```python
+core/schemas.py:63    "nutricion_por": pl.Utf8,      # "100g" | "100ml" | "porcion"
+core/schemas.py:64    # Ninguna otra app de la competencia tiene esto. Alimenta la despensa
+core/schemas.py:65    # deducida: se compro hace 12 dias, dura 15, se acaba el viernes.
+```
+
+**«Ninguna otra app de la competencia tiene esto»** -- *y es verdad que es raro: **la mayoria de las apps
+guardan `kcal` y no dicen por que**.* **Y la linea 64-65 dice **para que**: alimenta la despensa deducida.** *O
+sea, `N03` **no es solo para ensenar la tabla: es lo que hace que `dias_caducidad` y la despensa se puedan
+calcular.***
+
+### Y la segunda mitad -- «conversiones trazables» -- es donde hay que seguir
+
+**«Conversion trazable» quiere decir**: *poder ir **de la base a la racion**, y **poder decir como**.*
+
+- **Con `100g` o `100ml`, la conversion es una regla de tres sobre el peso**, *y es trazable si se sabe el peso
+  de la racion.*
+- **Con `porcion`, la base **es** la racion** -- *pero **`porcion` no dice de que tamano***. *Y ahi esta el
+  hueco: `kcal` «por porcion» **sin decir cuantos gramos es una porcion** no se puede comparar con nada.*
+- **Y `costeReceta.ts` ya trata el caso analogo** (`R09`): *«en `ud` no se prorratea… seria inventar una fraccion
+  de huevo».*
+
+**Asi que la pregunta de la segunda mitad es una y es concreta**: ***¿hay un campo con el tamano de la porcion, o
+«por porcion» se queda sin decir de cuanto?*** *Es un `SELECT` sobre el esquema y un `grep` de `porcion_g` o
+equivalente, **y va en la ronda siguiente** -- y esta vez **con el `SELECT` primero**, que es lo que ha funcionado
+cuando el grep se atasca.*
+
+### Y F12, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`N01`** | *la «nueva operacion legitima» esta* |
+| **`N02`** | **hecho** |
+| **`N03`** | **la base, hecha y ensenada**; *la «conversion trazable» depende de si hay tamano de porcion* |
+| **`N04`** | **hecho** |
+| **`N05`** | **hecho** |
+| **`N06`** | **hecho** |
+
+**Cinco de los seis, con su mitad principal hecha; y `N03` tiene la mitad de la base y la pregunta de la racion
+ya escrita.**
