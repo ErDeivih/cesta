@@ -145,3 +145,71 @@ declaro un token nuevo con su motivo**, y los componentes usan el token.*
 
 **Dos de los cinco, y con sistema en vez de con parches.** *Y la decimocuarta pieza: **el color ya tenia su
 regla**, con el ratio al lado de cada token.*
+
+
+---
+
+## 3. «Reduccion de movimiento»: **no esta, y hay tres animaciones que reducir** -- y el foco **si**
+
+*(Ronda 142.)* Los tres casos que se pueden medir sin navegador, y **dan dos respuestas distintas.**
+
+```
+reduced-motion :  0 menciones   <- NO HAY
+foco visible   :  2             <- SI: estilos.css:70  :focus-visible { @apply outline-none ring-2 ring-offset-2 ring-sky-600 ... }
+animacion      :  4             <- Y HAY QUE REDUCIR: ui.tsx:307 y :324 (animate-pulse), estilos.css:188 (transition: transform 150ms ease)
+```
+
+### Y lo importante es que **el caso es real, no teorico**
+
+**«Respetar `prefers-reduced-motion`» solo importa **si hay movimiento**, y **hay tres cosas**:**
+
+| donde | **que se mueve** |
+|---|---|
+| `ui.tsx:307` | **`animate-pulse`** -- *el esqueleto de carga de una tarjeta* |
+| `ui.tsx:324` | **`animate-pulse`** -- *el de otra* |
+| `estilos.css:188` | **`transition: transform 150ms ease`** |
+
+**Asi que no es «no hay animaciones, luego no hace falta»: es que **hay tres**, y **ninguna** consulta la
+preferencia.** *Un `animate-pulse` **parpadeando** para quien ha pedido que no se mueva nada es exactamente lo
+que el ajuste existe para evitar.*
+
+### Y el foco **si esta**, y bien
+
+```css
+70   :focus-visible {
+71     @apply outline-none ring-2 ring-offset-2 ring-sky-600 ring-offset-white ...
+```
+
+**`focus-visible` y no `focus`** -- *que es la diferencia entre **rodear de un anillo solo a quien navega con
+teclado** y **rodearlo tambien al que acaba de hacer clic con el raton**.* **Y el anillo es `ring-2` con
+`ring-offset-2`**, *o sea, **separado del borde** -- que es lo que hace que se vea **sobre cualquier fondo**.*
+
+**Es la decision correcta, y es del criterio: «teclado / cajon / **foco**».** *Un `:focus` a secas tambien
+«funcionaria», y seria peor.*
+
+### Y las dos, juntas, dicen una cosa del proyecto
+
+**El foco esta resuelto **con la variante correcta** (`:focus-visible`, que es la que casi nadie usa), y la
+reduccion de movimiento **no esta**.** *No es un proyecto descuidado con la accesibilidad: es **un proyecto que
+resolvio la parte que se ve y no la que no se ve** -- y `prefers-reduced-motion` es **justo la que no se ve**: la
+activa quien la necesita, y quien no, **nunca la echa en falta**.*
+
+**Es la misma forma que los otros huecos de esta fase**: *`R02`, `R05` y `R08` **no existen porque nadie los ha
+pedido**; y `prefers-reduced-motion` **no esta porque nadie lo ha notado**.* **La diferencia es que este son
+**tres lineas**.**
+
+### Y F14, con lo medido
+
+| lo que pide la aceptacion | **estado** |
+|---|---|
+| **contraste** | **sistema**: cinco tokens con su ratio, y uno que existe porque otro no llegaba |
+| **color** | **direccion**: *«archivo domestico, no panel generico»* |
+| **modo oscuro** | **si** |
+| **teclado / foco** | **si**, con `:focus-visible` y anillo separado |
+| **reduccion de movimiento** | **NO** -- *y hay **tres** animaciones que reducir* |
+| **360/390/768/1440 y zoom 200 %** | *por medir, **con navegador*** |
+
+**Cuatro de los seis, uno que falta y son tres lineas, y uno que exige navegador.** *Y los dos que faltan
+**no se pueden leer**: el de anchuras hay que **verlo**, y el de movimiento hay que **emular la preferencia** --
+*que es exactamente lo que `capture_browser_scenario` del laboratorio auxiliar sabe hacer, con
+`reduced_motion: "reduce"` entre sus ajustes por defecto.*
