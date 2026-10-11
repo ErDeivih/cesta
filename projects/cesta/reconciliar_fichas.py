@@ -187,3 +187,77 @@ def reconcilia(con, maestros: dict[str, dict], *, ahora=None, fuentes=None) -> d
         cuenta["reconciliadas"] += 1
 
     return cuenta
+
+# ---------------------------------------------------------------------------------------------
+# Y la puerta: corregir la cola de verdad, pidiendolo.
+# ---------------------------------------------------------------------------------------------
+
+
+def carga_maestros(fuentes=("dia", "mercadona")) -> dict[str, dict]:
+    """Los maestros de `data/master`, por cadena. *Los que no existan, no se cargan.*"""
+    import gzip
+    import json
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parents[2]
+    salida: dict[str, dict] = {}
+    for fuente in fuentes:
+        ruta = raiz / "data" / "master" / f"{fuente}.json.gz"
+        if ruta.exists():
+            salida[fuente] = json.loads(gzip.decompress(ruta.read_bytes()))
+    return salida
+
+
+def main(argv: list[str] | None = None) -> int:
+    """**Por defecto NO escribe.** *Toca `data/inventario.sqlite`, del que dependen las pasadas diarias: que
+    haya que pedirlo con `--aplicar` es lo minimo.*
+
+        uv run python -m projects.cesta.reconciliar_fichas            # dice que haria
+        uv run python -m projects.cesta.reconciliar_fichas --aplicar  # lo escribe
+    """
+    import argparse
+    from pathlib import Path
+
+    from core import inventario
+
+    raiz = Path(__file__).resolve().parents[2]
+    ap = argparse.ArgumentParser(description="Marca correcto lo que ya tiene ficha en el maestro.")
+    ap.add_argument("--aplicar", action="store_true",
+                    help="escribe los cambios; sin esto solo dice lo que haria")
+    ap.add_argument("--cola", default=str(raiz / "data" / "inventario.sqlite"),
+                    help="la cola a reconciliar")
+    a = ap.parse_args(argv)
+
+    maestros = carga_maestros()
+    if not maestros:
+        print("  no hay maestros en data/master: no hay nada que reconciliar")
+        return 1
+    for fuente, maestro in sorted(maestros.items()):
+        print(f"  maestro de {fuente}: {len(maestro):,} registros")
+
+    con = inventario.conecta(Path(a.cola))
+    antes = inventario.resumen(con)
+    total_antes = sum(v.get("pendiente", 0) for v in antes.values())
+    print(f"\n  antes: {total_antes:,} pendientes")
+
+    cuenta = reconcilia(con, maestros)
+    print(f"  reconciliador: {cuenta}")
+
+    if a.aplicar:
+        con.commit()
+        despues = inventario.resumen(con)
+        total = sum(v.get("pendiente", 0) for v in despues.values())
+        print(f"\n  DESPUES: {total:,} pendientes  ({total_antes - total:,} reconciliadas)")
+        for fuente, cuenta_estado in sorted(despues.items()):
+            print(f"    {fuente:11} {cuenta_estado}")
+    else:
+        con.rollback()
+        print(f"\n  (sin --aplicar: no se ha escrito nada. Serian "
+              f"{cuenta['reconciliadas']:,} fichas de {total_antes:,})")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

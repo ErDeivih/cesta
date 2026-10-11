@@ -911,3 +911,62 @@ distinguir, manana, una ficha que trajo el ejecutor de una que ya estaba.*
    mentira; falta la pasada de verdad, que cambiaria **79.887 -> 72.411**.*
 2. **Y el arreglo de fondo**: *que el colector avise a la cola al guardar una ficha, para que no vuelva a
    acumularse deuda falsa.*
+
+
+---
+
+## 21. **Corrido contra la cola real, y la deuda falsa esta corregida**
+
+*(Ronda 72.)* Con copia de seguridad primero -- *`data/inventario.sqlite.antes-de-reconciliar`* -- y despues
+`reconciliar_fichas.reconcilia` contra la cola de verdad:
+
+```
+ANTES:   79.887 pendientes
+    alcampo 43.603 · aldi 3.206 · carrefour 17.283 · dia 6.292 · lidl 5.026 · mercadona 4.477
+
+reconciliador: {'miradas': 10.769, 'reconciliadas': 7.565, 'sin_maestro': 69.118}
+
+DESPUES: 72.322 pendientes   (7.565 reconciliadas)
+    alcampo     {'pendiente': 43603}                       <- sin maestro: no se puede contrastar
+    aldi        {'pendiente':  3206}
+    carrefour   {'pendiente': 17283}
+    dia         {'correcto': 4655, 'pendiente': 1637}      <- 6.292 -> 1.637
+    lidl        {'correcto':   28, 'pendiente': 5026}
+    mercadona   {'correcto': 2910, 'pendiente': 1567}      <- 4.477 -> 1.567
+```
+
+**Y coincide con lo medido en la seccion 17**: *Dia 1.637 pendientes de verdad, exactamente el numero que
+salio del `SELECT`.* **Mercadona da 1.567 y no 1.656** -- *la diferencia son 89 fichas, y es porque el `SELECT`
+contaba `nutricion` **o** `ingredientes`, y `tiene_ficha` usa las marcas de cada cadena.* **La cifra buena es
+la del reconciliador, que es el que escribe.**
+
+**Las cuatro cadenas sin maestro quedan intactas, y `sin_maestro` las cuenta: 69.118.** *Antes no se contaban
+-- lo cazo una prueba (§20) -- y ahora se sabe cuanto NO se puede contrastar.*
+
+### Y la puerta, para que sea repetible
+
+```
+uv run python -m projects.cesta.reconciliar_fichas            # dice que haria, sin tocar nada
+uv run python -m projects.cesta.reconciliar_fichas --aplicar  # lo escribe
+```
+
+**Por defecto NO escribe**, y la segunda pasada ya dice **«Serian 0 fichas de 72.322»** -- *que es la prueba de
+que la primera hizo su trabajo.*
+
+### Y un error mio, en el arreglo
+
+**Sobrescribi el modulo con `write` al anadirlo la puerta**, y *me lleve por delante `campos_de_ficha`,
+`tiene_ficha` y `reconcilia`.* **Restaurado desde `git checkout`, y la puerta anadida despues con `edit`.**
+*Las once pruebas lo confirmaron antes de seguir.*
+
+**Es el mismo descuido que el aviso de `ruff` de la ronda 70**: *mirar una cosa y no la otra.* **`write`
+reemplaza entero; para anadir, `edit`.**
+
+### Lo que queda de F05
+
+1. **El arreglo de fondo**: *que el colector avise a la cola al guardar una ficha*, para que la deuda no se
+   vuelva a acumular. **Sin eso, esta correccion hay que repetirla cada vez.**
+2. **Decidir que productos de los 72.322 merecen la visita** -- *pedir 72.322 fichas es una operacion de red
+   de verdad, con su presupuesto.*
+3. **Construir el maestro de alcampo, carrefour y aldi**, que es lo que convierte sus **64.092** de «sin
+   medir» en un numero.
