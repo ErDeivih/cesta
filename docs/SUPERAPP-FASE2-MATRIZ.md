@@ -67,6 +67,18 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
 | **Calorías y tabla nutricional** | **parcial: 22,8 %** (11.064 de 48.606 grupos) | *Esta fila decía «Día: 6.331 productos» y **el catalogo mide otra cosa**: 11.064 de 48.606 grupos con `kcal_100g` (22,8 %), Día 2.826 (48,9 %), Carrefour 6.512 (40,2 %), Mercadona 1.900 (45,1 %), **Alcampo y Aldi 0**. La fuente es Open Food Facts por EAN. **Las dos cifras pueden ser de cosas distintas y no he vuelto a medir la primera**: se deja dicho en vez de sustituir una por otra.* *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |
 | Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
+| **Vaciar la lista y volver a comprar, desde el móvil** | **funciona** | `prueba_f07_pasos.py` **PASA**: **4 toques** en la cuenta vacía; y `prueba_f07_lista.py` llega a `/compra/listas` y el encabezado **`'BEBIDAS'`** prueba que `porPasillo` agrupa |
+| **Que una receta de otra persona no se vea** | **funciona** | `test_fase2_f09_recetario.py`, **9 pruebas**: el de fuera **no lee, no cambia, no archiva y no ve las versiones**; y `listar` no mezcla dueños |
+| **Que editar una receta no cambie lo de ayer** | **funciona** | *v1 sigue diciendo «harina» después de editar a «patata»* — versiones autocontenidas |
+| **Escalar raciones sin inventar** | **funciona** | *`kg`+`kg` = 1,5; y **a la sal no le aparece cantidad*** |
+| **Ver lo que costaría la compra antes de decidir** | **funciona** | `core/previa_compra`: **la ruta `GET` que no escribe**, y devuelve **lo que no se puede comprar con su motivo** |
+| **Saber cuánto usas y cuánto compras** | **funciona** | `logica/costeReceta.ts`: **los dos números separados** (*«200 g» de un envase de 1 kg: usas 0,24 €, compras 1,20 €*) y `ud` sin prorrateo |
+| **Leer un código de barras sin cámara** | **funciona** | `Escaner.tsx`: **el texto es el camino principal**, la cámara un botón que **sólo aparece si el navegador sabe leer**; y `comparacion: null` → **«no puedo comparar»** |
+| **Meter una receta en el diario y que no se pierda la versión** | **funciona** | `diario.py:154`: **una entrada de receta sin versión no entra** (*`raise`*: *«sin ella no se puede releer»*) |
+| **Importar una receta de fuera** | **no existe** | *ni ruta, ni pantalla, ni `fuente` de receta* — `R02` |
+| **Cocinar paso a paso, con temporizadores** | **no existe** | *los «temporizador» del código son **debounce de búsqueda*** — `R05` |
+| **Tener despensa y descontar existencias** | **no existe** | *ninguna de las 13 tablas es de despensa; `preferencia` está vacía* — `R08` |
+| **Que `1 kg` y `500 g` se sumen en la compra** | **no** — *defecto fijado* | `xfail(strict=True)`: `kg+g` **no se suman** y se nombran como incompatibles, cuando la aceptación dice «kg/g **compatible**» |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **hay defensa, y 5 pruebas** | `SameSite=Lax` + `HttpOnly` (`main.py:88`); **26 endpoints que mutan, todos no-GET**; **ningún GET exige escribir**. *Falta el ensayo con navegador: las pruebas del CORS usan un middleware con los mismos parámetros, no la app real* |
 
@@ -121,6 +133,10 @@ npm run build                                        154 modulos
 | `tests/test_fase2_f01_sustitucion.py` | A pedido, B aceptado, 3 unidades y 3×2 → **500**, no 900 |
 | `tests/test_g03_cierre.py` | el cierre archiva **lo que puso el precio**, por HTTP |
 | `tests/test_fase2_f02_concurrencia.py` | misma clave a la vez → **una** entrada; choque → **400** |
+| `tests/test_fase2_f09_recetario.py` | **9 pruebas**: aislamiento (el de fuera no lee/cambia/archiva/ve versiones), versiones persistentes, `listar` sin mezclar, y el escalado sin inventar |
+| `tests/test_fase2_f10_previa_compra.py` | **8 pruebas**: `kg`+`kg` suma, **`kg`+`g` no** (*xfail: el defecto*), `ud` y `ml`/`g` se nombran, la sal no se compra, y **la previa no modifica la entrada** |
+| `plataforma/prueba_f07_pasos.py` | navegador: **4 toques** para el recorrido de la cuenta vacía |
+| `plataforma/prueba_f07_lista.py` | navegador: llega a `/compra/listas` **pulsando «Ver mi lista»**, y el encabezado `'BEBIDAS'` prueba el agrupado por pasillo |
 | `plataforma/prueba_reintento.py` | el reintento **en un navegador**: 1→1 contra 1→3 |
 | `core/oraculo_reparto.py` + su prueba | **cero discrepancias** en 200 escenarios al azar |
 | `tests/test_fase2_f03_publicacion.py` | publicar tarde, fallo en el veredicto, e invariantes |
