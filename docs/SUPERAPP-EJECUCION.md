@@ -938,6 +938,34 @@ problema de Lidl: es que el sistema de fichas, en conjunto, casi no ha corrido.*
 el limite con su hora de red, y que el resumen dice cuanto queda **sin prometer plazo con
 `--limite 0`**.
 
+### G09, cerrado: **Lidl entra, y la limitacion se publica**
+
+**Los cinco puntos, con lo que hay y lo que falta.**
+
+| punto | estado |
+|---|---|
+| **187** medir fuentes; distinguir catalogo/campañas/no alimentacion; registrar que no publica | ✓✓ *sitemap (6.622 URLs), clasificador de ambito, `promos_por_cadena`, y **`LIDL.md`: «lidl.es no publica precios de alimentacion»**, comprobado con fichas reales (`COMPETENCIA.md:510`)* -- *falta «familias/categorias»: el descubrimiento clasifica por slug, no por la familia de la web* |
+| **188** clasificar consumibles con motivo; no reabrir electrodomesticos | ✓✓ *politica de alcance v5: `excluido` 0->14 sobre 26 fichas, con las pruebas en las dos direcciones* |
+| **189** `ORDEN` sin Lidl; presupuesto y resumen | ✓✓ *Lidl en `ORDEN` (al final), su ritmo declarado, y `LIMITE_POR_EJECUCION = 1000`: **6 ejecuciones en vez de 1.676*** |
+| **190** no extender una campaña; conservar fechas y ambito | ✓✓ *`promo_hasta` con 5.767 valores, duracion medida por cadena (mediana 6-8 dias), y **el tope por fecha**: «una particion posterior a la fecha de referencia no se elige: sus ofertas todavia no estaban vigentes»* -- *la clausula de canal/ubicacion, sin verificar* |
+| **191** fixtures y tests de parser; **publicar limitaciones** | ✓ *fixtures reales y 12 pruebas del parser; y **el informe publica la limitacion**: «cuenta lo DESCUBIERTO, no el surtido de una cadena: un numero de filas no demuestra cobertura completa»* |
+
+**Y LA LIMITACION, PUBLICADA COMO PIDE EL 191.**
+
+**El sistema de fichas casi no ha corrido, y esta medido por el instrumento del propio proyecto:**
+
+    79.915 productos descubiertos · 79.887 SIN ficha · 28 con ficha
+      (cinco de las seis cadenas a cero)
+
+*No es un problema de Lidl ni de una ronda: es cobertura.* **Lo que hoy cambia es que tiene
+presupuesto y plazo**: *la cola de Lidl son 5.026 pendientes y a 1.000 por ejecucion se cubren en
+**6 ejecuciones**, no en las 1.676 del limite anterior.* **Y la ventana la marca Alcampo** -- *1 h 40
+min medidos en `data/ejecuciones.log`, con las cadenas en paralelo, asi que Lidl se solapa.*
+
+**Lo que NO se hace en esta ronda, y se dice**: *cubrir las 79.887 fichas.* **Eso es dejar correr el
+presupuesto nuevo y volver a medir**, y es exactamente lo que el 191 pide: *«no exigir mismo numero que
+Aldi: demostrar cobertura accesible y **publicar limitaciones**».*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
