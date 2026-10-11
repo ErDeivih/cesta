@@ -689,6 +689,34 @@ visible** (`pipeline.py:792-799`, con el incidente del **13 de octubre de 2026**
 puntero en el 7 -- documentado en el propio comentario)*; y **`/api/estado` lo declara** comparando las
 dos fechas.
 
+### G07: el manifiesto medía un reloj y hay dos
+
+**La clausula que faltaba de 168**, y la que G07 escribe con dos frases: *«descubrimiento con sitemap
+antiguo no implica automaticamente precio antiguo; **medir ambos por separado**»*.
+
+**El manifiesto declaraba UNA fecha de captura por cadena** -- la de ficha, que sale de `bronze` -- y
+los precios viven en **otro sitio y con su propio reloj**: `gold/precio_diario.parquet`, columna
+`fecha`, **una por cadena** (medido: Alcampo de 2026-09-06 a 2026-10-11, Carrefour desde el 09-07).
+
+*Un catalogo con las fichas de hoy y los precios de anteayer producia **cero avisos** y se leia como
+fresco.* **Es exactamente el caso contra el que G07 escribe esa linea.**
+
+**Corregido**: `_precios()` lee `max(fecha)` por `fuente` y lo mete en `fuentes[fuente]["precio"]`,
+junto a `captura`; **y el aviso se parte en dos**:
+
+    "{fuente}: sin captura de hoy (la ultima es X)"
+    "{fuente}: la ficha es de hoy pero el precio es de X"      <-- nuevo
+
+*Y una cadena con precio y sin ficha tambien entra: un precio sin ficha es un dato y hasta hoy no
+aparecia.* **No lanza si falta el fichero**: el dia se mide por el dato, no por el manifiesto.
+
+**Contra los datos reales**: las cinco cadenas con `ficha=2026-10-11` y `precio=2026-10-11`, **cero
+avisos** -- que es la verdad. *El caso que importa -- ficha fresca y precio viejo -- lo fija la prueba.*
+
+**Y seis pruebas nuevas** (`tests/test_g07_manifiesto.py`): las dos fechas por separado, **el aviso
+cuando la ficha es de hoy y el precio de enero**, que con las dos iguales no avisa, que sin fichero de
+precios el manifiesto sale igual, que un precio sin ficha entra, y que se escribe sin dejar temporal.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

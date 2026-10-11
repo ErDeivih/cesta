@@ -90,6 +90,28 @@ def _fuentes(hoy: date | None = None) -> dict[str, dict]:
     return salida
 
 
+def _precios() -> dict[str, str]:
+    """La fecha del ultimo precio de cada cadena. **Medida aparte de la ficha.**
+
+    G07: *«descubrimiento con sitemap antiguo no implica automaticamente precio antiguo; **medir ambos
+    por separado**»*. Hasta hoy el manifiesto declaraba **una sola** fecha de captura -- la de ficha,
+    que sale de `bronze` -- y los precios viven en `gold/precio_diario` con la suya. *Un catalogo con
+    las fichas de hoy y los precios de anteayer producia **cero avisos** y se leia como fresco.*
+
+    **No lanza**: sin fichero, o ilegible, se devuelve vacio y el manifiesto sale sin esa columna.
+    *El dia se mide por el dato, no por el manifiesto.*
+    """
+    ruta = GOLD / "precio_diario.parquet"
+    if not ruta.exists():
+        return {}
+    try:
+        marco = pl.read_parquet(ruta, columns=["fuente", "fecha"])
+        agrupado = marco.group_by("fuente").agg(pl.col("fecha").max().alias("ultima"))
+        return {fila["fuente"]: str(fila["ultima"]) for fila in agrupado.iter_rows(named=True)}
+    except Exception:  # noqa: BLE001  (un precio ilegible no invalida el manifiesto)
+        return {}
+
+
 def _cobertura() -> dict[str, dict]:
     """Lo que cada colector declara sobre su propia cobertura (Lidl: ofertas conocidas)."""
     salida: dict[str, dict] = {}
@@ -106,6 +128,12 @@ def _cobertura() -> dict[str, dict]:
 def construye(fecha: date | None = None) -> dict:
     dia = fecha or date.today()
     fuentes = _fuentes(dia)
+    # **La fecha del precio, por cadena, junto a la de ficha.** *Son dos relojes distintos.*
+    precios = _precios()
+    for fuente, cuando in precios.items():
+        fuentes.setdefault(fuente, {"captura": None, "filas": 0, "de_hoy": False})["precio"] = cuando
+    for datos in fuentes.values():
+        datos.setdefault("precio", None)
     ficheros = {}
     for nombre in PUBLICADOS:
         ruta = GOLD / nombre
@@ -123,6 +151,10 @@ def construye(fecha: date | None = None) -> dict:
     for fuente, datos in fuentes.items():
         if not datos["de_hoy"]:
             avisos.append(f"{fuente}: sin captura de hoy (la ultima es {datos['captura']})")
+        # **Y el precio, aparte.** *Una ficha de hoy con un precio de anteayer no es un catalogo de
+        # hoy, y hasta ahora no lo decia nadie.*
+        if datos["precio"] is not None and datos["precio"] != dia.isoformat() and datos["de_hoy"]:
+            avisos.append(f"{fuente}: la ficha es de hoy pero el precio es de {datos['precio']}")
     sin_fichero = [n for n, d in ficheros.items() if d["sha256"] is None]
     if sin_fichero:
         avisos.append(f"falta publicar: {', '.join(sin_fichero)}")
