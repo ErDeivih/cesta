@@ -782,3 +782,49 @@ cobertura buena no es la de la cola, es la del catalogo** -- Dia, **4.695 de 6.3
 **Lo que hay que decir, corregido**: *la cobertura de fichas de Dia es **del 74 % de su maestro** (4.695 de
 6.331), no del 0,04 %.* **Y la de Mercadona, 2.830 de 4.494 (63 %).** *Lo que esta en el 0,04 % es **el
 trabajo de la cola**, que es otra cosa.*
+
+
+---
+
+## 18. Y esto no es una cifra rara: **es un defecto de contabilidad de la cola**
+
+*(Ronda 69.)* El 74 % de deuda falsa de Dia **no es una curiosidad de medicion**: *es que **la cola cuenta
+como pendiente algo que ya esta hecho**.* **Llamarlo cifra lo disimula; es un defecto.**
+
+### Que pasa exactamente
+
+```
+core/inventario.py:37    PENDIENTE = "pendiente"
+                 :39    CORRECTO  = "correcto"
+                 :167   def terminar(con, clave, estado, ...):
+                 :173       «`correcto` exige el hash del contenido util»
+```
+
+**Una ficha se marca `correcto` cuando alguien llama a `terminar`** -- *y **solo lo llama el ejecutor de
+Lidl** (`fichas_lidl.py`).* **El colector, cuando pide una ficha y la guarda en el maestro, no toca la
+cola.** *Asi que la cola no se entera.*
+
+**No es que la cola mienta a proposito: es que **nadie la avisa**, y su trabajo -- «que le falta a cada
+producto» -- queda mal contado.**
+
+### El arreglo, y sus dos piezas
+
+1. **Un reconciliador**: *recorrer los pendientes y, para los que **ya tienen ficha en el maestro**, llamar a
+   `terminar(..., CORRECTO, hash=...)`.* **El hash es el requisito** -- *«exige el hash del contenido util»*
+   --, y **el maestro lo tiene**: para Dia, `nutricion` + `nutricion_por`; para Mercadona, `ingredientes` +
+   `alergenos`. *Se calcula con la misma funcion que use el ejecutor, para que un hash de la cola y uno del
+   reconciliador sean comparables.*
+2. **Y por que el colector deberia avisar**: *si cada vez que guarda una ficha en el maestro marcara la
+   cola, no haria falta reconciliar nada.* **Es el arreglo de fondo**, y *el reconciliador es el parche que
+   hace falta igualmente para la deuda ya acumulada -- 7.476 fichas entre Dia y Mercadona.*
+
+### Y por que no lo hago en esta ronda
+
+**`terminar` exige el hash del contenido util**, y **elegir con que funcion se calcula para cada cadena
+decide si dos hashes son comparables.** *Eso hay que mirarlo en `fichas_lidl.py` y decidirlo, no
+suponerlo* -- *y hacerlo mal escribiria en la cola un hash que no casa con el que escriba el ejecutor, que
+es peor que no tocarla.*
+
+**El defecto queda localizado, contado (7.476 fichas entre las dos cadenas medidas) y con el arreglo
+especificado en dos piezas, la segunda de fondo.** *Es lo mismo que paso con `alerta`: especificarlo bien
+fue lo que permitio arreglarlo despues en una sola ronda.*
