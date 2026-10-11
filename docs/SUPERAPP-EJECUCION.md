@@ -201,6 +201,35 @@ que revocar en esa puerta*).
 para quitarla** —*no tiene fila de reparto, así que no hay control*—. *No es un defecto grave: el
 cierre la archiva sin precio y la pantalla la señala. Pero es un estado alcanzable sin salida visible.*
 
+### G04, punto 1: el catalogo fijo de ensayo, publicado por el mecanismo de verdad
+
+**Se usa el mecanismo real, no un doble.** `core/publicacion.py` publica por versiones: todos los
+ficheros en `data/gold/v<sello>/`, y el puntero (`actual.json`) se mueve con `os.replace` **solo cuando
+estan todos**. Una version incompleta no se publica; las anteriores no se borran. *Sustituirlo mediria
+mi doble, no el sistema.*
+
+**Y el aislamiento no depende de la disciplina**: `GOLD` y `PUNTERO` son constantes de modulo, asi que
+apuntarlas a un temporal deja **todo** el mecanismo --carpetas, puntero atomico, completitud,
+rollback-- funcionando contra el ensayo, sin tocar el catalogo que sirve el producto. *Hoy importa mas
+que nunca: esta manana se publico la version **`20261011-124542`** mientras se trabajaba en esto, y el
+tablero decia `20261010-142831`.*
+
+**El contenido es del ensayo y se declara como tal**: un producto, **dos cadenas** (DIA 150 con
+promocion, Alcampo 220 sin ella), los siete nutrientes por 100 g, la promocion con su texto, y las
+cinco cadenas en `promos_por_cadena`. **Nada viene del catalogo real**: *si viniera, el ensayo mediria
+el dia en que se ejecuta.*
+
+| comprobado | |
+|---|---|
+| sin publicar: `version_actual()` es `None` y se lee el catalogo suelto | ✓ *el fallback, medido* |
+| publicar V1 mueve el puntero y deja los **seis** ficheros | ✓ |
+| `rutas()` devuelve los seis caminos **bajo la carpeta de la version** | ✓ |
+| y lo que se lee **es el ensayo**, no los 51.609 productos reales | ✓ **2 filas, DIA y Alcampo** |
+
+**Y `enlaces` quedo entendido leyendolo**: `i` y `j` son **indices de fila de `grupos`** (`i` llega a
+50.855 con 51.609 filas; la fila `i=0` coincide), los pares van ordenados, y los niveles son
+`identico`, `equivalente` y `ean`. *Era lo unico que estaba afirmando por deduccion.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
