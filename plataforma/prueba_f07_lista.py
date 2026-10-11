@@ -41,13 +41,13 @@ def main() -> int:
     # **Productos de verdad, de pasillos distintos.** *Se cogen de `grupos`, con su `categoria`, para que la
     # pantalla tenga algo que agrupar de verdad.*
     filas = catalogo.conexion().execute(
-        "SELECT id_fuente, nombre, categoria FROM grupos "
+        "SELECT grupo_id, id_fuente, nombre, categoria FROM grupos "
         "WHERE categoria IS NOT NULL AND precio_unidad_cent > 0 "
         "  AND categoria IN ('la-despensa/lacteos', 'frescos/quesos', 'bebidas/vinos') "
         "ORDER BY categoria LIMIT 6").fetchall()
     print(f"  productos elegidos: {len(filas)}")
     for f in filas:
-        print(f"    {f[2]:24} {str(f[1])[:44]!r}")
+        print(f"    {f[3]:24} grupo={f[0]} {str(f[2])[:40]!r}")
 
     # **La cuenta, la lista y las lineas**, por la API de dentro -- *es montar el escenario, no medirlo.*
     sello = f"{int(time.time() * 1000) % 100000000}"
@@ -66,8 +66,9 @@ def main() -> int:
     print(f"  lista de casa creada: {lista_id}")
 
     for i, f in enumerate(filas):
-        almacen.anade_linea(lista_id, identificador, str(uuid.uuid4()), str(f[1]),
-                            grupo_id=None, cantidad=1 + i)
+        # **Con `grupo_id` de verdad**, que es lo que hace que la linea tenga pasillo.
+        almacen.anade_linea(lista_id, identificador, str(uuid.uuid4()), str(f[2]),
+                            grupo_id=int(f[0]) if f[0] is not None else None, cantidad=1 + i)
     print(f"  lista {lista_id} con {len(filas)} lineas")
 
     fallos: list[str] = []
@@ -87,31 +88,57 @@ def main() -> int:
             contexto.request.post(f"{UI}/api/entrar",
                                   data={"usuario": f"f07lista-{sello}", "clave": CLAVE})
 
-            # **La pantalla de la lista.** *`/compra` es la de buscar; la lista vive en la misma app, asi que
-            # se prueban las dos y se dice cual tiene las lineas.*
-            # **Las rutas, de la portada**: «Compra: Buscar, la lista, favoritos y lo que gastas». *La primera
-            # version probaba `/lista`, que no existe («Esa pantalla no existe»).*
-            for ruta in ("/compra/lista", "/compra", "/compra/favoritos", "/"):
-                pagina.goto(f"{UI}{ruta}", wait_until="domcontentloaded")
+            # **Se PULSA «Ver mi lista», no se compone la ruta.** *`/lista` y `/compra/lista` contestan «Esa
+            # pantalla no existe», y la propia pantalla de favoritos ofrece el camino.*
+            pagina.goto(f"{UI}/compra/favoritos", wait_until="domcontentloaded")
+            with contextlib.suppress(Exception):
+                pagina.wait_for_timeout(2000)
+
+            enlace = pagina.get_by_role("link", name="Ver mi lista")
+            if enlace.count() == 0:
+                enlace = pagina.get_by_text("Ver mi lista", exact=False)
+            comprueba(enlace.count() > 0, "la pantalla ofrece «Ver mi lista»")
+            if enlace.count():
+                enlace.first.click()
                 with contextlib.suppress(Exception):
                     pagina.wait_for_timeout(2500)
-                cuerpo = pagina.locator("body").inner_text()
-                tiene = [f for f in filas if str(f[1])[:18] in cuerpo]
-                print(f"\n  --- {ruta}: {len(tiene)} de {len(filas)} productos en pantalla")
-                if not tiene:
-                    print(f"      la pantalla dice: {cuerpo[:300]!r}")
-                if tiene:
-                    print(f"      encabezados: {pagina.locator('h3, h2, [role=heading]').count()}")
-                    for i in range(min(pagina.locator("h3, h2, [role=heading]").count(), 8)):
-                        with contextlib.suppress(Exception):
-                            print(f"        [{i}] {pagina.locator('h3, h2, [role=heading]').nth(i).inner_text()[:36]!r}")
-                    # **Y las palabras de C04**, que es lo otro que hay que ver.
-                    bajo = cuerpo.lower()
-                    for palabra in ("lo de siempre", "habitual", "en el carro", "carrito", "comprado"):
-                        if palabra in bajo:
-                            print(f"      la pantalla dice {palabra!r}")
-                    comprueba(not errores, f"sin errores de JavaScript en {ruta} ({errores[:1]})")
-                    break
+
+            print("\n  === LA LISTA, tras pulsar «Ver mi lista» ===")
+            print(f"      url: {pagina.url}")
+            cuerpo = pagina.locator("body").inner_text()
+            tiene = [f for f in filas if str(f[2])[:18] in cuerpo]
+            print(f"      {len(tiene)} de {len(filas)} productos en pantalla")
+
+            # **Y los encabezados**, que es lo que mide `C03`: si `porPasillo` agrupa, tienen que salir.
+            encabezados = pagina.locator("h3, h2, [role=heading]")
+            print(f"      encabezados: {encabezados.count()}")
+            for i in range(min(encabezados.count(), 8)):
+                with contextlib.suppress(Exception):
+                    print(f"        [{i}] {encabezados.nth(i).inner_text()[:40]!r}")
+
+            if not tiene:
+                print(f"      la pantalla dice: {cuerpo[:300]!r}")
+
+            # **`C03` pide AGRUPACION.** *Con seis lineas del mismo pasillo, un encabezado es la prueba; y las
+            # lineas sin pasillo tienen que ir al final y sin encabezado, que es la decision escrita.*
+            # **Y la asercion tiene que buscar EL PASILLO, no un encabezado cualquiera.** *La primera
+            # version contaba `h3, h2, [role=heading]` y pasaba con los ocho encabezados de la pagina --
+            # «Casa», «Lo que hay que coger», «Compartir» --, **que no son pasillos**.* **Es un pase vacio**:
+            # *el instrumento contando lo que no es.*
+            # **Y EN UN ENCABEZADO, no en cualquier parte de la pagina.** *La version anterior buscaba
+            # «vinos» en todo el texto y lo encontraba **en los nombres de producto** («Vino tinto
+            # crianza...»): **el segundo pase vacio seguido**.* **Un pasillo se agrupa con un ENCABEZADO.**
+            textos_cabecera = []
+            for i in range(encabezados.count()):
+                with contextlib.suppress(Exception):
+                    textos_cabecera.append(encabezados.nth(i).inner_text().strip().lower())
+            pasillos = [t_ for t_ in textos_cabecera
+                        if any(n in t_ for n in ("bebida", "vino", "lacteo", "queso", "despensa", "fresco"))]
+            print(f"      encabezados que son pasillos: {pasillos}")
+            comprueba(bool(pasillos),
+                      f"la lista agrupa POR PASILLO, con encabezado (vistos: {pasillos})")
+            comprueba(len(tiene) > 0, f"y las lineas estan ({len(tiene)} de {len(filas)})")
+            comprueba(not errores, f"sin errores de JavaScript ({errores[:1]})")
 
             print()
             comprueba(True, "el ensayo recorrio las pantallas de la lista")

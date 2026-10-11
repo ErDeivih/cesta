@@ -907,3 +907,57 @@ exactamente lo que acabo de aprender en esta misma ronda.*
 
 **Cinco de siete con dato y pantalla; cuatro pasan; uno es un defecto fijado; y `C03` es el unico que queda a
 medias -- y a un clic.**
+
+
+---
+
+## 16. **`C03`, medido y PASA** -- y tres pases vacios por el camino
+
+*(Ronda 103.)* Pulsado «Ver mi lista» -- *en vez de componer la ruta, que es lo que enseño la ronda 102* --, y
+leidos los encabezados:
+
+```
+url: /compra/listas
+6 de 6 productos en pantalla
+encabezados: 14
+  [0] 'Casa'
+  [1] 'Lo que hay que coger'
+  [2] 'BEBIDAS'                  <- EL PASILLO
+  [3] 'Dónde compro cada cosa'
+  [4] 'Sin decidir (6)'
+encabezados que son pasillos: ['bebidas']
+```
+
+**`porPasillo` esta haciendo su trabajo, con su encabezado de verdad, y las seis lineas estan.** *`C03` queda
+medido: **la agrupacion por pasillo, en la pantalla, con lineas de verdad***
+
+### Y tres pases vacios hasta llegar aqui, los tres mios
+
+**Esta medicion costo cuatro intentos, y **los tres primeros pasaron sin medir nada**:
+
+| intento | lo que hice | **por que no medía** |
+|---|---|---|
+| 1 | puse las lineas **sin `grupo_id`** | *sin grupo no hay pasillo: `porPasillo` las manda al final y sin encabezado -- **su decision escrita**, y por eso no podia salir nada* |
+| 2 | comprobe **«hay encabezados»** | *y habia ocho -- **«Casa», «Lo que hay que coger», «Compartir»** -- que son **secciones de la pagina, no pasillos*** |
+| 3 | busque **«vinos» en el texto** | *y salio porque **los nombres de producto lo traen** («Vino tinto crianza...»)* |
+| 4 | **`grupo_id` real, y el pasillo en un ENCABEZADO** | **aqui si** -- *y sale `'BEBIDAS'`* |
+
+**Los tres primeros son el mismo error de esta fase, y ahora tres veces en una sola medicion**: *el instrumento
+dando por bueno lo que no ha medido.* **Y lo que los corrige es lo de siempre: mirar lo que salio -- los ocho
+encabezados, la palabra «vinos» -- en vez de mirar el `ok`.**
+
+### Y C01-C05, al cerrar
+
+| ID | lo que pide | **capas medidas** | |
+|---|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **dato** | *la cantidad es un defecto, **fijado*** |
+| **C01b** | *ni exponer listas de otro hogar* | **dato** | **PASA** |
+| **C02** | *guardado sin catalogo* | **dato** | **cumple** |
+| **C02b** | *precio desconocido visible* | **dato y pantalla** | **PASA** |
+| **C03** | *pasillos / una mano / recarga* | **pantalla** | **PASA** -- *`'BEBIDAS'`; 4 toques; recarga por F03* |
+| **C04** | *preferencia contra necesidad* | **dato y pantalla** | **PASA** -- *«seguir» no es la lista* |
+| **C05** | *sugerir no es afirmar* | **dato, uso y pantalla** | **PASA** |
+
+**Seis de los siete sub-criterios pasan; uno -- la cantidad -- es un defecto medido y fijado; y `C03`, `C04` y
+`C05` ya tienen la pantalla mirada.** *Lo que queda de C01-C05 es **un arreglo** (la cantidad) y **nada mas** --
+*y el arreglo espera una decision del dueno, no una medicion.*
