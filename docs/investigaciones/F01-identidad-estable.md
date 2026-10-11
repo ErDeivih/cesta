@@ -379,3 +379,53 @@ ha leido el endpoint que la sirve.*
 
 **Dos cosas pendientes, las dos pequenas y las dos concretas.** *Y el defecto de `alerta` sigue siendo lo
 unico de esta fase que hace algo mal hoy.*
+
+
+---
+
+## 11. Y `explicacion` **si** lleva el veredicto -- con metodo, confianza y features
+
+*(Ronda 47.)* Ultima duda: *¿`explicacion` lleva el veredicto de identidad o explica los pares por otra via?*
+**Lo lleva, y el diseño esta escrito:**
+
+```
+catalogo.py:1059  def explicacion(grupo_id) -> dict | None:
+          :1062      «El dato ya esta calculado: sale de `equivalencia.parquet` de la ultima pasada del
+          :1063      matching, que trae un par aceptado por fila con su METODO, SU CONFIANZA y sus
+          :1064      `features`. NO SE RECALCULA EL PARECIDO AQUI: el emparejador ya decidio los grupos, y
+          :1065      deducirlos otra vez daria UNA SEGUNDA VERSION DE LA MISMA VERDAD -- la que ensena la
+          :1066      ficha no seria la que formo el grupo.»
+          :1068      «Devuelve **None** cuando no hay nada que contar [...] Un `{"pares": 0}` se leeria
+          :1071      como "se emparejaron por nada", y eso no es lo mismo que "no lo sabemos".»
+          :1074      «Los grupos se forman por TRANSITIVIDAD, asi que un miembro puede no tener ningun
+          :1075      par directo con otro. Eso no es un error, y se dice en `productos_sin_par`.»
+```
+
+**Asi que la respuesta es si, y la ficha dice mas de lo que yo preguntaba**: *no solo que los productos
+estan juntos, sino **por que par, con que metodo y con cuanta confianza**.*
+
+**Y hay tres cosas ahi que son el proyecto en miniatura:**
+
+1. **Una sola verdad.** *«No se recalcula el parecido aqui»* -- *la ficha lee lo que el emparejador escribio,
+   **no una segunda deduccion**, porque entonces la pantalla y el grupo podrian discrepar.* **Es la misma
+   regla que `_del_plan` (F03): «separarlos es como se acaba con una previa que miente».**
+2. **`None` no es cero.** *«Un `{"pares": 0}` se leeria como "se emparejaron por nada", y eso no es lo mismo
+   que "no lo sabemos".»* **La misma distincion que F05 pedia para la cobertura, y que el `AvisoIdentidad`
+   aplica en la linea.**
+3. **La transitividad se dice.** *Un miembro sin par directo no es un error: se declara en
+   `productos_sin_par`.* **Lo que no se puede explicar, se dice que no se puede -- no se calla.**
+
+### Y F01 queda con esto: la investigacion cerrada
+
+| pregunta | respuesta | como se sabe |
+|---|---|---|
+| ¿el motor distingue identidad de parecido? | **si**, cuatro estados | `core/identidad.py` |
+| ¿hay consumidores ligados al ordinal? | **uno: `alerta`** | `001_esquema.sql:139` + `git grep` |
+| ¿la linea de una lista lo dice? | **si**, dos mensajes | `AvisoIdentidad.tsx` |
+| ¿la ficha del grupo lo explica? | **si**, con metodo y confianza | `catalogo.explicacion` |
+| ¿el grupo 11627 es una equivalencia inventada? | **no: es la via debil declarada** | `identidad.py:20` + 2.276 grupos medidos |
+| **¿queda algo por arreglar?** | **si: `alerta`** | *1 alerta, daño medido* |
+
+**F01 -- producto efectivo -- queda asi: el motor, el cierre y la identidad, medidos y probados; la
+investigacion de identidad estable, cerrada; y **un defecto real pendiente de arreglo**, con la direccion
+decidida (identidad estable por `ean`).**
