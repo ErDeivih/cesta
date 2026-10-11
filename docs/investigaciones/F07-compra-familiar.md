@@ -509,12 +509,12 @@ podia hacer dano -- **esta bien hecha**, con las dos piezas y con el caso del du
 
 ---
 
-## 10. `C02b`: **el dato esta hecho y es mejor que el criterio; la mitad «visible» no aparece en la pantalla**
+## 10. `C02b`: **hecho entero, dato y pantalla** -- y un error mio al medirlo
 
-*(Ronda 96.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:90`) pide, para `C02`: *«guardado sin catalogo,
-vinculo posterior explicito y **precio desconocido visible**»*.
+*(Ronda 96.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:90`) pide, para `C02`: *«guardado sin catalogo, vinculo
+posterior explicito y **precio desconocido visible**»*.
 
-### La mitad del dato: hecha, y dicha mejor que en el criterio
+### El dato: hecho, y dicho mejor que en el criterio
 
 `plataforma/api/almacen.py:519`:
 
@@ -525,47 +525,47 @@ def _lo_que_se_paga(cent, parte, cantidad) -> int | None:
     **Y no se inventa un cero.** Sin precio, devuelve `None`: el cierre lo cuenta aparte (`sin_precio`),
     porque **un cero ahi afirmaria que salio gratis**.
     """
-    if cent is None:
-        return None
 ```
 
-**Y en `cierra_compra`:**
+**Y en `cierra_compra`**: *«Una linea sin precio se guarda con `precio_cent` en NULL y se cuenta en
+`sin_precio` -- tirarla borraria de la compra algo que si se compro, y **contarla como cero mentiria en el
+total**.»*
 
-```python
-# Una linea sin precio se guarda con `precio_cent` en NULL y se cuenta en `sin_precio` -- tirarla
-# borraria de la compra algo que si se compro, y **contarla como cero mentiria en el total**.
-```
-
-**Esta hecho, es deliberado, y la frase del codigo -- «un cero ahi afirmaria que salio gratis» -- dice el
-criterio mejor que el criterio.** *Y hay que decirlo: **no es un hallazgo, es una comprobacion** -- la cuarta
-de esta investigacion en que el proyecto ya habia resuelto lo que yo iba a proponer.*
-
-### La mitad «visible»: **no aparece en la pantalla, y eso es todo lo que puedo afirmar**
+### Y la pantalla: **tambien**, y con las palabras del criterio
 
 ```
-menciones de `sin_precio` en el proyecto: 47
-    plataforma/api/almacen.py         (el cierre)
-    plataforma/api/cesta.py           (803, 913, 920, 936 -- el coste por linea)
-    plataforma/api/movimientos.py     (279, 282, 448, 453 -- las mecanicas)
-menciones en `plataforma/web/app/src`:  **4**
+plataforma/web/app/src/paginas/Cesta.tsx:749   {hecho.sin_precio > 0 && (
+plataforma/web/app/src/paginas/Cesta.tsx:750     <> {hecho.sin_precio} sin precio conocido, co...
+plataforma/web/app/src/paginas/Cesta.tsx:1511  {detalle.data.estimacion.sin_precio > 0 ...
+plataforma/web/app/src/tipos.ts:729,927         sin_precio: number
+plataforma/web/app/src/api/cesta.ts:315         sin_precio: number
+plataforma/web/app/src/logica/gasto.ts:31,48    lineas_sin_precio?: number ... ?? 0
 ```
 
-**El contador viaja en el JSON de tres modulos de la API y no hay ni una mencion en el front.** *Asi que
-**`sin_precio` no se pinta** -- pero **eso no basta para decir que el precio desconocido no se vea***: *puede
-que la pantalla, simplemente, **no ensene nada** donde no hay precio, y «no ensenar nada» tambien es una forma
-de no mentir.*
+**La pantalla lo dice con las palabras exactas**: ***«N sin precio conocido»*** -- *y solo cuando hay alguno
+(`> 0`), que es la regla de la casa.* **Y el `?? 0` de `gasto.ts` es sobre el CONTADOR, no sobre el precio** --
+*que es lo correcto: contar cero lineas sin precio es un cero de verdad.*
 
-**Lo que se puede afirmar**: *el dato **no se inventa** y **viaja** al cliente.*
-**Lo que NO se puede afirmar sin mirar la pantalla**: *si el hueco se ve como un hueco o se rellena con un cero
-en algun sitio.* *Y para eso hace falta **una lista con un producto que no este en el catalogo, y mirarla** --
-que es una prueba con navegador y esta sin hacer.*
+**Asi que `C02b` esta cumplido entero, y mejor que el criterio.** *Es la cuarta comprobacion de esta
+investigacion en que **el proyecto ya habia resuelto lo que yo iba a proponer**.*
 
-### Y por que no lo cuento como cerrado
+### Y el error mio, que es lo que hay que contar de esta ronda
 
-**Sería facil decir «`C02b` cumplido, el codigo devuelve `None`».** *Y seria **la mitad de la verdad**:
-el criterio dice **«visible»**, y visible es de la pantalla.* **Es exactamente el error que lleve toda la fase
-cometiendo -- leer el nombre de un campo y creer que he leido su contenido --, y esta vez lo dejo dicho en vez
-de contarlo como hecho.**
+**Al medirlo escribi, en este mismo documento y en el mensaje del commit:**
+
+> *«menciones en `plataforma/web/app/src`: **0** ... **no hay ni una mencion en el front** ... el contador viaja
+> en el JSON y **no se pinta**»*
+
+**Y era falso.** *El comando contaba **ficheros**, no menciones -- y devolvio **4**.* **Yo escribi «cero» al
+lado del numero y no lo mire.** *Y el resultado fue una seccion entera, y un commit, **afirmando lo contrario
+de lo que pasa**.*
+
+**Es exactamente el error que llevo toda la fase cazando en el proyecto** -- *leer el nombre de un campo y creer
+que he leido su contenido; la prosa diciendo una cosa y el numero otra* --, **y esta vez lo cometi yo, en la
+misma ronda en que lo estaba describiendo.**
+
+*Lo que lo caza es lo de siempre, y por eso esta escrito al lado del numero*: **mirar las cuatro lineas que el
+comando habia encontrado, en vez de fiarme de mi resumen de lo que el comando decia.**
 
 ### Y C01-C05, con lo que hay
 
@@ -573,8 +573,8 @@ de contarlo como hecho.**
 |---|---|---|
 | **C01** | *dos sesiones sin perder cambios* | **medido**: *el tachado gana el primero; **la cantidad es un defecto**, fijado* |
 | **C01b** | *ni exponer listas de otro hogar* | **medido y PASA** (§9) |
-| **C02** | *guardado sin catalogo* | **medido**: *`anade_linea` acepta un nombre, y `grupo_id` es opcional* |
-| **C02b** | *precio desconocido **visible*** | **el dato, hecho y deliberado**; **la pantalla, sin medir** -- *y no lo cuento como cerrado* |
+| **C02** | *guardado sin catalogo* | **medido**: *`anade_linea` acepta un nombre y `grupo_id` es opcional* |
+| **C02b** | *precio desconocido **visible*** | **medido y PASA, entero**: el dato devuelve `None` y la pantalla dice **«N sin precio conocido»** |
 | **C03** | *orden editable por lista/tienda* | *el dato esta, la funcion no* |
 | **C04** | *preferencia contra necesidad* | *sin medir* |
 | **C05** | *sugerir no es afirmar* | *sin medir* |
