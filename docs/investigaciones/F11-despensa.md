@@ -109,3 +109,72 @@ escrito** -- como `R02` (importar) y `R05` (modo cocina).* **Van tres.**
 
 **Asi que F11 son tres criterios y un solo hueco de fondo**: *sin despensa, `R10` no tiene de donde sacar los
 «disponibles», y `R09` se queda en la mitad que ya existe.*
+
+
+---
+
+## 3. `R09`: **hecho, y con la mejor explicacion de la fase** -- coste usado contra envases
+
+*(Ronda 127.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:109`): *«**Coste usado distinto de envases por
+comprar**; cobertura/ambito/version.»* **Y esta hecho, en `plataforma/web/app/src/logica/costeReceta.ts`, 138
+lineas.**
+
+### El modulo se explica solo, y explica el criterio
+
+```typescript
+1   /** Lo que cuesta una receta: **lo que usas y lo que hay que comprar, y no son lo mismo**.
+3   *  G05 lo pide en Recetas: *«nutricion por racion y coste estimado, **distinguiendo cantidad usada de
+4   *  coste de comprar envases**; **indicar ingredientes sin datos**»*.
+6   *  **El caso que da sentido al modulo**: la receta dice «200 g de arroz» y el catalogo vende «1 kg por
+7   *  1,20 EUR». **Lo que usas cuesta 0,24 EUR; lo que compras cuesta 1,20 EUR.** Los dos numeros son ciertos
+8   *  y significan cosas distintas -- *lo que cuesta hacer el plato, y lo que sale de tu bolsillo hoy* --,
+9   *  y dar uno solo como «el coste de la receta» es **elegir por quien lee sin decírselo**.
+11  *  **Y el caso que no se puede prorratear**: «2 huevos». *Un huevo no tiene fraccion: o compras el envase
+12  *  o no lo compras.* Ahi `costeUsadoCent` **es** el del envase, y decir otra cosa seria **inventar una
+13  *  fraccion de huevo**.
+16  *  ...**los ingredientes sin datos se cuentan y se nombran**, porque **un total sobre la mitad de los
+17  *  ingredientes no es el total**.
+18  */
+```
+
+**Las tres cosas que el criterio pide, una por una:**
+
+| lo que pide `R09` | **donde esta** |
+|---|---|
+| **«coste usado distinto de envases por comprar»** | **`CosteDeReceta` con sus dos numeros** -- *`costeUsadoCent` y el del envase --, y la linea 9 dice por que no se juntan* |
+| **«cobertura»** | **`{valor, faltantes}`** -- *«los ingredientes sin datos **se cuentan y se nombran**»* |
+| **«ambito/version»** | *los precios vienen del catalogo, y `RecetaDetalle.tsx:256` lo pinta sobre la receta **versionada*** |
+
+### Y el modulo contesta, de paso, la pregunta del pack de F08
+
+**`costeReceta.ts:11-13` trata exactamente el caso que en F08 me dejo dudando** -- *«2 huevos»:*
+
+> *«Un huevo **no tiene fraccion**: o compras el envase o no lo compras. Ahi `costeUsadoCent` **es** el del
+> envase, **y decir otra cosa seria inventar una fraccion de huevo**.»*
+
+**Es la misma regla que `parse_formato`** (*la cantidad es el total*) **y la misma que `previa_compra`** (*la
+unidad va en la clave*) -- **y aqui esta dicha en una linea**: *lo que no se puede partir **no se parte**.*
+
+**Y el caso `ud` esta en el tipo, no en un comentario**: *`unidadEnvase?: string | null` con **«En `ud` no se
+prorratea»*** (`:27`). **La regla esta en la firma.**
+
+### Y hay pruebas, y estan en el sitio correcto
+
+```
+plataforma/web/app/tests/cocina.test.mjs:189   // --- G05: el coste de una receta -- lo que usas y lo que...
+plataforma/web/app/tests/cocina.test.mjs:192   const r = costeDeReceta([
+```
+
+**`node --test`, y el modulo esta escrito **sin dependencias** precisamente para eso**: *«nada de `api/`, para
+que `node --test` lo cargue y **las reglas se prueben en un segundo**»* (`:15-16`).
+
+### Y F11, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`R08`** -- despensa | **NO EXISTE** -- *cuatro capas; `R08` no tiene su primera mitad* |
+| **`R09`** -- coste por racion | **HECHO**, con los dos numeros, la cobertura por `faltantes`, y la regla de `ud` **en la firma** |
+| **`R10`** -- buscar por lo disponible | **depende de `R08`**: *sin existencias no hay disponibles*; *su mitad de «sugerencia, no sustitucion» es la de `AvisoIdentidad`* |
+
+**Uno hecho, uno que no existe, y el tercero colgando del que no existe.** *Y el que esta hecho es el que
+**no** necesitaba la despensa, que era exactamente por donde habia que empezar.*
