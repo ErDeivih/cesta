@@ -181,3 +181,33 @@ def test_dos_claves_distintas_por_http_son_dos_entradas():
             "fuente_dato": "etiqueta", "clave_operacion": clave})
         assert r.status_code == 201, r.text
     assert len(como(ANA).get("/api/diario/2026-10-11").json()["entradas"]) == 2
+
+
+def test_la_misma_clave_con_otros_datos_por_http_se_dice_y_no_se_disimula():
+    """**F02 (fase 2)**: *«misma clave con payload distinto produce conflicto o politica explicita,
+    **no exito que parece guardar otro dato**»*.
+
+    *El motor lanza `ValueError` y la ruta lo convierte en **400 con el motivo** (`diario.py:103`).*
+    **Devolver 201 con la entrada vieja seria lo peor de los dos mundos**: quien lo pidio creeria haber
+    anotado lo suyo, y en el diario estaria lo de antes.
+
+    *El cliente no puede llegar aqui* -- su regla, probada en `tests/cocina.test.mjs`, es que un
+    payload distinto lleva clave nueva --, **pero el servidor no puede depender de que el cliente sea
+    correcto.**
+    """
+    cuerpo = {"fecha": "2026-10-11", "comida": "comida", "tipo": "alimento",
+              "referencia": "yogur", "kcal": 300, "fuente_dato": "etiqueta",
+              "clave_operacion": "op-http-choque"}
+    primera = como(ANA).post("/api/diario", json=cuerpo)
+    assert primera.status_code == 201, primera.text
+
+    segunda = como(ANA).post("/api/diario", json={**cuerpo, "kcal": 999})
+    assert segunda.status_code == 400, segunda.text
+    assert "ya se uso con otros datos" in segunda.json()["detail"], segunda.text
+
+    # **El choque no anota nada**: sigue habiendo una sola entrada.
+    assert len(como(ANA).get("/api/diario/2026-10-11").json()["entradas"]) == 1
+    # Y el reintento de verdad -- los mismos datos -- sigue siendo el mismo id.
+    tercera = como(ANA).post("/api/diario", json=cuerpo)
+    assert tercera.status_code == 201, tercera.text
+    assert tercera.json()["id"] == primera.json()["id"]

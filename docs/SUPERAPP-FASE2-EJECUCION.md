@@ -6,22 +6,29 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F02 · la concurrencia y las unidades**, ya que el reintento está **verificado en la UX**. El ensayo de
-navegador (`plataforma/prueba_reintento.py`) **reproduce el defecto y confirma el arreglo**:
+**F02 · las unidades y la vista previa.** El reintento está **verificado en la UX** y **la carrera
+arreglada**. El encargo ya había señalado el punto —*«clave de diario escrita tras el INSERT»*— y era
+exactamente eso: el `SELECT`, el `INSERT` **sin la clave** y un `UPDATE` **después**. *Con dos envíos a
+la vez los dos `SELECT` no veían nada, los dos insertaban, y el índice único **rechazaba al segundo**:
+no deduplicaba, **fallaba** — y la fila del que fallaba se quedaba sin clave.*
 
-    con la regla anterior   claves DISTINTAS · el dia 1 -> 3   (dos entradas de mas)
-    con el arreglo          la MISMA clave   · el dia 1 -> 1
+```
+ANTES   F..  IntegrityError: UNIQUE constraint failed: entrada.propietario, entrada.clave_operacion
+DESPUES ...  pasa
+```
 
-*Y se comprobó discriminante simulando la regla vieja.* **Lo que queda de F02**: dos solicitudes
-simultáneas con la misma clave y rollback limpio; la política de «misma clave con payload distinto»;
-**cantidad, unidad y base** (g, ml, raciones con conversiones trazables, y consumir parte del envase);
-y la **vista previa congelada** a compra/líneas y receta/versiones.
+*La reproducción fue la prueba de que discrimina: falló antes y pasa después.* **Y la clave va ahora
+dentro del `INSERT`** (`ON CONFLICT … WHERE clave_operacion IS NOT NULL DO NOTHING`), con el que no
+inserta devolviendo la fila del otro.
+
+**Lo que queda de F02**: **cantidad, unidad y base** (g, ml, raciones con conversiones trazables, y
+consumir parte del envase en vez de la compra entera) y la **vista previa congelada** a compra/líneas y
+receta/versiones.
 
 Detalle: [`investigaciones/F02-reintentos-del-diario.md`](investigaciones/F02-reintentos-del-diario.md).
 
-**Recursos que quedan levantados para los siguientes ensayos**: API en el **8099** (catálogo de ensayo)
-y **Vite en el 5173** con `CESTA_API` apuntando ahí — *los necesita también el recorrido de navegador que
-le falta a F01.*
+**Recursos que quedan levantados**: API en el **8099** y **Vite en el 5173** — *los necesita el
+recorrido de navegador que le falta a F01.*
 
 **Lo que queda de F01**, enumerado y no cerrado: navegador; estabilidad ante reordenación (V1/V2/V3
 sobre lista y favorito, «jamás B por ordinal»); elegir comprar A otra vez como acción explícita; y
@@ -37,7 +44,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 |---|---|---|---|
 | F00 | Reconciliar aceptación y baseline | **en curso** | Baseline **1.670 pasan, 0 saltan, 0 fallan** (155 s, con `CESTA_POSTGRES` al 5434). Encabezado del tablero G01–G14 reconciliado. Hallazgo 4 **reproducido**. Faltan los otros 8 hallazgos y la matriz S00–S12. |
 | F01 | Identidad estable y producto efectivo comprado | **en curso** | Motor, cierre y **HTTP verificado** (la prueba **discrimina**: simulando lo anterior falla). Migración **015**. Falta navegador, estabilidad ante reordenación y migrar consumidores del ordinal. |
-| F02 | Reintentos/unidades/privacidad del diario | **en curso** | Reintento **verificado en la UX**: `plataforma/prueba_reintento.py` reproduce el defecto (el día **1→3**) y confirma el arreglo (**1→1**, misma clave). Falta concurrencia, unidades y vista previa. |
+| F02 | Reintentos/unidades/privacidad del diario | **en curso** | Reintento **verificado en la UX** (`prueba_reintento.py`: el día 1→3 sin arreglo, 1→1 con él) y **carrera arreglada** (la clave va en el `INSERT`; antes `IntegrityError`). Falta unidades y vista previa. |
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
 | F05 | Fichas de seis cadenas/Lidl | pendiente | Inventario real por campo y workers ejecutados. |
@@ -56,23 +63,25 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 ## Continuación obligatoria antes de pausar
 
 - Paquete y criterio concreto: **F00 en curso** (los otros ocho hallazgos y la matriz S00–S12);
-  **F01 en curso** (motor, cierre y HTTP hechos; cuatro cosas enumeradas); **F02 en curso** con el
-  reintento **verificado en la UX** y pendientes concurrencia, unidades y vista previa.
-- Fichero / función / recorrido: `plataforma/prueba_reintento.py` (nuevo) — *intercepta la respuesta del
-  alta con `route.fetch()` + `route.abort()` y cuenta las entradas del día por la API*.
-- Evidencia obtenida y comando/fecha: `CESTA_UI=http://localhost:5173 uv run python -m
-  plataforma.prueba_reintento` → **10 comprobaciones, todas ok** (13 oct 2026). *Discriminante
-  comprobado*: simulando `resolver(null, …)` el ensayo falla con «el día **1 → 3**». Y las puertas:
-  `npm test` → **42 pasan**; `tsc` → 0; **`npm run build` → ✓ 154 módulos**; `ruff` limpio; `uv run
-  pytest -q` → **1674 pasan, 0 fallan**.
-- Caso que falla o comprobación siguiente: **la concurrencia** (dos solicitudes simultáneas con la misma
-  clave) y las unidades (g/ml/raciones), sin hacer.
-- Cambios conservados / commit: `plataforma/prueba_reintento.py`, `docs/investigaciones/F02-…` y este
-  tablero (el arreglo del cliente y el módulo van en `69f7dbe`).
-- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* el ensayo usa la **cuenta
-  de prueba** y la base desechable; **no toca el diario de casa**.
-- **Acción inmediata al retomar:** montar la concurrencia de F02 —dos solicitudes simultáneas con la
-  misma clave, y que quede una entrada con rollback limpio—; después las unidades y la vista previa, y
-  el recorrido de navegador que le falta a F01.
+  **F01 en curso** (motor, cierre y HTTP hechos; cuatro cosas enumeradas); **F02 en curso** con reintento
+  y carrera hechos, y pendientes unidades y vista previa.
+- Fichero / función / recorrido: `core/diario.py:apunta` — *la clave va **dentro** del `INSERT` con
+  `ON CONFLICT … WHERE clave_operacion IS NOT NULL DO NOTHING`; antes era un `UPDATE` **después** del
+  `INSERT`*. Y `_respuesta_del_reintento`, que **dice el conflicto** en vez de devolver la entrada
+  vieja en silencio.
+- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f02_concurrencia.py` →
+  **5 pasan**; *antes del arreglo esa misma prueba daba `F..` con
+  `IntegrityError: UNIQUE constraint failed`* (13 oct 2026). Y `tests/test_g01_diario_http.py` →
+  **16 pasan**, con el choque de clave devolviendo **400 con el motivo**.
+- Caso que falla o comprobación siguiente: **las unidades** (g/ml/raciones) y la vista previa congelada,
+  sin hacer.
+- Cambios conservados / commit: `core/diario.py`, `tests/test_fase2_f02_concurrencia.py` (nuevo),
+  `tests/test_g01_diario_http.py`, el informe de F02 y este tablero.
+- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* la carrera se prueba con
+  dos conexiones y una barrera contra el **mismo fichero SQLite**; *no* se ha probado con la API
+  levantada y dos peticiones HTTP a la vez — eso queda para el ensayo de navegador si hiciera falta.
+- **Acción inmediata al retomar:** las **unidades** de F02 —g, ml y raciones con conversiones trazables,
+  y consumir parte del envase en vez de la compra entera—, que es lo que queda del paquete después del
+  reintento y la carrera.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.

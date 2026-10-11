@@ -87,6 +87,47 @@ def conecta(ruta: Path | str | None = None) -> sqlite3.Connection:
     return con
 
 
+# Los campos que definen **que** se anoto. La clave dice **que operacion** es; esto dice **que datos**
+# lleva. Los dos juntos son lo que distingue un reintento de un choque de claves.
+_CAMPOS_DE_LA_OPERACION = ("fecha", "comida", "tipo", "referencia", "version", "cantidad_g", "kcal",
+                           "proteinas_g", "grasas_g", "hidratos_g", "fuente_dato", "nota")
+
+
+def _el_mismo_reintento(previa: tuple, contenido: dict) -> bool:
+    """**¿La clave ya usada llevaba estos mismos datos?**
+
+    *`referencia` y `nota` pueden llegar `None` o vacias segun por donde entren, asi que se comparan
+    como texto -- `''` y `None` no son un cambio.* Los numeros se comparan como numeros: `100` y
+    `100.0` son el mismo dato, y `0` no es lo mismo que `None`, porque *no es cero, es que no se sabe*.
+    """
+    for posicion, campo in enumerate(_CAMPOS_DE_LA_OPERACION, start=1):
+        suyo, mio = previa[posicion], contenido[campo]
+        if suyo is None or mio is None:
+            if (suyo is None) != (mio is None):
+                return False
+        elif isinstance(suyo, float) or isinstance(mio, float):
+            if float(suyo) != float(mio):
+                return False
+        elif (suyo or "") != (mio or ""):
+            return False
+    return True
+
+
+def _respuesta_del_reintento(previa: tuple, contenido: dict, clave: str) -> int:
+    """**La entrada que ya hay -- o el conflicto, dicho.**
+
+    Si es el mismo reintento se devuelve su id, que es lo que hace que un envio repetido no duplique.
+    **Pero si la clave se reutilizo con otros datos, devolver la vieja en silencio seria un exito que
+    parece guardar otra cosa**: quien lo pidio creeria haber anotado lo suyo y en el diario estaria lo
+    de antes. *Se dice, en vez de disimularlo.*
+    """
+    if _el_mismo_reintento(previa, contenido):
+        return int(previa[0])
+    raise ValueError(
+        f"esa clave de operacion ya se uso con otros datos ({clave!r}): la misma clave es el mismo "
+        f"reintento, no una comida nueva con otro contenido")
+
+
 def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *,
             clave_operacion: str | None = None,
            tipo: str = ALIMENTO, referencia: str | None = None, version: str | None = None,
@@ -123,24 +164,60 @@ def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *
     # **Si esa operacion ya se hizo, se devuelve la entrada que hay.** No se busca por nombre, fecha
     # ni nutrientes -- eso prohibiria dos meriendas iguales --, sino por **la clave que manda quien
     # envia**, que es la unica que distingue un reintento de una comida nueva.
+    #
+    # *Esto es el camino rapido, no la garantia.* La garantia es el indice unico: ver abajo.
+    contenido = {"fecha": fecha, "comida": comida, "tipo": tipo, "referencia": referencia,
+                 "version": version, "cantidad_g": cantidad_g, "kcal": kcal,
+                 "proteinas_g": proteinas_g, "grasas_g": grasas_g, "hidratos_g": hidratos_g,
+                 "fuente_dato": fuente_dato, "nota": nota}
+    por_clave = (f"SELECT id, {', '.join(_CAMPOS_DE_LA_OPERACION)} FROM {TABLA} "
+                 "WHERE propietario = ? AND clave_operacion = ?")
     if clave_operacion:
-        previa = con.execute(
-            f"SELECT id FROM {TABLA} WHERE propietario = ? AND clave_operacion = ?",
-            (propietario, clave_operacion)).fetchone()
+        previa = con.execute(por_clave, (propietario, clave_operacion)).fetchone()
         if previa is not None:
-            return int(previa[0])
+            return _respuesta_del_reintento(previa, contenido, clave_operacion)
+
+    # **La clave va DENTRO del INSERT, y el choque lo resuelve el indice.**
+    #
+    # *Antes se insertaba sin clave y se ponia despues con un `UPDATE`. Entre las dos cosas habia una
+    # ventana, y con dos envios a la vez -- que es exactamente lo que hace un reintento desde dos
+    # pestanas, o un doble toque con mala cobertura -- **los dos SELECT no veian nada**: ninguno habia
+    # escrito todavia. Los dos insertaban su fila, y al poner la clave el indice unico parcial
+    # rechazaba al segundo con `UNIQUE constraint failed`. **En vez de deduplicar, fallaba** -- y la
+    # fila del que fallaba se quedaba sin clave, que es peor que fallar: una entrada que ya no se
+    # puede reconocer como repetida.*
+    #
+    # **Ahora hay una sola escritura y el choque es la respuesta**: `DO NOTHING` deja pasar a uno, y
+    # el que no inserta **lee la del otro y la devuelve**. *`WHERE clave_operacion IS NOT NULL` es
+    # obligatorio: el indice es parcial, y el destino del conflicto tiene que decir el mismo predicado
+    # que el indice o SQLite no lo reconoce.*
+    columnas = ("fecha, comida, tipo, referencia, version, cantidad_g, kcal, proteinas_g, grasas_g, "
+                "hidratos_g, fuente_dato, nota, creada, propietario")
+    valores: tuple = (fecha, comida, tipo, referencia, version, cantidad_g, kcal, proteinas_g,
+                      grasas_g, hidratos_g, fuente_dato, nota,
+                      (ahora or datetime.now()).isoformat(timespec="seconds"), propietario)
+    if clave_operacion:
+        columnas += ", clave_operacion"
+        valores += (clave_operacion,)
+        choque = (" ON CONFLICT (propietario, clave_operacion) WHERE clave_operacion IS NOT NULL"
+                  " DO NOTHING")
+    else:
+        choque = ""
 
     cur = con.execute(
-        """INSERT INTO entrada (fecha, comida, tipo, referencia, version, cantidad_g, kcal,
-                                proteinas_g, grasas_g, hidratos_g, fuente_dato, nota, creada,
-                                propietario)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (fecha, comida, tipo, referencia, version, cantidad_g, kcal, proteinas_g, grasas_g,
-         hidratos_g, fuente_dato, nota, (ahora or datetime.now()).isoformat(timespec="seconds"),
-         propietario))
-    if clave_operacion:
-        con.execute(f"UPDATE {TABLA} SET clave_operacion = ? WHERE id = ?",
-                    (clave_operacion, cur.lastrowid))
+        f"INSERT INTO {TABLA} ({columnas}) VALUES ({','.join('?' * len(valores))}){choque}", valores)
+
+    if clave_operacion and cur.rowcount == 0:
+        # **Otro la escribio primero, y ya esta confirmada.** Si es el mismo reintento se devuelve su
+        # id -- la respuesta tiene que ser la misma que si hubiera llegado el primero --, y si la clave
+        # se reutilizo con otros datos se dice, en vez de devolver una entrada que no es la suya.
+        suya = con.execute(por_clave, (propietario, clave_operacion)).fetchone()
+        if suya is None:                                    # pragma: no cover
+            # *No deberia poder pasar: si el indice dijo que estaba, esta.* Se dice tal cual en vez
+            # de inventar una entrada nueva, que seria duplicar justo lo que se quiere evitar.
+            raise RuntimeError("el indice dijo que la clave estaba, y no esta")
+        return _respuesta_del_reintento(suya, contenido, clave_operacion)
+
     con.commit()
     return int(cur.lastrowid)
 

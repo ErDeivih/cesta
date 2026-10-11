@@ -145,22 +145,83 @@ es por subcadena—. Se arregla con `exact=True`.
 
 ---
 
-## 7. Lo que queda de F02
+## 7. La carrera del diario — y **por qué el `UPDATE` de después era el defecto**
 
-1. **Concurrencia**: dos solicitudes simultáneas con la misma clave y rollback limpio.
-2. **Misma clave con payload distinto**: qué hace el servidor, y que no devuelva un éxito que parece
-   guardar otro dato.
-3. **Cantidad, unidad y base**: g, ml y raciones con conversiones trazables —*que SQLite tenga columna
-   `unidad` no acredita API, cálculo ni interfaz*—, y **consumir parte del envase, no la compra entera
-   por defecto**.
-4. **La vista previa congelada** a compra/líneas y receta/versiones, con revalidación al cambiar.
+El encargo lo dejó escrito como hallazgo: *«clave de diario escrita tras el INSERT»*. **Y era
+exactamente eso.** `core/diario.py:apunta` hacía:
 
-*El reintento —que es el núcleo del paquete— está hecho y **verificado en la UX**; lo demás está
-enumerado arriba.* **No se declara F02 cerrado por tener verde la mitad.**
+```
+1. SELECT por (propietario, clave_operacion)   -> si estaba, se devuelve
+2. INSERT  ... SIN la clave
+3. UPDATE  ... poniendo la clave               <- después
+4. commit
+```
+
+**Con dos envíos a la vez, los dos pasos 1 no ven nada** —ninguno ha escrito todavía—. Los dos insertan
+su fila. Y al poner la clave, el índice único parcial
+`(propietario, clave_operacion) WHERE clave_operacion IS NOT NULL` **rechaza al segundo**. *No se
+deduplica: **falla**. Y la fila del que falla se queda sin clave, que es peor que fallar: una entrada
+que ya no se puede reconocer como repetida.*
+
+**Reproducido, y de forma determinista** (`tests/test_fase2_f02_concurrencia.py`, dos conexiones y una
+barrera —*que es lo que hace que sea una carrera y no una cola*—):
+
+```
+ANTES   F..   1 failed, 2 passed
+        IntegrityError: UNIQUE constraint failed: entrada.propietario, entrada.clave_operacion
+
+DESPUES .....  5 passed
+```
+
+**La reproducción fue la prueba de que discrimina**: el ensayo falló antes del arreglo y pasa después,
+sin necesidad de simular nada.
+
+**El arreglo: una sola escritura.** La clave va **dentro del `INSERT`**, con
+`ON CONFLICT (propietario, clave_operacion) WHERE clave_operacion IS NOT NULL DO NOTHING`. *El
+`WHERE` es obligatorio: el índice es parcial, y el destino del conflicto tiene que repetir su
+predicado o SQLite no lo reconoce.* **El que no inserta lee la fila del otro y la devuelve.**
 
 ---
 
-## 8. Y para volver a correrlo
+## 8. Y la misma clave con **otros** datos
+
+Tercer punto de F02: *«misma clave con payload distinto produce conflicto o política explícita, **no
+éxito que parece guardar otro dato**»*. **Lo que hacía era lo peor de los dos mundos**: el `SELECT`
+encontraba la fila y **devolvía su id en silencio**, así que quien lo pidió creería haber anotado lo
+suyo mientras en el diario estaba lo de antes.
+
+**Ahora se compara el contenido**: si es el mismo reintento se devuelve su id —*que es lo que hace que
+un envío repetido no duplique*—, y **si la clave se reutilizó con otros datos se dice**.
+`plataforma/api/diario.py:103` convierte el `ValueError` en **400 con el motivo**, así que la política
+llega al HTTP y no se queda en el motor.
+
+*Dos cuidados que tienen prueba propia:*
+
+- **`None` y `''` no son un cambio** — `referencia` y `nota` pueden llegar de las dos formas.
+- **`0` no es lo mismo que `None`** (`test_un_cero_no_es_lo_mismo_que_no_saberlo`): *es la misma regla
+  que el resto del diario — dejar un campo en blanco no es anotar cero —, y si se compararan como
+  iguales, un reintento que corrigiera un dato a `0` se tomaría por el mismo y la corrección se
+  perdería.*
+
+*El cliente no puede llegar a este caso* —su regla, probada en `tests/cocina.test.mjs`, es que un
+payload distinto lleva clave nueva—, **pero el servidor no puede depender de que el cliente sea
+correcto.**
+
+---
+
+## 9. Lo que queda de F02
+
+1. **Cantidad, unidad y base**: g, ml y raciones con conversiones trazables —*que SQLite tenga columna
+   `unidad` no acredita API, cálculo ni interfaz*—, y **consumir parte del envase, no la compra entera
+   por defecto**.
+2. **La vista previa congelada** a compra/líneas y receta/versiones, con revalidación al cambiar.
+
+*El reintento está hecho, **verificado en la UX** y **con la carrera arreglada**; lo demás está
+enumerado arriba.* **No se declara F02 cerrado por tener verdes las tres cuartas partes.**
+
+---
+
+## 10. Y para volver a correrlo
 
 Necesita la API y la interfaz levantadas, **con la interfaz sirviendo el código de hoy**:
 
