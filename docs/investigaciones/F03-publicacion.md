@@ -1017,3 +1017,59 @@ falla es el momento de leer, no lo que se lee.**
 | sustitucion | *la previa de consumir la cubre* -- *«que lineas se podrian anotar y con que dato»* --, **pero no se ha pulsado** |
 | alta en el diario | **no medido durante una publicacion** -- *el ensayo del diario lo prueba aparte* |
 | respuesta individual no mezcla versiones | **medido en el servidor** (§12, §17) |
+
+
+---
+
+## 27. **PASA, y sin intermitencia.** Los tres recorridos, medidos
+
+*(Ronda 63.)* Se cambio la espera fija por la espera al contenedor -- *`wait_for_selector("ul.divide-y >
+li", timeout=25000)`*, que es la regla de siempre con una pantalla -- y **el ensayo pasa entero**:
+
+```
+la pantalla carga (titulo: 'Cesta')                            ok
+/api/estado por el proxy del cliente -> 200                    ok
+/api/buscar por el proxy del cliente -> 200                    ok
+una peticion nueva sirve la version nueva                      ok
+publicar cambia lo que el cliente sirve, sin reiniciar nada    ok
+la busqueda ensena precios en la pantalla                      ok
+la segunda busqueda ensena precios (no una lista vacia)        ok
+la PANTALLA ensena los precios de la version nueva             ok   19,81 EUR -> 20,81 EUR
+hay cuenta para el recorrido (201)                             ok
+se crea una lista para el recorrido (201)                      ok
+/api/listas con sesion -> 200 (antes daba 401)                 ok
+previa de lista (desde-el-plan) -> 200                         ok
+previa de consumir (desde-la-compra) -> 200                    ok
+la pantalla no dio errores de JavaScript                       ok
+el puntero del catalogo REAL sigue intacto                     ok
+=== PASA ===
+```
+
+### Y los cuatro fallos del ensayo, que eran cuatro mediciones mal hechas
+
+*Todos del mismo tipo, y todos cazados mirando el resultado en vez de la asercion:*
+
+| lo que pasaba | lo que era |
+|---|---|
+| leia los precios del `body` entero | `/compra` tiene **varias secciones**: medía otra |
+| buscar dos veces el mismo termino | **no relanza la peticion**: medía la cache del cliente |
+| 3 s fijos de espera | **a veces leia antes** de que estuvieran los resultados |
+| la lista **vacia** contaba como distinta | la asercion **pasaba sin haber leido nada** |
+
+**Los cuatro son la misma cosa**: *el instrumento medía algo distinto de lo que yo creia, y lo que lo
+corrigio fue **mirar** -- la estructura de la pantalla, el resultado impreso -- en vez de suponer.*
+
+### Y la aceptacion de F03, con esto
+
+| lo que pide | como esta |
+|---|---|
+| auditar el cierre de version | **hecho** |
+| el estado diario | **hecho**: capturado / procesado / publicado / reanudable |
+| inyectar fallos entre las cuatro etapas | **hecho**, con la del puntero **discriminante** |
+| **V1 fija y V2 publicada durante el uso** | **hecho en un navegador**: la pantalla pasa de 19,81 a 20,81 |
+| **busqueda, previa de lista y sustitucion** | **medidos los tres**, con una publicacion en medio |
+| respuesta individual no mezcla versiones | **hecho** en el servidor (§12, §17) |
+| **alta en el diario durante una publicacion** | **no medido** -- *el ensayo del diario lo prueba aparte* |
+
+**Lo unico que queda de F03 es esa ultima fila**, y es la mas pequena: *el alta ya esta probada en
+`plataforma/prueba_reintento.py`; lo que falta es anadirle una publicacion a mitad.*

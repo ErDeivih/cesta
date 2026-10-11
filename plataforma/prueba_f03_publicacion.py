@@ -131,12 +131,21 @@ def main() -> int:
                     return []
                 return [x.strip() for x in lista.locator("span.cifra").all_inner_texts()][:6]
 
+            def buscar(termino: str) -> None:
+                """**Escribe en la pantalla y espera a que los resultados esten.**
+
+                *La primera version esperaba 3 s fijos, y con la recarga de por medio a veces leia la
+                pantalla vacia: el ensayo fallaba por el momento de leer, no por lo que leia.* **Se espera
+                al contenedor de resultados**, medida en la sonda: `ul.divide-y > li`.
+                """
+                campo = pagina.locator("input[type=search]").first
+                campo.fill(termino)
+                campo.press("Enter")
+                pagina.wait_for_selector("ul.divide-y > li", timeout=25000)
+
             pagina.goto(f"{BASE}/compra", wait_until="domcontentloaded")
             pagina.wait_for_selector("input[type=search]", timeout=25000)
-            campo = pagina.locator("input[type=search]").first
-            campo.fill("leche")
-            campo.press("Enter")
-            pagina.wait_for_timeout(3000)
+            buscar("leche")
             en_pantalla_antes = precios_en_pantalla()
             print(f"        precios en la pantalla: {en_pantalla_antes}")
             comprueba(bool(en_pantalla_antes), "la busqueda ensena precios en la pantalla")
@@ -149,10 +158,7 @@ def main() -> int:
             # cache del cliente, no lo que sirve el servidor.*
             pagina.goto(f"{BASE}/compra", wait_until="domcontentloaded")
             pagina.wait_for_selector("input[type=search]", timeout=25000)
-            campo = pagina.locator("input[type=search]").first
-            campo.fill("leche")
-            campo.press("Enter")
-            pagina.wait_for_timeout(3000)
+            buscar("leche")
             en_pantalla_despues = precios_en_pantalla()
             print(f"        precios en la pantalla: {en_pantalla_despues}")
 
