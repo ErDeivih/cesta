@@ -247,6 +247,38 @@ def _main() -> int:
             print(f"[pipeline] FALLO: {exc}")
             fallos.append("pipeline")
 
+    # **La cola de fichas se reconcilia con lo que el colector acaba de traer.**
+    #
+    # *Medido en F05:* la cola contaba como pendiente **7.565 fichas que ya tenian su dato** -- *el colector
+    # pide la ficha de los productos que recorre y la guarda en el maestro, **y no avisa a la cola**; solo lo
+    # hace el ejecutor de Lidl.* El efecto era que **la cifra de cobertura media la cola, no el catalogo**.
+    #
+    # **Y va aqui, y no dentro de cada colector, a proposito**: *los maestros los escribe el pipeline, y
+    # enhebrar la cola por los seis colectores seria tocar seis sitios para lo mismo.* Una pasada despues del
+    # pipeline ve **todo** lo que el dia trajo.
+    #
+    # *No puede tumbar el dia*: el catalogo esta bien aunque la cola quede sin reconciliar, asi que un fallo
+    # **se avisa y se sigue** -- el mismo trato que el manifiesto, y por la misma razon.
+    if not args.sin_pipeline:
+        try:
+            from projects.cesta import reconciliar_fichas as _reconciliar
+
+            maestros = _reconciliar.carga_maestros()
+            if maestros:
+                from core import inventario as _inventario
+
+                con = _inventario.conecta(config.DATA / "inventario.sqlite")
+                try:
+                    cuenta = _reconciliar.reconcilia(con, maestros)
+                    con.commit()
+                    if cuenta["reconciliadas"]:
+                        print(f"[inventario] {cuenta['reconciliadas']:,} fichas ya estaban en el maestro: "
+                              f"marcadas correcto")
+                finally:
+                    con.close()
+        except Exception as exc:  # noqa: BLE001
+            print(f"[inventario] no se pudo reconciliar la cola: {type(exc).__name__}: {exc}")
+
     # Los grupos se reconstruyen enteros cada dia, no se acumulan: son producto
     # del catalogo de hoy, y un catalogo distinto da grupos distintos. Cuesta
     # segundos y no toca la red, asi que no hay razon para conservar los de ayer.

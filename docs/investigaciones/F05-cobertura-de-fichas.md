@@ -970,3 +970,57 @@ reemplaza entero; para anadir, `edit`.**
    de verdad, con su presupuesto.*
 3. **Construir el maestro de alcampo, carrefour y aldi**, que es lo que convierte sus **64.092** de «sin
    medir» en un numero.
+
+
+---
+
+## 22. El arreglo de fondo, en el ciclo -- y por que **no** dentro de cada colector
+
+*(Ronda 73.)* La reconciliacion ya no hay que acordarse de correrla: **el ciclo la hace**.
+`projects/cesta/run.py`, despues del pipeline:
+
+```python
+# **La cola de fichas se reconcilia con lo que el colector acaba de traer.**
+if not args.sin_pipeline:
+    maestros = _reconciliar.carga_maestros()
+    con = _inventario.conecta(config.DATA / "inventario.sqlite")
+    cuenta = _reconciliar.reconcilia(con, maestros)
+    con.commit()
+```
+
+### Y por que ahi, y no dentro de los colectores
+
+**El arreglo «de fondo» que yo mismo habia descrito era que el colector avisara a la cola al guardar una
+ficha.** *Mirandolo bien, eso es **tocar seis sitios** -- los seis colectores -- **para lo mismo**, y ademas
+enhebra la cola por dentro de cada uno.*
+
+**Una pasada despues del pipeline ve todo lo que el dia trajo**, y **los maestros los escribe el pipeline**:
+*es un sitio en vez de seis, y el que ya tiene delante todo el resultado del dia.*
+
+*Lo que se pierde con esto*: **el aviso es al final del ciclo, no en el momento** -- *una ficha guardada a las
+06:10 no marca la cola hasta que el ciclo termina.* **Para una cola que se mira una vez al dia, da igual.**
+
+### Y no puede tumbar el dia
+
+**El catalogo esta bien aunque la cola quede sin reconciliar**, asi que un fallo **se avisa y se sigue** --
+*el mismo trato que el manifiesto (`run.py`), y por la misma razon: es mantenimiento, no el catalogo.*
+
+```
+[inventario] 7.565 fichas ya estaban en el maestro: marcadas correcto
+[inventario] no se pudo reconciliar la cola: <lo que sea>
+```
+
+*Y solo dice la linea cuando hay algo que decir* -- *con cero reconciliadas no imprime nada, que es la regla
+de la casa.*
+
+### Y F05 queda asi
+
+| pieza | estado |
+|---|---|
+| el mapa por cadena | **medido** (§8-§10) |
+| los lectores de ficha (Mercadona, Dia) | **hechos y probados contra crudo real** |
+| la deuda falsa | **medida (7.565), corregida en la cola real** (§21) |
+| el reconciliador | **hecho, con 11 pruebas y puerta repetible** |
+| **que no se vuelva a acumular** | **hecho**: el ciclo reconcilia tras el pipeline (§22) |
+| decidir que productos merecen la visita | **pendiente** |
+| el maestro de alcampo, carrefour y aldi | **pendiente** |
