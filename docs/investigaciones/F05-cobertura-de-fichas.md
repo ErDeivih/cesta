@@ -235,3 +235,53 @@ agruparlos por clase --, y sin eso cualquier conclusion sobre nutricion es una s
 **Quinta vez en esta fase que medir cambia el trabajo.** *Y esta vez la leccion es mas fina: **el primer
 instrumento que escribi medía mal** -- palabras en vez de claves --, y lo descubri porque **otra medicion
 mas fina lo contradijo**.*
+
+
+---
+
+## 8. El mapa, por fin: **que publica cada cadena, por claves, sobre el crudo que ya hay**
+
+*(Ronda 29.)* Faltaba saber **cual** de los crudos de cada cadena es una ficha. Clasificados **por la forma
+del JSON**, aparece solo:
+
+```
+alcampo     399 ficheros · 396  dict[additionalPageInfo, metadata, missedPromotions, productGroups]
+aldi        140 ficheros · 139  dict[products]
+carrefour  2004 ficheros · TODOS (no es json)          <- HTML
+dia         547 ficheros · 543 (no es json) · 4  dict[... allergen_type_code ...]
+mercadona   155 ficheros · 148  dict[categories, id, is_extended, layout, name, next_category]
+                             6  dict[badges, brand, categories, color_variants, details, display_name]
+lidl        sin crudo de hoy
+```
+
+**Y con las fichas localizadas, las claves -- que es lo que vale:**
+
+| cadena | sus fichas traen | veredicto |
+|---|---|---|
+| **mercadona** | `nutrition_information`, `ingredients`, `allergens`, `details` | **nutricion estructurada, y YA ESTA EN DISCO** |
+| **dia** | `ingredients`, `allergen_type_code` | ingredientes y alergenos; **nutricion no** |
+| **aldi** | 18 claves, ninguna de nutricion | **la fuente no la publica** en su API |
+| **carrefour** | HTML | *hay que parsear la pagina* |
+| **alcampo** | `productGroups` (forma de busqueda) | **sin comprobar** |
+
+### Y esto cambia F05 entero
+
+**Para Mercadona, la ficha no hay que pedirla: hay que extraerla.** *El colector ya captura
+`nutrition_information` todos los dias y lo guarda en crudo; lo que falta es leerlo y meterlo en la cola.*
+
+**Es la respuesta que el hallazgo pedia** -- *«medir situacion actual **por campo/cadena**»* -- **y no es
+la que yo estaba buscando**: no hay un problema de descarga, hay **un campo que se tira a la basura
+despues de haberlo pedido y pagado**.
+
+**Y las otras quedan dichas sin adorno**: *Dia da ingredientes y alergenos y no nutricion; Aldi no da
+nada de eso; Carrefour exige parsear HTML; y Alcampo esta sin comprobar.* **Ninguna de esas frases es una
+suposicion: cada una sale de leer las claves de un fichero real.**
+
+### Lo que queda de F05, con esto
+
+1. **Extraer `nutrition_information` de Mercadona** desde el crudo a la cola de fichas. *4.477 pendientes,
+   y el dato ya esta capturado: no hace falta red.* **Es el primer trozo que se puede cerrar entero.**
+2. **Comprobar `alcampo`** (43.603, el mayor) -- *misma medicion, sobre `productGroups`*.
+3. **Dia**: ingredientes y alergenos, sin nutricion. *Decidir si eso basta para lo que se quiere enseñar.*
+4. **Carrefour**: parsear HTML, *que es lo que el comentario de Lidl ya anticipaba*.
+5. **Lidl**: 28 de 5.054 con ejecutor, y su limite de campos ya documentado.

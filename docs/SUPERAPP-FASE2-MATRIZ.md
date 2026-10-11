@@ -100,10 +100,11 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Saber cuál de los crudos de cada cadena es una ficha**, y sólo después decidir de dónde sale su
-   nutrición. *Medido por claves: la API de **aldi** trae 18 campos y ninguno es nutrición; **dia** no
-   tiene ninguna clave de nutrición en sus 40 primeros crudos —muestra sin caracterizar—. Y **un escaneo
-   por palabras sobreestima**: lo prueba que aldi salga 25/60 con «grasa» cuando sus claves no la traen.* *Medido
+1. **Extraer `nutrition_information` de Mercadona** desde el crudo que el colector **ya captura** todos
+   los días (4.477 pendientes, **sin red**). *El mapa por claves está medido*: mercadona trae
+   `nutrition_information`/`ingredients`/`allergens`; **dia** ingredientes y alérgenos y **no** nutrición;
+   **aldi** nada de eso; **carrefour** es HTML y hay que parsearlo; **alcampo** está sin comprobar. *No
+   falta un descargador: en Mercadona **se tira a la basura un campo que ya se pidió y se pagó**.* *Medido
    para Aldi, leyendo el crudo que el colector ya guarda: su API trae 18 campos y **ninguno es
    nutrición** — no es «no lo hemos pedido», es que **la fuente no lo publica en la API que se usa**.*
    La salida es la misma que Lidl documenta: **parsear el HTML o ir a fuente externa**. *La misma
