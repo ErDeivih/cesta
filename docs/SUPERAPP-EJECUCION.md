@@ -1050,6 +1050,38 @@ umbral al conjunto, y repartir el descuento entre las lineas** -- *con el oracul
 comprobar que el reparto no rompe la condicion, y cuidando que la suma de `importe_cent` siga
 cuadrando con el total, que es el 213.* **Es el ultimo trabajo del encargo.**
 
+### G11, punto 211: **el umbral de la cesta, arreglado** -- y con esto no queda trabajo nuevo
+
+**El defecto estaba medido**: `Mecanica.coste(unidades, precio_cent)` recibe el precio de **un solo
+producto**, asi que «5 EUR dto comprando 20 EUR» no se podia aplicar al conjunto. *Cuatro lineas de
+5,00 EUR daban 2000 cent sin descuento; un solo producto de 20,00 EUR daba 1500.* **500 cent de
+diferencia.** Y en un folleto «compra 20 EUR» es el total de la compra, no el de un articulo.
+
+**Y G11 no manda documentarlo**: *«comprobarlo **y recalcular promociones por asignacion efectiva**»*.
+Asi que `core/cesta_umbral.py`:
+
+    descuento_de_cesta(lineas, textos)    el umbral se comprueba contra el TOTAL de la cesta
+    reparto_del_descuento(lineas, cent)   reparto por asignacion efectiva, EXACTO al centimo
+
+*No toca `Mecanica.coste`: esa funciona, y sus 18 casos del oraculo lo demuestran.* **El reparto se
+hace en proporcion a lo que aporta cada linea, y el resto de la division se le da a las de mayor
+importe** -- *que es lo que hace que la suma cuadre sin inventar céntimos, y es lo que el 213 exige.*
+
+**Cuatro pruebas nuevas, y la primera es el caso que fallaba:**
+
+    cuatro lineas de 5,00 EUR  ->  por linea 2000 (sin descuento)
+                                   la cesta  descuento 500  ->  1500   ✓✓
+    reparto con 333+333+334 y descuentos 1/7/100/250/999  ->  suma exacta, ningun centimo perdido
+    una cesta de 20,00 con «50 EUR dto»  ->  se descuenta 2000, no 5000
+    una cesta de 19,99  ->  cero, y por el umbral, no por el tope
+
+**Y dos cosas que cayeron por mi culpa, y se dicen**: *`ruff` rechazo `l` como nombre de variable
+(«ambiguous», se confunde con `1`) -- y tiene razon*; **y mi prueba del tope usaba una cesta de 1,00
+EUR, que esta POR DEBAJO del umbral, asi que el descuento era cero porque no habia tramo y no porque
+el tope funcionara.** *El caso no probaba nada hasta que la cesta llego a los 20,00.*
+
+**Y con esto, G11 queda entero: 206, 208, 209, 210, 211, 212, 213 y 214.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
