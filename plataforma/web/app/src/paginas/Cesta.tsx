@@ -418,6 +418,17 @@ function UnaLinea({ linea, guardando, cambiar }: {
         etiqueta={
           <span className={cx(tachada && 'text-tinta-suave line-through')}>
             {linea.nombre_visto}
+            {/* **Sin destino, se dice en la pantalla.** Una linea asi es legitima desde la
+                migracion 014 (paquete G02): se apunta lo que no esta en el catalogo, en vez de
+                obligar a buscarlo o a apuntarlo en otro sitio. Pero **no es un producto**, y la
+                pantalla no puede hacer que lo parezca: **no tiene precio, no entra en ninguna
+                comparacion**, y lo unico que se puede hacer con ella es **identificarla** -- que es
+                el enlace a la busqueda que tiene al lado. */}
+            {!linea.grupo_id && !linea.producto_id && (
+              <span className="ml-2 rounded border border-borde px-1.5 py-0.5 text-[12px] text-secundaria">
+                Pendiente de identificar
+              </span>
+            )}
           </span>
         }
         checked={tachada}

@@ -111,6 +111,14 @@ un favorito es, por definición, un producto del catálogo.
 3. **El nombre en blanco salía como 500.** La restricción nueva lo corta, pero llegar al INSERT es
    «el servidor ha fallado», que es mentira: es una petición mal formada. Ahora es **422**.
 
+**La mitad visible**: en `Cesta.tsx`, junto al nombre, **«Pendiente de identificar»** cuando la
+linea no tiene grupo ni producto. *No es un adorno*: esa linea **no tiene precio, no entra en ninguna
+comparacion**, y lo unico que se puede hacer con ella es identificarla -- que es el enlace a la
+busqueda que ya tiene al lado (`Cesta.tsx:474`). La pantalla no puede hacer que parezca un producto.
+
+**Pendiente de verificar en el navegador**: que la etiqueta se vea y que la linea quede **fuera de los
+totales con precio**. *Implementado y compilado, no recorrido.*
+
 **Cómo se ejecuta la prueba del recibo** (la cadena se lee al importar, no vale `monkeypatch`):
 
     $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
