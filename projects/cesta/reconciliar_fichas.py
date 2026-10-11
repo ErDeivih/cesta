@@ -123,10 +123,8 @@ def tiene_ficha(fuente: str, registro: dict) -> bool:
         "dia": ("nutricion", "ingredientes"),
         "mercadona": ("ingredients", "allergens", "ingredientes", "alergenos"),
     }.get(fuente, ())
-    if any(registro.get(marca) for marca in marcas):
-        return True
-    # **Y NO hay respaldo.** *La primera version tenia uno -- «un registro que ya trae campos de ficha
-    # traducibles tambien sirve» -- y **estaba mal**: un producto con nombre y marca pero sin nutricion ni
-    # ingredientes **no tiene ficha**, y marcarlo `correcto` seria dar por buena una ficha vacia.* **Lo cazo
-    # la prueba, no la lectura.**
-    return False
+    # **El dato de la ficha es lo que cuenta, y no hay respaldo.** *La primera version tenia uno -- «un
+    # registro que ya trae campos de ficha traducibles tambien sirve» -- y **estaba mal**: un producto con
+    # nombre y marca pero sin nutricion ni ingredientes **no tiene ficha**, y marcarlo `correcto` seria dar
+    # por buena una ficha vacia.* **Lo cazo la prueba, no la lectura.**
+    return any(registro.get(marca) for marca in marcas)
