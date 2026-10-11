@@ -1535,3 +1535,50 @@ que es lo que acabo de hacer.**
 
 *Y esto cierra el paquete: **lo que queda no es cobertura, es decision** -- si merece la pena pedir 17.283
 fichas de Carrefour cuando Open Food Facts ya da el 40 % de sus grupos.*
+
+
+---
+
+## 32. **La cobertura buena, medida** -- y el hueco entero son dos cadenas
+
+*(Ronda 84.)* Medido el catalogo entero contra `kcal_100g`, que es la columna que la aplicacion ensena:
+
+```
+catalogo: 52.087 grupos
+    alcampo      23.128 ·      0 con kcal (  0,0 %)
+    carrefour    16.195 ·  6.512 con kcal ( 40,2 %)
+    dia           5.783 ·  2.826 con kcal ( 48,9 %)
+    mercadona     4.213 ·  1.900 con kcal ( 45,1 %)
+    aldi          2.768 ·      0 con kcal (  0,0 %)
+
+por clase de producto:
+    alimento        48.606 grupos · 11.064 con kcal ( 22,8 %)
+    no alimento      3.332 grupos ·    174 con kcal (  5,2 %)
+    sin categoria      149 grupos ·      0
+```
+
+### La cifra honesta: **11.064 de 48.606 alimentos, un 22,8 %**
+
+**Ni el 0,04 % que yo escribi en la matriz -- *que medía el trabajo de la cola y lo llamaba cobertura* --, ni el
+45 % que parecia al mirar tres cadenas.** **Es un 22,8 %, y con el hueco localizado.**
+
+### Y el hueco entero son dos cadenas
+
+**Alcampo (23.128) y Aldi (2.768) suman 25.896 grupos con cero nutricion** -- *mas de la mitad del catalogo.*
+*Y las dos tienen la misma causa, ya medida por claves (§6 y §10): **sus fuentes no publican nutricion.***
+
+**Asi que de los 48.606 alimentos del catalogo, 25.896 estan en cadenas que no la dan, y los otros 22.710 estan
+en cadenas que si** -- *Carrefour, Dia y Mercadona, que la traen por Open Food Facts en un 45 %.*
+
+### Y lo que queda de F05, con esto
+
+**La cobertura no es una tarea pendiente: es un reparto de causas.**
+
+| causa | grupos | y que se puede hacer |
+|---|---|---|
+| **la fuente no la publica** | **25.896** (alcampo + aldi) | *nada por esta via* |
+| **la fuente la publica y no se ha cruzado** | ~11.600 | *cruce con Open Food Facts: es un `JOIN`, no una pasada de red* |
+| **la cadena la tiene en su ficha** | *Carrefour 17.283 pendientes* | *el ejecutor, con presupuesto* |
+
+**Y la primera fila es la conclusion de F05**: *la mitad del catalogo esta en dos cadenas que **no publican** el
+dato.* **No es un problema de cobertura que se arregle con trabajo: es lo que hay.**
