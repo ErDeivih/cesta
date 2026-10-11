@@ -171,6 +171,25 @@ existente, falta una medición*.
    después de aplicar seis, y *escribe el fichero al final*. **Es el mismo defecto que diagnostiqué en
    la ronda 8.** Ahora **verifica todas las anclas antes de escribir**, y así entró a la primera.
 
+**Y la revocación en el cálculo, medida sin base de datos.** `donde_comprar` seria lo natural de
+medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
+calendario*. Las dos piezas donde la revocación decide **si** son puras:
+
+| | |
+|---|---|
+| `_es_la_confirmada(peticion, alternativa)` | ✓ **`autorizado=False` deja de contar, por el primer camino** |
+| las tres condiciones, **cada una sola** | ✓ sin alternativa · sin producto aceptado · otro producto · otra cadena |
+| **la cadena por sus dos nombres** (`fuente` y `cadena`) | ✓ *el defecto que ya hubo, fijado para que no vuelva* |
+| la alternativa como **diccionario o como objeto** | ✓ |
+| `_total_autorizado` | ✓ suma lo autorizado, cuenta, y **devuelve las pendientes con su motivo** |
+
+**12 pruebas, puras, en 0,40 s.** Y tres correcciones mias por el camino, todas por leer un trozo:
+`donde_comprar` **no** es pura (dije que si); el endpoint autoriza por **`Query`**, no por cuerpo;
+y **`Eleccion` tiene `autorizada`, `identidad` y `motivo`** -- campos que no vi porque mi lectura del
+dataclass se cortó en `linea_id`, y sin `autorizada` mis dos pruebas del total *median mi suposición,
+no el código*. **Un total que esconde lo que no pudo contar es peor que un total más bajo**: por eso
+`pendientes` viaja con su motivo, y por eso la línea revocada **no es un hueco**.
+
 **La segunda lista de casa responde 409, no 500.** La base impone `lista_de_casa_por_dueno` --una
 lista de casa por persona, que es la regla correcta: es el eje que alimenta el contador del menú, el
 puente de la compra y las alertas-- y la API no la atrapaba: crear la segunda salía como «Internal
