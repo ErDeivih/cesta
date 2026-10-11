@@ -608,3 +608,57 @@ lo que hay que hacer con un cambio de contrato es **preguntar**, no commitear.*
 | **el arreglo** | **probado, funciona, y revertido** -- *esta descrito, y son dos funciones* |
 | **lo que falta** | **una decision**: *la linea se guarda en la unidad que vino, o en la canonica* |
 | **y `previa_compra`** | **vuelto a como estaba**, y `test_g12_previa.py` pasa |
+
+
+---
+
+## 10. `R05` y `R06`: **el modo cocina no existe, y el plan exige fecha** -- mirado en varias capas
+
+*(Ronda 124.)* Los dos criterios que quedaban de F10.
+
+### `R05` -- modo cocina: **no existe**, y el codigo lo dice
+
+**El criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:105`): *«**Paso actual, ingredientes usados, temporizadores** y
+reanudacion sin conexion cuando sea viable.»*
+
+| lo que busque | **lo que hay** |
+|---|---|
+| **«temporizador»** | *los tres son **debounce de busqueda***: `app.js:174` `let temporizador`, `:183` `temporizador = setTimeout(busca, 220)` -- **no son temporizadores de cocina** |
+| **«pasos»** | *comentarios del codigo, y **los nombres de mis propios ficheros de prueba**. Y uno que dice mucho:* `prueba_navegador.py:603` -- **«y no es una visita guiada: NO HAY PASOS QUE PASAR»** |
+| **«Cocina.tsx»** | *es el **contenedor** de las dos apps* (`modo: 'recetas' | 'calorias'`), **no una pantalla de cocinar** |
+
+**Asi que `R05` no existe** -- *ni paso actual, ni ingredientes usados paso a paso, ni temporizadores.* **Y lo
+mejor del hallazgo es la frase del propio proyecto: «no hay pasos que pasar».** *Es una decision escrita sobre
+otra cosa -- la app no es una visita guiada -- y **resulta que tambien contesta esta**.*
+
+### `R06` -- calendario y cola: **el plan exige fecha**
+
+**El criterio** (`:106`): *«Mover/copiar recetas y notas; **recetas aun sin fecha no obligan a inventar dia**.»*
+
+```
+core/recetas.py:253   def planificar(con, propietario, fecha: str, receta_id: int,
+                                     comensales: int = 2, version: int | None = None) -> None:
+:255                  """Poner **una receta tuya** en un dia. Se fija la version: el plan viejo se rel[e]..."""
+```
+
+**La `fecha` es **obligatoria** en `planificar`** -- *y **0 menciones** de «cola», «sin fecha» o «sin dia» en
+`core/recetas.py`, `plataforma/api/recetas.py` ni `PlanSemanal.tsx`.*
+
+**Asi que no hay cola de recetas sin fecha** -- *y el criterio no pide que la haya: **pide que no se obligue a
+inventar dia.*** *Que es distinto: **puede que hoy simplemente no se puedan poner sin fecha** -- y entonces el
+comportamiento **ya cumple** el «no obliga a inventar», **porque no deja**.*
+
+**Y eso hay que decirlo tal cual**: *«no hay cola» y «no obliga a inventar dia» son dos cosas, y la segunda
+puede ser cierta **por vacio** -- igual que el «sin mezclar» de `C09`.* **No lo cuento como cumplido sin verlo
+en la pantalla**, que es la capa que falta.
+
+### Y F10, con sus tres criterios
+
+| criterio | **estado** |
+|---|---|
+| **`R05`** -- modo cocina | **NO EXISTE**: ni pasos, ni temporizadores, ni ingredientes usados. *Y el proyecto lo dice de si mismo: «no hay pasos que pasar»* |
+| **`R06`** -- calendario y cola | **el plan esta** (`planificar`/`plan`/`quitar_del_plan`), **y exige fecha**; *la «cola sin fecha» no esta, y «no obliga a inventar dia» puede cumplirse **por vacio*** -- *la pantalla, sin mirar* |
+| **`R07`** -- plan→lista | **hecho**, en `core/previa_compra.py` (ronda 120) |
+
+**Y con esto F09 y F10 quedan medidos**: *tres criterios hechos, uno con un defecto fijado (`kg/g`), y uno que no
+existe.*
