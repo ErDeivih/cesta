@@ -6,33 +6,36 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F06 · el oráculo exhaustivo de asignaciones.** Es lo que el hallazgo pide y lo único que convierte
-«discrepancias cero» en una afirmación con contenido. *Y ya hay un defecto real detrás.*
-
-**El reparto se decidía con costes sin agrupar**, y estaba en cinco líneas de cableado de
-`donde_comprar`:
+**F06 · arreglar las 9 discrepancias del reparto.** El **oráculo exhaustivo ya existe**
+(`core/oraculo_reparto.py`, sin importar nada de `cesta.py`) y **su barrido ha encontrado el defecto que
+F06 describía**: *9 de 176 escenarios (5%) donde el motor propone pagar más de lo que hay.*
 
 ```
-por_cadena[fuente] = [...resolver...]              # SIN agrupar
-resueltas = _agrupa_y_reparte([...])               # agrupadas, variable LOCAL
-repartido = _mejor_reparto(..., por_cadena, ...)   # recibe las SIN agrupar
+linea l1: p2, 2u | l2: p1, 3u | l3: p1, 1u
+alcampo  l1 80 3x2  l2 120 3x2  l3 120 3x2
+aldi     l1 50 -25% l2 100 sin  l3 100 sin
+dia      l1 70 sin  (l2 y l3 no estan)
+
+motor    l1->aldi, l2->alcampo, l3->alcampo : 75 + (270+90) = 435
+oraculo  l1->aldi, l2->alcampo, l3->aldi    : 75 +  240 + 100 = 415
 ```
 
-*`una_tienda` se calculaba agrupado y el reparto comparaba por línea: dos números distintos para la
-misma compra.* **Medido**: dos líneas del mismo producto con 3×2 en alcampo y una tercera en día daban
-**4,50 €** cuando cuestan **3,50**, con **`ahorro_cent = -50`** y `merece_la_pena = False` — **se le
-decía a quien compra que no partiera la lista, cuando partirla ahorraba 0,50 €.** Arreglado, y la
-reproducción fue la prueba: `F.` antes, `..` después.
+**El motor manda `l3` a alcampo porque su parte del 3×2 allí es 90** (frente a 100 en aldi) — *pero esa
+parte sale de un grupo de **cuatro** unidades que **sólo se forma si `l3` se queda**: fuera, alcampo son
+240 y aldi 100.* **Es la frase de F06 al pie de la letra**: *«no elegir partes de un descuento calculado
+sobre una cesta que al final no se compra en esa tienda»* — la parte que decide sólo existe si la
+decisión ya está tomada. *Circular.*
 
-**Lo que falta de F06**: el **oráculo exhaustivo** (enumerar asignaciones, calcular cada conjunto
-realmente asignado, exigir discrepancias cero); **publicar la garantía y el límite** de `_mejor_reparto`
-—*hoy no está escrito qué promete*—; decidir y decir **el alcance del umbral**; y el banco de matching.
+**Fijado con `xfail(strict=True)`**: la prueba afirma el criterio (discrepancias cero), hoy falla, y el
+`strict` obligará a quitar la marca al arreglarlo. **No se rebaja el criterio.**
+
+**Lo que falta**: arreglarlo —*enumerar asignaciones en cestas pequeñas, y llamar heurística a la
+heurística en las grandes*—, **publicar la garantía y el límite** del algoritmo, decidir **el alcance del
+umbral**, y el banco de matching.
 Detalle: [`investigaciones/F06-reparto-agrupado.md`](investigaciones/F06-reparto-agrupado.md).
 
-**Lo que queda de F01**, enumerado y no cerrado: navegador; estabilidad ante reordenación (V1/V2/V3
-sobre lista y favorito, «jamás B por ordinal»); elegir comprar A otra vez como acción explícita; y
-migrar los consumidores que aún lean el ordinal.
-**Y de F02**: las unidades (g/ml/raciones) y la vista previa congelada.
+**Lo que queda de F01**: navegador, estabilidad ante reordenación, elegir comprar A otra vez, y migrar
+los consumidores del ordinal. **Y de F02**: las unidades (g/ml/raciones) y la vista previa congelada.
 
 No reiniciar el contador ni volver a implementar los campos del diario: existen. Preservar `core/datos/secciones.yml` y `docs/CIFRAS.md`, sin incluirlos en commits. No modificar el estado de investigaciones de RadioPV/CueDigital.
 
@@ -48,7 +51,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
 | F05 | Fichas de seis cadenas/Lidl | pendiente | Inventario real por campo y workers ejecutados. |
-| F06 | Matching y oráculo multi-tienda | **en curso** | Defecto del reparto **reproducido y arreglado**: comparaba con costes **sin agrupar** y descartaba el reparto que ahorra (`ahorro_cent = -50`). Falta el **oráculo exhaustivo**, publicar garantía/límite y el banco de matching. |
+| F06 | Matching y oráculo multi-tienda | **en curso** | Oráculo exhaustivo **construido** (`core/oraculo_reparto.py`) y **ha encontrado 9 discrepancias en 176 escenarios** (5%): el motor reparte con una «parte» que sólo existe si la línea se queda. Fijado con `xfail(strict)`. Falta el arreglo, publicar garantía/límite y el banco de matching. |
 | F07 | Compra rápida y familiar | pendiente | Investigar C01–C05 y medir UI real. |
 | F08 | Comparación/presupuesto/ahorro | pendiente | C06–C10, costes y ámbito elegibles. |
 | F09 | Recetario/importación/borradores | pendiente | R01–R04 con referencias y fixtures permitidos. |
@@ -65,25 +68,25 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 - Paquete y criterio concreto: **F00 en curso** (ocho hallazgos y la matriz S00–S12); **F01 en curso**
   (navegador, estabilidad de identidad); **F02 en curso** (unidades, vista previa); y **F06 en curso**
   con el defecto del reparto arreglado y el oráculo exhaustivo pendiente.
-- Fichero / función / recorrido: `plataforma/api/cesta.py:donde_comprar` — *las elecciones agrupadas
-  vuelven a `por_cadena`, que es lo que compara `_mejor_reparto`*. **El defecto no estaba en
-  `_mejor_reparto`**, que recibe sus estructuras y está bien: estaba en quien se las daba.
-- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f06_reparto_agrupado.py` →
-  **2 pasan**; *antes del arreglo esa misma prueba daba `F.`, con `total_cent = 450` (son 350),
-  `ahorro_cent = -50` y `merece_la_pena = False`* (13 oct 2026). Y `uv run pytest -q` → **1682 pasan,
-  0 fallan**; `ruff` limpio.
-- Caso que falla o comprobación siguiente: **el oráculo exhaustivo de asignaciones**, sin hacer.
-  **Límite que queda, y hay que publicarlo**: la parte que se atribuye a cada línea se calcula
-  suponiendo que **todas** las líneas van a esa tienda, así que una asignación que deje sólo una parte
-  del grupo en la tienda sigue valorándose sobre un conjunto que no se compra allí.
-- Cambios conservados / commit: `plataforma/api/cesta.py`, `tests/test_fase2_f06_reparto_agrupado.py`
-  (nuevo), `docs/investigaciones/F06-reparto-agrupado.md` (nuevo) y este tablero.
-- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado, además del de arriba:* el
-  **alcance del umbral** («5 € dto comprando 20 €») no está decidido ni publicado — medido: dos líneas
-  distintas de 12 € dan **2400** en el motor y **1900** si el umbral fuera del ticket entero. *No se
-  llama defecto: se llama límite sin publicar.*
-- **Acción inmediata al retomar:** construir el **oráculo exhaustivo de asignaciones** —enumerar todas,
-  calcular cada conjunto realmente asignado, aplicar la promoción a ese conjunto y exigir
-  **discrepancias cero** contra `donde_comprar`—, y **publicar la garantía y el límite** del algoritmo.
+- Fichero / función / recorrido: `core/oraculo_reparto.py` (nuevo) — *no importa nada de `cesta.py`: ni
+  el optimizador, ni la aritmética de promociones, ni la agrupación; la mecánica entra ya leída*.
+  Comparado contra `plataforma/api/cesta.py:donde_comprar`.
+- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f06_oraculo_asignaciones.py`
+  → **7 pasan, 1 xfailed** (13 oct 2026). *El barrido de 200 escenarios con semilla fija da **9
+  discrepancias en 176**, todas con el motor más caro que el óptimo.* Y `uv run pytest -q` → **1689
+  pasan, 1 xfailed, 0 fallan**; `ruff` limpio.
+- Caso que falla o comprobación siguiente: **las 9 discrepancias, sin arreglar.** *Caso mínimo medido*:
+  `l1(p2,2u)`→aldi, `l2(p1,3u)` y `l3(p1,1u)` en alcampo a 1,20 con 3×2 → el motor propone **435** y el
+  óptimo es **415**, porque la parte de `l3` en alcampo (90) sale de un grupo de 4 unidades que sólo se
+  forma si `l3` se queda.
+- Cambios conservados / commit: `core/oraculo_reparto.py`, `tests/test_fase2_f06_oraculo_asignaciones.py`
+  (nuevos), `docs/investigaciones/F06-reparto-agrupado.md` y este tablero.
+- Bloqueo real y alternativa independiente: **ninguno**. *Límites declarados:* el oráculo **excluye
+  `umbral`** a propósito (su alcance no está decidido); el precio y la oferta del barrido van **por
+  tienda y producto**, no por línea; y el barrido cubre cestas de **2–3 líneas y 2–3 tiendas**, que es
+  lo que F06 llama «cestas pequeñas».
+- **Acción inmediata al retomar:** **arreglar las 9 discrepancias** —enumerar asignaciones y re-puntuar
+  cada una con su conjunto real en cestas pequeñas, y llamar heurística a la heurística en las grandes—,
+  y **publicar la garantía y el límite** de `_mejor_reparto`.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.

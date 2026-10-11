@@ -98,36 +98,83 @@ función interna**: probar la interna con datos ya agrupados habría dado verde 
 
 ---
 
-## 4. El límite que queda, y hay que publicarlo
+## 4. El oráculo exhaustivo, y **lo que ha encontrado**
 
-**El reparto se sigue calculando con la parte que a cada línea le toca suponiendo que *todas* las líneas
-van a esa tienda.** Si una asignación deja en la tienda **sólo una parte** del grupo, esa parte se
-calculó sobre un conjunto que al final no se compra allí.
+**Está construido**: `core/oraculo_reparto.py`. *No importa nada de `cesta.py`* — ni el optimizador, ni
+la aritmética de promociones, ni la agrupación: **la mecánica de la oferta entra ya leída** (`Oferta`),
+así que ni siquiera depende del parser de castellano de folleto. *Si los dos coinciden, es porque los
+dos calculan bien.*
 
-*Es literalmente la frase de F06* —«no elegir partes de un descuento calculado sobre una cesta que al
-final no se compra en esa tienda»— **y sigue en pie**. El arreglo de hoy quita la incoherencia entre
-`una_tienda` y el reparto, que era el defecto **medido**; **no** convierte el algoritmo en exacto.
+**Y antes de usarlo contra el motor se comprueba él solo**: su aritmética contra cuentas a mano, su
+agrupación por producto dentro de la tienda, que enumera **todas** las asignaciones (`asignaciones_vistas`
+en el caso de dos líneas × dos tiendas da 4), y que una línea que no está en una tienda **no se puede
+asignar ahí**. *Un oráculo que no se comprueba no es un oráculo: es otra opinión.*
 
-**Lo que falta, y es el entregable central de F06**: el **oráculo exhaustivo de asignaciones** para
-cestas pequeñas —*enumerar todas las asignaciones, calcular cada conjunto realmente asignado y aplicar
-la promoción a ese conjunto*—, comparar contra `donde_comprar` y exigir **discrepancias cero**. Y para
-lo que no se pueda enumerar, **publicar la garantía y llamar heurística a la heurística**.
+### Y ha encontrado el defecto que F06 describía
 
-**Y queda por decidir, también con prueba, el alcance del umbral.** `umbral` («5 € dto comprando 20 €»)
-se aplica hoy **a los productos de esa promoción dentro de la tienda**. Medido: dos líneas *distintas*
-de 12 € con esa oferta dan **2400 céntimos** en el motor y darían **1900** si el umbral fuera del ticket
-entero. *El texto del folleto no dice de qué es el umbral, y el motor ha elegido una lectura sin
-publicarla.* **No lo llamo defecto**: lo llamo límite sin publicar, que es lo que F06 pide cerrar.
+**No cuatro casos hechos a mano** —*se eligen los que uno ya sabe que pasan*—: un **barrido de 200
+escenarios al azar con semilla fija**, precio y oferta por tienda y producto.
+
+```
+9 discrepancias en 176 escenarios (5%), TODAS con el motor mas caro que el optimo
+```
+
+**El caso mínimo, entero:**
+
+```
+linea l1: p2, 2 unidades | linea l2: p1, 3 unidades | linea l3: p1, 1 unidad
+
+alcampo  l1 80 3x2   l2 120 3x2   l3 120 3x2
+aldi     l1 50 -25%  l2 100 sin   l3 100 sin
+dia      l1 70 sin   (l2 y l3 no estan)
+
+motor    l1->aldi, l2->alcampo, l3->alcampo :  75 + (270 + 90) = 435
+oraculo  l1->aldi, l2->alcampo, l3->aldi    :  75 +  240 + 100 = 415
+```
+
+**Y por qué el motor manda `l3` a alcampo**: su **parte** del 3×2 allí es **90**, frente a 100 en aldi.
+*Pero esa parte de 90 sale de un grupo de **cuatro** unidades que **sólo se forma si `l3` se queda**:
+con `l3` fuera, alcampo son 3 unidades y cuesta **240**, y `l3` sola en aldi cuesta 100.*
+
+**Es la frase de F06 al pie de la letra**: *«no elegir partes de un descuento calculado sobre una cesta
+que al final no se compra en esa tienda»*. **La parte que se usa para decidir sólo existe si la decisión
+ya está tomada.** *Circular.*
+
+**Y no miente sobre el coste de lo que propone** — los 435 son el precio real de su asignación —:
+**lo que hace es proponer una asignación peor que la que existe.** *Se le dice a quien compra que pague
+20 céntimos de más, y se le manda a la tienda equivocada una de las líneas.*
+
+**Queda fijado** en `tests/test_fase2_f06_oraculo_asignaciones.py` con `xfail(strict=True)`: *la prueba
+afirma el criterio de F06 —discrepancias cero—, hoy falla, y el `strict` obligará a quitar la marca
+cuando se arregle.* **No se borra ni se rebaja el criterio.**
+
+### Lo que F06 pide y sigue pendiente
+
+**Arreglarlo**: para cestas pequeñas, *enumerar asignaciones* —que es lo que el oráculo ya hace— y
+re-puntuar cada una con su conjunto real; para lo que no se pueda enumerar, **llamar heurística a la
+heurística**, que es lo que F06 dice con esas palabras. Y **publicar la garantía y el límite**: hoy no
+está escrito en ningún sitio qué promete `_mejor_reparto` y qué no.
 
 ---
 
-## 5. Lo que queda de F06
+## 5. Los dos límites de alcance, que también hay que publicar
 
-1. **El oráculo exhaustivo de asignaciones**, independiente del optimizador. *Es lo que el hallazgo pide
-   y lo único que convierte «discrepancias cero» en una afirmación con contenido.*
-2. **Publicar la garantía y el límite** de `_mejor_reparto`: hoy no está escrito en ningún sitio qué
-   promete y qué no.
-3. **El alcance del umbral**, decidido y dicho.
-4. Banco de matching: positivos/negativos duros por familia/cadena, precisión/recall/abstención **con
-   denominadores**, y *«mismo GTIN no ignora contradicciones; distinto GTIN no demuestra engaño»*.
-   *Sin empezar.*
+**a) El `umbral`.** `umbral` («5 € dto comprando 20 €») se aplica hoy **a los productos de esa promoción
+dentro de la tienda**. Medido: dos líneas *distintas* de 12 € con esa oferta dan **2400 céntimos** en el
+motor y darían **1900** si el umbral fuera del ticket entero. *El texto del folleto no dice de qué es el
+umbral, y el motor ha elegido una lectura sin publicarla.* **El oráculo lo excluye a propósito**: mientras
+no se decida, incluirlo sería elegir una de las dos lecturas y llamarla verdad.
+
+**b) El banco de matching.** Positivos/negativos duros por familia/cadena, precisión/recall/abstención
+**con denominadores**, y *«mismo GTIN no ignora contradicciones; distinto GTIN no demuestra engaño»*.
+**Sin empezar.**
+
+---
+
+## 6. Lo que queda de F06
+
+1. **Arreglar las 9 discrepancias** — enumeración exhaustiva en cestas pequeñas, y heurística declarada
+   como tal en las grandes.
+2. **Publicar garantía y límite** del algoritmo.
+3. **Decidir y decir el alcance del umbral.**
+4. **El banco de matching**, sin empezar.
