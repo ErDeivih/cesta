@@ -272,3 +272,52 @@ se cae en ella igual que se cayo entonces.* **Con `::VARCHAR`, la consulta funci
 
 **Uno cubierto, uno contestado por construccion, y tres por medir** -- *y los tres que quedan son columnas que
 existen y casos que hay que ejercer.*
+
+
+---
+
+## 5. «Cantidad/pack»: **esta implementado hasta el precio unitario, y con comprobacion entre cadenas**
+
+*(Ronda 108.)* El caso de la aceptacion que **conecta con F01**: *un 3x2 o un pack de 2, donde la cantidad cambia
+el precio unitario.* *Y las 29 menciones de `unidades_pack` / `promo_unidades_minimas` dibujan **cuatro piezas**,
+no una:*
+
+| pieza | donde | **que hace** |
+|---|---|---|
+| **la normalizacion** | `core/normalize.py:11` | *«Todo acaba en **(cantidad, unidad_canon, unidades_pack)** y en precio por kg / L / ud»* -- *o sea, **el pack se convierte en precio unitario comparable*** |
+| **el dato a la pantalla** | `catalogo.py:961` | *`"unidades_pack": f["unidades_pack"] if (...)`* -- **condicional, no crudo** |
+| **lo que la pantalla dice** | `app.js:1312,1317` | *`cadaUno = p.cantidad / p.unidades_pack` y `fila('Vienen', ...)`: **«Vienen N x tamano»**, con el **precio del suelto al lado*** |
+| **la comprobacion entre cadenas** | `projects/cesta/ejes.py:37` | *«Pares **ciertos** por codigo de barras cuyo `unidades_pack` se contradi…»* -- *es decir, **se buscan los packs que se contradicen entre cadenas** |
+
+**Y las cuatro juntas son lo que el criterio pide**: *`C06` pide **«cantidad/promocion elegibles y coste parcial
+explicito»*** -- *y aqui esta la cantidad normalizada, el pack visible, el precio del suelto al lado, **y una
+comprobacion de que dos cadenas no digan packs distintos del mismo codigo de barras**.*
+
+### Y otra pieza documentada que aparece de paso
+
+**`catalogo.py:879` dice, cortado, *«…y `unidades_pack` no llegaba nunca a la pantalla (leia `adverte…»*.** *Es
+**el sexto arreglo documentado** que aparece mientras buscaba otra cosa:* **el pack estaba en el dato y no
+llegaba a la pantalla** -- *que es **literalmente el mismo defecto** que el `sin_precio` de la ronda 96 y la
+columna `kcal_100g` de la 82: **el dato existe y la pantalla no lo ensena.*** *Y aqui esta arreglado y dicho.*
+
+### Y lo que queda, que es **ejercerlo**
+
+**Las cuatro piezas estan; lo que no esta es la prueba del caso**: *coger un producto con `unidades_pack > 1`
+-- o con `promo_unidades_minimas` --, **pedir 3 unidades en la lista**, y comprobar que **el precio unitario que
+se sirve es el del pack y no el del suelto.***
+
+**Es un `SELECT` mas una llamada a `cesta.coste_por_linea`** -- *sin navegador* --, **y es exactamente la clase
+de prueba que F01 ya hizo para la promocion 3x2.** *Queda como el paso siguiente, y es pequeno.*
+
+### Y F08, con sus cinco casos
+
+| caso | **estado** |
+|---|---|
+| **lista parcial** | **cubierto**: `sin_precio` y la estimacion en pantalla |
+| **oferta caducada** | **no hay ninguna, por construccion**; *1.553 sin fecha* |
+| **cantidad/pack** | **cuatro piezas implementadas** (normalizacion, pack visible, suelto al lado, y comprobacion entre cadenas); *ejercerlo, pendiente* |
+| **cupon/club no elegible** | *por medir* (`promo_club`, `promo_solo_online`) |
+| **historico desconocido** | *por medir* (`historial_de`) |
+
+**Dos cubiertos, uno contestado por construccion, y dos por medir** -- *y el que se ha medido hoy trae **cuatro
+piezas y un arreglo documentado**, que es mas de lo que el criterio pide.*
