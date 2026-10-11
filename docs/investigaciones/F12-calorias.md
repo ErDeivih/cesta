@@ -340,3 +340,78 @@ cuando el grep se atasca.*
 
 **Cinco de los seis, con su mitad principal hecha; y `N03` tiene la mitad de la base y la pregunta de la racion
 ya escrita.**
+
+
+---
+
+## 7. `N03` cerrado: **la base que no tiene tamano tiene CERO productos** -- y el hueco se mide, no se supone
+
+*(Ronda 136.)* La pregunta del §6 -- *«¿hay un campo con el tamano de la porcion, o "por porcion" se queda sin
+decir de cuanto?»* -- **contra el esquema y contra los datos.**
+
+### El esquema: **no hay campo de tamano de porcion**
+
+*Lo que `core/schemas.py` tiene de porciones, pesos y envases:*
+
+```
+25   "unidad_declarada": pl.Utf8,        28  "unidad_ref_nativa": pl.Utf8,
+51   "unidades_envase": pl.Int32,        52  "peso_variable": pl.Boolean,
+63   "nutricion_por": pl.Utf8,          # "100g" | "100ml" | "porcion"
+66   "dias_caducidad": pl.Int32,        75  "peso_escurrido_g": pl.Int32,
+80   "peso_neto_g": pl.Int32,           84  "envase": pl.Utf8,
+```
+
+**No hay `porcion_g` ni nada equivalente.** *Asi que **si algun producto dijera `nutricion_por = "porcion"`, su
+`kcal` no se podria convertir a nada** -- no habria de cuanto.*
+
+### Y los datos: **ningun producto lo dice**
+
+```sql
+SELECT coalesce(nutricion_por, '(nulo)') AS v, count(*) FROM grupos
+ WHERE nutricion IS NOT NULL GROUP BY 1 ORDER BY 2 DESC
+```
+
+```
+     100g: 2485
+    100ml:  771
+    (nulo): 689
+ «porcion»:   0
+```
+
+**CERO.** *De los grupos con tabla nutricional, **todos** usan una base de peso o volumen, **o ninguna**.*
+
+### Y por eso `N03` queda **cerrado, y bien**
+
+| lo que pide `N03` | **estado, y por que** |
+|---|---|
+| **«base nutricional clara»** | **si**: *`nutricion_por` con sus valores, **y la pantalla lo dice*** |
+| **«gramos/ml/racion»** | **los tres, y con `racion` sin tamano** -- *que es el unico que daria problemas* |
+| **«conversiones trazables»** | **si, porque la base que no se puede convertir tiene cero productos** |
+
+**Y el 689 `(nulo)` no es un hueco**: *la pantalla dice `100 g` cuando falta, y **`100 g` es la convencion de la
+etiqueta europea***. *No es una suposicion: es lo que la etiqueta significa cuando no dice otra cosa.*
+
+### Y la leccion, que es la de esta fase entera
+
+**El §6 predijo un hueco -- «`porcion` no dice de que tamano» -- y era correcto sobre el esquema.** *Lo que no se
+sabia era **si importaba**.* **Y para saberlo habia que contar, no leer.** *Un campo que falta **y que nadie
+usa** no es un defecto: es una puerta que no se ha abierto.*
+
+**Es la mismo que paso con las fichas** (*el extractor estaba y el crudo traia 3 de 155: lo que faltaba era
+**pedir***) **y con la cola de Carrefour** (*el `url` solo lo tenia Lidl*) -- **y es la razon de que el encargo
+diga «no inventes cobertura»**: *un cero medido y un cero supuesto se parecen mucho en un informe y no se parecen
+en nada.*
+
+### Y F12, cerrado
+
+| criterio | **estado** |
+|---|---|
+| **`N01`** -- registro rapido | **la «nueva operacion legitima» esta** (*`clave_operacion`*) |
+| **`N02`** -- codigo de barras | **hecho** -- *texto principal, camara como boton* |
+| **`N03`** -- porciones | **hecho** -- *base declarada, ensenada, y **la que no tiene tamano tiene cero productos*** |
+| **`N04`** -- diario por comidas | **hecho** -- *los reintentos, por la clave de operacion* |
+| **`N05`** -- alimentos propios | **hecho** -- *fuente declarada en conjunto cerrado, con `raise`* |
+| **`N06`** -- receta consumida | **hecho** -- *version obligatoria, con `raise`* |
+
+**Los seis, con su parte principal medida.** *Y de los seis, **cuatro** los contesta el mismo `core/diario.py` --
+que es el modulo con la disciplina mas consistente del proyecto.*
