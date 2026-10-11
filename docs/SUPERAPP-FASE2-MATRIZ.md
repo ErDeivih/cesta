@@ -129,7 +129,30 @@ npx tsc --noEmit                                     0
 npm run build                                        154 modulos
 ```
 
-**Los ensayos que existen y qué demuestran**, por si hay que volver a ellos:
+### El ensayo integral -- **las cuatro puertas juntas, corridas el 2026-10-11 a las 23:53**
+
+```
+1/4  uv run ruff check . --output-format=concise     All checks passed!        exit 0
+2/4  uv run pytest -q                                1800 passed, 3 xfailed    (180,70 s)
+3/4  npx --no-install tsc --noEmit                   0 errores                 exit 0
+4/4  npm run build                                   built in 5,41 s            exit 0
+```
+
+**Las cuatro, en verde, en la misma sesion.** *Y las tres cifras que importan:*
+
+- **`1800 passed, 3 xfailed, 0 failed`** -- *y los **tres xfailed son los tres defectos medidos**, a proposito:
+  *la cantidad de `F07`, y los dos del `kg/g` de `F10`.* **No son pruebas rotas: son defectos fijados con
+  `strict=True`, y si alguien los arregla, `pytest` avisa porque el `xfail` deja de cumplirse.**
+- **`ruff` sin un solo aviso**, con el proyecto entero.
+- **`tsc` 0 y el build 0** -- *y el bundle son **681 KB en un unico chunk**, con el aviso de Vite sobre los 500 kB
+  **sin resolver** (`F15`).*
+
+**Lo que este ensayo **no** cubre, y hay que decirlo**: *los dos ensayos de **navegador de verdad** --
+`prueba_f03_publicacion.py` y los dos de `F07` -- **no entran en `pytest`**, porque necesitan la pila levantada
+(API y Vite).* **Se corrieron en su dia y estan documentados arriba**; *este ensayo integral es **Python + tipos +
+build**, no navegador.*
+
+**Y los ensayos que existen y qué demuestran**, por si hay que volver a ellos:
 
 | ensayo | qué demuestra |
 |---|---|
