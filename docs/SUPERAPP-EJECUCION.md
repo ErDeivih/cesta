@@ -1082,6 +1082,33 @@ el tope funcionara.** *El caso no probaba nada hasta que la cesta llego a los 20
 
 **Y con esto, G11 queda entero: 206, 208, 209, 210, 211, 212, 213 y 214.**
 
+### G12, punto 222: **el coste de la receta, cableado** -- el dato ya estaba
+
+**Lo que faltaba no era el dato: era el cable.** `core/recetas.py` guarda por ingrediente
+`producto_id`, `grupo_id` y `fuente` **desde antes**, los tres opcionales -- *para que un ingrediente
+generico siga siendo generico y uno con marca lleve su identidad, que es el 219* --. **Y la pantalla
+recibia el ingrediente sin precio, asi que `logica/costeReceta.ts` decia «no se puede calcular
+todavia» en TODAS las lineas**, incluidas las que si tenian producto.
+
+**El cable, en un sitio:** `api/recetas.py`, `_con_precios(hallada)` -- *que llama a
+`catalogo.producto(producto_id)` y pone `precio_cent`, `precio_unidad_cent` y `unidad_canon` en cada
+ingrediente que tenga producto.* **Sin `producto_id` no se pone precio, ni se busca por nombre**:
+*un nombre parecido no demuestra que sea el mismo producto, y es la regla que `cocina.ts` escribe.*
+
+*Se hace en la API y no en la pantalla a proposito: el precio sale del catalogo, que la API ya tiene;
+que la pantalla lo pidiera ingrediente a ingrediente serian N peticiones por receta para un dato que
+ya esta a mano.*
+
+**Y la pantalla**, `RecetaDetalle.tsx`: lee ese precio si viene y **pasa `null` si no** -- *asi que una
+receta con productos elegidos dice sus **dos numeros** (usado y envase) y las demas siguen declarando
+lo que no saben*, que es el 222 entero: *«separar coste de ingredientes usados del desembolso por
+envases», con cobertura.*
+
+**Y de paso, una correccion mia**: *en la ronda 242 dije «el enlace ingrediente↔producto no existe» y
+era falso: lo que habia leido era el tipo `Ingrediente` del cliente, que no tiene el campo, y conclui
+para todo el sistema.* **Decimoseptima vez del dia, y la misma forma que las primeras: leer una capa y
+concluir sobre el conjunto.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

@@ -137,13 +137,26 @@ export function RecetaDetalle() {
           sin tocar el modulo. */}
       <Tarjeta titulo="Lo que cuesta">
         {(() => {
-          const conPrecio: IngredienteConPrecio[] = data.ingredientes.map((i) => ({
-            nombre: i.texto,
-            cantidad: i.cantidad ?? 0,
-            unidad: i.unidad ?? '',
-            // **Sin enlace no hay precio.** No se busca por nombre: no demuestra que sea el mismo.
-            precio: null,
-          }))
+          // **El precio lo manda el servidor** cuando el ingrediente tiene producto elegido:
+          // `core/recetas.py` guarda su `producto_id` y `api/recetas.py` lo enriquece con el precio
+          // del catalogo. *Lo que falta no era el dato: era el cable.*
+          const conPrecio: IngredienteConPrecio[] = data.ingredientes.map((i) => {
+            const p = i as unknown as {
+              precio_cent?: number | null; precio_unidad_cent?: number | null
+            }
+            const tiene = typeof p.precio_cent === 'number' || typeof p.precio_unidad_cent === 'number'
+            return {
+              nombre: i.texto,
+              cantidad: i.cantidad ?? 0,
+              unidad: i.unidad ?? '',
+              // **Y sin producto elegido sigue sin precio.** No se busca por nombre: un nombre
+              // parecido no demuestra que sea el mismo producto, y `cocina.ts` lo prohibe.
+              precio: tiene
+                ? { precioEnvaseCent: p.precio_cent ?? null,
+                    precioUnidadCent: p.precio_unidad_cent ?? null }
+                : null,
+            }
+          })
           const c = costeDeReceta(conPrecio)
           return (
             <>

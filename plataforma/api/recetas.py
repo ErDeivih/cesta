@@ -135,7 +135,46 @@ def leer(receta_id: int, version: int | None = None,
     if hallada is None:
         raise HTTPException(status_code=404, detail=f"no hay receta {receta_id}"
                             + (f" en la version {version}" if version else ""))
+    _con_precios(hallada)
     return hallada
+
+
+def _con_precios(hallada: dict) -> None:
+    """Pone a cada ingrediente **con producto elegido** el precio del catalogo.
+
+    **G12, punto 222**: *«nutricion/coste por racion con cobertura y procedencia. **Separar coste de
+    ingredientes usados del desembolso por envases**»*.
+
+    **El dato ya estaba.** `core/recetas.py` guarda `producto_id`, `grupo_id` y `fuente` por
+    ingrediente desde antes -- *opcionales los tres, para que un ingrediente generico siga siendo
+    generico* --. **Lo que faltaba era el cable**: la pantalla recibia el ingrediente sin precio y
+    `logica/costeReceta.ts` decia «no se puede calcular todavia» en **todas** las lineas, incluidas
+    las que si tenian producto.
+
+    *Y se hace aqui y no en la pantalla a proposito*: el precio sale del catalogo, que la API ya
+    tiene; **que la pantalla pidiera el precio ingrediente a ingrediente serian N peticiones por
+    receta para un dato que ya esta a mano.**
+
+    **Sin `producto_id` no se pone precio**, ni se busca por nombre: *un nombre parecido no demuestra
+    que sea el mismo producto, y es la regla que `cocina.ts` escribe: «no fusionar por parecido de
+    nombre».* **Lo que no se sabe sigue sin saberse.**
+    """
+    from . import catalogo
+
+    for ing in hallada.get("ingredientes") or []:
+        pid = ing.get("producto_id")
+        if not pid:
+            continue
+        try:
+            producto = catalogo.producto(str(pid))
+        except Exception:  # noqa: BLE001  (un catalogo ilegible no tumba la receta)
+            producto = None
+        if not producto:
+            continue
+        # Los tres que el coste necesita, con los nombres que ya usa `costeReceta.ts`.
+        ing["precio_cent"] = producto.get("precio_cent")
+        ing["precio_unidad_cent"] = producto.get("precio_unidad_cent")
+        ing["unidad_canon"] = producto.get("unidad_canon")
 
 
 @rutas.get("/{receta_id}/versiones")
