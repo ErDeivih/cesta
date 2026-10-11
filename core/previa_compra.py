@@ -29,11 +29,6 @@ from dataclasses import dataclass, field
 
 from core import envases
 
-# **La tabla de unidades de `core.normalize`**, que ya sabe que `g` es `kg` por 0,001.
-# *Se importa en vez de copiarse: una sola tabla, y la misma que usa el catalogo para el
-# precio por kg.*
-from core.normalize import _UNIDADES
-
 
 @dataclass
 class LineaDeCompra:
@@ -60,29 +55,8 @@ class Previa:
 
 
 def _unidad_canon(unidad: str | None) -> str:
-    """La unidad, dicha igual venga como venga. *Sin unidad no se consolida con nadie.*
-
-    **Y `g` y `kg` son la MISMA unidad**, no dos: *la tabla de `core.normalize` ya lo sabe* --
-    `"g": ("kg", 0.001)` --, *y sin usarla `1 kg` y `500 g` de harina caian en claves distintas y se nombraban
-    como incompatibles, **que es lo que no son**.*
-
-    *Medido (ronda 121): la aceptacion de F10 pide **«mezcla kg/g compatible y ud incompatible»** -- los dos
-    casos puestos juntos a proposito --, y el modulo los trataba igual.* **Con esto se distinguen**: `kg` y `g`
-    caen en `kg`, `ml` cae en `l`, y `ud` en `ud`, *asi que se suman los que se pueden sumar y se nombran los
-    que no.*
-    """
-    return _UNIDADES.get((unidad or "").strip().lower(), ((unidad or "").strip().lower(), 1.0))[0]
-
-
-def _a_canonica(cantidad: float, unidad: str | None) -> float:
-    """**La cantidad, en la unidad canonica.** *Sumar `1 kg` con `500 g` sin convertir daria `501`.*
-
-    *Es la otra mitad del mismo arreglo*: **cambiar el nombre de la unidad sin cambiar el numero empeora las
-    cosas** -- *seria sumar peras con manzanas y decir que son todas peras.* **Se convierte con el factor de la
-    tabla, y lo que no esta en la tabla se queda como esta** -- *un factor de 1.0, que es no tocar nada.*
-    """
-    factor = _UNIDADES.get((unidad or "").strip().lower(), (None, 1.0))[1]
-    return float(cantidad) * factor
+    """La unidad, dicha igual venga como venga. *Sin unidad no se consolida con nadie.*"""
+    return (unidad or "").strip().lower()
 
 
 def previa_de_compra(ingredientes: list[dict]) -> Previa:
@@ -117,10 +91,6 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         quien = pid or texto.lower()
         clave = f"{quien}|{unidad}"
         por_producto.setdefault(quien, set()).add(unidad)
-
-        # **Y la cantidad, en la unidad canonica.** *Cambiar el nombre de la unidad sin cambiar el
-        # numero seria sumar peras con manzanas y decir que son todas peras.*
-        cantidad = _a_canonica(cantidad, ing.get("unidad"))
 
         if clave in acumulado:
             ln = acumulado[clave]

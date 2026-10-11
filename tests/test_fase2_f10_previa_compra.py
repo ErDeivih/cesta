@@ -50,6 +50,15 @@ def test_la_misma_unidad_suma():
     assert _comprable(previa)["harina"] == 1.5, _linea(previa)
 
 
+@pytest.mark.xfail(strict=True, reason=(
+    "DEFECTO MEDIDO: `_unidad_canon` no usa `normalize._UNIDADES`, asi que `g` y `kg` son dos "
+    "unidades distintas y `1 kg` + `500 g` NO se suman -- se nombran como incompatibles, igual que "
+    "`kg` y `ud`, cuando la aceptacion de F10 los distingue (\"kg/g COMPATIBLE y ud INCOMPATIBLE\"). "
+    "EL ARREGLO SE PROBO Y FUNCIONA -- `_unidad_canon` con la tabla y la cantidad por su factor da "
+    "1,5 kg --, PERO CAMBIA LA UNIDAD QUE SE ENSENA: `test_g12_previa.py` espera `500` (en g) y el "
+    "arreglo da `0,5` (en kg). Asi que no son tres lineas: HAY QUE DECIDIR si la linea se guarda en "
+    "la unidad que vino -- y solo se convierte para comparar -- o en la canonica. Es decision del "
+    "dueno, y por eso el arreglo esta revertido y esto queda fijado."))
 def test_kg_y_g_SI_se_suman_porque_son_la_misma_unidad():
     """**«Mezcla kg/g compatible»** -- *el caso que la aceptacion nombra, y que **no** funcionaba.*
 
@@ -77,6 +86,15 @@ def test_kg_y_g_SI_se_suman_porque_son_la_misma_unidad():
     assert {f["unidad"] for f in d["lineas"]} == {"kg"}, d["lineas"]
 
 
+@pytest.mark.xfail(strict=True, reason=(
+    "DEFECTO MEDIDO: `_unidad_canon` no usa `normalize._UNIDADES`, asi que `g` y `kg` son dos "
+    "unidades distintas y `1 kg` + `500 g` NO se suman -- se nombran como incompatibles, igual que "
+    "`kg` y `ud`, cuando la aceptacion de F10 los distingue (\"kg/g COMPATIBLE y ud INCOMPATIBLE\"). "
+    "EL ARREGLO SE PROBO Y FUNCIONA -- `_unidad_canon` con la tabla y la cantidad por su factor da "
+    "1,5 kg --, PERO CAMBIA LA UNIDAD QUE SE ENSENA: `test_g12_previa.py` espera `500` (en g) y el "
+    "arreglo da `0,5` (en kg). Asi que no son tres lineas: HAY QUE DECIDIR si la linea se guarda en "
+    "la unidad que vino -- y solo se convierte para comparar -- o en la canonica. Es decision del "
+    "dueno, y por eso el arreglo esta revertido y esto queda fijado."))
 def test_g_y_kg_al_reves_dan_lo_mismo():
     """*El orden no puede cambiar el resultado: **500 g y 1 kg son 1,5 kg igual**.* *Una consolidacion que
     dependa del orden es una consolidacion que miente la mitad de las veces.*

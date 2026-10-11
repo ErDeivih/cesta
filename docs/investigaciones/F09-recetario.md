@@ -549,3 +549,62 @@ veces***.
 
 **La aceptacion de F10 -- «dos recetas con ingrediente compartido, mezcla kg/g compatible y ud incompatible» --
 esta cumplida y probada, con las dos mitades distinguidas.**
+
+
+---
+
+## 9. **El arreglo se probo, funciona, y se revirtio** -- porque cambia lo que se ensena
+
+*(Ronda 122, segunda parte.)* **Escribi el arreglo, y funciona:**
+
+```
+kg + kg -> SUMA     [('harina', 1.5, 'kg')]
+kg + g  -> SUMA     [('harina', 1.5, 'kg')]        <- el caso del criterio
+kg + ud -> NO SUMA  SIN CONSOLIDAR: ['harina: kg y ud']
+ml + g  -> NO SUMA  SIN CONSOLIDAR: ['leche: kg y l']
+```
+
+**Y al correr la suite entera, dos pruebas existentes fallaron:**
+
+```
+test_g12_previa.py:34   assert previa.lineas[0].cantidad == 500
+E   AssertionError: assert 0.5 == 500
+
+test_g12_previa.py:61   assert ... cantidad == 150
+E   AssertionError: assert 0.15000000000000002 == 150
+```
+
+### Y lo que eso dice, que es mas importante que el arreglo
+
+**Mi arreglo no solo consolida: cambia la unidad que se **ensena**.** *Una receta que decia «500 g de harina»
+pasa a decir «0,5 kg de harina».* **Y eso es una decision, no un detalle** -- *y yo la tome sin tomarla.*
+
+**Los dos comportamientos son defendibles:**
+
+| guardar en... | a favor | en contra |
+|---|---|---|
+| **la unidad que vino** | *la receta se lee como la escribio quien la escribio* -- *«500 g» es como se dice en una cocina* | *hay que convertir **para comparar**, en cada consolidacion* |
+| **la canonica** | *una sola forma, y sumar es directo* | *«0,5 kg de harina» es como se dice en un almacen, no en una receta* |
+
+**Y cual es la buena no lo decide el codigo: lo decide quien cocina.** *Por eso el arreglo esta **revertido**, y
+lo que queda es el defecto **fijado con `xfail(strict=True)`** y el motivo escrito -- *incluido que el arreglo ya
+se probo.*
+
+### Y una leccion de metodo, que es la de siempre
+
+**La prueba tolerante de la ronda 121 fue lo correcto** -- *no sabia que hacia, y no invente el resultado.*
+**Pero la apreté en cuanto crei saber, y la apreté contra un arreglo que cambia otra cosa.** *Lo que lo cazo
+fue **correr la suite entera**: las dos pruebas que fallaron no eran mias, eran de `test_g12_previa.py`, **y
+llevaban ahi desde antes**.*
+
+**Un arreglo que pasa sus propias pruebas y rompe las de otro no es un arreglo: es un cambio de contrato.** *Y
+lo que hay que hacer con un cambio de contrato es **preguntar**, no commitear.*
+
+### Y el estado, con precision
+
+| | |
+|---|---|
+| **el defecto** | **medido y fijado** con `xfail(strict=True)` y el motivo escrito |
+| **el arreglo** | **probado, funciona, y revertido** -- *esta descrito, y son dos funciones* |
+| **lo que falta** | **una decision**: *la linea se guarda en la unidad que vino, o en la canonica* |
+| **y `previa_compra`** | **vuelto a como estaba**, y `test_g12_previa.py` pasa |
