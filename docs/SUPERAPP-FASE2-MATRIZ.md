@@ -19,7 +19,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| Fichas de producto: **calorías** | **sí, para Día** | **Día publica la tabla entera** (kcal, kJ, grasas, hidratos, azúcares, proteínas, sal) **con unidades**, y `ficha_dia.py` la lee — 9 pruebas, una contra crudo real. *Mercadona, Alcampo y Aldi **no** la publican: medido por claves* |
+| Fichas de producto: **calorías** | **sí, para Día**; **no** para Mercadona, Alcampo y Aldi; **sin saber** para Carrefour | **Día publica la tabla entera con unidades** y `ficha_dia.py` la lee (9 pruebas, una contra crudo real). *Carrefour son 2.004 crudos HTML: **en HTML no hay claves que leer**, así que no se sabe y no se afirma* |
 | Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |

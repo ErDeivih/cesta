@@ -517,3 +517,46 @@ no**, campo a campo.
 *Lo que hay capturado hoy son **4 fichas de Dia** -- y en 3 esta la tabla --, asi que el trabajo sigue
 siendo **pedir**: el lector no llena la cola solo.* **Pero la pregunta «¿se puede?» tiene respuesta, y es
 que si.**
+
+
+---
+
+## 13. Carrefour: el unico hueco, y **no se puede cerrar por claves**
+
+*(Ronda 34.)* El mapa quedaba con Carrefour *«HTML, sin medir»*. Medido:
+
+```
+2.004 crudos de hoy, y los 2.004 son HTML -- ni un JSON
+
+ficheros con alguna palabra de nutricion: 40/2004
+   nutriben 35   proteina 2   energia 2   nutricosmetica 1
+```
+
+**Y esas palabras no dicen nada.** *`nutriben` es **una marca de potitos** -- 35 de los 40 --, y
+`nutricosmetica` es otra palabra de catalogo.* **Es el mismo falso positivo que ya me ha enganado tres veces
+en esta fase.**
+
+**Y hay una razon de fondo**: *en HTML **no hay claves que leer***. *Todo el metodo que ha funcionado con
+Mercadona, Dia, Alcampo y Aldi -- leer las claves de un JSON -- **no se puede aplicar aqui**.*
+
+**Asi que lo honesto no es decir que Carrefour no publica nutricion: es decir que no se sabe.** *Para
+saberlo hay que **parsear el HTML** -- buscar la tabla en el marcado, o el JSON que la pagina lleve
+incrustado --, y eso **no se ha hecho**.*
+
+*Es exactamente la leccion de la ronda 33 aplicada a tiempo: **no extender una conclusion a un caso que no
+he medido**. Ayer escribi «ninguna cadena» sin mirar Dia; hoy no escribo «Carrefour tampoco» sin mirar su
+HTML.*
+
+### Y el mapa queda cerrado, con un solo hueco declarado
+
+| cadena | nutricion **numerica** | como se sabe |
+|---|---|---|
+| **dia** | **SI** -- kcal, kJ, grasas, hidratos, azucares, proteinas, sal | por claves, 4 fichas, **lector hecho y probado** |
+| **mercadona** | **no** | 6 fichas: solo `ingredients` y `allergens`, en texto |
+| **alcampo** | **no** | 59 claves, ninguna |
+| **aldi** | **no** | 18 claves, ninguna |
+| **lidl** | **no**, y documentado | *«no es un parser incompleto, es una fuente que no los da»* |
+| **carrefour** | **NO SE SABE** | HTML; **el metodo de claves no sirve**, y no se ha parseado |
+
+**Uno de seis sin contestar, y esta dicho como lo que es** -- *no como un «tampoco», que es lo que habria
+escrito ayer.*
