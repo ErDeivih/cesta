@@ -224,3 +224,49 @@ criterio del emparejador para este grupo.**
 **Asi que el siguiente paso no es la migracion: es distinguir las dos causas.** *Si es el emparejador
 juntando marcas, **migrar la alerta a un `ean` no arreglaria nada**: el problema estaria en quien forma los
 grupos.* **Y esa es la pregunta que F06 (matching) tiene abierta, ahora con un caso real delante.**
+
+
+---
+
+## 8. Que une a esos cinco: **el codigo lo dice, y no es una equivalencia inventada**
+
+*(Ronda 44.)* Pregunte si el grupo 11627 era una renumeracion o un emparejamiento que habia juntado
+marcas. **El criterio esta escrito, y es mas cuidadoso de lo que yo suponia:**
+
+```
+core/identidad.py:5    «de los grupos multi-cadena medidos, 2.276 agrupan productos con EAN distinto»
+core/identidad.py:12   «El GTIN se valida, no se copia. Es la via fuerte: mismo GTIN valido y pre[sentacion]»
+core/identidad.py:15   «Mismo GTIN con presentacion incompatible va a CUARENTENA, no a identidad»
+core/identidad.py:17   «GTIN distinto no se fusiona por texto, NUNCA»
+core/identidad.py:20   «Sin GTIN no hay identidad exacta. Marca, nombre y formato compatibles dan [aproximacion]»
+```
+
+**Asi que hay dos vias, y estan separadas a proposito:**
+
+- **La fuerte**: mismo GTIN valido y presentacion compatible → **identidad**. *Mismo GTIN con presentacion
+  incompatible va a cuarentena.*
+- **La debil**: **sin GTIN no hay identidad exacta**; marca, nombre y formato compatibles dan **una
+  aproximacion**.
+- **Y lo que nunca se hace**: *fusionar por texto dos productos con **GTIN distinto**.*
+
+### Y con eso, el grupo 11627 queda explicado
+
+**Los miembros de alcampo de ese grupo traen `ean=None`** -- *medido en la seccion 7, y hay 25.975 filas en
+el catalogo sin GTIN* --. **Asi que el grupo se formo por la via debil**: *sin GTIN, marca, nombre y formato
+compatibles.* **No es una renumeracion, y no es una equivalencia inventada: es la aproximacion declarada,
+aplicada.**
+
+**Y el propio modulo lo dice con un numero**: *2.276 grupos multi-cadena agrupan productos con EAN distinto.*
+**No es un descubrimiento mio; es una cifra medida y escrita en el codigo.** *Lo que yo iba a reportar como
+sospecha llevaba tiempo documentado.*
+
+### Y la pregunta que queda, que si es nueva -- y es del producto, no del motor
+
+**El motor distingue identidad exacta de aproximacion. La pregunta es si quien compra puede distinguirlas.**
+
+*En la ficha, un grupo formado por GTIN valido y uno formado por marca y nombre compatibles **se ven
+igual***. **Y para decidir si comprar la leche de Milsani en vez de la de Central Lechera Asturiana -- que es
+lo que el grupo invita a hacer -- esa diferencia es exactamente lo que hace falta saber.** *«Es la misma» y
+«se parecen» no son lo mismo cuando alguien va a pagar por ello.*
+
+**No he comprobado si la interfaz lo dice.** *Es una pantalla, y es lo siguiente que hay que mirar.*
