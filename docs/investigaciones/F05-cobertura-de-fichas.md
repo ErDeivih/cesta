@@ -560,3 +560,52 @@ HTML.*
 
 **Uno de seis sin contestar, y esta dicho como lo que es** -- *no como un «tampoco», que es lo que habria
 escrito ayer.*
+
+
+---
+
+## 14. Carrefour, cerrado -- y **el hallazgo que unifica las seis cadenas**
+
+*(Ronda 35.)* El hueco de Carrefour se puede cerrar, y no por claves sino **leyendo su `ld+json`** -- *que es
+lo mismo que hace `ficha_lidl.py`, asi que la tecnica ya estaba en el proyecto.*
+
+```
+2.004 crudos: 1.998 con ld+json
+los @type que aparecen:   BreadcrumbList 1995 · Product 1995 · Organization 3
+y los 1.995 bloques Product tienen TODOS las mismas CUATRO claves:
+    ['@context', '@type', 'name', 'offers']
+```
+
+**Ninguno trae ficha.** *Ni ingredientes, ni alergenos, ni nutricion: nombre y oferta.* **Y las paginas son
+de categoria** -- los titulos dicen *«Comprar Platos Preparados | Supermercado Online Carrefour»* --, asi
+que esos bloques `Product` son **entradas de listado, no fichas de producto.**
+
+**Asi que la respuesta para Carrefour no es «no se sabe» ni «no publica»: es que **lo capturado no trae
+ficha**, porque **lo que se captura son paginas de categoria**.**
+
+### Y aqui esta lo que unifica las seis cadenas
+
+*Mirando las seis juntas, el problema deja de ser seis problemas distintos:*
+
+| cadena | fichas en el crudo de hoy | **que captura el colector** |
+|---|---|---|
+| **lidl** | 5.054 en cola, **28 hechas** | *tiene **ejecutor propio** (`fichas_lidl.py`)* |
+| **mercadona** | **3** de 155 | **listados de categoria** (`{"categories": [...]}`) |
+| **dia** | **4** de 547 | **listados y paginas sueltas** (543 no son JSON) |
+| **carrefour** | **0** de 2.004 | **paginas de categoria** (1.995 `Product` de listado) |
+| **alcampo** | -- | `productGroups`, **forma de busqueda** |
+| **aldi** | -- | su **API de producto por lotes**, que **no trae nutricion** |
+
+**Cinco de las seis cadenas capturan listados, no fichas. La unica que pide fichas es Lidl.**
+
+**Y eso convierte F05 en un solo problema, no en seis**: *no hay que escribir cinco parsers distintos ni
+decidir cinco veces de donde sale la nutricion.* **Hay que hacer lo que Lidl ya tiene: pedir las fichas.**
+*Los lectores ya estan escritos para las dos cadenas cuyas fichas traen algo* -- `ficha_mercadona.py` y
+`ficha_dia.py`, **probados contra crudo real** --, *y lo que falta es **el equivalente de `fichas_lidl.py`
+para ellas.***
+
+### Lo que queda de F05, en una linea
+
+**Pedir fichas, como Lidl.** *La cola, el lease, el presupuesto, el ritmo y dos lectores ya estan hechos y
+probados; lo que no existe es quien **pida** para las otras cinco.* **Y `carrefour` no necesita parser
+nuevo: necesita que se pidan sus paginas de producto.**
