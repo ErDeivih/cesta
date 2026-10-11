@@ -117,3 +117,52 @@ y **no borre nada**.
 
 **Asi que el defecto queda localizado, entendido y con direccion** -- *y con el paso siguiente que es medir
 cuantas alertas hay antes de tocar nada.*
+
+
+---
+
+## 6. Medido: **hay UNA alerta**, y la tabla ya guarda el nombre -- pero no la clave
+
+*(Ronda 42.)* El `SELECT` de una linea, hecho sobre la base de trabajo (`127.0.0.1:5434`):
+
+```
+alerta               1 fila
+compra             463      lista              877      usuario        12
+compra_linea       474      lista_linea       1026      sesion       1495
+favorito             0      invitacion           0      visita        141
+
+la unica alerta:
+    grupo_id      11627
+    tipo          minimo_90d
+    creada_en     2026-10-10
+    salto_nombre  «Leche entera Central Lechera Asturiana brik 1 l.»
+    salto_texto   «esta al precio mas bajo de los ultimos 90 dias: 1.24 EUR/l en carrefour»
+```
+
+### Y un hallazgo dentro del hallazgo, que corrige mi propia lectura
+
+**La tabla tiene `salto_nombre` y `salto_texto`, y mi lectura del esquema (seccion 1) no los vio.**
+*`001_esquema.sql` declara siete columnas y la tabla tiene nueve: **una migracion posterior anadio las
+dos**.* **Lei el esquema base y di por hecho que era la tabla** -- *el mismo error de siempre, esta vez con
+una migracion en medio.*
+
+**Asi que la alerta ya guarda el nombre del producto que vigila**, en `salto_nombre`. *Y eso **mitiga** el
+problema: si el `grupo_id` se renombra, **el texto de la alerta sigue diciendo de que producto era**.*
+
+**Pero es una etiqueta, no una clave.** *`salto_nombre` es para leerlo una persona; **no sirve para volver a
+resolver el grupo en la siguiente pasada**, que es lo que hace falta para que la alerta siga vigilando lo
+mismo.* **Es la diferencia entre un recibo y un identificador.**
+
+### Y con esto, la migracion es pequena
+
+**Hay una sola alerta, y su producto esta identificado por nombre y por grupo.** *Asi que rellenar su
+identidad estable es resolver **un** caso, no una politica:*
+
+- **el grupo 11627** dice que producto es, y
+- **`salto_nombre`** lo confirma en palabras.
+
+**Lo que falta es el paso que no se ha dado**: resolver ese grupo a un `ean` en el catalogo de hoy y
+guardarlo. **No se ha hecho**, y *es un `SELECT` y un `UPDATE` de un caso* -- ***pero antes hay que
+comprobar que el grupo 11627 del catalogo de hoy sigue siendo ese producto**, porque si el emparejador lo
+ha renumerado desde el 10 de octubre, **la propia migracion estaria escribiendo el dato equivocado**.*
+**Y esa comprobacion es, exactamente, el defecto que este hallazgo describe: se mide o no se sabe.**
