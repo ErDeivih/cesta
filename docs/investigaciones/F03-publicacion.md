@@ -271,3 +271,36 @@ verdad** -- publicar V2 con `publicacion.publicar()` y comprobar que la busqueda
 con ella la de que **una peticion de dos ficheros ve una sola version**.
 
 *Es el siguiente paso, y es corto: el mecanismo ya esta conectado.*
+
+
+---
+
+## 11. La prueba que faltaba, y el enlace duro mordiendo de verdad
+
+*(Ronda 18.)* La conmutacion de la ronda 17 **ya esta probada**: hay una prueba que **publica de verdad**
+--puntero, carpeta de version y enlace duro-- y comprueba que lo servido sigue al puntero.
+
+**Y esta montada para discriminar, que es lo que habia que cuidar.** *Si se escribe V2 en el gold suelto
+**y se publica**, una aplicacion que leyera el suelto tambien daria otro precio, y la prueba pasaria sin
+medir nada.* Por eso **V2 se deja SOLO en el suelto, sin publicar**: si la aplicacion lee la version,
+sigue sirviendo **V1** -- y eso es lo que comprueba la primera asercion.
+
+```
+con el puntero en V1 y V2 solo en el gold suelto  ->  sirve V1   (150)
+y despues de publicar V2                          ->  sirve V2   (120)
+```
+
+### Y al escribirla, el enlace duro mordio de verdad
+
+**La primera version fallo**, y no por la prueba: con el puntero en V1 servia **120**, el precio de V2.
+*La causa es la invariante que fije en la ronda 10 y que aqui dejo de ser teorica.*
+
+`_suelta` -- el ayudante del ensayo -- usa `marco.write_parquet`, que **escribe en el sitio**; y
+`publicar()` deja un **enlace duro** entre el gold suelto y la version. **Asi que escribir V2 en el gold
+suelto mutaba tambien la version publicada.** *Con el escritor del proyecto -- `write_parquet_file`, que
+escribe en un temporal y renombra -- la prueba pasa.*
+
+**Queda dicho donde importa**: en la prueba nueva, con el porque. *`_suelta` sigue como estaba porque las
+otras pruebas del fichero no publican antes de volver a escribir, y cambiar un ayudante compartido por
+una razon que solo afecta a una prueba es peor que decirlo ahi.* **Pero es una trampa para el proximo**:
+*publicar y despues usar `_suelta` sobre el mismo gold mutila la version publicada.*

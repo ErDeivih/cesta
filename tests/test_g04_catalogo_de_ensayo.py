@@ -31,6 +31,7 @@ import polars as pl
 import pytest
 
 from core import publicacion
+from core.storage import write_parquet_file
 
 SELLO_V1 = "20260101-000000"
 SELLO_V2 = "20260102-000000"
@@ -551,3 +552,55 @@ def test_el_puntero_sella_el_mismo_momento_que_nombra_la_carpeta(gold_de_ensayo)
     assert datos["version"] == version
     assert datos["publicado_en"].startswith("2026-01-01T00:00:00"), (
         "el puntero sella el momento que nombra la carpeta, no la hora real")
+
+
+def test_publicar_de_verdad_cambia_lo_que_la_aplicacion_sirve(app_leyendo_el_ensayo):
+    """**F03 (fase 2): la prueba que faltaba**, y la que el nombre de la de arriba prometia.
+
+    *La de arriba -- `test_publicar_v2_cambia_lo_que_la_aplicacion_sirve` -- usa `_suelta`, que escribe
+    el gold suelto, **no `publicar()`**: mide otra cosa.* Aqui se publica de verdad: puntero, carpeta de
+    version y enlace duro. **Y es lo que hasta la ronda 17 se cumplia por trivialidad**: `catalogo` leia
+    el gold suelto, asi que publicar **no cambiaba nada** de lo que se servia.
+
+    **La prueba esta montada para discriminar, y eso es lo que hay que mirar.** Si se escribe V2 en el
+    gold suelto **y se publica**, *una aplicacion que leyera el suelto tambien daria otro precio* y la
+    prueba pasaria sin medir nada. **Por eso V2 se deja SOLO en el suelto, sin publicar**: si la
+    aplicacion lee la version -- que es lo que ahora hace --, sigue sirviendo **V1**.
+    """
+    from datetime import datetime
+
+    from plataforma.api import catalogo
+
+    # **Se escribe con `write_parquet_file`, el escritor del proyecto, y no con `_suelta`.**
+    # *`_suelta` usa `marco.write_parquet`, que escribe **en el sitio**; y `publicar()` deja un
+    # **enlace duro** entre el gold suelto y la version, asi que escribir V2 ahi **mutaria tambien la
+    # version publicada**. Es la invariante que fija
+    # `test_fase2_f03_publicacion.py::test_una_version_publicada_no_se_muta_si_el_escritor_renombra`,
+    # y aqui mordia de verdad: la primera version de esta prueba media el escritor, no la publicacion.*
+    def suelta_atomico(datos):
+        for nombre, marco in datos.items():
+            write_parquet_file(marco, oro / nombre)
+
+    oro = app_leyendo_el_ensayo
+    suelta_atomico(publica_v1())
+    v1 = publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 0, 0))
+    catalogo.reiniciar()
+    con_v1 = catalogo.buscar("Barrita de ensayo")[0].get("precio_cent")
+
+    # **V2, SOLO en el gold suelto. El puntero sigue en V1.**
+    suelta_atomico(publica_v2())
+    catalogo.reiniciar()
+    sigue = catalogo.buscar("Barrita de ensayo")[0].get("precio_cent")
+    assert sigue == con_v1, (
+        f"con el puntero en V1 hay que servir V1 ({con_v1}), y salio {sigue}: se esta leyendo el gold "
+        f"suelto, asi que publicar no sirve para nada")
+
+    # **Y ahora si se publica V2.** El puntero se mueve, y lo servido con el.
+    v2 = publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 30, 0))
+    catalogo.reiniciar()
+    con_v2 = catalogo.buscar("Barrita de ensayo")[0].get("precio_cent")
+
+    assert v2 != v1
+    assert con_v2 != con_v1, (
+        "publicar V2 tiene que cambiar lo que la aplicacion sirve; si no, la publicacion no llega a "
+        "quien compra")
