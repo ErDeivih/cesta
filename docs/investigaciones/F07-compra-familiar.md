@@ -247,3 +247,71 @@ para recorrer nada.*
 | **tarea movil con una mano** | *por medir* |
 | **recorrido de cuenta vacia** | *por medir* |
 | **medir pasos** | *por hacer* |
+
+
+---
+
+## 5. «Medir pasos»: **los del servidor son cuatro** -- y los de la pantalla no los he contado
+
+*(Ronda 91.)* El criterio acaba con *«medir pasos»*, que es un numero y por eso hay que darlo. **Y hay que decir
+de que son los pasos**, porque no es lo mismo:
+
+### Los pasos del SERVIDOR, que si estan contados
+
+Contadas las rutas que hacen falta para el **recorrido de cuenta vacia** -- *lo que pide el criterio* --, en
+`plataforma/api/main.py`:
+
+| paso | ruta | linea |
+|---|---|---|
+| 1 | **`POST /api/registrarse`** (o `/api/entrar` si ya hay cuenta) | 100 (o 82) |
+| 2 | **`POST /api/listas`** -- *la lista de casa* | 518 |
+| 3 | **`GET /api/buscar`** -- *encontrar el producto* | 390 |
+| 4 | **`POST /api/listas/{lista_id}/lineas`** -- *anadirlo* | 698 |
+
+**Cuatro peticiones.** *Y el paso 2 no se puede saltar:* **la lista de casa es el eje** -- *alimenta el contador
+del menu, el puente de la compra y las alertas* --, y **una linea necesita una lista donde vivir.**
+
+### Y lo que NO he contado: los toques en la pantalla
+
+**«Pasos» en el criterio es, con toda probabilidad, toques con el pulgar, no peticiones.** *Y esos no los he
+contado* -- *hacen falta la pantalla y alguien usandola.* **Decir «cuatro» y dejarlo ahi seria confundir una
+cosa con la otra**, que es la clase de error que llevo toda la fase encontrando.
+
+**Lo que se puede afirmar sin la pantalla**: *la app necesita **cuatro viajes al servidor** para que una cuenta
+nueva tenga su primer producto en la lista.* **Cuantos toques hacen falta para provocarlos es otra medida, y
+estA pendiente.**
+
+### Y una pieza que aparece al mirarlo, y conviene guardar
+
+**El alta de la lista de casa tenía un defecto, y ya está arreglado** (`main.py:518`):
+
+```
+# **Una lista de casa por persona, y la base lo impone** (`lista_de_casa_por_dueno`). La regla es la
+# correcta -- la lista de casa es el eje de la aplicacion --, pero **la respuesta era mentira**: crear
+# la segunda salia como **500 «Internal Server Error»**, que manda a mirar los registros de la API por
+# algo que el usuario puede entender y resolver. Medido el 11 de octubre de 2026 contra la API viva:
+# `UniqueViolation: ... "lista_de_casa_por_dueno"`.
+# Es la misma clase de defecto que el 422 de las lineas: **la restriccion hacia su trabajo y el
+# mensaje culpaba al servidor**.
+try:
+    return almacen.crea_lista(usuario["id"], datos.nombre, datos.es_de_casa)
+except psycopg.errors.UniqueViolation as choque:
+    raise HTTPException(409, "Ya tienes una lista de casa, y solo puede haber una. ...")
+```
+
+**Un 500 que ahora es un 409 con una frase que se entiende.** *Y el comentario dice la leccion mejor que yo:
+**«la restricción hacía su trabajo y el mensaje culpaba al servidor»**.* **Es la misma clase de defecto que el
+422 de las líneas** -- *los dos ya cerrados* --, **y el mismo que encontré en F00 con `alerta`: un dato correcto
+con un mensaje que manda a mirar donde no es.**
+
+### Y F07, con sus seis filas
+
+| lo que pide su criterio | estado |
+|---|---|
+| **dos sesiones, sin pisarse** | **medido**: *el tachado cumple; **la cantidad es un defecto**, fijado* |
+| **lista por pasillos y orden por pasillo** | **el dato está** (`grupo_id`+`categoria`), **la función no**; *falta decidir de qué tienda* |
+| **recorrido de cuenta vacía** | **4 pasos de servidor** (medido); **los toques de pantalla, pendientes** |
+| **medir pasos** | **medido a medias, y se dice cuál mitad** |
+| **tarea móvil con una mano** | *por medir -- necesita la pantalla* |
+| **recarga** | *cubierta por el ensayo de F03 (la pantalla se recarga y sirve la versión nueva)* |
+| C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
