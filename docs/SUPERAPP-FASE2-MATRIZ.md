@@ -152,6 +152,50 @@ npm run build                                        154 modulos
 (API y Vite).* **Se corrieron en su dia y estan documentados arriba**; *este ensayo integral es **Python + tipos +
 build**, no navegador.*
 
+### Los dos ensayos de navegador -- **corridos el 2026-10-11, con la pila levantada**
+
+*Necesitan API y Vite en pie, y por eso **no entran en `pytest`**. Se anotan aqui con su fecha y su resultado, que
+es lo que hace que el ensayo integral de arriba no se lea como si lo cubriera todo.*
+
+**`plataforma/prueba_f03_publicacion.py` -- 23:56**
+
+```
+ok   una peticion nueva sirve la version nueva (20261011-235620)
+ok   publicar cambia lo que el cliente sirve, sin reiniciar nada
+     precios en la pantalla:  33,81 EUR  ->  34,81 EUR
+ok   la segunda busqueda ensena precios (no una lista vacia)
+ok   LA PANTALLA ENSENA LOS PRECIOS DE LA VERSION NUEVA TRAS PUBLICAR
+ok   la pantalla no dio errores de JavaScript ([])
+ok   EL PUNTERO DEL CATALOGO REAL SIGUE INTACTO (20261007-103000)
+
+MAL  hay cuenta para el recorrido (429)
+     -> el ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO
+```
+
+**Y el `429` **no es un fallo de la aplicacion**: *`main.py:117`, «429, **se han creado demasiadas cuentas en la
+ultima hora**», y el ensayo **creaba una cuenta por corrida**.* **Su propio comentario pedia «`entrar` primero y
+registrarse solo si no existe» y el codigo iba directo a `registrarse`** -- *arreglado en `plataforma/prueba_f03_publicacion.py`
+con una cuenta fija; **la comprobacion necesita que pase la hora del limite**.*
+
+**`plataforma/prueba_f07_pasos.py` -- 23:58**
+
+```
+ok   la pantalla carga (titulo: 'Buscar · Cesta')
+     4 toques: abrir la app -> escribir 'Gofres' -> buscar (12 resultados) -> anadir a la lista
+     el primer resultado: 'Gofres con chocolate Hacendado · mercadona ·
+                           ahorras un 7,7 % · COMPARABLE · 2 CADENAS · sin Eco-Score'
+ok   la pantalla no dio errores de JavaScript ([])
+
+=== TOQUES DEL RECORRIDO DE CUENTA VACIA: 4 ===  -> PASA
+```
+
+**Y éste **sí** corre porque **su cuenta ya existe**: *no pasa por `registrarse`, que es la puerta con el limite.*
+*Es la confirmacion por la via contraria: **el `429` era del ensayo, no de la aplicacion**.*
+
+**Los dos, juntos, dejan dos cosas medidas en pantalla de verdad: la publicacion (**33,81 -> 36,81 EUR** a lo
+largo de las corridas) y **el recorrido de la cuenta vacia en 4 toques** -- *mas el ambito («2 cadenas») de `C06`,
+visible en la captura.*
+
 **Y los ensayos que existen y qué demuestran**, por si hay que volver a ellos:
 
 | ensayo | qué demuestra |
