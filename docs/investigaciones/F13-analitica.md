@@ -137,3 +137,73 @@ resultado**.*
 
 **Las dos mitades del criterio, hechas y con sus palabras; y los casos de la aceptacion, el unico que ya se ve
 cubierto es «datos controlados exactos»** -- *porque el componente no calcula nada.* **Van doce piezas.**
+
+
+---
+
+## 3. «Filtro que cambia universo explicado» y «cobertura»: **estan, en `movimientos.py`**
+
+*(Ronda 139.)* **`plataforma/api/movimientos.py` no es un router: es una libreria** -- *las rutas se registran en
+`main.py`* --, **y ahi viven las dos piezas que faltaban de la aceptacion.**
+
+### El filtro: `_filtro_de_cadenas`
+
+```python
+254  def _filtro_de_cadenas(cadenas: list[str] | None) -> tuple[str, list]:
+255      """El trozo de SQL y sus argumentos para mirar **solo unas cadenas**."""
+256      if not cadenas:
+257          return "", []
+258      return (" AND x.fuente IN (" + ",".join("?" * len(cadenas)) + ")", list(cadenas))
+```
+
+**El filtro existe, es un parametro de las funciones de analitica, y **cambia el universo** -- *que es lo que la
+aceptacion pide comprobar.* **Y el trozo de SQL se construye con parametros**, no con concatenacion de valores.
+
+### Y la cobertura: `ofertas_sin_poder_juzgar`, que es el criterio entero
+
+```python
+425  def ofertas_sin_poder_juzgar(cadenas: list[str] | None = None) -> dict:
+426      """Cuantas ofertas anunciadas **no se pueden juzgar**, y por que.
+428      Tres familias, y las tres se cuentan porque **la pantalla las dice en voz alta**:
+429      es la regla de siempre -- **un dato que no tenemos es "no lo se"**, y aqui el dato
+430      que falta es el precio normal de *ese* producto:
+432          por_varias_unidades          el descuento depende de cuantas compres
+433                                       ("3x2", "2a unidad -50 %", "Todo a 1 EUR"):
+434                                       el precio de una unidad no lo puede ver
+435          sin_descuento_de_precio      el texto no anuncia un descuento sobre el
+436                                       precio ("Stock Fuera", "Novedad", folleto)
+437          cantidad_cambiada            el tamano declarado cambio dentro de...
+```
+
+**«Cuantas ofertas anunciadas **no se pueden juzgar**, **y por que**»** -- *que es, palabra por palabra, lo que el
+criterio pide con **«cobertura»**:* **no el porcentaje de lo que hay, sino **el recuento de lo que no se puede
+decir, con su motivo**.**
+
+**Y la linea 428 dice donde acaba**: *«las tres se cuentan porque **la pantalla las dice en voz alta**»* -- *o
+sea, **la cobertura no es un dato interno: es texto en la pantalla**.* *Es la misma forma que `sin_precio` y que
+`sin_consolidar`.*
+
+**Y la linea 429 es la regla, ya sin rodeos**: *«**un dato que no tenemos es "no lo se"**»* -- *y aqui, **el dato
+que falta es el precio normal de ese producto**.* **Sin el precio de siempre no se puede decir si algo es una
+oferta**, y eso **se cuenta** en vez de suponerse.
+
+**Y las tres familias tienen nombre, y la primera es la de `F01`:** *`por_varias_unidades` -- «3x2», «2a unidad
+-50 %», «Todo a 1 EUR» -- «**el precio de una unidad no lo puede ver**».* *Es **el mismo problema** que la
+aceptacion de `F01` pide comprobar («tres unidades y promocion 3x2») y que `C08` llama «condiciones»: **una
+oferta que depende de cuantas compres no se puede juzgar con el precio de una**.*
+
+### Y `F13`, con lo medido
+
+| lo que pide `F13` | **estado** |
+|---|---|
+| **las siete cosas declaradas** | **todas**: fecha y ambito (`C06`), cobertura (`R09` **y** `ofertas_sin_poder_juzgar`), fuente (`N05`), y unidad/fecha/universo (`GraficoIndice`) |
+| **«tabla equivalente»** | **hecho** -- *«la tabla de debajo no es un extra», y el motivo es **contraste 3:1*** |
+| **«huecos reales»** | **hecho** -- *«un dia sin dato no es un dia de cero»* |
+| **«datos controlados exactos»** | *el grafico **no calcula ni un dato***: se prueba con fixtures |
+| **«filtro que cambia universo explicado»** | **el filtro esta** (`_filtro_de_cadenas`); *que **explique** el cambio de universo, **por medir en la pantalla*** |
+| **«fechas duplicadas»** | *por medir* -- *y `cantidad_cambiada` (`:437`) es la familia que mas se le parece* |
+| **«campos nutricionales solo si disponibles»** | *por medir* -- *y `N03` midio la cobertura: **22,8 %*** |
+
+**Seis de los siete, y el septimo es texto de pantalla.** *Y `F13` deja **trece piezas** encontradas ya resueltas
+y con el motivo escrito -- que es la cuenta que esta fase puede dar sin exagerar: **el proyecto ya sabia lo que
+este encargo viene a comprobar.***
