@@ -1326,6 +1326,38 @@ verde lo que nadie ha ejercitado no es una aceptacion: es una promesa.**
 domestico con TLS y alta de usuarios seria tiempo perdido, y uno publicado sin CSRF verificado y con la
 copia en el mismo disco seria un problema esperando.*
 
+### G14 y el cierre del encargo: **el informe final**
+
+`docs/INFORME-DE-CIERRE.md`: la matriz G01-G14 con sus cuatro columnas -- **criterio, evidencia,
+resultado y limitacion** -- mas el veredicto y lo que exigiria una fase posterior.
+
+**El veredicto: `Apto local con limitaciones explicitas`**, que es **el intermedio de los tres estados
+que G14 admite**:
+
+* **No es «no apto todavia»**: *no persisten fallos esenciales.* Autorizacion -- dueno en el servidor
+  (`_acceso`, `usuario_actual`, `_de_quien`), y el 221 comprueba el dueno de la lista contra la base y
+  no contra lo que manda el cliente. Identidad y coste -- la igualdad al centimo en cuatro numeros, el
+  oraculo en 18 casos sin discrepancia, y el veto de atributos con error 0,00. Registro -- dos bancos,
+  la sombra, y el techo del recall medido aparte.
+* **No es «apto local» a secas**: *porque hay una limitacion de fuente, acotada y publicada.* **79.887
+  productos sin ficha**, cinco de seis cadenas a cero, con la causa dicha (Lidl no publica contenido
+  en su JSON-LD; y el sistema de fichas casi no ha corrido). **Hoy tiene presupuesto y plazo** -- 5.026
+  pendientes de Lidl: 6 ejecuciones y no 1.676 -- *asi que es una limitacion de calendario, no de
+  diseno.*
+
+**Y lo que hace que el informe no exagere esta escrito dentro**: *«cerrado por lectura» aparece tres
+veces* (G01, G10, G14) y **quiere decir que el trabajo fue comprobar y no construir**; *las limitaciones
+tienen nombre y numero* (79.887 fichas, CSRF, el camino HTTP sin ejercitar, la copia en el mismo
+disco); **y el estado final es el intermedio, no el primero, aunque la suite tenga 1.670 pruebas
+verdes** -- *que es exactamente el numero por el que G14 prohibe declarar nada.*
+
+**Y de los catorce paquetes, once tenian sus reglas escritas.** *Lo que hubo que hacer de verdad:*
+**siete modulos nuevos** (gasto, previa_compra, traspaso, cesta_umbral, tres de logica de cliente y el
+oraculo), **seis defectos corregidos** (el puntero con dos fechas, el hash con el precio dentro, una
+constante muerta, los terminos de ambito, Lidl fuera de `ORDEN`, y el umbral de cesta con 500 centimos
+de diferencia), **dos comportamientos que no existian** (el puente receta-lista y el buscador del
+recetario), **y tres limitaciones medidas y fijadas con prueba**, que es lo que impide que se olviden.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
