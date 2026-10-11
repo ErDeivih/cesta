@@ -127,3 +127,67 @@ que escribir una.*
 **Cinco de siete, y **los dos que faltan son de numeros**: el rendimiento (que exige medir) y el material.** *Y
 la pieza que parecia la mas gorda -- «acciones pendientes» -- **ya estaba resuelta sin cola propia**, porque
 React Query la trae.*
+
+
+---
+
+## 3. El rendimiento, con reloj: **700 KB en un solo chunk, y un tope que no es paginacion**
+
+*(Ronda 147.)* **El «antes» de F15**, y son numeros, no impresiones.
+
+### Los tamanos, medidos sobre **lo que se sirve** (`plataforma/web/dist/assets`)
+
+```
+   681.283 b   index-CeOlamCl.js        <- UN SOLO chunk
+    35.924 b   index-DxKGHfQJ.css
+    ---------
+   717.207 b   total (unos 700 KB)
+```
+
+**Y el aviso del build **no era una hipotesis**: *«Some chunks are larger than 500 kB after minification» -- y el
+chunk son **681 KB**, o sea **un 36 % por encima del umbral que el propio Vite considera excesivo**.*
+
+**Y esta **sin dividir**: un solo fichero, que se descarga **entero** antes de que la aplicacion arranque** -- *y
+en un movil en un pasillo, eso es lo que decide si la pantalla aparece o no.*
+
+### La paginacion: **hay tope, y no hay paginacion**
+
+```python
+254  def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40, ...
+340  args = texto_args + atributo_args + atributo_args + [limite]
+422  LIMIT ?
+```
+
+**El `LIMIT` esta parametrizado** -- *no es un 40 escrito a mano en el SQL, es un parametro* --, **y eso es
+correcto**. *Pero **no hay `OFFSET` en ninguna parte** de `catalogo.py`:*
+
+> **Se devuelven **los primeros 40**, y **no se puede pedir la pagina 2**.**
+
+**Y el criterio dice «paginacion», que es otra cosa que «tope».** *Un tope **corta**; una paginacion **continua**.*
+*Con el buscador, **ver los 41º y siguientes no es posible** -- y eso **no es un problema de rendimiento: es una
+funcion que no esta**.* **Es la distincion de siempre, otra vez: no confundir «se para» con «no hay mas».**
+
+### Y lo que queda por medir, que necesita el servidor levantado
+
+| lo que pide F15 | **como se mide, y por que no esta todavia** |
+|---|---|
+| **«indices»** | *`SELECT` sobre el esquema del catalogo (DuckDB, que **no usa indices clasicos** -- *usa zonemaps*), **por medir*** |
+| **«cargas»** | *cuantas peticiones hace una pantalla: **necesita el navegador*** |
+| **«latencia»** | *`/api/buscar` con los **52.087 grupos** reales: **necesita la API levantada*** |
+
+**Los tamanos **si** se han medido -- *y son el numero que mas importa, porque es el unico que **ve el usuario
+antes de que la aplicacion exista***.
+
+### Y `F15`, con lo medido
+
+| lo que pide F15 | **estado** |
+|---|---|
+| **offline: que funciona sin red** | **medido**: *arranca y recuerda; los datos no* |
+| **acciones pendientes sin duplicar** | **medido y pasando** (React Query + clave de operacion) |
+| **paginacion** | **NO HAY**: *hay un tope de 40, y **no se puede pedir la pagina 2*** |
+| **tamanos JS** | **medido**: **681 KB en un chunk**, un 36 % sobre el umbral de Vite |
+| **indices / cargas / latencia** | *por medir: los tres necesitan el servidor o el navegador* |
+
+**Tres de seis con numero, y los tres que faltan son los que exigen levantar algo.** *Y el unico que resulto ser
+una **funcion ausente** -- la paginacion -- **no era el que parecia**: se buscaba un problema de rendimiento y
+aparecio **una capacidad que no esta**.*
