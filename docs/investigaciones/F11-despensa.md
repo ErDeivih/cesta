@@ -60,3 +60,52 @@ esta esperando el dueno** (guardar en la unidad que vino o en la canonica) **la 
 **¿Existe una tabla de despensa?** *Es lo primero, y contesta `R08` entero: «existencias declaradas» **o no
 existen**.* *Y despues, si existe: **¿la compra escribe en ella?*** -- *que es la pregunta de `R08`: «compra no
 acredita consumo», **y hay que ver si la compra la toca.**
+
+
+---
+
+## 2. **La despensa no existe** -- y lo dicen cuatro capas
+
+*(Ronda 126.)* La primera medida de F11, y **esta vez mire cuatro capas antes de decirlo** -- *que es la leccion
+de las ocho veces en que concluí desde una.*
+
+| capa | **lo que hay** |
+|---|---|
+| **la base de datos** | **13 tablas**: `alerta`, `compra`, `compra_linea`, `favorito`, `invitacion`, `invitaciones_vivas`, `lista`, `lista_acceso`, `lista_linea`, `preferencia`, `sesion`, `usuario`, `visita` -- **ninguna de despensa** |
+| **la API** | **`plataforma/api/despensa.py` NO EXISTE** |
+| **la pantalla** | *dos menciones de «stock», y las dos son **«Stock Fuera»*** -- *una **mecanica de cadena**: el producto no esta en la tienda.* **No es una despensa.** |
+| **las preferencias** | **la tabla esta VACIA**, y el unico sitio que escribe es `main.py:1184` -- **una ruta generica donde el cliente manda la clave**. *Ningun codigo guarda una clave de despensa.* |
+
+### Y la cuarta capa era la que habia que mirar
+
+**`preferencia` es una tabla generica clave-valor** -- *asi que **una despensa podria vivir ahi** sin tabla
+propia.* **Es exactamente el caso que me salvo en `C09`**: *alli el «presupuesto» no estaba en ninguna tabla, y
+**tampoco** en el codigo; aqui, **tampoco.***
+
+**Y no basta con que la tabla exista**: *hay que ver **si alguien escribe en ella**.* *El unico escritor es una
+ruta generica, y **no hay ninguna clave de despensa en el codigo**.* **Con la tabla vacia, las dos cosas
+concuerdan.**
+
+### Y `R08` queda contestado entero, y en su primera mitad
+
+**El criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:108`): *«**Existencias declaradas**, ubicacion/caducidad
+**opcional**; **compra no acredita consumo ni stock restante**.»*
+
+| la mitad de `R08` | **estado** |
+|---|---|
+| **«existencias declaradas»** | **NO EXISTEN** -- *no hay donde declararlas* |
+| **«ubicacion/caducidad opcional»** | *no aplica: no hay existencias* |
+| **«compra no acredita consumo ni stock restante»** | **se cumple por vacio** -- *no hay stock que acreditar* -- **y ademas esta escrito en el diario** (`diario.py:140`: *«Comprar no es comer»*) |
+
+**Asi que `R08` es un hueco entero, y del tipo que ya conozco**: *no un defecto, sino **una funcion que nadie ha
+escrito** -- como `R02` (importar) y `R05` (modo cocina).* **Van tres.**
+
+### Y las otras dos, con lo que se ve
+
+| criterio | **lo que se puede decir ya** |
+|---|---|
+| **`R09`** -- coste por racion | **hay piezas**: `cesta.coste_por_linea` (el coste de lo que se compra) y `previa_compra` (los envases **enteros**). **Y el criterio pide precisamente distinguirlas**: «**coste usado distinto de envases por comprar**». *Es la misma separacion que `compra.total_cent` contra la estimacion -- **por medir*** |
+| **`R10`** -- buscar por lo disponible | **depende de `R08`**: *sin existencias no hay «disponibles» que explicar.* *Y su otra mitad -- «**sugerencia, no sustitucion automatica**» -- es la misma que `AvisoIdentidad` y que `F01`* |
+
+**Asi que F11 son tres criterios y un solo hueco de fondo**: *sin despensa, `R10` no tiene de donde sacar los
+«disponibles», y `R09` se queda en la mitad que ya existe.*
