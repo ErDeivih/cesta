@@ -1075,3 +1075,60 @@ una que ya este en crudo.**
 *Asi que el paso siguiente de F05 no es construir tres maestros: es **mirar si algun crudo de Carrefour es
 una pagina de producto** -- y si no lo es, pedir una.* **Una pregunta concreta en vez de tres libros que
 nadie va a leer.**
+
+
+---
+
+## 24. Carrefour, contestado: **lo capturado no trae nutricion** -- y las senales enganan
+
+*(Ronda 76.)* La pregunta era si alguno de sus 2.004 crudos es una **pagina de producto**. **Medido con cinco
+senales, y cuatro de ellas enganan:**
+
+```
+crudos de Carrefour: 2.004
+    "tabla de nutricion"       23/2004     <- ENGAÑA: es prosa
+    "<table"                    0/2004     <- NINGUNO
+    "por 100 g"                 0/2004     <- NINGUNO
+    "kcal"                      0/2004     <- NINGUNO
+    un solo bloque Product   1995/2004     <- ENGAÑA: un listado tambien trae uno
+```
+
+### Y las dos que enganan, con su porque
+
+**«un solo bloque `Product`»**: *yo suponia que una ficha tendria uno y un listado muchos.* **Sale 1.995 de
+2.004** -- *porque **el listado de Carrefour trae un solo `Product`, el primero de la categoria***. *La senal
+no distingue nada, y la suposicion era mia.*
+
+**«tabla de nutricion», 23 ficheros**: *leidos, son **la descripcion de la categoria**, y ademas la misma en
+los 23 -- todos de quesos:*
+
+> *«El queso forma parte de nuestra alimentacion basica por lo que es importante consumirlo diariamente ya que
+> posee **grandes valores nutricionales e importantes beneficios para la salud**. En nuestra seccion de
+> quesos podras disfrutar de un gr...»*
+
+**Prosa comercial.** *Es la cuarta vez en esta fase que una palabra clave de nutricion resulta ser un texto y
+no un dato -- `nutriben`, `energy` en un nombre de producto, `nutrition_information` sin nutricion, y ahora
+«valores nutricionales» en un parrafo.*
+
+### Y lo que se puede afirmar
+
+**En lo que el sistema captura de Carrefour -- 2.004 paginas de categoria -- no hay una sola cifra
+nutricional**: *ni tabla, ni `kcal`, ni «por 100 g».*
+
+**Lo que NO se sabe, y sigue sin saberse**: *si la **pagina de producto** de Carrefour trae una tabla.* **Eso
+no se puede contestar con lo capturado** -- *no hay ninguna en el crudo* --, **y contestarlo exige pedir una**,
+que es una operacion de red.
+
+### Y F05 queda con **una sola pregunta abierta**, y es una decision
+
+| cadena | nutricion numerica | como se sabe |
+|---|---|---|
+| **dia** | **SI** -- y 4.655 fichas ya en el maestro | lector + reconciliado |
+| **mercadona** | **no** | 6 fichas, solo ingredientes y alergenos |
+| **alcampo** | **no** | 59 claves |
+| **aldi** | **no** | 18 claves |
+| **lidl** | **no**, documentado | *«es una fuente que no los da»* |
+| **carrefour** | **no en lo capturado**; *la pagina de producto, sin medir* | 2.004 crudos, ninguna cifra |
+
+**Cinco de seis contestadas. La sexta exige una peticion, y si merece la pena pedirla es una decision de
+presupuesto, no una duda tecnica.**
