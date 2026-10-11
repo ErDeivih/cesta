@@ -201,3 +201,74 @@ tres decisiones, y `costeReceta`.*
 
 **Y las diez son la misma cosa**: *el proyecto **ya sabia** lo que este encargo viene a comprobar, **y lo dejo
 escrito donde se pudiera leer**.* *Lo que ha hecho esta fase, casi siempre, ha sido **leerlo.***
+
+
+---
+
+## 5. `N05`: **hecho, y con la fuente en un conjunto cerrado** -- la quinta vez la misma disciplina
+
+*(Ronda 134.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:115`): *«Alimentos propios -- **fuente declarada**,
+datos desconocidos y **sin falsa verificacion de etiqueta**.»* **Y las tres cosas estan, en `core/diario.py`:**
+
+```python
+30   ETIQUETA = "etiqueta"
+31   FICHA = ...            # (la ficha del catalogo)
+32   ESTIMADO = ...
+33   DESCONOCIDO = "desconocido"
+34   FUENTES = (ETIQUETA, FICHA, ESTIMADO, DESCONOCIDO)
+52   fuente_dato TEXT NOT NULL,
+151  if fuente_dato not in FUENTES:
+152      raise ValueError(f"fuente de dato desconocida: {fuente_dato}")
+```
+
+| lo que pide `N05` | **donde esta** |
+|---|---|
+| **«fuente declarada»** | **`fuente_dato`, `NOT NULL`** -- *no puede quedar sin decir* |
+| **«datos desconocidos»** | **`DESCONOCIDO` esta en la lista** -- *es **una de las cuatro respuestas validas**, no la ausencia de respuesta* |
+| **«sin falsa verificacion de etiqueta»** | **`ETIQUETA` y `FICHA` y `ESTIMADO` son tres cosas distintas**, *y una entrada **no puede** decir una de las cuatro que no sea* |
+
+### Y la cuarta es la que hace el trabajo
+
+**«Sin falsa verificacion de etiqueta» quiere decir que un numero **no puede** parecer leido de la etiqueta
+cuando no lo fue.** *Y la forma de conseguirlo no es una advertencia en la pantalla: es **que la fuente sea un
+campo obligatorio con cuatro valores posibles**, y que **inventarse uno sea un `raise`**.*
+
+**Es la quinta vez la misma forma**, y ya se puede decir el patron entero:
+
+| donde | la regla | y como se impone |
+|---|---|---|
+| **`escala`** (`R04`) | lo que no tiene cantidad no la gana | *no se le pone* |
+| **`previa_compra`** | lo que no se puede consolidar se nombra | *se devuelve en `sin_consolidar`* |
+| **`diario.py`** (`N06`) | una receta se anota con su version | **`raise`** |
+| **`Escaner.tsx`** (`N02`) | «no puedo comparar» no es «no hay nada» | *`comparacion: null`, no `[]`* |
+| **`diario.py`** (`N05`) | la fuente del dato se declara | **`raise` sobre un conjunto cerrado** |
+| **`costeReceta.ts`** (`R09`) | lo usado y lo comprado no se juntan | *dos numeros, y la linea 9 dice por que* |
+
+**Seis sitios, una sola regla**: *lo que no se sabe **se dice**, y **no se deja que se confunda** con un cero,
+con una lista vacia, con un envase, o con una etiqueta.* **Y en dos de los seis, con un `raise` que impide
+guardar mal.**
+
+### Y `N03` queda para la ronda siguiente, y digo por que
+
+**La busqueda de «porcion/racion/base nutricional» devuelve 212 menciones, y **casi todas son ruido** --
+`alcance`, `atributos`, y `racion` en docstrings que hablan de otra cosa.** *No he encontrado la pieza en una
+lectura, y **no voy a concluir «no existe» desde un grep ruidoso** -- que es el error que esta fase ha cometido
+ocho veces.*
+
+**Lo que si se ve, y hay que anotarlo sin confundirlo con una medicion**: *`fuente_dato` incluye **`FICHA`** --
+que es la tabla nutricional del catalogo, y **la base de la ficha es un dato que existe** (`nutricion_por`,
+`kcal_100g`).* **Si `N03` es «base nutricional clara», la base esta declarada por `nutricion_por`; lo que hay
+que medir es si la conversion a racion es trazable.** *Es un `SELECT` y una lectura, y va en la ronda siguiente.*
+
+### Y F12, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`N01`** | *la «nueva operacion legitima» esta* |
+| **`N02`** | **hecho** (la camara como boton) |
+| **`N03`** | **por medir** -- *y el grep ruidoso no cuenta como respuesta* |
+| **`N04`** | **hecho** (los reintentos) |
+| **`N05`** | **hecho**, con `raise` sobre conjunto cerrado |
+| **`N06`** | **hecho** (version obligatoria) |
+
+**Cuatro hechos, uno con su mitad vista, y uno por medir.**
