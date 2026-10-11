@@ -143,3 +143,77 @@ propietario, receta_id)`** -- *que es el guardian de `R03`, y es una funcion de 
 **Asi que `R03` tiene modulo, docstring y guardian.** *Falta **medirlo** -- el aislamiento de verdad, con dos
 propietarios --, que es exactamente la prueba que F07 ya hizo para las listas (`test_fase2_f07_otro_hogar.py`) y
 que aqui se puede copiar entera.*
+
+
+---
+
+## 3. `R03` y el aislamiento, **medidos y pasan** -- y un instrumento mio que medía la forma
+
+*(Ronda 117.)* `tests/test_fase2_f09_recetario.py`, **nueve pruebas** contra un SQLite temporal -- *«recetas de
+fixture», que es lo que la aceptacion pide, y sin tocar datos de nadie.*
+
+### La afirmacion del modulo, probada entera
+
+| lo que dice `core/recetas.py` | **la prueba** |
+|---|---|
+| *«Cada receta tiene propietario, y **todas** las operaciones lo exigen»* | **el dueno lee la suya y el de fuera no**; **no puede cambiarla**; **no puede archivarla** |
+| *«`listar`»* | **y las listas no mezclan duenos** |
+| *«Cada version es autocontenida»* | **una version no cambia porque cambie la receta** -- *v1 sigue diciendo «harina» despues de editar a «patata»* |
+| *«version persistente»* | **las versiones crecen** (`[1]` -> `[1, 2]`) |
+| *«todas las operaciones»* | **y las versiones de otro tampoco se ven** (`[]`) |
+
+**Las nueve pasan.** *Y `R04` esta en las dos ultimas: el escalado no le inventa cantidad a la sal, y multiplica
+sin sumar.*
+
+### Y un instrumento mio que medía la forma y no el fondo
+
+**La prueba del archivado estaba escrita asi:**
+
+```python
+with pytest.raises(Exception):
+    recetas.archivar(con, "luis", mia)
+```
+
+**Y fallo: `DID NOT RAISE Exception`.** *A punto estuve de apuntar un defecto de aislamiento.*
+
+**Y NO LO ERA.** *`archivar` no levanta **y tampoco borra**: su `WHERE` no casa ninguna fila, devuelve 0, y
+**la receta de ana sigue ahi** -- que es **exactamente lo que se quiere**.*
+
+**Lo que fallaba era mi asercion**: *pedia **una excepcion**, y lo que hay que pedir es **el efecto**.* **Es el
+mismo error de la lista vacia que contaba como distinta, y del `ok` que pasaba con ocho encabezados que no eran
+pasillos** -- *y van **cuatro** en esta fase.*
+
+**Corregido, la prueba dice lo que quiere decir:**
+
+```python
+with contextlib.suppress(Exception):
+    recetas.archivar(con, "luis", mia)
+assert recetas.leer(con, "ana", mia) is not None, "**la de ana sigue ahi**"
+```
+
+**«No se exige que falle: se exige que no borre.»**
+
+### Y dos formas mas que el modulo dijo, y mis pruebas no sabian
+
+*Las dos las corrigio el propio error, no mi memoria:*
+
+1. **El campo de un ingrediente es `texto`, no `nombre`** -- *«un ingrediente necesita al menos su texto»*. **Y
+   trae `producto_id`, `grupo_id` y `fuente`** -- *que es **la trazabilidad ingrediente->catalogo** de `R02` y
+   `R07`.*
+2. **`crear` devuelve el id**, no un diccionario -- *lo dijo un `TypeError`.*
+
+**Las dos son la misma cosa que me ha pasado toda la fase**: *escribir de memoria un nombre o una forma, y que
+lo corrija **el error del programa** en vez de mi recuerdo. **Y por eso se corren las pruebas antes de
+commitear** -- *que es lo que hace que ninguna de estas haya llegado al commit.*
+
+### Y F09, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`R01`** -- biblioteca/filtros | *por medir* |
+| **`R02`** -- importar receta | *por medir* |
+| **`R03`** -- borrador y versiones | **medido y PASA**: aislamiento (3 pruebas), versiones persistentes (2), y `listar` sin mezclar |
+| **`R04`** -- raciones/unidades | **medido y PASA**: escalado reproducible, sin inventar cantidades, **y sin sumar** |
+
+**Dos de los cuatro, medidos y pasando; y los dos que faltan -- `R01` y `R02` -- son los que tienen que ver con
+las pantallas y con traer recetas de fuera.**
