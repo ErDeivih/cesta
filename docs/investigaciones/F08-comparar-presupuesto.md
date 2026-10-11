@@ -387,3 +387,69 @@ es de una funcion del colector, no de la pantalla.*
 
 **Un caso con **cuatro piezas hechas y una pregunta abierta** -- *y la pregunta, otra vez, hay que **leerla**, no
 suponerla.* *Es la septima vez en esta fase que la respuesta esta en un campo que no he mirado.*
+
+
+---
+
+## 7. El pack, **resuelto: el precio unitario esta bien, y la duda era mia**
+
+*(Ronda 110.)* La pregunta de la ronda 109 -- *«¿`cantidad` ya incluye el pack?»* -- **se contesta leyendo el
+contrato de la funcion que lo calcula**, `core/normalize.py:69`:
+
+```python
+70  """'Pack 6 x 1 L' -> (6.0, 'l', 6).  '500 g unidad' -> (0.5, 'kg', 1).
+72  Devuelve (cantidad_TOTAL_en_unidad_canon, unidad_canon, unidades_del_pack).
+73  """
+78  m = _PACK.search(t)
+79  if m:
+80      n, cant, uni = _num(m.group(1)), _num(m.group(2)), m.group(3)
+83      return round(n * cant * factor, 6), canon, int(n)
+```
+
+**La respuesta, en dos sitios de cuatro lineas:**
+
+1. **El docstring lo dice con esas palabras**: *«Devuelve (**cantidad_total** en unidad canon, unidad canon,
+   unidades del pack)»* -- **`n * cant`**, o sea **6 x 1 L son 6 litros, no 1**.
+2. **Y la linea lo hace**: `round(n * cant * factor, 6)` -- *el **producto**, no el factor de uno.*
+
+**Asi que `cantidad` **es el total, pack incluido**, y `precio_cent / cantidad` **es el precio por unidad de
+verdad**.** *El SCOTTEX: 581 cent / 148 ud = **3,9257 cent por unidad**, y **148 ud es lo que trae el envase
+entero** (los dos rollos juntos, con `unidades_pack=2` para poder decir «vienen 2»).*
+
+### Y la duda era mia, y conviene decir de donde salio
+
+**En la ronda 109 escribi**: *«si `cantidad` es lo que trae cada unidad del pack, entonces 3,9257 es correcto
+-- aunque el precio por ud que se ensena al lado de un pack de dos deberia ser el del pack».*
+
+**Sali de leer `pack=2` y suponer que `cantidad` era por unidad.** *Y no lo era.* **Lo que lo resuelve no es
+razonar sobre el numero: es **leer la funcion que lo produce**, que tiene el contrato escrito **en su
+docstring**.*
+
+**Es la misma leccion de las siete anteriores de esta fase, esta vez con la respuesta a cuatro lineas de donde
+yo estaba mirando** -- *y ademas con un `_PACK` y un `_SIMPLE` que dicen que **el parseo de formatos es un
+problema que ya se penso**, no un `split` de fortuna.*
+
+### Y `C06` queda asi
+
+| lo que pide `C06` | **estado** |
+|---|---|
+| **identidad/formato** | **el formato, resuelto**: `parse_formato` normaliza **packs, unidades y pesos** a una cantidad canonica, **y el precio unitario sale de ahi** |
+| **ambito visible** | *por medir* -- *¿se dice de que cadenas es?* |
+| **fecha visible** | **si**: la fecha del catalogo, y F03 la publica |
+| **cantidad/promocion elegibles** | **si**: el pack y las unidades minimas llegan a la pantalla |
+| **coste parcial explicito** | **si**: `sin_precio` y la estimacion |
+
+**Cuatro de cinco contestados, y el que falta -- «ambito visible» -- es una pregunta de la pantalla.** *Y el
+formato, que era el unico con una duda abierta, **queda cerrado y bien**.*
+
+### Y F08, con sus cinco casos
+
+| caso | **estado** |
+|---|---|
+| **lista parcial** | **cubierto** |
+| **oferta caducada** | **no hay ninguna, por construccion** |
+| **cantidad/pack** | **CERRADO**: `cantidad` es el total del envase (`parse_formato`), y el precio unitario divide bien |
+| **cupon/club no elegible** | *por medir* (`promo_club`, `promo_solo_online`) |
+| **historico desconocido** | *por medir* (`historial_de`) |
+
+**Tres cubiertos, uno contestado por construccion, y dos por medir.**
