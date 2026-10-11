@@ -119,6 +119,26 @@ busqueda que ya tiene al lado (`Cesta.tsx:474`). La pantalla no puede hacer que 
 **Pendiente de verificar en el navegador**: que la etiqueta se vea y que la linea quede **fuera de los
 totales con precio**. *Implementado y compilado, no recorrido.*
 
+### G02, cerrado: la línea sin destino, medida en pantalla
+
+| aceptación | resultado |
+|---|---|
+| migración `014`, repetible, en la base real | ✓ |
+| la línea con solo nombre | ✓ 201, **sin destino y sin precio ni importe** |
+| **apuntada en la lista de casa** | ✓ 201 |
+| **«Pendiente de identificar» en pantalla** | ✓ **390 y 1440** |
+| **la línea no lleva precio** | ✓ **verificado en su propia fila, en los dos anchos** |
+| nombre en blanco → 422 · segunda lista de casa → 409 | ✓ **1.580 pruebas** |
+| `favorito` | ✓ no se toca, con el motivo escrito |
+
+**Y dos conclusiones mías que eran falsas, dichas para que no se repitan**:
+
+1. *«En `/compra/listas` la línea no aparece»* -- **falso**. Aparece, debajo del resumen: comprobé
+   **220 caracteres** de la pantalla y saqué una conclusión. El texto entero tiene 3.131.
+2. *«Las listas son un `DIV` sin enlace: no se pueden abrir»* -- **tampoco**. No hay enlace porque
+   **la lista se pinta en esa misma página**: no hay a dónde navegar. El `DIV` no era el defecto;
+   *era mi lectura.*
+
 **La segunda lista de casa responde 409, no 500.** La base impone `lista_de_casa_por_dueno` --una
 lista de casa por persona, que es la regla correcta: es el eje que alimenta el contador del menú, el
 puente de la compra y las alertas-- y la API no la atrapaba: crear la segunda salía como «Internal
