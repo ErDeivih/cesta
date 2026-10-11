@@ -1199,3 +1199,63 @@ de las cuatro se resolvio suponiendo: las cuatro se resolvieron leyendo lo que e
 
 *Es la leccion de toda esta fase, aplicada de principio a fin: **el sistema dice lo que le pasa, si uno lee
 el mensaje en vez de adivinar la causa.***
+
+
+---
+
+## 34. La pila de ensayo, arrancada y comprobada -- y **el puerto de Vite es 5173, no 5174**
+
+*(Ronda 151, al ir a correr los ensayos de navegador para el cierre de F16.)*
+
+### El estado, medido
+
+```
+8102  ESCUCHA (pid 44352, python)     <- la API, y es la del SANDBOX
+5173  ESCUCHA (pid 25236, node)       <- Vite
+5174  libre
+
+GET /api/estado -> 200
+  fecha_datos        = 2026-10-11
+  version_catalogo   = 20261011-214900     <- del gold de ensayo (data/debug/gold-f03)
+  vigencia_precio    = comprobable
+  coherente          = True
+  dias_precio_valido = 3
+```
+
+**La API del 8102 sirve el **gold de ensayo** -- `20261011-214900` es una de las versiones de
+`data/debug/gold-f03` -- y **responde 200**.** *O sea: se puede correr el recorrido de navegador **sin tocar el
+gold real**, que es lo que la receta del §15 buscaba.*
+
+### Y una correccion a lo que yo mismo habia escrito
+
+**El resumen de la fase decia «Vite 5174». Es 5173.** *El fichero lo dice: `vite.config.*`, `port: 5173`.* **Y
+`5174` esta libre** -- *que es lo que hace pensar que el 5174 salio de un arranque en el que el 5173 estaba
+ocupado **y Vite subio al siguiente**, no de una configuracion.*
+
+**Importa porque el ensayo de navegador tiene que apuntar al sitio correcto**: *una URL con el puerto equivocado
+**falla con un error que no dice «te has equivocado de puerto»**: dice que la pantalla no carga.*
+
+### Y `coherente: True` en el sandbox, contra lo que dice la matriz
+
+**`docs/SUPERAPP-FASE2-MATRIZ.md` §4 dice que `/api/estado` «lleva desde el 7 de octubre declarando el catalogo
+incoherente»** -- *y eso es **la API real, contra el puntero real**.* **En el sandbox, con su gold, es
+`coherente: True`.**
+
+**Las dos cosas son ciertas y no se contradicen**: *la incoherencia **no es del codigo**, es **del puntero real
+frente al gold publicado**.* *Y conviene que quede dicho, porque un informe que solo dijera «coherente: True»
+--medido en el sandbox-- **estaria describiendo un sistema distinto del que se usa en casa**.*
+
+### Y los dos comandos, para no volver a buscarlos
+
+```powershell
+# API del sandbox, en el 8102
+$env:CESTA_GOLD = "F:\aprendizaje\scrap\data\debug\gold-f03"
+uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8102
+
+# Vite, en el 5173, apuntando al sandbox
+cd plataforma\web\app; $env:CESTA_API = 'http://127.0.0.1:8102'; npm run dev
+```
+
+**Y un aviso que costo una ronda**: *editar un fichero de `plataforma/web/app/src/` **con Vite corriendo** puede
+tumbar el servidor con `EBUSY`* -- *Vite vigila `src/` y la herramienta de edicion escribe ahi temporalmente.*
+*Se vio en la ronda 143 y se apunta aqui, que es donde se busca el arranque.*
