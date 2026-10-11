@@ -182,6 +182,13 @@ def main() -> int:
             comprueba(r.ok or r.status in (400, 409),
                       f"hay cuenta para el recorrido ({r.status})")
 
+            # **Y una lista propia**, para poder ejercer la previa: *la cuenta nueva no tiene ninguna, y
+            # usar las de otros usuarios seria tocar datos ajenos.*
+            r = contexto.request.post(f"{BASE}/api/listas", data={"nombre": "Prueba F03"})
+            comprueba(r.ok, f"se crea una lista para el recorrido ({r.status})")
+            if not r.ok:
+                print(f"        (respuesta del alta: {r.text()[:160]})")
+
             r = pagina.request.get(f"{BASE}/api/listas")
             comprueba(r.status != 401, f"/api/listas con sesion -> {r.status} (antes daba 401)")
             listas = r.json() if r.ok else []

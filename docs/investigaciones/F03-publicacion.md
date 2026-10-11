@@ -963,3 +963,57 @@ resultado, no la asercion.*
 
 **El paso siguiente, concreto**: *dar de alta una lista en el ensayo -- o usar una de las que ya existen en
 la base -- y ejercer la previa con una publicacion a mitad.*
+
+
+---
+
+## 26. Los recorridos de lista, **medidos** -- y una espera que hay que arreglar
+
+*(Ronda 62.)* Se anadio el alta de lista (`POST /api/listas`, con `{"nombre": ...}`) para poder ejercer la
+previa, y **los dos recorridos contestan**:
+
+```
+ok   hay cuenta para el recorrido (201)
+ok   se crea una lista para el recorrido (201)
+ok   /api/listas con sesion -> 200 (antes daba 401)
+ok   previa de lista (desde-el-plan) -> 200           <- MEDIDO
+ok   previa de consumir (desde-la-compra) -> 200      <- MEDIDO
+ok   la pantalla no dio errores de JavaScript
+ok   el puntero del catalogo REAL sigue intacto
+```
+
+**La previa de lista y la previa de consumir pasan por el proxy del cliente, con una publicacion en medio.**
+
+### Y la asercion corregida ha hecho su trabajo a la primera
+
+*En la misma ejecucion, la segunda lectura de la pantalla devolvio `[]` -- **vacia** -- y el ensayo **FALLO**,
+que es lo correcto:*
+
+```
+MAL  la segunda busqueda ensena precios (no una lista vacia)
+```
+
+**Es exactamente lo que el falso positivo de la ronda 61 se tragaba.** *Corregida la asercion, la misma
+situacion se ve.* **Asi que el arreglo no fue cosmetico: cambio un ensayo que pasaba en falso por uno que
+dice la verdad.**
+
+### Lo que hay que arreglar, y es una espera
+
+**La segunda busqueda lee la pantalla antes de que la lista de resultados este.** *El ensayo espera 3 s fijos
+tras pulsar Enter, y con la recarga de por medio a veces no llega.* **El arreglo es esperar a que aparezca el
+contenedor de resultados** -- `pagina.wait_for_selector("ul.divide-y > li", timeout=...)` -- **en vez de un
+tiempo fijo**, que es la regla de siempre con una pantalla.
+
+*Queda pendiente, y es pequeno.* **Lo que esta medido son los dos recorridos de lista y la busqueda; lo que
+falla es el momento de leer, no lo que se lee.**
+
+### El estado de F03, al cerrar esta ronda
+
+| recorrido | estado |
+|---|---|
+| **busqueda** | **medido** (§25) -- *con la espera por arreglar, que la hace intermitente* |
+| **previa de lista** (`desde-el-plan`) | **medido**: 200 con una publicacion en medio |
+| **previa de consumir** (`desde-la-compra`) | **medido**: 200 con una publicacion en medio |
+| sustitucion | *la previa de consumir la cubre* -- *«que lineas se podrian anotar y con que dato»* --, **pero no se ha pulsado** |
+| alta en el diario | **no medido durante una publicacion** -- *el ensayo del diario lo prueba aparte* |
+| respuesta individual no mezcla versiones | **medido en el servidor** (§12, §17) |
