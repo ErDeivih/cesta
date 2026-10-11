@@ -119,6 +119,18 @@ busqueda que ya tiene al lado (`Cesta.tsx:474`). La pantalla no puede hacer que 
 **Pendiente de verificar en el navegador**: que la etiqueta se vea y que la linea quede **fuera de los
 totales con precio**. *Implementado y compilado, no recorrido.*
 
+**La segunda lista de casa responde 409, no 500.** La base impone `lista_de_casa_por_dueno` --una
+lista de casa por persona, que es la regla correcta: es el eje que alimenta el contador del menú, el
+puente de la compra y las alertas-- y la API no la atrapaba: crear la segunda salía como «Internal
+Server Error». Ahora dice *«Ya tienes una lista de casa, y solo puede haber una…»*. *Misma clase que
+el 422 de las líneas: la restricción hace su trabajo y el mensaje culpaba al servidor.*
+
+**Y la causa de tres rondas de fallos en el andamiaje, encontrada**: **salir del `with TestClient(...)`
+ejecuta el `lifespan` de la aplicación, que CIERRA el almacén.** Por eso la primera prueba de un
+módulo pasaba y las siguientes morían con `RuntimeError: el almacen no esta arrancado` (y antes con
+`psycopg`, según por dónde reventara). *La firma era inconfundible y no la vi: **la prueba pasa sola y
+falla en el fichero**.* El arranque va ahora en el limpiador, que corre entre pruebas.
+
 **Cómo se ejecuta la prueba del recibo** (la cadena se lee al importar, no vale `monkeypatch`):
 
     $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'

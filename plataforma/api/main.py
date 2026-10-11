@@ -17,6 +17,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -514,7 +515,20 @@ def mis_listas(usuario: dict = Depends(usuario_actual)):
 
 @app.post("/api/listas", status_code=201)
 def nueva_lista(datos: NuevaLista, usuario: dict = Depends(usuario_actual)):
-    return almacen.crea_lista(usuario["id"], datos.nombre, datos.es_de_casa)
+    # **Una lista de casa por persona, y la base lo impone** (`lista_de_casa_por_dueno`). La regla
+    # es la correcta -- la lista de casa es el eje de la aplicacion: alimenta el contador del menu,
+    # el puente de la compra y las alertas --, pero **la respuesta era mentira**: crear la segunda
+    # salia como **500 «Internal Server Error»**, que manda a mirar los registros de la API por algo
+    # que el usuario puede entender y resolver. Medido el 11 de octubre de 2026 contra la API viva:
+    # `UniqueViolation: duplicate key value violates unique constraint "lista_de_casa_por_dueno"`.
+    # Es la misma clase de defecto que el 422 de las lineas: **la restriccion hacia su trabajo y el
+    # mensaje culpaba al servidor**.
+    try:
+        return almacen.crea_lista(usuario["id"], datos.nombre, datos.es_de_casa)
+    except psycopg.errors.UniqueViolation as choque:
+        raise HTTPException(
+            409, "Ya tienes una lista de casa, y solo puede haber una. "
+                 "Anade lo que quieras a esa, o cambia el nombre de esta.") from choque
 
 
 @app.delete("/api/listas/{lista_id}")

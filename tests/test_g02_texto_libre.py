@@ -60,6 +60,11 @@ def con_almacen():
                     pytest.skip("no hay cuenta de prueba y el alta tiene limite por hora agotado")
                 assert r.status_code == 201, r.text
                 _CUENTA = usuario
+    # **Salir del `with TestClient(...)` APAGA el almacen**, porque el `lifespan` de la aplicacion lo
+    # cierra al terminar. Es lo que hacia que la primera prueba de un modulo pasara y las siguientes
+    # murieran con `RuntimeError: el almacen no esta arrancado` (y antes, con `psycopg`, segun por
+    # donde reventara). Medido el 11 de octubre de 2026. Se vuelve a arrancar aqui, una vez.
+    almacen.arranca(espera=10)
     yield
     main.app.dependency_overrides.clear()
 
