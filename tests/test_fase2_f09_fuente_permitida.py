@@ -84,3 +84,102 @@ def test_el_archivo_local_se_admite_con_ruta():
     sin_ruta = importar_receta.comprueba_fuente("file://")
     assert not sin_ruta.permitida, "un file:// sin ruta no es un archivo"
     assert "sin ruta" in sin_ruta.motivo, sin_ruta.motivo
+
+
+# ---------------------------------------------------------------------------------------------
+# El borrador: la previa, que no escribe
+# ---------------------------------------------------------------------------------------------
+
+
+def _permitida(host: str = "recetas.example.com"):
+    """*Declara una fuente y devuelve una funcion que la retira.* **Una prueba no cambia la politica.**"""
+    importar_receta.FUENTES[host] = "prueba de la fase 2"
+    return lambda: importar_receta.FUENTES.pop(host, None)
+
+
+def test_sin_fuente_permitida_no_hay_borrador():
+    """**La comprobacion va primero, y si falla no se construye nada.** *No un borrador a medias: `None`, y el
+    motivo -- que es lo que permite decir «no puedo importar de ahi» en vez de enseñar una receta vacia.*
+    """
+    permiso, b = importar_receta.borrador("https://recetas.example.com/tortilla", {"nombre": "Tortilla"})
+
+    assert not permiso.permitida and b is None, "sin permiso no puede salir un borrador"
+    assert "no esta declarada" in permiso.motivo
+
+
+def test_el_borrador_guarda_la_fuente():
+    """**El criterio lo pide por su nombre** -- *«previa, **fuente**, unidades...» --, y es lo que hace que la
+    receta se pueda **volver a comprobar** dentro de un ano.*
+    """
+    quitar = _permitida()
+    try:
+        _, b = importar_receta.borrador("https://recetas.example.com/tortilla",
+                                        {"nombre": "Tortilla", "raciones": 2})
+        assert b is not None and b.fuente == "https://recetas.example.com/tortilla", b
+        assert b.nombre == "Tortilla" and b.raciones == 2
+    finally:
+        quitar()
+
+
+def test_sin_nombre_no_hay_receta_que_previsualizar():
+    """*No se inventa «Receta importada»*: **una receta sin nombre en una lista es una fila que nadie sabe que
+    es.**
+    """
+    quitar = _permitida()
+    try:
+        permiso, b = importar_receta.borrador("https://recetas.example.com/x", {"raciones": 2})
+        assert b is None, "sin nombre no hay borrador"
+        assert "sin nombre" in permiso.motivo, permiso.motivo
+    finally:
+        quitar()
+
+
+def test_las_raciones_que_faltan_se_dicen_y_no_se_inventan():
+    """*Y las raciones son al menos una, como en `core.recetas.crear`.* **Se dice y se pone una**, en vez de
+    dejar el campo en `None` y que reviente al guardar.*
+    """
+    quitar = _permitida()
+    try:
+        _, b = importar_receta.borrador("https://recetas.example.com/x", {"nombre": "Tortilla"})
+        assert b is not None and b.raciones == 1, b
+        assert any("raciones" in f for f in b.faltantes), b.faltantes
+    finally:
+        quitar()
+
+
+def test_un_ingrediente_sin_texto_no_entra_y_se_nombra():
+    """**La misma regla de `core.recetas._ingredientes_para_guardar`.** *No se le inventa un texto, y **no se
+    tira en silencio**: se cuenta en `faltantes`, que es lo que la pantalla puede enseñar.*
+    """
+    quitar = _permitida()
+    try:
+        _, b = importar_receta.borrador("https://recetas.example.com/x", {
+            "nombre": "Tortilla", "raciones": 2,
+            "ingredientes": [{"texto": "patata", "cantidad": 300, "unidad": "g"},
+                             {"cantidad": 2}, {"texto": ""}],
+        })
+        assert b is not None, "el borrador tiene que salir: hay un ingrediente bueno"
+        assert [i["texto"] for i in b.ingredientes] == ["patata"], b.ingredientes
+        assert len(b.faltantes) == 2, f"los dos malos tienen que contarse: {b.faltantes}"
+    finally:
+        quitar()
+
+
+def test_el_borrador_no_escribe_ni_tiene_id():
+    """**Lo que hace que se pueda mirar, corregir y tirar sin dejar rastro.** *`core.recetas.crear` escribe; esto
+    **no** -- y por eso `Borrador` no tiene `id` ni version, **porque no es una receta**.*
+    """
+    quitar = _permitida()
+    try:
+        _, b = importar_receta.borrador("https://recetas.example.com/x", {"nombre": "Tortilla"})
+        assert not hasattr(b, "id"), "un borrador no tiene id: no esta en ninguna base"
+        assert not hasattr(b, "version"), "ni version"
+        # **Y `crear` no se ha llamado**: el modulo **no importa** `core.recetas`.
+        import importlib
+        import sys as _sys
+        importlib.reload(_sys.modules["core.importar_receta"])
+        mod = _sys.modules["core.importar_receta"]
+        assert not hasattr(mod, "recetas"), (
+            "el modulo del borrador no puede tener la puerta que escribe")
+    finally:
+        quitar()

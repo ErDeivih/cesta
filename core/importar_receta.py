@@ -27,7 +27,7 @@ declarado**, que es la mitad que no se puede equivocar.**
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
 # ---------------------------------------------------------------------------------------------
@@ -99,3 +99,98 @@ def comprueba_fuente(url: str | None) -> Permiso:
         return Permiso(False, f"la fuente no esta declarada: {host}", host=host)
 
     return Permiso(True, "declarada", host=host, razon_declarada=FUENTES[host])
+
+
+# ---------------------------------------------------------------------------------------------
+# El borrador: **la previa, que no escribe**
+# ---------------------------------------------------------------------------------------------
+
+
+@dataclass
+class Borrador:
+    """**Una receta importada, antes de guardarla.** *Y por eso **no es una receta**: no tiene `id`, no tiene
+    version y **no esta en ninguna base** -- *se puede mirar, corregir y tirar sin dejar rastro.*
+
+    Es la forma que el criterio pide con «**previa**, fuente, unidades y **edicion antes de guardar**»:
+    *`core/recetas.crear` **escribe**, asi que **enseñar antes de decidir exige un objeto que no escriba*** --
+    *la misma decision que `previa_compra` tomo en `F10`.*
+    """
+
+    nombre: str
+    raciones: int
+    ingredientes: list[dict] = field(default_factory=list)
+    preparacion: str = ""
+    minutos: int | None = None
+    #: **De donde se importo.** *El criterio lo pide por su nombre -- «previa, **fuente**, unidades...» --, y
+    #: es lo que hace que la receta se pueda **volver a comprobar** dentro de un ano.*
+    fuente: str = ""
+    #: *Lo que no se pudo leer, y **por que**.* *La misma forma que `sin_cantidad` y `sin_consolidar`: lo que
+    #: falta **se dice**, y no se rellena con un cero.*
+    faltantes: list[str] = field(default_factory=list)
+
+
+def borrador(url: str | None, campos: dict | None = None) -> tuple[Permiso, Borrador | None]:
+    """**La previa de una receta importada.** *Devuelve el permiso (para poder decir que no) y el borrador.*
+
+    **No lee la red, no parsea HTML y no escribe**: *recibe los **campos ya extraidos** y los pone en la forma
+    que `core.recetas.crear` espera.* *Lo que falta -- **el lector de cada sitio** -- no se puede escribir hasta
+    que haya una fuente declarada, que es la decision del tablero.*
+
+    **Tres cosas que hace, y las tres son del criterio:**
+
+    1. **Comprueba la fuente primero**, y **si no esta permitida no construye nada** -- *no un borrador a
+       medias: **`None`, y el motivo.***
+    2. **Guarda la `fuente`**, que es lo que permite comprobarla despues.
+    3. **Cuenta lo que falta en vez de inventarlo**: *sin nombre, o con un nombre vacio, **no hay borrador** --
+       *una receta sin nombre no se puede leer en una lista.* *Sin raciones, se dice; y un ingrediente sin
+       texto **no entra**, que es la misma regla de `core.recetas._ingredientes_para_guardar`.*
+    """
+    permiso = comprueba_fuente(url)
+    if not permiso.permitida:
+        return permiso, None
+
+    campos = campos or {}
+    faltantes: list[str] = []
+
+    nombre = str(campos.get("nombre") or "").strip()
+    if not nombre:
+        # **Sin nombre no hay borrador.** *No se inventa «Receta importada»: una receta sin nombre en una lista
+        # es una fila que nadie sabe que es.*
+        return Permiso(False, "sin nombre no hay receta que previsualizar", host=permiso.host), None
+
+    raciones = campos.get("raciones")
+    if not isinstance(raciones, int) or raciones < 1:
+        # *Y las raciones son al menos una, como en `core.recetas.crear`.* **Se dice y se pone una**, en vez de
+        # dejar el campo en `None` y que reviente al guardar.
+        faltantes.append("raciones (se asume 1)")
+        raciones = 1
+
+    ingredientes: list[dict] = []
+    for uno in campos.get("ingredientes") or []:
+        if not isinstance(uno, dict) or not str(uno.get("texto") or "").strip():
+            # **Un ingrediente sin texto no entra**, y se dice: *es la regla de `recetas.crear`.*
+            faltantes.append(f"ingrediente sin texto: {uno!r:.60}")
+            continue
+        ingredientes.append({
+            "texto": str(uno["texto"]).strip(),
+            "cantidad": uno.get("cantidad"),
+            "unidad": uno.get("unidad"),
+            # *Los enlaces al catalogo **se conservan si vienen**: son la trazabilidad de `R02`/`R07`.*
+            "producto_id": uno.get("producto_id"),
+            "grupo_id": uno.get("grupo_id"),
+            "fuente": uno.get("fuente"),
+        })
+
+    if not ingredientes:
+        faltantes.append("ningun ingrediente con texto")
+
+    minutos = campos.get("minutos")
+    return permiso, Borrador(
+        nombre=nombre,
+        raciones=raciones,
+        ingredientes=ingredientes,
+        preparacion=str(campos.get("preparacion") or ""),
+        minutos=int(minutos) if isinstance(minutos, (int, float)) else None,
+        fuente=str(url).strip(),
+        faltantes=faltantes,
+    )
