@@ -205,3 +205,70 @@ descuenta**.** *Es un `SELECT` sobre `grupos` mas una llamada a `catalogo.buscar
 **Y hay que hacerlo **antes** de tocar nada**: *si el descuento **no** se aplica, la promocion vencida solo
 queda como texto informativo, y **esta bien**; si **si** se aplica, **es un defecto que miente en el precio** --
 que es el peor sitio donde puede mentir un dato en esta aplicacion.*
+
+
+---
+
+## 4. «Oferta caducada»: **no hay ninguna, y por construccion** -- pero hay 1.553 sin fecha
+
+*(Ronda 107.)* La prueba que iba a cerrar el caso, y su resultado:
+
+```
+promociones en el catalogo:  7.336
+    sin fecha de fin:        1.553
+    con fecha:               5.783
+    rango de fechas:         2026-10-11  ..  2027-01-08
+    hoy:                     2026-10-11
+    VENCIDAS:                0
+```
+
+**Cero.** *Y la razon no es que alguien las filtre: es **estructural**.*
+
+### Por que no puede haberlas, y no es un filtro
+
+**El catalogo se reconstruye cada dia desde capturas frescas** -- *medido en F03: la version se cierra y se
+publica cada ciclo.* **Asi que una promocion cuya fecha paso simplemente **no esta** en los datos de hoy**: *no
+hay que descartarla, porque **nunca llego a entrar** -- el colector leyo la oferta **mientras estaba viva**.*
+
+**Es la misma forma que el «precio desconocido» y el «sin pasillo»: el problema no se resuelve filtrando, se
+resuelve **no teniendo el dato viejo**.** *Y por eso `C06` pide «ambito y **fecha** visibles»: **la fecha del
+catalogo es lo que hace que todo lo demas sea de hoy.**
+
+### Y el matiz que si importa: **1.553 promociones SIN FECHA**
+
+*De las 7.336, **1.553 no traen `promo_hasta`**.* **Esas no se pueden caducar por fecha, porque no tienen** --
+*y son el unico sitio donde una oferta vieja **podria** quedarse.*
+
+**Y no es un defecto medido**: *puede ser que esas fuentes **no publiquen** la fecha de fin* -- *que es lo
+normal en una oferta de folleto* --, **y entonces «no hay fecha» es la verdad, no un hueco.** *Lo que **no** se
+sabe es si alguna de esas 1.553 lleva meses ahi.*
+
+**Para saberlo haria falta comparar la promocion de hoy con la de ayer** -- *y eso el catalogo no lo guarda: solo
+tiene el estado de hoy.* **Queda dicho como la pregunta abierta que es.**
+
+### Y una confirmacion que vale la pena guardar
+
+**Al escribir este `SELECT` me comi el `::VARCHAR`** -- *pedi `promo_hasta` tal cual* -- **y DuckDB contesto:**
+
+```
+Invalid Input Error: Required module 'pytz' failed to import,
+    due to the following Python exception: ModuleNotFoundError: No module named 'pytz'
+```
+
+**Es **exactamente** el 500 que documenta `catalogo.py:836`** -- *«sin el `::VARCHAR` la pantalla de grupo daba
+500 en cuanto un miembro tenia promocion con fecha; y era la mayoria»* --, **y lo he reproducido sin querer en
+la ronda siguiente a leerlo.** *El comentario no era una nota historica: **es una trampa que sigue puesta**, y
+se cae en ella igual que se cayo entonces.* **Con `::VARCHAR`, la consulta funciona.**
+
+### Y F08, con lo que hay de sus cinco casos
+
+| caso de la aceptacion | **estado** |
+|---|---|
+| **lista parcial** | **cubierto**: `sin_precio` y la estimacion en pantalla |
+| **oferta caducada** | **no hay ninguna, por construccion** -- *el catalogo es de hoy*; **1.553 sin fecha, sin medir** |
+| **cupon/club no elegible** | *por medir* (`promo_club`, `promo_solo_online`) |
+| **cantidad/pack** | *por medir* (`unidades_pack`, `promo_unidades_minimas`) |
+| **historico desconocido** | *por medir* (`historial_de`) |
+
+**Uno cubierto, uno contestado por construccion, y tres por medir** -- *y los tres que quedan son columnas que
+existen y casos que hay que ejercer.*
