@@ -700,3 +700,71 @@ buscador llevan su identidad y la ensenan** -- *y para saberlo hay que leer como
 
 **De siete sub-criterios: cinco medidos, cuatro pasan, uno es un defecto fijado, y dos tienen una capa sin
 medir** -- *y las dos capas que faltan son **la pantalla**, que es donde esta el trabajo que queda de F07.*
+
+
+---
+
+## 13. `C05`, la capa que faltaba: **el buscador devuelve grupos y precios, y no promete identidad**
+
+*(Ronda 100.)* Leida la funcion que construye los resultados, `catalogo.buscar`
+(`plataforma/api/catalogo.py:254`):
+
+```python
+254  def buscar(texto: str, cadenas=None, limite: int = 40, ...
+258             sin_alcohol: bool = False, seccion: str | None = None) -> list[dict]:
+259      """Grupos que casan con el texto, cada uno con su precio mas bajo.
+261      Los productos sin grupo salen igual, marcados: son 32.522 de 51.800 y
+262      esconderlos seria esconder el 63 % del catalogo.
+263      """
+264      palabras = [p for p in _sin_tildes(texto).lower().split() if p]
+265      # Sin texto no hay busqueda... salvo que se este explorando un pasillo, que
+266      # es una busqueda por si misma: "ensename lo que hay en congelados".
+267      if not palabras and not seccion:
+268          return []
+```
+
+### Lo que esto contesta, y lo que no
+
+**Lo que contesta, y son dos cosas del criterio:**
+
+1. **«Acentos»** -- *esta hecho, y se ve en la primera linea de trabajo: **`_sin_tildes(texto)`**, tanto en lo
+   que se busca como, por simetria, en lo que se compara.* **El criterio pedia «acentos/typos utiles»** --
+   *los acentos estan.*
+2. **«Sugerir no significa declarar identidad exacta»** -- *y el buscador **no promete identidad**: devuelve
+   **grupos que casan con el texto, cada uno con su precio mas bajo**.* **No hay campo `identidad` en
+   `catalogo.py`** -- *ni en `buscar` ni en el resto del modulo.*
+
+**Y hay una decision escrita que importa mas de lo que parece** -- *linea 261*:
+
+> *«Los productos sin grupo salen igual, **marcados**: son 32.522 de 51.800 y **esconderlos seria esconder el
+> 63 % del catalogo**.»*
+
+**Es el criterio aplicado al reves, y bien**: *lo que no esta agrupado **no se esconde ni se disfraza** --
+**sale, y sale marcado**.* **Que es la misma regla de `nombre_visto`, `nutricion_por` y «sin precio conocido»:
+lo que no se sabe se dice.**
+
+### Y lo que sigue sin medirse, y por que no lo cierro
+
+**Que `buscar` no lleve `identidad` significa que **no la declara en el dato**.** *Lo que no esta medido es **que
+la pantalla no la insinue de otra forma*** -- *un resultado con un nombre, una marca y un precio **sugiere**, y
+sugerir es lo que el criterio permite; **pero eso hay que verlo**, no deducirlo.*
+
+**Y sigue siendo la leccion de esta sesion**: *he leido **tres capas** de `C05` -- el aviso, su uso, y el
+buscador -- y **las tres dicen lo mismo**; la cuarta, **la pantalla**, es la que no he mirado.* **No la sustituyo
+por un razonamiento.**
+
+### Y C01-C05, cerrado con lo que hay
+
+| ID | lo que pide | capas medidas |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **medido** -- *el tachado gana el primero; **la cantidad es un defecto**, fijado* |
+| **C01b** | *ni exponer listas de otro hogar* | **medido y PASA** |
+| **C02** | *guardado sin catalogo* | **medido** |
+| **C02b** | *precio desconocido visible* | **medido y PASA** (dato **y** pantalla) |
+| **C03** | *pasillos / una mano / recarga* | **el orden ESTA HECHO**; *«editable» falta*; 4 toques; recarga por F03 |
+| **C04** | *preferencia contra necesidad* | **estructural, medida y correcta**; *la pantalla, sin medir* |
+| **C05** | *acentos/typos/filtros; sugerir no es afirmar* | **el aviso, su uso y el buscador, medidos**; *la pantalla del buscador, sin medir* |
+
+**De siete sub-criterios: seis con su capa principal medida, cuatro pasan, uno es un defecto fijado, y tres
+tienen una capa de pantalla sin mirar.** *Y las tres que faltan son la misma: **mirar la pantalla con un
+navegador**, que es lo que queda de F07 y lo que el criterio llama «uso con una mano».*
