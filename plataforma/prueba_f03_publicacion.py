@@ -221,10 +221,15 @@ def main() -> int:
             # justo lo que hay que comprobar: que publicar debajo no impide anotar ni duplica.**
             import time as _t2
 
+            # **La forma, leida de `plataforma/api/diario.py`**: `EntradaIn` exige **`fecha`** y
+            # **`comida`** -- *mi primer intento mandaba `nombre` y le faltaban los dos: de ahi el 422* --,
+            # y la lectura del dia es **`/api/diario/{fecha}`**, no `/api/diario` (*de ahi el 405*).
+            HOY = "2026-10-11"
+
             def anota(nombre: str) -> int:
                 return contexto.request.post(
                     f"{BASE}/api/diario",
-                    data={"nombre": nombre, "kcal": 111,
+                    data={"fecha": HOY, "comida": nombre, "kcal": 111,
                           "clave_operacion": f"f03-{int(_t2.time() * 1000)}-{nombre[-4:]}"}).status
 
             # **Y aqui esta el limite, medido**: `POST /api/diario` contesta **422** y `GET /api/diario`

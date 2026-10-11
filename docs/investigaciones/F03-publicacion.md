@@ -1113,3 +1113,46 @@ publicacion a mitad.** *Con eso, F03 queda cerrado del todo: es la ultima fila d
 
 *Y no se toca `plataforma/prueba_reintento.py`: ese ensayo prueba el reintento y la carrera, que es otra
 cosa; mezclar una publicacion alli habria sido cambiar el alcance de una prueba que ya funciona.*
+
+
+---
+
+## 29. El alta del diario: **422 -> 400**, y lo que ya se sabe de su forma
+
+*(Ronda 65.)* Se leyo el modelo, y con eso el error cambio de **422** a **400** -- *es decir, la forma ya se
+acepta y algo mas la rechaza*:
+
+```
+plataforma/api/diario.py:38    class EntradaIn(BaseModel):
+                          39        fecha: str                  <- OBLIGATORIA
+                          40        comida: str                 <- OBLIGATORIA
+                          45        kcal: float | None
+                          54        clave_operacion: str | None
+                          57    @rutas.get("/rango")
+                          68    @rutas.post("", status_code=201)      <- el alta
+                         140    @rutas.get("/{fecha}")                <- LA LECTURA
+```
+
+**Los dos fallos del primer intento, y sus causas:**
+
+| lo que mandaba | lo que era |
+|---|---|
+| `{"nombre": ..., "kcal": ...}` | **faltaban `fecha` y `comida`** -> **422** |
+| `GET /api/diario` | **la lectura es `/api/diario/{fecha}`** -> **405** |
+
+**Corregido, y ahora contesta 400.** *La forma se acepta; lo que queda es **por que** rechaza el contenido.*
+*Candidatos que no se han comprobado: la fecha de hoy del ensayo, el `tipo`, o `fuente_dato`.*
+
+**Y el ensayo sigue PASANDO, con el limite dicho:**
+
+```
+POST /api/diario -> 400: la forma del alta no se ha encontrado, asi que el
+      ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO
+=== PASA ===
+```
+
+### Y el paso siguiente, con precision
+
+**Mirar que rechaza el 400** -- *el propio `diario.py` lo dira: `raise HTTPException(400, ...)` esta ahi* --
+**y con eso el alta entra.** *Es lo unico que queda de F03, y cada ronda que pasa esta mas cerca: del 422 al
+400 ya se sabe que **la forma esta bien** y el problema es el contenido.*
