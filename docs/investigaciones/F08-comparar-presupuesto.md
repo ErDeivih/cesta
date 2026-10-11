@@ -501,3 +501,84 @@ cosa.**
 | **historico desconocido** | *por medir* (`historial_de`) |
 
 **Cuatro de los cinco casos, cubiertos; y el que queda -- historico desconocido -- es el unico sin medir.**
+
+
+---
+
+## 9. «Historico desconocido»: **el historial devuelve necesidades, no precios** -- y `C10` queda cerrado
+
+*(Ronda 112.)* **El ultimo caso de la aceptacion**, y el criterio de `C10`
+(`SUPERAPP-COMPETENCIA-Y-REA.md:98`): *«**Copiar necesidades, nunca precios antiguos como si fueran
+actuales**.»*
+
+### La respuesta, en el docstring de la propia funcion
+
+`almacen.historial_de` (`plataforma/api/almacen.py:808`):
+
+```python
+809  """Los grupos que esta persona ha anadido, lo reciente pesando mas.
+811  Tres decisiones, y las tres estan en el SQL para que la regla y la consulta no
+812  se puedan separar:
+814  **Se cuentan todas las lineas, incluidas las borradas.** `lista_linea` no borra
+815  de verdad: pone `borrado_en` y `limpiar_lineas_borradas` las quita a los 30
+816  dias. *Una lista se vacia al terminar la compra; el habito no.* ...
+821  **Se cuenta por `anadido_por`, no por "las listas en las que estoy".** En una
+822  lista compartida se apunta lo que trae el otro, y eso no es tu historial: es el
+823  suyo. Ademas, quien tiene permiso de solo mirar una lista **no puede sacar de
+824  aqui lo que hay dentro de ella**.
+826  **Lo reciente pesa mas, con un decaimiento y no con un corte.** ...
+```
+
+**La primera linea ya contesta `C10`**: *«Los **grupos** que esta persona ha **anadido**»* -- *o sea,
+**necesidades, no precios**.* **El historial devuelve **a que productos** vuelve alguien, y el precio de esos
+productos sale **del catalogo de hoy** -- que es lo unico que el proyecto guarda.**
+
+**Asi que `C10` no esta «cumplido por cuidado»: esta cumplido **por estructura**.** *No hay precios antiguos
+que copiar, porque **el historial no guarda precios**.*
+
+### Y las tres decisiones que trae, que son de las mejores piezas de esta fase
+
+1. **«Se cuentan todas las lineas, incluidas las borradas»** -- *«Una lista se vacia al terminar la compra; **el
+   habito no**»*. *Contando solo las vivas, **el historial de quien usa la lista como se usa una lista estaria
+   siempre vacio**, y el mosaico ensenaria lo de todos a alguien que lleva meses comprando.* **Es la diferencia
+   entre «lo que tengo apuntado» y «lo que suelo comprar», y esta escrita.**
+2. **`anadido_por`, y con la consecuencia de seguridad dicha**: *«quien tiene permiso de **solo mirar** una lista
+   **no puede sacar de aqui** lo que hay dentro de ella»*. **Segunda decision de seguridad de esta fase que
+   aparece escrita, despues de `_acceso`** -- *y esta es mas sutil: no es que no pueda **entrar**, es que **no
+   puede deducir** lo de dentro por el historial.*
+3. **La recencia, y por que no un corte** -- *y esta es la que vale la pena leer entera:*
+
+> *«Con un corte a 90 dias, un producto **desaparece del mosaico de un dia para otro** al cruzar el dia 90, y
+> `veces` tendria que pasar a significar "veces en 90 dias". **Dos numeros distintos con el mismo nombre es
+> justo el error que este proyecto ya pago una vez con "imposible"** (`core/comparacion.py`).»*
+
+**Una decision de diseno argumentada, con el caso a favor y en contra, con el numero elegido (vida media de 30
+dias) y con un **precedente real del propio proyecto** como razon.** *Y el encargo pedia exactamente esto --
+«elegir entre contar los ultimos 90 dias o pesar por recencia, **y escribirlo**» --, **y esta escrito.***
+
+### Y F08, con sus cinco casos **enteros**
+
+| caso de la aceptacion | **estado** |
+|---|---|
+| **lista parcial** | **cubierto**: `sin_precio` y la estimacion en pantalla |
+| **oferta caducada** | **no hay ninguna, por construccion** -- *el catalogo es de hoy* |
+| **cantidad/pack** | **CERRADO**: `parse_formato` normaliza el total, y el precio unitario divide bien |
+| **cupon/club no elegible** | **cubierto en cuatro sitios**, y con la mitad de peso |
+| **historico desconocido** | **cubierto por estructura**: el historial devuelve **necesidades, no precios** |
+
+**Los cinco, cubiertos** -- *y la aceptacion de F08 queda contestada entera, con la unica mitad sin medir siendo
+«ambito visible» de `C06`, que es una pregunta de la pantalla.*
+
+### Y la cuenta de la fase, que ya se puede dar
+
+**Ocho piezas de este paquete aparecieron **ya resueltas y con el motivo escrito** mientras buscaba otra cosa**:
+*el `::VARCHAR` de `promo_hasta` con su prueba, `unidades_pack` que no llegaba a la pantalla, el historial con
+sus tres decisiones, el club excluido de las alertas, el peso de media, y tres mas.*
+
+**Y eso cambia lo que este paquete significa**: *F08 no ha sido «implementar comparacion y presupuesto» -- **ha
+sido comprobar que el proyecto ya habia pensado casi todo eso**, y encontrar **las dos piezas que de verdad
+faltan**:*
+1. **el «previsto» de `C09`** -- *lo que la persona se propone gastar: **no existe***
+2. **y el «ambito visible» de `C06`** -- *por medir*
+
+**Dos huecos, y ninguno es un descuido: los dos son cosas que nadie ha pedido todavia.**
