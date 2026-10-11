@@ -270,3 +270,74 @@ el grep del resumen, el `lineas_de` -- y concluí.* **Aqui mire tres antes de de
 **Los tres son casos **de importar**, y los tres estan sin poder probarse** -- *no porque fallen, sino porque
 **no hay donde**.* **Es el unico criterio de F09 en ese estado, y conviene que se lea asi: no es un defecto, es
 una funcion que nadie ha escrito.**
+
+
+---
+
+## 5. `R01`: **hecho, y con el mejor comentario de la fase**
+
+*(Ronda 119.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:101`): *«Recetas propias, **etiquetas, favoritos,
+busqueda** y **vacio con filtros explicados**.»*
+
+**Y despues de mirar la pagina equivocada** -- *`Cocina.tsx`, que es la de cocinar, no la del recetario* --, **el
+recetario es `Recetario.tsx`, 303 lineas, y `logica/recetario.ts`, 125.** *Y ahi esta todo.*
+
+### `Recetario.tsx`: los estados, dichos de si mismo
+
+```
+:1-9   «El recetario: la pantalla propia de Recetas.
+       **El selector de version es lo importante de esta pantalla.** El recetario guarda versiones para que
+       el diario pueda citar una y que no se mueva; pero eso, SIN PODER MIRARLO, ES UNA PROMESA. Con el
+       selector, quien cocina puede comprobar que la version 1 sigue diciendo lo que decia...
+       Estados de verdad: cargando, sin nada, y error con el motivo que da la API.
+       UNA PANTALLA QUE SOLO SABE PINTAR EL CASO BUENO NO ESTA TERMINADA.»
+```
+
+**Y las dos cosas del criterio, en el codigo:**
+
+| lo que pide `R01` | **donde esta** |
+|---|---|
+| **busqueda** | `Recetario.tsx:221`, `placeholder="Buscar por nombre..."` -- *y `:201` dice **«G12, punto 218: el buscador que faltaba»*** |
+| **filtro por etiqueta** | `:229`, `aria-label="Filtrar por etiqueta"`, con `etiquetasDe(todas)` |
+| **etiquetas** | *en el dato: `listar` devuelve `etiquetas`, y `logica/recetario.ts` las acepta **en dos formas** porque el servidor manda texto* |
+| **favoritos** | *por medir* -- *no aparece en esta pantalla* |
+| **vacio con filtros explicados** | **`textoDelVacio`**, importado en `:22` -- *y el tipo `Filtro` dice **que significa cada filtro*** (`«Vacio significa todo»`, `«Vacia o ausente significa todas»`) |
+| **y el selector de version** | *que es `R03` **hecho visible**: «sin poder mirarlo, es una promesa»* |
+
+### Y el comentario que dice lo que yo llevo 119 rondas aprendiendo
+
+`logica/recetario.ts`, lineas 4 a 6:
+
+> *«G12 pide en su 218 "biblioteca, **busqueda/filtros**, crear/editar/versionar/archivar", y el recetario tenia
+> la biblioteca y no tenia buscador. **Es la primera funcion de interfaz que este encargo encuentra ausente --
+> en once paquetes, todo lo demas estaba escrito.**»*
+
+**Alguien, en una sesion anterior, encontro exactamente lo que yo llevo encontrando ocho veces** -- *y lo dijo
+**mejor**: **«en once paquetes, todo lo demas estaba escrito»**.* **Es la misma conclusion, y ya estaba escrita
+en el codigo, esperando a que alguien la leyera.**
+
+### Y la decision del filtrado, que es de seguridad
+
+`logica/recetario.ts:8-13`:
+
+> *«**Se filtra en el cliente y no en el servidor, y eso es una decision, no una comodidad.** La lista que llega
+> ya viene **filtrada por dueno** desde `recetas.listar(con, propietario)` -- que es la puerta del 223:
+> "privadas por defecto" --, asi que **filtrar aqui no puede ensenar nada que no fuera tuyo**: lo que se esconde
+> es un subconjunto de lo que ya te tocaba. **Hacerlo en el servidor anadiria un parametro mas que habria que
+> recordar comprobar contra el dueno, y ese es justo el sitio donde un olvido se convierte en una fuga.**»*
+
+**Es un argumento de **seguridad** para una decision de **interfaz*** -- *y es correcto: **cuantos menos sitios
+donde haya que acordarse de comprobar el dueno, menos sitios donde olvidarlo**.* *Es la misma logica que
+`_de_quien` y que `_acceso`: **la comprobacion, en un solo sitio**.*
+
+### Y F09, con sus cuatro criterios
+
+| criterio | **estado** |
+|---|---|
+| **`R01`** -- biblioteca/filtros | **hecho**: busqueda, filtro por etiqueta, estados (cargando/sin nada/error), **vacio explicado**, y el selector de version; *«favoritos» por medir* |
+| **`R02`** -- importar receta | **NO EXISTE**, y lo dicen tres capas -- *es una funcion que nadie ha escrito* |
+| **`R03`** -- borrador y versiones | **medido y PASA** (9 pruebas) |
+| **`R04`** -- raciones/unidades | **medido y PASA** -- *y la mitad de la suma es de F10* |
+
+**Tres de los cuatro, hechos o medidos; y el cuarto es un hueco con nombre.** *Y `R01` trae ademas **la respuesta
+a la pregunta de esta fase**: **en once paquetes, todo lo demas estaba escrito.***
