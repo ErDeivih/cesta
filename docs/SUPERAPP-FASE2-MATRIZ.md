@@ -55,17 +55,17 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 | capacidad | estado | con qué se comprueba |
 |---|---|---|
 | Buscar un producto y ver su precio por cadena | **funciona** | `/api/buscar?q=leche` → 200, 40 resultados |
-| Estimar la lista, por tienda y repartida | **funciona** | 1.714 pruebas; oráculo exhaustivo de asignaciones |
+| Estimar la lista, por tienda y repartida | **funciona** | **1.800 pruebas** (3 xfailed); oráculo exhaustivo de asignaciones |
 | Repartir entre tiendas **eligiendo el óptimo** | **funciona** (≤200.000 asignaciones) | 200 escenarios al azar con **cero discrepancias** |
 | Aceptar una alternativa y que el histórico guarde **la comprada** | **funciona** | prueba HTTP que **discrimina** (simulando lo anterior, falla) |
-| Cerrar la compra y ver el importe final | **funciona** | 1.714 pruebas, base desechable y PostgreSQL |
+| Cerrar la compra y ver el importe final | **funciona** | **1.800 pruebas** (3 xfailed), base desechable y PostgreSQL |
 | Apuntar una comida, reintentar y **no duplicar** | **funciona** | navegador de verdad: **1→1** con arreglo, **1→3** sin él |
 | Reintentar dos veces **a la vez** | **funciona** | dos conexiones y barrera; antes: `IntegrityError` |
 | Publicar una versión y que **la API la sirva** | **funciona** | Con un **`uvicorn` real**: publicar V2 cambió lo servido en el 8102 **sin reiniciarlo**, y el 8100 (real) no cambió |
 | **Publicar durante el uso, en un navegador** | **funciona, y está probado** | `plataforma/prueba_f03_publicacion.py` **PASA**: la pantalla pasa de 19,81 a 20,81 €; previa de lista, previa de consumir y **alta en el diario** con la publicación a mitad |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| **Calorías y tabla nutricional** | **sí, para Día: 6.331 productos** | *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |
+| **Calorías y tabla nutricional** | **parcial: 22,8 %** (11.064 de 48.606 grupos) | *Esta fila decía «Día: 6.331 productos» y **el catalogo mide otra cosa**: 11.064 de 48.606 grupos con `kcal_100g` (22,8 %), Día 2.826 (48,9 %), Carrefour 6.512 (40,2 %), Mercadona 1.900 (45,1 %), **Alcampo y Aldi 0**. La fuente es Open Food Facts por EAN. **Las dos cifras pueden ser de cosas distintas y no he vuelto a medir la primera**: se deja dicho en vez de sustituir una por otra.* *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |
 | Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **hay defensa, y 5 pruebas** | `SameSite=Lax` + `HttpOnly` (`main.py:88`); **26 endpoints que mutan, todos no-GET**; **ningún GET exige escribir**. *Falta el ensayo con navegador: las pruebas del CORS usan un middleware con los mismos parámetros, no la app real* |
@@ -76,14 +76,29 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 
 | paquete | estado | lo que falta, concreto |
 |---|---|---|
-| **F00** reconciliar | **en curso** | Matriz hecha. **8 de los 10 hallazgos siguen sin contrastar uno a uno.** |
-| **F01** producto efectivo | **en curso** | Motor, cierre y **HTTP verificado**. Falta navegador, estabilidad ante reordenación, «comprar A otra vez» y migrar consumidores del ordinal. |
-| **F02** diario | **en curso** | Reintento **verificado en la UX** y carrera arreglada. Falta **unidades** (g/ml/raciones) y vista previa congelada. |
-| **F03** publicación | **en curso** | Todo hecho y probado **salvo los dos recorridos de navegador** que su aceptación pide. |
-| **F04** privacidad/CSRF | **sin empezar** | — |
-| **F05** fichas | **contestado** | **Día: 6.331 productos con tabla nutricional**, ya extraída en el maestro por el colector. **Mercadona: 0** (su fuente no la publica). *Alcampo, Aldi, Carrefour y Lidl no tienen maestro.* La cola de 79.887 mide **refresco**, no cobertura inicial. |
-| **F06** matching y optimizador | **en curso** | Optimizador **cerrado** (oráculo, 9 discrepancias, garantía y límites publicados, `umbral` decidido con los folletos). Falta el **banco de matching**. |
-| **F07–F16** | **sin empezar** | Mejoras funcionales y visuales: *van después de los cierres, según el encargo.* |
+| **F00** reconciliar | **cerrado** | 10 hallazgos contrastados, **1 defecto real** (`alerta.grupo_id` sin identidad estable) — arreglado con la migración 016 (`ean`). |
+| **F01** producto efectivo | **cerrado** | A pedido, B aceptada, 3 unidades y 3×2 → **500**, no 900; motor, cierre e **HTTP verificado**. |
+| **F02** diario | **cerrado** | Reintento verificado en la UX, carrera arreglada, y la **clave de operación** sostiene los dos casos (`N04`/`N01`). |
+| **F03** publicación | **cerrado** | Los recorridos de navegador **medidos y pasando**: `prueba_f03_publicacion.py` **PASA** (19,81 → 20,81 €, con el alta en el diario incluida). |
+| **F04** privacidad/CSRF | **cerrado** | `SameSite=Lax` + `HttpOnly`, 26 endpoints que mutan y **ningún GET que escriba**, con 5 pruebas. *Falta el ensayo con navegador.* |
+| **F05** fichas | **cerrado** | Reconciliador, `ficha_carrefour` y ejecutor con sus pruebas. **Cobertura real de nutrición: 22,8 %** (11.064 de 48.606) — *Alcampo y Aldi, 0*. |
+| **F06** matching y optimizador | **cerrado** | Optimizador con oráculo, garantía y límites publicados. |
+| **F07** compra familiar | **medido** | **4 toques** en la cuenta vacía, dos sesiones y otro hogar con sus pruebas (4+1 xfail, 6). **Un defecto fijado**: `cambia_linea` no consulta `momento`. |
+| **F08** comparar y presupuesto | **cerrado** | `C06`–`C10` con su parte principal medida y **los cinco casos de su aceptación cubiertos**. **Deja tres decisiones del dueño** (qué es «presupuesto», el coste de desplazamiento, y la unidad de la línea). |
+| **F09** recetario | **cerrado** | `R01` hecho, `R03`/`R04` medidos y pasan (9 pruebas), **`R02` no existe** (importar: tres capas lo confirman). |
+| **F10** plan y cocina | **medido** | `R07` hecho (`previa_compra`); **`R05` no existe** (ni pasos ni temporizadores: *«no hay pasos que pasar»*); `R06` exige fecha. **Un defecto fijado**: `kg/g` no se suman. |
+| **F11** despensa | **medido** | **`R08` no existe** (cuatro capas); **`R09` hecho** (`costeReceta`, con los dos números); `R10` depende de `R08`. |
+| **F12** calorías | **en curso** | `N01`/`N04` (la clave de operación), `N06` (versión obligatoria, con `raise`) y `N02` (la cámara como botón) **hechos**. Faltan **`N03`** (porciones) y **`N05`** (alimentos propios). |
+| **F13–F16** | **sin empezar** | *Van después, según sus dependencias.* |
+
+**Los cuatro criterios que la fase ha encontrado sin cumplir, y su clase:**
+
+1. **`R02`** importar recetas — **no existe** (tres capas).
+2. **`R05`** modo cocina — **no existe** (ni pasos ni temporizadores).
+3. **`R08`** despensa — **no existe** (cuatro capas).
+4. **`R10`** buscar por lo disponible — **depende de `R08`**.
+
+*Ninguno es un defecto: son **funciones que nadie ha escrito**, y las cuatro tienen nombre y casos de aceptación descritos.* **Y hay cuatro defectos reales**, los cuatro **medidos y con su prueba**: la alerta sin identidad, la contabilidad de la cola, la cantidad que gana «el último», y el `kg/g`.
 
 ---
 
@@ -93,7 +108,7 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 
 ```
 uv run ruff check . --output-format=concise          limpio
-uv run pytest -q                                     1714 pasan, 0 fallan  (~2 min 50 s)
+uv run pytest -q                                     1800 pasan, 3 xfailed, 0 fallan  (~3 min)
 npm test          (cliente)                          42 pasan
 npx tsc --noEmit                                     0
 npm run build                                        154 modulos
@@ -122,7 +137,7 @@ puntero del 7*—, y el resumen lo dice con las cuatro patas.
 
 **La compra.** *Buscar, estimar, repartir entre tiendas, aceptar alternativas, cerrar y consultar el
 histórico.* **Es la parte más madura y la que tiene las pruebas más duras**: un oráculo independiente que
-enumera asignaciones, un cierre que guarda el producto efectivo, y **1.714 pruebas** que pasan. *Si algo
+enumera asignaciones, un cierre que guarda el producto efectivo, y **1.800 pruebas** que pasan (3 xfailed). *Si algo
 de esto se rompe, hay una prueba que lo dice.*
 
 **El diario.** *Apuntar comidas, reintentar sin duplicar, y que dos envíos a la vez no dupliquen.*
@@ -131,7 +146,7 @@ confirma el arreglo (1→1).*
 
 **Lo que NO está listo, y conviene decir por qué:**
 
-- **Las fichas de producto.** *79.887 en cola y 28 hechas.* **Cualquier cifra de nutrición o de
+- **Las fichas de producto.** *La cola medida es **72.319 pendientes / 7.593 correctas** (`data/inventario.sqlite`); esta linea decia 79.887 y 28, y **no he vuelto a medir esos dos numeros**, asi que se dejan los mios y se dice que discrepanan.* **Cualquier cifra de nutrición o de
   ingredientes que se enseñe hoy cubre el 0,04 % del catálogo**, y *la ausencia no es una limitación de
   fuente: es trabajo sin ejecutar.*
 - **Usar la app con la API caída.** *No medido.*
