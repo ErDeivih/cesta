@@ -20,7 +20,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
 | Fichas de producto: **calorías / Nutri-Score** | **no se puede con estas fuentes** | **ninguna de las cinco cadenas medidas publica nutrición numérica** — por claves, sobre el crudo real |
-| Fichas: **ingredientes y alérgenos** | **el dato ya está capturado; falta extraerlo** | Mercadona (6 fichas) y Día los publican y están en disco |
+| Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py`, 7 pruebas, una **contra crudo real**. *Pero el crudo de hoy sólo trae **3 fichas** de 155: lo demás son listados* |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |
 
@@ -101,8 +101,9 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Extraer `ingredients` y `allergens` de Mercadona y Día** del crudo a la cola de fichas — *sin
-   red, el dato ya está capturado* —. *El mapa está cerrado*: **ninguna de las cinco cadenas medidas
+1. **Pedir las páginas de producto de las cadenas de las que se sabe la forma** — *Mercadona ya tiene
+   extractor (`ficha_mercadona.py`) y el crudo de hoy sólo trae 3 fichas: lo que falta es **pedir**, no
+   extraer* —, y **escribir el lector de Día**, que tiene otra forma y hoy da 0 de 547. *El mapa está cerrado*: **ninguna de las cinco cadenas medidas
    publica nutrición numérica** (mercadona 6 fichas, alcampo 59 claves, aldi 18, dia, lidl documentado),
    así que **las calorías no se pueden enseñar con estas fuentes**; los ingredientes y alérgenos **sí**.
    Queda **carrefour** (HTML) sin medir. *Medido

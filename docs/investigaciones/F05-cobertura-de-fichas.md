@@ -402,3 +402,49 @@ cual, y sale partido:**
 **Enseñar ingredientes y alergenos, si**, *y para dos cadenas el dato ya se pidio y esta guardado.*
 
 *Es la frase que faltaba en el veredicto, y ahora tiene cinco cadenas detras.*
+
+
+---
+
+## 11. El extractor, hecho -- **y lo que hay en el crudo son TRES fichas, no un tesoro**
+
+*(Ronda 32.)* `projects/cesta/ficha_mercadona.py`, con siete pruebas y **una de ellas contra un fichero
+real** (`test_contra_el_crudo_real`, que se salta si no hay crudo -- el crudo es del entorno, no del
+codigo -- y **que hoy se ejecuto, no se salto**).
+
+**Lo que hace**: lee `ingredients` y `allergens` del bloque `nutrition_information`, **quita el marcado sin
+perder el texto** -- *el `<strong>` marca los alergenos, no decora* --, y **no rellena lo que la fuente no
+trae**: un campo ausente no aparece, para no contar como cobertura una ficha vacia.
+
+### Y ahora la cobertura de verdad, que es pequena
+
+```
+mercadona  155 crudos de hoy   ->  con ingredientes 3/155   con alergenos 3/155
+dia        547 crudos de hoy   ->  543 NO son JSON, y con ingredientes 0/547
+```
+
+**Tres fichas.** *Asi que el crudo de hoy de Mercadona trae **3 fichas de producto** y el resto son
+listados de categoria.* **Y no es que el extractor falle: es que el colector solo pidio tres paginas de
+producto.**
+
+**Y un numero mio que era enganoso, dicho para que no se cite**: en el primer pase mi script imprimia
+*«con algo: 154/155»*, porque contaba tambien `id` y `nombre` -- **que no son una ficha**. *La cuenta buena
+es la de ingredientes y alergenos: **3**.*
+
+### Y Dia no se lee con esto
+
+**0 de 547**, y **543 no son JSON**. *Dia tiene otra forma* -- la que encontre en la ronda 29 con
+`allergen_type_code` -- **y este modulo es de Mercadona, no la lee.** *Decirlo es parte del resultado:
+no he escrito un extractor generico, he escrito uno de Mercadona y **probado que no sirve para Dia**.*
+
+### Lo que esto deja dicho sobre F05, sin adornos
+
+1. **El extractor funciona y esta probado**, contra la forma real y contra un fichero real.
+2. **Lo que hay capturado son 3 fichas.** *Para tener las 4.477 de la cola hay que **pedir las paginas**,
+   y eso es red -- no un extractor.*
+3. **Dia necesita su propio lector**, de otra forma.
+4. **Y las cifras nutricionales siguen sin existir en ninguna fuente**, que es lo que el mapa de la
+   seccion 10 dejo cerrado.
+
+**Asi que «extraer lo que ya esta» da tres fichas, no cuatro mil.** *El trabajo grande sigue siendo pedir,
+y ahora se sabe exactamente que pedir y para que.*
