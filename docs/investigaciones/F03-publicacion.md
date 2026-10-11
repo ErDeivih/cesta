@@ -607,3 +607,49 @@ hizo **sin arriesgar el catalogo de casa**:
 version. **Lo que no se ha hecho es abrir la pantalla** y comprobar que un recorrido de persona -- buscar,
 previa, sustituir, anotar -- no mezcla dos versiones en lo que ve.* **Es la ultima pieza de F03, y sigue
 pendiente.**
+
+
+---
+
+## 19. Los dos bloqueos de la pantalla, medidos antes de intentarla
+
+*(Ronda 55.)* Antes de montar el recorrido de navegador comprobe si era viable. **No lo era, por dos cosas
+concretas -- y las dos merecen quedar escritas, porque ninguna se ve leyendo el informe:**
+
+```
+1. El 5173 NO contesta: el servidor de desarrollo del cliente no esta levantado.
+   -> no hay pantalla que abrir, y el 8099/8100/8102 son APIs sin interfaz.
+
+2. V1 y V2 del SANDBOX SON BYTE A BYTE IDENTICAS:
+       versiones del sandbox: ['20261001-090000', '20261002-110000']
+         v20261001-090000: grupos.parquet 4589791 bytes
+         v20261002-110000: grupos.parquet 4589791 bytes
+       identicos: True
+   -> aunque hubiera pantalla, el recorrido NO ENSENARIA NADA DISTINTO: publique dos veces
+      la misma carpeta.
+```
+
+**El segundo es el que importa, y es un fallo de mi montaje**: *para probar que una publicación cambia lo
+que se ve, **las dos versiones tienen que diferir en algo que la persona note** -- un precio, un producto,
+una promoción.* **En el §18 publique dos veces los mismos ficheros**, asi que lo que demostre fue que **el
+API cambia de versión**, no que **el cambio se note**.
+
+*Las pruebas de ensayo ya hacen lo correcto en esto: `publica_v2()` devuelve marcos **distintos** de
+`publica_v1()`, y escriben con `write_parquet_file`. Es lo que hay que repetir en el sandbox.*
+
+### La receta corregida, con los dos arreglos
+
+    # 1. Que V2 sea DISTINTA de V1 -- sin esto el recorrido no ensena nada
+    from core.storage import write_parquet_file
+    import polars as pl
+    grupos = pl.read_parquet(sandbox / "grupos.parquet")
+    cambiado = grupos.with_columns((pl.col("precio_cent") + 100).alias("precio_cent"))
+    write_parquet_file(cambiado, sandbox / "grupos.parquet")     # atomico: renombra
+    # y DESPUES publicar la V2, con publicacion.GOLD parcheado en el proceso
+
+    # 2. Levantar el cliente apuntando al API del sandbox
+    cd plataforma/web/app; $env:CESTA_API='http://127.0.0.1:8102'; npm run dev
+
+**Estado de los servicios al cerrar esta ronda**, medido: **8100 (real), 8102 (sandbox) y 8099
+levantados**; **5173 no**. *El 8102 queda apuntando al sandbox y con la V2 publicada, listo para el paso de
+la pantalla.*
