@@ -412,3 +412,68 @@ que»** -- es la regla de la casa entera, dicha en una linea.*
 
 **Asi que la advertencia de la ronda 116 se cumple**: *la pieza estaba **en otro paquete**, y **estaba
 hecha**.* *Y la encontre **siguiendola**, no suponiendola -- que es lo unico que ha funcionado en esta fase.*
+
+
+---
+
+## 7. **Medido**: `previa_compra` no distingue `kg/g` de `kg/ud` -- y la aceptacion si
+
+*(Ronda 121.)* `tests/test_fase2_f10_previa_compra.py`, **siete pruebas**, y una sonda sobre los cuatro casos.
+**El resultado, sin adornos:**
+
+```
+kg + kg   -> [('harina', 1.5, 'kg')]                        <- SUMA
+kg + g    -> [('harina', 500, 'g'), ('harina', 1, 'kg')]    <- NO suma
+             SIN CONSOLIDAR: ['harina: g y kg']             <- y lo DICE
+kg + ud   -> SIN CONSOLIDAR: ['harina: kg y ud']            <- NO suma
+ml + g    -> SIN CONSOLIDAR: ['leche: g y ml']              <- NO suma
+```
+
+### Y la aceptacion pide **distinguir** esos dos casos
+
+**La aceptacion de F10 lo dice con dos palabras contrapuestas:**
+
+> *«Aceptacion: dos recetas con ingrediente compartido, **mezcla kg/g compatible y ud incompatible**…»*
+
+***«kg/g compatible» y «ud incompatible» estan puestos juntos a proposito*** -- *son **el caso que se puede
+combinar** y **el que no**, y la prueba tiene que comprobar que el sistema los trata **distinto**.*
+
+**Y `previa_compra` los trata igual**: *`1 kg` de harina y `500 g` de harina **son 1,5 kg de verdad**, y el
+modulo los deja en dos lineas y los nombra como incompatibles, **igual que hace con `kg` y `ud`**.*
+
+### Y lo que esto **no** es, que tambien hay que decirlo
+
+**No es un dato mal sumado.** *El modulo **no inventa nada**: no suma, y **nombra** lo que no pudo consolidar
+con sus dos unidades.* **Es la decision segura** -- *y es exactamente lo que su regla 1 dice que hace.*
+
+**Asi que es un hueco, y es pequeno y esta bien definido:** *falta convertir `g` a `kg` **cuando la conversion
+es de la misma magnitud*** -- *que es lo que `core/normalize._UNIDADES` ya sabe hacer, con su factor, y que aqui
+**no se usa**.*
+
+**Y el arreglo no seria inventar**: *`_unidad_canon` hoy solo pasa a minusculas y quita espacios -- y **podria
+devolver tambien la cantidad convertida**, con la misma tabla que usa el catalogo para el precio por kg.*
+**La pieza existe y esta a un import de distancia.**
+
+### Y las otras tres reglas, que **si** pasan
+
+| la regla | **la prueba** | |
+|---|---|---|
+| **misma unidad suma** | `kg` + `kg` = `1,5 kg` | **pasa** |
+| **2: lo que no tiene cantidad no se compra** | *la `sal` no sale en `lineas` y **sale en `sin_cantidad`*** | **pasa** |
+| **sin unidad tampoco** | *«3 de que» -- **se dice, no se supone*** | **pasa** |
+| **3: los envases son enteros, y el sobrante se dice** | *`envases`, `tamano_envase`, `sobrante`* | *por medir -- necesita el catalogo* |
+| **y la previa **no escribe nada** | *misma entrada, misma salida, y la entrada **no se modifica*** | **pasa** |
+
+**Cuatro de cinco, y la que falla es la que el criterio nombra con dos palabras.**
+
+### Y F10, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`R05`** -- modo cocina | *por medir* |
+| **`R06`** -- calendario y cola | *por medir* -- *hay `planificar`/`plan`/`quitar_del_plan`* |
+| **`R07`** -- plan→lista | **el modulo esta, y cuatro de sus cinco reglas pasan**; **falta la conversion kg/g** |
+| **y `R04`** -- la mitad de la suma | *la misma pieza: lo que falta es convertir, no sumar mal* |
+
+**Y el hueco tiene nombre**: *`previa_compra._unidad_canon` no usa `core/normalize._UNIDADES`, asi que `g` y `kg`
+son dos unidades distintas en vez de dos formas de decir la misma.*
