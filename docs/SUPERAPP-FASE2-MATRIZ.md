@@ -16,7 +16,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Cerrar la compra y ver el importe final | **funciona** | 1.714 pruebas, base desechable y PostgreSQL |
 | Apuntar una comida, reintentar y **no duplicar** | **funciona** | navegador de verdad: **1→1** con arreglo, **1→3** sin él |
 | Reintentar dos veces **a la vez** | **funciona** | dos conexiones y barrera; antes: `IntegrityError` |
-| Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
+| Publicar una versión y que **la API la sirva** | **funciona** | Con un **`uvicorn` real**: publicar V2 cambió lo servido en el 8102 **sin reiniciarlo**, y el 8100 (real) no cambió |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
 | **Calorías y tabla nutricional** | **sí, para Día: 6.331 productos** | *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |

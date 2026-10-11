@@ -562,3 +562,48 @@ error del §16*.
   uso».
 
 *Sigue sin hacerse el recorrido con navegador. Lo que hay ahora es la mitad del servidor, probada.*
+
+
+---
+
+## 18. **El recorrido, con un servidor de verdad** -- y el catalogo real sin tocar
+
+*(Ronda 54.)* La mitad del servidor estaba probada en proceso. **Faltaba contra un `uvicorn` real**, y se
+hizo **sin arriesgar el catalogo de casa**:
+
+```
+1. Sandbox  data/debug/gold-f03, con publicacion.GOLD y publicacion.PUNTERO PARCHEADOS EN EL PROCESO
+            -> V1 publicada en el sandbox
+            -> comprobado antes de publicar: el puntero del REAL sigue en 20261007-103000
+
+2. API en el 8102 con CESTA_GOLD al sandbox   (esta variable SI la lee el API: ajustes.py)
+   API en el 8100 con el gold real            (el que ya estaba)
+
+3. Contraste, y los dos aislados:
+       8102 (sandbox) -> version = 20261001-090000
+       8100 (real)    -> version = 20261007-103000
+       y una busqueda en el sandbox: 200, 40 resultados
+
+4. **Se publica V2 EN EL SANDBOX**, con el API corriendo:
+       8102 (sandbox) -> version = 20261002-110000   <- CAMBIO
+       8100 (real)    -> version = 20261007-103000   <- NO cambio
+```
+
+### Lo que esto demuestra
+
+1. **Publicar cambia lo que sirve un API en marcha, sin reiniciarlo.** *Es la conmutacion de la ronda 17
+   --`catalogo` resolviendo la version y sellando la cache con lo que se lee-- **funcionando contra un
+   proceso real**, no en una prueba.*
+2. **Dos APIs pueden mirar catalogos distintos a la vez**, y ninguno ve al otro. *Por eso el recorrido se
+   pudo hacer sin tocar el catalogo de casa: **el puntero del real se verifico intacto tres veces**, antes
+   y despues de cada publicacion.*
+3. **Y el aislamiento es de dos piezas distintas**: *`CESTA_GOLD` para el **API**, y el parcheo de
+   `publicacion.GOLD` en el proceso para **publicar**.* **Creer que una servia para las dos costó el
+   incidente del §16**, y ahora esta medido cual es cual.
+
+### Y lo que sigue sin hacerse
+
+**El navegador.** *Lo probado es el servidor: que publicar cambia lo que se sirve, y que cada API sirve una
+version. **Lo que no se ha hecho es abrir la pantalla** y comprobar que un recorrido de persona -- buscar,
+previa, sustituir, anotar -- no mezcla dos versiones en lo que ve.* **Es la ultima pieza de F03, y sigue
+pendiente.**
