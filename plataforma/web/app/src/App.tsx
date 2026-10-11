@@ -28,6 +28,7 @@ import { Cocina, CocinaProvider } from './paginas/Cocina'
 import { Escaner } from './paginas/Escaner'
 import { Diario } from './paginas/Diario'
 import { Tendencias } from './paginas/Tendencias'
+import { Despensa } from './paginas/Despensa'
 import { Favoritos } from './paginas/Favoritos'
 import { Grupo } from './paginas/Grupo'
 import { Panel } from './paginas/Panel'
@@ -103,6 +104,7 @@ export function tituloDe(ruta: string): string {
   // un titulo que falta no da error de compilacion, se nota cuando ya no sabes cual es cual.
   if (ruta === '/buscar' || ruta === '/compra') return 'Buscar'
   if (ruta.startsWith('/cesta') || ruta.startsWith('/compra/listas')) return 'La cesta'
+  if (ruta.startsWith('/compra/despensa')) return 'Despensa'
   if (ruta.startsWith('/grupo/') || ruta.startsWith('/compra/comparar/')) return 'Comparar'
   if (ruta.startsWith('/producto/') || ruta.includes('/productos/')) return 'Producto'
   if (ruta.startsWith('/favoritos') || ruta.startsWith('/compra/favoritos')) return 'Favoritos'
@@ -137,6 +139,7 @@ export function App() {
         {/* Compra: la lista, el buscador, la ficha y el gasto. */}
         <Route path="/compra" element={<LayoutSuite app="compra"><Buscar /></LayoutSuite>} />
         <Route path="/compra/listas" element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>} />
+        <Route path="/compra/despensa" element={<LayoutSuite app="compra"><Despensa /></LayoutSuite>} />
         <Route
           path="/compra/listas/:listaId"
           element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>}

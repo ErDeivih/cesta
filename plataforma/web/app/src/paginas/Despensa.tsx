@@ -1,0 +1,125 @@
+/** La despensa: lo que hay en casa.
+ *
+ *  **Lo que esta pantalla tiene que decir bien, y es lo unico que importa aqui**: *«no se sabe cuanto» **no es
+ *  «cero»**.* Una existencia **sin cantidad** se enseña **como lo que es** -- *no con un `0`, que afirmaria que no
+ *  queda nada* --, y el total de las que no se sabe **se dice arriba**, para que no parezca que la lista esta
+ *  completa.
+ *
+ *  **Y no hay ningun boton de «he comprado».** *No es un olvido:* **la ruta no existe**, porque *«compra no
+ *  acredita consumo ni stock restante»* (`R08`). *Lo que hay es **declarar** lo que hay -- que sobrescribe -- y
+ *  **gastar**.
+ */
+import { useState } from 'react'
+
+import { declara, consume, useDespensa } from '../api/despensa'
+import { textoDeError } from '../api/cliente'
+import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+
+/** **Como se lee una cantidad.** *Y `null` **no** es `0`: es «no se sabe».* */
+function cuanto(e: { cantidad: number | null; unidad: string }): string {
+  if (e.cantidad === null) return 'no se sabe cuanto'
+  return `${e.cantidad}${e.unidad ? ' ' + e.unidad : ''}`
+}
+
+export function Despensa() {
+  const { data, isLoading, error } = useDespensa()
+  const [texto, setTexto] = useState('')
+  const [cantidad, setCantidad] = useState('')
+  const [unidad, setUnidad] = useState('')
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [gastado, setGastado] = useState<string | null>(null)
+
+  const mete = async () => {
+    setAviso(null)
+    const n = cantidad.trim() === '' ? null : Number(cantidad.replace(',', '.'))
+    if (n !== null && !Number.isFinite(n)) {
+      setAviso('Esa cantidad no es un numero.')
+      return
+    }
+    try {
+      await declara({ texto: texto.trim(), cantidad: n, unidad: unidad.trim() })
+      setTexto(''); setCantidad(''); setUnidad('')
+    } catch (e) {
+      setAviso(textoDeError(e))
+    }
+  }
+
+  const gasta = async (t: string) => {
+    setAviso(null); setGastado(null)
+    try {
+      const r = await consume({ texto: t, cantidad: 1, unidad: '' })
+      // **El motivo se enseña tal cual.** *«Queda menos, y no se sabe cuanto» es una respuesta, no un fallo.*
+      if (r.motivo) setGastado(`${t}: ${r.motivo}`)
+    } catch (e) {
+      setAviso(textoDeError(e))
+    }
+  }
+
+  if (isLoading) return <p className="text-tinta-suave">Cargando la despensa...</p>
+  if (error) return <p className="text-red-700">{textoDeError(error)}</p>
+
+  const existencias = data?.existencias ?? []
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">La despensa</h1>
+      <p className="text-sm text-tinta-suave">
+        Lo que hay en casa. <strong>Se declara</strong>, no se deduce de lo que se ha comprado:
+        comprar algo no quiere decir que quede.
+      </p>
+
+      {data && data.sin_saber_cuanto > 0 && (
+        <p className="text-sm text-amber-700">
+          {data.sin_saber_cuanto === 1
+            ? 'Hay 1 cosa de la que no se sabe cuanto queda.'
+            : `Hay ${data.sin_saber_cuanto} cosas de las que no se sabe cuanto queda.`}
+        </p>
+      )}
+
+      {aviso && <p className="text-sm text-red-700">{aviso}</p>}
+      {gastado && <p className="text-sm text-tinta-suave">{gastado}</p>}
+
+      {existencias.length === 0 ? (
+        <Vacio titulo="La despensa esta vacia">
+          Declara lo que tengas en casa, y ve descontandolo.
+        </Vacio>
+      ) : (
+        <Tarjeta>
+          <ul className="divide-y divide-borde">
+            {existencias.map((e) => (
+              <li key={e.texto} className="flex items-center justify-between gap-3 py-2">
+                <span>{e.texto}</span>
+                <span className={e.se_sabe ? 'text-tinta-suave' : 'text-amber-700'}>
+                  {cuanto(e)}
+                </span>
+                <Boton onClick={() => gasta(e.texto)}>Gastar uno</Boton>
+              </li>
+            ))}
+          </ul>
+        </Tarjeta>
+      )}
+
+      <Tarjeta>
+        <h2 className="text-sm font-semibold">Declarar lo que hay</h2>
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <label className="flex flex-col text-sm">
+            Que
+            <input className="rounded border border-borde px-2 py-1" value={texto}
+                   onChange={(ev) => setTexto(ev.target.value)} placeholder="harina" />
+          </label>
+          <label className="flex flex-col text-sm">
+            Cuanto <span className="text-xs text-tinta-suave">(vacio = no se sabe)</span>
+            <input className="rounded border border-borde px-2 py-1" value={cantidad}
+                   onChange={(ev) => setCantidad(ev.target.value)} placeholder="1" />
+          </label>
+          <label className="flex flex-col text-sm">
+            Unidad
+            <input className="rounded border border-borde px-2 py-1" value={unidad}
+                   onChange={(ev) => setUnidad(ev.target.value)} placeholder="kg" />
+          </label>
+          <Boton onClick={mete} disabled={!texto.trim()}>Declarar</Boton>
+        </div>
+      </Tarjeta>
+    </div>
+  )
+}
