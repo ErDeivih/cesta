@@ -422,6 +422,33 @@ para el mismo hecho acaban discrepando, que es lo que el propio proyecto dice en
 **sin unidad se dibuja** --*la API puede no mandarla y eso no puede romper nada*--; y **un punto
 descartado por fecha no decide que la serie mezcla**.
 
+### G05, el gasto pagado: **la regla primero, porque es donde el numero miente**
+
+**La pagina se llama «Gasto y ahorro» y no tenia gasto.** Sus diez secciones son del catalogo (que
+entro por cadena, precios movidos, dispersion, letras de calidad, indice), y **el gasto no se sumaba en
+ningun sitio**: `importe_cent` -- la columna de la migracion 013, que G03 midio -- **no aparecia en
+ninguna suma, ni en el servidor ni en el cliente**. *El dato estaba y nadie lo usaba.*
+
+**Y el dato es alcanzable**: `GET /api/listas/{lista_id}/compras` devuelve las compras cerradas con sus
+lineas y sus importes, **incluidos los `NULL` de las lineas movidas**.
+
+**`core/gasto.py`**, con la regla que da sentido al modulo: **un importe que falta no es un cero.**
+
+- `total_cent` suma **solo las lineas con importe**, y se acompana de **cuantas entraron y cuantas no**;
+- **un periodo sin ninguna linea con importe tiene `total_cent = None`, no `0`** -- *no es que se
+  gastara cero; es que no se sabe*;
+- **`completo` es `False` en cuanto falta una**, aunque el total sea grande y creible;
+- **un `0` explicito SI es un importe conocido** (algo que salio gratis), y no cobertura que falta;
+- agrupa por **la fecha de la compra**, no la del precio -- *recalcular una compra de ayer con los
+  precios de hoy seria explicar lo que paso con datos que no existian*;
+- y **una linea sin fecha no se coloca en el periodo de hoy**: se cuenta aparte y se declara.
+
+**Ocho pruebas, en 0,29 s.** La que da sentido a todo: *sin ningun importe, `total_cent is None`.*
+
+*Es la misma distincion que `{valor, faltantes}` en `estado/cocina.ts` y la columna «Recortados» del
+indice: el dato que falta se declara. Y en dinero importa mas, porque un `NULL` sumado como cero da un
+numero redondo, mas bajo de lo real, y nada en la pantalla lo delata.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
