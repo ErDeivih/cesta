@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | ofrecer cantidad y macros en `Diario.tsx:Alta` |
+| G01 Diario efectivo | `en curso` | ver abajo | el puente compra→diario consumiendo el recibo real |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -40,6 +40,9 @@ completo, no una compilación.**
 | El cliente **devuelve el recibo** del servidor (`{id, dia}` / `{entrada}`) en vez de `undefined`, y los tres tipos están declarados | `src/api/diario.ts` | 11 oct 2026 |
 | **Las tendencias se invalidan**: `useApuntar`, `useApuntarDesdeFicha` y `useBorrarEntrada` invalidan `['diario']` **y** `['diario-rango']` | `src/api/diario.ts` | 11 oct 2026 |
 | `npm run tipos` limpio tras el cambio | `npx tsc --noEmit` | 11 oct 2026 |
+| **La aceptación por HTTP montado**: recibo `{id, dia}`, cantidad y macros que se vuelven a leer, cobertura 1/2 y 2/2, el rango viendo el alta, negativos/compra/receta inventada rechazados, dos comidas iguales y el borrado con recibo | `tests/test_g01_diario_http.py` — **10 pasan** (1,9 s) | 11 oct 2026 |
+| **El formulario**: `Alta` ofrece **cantidad (g)** y los **tres macronutrientes**, con la aclaración de que lo apuntado es lo comido y no los valores de 100 g; vacío es `null` (no `0`) y la coma decimal se acepta | `src/paginas/Diario.tsx` — `aNumero()` | 11 oct 2026 |
+| **Al guardar se limpia solo lo guardado**: si el alta falla, el error se ve y no se borra lo escrito | `src/paginas/Diario.tsx` | 11 oct 2026 |
 
 **Lo que ya existía y se conserva**: `tests/test_de_la_ficha_al_diario.py` (la cuenta de la ficha y
 lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valores por 100 g, que
@@ -47,16 +50,15 @@ hace la cuenta **en el servidor**.
 
 ### Pendiente, y por qué
 
-1. **`Diario.tsx:Alta` no ofrece cantidad ni macronutrientes**: manda `cantidad_g`, proteínas, grasas
-   e hidratos como `null`. Es el hueco principal del paquete y el que el documento señala primero.
-   *Acción: leer `Alta` entero (líneas 96-160) y añadir cantidad, unidad y los cuatro nutrientes con
-   su fuente, distinguiendo por porción de por 100 g y sin multiplicar dos veces.*
-2. **El puente compra→diario usa el número de la previa**, no el recibo: `Diario.tsx:62` hace
+1. **El puente compra→diario usa el número de la previa**, no el recibo: `Diario.tsx:62` hace
    `setAnotadas(previa?.anotarian.length ?? 0)`. *Acción: consumir `ReciboDeAlta`/lo que devuelva
    `anotarDeLaCompra`, y decir cuántas se anotaron de verdad.*
-3. **Idempotencia por operación**: hoy no hay clave. *Acción: una clave por operación (doble clic,
+2. **Idempotencia por operación**: hoy no hay clave. *Acción: una clave por operación (doble clic,
    respuesta perdida, reintento) que no duplique, **sin** deduplicar por nombre+fecha+nutrientes —
    eso ya está probado que debe permitir dos comidas iguales.*
+3. **`ml` frente a `g`**: el formulario solo ofrece gramos. Ofrecer mililitros exige una unidad
+   declarada en el almacén (`cantidad_g` no puede guardar ml: es justo la equivalencia que el
+   documento prohíbe sin densidad trazable). *Acción: decidir con el modelo, no en la pantalla.*
 4. **Aislamiento por HTTP montado**: anónimo 401; B no enumera, lee, modifica ni borra entradas de A
    por ID o fecha; cambio A→B sin cachés ni borradores. *Acción: extender las pruebas de la API con
    `TestClient`, que es donde se prueba la ruta y no la función interna.*

@@ -28,6 +28,21 @@ const NOMBRE_NUTRIENTE: Record<string, string> = {
 const COMIDAS = ['desayuno', 'media manana', 'comida', 'merienda', 'cena', 'otras']
 const FUENTES = ['etiqueta', 'ficha', 'estimado', 'desconocido']
 
+/** Un campo de texto a numero, o **`null` si esta vacio**. Dos cosas que importan:
+ *
+ *  - **Vacío es `null`, no `0`**: un cero es la afirmación «no lleva proteína», y no la tenemos.
+ *  - **La coma decimal se acepta**, que es como se escribe en la cocina: `7,5` es `7.5`.
+ *
+ *  Y `Number('')` es `0` y `Number('abc')` es `NaN`: los dos se convierten en `null` por caminos
+ *  distintos si no se mira. Aqui se mira.
+ */
+function aNumero(texto: string): number | null {
+  const limpio = texto.trim().replace(',', '.')
+  if (limpio === '') return null
+  const valor = Number(limpio)
+  return Number.isFinite(valor) ? valor : null
+}
+
 function hoy(): string {
   const ahora = new Date()
   // Fecha local, no UTC: a las once de la noche el dia que se anota es el de casa.
@@ -154,6 +169,10 @@ function Alta({ fecha }: { fecha: string }) {
   const [comida, setComida] = useState('comida')
   const [texto, setTexto] = useState('')
   const [kcal, setKcal] = useState('')
+  const [cantidad, setCantidad] = useState('')
+  const [proteinas, setProteinas] = useState('')
+  const [grasas, setGrasas] = useState('')
+  const [hidratos, setHidratos] = useState('')
   const [fuente, setFuente] = useState('etiqueta')
   const [esReceta, setEsReceta] = useState(false)
   const [version, setVersion] = useState('1')
@@ -169,20 +188,39 @@ function Alta({ fecha }: { fecha: string }) {
             tipo: esReceta ? 'receta' : 'alimento',
             referencia: esReceta ? texto.trim() || null : texto.trim() || null,
             version: esReceta ? version : null,
-            cantidad_g: null,
-            kcal: kcal === '' ? null : Number(kcal.replace(',', '.')),
-            proteinas_g: null, grasas_g: null, hidratos_g: null,
+            // **Los valores son los de lo que se ha comido, no los de 100 g.** La pantalla lo
+            // dice antes de los campos, para que nadie multiplique dos veces. Quien tenga los
+            // valores por 100 g usa la ficha del producto, que hace la cuenta en el servidor
+            // (`/api/diario/desde-ficha`).
+            cantidad_g: aNumero(cantidad),
+            kcal: aNumero(kcal),
+            proteinas_g: aNumero(proteinas),
+            grasas_g: aNumero(grasas),
+            hidratos_g: aNumero(hidratos),
             fuente_dato: fuente, nota: '',
           }
           apuntar.mutate(datos, {
             onSuccess: () => {
+              // **Se limpia solo lo que se ha guardado.** Si el alta falla, el error se ve y no se
+              // borra lo escrito: volver a teclear una comida entera por un 500 es lo que hace que
+              // alguien deje de usar esto.
               setTexto('')
               setKcal('')
+              setCantidad('')
+              setProteinas('')
+              setGrasas('')
+              setHidratos('')
             },
           })
         }}
         className="flex flex-col gap-3"
       >
+        <p className="text-[13px] leading-5 text-secundaria">
+          <strong className="text-tinta-fuerte">Lo que apuntes es lo que has comido</strong>, no los
+          valores de 100 g. Si tienes la ficha del producto, anotalo desde ahí y la cuenta la hace
+          el servidor. Deja en blanco lo que no sepas: <strong className="text-tinta-fuerte">no es
+          cero</strong>, es que no se sabe.
+        </p>
         <div className="flex flex-wrap gap-3">
           <label className="flex flex-col gap-1 text-[13px] text-secundaria">
             Comida
@@ -209,6 +247,43 @@ function Alta({ fecha }: { fecha: string }) {
               onChange={(e) => setKcal(e.target.value)}
               inputMode="decimal"
               className="min-h-[44px] w-28 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+            Cantidad (g)
+            <input
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value)}
+              inputMode="decimal"
+              placeholder="150"
+              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+            Proteinas (g)
+            <input
+              value={proteinas}
+              onChange={(e) => setProteinas(e.target.value)}
+              inputMode="decimal"
+              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+            Grasas (g)
+            <input
+              value={grasas}
+              onChange={(e) => setGrasas(e.target.value)}
+              inputMode="decimal"
+              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+            Hidratos (g)
+            <input
+              value={hidratos}
+              onChange={(e) => setHidratos(e.target.value)}
+              inputMode="decimal"
+              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
             />
           </label>
           <label className="flex flex-col gap-1 text-[13px] text-secundaria">
