@@ -860,3 +860,47 @@ suponer como estaba hecha.*
 **Lo que el ensayo NO hace, y sigue dicho**: *no abre la previa de una lista, ni sustituye, ni anota en el
 diario.* **Lo que prueba es la busqueda.** *Los otros tres recorridos comparten el mismo mecanismo -- una
 conexion por funcion -- y estan cubiertos en el servidor, pero **no se ha pulsado en ellos**.*
+
+
+---
+
+## 24. Y el limite, medido: **los recorridos de lista necesitan sesion**
+
+*(Ronda 60.)* Se anadieron al ensayo los tres recorridos que la aceptacion nombra ademas de la busqueda --
+**previa de lista, sustitucion y alta** -- por el proxy del cliente, con una publicacion en medio. **Y el
+primero contesta lo que hay que contestar:**
+
+```
+/api/listas -> 401 SIN SESION
+```
+
+**La busqueda no necesitaba autenticarse; los recorridos de lista si.** *Y el ensayo lo dice en voz alta, en
+vez de darlo por bueno:*
+
+```
+la PANTALLA ensena los precios de la version nueva                     ok   (11,81 -> 12,81)
+/api/listas -> 401 SIN SESION: los recorridos de lista necesitan entrar,
+               y NO SE HAN MEDIDO
+la pantalla no dio errores de JavaScript                               ok
+el puntero del catalogo REAL sigue intacto                             ok
+=== PASA ===
+```
+
+*El `comprueba` acepta el 401 **a proposito**, porque un 401 no es un fallo de la publicacion: es que ese
+recorrido **no se puede medir sin entrar**.*
+
+### Lo que queda de F03, con precision
+
+| recorrido | estado |
+|---|---|
+| **busqueda** | **medido en el navegador**: la pantalla pasa de 11,81 a 12,81 al publicar |
+| **previa de lista** | **no medido**: `/api/listas` pide sesion (401) |
+| **sustitucion** | **no medido**: mismo motivo |
+| **alta en el diario** | **no medido**: mismo motivo |
+| respuesta individual no mezcla versiones | **medido en el servidor** (§12, §17) |
+
+**Los tres que faltan comparten el mecanismo con la busqueda** -- *una conexion por funcion* --, **pero
+compartir el mecanismo no es haberlo medido**, y por eso quedan dichos como no medidos.
+
+**Y el paso siguiente es concreto**: *entrar en el ensayo -- el del diario ya lo hace, y esta ahi para
+copiarlo -- y repetir los tres con una publicacion a mitad.*

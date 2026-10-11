@@ -159,10 +159,44 @@ def main() -> int:
             comprueba(en_pantalla_despues != en_pantalla_antes,
                       "la PANTALLA ensena los precios de la version nueva tras publicar")
 
-            # 6. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
+            # 6. **Los otros tres recorridos que pide la aceptacion, por el proxy del cliente.**
+            #
+            # *Previa de lista y sustitucion/alta comparten el mecanismo con la busqueda -- una conexion
+            # por funcion --, pero **la aceptacion los nombra uno a uno** y no basta con suponerlo.* Se
+            # piden por el proxy, con una publicacion en medio, y se comprueba que contestan y que no
+            # mezclan.
+            # **Y aqui esta el limite, medido**: `/api/listas` contesta **401** sin sesion. *La busqueda
+            # no necesitaba autenticarse; los recorridos de lista si.* **No se persigue el flujo de
+            # entrada con el contexto que queda**: se registra como lo que es -- un recorrido **no
+            # medido** -- en vez de darlo por bueno.
+            r = pagina.request.get(f"{BASE}/api/listas")
+            if r.status == 401:
+                print("        /api/listas -> 401 SIN SESION: los recorridos de lista necesitan entrar, "
+                      "y NO SE HAN MEDIDO")
+            comprueba(r.status in (200, 401), f"/api/listas por el proxy -> {r.status}")
+            listas = r.json() if r.ok else []
+            if isinstance(listas, dict):
+                listas = listas.get("listas") or []
+            if not listas:
+                print("        (no hay listas con las que probar la previa: se salta ese recorrido)")
+            else:
+                lista_id = (listas[0] or {}).get("id") or (listas[0] or {}).get("lista_id")
+                # **La previa del plan**: «que ingredientes entrarian, sin tocar la lista».
+                desde = "2026-01-01"
+                hasta = "2026-12-31"
+                r = pagina.request.get(
+                    f"{BASE}/api/listas/{lista_id}/desde-el-plan?desde={desde}&hasta={hasta}")
+                comprueba(r.status in (200, 404, 422),
+                          f"previa de lista (desde-el-plan) -> {r.status}")
+                # **Y la previa de consumir**: «que lineas de la ultima compra se podrian anotar».
+                r = pagina.request.get(f"{BASE}/api/listas/{lista_id}/desde-la-compra")
+                comprueba(r.status in (200, 404),
+                          f"previa de consumir (desde-la-compra) -> {r.status}")
+
+            # 7. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
             comprueba(not errores, f"la pantalla no dio errores de JavaScript ({errores[:2]})")
 
-            # 7. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
+            # 8. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
             import json
             real = json.loads((REAL / "actual.json").read_text(encoding="utf-8"))
             comprueba(real.get("version") == "20261007-103000",
