@@ -173,3 +173,66 @@ de 1.600 caracteres que cortaba antes del `except`.*
 
 **Lo que corrigió cada uno fue leer el mensaje del servidor, pedir el esquema al proyecto, o mirar la
 estructura -- nunca suponer.** *Es la regla que ha funcionado en esta fase, y la dejo escrita.*
+
+---
+
+## Lo que espera una decision tuya -- tres cosas, y las tres bloquean un arreglo
+
+*Todo lo demas que se ha medido esta **cerrado, hecho, o fijado con su prueba**. Estas tres **no** son
+mediciones que falten: son **decisiones que nadie puede tomar por ti**, y por eso estan aqui y no en un
+informe.*
+
+### 1. ¿Qué es «presupuesto»? -- de `C09`, F08
+
+**El criterio pide** *(SUPERAPP-COMPETENCIA-Y-REA.md:97)*: *«**Previsto contra guardado/pagado sin mezclar**;
+cobertura de lineas desconocidas.»*
+
+**Hoy hay tres numeros posibles y solo dos existen:**
+
+| pieza | **estado** |
+|---|---|
+| **lo que va a costar la lista ahora** (*estimacion*) | **hecho y en pantalla** (`cesta.coste_por_linea`) |
+| **lo que se pago** | **hecho** (`compra.total_cent`) |
+| **lo que la persona se propone gastar** | **NO EXISTE** |
+
+**Y la palabra «presupuesto» en el proyecto es de colector** -- *presupuesto de tiempo y de peticiones* --, **no
+de dinero**. *Asi que hay que decidir **cual de las tres** es la que el criterio llama «previsto»* -- *y si es
+la tercera, **hay que construirla**.*
+
+### 2. ¿Cuánto cuesta ir a una tienda? -- de `C07`, F08
+
+**El criterio pide**: *«Maximo de tiendas y **coste de desplazamiento optativo**; ahorro neto definido».*
+
+**El maximo de tiendas esta** (`CESTA_MAX_TIENDAS`, por defecto 2, y lo usan el optimizador **y** el oraculo), y
+**el ahorro neto esta definido** (*«si gana a ir a una sola»*). **Lo que no existe es el coste de ir.**
+
+**Y no puede venir de los datos**: *depende de donde vivas, de si vas andando o en coche, y de si de todas
+formas pasabas por alli.* **El criterio dice «optativo» precisamente por eso** -- *pero hay que decidir **como
+se pide**: un numero fijo, un coste por tienda, o nada.*
+
+### 3. ¿La línea de la compra se guarda en la unidad que vino, o en la canónica? -- de F10
+
+**El defecto esta medido**: *`previa_compra._unidad_canon` no usa `normalize._UNIDADES`, asi que `1 kg` + `500 g`
+**no se suman**, y la aceptacion de F10 dice «mezcla **kg/g compatible** y ud **incompatible**».*
+
+**El arreglo se probo, y funciona** -- *da `1,5 kg`, y deja `kg/ud` y `ml/g` separados, que es lo correcto.*
+**Pero cambia lo que se ensena**: *`test_g12_previa.py` espera `500` (en g) y el arreglo da `0,5` (en kg).*
+
+| guardar en... | a favor | en contra |
+|---|---|---|
+| **la unidad que vino** | *«500 g» es como se dice en una cocina* | *hay que convertir para comparar, en cada consolidacion* |
+| **la canonica** | *una sola forma, y sumar es directo* | *«0,5 kg de harina» es como se dice en un almacen, **no en una receta*** |
+
+**Son dos funciones de `core/previa_compra.py`**, y estan escritas y probadas: *lo unico que falta es **cual de
+las dos**.*
+
+---
+
+### Y las tres, en una linea cada una
+
+1. **«Presupuesto»**: *¿la estimacion de la lista, lo pagado, o un numero que se ponga la persona?*
+2. **«Coste de desplazamiento»**: *¿se pide, y como -- fijo, por tienda, o no se pide?*
+3. **«Unidad de la linea de compra»**: *¿la que vino, o la canonica?*
+
+**Ninguna de las tres es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
+son «que quiere la persona que usa esto», y eso se pregunta.*
