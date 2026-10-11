@@ -176,7 +176,7 @@ estructura -- nunca suponer.** *Es la regla que ha funcionado en esta fase, y la
 
 ---
 
-## Lo que espera una decision tuya -- tres cosas, y las tres bloquean un arreglo
+## Lo que espera una decision tuya -- cuatro cosas, y las cuatro bloquean un arreglo
 
 *Todo lo demas que se ha medido esta **cerrado, hecho, o fijado con su prueba**. Estas tres **no** son
 mediciones que falten: son **decisiones que nadie puede tomar por ti**, y por eso estan aqui y no en un
@@ -228,11 +228,31 @@ las dos**.*
 
 ---
 
-### Y las tres, en una linea cada una
+### 4. ¿Se pone un desempate al orden del buscador? -- de `F15`, y salio **al hacer la paginacion**
+
+**Medido el 11 de octubre de 2026, al anadir el `OFFSET`:** *`buscar` ordena por `comparable DESC, cadenas DESC,
+min_unidad` **sin desempate**, asi que los grupos con las mismas tres claves salen **en orden arbitrario**.*
+
+**Y se ve asi, sin mas**: *la misma llamada, `buscar('leche', limite=5)`, devolvio `['20378', ...]` una vez y
+`['10645', ...]` otra.*
+
+| la opcion | a favor | en contra |
+|---|---|---|
+| **poner desempate** (`ORDER BY ..., grupo_id`) | **la paginacion funciona de verdad**: *entre dos paginas no se pierde ni se repite nada* | **cambia el orden que ve quien ya usa el buscador** -- *aunque solo entre los empatados* |
+| **dejarlo** | *nadie ve cambiar nada* | **la paginacion que se acaba de anadir BAR AJA**: *un producto puede salir dos veces o no salir* -- *y ademas **parece** que funciona* |
+
+**Lo que hay que decidir no es «si el orden importa»**: *es **si importa mas que la paginacion*** -- *porque
+**sin orden total, paginar es peor que no paginar**.*
+
+**Y va descrito**: *es anadir `grupo_id` al final del `ORDER BY` de `catalogo.buscar` (`catalogo.py:421`).*
+**Una linea.**
+
+### Y las cuatro, en una linea cada una
 
 1. **«Presupuesto»**: *¿la estimacion de la lista, lo pagado, o un numero que se ponga la persona?*
 2. **«Coste de desplazamiento»**: *¿se pide, y como -- fijo, por tienda, o no se pide?*
 3. **«Unidad de la linea de compra»**: *¿la que vino, o la canonica?*
+4. **«Desempate del buscador»**: *¿se pone, y con que -- `grupo_id` es lo natural, pero cambia el orden de los empatados?*
 
-**Ninguna de las tres es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
+**Ninguna de las cuatro es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
 son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
