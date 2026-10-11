@@ -4,6 +4,11 @@ Contrato: [empezar aquí](SUPERAPP-FASE2-EMPEZAR-AQUI.md). Investigación: [comp
 
 Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión no reejecutó tests de Cesta; el laboratorio REA pasó 6/6 básicos, sin nativo. No trasladar esos resultados a la aceptación de Cesta.
 
+## Estado de la fase
+
+**Matriz de capacidades y veredicto honesto**: [`SUPERAPP-FASE2-MATRIZ.md`](SUPERAPP-FASE2-MATRIZ.md).
+*Que se puede hacer hoy, que no, con que se comprueba y en que orden sigue.*
+
 ## Siguiente acción
 
 **F03 · la publicación coherente.** Es el siguiente cierre de tu lista —*«optimización entre tiendas,
