@@ -321,3 +321,61 @@ del grupo?», que es una pantalla concreta.**
 | la pantalla de la linea | **lo dice**, con dos mensajes distintos |
 | **la ficha del grupo** | **sin comprobar** |
 | **la migracion de `alerta`** | **pendiente**: darle identidad estable por `ean` |
+
+
+---
+
+## 10. Y la ficha del grupo tambien: **`explicacion`, y solo si hay algo que decir**
+
+*(Ronda 46.)* La ultima pregunta abierta: *¿distingue la **ficha del grupo** la equivalencia exacta de la
+aproximada?* **La ficha trae una explicacion.**
+
+```
+plataforma/api/main.py:313  @app.get("/api/grupo/{grupo_id}")
+                     :315      """El grupo entero, y el por que de que esos productos esten juntos.
+                     :317      `explicacion` **solo viaja si hay algo que decir**: un grupo de un solo
+                     :318      producto, o uno sin ningun par directo entre sus miembros, no tiene
+                     :319      explicacion, y el campo se omite en vez de mandarse vacio. La pantalla sabe
+                     :320      decir que ahi no hay nada que ensenar; un objeto vacio diria que se emparejo
+                     :321      por nada, que es distinto de no saberlo."""
+                     :327      explicacion = catalogo.explicacion(grupo_id)
+                     :328      if explicacion:
+                     :329          respuesta["explicacion"] = explicacion
+```
+
+**Y en la interfaz esta `ExplicacionEmparejamiento.tsx`** (localizado en la seccion 9).
+
+**Asi que la respuesta a mi pregunta de la ronda 44 es que si, en los dos niveles:**
+
+| nivel | mecanismo |
+|---|---|
+| **la linea de una lista** | `AvisoIdentidad`: `probable` ≠ `alternativa`/`cuarentena`/`abstiene` |
+| **la ficha del grupo** | `explicacion`: *el por que de que esos productos esten juntos* |
+
+**Y las dos siguen la misma regla, que el proyecto repite**: *el campo **viaja solo si hay algo que decir**.
+Un objeto vacio diria que se emparejo por nada, **que es distinto de no saberlo**.* **Es exactamente la
+distincion que F05 pedia para la cobertura y que el encargo pide en general: lo que falta se dice, no se
+rellena.**
+
+### Y lo que NO queda comprobado, que es un detalle y no una duda de fondo
+
+**Si `explicacion` lleva el veredicto de identidad** -- *`exacto` frente a `probable`, que es lo que produce
+`identidad.decide`* -- **o si explica los pares por otra via.** *`catalogo.explicacion` no se ha leido: se
+ha leido el endpoint que la sirve.*
+
+**Es lo unico que queda de esta pregunta**, y *es una funcion.*
+
+### Y el hallazgo #9, cerrado en lo que se puede cerrar
+
+| | |
+|---|---|
+| `alerta` ligada al ordinal | **defecto real**, 1 alerta, **con daño medido** |
+| su causa | **explicada**: via debil sin GTIN, declarada en el codigo |
+| el motor | **distingue** exacto/probable/cuarentena/abstiene |
+| la linea de una lista | **lo dice**, con dos mensajes distintos |
+| la ficha del grupo | **lo explica**, y solo si hay algo que decir |
+| **la migracion de `alerta`** | **pendiente**: identidad estable por `ean` |
+| `catalogo.explicacion` | **sin leer**: si lleva el veredicto o no |
+
+**Dos cosas pendientes, las dos pequenas y las dos concretas.** *Y el defecto de `alerta` sigue siendo lo
+unico de esta fase que hace algo mal hoy.*
