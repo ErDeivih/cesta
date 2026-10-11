@@ -184,3 +184,66 @@ mas sitios» es un argumento legitimo para que gane la ultima llegada.*
 **Lo que si queda hecho es lo que hacia falta**: *la afirmacion del criterio **ya no es una suposicion** --
 **esta medida, y en rojo**, con el defecto nombrado y el arreglo descrito.* *Y el dia que se arregle, la prueba
 **fallara por pasar** y alguien lo sabra.*
+
+
+---
+
+## 4. Pasillos: **la funcion no esta, y el dato si** -- a un `LEFT JOIN` de distancia
+
+*(Ronda 90.)* El criterio pide *«lista por pasillos y **orden por pasillo**»*. Leida la consulta que sirve la
+lista a la pantalla, `almacen.lineas_de` (`plataforma/api/almacen.py:342`):
+
+```sql
+SELECT li.id, li.grupo_id, li.producto_id, li.nombre_visto, li.cantidad,
+       li.nota, li.tachado_en, li.anadido_en, li.en_carrito, li.cadena_elegida,
+       qa.nombre AS anadido_por, qt.nombre AS tachado_por
+  FROM lista_linea li
+  LEFT JOIN usuario qa ON qa.id = li.anadido_por
+  LEFT JOIN usuario qt ON qt.id = li.tachado_por
+ WHERE li.lista_id = %s AND li.borrado_en IS NULL
+ ORDER BY li.en_carrito, li.anadido_en
+```
+
+### Lo que hay, y lo que no
+
+| pieza | estado |
+|---|---|
+| **el pasillo en la respuesta** | **no esta** -- *no hay `categoria` en el `SELECT`* |
+| **el orden** | **`en_carrito, anadido_en`**: *lo tachado al final, y dentro, por orden de alta* -- **no por pasillo** |
+| **`grupo_id` en la linea** | **si esta** |
+| **`categoria` en `grupos`** | **si esta** (medida en la ronda 82: *62 columnas, y `categoria` trae cosas como `la-despensa/lacteos`*) |
+
+**Asi que el pasillo **no hay que inventarlo ni pedirlo a nadie**: *es un `LEFT JOIN grupos ON grupos.grupo_id
+= li.grupo_id`, y una columna mas en la respuesta.* **La funcion no esta escrita; el dato esta.**
+
+### Y el orden que hay es defendible, y no es el que falta
+
+**`ORDER BY li.en_carrito, li.anadido_en`** hace lo correcto para una lista de la compra: *lo ya cogido **al
+final** -- para que no estorbe mientras se recorre -- y dentro de cada grupo, por orden de alta.* **Es el orden
+de una lista corriente, no el de un supermercado.**
+
+**Y el de pasillo es otra cosa**: *agrupar por `categoria` para **recorrer la tienda en un solo sentido** y no
+volver atras.* *Que es exactamente lo que pide C01-C05 de las referencias.*
+
+### Y una advertencia que hay que decir antes de construirlo
+
+**El pasillo de `grupos` es el de la cadena que lo capturo, y cada cadena tiene el suyo.** *`la-despensa/lacteos`
+de Carrefour **no es el mismo pasillo** que el de Alcampo, y el orden fisico de las tiendas tampoco es el
+mismo.* **Asi que «ordenado por pasillo» solo significa algo si se dice **en que tienda** -- y la linea ya tiene
+`cadena_elegida` para eso.**
+
+**Es la decision que hay que tomar antes de escribir el `ORDER BY`**: *¿se ordena por el pasillo de la tienda
+elegida en la linea, por el de la cadena del producto, o por una lista de pasillos propia de casa?* **Las tres
+son defendibles y dan listas distintas** -- *y elegir una sin decirlo es como se construye un orden que no sirve
+para recorrer nada.*
+
+### Y F07 queda asi, con lo suyo medido
+
+| lo que pide su criterio | estado |
+|---|---|
+| **dos sesiones, sin pisarse** | **medido** (§3): *el tachado cumple; **la cantidad es un defecto**, fijado* |
+| **lista por pasillos** | **el dato esta** (`grupo_id` + `categoria`), **la funcion no**; *y hay que decidir de que tienda* |
+| C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
+| **tarea movil con una mano** | *por medir* |
+| **recorrido de cuenta vacia** | *por medir* |
+| **medir pasos** | *por hacer* |
