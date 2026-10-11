@@ -244,6 +244,25 @@ el dia en que se ejecuta.*
 **Y una nota de metodo**: `ruff --fix` me quito `import json` cuando no se usaba, y dejo de estar cuando
 empece a usarlo. *El lint no se equivoca; el que cambia de idea soy yo.*
 
+### G04, punto 4 (mecanismo): error de publicacion y desaparicion de candidato
+
+| comprobado | |
+|---|---|
+| publicar con **un fichero de menos** lanza `PublicacionIncompleta` | ✓ |
+| **el puntero NO se mueve** y se sigue sirviendo la V1 **entera** | ✓ |
+| **la carpeta a medias se retira**: no queda una version fantasma con cinco ficheros | ✓ |
+| **`fijar()` rechaza una version incompleta**, y el puntero no se mueve | ✓ *el rollback no sirve mezclas* |
+| **desaparicion de candidato**: una V2 sin Alcampo deja **una** fila (DIA) | ✓ |
+| **y la V1 sigue con las dos** -- no se reescribe lo publicado | ✓ |
+
+**Y una correccion**: mi prueba de rollback de la ronda anterior **escribia el puntero a mano**
+(`PUNTERO.write_text`) cuando `fijar()` existe, hace lo mismo **y ademas rechaza una version
+incompleta**. *Pasaba igual, pero medía mi escritura en vez de la funcion.* Ahora usa `fijar()`.
+
+**Lo que falta de G04 es el recorrido de usuario** -- *«buscar, abrir ficha, preparar compra/consumo,
+publicar V2»* -- y su parte de aplicacion: **el fixture publica contra un `GOLD` temporal, y la API
+sigue leyendo el suyo**, asi que el recorrido con el catalogo cambiando debajo **no esta recorrido**.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

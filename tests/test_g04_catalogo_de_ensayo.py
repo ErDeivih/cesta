@@ -23,7 +23,7 @@ catalogo real: *si viniera, el ensayo mediria el dia en que se ejecuta.*
 """
 from __future__ import annotations
 
-import json
+from pathlib import Path
 
 import polars as pl
 import pytest
@@ -257,9 +257,88 @@ def test_volver_a_la_v1_es_apuntar_atras_y_no_toca_los_datos(gold_de_ensayo):
     publicacion.publicar(publica_v2(), momento=_momento(SELLO_V2))
     assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet")), "dia") == 120
 
-    # Volver atras: el puntero, escrito a mano, que es lo unico que hace falta.
-    publicacion.PUNTERO.write_text(json.dumps({"version": SELLO_V1, "puntero": 1}), encoding="utf-8")
+    # **Volver atras con la funcion del modulo**, no escribiendo el puntero a mano: `fijar()`
+    # comprueba que la version existe y que **esta completa** antes de mover nada.
+    publicacion.fijar(SELLO_V1)
     assert publicacion.version_actual() == SELLO_V1
     assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet")), "dia") == 150
     # **Y la V2 sigue intacta**: volver atras no deshace nada, solo deja de servirla.
     assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet", SELLO_V2)), "dia") == 120
+
+def test_una_publicacion_incompleta_no_se_publica_y_no_deja_restos(gold_de_ensayo):
+    """**El error de publicacion del punto 4, y su regla**: «se cayo a medias» se convierte en «no
+    paso nada».
+
+    Se publica una V1 buena, y despues se intenta una V2 **a la que le falta un fichero**. Tienen que
+    pasar tres cosas, y las tres importan:
+
+    - lanza `PublicacionIncompleta`;
+    - **el puntero NO se mueve**: se sigue sirviendo la V1 entera;
+    - y **la carpeta a medias se retira** (`shutil.rmtree`), asi que en `versiones()` no aparece una
+      version fantasma con cinco ficheros.
+    """
+    publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+    incompleta = publica_v2()
+    del incompleta["precio_derivado.parquet"]          # falta uno de los seis
+
+    with pytest.raises(publicacion.PublicacionIncompleta) as fallo:
+        publicacion.publicar(incompleta, momento=_momento(SELLO_V2))
+    assert "precio_derivado" in str(fallo.value), fallo.value
+
+    # **El puntero sigue en la V1, y se sirve la V1 entera.**
+    assert publicacion.version_actual() == SELLO_V1
+    assert publicacion.versiones() == [SELLO_V1], publicacion.versiones()
+    assert not (gold_de_ensayo / f"v{SELLO_V2}").exists(), "la carpeta a medias tenia que retirarse"
+    assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet")), "dia") == 150
+    # **Y los seis ficheros de la V1 siguen ahi**, que es lo que hace que «no paso nada» sea cierto.
+    for nombre in publicacion.FICHEROS:
+        assert (gold_de_ensayo / f"v{SELLO_V1}" / nombre).exists(), nombre
+
+
+def test_fijar_rechaza_una_version_incompleta(gold_de_ensayo):
+    """**Y el rollback tampoco acepta una version a medias**: volver a una que le falta un fichero
+    seria servir una mezcla con otro nombre."""
+    publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+    publicacion.publicar(publica_v2(), momento=_momento(SELLO_V2))
+    # Se le quita un fichero a la V1 ya publicada, a mano: el caso de un disco a medias.
+    (gold_de_ensayo / f"v{SELLO_V1}" / "resumen.parquet").unlink()
+
+    with pytest.raises(publicacion.PublicacionIncompleta):
+        publicacion.fijar(SELLO_V1)
+    # **Y el puntero no se ha movido**: sigue sirviendo la V2, que esta entera.
+    assert publicacion.version_actual() == SELLO_V2
+    # Una version que no existe tampoco se fija.
+    with pytest.raises(ValueError):
+        publicacion.fijar("20990101-000000")
+
+
+def test_una_v2_sin_el_producto_en_una_cadena_lo_deja_con_una(con_almacen=None):
+    """**Desaparicion de candidato**: el mismo producto, una cadena menos.
+
+    Publicar una V2 que quite el producto de Alcampo tiene que dejar **una sola fila** en `grupos`, y
+    **la que queda es la de DIA**. Y la V1 -- que tenia las dos -- **sigue leyendose entera por su
+    sello**: *lo que ya se miraba con la V1 no cambia porque se publique la V2.*
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temporal:
+        oro = Path(temporal)
+        guardado = (publicacion.GOLD, publicacion.PUNTERO)
+        publicacion.GOLD, publicacion.PUNTERO = oro, oro / "actual.json"
+        try:
+            publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+            sin_alcampo = publica_v2()
+            sin_alcampo["grupos.parquet"] = sin_alcampo["grupos.parquet"].filter(
+                pl.col("fuente") != "alcampo")
+            publicacion.publicar(sin_alcampo, momento=_momento(SELLO_V2))
+
+            servido = pl.read_parquet(publicacion.ruta("grupos.parquet"))
+            assert servido.height == 1, f"el candidato tenia que desaparecer: {servido.height} filas"
+            assert servido["fuente"].to_list() == ["dia"], servido["fuente"].to_list()
+
+            # **Y la V1 sigue con los dos**: no se reescribe lo que ya estaba publicado.
+            v1 = pl.read_parquet(publicacion.ruta("grupos.parquet", SELLO_V1))
+            assert v1.height == 2, v1.height
+            assert set(v1["fuente"].to_list()) == {"dia", "alcampo"}
+        finally:
+            publicacion.GOLD, publicacion.PUNTERO = guardado
