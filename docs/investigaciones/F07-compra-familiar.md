@@ -188,68 +188,65 @@ mas sitios» es un argumento legitimo para que gane la ultima llegada.*
 
 ---
 
-## 4. Pasillos: **la funcion no esta, y el dato si** -- a un `LEFT JOIN` de distancia
+## 4. Pasillos: **estan hechos, con tres decisiones escritas** -- y me equivoque al medirlo
 
-*(Ronda 90.)* El criterio pide *«lista por pasillos y **orden por pasillo**»*. Leida la consulta que sirve la
-lista a la pantalla, `almacen.lineas_de` (`plataforma/api/almacen.py:342`):
+*(Ronda 90, **corregida en la 97**.)* El criterio pide *«lista por pasillos y **orden por pasillo**»*.
 
-```sql
-SELECT li.id, li.grupo_id, li.producto_id, li.nombre_visto, li.cantidad,
-       li.nota, li.tachado_en, li.anadido_en, li.en_carrito, li.cadena_elegida,
-       qa.nombre AS anadido_por, qt.nombre AS tachado_por
-  FROM lista_linea li
-  LEFT JOIN usuario qa ON qa.id = li.anadido_por
-  LEFT JOIN usuario qt ON qt.id = li.tachado_por
- WHERE li.lista_id = %s AND li.borrado_en IS NULL
- ORDER BY li.en_carrito, li.anadido_en
+### Lo que escribi en la ronda 90, y era falso
+
+> *«Leida la consulta que sirve la lista a la pantalla, `almacen.lineas_de` ... **el pasillo en la respuesta no
+> esta** ... **La funcion no esta escrita; el dato esta**»*
+
+**Lei UNA capa -- el `SELECT` de Postgres -- y concluí que la funcion no existia.** *Y existe, en la pantalla,
+con tres decisiones escritas al lado.*
+
+### Lo que hay de verdad
+
+`plataforma/web/app/src/paginas/Cesta.tsx:386`:
+
+```tsx
+function porPasillo(lineas: Linea[]): [string, Linea[]][] {
+  const sinPasillo = Number.MAX_SAFE_INTEGER
+  const ordenadas = [...lineas].sort(
+    (a, b) => (a.pasillo_orden ?? sinPasillo) - (b.pasillo_orden ?? sinPasillo),
+  )
 ```
 
-### Lo que hay, y lo que no
+**Y encima, tres decisiones que estan escritas en el propio codigo (`Cesta.tsx:372-384`):**
 
-| pieza | estado |
+1. **«Las lineas sin pasillo van al final y sin encabezado**, no al principio ni repartidas por donde "parezca".
+   Cuando gold no trae la columna `seccion`, o el grupo no esta en el catalogo, no sabemos de que pasillo es:
+   **eso no se rellena, se deja al final**.»
+   > *Es la regla de la casa -- **lo que no se sabe se dice** -- aplicada a los pasillos.* **Y es la respuesta
+   > exacta a la duda que yo planteaba en la ronda 90 sobre que hacer con lo que no tiene pasillo.**
+2. **«Dentro de un pasillo se respeta el orden que manda la API»** (`en_carrito, anadido_en`), porque `sort` es
+   estable -- *«ordenarlas aqui otra vez daria dos ordenes peleandose en cada recarga».*
+3. **«Los pasillos se cortan por nombre, no por `seccion`»**, para pintar lo que se lee.
+
+**Y usa `l.pasillo` y `l.pasillo_orden`, que la API entrega.** *No los vi porque mire donde no estaban.*
+
+### Y el error, que es lo que hay que contar
+
+**Es el tercero de la misma clase en esta sesion, y los tres iguales:**
+
+| ronda | donde mire | **donde estaba** |
+|---|---|---|
+| 82 | el maestro, el crudo, la cola | **`kcal_100g`**, una columna que la app ensena |
+| 96 | `git grep -c` y mi resumen del numero | **las cuatro lineas del front** que el comando si habia encontrado |
+| **90** | **`almacen.lineas_de`** (Postgres) | **`Cesta.tsx:386`** (la pantalla) |
+
+**Los tres son lo mismo: mirar una capa y concluir sobre el sistema.** *Y los tres se corrigen igual: **ir a ver
+la capa que falta**, no razonar sobre la que ya mire.* **Es el error mas repetido de esta fase, y el mas facil de
+cometer precisamente porque cada capa, leida sola, parece completa.**
+
+### Y `C03`, corregido
+
+| lo que pide | estado |
 |---|---|
-| **el pasillo en la respuesta** | **no esta** -- *no hay `categoria` en el `SELECT`* |
-| **el orden** | **`en_carrito, anadido_en`**: *lo tachado al final, y dentro, por orden de alta* -- **no por pasillo** |
-| **`grupo_id` en la linea** | **si esta** |
-| **`categoria` en `grupos`** | **si esta** (medida en la ronda 82: *62 columnas, y `categoria` trae cosas como `la-despensa/lacteos`*) |
+| **orden editable por lista/tienda; uso con una mano; conservacion al recargar** | **el orden por pasillo ESTA HECHO** (`porPasillo`, con las tres decisiones); *«editable» -- que el usuario lo cambie -- **eso si falta, y es otra cosa***; **una mano: 390x844 y 4 toques**; **la recarga SI**, por F03 |
 
-**Asi que el pasillo **no hay que inventarlo ni pedirlo a nadie**: *es un `LEFT JOIN grupos ON grupos.grupo_id
-= li.grupo_id`, y una columna mas en la respuesta.* **La funcion no esta escrita; el dato esta.**
-
-### Y el orden que hay es defendible, y no es el que falta
-
-**`ORDER BY li.en_carrito, li.anadido_en`** hace lo correcto para una lista de la compra: *lo ya cogido **al
-final** -- para que no estorbe mientras se recorre -- y dentro de cada grupo, por orden de alta.* **Es el orden
-de una lista corriente, no el de un supermercado.**
-
-**Y el de pasillo es otra cosa**: *agrupar por `categoria` para **recorrer la tienda en un solo sentido** y no
-volver atras.* *Que es exactamente lo que pide C01-C05 de las referencias.*
-
-### Y una advertencia que hay que decir antes de construirlo
-
-**El pasillo de `grupos` es el de la cadena que lo capturo, y cada cadena tiene el suyo.** *`la-despensa/lacteos`
-de Carrefour **no es el mismo pasillo** que el de Alcampo, y el orden fisico de las tiendas tampoco es el
-mismo.* **Asi que «ordenado por pasillo» solo significa algo si se dice **en que tienda** -- y la linea ya tiene
-`cadena_elegida` para eso.**
-
-**Es la decision que hay que tomar antes de escribir el `ORDER BY`**: *¿se ordena por el pasillo de la tienda
-elegida en la linea, por el de la cadena del producto, o por una lista de pasillos propia de casa?* **Las tres
-son defendibles y dan listas distintas** -- *y elegir una sin decirlo es como se construye un orden que no sirve
-para recorrer nada.*
-
-### Y F07 queda asi, con lo suyo medido
-
-| lo que pide su criterio | estado |
-|---|---|
-| **dos sesiones, sin pisarse** | **medido** (§3): *el tachado cumple; **la cantidad es un defecto**, fijado* |
-| **lista por pasillos** | **el dato esta** (`grupo_id` + `categoria`), **la funcion no**; *y hay que decidir de que tienda* |
-| C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
-| **tarea movil con una mano** | *por medir* |
-| **recorrido de cuenta vacia** | *por medir* |
-| **medir pasos** | *por hacer* |
-
-
----
+**Asi que de C03 falta lo mas pequeno**: *que el orden se pueda **editar**.* **El agrupar por pasillo, que es lo
+que yo daba por no hecho, esta hecho y bien.**
 
 ## 5. «Medir pasos»: **los del servidor son cuatro** -- y los de la pantalla no los he contado
 
