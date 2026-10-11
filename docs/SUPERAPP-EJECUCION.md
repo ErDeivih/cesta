@@ -1290,6 +1290,42 @@ de lo que devuelve otro*:
 hizo creer que `conCuerpo` no estaba definido en el fichero, **cuando estaba**. *Es la tercera vez hoy
 que truncar una lista me esconde lo que buscaba, y la leccion ya la tenia escrita desde la ronda 201.*
 
+### G13, punto 232: **la matriz de aceptacion** -- y con esto G13 queda cerrado
+
+`docs/MATRIZ-DE-ACEPTACION.md`: las dos columnas que el punto pide -- **uso domestico local** contra
+**antes de publicar** -- y los ocho renglones que nombra: TLS, cookies/CSRF, secretos, copias, acceso,
+limites, observabilidad y obligaciones con las fuentes.
+
+**La regla al escribirla**: *cada celda dice **implementado** o **verificado**, que no es lo mismo, y
+cuando no se ha comprobado se escribe **no verificado** en vez de suponerlo.* **Una matriz que declara
+verde lo que nadie ha ejercitado no es una aceptacion: es una promesa.**
+
+**Lo que queda de un lado y del otro**, resumido:
+
+    DOMESTICO, con evidencia        ANTES DE PUBLICAR, sin hacer
+    --------------------------      -----------------------------
+    dueno en el servidor (_acceso)  CSRF: SIN VERIFICAR  <-- lo unico que no se cierra por lectura
+    .env ignorado, clave de var.    TLS y cookies Secure
+    copia que SE RESTAURA           copia fuera del mismo disco y automatizada
+    79.887 fichas sin cubrir        limites por usuario, no por proceso
+    OPERACION.md y la marca del dia metricas que no dependan de que alguien mire
+
+**Y los dos hallazgos que salen de escribirla**, los dos con su proporcion:
+
+* **`ajustes.py:30` trae `cesta:cesta` por defecto.** *Es un valor de conveniencia para el contenedor
+  de casa y el compose lo sustituye por variable; no es un incidente.* **Pero el 231 avisa de que
+  «rotacion requiere coordinacion, no reutilizacion en documentacion»** -- *un secreto repetido en
+  muchos sitios cuesta rotarlo.*
+* **CSRF no verificado.** *Con el navegador y el servidor en el mismo origen da igual; **con un domino
+  de verdad deja de dar igual**.* **Y es la unica casilla que no se puede cerrar leyendo: hay que
+  probarla.**
+
+**Y lo que la matriz NO dice, que es lo que la hace util**: *no dice que este lista para publicar
+--no lo esta-- ni que sea insegura para casa --las casillas que importan estan y con evidencia--.*
+**Dice que las dos listas son dos listas**, que es exactamente lo que el 232 pide: *un proyecto
+domestico con TLS y alta de usuarios seria tiempo perdido, y uno publicado sin CSRF verificado y con la
+copia en el mismo disco seria un problema esperando.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
