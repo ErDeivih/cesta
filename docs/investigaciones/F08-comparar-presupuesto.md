@@ -453,3 +453,51 @@ formato, que era el unico con una duda abierta, **queda cerrado y bien**.*
 | **historico desconocido** | *por medir* (`historial_de`) |
 
 **Tres cubiertos, uno contestado por construccion, y dos por medir.**
+
+
+---
+
+## 8. «Cupon/club no elegible»: **resuelto en cuatro sitios, y mejor que el criterio**
+
+*(Ronda 111.)* El criterio pide, para `C08`: *«**condiciones y vigencia**; credito futuro separado del dinero
+pagado hoy»*, y la aceptacion nombra *«**cupon/club no elegible**»*. **Y las 39 menciones de `promo_club` /
+`promo_solo_online` dibujan cuatro decisiones, no una:**
+
+| donde | que hace | **por que es lo correcto** |
+|---|---|---|
+| **`alertas.py:76-77`** | *`AND NOT coalesce(b.promo_club, false) AND NOT coalesce(b.promo_solo_online, false)`* | ***las alertas las EXCLUYEN*** -- *no se avisa de una bajada que **no se puede aprovechar**; avisar de una oferta de tarjeta a quien no la tiene es una alerta falsa* |
+| **`catalogo.py:328-329`** | *el filtro de ofertas tambien las excluye* | *«ensename solo lo que puedo coger»* |
+| **`catalogo.py:404`** | *`count(*) FILTER (WHERE coalesce(promo_club, false)) AS ...`* | **y se cuentan aparte** -- *asi que se sabe cuantas hay **sin ensenarlas** como si fueran tuyas* |
+| **`app.js:1269`** | *`` `${p.promo_club ? 'Oferta de tarjeta' : 'Oferta'}` ``* | **y la pantalla LO DICE**: *una promocion de club **se llama «Oferta de tarjeta»**, no se disfraza de oferta normal* |
+| **`pesos.ts:101`** | *`return p.promo_club ? 0.5 : 1`* | **y ademas PESA LA MITAD** -- *una decision de puntuacion, deliberada y escrita* |
+
+### Y esto es el criterio entero de `C08`
+
+*«Condiciones»*: **las condiciones estan dichas** -- *la pantalla la llama «oferta de tarjeta», que es la
+condicion.* *«Vigencia»*: **la fecha esta** (§3). **Y «no elegible» esta resuelto **en los dos sitios donde
+importa** -- *el aviso (**no avisar de lo que no se puede coger**) y el filtro (**no ensenarlo como tuyo**)*
+--, **y ademas se cuenta aparte en vez de esconderse.**
+
+**Es la misma forma que `sin_precio`, `nombre_visto` y los pasillos sin seccion**: *lo que no se puede aplicar
+**no se esconde ni se disfraza**: **se dice y se cuenta**.*
+
+### Y `pesos.ts:101` es la pieza que no esperaba
+
+**`return p.promo_club ? 0.5 : 1`** -- *una promocion de club **vale la mitad** en la puntuacion.* **No se que
+puntua** (habria que leer `pesos.ts`), **pero la decision esta escrita y es defendible**: *una oferta que la
+mitad de la gente no puede coger **no deberia pesar lo mismo** que una que cualquiera puede coger.*
+
+**Y es la octava pieza de esta fase que aparece **ya resuelta y con el motivo escrito** mientras buscaba otra
+cosa.**
+
+### Y F08, con sus cinco casos
+
+| caso | **estado** |
+|---|---|
+| **lista parcial** | **cubierto** |
+| **oferta caducada** | **no hay ninguna, por construccion** |
+| **cantidad/pack** | **CERRADO** |
+| **cupon/club no elegible** | **CUBIERTO en cuatro sitios** -- *excluido de alertas, excluido del filtro, contado aparte, dicho en pantalla, y con la mitad de peso* |
+| **historico desconocido** | *por medir* (`historial_de`) |
+
+**Cuatro de los cinco casos, cubiertos; y el que queda -- historico desconocido -- es el unico sin medir.**
