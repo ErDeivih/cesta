@@ -624,6 +624,48 @@ pruebas mias** -- *«Prueba texto libre» 130 veces, «Prueba G03 cierre» 90* -
 esquema primero** (`lista_linea`, y el orden que dictan las claves foraneas), **conservando «Casa» con
 sus 12 lineas y su compra cerrada** y la «Sonda de ruta». *Quedan 3 listas.*
 
+### G06, entregable: **la lista priorizada de mejoras visuales, VACIA y con su evidencia**
+
+G06 pide *«una lista priorizada de mejoras visuales con capturas antes/después de la aplicacion real»*.
+**La lista sale vacia**, y no por no haber buscado: **porque las tres mejoras que propuse resultaron
+estar ya hechas**, y las tres cayeron por el mismo metodo.
+
+| propuse | y la verdad |
+|---|---|
+| **plegar las listas de `/compra/listas`** | ya es un `<select>` (`Cesta.tsx:1370`) |
+| **agrupar las doce secciones de `/compra/analisis`** | ya es un conmutador: `{activa === 'hoy' && <Hoy />}` (`Panel.tsx:139`) |
+| **subir el puente en `/calorias`** | *«De la compra al diario»* ya va antes del detalle |
+
+**Las tres veces medi el TEXTO que pinta la pagina y de ahi deduje como estaba construida.** *Los
+12.000 caracteres, los doce rotulos y el orden eran medidas correctas; las conclusiones, inventadas.*
+**El texto de una pagina no dice como esta ordenada.**
+
+**Lo que sostiene la lista vacia, y no es una impresion:**
+
+- **dos recorridos completos** -- primera cuenta sin datos y cuenta con historial -- **en 390 y 1440**,
+  con **cero errores de pagina** en los dos anchos, y **79 capturas** en `data/debug/capturas/`;
+- **los cuatro estados vacios dicen que no hay nada Y que hacer a continuacion**, y **ninguno muestra
+  un cero**: *`/calorias` dice **«sin dato»** en los cuatro nutrientes y «de 0 de 0 entradas»*; un
+  «0 kcal» habria dicho «hoy no comiste nada»;
+- **las tres apps estan diferenciadas** (punto 156): Compra *«Buscar / Listas / Favoritos / Gasto y
+  ahorro»*, Recetas *«Mi recetario / Plan semanal»*, Calorias *«Mi diario / Mis alimentos / Tendencias»*;
+- **la frontera Compra/Calorias se sostiene** (punto 154): `BotonAnadirACesta.tsx` **no menciona
+  nutricion ni una vez**, y la ficha de producto si lleva la tabla **porque G06 la pide**.
+
+**Y un hallazgo real, corregido** (punto 157, mensajes ambiguos): `Panel.tsx` titulaba **«La ingesta de
+hoy»** una seccion que habla del **catalogo** -- *«hoy N productos, y lo normal M», con alarmas de
+caida* --. **«Ingesta» significa dos cosas** y ahi solo vale una: *dentro de «Gasto y ahorro» se leia
+como «lo que has comido hoy»*, que es justo la confusion que hay que evitar. **Corregido a «Lo que
+entro hoy en el catalogo»**, con la nota al lado y el `etiqueta` de la tabla tambien.
+
+**Antes/despues**: existe par real **donde hubo captura** -- *la tarjeta de gasto vacia (ronda 158)
+frente a con datos (161), y el rotulo viejo en `analisis-movil.png`* --. **Para la chispa, el transporte
+y el gasto no hay «antes», porque se arreglaron antes de empezar a capturar**; la lista lo declara en
+vez de fabricar un antes con el codigo de ayer.
+
+**Nota de metodo, para G07-G14**: *abrir el componente antes de proponer un cambio. Me ha costado tres
+rondas y tres propuestas inventadas.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
