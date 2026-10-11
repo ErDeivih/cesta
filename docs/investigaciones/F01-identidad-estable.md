@@ -166,3 +166,61 @@ guardarlo. **No se ha hecho**, y *es un `SELECT` y un `UPDATE` de un caso* -- **
 comprobar que el grupo 11627 del catalogo de hoy sigue siendo ese producto**, porque si el emparejador lo
 ha renumerado desde el 10 de octubre, **la propia migracion estaria escribiendo el dato equivocado**.*
 **Y esa comprobacion es, exactamente, el defecto que este hallazgo describe: se mide o no se sabe.**
+
+
+---
+
+## 7. Y la comprobacion que decia la seccion 6: **el grupo 11627 ya no es lo que la alerta decia**
+
+*(Ronda 43.)* Iba a comprobar si el grupo 11627 del catalogo de hoy seguia siendo el producto de la alerta.
+**No lo es, y lo que hay dentro es mas grave que una renumeracion.**
+
+### Lo que el grupo 11627 contiene HOY
+
+```
+grupo 11627  aldi       MILSANI     «Leche entera»                                 96 cent
+grupo 11627  carrefour  PRESIDENT   «Leche entera President brik 1 l.»            102 cent
+grupo 11627  alcampo    CENTRAL LECHERA ASTURIANA «Leche entera botella 1 l.»     126 cent
+grupo 11627  dia        Asturiana   «Leche entera Asturiana 1 L»                  129 cent
+grupo 11627  mercadona  Asturiana   «Leche entera Asturiana»                      129 cent
+```
+
+**Y la alerta guardaba:**
+
+```
+salto_nombre  «Leche entera Central Lechera Asturiana brik 1 l.»
+salto_texto   «esta al precio mas bajo de los ultimos 90 dias: 1.24 EUR/l en carrefour»
+```
+
+### Lo que se puede afirmar, y lo que NO
+
+**Lo que se puede afirmar, y es la demostracion del defecto**: *la alerta dice «Central Lechera Asturiana,
+brik 1 l., en carrefour», y **el miembro de carrefour del grupo 11627 hoy es «Leche entera President brik
+1 l.» a 1,02**.* **El nombre guardado y lo que el grupo contiene hoy no coinciden.** *Es exactamente lo que
+la seccion 2 describia en abstracto: **la alerta guarda una clave que se renombra, y el nombre es lo unico
+que la ata a su producto** -- y ese nombre **ya no describe al grupo**.*
+
+**Lo que NO voy a afirmar, porque no lo he medido**: *si esto es una **renumeracion** del grupo -- el hecho
+que la seccion 2 describe -- o si el **emparejador ha juntado marcas distintas** desde el 10 de octubre.*
+**Son dos causas distintas y llevan a arreglos distintos**, y *para distinguirlas hay que mirar como cambio
+el grupo entre el 10 de octubre y hoy, que no se ha hecho.*
+
+**Y lo que SI conviene decir, porque salta a la vista y no es una interpretacion**: *el grupo 11627 tiene
+hoy **cuatro marcas** -- MILSANI, PRESIDENT, CENTRAL LECHERA ASTURIANA y Asturiana --, y **tres de ellas son
+marcas distintas del mismo tipo de producto**.* **Si el grupo significa «el mismo producto en distintas
+cadenas», agrupar Milsani con President no es una renumeracion: es una equivalencia inventada** -- *y el
+encargo prohibe inventar equivalencias.* **Queda anotado como pregunta, no como defecto: no he medido el
+criterio del emparejador para este grupo.**
+
+### Y el estado del hallazgo, tras medirlo
+
+| lo que se creia | lo que hay |
+|---|---|
+| `alerta` ligada a un ordinal que se renumera | **cierto, y hay 1 alerta** |
+| *«resolver cualquier consumidor ligado a ordinal»* | **localizado**: `alerta.grupo_id NOT NULL`, sin identidad estable |
+| ¿el defecto ya hizo dano? | **el nombre guardado ya no describe al grupo**, medido hoy |
+| **la causa** | **sin determinar**: *renumeracion o emparejamiento* |
+
+**Asi que el siguiente paso no es la migracion: es distinguir las dos causas.** *Si es el emparejador
+juntando marcas, **migrar la alerta a un `ean` no arreglaria nada**: el problema estaria en quien forma los
+grupos.* **Y esa es la pregunta que F06 (matching) tiene abierta, ahora con un caso real delante.**
