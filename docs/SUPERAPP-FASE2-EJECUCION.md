@@ -9,6 +9,26 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 **Matriz de capacidades y veredicto honesto**: [`SUPERAPP-FASE2-MATRIZ.md`](SUPERAPP-FASE2-MATRIZ.md).
 *Que se puede hacer hoy, que no, con que se comprueba y en que orden sigue.*
 
+## F00 · los diez hallazgos, uno a uno
+
+*El encargo empieza por aquí: «contrastar los cierres anteriores con los criterios y pruebas reales».*
+**Contrastados los diez.**
+
+| # | hallazgo | estado | con qué se comprueba |
+|---|---|---|---|
+| 1 | Tablero desactualizado | **contestado** | encabezado reconciliado en este mismo fichero |
+| 2 | Aceptación rebajada (G02 «texto libre» / G04 histórico) | **contestado** | *G02 pedía **lista**: migración 014 y «la línea sin destino, medida en pantalla». G04: ver F03* |
+| 3 | Multi-tienda sin demostrar | **contestado** | `core/oraculo_reparto.py`: **cero discrepancias** en 200 escenarios |
+| 4 | Sustitución estimada frente a compra | **contestado** | prueba HTTP **discriminante** (simulando lo anterior, falla) |
+| 5 | Reintento manual del diario | **contestado** | `plataforma/prueba_reintento.py`, en navegador: **1→1** contra **1→3** |
+| 6 | Clave escrita después del INSERT | **contestado** | misma clave a la vez → **una** entrada; choque → **400** |
+| 7 | Publicación y derivados | **contestado** | publicación al final del ciclo, fallo en el veredicto, API leyendo la versión |
+| 8 | Fichas sin ejecución suficiente | **contestado** | **Día: 6.331 productos con tabla**, ya extraída; Mercadona 0; otras cuatro sin maestro |
+| 9 | Riesgo de identidad estable | **mitad contestada** | *no hay **ningún** consumidor del ordinal: las 3 menciones son comentarios, medido con `git grep`. **Falta la prueba** de lista/favorito/receta ante reordenación* |
+| 10 | CSRF no ensayado | **SIN TOCAR** | *el informe lo aplaza con una inferencia que el encargo no acepta* |
+
+**Nueve de diez contrastados. Queda el #10 (CSRF) entero, y del #9 la prueba.**
+
 ## Siguiente acción
 
 **F03 · la publicación coherente.** Es el siguiente cierre de tu lista —*«optimización entre tiendas,
