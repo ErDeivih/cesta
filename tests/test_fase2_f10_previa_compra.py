@@ -19,6 +19,8 @@ La aceptacion de F10 (`docs/SUPERAPP-FASE2-EMPEZAR-AQUI.md:151`) dice:
 """
 from __future__ import annotations
 
+import pytest
+
 from core import previa_compra
 
 
