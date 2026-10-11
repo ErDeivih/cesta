@@ -60,3 +60,73 @@ un error**.*
 **Y en esta fase ya aparecio el mismo problema dos veces** (`C01b` en las listas, y la «nueva operacion
 legitima» de `N01`), **asi que hay una pregunta que hacerle al codigo y que vale para los tres**: *¿que pasa si
 se manda **dos veces la misma cosa**?*
+
+
+---
+
+## 2. `N04` y `N01`: **la clave de operacion ya los contesta** -- y contesta los dos casos a la vez
+
+*(Ronda 129.)* La primera medida de F12, y **es la pregunta que el encargo puso en su lista de prioridades**
+(*«reintentos del diario»*). **`plataforma/api/diario.py:51-54`:**
+
+```python
+51  # **La clave de la operacion.** El cliente la genera al enviar y la repite si reintenta: un
+52  # doble clic o una respuesta perdida devuelven **la entrada que ya hay** en vez de crear otra.
+53  # Dos comidas legitimas llevan claves distintas y se registran las dos.
+54  clave_operacion: str | None = None
+```
+
+**Cuatro lineas, y contestan `N04` y `N01` enteros** -- *y **los dos casos de la aceptacion que parecian
+contrarios***:
+
+| el caso | **lo que dice el codigo** |
+|---|---|
+| **«reintentos»** (`N04`) | *«el cliente la genera al enviar y **la repite si reintenta**: un **doble clic** o una **respuesta perdida** devuelven **la entrada que ya hay** en vez de crear otra»* |
+| **«dos comidas iguales»** (`N01`) | *«**Dos comidas legitimas llevan claves distintas y se registran las dos**»* |
+
+### Y esto es lo que el criterio pedia, exactamente
+
+**`N04`**: *«registrar/editar/borrar/**recargar y reintentos**»* -- **y los reintentos estan**.
+**`N01`**: *«copiar comida con cantidad editable y **nueva operacion legitima**»* -- **y la operacion legitima
+esta**: *dos comidas iguales **no son un duplicado**, y el sistema **no las confunde**, porque la clave la genera
+quien come y no el servidor.*
+
+**Y esa es la decision que lo hace funcionar**: *si la clave la generara el servidor **a partir del contenido**
+-- «la misma comida a la misma hora» --, **dos comidas iguales se perderian**.* **Generandola el cliente, el
+sistema distingue «lo mismo dicho dos veces» de «dos veces lo mismo»**, que es exactamente la distincion que la
+aceptacion pone a prueba con dos casos que parecen el mismo.
+
+### Y como se comporta el resto del diario, de paso
+
+```
+57   @rutas.get("/rango")               <- y :60 dice por que va ANTES: «si no, FastAPI leeria "rango" como una fecha»
+68   @rutas.post("", status_code=201)
+124  @rutas.post("/desde-ficha", status_code=201)
+140  @rutas.get("/{fecha}")
+149  @rutas.delete("/entrada/{entrada_id}")
+```
+
+**Las cinco rutas, y `:60` es otra decision escrita**: *el orden de las rutas importa y esta dicho.* **Y `:72-74`
+es la tercera**: *«la receta se comprueba **antes** de guardarla... es lo que cierra las referencias
+inventadas»* -- *que es `N06`, y es la pieza que ya se midio en `R03`.*
+
+### Y `N06` empieza a confirmarse
+
+**La sospecha del §1 se sostiene**: *`diario.py:72-74` comprueba la receta **antes** de anotar, y `R03` ya esta
+medido (versiones autocontenidas, v1 no cambia).* **Falta la mitad de `N06`** -- *que el diario **guarde la
+version** y que «editar receta **no reescriba ayer**» --, y eso es una columna y un `SELECT`.*
+
+### Y F12, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`N01`** -- registro rapido | **la «nueva operacion legitima» esta** (`clave_operacion`, `:51-54`); *recientes/favoritos y copiar con cantidad editable, por medir* |
+| **`N02`** -- codigo de barras | *por medir* |
+| **`N03`** -- porciones | *por medir* |
+| **`N04`** -- diario por comidas | **los reintentos estan, y por la via correcta** (`:51-52`); *recargar, cuenta y fecha local, por medir* |
+| **`N05`** -- alimentos propios | *por medir* -- *`fuente_dato` existe (`:49`), con `diario.DESCONOCIDO` por defecto* |
+| **`N06`** -- receta consumida | *la comprobacion previa esta (`:72-74`); **falta que se guarde la version*** |
+
+**Y `N05` asoma en la misma firma**: *`fuente_dato: str = diario.DESCONOCIDO`* -- *«fuente declarada», y **por
+defecto desconocida**, que es no afirmar lo que no se sabe.* **Es `nombre_visto` y `sin_precio` otra vez, en un
+tercer sitio, y con el criterio pidiendolo con esas palabras: «sin falsa verificacion de etiqueta».***
