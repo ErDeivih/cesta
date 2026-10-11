@@ -521,6 +521,32 @@ en `logica/gasto.ts` (puro y probado, 5 pruebas); **el componente solo compone**
 **Y con esto, el punto del gasto pagado de G05 queda cerrado**: regla, endpoint, cobertura de lineas,
 medida de punta a punta, regla de presentacion y seccion en pantalla.
 
+### G05, el coste de una receta: **lo que usas y lo que compras no son lo mismo**
+
+**El coste no existia.** `estado/cocina.ts` son 38 lineas: tipos, validacion, nutricion y lista de la
+compra -- y **`Ingrediente` no tiene ningun campo de precio**. El modelo de coste que si existe
+(`cesta.py:_coste_para`) es para **unidades**, con promociones, no para gramos de una receta.
+
+**Y la distincion que G05 pide es esta**: la receta dice «200 g de arroz» y el catalogo vende «1 kg por
+1,20 EUR». **Lo que usas cuesta 0,24 EUR; lo que compras cuesta 1,20 EUR.** Los dos son ciertos y
+significan cosas distintas -- *lo que cuesta hacer el plato, y lo que sale de tu bolsillo hoy* --, y dar
+uno solo como «el coste de la receta» es elegir por quien lee sin decírselo.
+
+`logica/costeReceta.ts`, **puro y sin imports** (como `chispa.ts` y `gasto.ts`: `node --test` lo carga
+y las reglas se prueban en un segundo), devuelve por ingrediente **`costeUsadoCent` y `costeEnvaseCent`**,
+y por receta los dos totales **con su cobertura**: `conDatos`, `sinDatos` (con nombres) y `completo`.
+
+| caso | lo que hace |
+|---|---|
+| **200 g de un paquete de 1 kg a 1,20 EUR** | ✓ **usado 24, envase 120** |
+| **«2 huevos»** | ✓ **usado = envase**: *un huevo no tiene fraccion, y decir 35 centimos seria inventarsela* |
+| **se sabe el envase pero no cuanto trae** | ✓ **usado `null` con su motivo**, envase 350 -- y el total de lo usado **no es 0: no se sabe** |
+| **sin precio** | ✓ **se cuenta y se nombra** en `sinDatos`, y `completo: false` |
+| **nada conocido** | ✓ **los dos totales `null`**, no cero |
+| **€/unidad del catalogo** | ✓ manda, y el envase se sigue diciendo |
+
+**Seis pruebas nuevas (26 en el cliente).** *Falta la pantalla de la receta.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

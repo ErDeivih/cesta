@@ -4,6 +4,7 @@ import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
 import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
 import { importeEnCentimos, textoDeLoQueFalta, textoDePeriodo, totalConocido } from '../src/logica/gasto.ts'
+import { costeDeReceta } from '../src/logica/costeReceta.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -179,4 +180,71 @@ test('el periodo se dice legible, y una fila sin periodo lo dice', () => {
   assert.equal(textoDePeriodo({ ...base, periodo: '2026-10' }, false), 'octubre de 2026')
   assert.equal(textoDePeriodo({ ...base, periodo: '2026-W41' }, true), '2026 · semana 41')
   assert.equal(textoDePeriodo({ ...base, periodo: null }, false), 'Sin fecha')
+})
+
+// --- G05: el coste de una receta -- lo que usas y lo que compras -------------
+
+test('200 g de un paquete de 1 kg a 1,20 EUR: usado 24 centimos, envase 120', () => {
+  const r = costeDeReceta([
+    { nombre: 'Arroz', cantidad: 200, unidad: 'g',
+      precio: { precioEnvaseCent: 120, cantidadEnvase: 1000, unidadEnvase: 'g' } },
+  ])
+  assert.equal(r.ingredientes[0].costeUsadoCent, 24, 'la quinta parte de 1,20')
+  assert.equal(r.ingredientes[0].costeEnvaseCent, 120, 'y el envase entero es otro numero')
+  assert.equal(r.usadoCent, 24)
+  assert.equal(r.envaseCent, 120)
+  assert.equal(r.completo, true)
+  assert.deepEqual(r.sinDatos, [])
+})
+
+test('en unidades NO se prorratea: un huevo no tiene fraccion', () => {
+  const r = costeDeReceta([
+    { nombre: 'Huevos', cantidad: 2, unidad: 'ud',
+      precio: { precioEnvaseCent: 210, cantidadEnvase: 12, unidadEnvase: 'ud' } },
+  ])
+  assert.equal(r.ingredientes[0].costeUsadoCent, 210,
+    'lo que usas cuesta el envase: 2 de 12 no son 35 centimos, son el envase que compras')
+  assert.equal(r.ingredientes[0].costeEnvaseCent, 210)
+})
+
+test('sin saber cuanto trae el envase, lo usado no se inventa', () => {
+  const r = costeDeReceta([
+    { nombre: 'Azafran', cantidad: 0.4, unidad: 'g',
+      precio: { precioEnvaseCent: 350, cantidadEnvase: null, unidadEnvase: 'g' } },
+  ])
+  assert.equal(r.ingredientes[0].costeUsadoCent, null)
+  assert.equal(r.ingredientes[0].costeEnvaseCent, 350, 'el envase si se sabe')
+  assert.match(r.ingredientes[0].motivo, /cuánto trae/)
+  assert.deepEqual(r.sinDatos, [], 'no es «sin datos»: se sabe el envase')
+  assert.equal(r.usadoCent, null, 'y el total de lo usado NO es 0: no se sabe')
+  assert.equal(r.envaseCent, 350)
+})
+
+test('un ingrediente sin precio se cuenta y se nombra', () => {
+  const r = costeDeReceta([
+    { nombre: 'Arroz', cantidad: 200, unidad: 'g',
+      precio: { precioEnvaseCent: 120, cantidadEnvase: 1000, unidadEnvase: 'g' } },
+    { nombre: 'Sal', cantidad: 5, unidad: 'g', precio: null },
+  ])
+  assert.deepEqual(r.sinDatos, ['Sal'])
+  assert.equal(r.completo, false, 'un total sobre la mitad no es el total')
+  assert.equal(r.usadoCent, 24, 'y lo que si se sabe se suma')
+  assert.equal(r.conDatos, 1)
+})
+
+test('sin ningun dato, los dos totales son null y no cero', () => {
+  const r = costeDeReceta([{ nombre: 'Sal', cantidad: 5, unidad: 'g', precio: null }])
+  assert.equal(r.usadoCent, null)
+  assert.equal(r.envaseCent, null)
+  assert.equal(r.completo, false)
+})
+
+test('el €/unidad del catalogo manda, y el envase se sigue diciendo', () => {
+  const r = costeDeReceta([
+    { nombre: 'Leche', cantidad: 250, unidad: 'ml',
+      precio: { precioEnvaseCent: 95, cantidadEnvase: 1000, unidadEnvase: 'ml',
+                precioUnidadCent: 0.09 } },
+  ])
+  assert.equal(r.ingredientes[0].costeUsadoCent, 23, '0,0009 EUR/ml x 250 ml = 22,5 -> 23')
+  assert.equal(r.ingredientes[0].costeEnvaseCent, 95)
 })
