@@ -1259,3 +1259,69 @@ cd plataforma\web\app; $env:CESTA_API = 'http://127.0.0.1:8102'; npm run dev
 **Y un aviso que costo una ronda**: *editar un fichero de `plataforma/web/app/src/` **con Vite corriendo** puede
 tumbar el servidor con `EBUSY`* -- *Vite vigila `src/` y la herramienta de edicion escribe ahi temporalmente.*
 *Se vio en la ronda 143 y se apunta aqui, que es donde se busca el arranque.*
+
+
+---
+
+## 35. F03 re-corrido el 2026-10-11 a las 23:56 -- **el bucle de publicacion PASA; falla la preparacion**
+
+*(Ronda 152, para el cierre de F16.)* **Corrido contra la pila del sandbox** (API 8102 con el gold de ensayo,
+Vite en el **5173**), y `CESTA_UI=http://localhost:5173`.
+
+### Lo que paso, con sus numeros
+
+```
+ok   una peticion nueva sirve la version nueva (20261011-235620)
+     precios: [3381, 3381, 3391, 3394, 3396]
+
+ok   publicar cambia lo que el cliente sirve, sin reiniciar nada
+     precios en la pantalla: ['ahorras un 59,3 %', '33,81 EUR', '0,81 EUR/l...', ...]
+
+ok   la busqueda ensena precios en la pantalla
+
+version publicada con la pantalla de busqueda abierta: v20261011-235626 (+100)
+
+ok   la segunda busqueda ensena precios (no una lista vacia)
+ok   **la PANTALLA ensena los precios de la version nueva tras publicar**   <- 34,81 EUR
+ok   la pantalla no dio errores de JavaScript ([])
+ok   **el puntero del catalogo REAL sigue intacto (20261007-103000)**       <- el dato de casa, a salvo
+
+MAL  hay cuenta para el recorrido (429)
+MAL  se crea una lista para el recorrido (401)
+MAL  /api/listas con sesion -> 401
+     POST /api/diario -> 401: {"detail":"Hay que entrar primero."}
+     el ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO
+```
+
+### Las dos cosas que esto dice, y son distintas
+
+**1. El corazon de F03 **pasa**, y con numeros.** *La pantalla pasa de **33,81 a 34,81 EUR** al publicar **sin
+reiniciar nada**, la segunda busqueda **no** devuelve una lista vacia, no hay **ni un error de JavaScript**, y
+**el puntero del catalogo real sigue en `20261007-103000`** -- o sea, **el ensayo no toco el dato de casa**,
+que es lo que el encargo pide preservar.*
+
+**2. Y el fallo es **de la preparacion del ensayo, no de la aplicacion**.** *Las tres lineas «MAL» son **una sola
+causa**: `POST /api/registrarse` devolvio **429** -- **demasiadas peticiones** --, asi que **no hubo cuenta**, y
+sin cuenta **no hay sesion**, y sin sesion **401 en todo lo que necesita estar dentro**.* **El alta en el diario
+no se pudo medir por eso**, no porque falle.
+
+### Y `429` es correcto que exista
+
+**El limite de peticiones esta **bien** puesto: `registrarse` es la puerta que hay que proteger.** *El problema es
+que **el ensayo necesita una cuenta** y **la pide creando una nueva cada vez** -- asi que **al cabo de unas
+cuantas rondas de ensayo, se limita a si mismo**.*
+
+**La salida ya esta insinuada en el propio ensayo** (*`/api/entrar` con una cuenta existente*), **y es lo que el
+resumen de la fase anoto en su dia**: *«test falls back to `/api/entrar`»*. **En esta corrida el respaldo no
+actuo** -- *queda por mirar **por que**, y es una linea.*
+
+### Y lo que esto significa para F16
+
+| | |
+|---|---|
+| **la publicacion en navegador** | **medida y pasando**: *33,81 -> 34,81 EUR en pantalla, sin reiniciar, sin errores JS, y con el catálogo real intacto* |
+| **el alta en el diario durante una publicacion** | **NO medida**, y **la causa es un `429` en la preparacion** -- *no un fallo de la aplicacion* |
+
+**Asi que el ensayo de F03 queda **en verde en lo suyo** y **con un limite de ensayo anotado**: *se puede volver
+a correr en cuanto la cuenta se reutilice en vez de crearse.* **Y decirlo asi es la mitad del valor: un «MAL» que
+se lee como fallo de la aplicacion seria falso.**
