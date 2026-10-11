@@ -406,3 +406,49 @@ por separado** -- *decir «cuatro» a secas habria sido cierto y no habria dicho
 | **tarea movil con una mano** | *medido a 390x844 en el ensayo*; **falta que lo haga una mano de verdad** |
 | **recarga** | **cubierta** por el ensayo de F03 |
 | C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
+
+
+---
+
+## 8. C01-C05, contrastados -- y **no son una tarea aparte: son una lista de comprobacion**
+
+*(Ronda 94.)* *Y al leerlos se ve lo que son.* **C01-C05 no son cinco funciones que haya que estudiar en
+Bring! o Listonic: son cinco criterios de aceptacion, y cuatro de ellos ya estaban medidos en esta misma
+investigacion -- por otro motivo.** *El estudio consistia en **contrastarlos**, no en empezarlos.*
+
+**Los criterios, de `docs/SUPERAPP-COMPETENCIA-Y-REA.md:89-93`** -- *y el documento avisa de como leerlos:*
+*«Las referencias son semillas de investigacion. La columna "aceptacion" define Cesta, **no afirma que el
+competidor se comporte exactamente asi**»* ✓ **Asi que no hay que copiar a nadie: hay que cumplir el criterio.**
+
+| ID | lo que pide | **estado, con la medida** |
+|---|---|---|
+| **C01** | *anadir/tachar/deshacer desde dos sesiones, sin perder cambios* | **medido** (§3): *el tachado **gana el primero** (`LEAST`+`COALESCE` sobre la hora del movil), tachar dos veces **no es error**, y **deshacer gana siempre*** |
+| **C01b** | *ni exponer listas de otro hogar* | **NO MEDIDO** -- *y es la mitad que importa mas: es lo unico de C01 que es de seguridad.* **Hay `papel_en` y `_acceso` en el codigo, pero no se ha probado** |
+| **C02** | *guardado sin catalogo* | **medido**: `anade_linea` acepta un nombre y `grupo_id`/`producto_id` son opcionales -- *una linea puede existir sin estar en ningun catalogo* |
+| **C02b** | *vinculo posterior explicito y **precio desconocido visible*** | **NO MEDIDO** -- *y «precio desconocido **visible**» es una condicion de la pantalla, no del dato* |
+| **C03** | *orden editable por lista/tienda; uso con una mano; conservacion al recargar* | **el orden NO esta** (§4: *el dato si, la funcion no*); **una mano: 390x844 y 4 toques** (§7); **la recarga SI** -- *cubierta por el ensayo de F03* |
+| **C04** | *frecuentes sin confundir preferencia con necesidad; estados necesito/no necesito y carrito/comprado* | **NO MEDIDO** -- *hay `favoritos` y hay `en_carrito` separado de `tachado_en` en la tabla, pero no se ha comprobado que no se confundan* |
+| **C05** | *acentos/typos/filtros utiles; **sugerir no significa declarar identidad exacta*** | **NO MEDIDO** -- *la pantalla tiene filtros (`cadena, pasillo, dieta, ofertas`), y la parte de «sugerir no es afirmar» es la misma que ya trata `AvisoIdentidad`, **pero no se ha probado en la busqueda***
+
+### Y lo que sale al contrastarlos: **la mitad de C01-C05 esta sin medir, y no es la mitad facil**
+
+**Cuatro de los cinco tienen su parte principal medida** -- *y por otros motivos: la concurrencia por F07, los
+pasos por el criterio, la recarga por F03.* **Pero hay cuatro sub-criterios que no se han tocado, y tres de
+ellos son de la clase que mas importa:**
+
+1. **`C01b`: que no se expongan listas de otro hogar.** *Es **seguridad**, y es lo unico de la tabla que puede
+   hacer dano si falla.* *El codigo tiene `papel_en` y `_acceso`; **que hagan su trabajo no se ha probado.***
+2. **`C02b`: que el precio desconocido se vea.** *Una linea sin catalogo **tiene que poder decir que no sabe
+   el precio**, y no ensenar un cero.* *Es el mismo patron que `nombre_visto` y que `nutricion_por`: **lo que
+   no se sabe se dice.***
+3. **`C04`: preferencia contra necesidad.** *«Frecuentes» y «lo que hace falta» son cosas distintas*, y la
+   tabla ya las separa (`en_carrito` y `tachado_en` son columnas distintas) -- **pero separadas en la base no
+   es separadas en la cabeza de quien las mira.***
+4. **`C05`: que sugerir no sea afirmar.** *Es el mismo problema que `AvisoIdentidad` ya resuelve para las
+   alternativas*, **y no esta dicho que la busqueda lo respete.**
+
+### Y el orden que sale de aqui
+
+**Lo siguiente de F07 no es estudiar a Bring!: es `C01b`, que es seguridad y es el unico que puede hacer
+dano.** *Y se prueba como los demas: **dos sesiones de dos hogares distintos, y comprobar que la una no ve la
+lista de la otra*** -- *que es `papel_en`, y es una prueba de una funcion.*
