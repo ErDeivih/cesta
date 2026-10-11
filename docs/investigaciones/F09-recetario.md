@@ -217,3 +217,56 @@ commitear** -- *que es lo que hace que ninguna de estas haya llegado al commit.*
 
 **Dos de los cuatro, medidos y pasando; y los dos que faltan -- `R01` y `R02` -- son los que tienen que ver con
 las pantallas y con traer recetas de fuera.**
+
+
+---
+
+## 4. `R02`: **importar recetas no existe** -- y esta vez lo dicen las tres capas
+
+*(Ronda 118.)* El criterio (`SUPERAPP-COMPETENCIA-Y-REA.md:102`): *«**URL/archivo de fuente permitida**;
+**previa, fuente, unidades y edicion antes de guardar**.»*
+
+**Y despues de ocho veces en esta fase en que la respuesta estaba en otra capa, esta vez no**: *lo he mirado en
+**tres** y las tres dicen lo mismo.*
+
+| capa | lo que hay |
+|---|---|
+| **las rutas de la API** (`plataforma/api/recetas.py`) | `/plan` · `/{receta_id}` · `/{receta_id}/a-la-lista` · `/{receta_id}/versiones` · `PUT /{receta_id}` · `/{receta_id}/archivar` -- **ninguna ruta de importar** |
+| **la pantalla** (`plataforma/web/app/src`) | **una** mencion de «importar»... **y es de CSS**: *«el pasillo se pegaria en `top: 0`»*. **No hay pantalla de importar.** |
+| **el campo `fuente`** | existe -- `core/recetas.py:97`, `"fuente": uno.get("fuente")` --, **pero es del INGREDIENTE**, no de la receta: *dice de donde salio un ingrediente, no de donde se trajo la receta* |
+
+**Asi que `R02` no esta implementado, y no es que falte una pieza: falta el camino entero** -- *traer una receta
+de fuera, ensenarla **antes** de guardarla, y dejar editar unidades y texto.*
+
+### Y por que esto es una buena noticia para el metodo
+
+**En esta fase he concluido ocho veces que algo faltaba, y ocho veces estaba en otra capa.** *Esta es la
+**primera** en que mirar tres capas **confirma** que falta.*
+
+**La diferencia no es la suerte: es que las otras ocho veces **no mire las tres**.** *Mire una -- el `SELECT`,
+el grep del resumen, el `lineas_de` -- y concluí.* **Aqui mire tres antes de decirlo, y por eso lo puedo decir.**
+
+### Y lo que si hay, que conviene no perder
+
+- **`GET /{receta_id}/a-la-lista` y `POST /{receta_id}/a-la-lista`** -- *que es **`R07`**: «Plan→lista»,*
+  *«seleccionar lo necesario, consolidar compatibles y mantener trazabilidad ingrediente-receta»*.
+  **Ya existe una ruta para eso**, y es de F10.
+- **`PUT /{receta_id}`** -- *que es el editor.*
+- **`GET /{receta_id}/versiones`** -- *que es `R03`, ya medido.*
+- **Y los ingredientes llevan `producto_id`, `grupo_id` y `fuente`** -- *que **es** la trazabilidad
+  ingrediente→receta→catálogo que `R02` y `R07` piden.* **El dato esta; lo que falta es el camino para
+  meterlo desde fuera.**
+
+### Y `R02` queda como lo que es: **un hueco con nombre, y con sus tres casos**
+
+**La aceptacion nombra tres casos que son de este criterio**, y sin importar no existen:
+
+| caso de la aceptacion | **que necesitaria** |
+|---|---|
+| **URL invalida** | *una comprobacion de **fuente permitida** -- que es literalmente lo que el criterio pide, y no hay* |
+| **duplicado** | *traer dos veces la misma receta, y decidir que se hace* |
+| **error** | *que la fuente no conteste, o conteste algo que no es una receta* |
+
+**Los tres son casos **de importar**, y los tres estan sin poder probarse** -- *no porque fallen, sino porque
+**no hay donde**.* **Es el unico criterio de F09 en ese estado, y conviene que se lea asi: no es un defecto, es
+una funcion que nadie ha escrito.**
