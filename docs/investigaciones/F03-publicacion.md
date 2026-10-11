@@ -79,16 +79,32 @@ el escritor por uno que no renombre, salta ahí.*
 
 ---
 
-## 4. Lo que queda de F03
+## 4. La publicación, movida al final del ciclo
 
-1. **Mover la publicación al final del ciclo** —después de `emparejar` y `limpiar`—, que es la mitad que
-   falta del arreglo. *Toca el orden de las etapas de `run.py` y hay que mirar
-   `tests/test_la_pasada_publica.py`, que afirma que el pipeline publica.*
-2. **Inyectar fallos** entre pipeline, matching, manifiesto y publicación, como pide el criterio.
-3. **El resumen diario** que distingue **capturado / procesado / publicado**, y que **reanuda desde crudo
+**El propio ciclo decía dónde va.** `run.py` comenta, al escribir el manifiesto: *«va después del
+emparejador, **que es lo último que toca gold**»*. Ahí es donde se publica ahora —justo después del
+manifiesto, que describe lo que se publica—.
+
+**Y el pipeline aprende a callarse**: `pipeline.main(*, publicar=True)`. *Una pasada suelta
+(`python -m projects.cesta.pipeline`) sigue publicando; **el ciclo le dice `publicar=False`**, porque es
+el ciclo quien sabe cuándo se ha acabado de escribir gold.*
+
+**Y el fallo entra en el veredicto**: `fallos.append("publicacion")`.
+
+**Fijado en `tests/test_la_pasada_publica.py`**, que lee la fuente del ciclo y afirma **las tres cosas**:
+que el pipeline **no** publique cuando lo llama el ciclo, que el ciclo **sí** publique, y que lo haga
+**después** del emparejador. *Se refuerza el test que ya existía en vez de sustituirlo: el de antes
+comprobaba que la pasada publica, y sigue siendo verdad para una pasada suelta.*
+
+---
+
+## 5. Lo que queda de F03
+
+1. **Inyectar fallos** entre pipeline, matching, manifiesto y publicación, como pide el criterio.
+2. **El resumen diario** que distingue **capturado / procesado / publicado**, y que **reanuda desde crudo
    sin rescrapear todo**.
-4. **Los dos recorridos de navegador** de V1 fija y V2 publicada durante el uso, con las tres apps.
-5. **Y una observación sin explicar, que no afirmo como defecto**: el puntero apunta a
+3. **Los dos recorridos de navegador** de V1 fija y V2 publicada durante el uso, con las tres apps.
+4. **Y una observación sin explicar, que no afirmo como defecto**: el puntero apunta a
    `20261007-103000`, y sus **6 ficheros son byte a byte idénticos** al gold que se sirve hoy. *Con
    `fijar()` no se tocan ficheros y `publicar()` rechaza una versión que ya existe, así que la
    explicación más probable es una publicación con `momento` retrofechado — que es justo la sutileza que

@@ -237,7 +237,9 @@ def _main() -> int:
             # un pipeline que no habia podido **publicar** devolvia 0 y el veredicto del dia no se
             # enteraba.* El pipeline publica al final, y si no puede, **el puntero se queda atras** --
             # que es una incoherencia visible en `/api/estado`, pero solo si alguien la mira.
-            bien = importlib.import_module("projects.cesta.pipeline").main() == 0
+            # **Sin publicar**: la publicacion va al final, cuando ya esta todo lo que
+            # escribe gold. Publicar aqui era el defecto.
+            bien = importlib.import_module("projects.cesta.pipeline").main(publicar=False) == 0
             if not bien:
                 print("[pipeline] el dia no se ha publicado")
                 fallos.append("pipeline")
@@ -258,6 +260,24 @@ def _main() -> int:
                 importlib.import_module("core.manifiesto").escribe()
             except Exception as exc:  # noqa: BLE001
                 print(f"[manifiesto] no se pudo escribir: {type(exc).__name__}: {exc}")
+
+            # **Y ahora si: se publica.** Aqui se acaba todo lo que escribe gold -- el emparejador
+            # es lo ultimo que lo toca, y el manifiesto va justo antes porque describe **lo que se
+            # publica** --, asi que este es el punto.
+            #
+            # *Antes esto lo hacia `pipeline.main()` a mitad del ciclo, y por eso la version
+            # publicada **no llevaba** `grupos.parquet` ni `enlaces.parquet`: los dos ficheros que
+            # escribe el emparejador. **Medido el 13 de octubre de 2026**: la ultima version
+            # publicada tenia esos dos distintos del gold y los otros cuatro identicos.* Lo que
+            # calculaba el emparejador **no lo veia nadie**.
+            #
+            # **Y si falla, el veredicto del dia lo ve**: la version no se ha publicado y el puntero
+            # se queda atras. *Dejarlo en un `print` sin codigo de salida fue justo el otro fallo.*
+            try:
+                importlib.import_module("core.publicacion").publicar()
+            except Exception as exc:  # noqa: BLE001
+                print(f"[publicacion] no se pudo publicar la version del dia: {type(exc).__name__}: {exc}")
+                fallos.append("publicacion")
         except Exception as exc:  # noqa: BLE001
             print(f"[emparejar] FALLO: {exc}")
             fallos.append("emparejar")

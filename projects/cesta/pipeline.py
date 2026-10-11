@@ -726,7 +726,13 @@ def registrar_vistas() -> None:
     con.close()
 
 
-def main() -> int:
+def main(*, publicar: bool = True) -> int:
+    """La pasada del dia.
+
+    **`publicar=False` es lo que usa el ciclo**: la publicacion tiene que ir **al final de todo
+    lo que escribe gold** -- el emparejador incluido --, y eso no lo sabe la pasada sola. *Una
+    pasada suelta, en cambio, si publica: es lo que hace `python -m projects.cesta.pipeline`.*
+    """
     print("pipeline: cargando bronze...")
     bronze = _cargar_bronze()
     if bronze is None or bronze.is_empty():
@@ -797,6 +803,12 @@ def main() -> int:
     #
     # Va al final y con su `try`, como el resto de esta cola: si no se puede publicar, el dato ya
     # esta escrito y el puntero se queda donde estaba, que deja la incoherencia **visible**.
+    if not publicar:
+        # **El ciclo publica al final.** *Aqui no: el emparejador todavia no ha corrido, y publicar
+        # antes deja fuera `grupos.parquet` y `enlaces.parquet`.*
+        print("  publicacion: se deja para el final del ciclo")
+        print("pipeline: hecho")
+        return 0
     try:
         from core import publicacion
 
