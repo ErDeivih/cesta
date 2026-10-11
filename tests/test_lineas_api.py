@@ -6,7 +6,12 @@ una restriccion (`linea_con_destino`), y el `CheckViolation` salia por la puerta
 como "el servidor ha fallado".
 
 Un 500 ahi es mentira y ademas hace perder el tiempo: manda a mirar los registros
-de la API por algo que es una peticion mal formada. La interfaz siempre manda uno
+de la API por algo que es una peticion mal formada.
+
+**Y desde la migracion 014 (paquete G02) lo mal formado cambio de forma**: la linea sin destino es
+legitima -- es la *pendiente de identificar* -- y lo que falta es **el nombre**. Las dos pruebas del
+final dicen eso: la que falta da 422 sin tocar el almacen, y la que sobra llega al almacen sin
+destino. La interfaz siempre manda uno
 de los dos -- se comprobo contra la API viva --, asi que esto no se ve desde la
 pantalla: se ve desde `curl`, y `curl` es donde se prueba una API.
 
@@ -30,20 +35,51 @@ def _cliente(monkeypatch, llamado: list):
     return TestClient(main.app)
 
 
-def test_una_linea_sin_destino_da_422(monkeypatch):
+def test_una_linea_sin_nombre_da_422(monkeypatch):
+    """**La peticion mal formada cambio de forma, y la prueba con ella.**
+
+    Existe desde la auditoria del front por un hallazgo concreto: anadir una linea devolvia **500**
+    («el servidor ha fallado»), que es mentira y ademas manda a mirar los registros por algo que es
+    una peticion mal formada. **Entonces lo mal formado era no llevar destino**; desde la migracion
+    014 eso es legitimo -- es la linea *pendiente de identificar* de G02 -- y **lo que falta es el
+    nombre**, que es lo unico que se puede leer de ella y lo unico que permite identificarla despues.
+
+    La prueba conserva **lo que importaba**: 422 y no 500, **y la comprobacion antes de escribir
+    nada**. Lo que ya no afirma es la regla vieja, porque G02 la cambia a proposito.
+    """
     llamado: list = []
     cliente = _cliente(monkeypatch, llamado)
     try:
         r = cliente.post("/api/listas/una-lista/lineas",
-                         json={"nombre": "Leche", "cantidad": 1})
+                         json={"nombre": "   ", "cantidad": 1})
         assert r.status_code == 422, (
-            f"una linea sin grupo ni producto ha contestado {r.status_code}; "
-            f"la base la rechaza, pero eso es una peticion mal formada, no un "
-            f"fallo del servidor")
-        assert "grupo o el producto" in r.json()["detail"]
+            f"una linea sin nombre ha contestado {r.status_code}; la base la rechaza con "
+            f"`linea_con_nombre`, pero eso es una peticion mal formada, no un fallo del servidor")
+        assert "nombre" in r.json()["detail"]
         assert not llamado, (
-            "ha llegado al almacen una linea sin destino: la comprobacion tiene "
-            "que ir antes de escribir nada")
+            "ha llegado al almacen una linea sin nombre: la comprobacion tiene que ir antes de "
+            "escribir nada")
+    finally:
+        main.app.dependency_overrides.clear()
+
+
+def test_una_linea_sin_destino_se_acepta_y_llega_sin_destino(monkeypatch):
+    """**Y la regla nueva, en positivo**: sin destino pero **con nombre** es una peticion valida.
+
+    Es la linea *pendiente de identificar*: se lee, se puede identificar despues, **no se compara** y
+    **no se le inventa precio**. Aqui se comprueba lo que sale hacia el almacen: que llega, y que
+    llega **sin destino** -- que es lo que la hace pendiente y no un producto.
+    """
+    llamado: list = []
+    cliente = _cliente(monkeypatch, llamado)
+    try:
+        r = cliente.post("/api/listas/una-lista/lineas",
+                         json={"nombre": "Papel de cocina", "cantidad": 1})
+        assert r.status_code in (200, 201), r.text
+        assert llamado, "una linea con nombre tiene que llegar al almacen"
+        # `anade_linea(lista_id, usuario_id, id, nombre, grupo_id, producto_id, ...)`
+        assert llamado[0][4] is None and llamado[0][5] is None, (
+            f"tiene que llegar SIN destino, y llego {llamado[0][3:6]}")
     finally:
         main.app.dependency_overrides.clear()
 
