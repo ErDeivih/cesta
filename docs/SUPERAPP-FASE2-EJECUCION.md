@@ -6,24 +6,25 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F06 · publicar la garantía y el límite, y el banco de matching.** **Las 9 discrepancias están
-arregladas**, y el arreglo es el que pedía el criterio: *cada asignación se puntúa con **su** conjunto.*
+**F03 · la publicación coherente.** Es el siguiente cierre de tu lista —*«optimización entre tiendas,
+**publicación** y cobertura de fichas»*— y el reparto ya está cerrado y verificado.
 
-```
-antes    _mejor_reparto repartia con la «parte» de cada linea suponiendo que TODAS iban a esa tienda
-ahora    por_cadena se queda SIN agrupar, y el reparto agrupa lo que de verdad va a cada tienda
+El hallazgo: *«`pipeline.py` todavía captura fallo de publicar; el ciclo reconstruye grupos después del
+pipeline. **Auditar cierre de versión y estado diario.** El arreglo de las fechas del puntero no
+demuestra coherencia de todos los artefactos.»* **Y su criterio**: *«tres recorridos V1/V2/V3»*.
 
-         por debajo de 200.000 asignaciones -> producto cartesiano -> el OPTIMO, exhaustivo = True
-         por encima                         -> la heuristica         -> exhaustivo = False, y lo dice
-```
+**Antes de tocar nada: medirlo.** *Qué artefactos publica el pipeline, cuáles se reconstruyen después, y
+si el estado diario que ve quien compra es coherente con el puntero durante el cambio.*
 
-**El barrido pasa de 9 discrepancias a cero**, y el `xfail(strict)` **saltó como `XPASS` al arreglarlo**
-—*que era exactamente para lo que estaba*—. **Los 41 tests de reparto que ya existían siguen pasando.**
+**Lo que queda de F06**, enumerado y no cerrado: **el banco de matching** —*positivos/negativos duros por
+familia/cadena, precisión/recall/abstención **con denominadores**, y «mismo GTIN no ignora
+contradicciones; distinto GTIN no demuestra engaño»*—, sin empezar. *El optimizador sí está cerrado:
+**9 discrepancias arregladas, cero en el barrido**, con garantía y límites publicados.*
 
-**Lo que queda de F06**: publicar la garantía y el límite **donde se lee el algoritmo** (hoy están en el
-código y en el informe); **decidir el alcance del `umbral`** —*«5 € dto comprando 20 €»: 2400 con la
-lectura del motor y 1900 con la del ticket, y el folleto no lo dice*—; y el **banco de matching**
-(positivos/negativos duros, precisión/recall/abstención con denominadores), **sin empezar**.
+Y de F06 queda también **decidido y publicado el alcance del `umbral`**, con la evidencia delante: los
+tres textos de umbral del catálogo **nombran una marca o familia** (*«PRODUCTOS PASCUAL», «en Nestlé
+Cafés», «en PepsiCo»*), dos son `solo_online` y no restan, así que **la exposición viva es 1 de 236** —
+*el motor lo aplica por producto, que **subestima** el descuento: cobra de más, el lado conservador*.
 Detalle: [`investigaciones/F06-reparto-agrupado.md`](investigaciones/F06-reparto-agrupado.md).
 
 **Lo que queda de F01**: navegador, estabilidad ante reordenación, elegir comprar A otra vez, y migrar
@@ -43,7 +44,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
 | F05 | Fichas de seis cadenas/Lidl | pendiente | Inventario real por campo y workers ejecutados. |
-| F06 | Matching y oráculo multi-tienda | **en curso** | **9 discrepancias arregladas**: el reparto puntúa cada asignación con **su** conjunto y **enumera cuando cabe** (200.000), diciendo `exhaustivo`. El `xfail(strict)` saltó como `XPASS`. Falta publicar garantía/límite, el alcance del `umbral` y el banco de matching. |
+| F06 | Matching y oráculo multi-tienda | **en curso** | **Optimizador cerrado**: 9 discrepancias arregladas, **cero en el barrido**, garantía y límites **publicados** en `_mejor_reparto`, y el **alcance del `umbral` decidido con los folletos** (3 textos, los tres por marca; 1 vivo de 236). **Falta el banco de matching.** |
 | F07 | Compra rápida y familiar | pendiente | Investigar C01–C05 y medir UI real. |
 | F08 | Comparación/presupuesto/ahorro | pendiente | C06–C10, costes y ámbito elegibles. |
 | F09 | Recetario/importación/borradores | pendiente | R01–R04 con referencias y fixtures permitidos. |
@@ -60,26 +61,23 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 - Paquete y criterio concreto: **F00 en curso** (ocho hallazgos y la matriz S00–S12); **F01 en curso**
   (navegador, estabilidad de identidad); **F02 en curso** (unidades, vista previa); y **F06 en curso**
   con el defecto del reparto arreglado y el oráculo exhaustivo pendiente.
-- Fichero / función / recorrido: `plataforma/api/cesta.py:_mejor_reparto` — *recibe las elecciones **sin
-  agrupar** y agrupa lo que de verdad va a cada tienda (`_coste_con_lo_agrupado`); enumera el producto
-  cartesiano por debajo de `_LIMITE_EXHAUSTIVO = 200_000` y si no usa la heurística, **diciéndolo con
-  `exhaustivo`***. Y el write-back de la ronda anterior **se quitó**: era un arreglo a medias.
-- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f06_oraculo_asignaciones.py` →
-  **10 pasan** (13 oct 2026), incluido el barrido de 200 escenarios con **cero discrepancias**. *El
-  `xfail(strict=True)` que fijaba las 9 saltó como **`XPASS`**, que es lo que obliga a quitar la marca.*
-  Y `uv run pytest -q` → **1692 pasan, 0 fallan**; `ruff` limpio; los 41 tests de reparto que ya
-  existían siguen pasando.
-- Caso que falla o comprobación siguiente: **ninguno abierto en el reparto**. Lo que queda es
-  *publicar* la garantía y el límite donde se lee el algoritmo, y decidir el alcance del `umbral`.
-- Cambios conservados / commit: `plataforma/api/cesta.py`,
-  `tests/test_fase2_f06_oraculo_asignaciones.py`, `docs/investigaciones/F06-reparto-agrupado.md` y este
-  tablero.
-- Bloqueo real y alternativa independiente: **ninguno**. *Límites declarados:* por encima de 200.000
-  asignaciones **no se promete el óptimo** y la respuesta lo dice; el `umbral` sigue fuera del oráculo
-  hasta que se decida su alcance; y el límite exhaustivo es un número de **asignaciones, no de tiempo**
-  —*si alguna vez se mide que 200.000 tardan demasiado, el número tendrá que bajar y habrá que decirlo*.
-- **Acción inmediata al retomar:** **publicar la garantía y el límite** de `_mejor_reparto` donde se lee
-  el algoritmo, **decidir el alcance del `umbral`** con su prueba, y empezar el **banco de matching**
-  (positivos/negativos duros por familia/cadena, precisión/recall/abstención **con denominadores**).
+- Fichero / función / recorrido: `plataforma/api/cesta.py:_mejor_reparto` — *lleva ahora un bloque
+  **«Garantía y límites»**: el óptimo por debajo de 200.000 asignaciones, la heurística por encima, que
+  el límite es un número de **asignaciones y no de tiempo**, y el alcance del `umbral` con su medición*.
+- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f06_alcance_del_umbral.py` →
+  **4 pasan** (13 oct 2026). *Y la medición que decide*: de **236** textos de oferta del silver, **3** son
+  de umbral y **los tres nombran una marca o familia**; **2 son `solo_online`** y no restan → **1 vivo**.
+  `uv run pytest -q` → **1696 pasan, 0 fallan**; `ruff` limpio.
+- Caso que falla o comprobación siguiente: **el banco de matching**, sin empezar. *Y el siguiente cierre
+  de la lista del encargo es **F03, la publicación**, que no se ha medido todavía.*
+- Cambios conservados / commit: `plataforma/api/cesta.py` (docstring de garantía y límites),
+  `tests/test_fase2_f06_alcance_del_umbral.py` (nuevo), `docs/investigaciones/F06-reparto-agrupado.md` y
+  este tablero.
+- Bloqueo real y alternativa independiente: **ninguno**. *Límites publicados:* por encima de 200.000
+  asignaciones no se promete el óptimo y la respuesta lo dice; el `umbral` se aplica **por producto** y
+  eso **subestima** el descuento —*cobra de más, el lado conservador*—, con **1 texto vivo de 236**.
+- **Acción inmediata al retomar:** **F03** —medir qué artefactos publica el `pipeline`, cuáles se
+  reconstruyen **después**, y si el estado diario es coherente con el puntero durante el cambio—, y
+  después el **banco de matching** de F06.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.

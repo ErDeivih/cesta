@@ -565,6 +565,37 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
 
     **Y se dice si la respuesta es exhaustiva o heuristica**: `exhaustivo` viaja en el resultado.
     *Heuristica se llama heuristica.*
+
+    Garantia y limites
+    ------------------
+    **Garantia.** Con **200.000 asignaciones o menos** (`_LIMITE_EXHAUSTIVO`), el reparto devuelto es
+    **el optimo** entre las asignaciones de como mucho `max_tiendas` tiendas, puntuando cada una con
+    **el conjunto que de verdad va a cada tienda**. *Medido contra el oraculo independiente
+    `core/oraculo_reparto.py`: **cero discrepancias en 200 escenarios al azar** con semilla fija
+    (`tests/test_fase2_f06_oraculo_asignaciones.py`).*
+
+    **Limites, dichos:**
+
+    1. **Por encima de 200.000 asignaciones no se promete el optimo**, y la respuesta lo dice con
+       `exhaustivo: False`. *Es una heuristica y se llama heuristica.*
+    2. **El limite es un numero de asignaciones, no de tiempo.** *Si alguna vez se mide que 200.000
+       tardan demasiado, el numero tendra que bajar y habra que decirlo.*
+    3. **`umbral` se aplica por producto, y los folletos lo escriben por marca.** Medido el 13 de
+       octubre de 2026 sobre los **236** textos distintos de oferta del silver: **3** son de umbral y
+       los tres nombran una marca o una familia --
+
+           "5 EUR DTO COMPRANDO 15 EUR PRODUCTOS PASCUAL"
+           "5 EUR dto. comprando 20 EUR en Nestle Cafes. Exclusivo Online."
+           "5 EUR dto. comprando 15 EUR en PepsiCo. Exclusivo Online."
+
+       *No es el ticket entero, como supondria leerlo como compra global, y **no es un producto**, que
+       es lo que hace el motor.* **Dos de los tres son `solo_online` y no restan**, asi que la
+       exposicion viva es **1 texto de 236**. *La lectura del motor **subestima** el descuento -- cobra
+       de mas --, que es el lado conservador del error; cerrarlo pide un concepto de marca o familia
+       que el motor no tiene, y por eso queda publicado como limite en vez de disimulado.*
+    4. **`acumulable` y `solo_online` no restan nada**: se ensenan, pero ese dinero no baja el ticket
+       --*va a la tarjeta, o solo existe comprando por internet*--. *Un comparador que los reste miente
+       sobre lo que se paga hoy.*
     """
     if max_tiendas < 2 or len(por_cadena) < 2:
         return None

@@ -192,31 +192,52 @@ que estaba: la marca se quita en cuanto la prueba pasa.* **Y los 41 tests de rep
 
 ---
 
-## 6. Los dos límites de alcance, que también hay que publicar
+## 6. El alcance del `umbral`, **decidido con los folletos delante**
 
-**a) El `umbral`.** `umbral` («5 € dto comprando 20 €») se aplica hoy **a los productos de esa promoción
-dentro de la tienda**. Medido: dos líneas *distintas* de 12 € con esa oferta dan **2400 céntimos** en el
-motor y darían **1900** si el umbral fuera del ticket entero. *El texto del folleto no dice de qué es el
-umbral, y el motor ha elegido una lectura sin publicarla.* **El oráculo lo excluye a propósito**:
-mientras no se decida, incluirlo sería elegir una de las dos lecturas y llamarla verdad.
+Estaba sin decidir: `Mecanica.coste` lo aplica **por producto**, y su propio comentario lo escribe como
+«5 € dto comprando 20 €», que se lee como una regla del ticket.
 
-**b) La heurística por encima del límite.** Con más de ~200.000 asignaciones **no se promete el óptimo**,
-y la respuesta lo dice con `exhaustivo: False`. *Es lo que F06 pide con «heurística se llama heurística»,
-y la prueba comprueba **los dos lados**: que una cesta grande **no** se declara exhaustiva y que una
-pequeña **sí**.*
+**En vez de elegir una lectura, se miraron los textos que hay.** Medido el 13 de octubre de 2026 sobre
+los **236** textos distintos de oferta del silver: **3** son de umbral, **y los tres nombran una marca o
+familia**:
 
-**c) El banco de matching.** Positivos/negativos duros por familia/cadena, precisión/recall/abstención
-**con denominadores**, y *«mismo GTIN no ignora contradicciones; distinto GTIN no demuestra engaño»*.
-**Sin empezar.**
+```
+"5 EUR DTO COMPRANDO 15 EUR PRODUCTOS PASCUAL"
+"5 EUR dto. comprando 20 EUR en Nestle Cafes. Exclusivo Online."
+"5 EUR dto. comprando 15 EUR en PepsiCo. Exclusivo Online."
+```
+
+*No es el ticket entero, como supondría leerlo como compra global, y **no es un producto**, que es lo
+que hace el motor.*
+
+**Y dos de los tres son `solo_online`, que ya no resta**, así que **la exposición viva es 1 texto de 236
+(0,4 %)**.
+
+### La decisión
+
+**Se deja como está —por producto— y se publica.** *La lectura del motor **subestima** el descuento, es
+decir **cobra de más**: es el lado conservador del error.* Cerrarlo pide un concepto de marca o familia
+que el motor no tiene, y con un texto vivo de 236 no compensa inventarlo.
+
+**Lo que las pruebas impiden es el error contrario**: que alguien lo aplique al ticket entero y el
+comparador empiece a **prometer descuentos que no existen**. *Ese error no es conservador: es mentir
+sobre lo que se paga.* Está en `tests/test_fase2_f06_alcance_del_umbral.py` — **4 pasan**, con la
+propiedad afirmada explícitamente (`por_producto >= por_marca`) y los dos textos online comprobados.
+
+**Y se publica donde se lee el algoritmo**: `_mejor_reparto` lleva ahora un bloque **«Garantía y
+límites»** con las cuatro cosas —el óptimo por debajo del límite, la heurística por encima, que el
+límite es un número de asignaciones y no de tiempo, y el alcance del umbral con su medición—.
 
 ---
 
-## 7. Lo que queda de F06
+## 7. Los límites que quedan publicados
 
-1. **Publicar la garantía y el límite** de `_mejor_reparto` en el documento del algoritmo —*hoy está en
-   el código y en este informe, pero no donde se lee el algoritmo*.
-2. **Decidir y decir el alcance del umbral.**
-3. **El banco de matching**, sin empezar.
-4. *Y una pregunta abierta que conviene no perder*: el límite exhaustivo es un número de asignaciones,
-   **no de tiempo**. *Si alguna vez se mide que 200.000 asignaciones tardan demasiado, el número tendrá
-   que bajar y habrá que decirlo.*
+**a) El `umbral`**, ya decidido arriba: por producto, conservador, 1 texto vivo de 236.
+
+**b) La heurística por encima del límite.** Con más de ~200.000 asignaciones **no se promete el óptimo**,
+y la respuesta lo dice con `exhaustivo: False`. *La prueba comprueba **los dos lados**: que una cesta
+grande **no** se declara exhaustiva y que una pequeña **sí**.*
+
+**c) El banco de matching.** Positivos/negativos duros por familia/cadena, precisión/recall/abstención
+**con denominadores**, y *«mismo GTIN no ignora contradicciones; distinto GTIN no demuestra engaño»*.
+**Sin empezar: es lo que queda de F06.**
