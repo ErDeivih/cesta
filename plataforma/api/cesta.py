@@ -846,10 +846,18 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
     guarda el precio de esa tienda**; si no la tiene, el mas barato de hoy. Guardar la mas
     barata cuando alguien decidio comprarlo en DIA apuntaria un precio que no se pago.
 
-    Devuelve `{linea_id: {"cadena", "precio_cent"}}`, y `precio_cent` es **None** cuando no
-    hay precio que dar: la linea apunta a otro producto (`producto_movido`, el caso de
-    `catalogo.lineas_movidas`) o el producto no esta en el catalogo. Quien lo guarde lo
-    cuenta aparte -- un cero ahi seria afirmar que salio gratis.
+    Devuelve `{linea_id: {"cadena", "precio_cent", "promo", "producto_id"}}`, mas `coste_cent` cuando
+    hay precio y cantidad, que es la parte repartida de la promocion. `precio_cent` es **None** cuando
+    no hay precio que dar: la linea apunta a otro producto (`producto_movido`, el caso de
+    `catalogo.lineas_movidas`) o el producto no esta en el catalogo. Quien lo guarde lo cuenta aparte --
+    un cero ahi seria afirmar que salio gratis.
+
+    **`promo` y `producto_id` se anadieron el 13 de octubre de 2026 (fase 2, F01)**, y son lo que el
+    cierre necesita para guardar **el producto efectivo**: *sin `producto_id`, una linea que pide solo
+    grupo se archivaba **sin identidad** -- no se sabia que producto le habia puesto el precio; y sin
+    `promo`, el reparto de la oferta la adivinaba buscando en `mejor` un candidato de esa cadena con
+    ese precio exacto, que se equivoca con dos productos al mismo precio y **no encontraba nada cuando
+    el precio venia de una alternativa aceptada**.*
     """
     salida: dict[str, dict] = {}
     if not lineas:
@@ -863,19 +871,43 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
                            autorizado_cadena=x.get("autorizado_cadena")) for x in lineas]
     mejor = _candidatos(peticiones, _fecha_de_hoy())
     for linea, peticion in zip(lineas, peticiones, strict=True):
-        cadena = precio = None
+        cadena = precio = promo = efectivo = None
         if not linea.get("producto_movido"):
             # **Por la llave del motor**, no por el grupo: la llave lleva el producto concreto cuando la
             # linea lo pide, y comparar contra el grupo dejaba esas lineas guardandose **sin precio**.
             esperada = _llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, None)[0]
-            suyos = [(k[1], v[1]) for k, v in mejor.items()
-                     if k[0] == esperada and k[-1] != "alternativa"]
-            elegida = linea.get("cadena_elegida")
-            if elegida and any(f == elegida for f, _ in suyos):
-                cadena, precio = elegida, next(p for f, p in suyos if f == elegida)
-            elif suyos:
-                cadena, precio = min(suyos, key=lambda par: par[1])
-        salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio}
+            # **La sustitucion aceptada manda aqui igual que en la estimacion.** Hasta el 13 de octubre
+            # de 2026 no se miraba: se filtraba `k[-1] != "alternativa"` y se guardaba **el producto del
+            # grupo** con su precio, mientras la estimacion cobraba la alternativa aceptada. Medido con
+            # el escenario del encargo -- A de 300 c pedido, B de 250 c con 3x2 aceptado, tres unidades:
+            # **la estimacion cobraba 500 y el cierre guardaba 900.** Cuatrocientos centimos, y un
+            # producto que nadie compro. *Y lo que se guarda al cerrar no se recalcula nunca: un error
+            # aqui miente para siempre.*
+            aceptada = None
+            for k, v in mejor.items():
+                if k[0] != esperada or k[-1] != "alternativa":
+                    continue
+                candidata = {"producto_id": v[0], "precio_cent": v[1], "promo": v[3], "fuente": k[1]}
+                if _es_la_confirmada(peticion, candidata):
+                    aceptada = candidata
+            if aceptada is not None:
+                cadena = aceptada["fuente"]
+                precio = aceptada["precio_cent"]
+                promo = aceptada["promo"]
+                efectivo = aceptada["producto_id"]
+            else:
+                # **Sin sustitucion confirmada, el producto que el grupo es hoy**, con la tienda
+                # decidida mandando sobre el mas barato. *Es lo que hacia antes y sigue estando bien:
+                # una linea que no acepto nada no puede cobrarse como si hubiera aceptado.*
+                suyos = [(k[1], v[1], v[3], v[0]) for k, v in mejor.items()
+                         if k[0] == esperada and k[-1] != "alternativa"]
+                elegida = linea.get("cadena_elegida")
+                if elegida and any(f == elegida for f, *_ in suyos):
+                    cadena, precio, promo, efectivo = next(x for x in suyos if x[0] == elegida)
+                elif suyos:
+                    cadena, precio, promo, efectivo = min(suyos, key=lambda par: par[1])
+        salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio,
+                                        "promo": promo, "producto_id": efectivo}
 
     # **Y la parte de cada linea, repartida.** La promocion se decide **aqui**, que es donde se conoce: el
     # cierre solo tiene que escribir el numero. Se agrupa por producto efectivo y cadena elegida -- dos lineas
@@ -893,8 +925,11 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
         unidades = sum(int(next(x["cantidad"] for x in lineas if str(x.get("id")) == i))
                        for i in indices)
         unitario = primera["precio_cent"]
-        promo = next((v[3] for k, v in mejor.items()
-                      if k[1] == primera["cadena"] and v[1] == unitario), None)
+        # **La oferta de la propia linea, no una busqueda por parecido.** Antes se rebuscaba en `mejor`
+        # un candidato de esa cadena con ese precio exacto: se equivocaba con dos productos al mismo
+        # precio en la misma tienda y, sobre todo, **no encontraba nada cuando el precio venia de una
+        # alternativa aceptada**, porque la alternativa no estaba entre los candidatos que miraba.
+        promo = primera.get("promo")
         total_grupo = lee_promo(promo).coste(unidades, unitario)
         cantidades = [int(next(x["cantidad"] for x in lineas if str(x.get("id")) == i)) for i in indices]
         partes = [(total_grupo * c) // unidades for c in cantidades]

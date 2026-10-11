@@ -583,7 +583,17 @@ def cierra_compra(lista_id: str, usuario_id: str,
                 sin_precio += 1
             else:
                 total += cuanto
-            filas.append((str(linea["id"]), linea["grupo_id"], linea["producto_id"],
+            # **Lo que se compro, y lo que se pidio si no es lo mismo.** `coste_por_linea` devuelve el
+            # producto efectivo -- la alternativa aceptada, cuando la hay --, y se guarda **ese** en
+            # `producto_id`; lo pedido va a `producto_pedido_id`, para que la compra se pueda explicar
+            # sola sin depender de una fila de lista que se poda a los 30 dias. *Antes se escribia
+            # `lista_linea.producto_id`, que es **lo pedido**: con una sustitucion aceptada el historico
+            # decia A mientras se habia comprado B, y con el precio de A.*
+            efectivo = suyo.get("producto_id")
+            pedido = linea["producto_id"]
+            filas.append((str(linea["id"]), linea["grupo_id"],
+                          efectivo or pedido,
+                          pedido if efectivo and str(efectivo) != str(pedido) else None,
                           linea["nombre_visto"], linea["cantidad"],
                           suyo.get("cadena") or linea["cadena_elegida"], cent, cuanto))
 
@@ -595,9 +605,9 @@ def cierra_compra(lista_id: str, usuario_id: str,
         compra_id = str(cur.fetchone()["id"])
 
         cur.executemany("""
-            INSERT INTO compra_linea (compra_id, linea_id, grupo_id, producto_id, nombre,
-                                      cantidad, cadena, precio_cent, importe_cent)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO compra_linea (compra_id, linea_id, grupo_id, producto_id, producto_pedido_id,
+                                      nombre, cantidad, cadena, precio_cent, importe_cent)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, [(compra_id, *f) for f in filas])
 
         cur.execute("""
@@ -1166,8 +1176,8 @@ def lineas_de_compra(compra_id: str) -> list[dict]:
     """
     with cursor() as cur:
         cur.execute("""
-            SELECT linea_id, grupo_id, producto_id, nombre, cantidad, precio_cent, cadena,
-                   importe_cent
+            SELECT linea_id, grupo_id, producto_id, producto_pedido_id, nombre, cantidad,
+                   precio_cent, cadena, importe_cent
               FROM compra_linea
              WHERE compra_id = %s
              ORDER BY nombre

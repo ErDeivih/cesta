@@ -292,13 +292,21 @@ def test_la_estimacion_de_una_lista_vacia_es_cero_y_no_revienta():
 # `coste_por_linea` existe por «He terminado la compra» (tarea 10): la compra se guarda **con
 # sus precios**, porque gold se reescribe cada dia y una compra sin su precio no se puede
 # volver a mirar. Lo que se vigila aqui es de quien es el precio que se guarda.
+#
+# **La forma que devuelve tiene cuatro claves desde el 13 de octubre de 2026 (fase 2, F01)**:
+# `cadena`, `precio_cent`, `promo` y `producto_id` -- mas `coste_cent`, que anade el reparto. *Las dos
+# ultimas son lo que el cierre necesita para guardar **el producto efectivo**: sin `producto_id` una
+# linea de grupo se archivaba sin identidad, y sin `promo` el reparto adivinaba la oferta buscando un
+# candidato de esa cadena con ese precio exacto.* Se afirma la forma entera a proposito: **una clave de
+# mas es un cambio de contrato, y tiene que doler.**
 
 def test_el_precio_de_una_linea_es_el_de_la_cadena_mas_barata():
     filas = [(1, "alcampo", "alcampo:a", "Leche", 120),
              (1, "dia", "dia:a", "Leche", 100)]
     with _catalogo(filas):
         c = cesta.coste_por_linea([_linea(1, id="l1")])
-    assert c["l1"] == {"cadena": "dia", "precio_cent": 100, "coste_cent": 100}, c["l1"]
+    assert c["l1"] == {"cadena": "dia", "precio_cent": 100, "coste_cent": 100,
+                       "promo": None, "producto_id": "dia:a"}, c["l1"]
 
 
 def test_si_la_linea_tiene_tienda_decidida_se_guarda_ese_precio():
@@ -308,7 +316,8 @@ def test_si_la_linea_tiene_tienda_decidida_se_guarda_ese_precio():
              (1, "dia", "dia:a", "Leche", 100)]
     with _catalogo(filas):
         c = cesta.coste_por_linea([_linea(1, id="l1", cadena_elegida="alcampo")])
-    assert c["l1"] == {"cadena": "alcampo", "precio_cent": 120, "coste_cent": 120}, c["l1"]
+    assert c["l1"] == {"cadena": "alcampo", "precio_cent": 120, "coste_cent": 120,
+                       "promo": None, "producto_id": "alcampo:a"}, c["l1"]
 
 
 def test_una_linea_que_apunta_a_otro_producto_no_tiene_precio():
@@ -317,13 +326,15 @@ def test_una_linea_que_apunta_a_otro_producto_no_tiene_precio():
     with _catalogo(filas):
         c = cesta.coste_por_linea([_linea(1, id="l1", nombre="Leche entera",
                                           producto_movido=True)])
-    assert c["l1"] == {"cadena": None, "precio_cent": None}
+    assert c["l1"] == {"cadena": None, "precio_cent": None,
+                       "promo": None, "producto_id": None}
 
 
 def test_una_linea_que_no_esta_en_el_catalogo_no_tiene_precio_y_no_es_un_cero():
     with _catalogo([(1, "dia", "dia:a", "Leche", 100)]):
         c = cesta.coste_por_linea([_linea(77, id="suelta", nombre="algo raro")])
-    assert c["suelta"] == {"cadena": None, "precio_cent": None}
+    assert c["suelta"] == {"cadena": None, "precio_cent": None,
+                           "promo": None, "producto_id": None}
 
 
 def test_sin_lineas_no_hay_precios_que_dar():

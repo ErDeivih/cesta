@@ -12,10 +12,19 @@ precio de la sustitucion que se dejo de aceptar, esa compra miente para siempre.
     ALTERNATIVA en alcampo 518  («Tortilla de patata con cebolla caramelizada PA»)
 
 **La alternativa cuesta lo mismo que el exacto de su cadena** -- es el producto de esa cadena, en el
-mismo pasillo -- asi que **una prueba con el precio igual no demostraria nada**: hay que mirar la
-cadena. Con la sustitucion de **alcampo** aceptada, se archiva **518**; revocada, la linea no tiene
-nada aceptado y coge **el mas barato de hoy: dia, 260**. *Doscientos cincuenta y ocho centimos de
-diferencia, congelados.*
+mismo pasillo -- asi que **una prueba con el precio igual no demostraria nada**.
+
+**Y hay que decirlo entero, porque la version anterior de este parrafo prometia una diferencia que
+aqui no se puede ver**: decia que *«revocada, la linea no tiene nada aceptado y coge el mas barato de
+hoy: dia, 260»*. **No.** Este fixture **decide la tienda** (`POST /lineas/{id}/tienda`), y con la
+tienda decidida la eleccion no cae al mas barato: revocar tambien archiva `alcampo` a **518**.
+*Medido el 13 de octubre de 2026.*
+
+**Y en `alcampo` hay un solo candidato para el grupo 6803, que ocupa las dos casillas** -- la
+principal y la de alternativa, las dos con `alcampo:202841` a 518 --: *en esa tienda no hay dos
+productos que distinguir.* **Es un limite del fixture, no del motor.** La prueba que si discrimina la
+sustitucion esta en `tests/test_fase2_f01_sustitucion.py`, con un catalogo controlado donde A y B
+difieren en precio y en oferta.
 
     $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
     uv run pytest -q tests/test_g03_cierre.py
@@ -133,27 +142,48 @@ def test_con_la_sustitucion_aceptada_se_archiva_el_precio_de_su_tienda(con_almac
             f"con la sustitucion de {TIENDA} aceptada se archiva su precio: {guardada}")
 
 
-def test_el_cierre_archiva_el_producto_del_grupo_no_el_sustituto(con_almacen, limpio):
-    """**Lo que se midio, que no es lo que yo esperaba.**
+def test_el_cierre_archiva_el_producto_que_puso_el_precio(con_almacen, limpio):
+    """**La identidad que faltaba**, y el limite medido de este fixture.
 
-    Iba a comprobar que revocar cambia el precio archivado. **No lo cambia, y esta bien que no lo
-    cambie**: `coste_por_linea` descarta las alternativas al poner precio -- filtra por
-    `k[-1] != "alternativa"` -- y archiva **el producto que el grupo es hoy**, con la tienda decidida
-    mandando sobre el mas barato. *El cierre es de precios y guarda lo que se compro, no lo que se
-    acepto.* Asi que la sustitucion aceptada no puede cambiar el numero: **no hay nada que revocar en
-    esta puerta**.
+    Antes de F01 el cierre escribia `lista_linea.producto_id`. Con una linea que pide **solo grupo**
+    -- que es este caso -- eso es **NULL**: *la compra no guardaba **que** producto le habia puesto el
+    precio, y el historico quedaba sin identidad.* Ahora guarda el que de verdad lo puso.
 
-    Se deja medido en los dos sentidos para que quede claro que **es una regla, no un descuido**:
-    las dos compras archivan lo mismo.
+    **Y aqui esta el limite de este fixture, medido y no supuesto** (13 de octubre de 2026, grupo 6803):
+    en `alcampo` hay **un solo candidato**, y no es exacto, asi que ocupa **las dos casillas** de
+    `_candidatos`:
+
+        clave=(6803, 'alcampo')                 pid=alcampo:202841  precio=518  exacta=False
+        clave=(6803, 'alcampo', 'alternativa')  pid=alcampo:202841  precio=518  exacta=False
+
+    *Asi que aceptar la sustitucion y no aceptarla archivan **el mismo producto, la misma tienda y el
+    mismo precio** -- no por una regla, sino porque en esa tienda no hay dos productos que distinguir.*
+    **Por eso esta prueba no puede discriminar el defecto de F01**, y la que si lo hace es
+    `tests/test_fase2_f01_sustitucion.py`, con un catalogo controlado donde A y B difieren en precio y
+    en oferta. *Se deja escrito para que nadie vuelva a creer que esta puerta cubre la sustitucion.*
+
+    *La prueba que estaba aqui se llamaba «el cierre archiva el producto del grupo no el sustituto»,
+    **pasaba antes y despues del arreglo**, y de un caso que no puede distinguir sacaba la conclusion
+    general de que «el cierre es de precios y guarda lo que se compro» -- que es justo lo que el
+    escenario del encargo refuta. Se sustituye, no se borra.*
     """
     with _cliente() as cliente:
         con = _compra_cerrada(cliente, con_alternativa=True)
         sin = _compra_cerrada(cliente, con_alternativa=False)
-        assert con.get("precio_cent") == PRECIO_CON_ALTERNATIVA, con
-        assert sin.get("precio_cent") == PRECIO_CON_ALTERNATIVA, (
-            f"el cierre no usa el sustituto: archiva el producto del grupo en su tienda ({TIENDA}). "
-            f"Si esto cambia, `coste_por_linea` ha empezado a mirar la autorizacion: {sin}")
-        assert con.get("cadena") == sin.get("cadena") == TIENDA, (con, sin)
+
+    # **Lo que si se prueba aqui**: el cierre archiva el producto que puso el precio.
+    assert con.get("producto_id") == PRODUCTO_ALTERNATIVA, con
+    assert sin.get("producto_id"), (
+        f"una linea de grupo tambien tiene que archivar QUE producto se precio: {sin}")
+
+    # El precio y la tienda, los de la tienda decidida: la sustitucion no los mueve **aqui**.
+    assert con.get("precio_cent") == sin.get("precio_cent") == PRECIO_CON_ALTERNATIVA, (con, sin)
+    assert con.get("cadena") == sin.get("cadena") == TIENDA, (con, sin)
+
+    # Y `producto_pedido_id` queda NULL: la linea pedia **grupo**, no un producto concreto, asi que no
+    # hay dos cosas que distinguir. *Se guarda solo cuando lo pedido y lo comprado difieren.*
+    assert con.get("producto_pedido_id") is None, con
+    assert sin.get("producto_pedido_id") is None, sin
 
 
 def test_una_linea_movida_se_archiva_sin_precio_y_no_con_el_de_otro(con_almacen, limpio):

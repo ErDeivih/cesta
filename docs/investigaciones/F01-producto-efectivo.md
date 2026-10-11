@@ -1,6 +1,7 @@
 # F01 · El producto efectivo que se compra cuando se acepta una alternativa
 
-Estado: **defecto reproducido, sin corregir**. Fecha: 13 de octubre de 2026.
+Estado: **motor y cierre arreglados y probados; falta el recorrido distinguible por HTTP**. Fecha: 13
+de octubre de 2026.
 Origen del hallazgo: revisión previa de fase 2, tabla §3, fila *«Sustitución estimada frente a compra»*.
 
 > *«`coste_por_linea` filtra candidatos cuya llave termina en `alternativa`; `test_g03_cierre.py` prueba
@@ -24,7 +25,7 @@ Lo que cuesta de verdad: un 3×2 sobre 250 son **dos pagadas = 500 c**.
 
 ---
 
-## 2. Cómo se ha comprobado, y con qué fuerza
+## 2. Cómo se comprueba, y con qué fuerza
 
 **No es lectura de código.** Se ejecuta el motor real — `_candidatos`, `_llave_candidato`,
 `identidad.decide`, `_es_la_confirmada`, `_elige`, `_serializa`, `donde_comprar`, `coste_por_linea` — y
@@ -32,99 +33,127 @@ Lo que cuesta de verdad: un 3×2 sobre 250 son **dos pagadas = 500 c**.
 silver. *Sustituir `_candidatos` entero, como hace `test_cesta_api.py`, no sirve aquí: su mock devuelve
 claves de dos elementos y valores de cuatro, y `coste_por_linea` lee `k[-1]` y `v[7]`.*
 
-Reproducción: `tests/test_fase2_f01_sustitucion.py` — **2 pasan, 1 `xfail(strict)`**.
+Reproducción: `tests/test_fase2_f01_sustitucion.py` — **3 pasan**.
 
 ---
 
-## 3. Lo que se ha medido
+## 3. Lo que se midió, antes y después
 
 ```
-ESTIMACION (donde_comprar)
-  cadena            : alcampo
-  producto efectivo : alcampo:P-B          <-- la alternativa aceptada
-  identidad         : confirmada
-  total_cent        : 500                  <-- 3 unidades de B con 3x2
+ANTES (reproducido el 13 de octubre de 2026)
 
-CIERRE (coste_por_linea -> compra_linea)
-  cadena            : alcampo
-  precio_cent       : 300                  <-- el unitario de A
-  coste_cent        : 900                  <-- tres unidades de A, sin oferta
-  producto_id       : alcampo:P-A          <-- EL PEDIDO, no el efectivo
+  ESTIMACION   producto efectivo alcampo:P-B · identidad «confirmada» · total  500 c
+  CIERRE       precio_cent 300 · coste_cent 900 · producto_id alcampo:P-A (el pedido)
+  DISCREPANCIA 400 centimos
 
-DISCREPANCIA: 900 - 500 = 400 centimos
+DESPUES (13 de octubre de 2026, tras el arreglo)
+
+  ESTIMACION   alcampo:P-B · confirmada · 500 c
+  CIERRE       alcampo:P-B · alcampo · precio 250 · coste 500
+  DISCREPANCIA 0
 ```
 
-**La estimación está bien. El cierre no.** *Y el daño no es un redondeo: el histórico registra un
-producto que nadie compró, a un precio que nadie pagó, sin la oferta que sí se aplicó.* **El gasto y el
-diario heredan de ahí.**
+**El daño que se evitó no era un redondeo**: el histórico apuntaba a un producto que nadie compró, a un
+precio que nadie pagó, sin la oferta que sí se aplicó. *Y una compra no se recalcula: lo que se guarda
+mal miente para siempre.*
 
 ---
 
-## 4. La causa: **dos sitios independientes**, y arreglar uno solo no arregla nada
+## 4. Las causas, y **una corrección de mi propio diagnóstico**
 
-**1. El cierre no ve la confirmación.** `almacen.cierra_compra`, línea 563:
-
-```sql
-SELECT id, grupo_id, producto_id, nombre_visto, cantidad, cadena_elegida
-  FROM lista_linea
- WHERE lista_id = %s AND borrado_en IS NULL AND en_carrito
-```
-
-**No selecciona `autorizado`, `autorizado_producto` ni `autorizado_cadena`.** Así que el cierre no puede
-saber qué se aceptó aunque quisiera, y en la línea 586 escribe `linea["producto_id"]` — **el pedido**.
-*Es el mismo hueco que el comentario de `coste_por_linea` documenta haber tapado en la estimación:
-«sin esto, la comparación de la sustitución ve `None` y no cuenta ninguna confirmación». En el cierre
-sigue abierto.*
-
-**2. Y `coste_por_linea` descarta las alternativas.** Líneas 871-872:
+**Causa 1 — `coste_por_linea` descartaba las alternativas.** Líneas 871-872:
 
 ```python
 suyos = [(k[1], v[1]) for k, v in mejor.items()
          if k[0] == esperada and k[-1] != "alternativa"]
 ```
 
-**El filtro es correcto para lo que se escribió** — separa el candidato principal de la oferta de
-alternativa — **y por eso mismo deja fuera a B**, que es exactamente el que hay que cobrar cuando está
-confirmado.
+*El filtro es correcto para lo que se escribió* — separa el candidato principal de la oferta de
+alternativa — **y por eso mismo dejaba fuera a B**, que es el que hay que cobrar cuando está confirmado.
 
-*Los dos son independientes: si sólo se arregla el (1), el precio sigue siendo el de A; si sólo se
-arregla el (2), el cierre sigue sin recibir el dato.*
+**Causa 2 — la identidad que se guardaba era el pedido, nunca el efectivo.**
+`almacen.cierra_compra` escribía `linea["producto_id"]`, que es lo que la línea pide. **Con una línea
+que sólo pide grupo, eso es `NULL`**: la compra no guardaba *qué* producto le había puesto el precio.
+**La autorización no influía en la identidad en ningún sitio.**
+
+> ### Y una corrección, porque el informe de esta misma investigación decía otra cosa
+>
+> **Decía**: *«el cierre no ve la confirmación: `cierra_compra:563` no selecciona `autorizado*`»*, y de
+> ahí deducía que el precio salía de A **porque el dato no llegaba**.
+>
+> **Es falso.** `main.py:575` hace `lineas = _con_autorizacion(lineas, lista_id)`, con el comentario
+> *«lo autorizado se lee de la base, no del cuerpo de la petición»*: **la autorización sí llega a
+> `coste_por_linea`**. *Lo demostró mi propia reproducción sin querer: le pasé `autorizado*` a mano y
+> aun así devolvía A.*
+>
+> **El precio salía de A sólo por la causa 1.** *Y el `SELECT` de `cierra_compra` no necesita
+> `autorizado*`: recibe los precios ya calculados.* **Corregido aquí, no borrado.**
+
+*Las dos causas son independientes: arreglar sólo la 1 deja el `producto_id` sin identidad; arreglar
+sólo la 2 deja el precio en el de A.*
 
 ---
 
 ## 5. Por qué el cierre anterior pudo declararse sin que saltara nada
 
-`test_g03_cierre.py` prueba **archivar el producto del grupo**, no comprar el sustituto. Y el
-`xfail(strict)` de la reproducción es la primera prueba del proyecto que ejecuta el camino completo
-—pedido, confirmación, precio, promoción y cierre— sobre el sustituto.
+**Porque el fixture de `test_g03_cierre.py` no puede distinguir la sustitución, y eso está medido.**
+Grupo 6803 en `alcampo`, consultado el 13 de octubre de 2026:
 
-**Lo que este caso enseña y hay que conservar**: *una batería verde sobre el camino equivocado se lee
-igual que una verde sobre el camino correcto.* **Es la misma lección que `banco_verdad.py` escribe para
-el clasificador**: *un control que comparte vocabulario con lo que vigila confirma sus propios errores.*
+```
+clave=(6803, 'alcampo')                 pid=alcampo:202841  precio=518  exacta=False
+clave=(6803, 'alcampo', 'alternativa')  pid=alcampo:202841  precio=518  exacta=False
+```
 
----
+**En esa tienda hay un solo candidato, y ocupa las dos casillas.** *Así que aceptar la sustitución y no
+aceptarla archivan el mismo producto, la misma tienda y el mismo precio — no por una regla, sino porque
+no hay dos productos que distinguir.*
 
-## 6. Lo que F01 tiene que dejar hecho
+**Y el docstring del módulo prometía una diferencia que ese fixture no puede ver**: decía que
+*«revocada, la línea coge el más barato de hoy: día, 260»*. **No**: el fixture **decide la tienda**, y
+con la tienda decidida revocar también archiva `alcampo` a 518. *Las dos afirmaciones están corregidas
+en el fichero.*
 
-1. **`cierra_compra` recibe lo aceptado**: añadir `autorizado`, `autorizado_producto` y
-   `autorizado_cadena` al `SELECT` y pasarlos a `coste_por_linea` como ya hace su firma.
-2. **`coste_por_linea` honra la confirmación**: cuando `_es_la_confirmada` sea cierta, el precio, la
-   cadena y la oferta son **los de la alternativa** — la misma decisión que `_elige` ya toma.
-3. **La identidad que se guarda es la efectiva**: `compra_linea.producto_id` tiene que ser **B**.
-   *Decidir explícitamente qué se hace con el pedido original: el encargo pide conservarlo («la
-   solicitud original permanece»), así que A no se pierde — **se guarda como lo pedido, con B como lo
-   comprado**.*
-4. **No archivar A «porque era el grupo»** mientras se compró B (criterio del encargo, punto 3 de F01).
-5. **Verificación**: la prueba marcada `xfail(strict)` pasa a verde **y se le quita la marca**; más
-   recorrido **HTTP y de almacenamiento real aislado**, que es lo que la aceptación de F01 exige.
-
-**Y un límite que se declara ya**: *esta reproducción cubre el motor con un catálogo controlado en
-memoria; **no** cubre todavía el recorrido HTTP ni el cierre contra PostgreSQL.* **Es implementación sin
-ensayo servido hasta que F01 lo haga**, y así queda anotado.
+**Lo que este caso enseña y hay que conservar**: *una batería verde sobre un caso que no puede
+distinguir se lee igual que una verde sobre el caso correcto.* **Es la misma lección que
+`banco_verdad.py` escribe para el clasificador**: *un control que comparte vocabulario con lo que vigila
+confirma sus propios errores.* **Y es el hallazgo 2 de la revisión — «aceptación rebajada» — en su forma
+más literal: se generalizó «el cierre guarda lo que se compró» desde un caso que no podía comprobarlo.**
 
 ---
 
-## 7. Lo que NO se toca
+## 6. Lo que se ha hecho
+
+1. **`plataforma/sql/015_lo_pedido_y_lo_comprado.sql`** — `compra_linea.producto_pedido_id`, nullable,
+   `IF NOT EXISTS`, con su `COMMENT ON COLUMN`. *`producto_id` pasa a significar **lo comprado**; lo
+   pedido se guarda aparte cuando difiere.* **En la compra y no sólo en la línea de la lista**, porque
+   `limpiar_lineas_borradas` poda las archivadas a los 30 días: *una compra de un año tiene que poder
+   explicarse sola.*
+2. **`cesta.coste_por_linea`** — honra la confirmación: si `_es_la_confirmada` es cierta, el precio, la
+   cadena, **la oferta** y el producto son los de la alternativa. *Sin confirmación, el
+   comportamiento de antes, que era correcto.* Y devuelve `promo` y `producto_id` en vez de dejar que
+   el reparto los adivine por precio y cadena.
+3. **`almacen.cierra_compra`** — guarda el producto efectivo en `producto_id` y el pedido en
+   `producto_pedido_id`; y `lineas_de_compra` expone la columna nueva.
+4. **`test_g03_cierre.py`** — la prueba que consagraba el contrato viejo **se sustituye, no se borra**:
+   ahora afirma la identidad que antes era `NULL`, y lleva escrito **el límite medido** del fixture.
+   *El docstring del módulo corrige la promesa falsa sobre «día, 260».*
+5. **`test_fase2_f01_sustitucion.py`** — la marca `xfail(strict)` **se quitó al arreglar**, que era
+   exactamente para lo que estaba: *el `strict` obliga a quitar la marca en cuanto la prueba pasa.*
+
+---
+
+## 7. Lo que queda de F01
+
+**Un recorrido por HTTP con una sustitución distinguible, y el de navegador.** *El fixture de grupo 6803
+no sirve, y ya se sabe por qué.* Hace falta un caso donde **A y B difieran en precio o en oferta** — el
+del catálogo controlado, que hoy sólo corre en memoria.
+
+*Es implementación sin ensayo servido en la parte HTTP*, y así queda anotado en el tablero.
+**No se declara F01 cerrado por tener el motor verde.**
+
+---
+
+## 8. Lo que no se toca
 
 *La estimación no se toca: es el camino correcto y ahora tiene prueba que lo fija.* **Si esa prueba se
 rompe, lo que se ha roto es el bueno.**

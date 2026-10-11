@@ -115,26 +115,21 @@ def test_la_estimacion_cobra_la_alternativa_confirmada(motor):
 # --- 2. El cierre: la discrepancia, en forma ejecutable ---------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "F01 (fase 2), hallazgo 4 sin corregir: `coste_por_linea` excluye los candidatos "
-        "`alternativa` (cesta.py:871-872), asi que el cierre guarda el producto PEDIDO y su precio "
-        "en vez de la alternativa ACEPTADA. La estimacion cobra 500 y el cierre guardaria 900. "
-        "Cuando F01 lo arregle, esta prueba empezara a pasar y el `strict` obligara a quitar la marca."
-    ),
-)
 def test_el_cierre_guarda_la_alternativa_confirmada_y_no_el_pedido(motor):
-    """**El contrato que F01 tiene que dejar en pie**, y hoy no se cumple.
+    """**El contrato de F01, y ahora se cumple.**
 
     El cierre escribe lo que se compro: si la persona acepto B en alcampo y se lleva tres, el
-    historico tiene que decir **B, alcampo, 3 y 500**. *Un cierre que guarda A a 300 no es un
-    redondeo distinto: es otro producto y otro dinero.*
+    historico tiene que decir **B, alcampo, 3 y 500**. *Un cierre que guardaba A a 300 no era un
+    redondeo distinto: era otro producto y otro dinero.*
+
+    *Esta prueba nacio con `xfail(strict)` porque el defecto estaba sin arreglar. Se le quito la marca
+    al arreglarlo* -- **y el `strict` existia justo para obligar a eso.**
     """
     salida = cesta.coste_por_linea([_linea_guardada()])
     linea = salida["L1"]
 
     assert linea["cadena"] == TIENDA
+    assert linea["producto_id"] == B, "el producto efectivo es el aceptado, no el pedido"
     assert linea["precio_cent"] == 250, "el precio unitario es el de B, no el de A"
     assert linea["coste_cent"] == COSTE_ESPERADO, "y el importe, el 3x2 sobre B"
 
@@ -142,17 +137,18 @@ def test_el_cierre_guarda_la_alternativa_confirmada_y_no_el_pedido(motor):
 # --- 3. Y que la discrepancia no venga de la estimacion ---------------------------------------
 
 
-def test_estimacion_y_cierre_discrepan_hoy(motor):
-    """**La medida del defecto, mientras exista**: los dos caminos dan numeros distintos.
+def test_estimacion_y_cierre_dan_el_mismo_numero(motor):
+    """**La discrepancia, a cero.** *Es la sucesora de la prueba que medía el defecto.*
 
-    *Se escribe como prueba de la discrepancia -- y no como consuelo -- porque es lo que hay que ver
-    bajar a cero.* **Cuando F01 este hecho, esta prueba tambien tendra que cambiar**, y cambiarla
-    sera la senal de que el contrato se unifico.
+    Mientras el defecto existia, la prueba de esta posicion afirmaba que los dos caminos
+    **discrepaban** -- 900 contra 500 --. Ahora afirma el contrato: **lo que se estima y lo que se
+    archiva son el mismo producto, la misma tienda, la misma cantidad y el mismo dinero.**
+
+    *Se conserva en vez de borrarla porque la igualdad es el criterio, y una prueba que afirma la
+    igualdad es la que impide que la discrepancia vuelva.*
     """
     estimado = cesta.donde_comprar([_peticion()], [TIENDA])["una_tienda"][0]["total_cent"]
-    cerrado = cesta.coste_por_linea([_linea_guardada()])["L1"]["coste_cent"]
+    salida = cesta.coste_por_linea([_linea_guardada()])["L1"]
 
     assert estimado == COSTE_ESPERADO
-    assert cerrado != estimado, (
-        "hoy discrepan; si ya coinciden, F01 esta hecho y esta prueba sobra")
-    assert cerrado == 900, "el cierre cobra tres unidades de A sin oferta"
+    assert salida["coste_cent"] == estimado, "la estimacion y el cierre no pueden discrepar"

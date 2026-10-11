@@ -6,15 +6,15 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F01 · arreglar el producto efectivo del cierre.** El hallazgo **ya no es una lectura: está
-reproducido con números.** Con A pedido y B aceptado —3 unidades, 3×2 de B— la **estimación** cobra B a
-**500 c** y el **cierre** guarda A a **900 c**: 400 céntimos, y el histórico apunta a un producto que
-nadie compró. **Está en dos sitios independientes** —`almacen.cierra_compra:563` no lee `autorizado*`, y
-`cesta.coste_por_linea:871` descarta las alternativas—, así que arreglar uno solo no arregla nada.
+**F01 · el recorrido HTTP con una sustitución distinguible.** El motor y el cierre **ya están
+arreglados y probados**: con A pedido y B aceptado —3 unidades, 3×2— la estimación y el cierre dan
+**B, alcampo, 3 y 500 céntimos**; antes el cierre guardaba **A a 900**. *Lo que falta es el ensayo
+servido*, y **el fixture que había no puede hacerlo**: medido el 13 de octubre de 2026, en `alcampo`
+hay **un solo candidato** para el grupo 6803 y ocupa **las dos casillas** —la principal y la de
+alternativa—, así que aceptar y no aceptar archivan lo mismo.
 
-Detalle y plan: [`investigaciones/F01-producto-efectivo.md`](investigaciones/F01-producto-efectivo.md).
-Prueba que lo fija: `tests/test_fase2_f01_sustitucion.py` (**`xfail(strict)`**: pasará al arreglarlo y
-entonces **obligará a quitar la marca**).
+Hace falta un caso donde **A y B difieran en precio o en oferta**, por HTTP y contra PostgreSQL.
+Detalle: [`investigaciones/F01-producto-efectivo.md`](investigaciones/F01-producto-efectivo.md).
 
 No reiniciar el contador ni volver a implementar los campos del diario: existen. Preservar `core/datos/secciones.yml` y `docs/CIFRAS.md`, sin incluirlos en commits. No modificar el estado de investigaciones de RadioPV/CueDigital.
 
@@ -25,7 +25,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 | ID | Entregable | Estado | Evidencia / siguiente acción |
 |---|---|---|---|
 | F00 | Reconciliar aceptación y baseline | **en curso** | Baseline **1.670 pasan, 0 saltan, 0 fallan** (155 s, con `CESTA_POSTGRES` al 5434). Encabezado del tablero G01–G14 reconciliado. Hallazgo 4 **reproducido**. Faltan los otros 8 hallazgos y la matriz S00–S12. |
-| F01 | Identidad estable y producto efectivo comprado | **defecto reproducido** | `tests/test_fase2_f01_sustitucion.py`: estimación 500 c / cierre 900 c. Dos causas independientes. |
+| F01 | Identidad estable y producto efectivo comprado | **en curso** | **Motor y cierre arreglados**: estimación y cierre dan B, alcampo, 3 y **500 c** (antes el cierre guardaba A a 900). Migración **015**. `test_g03_cierre.py` corregido con su límite medido. **Falta el HTTP distinguible.** |
 | F02 | Reintentos/unidades/privacidad del diario | pendiente | Respuesta perdida→segundo submit; simultaneidad. |
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
@@ -44,22 +44,26 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 
 ## Continuación obligatoria antes de pausar
 
-- Paquete y criterio concreto: **F00 en curso** (baseline, reconciliación del tablero anterior) y **F01
-  abierto** con su defecto reproducido.
-- Fichero / función / recorrido: `plataforma/api/almacen.py:563` (`cierra_compra`, SELECT sin
-  `autorizado*`) y `plataforma/api/cesta.py:871` (`coste_por_linea`, filtro `!= "alternativa"`).
-- Evidencia obtenida y comando/fecha: `uv run pytest -q` → **1.670 pasan, 0 saltan** (13 oct 2026, base
-  desechable 5434); `uv run pytest -q tests/test_fase2_f01_sustitucion.py` → **2 pasan, 1 xfail(strict)**;
-  la prueba compara estimación (B, 500 c) y cierre (A, 900 c).
-- Caso que falla o comprobación siguiente: la prueba marcada `xfail(strict)` **falla a propósito**: el
-  cierre cobra el producto pedido, no el aceptado.
-- Cambios conservados / commit: `tests/test_fase2_f01_sustitucion.py`,
-  `docs/investigaciones/F01-producto-efectivo.md`, encabezado de `SUPERAPP-EJECUCION.md` reconciliado,
-  este tablero.
-- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* la reproducción cubre el
-  motor con catálogo en memoria; **no** cubre HTTP ni PostgreSQL, y eso lo cierra F01.
-- **Acción inmediata al retomar:** pasar `autorizado*` al `SELECT` de `cierra_compra`, honrar la
-  confirmación en `coste_por_linea` y guardar **B** como `producto_id` de la compra (conservando A como
-  lo pedido); después quitar el `xfail` y añadir el recorrido HTTP.
+- Paquete y criterio concreto: **F00 en curso** (los otros ocho hallazgos y la matriz S00–S12) y
+  **F01 en curso** con motor y cierre ya arreglados; falta su ensayo HTTP.
+- Fichero / función / recorrido: `plataforma/api/cesta.py:coste_por_linea` (honra la confirmación y
+  devuelve `promo` y `producto_id`), `plataforma/api/almacen.py:cierra_compra` (guarda el efectivo en
+  `producto_id` y el pedido en `producto_pedido_id`), `plataforma/sql/015_lo_pedido_y_lo_comprado.sql`.
+- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f01_sustitucion.py` → **3
+  pasan**; `uv run pytest -q` → **1673 pasan, 0 fallan** (13 oct 2026, base desechable 5434). La
+  estimación y el cierre dan el mismo número; antes 500 contra 900.
+- Caso que falla o comprobación siguiente: **la sustitución por HTTP**. *El fixture de
+  `test_g03_cierre.py` no puede distinguirla*: en `alcampo` el grupo 6803 tiene **un solo candidato**
+  que ocupa las dos casillas. Hace falta un caso con A y B distintos en precio u oferta.
+- Cambios conservados / commit: `sql/015`, `cesta.py`, `almacen.py`, `tests/test_fase2_f01_sustitucion.py`,
+  `tests/test_g03_cierre.py` (prueba sustituida con su límite medido y docstring corregido),
+  `tests/test_cesta_api.py` (forma de retorno), `docs/investigaciones/F01-producto-efectivo.md`.
+- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* el motor está probado con
+  catálogo en memoria y el cierre contra PostgreSQL, pero **no hay un caso HTTP que discrimine la
+  sustitución**; eso es implementación sin ensayo servido.
+- **Acción inmediata al retomar:** buscar o fabricar un grupo donde la alternativa aceptada **difiera**
+  del candidato principal en precio u oferta, y montar con él el recorrido HTTP completo —estimar,
+  aceptar, cerrar, leer `compra_linea`— comprobando **B, tienda, cantidad e importe**; después, los
+  otros ocho hallazgos de F00.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.
