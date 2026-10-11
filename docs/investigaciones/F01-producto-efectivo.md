@@ -142,18 +142,67 @@ más literal: se generalizó «el cierre guarda lo que se compró» desde un cas
 
 ---
 
-## 7. Lo que queda de F01
+## 7. El recorrido HTTP, con el catálogo real — y **qué se puede y qué no**
 
-**Un recorrido por HTTP con una sustitución distinguible, y el de navegador.** *El fixture de grupo 6803
-no sirve, y ya se sabe por qué.* Hace falta un caso donde **A y B difieran en precio o en oferta** — el
-del catálogo controlado, que hoy sólo corre en memoria.
+**La prueba existe y discrimina**, aunque no como yo esperaba. Está en `tests/test_g03_cierre.py`
+(`test_la_compra_archiva_el_producto_aceptado_cuando_la_linea_pide_otro`), va **por HTTP y contra
+PostgreSQL**, y usa el catálogo real:
 
-*Es implementación sin ensayo servido en la parte HTTP*, y así queda anotado en el tablero.
-**No se declara F01 cerrado por tener el motor verde.**
+```
+la linea pide              dia:262522          («el producto que quiero»)
+en alcampo el grupo tiene  alcampo:202841  518 c
+y se acepta                alcampo:202841 en alcampo
+→ se archiva: producto_id = alcampo:202841 · producto_pedido_id = dia:262522 · alcampo · 3 · 1554 c
+```
+
+**Y se ha comprobado que discrimina**, que es lo que faltaba: *simulando el comportamiento anterior
+—guardar el pedido y no la columna nueva— **la prueba falla**; con el arreglo, pasa.* **Una prueba que
+pasa después del arreglo no vale si también pasaba antes.**
+
+### Pero el escenario «A y B distintos en precio» no se puede montar con este catálogo
+
+**Medido el 13 de octubre de 2026**, y es un dato sobre el catálogo, no sobre el motor:
+
+```
+(grupo, tienda) con 2+ GTIN DISTINTOS ................  0     ← la condición no se da nunca
+(grupo, tienda) con 2+ productos y UN solo GTIN .......  38
+(grupo, tienda) con alguna fila SIN GTIN ..............  25.975
+```
+
+**Los 38 casos de varios productos son el mismo producto en distintos cortes** — el grupo 38122 en
+Mercadona tiene seis «Salmón …» **con el mismo EAN** `2105300816493` —. *Mismo GTIN ⇒ `identidad.decide`
+dice `EXACTO` ⇒ **la casilla de alternativa no se llena**, porque `_candidatos` sólo la escribe cuando
+`not exacta`. Y de los 25.975 pares con alguna fila sin GTIN, `decide` **se abstiene**, así que la
+alternativa acaba siendo **la misma fila** que el candidato principal.*
+
+**Consecuencia, dicha sin adorno**: en el catálogo de hoy, **la alternativa que se ofrece es o
+inexistente o el mismo producto**, nunca un producto distinto en la misma tienda. *Lo que sí difiere es
+la alternativa respecto de **lo que la persona pidió** — y por eso la prueba HTTP pide un producto
+concreto: sin pedido, no hay nada que sustituir.*
+
+**Y hay una consecuencia que no es de F01 y conviene dejar apuntada para F06/F08**: si la alternativa
+coincide con el candidato principal, **la pantalla ofrece «aceptar una alternativa» que es lo mismo que
+ya se iba a comprar**. *No lo afirmo como defecto sin verlo en pantalla; queda como pregunta medida
+para el paquete de comparación.*
 
 ---
 
-## 8. Lo que no se toca
+## 8. Lo que queda de F01
+
+1. **El recorrido de navegador** —*el encargo lo pide junto al de HTTP, y es lo único de la aceptación
+   que sigue sin hacerse.*
+2. **La estabilidad ante reordenación** (el punto 1 de F01): *V1 con A, V2 reordena grupos y añade B de
+   otra categoría, V3 divide un grupo; la lista y el favorito siguen apuntando A o quedan pendientes
+   motivados, **jamás B por ordinal**.* **No está probado.**
+3. **Elegir comprar A otra vez** exige acción explícita y actualizar el efectivo.
+4. **Migrar los consumidores que aún lean el ordinal**, conservando históricos.
+
+*El motor y el cierre están hechos y probados, en memoria y por HTTP.* **Lo que falta de F01 está
+enumerado arriba, y no se declara F01 cerrado por tener verde lo que ya está.**
+
+---
+
+## 9. Lo que no se toca
 
 *La estimación no se toca: es el camino correcto y ahora tiene prueba que lo fija.* **Si esa prueba se
 rompe, lo que se ha roto es el bueno.**

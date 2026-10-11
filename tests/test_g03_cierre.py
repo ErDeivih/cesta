@@ -206,3 +206,73 @@ def test_una_linea_movida_se_archiva_sin_precio_y_no_con_el_de_otro(con_almacen,
                 f"una linea movida no puede llevar el precio de otro producto "
                 f"(autorizada={con_alternativa}): {guardada}")
             assert guardada.get("importe_cent") is None, guardada
+
+
+# --- F01 (fase 2): el producto efectivo comprado, por HTTP y contra PostgreSQL -------------------
+#
+# **El escenario del encargo, con el catalogo real.** La persona **pide un producto concreto** -- que
+# es lo que hace que haya algo que sustituir -- y acepta la alternativa que el motor ofrece en una
+# tienda. Medido el 13 de octubre de 2026 sobre el grupo 6803:
+#
+#     la linea pide            dia:262522          («el producto que quiero»)
+#     en alcampo el grupo tiene alcampo:202841  518 c
+#     y se acepta              alcampo:202841 en alcampo
+#
+# **Y hay que decir que esta prueba discrimina la IDENTIDAD, no el precio.** En el catalogo de hoy
+# **no existe ni un solo par (grupo, tienda) con dos GTIN distintos** -- medido ese dia: **0** --, asi
+# que el precio de la alternativa coincide con el del candidato principal de esa tienda. *Lo que si
+# cambia, y es lo grave, es **que producto queda en el historico**: antes del arreglo se guardaba
+# `producto_id = dia:262522`, el pedido; ahora se guarda el aceptado.*
+PEDIDO_REAL = "dia:262522"
+ACEPTADO_REAL = "alcampo:202841"
+PRECIO_REAL = 518
+
+
+def test_la_compra_archiva_el_producto_aceptado_cuando_la_linea_pide_otro(con_almacen, limpio):
+    """**F01, por HTTP y contra la base de verdad.** *El nivel que el motor en memoria no alcanza.*
+
+    Y el caso que el fixture de arriba **no puede** montar: alli la linea pedia **solo grupo**, asi que
+    no habia pedido del que distinguir la sustitucion. **Aqui se pide un producto concreto.**
+    """
+    with _cliente() as cliente:
+        lista = cliente.post("/api/listas", json={"nombre": "Prueba F01 sustitucion",
+                                                  "es_de_casa": False})
+        assert lista.status_code in (200, 201), lista.text
+        lista_id = lista.json()["id"]
+
+        # **Se pide un producto concreto**, no el grupo: sin eso no hay nada que sustituir.
+        linea = cliente.post(f"/api/listas/{lista_id}/lineas",
+                             json={"nombre": "Tortilla de patata", "grupo_id": GRUPO,
+                                   "producto_id": PEDIDO_REAL, "cantidad": 3})
+        assert linea.status_code == 201, linea.text
+        linea_id = linea.json()["id"]
+
+        puesta = cliente.post(f"/api/listas/{lista_id}/tienda",
+                              json={"linea_id": linea_id, "cadena": TIENDA})
+        assert puesta.status_code < 300, puesta.text
+
+        aut = cliente.post(f"/api/listas/{lista_id}/lineas/{linea_id}/autorizar",
+                           params={"autorizado": "true", "producto": ACEPTADO_REAL,
+                                   "cadena": TIENDA})
+        assert aut.status_code < 300, f"autorizar: {aut.status_code} {aut.text}"
+
+        carro = cliente.patch(f"/api/listas/{lista_id}/lineas/{linea_id}",
+                              json={"en_carrito": True})
+        assert carro.status_code < 300, carro.text
+        cierre = cliente.post(f"/api/listas/{lista_id}/cerrar", json={})
+        assert cierre.status_code < 300, f"cerrar: {cierre.status_code} {cierre.text}"
+
+        compras = almacen.compras_de(lista_id, limite=1)
+        assert compras, "el cierre no ha dejado compra"
+        guardada = almacen.lineas_de_compra(str(compras[0]["compra_id"]))[0]
+
+    # **El producto que se compro**, no el que se pidio. Es la diferencia que F01 arregla.
+    assert guardada.get("producto_id") == ACEPTADO_REAL, (
+        f"se acepto {ACEPTADO_REAL} y el historico tiene que decir eso, no el pedido: {guardada}")
+    # **Y el pedido no se pierde**: queda guardado aparte, para poder explicar la compra despues.
+    assert guardada.get("producto_pedido_id") == PEDIDO_REAL, guardada
+    # La tienda, la cantidad y el importe, los de la eleccion efectiva.
+    assert guardada.get("cadena") == TIENDA, guardada
+    assert guardada.get("cantidad") == 3, guardada
+    assert guardada.get("precio_cent") == PRECIO_REAL, guardada
+    assert guardada.get("importe_cent") == 3 * PRECIO_REAL, guardada
