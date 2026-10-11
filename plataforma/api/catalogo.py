@@ -255,7 +255,8 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
            solo_comparables: bool = False, solo_con_nutricion: bool = False,
            sellos: list[str] | None = None, conservacion: str | None = None,
            solo_marca_propia: bool = False, solo_ofertas: bool = False,
-           sin_alcohol: bool = False, seccion: str | None = None) -> list[dict]:
+           sin_alcohol: bool = False, seccion: str | None = None,
+           desplazamiento: int = 0) -> list[dict]:
     """Grupos que casan con el texto, cada uno con su precio mas bajo.
 
     Los productos sin grupo salen igual, marcados: son 32.522 de 51.800 y
@@ -337,7 +338,7 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
 
     filtro_casan = " AND ".join(texto_donde + atributo_donde) or "1=1"
     filtro_miembros = " AND ".join(atributo_donde) or "1=1"
-    args = texto_args + atributo_args + atributo_args + [limite]
+    args = texto_args + atributo_args + atributo_args + [limite, max(0, int(desplazamiento))]
 
     filas = con.execute(f"""
         WITH casan AS (SELECT * FROM buscable WHERE {filtro_casan}),
@@ -419,7 +420,9 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
                min_unidad > 0 AND max_unidad / min_unidad > {FACTOR_INCREIBLE} AS dudoso
           FROM porgrupo
         ORDER BY comparable DESC, cadenas DESC, min_unidad
-        LIMIT ?
+        -- **`OFFSET` para poder pedir la pagina siguiente.** *Sin el, `LIMIT` es un TOPE: se ven los
+        -- primeros N, y los siguientes **no se pueden pedir** -- que no es lo mismo que paginar.*
+        LIMIT ? OFFSET ?
     """, args).fetchall()
 
     return [{
