@@ -121,3 +121,55 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
   después el **banco de matching** de F06.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.
+
+---
+
+## Continuación exacta -- 88 rondas, 26 de octubre de 2026
+
+**Estado verificado al cerrar esta sesión:**
+
+```
+ruff check .            All checks passed
+uv run pytest -q        1.775 pasan · 0 fallan
+catalogo real           20261007-103000 · publicado_en 2026-10-07T10:30:00   (intacto)
+cola de fichas          72.319 pendientes · 7.593 correctas   (era 79.887)
+arbol                   solo los 3 ficheros ajenos
+```
+
+**Los seis primeros paquetes, cerrados.** *Y los tres defectos reales de la fase, los tres con el mismo
+recorrido: medir → localizar → especificar → arreglar → probar.*
+
+| # | defecto | estado |
+|---|---|---|
+| 1 | **`alerta` ligada al ordinal** (`grupo_id bigint NOT NULL`, sin identidad estable) | **arreglado**: migración 016 (`ean`), `almacen.py:959`, `alertas._grupo_de_hoy`, 6 pruebas |
+| 2 | **la cola contaba como pendiente lo ya hecho** (7.565 fichas) | **arreglado**: reconciliador + **el ciclo lo corre** tras el pipeline, 11+4 pruebas, **colar real corregida 79.887 → 72.322** |
+| 3 | **dos vías de ficha que no se hablaban** | **el mismo que el 2**, visto desde el otro lado |
+
+### La siguiente acción, con el punto exacto
+
+**F07, la concurrencia de la cantidad.** *Medido (§2 de `docs/investigaciones/F07-compra-familiar.md`):*
+
+- **el tachado cumple el criterio** -- `LEAST`+`COALESCE` sobre la hora **del móvil**: *gana el primero y el
+  otro ve lo que quería ver*
+- **la cantidad no**: `cantidad = %s` **«gana el último, a propósito»**, y `momento` **no se usa**
+
+**Falta un ensayo, y su diseño está claro:** *dos sesiones con la misma línea, cantidad cambiada a horas de
+móvil distintas y **en los dos órdenes de llegada***; ver quién gana. **El patrón de conexión y lista está en
+`tests/test_lineas_api.py` (`monkeypatch.setattr(almacen, "cambia_linea", ...)`).**
+
+*Y decide si es defecto o decisión:* **si la cantidad vieja gana sobre la nueva, es defecto**; *si gana la
+última llegada aunque su hora sea anterior, es una decisión que hay que escribir en el criterio.*
+
+**Después, por este orden:** *la lista por pasillos (`¿hay `categoria` en las líneas?`), C01–C05 con
+Bring!/AnyList/Listonic, los pasos de la tarea con una mano, y el recorrido de cuenta vacía.*
+
+### Lo que me llevo, y conviene que no se pierda
+
+*En 88 rondas "descubrí" ocho veces cosas que ya estaban escritas en el código -- la última, `kcal_100g`, una
+columna **que la aplicación enseña** y que no había mirado en 82 rondas. Y más de la mitad de los fallos de
+**mis propias pruebas** fueron **el instrumento midiendo algo distinto de lo que yo creía**: precios leídos del
+`body` entero, la caché del cliente, 3 s fijos de espera, una lista vacía contando como distinta, una ventana
+de 1.600 caracteres que cortaba antes del `except`.*
+
+**Lo que corrigió cada uno fue leer el mensaje del servidor, pedir el esquema al proyecto, o mirar la
+estructura -- nunca suponer.** *Es la regla que ha funcionado en esta fase, y la dejo escrita.*
