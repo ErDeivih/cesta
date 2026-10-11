@@ -637,3 +637,66 @@ fallado tres veces esta sesion** (§4, §10 y la ronda 96).*
 | **C03** | *orden por pasillo / una mano / recarga* | **el orden ESTA HECHO** (§4 corregido); *«editable» falta*; 4 toques; recarga por F03 |
 | **C04** | *preferencia contra necesidad* | **la separacion estructural, medida y correcta** (dos tablas, dos columnas); *la pantalla, sin medir* |
 | **C05** | *sugerir no es afirmar* | *sin medir* |
+
+
+---
+
+## 12. `C05`: **el aviso de identidad existe y esta bien** -- y en los resultados de busqueda **no lo he concluido**
+
+*(Ronda 99.)* **El criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:93`): *«Acentos/typos/filtros utiles; **sugerir no
+significa declarar identidad exacta**.»*
+
+### Lo que si esta medido
+
+**El aviso existe, y distingue bien** -- `plataforma/web/app/src/componentes/AvisoIdentidad.tsx`:
+
+```tsx
+19  export function AvisoIdentidad({ identidad, motivo }) {
+20    identidad?: string | null
+25    if (CONFIRMADO.has(identidad)) return null      // <- si esta confirmado, NO avisa
+26    const esSeguro = identidad === 'probable'
+```
+
+**Solo avisa cuando la identidad NO esta confirmada**, *y distingue «probable» del resto* -- *que es la
+distincion que el criterio pide, y en el sitio correcto: **el aviso, no el dato.***
+
+**Y se usa** -- `RepartoEnTiendas.tsx:390`: `<AvisoIdentidad identidad={f.i…}` -- *que es la pantalla donde de
+verdad hay que avisar: **la que compara el mismo producto entre tiendas**.*
+
+**Y hay una decision escrita al lado**, en `BotonAnadirACesta.tsx:17`: *«No sustituir la eleccion concreta
+antes …»*.
+
+### Y lo que **no** he concluido, a proposito
+
+**Mi grep de `AvisoIdentidad` no lo encontro en los resultados de busqueda.** *Y **no voy a decir por eso que
+falte**.*
+
+**Es exactamente el error que he cometido tres veces en esta sesion:**
+
+| ronda | conclui de una capa | **y estaba en otra** |
+|---|---|---|
+| 82 | que no habia nutricion | **`kcal_100g`**, que la app ensena |
+| 90 | que no habia orden por pasillo | **`Cesta.tsx:386`** |
+| 96 | que `sin_precio` no se pintaba | **cuatro lineas del front** |
+
+**Asi que lo que se puede afirmar es solo esto**: *el aviso **existe**, **distingue** lo confirmado de lo
+probable, y **se usa en la comparacion entre tiendas**.* **Lo que NO esta medido es si los resultados del
+buscador llevan su identidad y la ensenan** -- *y para saberlo hay que leer como construye sus resultados
+`catalogo.buscar` (linea 254) y despues mirar la pantalla, **no un grep**.*
+
+*Queda escrito como lo que es: **una capa medida y otra sin medir**, y la distincion dicha.*
+
+### Y C01-C05, al cerrar esta parte
+
+| ID | lo que pide | estado |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **medido**: *el tachado gana el primero; **la cantidad es un defecto**, fijado con `xfail`* |
+| **C01b** | *ni exponer listas de otro hogar* | **medido y PASA** (6 pruebas) |
+| **C02** | *guardado sin catalogo* | **medido** |
+| **C02b** | *precio desconocido visible* | **medido y PASA** |
+| **C03** | *orden por pasillo / una mano / recarga* | **el orden ESTA HECHO**; *«editable» falta*; 4 toques; recarga por F03 |
+| **C04** | *preferencia contra necesidad* | **estructural, medida y correcta**; *la pantalla, sin medir* |
+| **C05** | *sugerir no es afirmar* | **el aviso existe y distingue, y se usa entre tiendas**; *los resultados del buscador, sin medir* |
+
+**De siete sub-criterios: cinco medidos, cuatro pasan, uno es un defecto fijado, y dos tienen una capa sin
+medir** -- *y las dos capas que faltan son **la pantalla**, que es donde esta el trabajo que queda de F07.*
