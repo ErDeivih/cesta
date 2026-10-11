@@ -65,3 +65,81 @@ sumar, **y que se niegue cuando no**?* *Y en F08 la respuesta fue que **si**, co
 explicito. **Aqui hay que ver si la receta usa la misma** -- *o si suma por apariencia.*
 
 **Es un `SELECT` sobre `core/recetas.py` y `core/normalize.py`, y va antes que cualquier pantalla.**
+
+
+---
+
+## 2. `R04`: **el escalado esta hecho y no suma nada** -- y la suma esta en F10
+
+*(Ronda 116.)* El `SELECT` sobre `core/recetas.py`, que era lo primero que habia que mirar.
+
+### El escalado, entero, en veinte lineas
+
+```python
+134  def escala(ingredientes: list[dict], de_raciones: int, a_raciones: int) -> list[dict]:
+135      """Los ingredientes para `a_raciones` en vez de para `de_raciones`.
+137      **Lo que no tiene cantidad, no la gana.** Un ingrediente anotado como "sal" sigue sin cantidad: la
+138      regla de tres no se puede aplicar a lo que no se sabe, e inventarle un cero seria convertir un dato
+139      que falta en un dato falso.
+141      Se redondea a dos decimales, y sin miedo: media unidad de huevo es raro de leer pero es la verdad.
+142      Redondear a 2 seria comodo y mentira; quien cocina decide, con el numero delante.
+143      """
+144      if de_raciones < 1 or a_raciones < 1:
+145          raise ValueError("las raciones son al menos una")
+146      factor = a_raciones / de_raciones
+148      for uno in ingredientes:
+150          cantidad = copia.get("cantidad")
+151          if isinstance(cantidad, (int, float)):
+152              copia["cantidad"] = round(cantidad * factor, 2)
+```
+
+**Las dos mitades del criterio, una por una:**
+
+| lo que pide `R04` | **estado** |
+|---|---|
+| **«escalado reproducible»** | **si**: *una multiplicacion por el factor, redondeada a dos decimales -- **determinista**, y sin depender de nada mas* |
+| **«lo que no tiene cantidad, no la gana»** | **si, y dicho**: *la sal sigue sin cantidad, porque **inventarle un cero seria convertir un dato que falta en un dato falso*** |
+| **«g/ml/ud no sumados por apariencia»** | **aqui se cumple por no haber suma** -- *ver abajo* |
+
+### Y el hallazgo que importa: **`escala` no suma, multiplica**
+
+**«No sumados por apariencia» presupone que hay una suma.** *Y en `escala` **no la hay**: recorre los
+ingredientes **de uno en uno** y multiplica cada cantidad por el factor.* **Asi que no puede sumar g con ml
+porque no suma nada con nada.**
+
+**La suma aparece **en otro sitio**: cuando el plan semanal se convierte en lista de la compra** -- *«Plan→lista:
+seleccionar lo necesario, **consolidar compatibles** y mantener trazabilidad ingrediente-receta»*, que es
+**F10** (`SUPERAPP-FASE2-EMPEZAR-AQUI.md:149`).*
+
+> **Ahi es donde 100 g de harina de una receta y 200 g de harina de otra tienen que ser 300 g** -- *y donde
+> 100 ml de leche y 100 g de mantequilla **no pueden ser 200 de nada**.*
+
+**Asi que `R04` queda medido -- el escalado esta y esta bien --, y **la mitad que da miedo no es de este
+paquete**: es de F10, y conviene decirlo para no darla por buena desde aqui.** *Es la misma trampa que F08 me
+enseno a evitar: **la pieza existe en un sitio y el criterio se cumple en otro.***
+
+### Y `R03` empieza a aparecer solo, y es fuerte
+
+**El docstring del modulo, en sus tres primeras lineas:**
+
+```
+:3    **Privacidad, implementada.** Cada receta tiene propietario, y **todas** las operaciones lo exig[en]...
+:11   **Lo historico, sin dueno, queda conservado e inaccesible.** La migracion anade la columna y dej[a]...
+:15   **Cada version es autocontenida**: guarda sus raciones, su preparacion y sus ingredientes **copi[ados]**...
+```
+
+**Y las tres son `R03` y el aislamiento de la aceptacion:**
+
+| lo que dice el modulo | **que criterio toca** |
+|---|---|
+| **«Privacidad, implementada. Cada receta tiene propietario, y todas las operaciones lo exigen»** | **`R03`/aislamiento** -- *el septimo caso de la aceptacion* |
+| **«Lo historico, sin dueno, queda conservado e inaccesible»** | *una decision de migracion: **no se borra y no se ve*** |
+| **«Cada version es autocontenida: guarda sus raciones, su preparacion y sus ingredientes copiados»** | **`R03`: «version persistente»** -- *una version no cambia porque cambie la receta* |
+
+**Y hay funciones que lo dicen en su nombre**: `versiones()`, `actualizar()`, `archivar()`, y **`_de_quien(con,
+propietario, receta_id)`** -- *que es el guardian de `R03`, y es una funcion de tres argumentos que **devuelve
+`None` si no es tuya**.*
+
+**Asi que `R03` tiene modulo, docstring y guardian.** *Falta **medirlo** -- el aislamiento de verdad, con dos
+propietarios --, que es exactamente la prueba que F07 ya hizo para las listas (`test_fase2_f07_otro_hogar.py`) y
+que aqui se puede copiar entera.*
