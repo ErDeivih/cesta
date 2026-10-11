@@ -176,7 +176,7 @@ estructura -- nunca suponer.** *Es la regla que ha funcionado en esta fase, y la
 
 ---
 
-## Lo que espera una decision tuya -- cuatro cosas, y las cuatro bloquean un arreglo
+## Lo que espera una decision tuya -- cinco cosas, y las cinco bloquean un arreglo
 
 *Todo lo demas que se ha medido esta **cerrado, hecho, o fijado con su prueba**. Estas tres **no** son
 mediciones que falten: son **decisiones que nadie puede tomar por ti**, y por eso estan aqui y no en un
@@ -247,12 +247,37 @@ min_unidad` **sin desempate**, asi que los grupos con las mismas tres claves sal
 **Y va descrito**: *es anadir `grupo_id` al final del `ORDER BY` de `catalogo.buscar` (`catalogo.py:421`).*
 **Una linea.**
 
-### Y las cuatro, en una linea cada una
+### 5. ¿De que sitios se puede importar una receta? -- de `R02`, y es la **primera** palabra de su criterio
+
+**El criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:102`) **empieza por ahi**: *«**URL/archivo de fuente
+permitida**; previa, fuente, unidades y edicion antes de guardar.»*
+
+**Y el mecanismo esta escrito y probado** (`core/importar_receta.py`, 7 pruebas): *una direccion se acepta
+**solo si su host esta en `FUENTES`**, y si no, se rechaza **con el motivo** -- *«la fuente no esta declarada:
+recetas.example.com»*. *Y los motivos estan separados porque son problemas distintos: **«no es una direccion»**
+se corrige, **«la fuente no esta declarada»** se decide.*
+
+**Y `FUENTES` esta VACIA a proposito**: *nada esta permitido hasta que se declare.* **Lo que falta es la lista,
+y la lista es esto:**
+
+| la opcion | a favor | en contra |
+|---|---|---|
+| **declarar sitios concretos** (*los que publican recetas con datos estructurados*) | *se puede importar de donde se decida, y **la decision queda escrita con su razon*** | *hay que mantenerla, y **comprobar cada sitio** -- *que es trabajo, no solo una lista* |
+| **no declarar ninguno** | *no hay nada que mantener* | **`R02` no se puede terminar**: *sin una fuente permitida no hay nada que leer* |
+
+**Y lo que hay que decidir no es «si se puede importar»**: *es **de donde**, y **cada sitio que se declare hay que
+mirarlo** -- *que es lo que el criterio llama «fuente permitida» y lo que separa esto de un raspador.*
+
+**Y va descrito**: *es anadir entradas a `FUENTES` en `core/importar_receta.py`, con el **host** de clave y **por
+que se permite** de valor.*
+
+### Y las cinco, en una linea cada una
 
 1. **«Presupuesto»**: *¿la estimacion de la lista, lo pagado, o un numero que se ponga la persona?*
 2. **«Coste de desplazamiento»**: *¿se pide, y como -- fijo, por tienda, o no se pide?*
 3. **«Unidad de la linea de compra»**: *¿la que vino, o la canonica?*
 4. **«Desempate del buscador»**: *¿se pone, y con que -- `grupo_id` es lo natural, pero cambia el orden de los empatados?*
+5. **«Fuentes de recetas»**: *¿de que sitios, y con que comprobacion cada uno?*
 
-**Ninguna de las cuatro es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
+**Ninguna de las cinco es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
 son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
