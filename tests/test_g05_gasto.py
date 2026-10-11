@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.gasto import SEMANA, gasto_por_periodo
+from core.gasto import SEMANA, gasto_de_compras, gasto_por_periodo
 
 
 def _linea(fecha: str, importe: int | None):
@@ -88,3 +88,52 @@ def test_una_linea_sin_fecha_no_se_coloca_en_el_periodo_de_hoy():
 def test_un_periodo_desconocido_es_un_error_y_no_un_silencio():
     with pytest.raises(ValueError):
         gasto_por_periodo([], periodo="dia")
+
+
+# --- el grano que hay de verdad: compras enteras -----------------------------
+
+def _compra(fecha: str, total: int | None, lineas: int, sin_precio: int = 0):
+    return {"cerrada_en": fecha, "total_cent": total, "lineas": lineas, "sin_precio": sin_precio}
+
+
+def test_una_compra_con_lineas_sin_precio_no_esta_completa():
+    """**Aunque su total venga puesto**: ese total es el de las lineas que si lo tienen."""
+    f = gasto_de_compras([_compra("2026-10-02", 1500, 5, sin_precio=2)])[0]
+    assert f["total_cent"] == 1500, "el total guardado se respeta"
+    assert f["completo"] is False, "pero NO esta completo: faltan 2 lineas"
+    assert f["sin_importe"] == 0 and f["con_importe"] == 1
+
+
+def test_una_compra_sin_total_conocido_no_suma_cero():
+    """Las dos vias: el total ausente, o **ninguna** de sus lineas con precio."""
+    f = gasto_de_compras([_compra("2026-10-02", None, 3, sin_precio=1)])[0]
+    assert f["total_cent"] is None, "no es 0: es que no se sabe"
+    assert f["sin_importe"] == 1 and f["con_importe"] == 0
+    f2 = gasto_de_compras([_compra("2026-10-02", 0, 3, sin_precio=3)])[0]
+    assert f2["total_cent"] is None, "un 0 con TODAS las lineas sin precio no es un cero sabido"
+
+
+def test_lo_conocido_y_lo_desconocido_se_suman_por_separado():
+    f = gasto_de_compras([
+        _compra("2026-10-02", 1000, 2),
+        _compra("2026-10-20", 500, 1),
+        _compra("2026-10-25", None, 2, sin_precio=2),
+    ])[0]
+    assert f["total_cent"] == 1500, "solo lo conocido"
+    assert f["compras"] == 3
+    assert f["con_importe"] == 2
+    assert f["sin_importe"] == 1
+    assert f["completo"] is False
+
+
+def test_todo_conocido_esta_completo_y_se_agrupa_por_mes():
+    filas = gasto_de_compras([_compra("2026-10-02", 1000, 2), _compra("2026-11-02", 700, 1)])
+    assert [f["periodo"] for f in filas] == ["2026-10", "2026-11"]
+    assert [f["total_cent"] for f in filas] == [1000, 700]
+    assert all(f["completo"] for f in filas)
+
+
+def test_una_compra_sin_fecha_no_cae_en_el_periodo_de_hoy():
+    filas = gasto_de_compras([_compra("2026-10-02", 100, 1), {"total_cent": 900, "lineas": 1}])
+    assert next(f for f in filas if f["periodo"] == "2026-10")["total_cent"] == 100
+    assert next(f for f in filas if f["periodo"] is None)["compras"] == 1

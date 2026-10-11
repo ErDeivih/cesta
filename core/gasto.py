@@ -145,3 +145,86 @@ def gasto_por_periodo(
             }
         )
     return filas
+
+
+# --- y el grano que hay de verdad: compras enteras ---------------------------
+#
+# `almacen.compras_de` **ya devuelve `total_cent`, `lineas` y `sin_precio`**: el cierre calculo el
+# total y conto cuantas lineas no tenian precio, y lo archivo. *Su propio docstring lo dice: «la
+# pantalla no las ensena hoy; esto existe para que el dia que se pidan no haya que volver a decidir el
+# modelo»*. Asi que esto no recorre lineas: **agrupa compras que ya traen su cobertura** -- que es la
+# forma `{valor, faltantes}` que el proyecto usa en `estado/cocina.ts`.
+
+
+def _fecha_cierre(fila: Mapping[str, Any]) -> date | None:
+    """La fecha en que se cerro la compra. `compras_de` la manda como `cerrada_en` en ISO."""
+    return _fecha_de_compra(fila)
+
+
+def gasto_de_compras(
+    compras: Iterable[Mapping[str, Any]], periodo: str = MES
+) -> list[dict[str, Any]]:
+    """El gasto por periodo, **a partir de compras que ya traen su total y su cobertura**.
+
+    Cada fila es una compra de `almacen.compras_de`: `cerrada_en`, `total_cent`, `lineas` y
+    `sin_precio`. La diferencia con `gasto_por_periodo` es el grano -- *aqui la cobertura viene
+    guardada por compra, no hay que contarla* --, y la regla es la misma:
+
+    - **`total_cent` cuenta solo si la compra tiene algun importe conocido.** Una compra con
+      `total_cent` a `None` **o con `sin_precio == lineas`** no aporta cero: **no aporta nada**, y el
+      periodo se queda sin total conocido si no hay otra;
+    - **`completo` es `False` en cuanto una compra tiene lineas sin precio**, aunque su total venga
+      puesto: *ese total es el de las lineas que si lo tienen;*
+    - y un periodo **sin ninguna compra con importe tiene `total_cent = None`, no `0`**.
+    """
+    if periodo not in (MES, SEMANA):
+        raise ValueError(f"periodo tiene que ser {MES!r} o {SEMANA!r}, y llego {periodo!r}")
+
+    por_periodo: dict[str, dict[str, Any]] = {}
+    sin_fecha = 0
+    for fila in compras:
+        fecha = _fecha_cierre(fila)
+        if fecha is None:
+            sin_fecha += 1
+            continue
+        clave = periodo_de(fecha, periodo)
+        a = por_periodo.setdefault(
+            clave,
+            {"periodo": clave, "total_cent": 0, "compras": 0, "con_importe": 0, "sin_importe": 0},
+        )
+        a["compras"] += 1
+        lineas = int(fila.get("lineas") or 0)
+        sin_precio = int(fila.get("sin_precio") or 0)
+        total = fila.get("total_cent")
+        # **Una compra de la que no se sabe el total no suma cero.** Se reconoce por las dos vias:
+        # el total ausente, o que **ninguna** de sus lineas tuviera precio.
+        sabe = total is not None and not (lineas > 0 and sin_precio >= lineas)
+        if sabe:
+            a["total_cent"] += int(total)
+            a["con_importe"] += 1
+        else:
+            a["sin_importe"] += 1
+        if sin_precio > 0:
+            a["completo"] = False
+
+    filas: list[dict[str, Any]] = []
+    for clave in sorted(por_periodo):
+        a = por_periodo[clave]
+        filas.append(
+            {
+                "periodo": clave,
+                "total_cent": a["total_cent"] if a["con_importe"] > 0 else None,
+                "compras": a["compras"],
+                "con_importe": a["con_importe"],
+                "sin_importe": a["sin_importe"],
+                "completo": a.get("completo", True),
+            }
+        )
+    if sin_fecha:
+        filas.append(
+            {
+                "periodo": None, "total_cent": None, "compras": sin_fecha,
+                "con_importe": 0, "sin_importe": sin_fecha, "completo": False,
+            }
+        )
+    return filas
