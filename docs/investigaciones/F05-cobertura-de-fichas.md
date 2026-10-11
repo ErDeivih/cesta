@@ -1194,3 +1194,57 @@ lo trae.***
 *Y una nota de metodo*: **esta es la primera vez en toda la fase que una palabra clave de nutricion resulto
 ser un DATO** -- *`kcal` seis veces, `por 100 g` una* --, despues de cuatro veces seguidas en que era prosa.
 *Lo que lo distingue no es la palabra: es **haber ido a la pagina de producto** en vez de mirar el listado.*
+
+
+---
+
+## 26. El lector de Carrefour, hecho -- y la tabla estaba en atributos
+
+*(Ronda 78.)* *Y sin pedir nada mas: **la ficha que se pidio en la 77 ya estaba cacheada** (`carrefour._raw`
+guarda en crudo), asi que se leyo de ahi.*
+
+### Donde estaba
+
+**No es una tabla HTML** -- *el `<table` sale 0, y eso despisto.* **Esta en atributos `data-*` de un `div` de
+grafico:**
+
+```html
+<h3 class="nutrition__info-title">Información nutricional</h3>
+<p class="nutrition-graph__info-text">Valores medios por 100 g.</p>
+<div data-cal="900 Kcal" data-fi="" data-fa="100 g" data-h="0 g"
+     data-kj="3700 KJ" data-p="0 g" data-s="0 g" class="nutrition-graph__graphic-svg">
+```
+
+**Y los numeros son los del aceite de oliva** -- *900 kcal y 100 g de grasa por 100 g, **que es exactamente lo
+que tiene**.* **No son de relleno: la comprobacion quimica cuadra.**
+
+### Y el lector, con siete pruebas
+
+`projects/cesta/ficha_carrefour.py` -- *una de las pruebas **contra la ficha real cacheada**.* **Lee los
+`data-*`, devuelve cada nutriente con su unidad, y la base aparte** (`"100 g"`, la comparable que el proyecto
+exige).
+
+**Y respeta la regla de la casa en el caso que importa**: *`data-fi=""` es **fibra vacia, no cero*** -- *y se
+salta, porque un cero dice «no tiene» y un vacio dice «no lo dice».* **Es la misma regla que `ficha_dia` y
+`ficha_mercadona`.**
+
+### Y F05 queda asi, con el mapa entero
+
+| cadena | nutricion | **por donde** | lector |
+|---|---|---|---|
+| **dia** | **SI** -- 6.331 en el maestro | el colector pide la ficha | **`dia.py:_nutricion`** |
+| **carrefour** | **SI** -- en la pagina de producto | *hay que pedirla: el colector solo captura listados* | **`ficha_carrefour`** (7 pruebas) |
+| mercadona | no | -- | `ficha_mercadona` (ingredientes y alergenos) |
+| alcampo | no | -- | -- |
+| aldi | no | -- | -- |
+| lidl | no, documentado | -- | `ficha_lidl` |
+
+**Dos de seis con nutricion, y las dos con lector.** *Y la cola corregida -- 72.322, con el ciclo
+reconciliando.*
+
+### Lo que queda de F05
+
+1. **Pedir fichas de Carrefour con presupuesto** -- *una por producto, como Lidl.* **El lector ya esta.**
+2. **Decidir que productos de los 72.322 merecen la visita.**
+
+*Y las dos son decisiones de operacion, no dudas tecnicas -- **que es donde F05 tenia que acabar.**
