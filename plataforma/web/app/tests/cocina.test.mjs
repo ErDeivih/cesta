@@ -5,6 +5,7 @@ import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
 import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
 import { importeEnCentimos, textoDeLoQueFalta, textoDePeriodo, totalConocido } from '../src/logica/gasto.ts'
 import { costeDeReceta } from '../src/logica/costeReceta.ts'
+import { avisoDeTransporte, hayVariosViajes } from '../src/logica/transporte.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -247,4 +248,27 @@ test('el €/unidad del catalogo manda, y el envase se sigue diciendo', () => {
   ])
   assert.equal(r.ingredientes[0].costeUsadoCent, 23, '0,0009 EUR/ml x 250 ml = 22,5 -> 23')
   assert.equal(r.ingredientes[0].costeEnvaseCent, 95)
+})
+
+// --- G05: lo que el total del reparto NO incluye -----------------------------
+
+test('con dos tiendas, el aviso dice que son dos viajes', () => {
+  const t = avisoDeTransporte(2)
+  assert.match(t, /no incluye el transporte ni el tiempo/)
+  assert.match(t, /2 tiendas hay 2 viajes/, 'y con mas de una tienda se nombra el viaje')
+  assert.equal(hayVariosViajes(2), true)
+})
+
+test('con una sola tienda, el aviso sigue estando', () => {
+  const t = avisoDeTransporte(1)
+  assert.match(t, /no incluye el transporte ni el tiempo/,
+    'una tienda tambien es un viaje, aunque el aviso no tenga que comparar')
+  assert.doesNotMatch(t, /viajes/)
+  assert.equal(hayVariosViajes(1), false)
+})
+
+test('con cinco tiendas no se promete que el ahorro compense', () => {
+  const t = avisoDeTransporte(5)
+  assert.match(t, /5 tiendas hay 5 viajes/)
+  assert.match(t, /puede ser menor/)
 })

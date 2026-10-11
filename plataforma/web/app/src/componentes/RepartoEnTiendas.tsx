@@ -32,6 +32,7 @@ import { AvisoIdentidad } from './AvisoIdentidad'
 import { ponerTienda, reparto as pedirReparto } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { euros } from '../api/formato'
+import { avisoDeTransporte } from '../logica/transporte'
 import { Aviso, Boton, Etiqueta, Tarjeta, cx } from './ui'
 import { autorizarLinea } from '../api/cesta'
 import type { OpcionEnTienda, RepartoTiendas } from '../tipos'
@@ -205,6 +206,15 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
   })
 
   if (reparto.isLoading || !reparto.data) return null
+  // **Lo que el total NO incluye, y va antes de los numeros a proposito**: *comparar dos tiendas
+  // como si llegar a las dos costara lo mismo que llegar a una es la omision que G05 pide declarar
+  // -- «y si falta transporte» --, y el ahorro de repartir puede ser menor que el viaje.*
+  // **Las tiendas que de verdad entran**: las sublistas, que son la lista partida por tienda.
+  const tiendasDelReparto = reparto.data.sublistas.length
+  const avisoTransporte = (
+    <p className="text-[13px] text-secundaria">{avisoDeTransporte(tiendasDelReparto)}</p>
+  )
+
   const r: RepartoTiendas = reparto.data
 
   // Sin ninguna línea decidida y sin nada pendiente, esta tarjeta no tiene nada que
@@ -222,6 +232,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
       sub="Elige la tienda de cada producto y aquí se parte la lista: cada sublista con su precio y el total de todo, con las ofertas aplicadas y explicadas."
       className={className}
     >
+      {avisoTransporte}
       {error && (
         <div className="mb-3">
           <Aviso tono="mal" titulo="No he podido cambiarlo">{error}</Aviso>

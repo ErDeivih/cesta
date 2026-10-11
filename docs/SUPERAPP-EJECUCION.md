@@ -566,6 +566,34 @@ parecido de nombre: no demuestra que sean el mismo ingrediente»* --. Asi que el
 `unidad`** -- *los tres que el modulo necesita* --, y el escalado de raciones lo hace el servidor. *Asi
 que cuando G10 traiga el enlace, esta tarjeta calcula los dos numeros sin tocar `logica/costeReceta.ts`.*
 
+### G05, el reparto: **cuatro de cinco exigencias ya estaban, y la quinta era una frase**
+
+El reparto de la lista por tiendas cumple **cuatro de las cinco** cosas que G05 pide, y lo dice en su
+propia cabecera -- *«tres decisiones de esta pantalla, y las tres son de dinero»*:
+
+| G05 pide | y estaba |
+|---|---|
+| **contra que se compara** | ✓ *«al lado va lo que costaria sin decidir nada (todo en la mas barata, o repartido en dos). Ensenar solo el total propio no deja comparar»* |
+| **restricciones de ofertas** | ✓ *«las ofertas se ensenan desglosadas: el total con ofertas, el total sin ellas y la lista de las que se aplican»* |
+| **cuantas lineas entran** | ✓ **`sin_precio` en `RepartoTiendas`**, junto a `lineas` y `decididas` -- y `cesta.py:387` manda `lineas_contadas` |
+| **ahorro medido contra algo comprable** | ✓ *`cesta.py:514`: «el ahorro se mediria contra un total que no se puede comprar»* -- **se niega a calcularlo** |
+| **y si falta transporte** | ✗ **`transporte` no aparecia en NINGUNA parte del proyecto** |
+
+**La quinta, arreglada.** `logica/transporte.ts`, **puro y sin imports** (29 pruebas en el cliente), con
+la frase que dice lo que el total no incluye: *«el total no incluye el transporte ni el tiempo: es lo que
+cuesta la compra, no el viaje»*, **y con mas de una tienda lo nombra** -- *«con 2 tiendas hay 2 viajes, y
+el ahorro puede ser menor que el segundo viaje»* --. Montado **dentro de la tarjeta del reparto**, antes
+de los numeros.
+
+*El problema no era de calculo -- la cuenta estaba bien -- sino de contexto: **el reparto comparaba dos
+tiendas como si llegar a las dos costara lo mismo que llegar a una.** Y la frase se decide en una funcion
+pura, no en el texto de la pantalla, porque «comparar dos tiendas sin decir que son dos viajes» tiene que
+estar cubierto por una prueba.*
+
+**Y «óptimo» no aparece en ninguna parte del proyecto**: G05 pide no llamar optimo a una heuristica, y
+**el proyecto no llama optimo a nada** -- *«exacto» se reserva para lo que tiene GTIN, como dice
+`identidad.py:219`*.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
