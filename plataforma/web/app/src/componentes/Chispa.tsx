@@ -1,5 +1,11 @@
 /** La chispa del historico: una serie de precio por unidad, sin ejes.
  *
+ *  **Un hueco es un hueco.** Un `null` entre dos precios es un dia que no se observo, y la chispa
+ *  **no lo conecta**: `spanGaps: false`. Lo pide G05 con estas palabras -- *«no conectar datos
+ *  ausentes como si hubiera observaciones»* --, y antes de este cambio la linea recta entre dos
+ *  puntos afirmaba un precio que nadie midio. **Lo que no se sabe se ve que no se sabe**, que es
+ *  justo para lo que sirve un hueco en un adorno de 40 px.
+ *
  *  uPlot y no Recharts: un solo trazo, 40 px de alto y cuarenta de ellos en una
  *  pantalla. uPlot son ~50 KB, pinta en canvas y no toca el DOM por punto.
  *  Recharts mete d3 y un SVG por grafica; con cuarenta en una lista, eso se
@@ -7,13 +13,11 @@
  *  (minimo, maximo, media) van siempre escritos al lado.
  */
 import { useEffect, useRef, useState } from 'react'
+import { serieDeChispa, type PuntoChispa } from '../logica/chispa'
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 
-export interface PuntoChispa {
-  fecha: string
-  valor: number | null
-}
+export type { PuntoChispa } from '../logica/chispa'
 
 interface Props {
   puntos: PuntoChispa[]
@@ -23,10 +27,6 @@ interface Props {
   etiqueta: string
 }
 
-function aMs(fecha: string): number {
-  const t = new Date(fecha.length <= 10 ? `${fecha}T00:00:00` : fecha).getTime()
-  return Number.isNaN(t) ? 0 : t
-}
 
 export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -56,8 +56,11 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
     const el = contenedor.current
     if (!el || ancho < 20 || puntos.length === 0) return
 
-    const xs = puntos.map((p) => aMs(p.fecha))
-    const ys = puntos.map((p) => (p.valor === null || !Number.isFinite(p.valor) ? null : p.valor))
+    // **Que se dibuja lo decide `logica/chispa.ts`**, que es puro y esta probado: las reglas de
+    // huecos, fechas ilegibles y series vacias son de G05 y no se deciden aqui.
+    const serie = serieDeChispa(puntos)
+    if (!serie.dibujable) return
+    const { xs, ys } = serie
 
     const opciones: uPlot.Options = {
       width: ancho,
@@ -85,7 +88,8 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
         {
           stroke: color,
           width: 2,
-          spanGaps: true,
+          // **Un hueco se ve como hueco**: ver la cabecera del fichero.
+          spanGaps: false,
           // Un unico punto sin `points` no dibuja nada y parece que no hay
           // historico, que es justo lo contrario de lo que pasa.
           points: { show: puntos.length <= 1, size: 5, width: 0, fill: color },
@@ -104,8 +108,12 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
 
   if (puntos.length === 0) {
     return (
+      // **No se infiere nada de una serie vacia.** Antes decia «solo tenemos un dia de este
+       // precio», que es una afirmacion sobre el catalogo sacada de **no tener datos**: un producto
+       // con cuarenta dias de historico y una consulta que falla decia exactamente lo mismo. G05:
+       // *«no inferir "solo un dia" de una serie vacia»*. Se dice lo que se sabe: que no hay serie.
       <p className="text-xs text-tinta-suave">
-        Sin histórico: solo tenemos un día de este precio.
+        Sin serie de precios que dibujar.
       </p>
     )
   }

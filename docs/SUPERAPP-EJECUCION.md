@@ -343,6 +343,37 @@ que esta cargando se pintan igual.** `Grupo.tsx` ahora distingue el caso `isPend
 (`fetchStatus: 'fetching'` sin dato ni error) sigue esperando en silencio**, y eso no se puede
 distinguir desde fuera de la biblioteca sin un tiempo de espera.
 
+### G05, primeros hallazgos: **la chispa dibujaba precios que nadie midio**
+
+`Chispa.tsx` -- el componente que el documento nombra **por su nombre** -- incumplia **tres requisitos
+de G05, dos de ellos citados literalmente**:
+
+| antes | y G05 dice |
+|---|---|
+| **`spanGaps: true`** | *«no conectar datos ausentes como si hubiera observaciones»* -- **la linea recta entre dos puntos afirmaba un precio no observado** |
+| **«Sin historico: solo tenemos un dia de este precio»**, dicho **de una serie vacia** | *«no inferir "solo un dia" de una serie vacia»* -- *y `Producto.tsx:87` devuelve `puntos: []` como caso legitimo, asi que se decia en pantalla sin saberlo* |
+| **`aMs` devolvia `0`** para una fecha ilegible | *«no convertir ausencias en cero»* -- **1970 es el origen del eje, y arrastraba la escala** |
+
+**Arreglado, y con la decision fuera del componente**: `logica/chispa.ts` es puro -- sin uPlot y sin DOM
+-- y devuelve `{xs, ys, total, dibujados, sinFecha, dibujable}`. **Lleva la cobertura en la forma que el
+proyecto ya usa en `estado/cocina.ts` (`{valor, faltantes}`)**: *cuantos puntos se dibujan y cuantos se
+quedaron fuera, porque sin eso un hueco y una ausencia se ven igual.*
+
+**Cuatro pruebas nuevas, y las seis de antes siguen pasando** (10/10 en el cliente):
+
+- **un hueco NO se conecta**: `ys = [100, null, 120]`, y el hueco **cuenta como punto**;
+- **una serie vacia NO dice «un dia»**: `dibujable: false`;
+- **una fecha ilegible se descarta y SE CUENTA** (`sinFecha`), no se coloca en 1970;
+- **un valor no finito es un hueco, no un cero**.
+
+**Y una nota de metodo**: `node --test` **importa `.ts` directamente** (Node 24 quita los tipos), asi que
+la logica del cliente se puede probar sin navegador -- *y el proyecto ya tenia ahi una prueba con este
+mismo principio: «subtotal no convierte ausencias en ceros conocidos».*
+
+**Falta de G05**: la **tabla accesible de los mismos datos** que pide la aceptacion, y el resto de los
+ocho puntos (evolucion por tienda, alternativas, gasto pagado, reparto, inflacion; y en Calorias y
+Recetas, cobertura por nutriente y coste distinguiendo cantidad usada de envase).
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

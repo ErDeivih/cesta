@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
+import { aMs, serieDeChispa } from '../src/logica/chispa.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -35,4 +36,47 @@ test('apunte calculado no depende de cambios posteriores', () => {
   const r = { ...receta, ingredientes: [{ ...ingrediente, kcal: 400 }] }
   assert.equal(n, 350)
   assert.equal(calcular(r, 1).kcal.valor, 400)
+})
+// --- G05: la chispa no puede dibujar lo que no se observo --------------------
+// Las tres reglas son del documento y se fijan aqui, porque `tsc` verde dice que compila y no que
+// acierte. La primera es la que mas importa: **un hueco no se conecta**.
+test('un hueco en la serie NO se conecta', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 100 },
+    { fecha: '2026-01-02', valor: null },
+    { fecha: '2026-01-03', valor: 120 },
+  ])
+  assert.deepEqual(s.ys, [100, null, 120])
+  assert.equal(s.dibujados, 3, 'un hueco cuenta como punto: esta en la serie, sin valor')
+  assert.equal(s.dibujable, true)
+  assert.equal(s.sinFecha, 0)
+})
+
+test('una serie vacia NO dice «solo un dia»', () => {
+  const s = serieDeChispa([])
+  assert.equal(s.dibujable, false)
+  assert.equal(s.total, 0)
+  assert.equal(s.dibujados, 0)
+})
+
+test('una fecha ilegible no se coloca en 1970, se descarta', () => {
+  assert.equal(aMs(''), null)
+  assert.equal(aMs('no-es-una-fecha'), null)
+  assert.equal(aMs('2026-01-01'), Date.parse('2026-01-01T00:00:00'))
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 100 },
+    { fecha: 'no-es-una-fecha', valor: 999 },
+  ])
+  assert.equal(s.dibujados, 1)
+  assert.equal(s.sinFecha, 1, 'y se cuenta: una ausencia se declara, no se disimula')
+  assert.deepEqual(s.ys, [100])
+})
+
+test('un valor no finito es un hueco, no un cero', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: Number.NaN },
+    { fecha: '2026-01-02', valor: Number.POSITIVE_INFINITY },
+  ])
+  assert.deepEqual(s.ys, [null, null])
+  assert.equal(s.dibujados, 2)
 })
