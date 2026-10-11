@@ -1325,3 +1325,55 @@ actuo** -- *queda por mirar **por que**, y es una linea.*
 **Asi que el ensayo de F03 queda **en verde en lo suyo** y **con un limite de ensayo anotado**: *se puede volver
 a correr en cuanto la cuenta se reutilice en vez de crearse.* **Y decirlo asi es la mitad del valor: un «MAL» que
 se lee como fallo de la aplicacion seria falso.**
+
+
+---
+
+## 36. La causa del `429`, encontrada: **el comentario dice el patron y el codigo no lo hace**
+
+*(Ronda 153.)* **Una linea, y es del ensayo, no de la aplicacion.**
+
+### El codigo, tal cual
+
+```python
+179  # **Entrar primero.** *La busqueda no necesitaba sesion; los recorridos de lista si -- `[antes]`
+180  # contestaba 401 --.* **El patron es el del ensayo del diario**: `POST /api/entrar` con [la cuenta]
+181  # del propio contexto, y **registrarse si la cuenta no existe**.
+...
+185  r = contexto.request.post(f"{BASE}/api/registrarse", ...)      <- va DIRECTO a registrarse
+189      f"hay cuenta para el recorrido ({r.status})")
+```
+
+**El comentario describe **exactamente** el patron que hace falta** -- *entrar primero, y registrarse **solo si la
+cuenta no existe**.* **Y el codigo de la linea 185 va **directo** a `registrarse`, sin intentar `entrar`.**
+
+**Asi que cada corrida del ensayo **crea una cuenta nueva**, y al cabo de unas cuantas **el propio limite de
+peticiones lo para con un `429`.** *No es que el limite este mal: es que **el ensayo se limita a si mismo**.*
+
+### Y es la misma forma que esta fase lleva dieciseis veces encontrando
+
+**La intencion, escrita; y el codigo, haciendo otra cosa.** *Es lo mismo que `--borde-fuerte` resolvio bien*
+(*el motivo al lado del token*) **y que `archivar` hacia bien** (*no levanta y no borra*) -- *pero aqui esta al
+reves: **el comentario sabe lo que hay que hacer y el codigo no lo hace**.*
+
+**Y lo que lo cazo fue correr el ensayo**, no leerlo: *leyendo el comentario, **parece** que el respaldo existe.*
+
+### El arreglo, que es una linea, y va descrito para no volver a buscarlo
+
+**Antes de `registrarse`, intentar `POST /api/entrar` con la misma cuenta; y solo si eso da 401 (o 404),
+registrarse.** *Es lo que el comentario de las lineas 179-181 pide, y lo que el ensayo del diario ya hace.*
+
+**Y hay una razon de fondo por la que esto importa mas que un `429` en un ensayo**: *el limite de `registrarse`
+**existe para proteger una puerta**, y **un ensayo que lo esquiva creando cuentas esta usando la puerta que no
+es**.* *El respaldo no es un apaño para saltarse el limite: es **usar la puerta correcta**.*
+
+### Y el estado de F03, con esto
+
+| | |
+|---|---|
+| **el bucle de publicacion en navegador** | **MEDIDO Y PASA**: *33,81 -> 34,81 EUR en pantalla, sin reiniciar, sin errores JS, catalogo real intacto* |
+| **el alta en el diario durante la publicacion** | **NO medido**, y **la causa esta identificada y es una linea del ensayo** |
+| **y el `429`** | **no es un fallo de la aplicacion**: *es el limite funcionando contra un ensayo que crea cuentas de mas* |
+
+**Un ensayo que falla por su propia preparacion, con la causa escrita en su propio comentario** -- *que es, a esta
+altura de la fase, casi lo que se espera.*
