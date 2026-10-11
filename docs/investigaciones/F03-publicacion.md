@@ -304,3 +304,36 @@ escribe en un temporal y renombra -- la prueba pasa.*
 otras pruebas del fichero no publican antes de volver a escribir, y cambiar un ayudante compartido por
 una razon que solo afecta a una prueba es peor que decirlo ahi.* **Pero es una trampa para el proximo**:
 *publicar y despues usar `_suelta` sobre el mismo gold mutila la version publicada.*
+
+
+---
+
+## 12. «Una peticion de dos ficheros ve una sola version», y su limite
+
+*(Ronda 19.)* La otra mitad de la frase de S01, con prueba: **una conexion ya montada sigue leyendo su
+version aunque se publique otra cosa, y una nueva lee la nueva** -- *que es lo que hace que publicar sirva
+para algo.*
+
+```
+se monta la conexion con el puntero en V1
+se publica V2 a mitad de camino
+  la conexion que ya estaba  ->  sigue leyendo V1   (sus vistas apuntan a los ficheros de V1)
+  una conexion nueva         ->  lee V2
+```
+
+### Y el limite, medido y dicho donde se lee
+
+**La unidad no es la peticion, es la conexion.** Medido: la API llama a `catalogo.conexion()` en **ocho
+sitios, cada uno en una funcion distinta** (`alertas.py` dos, `main.py` dos -- uno de ellos al arrancar
+--, `movimientos.py` cuatro). *Asi que un manejador que la pida una vez esta cubierto.*
+
+**Si algun dia un manejador llama a dos de esas funciones** -- y por tanto pide conexion dos veces -- **y
+se publica entre las dos, vera dos versiones.** *Entonces habra que **pasar la conexion**, no volver a
+pedirla.* **Queda escrito en la prueba, que es donde se va a leer.**
+
+### Lo que esta prueba NO demuestra, y no se le atribuye
+
+**Que las cinco vistas se resuelvan de una sola version.** *Eso lo garantiza la construccion -- `version`
+se resuelve en una linea y las cinco `CREATE VIEW` salen de ella -- y la lectura del codigo, no esta
+prueba.* Lo que esta prueba fija es el **contrato de fuera**: una conexion, una version. *Y fallaria si
+`conexion()` se rehiciera en cada lectura.*

@@ -604,3 +604,46 @@ def test_publicar_de_verdad_cambia_lo_que_la_aplicacion_sirve(app_leyendo_el_ens
     assert con_v2 != con_v1, (
         "publicar V2 tiene que cambiar lo que la aplicacion sirve; si no, la publicacion no llega a "
         "quien compra")
+
+
+def test_una_conexion_ve_una_sola_version(app_leyendo_el_ensayo):
+    """**La otra mitad de la frase de S01**: *«una peticion de dos ficheros ve una sola version»*.
+
+    **El mecanismo**: `conexion()` resuelve el puntero **una vez** y monta las cinco vistas desde esa
+    version. *Una conexion ya montada sigue leyendo **su** version aunque se publique otra cosa, y una
+    nueva lee la nueva -- que es lo que hace que publicar sirva para algo.*
+
+    **Y el limite, dicho aqui porque es donde se lee**: la unidad no es la peticion, es **la conexion**.
+    *La API llama a `catalogo.conexion()` en **ocho sitios, cada uno en una funcion distinta**, asi que
+    un manejador que la pida una vez esta cubierto.* **Si algun dia un manejador llama a dos de esas
+    funciones -- y por tanto pide conexion dos veces -- y se publica entre las dos, vera dos versiones.**
+    *Entonces habra que **pasar la conexion**, no volver a pedirla.*
+    """
+    from datetime import datetime
+
+    from plataforma.api import catalogo
+
+    def suelta_atomico(datos):
+        for nombre, marco in datos.items():
+            write_parquet_file(marco, oro / nombre)
+
+    oro = app_leyendo_el_ensayo
+    suelta_atomico(publica_v1())
+    publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 0, 0))
+    catalogo.reiniciar()
+    con = catalogo.conexion()
+    en_la_v1 = con.execute("SELECT precio_cent FROM grupos").fetchall()
+
+    # **Se publica V2 a mitad de camino.**
+    suelta_atomico(publica_v2())
+    publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 30, 0))
+
+    # **La conexion que ya estaba montada sigue en V1**: sus vistas apuntan a los ficheros de V1.
+    assert con.execute("SELECT precio_cent FROM grupos").fetchall() == en_la_v1, (
+        "una conexion ya montada no puede cambiar de version a mitad de camino")
+
+    # **Y una nueva lee la nueva**, que es lo que hace que publicar sirva para algo.
+    catalogo.reiniciar()
+    otra = catalogo.conexion()
+    assert otra.execute("SELECT precio_cent FROM grupos").fetchall() != en_la_v1, (
+        "una conexion nueva tiene que leer la version nueva")
