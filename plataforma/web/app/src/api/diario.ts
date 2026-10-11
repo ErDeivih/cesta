@@ -44,6 +44,18 @@ export type Dia = {
   completo: boolean
 }
 
+/** El alta desde una ficha. Los valores van por 100 g **tal como los publica la ficha**: el
+ *  servidor escala por los gramos y **de lo que la ficha no traiga no anota cero, anota `null`**. */
+export type FichaNueva = {
+  fecha: string
+  comida: string
+  referencia: string
+  gramos: number
+  /** Los campos de la ficha por 100 g; `null`/ausente es desconocido, no cero. */
+  producto: Record<string, unknown>
+  nota?: string
+}
+
 export type NuevaEntrada = {
   fecha: string
   comida: string
@@ -74,7 +86,14 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'DELETE', cuerpo?: un
     // Un 502 de Caddy delante de una API caida no es JSON.
   }
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalle)
-  return undefined as T
+  // **El recibo del servidor se devuelve, no se tira.** Antes esto era `return undefined as T`, y
+  // por eso el puente de la compra decia «se han anotado N» con el numero de **la previa** en vez
+  // de con lo que el servidor habia anotado de verdad: si la previa y el resultado no coinciden
+  // -- lineas que ya estaban, o que dejaron de estar --, el mensaje miente. El servidor ya
+  // devuelve `{id, dia}` al apuntar y `{entrada}` desde ficha; esto lo entrega.
+  const texto = await respuesta.text()
+  if (!texto) return undefined as T
+  return JSON.parse(texto) as T
 }
 
 export function useDia(fecha: string) {
@@ -85,19 +104,47 @@ export function useDia(fecha: string) {
   })
 }
 
+/** Lo que el servidor devuelve al apuntar: **el identificador de la entrada y el dia entero**
+ *  recalculado. Es el recibo, y es lo unico que puede sostener un mensaje de exito. */
+export type ReciboDeAlta = { id: number; dia: Dia }
+
+/** Lo que el servidor devuelve al anotar desde una ficha: la entrada ya calculada. */
+export type ReciboDeFicha = { entrada: Entrada }
+
 export function useApuntar() {
   const cliente = useQueryClient()
   return useMutation({
-    mutationFn: (datos: NuevaEntrada) => conCuerpo('/diario', 'POST', datos),
-    onSuccess: (_r, datos) => cliente.invalidateQueries({ queryKey: ['diario'] }),
+    mutationFn: (datos: NuevaEntrada) => conCuerpo<ReciboDeAlta>('/diario', 'POST', datos),
+    onSuccess: () => {
+      // **El dia y los rangos.** Invalidar solo `['diario']` dejaba las tendencias con el dato
+      // viejo: usan `['diario-rango', ...]`, que es otra clave. Medido el 11 de octubre de 2026.
+      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
+    },
+  })
+}
+
+/** Alta desde una ficha del catalogo: **la cuenta la hace el servidor** con los valores por 100 g. */
+export function useApuntarDesdeFicha() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (datos: FichaNueva) => conCuerpo<ReciboDeFicha>('/diario/desde-ficha', 'POST', datos),
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
+    },
   })
 }
 
 export function useBorrarEntrada(fecha: string) {
   const cliente = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => conCuerpo(`/diario/entrada/${id}`, 'DELETE'),
-    onSuccess: () => cliente.invalidateQueries({ queryKey: ['diario'] }),
+    mutationFn: (id: number) => conCuerpo<{ borrada: number }>(`/diario/entrada/${id}`, 'DELETE'),
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      // Y los rangos, por lo mismo que al apuntar: borrar tambien mueve las tendencias.
+      void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
+    },
   })
 }
 

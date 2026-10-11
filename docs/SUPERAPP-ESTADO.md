@@ -2,6 +2,10 @@
 
 ## Resumen vigente — 11 de octubre de 2026
 
+**Tablero operativo por paquete (G01–G14): [SUPERAPP-EJECUCION.md](SUPERAPP-EJECUCION.md).**
+Es lo primero que hay que mirar para retomar: dice el paquete en curso, su evidencia y la
+siguiente acción exacta, sin releer la bitácora.
+
 **Tarea actual.** Etapa de cierre de Cesta: los cinco puntos del encargo (contador, registro
 efectivo del diario, texto libre, revocación de sustituciones, y los dos recorridos con
 publicación durante el uso), y después las gráficas y la revisión integral de las tres
