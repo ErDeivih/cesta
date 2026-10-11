@@ -139,6 +139,38 @@ totales con precio**. *Implementado y compilado, no recorrido.*
    **la lista se pinta en esa misma página**: no hay a dónde navegar. El `DIV` no era el defecto;
    *era mi lectura.*
 
+### G03: la revocación, medida por línea
+
+**Lo que el documento pedía, literal**: *«Fixture con al menos tres líneas: dos alternativas
+autorizadas y una exacta. Identificar la línea por ID estable. Verificar respuesta, almacenamiento y
+pantalla: solo ella pierde. Recargar y comparar los tres estados.»* Y la corrección de la revisión:
+***«un contador global de alternativas no acredita esto»***.
+
+**La revocación ya existía** —`almacen.autoriza_linea(..., autorizado=False)`, que *confirma o
+desconfirma* **una** línea y devuelve su `id`—, y el diagnóstico del documento ya lo decía: *función
+existente, falta una medición*.
+
+| | |
+|---|---|
+| **tres líneas**: dos alternativas autorizadas y una exacta | ✓ la fixture se monta y las dos quedan con su producto y su cadena |
+| la revocada pierde la autorización | ✓ |
+| **las otras dos quedan exactamente igual** | ✓ **es lo que un contador no dice** |
+| la respuesta **nombra el `id`** revocado | ✓ |
+| un identificador que no es de esa lista no cambia nada | ✓ |
+| el estado se relee de la base y dice lo mismo | ✓ |
+
+**Tres cosas que costaron rondas, y las tres eran mías:**
+
+1. **Los parámetros del endpoint van en la dirección, no en el cuerpo** (`autorizado`, `producto`,
+   `cadena` son `Query`, `main.py:1217`). Mandé un JSON y recibí un 400 que **parecía** del dato:
+   *«para autorizar hay que decir QUE producto se acepta»*.
+2. **`autorizacion_de` devuelve un mapa de diccionarios, no de booleanos** —`{id: {"autorizado",
+   "producto", "cadena"}}`— **y su anotación dice `dict[str, bool]`, o sea que miente.** Anotado, sin
+   tocar la firma para no mezclarlo con este arreglo.
+3. **Mi script de edición volvió a perder el trabajo entero**: abortó en la comprobación **séptima**
+   después de aplicar seis, y *escribe el fichero al final*. **Es el mismo defecto que diagnostiqué en
+   la ronda 8.** Ahora **verifica todas las anclas antes de escribir**, y así entró a la primera.
+
 **La segunda lista de casa responde 409, no 500.** La base impone `lista_de_casa_por_dueno` --una
 lista de casa por persona, que es la regla correcta: es el eje que alimenta el contador del menú, el
 puente de la compra y las alertas-- y la API no la atrapaba: crear la segunda salía como «Internal
