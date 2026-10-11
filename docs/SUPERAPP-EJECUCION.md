@@ -1230,6 +1230,41 @@ cabecera -- *«estas pruebas no tocan PostgreSQL ni la red: prueban la parte que
 compra, que es donde un error se traduce en dinero»* -- **y llama a las funciones directamente.** *Asi
 que la verificacion del endpoint va por ahi: por la funcion que decide.*
 
+### G12, punto 218: **el buscador del recetario** -- la ultima casilla, y la primera interfaz que faltaba
+
+**De los ocho sitios del 218, siete estaban** (biblioteca, crear/editar/versionar/archivar,
+ingredientes con cantidades y unidades, pasos, raciones, plan semanal) **y el modo cocina tambien**:
+`Cocina.tsx` con su provider y su `modo`, servida en DOS aplicaciones -- *«servidas por la misma
+pantalla de cocina con un `modo`»*. **Faltaba el buscador.** *Y es la primera funcion de interfaz que
+este encargo encuentra ausente: en once paquetes, todo lo demas estaba escrito.*
+
+**`logica/recetario.ts`**, sin dependencias -- *como `chispa`, `gasto` y `costeReceta`, que es lo que
+permite probarlo con `node --test` en medio segundo*:
+
+    filtraRecetas(recetas, {texto, etiqueta, incluirArchivadas})
+    etiquetasDeUna(r) / etiquetasDe(r)
+    textoDelVacio(filtro, cuantasHay)
+
+**Se filtra en el cliente, y es una decision**: *la lista que llega **ya viene filtrada por dueno**
+desde el servidor, asi que esconder es elegir un subconjunto de lo que ya era tuyo.* **Hacerlo en el
+servidor anadiria un parametro mas que habria que recordar comprobar contra el dueno, y ese es justo
+el sitio donde un olvido se convierte en una fuga.**
+
+**Y tres decisiones que no son de estilo:**
+
+* **Todas las palabras tienen que aparecer**, no una: *buscar «tortilla patata» y que salga cualquier
+  tortilla es peor que no encontrar nada, porque te hace leer la lista entera.*
+* **El orden del servidor no se toca**: *reordenar por parecido es lo que hace que una busqueda
+  parezca que «encuentra» cosas.*
+* **El vacio dice que filtro lo causo**: *«ninguna receta coincide con "garbanzos"; hay 4 en total»* --
+  *un filtro que esconde todo sin decir por que es lo mismo que una lista vacia, y peor, porque parece
+  que no tienes recetas.*
+
+**Y una discrepancia que cazo `tsc`**: *el servidor manda `etiquetas` como **`string`** -- la columna
+de `version` es texto -- y mi tipo la declaraba **lista**, que era mi suposicion.* **Se aceptan las dos
+formas** (`etiquetasDeUna` las normaliza), *que es arreglarlo aceptando la forma del servidor y no
+cambiando la suya.* **Septima vez que una herramienta corrige una suposicion mia hoy.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

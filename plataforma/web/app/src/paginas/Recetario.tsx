@@ -19,6 +19,7 @@ import {
 import type { Ingrediente } from '../api/recetas'
 import { textoDeError } from '../api/cliente'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { etiquetasDe, filtraRecetas, textoDelVacio } from '../logica/recetario'
 
 function ListaDeIngredientes({ ingredientes }: { ingredientes: Ingrediente[] }) {
   if (ingredientes.length === 0) {
@@ -197,11 +198,45 @@ function Alta() {
 export function Recetario() {
   const [abierta, setAbierta] = useState<number | null>(null)
   const [verArchivadas, setVerArchivadas] = useState(false)
+  // **G12, punto 218: el buscador que faltaba.** *Se filtra en el cliente a proposito: la lista ya
+  // viene filtrada por dueno desde el servidor, asi que esconder es elegir un subconjunto de lo que
+  // ya era tuyo -- y no anade un parametro del que alguien pueda olvidarse de comprobar el dueno.*
+  const [texto, setTexto] = useState('')
+  const [etiqueta, setEtiqueta] = useState('')
   const { data, isPending, error } = useRecetas(verArchivadas)
   const archivar = useArchivarReceta()
 
+  const todas = data?.recetas ?? []
+  const visibles = filtraRecetas(todas, { texto, etiqueta: etiqueta || null })
+  const etiquetas = etiquetasDe(todas)
+
   return (
     <div className="flex flex-col gap-4">
+      {todas.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Buscar por nombre..."
+            aria-label="Buscar recetas por nombre"
+            className="min-h-[44px] flex-1 rounded border border-borde bg-papel px-3 text-[16px]"
+          />
+          {etiquetas.length > 0 && (
+            <select
+              value={etiqueta}
+              onChange={(e) => setEtiqueta(e.target.value)}
+              aria-label="Filtrar por etiqueta"
+              className="min-h-[44px] rounded border border-borde bg-papel px-2 text-[16px]"
+            >
+              <option value="">Todas las etiquetas</option>
+              {etiquetas.map((e) => (
+                <option key={e} value={e}>{e}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Boton onClick={() => setVerArchivadas(!verArchivadas)}>
           {verArchivadas ? 'Ver solo las de ahora' : 'Ver tambien las archivadas'}
@@ -212,15 +247,21 @@ export function Recetario() {
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el recetario...</p>}
       {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
 
-      {data && data.recetas.length === 0 && (
+      {data && todas.length === 0 && (
         <Vacio titulo="Todavia no hay recetas">
           <p>Anade la primera y aparecera aqui, con sus ingredientes y sus raciones.</p>
         </Vacio>
       )}
 
-      {data && data.recetas.length > 0 && (
+      {todas.length > 0 && visibles.length === 0 && (
+        <Vacio titulo="Ninguna receta coincide">
+          <p>{textoDelVacio({ texto, etiqueta: etiqueta || null }, todas.length)}</p>
+        </Vacio>
+      )}
+
+      {visibles.length > 0 && (
         <ul className="flex flex-col gap-2">
-          {data.recetas.map((r) => (
+          {visibles.map((r) => (
             <li key={r.id}>
               <Tarjeta>
                 <div className="flex flex-wrap items-center justify-between gap-2">

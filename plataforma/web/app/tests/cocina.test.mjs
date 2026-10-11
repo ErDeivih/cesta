@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { etiquetasDe, etiquetasDeUna, filtraRecetas, textoDelVacio } from '../src/logica/recetario.ts'
 import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
 import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
@@ -271,4 +272,67 @@ test('con cinco tiendas no se promete que el ahorro compense', () => {
   const t = avisoDeTransporte(5)
   assert.match(t, /5 tiendas hay 5 viajes/)
   assert.match(t, /puede ser menor/)
+})
+
+// --- G12, punto 218: el buscador del recetario ---------------------------------------------
+//
+// **Sin dependencias y sin servidor**: `filtraRecetas` es una funcion pura, y por eso se puede
+// probar aqui en medio segundo. *La lista que llega ya viene filtrada por dueno desde el servidor, asi
+// que filtrar en el cliente no puede enseñar nada que no fuera tuyo.*
+
+const RECETAS = [
+  { id: 1, nombre: 'Tortilla de patatas', etiquetas: ['cena', 'espanola'] },
+  { id: 2, nombre: 'Tortilla francesa', etiquetas: ['cena'] },
+  { id: 3, nombre: 'Ensalada de atun', etiquetas: ['comida', 'rapida'] },
+  { id: 4, nombre: 'Guiso viejo', etiquetas: [], archivada: true },
+]
+
+test('el buscador encuentra por nombre y no le importan los acentos', () => {
+  assert.equal(filtraRecetas(RECETAS, { texto: 'tortilla' }).length, 2)
+  // «atun» encuentra «atún»: quien busca en la cocina no pone tildes.
+  assert.deepEqual(filtraRecetas(RECETAS, { texto: 'atun' }).map((r) => r.id), [3])
+})
+
+test('todas las palabras tienen que aparecer, no una', () => {
+  // **Y esto es a proposito**: buscar «tortilla patatas» y que salga cualquier tortilla es peor que
+  // no encontrar nada, porque te hace leer la lista entera.
+  assert.deepEqual(filtraRecetas(RECETAS, { texto: 'tortilla patatas' }).map((r) => r.id), [1])
+  assert.equal(filtraRecetas(RECETAS, { texto: 'tortilla garbanzos' }).length, 0)
+})
+
+test('las archivadas no salen salvo que se pidan', () => {
+  assert.equal(filtraRecetas(RECETAS, { texto: 'guiso' }).length, 0)
+  assert.equal(filtraRecetas(RECETAS, { texto: 'guiso', incluirArchivadas: true }).length, 1)
+})
+
+test('el filtro por etiqueta, y las etiquetas que hay para elegir', () => {
+  assert.deepEqual(filtraRecetas(RECETAS, { etiqueta: 'cena' }).map((r) => r.id), [1, 2])
+  assert.deepEqual(etiquetasDe(RECETAS), ['cena', 'comida', 'espanola', 'rapida'])
+})
+
+test('el vacio dice que filtro lo causo, en vez de parecer que no hay recetas', () => {
+  // *Un filtro que esconde todo sin decir por que es lo mismo que una lista vacia, y peor.*
+  const texto = textoDelVacio({ texto: 'garbanzos' }, 4)
+  assert.ok(texto.includes('garbanzos'), 'nombra lo que se busco')
+  assert.ok(texto.includes('4 recetas'), 'y dice cuantas hay en total')
+  assert.equal(textoDelVacio({}, 0), 'Todavia no hay recetas.')
+})
+
+test('el orden de la lista no se toca', () => {
+  // Reordenar por parecido es lo que hace que una busqueda parezca que «encuentra» cosas.
+  const ids = filtraRecetas(RECETAS, { etiqueta: 'cena' }).map((r) => r.id)
+  assert.deepEqual(ids, [1, 2], 'el orden del servidor se respeta')
+})
+
+test('las etiquetas se leen vengan como lista o como la cadena que manda el servidor', () => {
+  // **El servidor manda una `string`** -- la columna `etiquetas` de `version` es texto -- y declarar
+  // solo la lista fue un error de tipo que `tsc` cazo. Se aceptan las dos.
+  assert.deepEqual(etiquetasDeUna({ id: 1, nombre: 'x', etiquetas: 'cena,rapida' }), ['cena', 'rapida'])
+  assert.deepEqual(etiquetasDeUna({ id: 1, nombre: 'x', etiquetas: ['cena'] }), ['cena'])
+  assert.deepEqual(etiquetasDeUna({ id: 1, nombre: 'x', etiquetas: '' }), [])
+  assert.deepEqual(etiquetasDeUna({ id: 1, nombre: 'x' }), [])
+  // Y el filtro funciona igual con la forma del servidor.
+  assert.deepEqual(
+    filtraRecetas([{ id: 7, nombre: 'Guiso', etiquetas: 'cena,larga' }], { etiqueta: 'cena' }).map((r) => r.id),
+    [7])
 })
