@@ -13,7 +13,10 @@ aplicaciones.
   octubre, en móvil 390 y escritorio 1440 — *chapa y API coinciden al abrir, tras tachar, tras
   recargar y tras destachar* (2/2 · 1/1 · 1/1 · 2/2 en los dos anchos). Cuenta **solo la lista de
   casa**; dice **de qué lista es**; y **carga, error, «sin lista de casa» y cero real** son cuatro
-  estados distintos. El defecto real: el contador vivía en `Nav.tsx`, **que ninguna ruta monta**
+  estados distintos. **Medido también el 11 de octubre con cuentas aisladas**: una cuenta recién
+  registrada (`POST /api/registrarse`) dice **«Sin lista de casa»**, y **con una lista creada después
+  que NO es la de casa sigue diciéndolo** — *no cuenta «Otra» en silencio*, que era la regla. El
+  defecto real: el contador vivía en `Nav.tsx`, **que ninguna ruta monta**
   (`App.tsx` monta `LayoutSuite` en las 20 rutas, y su menú es `Suite.tsx`), y allí además exigía
   un destino terminado en `/listas` mientras su enlace apuntaba a `/cesta`.
 - **Las tres puertas del producto**, cerradas con un dedo: el plan a la lista (3 → 5 líneas, sin
@@ -29,7 +32,6 @@ aplicaciones.
 
 **Pendiente**
 
-1. contador: el caso **«sin lista de casa»** con una cuenta nueva, y el cambio de cuenta;
 2. **el registro efectivo del diario** (cantidades, fuente del dato, cobertura, persistencia tras
    recargar, idempotencia, aislamiento entre dos usuarios) — *los dos caminos vacíos no lo cubren*;
 3. **el texto libre en la lista**, como «Pendiente de identificar», sin precio ni equivalencia
