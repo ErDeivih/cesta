@@ -177,3 +177,61 @@ una fuente externa --, y **eso es una decision con evidencia, no un modulo que s
 ninguno.*
 
 **Es la cuarta vez en esta fase que medir antes de escribir cambia el trabajo que iba a hacer.**
+
+
+---
+
+## 7. El metodo sirve, pero **no basta con 40 ficheros** -- y el escaneo por palabras engania
+
+*(Ronda 28.)* Aplique el mismo metodo a las otras cuatro cadenas. **Y hay que separar lo que quedo
+probado de lo que solo es una pista.**
+
+### Lo que se hizo, y lo que da
+
+**Primero, un escaneo por palabras** (`nutri`, `kcal`, `grasa`, `protein`, `ingred`, `alerg`...) sobre los
+crudos de hoy:
+
+```
+alcampo     25/60 ficheros con algo de nutricion
+aldi        25/60
+carrefour   44/60
+dia         60/60
+mercadona   13/60
+```
+
+**Y ese escaneo NO vale como prueba.** *Lo demuestra Aldi: sale **25/60 con «grasa»**, cuando en la ronda
+27 quedo medido, **por claves**, que sus 18 campos no traen nutricion.* **La palabra estaba en el texto
+-- el nombre o la descripcion --, no en un campo.** *Un escaneo de palabras dice donde mirar, no que
+hay.*
+
+**Segundo, la comprobacion por claves** -- la que si vale --, sobre los 40 primeros crudos de `dia`:
+**ninguna clave de nutricion.** *Asi que el 60/60 de dia tambien eran menciones en texto.*
+
+### Lo que NO se puede concluir, y no lo concluyo
+
+**Que las cadenas no publiquen nutricion en ningun sitio.** *40 ficheros de una cadena que no he
+caracterizado no son una muestra: el crudo de una cadena trae **varias clases de captura** -- sitemaps,
+listados de categoria, paginas de producto --, y los 40 primeros pueden ser todos listados.*
+
+**Para contestarlo hace falta saber cual de esos ficheros es una ficha**, y eso no lo he medido. *Decir
+«ninguna cadena publica nutricion» con esto seria exactamente el error que el encargo prohibe: **afirmar
+una ausencia sin haber mirado donde toca**.*
+
+### Lo que si queda establecido
+
+| cadena | que se midio | como |
+|---|---|---|
+| **aldi** | su API de producto, **18 claves, ninguna de nutricion** | por claves, sobre un producto entero -- **riguroso** |
+| **dia** | **ninguna clave** de nutricion en los 40 primeros crudos | por claves -- *muestra sin caracterizar* |
+| alcampo, carrefour, mercadona | *solo el escaneo por palabras* | **no vale** |
+| **el escaneo por palabras sobreestima** | *probado con Aldi* | comparacion de los dos metodos |
+
+### Y la accion siguiente, corregida otra vez
+
+**No es «escribir un descargador» ni «decidir de donde sale la nutricion»**: es **saber cual de los
+crudos de cada cadena es una ficha.** *Eso es medible y barato -- mirar la forma de los ficheros y
+agruparlos por clase --, y sin eso cualquier conclusion sobre nutricion es una suposicion.*
+
+**Quinta vez en esta fase que medir cambia el trabajo.** *Y esta vez la leccion es mas fina: **el primer
+instrumento que escribi medía mal** -- palabras en vez de claves --, y lo descubri porque **otra medicion
+mas fina lo contradijo**.*
