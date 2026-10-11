@@ -372,3 +372,43 @@ que todavia no esta -- y **los dos recorridos de navegador**.
 **Y la leccion, que ya es la segunda vez**: *antes de apuntar un pendiente en el tablero hay que medirlo.*
 **Un pendiente inventado cuesta lo mismo que un cierre inventado**: los dos hacen que el tablero deje de
 servir para decidir.
+
+
+---
+
+## 14. Verificado por HTTP, y una decision que **no me toca tomar**
+
+*(Ronda 22.)* Lo que faltaba de la aceptacion de F03 en su mitad de *«pruebas reales de API»*: **el API
+corriendo con el codigo de hoy**, no solo `catalogo` en una prueba.
+
+```
+uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8100    (CESTA_POSTGRES -> 5434)
+
+/api/estado                    200
+  fecha_datos      2026-10-11
+  version_catalogo 20261007-103000
+  coherente        False
+/api/buscar?q=leche            200, 40 resultados
+```
+
+**1. La conmutacion de la ronda 17 funciona de punta a punta.** *El API lee la version publicada y sirve
+-- 40 resultados para «leche» --, que es lo que hasta la ronda 17 no se podia decir: `catalogo` leia el
+gold suelto.*
+
+**2. Y `/api/estado` declara `coherente: False`**, por lo mismo que el resumen: **los precios son del
+2026-10-11 y el puntero del 2026-10-07**. *No es un efecto del cambio -- la version y el gold son byte a
+byte identicos en `precio_diario` (medido en la ronda 10) --, es la incoherencia que ya estaba.*
+
+### Y aqui paro, a proposito
+
+**Publicar arreglaria la incoherencia**: el puntero pasaria al 11 y `/api/estado` diria coherente. *Y
+ahora es seguro hacerlo: la publicacion va al final del ciclo, el fallo llega al veredicto, y una
+conexion ve una sola version.*
+
+**Pero publicar cambia lo que la aplicacion sirve.** *Hoy sirve la version del 7 de octubre; publicar la
+moveria al gold del 11.* **Es un cambio material sobre datos reales, es reversible (`fijar` vuelve
+atras), y no es mio tomarlo sin que lo decida quien es dueno del catalogo.** *El encargo dice preservar
+los datos reales y no desplegar; y una publicacion no es un despliegue, pero si una decision.*
+
+**Queda como la primera cosa que hay que decidir, con los numeros delante**: *el puntero esta en
+`20261007-103000`, el gold es del 11, y `/api/estado` lleva desde entonces diciendo que no cuadra.*
