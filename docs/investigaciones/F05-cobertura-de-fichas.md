@@ -448,3 +448,72 @@ no he escrito un extractor generico, he escrito uno de Mercadona y **probado que
 
 **Asi que «extraer lo que ya esta» da tres fichas, no cuatro mil.** *El trabajo grande sigue siendo pedir,
 y ahora se sabe exactamente que pedir y para que.*
+
+
+---
+
+## 12. **Correccion grave**: la seccion 10 era falsa. **Dia SI publica nutricion numerica**
+
+*(Ronda 33.)* En la seccion 10 escribi, y quedo commiteado, que *«en el crudo que el sistema captura a
+diario, **ninguna cadena publica nutricion numerica**»*. **Es falso**, y el error es de metodo.
+
+**Lo medido, sobre el crudo de hoy de Dia:**
+
+```
+kilo_calories  {"name": "Kcal",                  "uom": "kcal", "value": 54}
+energy         {"name": "Valor Energetico (KJ)", "uom": "kJ",   "value": 257}
+fat            {"name": "Grasas",                "uom": "g",    "value": 3.5}
+carbohydrate   {"name": "Hidratos de carbono",   "uom": "g",    "value": 4.0}
+sugars         {"name": "Azucares",              "uom": "g",    "value": 4.0}
+protein        {"name": "Proteinas",             "uom": "g",    "value": 3.3}
+salt           {"name": "Sal",                   "uom": "g",    "value": 0.1}
+ingredients    {"name": "Ingredientes",          "value": "<p>...</p>"}
+```
+
+**La tabla entera, con unidades, y ya capturada.**
+
+### Como lo perdi, porque es el error mas caro de la fase
+
+**Generalice desde tres cadenas a cinco.** *Mercadona, Alcampo y Aldi **si** son «no publican» -- medido por
+claves. Y de ahi salte a «ninguna cadena», **sin mirar las claves de Dia**, que tenia **cuatro ficheros
+JSON clasificados en la ronda 29 y sin inspeccionar**.*
+
+**Y habia una senal que ignore**: en la ronda 28 el escaneo por palabras encontro `energy` en dos ficheros
+de Mercadona -- *que resultaron ser nombres de producto* -- **y no se me ocurrio comprobar los de Dia.**
+
+**Es exactamente el error que el encargo prohibe**: *afirmar una ausencia sin haber mirado donde toca.* **Y
+es peor que los anteriores de esta fase**: no fue leer mal un dato, fue **extender una conclusion a casos
+que no habia medido**.
+
+### Y queda un lector, hecho y probado
+
+`projects/cesta/ficha_dia.py`, con **nueve pruebas y una contra un fichero real** (*que hoy se ejecuta*).
+*Lee los siete nutrientes con su `uom`, los ingredientes sin marcado, y la identidad.*
+
+**Y un fallo de forma que salio al escribir la prueba, no al leer**: *Dia mezcla dos formas* -- los
+nutrientes como `{name, uom, value}` y **la identidad plana** (`"sku_id": "310847"`). *Aceptar solo la
+primera dejaba fuera justo los campos para casar la ficha con el producto.*
+
+**Y la trampa de esta fuente, escrita en la prueba**: `width` tiene **la misma forma** que `fat`
+(`{name, uom, value}`), y no es nutricion. *Por eso se lee **por nombre de campo**, no por forma.*
+
+### El mapa, corregido otra vez
+
+| cadena | nutricion **numerica** | como se sabe |
+|---|---|---|
+| **dia** | **SI** -- kcal, kJ, grasas, hidratos, azucares, proteinas, sal | por claves, 4 fichas, **lector hecho** |
+| **mercadona** | **no** | 6 fichas: solo `ingredients` y `allergens` en texto |
+| **alcampo** | **no** | 59 claves |
+| **aldi** | **no** | 18 claves |
+| **carrefour** | *HTML, sin medir* | -- |
+| **lidl** | **no**, documentado | *«es una fuente que no los da»* |
+
+### Y lo que esto cambia en el veredicto
+
+**Enseñar calorias SI se puede** -- *para Dia, que publica la tabla entera, y cuyo lector ya esta escrito y
+probado*. **Lo que no se puede es enseñarlas para todas las cadenas**, y ahora se sabe **cual si y cual
+no**, campo a campo.
+
+*Lo que hay capturado hoy son **4 fichas de Dia** -- y en 3 esta la tabla --, asi que el trabajo sigue
+siendo **pedir**: el lector no llena la cola solo.* **Pero la pregunta «¿se puede?» tiene respuesta, y es
+que si.**

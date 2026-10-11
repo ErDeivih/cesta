@@ -19,8 +19,8 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| Fichas de producto: **calorías / Nutri-Score** | **no se puede con estas fuentes** | **ninguna de las cinco cadenas medidas publica nutrición numérica** — por claves, sobre el crudo real |
-| Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py`, 7 pruebas, una **contra crudo real**. *Pero el crudo de hoy sólo trae **3 fichas** de 155: lo demás son listados* |
+| Fichas de producto: **calorías** | **sí, para Día** | **Día publica la tabla entera** (kcal, kJ, grasas, hidratos, azúcares, proteínas, sal) **con unidades**, y `ficha_dia.py` la lee — 9 pruebas, una contra crudo real. *Mercadona, Alcampo y Aldi **no** la publican: medido por claves* |
+| Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |
 
