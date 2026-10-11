@@ -106,12 +106,15 @@ las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
 | **F15** offline | **medido** | **Offline esta** (`navigator.onLine` + React Query, que **pausa** y reanuda); **la paginacion hecha** (4 pruebas) -- **y destapo que el orden de `buscar` no es total**, asi que *sin desempate **paginar baraja*** (fijado con `xfail`; es la 4.a decision). **681 KB en un solo chunk**. *Por medir: latencia, cargas e indices* |
 | **F13–F16** | **sin empezar** | *Van después, según sus dependencias.* |
 
-**Los cuatro criterios que la fase ha encontrado sin cumplir, y su clase:**
+**Los cuatro criterios que la fase encontro sin cumplir, y donde estan ahora** -- *los cuatro tienen ya **su nucleo hecho y probado**, y a los cuatro les falta **el enganche**: tabla, ruta y pantalla*:
 
-1. **`R02`** importar recetas — **no existe** (tres capas).
-2. **`R05`** modo cocina — **no existe** (ni pasos ni temporizadores).
-3. **`R08`** despensa — **no existe** (cuatro capas).
-4. **`R10`** buscar por lo disponible — **depende de `R08`**.
+1. **`R02`** importar recetas — **el nucleo hecho**: *la fuente permitida y el borrador, 13 pruebas.* **Falta**: el lector de cada sitio, que necesita **la lista de fuentes** (5.a decision).
+2. **`R05`** modo cocina — **el nucleo hecho**: `core/cocina.py`, 10 pruebas. **Falta**: la pantalla.
+3. **`R08`** despensa — **el nucleo hecho**: `core/despensa.py` con los cuatro casos de su aceptacion, 9 pruebas. **Falta**: la tabla y la ruta.
+4. **`R10`** buscar por lo disponible — **su mitad hecha**: `despensa.lo_que_falta` y `cocina.lo_que_falta`. **Falta**: la busqueda por ella.
+5. **Y la paginacion del buscador** — **hecha** (4 pruebas), *y **destapo** que el orden de `buscar` no es total.*
+
+**A las cuatro primeras les falta lo mismo, y conviene decirlo asi: el enganche** -- *tabla, ruta y pantalla. La **logica** esta, con las reglas del proyecto puestas en el camino; **lo que no esta es la puerta por la que se usa desde fuera**, que es trabajo de API y no de decision.*
 
 *Ninguno es un defecto: son **funciones que nadie ha escrito**, y las cuatro tienen nombre y casos de aceptación descritos.* **Y hay cuatro defectos reales**, los cuatro **medidos y con su prueba**: la alerta sin identidad, la contabilidad de la cola, la cantidad que gana «el último», y el `kg/g`.
 
