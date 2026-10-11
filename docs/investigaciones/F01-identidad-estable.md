@@ -429,3 +429,50 @@ estan juntos, sino **por que par, con que metodo y con cuanta confianza**.*
 **F01 -- producto efectivo -- queda asi: el motor, el cierre y la identidad, medidos y probados; la
 investigacion de identidad estable, cerrada; y **un defecto real pendiente de arreglo**, con la direccion
 decidida (identidad estable por `ean`).**
+
+
+---
+
+## 12. El arreglo de `alerta`, medido -- y **por que no lo hago a medias**
+
+*(Ronda 48.)* Fui a escribir la migracion. **Medi primero cuanto cableado hace falta, y hay una pieza que
+ya existe.**
+
+```
+plataforma/api/almacen.py:959    INSERT INTO alerta (usuario_id, grupo_id, tipo, umbral_cen...)
+                                    <- UN SOLO sitio de alta
+plataforma/api/alertas.py:57     def _mejor_de_cada_grupo(grupos)
+plataforma/api/alertas.py:196    def evalua(alertas)
+plataforma/api/alertas.py:260    def _clave(alerta) -> tuple
+plataforma/api/catalogo.py:1207  def por_ean(codigo: str) -> dict     <- EL RESOLUTOR YA EXISTE
+```
+
+**Asi que el arreglo es pequeño y esta bien acotado:**
+
+1. **Migracion** `016_alerta_con_identidad.sql`: `ADD COLUMN IF NOT EXISTS ean text` + `COMMENT ON COLUMN`.
+2. **Alta** (`almacen.py:959`): escribir tambien el `ean` del producto vigilado, *que hoy se puede resolver
+   desde el propio grupo con `por_ean`*.
+3. **Evaluacion** (`alertas.py`): resolver el `ean` de cada alerta al grupo de **hoy** -- *con el `por_ean`
+   que ya existe* -- en vez de fiarse del `grupo_id` guardado.
+4. **Prueba**: una alerta que sobrevive a una renumeracion del grupo.
+
+### Y no lo hago, y quiero que quede dicho por que
+
+**Con el contexto que me queda, un cambio de tres ficheros mas una migracion mas una prueba no lo puedo
+verificar bien.** *Y hay un motivo concreto y ya conocido en esta misma fase para no intentarlo:* **anadir
+la columna sin cablearla deja una columna muerta** -- *exactamente el defecto que se encontro en
+`entrada.unidad` de F02, que existe, nunca se escribe y nunca se lee.*
+
+**Un arreglo a medias de este defecto seria cometer, en el arreglo, el error que el defecto describe.** *Asi
+que lo dejo entero y especificado, con las tres piezas localizadas por linea, en vez de dejarlo empezado.*
+
+### Y la parte que **si** se puede hacer sin riesgo, para quien siga
+
+**El `ean` de la alerta que existe no se puede rellenar sin decidir** -- *y esa decision esta medida*:
+`salto_nombre` dice «Central Lechera Asturiana brik 1 l.» y `salto_texto` dice «en carrefour», **pero el
+miembro de carrefour de ese grupo hoy es «President brik 1 l.»**. *Rellenarlo con lo que hay hoy seria
+escribir un dato estable **equivocado**.*
+
+**Lo honesto para esa fila es dejarla con `ean` nulo y su `salto_nombre` como unico ancla** -- *que es
+justo lo que ya tiene* --, **y que el aviso de la pantalla siga diciendo lo que dice**. *No se pierde nada
+que hoy funcione; se deja de fingir que la clave es estable.*

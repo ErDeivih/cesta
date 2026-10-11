@@ -29,6 +29,20 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 **Los diez contrastados**, y **uno de ellos -- el #9 -- ha resultado ser un defecto localizado**: `alerta` ligada al ordinal. *Del #10 falta el ensayo con navegador (no la medición).*
 
+## El arreglo de `alerta`, especificado
+
+**Lo unico de esta fase que hace algo mal hoy.** *Medido y acotado a tres piezas:*
+
+| pieza | sitio |
+|---|---|
+| migración `016`: `ADD COLUMN IF NOT EXISTS ean text` | `plataforma/sql/` |
+| escribir el `ean` al dar de alta | `almacen.py:959` (único INSERT) |
+| resolver el `ean` al grupo **de hoy** al evaluar | `alertas.py` + **`catalogo.por_ean` (ya existe, `catalogo.py:1207`)** |
+| prueba: una alerta sobrevive a una renumeración | `tests/` |
+
+*La fila que existe se queda con `ean` nulo y su `salto_nombre` como ancla: rellenarla con lo que hay hoy
+escribiría un dato estable **equivocado**.*
+
 ## Siguiente acción
 
 **F03 · la publicación coherente.** Es el siguiente cierre de tu lista —*«optimización entre tiendas,
