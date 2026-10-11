@@ -244,7 +244,11 @@ function Hoy() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">La ingesta de hoy</h2>
+            {/* **«Ingesta» significa dos cosas** y aquí sólo vale una: lo que el raspador trajo al
+                catálogo, no lo que come nadie. *El rótulo decía «La ingesta de hoy» dentro de
+                «Gasto y ahorro», y se leía como «lo que has comido hoy» -- justo la confusion
+                entre Compra y Calorias que hay que evitar.* G06, punto 157: mensajes ambiguos. */}
+            <h2 className="text-base font-semibold">Lo que entró hoy en el catálogo</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
@@ -270,7 +274,7 @@ function Hoy() {
           <LoQueHasPagado />
 
           <Tarjeta titulo="Qué entró por cadena" sub="Sobre cuántos productos se ha contado cada cosa">
-            <TablaScroll etiqueta="Ingesta por cadena" minAncho="40rem">
+            <TablaScroll etiqueta="Productos por cadena" minAncho="40rem">
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr>

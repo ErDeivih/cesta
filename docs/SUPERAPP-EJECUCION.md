@@ -594,6 +594,36 @@ estar cubierto por una prueba.*
 **el proyecto no llama optimo a nada** -- *«exacto» se reserva para lo que tiene GTIN, como dice
 `identidad.py:219`*.
 
+### G06, los dos recorridos: **cero errores, y un rotulo ambiguo**
+
+**Los dos recorridos que G06 pide** -- *primera cuenta sin datos y cuenta con historial* -- **hechos, en
+390 y 1440, con cero errores de pagina en los dos anchos**, y **79 capturas** en `data/debug/capturas/`.
+
+**La cuenta nueva**: las cuatro pantallas dicen que no hay nada, **dicen que hacer a continuacion**, y
+**no muestran ceros** -- *`/calorias` dice **«sin dato»** en los cuatro nutrientes y «de 0 de 0
+entradas»; un «0 kcal» habria dicho «hoy no comiste nada»* --. Y las tendencias llevan la frase escrita
+para quien lee: *«Medido sobre lo anotado y lo que se sabe. No es todo lo que comiste.»*
+
+**Las tres apps estan diferenciadas** (punto 156): Compra tiene «Buscar / Listas (10) / 10 por coger en
+la lista de casa / Favoritos / Gasto y ahorro»; Recetas, «Mi recetario / Plan semanal»; Calorias, «Mi
+diario / Mis alimentos / Tendencias».
+
+**La frontera Compra/Calorias** (punto 154): `BotonAnadirACesta.tsx` **no menciona nutricion ni una
+vez**; la ficha de producto si lleva la tabla de nutricion, **y G06 la pide** («ingredientes/nutricion
+cuando existe»); y el `SelloNutriscore` del buscador es **una etiqueta impresa en el envase**, no un
+recuento dentro de una accion.
+
+**Y un hallazgo, del punto 157** -- *«mensajes ambiguos»* --: **`Panel.tsx` titulaba «La ingesta de hoy»
+una seccion que habla del CATALOGO** -- *«hoy N productos, y lo normal M», con alarmas de caida* --.
+**«Ingesta» significa dos cosas** y ahi solo vale una: *dentro de «Gasto y ahorro» se leia como «lo que
+has comido hoy», que es justo la confusion entre Compra y Calorias que hay que evitar.* **Corregido:
+«Lo que entro hoy en el catalogo»**, con la nota al lado, y el `etiqueta` de la tabla tambien.
+
+**Y mi propio desorden, cuantificado y limpiado**: la base desechable tenia **399 listas, 396 de
+pruebas mias** -- *«Prueba texto libre» 130 veces, «Prueba G03 cierre» 90* --. Borradas **preguntando el
+esquema primero** (`lista_linea`, y el orden que dictan las claves foraneas), **conservando «Casa» con
+sus 12 lineas y su compra cerrada** y la «Sonda de ruta». *Quedan 3 listas.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
