@@ -857,6 +857,42 @@ el comparador sobre el slug real **y** se cuenta antes y despues.
 la decision segura para la comida, pero si la cola pide lo revisado, es la via por la que todavia
 entra bazar.*
 
+### G08, cerrado: **el bazar de Lidl y por que entra lo que entra**
+
+**El paquete entero, en una tabla:**
+
+| que pide G08 | y hay |
+|---|---|
+| **inventariar** las seis cadenas | ✓ *medido para Lidl: sitemap de productos, 6.622 URLs* |
+| **campos cuando la fuente los publica** | ✗ **Lidl no publica ingredientes, nutricion ni alergenos** -- *medido sobre una ficha de alimento* |
+| **estados separados** | ✓✓ *`pendiente, en_curso, correcto, parcial, no_publicado, bloqueado, error_temporal, no_encontrado, excluido`; FINALES con cinco* |
+| **cola reanudable, leases, TTL** | ✓✓ *`tomar` con lease de 30 min, `REVISION_DIAS=30`, `REVISION_CONFLICTO_DIAS=7`* |
+| **hash semantico y version del parser** | ✓ **arreglado**: fuera el precio, dentro `gtin_invalido`/`url`/`imagen`, version `lidl-jsonld-2` |
+| **fuentes complementarias** | ✗ *no hay; es el siguiente trabajo, con la regla de 181* |
+| **unidades y bases** | ✓ *en el catalogo, no en la ficha de Lidl* |
+| **informe por cadena y familia** | ✓✓ `informe_inventario.py` |
+
+**Y el hallazgo del paquete -- el «exceso de bazar» de 183 -- cerrado de punta a punta:**
+
+1. **Medido**: de **26 fichas guardadas, NINGUNA alimentaria**.
+2. **Explicado**: el clasificador **si** se aplica (`descubrir_lidl.py:71`), y el slug viaja **como nombre
+   y como categoria** -- de ahi que «agua» de un deposito de jardin casara con `cat-bebidas`.
+3. **Corregido**: la politica tenia diez reglas de exclusion y **le faltaban terminos**. Anadidos
+   **compuestos** -- `deposito de agua`, `sierra de mano`, `caja fuerte`… --, **politica a version 5**.
+   Sobre las 26 fichas: **`excluido` 0->14, `revisar` 23->11, `incluido` 3->1**.
+4. **Y justificado**: **lo `revisar` se pide a proposito.** `registra_en_inventario` lo dice: *«son
+   candidatos: no se sabe y hay que ir a mirar»*; los `excluido` **no se apuntan** -- *«apuntarlos seria
+   dejar trabajo para pedir fichas que no se van a pedir; se cuentan aparte, que es informacion, no
+   trabajo»*. **Es el coste aceptado de no perder comida**: *«excluir comida por un nombre de URL es el
+   error caro».* **Asi que la palanca no es la cola: es la cobertura del clasificador** -- y hoy ha
+   pasado de 23 a 11 sin perder un alimento, con las pruebas en las dos direcciones.
+
+### G09, abierto: **Lidl no esta en `ORDEN`**
+
+`run.py`: `ORDEN = ["carrefour", "dia", "mercadona", "aldi", "alcampo"]` -- **sin Lidl**, y su punto 189
+lo dice con esas palabras: *«`ORDEN` actual sin Lidl debe resolverse o reemplazarse por una planificacion
+explicita que realmente lo ejecute»*.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
