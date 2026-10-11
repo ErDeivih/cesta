@@ -178,3 +178,62 @@ que `node --test` lo cargue y **las reglas se prueben en un segundo**»* (`:15-1
 
 **Uno hecho, uno que no existe, y el tercero colgando del que no existe.** *Y el que esta hecho es el que
 **no** necesitaba la despensa, que era exactamente por donde habia que empezar.*
+
+
+---
+
+## 4. La primera vez que la despensa se abrio en un navegador -- **y salio «Not Found»**
+
+*(Ronda 173, con la pila del sandbox: API 8102 y Vite 5173.)*
+
+### Lo que se midio
+
+```
+titulo de la pestana: 'Despensa · Cesta'        <- EL TITULO ES CORRECTO
+errores de JavaScript: []                       <- y no hay ninguno
+y el cuerpo, al final:  ...Gasto y ahorro | Cuenta y preferencias | Aprender
+                        COMPRA | Compra | Not Found      <- «NOT FOUND»
+```
+
+**Y lo que dice la pantalla, buscado frase a frase** -- *«La despensa», «no se sabe cuanto», «vacia», «Declarar lo
+que hay»* --: **ninguna aparece.** *El cuerpo tiene **155 caracteres**: es el armazon, no la pantalla.*
+
+### Y la causa, mirada en el codigo
+
+**El `Route` **esta bien**:**
+
+```
+App.tsx:136   <Routes>                                                    <- UNO SOLO
+App.tsx:142   <Route path="/compra/despensa" element={<LayoutSuite app="compra"><Despensa /></LayoutSuite>} />
+```
+
+**Y el titulo tambien** (`:107`, `if (ruta.startsWith('/compra/despensa')) return 'Despensa'`) -- *que es
+justo por lo que la pestana **si** dice «Despensa» y el cuerpo **no**.*
+
+**Asi que la ruta no falta: **lo que se esta sirviendo es viejo**.** *El titulo lo pone `App.tsx` **en la pestana**
+y el `<Routes>` **en el cuerpo** -- **y el segundo no ha recargado**.*
+
+### Y por que, que ya esta escrito en esta misma fase
+
+**Es el `EBUSY` de Vite** del que avisa `docs/investigaciones/F03-publicacion.md` §34: *editar un fichero de
+`plataforma/web/app/src/` **con Vite corriendo** puede tumbar el vigilante* -- *Vite vigila `src/`, y la
+herramienta de edicion escribe ahi **temporalmente**.* **Y esa vez se cayo el servidor entero; esta vez el
+sintoma es mas silencioso: el servidor responde 200 y sirve un modulo viejo.**
+
+**Se ve porque se miro:** *«Vite responde 200» **no es** «Vite sirve lo de ahora».*
+
+### Y lo que esto **no** dice, para no darlo por bueno en ninguna direccion
+
+**No dice que la pantalla este mal**: *compila, construye, el `Route` esta, el titulo esta y **no hay errores de
+JavaScript**.* **Y no dice que este bien**: ***no se ha visto pintar***, y lo que hay que ver -- que una existencia
+sin cantidad diga **«no se sabe cuanto»** y no un cero -- **no se ha visto**.
+
+**Lo que hay, medido y dicho**: *el armazon carga, la ruta esta declarada, el titulo es el suyo, y **el cuerpo
+sirve una version anterior***. **Lo siguiente es recargar Vite y volver a mirar**, que es un paso y no una duda.
+
+### Y una cosa que hay que anotar del ensayo, porque es del metodo
+
+**El primer intento miro solo **ocho lineas** del cuerpo y concluyo que «no decia despensa».** *El cuerpo tiene
+**155 caracteres**, o sea que **se estaba mirando el sitio equivocado** -- y **lo que lo aclaro fue imprimir el
+final del cuerpo**, donde estaba el «Not Found».* **Es la misma leccion de siempre: mirar una parte y concluir
+sobre el todo.**
