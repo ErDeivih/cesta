@@ -192,3 +192,30 @@ details[open] > summary .flecha {
   transform: rotate(180deg);
 }
 
+/* ------------------------------------------- lo que se mueve, para quien no lo quiere ---
+
+   **Esto estaba en la aplicacion vieja y se perdio al reescribirla.** `plataforma/web/estilo.css:180`
+   tenia la regla -- *y dos mas, por componente* --, y la aplicacion nueva no tenia ninguna: tres
+   animaciones (`animate-pulse` en `ui.tsx`, y la `transition` de arriba) que se movian **tambien**
+   para quien habia pedido que no se moviera nada. *Un `animate-pulse` parpadeando es justo lo que el
+   ajuste existe para evitar.*
+
+   **Y se elige la regla global, no las de componente.** La vieja tenia las dos; con la global **basta**,
+   y la decision esta en el motivo del ajuste: quien lo activa lo hace porque el movimiento **le hace
+   dano o le marea**, asi que **el error caro es dejar algo moviendose, no apagar de mas**. Las reglas
+   por componente se anaden si algun dia hay que conservar una animacion concreta, *y entonces se
+   justificara una por una.*
+
+   `!important` porque Tailwind aplica `animate-*` como utilidad, y **una utilidad gana a una regla de
+   elemento** sin el. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
