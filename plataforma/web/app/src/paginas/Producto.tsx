@@ -90,7 +90,8 @@ export function Producto() {
     // Cuantos productos de ESTA cadena hay en el grupo: la serie no los separa.
     const cuantos = grupo.productos.filter((p) => p.fuente === fuente).length
     const puntos = deLaCadena
-      .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent }))
+      .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent,
+        unidad: s.unidad_canon ?? null }))
       .sort((a, b) => ms(a.fecha) - ms(b.fecha))
     // La serie **con su unidad**, ordenada, que es lo que necesita la frase de debajo
     // de la curva: sin la unidad no se puede decir "el mas bajo de los N dias" sin

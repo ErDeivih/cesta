@@ -107,6 +107,14 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave, ancho, alto, color])
 
+  // **Si la serie mezcla unidades, no se dibuja una linea que las junte.** Mismo criterio y las
+  // mismas palabras que `logica/curva.ts`: un minimo sobre `kg` y `ud` juntos no es el minimo de
+  // nada. *La chispa era la unica pieza del sistema que lo ignoraba.*
+  const unidades = serieDeChispa(puntos)
+  if (!unidades.dibujable && unidades.motivoUnidad) {
+    return <p className="text-xs text-tinta-suave">{unidades.motivoUnidad}</p>
+  }
+
   if (puntos.length === 0) {
     return (
       // **No se infiere nada de una serie vacia.** Antes decia «solo tenemos un dia de este

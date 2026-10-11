@@ -398,6 +398,30 @@ para que mida los 44 px de pulsar. Por eso los diez desplegables de la aplicacio
 encontro: **mirando una captura, no leyendo el codigo**.* **Se cambia a `Resumen` y las cuatro puertas
 pasan.** *Es la suite haciendo su trabajo sobre codigo mio equivocado, que es lo que debe pasar.*
 
+### G05, segundo punto de Compra: **la chispa era la unica pieza que ignoraba la unidad**
+
+G05: *«Separar precio del envase y precio unitario normalizado; **no una sola linea mezclando €/kg y
+€/l**»*. Y el sistema **ya sabia** que `kg` y `ud` no se comparan:
+
+- **`api/alertas.py`**: *«si la unidad cambio, no es una bajada»*;
+- **`logica/curva.ts`**: *«tres dias en `kg` y uno en `ud` son dos series pegadas, y el minimo de las
+  dos juntas no es el minimo de nada»* -- y **se niega a afirmar un minimo**, con un mensaje redactado;
+- **`tipos.ts:173`**: `PuntoSerie` lleva **la unidad de ESE dia**, asi que dentro de una serie puede
+  cambiar.
+
+**Y la chispa recibia `{fecha, valor}` y dibujaba una sola linea con todo** -- *las dos llamadas
+(`Grupo.tsx:475`, `Producto.tsx:93`) dejaban la unidad fuera*. **No era un desconocimiento repartido:
+era un sitio al que no le habia llegado la regla.**
+
+**Arreglado con el mismo criterio y las MISMAS PALABRAS que `curva.ts`** -- *dos mensajes distintos
+para el mismo hecho acaban discrepando, que es lo que el propio proyecto dice en `cliente.ts`*:
+`PuntoChispa` gana `unidad`; `serieDeChispa` devuelve `unidades` y `motivoUnidad`, y **con dos unidades
+`dibujable: false`**; los dos consumidores pasan `s.unidad_canon`.
+
+**Cuatro pruebas nuevas** (15 en el cliente): `[kg, kg, ud]` **no** se dibuja y lo dice; `[kg, kg]` si;
+**sin unidad se dibuja** --*la API puede no mandarla y eso no puede romper nada*--; y **un punto
+descartado por fecha no decide que la serie mezcla**.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

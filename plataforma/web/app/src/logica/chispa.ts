@@ -19,6 +19,8 @@
 export interface PuntoChispa {
   fecha: string
   valor: number | null
+  /** **La unidad con la que se midio ESE dia.** La API puede no mandarla. */
+  unidad?: string | null
 }
 
 export interface SerieDeChispa {
@@ -33,6 +35,13 @@ export interface SerieDeChispa {
   sinFecha: number
   /** `false` cuando no hay nada que dibujar. **No significa «un solo dia».** */
   dibujable: boolean
+  /** Las unidades distintas que traia la serie, si traia mas de una. */
+  unidades: string[]
+  /** **Por que no se dibuja, cuando es por la unidad.** Mismo criterio y mismas palabras que
+   *  `logica/curva.ts`: *«tres dias en `kg` y uno en `ud` son dos series pegadas, y el minimo de las
+   *  dos juntas no es el minimo de nada»*. Y `api/alertas.py` ya dice lo mismo: *«si la unidad
+   *  cambio, no es una bajada»*. **La chispa era la unica pieza del sistema que lo ignoraba.** */
+  motivoUnidad: string | null
 }
 
 /** La fecha en milisegundos, o `null` si no es una fecha. */
@@ -43,7 +52,7 @@ export function aMs(fecha: string): number | null {
 }
 
 export function serieDeChispa(puntos: PuntoChispa[]): SerieDeChispa {
-  const validos: { x: number; y: number | null }[] = []
+  const validos: { x: number; y: number | null; u: string | null }[] = []
   let sinFecha = 0
   for (const p of puntos) {
     const x = aMs(p.fecha)
@@ -51,15 +60,31 @@ export function serieDeChispa(puntos: PuntoChispa[]): SerieDeChispa {
       sinFecha += 1
       continue
     }
-    validos.push({ x, y: p.valor === null || !Number.isFinite(p.valor) ? null : p.valor })
+    validos.push({
+      x,
+      y: p.valor === null || !Number.isFinite(p.valor) ? null : p.valor,
+      u: p.unidad ?? null,
+    })
   }
+  // **La unidad, si la API la manda.** Se miran solo los puntos que se van a dibujar: un punto
+  // descartado no puede decidir que la serie mezcla unidades.
+  const unidades = [...new Set(validos.map((q) => q.u).filter((u): u is string => Boolean(u)))]
+  const mezcla = unidades.length > 1
+  const motivoUnidad = mezcla
+    ? `La unidad de este producto cambió en el histórico (${unidades.join(', ')}), ` +
+      'así que el precio de esos días no se puede comparar con el de hoy.'
+    : null
+
   return {
     xs: validos.map((q) => q.x),
     ys: validos.map((q) => q.y),
     total: puntos.length,
     dibujados: validos.length,
     sinFecha,
-    dibujable: validos.length > 0,
+    // **Con dos unidades no se dibuja una linea**: se dice por que, como hace `curva.ts`.
+    dibujable: validos.length > 0 && !mezcla,
+    unidades,
+    motivoUnidad,
   }
 }
 

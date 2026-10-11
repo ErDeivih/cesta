@@ -92,3 +92,42 @@ test('la tabla lista los huecos, y los lee como «sin dato»', () => {
   assert.equal(filas[0].texto, '1.5 €')
   assert.equal(filas[2].texto, '1.8 €')
 })
+test('una serie que mezcla unidades NO se dibuja como una sola linea', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 150, unidad: 'kg' },
+    { fecha: '2026-01-02', valor: 155, unidad: 'kg' },
+    { fecha: '2026-01-03', valor: 90, unidad: 'ud' },
+  ])
+  assert.equal(s.dibujable, false, 'kg y ud no son la misma escala')
+  assert.deepEqual(s.unidades, ['kg', 'ud'])
+  assert.match(s.motivoUnidad, /cambió en el histórico \(kg, ud\)/)
+})
+
+test('una serie con una sola unidad SI se dibuja', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 150, unidad: 'kg' },
+    { fecha: '2026-01-02', valor: 155, unidad: 'kg' },
+  ])
+  assert.equal(s.dibujable, true)
+  assert.deepEqual(s.unidades, ['kg'])
+  assert.equal(s.motivoUnidad, null)
+})
+
+test('sin unidad, se dibuja: la API puede no mandarla y eso no rompe nada', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 150 },
+    { fecha: '2026-01-02', valor: 155 },
+  ])
+  assert.equal(s.dibujable, true)
+  assert.deepEqual(s.unidades, [])
+  assert.equal(s.motivoUnidad, null)
+})
+
+test('el punto descartado por fecha no decide que la serie mezcla', () => {
+  const s = serieDeChispa([
+    { fecha: '2026-01-01', valor: 150, unidad: 'kg' },
+    { fecha: 'no-fecha', valor: 90, unidad: 'ud' },
+  ])
+  assert.equal(s.dibujable, true, 'el de ud no se dibuja, asi que no mezcla nada')
+  assert.deepEqual(s.unidades, ['kg'])
+})

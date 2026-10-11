@@ -472,7 +472,8 @@ function ColumnaDeCadena({ cadena, lista, indice, ganadora, serie, fechaDatos, p
               // serie mezcla los dos y no hay forma de saber de cual es cada precio.
               serie
                 .filter((s) => s.producto_id === a.producto.producto_id)
-                .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent }))
+                .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent,
+                                        unidad: s.unidad_canon ?? null }))
             }
             chispaBloqueada={lista.length > 1}
             fechaDatos={fechaDatos}
