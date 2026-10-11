@@ -449,6 +449,37 @@ lineas y sus importes, **incluidos los `NULL` de las lineas movidas**.
 indice: el dato que falta se declara. Y en dinero importa mas, porque un `NULL` sumado como cero da un
 numero redondo, mas bajo de lo real, y nada en la pantalla lo delata.*
 
+### G05, el gasto: **el endpoint sirve, y el caso que da sentido al modulo sale del servidor**
+
+**Medido de punta a punta**, con dos compras cerradas de verdad en la base desechable y el ensayo
+servido:
+
+    A) 3 lineas, 2 de ellas sin precio  ->  cierre: total_cent 150        (las que si lo tenian)
+    B) 1 linea, sin ningun precio       ->  cierre: total_cent 0          <-- el cierre GUARDA 0
+
+    /api/listas/{id}/gasto?periodo=mes
+      A: total_cent 150   compras 1  completo false
+      B: total_cent null  compras 1  completo false      <--✓✓✓ ¡null, y no el 0 que se guardo!
+      semana: 2026-W41    total_cent 150
+
+**Lo importante de esa medida**: el cierre archiva `total_cent: 0` para una compra en la que **ninguna**
+linea tenia precio, **y `gasto_de_compras` se niega a leerlo como un cero** -- lo detecta por
+`sin_precio >= lineas`. *La regla ha hecho su trabajo sobre un dato que el propio sistema habia guardado
+mal: es el caso que da sentido al modulo, y sale del servidor.*
+
+**Y `completo: false` con `total_cent: 150`** en A: *el numero esta y se dice que no esta completo*, que
+es la mitad de lo que G05 pide.
+
+| endpoint | |
+|---|---|
+| `GET /api/listas/{id}/gasto?periodo=mes\|semana` | ✓ **sirve**; `periodo=dia` da **422** |
+| `total_cent` cuando no hay ningun importe conocido | ✓ **`null`, nunca `0`** |
+| `completo` con una compra incompleta | ✓ **`false`** |
+| cobertura | ✓ **`compras`, `con_importe`, `sin_importe` y `lineas_sin_precio`** -- *el numero de LINEAS, no solo el de compras* |
+
+**Lo que falta**: la **seccion en pantalla** (`/compra/analisis`), con el total y su cobertura al lado y
+`null` dicho como que no se sabe. *El endpoint ya devuelve todo lo que necesita.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

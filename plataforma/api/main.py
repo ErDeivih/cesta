@@ -22,6 +22,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from core import gasto
+
 from . import (
     alertas,
     almacen,
@@ -597,6 +599,35 @@ def ver_compras(lista_id: str, usuario: dict = Depends(usuario_actual)):
     _acceso(lista_id, usuario)
     return {"compras": almacen.compras_de(lista_id),
             "fecha_datos": catalogo.fecha_de_gold()}
+
+
+@app.get("/api/listas/{lista_id}/gasto")
+def ver_gasto(lista_id: str, periodo: str = "mes", usuario: dict = Depends(usuario_actual)):
+    """**Cuanto se ha pagado, y cuanto de eso no se sabe.**
+
+    G05 lo pide en Compra: *«gasto pagado semanal/mensual a partir de compras guardadas e importes
+    conocidos. Separar fechas de compra y de precios. **Cobertura de importes historicos `NULL`
+    visible**»*.
+
+    Se agrupa por **la fecha en que se cerro cada compra** -- *no por la del precio* -- y cada fila
+    lleva su total **y su cobertura**: cuantas compras entraron y cuantas no tienen importe conocido.
+    **Un periodo sin ninguna compra con total tiene `total_cent = None`, no `0`**: *no es que se
+    gastara cero, es que no se sabe*. Y `completo` es `False` en cuanto una compra tenga lineas sin
+    precio, aunque su total venga puesto.
+
+    *La regla vive en `core/gasto.py`, que es puro y tiene sus pruebas; aqui solo se sirve.*
+    """
+    _acceso(lista_id, usuario)
+    if periodo not in (gasto.MES, gasto.SEMANA):
+        raise HTTPException(422, "El gasto se agrupa por `mes` o por `semana`.")
+    # Un limite generoso: el gasto mira el historico entero, no las ultimas doce.
+    compras = almacen.compras_de(lista_id, limite=1000)
+    return {
+        "periodo": periodo,
+        "filas": gasto.gasto_de_compras(compras, periodo),
+        "compras": len(compras),
+        "fecha_datos": catalogo.fecha_de_gold(),
+    }
 
 
 @app.patch("/api/listas/{lista_id}")

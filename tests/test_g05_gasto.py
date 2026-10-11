@@ -97,8 +97,13 @@ def _compra(fecha: str, total: int | None, lineas: int, sin_precio: int = 0):
 
 
 def test_una_compra_con_lineas_sin_precio_no_esta_completa():
-    """**Aunque su total venga puesto**: ese total es el de las lineas que si lo tienen."""
+    """**Aunque su total venga puesto**: ese total es el de las lineas que si lo tienen.
+
+    Y dice **cuantas** lineas faltan, no solo que falte algo: *una cobertura que no dice cuanto
+    falta informa a medias.*
+    """
     f = gasto_de_compras([_compra("2026-10-02", 1500, 5, sin_precio=2)])[0]
+    assert f["lineas_sin_precio"] == 2, "el numero de LINEAS, no solo el de compras"
     assert f["total_cent"] == 1500, "el total guardado se respeta"
     assert f["completo"] is False, "pero NO esta completo: faltan 2 lineas"
     assert f["sin_importe"] == 0 and f["con_importe"] == 1
@@ -137,3 +142,14 @@ def test_una_compra_sin_fecha_no_cae_en_el_periodo_de_hoy():
     filas = gasto_de_compras([_compra("2026-10-02", 100, 1), {"total_cent": 900, "lineas": 1}])
     assert next(f for f in filas if f["periodo"] == "2026-10")["total_cent"] == 100
     assert next(f for f in filas if f["periodo"] is None)["compras"] == 1
+
+
+def test_la_cobertura_cuenta_lineas_y_no_solo_compras():
+    """Dos compras incompletas, con 2 y 1 linea sin precio: **3 lineas**, no 2 compras."""
+    f = gasto_de_compras([
+        _compra("2026-10-02", 1000, 5, sin_precio=2),
+        _compra("2026-10-10", 500, 3, sin_precio=1),
+    ])[0]
+    assert f["compras"] == 2 and f["completo"] is False
+    assert f["lineas_sin_precio"] == 3, "y el total sumado es solo el de las que si lo tienen"
+    assert f["total_cent"] == 1500

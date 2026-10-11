@@ -190,11 +190,16 @@ def gasto_de_compras(
         clave = periodo_de(fecha, periodo)
         a = por_periodo.setdefault(
             clave,
-            {"periodo": clave, "total_cent": 0, "compras": 0, "con_importe": 0, "sin_importe": 0},
+            {"periodo": clave, "total_cent": 0, "compras": 0, "con_importe": 0,
+             "sin_importe": 0, "lineas_sin_precio": 0},
         )
         a["compras"] += 1
         lineas = int(fila.get("lineas") or 0)
         sin_precio = int(fila.get("sin_precio") or 0)
+        # **El numero de LINEAS sin precio, no solo el de compras.** `compra.sin_precio` lo guarda
+        # el cierre, y sin esto la pantalla solo podia decir «esta compra no esta completa», no
+        # **cuanto** le falta. *Una cobertura que no dice cuanto falta informa a medias.*
+        a["lineas_sin_precio"] += sin_precio
         total = fila.get("total_cent")
         # **Una compra de la que no se sabe el total no suma cero.** Se reconoce por las dos vias:
         # el total ausente, o que **ninguna** de sus lineas tuviera precio.
@@ -217,6 +222,7 @@ def gasto_de_compras(
                 "compras": a["compras"],
                 "con_importe": a["con_importe"],
                 "sin_importe": a["sin_importe"],
+                "lineas_sin_precio": a["lineas_sin_precio"],
                 "completo": a.get("completo", True),
             }
         )
@@ -224,7 +230,8 @@ def gasto_de_compras(
         filas.append(
             {
                 "periodo": None, "total_cent": None, "compras": sin_fecha,
-                "con_importe": 0, "sin_importe": sin_fecha, "completo": False,
+                "con_importe": 0, "sin_importe": sin_fecha, "lineas_sin_precio": 0,
+                "completo": False,
             }
         )
     return filas
