@@ -237,3 +237,57 @@ sirve una version anterior***. **Lo siguiente es recargar Vite y volver a mirar*
 **155 caracteres**, o sea que **se estaba mirando el sitio equivocado** -- y **lo que lo aclaro fue imprimir el
 final del cuerpo**, donde estaba el «Not Found».* **Es la misma leccion de siempre: mirar una parte y concluir
 sobre el todo.**
+
+
+---
+
+## 5. **Correccion**: el «Not Found» no era un bundle viejo -- **era una API de hace tres horas**
+
+*(Ronda 174. **El diagnostico del §4 era falso, y esto lo sustituye.**)*
+
+### Lo que decia el §4, y por que estaba mal
+
+**En el §4 escribi**: *«la ruta no falta: **lo que se esta sirviendo es viejo**»*, y lo atribui al **`EBUSY` de
+Vite** -- *«el servidor responde 200 y sirve un modulo viejo».* **Y reinicie Vite para comprobarlo.**
+
+**Con Vite nuevo, la pantalla dijo exactamente lo mismo: «Not Found».** *Asi que **la hipotesis era falsa**, y
+reiniciar Vite **no cambio nada** -- *que es justo lo que hay que hacer con una hipotesis: **probarla**.*
+
+### Y lo que era, medido
+
+```
+GET /api/despensa  ->  404  {"detail":"Not Found"}      <- EL «Not Found» DE LA PANTALLA ES ESTO
+pid 44352, arrancada a las 21:35:02                     <- hace TRES HORAS Y TRECE MINUTOS
+hora de la comprobacion: 00:48:09
+y el codigo SI tiene: app.include_router(despensa.rutas)
+```
+
+**El «Not Found» que se veia en el cuerpo de la pagina **no era del router de React**: era
+`{"detail":"Not Found"}` -- **el 404 de FastAPI** --, *pintado por el camino de error de la pantalla.*
+
+**Y el catch-all de `App.tsx` dice otra cosa**: *`<Vacio titulo="Esa pantalla no existe">`. **Las dos frases son
+distintas**, y **eso es lo que las separa**: *si el problema fuera la ruta del cliente, se leeria «Esa pantalla no
+existe»; se leia **«Not Found»**, que es **lo que contesta el servidor**.*
+
+### Y lo que esto enseña, que es mas util que el arreglo
+
+**Yo tenia dos capas delante -- Vite y la API -- y di por hecho que el fallo estaba en la primera.** *El «Vite
+responde 200» del §4 me parecio la prueba de que Vite servia; **y era la prueba de que Vite estaba vivo**, que no
+es lo mismo.* **La capa que fallaba era la otra**, y **estaba a una peticion de distancia**: *`GET
+/api/despensa` **contesta 404 y lo dice**.*
+
+> **Es la misma leccion que esta fase lleva repitiendo: mirar una capa y concluir sobre el sistema.** *Y esta vez
+> el error **no fue no mirar la segunda capa**: fue **atribuir el sintoma a la capa equivocada sin comprobarlo** --
+> *y el §4 **lo afirmo con seguridad**, que es lo que lo hace peor.*
+
+### Y el estado, con precision
+
+| | |
+|---|---|
+| **el `Route` de React** | **correcto** (`App.tsx:142`, dentro del unico `<Routes>` de la 136) |
+| **el router de la API** | **correcto** (`main.py: app.include_router(despensa.rutas)`) |
+| **y el proceso que escucha** | **es de las 21:35, anterior a las dos cosas** |
+| **el «Not Found»** | **el 404 de esa API vieja**, no el router del cliente |
+
+**Lo siguiente no es recargar Vite: es **reiniciar la API**, y volver a mirar.** *Y eso **si** es un paso y no una
+duda, porque **ahora el sintoma tiene dueno**.*
