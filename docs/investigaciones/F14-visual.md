@@ -65,3 +65,83 @@ necesita lo mismo**, mas capturas a cuatro anchuras y a 200 %.*
 **Y el criterio pide «antes/despues con **mismos fixtures**»** -- *o sea, que las capturas se puedan comparar.*
 *Eso es `compare_web_screenshots` del laboratorio auxiliar, o el mismo `navegador.py` con dos juegos de tokens.*
 **Es trabajo de ensayo, no de lectura.**
+
+
+---
+
+## 2. «Contraste y color»: **hay una paleta, y cada token lleva su razon de contraste escrita**
+
+*(Ronda 141.)* La pregunta del §1 -- *«¿se arreglo en ese sitio, o hay una regla?»* -- **contestada: hay una
+regla, y esta escrita token por token, en `plataforma/web/app/src/estilos.css:7-30`.**
+
+```css
+7   @layer base {
+8     /* Los colores con significado, en un solo sitio.
+10     * Son variables y no valores fijos porque estas clases se usan sin el prefijo
+11     * `dark:`, y en modo oscuro un gris de texto claro sobre fondo oscuro no se
+12     * lee. Con la variable, el mismo `text-tinta-suave` vale en los dos temas y
+13     * nadie tiene que acordarse de escribir el par. */
+14    :root {
+15      --tinta-suave: #525252;  /* texto secundario */
+16      --fondo: #fafafa;        /* superficie dentro de una tarjeta */
+17      --borde: #e5e5e5;
+18      --aviso: #b45309;        /* texto de aviso, legible sobre blanco */
+19      --bien: #059669;         /* borde de lo que ha salido bien */
+20      --bien-suave: #ecfdf5;   /* fondo de lo que ha salido bien */
+22      --marfil: #f4f0e8;       /* lienzo calido */
+23      --papel: #fbf9f4;        /* formularios y superficies */
+24      --bosque: #183a32;       /* navegacion y accion principal */
+25      --tinta-fuerte: #202724; /* texto principal (13,42:1 sobre marfil) */
+26      --secundaria: #536158;   /* texto auxiliar  (5,74:1 sobre marfil) */
+27      --terracota: #a94d36;    /* acento de marca y seccion activa (4,86:1) */
+28      --borde-fuerte: #8a8578; /* si delimita un control: el suave da 1,43:1 */
+29      --error: #a12626;        /* lo que hay que mirar: 7,02:1 sobre marfil */
+30    }
+32    @media (prefers-color-scheme: dark) { ... }
+```
+
+### Y las cinco razones, que son lo que hace que esto sea un sistema y no una lista de colores
+
+| token | **su razon, escrita al lado** |
+|---|---|
+| **`--tinta-fuerte`** | *«texto principal (**13,42:1** sobre marfil)»* |
+| **`--secundaria`** | *«texto auxiliar (**5,74:1** sobre marfil)»* |
+| **`--terracota`** | *«acento de marca y seccion activa (**4,86:1**)»* |
+| **`--error`** | *«lo que hay que mirar: **7,02:1** sobre marfil»* |
+| **`--borde-fuerte`** | *«**si delimita un control: el suave da 1,43:1**»* |
+
+**Los cuatro primeros llevan su ratio, y los cuatro pasan el 4,5:1 de texto normal** -- *13,42, 5,74, 4,86 y
+7,02.* **Y el quinto es el que demuestra que esto es un sistema**: ***`--borde-fuerte` existe porque `--borde`
+da 1,43:1*** -- *o sea, **hay un token que existe unicamente porque otro no llegaba**, y su comentario lo dice.*
+
+**Y eso es exactamente lo que F13 encontro en `GraficoIndice`** -- *«tres de los que usaba la interfaz vieja no
+llegaban a 3:1»* --, **pero al reves**: *aqui el fallo no se descubrio en un componente y se parcheo ahi; **se
+declaro un token nuevo con su motivo**, y los componentes usan el token.*
+
+### Y el porque de que sean variables es el otro caso de la aceptacion
+
+> *«Son variables y no valores fijos porque estas clases se usan sin el prefijo `dark:`, y **en modo oscuro un
+> gris de texto claro sobre fondo oscuro no se lee**. Con la variable, el mismo `text-tinta-suave` vale en los
+> dos temas y **nadie tiene que acordarse de escribir el par**.»*
+
+**Dos cosas, y las dos son del criterio:**
+
+1. **`@media (prefers-color-scheme: dark)`** -- *el modo oscuro **se respeta***, que es del criterio de color.
+2. **Y la razon de las variables es de **accesibilidad**, no de comodidad**: *sin ellas, **cada sitio** tendria
+   que acordarse de escribir el par claro/oscuro, **y donde se olvide, el texto no se lee**.* **Es el mismo
+   argumento que `logica/recetario.ts` dio para filtrar en el cliente** (*«ese es justo el sitio donde un olvido
+   se convierte en una fuga»*), **aplicado a los colores**: *no dejar la correccion al cuidado de quien escribe
+   cada pantalla.*
+
+### Y `F14`, con lo medido
+
+| lo que pide la aceptacion | **estado** |
+|---|---|
+| **contraste** | **hay sistema**: cinco tokens con su ratio escrito, y **uno que existe porque otro no llegaba** |
+| **color** | **hay direccion**: *«archivo domestico, no panel generico»* (`:21`), con marfil/papel/bosque/terracota |
+| **reduccion de movimiento** | *por medir* |
+| **modo oscuro** | **si** (`@media (prefers-color-scheme: dark)`) -- *que no estaba en la lista pero es del mismo criterio* |
+| **360/390/768/1440, zoom 200 %, teclado/foco** | *por medir, y **con navegador*** |
+
+**Dos de los cinco, y con sistema en vez de con parches.** *Y la decimocuarta pieza: **el color ya tenia su
+regla**, con el ratio al lado de cada token.*
