@@ -5,6 +5,51 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 
 ---
 
+## 0. Aviso: **esta matriz esta desactualizada, y es culpa de mi proceso**
+
+*Escrito en la ronda 131, al descubrirlo.*
+
+**Esta matriz no se ha actualizado desde `3fd8e93`** -- *«F03 CERRADO»* --, **y lo dice su propio numero**:
+dice **«1.714 pruebas»** y la suite va por **1.800**. *Y desde F03 hasta aqui se han medido **F04 a F12**.*
+
+### Que paso, exactamente, porque es el mismo error que esta fase lleva diez veces encontrando en el codigo
+
+**Mis actualizaciones se hacian asi:**
+
+```python
+m = M.read_text()
+m = m.replace("| **Oferta caducada** |", "| **Nueva fila** |\n| **Oferta caducada** |", 1)
+M.write_text(m)
+```
+
+**Y el ancla `| **Oferta caducada** |` **no existe en este fichero**.** *La tabla es de
+`| capacidad | estado | con que se comprueba |`, sin negritas de ese tipo.* **Asi que `str.replace` devolvia
+**la misma cadena**, `write_text` la reescribia **igual**, y el commit no cambiaba nada** -- *y **el script decia
+«matriz corregida»** igual, porque **no comprobaba el resultado**.*
+
+**Es exactamente lo que esta fase ha encontrado diez veces en el codigo del proyecto**: *`archivar` que no
+levanta y no borra, el `.catch` que se traga el fallo, `comparacion: null` que evita una lista vacia.*
+**Una operacion que informa de exito y no hace nada.** *Y esta vez la escribi yo, y la repeti **en cada ronda**
+desde F03.*
+
+### Y por que se descubrio
+
+**Al intentar anadir una fila de F12 y ver que `grep N06` no encontraba nada.** *El instrumento que lo cazo fue
+**buscar el resultado**, no **volver a escribir la operacion** -- que es la unica forma de cazar este error.*
+
+### Lo que hay que hacer, y es de la ronda siguiente
+
+1. **Rehacer la tabla de §1 y §2 desde cero**, con lo medido de **F00 a F12**: *lo que funciona, lo que no
+   existe, y lo que espera decision.*
+2. **Y actualizar las cifras**: *1.714 -> **1.800 pruebas, 3 xfailed***, y el catalogo real.
+3. **Y desde entonces, comprobar cada edicion de este fichero**: *`assert` de que la fila entro, o `git diff`
+   no vacio.* **Escribir no es actualizar.**
+
+*Lo que **si** esta al dia, y se ha ido escribiendo sin fallar: `docs/SUPERAPP-FASE2-EJECUCION.md` (el tablero, con
+las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
+
+---
+
 ## 1. Qué se puede hacer hoy, de verdad
 
 | capacidad | estado | con qué se comprueba |
