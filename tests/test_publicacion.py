@@ -119,3 +119,41 @@ def test_el_puntero_dice_que_se_publico(gold):
     assert datos["version"] == version
     assert set(datos["ficheros"]) == set(publicacion.FICHEROS)
     assert datos["publicado_en"]
+
+
+def test_una_publicacion_que_falla_se_reanuda_sin_regenerar_nada(gold):
+    """**G07**: *«permitir reanudar publicacion/derivados desde datos locales sin volver a raspar»*.
+
+    **El fallo se provoca como falla de verdad** -- falta un fichero declarado -- y no parcheando
+    funciones: *los cuatro intentos anteriores peleaban con el instrumento en vez de con el
+    comportamiento*, y ese camino no llevaba a ninguna parte.
+
+    Lo que se mide, entero: **la publicacion falla**, el catalogo suelto se queda **intacto y con su
+    contenido**, no hay version publicada; y despues **`adoptar()` la publica sin generar un dato
+    nuevo**. *Reanudar no es volver a empezar: es publicar lo que ya estaba escrito.*
+    """
+    # El catalogo suelto, con un contenido reconocible.
+    pl.DataFrame({"x": [42]}).write_parquet(gold / "grupos.parquet")
+    antes = (gold / "grupos.parquet").read_bytes()
+
+    # **Falla**: falta un fichero de los declarados.
+    roto = gold / "promesas_que_no_existen.parquet"
+    promos = gold / "promos_por_cadena.parquet"
+    promos.rename(roto)
+    with pytest.raises(publicacion.PublicacionIncompleta):
+        publicacion.publicar(momento=_momento(0))
+
+    assert publicacion.version_actual() is None, "una publicacion fallida no publica"
+    assert not publicacion.carpeta_de("20261007-100000").exists(), "y no deja carpeta a medias"
+    assert (gold / "grupos.parquet").read_bytes() == antes, "y el suelto no se toca"
+
+    # **Y se reanuda**, con el fichero de vuelta: sin raspar, sin regenerar.
+    roto.rename(promos)
+    version = publicacion.adoptar(_momento(30))
+    assert publicacion.version_actual() == version
+
+    publicado = publicacion.carpeta_de(version) / "grupos.parquet"
+    assert publicado.exists()
+    # **Los mismos bytes**: adoptar enlaza lo que ya estaba escrito, no vuelve a generarlo.
+    assert publicado.read_bytes() == antes, "adoptar() no regenera: publica lo que ya estaba"
+    assert pl.read_parquet(publicado)["x"].to_list() == [42]

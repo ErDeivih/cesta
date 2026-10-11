@@ -717,6 +717,33 @@ avisos** -- que es la verdad. *El caso que importa -- ficha fresca y precio viej
 cuando la ficha es de hoy y el precio de enero**, que con las dos iguales no avisa, que sin fichero de
 precios el manifiesto sale igual, que un precio sin ficha entra, y que se escribe sin dejar temporal.
 
+### G07, punto 169: **las cinco pruebas, y la leccion de las cuatro que fallaron**
+
+**La quinta -- la de reintento -- costo cinco intentos, y los cuatro primeros ensenaron cuatro cosas
+reales** sobre como falla la publicacion:
+
+1. **`adoptar()` no escribe parquet: enlaza.** *Un monkeypatch sobre `write_parquet` no se dispara.*
+   Son **dos modos de fallo distintos**, y el vecino -- «caida entre escrituras» -- cubre el primero.
+2. **`publicar` captura el `OSError` de `os.link` y cae a `shutil.copy2`.** *Un enlace que falla no es
+   una publicacion que falla: esta tratado.* Inyectar la caida solo en `link` no prueba nada.
+3. **Un contador compartido entre las dos funciones miente**: el `copy2` de respaldo del mismo fichero
+   era la llamada 3 y no fallaba. *Hay que contar por destino.*
+4. **El tipo de excepcion depende de DONDE caiga el fallo**: antes de la comprobacion de completitud
+   sale el `OSError` de `copy2`; despues, `PublicacionIncompleta`. *Fijarlo a uno ata la prueba a un
+   detalle de implementacion.*
+
+**Y el quinto intento no fue un hallazgo: fue otra suposicion.** *Ahi se revirtio el fichero y se dejo
+la suite en verde, en vez de dejar una prueba que no entendia.* **El encargo prohibe retirar pruebas
+validas; el simetrico es no anadir pruebas que no se sostienen.**
+
+**La que si pasa, a la primera**: `test_una_publicacion_que_falla_se_reanuda_sin_regenerar_nada`, **sin
+parchear nada** -- *el fallo se provoca **quitando un fichero declarado**, que es como falla de verdad*.
+Mide el ciclo entero: **la publicacion falla** (`PublicacionIncompleta`), **el suelto queda intacto y con
+sus bytes**, **no hay version ni carpeta a medias**; y despues **`adoptar()` publica los MISMOS bytes**
+-- *enlaza, no regenera --*. **Reanudar no es volver a empezar: es publicar lo que ya estaba escrito.**
+
+**Y con eso el punto 169 queda completo: cinco de cinco.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
