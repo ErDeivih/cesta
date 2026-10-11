@@ -1404,3 +1404,66 @@ conviene saber antes de lanzar 173 pasadas.*
 **El ejecutor esta bien** -- *los tres caminos hicieron lo que debian* --, **y lo que falta no es codigo: es
 saber a que se esta pidiendo.** *Es la decima vez en esta fase que medir antes de lanzar cambia el plan, y esta
 vez lo que evita es 173 pasadas hacia productos que no tienen ficha.*
+
+
+---
+
+## 30. **El catalogo YA TENIA las calorias**, y llevo toda la fase midiendo donde no estan
+
+*(Ronda 82.)* Iba a buscar una senal para distinguir alimentos de no-alimentos -- *un filtro de cafetera no tiene
+ficha* -- y **al listar las columnas de `grupos` aparecio esto:**
+
+```
+62 columnas, y entre ellas:
+    ... categoria, url, nutricion, nutricion_por, kcal_100g, hidratos_100g,
+        proteinas_100g, grasas_100g, grasas_sat_100g, azucares_100g, sal_100g
+```
+
+**El catalogo tiene columnas de nutricion por 100 g.** *Y medidas, por cadena:*
+
+```
+kcal_100g en el catalogo:
+    alcampo      23.128 grupos ·      0 con kcal   ( 0,0 %)
+    carrefour    16.195 grupos ·  6.512 con kcal   (40,2 %)   <- YA ESTA
+    dia           5.783 grupos ·  2.826 con kcal   (48,9 %)
+    mercadona     4.213 grupos ·  1.900 con kcal   (45,1 %)   <- Y MERCADONA TAMBIEN
+    aldi          2.768 grupos ·      0 con kcal   ( 0,0 %)
+```
+
+**Y por seccion, en Carrefour:**
+
+```
+alimento (aproximado)      13.679 grupos ·  6.342 con kcal
+NO ALIMENTO (aproximado)    2.516 grupos ·    170 con kcal
+```
+
+### Y esto corrige lo que he estado diciendo toda la fase
+
+**He medido la cobertura de nutricion en tres sitios, y ninguno era el catalogo:**
+
+| donde mire | que encontre | **y el catalogo tenia** |
+|---|---|---|
+| el maestro de Mercadona | **0 con nutricion** | **1.900 grupos con `kcal_100g`** |
+| las claves del crudo de Carrefour | *ninguna de nutricion* | **6.512 grupos con `kcal_100g`** |
+| la cola de fichas | 72.322 pendientes | *--* |
+
+**Asi que la frase «Mercadona no publica nutricion» es cierta sobre su maestro y falsa sobre el catalogo.**
+*De donde salen esas 1.900 calorias de Mercadona **no lo se** -- y es lo siguiente que hay que mirar* --, pero
+**el numero esta en la tabla que la aplicacion sirve, y yo no lo habia visto en 82 rondas.**
+
+*Y no es que la columna este de adorno*: **Carrefour tiene 6.512 grupos con calorias, y su maestro no existe.**
+*Asi que esas calorias no vinieron de un maestro de Carrefour.*
+
+### Y lo que esto cambia de F05, que es casi todo
+
+1. **El ejecutor de Carrefour puede ser innecesario para 6.512 de sus 16.195 grupos.** *Lo que hay que hacer
+   primero es **mirar de donde salen** esas calorias* -- *un `SELECT` con su procedencia, no una pasada de red.*
+2. **La pregunta «cuantos de los 17.283 son alimentos» tiene respuesta por `categoria`**: *`drogueria-y-limpieza`
+   son 466, y las clases no-alimento unas 2.516.* **Asi que la cola de Carrefour pide fichas de arena de gato
+   porque nadie miro la categoria** -- *que esta en la tabla.*
+3. **Y la cobertura de fichas de la fase hay que rehacerla contra `kcal_100g`**, *que es donde vive el dato que
+   se ensena* -- *no contra el maestro ni contra la cola.*
+
+**Es el hallazgo mas grande de la fase, y es una columna que estaba a la vista.** *Lo que lo escondia era
+**haber decidido de antemano donde mirar**: el maestro, el crudo, la cola -- **tres sitios** -- y no haber
+listado nunca las columnas del sitio que se sirve.*
