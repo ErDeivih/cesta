@@ -341,3 +341,74 @@ donde haya que acordarse de comprobar el dueno, menos sitios donde olvidarlo**.*
 
 **Tres de los cuatro, hechos o medidos; y el cuarto es un hueco con nombre.** *Y `R01` trae ademas **la respuesta
 a la pregunta de esta fase**: **en once paquetes, todo lo demas estaba escrito.***
+
+
+---
+
+## 6. La suma que `R04` no cubre: **esta en `previa_compra`, y esta bien** -- `R07`, y es de F10
+
+*(Ronda 120.)* **En la ronda 116 escribi** que la mitad de `R04` -- *«g/ml/ud no sumados por apariencia»* --
+**no era de este paquete porque `escala` no suma.** *Y que estaba en «Plan→lista», que es F10.* **Lo he
+seguido, y esta, y esta mejor de lo que esperaba.**
+
+**El modulo es `core/previa_compra.py`, 145 lineas**, y **su docstring dice las tres reglas y por que:**
+
+```
+12  **Las tres reglas que aplica, y por que:**
+14  1. **La consolidacion es por producto Y unidad.** *Dos lineas del mismo producto en kilos se suman;
+15     una en kilos y otra en unidades **no**, y se dice por que.* **Sumar 1 kg con 2 unidades daria un
+16     numero que no significa nada.**
+17  2. **Lo que no tiene cantidad no se compra.** *Un ingrediente anotado como "sal" no se puede...*
+21  3. **Los envases son enteros.** *Si hacen falta 1,4 kg y el envase es de 1 kg, hay que comprar 2.*
+22     **Y el sobrante se dice**, porque es informacion util: *?te sobran 600 g?* no es un error...
+```
+
+**Y la regla 1, en el codigo, es literalmente el criterio:**
+
+```python
+53   sin_consolidar: list[str]     # el mismo producto en unidades incompatibles
+89   # **La clave de la consolidacion: producto si lo hay, y si no el texto.** *La unidad va
+90   # dentro: sumar kilos con unidades seria inventar.*
+92   clave = f"{quien}|{unidad}"
+105  # **Regla 1: lo que quedo en unidades incompatibles se nombra.** *No se suma ni se elige una.*
+108  if len(unidades) > 1:
+111      sin_consolidar.append(f"{nombre}: {' y '.join(sorted(unidades))}")
+```
+
+**«La unidad va dentro [de la clave]: sumar kilos con unidades seria inventar»** -- *que es **exactamente**
+«g/ml/ud no sumados por apariencia», dicho de otra forma.* **Y lo que no se puede consolidar **se nombra con sus
+dos unidades**, no se suma ni se elige una.**
+
+### Y `R07` sale entero de aqui tambien
+
+| lo que pide `R07` | **donde esta** |
+|---|---|
+| **«consolidar compatibles»** | **la clave `producto|unidad`**, y las tres reglas |
+| **«elegir que transferir»** | *`Previa` con **lo comprable y lo que no**, y la ruta **`GET` que no escribe*** |
+| **«rastrear receta de origen»** | *`de_donde=[texto]` en cada linea consolidada* |
+| **«idempotencia»** | *«Repetir la misma transferencia no duplica»* (`:4`), y **la previa precede al `POST`** |
+
+**Y hay una decision de diseno que vale la pena guardar** -- *`recetas.py:190-196`:*
+
+> *«Y hace falta que exista [la previa]: el `POST` escribe, asi que **ensenar la previa antes de decidir exige
+> un sitio que la calcule y no toque nada.** La consolidacion y los envases son logica de servido (Python), no
+> de pantalla, asi que **no se duplica en el cliente**. **Y devuelve tambien lo que NO se puede comprar** -- lo
+> que no tiene cantidad y lo que no se puede consolidar -- **con su motivo**. Es la mitad del valor de una
+> previa: **saber que la sal no se compra porque no se sabe cuanto, en vez de ver una lista sin sal y no
+> entender por que.**»*
+
+**Es `R02`'s «previa… antes de guardar» y `R04`'s «no sumados», juntos, y con el motivo por el que la previa
+tiene que ser una ruta aparte.** *Y la frase final -- **«en vez de ver una lista sin sal y no entender por
+que»** -- es la regla de la casa entera, dicha en una linea.*
+
+### Y el hilo de F09 a F10, ya cerrado
+
+| criterio | **donde vive de verdad** | **estado** |
+|---|---|---|
+| **`R04`** | *el escalado, en `core/recetas.escala`* | **medido y PASA** |
+| **`R04`**, la mitad de la suma | **`core/previa_compra`** -- *que es F10* | **hecho, con sus tres reglas y sus dos salidas** |
+| **`R07`** | **el mismo modulo** | **hecho**: consolidar, elegir, rastrear, idempotencia |
+| **`R02`**, la previa | *la ruta `GET /{id}/a-la-lista`, **que no escribe*** | **hecho** -- *lo que falta de `R02` es **traer de fuera**, no la previa* |
+
+**Asi que la advertencia de la ronda 116 se cumple**: *la pieza estaba **en otro paquete**, y **estaba
+hecha**.* *Y la encontre **siguiendola**, no suponiendola -- que es lo unico que ha funcionado en esta fase.*
