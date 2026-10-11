@@ -1248,3 +1248,52 @@ reconciliando.*
 2. **Decidir que productos de los 72.322 merecen la visita.**
 
 *Y las dos son decisiones de operacion, no dudas tecnicas -- **que es donde F05 tenia que acabar.**
+
+
+---
+
+## 27. La precondicion que faltaba: **la cola solo trae URL para Lidl**
+
+*(Ronda 79.)* Iba a escribir el ejecutor de Carrefour, calcado de `fichas_lidl.py`. **Y ese usa
+`fila["url"]`** -- *asi que mire si las filas la traen, antes de escribir un ejecutor que no pudiera pedir
+nada:*
+
+```
+cola de fichas, por cadena:
+    carrefour   17.283 pendientes  ·      0 con url      <- NO HAY URL
+    lidl         5.026 pendientes  ·  5.026 con url      <- todas
+    dia          1.637 pendientes  ·      0 con url
+    mercadona    1.567 pendientes  ·      0 con url
+    alcampo     43.603 pendientes  ·      0 con url
+    aldi         3.206 pendientes  ·      0 con url
+
+muestra de carrefour:  id_fuente=100401608  url=None
+```
+
+**Solo Lidl tiene URL en la cola, y tiene su explicacion**: *`fichas_lidl.py` es **el unico ejecutor que
+existe**, y las URL se rellenaron para el.* **Las demas cadenas nunca las necesitaron.**
+
+**Y el origen esta en `inventario.enganche`**, que *«levanta el inventario desde bronze»* leyendo **solo
+`id_fuente`** (medido en el §16: `columns=["id_fuente"]`). **De bronze no sale una URL** -- *bronze tiene
+fuente e identificador, no direccion.*
+
+### Y eso decide como se escribe el ejecutor de Carrefour
+
+**La URL no puede venir de la cola: tiene que resolverse del catalogo.** *Y esta ahi* -- *medido en la ronda
+77: `grupos.url` trae `https://www.carrefour.es/supermercado/.../R-824301999/p` para sus productos.*
+
+**Asi que el ejecutor de Carrefour tiene una pieza mas que el de Lidl**: *resolver `(fuente, id_fuente)` a una
+URL **en el catalogo**, y con esa pedir la ficha.* **Y si el producto no esta en el catalogo de hoy, no hay
+nada que pedir** -- *que es un resultado, no un fallo.*
+
+**Sin esta comprobacion, el ejecutor habria fallado en la primera fila** -- *`fila["url"]` es `None`, y
+`traer(None)` no lleva a ningun sitio.* **Es la novena vez en esta fase que medir antes de escribir cambia el
+trabajo.**
+
+### Y lo que queda de F05, con la pieza nueva
+
+1. **El ejecutor de Carrefour**: *resolver la URL del catalogo y pedir la ficha con `ficha_carrefour.lee`.*
+   **El lector ya esta (7 pruebas).**
+2. **Decidir que productos de los 72.322 merecen la visita.**
+3. *Y la pregunta que abre esto*: **¿deberia `enganche` guardar la URL cuando bronze la tenga?** *Hoy no la
+   guarda, y por eso cada ejecutor nuevo tiene que resolverla por su cuenta.*
