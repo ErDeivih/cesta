@@ -130,3 +130,74 @@ version** y que «editar receta **no reescriba ayer**» --, y eso es una columna
 **Y `N05` asoma en la misma firma**: *`fuente_dato: str = diario.DESCONOCIDO`* -- *«fuente declarada», y **por
 defecto desconocida**, que es no afirmar lo que no se sabe.* **Es `nombre_visto` y `sin_precio` otra vez, en un
 tercer sitio, y con el criterio pidiendolo con esas palabras: «sin falsa verificacion de etiqueta».***
+
+
+---
+
+## 3. `N06`: **hecho, y con una garantia dura** -- «sin ella no se puede releer»
+
+*(Ronda 130.)* La mitad que faltaba del §1, y **la sospecha se confirma entera**: *`N06` no solo esta
+cubierto, esta **blindado**.*
+
+### La columna, la clave, y el `raise`
+
+```python
+45   version   TEXT,                                       # en la tabla `entrada`
+92   _CAMPOS_DE_LA_OPERACION = ("fecha", "comida", "tipo", "referencia", "version", "cantidad_g", "kcal", ...)
+154  if tipo == RECETA and version is None:
+155      raise ValueError("una receta se anota con su version: sin ella no se puede releer")
+```
+
+**Las tres cosas, y cada una cierra una mitad del criterio** (`SUPERAPP-COMPETENCIA-Y-REA.md:116`):
+*«**Version y racion registradas**; **editar receta no reescribe ayer**.»*
+
+| lo que pide `N06` | **donde esta** |
+|---|---|
+| **«version... registrada»** | **la columna `version TEXT`** (`:45`), *y se escribe en el `INSERT`* (`:170`, `:194-196`) |
+| **«...y racion registradas»** | **`cantidad_g`** *y los nutrientes de la entrada* -- *que es la racion **consumida**, no la de la receta* |
+| **«editar receta **no reescribe ayer**»** | **`R03`** (*versiones autocontenidas, ya medido*) **+ que la entrada guarde la version**: *ayer apunta a la version 1, **y la version 1 no cambia*** |
+
+### Y la frase que lo cierra es un `raise`, no un comentario
+
+**`diario.py:154-155`**:
+
+> *`if tipo == RECETA and version is None: raise ValueError("una receta se anota con su version: **sin ella no
+> se puede releer**")`*
+
+**No es que la version se pueda guardar: es que una entrada de receta **sin version no entra**.** *Y el motivo
+esta dicho y es el correcto*: **sin la version, la entrada **no se puede releer** -- apuntaria a «la receta», y
+«la receta» cambia.**
+
+**Es la misma forma que `R04`** (*lo que no tiene cantidad no la gana*), **que `R08`** (*comprar no es comer*) y
+que `previa_compra` (*lo que no se puede consolidar se nombra*): **la regla no se deja al cuidado de quien
+escribe, se pone en el camino.** *Aqui, en un `raise` que impide guardar mal.*
+
+### Y de propina: la version entra en la clave de operacion
+
+**`_CAMPOS_DE_LA_OPERACION` (`:92`) incluye `version`.** *Asi que **la misma receta en dos versiones distintas
+son dos operaciones distintas**, y una no se confunde con la otra* -- *que es `N01` y `N06` a la vez, con la
+misma pieza.*
+
+### Y F12, con lo medido
+
+| criterio | **estado** |
+|---|---|
+| **`N01`** -- registro rapido | **la «nueva operacion legitima» esta**; *recientes/favoritos y copiar, por medir* |
+| **`N02`** -- codigo de barras | *por medir* |
+| **`N03`** -- porciones | *por medir* |
+| **`N04`** -- diario por comidas | **los reintentos estan**; *recargar, cuenta y fecha local, por medir* |
+| **`N05`** -- alimentos propios | *por medir* -- *`fuente_dato` con `DESCONOCIDO` por defecto* |
+| **`N06`** -- receta consumida | **HECHO, con `raise`**: version obligatoria, y la version entra en la clave |
+
+**Cuatro de los seis, con su mitad principal ya vista** -- *y las dos que quedan enteras (`N02`, `N03`) son las
+del codigo de barras y las porciones, que son de pantalla y de conversion.*
+
+### Y la cuenta de la fase, ya sin exagerar
+
+**Diez piezas encontradas ya resueltas y con el motivo escrito**, mientras buscaba otra cosa: *`kcal_100g` por
+EAN, `AvisoIdentidad`, `porPasillo`, el `::VARCHAR` de `promo_hasta`, `unidades_pack` que no llegaba a la
+pantalla, el `409` de la lista duplicada, la clave de operacion, la version obligatoria, el historial con sus
+tres decisiones, y `costeReceta`.*
+
+**Y las diez son la misma cosa**: *el proyecto **ya sabia** lo que este encargo viene a comprobar, **y lo dejo
+escrito donde se pudiera leer**.* *Lo que ha hecho esta fase, casi siempre, ha sido **leerlo.***
