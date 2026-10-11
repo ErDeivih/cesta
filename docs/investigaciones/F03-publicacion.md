@@ -1156,3 +1156,46 @@ POST /api/diario -> 400: la forma del alta no se ha encontrado, asi que el
 **Mirar que rechaza el 400** -- *el propio `diario.py` lo dira: `raise HTTPException(400, ...)` esta ahi* --
 **y con eso el alta entra.** *Es lo unico que queda de F03, y cada ronda que pasa esta mas cerca: del 422 al
 400 ya se sabe que **la forma esta bien** y el problema es el contenido.*
+
+
+---
+
+## 30. **F03 CERRADO.** El alta en el diario, medida -- y el 400 lo dijo todo
+
+*(Ronda 66.)* El `400` venia de `diario.apunta`, cuyo `ValueError` se convierte en `detail`
+(`diario.py:103-104`). **Asi que se imprimio el mensaje, y el servidor contesto la pregunta:**
+
+```
+POST /api/diario -> 400: {"detail":"comida desconocida: Prueba F03 antes"}
+```
+
+**`comida` es LA COMIDA DEL DIA -- desayuno, cena... --, no el nombre del alimento.** *Mi primer intento
+mandaba el nombre ahi; el nombre va en `nota`, que es texto libre.* **Corregido:**
+
+```
+ok   se anota otra comida despues de publicar (201)
+=== PASA ===
+```
+
+### Y la aceptacion de F03, entera
+
+| lo que pide | como esta |
+|---|---|
+| auditar el cierre de version | **hecho** |
+| el estado diario | **hecho**: capturado / procesado / publicado / reanudable |
+| inyectar fallos entre las cuatro etapas | **hecho**, con la del puntero **discriminante** |
+| **V1 fija y V2 publicada durante el uso** | **hecho en un navegador**: la pantalla pasa de 19,81 a 20,81 EUR |
+| **busqueda, previa de lista y sustitucion** | **medidos los tres**, con una publicacion en medio |
+| **alta en el diario durante una publicacion** | **medido**: 201, con la publicacion a mitad |
+| respuesta individual no mezcla versiones | **hecho** en el servidor (§12, §17) |
+
+**Las siete filas, cubiertas.** *Y el ensayo `plataforma/prueba_f03_publicacion.py` las recorre y pasa.*
+
+### Y el camino hasta aqui, que es lo que mas vale
+
+**Cuatro intentos para el alta, y cada uno dijo exactamente lo que faltaba** -- *422 (faltaban `fecha` y
+`comida`), 405 (la lectura es `/{fecha}`), 400 (y el `detail` dijo que `comida` era la del dia).* **Ninguna
+de las cuatro se resolvio suponiendo: las cuatro se resolvieron leyendo lo que el servidor contestaba.**
+
+*Es la leccion de toda esta fase, aplicada de principio a fin: **el sistema dice lo que le pasa, si uno lee
+el mensaje en vez de adivinar la causa.***

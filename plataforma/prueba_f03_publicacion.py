@@ -226,11 +226,18 @@ def main() -> int:
             # y la lectura del dia es **`/api/diario/{fecha}`**, no `/api/diario` (*de ahi el 405*).
             HOY = "2026-10-11"
 
-            def anota(nombre: str) -> int:
-                return contexto.request.post(
+            # **`comida` es LA COMIDA DEL DIA, no el nombre del alimento.** *Lo dijo el propio 400:
+            # `{"detail": "comida desconocida: Prueba F03 antes"}`.* **El nombre va en `nota`**, que es
+            # texto libre -- *y ese detalle costo dos intentos, y lo dio el mensaje del servidor, no una
+            # suposicion.*
+            def anota(nombre: str) -> tuple[int, str]:
+                r = contexto.request.post(
                     f"{BASE}/api/diario",
-                    data={"fecha": HOY, "comida": nombre, "kcal": 111,
-                          "clave_operacion": f"f03-{int(_t2.time() * 1000)}-{nombre[-4:]}"}).status
+                    data={"fecha": HOY, "comida": "desayuno", "nota": nombre, "kcal": 111,
+                          "clave_operacion": f"f03-{int(_t2.time() * 1000)}-{nombre[-4:]}"})
+                # **El `detail` del 400 lleva el motivo** -- `diario.py:104` lo construye con el
+                # `ValueError` de `diario.apunta` --, asi que se devuelve para poder leerlo.
+                return r.status, (r.text() or "")[:200]
 
             # **Y aqui esta el limite, medido**: `POST /api/diario` contesta **422** y `GET /api/diario`
             # **405**. *El diario no lo sirve `main.py` -- no hay ninguna ruta `/api/diario` ahi --, asi
@@ -238,15 +245,15 @@ def main() -> int:
             #
             # *Se dice, en vez de dejar tres aserciones en rojo que no miden nada:* **el alta en el diario
             # durante una publicacion queda NO MEDIDA.**
-            antes_alta = anota("Prueba F03 antes")
+            antes_alta, motivo = anota("Prueba F03 antes")
             if antes_alta in (200, 201):
-                _publica(datetime.now(), 100)
-                despues_alta = anota("Prueba F03 despues")
+                _publica(datetime.now(), 100)          # **publicacion a mitad del uso del diario**
+                despues_alta, _ = anota("Prueba F03 despues")
                 comprueba(despues_alta in (200, 201),
                           f"se anota otra comida despues de publicar ({despues_alta})")
             else:
-                print(f"        POST /api/diario -> {antes_alta}: la forma del alta no se ha encontrado, "
-                      f"asi que el ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO")
+                print(f"        POST /api/diario -> {antes_alta}: {motivo}")
+                print("        el ALTA EN EL DIARIO DURANTE UNA PUBLICACION NO SE HA MEDIDO")
 
             # 8. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
             comprueba(not errores, f"la pantalla no dio errores de JavaScript ({errores[:2]})")
