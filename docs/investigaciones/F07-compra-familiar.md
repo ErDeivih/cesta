@@ -961,3 +961,63 @@ encabezados, la palabra «vinos» -- en vez de mirar el `ok`.**
 **Seis de los siete sub-criterios pasan; uno -- la cantidad -- es un defecto medido y fijado; y `C03`, `C04` y
 `C05` ya tienen la pantalla mirada.** *Lo que queda de C01-C05 es **un arreglo** (la cantidad) y **nada mas** --
 *y el arreglo espera una decision del dueno, no una medicion.*
+
+
+---
+
+## 17. F07 re-corrido el 2026-10-11 a las 23:58 -- **PASA, y con la misma cuenta que F03**
+
+*(Ronda 155, para el cierre de F16.)* **`plataforma/prueba_f07_pasos.py`, contra la pila del sandbox**
+(`CESTA_UI=http://localhost:5173`).
+
+### El recorrido, toque a toque
+
+```
+ok   la pantalla carga (titulo: 'Buscar · Cesta')
+
+     toque  1: abrir la app
+     toque  2: escribir 'Gofres' en el buscador
+     toque  3: pulsar buscar
+              resultados en pantalla: 12
+              el primer resultado dice: 'Gofres con chocolate Hacendado
+                mercadona · Hacendado
+                ahorras un 7,7 %
+                comparable · 2 cadenas
+                E
+                sin Eco-Score
+                37,55 EUR'
+              y trae 1 elementos pulsables: [0] 'Gofres con chocolate Hacendado'
+     toque  4: anadir el producto a la lista
+
+ok   la pantalla no dio errores de JavaScript ([])
+
+=== TOQUES DEL RECORRIDO DE CUENTA VACIA: 4 ===
+```
+
+**`PASA`, y el numero que el criterio pedia: **4 toques**.** *Y la pantalla dice lo que la ronda 101 vio sin
+buscarlo -- **«comparable · 2 cadenas»** --, que es el ambito de `C06` **en una captura de navegador de verdad**.*
+
+### Y por que este **si** corrio y el de F03 no
+
+**La linea que lo dice esta en su propia salida:**
+
+```
+(no hay boton de crear lista: puede que ya venga creada)
+```
+
+**La cuenta de este ensayo **ya existe**, asi que **no pasa por `registrarse`** -- *que es la puerta con el limite
+de «demasiadas cuentas en la ultima hora» (`main.py:117`).* **Es la confirmacion por la via contraria de lo que
+el §37 de F03 concluyo**: *el `429` **no** es un fallo de la aplicacion, es **el ensayo de F03 creando cuentas**
+-- *y un ensayo que **no** las crea **pasa sin tocar el limite**.*
+
+### Y `F07`, con lo medido
+
+| lo que pide F07 | **estado** |
+|---|---|
+| **el recorrido de la cuenta vacia, en toques** | **medido: 4**, y **PASA** |
+| **la pantalla, en navegador de verdad** | **PASA**: *sin errores de JavaScript, y con el ambito («2 cadenas») visible* |
+| **dos sesiones y otro hogar** | **medidos en sus pruebas** (`test_fase2_f07_dos_sesiones.py`, 4+1 xfail; `test_fase2_f07_otro_hogar.py`, 6) |
+| **el defecto de la cantidad** | **fijado** con `xfail(strict=True)` -- *`cambia_linea` no consulta `momento`* |
+
+**Y las dos cifras del dia quedan dichas**: *la publicacion, **33,81 -> 36,81 EUR** en pantalla; y el recorrido,
+**4 toques**.* **Las dos, con captura de navegador y en la misma sesion.**
