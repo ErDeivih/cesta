@@ -183,3 +183,102 @@ def test_el_borrador_no_escribe_ni_tiene_id():
             "el modulo del borrador no puede tener la puerta que escribe")
     finally:
         quitar()
+
+
+# ---------------------------------------------------------------------------------------------
+# El lector: application/ld+json con @type Recipe
+# ---------------------------------------------------------------------------------------------
+
+#: **Una receta como las que publican las webs de verdad**, con lo que traen y con lo que no.
+LD = """
+<html><head>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Recipe",
+ "name":"Tortilla de patatas",
+ "recipeYield":"4 raciones",
+ "totalTime":"PT1H30M",
+ "recipeIngredient":["600 g de patatas","4 huevos","1 cebolla","Sal","Aceite de oliva"],
+ "recipeInstructions":[{"@type":"HowToStep","text":"Pelar y cortar las patatas."},
+                       {"@type":"HowToStep","text":"Pochar en aceite."},
+                       {"@type":"HowToStep","text":"Cuajar con el huevo."}]}
+</script></head><body>…</body></html>
+"""
+
+
+def test_el_lector_saca_lo_que_la_receta_dice():
+    """**Y nada mas.** *El nombre, las raciones, los ingredientes y el tiempo, tal cual vienen.*"""
+    campos = importar_receta.lee_json_ld(LD)
+
+    assert campos is not None
+    assert campos["nombre"] == "Tortilla de patatas"
+    assert campos["raciones"] == 4, "«4 raciones» son 4"
+    assert campos["minutos"] == 90, "PT1H30M son 90 minutos"
+    assert len(campos["ingredientes"]) == 5, campos["ingredientes"]
+    assert campos["preparacion"].count("\n") == 2, "tres pasos, separados"
+
+
+def test_las_cantidades_se_leen_y_lo_que_no_la_tiene_se_queda_sin_ella():
+    """**Lo que hace que el borrador pueda contar en vez de inventar.** *«600 g de patatas» son 600 y «g»; y
+    **«Sal» no tiene cantidad, y se queda sin ella** -- *no se le pone «1 unidad».*
+    """
+    campos = importar_receta.lee_json_ld(LD)
+    por_texto = {i["texto"]: i for i in campos["ingredientes"]}
+
+    assert por_texto["600 g de patatas"]["cantidad"] == 600
+    assert por_texto["600 g de patatas"]["unidad"] == "g"
+    assert por_texto["4 huevos"]["cantidad"] == 4
+    assert por_texto["Sal"]["cantidad"] is None, "a la sal no se le inventa cantidad"
+
+
+def test_un_html_sin_receta_devuelve_none_y_no_inventa():
+    """*«No hay receta» y «hay una receta vacia» son cosas distintas.* **Y `None` es la primera.**"""
+    assert importar_receta.lee_json_ld("<html><body>Hola</body></html>") is None
+    assert importar_receta.lee_json_ld("") is None
+    assert importar_receta.lee_json_ld(None) is None
+    # **Y un `ld+json` que no es una receta tampoco cuenta.**
+    otro = '<script type="application/ld+json">{"@type":"Article","name":"X"}</script>'
+    assert importar_receta.lee_json_ld(otro) is None
+
+
+def test_un_bloque_roto_no_impide_leer_el_siguiente():
+    """**Y esto pasa en webs de verdad**: *hay varias etiquetas, y alguna puede ser basura.* **Una rota no puede
+    tumbar la lectura de la buena.** *Es la misma forma que «un ingrediente malo no tira los buenos».*
+    """
+    html = ('<script type="application/ld+json">{esto no es json}</script>'
+            '<script type="application/ld+json">{"@type":"Recipe","name":"Buena"}</script>')
+
+    campos = importar_receta.lee_json_ld(html)
+
+    assert campos is not None and campos["nombre"] == "Buena", campos
+
+
+def test_una_receta_envuelta_en_graph_se_encuentra():
+    """*Muchas webs envuelven todo en `@graph`, con la receta y otras cosas dentro.* **Se busca al que es
+    `Recipe`, y no se coge el primero que pase.***
+    """
+    datos = {"@graph": [{"@type": "WebSite", "name": "Una web"},
+                        {"@type": "Recipe", "name": "La receta"}]}
+
+    campos = importar_receta.campos_de_json_ld(datos)
+
+    assert campos is not None and campos["nombre"] == "La receta", campos
+
+
+def test_el_lector_y_el_borrador_encajan_y_la_fuente_queda():
+    """**Las dos mitades juntas**: *se lee, se comprueba la fuente y sale un borrador **con la fuente dentro**.*
+
+    *Y es exactamente lo que el criterio pide: «URL/archivo de fuente permitida; **previa, fuente, unidades y
+    edicion antes de guardar**».*
+    """
+    quitar = _permitida("recetas.example.com")
+    try:
+        campos = importar_receta.lee_json_ld(LD)
+        permiso, b = importar_receta.borrador("https://recetas.example.com/tortilla", campos)
+
+        assert permiso.permitida and b is not None, permiso.motivo
+        assert b.nombre == "Tortilla de patatas"
+        assert b.raciones == 4 and b.minutos == 90
+        assert b.fuente == "https://recetas.example.com/tortilla", "la fuente queda dicha"
+        assert b.faltantes == [], f"no falta nada que decir: {b.faltantes}"
+    finally:
+        quitar()

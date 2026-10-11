@@ -194,3 +194,144 @@ def borrador(url: str | None, campos: dict | None = None) -> tuple[Permiso, Borr
         fuente=str(url).strip(),
         faltantes=faltantes,
     )
+
+
+# ---------------------------------------------------------------------------------------------
+# El lector: **`application/ld+json` con `@type: Recipe`**
+# ---------------------------------------------------------------------------------------------
+
+#: **El formato que se lee, y por que ese.** *`schema.org/Recipe` en `application/ld+json` es **el estandar que
+#: las webs de recetas publican para que las lean las maquinas** -- *no es un formato inventado aqui, y por eso es
+#: el unico que se lee.* **Un sitio que no lo publique no se puede leer sin escribirlo a mano, y eso es scraping**:
+#: *por eso «fuente permitida» y «formato» son la misma decision.*
+TIPO = "Recipe"
+
+
+def _texto(v) -> str:
+    """*Un campo de schema.org puede venir como texto, como `{"@value": ...}` o como lista.* **Se acepta lo que
+    es, y lo que no, se deja vacio -- no se inventa.**"""
+    if isinstance(v, str):
+        return v.strip()
+    if isinstance(v, dict):
+        return _texto(v.get("name") or v.get("@value") or v.get("text") or "")
+    if isinstance(v, list) and v:
+        return _texto(v[0])
+    return ""
+
+
+def _raciones(v) -> int | None:
+    """**El numero de raciones, si lo dice.** *Y `None` si no -- `borrador` ya sabe decir «se asume 1»*."""
+    if isinstance(v, (int, float)) and v >= 1:
+        return int(v)
+    s = _texto(v)
+    if not s:
+        return None
+    m = __import__("re").search(r"\d+", s)
+    return int(m.group(0)) if m else None
+
+
+def campos_de_json_ld(datos) -> dict | None:
+    """**Los campos de una receta de `schema.org`, en la forma que `borrador` entiende.**
+
+    *Devuelve `None` si el objeto **no es una receta** -- *que es distinto de «es una receta vacia»*. *Y acepta
+    tanto un objeto como la lista que muchas webs publican (`@graph`), **buscando dentro al que es `Recipe`***.
+    """
+    if isinstance(datos, list):
+        for uno in datos:
+            hallado = campos_de_json_ld(uno)
+            if hallado is not None:
+                return hallado
+        return None
+    if not isinstance(datos, dict):
+        return None
+
+    # *Muchas webs envuelven todo en `@graph`.*
+    if "@graph" in datos:
+        return campos_de_json_ld(datos["@graph"])
+
+    tipo = datos.get("@type")
+    tipos = [tipo] if isinstance(tipo, str) else (tipo if isinstance(tipo, list) else [])
+    if TIPO not in tipos:
+        return None
+
+    # **Los ingredientes, tal cual vienen.** *Se convierten en `{texto, cantidad, unidad}` **con lo que se pueda
+    # sacar del texto**, y **lo que no se pueda se deja en `None`** -- *no se inventa «1 unidad».*
+    ingredientes = []
+    for linea in datos.get("recipeIngredient") or []:
+        texto = _texto(linea)
+        if not texto:
+            continue
+        cantidad, unidad = _parte_cantidad(texto)
+        ingredientes.append({"texto": texto, "cantidad": cantidad, "unidad": unidad})
+
+    # *La preparacion: las instrucciones pueden venir como texto, como lista, o como lista de objetos con `text`.*
+    pasos = datos.get("recipeInstructions") or []
+    if isinstance(pasos, str):
+        preparacion = pasos
+    else:
+        preparacion = "\n".join(_texto(p) for p in pasos if _texto(p))
+
+    return {
+        "nombre": _texto(datos.get("name")),
+        "raciones": _raciones(datos.get("recipeYield")),
+        "ingredientes": ingredientes,
+        "preparacion": preparacion,
+        # *Y el tiempo, si lo dice: `PT1H30M` -- **o `None`, que es no decirlo.***
+        "minutos": _minutos_iso(datos.get("totalTime") or datos.get("cookTime")),
+    }
+
+
+#: *«200 g de harina» -> (200, 'g').* **Y si no hay cantidad, `(None, None)`** -- *que es lo que hace que `borrador`
+#: pueda contar lo que falta en vez de inventarlo.*
+_CANTIDAD = __import__("re").compile(r"^\s*([\d]+(?:[.,]\d+)?)\s*([A-Za-zÁÉÍÓÚÜáéíóúüñ]+)?")
+
+
+def _parte_cantidad(texto: str) -> tuple[float | None, str | None]:
+    """*Lo que se pueda sacar del principio de la linea, y nada mas.*"""
+    m = _CANTIDAD.match(texto)
+    if not m:
+        return None, None
+    try:
+        n = float(m.group(1).replace(",", "."))
+    except ValueError:
+        return None, None
+    return n, (m.group(2) or "").lower() or None
+
+
+#: *`PT1H30M` -> 90.* **`None` si no es un tiempo ISO o no viene.**
+_ISO = __import__("re").compile(r"P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?")
+
+
+def _minutos_iso(v) -> int | None:
+    s = _texto(v)
+    if not s:
+        return None
+    m = _ISO.fullmatch(s)
+    if not m:
+        return None
+    dias, horas, minutos = (int(x) if x else 0 for x in m.groups())
+    total = dias * 24 * 60 + horas * 60 + minutos
+    return total or None
+
+
+def lee_json_ld(html: str) -> dict | None:
+    """**Los campos de la receta que hay en un HTML, o `None` si no hay ninguna.**
+
+    *Busca los bloques `<script type="application/ld+json">`, los parsea y se queda con el que es `Recipe`.*
+    **No adivina: si no hay `Recipe`, devuelve `None`** -- *y quien llama decide, con `borrador`, si eso es «no
+    hay receta» o «no se pudo leer».*
+    """
+    import json
+    import re
+
+    for m in re.finditer(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', html or "",
+                         re.S | re.I):
+        try:
+            datos = json.loads(m.group(1).strip())
+        except (ValueError, TypeError):
+            # *Un bloque que no es JSON **no es un fallo**: hay webs con varios, y alguno puede ser basura.*
+            continue
+        campos = campos_de_json_ld(datos)
+        if campos is not None:
+            return campos
+    return None
