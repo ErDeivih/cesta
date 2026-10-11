@@ -30,7 +30,8 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from plataforma.api import almacen, diario as api_diario, main
+from plataforma.api import almacen, main
+from plataforma.api import diario as api_diario
 
 BASE = "postgresql://cesta:prueba@127.0.0.1:5434/cesta"
 CLAVE = "clave-de-prueba-123"
