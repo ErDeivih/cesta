@@ -1143,6 +1143,50 @@ propietario» y «mutaciones protegidas»**.* **Escribir en la lista sin esa dis
 hoy lo que G13 prohibe y arreglarlo en dos rondas.** *La previa no escribe: se puede hacer entera y
 bien, y es lo que la persona mira antes de decidir.*
 
+### G12, punto 221: **la transferencia, idempotente por operacion** -- y donde se decide eso
+
+**La frase que decide el diseno** es la de en medio del punto: *«Repetir la misma transferencia no
+duplica; **otra semana/operacion legitima si**»*. **Esas dos cosas no se pueden cumplir a la vez
+mirando las lineas de la lista**: *dos semanas distintas con los mismos ingredientes producen lineas
+identicas, y no hay forma de distinguirlas por su contenido.* **Asi que la identidad es de la
+OPERACION, no del resultado** -- `receta + version + semana`.
+
+    core/traspaso.py
+      Operacion(propietario, receta_id, version, semana)   la identidad, con su clave
+      semana_de(hoy)                                       el lunes de esa semana
+      pasar_a_lista(...)                                   comprueba, y solo despues escribe
+
+**Y la clave la calcula el servidor, igual que la semana.** *Si la mandara el cliente, dos pestanas con
+fechas distintas -- o una con la fecha cambiada a mano -- escribirian dos veces la misma compra.* Es la
+misma regla del 223 de G12 y del 227 de G13: **no confiar en lo que manda el cliente como identidad ni
+como propietario.** *La fecha de hoy es del servidor, como en `cesta._fecha_de_hoy`.*
+
+**Y el dueno se comprueba con `recetas._de_quien`, que ya existia** y que ya lanza: *«una receta
+necesita dueno: el recetario es personal»*. **La puerta no se reescribe: se usa.**
+
+**Siete pruebas, con base temporal** (`conecta(ruta)`, sin tocar el recetario real):
+
+    la misma operacion dos veces      -> la segunda dice `ya_estaba` y solo hay UNA fila de traspaso
+    lunes y miercoles de la misma semana -> la misma operacion (se compra una vez)
+    la semana siguiente               -> otra operacion, y se traspasa
+    la version siguiente               -> otra operacion, y se traspasa
+    la receta de otro dueno            -> se rechaza
+    sin dueno                          -> se rechaza
+    la semana es el lunes              -> miercoles->lunes, lunes->lunes, domingo->el lunes anterior
+
+**Y `insertar=None` es a proposito**: *con eso la funcion calcula la previa y registra la operacion
+**sin escribir en ninguna lista**, que es lo que permite probar la idempotencia sin tocar datos de
+nadie.* **El insertador real -- el que escribe en Postgres -- se inyecta desde la API, y con eso
+`core/` no aprende a hablar con la base de la API.**
+
+**Y la despensa no se toca**: *el 221 permite descontarla «solo si esta modelada y la persona lo
+elige», y hoy no esta modelada.* **Asi que la respuesta honesta es que no se descuenta nada, y decirlo
+en vez de simularlo.**
+
+**Y una correccion mas**: *`recetas.ruta_base` no existe -- eso vive en `plataforma/api/recetas.py:26`
+-- y di por hecho que estaba en `core`.* **Decimoctava vez, y la misma forma: leer una capa y concluir
+sobre otra.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
