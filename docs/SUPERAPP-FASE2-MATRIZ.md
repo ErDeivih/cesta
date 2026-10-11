@@ -202,25 +202,63 @@ mas.**
 
 ---
 
-## 5. Lo que hay que hacer a continuación, en orden
+## 5. Lo que hay que hacer a continuacion, en orden
 
-1. **Pedir las páginas de producto de las cadenas de las que se sabe la forma** — *Mercadona ya tiene
-   extractor (`ficha_mercadona.py`) y el crudo de hoy sólo trae 3 fichas: lo que falta es **pedir**, no
-   extraer* —, y **escribir el lector de Día**, que tiene otra forma y hoy da 0 de 547. *El mapa está cerrado*: **ninguna de las cinco cadenas medidas
-   publica nutrición numérica** (mercadona 6 fichas, alcampo 59 claves, aldi 18, dia, lidl documentado),
-   así que **las calorías no se pueden enseñar con estas fuentes**; los ingredientes y alérgenos **sí**.
-   Queda **carrefour** (HTML) sin medir. *Medido
-   para Aldi, leyendo el crudo que el colector ya guarda: su API trae 18 campos y **ninguno es
-   nutrición** — no es «no lo hemos pedido», es que **la fuente no lo publica en la API que se usa**.*
-   La salida es la misma que Lidl documenta: **parsear el HTML o ir a fuente externa**. *La misma
-   pregunta, para alcampo, carrefour, dia y mercadona, antes de escribir nada.*
-2. **Los dos recorridos de navegador de F03** —*la receta está en
-   `docs/investigaciones/F03-publicacion.md` §15: `CESTA_GOLD` a un sandbox, API en el 8101*—.
-3. **Decidir sobre el puntero** (`20261007-103000` contra un gold del 11): publicar o dejarlo. *Es de
-   operación.*
-4. **Las unidades del diario** (g/ml/raciones) y la vista previa congelada —*lo que queda de F02*—.
-5. **Los ocho hallazgos de F00** que siguen sin contrastar, y **F04** (CSRF) —*que el informe anterior
-   aplazó con una inferencia que el encargo no acepta*—.
-6. **El banco de matching de F06**, y después **F07–F16**.
+**§5 estaba entero desactualizado** -- *hablaba de «los recorridos de navegador de F03», de «los ocho hallazgos
+de F00 sin contrastar», de «F04 (CSRF) por hacer» y de «F07-F16», **y todo eso esta hecho**.* *Se reescribe con lo
+medido.*
 
-*Los puntos 1, 3 y 4 son pequeños y concretos. El 6 y los paquetes F07–F16 son el grueso que queda.*
+### 0. **Las tres decisiones del dueno**, que van primero porque desbloquean trabajo ya empezado
+
+*Estan en `docs/SUPERAPP-FASE2-EJECUCION.md`, y **no son trabajo: son elecciones**.*
+
+1. **Que es «presupuesto»** (`C09`): *la estimacion de la lista, lo pagado, o un numero que se ponga la persona.
+   **Las dos primeras existen; la tercera no**, y sin la respuesta `C09` no se puede cerrar.*
+2. **Cuanto cuesta ir a una tienda** (`C07`): *el maximo de tiendas ya esta (`CESTA_MAX_TIENDAS`); **el coste de
+   ir no**, y **no puede venir de los datos**.*
+3. **La unidad de la linea de compra** (`F10`): *la que vino o la canonica. **El arreglo `kg/g` esta escrito y
+   probado** -- *da 1,5 kg y deja `kg/ud` y `ml/g` separados* --; **lo unico que falta es cual de las dos**.*
+
+**Y la tercera es la que mas desbloquea**, porque ademas la necesita `R08` (la despensa) si algun dia se hace.
+
+### 1. **Cerrar F15 y F14, que son los dos que quedan a medias**
+
+- **F15, el rendimiento con servidor**: *`indices` (DuckDB: zonemaps), `cargas` (con navegador) y `latencia`
+  (`/api/buscar` con los 52.087 grupos reales).* *Los **tamanos ya estan medidos**: **681 KB en un solo chunk**,
+  un 36 % sobre el umbral que el propio Vite considera excesivo.*
+- **F15, el material educativo**: *«ejemplos reproducibles crudo -> normalizacion -> identidad ->
+  coste/nutricion», que es **escribir**, no medir.*
+- **F14, las cuatro anchuras y el zoom**: *360/390/768/1440 y 200 %, **con navegador**, y con
+  `reduced_motion: "reduce"` para dejar constancia en pantalla de lo que ahora ya no se mueve.*
+
+### 2. **F16, el ensayo integral** -- *que es este documento*
+
+**La matriz esta entera**: `§0` el aviso del fallo de proceso, `§1` lo que se puede hacer hoy, `§2` la tabla por
+paquete, `§3` los ensayos, `§4` el veredicto con los cinco estados, y `§5` esto. **Falta el ensayo integral**:
+*correr las puertas todas juntas -- `ruff`, la suite, `tsc`, el build -- y dejar el resultado escrito con fecha.*
+
+### 3. **Las cuatro funciones que no existen** -- *y son la fase 3*
+
+**`R02` (importar recetas), `R05` (modo cocina), `R08` (despensa) y la paginacion del buscador.** *Las cuatro
+tienen nombre, criterio y casos de aceptacion descritos en su informe.* **El encargo pone las mejoras funcionales
+**despues** de los cierres, y estos lo son.**
+
+**Y la paginacion es la mas barata de las cuatro**: *el `LIMIT` ya esta parametrizado (`catalogo.py:422`); falta
+el `OFFSET`, y el sitio donde ensenarlo.*
+
+### 4. **Lo que hay que decidir si se hace, o se descarta con motivo**
+
+| | **por que no esta** |
+|---|---|
+| **La nutricion de Alcampo y Aldi** | **limite de fuente**: *25.896 grupos **sin EAN**, y 13.898 con EAN que Open Food Facts no conoce* -- *39.794 que **no se arreglan con codigo*** |
+| **La cobertura de fichas** | **72.319 pendientes / 7.593 correctas**: *trabajo sin ejecutar, no limite* |
+| **Los campos nutricionales que `F13` pide** | *cubririan el **22,8 %** del catalogo, y por eso el propio criterio dice «**solo si disponibles**»* |
+
+**Y el orden no es una preferencia**: *las tres decisiones son **puertas**; lo de F15 y F14 es **cerrar lo
+empezado**; F16 es **el entregable**; y las cuatro funciones son **trabajo nuevo** -- *que solo se empieza cuando
+lo anterior esta dicho.*
+
+---
+
+*Los puntos 0, 1 y 2 son **cortos y concretos**. El 3 es el grueso que queda, y el 4 es **lo que hay que
+renunciar a hacer** -- que tambien hay que decirlo.*
