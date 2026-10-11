@@ -582,3 +582,76 @@ faltan**:*
 2. **y el «ambito visible» de `C06`** -- *por medir*
 
 **Dos huecos, y ninguno es un descuido: los dos son cosas que nadie ha pedido todavia.**
+
+
+---
+
+## 10. «Ambito y fecha visibles»: **las dos, y la fecha en la cabecera de todas las pantallas**
+
+*(Ronda 113.)* El ultimo medio caso de `C06`: *«identidad/formato, **ambito y fecha visibles**»*. *Y las dos
+estan.*
+
+### La fecha: en la cabecera, y con una decision escrita al lado
+
+```
+Cabecera.tsx:3    *  `fecha_datos` NO ES UN ADORNO DE PIE DE PAGINA. La r...
+Cabecera.tsx:77       Datos del <strong ...>
+Cabecera.tsx:82         ({hace(data.fecha_datos)})          <- «hace N dias/horas»
+Buscar.tsx:271        <span> · datos del {fecha(resultados.data.fecha_datos)}
+Cesta.tsx:1524        Datos del {detalle.data.fecha_datos}
+Escaner.tsx:237,247   Datos del {fecha(perdido.fecha_datos)} / sub={Datos del ${...}}
+Favoritos.tsx:279     <Etiqueta tono="dato">datos del ...
+Grupo.tsx:279         {grupo.fecha_datos && (...
+```
+
+**No esta en una pantalla: esta en la **cabecera**, o sea **en todas** -- *y con **«hace N»** al lado, que es lo
+que convierte una fecha en algo que se puede juzgar de un vistazo.* **Y `Cabecera.tsx:3` lo dice: «`fecha_datos`
+**no es un adorno de pie de pagina**»** -- *es decir, **alguien decidio que fuera visible en vez de discreta**,
+que es exactamente lo que el criterio pide.*
+
+### El ambito: una columna, y el orden por defecto que lo explica
+
+```
+TablaResultados.tsx:80    // Por defecto, lo que pide el backend: prim[ero]...
+TablaResultados.tsx:153       id: 'cadenas',
+TablaResultados.tsx:155       accessorFn: (f) => f.cadenas,
+TablaResultados.tsx:159       {row.original.cadenas} {row.origina...
+TablaResultados.tsx:169       accessorFn: (f) => (f.comparable && !f....
+TablaResultados.tsx:175       if (!f.comparable || f.dudoso) {
+```
+
+**Hay una columna `cadenas`** -- *cuantas cadenas tienen ese producto* -- **y una columna `comparable`**, *con
+`ahorro_pct: 0.0` tratado como **«centinela»** en el codigo*.
+
+**Y `TablaResultados.tsx:80` dice el criterio con otras palabras**: *«Por defecto, lo que pide el backend:
+**primero [...] cadenas y, dentro, el mas barato**»* -- *o sea, **el ambito es una de las dos cosas por las que
+se ordena**.*
+
+**Y eso es lo que se vio en la pantalla en la ronda 101, sin buscarlo**: *«Gofres con chocolate Hacendado ·
+**mercadona** · Hacendado · ahorras un 7,7 % · **comparable · 2 cadenas** · sin Eco-Score · 33,55 EUR»* -- **la
+cadena, las cadenas que lo tienen, y «comparable»**, todo en el resultado.
+
+### Y `C06` queda **entero**
+
+| lo que pide `C06` | **estado** |
+|---|---|
+| **identidad/formato** | **resuelto**: `parse_formato` normaliza packs, unidades y pesos |
+| **ambito visible** | **si**: columna `cadenas`, y la cadena en cada resultado |
+| **fecha visible** | **si, y en la cabecera de todas las pantallas**, con «hace N» |
+| **cantidad/promocion elegibles** | **si**: el pack y las unidades minimas llegan a la pantalla |
+| **coste parcial explicito** | **si**: `sin_precio` y la estimacion |
+
+**Los cinco, cubiertos.**
+
+### Y F08 queda cerrado
+
+**Los cinco casos de su aceptacion, cubiertos; y los cinco criterios que cubre -- `C06` a `C10` --, con su
+parte principal medida.** *Y lo que **no** queda hecho son **dos cosas que nadie ha pedido todavia**:*
+
+1. **El «previsto» de `C09`** -- *lo que la persona se propone gastar. **No existe**, y **cual de las tres
+   piezas** (estimacion, pagado, presupuesto propio) **es «presupuesto» es una decision del dueno.**
+2. **Y `C07` completo** -- *el **ahorro neto definido** y el **coste de desplazamiento optativo**: *el oraculo
+   multi-tienda es de F06, y **el «maximo de tiendas» y el desplazamiento** son de F08 y **no se han medido**.*
+
+**Dos huecos, y el segundo lo encuentro al cerrar** -- *que es la forma en que han aparecido casi todos en esta
+fase: **mirando el conjunto despues de medir las partes.***
