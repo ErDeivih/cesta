@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { anotarDeLaCompra, misListas, previaDeLaCompra } from '../api/cesta'
-import type { PreviaDeLaCompra } from '../api/cesta'
+import type { PreviaDeLaCompra, ReciboDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import type { NuevaEntrada } from '../api/diario'
@@ -61,20 +61,30 @@ function hoy(): string {
 function DeLaCompra({ fecha }: { fecha: string }) {
   const cliente = useQueryClient()
   const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
-  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  // **Solo la lista de casa, y sin elegir otra en silencio.** Antes esto era
+  // `find(es_de_casa)?.id ?? listas.data?.[0]?.id`: si no habia lista de casa, anotaba en la primera
+  // que hubiera, que puede ser la de otra persona del hogar o una lista de ideas. El documento lo
+  // pide explicito: *no confundir esa eleccion con una decision del usuario*.
+  const casa = listas.data?.find((l) => l.es_de_casa) ?? null
+  const listaId = casa?.id ?? null
   const [comida, setComida] = useState('comida')
   const [previa, setPrevia] = useState<PreviaDeLaCompra | null>(null)
-  const [anotadas, setAnotadas] = useState<number | null>(null)
+  // **El recibo, no el numero de la previa.** `anotadas` era `previa?.anotarian.length`, es decir
+  // lo que la previa DECIA que se anotaria: si alguna linea ya estaba o dejo de estar, el mensaje
+  // mentia sobre lo que se habia guardado.
+  const [recibo, setRecibo] = useState<ReciboDeLaCompra | null>(null)
 
   const ver = useMutation({
     mutationFn: () => previaDeLaCompra(listaId as string),
-    onSuccess: (p) => { setPrevia(p); setAnotadas(null) },
+    onSuccess: (p) => { setPrevia(p); setRecibo(null) },
   })
   const anotar = useMutation({
     mutationFn: () => anotarDeLaCompra(listaId as string, fecha, comida),
-    onSuccess: () => {
-      cliente.invalidateQueries({ queryKey: ['diario'] })
-      setAnotadas(previa?.anotarian.length ?? 0)
+    onSuccess: (r) => {
+      // El dia **y los rangos**: las tendencias usan `['diario-rango', ...]`, que es otra clave.
+      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
+      setRecibo(r)
       setPrevia(null)
     },
   })
@@ -100,10 +110,29 @@ function DeLaCompra({ fecha }: { fecha: string }) {
         </p>
       )}
 
-      {anotadas !== null && (
-        <p className="mt-2 text-[15px] text-tinta-fuerte">
-          {anotadas === 1 ? 'Se ha anotado 1.' : `Se han anotado ${anotadas}.`}
-        </p>
+      {recibo && (
+        <div className="mt-2 flex flex-col gap-1 text-[15px]">
+          <p className="text-tinta-fuerte">
+            {recibo.anotadas === 1 ? 'Se ha anotado 1.' : `Se han anotado ${recibo.anotadas}.`}
+          </p>
+          {/* **Lo que no entro tambien se dice**, y con su nombre: callarlo convertiria un dato que
+              falta en una comida que parece completa. */}
+          {recibo.ya_estaban.length > 0 && (
+            <p className="text-secundaria">
+              Ya estaban en el diario, asi que no se repiten: {recibo.ya_estaban.join(', ')}.
+            </p>
+          )}
+          {recibo.sin_nutricion.length > 0 && (
+            <p className="text-secundaria">
+              Anotadas sin dato de nutricion: {recibo.sin_nutricion.join(', ')}.
+            </p>
+          )}
+          {recibo.ajenas.length > 0 && (
+            <p className="text-secundaria">
+              No son de esa compra, asi que no se han tocado: {recibo.ajenas.join(', ')}.
+            </p>
+          )}
+        </div>
       )}
 
       {previa && (

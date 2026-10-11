@@ -206,8 +206,23 @@ export async function previaDeLaCompra(listaId: string,
                                       compraId ? { compra_id: compraId } : undefined)
 }
 
+/** El recibo del puente de la compra, tal como lo devuelve el servidor (`main.py`,
+`anotar_de_la_compra`). **`anotadas` es lo que se anoto de verdad** -- no lo que la previa decia que
+se anotaria --, y `ya_estaban`, `ajenas` y `sin_nutricion` dicen lo que **no** entro y por que:
+*una linea que ya estaba ese dia, una que no es de esta compra, y una cuyo producto no declara
+nutricion en el catalogo.*
+ */
+export interface ReciboDeLaCompra {
+  anotadas: number
+  ya_estaban: string[]
+  /** Lineas pedidas que **no son de esa compra**. Se devuelven, no se ignoran. */
+  ajenas: string[]
+  /** Las que se pueden anotar pero quedan **sin dato**: se dicen, no se callan. */
+  sin_nutricion: string[]
+}
+
 export async function anotarDeLaCompra(listaId: string, fecha: string, comida: string,
-                                       lineas: string[] = []): Promise<unknown> {
+                                       lineas: string[] = []): Promise<ReciboDeLaCompra> {
   return await escribe(`/listas/${listaId}/desde-la-compra`, 'POST',
                        { fecha, comida, lineas })
 }

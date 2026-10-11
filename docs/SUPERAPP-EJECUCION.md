@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | el puente compra→diario consumiendo el recibo real |
+| G01 Diario efectivo | `en curso` | ver abajo | prueba del recibo del puente contra el almacén real |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -43,6 +43,8 @@ completo, no una compilación.**
 | **La aceptación por HTTP montado**: recibo `{id, dia}`, cantidad y macros que se vuelven a leer, cobertura 1/2 y 2/2, el rango viendo el alta, negativos/compra/receta inventada rechazados, dos comidas iguales y el borrado con recibo | `tests/test_g01_diario_http.py` — **10 pasan** (1,9 s) | 11 oct 2026 |
 | **El formulario**: `Alta` ofrece **cantidad (g)** y los **tres macronutrientes**, con la aclaración de que lo apuntado es lo comido y no los valores de 100 g; vacío es `null` (no `0`) y la coma decimal se acepta | `src/paginas/Diario.tsx` — `aNumero()` | 11 oct 2026 |
 | **Al guardar se limpia solo lo guardado**: si el alta falla, el error se ve y no se borra lo escrito | `src/paginas/Diario.tsx` | 11 oct 2026 |
+| **El puente compra→diario consume el recibo** (`{anotadas, ya_estaban, ajenas, sin_nutricion}`, tipado) y lo cuenta en pantalla; **invalida `['diario-rango']`**; y **solo usa la lista de casa**, sin elegir otra en silencio | `src/paginas/Diario.tsx`, `src/api/cesta.ts` — `npm run tipos` limpio | 11 oct 2026 |
+| `tsc` cazó un comentario sin abrir en el primer intento y se corrigió antes de nada | `npx tsc --noEmit` | 11 oct 2026 |
 
 **Lo que ya existía y se conserva**: `tests/test_de_la_ficha_al_diario.py` (la cuenta de la ficha y
 lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valores por 100 g, que
@@ -50,19 +52,24 @@ hace la cuenta **en el servidor**.
 
 ### Pendiente, y por qué
 
-1. **El puente compra→diario usa el número de la previa**, no el recibo: `Diario.tsx:62` hace
+1. **El recibo del puente no tiene prueba propia.** El contrato está implementado y compilado,
+   **no medido**: `POST /api/listas/{id}/desde-la-compra` necesita el almacén real (PostgreSQL), y
+   las pruebas de `tests/` no levantan la base desechable. *Acción: prueba que use el 5434 y que
+   **se salte con motivo explícito** si no hay motor, midiendo los cuatro números del recibo
+   (`anotadas`, `ya_estaban`, `ajenas`, `sin_nutricion`) sobre una compra cerrada de ensayo.*
+2. **El puente compra→diario usaba el número de la previa**, no el recibo: `Diario.tsx:62` hace
    `setAnotadas(previa?.anotarian.length ?? 0)`. *Acción: consumir `ReciboDeAlta`/lo que devuelva
    `anotarDeLaCompra`, y decir cuántas se anotaron de verdad.*
-2. **Idempotencia por operación**: hoy no hay clave. *Acción: una clave por operación (doble clic,
+3. **Idempotencia por operación**: hoy no hay clave. *Acción: una clave por operación (doble clic,
    respuesta perdida, reintento) que no duplique, **sin** deduplicar por nombre+fecha+nutrientes —
    eso ya está probado que debe permitir dos comidas iguales.*
-3. **`ml` frente a `g`**: el formulario solo ofrece gramos. Ofrecer mililitros exige una unidad
+4. **`ml` frente a `g`**: el formulario solo ofrece gramos. Ofrecer mililitros exige una unidad
    declarada en el almacén (`cantidad_g` no puede guardar ml: es justo la equivalencia que el
    documento prohíbe sin densidad trazable). *Acción: decidir con el modelo, no en la pantalla.*
-4. **Aislamiento por HTTP montado**: anónimo 401; B no enumera, lee, modifica ni borra entradas de A
+5. **Aislamiento por HTTP montado**: anónimo 401; B no enumera, lee, modifica ni borra entradas de A
    por ID o fecha; cambio A→B sin cachés ni borradores. *Acción: extender las pruebas de la API con
    `TestClient`, que es donde se prueba la ruta y no la función interna.*
-5. **Navegador 390 y 1440**: alta efectiva, lectura, recarga, borrado y tendencias, guardando IDs y
+6. **Navegador 390 y 1440**: alta efectiva, lectura, recarga, borrado y tendencias, guardando IDs y
    resultados. *Acción: sección nueva en `plataforma/prueba_navegador.py`, con la disciplina del
    fichero: esperar a que el dato esté, y anclarse en los textos de hoy.*
 
