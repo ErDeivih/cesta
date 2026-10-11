@@ -24,10 +24,10 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 | 6 | Clave escrita después del INSERT | **contestado** | misma clave a la vez → **una** entrada; choque → **400** |
 | 7 | Publicación y derivados | **contestado** | publicación al final del ciclo, fallo en el veredicto, API leyendo la versión |
 | 8 | Fichas sin ejecución suficiente | **contestado** | **Día: 6.331 productos con tabla**, ya extraída; Mercadona 0; otras cuatro sin maestro |
-| 9 | Riesgo de identidad estable | **mitad contestada** | *no hay **ningún** consumidor del ordinal: las 3 menciones son comentarios, medido con `git grep`. **Falta la prueba** de lista/favorito/receta ante reordenación* |
+| 9 | Riesgo de identidad estable | **DEFECTO LOCALIZADO** | *Ningún consumidor **de código** (las 3 menciones son comentarios). **Pero `alerta` guarda `grupo_id NOT NULL` y nada más** (`001_esquema.sql:139`), mientras `linea` y `favorito` tienen `producto_id`: **una alerta puede quedar vigilando otro producto tras una reordenación** — [F01](investigaciones/F01-identidad-estable.md)* |
 | 10 | CSRF no ensayado | **medido en código** | *`SameSite=Lax` + `HttpOnly`; 26 que mutan, todos no-GET; el GET sospechoso dice `hace_falta_escribir=False`. **Falta el ensayo cross-origin y leer el 2.º** — [F04](investigaciones/F04-csrf.md)* |
 
-**Los diez contrastados.** Del #10 falta el **ensayo** (no la medición), y del #9 la **prueba**.
+**Los diez contrastados**, y **uno de ellos -- el #9 -- ha resultado ser un defecto localizado**: `alerta` ligada al ordinal. *Del #10 falta el ensayo con navegador (no la medición).*
 
 ## Siguiente acción
 
