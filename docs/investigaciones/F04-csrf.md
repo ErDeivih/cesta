@@ -82,3 +82,46 @@ comprobado.**
 
 **Y no está demostrado.** *Falta leer el segundo endpoint, y falta el ensayo real con una petición
 cross-origin.* **F04 sigue abierto, con dos pasos concretos en vez de una inferencia.**
+
+
+---
+
+## 5. Y el ensayo, hecho -- con su limite dicho
+
+*(Ronda 39.)* `tests/test_fase2_f04_csrf.py`, **cinco pruebas**, dos de ellas con un `Origin` de verdad
+pasando por el middleware:
+
+| prueba | que fija |
+|---|---|
+| un origen ajeno no recibe permiso | **`https://malo.example` no obtiene `access-control-allow-origin`**, y tampoco un comodin |
+| un origen configurado si lo recibe | *la otra mitad*: **sin esto, un `allow_origins` vacio tambien pasaria la de arriba** |
+| el preflight de un origen ajeno tampoco | *un POST con `Content-Type: application/json` dispara preflight: si no autoriza, el navegador no manda la peticion* |
+| la cookie va con `HttpOnly` y `SameSite=Lax` | **las dos emisiones**, leidas de la fuente |
+| ninguna ruta que muta es un GET | **y el defecto de `_acceso` sigue siendo leer** |
+
+### El segundo endpoint, leido
+
+`/api/listas/{lista_id}/desde-la-compra` (linea 1418): **tambien es una lectura y tambien lo declara** --
+*«No escribe nada: el diario rechaza el tipo `compra` a proposito -- comprar no es comer --, asi que
+**propone** y la persona confirma»*, y `_acceso(..., hace_falta_escribir=False)`.
+
+**Asi que ningun GET muta**, y las dos que lo parecian **son vistas previas que lo declaran en la firma del
+acceso.**
+
+### Y dos cosas que hay que decir de estas pruebas, para que no se lean como mas de lo que son
+
+1. **Las dos del CORS no usan la app real.** *Montan un `Starlette` con **los mismos parametros** que
+   `main.py` -- leidos de alli -- y comprueban el comportamiento del middleware.* **Eso fija que la
+   politica de Starlette defiende con esos parametros, no que la app los tenga hoy**: *si alguien cambiara
+   `allow_origins` en `main.py`, estas dos pruebas seguirian pasando.* **Para cerrarlo hay que usar
+   `TestClient` contra la app de verdad, y eso necesita la base.**
+2. **Ninguna prueba mira el navegador.** *Lo que se ha comprobado es la **configuracion**, no el
+   comportamiento real de un navegador mandando o no la cookie.* *Un ensayo con `patchright` -- mandar un
+   `POST` cross-origin y ver que no viaja la cookie -- seria la prueba que cierra F04, y no se ha hecho.*
+
+### Y un error mio, que es el de esta fase otra vez
+
+**La primera version de la ultima prueba tenia la condicion al reves**: marcaba las rutas GET que llaman a
+`_acceso` **sin** el argumento, y fallo con **cinco rutas de lectura**. *El codigo estaba bien:*
+`def _acceso(..., hace_falta_escribir: bool = False)` -- **el defecto ya significa leer**. *Corregido: lo
+que hay que vetar es una GET que **exija** escribir, y que el defecto siga siendo `False`.*

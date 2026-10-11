@@ -22,7 +22,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | **Calorías y tabla nutricional** | **sí, para Día: 6.331 productos** | *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |
 | Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
 | Usar Cesta con la API caída | **no medido** | — |
-| Defensa CSRF | **hay defensa; sin ensayo** | `SameSite=Lax` + `HttpOnly` (`main.py:88`) y **26 endpoints que mutan, todos POST/PUT/PATCH/DELETE**. *CORS no defiende del CSRF: sólo impide leer. Falta el ensayo cross-origin real y leer el 2.º endpoint sospechoso* |
+| Defensa CSRF | **hay defensa, y 5 pruebas** | `SameSite=Lax` + `HttpOnly` (`main.py:88`); **26 endpoints que mutan, todos no-GET**; **ningún GET exige escribir**. *Falta el ensayo con navegador: las pruebas del CORS usan un middleware con los mismos parámetros, no la app real* |
 
 ---
 
