@@ -1582,3 +1582,57 @@ en cadenas que si** -- *Carrefour, Dia y Mercadona, que la traen por Open Food F
 
 **Y la primera fila es la conclusion de F05**: *la mitad del catalogo esta en dos cadenas que **no publican** el
 dato.* **No es un problema de cobertura que se arregle con trabajo: es lo que hay.**
+
+
+---
+
+## 33. Por que el cruce deja fuera a 13.898: **dos causas, y una no es la que yo dije**
+
+*(Ronda 85.)* Medido por cadena: cuantos grupos tienen **EAN** -- *que es por donde se cruza* -- y cuantos
+cruzaron.
+
+```
+por cadena:
+    alcampo      23.128 grupos ·       0 con EAN (  0,0 %) ·      0 con kcal
+    carrefour    16.195 grupos ·  15.140 con EAN ( 93,5 %) ·  6.512 con kcal
+    dia           5.783 grupos ·   5.783 con EAN (100,0 %) ·  2.826 con kcal
+    mercadona     4.213 grupos ·   4.213 con EAN (100,0 %) ·  1.900 con kcal
+    aldi          2.768 grupos ·       0 con EAN (  0,0 %) ·      0 con kcal
+
+y de los que TIENEN EAN, cuantos cruzaron:
+    carrefour    6.512 de 15.140  (43,0 %)  ·  8.628 CON EAN Y SIN DATO
+    dia          2.826 de  5.783  (48,9 %)  ·  2.957 CON EAN Y SIN DATO
+    mercadona    1.900 de  4.213  (45,1 %)  ·  2.313 CON EAN Y SIN DATO
+```
+
+### Causa 1: alcampo y aldi **no tienen codigo de barras**
+
+**Los 25.896 grupos de alcampo y aldi tienen `EAN` a cero.** *Y el cruce con Open Food Facts es **por EAN**.*
+**Asi que no es solo que su fuente no publique nutricion: es que ademas no hay con que cruzar.**
+
+*Las dos cosas son ciertas y son distintas*, y yo habia dicho solo la primera. **La segunda importa mas de lo
+que parece**: *aunque Open Food Facts tuviera el dato de esos 25.896 productos, **no habria forma de
+encontrarlo** -- no hay clave.*
+
+### Causa 2: Open Food Facts **no tiene** esos productos
+
+**De los que si tienen EAN en carrefour, dia y mercadona, cruzaron entre el 43 % y el 49 %.** *Los otros
+-- **13.898** -- tienen codigo de barras valido y **Open Food Facts no los conoce**.*
+
+**Y eso no se arregla con codigo.** *El `JOIN` esta bien escrito y hace lo que puede: **la base comunitaria no
+tiene ese producto.*** *Es cobertura de terceros, y no es nuestra.*
+
+### Y la conclusion de F05, corregida otra vez
+
+| causa | grupos | **se arregla** |
+|---|---|---|
+| **alimento, sin EAN** (alcampo, aldi) | 25.896 | **no**: no hay clave con la que cruzar |
+| **con EAN y OFF no lo tiene** | 13.898 | **no por nuestra parte**: es cobertura de OFF |
+| **con EAN y OFF si lo tiene** | **11.238** | **ya esta** -- *es la nutricion que el catalogo sirve* |
+| **la cadena la tiene en su ficha** | *Carrefour 17.283 pendientes* | **si**, con el ejecutor y presupuesto |
+
+**Asi que de los 48.606 alimentos del catalogo, 39.794 no se pueden arreglar con codigo.** *Y lo que si se puede
+-- **la ficha de la cadena** -- es la ultima fila, y es una decision de presupuesto, no una duda.*
+
+*Tres correcciones seguidas de la misma cifra (§15, §17, §32, §33)*, y las tres por **mirar una columna mas**:
+*el maestro, la cola, `kcal_100g`, y ahora `ean`.* **La cifra no estaba mal calculada: estaba mal atribuida.**
