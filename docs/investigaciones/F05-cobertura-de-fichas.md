@@ -871,3 +871,43 @@ FAILED test_el_dato_de_la_ficha_es_lo_que_cuenta
    si, llamar a `inventario.terminar(con, clave, CORRECTO, hash=...)` con el hash de `_hash_util` sobre los
    campos traducidos.* **Es un bucle, y va despues de esto.**
 3. **Y el arreglo de fondo**: *que el colector avise a la cola al guardar una ficha.*
+
+
+---
+
+## 20. El reconciliador, hecho -- y **dos fallos mas que cazaron las pruebas**
+
+*(Ronda 71.)* `reconciliar_fichas.reconcilia(con, maestros)` esta escrito, con **once pruebas**. *Hace el
+bucle que faltaba: recorre los pendientes y marca `correcto` los que ya tienen ficha.*
+
+**Y las pruebas cazaron dos fallos mios mas, los dos del mismo tipo:**
+
+1. **El esquema de la cola, escrito a mano.** *Mi prueba creaba el `CREATE TABLE` copiandolo, y **le faltaban
+   columnas** -- `descubierto_en` y otras --:*
+   ```
+   sqlite3.OperationalError: table fichas has no column named descubierto_en
+   ```
+   **Arreglado pidiendo el esquema al proyecto** (`inventario.conecta`), *que es lo que hacen las otras
+   pruebas.* **El esquema de una tabla no se copia: se pide.**
+
+2. **`sin_maestro` no contaba lo que no se puede contrastar.** *El bucle saltaba las cadenas que no estan en
+   `maestros` **antes** de contarlas, asi que las **64.092** de alcampo, carrefour y aldi -- justo las que no
+   se pueden reconciliar -- no aparecian en la cuenta.* **Se cuentan antes de saltarlas.**
+
+### Y lo que hace, con la evidencia puesta
+
+**Marca `correcto`, con el hash del ejecutor, y deja dicho de donde vino:**
+
+```
+evidencia = "reconciliada: la ficha ya estaba en el maestro de {fuente}"
+```
+
+*Una marca `correcto` sin decir de donde vino es una marca que nadie puede auditar* -- *y es lo que permite
+distinguir, manana, una ficha que trajo el ejecutor de una que ya estaba.*
+
+### Y lo que queda para que esto corra de verdad
+
+1. **Llamarlo contra la cola real**, con los maestros de `data/master`. *Las pruebas usan una cola de
+   mentira; falta la pasada de verdad, que cambiaria **79.887 -> 72.411**.*
+2. **Y el arreglo de fondo**: *que el colector avise a la cola al guardar una ficha, para que no vuelva a
+   acumularse deuda falsa.*

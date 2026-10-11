@@ -128,3 +128,62 @@ def tiene_ficha(fuente: str, registro: dict) -> bool:
     # nombre y marca pero sin nutricion ni ingredientes **no tiene ficha**, y marcarlo `correcto` seria dar
     # por buena una ficha vacia.* **Lo cazo la prueba, no la lectura.**
     return any(registro.get(marca) for marca in marcas)
+
+
+def reconcilia(con, maestros: dict[str, dict], *, ahora=None, fuentes=None) -> dict:
+    """**Marca `correcto` lo que ya esta hecho**, y devuelve la cuenta.
+
+    *Es el arreglo del defecto medido*: la cola tiene **79.887 pendientes**, y de los que se pueden contrastar
+    -- Dia y Mercadona -- **7.476 ya tienen su ficha en el maestro**. *No porque la cola mienta, sino porque
+    **el colector guarda la ficha y no la avisa**.*
+
+    **El hash es el del ejecutor**, `fichas_lidl._hash_util` sobre `CAMPOS_DE_FICHA`: *si se calculara de
+    otra forma, la proxima pasada del ejecutor creeria que todo el contenido cambio y volveria a leerlo.*
+    Se importa de alli a proposito -- *una sola definicion, y la misma que escribe la cola.*
+
+    *`maestros` es `{fuente: {id: registro}}`*: quien llama decide de donde salen. **No se lee el disco aqui**
+    -- *para poder probarlo con un maestro de mentira, sin depender de `data/master`.*
+
+    **Y se deja `evidencia`**: *quien lea la cola manana tiene que poder saber que esa ficha no la trajo el
+    ejecutor, sino el colector.* *Una marca `correcto` sin decir de donde vino es una marca que nadie puede
+    auditar.*
+    """
+    from core import inventario
+    from projects.cesta.fichas_lidl import CAMPOS_DE_FICHA, _hash_util
+
+    cuenta = {"miradas": 0, "ya_estaban": 0, "reconciliadas": 0, "sin_maestro": 0}
+    lista_fuentes = tuple(fuentes) if fuentes else tuple(maestros)
+
+    pendientes = con.execute(
+        "SELECT fuente, id_fuente, variante, ambito FROM fichas WHERE estado = ?",
+        (inventario.PENDIENTE,)).fetchall()
+
+    for fuente, ident, variante, ambito in pendientes:
+        # **Se cuenta lo que NO se puede contrastar, antes de saltarlo.** *Alcampo, Carrefour y Aldi no
+        # tienen maestro: sus **64.092** pendientes no se pueden reconciliar, y saberlo es parte del
+        # resultado.* **La primera version los saltaba sin contarlos**, y `sin_maestro` solo se movia para
+        # una cadena que estuviera en `maestros` con el diccionario vacio -- *que no es el caso real. Lo
+        # cazo la prueba.*
+        if fuente not in lista_fuentes:
+            cuenta["sin_maestro"] += 1
+            continue
+        cuenta["miradas"] += 1
+        maestro = maestros.get(fuente)
+        if not maestro:
+            cuenta["sin_maestro"] += 1
+            continue
+        registro = maestro.get(str(ident))
+        if not tiene_ficha(fuente, registro):
+            continue
+        campos = campos_de_ficha(fuente, registro)
+        # **El hash, con los campos del ejecutor.** *Los que la fuente no traiga van como cadena vacia, que
+        # es lo que `_hash_util` hace con los suyos.*
+        hash_util = _hash_util({k: campos.get(k) for k in CAMPOS_DE_FICHA})
+        inventario.terminar(
+            con, (fuente, str(ident), variante, ambito), inventario.CORRECTO,
+            resultado="ficha del maestro", hash_util=hash_util,
+            evidencia=f"reconciliada: la ficha ya estaba en el maestro de {fuente}",
+            ahora=ahora)
+        cuenta["reconciliadas"] += 1
+
+    return cuenta

@@ -11,6 +11,8 @@ usan**. **Traducirlos es de lo que va esto**, y estas pruebas fijan la traduccio
 """
 from __future__ import annotations
 
+import pytest
+
 from projects.cesta import reconciliar_fichas as rf
 
 # **Las formas reales**, copiadas de los maestros. *Dia guarda `{"name", "value"}`; Mercadona guarda el
@@ -111,8 +113,6 @@ def test_los_maestros_reales_traen_lo_que_el_mapeo_espera():
     import json
     from pathlib import Path
 
-    import pytest
-
     vistos = 0
     for fuente in ("dia", "mercadona"):
         p = Path("data/master") / f"{fuente}.json.gz"
@@ -130,3 +130,83 @@ def test_los_maestros_reales_traen_lo_que_el_mapeo_espera():
 
     if vistos == 0:
         pytest.skip("no hay maestros con registros traducibles en data/master")
+
+
+# ---------------------------------------------------------------------------------------------
+# El reconciliador, sobre una cola de mentira -- sin red y sin tocar la de verdad.
+# ---------------------------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def cola(tmp_path):
+    """Una cola con el esquema **del propio proyecto**, en un fichero temporal.
+
+    *La primera version escribia el `CREATE TABLE` a mano y le faltaban columnas -- `descubierto_en` y
+    otras --: el esquema de una tabla no se copia, se pide.* **`inventario.conecta` lo crea**, y asi la
+    prueba no se queda atras cuando el esquema cambie.
+    """
+    from core import inventario
+
+    return inventario.conecta(tmp_path / "fichas.sqlite")
+
+
+def test_reconcilia_lo_que_ya_tiene_ficha(cola):
+    """**El arreglo del defecto.** *Un pendiente cuya ficha ya esta en el maestro pasa a `correcto`.*"""
+    from core import inventario
+    from projects.cesta import reconciliar_fichas as rf
+
+    inventario.alta(cola, "dia", "310847")
+    cuenta = rf.reconcilia(cola, {"dia": {"310847": DE_DIA}})
+
+    assert cuenta["reconciliadas"] == 1
+    fila = cola.execute("SELECT estado, hash_util, evidencia FROM fichas").fetchone()
+    assert fila["estado"] == inventario.CORRECTO
+    assert fila["hash_util"], "tiene que quedar el hash: es lo que detecta que el contenido cambio"
+    assert "maestro" in (fila["evidencia"] or ""), (
+        "y de donde vino: una marca correcto sin decir de donde es una marca que nadie audita")
+
+
+def test_no_toca_lo_que_no_tiene_ficha(cola):
+    """**Y no marca correcto lo que no lo esta.** *Un producto con nombre y marca pero sin dato sigue
+    pendiente: darlo por bueno seria dar por buena una ficha vacia.*
+    """
+    from core import inventario
+    from projects.cesta import reconciliar_fichas as rf
+
+    inventario.alta(cola, "dia", "1")
+    rf.reconcilia(cola, {"dia": {"1": {"product_name": {"value": "Yogur"}}}})
+
+    fila = cola.execute("SELECT estado FROM fichas").fetchone()
+    assert fila["estado"] == inventario.PENDIENTE
+
+
+def test_una_cadena_sin_maestro_se_cuenta_y_no_se_toca(cola):
+    """*Alcampo, Carrefour y Aldi no tienen maestro: sus pendientes **no se pueden contrastar**, y se cuenta
+    en vez de darlos por buenos.*
+    """
+    from core import inventario
+    from projects.cesta import reconciliar_fichas as rf
+
+    inventario.alta(cola, "alcampo", "824179")
+    cuenta = rf.reconcilia(cola, {"dia": {"310847": DE_DIA}})
+
+    assert cuenta["reconciliadas"] == 0
+    assert cuenta["sin_maestro"] == 1
+    assert cola.execute("SELECT estado FROM fichas").fetchone()["estado"] == inventario.PENDIENTE
+
+
+def test_el_hash_es_el_del_ejecutor(cola):
+    """**La parte que decidia.** *El hash tiene que salir de la misma funcion que usa `fichas_lidl`, o la
+    proxima pasada creeria que todo el contenido cambio.*
+    """
+    from core import inventario
+    from projects.cesta import reconciliar_fichas as rf
+    from projects.cesta.fichas_lidl import CAMPOS_DE_FICHA, _hash_util
+
+    inventario.alta(cola, "dia", "310847")
+    rf.reconcilia(cola, {"dia": {"310847": DE_DIA}})
+
+    campos = rf.campos_de_ficha("dia", DE_DIA)
+    esperado = _hash_util({k: campos.get(k) for k in CAMPOS_DE_FICHA})
+    guardado = cola.execute("SELECT hash_util FROM fichas").fetchone()["hash_util"]
+    assert guardado == esperado, "el hash de la cola y el del ejecutor tienen que ser el mismo"
