@@ -666,6 +666,29 @@ vez de fabricar un antes con el codigo de ayer.
 **Nota de metodo, para G07-G14**: *abrir el componente antes de proponer un cambio. Me ha costado tres
 rondas y tres propuestas inventadas.*
 
+### G07: el puntero sellaba una fecha y la carpeta otra
+
+`publicar(momento=X)` **nombraba la carpeta con `X`** (`_sello(momento)`) **y sellaba el puntero con
+`datetime.now()`** (`_mueve_puntero`). *Con `momento=None`, el uso normal, las dos son «ahora» y
+cuadra.* **Pero `/api/estado` comprueba la coherencia comparando justo esas dos fechas** --
+`_vigencia(catalogo.fecha_de_gold(), puntero["publicado_en"])` --, **asi que una publicacion
+retrofechada se declara incoherente sin serlo.** *Y el parametro `momento` existe precisamente para
+poder fechar: la mitad del sello lo ignoraba.*
+
+**Corregido**: `_mueve_puntero` acepta `momento` y sella con el. *Al volver atras (`fijar`) no se pasa,
+y esta dicho por que: ahi lo que importa es **cuando se movio el puntero**, no cuando se publico la
+version a la que se vuelve.*
+
+**Y con su prueba**, que antes no existia: *publicar con una fecha elegida y **muy anterior a hoy**
+--1 de enero de 2026-- y exigir que `publicado_en` empiece por esa fecha.* Sin el arreglo, el puntero
+diria octubre y el `assert` cae.
+
+**De paso quedaron verificados dos puntos de G07 leyendo, no suponiendo**: *el pipeline publica al
+final con `publicar()`, y **si no puede, el puntero se queda donde estaba y el desajuste queda
+visible** (`pipeline.py:792-799`, con el incidente del **13 de octubre de 2026** -- gold en el 8 y el
+puntero en el 7 -- documentado en el propio comentario)*; y **`/api/estado` lo declara** comparando las
+dos fechas.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

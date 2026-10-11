@@ -23,6 +23,8 @@ catalogo real: *si viniera, el ensayo mediria el dia en que se ejecuta.*
 """
 from __future__ import annotations
 
+import json
+from datetime import datetime
 from pathlib import Path
 
 import polars as pl
@@ -532,3 +534,20 @@ def test_lo_cerrado_conserva_su_precio_aunque_el_catalogo_cambie(con_almacen_y_e
         # **Y la lista sigue viva**, con la linea que quedo.
         detalle = cliente.get(f"/api/listas/{lista_id}")
         assert detalle.status_code == 200, detalle.text
+
+
+def test_el_puntero_sella_el_mismo_momento_que_nombra_la_carpeta(gold_de_ensayo):
+    """**Las dos mitades del sello dicen lo mismo**, que es lo que `/api/estado` compara.
+
+    `_vigencia(catalogo.fecha_de_gold(), puntero["publicado_en"])` pone la fecha de la carpeta contra
+    la del puntero. Si `publicar(momento=X)` nombrara la carpeta con `X` y sellara el puntero con la
+    hora real, **una publicacion retrofechada se veria incoherente sin serlo**.
+    """
+    # Una fecha elegida y **muy anterior a hoy**: si el puntero sellara la hora real, se veria.
+    momento = datetime(2026, 1, 1, 0, 0, 0)
+    version = publicacion.publicar(publica_v1(), momento=momento)
+    datos = json.loads((gold_de_ensayo / "actual.json").read_text(encoding="utf-8"))
+    assert version == "20260101-000000"
+    assert datos["version"] == version
+    assert datos["publicado_en"].startswith("2026-01-01T00:00:00"), (
+        "el puntero sella el momento que nombra la carpeta, no la hora real")

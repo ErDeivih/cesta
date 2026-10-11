@@ -131,14 +131,24 @@ def publicar(datos: dict[str, pl.DataFrame] | None = None, *, momento: datetime 
         shutil.rmtree(destino, ignore_errors=True)
         raise
 
-    _mueve_puntero(version, exigidos)
+    # **El mismo instante en las dos mitades del sello.** La carpeta se llama `v<momento>` y el
+    # puntero se sella con `publicado_en`: si uno lleva el `momento` y el otro la hora real, una
+    # publicacion retrofechada queda **incoherente para `/api/estado`**, que compara las dos fechas.
+    _mueve_puntero(version, exigidos, momento)
     return version
 
 
-def _mueve_puntero(version: str, ficheros: list[str]) -> None:
-    """Cambia el puntero de una vez. Un puntero a medias es peor que no tener version."""
+def _mueve_puntero(version: str, ficheros: list[str],
+                   momento: datetime | None = None) -> None:
+    """Cambia el puntero de una vez. Un puntero a medias es peor que no tener version.
+
+    `momento` es el mismo que nombra la carpeta, para que las dos fechas digan lo mismo. *Sin el,
+    una publicacion retrofechada se veia incoherente: la carpeta en enero y el puntero en octubre.*
+    Al **volver atras** (`fijar`) no se pasa: ahi lo que importa es **cuando se movio el puntero**,
+    no cuando se publico la version a la que se vuelve.
+    """
     datos = {"version_puntero": VERSION_PUNTERO, "version": version,
-             "publicado_en": datetime.now().isoformat(), "ficheros": ficheros}
+             "publicado_en": (momento or datetime.now()).isoformat(), "ficheros": ficheros}
     temporal = PUNTERO.with_suffix(".json.tmp")
     temporal.write_text(json.dumps(datos, ensure_ascii=False, indent=1), encoding="utf-8")
     os.replace(temporal, PUNTERO)
