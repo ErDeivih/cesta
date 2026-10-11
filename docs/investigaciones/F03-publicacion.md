@@ -653,3 +653,64 @@ API cambia de versión**, no que **el cambio se note**.
 **Estado de los servicios al cerrar esta ronda**, medido: **8100 (real), 8102 (sandbox) y 8099
 levantados**; **5173 no**. *El 8102 queda apuntando al sandbox y con la V2 publicada, listo para el paso de
 la pantalla.*
+
+
+---
+
+## 20. Los dos bloqueos, arreglados -- y la configuracion del recorrido, verificada
+
+*(Ronda 56.)*
+
+### 1. Que las versiones difieran: hecho
+
+```
+grupos del sandbox: 52.087 filas, precio_cent min = 15
+  -> +100 con write_parquet_file (atomico: temporal + rename)
+  -> min = 115
+V3 publicada: v20261003-120000   ·   puntero del sandbox: 20261003-120000
+
+V1 == V3 ? False      <- ya difieren
+V2 == V3 ? False
+puntero del REAL: 20261007-103000      <- intacto
+```
+
+**Y la diferencia se nota por HTTP**, que era el punto:
+
+```
+8100 (real)             version=20261007-103000    «Leche desnatada»            81 cent
+8102 (sandbox, V3 +100) version=20261003-120000    «Leche semidesnatada Simpl» 181 cent
+```
+
+### 2. El cliente: levantado y apuntando al sandbox
+
+```
+cd plataforma/web/app;  $env:CESTA_API='http://127.0.0.1:8102';  npm run dev
+
+    Port 5173 is in use, trying another one...
+    VITE v7.3.6  ready in 2013 ms
+    -> http://localhost:5174/
+```
+
+**Y verificado que sirve el sandbox, no el catalogo de casa:**
+
+```
+http://localhost:5174/                -> 200
+  proxy /api/estado   -> version=20261003-120000     <- la V3 del sandbox
+  proxy /api/buscar   -> 181 cent                    <- +100
+```
+
+### Y dos cosas que costaron intentos, para no repetirlos
+
+1. **El cliente quedo en el 5174, no en el 5173**: *habia un socket viejo ocupando el 5173* -- *del Vite de
+   una sesion anterior, que ya no contesta pero deja el puerto*. **Vite avisa y coge el siguiente**, asi que
+   el puerto hay que leerlo del arranque, no suponerlo.
+2. **Y contesta en `localhost`, no en `127.0.0.1`.** *Vite enlaza `localhost`, que en Windows resuelve a
+   IPv6; con `127.0.0.1` la conexion se rechaza aunque el servidor este levantado.* **Dos intentos
+   perdidos en eso** -- y es lo primero que hay que probar cuando un servidor de desarrollo "no contesta"
+   estando vivo.
+
+### Lo que queda
+
+**La pantalla, con la configuracion ya en pie**: *abrir `http://localhost:5174`, buscar, abrir la previa de
+una lista, sustituir y anotar en el diario -- **con el API sirviendo la V3 (181 cent)** -- y comprobar que
+lo que se ve es coherente.* **Es el ultimo paso de F03, y ya no tiene bloqueos.**
