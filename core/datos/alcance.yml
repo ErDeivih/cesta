@@ -25,7 +25,7 @@
 # y "Folleto y Promociones > Renueva la decoracion de tu hogar" es bazar (30) y no mixta (1),
 # que es el agujero por el que entro el bazar medido el 5 de octubre de 2026.
 
-version: 3
+version: 5
 
 # Familias del contrato. Son la unidad con la que se mide la cobertura y con la que despues se
 # compara de verdad (T03): "leche" es una familia, "Asturiana entera brik 1 l" es un articulo.
@@ -74,12 +74,21 @@ excluye_producto:
     motivo: "bricolaje, herramientas y jardin"
     terminos: ["taladro", "destornillador", "martillo", "llave inglesa", 
                "pintura", "manguera", "maceta", "sustrato", 
-               "cortacesped", "escalera", "candado", "cerradura"]
+               "cortacesped", "escalera", "candado", "cerradura",
+               # **Medido el 11 de octubre de 2026** sobre 26 fichas reales de Lidl: estos
+               # pasaban el filtro y llegaban a pedir ficha. *Compuestos y no palabras sueltas:
+               # «agua» esta en `cat-bebidas` y quitarla romperia el agua de verdad; «deposito
+               # de agua» no se lleva nada por delante, y «sierra de mano» deja intacta la
+               # sierra de lomo de cerdo.*
+               "deposito de agua", "huerto urbano", "huerto elevado", "sierra de mano",
+               "griferia", "caja fuerte", "portabicicletas", "invernadero", "toldo"]
   - id: prod-juguetes-deporte
     motivo: "juguetes, deporte y automovil"
     terminos: ["juguete", "puzzle", "bicicleta", "patinete", "balon",
                "raqueta", "pesas", "esterilla de yoga", "tienda de campaña", "saco de dormir",
-               "aceite de motor", "limpiaparabrisas", "casco de moto", "baca"]
+               "aceite de motor", "limpiaparabrisas", "casco de moto", "baca",
+               # Idem, medido: un peluche y una pista de canicas no son cesta familiar.
+               "peluche", "pista de canicas", "muneca", "mesa de agua para juegos"]
   - id: prod-libros-papeleria
     motivo: "libros y papeleria general (el cuaderno no es papel higienico)"
     terminos: ["novela", "cuaderno", "boligrafo", "lapiz", "rotulador",
@@ -111,7 +120,10 @@ excluye_producto:
     motivo: "menaje que se compra una vez y dura (no es consumible)"
     terminos: ["olla", "cazo", "tabla de cortar", "escurridor",
                "fiambrera", "tupper", "vaso de cristal", 
-               "escoba", "cubo de fregar"]
+               "escoba", "cubo de fregar",
+               # Idem: menaje que se compra una vez. **«molde» a secas no**: un molde de
+               # horno es menaje de cocina y se gasta; «molde de silicona» tampoco es comida.
+               "wok", "vasos termicos", "tarro de vidrio", "procesador de alimentos"]
 
 # ---------------------------------------------------------------------------------------------
 # 2. Reglas de categoria: se comparan con los **segmentos** de la ruta, no con el titulo.

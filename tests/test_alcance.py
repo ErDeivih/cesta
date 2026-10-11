@@ -345,3 +345,37 @@ def test_los_huevos_en_jaulas_no_son_una_jaula_de_mascota():
     # Y una jaula de mascota de verdad sigue fuera.
     assert alcance.clasificar_alcance(
         "Jaula para conejo con bandeja, 80 cm", "").estado == alcance.EXCLUIDO
+
+
+def test_el_bazar_que_menciona_comida_cae_por_su_compuesto_no_por_la_palabra():
+    """**Medido el 11 de octubre de 2026 sobre 26 fichas reales de Lidl.**
+
+    El slug de una ficha viaja **como nombre y como categoria**, asi que la palabra «agua» de un
+    deposito de jardin casaba con el pasillo `cat-bebidas` y **entraba como bebida**. *Quitar «agua»
+    de `cat-bebidas` habria roto el agua de verdad, asi que el arreglo va donde toca: en
+    `excluye_producto`, que se prueba **antes** que la categoria.*
+    """
+    from projects.cesta import descubrir_lidl
+
+    def clasifica(slug: str) -> str:
+        return descubrir_lidl.clasifica(f"https://www.lidl.es/p/{slug}/p1")[0]
+
+    assert clasifica("4rain-deposito-de-agua-vaso-2in1-decor-volum") == "excluido"
+    assert clasifica("step-2-mesa-de-agua-para-juegos-summer-showers") == "excluido"
+    assert clasifica("fisher-price-peluche-nutria-sonadora") == "excluido"
+    assert clasifica("gsw-wok-de-hierro-fundido-con-rejilla-o-32-cm-5-piezas") == "excluido"
+
+
+def test_la_regla_no_se_lleva_comida_por_delante():
+    """**Y esta es la mitad que hace valida a la otra.** *G09: «seguridad para no excluir alimentos
+    por coincidencias de palabras».*
+
+    «sierra de mano» excluye la herramienta; **«Sierra de lomo de cerdo» no es una sierra**. *Si la
+    regla se hubiera escrito con la palabra suelta, se habria llevado el lomo por delante.*
+    """
+    from core import alcance
+
+    assert alcance.clasificar_alcance("Sierra de lomo de cerdo", "Frescos > Carne").estado != "excluido"
+    assert alcance.clasificar_alcance("Agua mineral natural 1,5 l", "Bebidas > Aguas").estado != "excluido"
+    assert alcance.clasificar_alcance("Agua de coco", "Bebidas > Aguas").estado != "excluido"
+    assert alcance.clasificar_alcance("Caja de galletas", "Dulces").estado != "excluido"

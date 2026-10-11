@@ -808,6 +808,55 @@ nombra en su punto 183 y el alcance que G09 prohibe en su 188.** *Y `core/alcanc
 `clasificar_alcance` memorizado y politica en `alcance.yml`: la pregunta abierta es **quien llena la
 cola de Lidl y si le aplica el filtro**.*
 
+### G08: el bazar de Lidl, **medido, explicado y corregido**
+
+**El hallazgo, con numeros.** De las **26 fichas guardadas en `data/fichas-lidl/`, NINGUNA era
+alimentaria** -- woks, juguetes, textil, jardin, bano, menaje --: *el «exceso de bazar» que G08 nombra
+en su punto 183 y el alcance que G09 prohibe en su 188.*
+
+**La cadena entera, medida pieza a pieza:**
+
+1. **El clasificador existe y SI se aplica**: `descubrir_lidl.py:71` llama a
+   `alcance.clasificar_alcance(slug, slug)`, con la politica de `core/datos/alcance.yml`. *Mi
+   «no lo llama nadie» de la ronda 201 era falso: salio de cortar la salida del `grep` con
+   `-First 16`, y la linea que importaba era la 17.*
+2. **El slug viaja como NOMBRE Y COMO CATEGORIA** -- *el modulo lo explica: «como categoria, para que
+   valgan los pasillos; con la categoria sola no se rechazaba el bazar»* --, y ahi nace el falso
+   positivo: **la palabra «agua» de un deposito de jardin casa con el pasillo `cat-bebidas`**.
+3. **La politica tenia DIEZ reglas de exclusion** (bricolaje, muebles, juguetes, electronica, menaje…)
+   **y le faltaban terminos**: medidos sobre las 26 fichas, pasaban un deposito de agua, una mesa de
+   agua, un huerto, un wok, un peluche y una sierra.
+4. **`_casa` es correcto y esta bien documentado**: *frase contigua y en orden («"cubo de basura"
+   casaba con "Bolsa de basura para cubo alto"», 6 de octubre de 2026), raices en los dos lados,
+   y `panal` no casa con `pantalon`.* **El comparador no era el problema.**
+
+**Y el arreglo, donde toca**: `excluye_producto` se prueba **antes** que la categoria, asi que se
+anaden **compuestos** -- `deposito de agua`, `huerto urbano`, `sierra de mano`, `caja fuerte`,
+`portabicicletas`… -- y no palabras sueltas. *Quitar «agua» de `cat-bebidas` habria roto el agua de
+verdad.* **Politica a version 5.**
+
+| sobre las 26 fichas reales | antes | despues |
+|---|---|---|
+| `excluido` | 0 | **14** |
+| `revisar` | 23 | 11 |
+| `incluido` | **3** | **1** |
+
+*El que queda es una hamaca de bebe, en `cat-bebe`: legitima.*
+
+**Y dos pruebas, y la segunda es la que hace valida a la primera**: el compuesto excluye el deposito,
+la mesa de agua, el peluche y el wok; **y «Sierra de lomo de cerdo», «Agua mineral», «Agua de coco» y
+«Caja de galletas» NO se excluyen**. *La palabra «sierra» suelta se habria llevado el lomo por
+delante; el compuesto no.* Es exactamente la seguridad que G09 pide.
+
+**Y una leccion de herramienta, que costo dos rondas**: *mi script de la ronda 206 construyo la lista
+de bricolaje en una variable y **nunca la aplico**, mientras imprimia «version nueva: 4»*. **Un
+mensaje de exito no es la comprobacion de que el cambio esta**: ahora se relee el fichero, se prueba
+el comparador sobre el slug real **y** se cuenta antes y despues.
+
+**Queda abierto, y es lo siguiente**: **que hace la cola con los 11 `revisar`** -- *el aplazamiento es
+la decision segura para la comida, pero si la cola pide lo revisado, es la via por la que todavia
+entra bazar.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
