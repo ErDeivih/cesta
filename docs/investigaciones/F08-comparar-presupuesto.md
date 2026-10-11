@@ -58,3 +58,91 @@ hay que ver es si el **presupuesto** y lo **pagado** son dos numeros separados o
 criterio dice **«sin mezclar»**, y esa palabra es el criterio entero de `C09`.*
 
 **Es un `SELECT` sobre `compra` y sobre las columnas de presupuesto, y va antes que cualquier pantalla.**
+
+
+---
+
+## 2. `C09`: **«pagado» esta, con su cobertura; «previsto» no existe** -- y es un hueco de verdad
+
+*(Ronda 105.)* El `SELECT`, que iba antes que cualquier pantalla.
+
+### Lo que hay
+
+```
+tablas con «compra» o «presupuesto»:  compra, compra_linea
+    (y NINGUNA tabla de presupuesto)
+
+compra:
+    id, lista_id, usuario_id, cerrada_en, lineas, sin_precio, total_cent
+```
+
+**Y el criterio de `C09`** (*`SUPERAPP-COMPETENCIA-Y-REA.md:97`*): *«**Previsto contra guardado/pagado sin
+mezclar**; cobertura de lineas desconocidas.»*
+
+| mitad del criterio | **estado** |
+|---|---|
+| **«pagado»** | **esta**: `compra.total_cent` -- *lo que costo, al cerrar* |
+| **«cobertura de lineas desconocidas»** | **esta**: `compra.sin_precio` -- *cuantas lineas no tenian precio* |
+| **«previsto»** | **NO EXISTE** |
+| **«sin mezclar»** | *no hay nada que mezclar, porque solo hay un numero* |
+
+### Y comprobado que no esta en otro sitio, que es la leccion de esta fase
+
+**Antes de decir «no existe» mire los tres sitios donde podria estar escondido** -- *porque **tres veces esta
+sesion concluí de una capa y estaba en otra**:*
+
+1. **¿una tabla?** *No: la consulta a `information_schema` no devuelve ninguna.*
+2. **¿una preferencia?** *Hay `preferencias_de` / `guarda_preferencia`, y **no** aparece ninguna clave de
+   presupuesto en el codigo.*
+3. **¿el codigo?** ***Y aqui esta lo que decide*** -- *`git grep -i presupuesto` devuelve **dieciseis lineas, y
+   todas son de COLECTOR**:*
+
+```
+alcampo.py:396    PRESUPUESTO_BARRIDO_S = 1200   # 20 minutos
+dia.py:485        presupuesto = min(max(config.DIA_DETALLES_POR_DIA, faltan), ...)
+mercadona.py:291  presupuesto = config.MERCADONA_DETALLES_POR_DIA ...
+fichas_carrefour.py:28  «Procesa hasta limite fichas -- con presupuesto...»
+```
+
+**Son presupuestos de tiempo y de peticiones -- de cuanto trabajo se hace en una pasada --, no de dinero.**
+*La palabra esta en el proyecto, **y significa otra cosa** -- que es justo el error que he cometido cuatro veces
+esta fase: `nutriben`, `energy`, `nutrition_information` y `valores nutricionales` eran palabras de nutricion
+que no eran nutricion.* **Aqui la palabra es «presupuesto», y es de colector.**
+
+### Y lo que esto es, para F08
+
+**No un hallazgo de «ya estaba hecho»** -- *que es lo que me ha pasado cinco veces hoy* --, **sino lo contrario:
+una mitad del criterio que **falta**, y que se puede decir con precision por que falta:**
+
+> **«Previsto contra guardado/pagado sin mezclar»** pide **dos numeros que se puedan mirar juntos y no se
+> confundan**. *El proyecto guarda **uno** -- lo pagado, con su cobertura --, y **no guarda el previsto**.* **Asi
+> que el «sin mezclar» hoy se cumple por vacio: no hay dos numeros que mezclar.**
+
+**Y hay que decir tambien lo que SI se puede hacer ya sin construir nada**: *la **estimacion** de lo que costara
+la lista existe -- `cesta.coste_por_linea` la calcula, y **la pantalla la ensena** (`estimacion.sin_precio`, en
+`Cesta.tsx:1511`).* **Eso es «previsto» en el sentido de «lo que va a costar ahora mismo»** -- *y es **distinto**
+de un presupuesto que la persona se ponga.*
+
+**Asi que `C09` tiene tres piezas y hay que separarlas:**
+
+| pieza | **estado** |
+|---|---|
+| **lo que va a costar la lista ahora** (estimacion) | **hecho**, y en pantalla |
+| **lo que se pago** | **hecho**: `compra.total_cent` |
+| **lo que la persona se propone gastar** | **NO EXISTE** -- *y es el «previsto» del criterio* |
+
+*Y cual de las tres es «presupuesto» **es una decision del dueno**, no una medicion* -- *que es exactamente el
+tipo de cosa que hay que preguntar en vez de construir.*
+
+### Y los cinco casos de la aceptacion, con lo que ya se sabe
+
+| caso | **pieza que lo cubre, si existe** |
+|---|---|
+| **lista parcial** | *`sin_precio` -- y la estimacion lo dice en pantalla* |
+| **cupon/club no elegible** | *por medir: `promo_club`, `promo_solo_online` estan en el catalogo* |
+| **oferta caducada** | *por medir: `promo_hasta` esta* |
+| **cantidad/pack** | *por medir: `unidades_pack`, `promo_unidades_minimas` estan* |
+| **historico desconocido** | *por medir: `historial_de` existe* |
+
+**Los cinco tienen columna.** *Y que la columna este **no es** que el caso funcione* -- *es que hay donde
+mirarlo, que es distinto.*
