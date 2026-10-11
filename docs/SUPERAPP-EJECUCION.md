@@ -547,6 +547,25 @@ y por receta los dos totales **con su cobertura**: `conDatos`, `sinDatos` (con n
 
 **Seis pruebas nuevas (26 en el cliente).** *Falta la pantalla de la receta.*
 
+### G05, el coste en la pantalla: **y la respuesta honesta hoy es «no se puede calcular»**
+
+`RecetaDetalle.tsx` gana una tarjeta **«Lo que cuesta»** con los dos numeros que G05 pide -- *usando lo
+que dice la receta, y comprando los envases enteros* -- **y con lo que falta dicho por su nombre**.
+
+**Y hoy el resultado es «no se puede calcular todavía», y es correcto.** *El ingrediente de una receta
+tiene nombre, cantidad y nutrientes, y **ningun `producto_id`**: no hay precio que aplicar.* Enlazarlo
+**es el problema de identidad de G10**, y `cocina.ts:36` prohibe la salida facil -- *«no fusionar por
+parecido de nombre: no demuestra que sean el mismo ingrediente»* --. Asi que el coste **no se inventa**:
+
+- **no se pinta un «0,00 EUR»**, que se leeria como «esta receta es gratis»;
+- se dice **«no se puede calcular todavía»** en los dos numeros;
+- y se **nombran los ingredientes sin precio**, con el motivo: *los precios salen del catalogo y cada
+  ingrediente tiene que estar enlazado; emparejarlos por el nombre no vale.*
+
+**Lo que si esta verificado**: `/api/buscar` **ya devuelve `precio_cent`, `precio_unidad_cent` y
+`unidad`** -- *los tres que el modulo necesita* --, y el escalado de raciones lo hace el servidor. *Asi
+que cuando G10 traiga el enlace, esta tarjeta calcula los dos numeros sin tocar `logica/costeReceta.ts`.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

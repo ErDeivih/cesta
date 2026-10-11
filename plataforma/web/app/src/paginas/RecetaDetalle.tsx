@@ -12,6 +12,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { textoDeError, esErrorApi } from '../api/cliente'
 import { useReceta } from '../api/recetas'
+import { costeDeReceta, type IngredienteConPrecio } from '../logica/costeReceta'
 import { FormularioReceta } from '../componentes/FormularioReceta'
 import { Tarjeta, Vacio } from '../componentes/ui'
 
@@ -121,6 +122,59 @@ export function RecetaDetalle() {
             ))}
           </ul>
         )}
+      </Tarjeta>
+
+      {/* **Lo que cuesta, con sus dos numeros -- o dicho claro que no se puede.** G05: *«coste
+          estimado, **distinguiendo cantidad usada de coste de comprar envases**; **indicar
+          ingredientes sin datos**»*.
+          **Hoy no hay ningun ingrediente enlazado con un producto**: el ingrediente de una receta
+          tiene nombre, cantidad y nutrientes, y ningun `producto_id`. *Enlazarlo es el problema de
+          identidad de G10*, y `cocina.ts:36` prohibe la salida facil -- «no fusionar por parecido de
+          nombre: no demuestra que sean el mismo ingrediente». Asi que el coste **no se inventa**: se
+          declara.
+          Y no se pinta un «0,00 EUR»: **un cero se leeria como «esta receta es gratis»**, y lo que
+          pasa es que no se sabe. Cuando G10 traiga el enlace, esta tarjeta ya calcula los dos numeros
+          sin tocar el modulo. */}
+      <Tarjeta titulo="Lo que cuesta">
+        {(() => {
+          const conPrecio: IngredienteConPrecio[] = data.ingredientes.map((i) => ({
+            nombre: i.texto,
+            cantidad: i.cantidad ?? 0,
+            unidad: i.unidad ?? '',
+            // **Sin enlace no hay precio.** No se busca por nombre: no demuestra que sea el mismo.
+            precio: null,
+          }))
+          const c = costeDeReceta(conPrecio)
+          return (
+            <>
+              <ul className="flex flex-col gap-1 text-[13px] text-secundaria">
+                <li>
+                  Usando lo que dice la receta:{' '}
+                  <strong className="text-tinta-fuerte">
+                    {c.usadoCent === null ? 'no se puede calcular todavía' : `${c.usadoCent / 100} EUR`}
+                  </strong>
+                </li>
+                <li>
+                  Comprando los envases enteros:{' '}
+                  <strong className="text-tinta-fuerte">
+                    {c.envaseCent === null ? 'no se puede calcular todavía' : `${c.envaseCent / 100} EUR`}
+                  </strong>
+                </li>
+              </ul>
+              {!c.completo && (
+                <p className="mt-2 text-[13px] text-aviso">
+                  {c.sinDatos.length === 1
+                    ? 'Un ingrediente no tiene precio: '
+                    : `${c.sinDatos.length} ingredientes no tienen precio: `}
+                  <strong className="font-medium">{c.sinDatos.join(', ')}</strong>. Los precios salen
+                  del catálogo, y para eso cada ingrediente tiene que estar enlazado con su producto;
+                  emparejarlos por el nombre no vale, porque un nombre parecido no demuestra que sea el
+                  mismo producto.
+                </p>
+              )}
+            </>
+          )
+        })()}
       </Tarjeta>
 
       {data.preparacion && (
