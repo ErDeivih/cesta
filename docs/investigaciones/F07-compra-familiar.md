@@ -61,3 +61,69 @@ ver si `momento` decide algo.***
 
 **Y el orden correcto es el que ya funciona en esta fase**: *primero **medir que falta** -- `momento`, los
 pasillos, y los pasos --, y despues mejorar.* **No al reves.**
+
+
+---
+
+## 2. **El tachado esta protegido por diseno; la cantidad no** -- y el codigo dice que es a proposito
+
+*(Ronda 87.)* Leida `almacen.cambia_linea` (`plataforma/api/almacen.py:406`), que era la pregunta de una
+funcion:
+
+```python
+411  """Idempotente a proposito: tachar algo ya tachado no hace nada y no es un
+412  error. Si los dos tachais a la vez, gana quien lo hizo antes y el otro ve lo
+413  que queria ver.
+415  `momento` es la hora del MOVIL, no la de llegada: tachar sin cobertura a las
+416  18:04 y subirlo a las 18:20 cuenta como las 18:04, que si no el orden de los
+417  hechos se lo inventa el servidor.
+418  """
+419  cuando = momento or datetime.now(timezone.utc)
+...
+421  if tachado is True:
+422      trozos.append("en_carrito = true")
+423      # COALESCE: si ya estaba tachado, se respeta el primero.
+424      trozos.append("tachado_en = LEAST(COALESCE(tachado_en, %s), %s)")
+426      trozos.append("tachado_por = COALESCE(tachado_por, %s)")
+428  elif tachado is False:
+429      trozos += ["tachado_en = NULL", "tachado_por = NULL", "en_carrito = false"]
+430  if cantidad is not None:
+431      trozos.append("cantidad = %s")      # gana el ultimo, a proposito
+```
+
+### Y la respuesta es distinta para cada campo
+
+| campo | regla | y el motivo, escrito |
+|---|---|---|
+| **`tachado`** | **`LEAST` + `COALESCE`: gana el PRIMERO** | *«gana quien lo hizo antes y el otro ve lo que queria ver»* |
+| **`tachado_por`** | **`COALESCE`: se queda el primero** | *para poder decir quien fue* |
+| **`cantidad`** | **gana el ULTIMO** | *«a proposito», dice el comentario* |
+| **`nota`** | *ausente = no tocar; `null` = quitarla* | *con el defecto del 30-sep documentado al lado* |
+
+### Y eso choca con el criterio, que dice «no pisan cantidades ni tachados»
+
+**El tachado cumple la afirmacion, y ademas bien**: *`LEAST` sobre la hora **del movil** -- no la de llegada --
+hace que **el primero gane aunque llegue segundo***, y que el otro **vea lo que queria ver** en vez de un error.
+*Es exactamente lo que pide el criterio, y resuelve el caso dificil: dos personas tachando el mismo brick desde
+dos moviles sin cobertura.*
+
+**La cantidad, no.** *«Gana el ultimo»* significa que **si dos personas cambian la cantidad a la vez, la
+segunda pisa a la primera** -- *y **`momento` no se usa para la cantidad**: el `if cantidad is not None` no
+mira `cuando` para nada.*
+
+### Y aqui hay que decidir si es un defecto, y no antes de mirarlo
+
+**Hay dos lecturas y no son la misma:**
+
+1. **Es un defecto**: *el criterio dice «no pisan cantidades», y **esta claro que se pisan*** -- *la segunda
+   escritura gana, y quien puso «3» se encuentra «2» sin saber por que.*
+2. **Es una decision**: *«gana el ultimo» en una cantidad es defendible* -- *si mi pareja cambia de 2 a 6
+   porque ha visto mas sitios, mi 3 viejo no deberia ganar por ser mas antiguo.*
+
+**Y lo que decide entre las dos no es la opinion: es que pasa de verdad.** *Asi que lo siguiente es **probar
+dos sesiones cambiando la misma cantidad**, con horas de movil distintas y en los dos ordenes de llegada, y ver
+quien gana* -- *que es lo que el criterio pide medir y todavia no se ha medido.*
+
+**Y hay un tercer caso que no he mirado**: *`tachado is False` **borra la hora sin mirar `cuando`*** -- *asi que
+destachar **siempre gana** sobre tachar, sin importar el orden.* *Puede ser correcto -- destachar es una accion
+deliberada --, pero **es una asimetria que conviene tener escrita**.*
