@@ -1109,6 +1109,40 @@ era falso: lo que habia leido era el tipo `Ingrediente` del cliente, que no tien
 para todo el sistema.* **Decimoseptima vez del dia, y la misma forma que las primeras: leer una capa y
 concluir sobre el conjunto.**
 
+### G12, punto 221: **la previa de compra**, sin escribir nada
+
+G12 pide *«Receta→lista: **previa de cantidades**, **consolidacion compatible**, distincion
+g/ml/unidades y **envases enteros necesarios**»*. **`core/previa_compra.py` hace la previa y solo la
+previa**: *no escribe en ninguna lista, no toca ninguna base y no pide nada por red.* Devuelve **que
+habria que comprar**, linea a linea y ya consolidada, para que la persona lo vea antes de decidir.
+
+**Las tres reglas, y por que cada una:**
+
+1. **La consolidacion es por producto Y unidad.** *Dos lineas del mismo producto en kilos se suman;
+   una en kilos y otra en unidades **no**, y se dice por que.* **Sumar 1 kg con 2 unidades daria un
+   numero que no significa nada**, y es la clase de cifra inventada que este proyecto no escribe.
+2. **Lo que no tiene cantidad no se compra, ni se le inventa una.** *Un ingrediente anotado como
+   «sal» no se puede convertir en una cantidad de compra*, y es la regla que `core/recetas.py:escala`
+   ya escribe: *«lo que no tiene cantidad, no la gana… inventarle un cero seria convertir lo que
+   falta en un dato falso»*.
+3. **Los envases son enteros, y el sobrante se dice.** *Si hacen falta 1,4 kg y el envase es de 1 kg,
+   hay que comprar 2.* **Y «te sobran 600 g» no es un error de calculo: es lo que pasa de verdad.**
+
+**Cinco pruebas, y la primera fija el limite de la consolidacion por texto**: *un ingrediente generico
+no tiene `producto_id`, asi que dos lineas de «harina» se suman por texto -- **que es mas debil**: dos
+marcas distintas de harina no serian el mismo producto y aqui no se pretende que lo sean.*
+
+**Y es pura, y eso tambien se prueba**: *su firma toma **solo la lista** -- ni conexion ni propietario
+-- y su fuente no importa `sqlite3` ni `requests`.* **Asi que se puede probar con numeros, que es la
+unica forma de saber que la consolidacion y los envases son correctos y no solo que no revientan.**
+
+**Y lo que NO se ha construido, a proposito: el camino de escritura.** *El 221 pide que «repetir la
+misma transferencia no duplique», y eso necesita una **clave de operacion** -- el patron de
+`inventario`: clave unica y upsert -- y **G13 pide «no confiar en IDs enviados por el cliente como
+propietario» y «mutaciones protegidas»**.* **Escribir en la lista sin esa disciplina seria construir
+hoy lo que G13 prohibe y arreglarlo en dos rondas.** *La previa no escribe: se puede hacer entera y
+bien, y es lo que la persona mira antes de decidir.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
