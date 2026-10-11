@@ -1016,6 +1016,40 @@ la migracion 013 vista en G05.
 exhaustiva en cestas pequenas, **independiente del codigo de produccion**»*. *Un oraculo independiente
 es justo lo que este proyecto hace bien con `banco_verdad`: la misma idea, aplicada al dinero.*
 
+### G11, punto 210: **el oraculo independiente** -- y el 211 comprobado con un numero
+
+**El oraculo, hecho y verificado.** `tests/test_g11_oraculo.py`: **aritmetica escrita desde la
+definicion**, sin importar `promos` ni `cesta` -- *un oraculo que comparta codigo con lo que verifica
+no verifica nada, y eso lo dice el propio proyecto en `banco_verdad.py`*.
+
+    3x2              1..6 →  100 200 200 300 400 400     oraculo == produccion
+    2a unidad -50%   1..6 →  100 150 250 300 400 450     oraculo == produccion
+    Club 15% dto     1..6 →  100 200 300 400 500 600     oraculo == produccion
+
+**18 casos, cero discrepancias.** *Dos implementaciones escritas por separado que coinciden: la
+coincidencia es un dato.* Y la enumeracion exhaustiva tambien esta -- `asignaciones()` evalua **todas**
+las tiendas y **no descarta ninguna antes de calcular**, que es el 208 al pie de la letra.
+
+**Y el 211, comprobado y cuantificado.** `coste(unidades, precio_cent)` recibe **el precio de un solo
+producto** y calcula `lleno = unidades * precio_cent`. *Asi que un umbral de cesta no se puede
+expresar.* Medido con «5 EUR dto comprando 20 EUR»:
+
+    (a) POR LINEA:  4 lineas de 5,00 EUR  →  4 x 500 = 2000 cent   (SIN descuento)
+    (b) UNA LINEA de 20,00 EUR            →            1500 cent   (con descuento)
+    (c) la cesta entera son 20,00 EUR     →  deberia ser 1500 cent
+
+    DIFERENCIA: 500 cent = 5,00 EUR
+
+**Y en un folleto «compra 20 EUR» es el total de la compra, no el de un articulo.** *No es una
+limitacion teorica: es una oferta real que el modelo no puede representar.* El unico llamador de
+produccion es `promos.py:279`, y le pasa el precio de un producto.
+
+**Lo que el 211 manda, y que no es documentar**: *«comprobarlo **y recalcular promociones por
+asignacion efectiva**»*. Asi que el trabajo es: **llevar el total de la cesta al calculo, aplicar el
+umbral al conjunto, y repartir el descuento entre las lineas** -- *con el oraculo delante para
+comprobar que el reparto no rompe la condicion, y cuidando que la suma de `importe_cent` siga
+cuadrando con el total, que es el 213.* **Es el ultimo trabajo del encargo.**
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
