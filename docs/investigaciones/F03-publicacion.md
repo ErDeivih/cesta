@@ -198,3 +198,36 @@ reales».
 3. **Reanudar desde crudo sin rescrapear todo**, con `load_raw_bytes`.
 4. **Y una decisión de tabla, no de código**: la fila de S01 que da «concurrencia probada» por `rutas()`
    —*probado, sí; usado, no*— **debería decir lo que dice la prosa**.
+
+
+---
+
+## 9. El modulo sin polars, hecho
+
+*(Ronda 16.)* El pendiente declarado de S01 es **que la API lea la version publicada**. *Y el propio
+documento de estado fija por que no se hizo de la forma obvia: `core/publicacion.py` **importa polars**
+-- escribe marcos --, y meterlo en la API es meter polars en el proceso que atiende a quien compra:
+**«causo reinicios de `cesta-api` el 21 de septiembre»**.* El camino que el documento apunta: *«sacar la
+lectura a un modulo pequeno sin polars que usen los dos»*.
+
+**Ese modulo esta hecho**: `core/version_vigente.py`. **No importa nada del proyecto** -- ni polars, ni
+`duckdb`, ni `core.config`: *solo la biblioteca estandar* --, y resuelve lo unico que hace falta:
+
+    version_actual(gold)                 la version que se sirve, o None
+    publicado_en(gold)                   cuando se movio el puntero
+    carpeta_de(gold, version)            donde vive
+    ruta(gold, nombre, version=None)     el fichero, de la version o del gold suelto
+    sello(gold, nombre, version=None)    su mtime, para cachear por el
+
+**Y la restriccion se comprueba, no se confia**: `test_no_arrastra_polars` importa el modulo en un
+interprete limpio y mira `sys.modules` -- *si polars, duckdb o pyarrow entraran por la puerta de atras,
+saldria ahi*.
+
+**Y una cosa que el modulo ya deja bien**: `catalogo` cachea hoy por el `mtime` de
+`AJUSTES.gold / "grupos.parquet"`, **el suelto**. *Cuando lea la version, cachear por el suelto seria
+cachear por un fichero que puede no ser el que se lee, y la cache no se invalidaria al publicar -- que
+es justo cuando tiene que invalidarse.* **`sello()` resuelve eso y tiene prueba propia.**
+
+**Lo que queda es la conmutacion**: `catalogo.conexion()` y `_sello_de_gold()` tienen que pasar a usar
+`version_vigente`, resolviendo la version **una vez por peticion** -- *que es la frase que hoy se cumple
+por trivialidad* --. **No se ha hecho en esta ronda y no se da por hecho.**
