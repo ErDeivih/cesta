@@ -310,6 +310,39 @@ columna `importe_cent` de la migracion 013.*
 recorrido de interfaz** --*punto 2: «buscar, abrir ficha, preparar compra/consumo, publicar V2»*--, que
 es donde el catalogo cambia **debajo de una pantalla**.
 
+### G04, el recorrido de interfaz: **lo que se midio y el defecto que queda**
+
+**Medido, con el ensayo servido por la aplicacion viva** (verificado por los dos lados: encuentra
+«Barrita de ensayo» y «leche» devuelve CERO, o sea que no lee el catalogo real):
+
+| paso del punto 2 | estado |
+|---|---|
+| **buscar** | ✓ **funciona**: encuentra el producto del ensayo, dice «2 cadenas», «ahorras 46,7 %», «datos del 1 ene 2026» |
+| **abrir ficha** | ✗ **no carga**: se queda en «Cargando el grupo…» |
+| preparar compra, publicar V2, medir lo conservado | **no recorrido** -- bloqueado por lo anterior |
+
+**El defecto, diagnosticado hasta el limite**: `/compra/comparar/:grupoId` no termina de cargar. Lo
+medido, uno por uno:
+
+- **el parametro llega bien**: `grupoId=900001`, `Number.isFinite(id)=true`, y `enabled` se cumple;
+- **la consulta se lanza** y su reintento tambien: `pide('/grupo/900001')` **se llama dos veces**;
+- **la peticion sale, el servidor contesta 200** y `pide` **devuelve un objeto**: hay `fetch-hecho 200` y
+  `cuerpo object`, dos veces;
+- **la senal de React Query llega viva** (`senal viva tipo=object`), no abortada;
+- **y la entrada de la consulta no registra nada**: `dataUpdatedAt: 0`, `isFetched: false`,
+  `data: undefined`, con `status: 'pending'` y `fetchStatus: 'fetching'` para siempre.
+
+*Es decir: `queryFn` resuelve y la consulta no lo guarda.* **El codigo de `useGrupo`, la version
+instalada (`@tanstack/react-query` 5.103.2) y el patron --identico en `useBuscar`, `useSecciones` y
+`useProducto`, que si cargan-- estan leidos y son correctos.** Queda como **defecto abierto y acotado**,
+no como duda: *la firma esta arriba y se reproduce recargando.*
+
+**Y el defecto de producto que hay debajo, que si es accionable**: **una consulta que no resuelve y una
+que esta cargando se pintan igual.** `Grupo.tsx` ahora distingue el caso `isPending && fetchStatus ===
+'idle'` (una consulta cancelada no esta cargando nada) y lo dice; **el caso de esta ficha
+(`fetchStatus: 'fetching'` sin dato ni error) sigue esperando en silencio**, y eso no se puede
+distinguir desde fuera de la biblioteca sin un tiempo de espera.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

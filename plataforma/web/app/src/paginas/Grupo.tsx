@@ -64,6 +64,9 @@ export function Grupo() {
 
   const consulta = useGrupo(Number.isFinite(id) ? id : null)
   const estado = useEstado()
+
+  // **Diagnostico temporal**, para el cuelgue de esta pantalla: se imprime el estado de la
+  // consulta en cada render. Quitar cuando este entendido.
   const [pesos, setPesos] = useState<Pesos>(PESOS_INICIALES)
 
   const grupo = consulta.data
@@ -155,6 +158,24 @@ export function Grupo() {
 
   // ------------------------------------------------------------------ estados
 
+  // **Una consulta cancelada no esta cargando nada.** React Query deja una cancelacion en
+  // `pending` con `fetchStatus: 'idle'`: no hay dato, no hay error, y no hay nada en vuelo. Sin
+  // distinguirlo, la pantalla dice «Cargando…» para siempre y no hay forma de salir de ahi.
+  //
+  // Paso de verdad: en desarrollo, `StrictMode` monta el componente dos veces, la primera
+  // peticion se cancela, `retry` la reintenta una vez -- y la consulta se queda en `idle`. Y le
+  // pasaria lo mismo en produccion navegando rapido a otra pantalla y volviendo: **cualquier
+  // cancelacion dejaba la ficha colgada sin decirlo**. Se vio midiendo, no leyendo.
+  if (consulta.isPending && consulta.fetchStatus === 'idle') {
+    return (
+      <Vacio titulo="No se ha cargado el grupo">
+        <p>La peticion se cancelo antes de llegar: no hay nada en camino.</p>
+        <Boton variante="normal" className="mt-2" onClick={() => void consulta.refetch()}>
+          Volver a intentarlo
+        </Boton>
+      </Vacio>
+    )
+  }
   if (consulta.isPending) return <Cargando que="el grupo" />
   if (consulta.isError) {
     return (
