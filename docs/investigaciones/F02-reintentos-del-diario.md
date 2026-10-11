@@ -106,18 +106,67 @@ dejaría de ser verdad con el segundo fichero.*
 
 ---
 
-## 6. Lo que queda de F02
+## 6. El ensayo de navegador — **y reproduce el defecto**
 
-1. **El ensayo de navegador** —*el que el encargo reclama con esas palabras: «la prueba de mismo UUID
-   por HTTP no cubre la UX».* **No está hecho**, y es lo que convierte esto en «implementado» y no en
-   «verificado en la UX».
-2. **Concurrencia**: dos solicitudes simultáneas con la misma clave y rollback limpio.
-3. **Misma clave con payload distinto**: qué hace el servidor, y que no devuelva un éxito que parece
+**Es lo que el encargo reclamaba con esas palabras**: *«la prueba de mismo UUID por HTTP no cubre la
+UX»*. Está en `plataforma/prueba_reintento.py`, y **no prueba el módulo: prueba la pantalla**.
+
+*El «servidor que guarda y pierde la respuesta» se monta sin tocar el código*: con
+`route.fetch()` la petición **llega** y la entrada **se guarda**; con `route.abort()` el navegador **ve
+un fallo**. Después se pulsa otra vez, ya sin interceptar.
+
+**Lo que mide, y son tres cosas distintas:**
+
+```
+ok  se interrumpio una respuesta, ni mas ni menos
+ok  **el primer envio SI guardo** (la respuesta es lo que se perdio): 0 -> 1
+ok  el boton vuelve a estar activo: el reintento es posible
+ok  hubo dos envios del alta (2)
+ok  **los dos envios llevan la MISMA clave**
+ok  **y el dia acaba con UNA entrada, no dos**: 0 -> 1
+```
+
+**Y se ha comprobado que discrimina**, que era lo que faltaba en otros cierres: simulando la regla
+anterior —`resolver(null, …)`, que da clave nueva en cada envío— **el ensayo falla, y reproduce el
+defecto entero**:
+
+```
+FALLA **los dos envios llevan la MISMA clave**
+FALLA **y el dia acaba con UNA entrada, no dos**: 1 -> 3
+```
+
+**Dos entradas de más en una sola pantalla, contadas en el navegador.** *El fichero se restauró y se
+verificó.* **Es la primera vez en esta fase que un defecto se reproduce y se arregla en la UX y no sólo
+en el motor.**
+
+*Y costó dos intentos:* la primera versión usaba `get_by_role("button", name="Anotar")`, que resolvía a
+**dos** botones —«Ver que se puede **anotar**» también contiene «anotar», y la coincidencia por defecto
+es por subcadena—. Se arregla con `exact=True`.
+
+---
+
+## 7. Lo que queda de F02
+
+1. **Concurrencia**: dos solicitudes simultáneas con la misma clave y rollback limpio.
+2. **Misma clave con payload distinto**: qué hace el servidor, y que no devuelva un éxito que parece
    guardar otro dato.
-4. **Cantidad, unidad y base**: g, ml y raciones con conversiones trazables —*que SQLite tenga columna
+3. **Cantidad, unidad y base**: g, ml y raciones con conversiones trazables —*que SQLite tenga columna
    `unidad` no acredita API, cálculo ni interfaz*—, y **consumir parte del envase, no la compra entera
    por defecto**.
-5. **La vista previa congelada** a compra/líneas y receta/versiones, con revalidación al cambiar.
+4. **La vista previa congelada** a compra/líneas y receta/versiones, con revalidación al cambiar.
 
-*El reintento —que es el núcleo del paquete— está hecho y probado; lo demás está enumerado arriba.*
-**No se declara F02 cerrado por tener verde la mitad.**
+*El reintento —que es el núcleo del paquete— está hecho y **verificado en la UX**; lo demás está
+enumerado arriba.* **No se declara F02 cerrado por tener verde la mitad.**
+
+---
+
+## 8. Y para volver a correrlo
+
+Necesita la API y la interfaz levantadas, **con la interfaz sirviendo el código de hoy**:
+
+    $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
+    uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8099
+    cd plataforma/web/app; $env:CESTA_API='http://127.0.0.1:8099'; npm run dev
+    $env:CESTA_UI='http://localhost:5173'; uv run python -m plataforma.prueba_reintento
+
+*Los datos son de la base desechable y de la cuenta `prueba-navegador`.* **No toca el diario de casa.**

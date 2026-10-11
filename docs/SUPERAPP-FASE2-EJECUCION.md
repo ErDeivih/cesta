@@ -6,22 +6,22 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F02 · el ensayo de navegador del reintento.** El núcleo está hecho y probado en el cliente: *la clave
-la decide ahora la operación pendiente, así que reintentar lo mismo **reutiliza la clave** y el servidor
-devuelve la entrada que ya creó.* **Y el defecto estaba peor de lo que decía el hallazgo**:
-`clave_operacion` **no impedía nada en la UX real** — el doble clic en vuelo lo bloquea
-`disabled={isPending}`, no la clave, y **no hay reintento automático** en ninguna mutación, así que la
-premisa del comentario no ocurría nunca.
+**F02 · la concurrencia y las unidades**, ya que el reintento está **verificado en la UX**. El ensayo de
+navegador (`plataforma/prueba_reintento.py`) **reproduce el defecto y confirma el arreglo**:
 
-**Lo que falta es la prueba que el encargo reclama con esas palabras**: *«la prueba de mismo UUID por
-HTTP no cubre la UX»*. **Ensayo de navegador: servidor que guarda y respuesta que se pierde, seguido de
-pulsar otra vez, y contar entradas.**
+    con la regla anterior   claves DISTINTAS · el dia 1 -> 3   (dos entradas de mas)
+    con el arreglo          la MISMA clave   · el dia 1 -> 1
 
-Y en la misma línea apareció un **segundo defecto ya arreglado**: `crypto.randomUUID` no existe en
-contexto no seguro, y el diario lo llamaba a pelo — *por la IP de Tailscale, en http, «Anotar»
-reventaba.*
+*Y se comprobó discriminante simulando la regla vieja.* **Lo que queda de F02**: dos solicitudes
+simultáneas con la misma clave y rollback limpio; la política de «misma clave con payload distinto»;
+**cantidad, unidad y base** (g, ml, raciones con conversiones trazables, y consumir parte del envase);
+y la **vista previa congelada** a compra/líneas y receta/versiones.
 
 Detalle: [`investigaciones/F02-reintentos-del-diario.md`](investigaciones/F02-reintentos-del-diario.md).
+
+**Recursos que quedan levantados para los siguientes ensayos**: API en el **8099** (catálogo de ensayo)
+y **Vite en el 5173** con `CESTA_API` apuntando ahí — *los necesita también el recorrido de navegador que
+le falta a F01.*
 
 **Lo que queda de F01**, enumerado y no cerrado: navegador; estabilidad ante reordenación (V1/V2/V3
 sobre lista y favorito, «jamás B por ordinal»); elegir comprar A otra vez como acción explícita; y
@@ -37,7 +37,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 |---|---|---|---|
 | F00 | Reconciliar aceptación y baseline | **en curso** | Baseline **1.670 pasan, 0 saltan, 0 fallan** (155 s, con `CESTA_POSTGRES` al 5434). Encabezado del tablero G01–G14 reconciliado. Hallazgo 4 **reproducido**. Faltan los otros 8 hallazgos y la matriz S00–S12. |
 | F01 | Identidad estable y producto efectivo comprado | **en curso** | Motor, cierre y **HTTP verificado** (la prueba **discrimina**: simulando lo anterior falla). Migración **015**. Falta navegador, estabilidad ante reordenación y migrar consumidores del ordinal. |
-| F02 | Reintentos/unidades/privacidad del diario | **en curso** | Núcleo del reintento hecho: `logica/operacionPendiente.ts` + `Diario.tsx`; **42 tests de cliente**, guarda **comprobada discriminante**. *Arreglado de paso: `crypto.randomUUID` sin respaldo rompía el formulario por la IP.* Falta navegador, concurrencia y unidades. |
+| F02 | Reintentos/unidades/privacidad del diario | **en curso** | Reintento **verificado en la UX**: `plataforma/prueba_reintento.py` reproduce el defecto (el día **1→3**) y confirma el arreglo (**1→1**, misma clave). Falta concurrencia, unidades y vista previa. |
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
 | F05 | Fichas de seis cadenas/Lidl | pendiente | Inventario real por campo y workers ejecutados. |
@@ -56,23 +56,23 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 ## Continuación obligatoria antes de pausar
 
 - Paquete y criterio concreto: **F00 en curso** (los otros ocho hallazgos y la matriz S00–S12);
-  **F01 en curso** (motor, cierre y HTTP hechos; cuatro cosas enumeradas); **F02 en curso** con el núcleo
-  del reintento hecho y su ensayo de navegador pendiente.
-- Fichero / función / recorrido: `plataforma/web/app/src/logica/operacionPendiente.ts` (nuevo) y
-  `src/paginas/Diario.tsx` (`Alta`) — *la clave la decide `resolver`, no el `onSubmit`*. Lo que falta:
-  el ensayo de navegador con respuesta perdida.
-- Evidencia obtenida y comando/fecha: `npm test` (cliente) → **42 tests, 42 pasan**; `npx tsc --noEmit`
-  → 0; `uv run pytest -q` → **1674 pasan, 0 fallan**; `uv run ruff check .` → limpio (13 oct 2026). *La
-  guarda se comprobó **discriminante**: reintroduciendo el defecto en el código, falla.*
-- Caso que falla o comprobación siguiente: **el ensayo de navegador del reintento**, sin hacer.
-- Cambios conservados / commit: `logica/operacionPendiente.ts`, `Diario.tsx`, `tests/cocina.test.mjs`,
-  `package.json` (**`npm test`**, que recoge todos los tests del cliente), el informe de F02 y este
-  tablero.
-- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* está probado el módulo y el
-  cableado, **no la UX**; y de F02 quedan sin hacer la concurrencia, la política de «misma clave con otro
-  payload», las unidades (g/ml/raciones) y la vista previa congelada.
-- **Acción inmediata al retomar:** montar el ensayo de navegador del reintento —servidor que guarda y
-  respuesta que se pierde, segundo envío, y contar entradas—, que es el criterio que el encargo reclama
-  para F02; después la concurrencia y las unidades.
+  **F01 en curso** (motor, cierre y HTTP hechos; cuatro cosas enumeradas); **F02 en curso** con el
+  reintento **verificado en la UX** y pendientes concurrencia, unidades y vista previa.
+- Fichero / función / recorrido: `plataforma/prueba_reintento.py` (nuevo) — *intercepta la respuesta del
+  alta con `route.fetch()` + `route.abort()` y cuenta las entradas del día por la API*.
+- Evidencia obtenida y comando/fecha: `CESTA_UI=http://localhost:5173 uv run python -m
+  plataforma.prueba_reintento` → **10 comprobaciones, todas ok** (13 oct 2026). *Discriminante
+  comprobado*: simulando `resolver(null, …)` el ensayo falla con «el día **1 → 3**». Y las puertas:
+  `npm test` → **42 pasan**; `tsc` → 0; **`npm run build` → ✓ 154 módulos**; `ruff` limpio; `uv run
+  pytest -q` → **1674 pasan, 0 fallan**.
+- Caso que falla o comprobación siguiente: **la concurrencia** (dos solicitudes simultáneas con la misma
+  clave) y las unidades (g/ml/raciones), sin hacer.
+- Cambios conservados / commit: `plataforma/prueba_reintento.py`, `docs/investigaciones/F02-…` y este
+  tablero (el arreglo del cliente y el módulo van en `69f7dbe`).
+- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* el ensayo usa la **cuenta
+  de prueba** y la base desechable; **no toca el diario de casa**.
+- **Acción inmediata al retomar:** montar la concurrencia de F02 —dos solicitudes simultáneas con la
+  misma clave, y que quede una entrada con rollback limpio—; después las unidades y la vista previa, y
+  el recorrido de navegador que le falta a F01.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.
