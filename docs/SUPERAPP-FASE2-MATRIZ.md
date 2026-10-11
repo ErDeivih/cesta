@@ -19,7 +19,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| Fichas de producto (kcal, ingredientes, Nutri-Score…) | **no, en la práctica** | **79.887 en cola, 28 hechas (0,04 %)** |
+| Fichas de producto (kcal, ingredientes, Nutri-Score…) | **no, en la práctica** | **79.887 en cola, 28 hechas (0,04 %)**, y **hay ejecutor sólo para Lidl**: las otras cinco cadenas no tienen descargador ni parser |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |
 
@@ -34,7 +34,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | **F02** diario | **en curso** | Reintento **verificado en la UX** y carrera arreglada. Falta **unidades** (g/ml/raciones) y vista previa congelada. |
 | **F03** publicación | **en curso** | Todo hecho y probado **salvo los dos recorridos de navegador** que su aceptación pide. |
 | **F04** privacidad/CSRF | **sin empezar** | — |
-| **F05** fichas | **medido** | 79.887 pendientes. Falta **ejecutar**, medir **por campo** separando «no lo publica» de «no lo hemos pedido», y el parser. |
+| **F05** fichas | **medido** | 79.887 pendientes. **Hay ejecutor sólo para Lidl** (28 de 5.054); las otras cinco **no tienen descargador ni parser**. Falta escribirlos, y medir por campo. |
 | **F06** matching y optimizador | **en curso** | Optimizador **cerrado** (oráculo, 9 discrepancias, garantía y límites publicados, `umbral` decidido con los folletos). Falta el **banco de matching**. |
 | **F07–F16** | **sin empezar** | Mejoras funcionales y visuales: *van después de los cierres, según el encargo.* |
 
@@ -100,9 +100,10 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Ejecutar la cola de fichas de una cadena pequeña** (`aldi`, 3.206) **con presupuesto acotado**, y
-   **medir por campo separando «no lo publica» de «no lo hemos pedido»**. *Primer trozo verificable de
-   F05, y el que convierte la cifra en algo que no miente.*
+1. **Escribir el descargador y el parser de una segunda cadena** (`aldi`, 3.206 pendientes) — *la cola,
+   el lease, el presupuesto y el ritmo ya están; falta el `ficha_<cadena>`* —, con su prueba **sin red**
+   (`fetch` es inyectable). *Y después medir por campo separando «no lo publica» de «no lo hemos
+   pedido», que para Lidl ya está hecho.*
 2. **Los dos recorridos de navegador de F03** —*la receta está en
    `docs/investigaciones/F03-publicacion.md` §15: `CESTA_GOLD` a un sandbox, API en el 8101*—.
 3. **Decidir sobre el puntero** (`20261007-103000` contra un gold del 11): publicar o dejarlo. *Es de

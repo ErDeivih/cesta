@@ -74,3 +74,61 @@ medias y una cifra sin comprobar.*
 
 **Y medir era, literalmente, lo primero que el hallazgo pide.** *Ahora se sabe qué hay y qué no: **una
 cola de 79.887 esperando y 28 hechas**.*
+
+
+---
+
+## 5. Y al ir a ejecutarla, el hallazgo de verdad: **hay ejecutor para una cadena de seis**
+
+*(Ronda 26.)* Iba a ejecutar la cola de `aldi` con presupuesto acotado. **No se puede: para `aldi` no hay
+nada que ejecutar.** Medido:
+
+```
+projects/cesta/fichas_lidl.py:72     inventario.tomar(con, limite, fuentes=["lidl"], ahora=ahora)
+projects/cesta/fichas_lidl.py:28     from projects.cesta import ficha_lidl
+projects/cesta/fichas_lidl.py:30     PARSER_VERSION = "lidl-jsonld-2"
+
+modulos que piden una ficha, por cadena:
+   banco_de_pares.py    alcampo, aldi, dia     <- no es un ejecutor de fichas
+   mide_nutricion.py    lidl
+```
+
+**Hay un solo descargador y un solo parser, y son de Lidl.** *No hay `ficha_alcampo`, ni `ficha_aldi`, ni
+`ficha_dia`, ni `ficha_carrefour`, ni `ficha_mercadona`.*
+
+**Y eso explica, sin dejar nada al azar, el numero de la seccion 1**: de 79.887 pendientes, **las 28
+`correcto` son todas de Lidl** -- *la unica cadena con ejecutor es la unica con fichas.*
+
+### Lo que corrijo de lo que yo mismo escribi
+
+Dije: *«la ausencia no es una limitacion de fuente: **es trabajo sin ejecutar**»*. **Es verdad a medias, y
+la mitad que falta importa:**
+
+- Para **Lidl**: hay ejecutor, y **28 de 5.054**. *Ahi si es trabajo sin ejecutar.*
+- Para **las otras cinco**: **no hay con que ejecutarlo.** *No es trabajo pendiente de una pasada: es
+  codigo que no existe.* **Llamarlo «sin ejecutar» hacia parecer que bastaba con lanzarlo.**
+
+**Y la distincion que F05 pide -- «no llamar toda ausencia limitacion de fuente» -- ya esta hecha, campo a
+campo, para Lidl**, en el propio comentario del ejecutor:
+
+> *«**Y lo que este hash NO puede vigilar, medido.** El bloque `@type=Product` de Lidl trae nueve [campos]
+> [...] Asi que no hay campos de contenido que hashear: **no es un parser incompleto, es una fuente que no
+> los da**. Para tenerlos hay que **parsear el HTML** de la ficha o ir a **fuente** [externa].»*
+
+*Es exactamente la frase del hallazgo, aplicada y con evidencia.* **Lo que falta es hacerla para las otras
+cinco.**
+
+### El estado de F05, entonces, es este
+
+| pieza | estado |
+|---|---|
+| La cola (estados, *lease*, hash, revision, resumen) | **hecha y probada** |
+| El alta desde bronze | **hecha** (74.861 fichas en 75,7 s, medido) |
+| El presupuesto y el ritmo | **hechos** (`--limite`, `RITMO`, y dice cuantos dias faltan) |
+| **Un descargador y un parser** | **solo de Lidl** |
+| **Las otras cinco cadenas** | **no tienen nada** |
+| La distincion «no lo publica» / «no lo hemos pedido» | **hecha para Lidl**; para las demas, **todo es «no lo hemos pedido»** |
+
+**Y por eso la accion siguiente no es «lanzar una pasada»**: es **escribir el descargador y el parser de
+una segunda cadena** -- *`aldi`, que tiene 3.206 pendientes y es la mas pequena --, con su `PARSER_VERSION`
+y su prueba sin red (`fetch` es inyectable, asi que se puede probar sin pedir nada).*
