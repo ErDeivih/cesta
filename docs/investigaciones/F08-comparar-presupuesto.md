@@ -321,3 +321,69 @@ de prueba que F01 ya hizo para la promocion 3x2.** *Queda como el paso siguiente
 
 **Dos cubiertos, uno contestado por construccion, y dos por medir** -- *y el que se ha medido hoy trae **cuatro
 piezas y un arreglo documentado**, que es mas de lo que el criterio pide.*
+
+
+---
+
+## 6. El pack, ejercido: **`precio_unidad_cent` divide por `cantidad` y NO por el pack**
+
+*(Ronda 109.)* La prueba del caso, con numeros de verdad:
+
+```
+grupos con unidades_pack > 1:   1.507 de 52.087
+
+alcampo  'SCOTTEX Fresh Papel higienico humedo'
+    cantidad=148 ud · pack=2 · precio=581 cent
+    precio_unidad_cent=3,9257 cent ·  ref=4,0 cent por ud
+
+aldi     'Vasitos de quinoa'
+    cantidad=0,25 kg · pack=2 · precio=139 cent
+    precio_unidad_cent=556,0 cent ·  ref=556,0 cent por kg
+```
+
+### La aritmetica, que es lo que hay que mirar
+
+| producto | lo que da `precio_cent / cantidad` | lo que daria `/ (cantidad x pack)` | **lo que se sirve** |
+|---|---|---|---|
+| **SCOTTEX** | *581 / 148 = **3,9257*** | *581 / 296 = **1,963*** | **3,9257** -- *o sea, `/cantidad`* |
+| **aldi vasitos** | *139 / 0,25 = **556,0*** | *139 / 0,5 = **278,0*** | **556,0** -- *o sea, `/cantidad`* |
+
+**En los dos casos, `precio_unidad_cent` es `precio_cent / cantidad`**, y **`unidades_pack` no entra en la
+division.** *Y `precio_ref_canon_cent` es el mismo numero redondeado* (3,9257 -> 4,0; 556,0 -> 556).
+
+### Y lo que NO puedo concluir, que es lo honesto
+
+**Que la division ignore el pack **puede estar bien o mal**, y depende de una cosa que no he mirado: **si
+`cantidad` ya incluye el pack o no.**
+
+- **Si `cantidad` es el total del envase** -- *296 ud en el SCOTTEX, porque son dos rollos* --, **entonces
+  `581 / 296 = 1,963` es el precio por unidad de verdad, y el 3,9257 esta mal.**
+- **Si `cantidad` es lo que trae cada unidad del pack** -- *148 ud por rollo, y el pack trae dos* --, **entonces
+  el precio por unidad **de un rollo** es 3,9257, y es correcto** -- *aunque el «precio por ud» que se ensena
+  al lado de un pack de dos deberia ser el del pack, porque **es lo que se compra**.*
+
+**Las dos lecturas dan numeros distintos, y cual es la buena no se decide mirando el `SELECT`: se decide
+mirando **que significa `cantidad` en el colector de Alcampo**, y eso es un campo que hay que leer.**
+
+### Y por que esto es el caso «cantidad/pack» del criterio, exactamente
+
+**El criterio dice**: *«cantidad/promocion **elegibles** y **coste parcial explicito**»* -- *y `C06`: «identidad/
+formato, ambito y fecha visibles»*.*** Aqui el «formato» es el pack, y **un pack de 2 hace que el precio
+comparable cambie por dos** -- *que es justo lo que un comparador de precios no puede hacer mal.*
+
+**Asi que esto no queda «medido y bien» ni «medido y mal»: queda **medido y a una pregunta** -- *y la pregunta
+es de una funcion del colector, no de la pantalla.*
+
+### Y el estado del caso, con precision
+
+| lo que hay | **estado** |
+|---|---|
+| **`unidades_pack` en el dato** | **si**, en 1.507 grupos |
+| **la normalizacion** (`normalize.py`) | **si** |
+| **el pack en la pantalla** («Vienen N x tamano», con el suelto al lado) | **si** |
+| **la comprobacion entre cadenas** (`ejes.py:37`) | **si** |
+| **que el precio unitario tenga en cuenta el pack** | **NO** -- *divide por `cantidad`* |
+| **y si eso es correcto** | **depende de que significa `cantidad`**, y **sin medir** |
+
+**Un caso con **cuatro piezas hechas y una pregunta abierta** -- *y la pregunta, otra vez, hay que **leerla**, no
+suponerla.* *Es la septima vez en esta fase que la respuesta esta en un campo que no he mirado.*
