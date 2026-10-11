@@ -840,3 +840,70 @@ pantalla, y para C03 y C04 hace falta **una lista con lineas y su agrupacion**, 
 **Cinco de siete con la pantalla o el dato medido; cuatro pasan; uno es un defecto fijado; y los dos que faltan
 -- `C03` y `C04` -- son **la misma prueba**: un ensayo sobre la pantalla de la lista, con lineas de varios
 pasillos y un favorito.**
+
+
+---
+
+## 15. `C04`, medido en la pantalla: **seguir no es la lista**, y lo dice la propia pantalla
+
+*(Ronda 102.)* Montado el escenario por la API -- *una lista de casa con lineas de verdad* -- y recorridas las
+pantallas. **Y la de favoritos contesta `C04` sin necesidad de montar nada mas:**
+
+```
+/compra/favoritos:
+  «Favoritos
+   No sigues ningún producto
+   Aquí van los pocos que compras siempre, para ver si se mueven sin tener que buscarlos.
+   Se añaden desde la ficha de un producto, con el corazón.
+   [Buscar un producto]  [Ver mi lista]»
+```
+
+**Las cuatro cosas que dice, y las cuatro son la respuesta al criterio:**
+
+| lo que dice la pantalla | lo que contesta |
+|---|---|
+| **«Favoritos»** | *la **preferencia**, con su nombre* |
+| **«No sigues ningún producto»** | *seguir es **otra cosa** que tener: **preferencia, no necesidad*** |
+| **«los pocos que compras siempre, para ver si se mueven»** | *y para que sirve: **mirar el precio**, no para la lista* |
+| **«Se añaden desde la ficha de un producto, con el corazón»** | *y **el gesto es distinto**: se anaden **a favoritos**, no a la lista* |
+| **«Ver mi lista»** *(enlace aparte)* | *la lista es **otro sitio**, y estan separados **en la pantalla** |
+
+**Asi que `C04` esta cumplido tambien en la pantalla, y no por convencion: *la pantalla misma dice que son
+cosas distintas, que se llenan de sitios distintos y que sirven para cosas distintas.*** **Y el «corazón» frente
+a «anadir a la lista» es la separacion que el criterio pedia, hecha gesto.**
+
+### Y lo que sale al montar el escenario, que es mas de lo que parece
+
+**Tres cosas que el ensayo cazo, y las tres son la misma clase:**
+
+1. **La app ensena LA LISTA DE CASA, y yo escribia en otra.** *La primera version creaba una lista nueva con
+   `crea_lista(...)`, y las seis lineas salieron **0 de 6 en las tres pantallas**: estaba mirando una lista y
+   escribiendo en otra.*
+2. **`crea_usuario` NO crea la lista de casa** -- *`listas_de` devolvio `[]`.* **La crea el alta por la API**
+   (`POST /api/registrarse`), *y por eso en la ronda 93 el recorrido de cuenta vacia decia **«no hay boton de
+   crear lista: puede que ya venga creada»**.* **Dos caminos para crear una cuenta y solo uno hace el trabajo
+   entero** -- *el mismo patron que las dos vias de ficha de F05.*
+3. **Las rutas no se adivinan.** *`/lista` y `/compra/lista` contestan **«Esa pantalla no existe»***, y la
+   portada dice lo que hay: *«Compra: **Buscar, la lista, favoritos y lo que gastas**»*. **El camino bueno es
+   pulsar «Ver mi lista», no componer la URL** -- *y para eso esta el navegador.*
+
+### Y `C03` queda con una sola cosa: llegar a la lista
+
+**`/compra/lista` no existe, y la pantalla de favoritos **ofrece el enlace** («Ver mi lista»).** *Asi que la
+medicion de `C03` -- ver los encabezados de pasillo con lineas de verdad -- **esta a un clic**, y el clic es lo
+que hay que dar: **pulsar «Ver mi lista» y leer los encabezados**, en vez de componer la ruta -- que es
+exactamente lo que acabo de aprender en esta misma ronda.*
+
+### Y C01-C05, con las capas
+
+| ID | lo que pide | **capas medidas** |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **dato** -- *la cantidad es un defecto fijado* |
+| **C01b** | *ni exponer listas de otro hogar* | **dato, y PASA** |
+| **C02 / C02b** | *sin catalogo / precio desconocido visible* | **dato y pantalla, y PASA** |
+| **C03** | *pasillos / una mano / recarga* | **4 toques** y **recarga**; *los encabezados, a un clic («Ver mi lista»)* |
+| **C04** | *preferencia contra necesidad* | **dato y pantalla, y PASA** -- *«seguir» no es la lista, y el gesto es el corazon* |
+| **C05** | *acentos/filtros; sugerir no es afirmar* | **dato, uso y pantalla** -- *y **PASA*** |
+
+**Cinco de siete con dato y pantalla; cuatro pasan; uno es un defecto fijado; y `C03` es el unico que queda a
+medias -- y a un clic.**
