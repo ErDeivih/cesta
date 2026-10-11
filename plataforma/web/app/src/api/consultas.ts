@@ -33,6 +33,7 @@ import type {
   PanelMatching,
   PanelMovidos,
 } from '../tipos'
+import type { FilaDeGasto } from '../logica/gasto'
 
 const CINCO_MIN = 5 * 60 * 1000
 const UNA_HORA = 60 * 60 * 1000
@@ -451,5 +452,29 @@ export function usePanelMatching(limite = 20) {
       if (error instanceof ErrorApi && error.estado < 500) return false
       return intento < 1
     },
+  })
+}
+
+/** **Lo que has pagado**, por mes o por semana, con su cobertura.
+ *
+ *  G05: *«Gasto pagado semanal/mensual a partir de compras guardadas e importes conocidos. […]
+ *  **Cobertura de importes historicos `NULL` visible**»*. El gasto es de **la lista**, no del catalogo:
+ *  sale de las compras cerradas. *Y la regla de que `null` no es `0` vive en `logica/gasto.ts`, que es
+ *  puro y esta probado; aqui solo se trae.*
+ */
+export interface RespuestaGasto {
+  periodo: 'mes' | 'semana'
+  filas: FilaDeGasto[]
+  compras: number
+  fecha_datos: string
+}
+
+export function useGasto(listaId: string | null, periodo: 'mes' | 'semana' = 'mes') {
+  return useQuery({
+    queryKey: ['gasto', listaId, periodo],
+    queryFn: ({ signal }) =>
+      pide<RespuestaGasto>(`/listas/${listaId}/gasto`, { periodo }, signal),
+    enabled: listaId !== null,
+    staleTime: CINCO_MIN,
   })
 }
