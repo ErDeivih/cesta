@@ -1297,3 +1297,54 @@ trabajo.**
 2. **Decidir que productos de los 72.322 merecen la visita.**
 3. *Y la pregunta que abre esto*: **¿deberia `enganche` guardar la URL cuando bronze la tenga?** *Hoy no la
    guarda, y por eso cada ejecutor nuevo tiene que resolverla por su cuenta.*
+
+
+---
+
+## 28. El ejecutor de Carrefour, hecho -- y cuatro nombres que invente
+
+*(Ronda 80.)* `projects/cesta/fichas_carrefour.py`, con **siete pruebas sin red**. *Es el bucle de
+`fichas_lidl.procesa` mas la pieza que hacia falta:*
+
+```python
+url = fila["url"] or mapa.get(str(fila["id_fuente"]))   # del catalogo: la cola no la trae
+if not url:
+    inventario.terminar(con, clave, inventario.NO_PUBLICADO,
+                        resultado="sin url en el catalogo: no hay nada que pedir")
+```
+
+**Y el limite es el presupuesto** -- *como Lidl: no hay bucle hasta agotar*, y `--limite` lo cambia.
+
+### Y cuatro nombres que invente, que las pruebas cazaron
+
+**Escribi el modulo de memoria y me invente la mitad de los nombres.** *Las pruebas y `ruff` los sacaron uno
+detras de otro:*
+
+| lo que escribi | lo que es |
+|---|---|
+| `inventario.NO_PUBLICA` | **`inventario.NO_PUBLICADO`** |
+| `SELECT ... resultado` | **`ultimo_resultado`** |
+| `ficha_carrefour.hash_util` | **no existia**: *se anadio, con la receta de `fichas_lidl._hash_util`* |
+| `main()` con `if False else None` | **codigo muerto**: *reescrito* |
+
+**Los tres primeros son el mismo error**: *recordar un nombre en vez de leerlo.* **Y el cuarto es peor**,
+porque no es un nombre: *era codigo que no hace nada, escrito para salir del paso.*
+
+*Lo que los caza no es la memoria: es **correr las pruebas y el linter antes de commitear** -- que es
+exactamente lo que hice, y por eso no llego ninguno al commit.*
+
+### Y F05 queda asi
+
+| pieza | estado |
+|---|---|
+| el mapa por cadena | **medido** (§6-§13) |
+| la deuda falsa de la cola | **medida (7.565), corregida en la cola real** (§21) |
+| que no se vuelva a acumular | **hecho**: el ciclo reconcilia tras el pipeline (§22), con 4 pruebas (§24) |
+| los lectores de ficha | **Mercadona, Dia y Carrefour**, los tres probados contra crudo real |
+| **el ejecutor de fichas** | **Lidl** (ya estaba) y **Carrefour** (nuevo, 7 pruebas) |
+
+**Lo que queda, y son dos decisiones de operacion:**
+1. **Correr el ejecutor de Carrefour** -- *con su presupuesto: 17.283 fichas, y a 100 por ejecucion son 173
+   pasadas.* **El codigo esta; falta decidir cuando.**
+2. **Decidir que productos de los 72.322 merecen la visita** *de las que no se pueden resolver con un
+   catalogo.*

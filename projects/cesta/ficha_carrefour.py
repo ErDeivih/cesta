@@ -110,3 +110,22 @@ def lee(html: str) -> dict:
 def la_tiene(html: str) -> bool:
     """**Si esta pagina trae tabla.** *Para poder contar cuantas la traen sin leerlas enteras.*"""
     return bool([k for k in lee(html) if k != "por"])
+
+
+# **Los campos que se hashean.** *Los mismos que la cola espera: `nombre`, `marca`, `ean`...* **Carrefour da
+# `gtin13` y el nombre**, y los demas no los trae el lector -- *asi que van vacios, que es lo que
+# `fichas_lidl._hash_util` hace con los suyos.*
+CAMPOS_DE_FICHA = ("nombre", "marca", "ean", "gtin_invalido", "descripcion", "url", "imagen")
+
+
+def hash_util(datos: dict) -> str:
+    """**El hash del contenido util**, con la misma receta que el ejecutor de Lidl.
+
+    *Es lo que permite detectar que la ficha cambio sin volver a leerla entera, y tiene que ser **el mismo
+    calculo** que use quien escriba en la cola: uno distinto haria que la proxima pasada creyera que todo
+    cambio.*
+    """
+    import hashlib
+
+    util = "|".join(str(datos.get(k) or "") for k in CAMPOS_DE_FICHA)
+    return hashlib.sha256(util.encode()).hexdigest()[:16]
