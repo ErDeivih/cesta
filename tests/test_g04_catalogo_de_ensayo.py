@@ -23,6 +23,8 @@ catalogo real: *si viniera, el ensayo mediria el dia en que se ejecuta.*
 """
 from __future__ import annotations
 
+import json
+
 import polars as pl
 import pytest
 
@@ -182,3 +184,82 @@ def _momento(sello: str):
     """El sello, como `datetime`, para que V1 y V2 tengan nombre fijo y elegido."""
     from datetime import datetime
     return datetime.strptime(sello, "%Y%m%d-%H%M%S")
+
+def publica_v2() -> dict[str, pl.DataFrame]:
+    """La V2 del ensayo: **el mismo producto, con el precio de DIA cambiado.**
+
+    Es lo que G04 pide en el punto 2: *cambiar el catalogo a mitad de uso*. Y el cambio es de precio
+    --no de identidad-- para que lo que se mida sea **que version se sirve**, no otra cosa.
+    """
+    datos = publica_v1()
+    grupos = datos["grupos.parquet"].with_columns(
+        pl.when(pl.col("fuente") == "dia").then(pl.lit(120)).otherwise(pl.col("precio_cent"))
+        .alias("precio_cent"))
+    datos["grupos.parquet"] = grupos
+    diario, derivado = _precios("2026-01-02")
+    datos["precio_diario.parquet"] = diario.with_columns(
+        pl.when(pl.col("fuente") == "dia").then(pl.lit(120)).otherwise(pl.col("precio_cent"))
+        .alias("precio_cent"))
+    datos["precio_derivado.parquet"] = derivado
+    return datos
+
+
+def _precio_de(grupos: pl.DataFrame, fuente: str) -> int:
+    return int(grupos.filter(pl.col("fuente") == fuente)["precio_cent"][0])
+
+
+def test_publicar_v2_mueve_el_puntero_y_no_borra_la_v1(gold_de_ensayo):
+    """**El punto 2, entero, y con las dos reglas del modulo a la vista.**
+
+    - el puntero se mueve **de una vez** (`os.replace`, atomico): antes de eso los lectores ven la
+      version anterior **entera**;
+    - **publicar no borra**: la V1 sigue en disco, asi que volver atras es apuntar a ella.
+    """
+    v1 = publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+    assert publicacion.version_actual() == v1
+
+    v2 = publicacion.publicar(publica_v2(), momento=_momento(SELLO_V2))
+    assert v2 == SELLO_V2, v2
+    assert publicacion.version_actual() == SELLO_V2, "el puntero tiene que apuntar a la nueva"
+    assert publicacion.versiones() == [SELLO_V1, SELLO_V2], publicacion.versiones()
+
+    # **Las dos siguen en disco, con sus seis ficheros cada una.**
+    for sello in (SELLO_V1, SELLO_V2):
+        carpeta = gold_de_ensayo / f"v{sello}"
+        assert carpeta.is_dir(), f"publicar ha borrado la v{sello}"
+        for nombre in publicacion.FICHEROS:
+            assert (carpeta / nombre).exists(), f"falta {nombre} en la v{sello}"
+
+    # **Y se sirve la V2**: el precio de DIA cambio de 150 a 120.
+    servido = pl.read_parquet(publicacion.ruta("grupos.parquet"))
+    assert _precio_de(servido, "dia") == 120, "se sigue sirviendo la V1"
+    assert _precio_de(servido, "alcampo") == 220, "lo que no cambio no cambia"
+
+    # **Y la V1 se puede seguir leyendo pidiendola por su sello**: fijar la version por peticion es
+    # lo que impide que un lector vea `grupos` de una publicacion y `enlaces` de la siguiente.
+    antigua = pl.read_parquet(publicacion.ruta("grupos.parquet", SELLO_V1))
+    assert _precio_de(antigua, "dia") == 150, "la V1 no puede cambiar porque se publique la V2"
+
+    # **Y `rutas()` da los seis caminos de UNA version, no una mezcla.**
+    caminos = publicacion.rutas(SELLO_V1)
+    assert {c.parent.name for c in caminos.values()} == {f"v{SELLO_V1}"}, caminos
+    caminos_v2 = publicacion.rutas()
+    assert {c.parent.name for c in caminos_v2.values()} == {f"v{SELLO_V2}"}, caminos_v2
+
+
+def test_volver_a_la_v1_es_apuntar_atras_y_no_toca_los_datos(gold_de_ensayo):
+    """**El rollback, que el modulo define como «apuntar a una anterior».**
+
+    Y no se hace con una funcion propia: se hace con lo que ya hay. Aqui se comprueba que apuntar a la
+    V1 la sirve entera y con los datos de la V1, sin haber tocado nada de la V2.
+    """
+    publicacion.publicar(publica_v1(), momento=_momento(SELLO_V1))
+    publicacion.publicar(publica_v2(), momento=_momento(SELLO_V2))
+    assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet")), "dia") == 120
+
+    # Volver atras: el puntero, escrito a mano, que es lo unico que hace falta.
+    publicacion.PUNTERO.write_text(json.dumps({"version": SELLO_V1, "puntero": 1}), encoding="utf-8")
+    assert publicacion.version_actual() == SELLO_V1
+    assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet")), "dia") == 150
+    # **Y la V2 sigue intacta**: volver atras no deshace nada, solo deja de servirla.
+    assert _precio_de(pl.read_parquet(publicacion.ruta("grupos.parquet", SELLO_V2)), "dia") == 120

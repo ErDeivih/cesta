@@ -230,6 +230,20 @@ el dia en que se ejecuta.*
 50.855 con 51.609 filas; la fila `i=0` coincide), los pares van ordenados, y los niveles son
 `identico`, `equivalente` y `ean`. *Era lo unico que estaba afirmando por deduccion.*
 
+### G04, puntos 2 y 3: V1→V2 durante el uso, y la version fijada por peticion
+
+| comprobado | |
+|---|---|
+| publicar **V2** mueve el puntero y `versiones()` tiene las dos | ✓ |
+| **publicar no borra**: las dos carpetas conservan sus seis ficheros | ✓ |
+| **se sirve la V2** -- el precio de DIA pasa de 150 a 120 -- y **lo que no cambio no cambia** (Alcampo 220) | ✓ |
+| **la V1 se sigue leyendo por su sello** (150), no la sobrescribe la V2 | ✓ |
+| `rutas(V1)` da los **seis caminos de UNA version**, no una mezcla | ✓ *la politica de version explicita del punto 3* |
+| **rollback**: escribir el puntero atras sirve la V1 con sus datos, **y la V2 queda intacta** | ✓ |
+
+**Y una nota de metodo**: `ruff --fix` me quito `import json` cuando no se usaba, y dejo de estar cuando
+empece a usarlo. *El lint no se equivoca; el que cambia de idea soy yo.*
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:
