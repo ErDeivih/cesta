@@ -235,4 +235,4 @@ las dos**.*
 3. **«Unidad de la linea de compra»**: *¿la que vino, o la canonica?*
 
 **Ninguna de las tres es un descuido del proyecto, y ninguna se puede contestar mirando el codigo** -- *las tres
-son «que quiere la persona que usa esto», y eso se pregunta.*\n
+son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
