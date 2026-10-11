@@ -7,13 +7,14 @@
  *  Y por eso el alta obliga a declarar **de donde sale el dato**: etiqueta, ficha, estimacion o
  *  desconocido. Es la unica manera de que el subtotal signifique algo.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { anotarDeLaCompra, misListas, previaDeLaCompra } from '../api/cesta'
 import type { PreviaDeLaCompra, ReciboDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
+import { resolver, type Pendiente } from '../logica/operacionPendiente'
 import type { NuevaEntrada } from '../api/diario'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
@@ -206,19 +207,19 @@ function Alta({ fecha }: { fecha: string }) {
   const [esReceta, setEsReceta] = useState(false)
   const [version, setVersion] = useState('1')
   const apuntar = useApuntar()
+  // **La operación que se está intentando, y su payload.** *Vive en un `ref` y no en un `estado`
+  // porque no se pinta: sólo tiene que sobrevivir al repintado y al reintento.*
+  const pendiente = useRef<Pendiente<NuevaEntrada> | null>(null)
 
   return (
     <Tarjeta>
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          const datos: NuevaEntrada = {
-            // **Una clave por operación, generada al enviar.** Va dentro de `datos`, que es lo que
-            // se reintenta: si la respuesta se pierde y se repite, la clave es la misma y el
-            // servidor devuelve la entrada que ya creó en vez de crear otra. Tras un alta buena se
-            // limpia lo escrito, y la siguiente genera una nueva -- por eso dos meriendas iguales
-            // siguen siendo dos.
-            clave_operacion: crypto.randomUUID(),
+          // **El payload SIN la clave.** *La clave la decide `resolver`, que es lo único que sabe si
+          // esto es un reintento — y por eso el sello no puede incluirla: si la llevara, comparar lo
+          // pendiente con lo nuevo daría siempre distinto.*
+          const campos: NuevaEntrada = {
             fecha, comida,
             tipo: esReceta ? 'receta' : 'alimento',
             referencia: esReceta ? texto.trim() || null : texto.trim() || null,
@@ -234,11 +235,24 @@ function Alta({ fecha }: { fecha: string }) {
             hidratos_g: aNumero(hidratos),
             fuente_dato: fuente, nota: '',
           }
-          apuntar.mutate(datos, {
+          // **Misma operación, misma clave.** Si esto es reintentar lo de antes —porque la respuesta
+          // se perdió— lleva **la clave de antes** y el servidor devuelve la entrada que ya creó en
+          // vez de crear otra. Si cambió algo del formulario, es otra operación y lleva clave nueva:
+          // *cambiar lo escrito es cancelar lo anterior, y no hace falta un botón para eso.*
+          //
+          // **Antes esto era `clave_operacion: crypto.randomUUID()` aquí dentro**, así que cada
+          // pulsación —incluido el reintento— era una operación nueva y el servidor duplicaba. *La
+          // clave existía, el índice único existía y el servidor deduplicaba; el cliente nunca
+          // reenviaba la misma, así que no servía de nada.* Y de paso: `crypto.randomUUID` no existe
+          // en contexto no seguro —por la IP de Tailscale, en http— y ahora lo resuelve el módulo.
+          pendiente.current = resolver(pendiente.current, campos)
+          apuntar.mutate({ ...campos, clave_operacion: pendiente.current.clave }, {
             onSuccess: () => {
-              // **Se limpia solo lo que se ha guardado.** Si el alta falla, el error se ve y no se
-              // borra lo escrito: volver a teclear una comida entera por un 500 es lo que hace que
-              // alguien deje de usar esto.
+              // **Se olvida la operación al confirmarla**, para que dos meriendas iguales de verdad
+              // sigan siendo dos. Y se limpia sólo lo que se ha guardado: si el alta falla, el error
+              // se ve y no se borra lo escrito — *volver a teclear una comida entera por un 500 es
+              // lo que hace que alguien deje de usar esto.*
+              pendiente.current = null
               setTexto('')
               setKcal('')
               setCantidad('')

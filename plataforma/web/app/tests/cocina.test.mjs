@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { etiquetasDe, etiquetasDeUna, filtraRecetas, textoDelVacio } from '../src/logica/recetario.ts'
 import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
 import { referenciaLinea } from '../src/estado/referenciaLinea.ts'
@@ -7,6 +8,7 @@ import { aMs, filasDeChispa, serieDeChispa } from '../src/logica/chispa.ts'
 import { importeEnCentimos, textoDeLoQueFalta, textoDePeriodo, totalConocido } from '../src/logica/gasto.ts'
 import { costeDeReceta } from '../src/logica/costeReceta.ts'
 import { avisoDeTransporte, hayVariosViajes } from '../src/logica/transporte.ts'
+import { claveNueva, esReintento, resolver, sello } from '../src/logica/operacionPendiente.ts'
 
 const ingrediente = { nombre: 'Arroz crudo', cantidad: 200, base: '100g', kcal: 350, proteinas: null, hidratos: 80, grasas: 0 }
 const receta = { version: 1, nombre: 'Prueba', raciones: 2, ingredientes: [ingrediente] }
@@ -335,4 +337,88 @@ test('las etiquetas se leen vengan como lista o como la cadena que manda el serv
   assert.deepEqual(
     filtraRecetas([{ id: 7, nombre: 'Guiso', etiquetas: 'cena,larga' }], { etiqueta: 'cena' }).map((r) => r.id),
     [7])
+})
+
+
+// --- F02 (fase 2): la operacion pendiente del diario --------------------------------------
+//
+// **El defecto primero, escrito para poder medirlo.** `Diario.tsx` generaba la clave DENTRO del
+// `onSubmit`, asi que cada envio -- incluido el reintento manual tras una respuesta perdida -- llevaba
+// una clave nueva. *El servidor deduplica por clave; con dos claves distintas no puede.* La mitad del
+// servidor esta probada contra la base de verdad en `tests/test_g01_diario_http.py` (la misma clave dos
+// veces devuelve un id y una sola entrada).
+
+const CAMPOS = {
+  fecha: '2026-10-13', comida: 'comida', tipo: 'alimento', referencia: 'Tortilla de patatas',
+  kcal: 250, cantidad_g: 150, fuente_dato: 'etiqueta',
+}
+let contador = 0
+const claveSeguida = () => `clave-${++contador}`
+
+test('el diario no genera la clave a mano: la decide la operacion pendiente', () => {
+  // **Guarda contra el defecto exacto que F02 arregla.** Si alguien vuelve a poner una clave nueva
+  // dentro del `onSubmit`, el reintento manual vuelve a ser una operacion nueva y el servidor
+  // duplica. *Es una prueba sobre el texto del fichero, y se hace a proposito: lo que hay que
+  // impedir es exactamente esa linea.*
+  const fuente = readFileSync(new URL('../src/paginas/Diario.tsx', import.meta.url), 'utf8')
+  // **Sin los comentarios.** El fichero *menciona* `crypto.randomUUID` para explicar por que ya no lo
+  // usa, y buscarlo en crudo haria fallar la guarda por su propia documentacion. *Lo que se persigue
+  // es la llamada, no la palabra.*
+  const codigo = fuente
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/gm, '$1')
+  assert.equal(codigo.includes('crypto.randomUUID'), false,
+    'el diario tiene que usar `resolver`, no una clave nueva por envio')
+  assert.ok(codigo.includes('resolver(pendiente.current, campos'),
+    'y la tiene que decidir la operacion pendiente, con su payload')
+})
+
+test('reintentar lo mismo reutiliza la clave', () => {
+  contador = 0
+  const primera = resolver(null, CAMPOS, claveSeguida)
+  const segunda = resolver(primera, CAMPOS, claveSeguida)
+
+  assert.equal(segunda.clave, primera.clave, 'el reintento lleva la misma clave')
+  assert.equal(segunda.intentos, 2, 'y se sabe que va por el segundo intento')
+  assert.equal(esReintento(primera, CAMPOS), true)
+})
+
+test('cambiar el formulario es otra operacion, no un reintento', () => {
+  contador = 0
+  const primera = resolver(null, CAMPOS, claveSeguida)
+  const otra = resolver(primera, { ...CAMPOS, kcal: 300 }, claveSeguida)
+
+  assert.notEqual(otra.clave, primera.clave)
+  assert.equal(otra.intentos, 1)
+  assert.equal(esReintento(primera, { ...CAMPOS, kcal: 300 }), false)
+})
+
+test('tras un alta buena, dos meriendas iguales siguen siendo dos', () => {
+  // **El otro lado del criterio, y el que impide pasarse de listo.** Al confirmar se olvida lo
+  // pendiente, asi que la siguiente -- aunque sea identica -- es una operacion nueva.
+  contador = 0
+  const primera = resolver(null, CAMPOS, claveSeguida)
+  const despues = resolver(null, CAMPOS, claveSeguida)   // null: se olvido tras el exito
+  assert.notEqual(despues.clave, primera.clave)
+})
+
+test('el sello no depende del orden en que se escriban los campos', () => {
+  assert.equal(sello({ a: 1, b: 2 }), sello({ b: 2, a: 1 }))
+  assert.equal(esReintento(null, CAMPOS), false)
+})
+
+test('el generador de clave sirve tambien donde crypto.randomUUID no existe', () => {
+  // **El segundo fallo de la misma linea.** `crypto.randomUUID` solo esta en contexto seguro, y esta
+  // aplicacion se sirve por http en el 8080, tambien por la IP de Tailscale: ahi el diario reventaba.
+  // El respaldo usa `getRandomValues`, que si esta.
+  const original = Object.getOwnPropertyDescriptor(globalThis.crypto, 'randomUUID')
+  Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true })
+  try {
+    assert.match(claveNueva(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+  } finally {
+    if (original) Object.defineProperty(globalThis.crypto, 'randomUUID', original)
+    else delete globalThis.crypto.randomUUID
+  }
+  // Y con el metodo de verdad tambien da un uuid.
+  assert.match(claveNueva(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
 })
