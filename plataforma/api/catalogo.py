@@ -18,7 +18,7 @@ from pathlib import Path
 
 import duckdb
 
-from core import comparacion
+from core import comparacion, version_vigente
 
 from .ajustes import AJUSTES
 
@@ -49,10 +49,13 @@ def _sello_de_gold() -> float:
     Y como la cache del panel se indexa por `fecha_de_gold()`, tampoco se
     refrescaria. La app se quedaba congelada en silencio.
     """
-    try:
-        return (AJUSTES.gold / "grupos.parquet").stat().st_mtime
-    except OSError:
-        return 0.0
+    # **El sello de lo que se LEE, no el del fichero suelto.** *Mientras se sirve una version, el
+    # `mtime` del gold suelto es el de un fichero que puede no ser el que se lee: la cache no se
+    # invalidaria al publicar, que es justo cuando tiene que invalidarse.*
+    #
+    # *Y sin puntero `version_vigente.sello` devuelve el del suelto, asi que el comportamiento de
+    # siempre no cambia.*
+    return version_vigente.sello(AJUSTES.gold, "grupos.parquet")
 
 
 def sello_de_gold() -> float:
@@ -79,11 +82,24 @@ def conexion() -> duckdb.DuckDBPyConnection:
         _local.con = None
     con = duckdb.connect(database=":memory:")
     g = AJUSTES.gold
-    con.execute(f"CREATE VIEW grupos AS SELECT * FROM '{_p(g / 'grupos.parquet')}'")
-    con.execute(f"CREATE VIEW enlaces AS SELECT * FROM '{_p(g / 'enlaces.parquet')}'")
-    con.execute(f"CREATE VIEW diario AS SELECT * FROM '{_p(g / 'precio_diario.parquet')}'")
-    con.execute(f"CREATE VIEW derivado AS SELECT * FROM '{_p(g / 'precio_derivado.parquet')}'")
-    con.execute(f"CREATE VIEW resumen AS SELECT * FROM '{_p(g / 'resumen.parquet')}'")
+    # **La version se resuelve UNA VEZ, y las cinco vistas salen de ella.**
+    #
+    # *Resolver el puntero cinco veces -- una por vista -- es lo que deja montar `grupos` de una
+    # publicacion y `enlaces` de la siguiente si se publica a mitad de camino: la mezcla que S01
+    # prohibe y que `version_vigente.ruta` existe para evitar.* Y **es la frase que hasta hoy se
+    # cumplia por trivialidad**: `rutas()` estaba probado pero no lo usaba nadie.
+    #
+    # *Sin puntero, `ruta` devuelve los ficheros sueltos de siempre: el fallback conservador.*
+    version = version_vigente.version_actual(g)
+
+    def _de_la_version(nombre: str) -> str:
+        return _p(version_vigente.ruta(g, nombre, version))
+
+    con.execute(f"CREATE VIEW grupos AS SELECT * FROM '{_de_la_version('grupos.parquet')}'")
+    con.execute(f"CREATE VIEW enlaces AS SELECT * FROM '{_de_la_version('enlaces.parquet')}'")
+    con.execute(f"CREATE VIEW diario AS SELECT * FROM '{_de_la_version('precio_diario.parquet')}'")
+    con.execute(f"CREATE VIEW derivado AS SELECT * FROM '{_de_la_version('precio_derivado.parquet')}'")
+    con.execute(f"CREATE VIEW resumen AS SELECT * FROM '{_de_la_version('resumen.parquet')}'")
     # Una columna de busqueda sin tildes y en minusculas, calculada una vez.
     #
     # Las columnas se piden con `_o_nulo`, que comprueba antes si existen en el

@@ -231,3 +231,43 @@ es justo cuando tiene que invalidarse.* **`sello()` resuelve eso y tiene prueba 
 **Lo que queda es la conmutacion**: `catalogo.conexion()` y `_sello_de_gold()` tienen que pasar a usar
 `version_vigente`, resolviendo la version **una vez por peticion** -- *que es la frase que hoy se cumple
 por trivialidad* --. **No se ha hecho en esta ronda y no se da por hecho.**
+
+
+---
+
+## 10. La conmutacion, hecha
+
+*(Ronda 17.)* El pendiente declarado de S01 —**que la API lea la version publicada**— esta hecho:
+
+```python
+# catalogo._sello_de_gold()   ahora es el sello de LO QUE SE LEE
+return version_vigente.sello(AJUSTES.gold, "grupos.parquet")
+
+# catalogo.conexion()   la version se resuelve UNA VEZ y las cinco vistas salen de ella
+version = version_vigente.version_actual(g)
+con.execute(f"CREATE VIEW grupos AS SELECT * FROM '{_de_la_version('grupos.parquet')}'")
+```
+
+**Y las dos mitades importan por razones distintas:**
+
+- **Las vistas, de una sola version.** *Resolver el puntero cinco veces -- una por vista -- es lo que
+  deja montar `grupos` de una publicacion y `enlaces` de la siguiente si se publica a mitad de camino.*
+  **Es la mezcla que S01 prohibe**, y hasta hoy **la frase se cumplia por trivialidad**: `rutas()` estaba
+  probado y no lo usaba nadie.
+- **El sello, el de lo que se lee.** *El `mtime` del gold suelto es el de un fichero que puede no ser el
+  que se sirve: la cache no se invalidaria **al publicar**, que es justo cuando tiene que invalidarse.*
+
+**Y el fallback hace el cambio seguro**: *sin puntero, `version_vigente.ruta` devuelve los ficheros
+sueltos de siempre.* **Lo confirman las pruebas que ya existian**: `test_g04_catalogo_de_ensayo.py`
+escribe el gold suelto con `_suelta` **sin poner puntero**, asi que sigue leyendo el suelto — **46 pasan,
+1 skipped** en la bateria del catalogo y la API, y **1711 en la suite entera**.
+
+### Lo que NO esta probado, y no se da por hecho
+
+**Que publicar cambie lo que la aplicacion sirve.** *La prueba que se llama asi
+(`test_publicar_v2_cambia_lo_que_la_aplicacion_sirve`) **usa `_suelta`, que escribe el gold suelto, no
+`publicar()`**: mide otra cosa.* **Ahora que `catalogo` lee la version, esa prueba hay que escribirla de
+verdad** -- publicar V2 con `publicacion.publicar()` y comprobar que la busqueda devuelve lo de V2 --, y
+con ella la de que **una peticion de dos ficheros ve una sola version**.
+
+*Es el siguiente paso, y es corto: el mecanismo ya esta conectado.*
