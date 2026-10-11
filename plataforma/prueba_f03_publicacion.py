@@ -179,12 +179,24 @@ def main() -> int:
             # **Entrar primero.** *La busqueda no necesitaba sesion; los recorridos de lista si -- `/api/listas`
             # contestaba 401 --.* **El patron es el del ensayo del diario**: `POST /api/entrar` con la sesion
             # del propio contexto, y registrarse si la cuenta no existe.
-            import time as _time
-
-            usuario = f"f03_{int(_time.time() * 1000) % 100000000}"
-            r = contexto.request.post(f"{BASE}/api/registrarse",
-                                      data={"nombre": "Prueba F03", "usuario": usuario,
-                                            "clave": "clave-de-prueba-123"})
+            #
+            # **Y la cuenta es FIJA, no nueva en cada corrida.** *El codigo pedia el patron en el comentario y
+            # hacia lo contrario: iba directo a `registrarse` con un nombre de usuario con marca de tiempo, o
+            # sea **una cuenta nueva por corrida**.* **Al cabo de unas cuantas, `registrarse` devolvia 429**
+            # -- *el limite de peticiones funcionando bien* --, y sin cuenta no habia sesion, y sin sesion el
+            # alta en el diario **no se podia medir** (medido el 11 de octubre de 2026: tres lineas «MAL» con
+            # una sola causa).
+            #
+            # *El respaldo no es un apano para esquivar el limite: es **usar la puerta correcta**.*
+            usuario = "f03_recorrido"
+            clave = "clave-de-prueba-123"
+            r = contexto.request.post(f"{BASE}/api/entrar",
+                                      data={"usuario": usuario, "clave": clave})
+            if not r.ok:
+                # *No existe (o la clave no es la suya): se crea una vez y se sigue.*
+                r = contexto.request.post(f"{BASE}/api/registrarse",
+                                          data={"nombre": "Prueba F03", "usuario": usuario,
+                                                "clave": clave})
             comprueba(r.ok or r.status in (400, 409),
                       f"hay cuenta para el recorrido ({r.status})")
 

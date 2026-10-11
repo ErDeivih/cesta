@@ -1377,3 +1377,59 @@ es**.* *El respaldo no es un apaño para saltarse el limite: es **usar la puerta
 
 **Un ensayo que falla por su propia preparacion, con la causa escrita en su propio comentario** -- *que es, a esta
 altura de la fase, casi lo que se espera.*
+
+
+---
+
+## 37. El arreglo esta, y **el limite es por hora** -- asi que no se puede comprobar en la misma hora
+
+*(Ronda 154.)* **El arreglo de §36 hecho, y la causa del `429` medida entera.**
+
+### El arreglo
+
+**`plataforma/prueba_f03_publicacion.py`, siguiendo su propio comentario:** *cuenta **fija** (`f03_recorrido`,
+no una con marca de tiempo), **`POST /api/entrar` primero**, y **`registrarse` solo si `entrar` no vale**.* **Y
+el comentario del codigo se amplia para decir por que** -- *el `429` de la ronda 152, con su causa.*
+
+### Y el limite, leido en el codigo
+
+```python
+plataforma/api/main.py:117
+    429, "Se han creado demasiadas cuentas en la ultima hora."
+```
+
+**Dos cosas, y las dos confirman que el arreglo es el correcto:**
+
+1. **Es de `registrarse`, no de `entrar`.** *Asi que **entrar primero** no solo es el patron del comentario:
+   **es la via que no esta limitada**.*
+2. **La ventana es de una hora.** *Y en esta sesion se han corrido **tres ensayos seguidos**, cada uno creando su
+   cuenta. **La hora no ha pasado.***
+
+**Por eso el ensayo **sigue** dando `429` con el arreglo puesto**: *la cuenta `f03_recorrido` **todavia no
+existe** (nunca se ha creado), asi que `entrar` falla, y el `registrarse` que viene detras **choca con la hora
+que ya se gasto creando cuentas de rondas anteriores**.*
+
+> **El arreglo es correcto y la comprobacion no se puede hacer ahora.** *No es que no funcione: es que
+> **la primera vez que corra despues de la hora, creara la cuenta y no volvera a crear ninguna** -- y a partir
+> de ahi, `entrar` siempre valdra.*
+
+### Y una sonda mia que estaba mal, y conviene decirlo
+
+**Probe la API a mano con `Invoke-WebRequest -Body @{...}`** -- *que manda **formulario** --, **y la API contesto
+422**: *«Input should be a valid dictionary or object to extract fields from», con `input` =
+`usuario=f03_recorrido&clave=...`.*
+
+**La API espera JSON, y mi sonda mando formulario.** *Asi que **la sonda estaba mal, no la API** -- y la prueba
+esta en que el propio mensaje de error **imprime lo que recibio**.* **Es la enesima vez en esta fase que el
+instrumento es lo que falla**, y aqui se vio **porque el error traia el dato dentro**.
+
+### Y el estado de F03, definitivo
+
+| | |
+|---|---|
+| **el bucle de publicacion en navegador** | **MEDIDO Y PASA**: *33,81 -> 35,81 -> 36,81 EUR en pantalla, sin reiniciar, sin errores JS, catalogo real intacto* |
+| **el alta en el diario durante la publicacion** | **NO medido**, y **la causa esta medida entera**: *`429` de «demasiadas cuentas en la ultima hora», en la preparacion del ensayo* |
+| **el arreglo** | **hecho y con `ruff` limpio**; *su comprobacion **necesita que pase una hora**, o un `registrarse` con otra IP* |
+| **y lo que **no** hay que hacer** | *subir el limite. **El limite funciona y protege una puerta**; lo que estaba mal era el ensayo.* |
+
+**Un ensayo cuyo limite se puede esperar** -- *y decirlo asi es mas util que subir el limite para que pase.*
