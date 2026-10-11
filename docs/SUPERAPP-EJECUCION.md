@@ -9,22 +9,35 @@ completo, no una compilación.**
 
 ## Tablero
 
-| Paquete | Estado | Evidencia | Siguiente acción |
-|---|---|---|---|
-| G01 Diario efectivo | **`cerrado`** | recorrido medido en 390 y 1440 | **G02: texto libre útil en la lista** |
-| G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
-| G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
-| G04 Dos recorridos | `en curso` | — | depende de G01–G03 |
-| G05 Gráficas | `pendiente` | — | depende de G01 para nutrición |
-| G06 Acabado de las tres apps | `pendiente` | — | puede avanzar por pantallas |
-| G07 Publicación diaria | `pendiente` | — | auditar `publicacion.publicar()` dentro del pipeline |
-| G08 Fichas completas | `pendiente` | — | inventario por cadena |
-| G09 Lidl integrado | `pendiente` | — | `run.py:ORDEN` sin Lidl |
-| G10 Identidad exacta | `pendiente` | — | banco estratificado |
-| G11 Oráculo de coste | `pendiente` | — | enumeración exhaustiva independiente |
-| G12 Recetas | `pendiente` | — | versiones y escalado por ración |
-| G13 Operación y privacidad | `pendiente` | — | copia/restauración probada en destino |
-| G14 Aprendizaje y aceptación | `pendiente` | — | cierre tras los demás |
+> **ENCABEZADO RECONCILIADO el 13 de octubre de 2026 (fase 2, paquete F00).** La tabla que había aquí
+> era la del **primer día** del encargo anterior: decía «G02 pendiente» y compañía mientras el cuerpo de
+> este mismo fichero las declaraba cerradas. Se sustituye por el estado real, **sin tocar los informes
+> históricos de abajo ni reutilizar sus cifras**. *Y se dice lo que la fase 2 ha encontrado al
+> contrastarlos: **un cierre «por lectura» no acredita un criterio que exigía navegador, concurrencia o
+> HTTP**.* La fase 2 los vuelve a verificar y abre F00–F16 en
+> [`SUPERAPP-FASE2-EJECUCION.md`](SUPERAPP-FASE2-EJECUCION.md).
+
+| Paquete | Estado al cerrar G14 | Qué dice la fase 2 |
+|---|---|---|
+| G01 Diario efectivo | `cerrado` | ✓ se conserva: recorrido medido en 390 y 1440 |
+| G02 Texto libre | `cerrado` | **reabierto**: el informe lo llama «texto libre del diario», y G02 pedía **lista** |
+| G03 Revocación exacta | `cerrado` | ✓ se conserva: revocación medida por línea |
+| G04 Dos recorridos | `cerrado` | **reabierto**: el informe resume «conservación del histórico», y pedía **las tres apps durante publicación** |
+| G05 Gráficas | `cerrado` | ✓ se conserva |
+| G06 Acabado de las tres apps | `cerrado` | ✓ se conserva (entregable: lista vacía con evidencia) |
+| G07 Publicación diaria | `cerrado` | **reabierto (F03)**: el puntero con dos fechas no demuestra coherencia de todos los artefactos |
+| G08 Fichas completas | `cerrado con limitación` | **reabierto (F05)**: hay que medir por campo y cadena, no llamar «limitación de fuente» a lo no ejecutado |
+| G09 Lidl integrado | `cerrado con limitación` | **reabierto (F05)**: demostrar qué descubre y qué obtiene cada día |
+| G10 Identidad exacta | `cerrado por lectura` | **reabierto (F01)**: identidad estable ante reordenación, sin consumidores ligados al ordinal |
+| G11 Oráculo de coste | `cerrado` | **reabierto (F06)**: el propio informe admite que el oráculo cubre aritmética, **no asignaciones multi-tienda** |
+| G12 Recetas | `cerrado` | ✓ se conserva; el camino HTTP del 221 queda por ejercitar |
+| G13 Operación y privacidad | `cerrado` | **reabierto (F04)**: **CSRF sin ensayar**, y la copia vive en el mismo disco |
+| G14 Aprendizaje y aceptación | `cerrado` | **sustituido** por F16, con matriz de capacidades C/R/N/X |
+
+**Y un defecto P0 reproducido el 13 de octubre de 2026, que esta tabla no puede esconder**: con **A
+pedido y la alternativa B aceptada** (3 unidades, 3×2 de B), **la estimación cobra B a 500 céntimos y el
+cierre guarda A a 900**. *Reproducción ejecutable en `tests/test_fase2_f01_sustitucion.py`.* **Es el
+paquete F01.**
 
 ## G01 — Diario: registrar, persistir y explicar lo conocido
 
