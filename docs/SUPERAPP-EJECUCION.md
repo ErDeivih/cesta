@@ -289,6 +289,27 @@ devuelve una fila **por cadena** -- devuelve **un producto** -- y me construi un
 `nombre`, que como los dos nombres son iguales **se quedo con uno y ocultaba el resultado**. *El
 codigo hacia lo sensato; el que no lo entendia era yo.*
 
+### G04, la ultima clausula: **lo ya hecho se mantiene**
+
+**El catalogo de ensayo Y el almacen de verdad**, cada uno en su sitio: el catalogo en un temporal, las
+listas en el PostgreSQL desechable. *El diario real y las compras reales no se tocan.*
+
+| comprobado | |
+|---|---|
+| se cierra una compra con el producto del ensayo | ✓ |
+| **se publica V2 con el precio cambiado** | ✓ *DIA 150 -> 120, y `catalogo.reiniciar()`* |
+| **la compra cerrada CONSERVA su precio** | ✓ **la linea archivada sigue en el mismo valor** |
+| y **la lista sigue viva**, para poder seguir comprando | ✓ |
+
+**Por que esto es lo que hace que una compra sirva de algo**: `almacen.lineas_de_compra` guarda la
+compra **con sus precios** --*gold se reescribe cada dia*--, asi que **recalcularla con los precios de
+hoy seria explicar una compra de ayer con los datos de hoy**. *Es la misma razon por la que existe la
+columna `importe_cent` de la migracion 013.*
+
+**Y con esto, los cuatro puntos de G04 estan medidos a nivel de servidor.** Lo que queda es **el
+recorrido de interfaz** --*punto 2: «buscar, abrir ficha, preparar compra/consumo, publicar V2»*--, que
+es donde el catalogo cambia **debajo de una pantalla**.
+
 **Las tres puertas del cálculo, medidas sin base de datos.** `donde_comprar` seria lo natural de
 medir, pero **lee el catálogo** (`_candidatos` sobre `data/gold/`) y una prueba suya *mide el
 calendario*. Las dos piezas donde la revocación decide **si** son puras:

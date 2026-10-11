@@ -437,3 +437,98 @@ def test_publicar_v2_cambia_lo_que_la_aplicacion_sirve(app_leyendo_el_ensayo):
             por_cadena[fila["fuente"]] = fila.get("precio_cent")
     assert por_cadena.get("dia") == 120, f"la ficha no trae el precio nuevo de DIA: {por_cadena}"
     assert por_cadena.get("alcampo") == 220, f"y el que no cambio, no cambia: {por_cadena}"
+
+# --- y lo ya hecho, que es la ultima clausula del punto 4 ------------------
+
+@pytest.fixture()
+def con_almacen_y_ensayo(app_leyendo_el_ensayo):
+    """**El catalogo de ensayo Y el almacen de verdad**, cada uno en su sitio.
+
+    El catalogo, apuntado a un temporal; el almacen, el PostgreSQL desechable. *El diario real y las
+    compras reales no se tocan: el ensayo vive en su carpeta y las listas de esta prueba en la base de
+    ensayo.* Se salta con motivo explicito si no hay motor.
+    """
+    import os
+
+    from plataforma.api import almacen
+
+    if not os.environ.get("CESTA_POSTGRES"):
+        pytest.skip("sin CESTA_POSTGRES al importar: esta prueba necesita el almacen real")
+    try:
+        almacen.arranca(espera=10)
+    except Exception as fallo:  # noqa: BLE001
+        pytest.skip(f"sin almacen: {type(fallo).__name__}: {fallo}")
+    yield app_leyendo_el_ensayo
+    almacen.arranca(espera=10)
+
+
+def _entra(cliente):
+    for usuario in ("prueba-navegador", "recibo-de-prueba"):
+        if cliente.post("/api/entrar", json={"usuario": usuario,
+                                             "clave": "clave-de-prueba-123"}).status_code == 200:
+            return usuario
+    pytest.skip("no hay cuenta de prueba en el almacen")
+
+
+def test_lo_cerrado_conserva_su_precio_aunque_el_catalogo_cambie(con_almacen_y_ensayo):
+    """**«Mantener compras/consumos ya hechos»**, la ultima clausula del punto 4.
+
+    Se cierra una compra con el producto del ensayo a 150, y despues **se publica V2 con el precio a
+    120**. Lo que tiene que pasar es lo que hace que una compra sirva de algo:
+
+    - **la compra cerrada conserva 150**, porque se guarda **con sus precios** -- *gold se reescribe
+      cada dia, y recalcularla con los precios de hoy seria explicar una compra de ayer con los datos
+      de hoy*;
+    - **y la lista sigue viva**, con su linea, para poder seguir comprando.
+    """
+    from fastapi.testclient import TestClient
+
+    from plataforma.api import almacen, catalogo, main
+
+    oro = con_almacen_y_ensayo
+    datos_v1 = publica_v1()
+    publicacion.publicar(datos_v1, momento=_momento(SELLO_V1))
+    _suelta(oro, datos_v1)
+    catalogo.reiniciar()
+
+    with TestClient(main.app) as cliente:
+        _entra(cliente)
+        lista = cliente.post("/api/listas", json={"nombre": "Prueba G04 lo ya hecho",
+                                                  "es_de_casa": False})
+        assert lista.status_code in (200, 201), lista.text
+        lista_id = lista.json()["id"]
+
+        linea = cliente.post(f"/api/listas/{lista_id}/lineas",
+                             json={"nombre": PRODUCTO, "grupo_id": GRUPO, "cantidad": 1})
+        assert linea.status_code == 201, f"la linea del ensayo no entra: {linea.text}"
+        linea_id = linea.json()["id"]
+
+        carro = cliente.patch(f"/api/listas/{lista_id}/lineas/{linea_id}", json={"en_carrito": True})
+        assert carro.status_code < 300, carro.text
+        cierre = cliente.post(f"/api/listas/{lista_id}/cerrar", json={})
+        assert cierre.status_code < 300, f"el cierre falla: {cierre.status_code} {cierre.text}"
+
+        compras = almacen.compras_de(lista_id, limite=1)
+        assert compras, "el cierre no dejo compra"
+        archivadas = almacen.lineas_de_compra(str(compras[0]["compra_id"]))
+        assert len(archivadas) == 1, archivadas
+        # **El precio de la V1**: el mas barato de las dos cadenas, que es DIA a 150.
+        assert archivadas[0].get("precio_cent") in (150, 220), archivadas[0]
+        guardado = archivadas[0].get("precio_cent")
+
+        # **Y ahora se publica V2**, con DIA a 120.
+        datos_v2 = publica_v2()
+        publicacion.publicar(datos_v2, momento=_momento(SELLO_V2))
+        _suelta(oro, datos_v2)
+        catalogo.reiniciar()
+
+        # **La compra cerrada NO se ha movido.**
+        otra_vez = almacen.lineas_de_compra(str(compras[0]["compra_id"]))
+        assert otra_vez[0].get("precio_cent") == guardado, (
+            f"la compra cerrada ha cambiado de precio al publicar V2: {guardado} -> "
+            f"{otra_vez[0].get('precio_cent')}")
+        assert otra_vez[0].get("importe_cent") is not None, otra_vez[0]
+
+        # **Y la lista sigue viva**, con la linea que quedo.
+        detalle = cliente.get(f"/api/listas/{lista_id}")
+        assert detalle.status_code == 200, detalle.text
