@@ -110,3 +110,44 @@ comprobaba que la pasada publica, y sigue siendo verdad para una pasada suelta.*
    explicación más probable es una publicación con `momento` retrofechado — que es justo la sutileza que
    avisa `tests/test_g04_catalogo_de_ensayo.py:543`.* **No lo doy por bueno ni por malo: queda anotado
    como algo que hay que explicar antes de tocar la publicación.**
+
+
+---
+
+## 6. Y el hallazgo que obliga a corregir lo de arriba: **la aplicación no lee versiones**
+
+*(Ronda 14.)* Buscando la mitad de F03 que se puede probar sin navegador —*«respuesta individual no mezcla
+versiones»*—, medí **quién usa el mecanismo que existe para eso**:
+
+```
+git grep -n "publicacion.ruta\|publicacion.rutas\|rutas(" -- plataforma/api core
+  core/publicacion.py:86:def rutas(...)      <- y ninguna llamada mas
+```
+
+**`ruta()` y `rutas()` no los usa nadie.** *Existen, están documentados —«fija la versión: un lector no
+puede ver dos mezcladas», «es lo que fija la versión por petición»— y **no tienen un solo consumidor**.*
+
+**Y la aplicación sí lee un catálogo**: `catalogo.buscar` va contra **`data/gold`**, con la conexión
+cacheada por el `mtime` de `grupos.parquet`. *Lo dice el propio test, en su comentario; y el test que
+parece demostrar lo contrario se llama `…publicar_v2_cambia_lo_que_la_aplicacion_sirve` **pero usa
+`_suelta`, que escribe el gold suelto, no `publicar()`**.*
+
+### Lo que eso significa, dicho sin adorno
+
+1. **El versionado es inerte para la aplicación.** Se publica, el puntero se mueve y `/api/estado` lo
+   mira — **pero la aplicación nunca lee una versión**: sirve siempre el gold suelto.
+2. **`respuesta individual no mezcla versiones` se cumple por trivialidad**, no por el `rutas()` que se
+   escribió para ello: *hay una sola fuente*.
+3. **Y el `AVISO` que añadí en la ronda 12 afirmaba algo falso**: *«hay catálogo procesado que NO se está
+   sirviendo»*. **No es verdad**: lo servido es el gold, que sí es lo más nuevo; **la que se quedó atrás
+   es la publicación**. *Lo he corregido, con la explicación impresa debajo, y la prueba que afirmaba la
+   frase vieja está ajustada a lo que es verdad.*
+
+**Es un error mío de la ronda 12, y es del tipo que el encargo avisa**: *afirmé una consecuencia
+operativa —«no se está sirviendo»— desde un detalle de versionado, **sin comprobar quién lee qué**.*
+*Mirar el puntero no es mirar lo que ve quien compra.*
+
+**Y abre una pregunta que hay que contestar antes de tocar nada más**: *si la aplicación no lee
+versiones, ¿para qué se publican?* Las respuestas posibles —que el versionado sea para el manifiesto y la
+auditoría, que falte conectar `catalogo` a `rutas()`, o que sea deuda a medio terminar— **no las elijo
+yo**: quedan como la primera cosa que hay que decidir en F03.

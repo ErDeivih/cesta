@@ -155,9 +155,12 @@ def test_el_resumen_distingue_capturado_procesado_y_publicado():
 
     assert '"  publicado: v' in fuente, "el resumen tiene que decir que version se sirve"
     assert "NO hay version publicada" in fuente, "y decir cuando no hay ninguna"
-    assert "NO se esta sirviendo" in fuente, (
-        "y avisar cuando hay catalogo procesado que no se sirve: *es lo que de verdad importa de esta "
-        "linea, no que haya version, sino que la version no se quede atras*")
+    # **Y el aviso tiene que decir lo que es verdad.** *La primera version decia «hay catalogo
+    # procesado que NO se esta sirviendo», y es falso: la aplicacion lee `data/gold`, no la version.
+    # Lo que se sirve es el gold; la que se quedo atras es la publicacion.*
+    assert "se publico por detras de lo procesado" in fuente, (
+        "y avisar cuando la PUBLICACION se queda atras de lo procesado -- sin decir que lo servido "
+        "esta viejo, que es otra cosa")
 
     # **Y el aviso tiene que poder compararse**: se calcula despues de tener las fechas del silver.
     pos_fechas = fuente.index("fechas = _fechas_por_cadena()")

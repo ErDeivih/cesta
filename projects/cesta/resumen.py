@@ -181,8 +181,19 @@ def main(argv: list[str] | None = None) -> int:
         dia_publicado = str(puntero.get("publicado_en", ""))[:10]
         dia_silver = max(d for _c, d in fechas)
         if dia_publicado and dia_publicado < dia_silver:
-            print(f"  AVISO: lo publicado es del {dia_publicado} y el silver llega al {dia_silver}: "
-                  f"hay catalogo procesado que NO se esta sirviendo")
+            # **Cuidado con lo que se afirma aqui.** *La primera version de este aviso decia «hay
+            # catalogo procesado que NO se esta sirviendo», y **es falso**: la aplicacion lee
+            # `data/gold` directamente (`catalogo.buscar`, con la conexion cacheada por el `mtime` de
+            # `grupos.parquet`), no la version publicada. Lo que se sirve es el gold, que si es lo mas
+            # nuevo; **la que se ha quedado atras es la version publicada**.*
+            #
+            # *Y ese es el hallazgo de verdad: `publicacion.ruta()` y `rutas()` -- que existen para
+            # fijar la version por peticion -- **no los usa nadie**. El versionado se publica, el
+            # puntero se mueve y `/api/estado` lo mira, pero **la aplicacion nunca lee una version**.*
+            print(f"  AVISO: la version publicada es del {dia_publicado} y el silver llega al "
+                  f"{dia_silver}: se publico por detras de lo procesado")
+            print("      (la aplicacion lee `data/gold`, no la version: lo servido es lo de gold; "
+                  "la que quedo atras es la publicacion)")
 
     comparables = ahorro(catalogo)
     con_letra = catalogo.filter(pl.col("calidad").is_not_null())
