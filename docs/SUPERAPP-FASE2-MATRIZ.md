@@ -19,7 +19,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| Fichas de producto: **calorías** | **sí, para Día**; **no** para Mercadona, Alcampo, Aldi ni Carrefour | **Día publica la tabla entera con unidades** y `ficha_dia.py` la lee (9 pruebas, contra crudo real). *Carrefour: sus 1.995 `Product` incrustados traen sólo `name` y `offers` — son listados* |
+| **Calorías y tabla nutricional** | **sí, para Día: 6.331 productos** | *Ya extraída por `collectors/dia.py:165 _nutricion`* en cada pasada diaria, **en el maestro, con la base declarada** (`nutricion_por`) y rechazando las bases incomparables. *Mercadona: 4.494 productos, **0 tablas** — su fuente no las publica* |
 | Fichas: **ingredientes y alérgenos** | **extractor hecho y probado** | `ficha_mercadona.py` (7 pruebas) y `ficha_dia.py` (9), ambas contra crudo real. *El crudo de hoy trae **3 fichas** de Mercadona (de 155) y **4** de Día (de 547): lo que falta es **pedir*** |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |
@@ -35,7 +35,7 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | **F02** diario | **en curso** | Reintento **verificado en la UX** y carrera arreglada. Falta **unidades** (g/ml/raciones) y vista previa congelada. |
 | **F03** publicación | **en curso** | Todo hecho y probado **salvo los dos recorridos de navegador** que su aceptación pide. |
 | **F04** privacidad/CSRF | **sin empezar** | — |
-| **F05** fichas | **medido** | 79.887 pendientes. **Hay ejecutor sólo para Lidl** (28 de 5.054); las otras cinco **no tienen descargador ni parser**. Falta escribirlos, y medir por campo. |
+| **F05** fichas | **contestado** | **Día: 6.331 productos con tabla nutricional**, ya extraída en el maestro por el colector. **Mercadona: 0** (su fuente no la publica). *Alcampo, Aldi, Carrefour y Lidl no tienen maestro.* La cola de 79.887 mide **refresco**, no cobertura inicial. |
 | **F06** matching y optimizador | **en curso** | Optimizador **cerrado** (oráculo, 9 discrepancias, garantía y límites publicados, `umbral` decidido con los folletos). Falta el **banco de matching**. |
 | **F07–F16** | **sin empezar** | Mejoras funcionales y visuales: *van después de los cierres, según el encargo.* |
 

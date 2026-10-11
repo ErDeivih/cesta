@@ -609,3 +609,68 @@ para ellas.***
 **Pedir fichas, como Lidl.** *La cola, el lease, el presupuesto, el ritmo y dos lectores ya estan hechos y
 probados; lo que no existe es quien **pida** para las otras cinco.* **Y `carrefour` no necesita parser
 nuevo: necesita que se pidan sus paginas de producto.**
+
+
+---
+
+## 15. **La respuesta, y estaba ya hecha**: Dia tiene 6.331 productos con tabla nutricional
+
+*(Ronda 36.)* Yendo a escribir el ejecutor de Dia, mire `collectors/dia.py` antes -- *por fin, antes* -- y
+**estaba todo hecho, y mejor de lo que yo iba a hacerlo.**
+
+### Lo que ya existe en el colector
+
+```
+collectors/dia.py:5     Ficha: /api/v1/product/<sku_id>?lang=es -> ean_code
+collectors/dia.py:77    def ficha(f, sku_id)  ->  f.get(f"{BASE}/api/v1/product/{sku_id}?lang=es")
+collectors/dia.py:165   def _nutricion(p)  ->  la tabla, y por cuanto esta expresada
+```
+
+**El colector de Dia pide la ficha y extrae la tabla en cada pasada diaria.** *No hace falta ni cola ni
+ejecutor nuevo para eso: ya ocurre.*
+
+**Y esta hecho con el cuidado que F05 pide**, en su propio comentario:
+
+> *«Se conserva una tabla parcial **sin inventar los nutrientes ausentes**. Quien la consulte debe
+> distinguir **desconocido de cero** y comprobar la base.»*
+
+> *«Ocho fichas dicen que su tabla esta por "1447g", "2.7g" o "97ml". No se sabe comparar eso con un "por
+> 100 g", y **una tabla que no se puede comparar enseñada como si se pudiera es peor que no tenerla**.»*
+
+### Y la cobertura de verdad, en los maestros
+
+```
+dia        6.331 entradas  ->  con nutricion: 6.331   (claves: nutricion, nutricion_por)   <- TODAS
+mercadona  4.494 entradas  ->  con nutricion: 0
+alcampo, aldi, carrefour, lidl:  no hay maestro
+```
+
+**Dia: 6.331 productos con tabla nutricional, el 100 % de su maestro, ya extraida.** *Y con la base
+declarada al lado (`nutricion_por`), que es lo que permite enseñarla sin mentir.*
+
+**Mercadona: 4.494 productos y cero tablas**, *coherente con que su fuente no las publique.*
+
+### Y la correccion que me toca
+
+**`ficha_dia.py` y `ficha_mercadona.py`, escritos en las rondas 32 y 33, no hacian falta para esto.** *El
+proyecto ya tenia el de Dia, dentro del colector, **y con dos cosas que el mio no tiene**: la base
+(`nutricion_por`) y el rechazo de las bases incomparables.* **Los mios leen el crudo; el del colector lee
+la ficha de la API y ademas decide si la tabla es comparable.**
+
+**Y el error es el mismo de siempre, mas grande**: *pase cinco rondas tratando F05 como «la cola no se ha
+ejecutado» cuando **la respuesta -- 6.331 productos con nutricion -- llevaba todo el tiempo en el maestro**.
+Grep a `collectors/dia.py` lo habria dicho en el primer minuto.* **Mire el crudo antes que el codigo que lo
+escribe.**
+
+### Lo que F05 deja, contestado
+
+| pregunta | respuesta | evidencia |
+|---|---|---|
+| ¿Se puede enseñar nutricion? | **Si, para Dia** | **6.331 productos**, 100 % de su maestro, con base declarada |
+| ¿Y para Mercadona? | **No** | 4.494 productos, 0 tablas; su fuente no las publica |
+| ¿Y para las otras cuatro? | **No se sabe: no hay maestro** | alcampo, aldi, carrefour y lidl no tienen maestro construido |
+| ¿La cola de 79.887 es el camino? | **No para esto** | *la nutricion de Dia no pasa por la cola: la extrae el colector en cada pasada* |
+
+**Asi que la cobertura de fichas no es cero: es 6.331 de Dia y 0 de Mercadona, y el resto sin maestro.**
+*Lo que la cola de 79.887 mide es **otra cosa** -- refresco y fichas de cadenas que no las traen en el
+listado --, y decirlo como «cobertura de fichas» mezclaba dos cosas distintas.*
