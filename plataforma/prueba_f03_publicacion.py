@@ -34,6 +34,8 @@ REAL = RAIZ / "data" / "gold"
 
 
 def _publica(marca: datetime, cuanto: int) -> str:
+    marca = marca.replace(year=datetime.now().year, month=datetime.now().month,
+                          day=datetime.now().day)
     """Publica en el **sandbox** una version con los precios movidos `cuanto`.
 
     **El parcheo de `publicacion.GOLD` va aqui, en el proceso**, y se comprueba antes de publicar: *confiar
@@ -112,10 +114,44 @@ def main() -> int:
             comprueba(precios_despues != precios_antes,
                       "publicar cambia lo que el cliente sirve, sin reiniciar nada")
 
-            # 5. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
+            # 5. **El recorrido de PULSACIONES: buscar en la pantalla y ver el precio cambiar.**
+            #
+            # *`/compra` es la pantalla de busqueda -- «Buscar · Cesta» -- y su campo es un
+            # `input[type=search]`, medido en la sonda de esta ronda.* **Se leen los precios del texto
+            # visible en vez de por una clase de CSS**: *el marcado puede cambiar y el texto es lo que ve
+            # la persona.*
+            import re as _re
+
+            def precios_en_pantalla() -> list[str]:
+                texto = pagina.inner_text("body") or ""
+                return _re.findall(r"\d+,\d+\s*€", texto)[:6]
+
+            pagina.goto(f"{BASE}/compra", wait_until="domcontentloaded")
+            pagina.wait_for_selector("input[type=search]", timeout=25000)
+            campo = pagina.locator("input[type=search]").first
+            campo.fill("leche")
+            campo.press("Enter")
+            pagina.wait_for_timeout(3000)
+            en_pantalla_antes = precios_en_pantalla()
+            print(f"        precios en la pantalla: {en_pantalla_antes}")
+            comprueba(bool(en_pantalla_antes), "la busqueda ensena precios en la pantalla")
+
+            # **Y se publica OTRA version con la pantalla abierta, y se vuelve a buscar.**
+            v_otra = _publica(datetime(2026, 10, 4, 10, 0, 0), 100)
+            print(f"\n  version publicada con la pantalla de busqueda abierta: v{v_otra} (+100)\n")
+            campo.fill("leche")
+            campo.press("Enter")
+            pagina.wait_for_timeout(3000)
+            en_pantalla_despues = precios_en_pantalla()
+            print(f"        precios en la pantalla: {en_pantalla_despues}")
+
+            comprueba(en_pantalla_despues != en_pantalla_antes,
+                      "la PANTALLA ensena los precios de la version nueva tras publicar")
+
+            # 6. **Y la pantalla sigue sin errores**: no se ha roto por publicar debajo.
             comprueba(not errores, f"la pantalla no dio errores de JavaScript ({errores[:2]})")
 
-            # 6. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
+            # 7. **El catalogo de casa, intacto.** *Es lo que hace que este ensayo se pueda repetir.*
             import json
             real = json.loads((REAL / "actual.json").read_text(encoding="utf-8"))
             comprueba(real.get("version") == "20261007-103000",

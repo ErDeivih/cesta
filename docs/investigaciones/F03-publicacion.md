@@ -760,3 +760,53 @@ versiones.* **Eso son pulsaciones, y no se ha hecho.**
 *Y hay una razon para no darlo por cubierto con lo de arriba*: **la garantia de «una conexion, una version»
 esta probada en el servidor (§12 y §17), pero que **la pantalla** no mezcle dos respuestas de dos peticiones
 distintas depende de como pida el cliente -- y eso no se ha mirado.**
+
+
+---
+
+## 22. El paso de pulsaciones: **escrito, y todavia no mide lo que debe**
+
+*(Ronda 58.)* Se anadio al ensayo el paso de interfaz. **Y el ensayo FALLA, con razon** -- *y el fallo es de
+la prueba, no de la aplicacion.*
+
+```
+precios por el PROXY:      281 -> 381      ok   (el API cambia)
+precios en la PANTALLA:    3,81 EUR  0,81 EUR  1,29 EUR
+                    ->     3,81 EUR  0,81 EUR  1,29 EUR     MAL  (no cambian)
+```
+
+**Pero esos precios no son los de la busqueda.** *El proxy da 281 y 291; la pantalla ensena 3,81 y 0,81 --
+**son productos distintos**.* **`/compra` tiene varias secciones** -- buscador, ofertas, habituales... -- y
+`precios_en_pantalla()` **coge los seis primeros precios del `body`, que son de otra seccion** y no de los
+resultados de la busqueda. **Asi que mide algo que no cambia, y por eso falla.**
+
+### Lo que hay que arreglar, y es concreto
+
+**Acotar la lectura a la seccion de resultados.** *La sonda dio el campo (`input[type=search]`), pero no la
+lista de resultados.* **El arreglo es leer los precios dentro del contenedor de resultados** -- *o esperar a
+que aparezca el nombre buscado y leer alrededor* --, **y no del `body` entero.**
+
+### Y lo que el ensayo **si** deja probado, que no es poco
+
+De las siete comprobaciones, **seis pasan**:
+
+```
+ok   la pantalla carga
+ok   /api/estado por el proxy del cliente
+ok   /api/buscar por el proxy del cliente
+ok   una peticion nueva sirve la version nueva
+ok   publicar cambia lo que el cliente sirve, sin reiniciar nada     <- el hallazgo
+ok   la pantalla no dio errores de JavaScript
+ok   el puntero del catalogo REAL sigue intacto
+MAL  la PANTALLA ensena los precios de la version nueva              <- mide mal, no falla la app
+```
+
+**Y un fallo del ensayo que se corrigio de paso**: *`publicar` no sobrescribe una version, asi que con marcas
+de tiempo fijas **el ensayo solo se podia correr una vez**.* **Ahora las marcas salen de la fecha de hoy.**
+
+### Y lo que queda de F03, sin adornos
+
+**El recorrido de persona -- buscar, previa, sustituir, anotar -- sigue sin estar probado.** *Lo que hay es:
+el servidor (probado), y el cliente leyendo por su proxy con un navegador real (probado).* **La interfaz, no
+todavia** -- y ahora se sabe exactamente por que: *falta acotar la lectura a la seccion de resultados, que es
+lo siguiente y es pequeño.*
