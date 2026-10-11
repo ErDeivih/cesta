@@ -459,3 +459,71 @@ es que ningun manejador pide conexion dos veces. *El limite esta escrito en
 `test_una_conexion_ve_una_sola_version`.*
 
 **No se ha montado en esta ronda, y no se da por hecho.**
+
+
+---
+
+## 16. **Incidente**: movi el puntero del gold REAL, y la receta de la seccion 15 estaba mal
+
+*(Ronda 50.)* Iba a montar el recorrido de V2 publicada con el sandbox de la seccion 15. **Y al publicar la V1
+del sandbox, escribi en el catalogo de verdad.**
+
+### Que paso
+
+```python
+os.environ["CESTA_GOLD"] = ".../data/debug/gold-f03"
+from core import publicacion
+publicacion.publicar(None, momento=datetime(2026, 10, 1, 9, 0, 0))
+```
+
+```
+publicacion.GOLD = F:\aprendizaje\scrap\data\gold      <- EL REAL
+```
+
+**`publicacion.GOLD` es una constante de modulo, calculada al importar, y NO lee `CESTA_GOLD`.** *Esa
+variable la lee `plataforma/api/ajustes.py` -- **el API** --, no los scripts de publicacion.* **Asi que la
+receta que yo mismo escribi en la seccion 15 era falsa en la mitad que importaba: `CESTA_GOLD` no aisla a
+`publicar`.**
+
+### Que se toco, y como quedo
+
+- Se creo `v20261001-090000` en el gold real (**enlace duro de los ficheros que ya estaban**: *byte a byte
+  identicos, nada corrupto*) y **el puntero paso a esa version** -- es decir, **la aplicacion empezo a
+  servir una version fechada el 1 de octubre**.
+- **Restaurado**: `publicacion.fijar("20261007-103000")` y **retirada la carpeta** que cree.
+- **Y un efecto que `fijar` dejo**: *re-sello `publicado_en` con la hora del arreglo*
+  (`2026-10-11T21:23`), **y eso cambiaba el veredicto de `/api/estado`** -- *de incoherente a coherente, por
+  un sello, no por un dato*. **Devuelto a su valor medido** (`2026-10-07T10:30:00`), escribiendo el puntero
+  de forma atomica como hace el resto del proyecto.
+
+**Estado final, verificado**: `version = 20261007-103000`, `publicado_en = 2026-10-07T10:30:00`, **los seis
+ficheros presentes**, y **el resumen dice exactamente lo mismo que antes del incidente**:
+
+```
+publicado: v20261007-103000, el 2026-10-07T10:30:00
+AVISO: la version publicada es del 2026-10-07 y el silver llega al 2026-10-11: se publico por detras de lo procesado
+```
+
+### Y la leccion, que es lo unico bueno que saco de esto
+
+**No se aisla un script de publicacion con variables de entorno: `publicacion.GOLD` se parchea en el
+proceso.** *Es lo que ya hacen las pruebas del ensayo (`monkeypatch.setattr(publicacion, "GOLD", oro)`), y
+es lo que yo deberia haber hecho en vez de confiar en `CESTA_GOLD`.*
+
+**La receta de la seccion 15 queda corregida:**
+
+    import os
+    from pathlib import Path
+    from core import publicacion
+    sandbox = Path(".../data/debug/gold-f03")
+    publicacion.GOLD = sandbox                 # <- ASI, no con CESTA_GOLD
+    publicacion.PUNTERO = sandbox / "actual.json"
+    publicacion.publicar(None, momento=...)
+
+*Y `CESTA_GOLD` sigue sirviendo para el **API**, que es para lo que existe.*
+
+### Y lo que no voy a hacer ahora
+
+**Reintentar el recorrido.** *El contexto de esta sesion esta agotado y acabo de demostrar el riesgo de
+tocar esto con prisa.* **La receta corregida queda escrita, y el recorrido sigue pendiente** -- *que es
+mejor que un segundo intento a medias sobre datos reales.*
