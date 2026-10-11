@@ -285,3 +285,60 @@ suposicion: cada una sale de leer las claves de un fichero real.**
 3. **Dia**: ingredientes y alergenos, sin nutricion. *Decidir si eso basta para lo que se quiere enseñar.*
 4. **Carrefour**: parsear HTML, *que es lo que el comentario de Lidl ya anticipaba*.
 5. **Lidl**: 28 de 5.054 con ejecutor, y su limite de campos ya documentado.
+
+
+---
+
+## 9. **Correccion**: lo de la ronda 29 era falso, y el error fue leer el **nombre** del campo
+
+*(Ronda 30.)* Escribi que *«Mercadona publica nutricion estructurada y **ya esta en disco**»*. **Es falso.**
+Y el campo se llama `nutrition_information`, que es justo lo que me enganio: **lei el nombre, no el
+contenido.**
+
+**Lo medido, entero:**
+
+```
+las 6 fichas JSON de Mercadona de hoy:
+    nutrition_information -> exactamente 2 claves: allergens (str), ingredients (str)
+    ninguna clave con valores numericos
+```
+
+**Texto, y con HTML dentro** (`"Contiene <strong>soja...</strong>..."`, `"<strong>INGREDIENTES</strong>:
+Preparado de nata..."`). **Ni kcal, ni grasas, ni hidratos, ni proteinas.** *Y `details` es marca, origen y
+proveedores -- metadatos de producto, no nutricion.*
+
+**Asi que lo que Mercadona da hoy, en sus fichas, es: ingredientes y alergenos.** *Ni una cifra.*
+
+### Y queda una puerta abierta, sin abrir
+
+**Dos ficheros de Mercadona de hoy contienen la palabra `energy`** -- *lo encontro el escaneo por
+palabras de la ronda 28, que para esto si sirvio: dijo donde mirar.* **Y esos dos no son JSON**: el
+`json.loads` falla y los salta. *Asi que son de otra clase -- probablemente HTML -- y **no se ha medido
+que hay dentro**.*
+
+**Puede ser una tabla de nutricion en la pagina. O puede ser la palabra en un script.** *No lo se, y **no
+lo afirmo**: seria repetir el error de esta misma ronda.*
+
+### El error, dicho con precision, porque es nuevo
+
+**No fue «suponer sin medir»** -- medi, y clasifique 155 ficheros por su forma --. **Fue leer el nombre de
+un campo y creerme lo que prometia.** *`nutrition_information` no contiene informacion nutricional: contiene
+ingredientes y alergenos.*
+
+*Es mas sutil que los errores anteriores de esta fase, y por eso conviene dejarlo escrito:* **medir el
+nombre no es medir el contenido.**
+
+### Lo que queda establecido, corregido
+
+| cadena | sus fichas traen | como se sabe |
+|---|---|---|
+| **mercadona** | `ingredients` y `allergens`, **en texto**; **sin cifras** | por claves, 6 fichas |
+| **dia** | `ingredients`, `allergen_type_code` | por claves, 1 ficha |
+| **aldi** | 18 claves, ninguna de nutricion | por claves, 1 producto |
+| **carrefour** | HTML | 2.004 ficheros, ninguno JSON |
+| **alcampo** | `productGroups`, **sin comprobar** | -- |
+| **¿y las cifras?** | **sin encontrar en ninguna** | *y dos ficheros de Mercadona sin identificar* |
+
+**Y la conclusion honesta, que no es la de ayer**: *en el crudo de hoy **no se ha encontrado nutricion
+numerica en ninguna cadena**, y **la busqueda no esta completa** -- queda identificar los dos ficheros de
+Mercadona con `energy` y comprobar `alcampo`.*

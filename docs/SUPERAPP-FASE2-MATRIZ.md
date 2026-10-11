@@ -100,11 +100,11 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Extraer `nutrition_information` de Mercadona** desde el crudo que el colector **ya captura** todos
-   los días (4.477 pendientes, **sin red**). *El mapa por claves está medido*: mercadona trae
-   `nutrition_information`/`ingredients`/`allergens`; **dia** ingredientes y alérgenos y **no** nutrición;
-   **aldi** nada de eso; **carrefour** es HTML y hay que parsearlo; **alcampo** está sin comprobar. *No
-   falta un descargador: en Mercadona **se tira a la basura un campo que ya se pidió y se pagó**.* *Medido
+1. **Identificar los dos ficheros de Mercadona que contienen `energy`** (no son JSON, sin medir) y
+   **comprobar `alcampo`** (`productGroups`), que son los dos huecos del mapa. *Lo medido por claves hasta
+   ahora: **mercadona** y **dia** dan `ingredients` y `allergens` **en texto y sin cifras**; **aldi** nada
+   de eso; **carrefour** es HTML. **No se ha encontrado nutrición numérica en ninguna cadena**, y la
+   búsqueda no está completa.* *Medido
    para Aldi, leyendo el crudo que el colector ya guarda: su API trae 18 campos y **ninguno es
    nutrición** — no es «no lo hemos pedido», es que **la fuente no lo publica en la API que se usa**.*
    La salida es la misma que Lidl documenta: **parsear el HTML o ir a fuente externa**. *La misma
