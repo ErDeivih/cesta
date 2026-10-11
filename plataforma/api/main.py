@@ -1445,6 +1445,17 @@ def anotar_de_la_compra(datos: DesdeLaCompra, lista_id: str,
             _diario.apunta(con, usuario["id"], datos.fecha, datos.comida, tipo=_diario.ALIMENTO,
                            referencia=linea_id, nota=f"de la compra: {nombre}")
             anotadas += 1
+            # **Y se dice que va sin dato, que era la mitad que faltaba.** El puente anota la
+            # linea **sin nutricion**: el catalogo la tiene, pero leerla y escalarla por la
+            # cantidad es trabajo que aqui aun no esta hecho. Asi que **todas** las que entran van
+            # sin dato, y callarlo convertiria un dato que falta en una comida que parece
+            # completa. Es la regla que este mismo endpoint escribe en su docstring: *no se
+            # inventan calorias; la entrada se anota sin ellas y el diario dice «sin dato», que es
+            # la verdad*. Medido el 11 de octubre de 2026: `sin_nutricion` se declaraba y se
+            # devolvia siempre vacia mientras la entrada anotada no llevaba un solo nutriente.
+            # Cuando el puente sepa leer la ficha del producto, esta lista se estrechara a las que
+            # de verdad no la declaren.
+            sin_nutricion.append(nombre)
     finally:
         con.close()
     return {"anotadas": anotadas, "ya_estaban": ya_estaban, "ajenas": ajenas,

@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | prueba del recibo del puente contra el almacén real |
+| G01 Diario efectivo | `en curso` | ver abajo | idempotencia por operación del alta |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -45,6 +45,9 @@ completo, no una compilación.**
 | **Al guardar se limpia solo lo guardado**: si el alta falla, el error se ve y no se borra lo escrito | `src/paginas/Diario.tsx` | 11 oct 2026 |
 | **El puente compra→diario consume el recibo** (`{anotadas, ya_estaban, ajenas, sin_nutricion}`, tipado) y lo cuenta en pantalla; **invalida `['diario-rango']`**; y **solo usa la lista de casa**, sin elegir otra en silencio | `src/paginas/Diario.tsx`, `src/api/cesta.ts` — `npm run tipos` limpio | 11 oct 2026 |
 | `tsc` cazó un comentario sin abrir en el primer intento y se corrigió antes de nada | `npx tsc --noEmit` | 11 oct 2026 |
+| **`sin_nutricion` se rellena**: el puente anota sin nutrición y **ahora lo dice**, que era la mitad que faltaba de su propia promesa. *Medido: `sin_nutricion: []` mientras la entrada no llevaba un solo nutriente, y el fichero lo enseñaba* | `plataforma/api/main.py` — arreglo | 11 oct 2026 |
+| **Las tres pruebas del recibo contra el almacén real**: las cuatro claves, `anotadas + ya_estaban == 1`, **la segunda vez no anota y lo dice**, una línea ajena **se devuelve en `ajenas`**, y **el recibo y el día dicen lo mismo sobre la nutrición** | `tests/test_g01_recibo_del_puente.py` — **3 pasan** (5,8 s, con `CESTA_POSTGRES` al 5434) | 11 oct 2026 |
+| **El diario real, comprobado intacto** (mtime 10-10 13:44) tras sospechar que un ensayo lo había tocado | `data/diario.sqlite` | 11 oct 2026 |
 
 **Lo que ya existía y se conserva**: `tests/test_de_la_ficha_al_diario.py` (la cuenta de la ficha y
 lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valores por 100 g, que
@@ -52,11 +55,17 @@ hace la cuenta **en el servidor**.
 
 ### Pendiente, y por qué
 
-1. **El recibo del puente no tiene prueba propia.** El contrato está implementado y compilado,
-   **no medido**: `POST /api/listas/{id}/desde-la-compra` necesita el almacén real (PostgreSQL), y
-   las pruebas de `tests/` no levantan la base desechable. *Acción: prueba que use el 5434 y que
-   **se salte con motivo explícito** si no hay motor, midiendo los cuatro números del recibo
-   (`anotadas`, `ya_estaban`, `ajenas`, `sin_nutricion`) sobre una compra cerrada de ensayo.*
+**Cómo se ejecuta la prueba del recibo** (la cadena se lee al importar, no vale `monkeypatch`):
+
+    $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
+    uv run pytest -q tests/test_g01_recibo_del_puente.py
+
+Sin esa variable **se salta diciendo qué hacer**, no conecta al 5432 por defecto.
+
+1. **Idempotencia por operación del alta.** El puente ya es idempotente por `referencia` (probado),
+   pero el **alta manual** no tiene clave: un doble clic o un reintento con la respuesta perdida
+   duplica. *Acción: clave por operación, **sin** deduplicar por nombre+fecha+nutrientes -- eso ya
+   está probado que debe permitir dos comidas legítimas iguales.*
 2. **El puente compra→diario usaba el número de la previa**, no el recibo: `Diario.tsx:62` hace
    `setAnotadas(previa?.anotarian.length ?? 0)`. *Acción: consumir `ReciboDeAlta`/lo que devuelva
    `anotarDeLaCompra`, y decir cuántas se anotaron de verdad.*
