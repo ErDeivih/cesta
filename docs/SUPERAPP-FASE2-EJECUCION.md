@@ -27,7 +27,7 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 | 9 | Riesgo de identidad estable | **DEFECTO LOCALIZADO** | *Ningún consumidor **de código** (las 3 menciones son comentarios). **Pero `alerta` guarda `grupo_id NOT NULL` y nada más** (`001_esquema.sql:139`), mientras `linea` y `favorito` tienen `producto_id`: **una alerta puede quedar vigilando otro producto tras una reordenación** — [F01](investigaciones/F01-identidad-estable.md)* |
 | 10 | CSRF no ensayado | **medido en código** | *`SameSite=Lax` + `HttpOnly`; 26 que mutan, todos no-GET; el GET sospechoso dice `hace_falta_escribir=False`. **Falta el ensayo cross-origin y leer el 2.º** — [F04](investigaciones/F04-csrf.md)* |
 
-**Los diez contrastados**, y **uno de ellos -- el #9 -- ha resultado ser un defecto localizado**: `alerta` ligada al ordinal. *Del #10 falta el ensayo con navegador (no la medición).*
+**Los diez contrastados**, y **uno de ellos -- el #9 -- ha resultado ser un defecto localizado**: `alerta` ligada al ordinal. *Del #10 falta el ensayo con navegador (no la medición), y del #9 queda que la línea **sin** producto concreto va por el grupo — **declarado, no un descuido**.*
 
 ## El arreglo de `alerta`: **hecho** (ronda 49)
 

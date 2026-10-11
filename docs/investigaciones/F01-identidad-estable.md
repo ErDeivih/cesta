@@ -476,3 +476,55 @@ escribir un dato estable **equivocado**.*
 **Lo honesto para esa fila es dejarla con `ean` nulo y su `salto_nombre` como unico ancla** -- *que es
 justo lo que ya tiene* --, **y que el aviso de la pantalla siga diciendo lo que dice**. *No se pierde nada
 que hoy funcione; se deja de fingir que la clave es estable.*
+
+
+---
+
+## 13. La segunda mitad del hallazgo: **la linea sobrevive si eligio producto** -- y lo dice el motor
+
+*(Ronda 53.)* Faltaba *«prueba lista/favorito/receta sobreviviendo a reordenacion»*. **Medido, y la
+respuesta tiene dos partes:**
+
+```
+cesta.py:112  def _llave_candidato(dueno, pedida, fuente) -> tuple:
+         :115      «**Sin producto concreto, la llave es la del grupo** -- `(grupo, cadena)` --: una linea
+         :116      que pide [el grupo] tiene por identidad el grupo, y esa es la forma que ya usaba el
+         :117      motor. Con producto concreto la [llave] lleva dentro, y ahi esta el arreglo del caso 3:
+                    dos articulos del mismo grupo dejan de pisarse.»
+         :119      if pedida is None: return (dueno, fuente)
+         :121      return ((dueno, pedida), fuente)
+```
+
+**Y `producto_id` se escribe y se lee de verdad** -- *no es una columna muerta como lo era `alerta`*:
+`almacen.py:381 INSERT INTO lista_linea (... producto_id ...)`, `almacen.py:699 INSERT INTO favorito
+(... producto_id ...)`, y `cesta.py` lo prefiere al resolver.
+
+**Asi que:**
+
+| la linea... | ¿sobrevive a que el grupo se renumere? |
+|---|---|
+| **eligio un producto concreto** | **si**: la llave lleva el producto dentro |
+| **solo pide el grupo** | **no, y es por diseno**: *«una linea que pide el grupo tiene por identidad el grupo»* |
+
+**Lo segundo no es un descuido, es la semantica.** *Lo que habria que vigilar es que nadie lea esa llave
+como si fuera un producto estable* -- y la prueba la fija **tal cual es**, para que no se confunda.
+
+### Y hay con que arreglarlo, si alguna vez se quiere
+
+**La misma pieza que arreglo `alerta`** -- `catalogo.por_ean` -- *serviria para que una linea sin producto
+concreto guardase el `ean` y resolviera por ahi.* **No se hace hoy**, y la prueba solo deja dicho que la
+pieza existe.
+
+### Y el hallazgo #9 queda entero
+
+| | |
+|---|---|
+| `alerta` ligada al ordinal | **defecto real: ARREGLADO** (migracion 016, `ean`, 6 pruebas) |
+| linea con producto concreto | **estable, probado** (4 pruebas) |
+| linea sin producto | **va por el grupo, declarado** |
+| favorito | **tiene `producto_id`, escrito y leido** |
+| receta | **su propia tabla, sin ordinal de grupo** |
+| **el motor y las dos pantallas** | **distinguen** lo exacto de lo aproximado |
+
+*Lo unico que queda de #9 es que la linea que solo pide el grupo siga yendo por el ordinal -- y eso es una
+decision de diseño, no un pendiente.*
