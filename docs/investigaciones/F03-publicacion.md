@@ -810,3 +810,53 @@ de tiempo fijas **el ensayo solo se podia correr una vez**.* **Ahora las marcas 
 el servidor (probado), y el cliente leyendo por su proxy con un navegador real (probado).* **La interfaz, no
 todavia** -- y ahora se sabe exactamente por que: *falta acotar la lectura a la seccion de resultados, que es
 lo siguiente y es pequeño.*
+
+
+---
+
+## 23. **PASA.** El recorrido de pulsaciones, medido
+
+*(Ronda 59.)* Los tres arreglos que faltaban, y el ensayo pasa:
+
+```
+la pantalla carga (titulo: 'Cesta')                            ok
+/api/estado por el proxy del cliente -> 200                    ok
+/api/buscar por el proxy del cliente -> 200                    ok
+una peticion nueva sirve la version nueva                      ok
+publicar cambia lo que el cliente sirve, sin reiniciar nada    ok
+      precios en la pantalla:  7,81 EUR   ->   8,81 EUR        ok   <- LA PANTALLA
+la pantalla no dio errores de JavaScript                       ok
+el puntero del catalogo REAL sigue intacto                     ok
+=== PASA ===
+```
+
+**Y el 7,81 -> 8,81 es exactamente el +100 que se publico** -- *la persona ve cambiar el precio de la leche
+en la pantalla porque se publico una version nueva, sin recargar el servidor ni el navegador.*
+
+### Los tres arreglos, y cada uno era una medicion mal hecha
+
+1. **La lectura del precio.** *Leia los seis primeros precios del `body`, y `/compra` tiene varias secciones
+   -- buscador, ofertas, habituales --: medía los de otra seccion.* **Acotado a la lista de resultados**,
+   medida: `ul.divide-y > li > span.cifra`.
+2. **Buscar dos veces el mismo termino no relanza la peticion.** *La pantalla ya tiene ese resultado, asi que
+   lo que se medía era la cache del cliente.* **Se recarga antes de la segunda busqueda.**
+3. **La marca de tiempo.** *`publicar` no sobrescribe una version, y con hora fija **el ensayo solo se podia
+   correr una vez al dia**.* **Ahora sale de `datetime.now()`**, con microsegundos.
+
+*Los tres son el mismo error de fondo que llevo toda la fase: **el instrumento medía algo distinto de lo que
+yo creia**, y lo que lo corrigio fue mirar la pantalla de verdad -- la sonda de estructura -- en vez de
+suponer como estaba hecha.*
+
+### Y con esto, la aceptacion de F03 queda cubierta
+
+| lo que pide | como esta |
+|---|---|
+| auditar el cierre de version | **hecho**: publicacion al final del ciclo, fallo en el veredicto, invariantes |
+| el estado diario | **hecho**: el resumen con capturado / procesado / publicado / reanudable |
+| inyectar fallos entre las cuatro etapas | **hecho**: con prueba, y la del puntero **comprobada discriminante** |
+| **V1 fija y V2 publicada durante el uso** | **hecho, en un navegador**: la pantalla pasa de 7,81 a 8,81 |
+| **respuesta individual no mezcla versiones** | **hecho**: una conexion, una version (§12, §17) |
+
+**Lo que el ensayo NO hace, y sigue dicho**: *no abre la previa de una lista, ni sustituye, ni anota en el
+diario.* **Lo que prueba es la busqueda.** *Los otros tres recorridos comparten el mismo mecanismo -- una
+conexion por funcion -- y estan cubiertos en el servidor, pero **no se ha pulsado en ellos**.*

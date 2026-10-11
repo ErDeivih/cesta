@@ -34,8 +34,9 @@ REAL = RAIZ / "data" / "gold"
 
 
 def _publica(marca: datetime, cuanto: int) -> str:
-    marca = marca.replace(year=datetime.now().year, month=datetime.now().month,
-                          day=datetime.now().day)
+    # **La marca sale del reloj, no del argumento.** *`publicar` no sobrescribe una version: con una
+    # marca fija el ensayo solo se podia correr una vez.* `now()` lleva microsegundos y no colisiona.
+    marca = datetime.now()
     """Publica en el **sandbox** una version con los precios movidos `cuanto`.
 
     **El parcheo de `publicacion.GOLD` va aqui, en el proceso**, y se comprueba antes de publicar: *confiar
@@ -120,11 +121,15 @@ def main() -> int:
             # `input[type=search]`, medido en la sonda de esta ronda.* **Se leen los precios del texto
             # visible en vez de por una clase de CSS**: *el marcado puede cambiar y el texto es lo que ve
             # la persona.*
-            import re as _re
-
+            # **Acotado a la lista de resultados, no al `body`.** *La primera version leia los seis
+            # primeros precios de la pagina entera, y `/compra` tiene varias secciones -- buscador,
+            # ofertas, habituales... --: medía los de otra seccion y daba por bueno que no cambiaban.*
+            # Medido: los resultados son `UL.divide-y > LI`, y el precio esta en `SPAN.cifra` dentro.
             def precios_en_pantalla() -> list[str]:
-                texto = pagina.inner_text("body") or ""
-                return _re.findall(r"\d+,\d+\s*€", texto)[:6]
+                lista = pagina.locator("ul.divide-y").first
+                if lista.count() == 0:
+                    return []
+                return [x.strip() for x in lista.locator("span.cifra").all_inner_texts()][:6]
 
             pagina.goto(f"{BASE}/compra", wait_until="domcontentloaded")
             pagina.wait_for_selector("input[type=search]", timeout=25000)
@@ -139,6 +144,12 @@ def main() -> int:
             # **Y se publica OTRA version con la pantalla abierta, y se vuelve a buscar.**
             v_otra = _publica(datetime(2026, 10, 4, 10, 0, 0), 100)
             print(f"\n  version publicada con la pantalla de busqueda abierta: v{v_otra} (+100)\n")
+            # **Se recarga antes de volver a buscar.** *Buscar dos veces el mismo termino no relanza la
+            # peticion -- la pantalla ya tiene ese resultado --, y sin recargar, lo que se mide es la
+            # cache del cliente, no lo que sirve el servidor.*
+            pagina.goto(f"{BASE}/compra", wait_until="domcontentloaded")
+            pagina.wait_for_selector("input[type=search]", timeout=25000)
+            campo = pagina.locator("input[type=search]").first
             campo.fill("leche")
             campo.press("Enter")
             pagina.wait_for_timeout(3000)
