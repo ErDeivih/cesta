@@ -146,3 +146,62 @@ tipo de cosa que hay que preguntar en vez de construir.*
 
 **Los cinco tienen columna.** *Y que la columna este **no es** que el caso funcione* -- *es que hay donde
 mirarlo, que es distinto.*
+
+
+---
+
+## 3. La oferta caducada: **la fecha se guarda y se ensena; que se cumpla, sin medir**
+
+*(Ronda 106.)* De los cinco casos de la aceptacion, **el que puede mentir en el precio** es *«oferta caducada»*
+-- *una promocion terminada que siga descontando.* **Y lo medido es la mitad.**
+
+### Lo que hay, y son las tres piezas menos una
+
+```
+core/schemas.py:41            "promo_hasta": pl.Datetime("us", "UTC")        <- se GUARDA
+catalogo.py:848               f"{c}::VARCHAR AS {c}" if c == "promo_hasta"   <- se CONVIERTE
+catalogo.py:953               "promo_hasta": f["promo_hasta"][:10] ...       <- se SIRVE
+Grupo.tsx:637                 {p.promo_hasta && `... hasta el ${fechaTexto(...)}`}   <- se ENSENA
+alcampo/aldi/carrefour/lidl.py   "promo_hasta": ...                          <- los colectores la leen
+```
+
+**Y las 18 menciones de `promo_hasta` no incluyen **ninguna** comparacion con la fecha de hoy.** *No hay un
+`WHERE promo_hasta > now()`, ni un `if` que descarte una promocion vencida.*
+
+### Y lo que eso significa, con cuidado
+
+**La fecha se guarda, se sirve y **se ensena en la pantalla**** -- *con su «hasta el ...», que es lo que hace
+que la persona pueda juzgar por si misma.* **Y que la promocion **se aplique o no** despues de esa fecha no lo
+he medido**: *no he encontrado donde se compare, **y no he encontrado donde no** -- que es distinto.*
+
+**Asi que `C08` queda asi:**
+
+| lo que pide el criterio | **estado** |
+|---|---|
+| **«condiciones y vigencia»** -- *las condiciones* | *por medir* (`promo_club`, `promo_solo_online`) |
+| **«condiciones y vigencia»** -- *la vigencia, **visible*** | **hecho**: la fecha se guarda y se ensena |
+| **«condiciones y vigencia»** -- *la vigencia, **aplicada*** | **SIN MEDIR** -- *18 menciones, ninguna comparacion con hoy* |
+| **«credito futuro separado del dinero pagado hoy»** | **por medir** |
+
+### Y una pieza que aparece y conviene guardar
+
+**El comentario de `catalogo.py:836` explica **otra cosa** -- y es un arreglo con su prueba:**
+
+> *«Ojo con `promo_hasta`: es un `TIMESTAMP WITH TIME ZONE` y se pide **ya convertido a texto**. DuckDB, para
+> devolverlo como objeto de fecha, importa `pytz` por debajo, y la imagen de la API no lo trae -- ni debe,
+> porque la API no maneja zonas horarias. Sin el `::VARCHAR` la pantalla de grupo, que es la pantalla clave del
+> encargo, **daba 500** en cuanto un miembro tenia promocion con fecha; **y era la mayoria**. Lo vigila
+> `test_la_ficha_del_grupo_no_necesita_pytz`.***
+
+**Un 500 que afectaba a «la mayoria» de los miembros con promocion, arreglado, con su prueba, y con el motivo
+escrito** -- *que es la quinta pieza de esta fase que aparece **ya resuelta y documentada** mientras buscaba otra
+cosa.*
+
+### Y lo que hay que hacer para cerrar «oferta caducada», que es una prueba
+
+**Coger una promocion con `promo_hasta` **ya vencida** y comprobar **si el precio que sirve la API la
+descuenta**.** *Es un `SELECT` sobre `grupos` mas una llamada a `catalogo.buscar` -- sin navegador y sin red.*
+
+**Y hay que hacerlo **antes** de tocar nada**: *si el descuento **no** se aplica, la promocion vencida solo
+queda como texto informativo, y **esta bien**; si **si** se aplica, **es un defecto que miente en el precio** --
+que es el peor sitio donde puede mentir un dato en esta aplicacion.*
