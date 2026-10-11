@@ -1348,3 +1348,59 @@ exactamente lo que hice, y por eso no llego ninguno al commit.*
    pasadas.* **El codigo esta; falta decidir cuando.**
 2. **Decidir que productos de los 72.322 merecen la visita** *de las que no se pueden resolver con un
    catalogo.*
+
+
+---
+
+## 29. El ejecutor, corrido -- y **los tres resultados explican mas de lo que parecen**
+
+*(Ronda 81.)* `uv run python -m projects.cesta.fichas_carrefour --limite 3`:
+
+```
+carrefour: {'leidas': 3, 'correctas': 0, 'no_publicado': 1, 'error_temporal': 1, 'sin_url': 1}
+quedan 17.280 fichas de Carrefour
+```
+
+**Cero correctas, y los tres caminos recorridos.** *Mirados uno a uno, cada uno dice algo distinto:*
+
+| ficha | resultado | y el porque |
+|---|---|---|
+| `2000750151` | **`error_temporal`** | **`HTTPStatusError: HTTP 403`** -- *Carrefour **bloquea** esa peticion* |
+| `173904274` | **`no_publicado`** | *«sin url en el catalogo»*: **no esta en el catalogo de hoy**, y **no se pidio nada** |
+| `100401608` | **`no_publicado`** | *«la pagina no trae tabla nutricional»*: **se pidio y no la trae** |
+
+### Y mirando las URL, la razon de las dos ultimas
+
+```
+100401608 -> https://www.carrefour.es/supermercado/set-de-80-filtros-para-c...
+2000750151 -> https://www.carrefour.es/supermercado/arena-absorbente-para-ga...
+```
+
+**Son un set de filtros para cafetera y arena para gatos.** *No son comida, **no tienen tabla nutricional**, y
+por eso `no_publicado` es la respuesta correcta* -- *no un fallo del lector.*
+
+**Y eso destapa algo que no habia mirado: la cola tiene productos que no son alimentos.** *`inventario.enganche`
+levanta la cola de **bronze**, y bronze es todo lo que el colector capturo de una pagina de supermercado* --
+*filtros, arena de gato, y lo que venga.* **De los 17.283 pendientes de Carrefour, cuantos son comida es una
+pregunta que nadie ha hecho** -- *y ahora importa, porque la ficha de un filtro no existe y no tiene sentido
+pedirla.*
+
+### Y el 403, que es un limite de la fuente
+
+**Carrefour devolvio `HTTP 403` en una de las tres.** *Es lo que hay: una fuente que bloquea peticiones.* **Va a
+`error_temporal` y se reintenta**, que es el camino correcto -- *y **una de cada tres es una tasa alta**, que
+conviene saber antes de lanzar 173 pasadas.*
+
+### Y lo que esto cambia del plan
+
+**Antes de correr 173 pasadas hacia 17.283 fichas, hay dos preguntas que contestar primero**, y las dos son
+`SELECT`:
+
+1. **¿Cuantos de los 17.283 son alimentos?** *Un filtro de cafetera no tiene ficha, y pedirla gasta
+   presupuesto y molesta a la fuente por nada.* **Y la señal para distinguirlo hay que buscarla** -- *la
+   categoria, el nombre, o el precio.*
+2. **¿Que tasa de 403 hay de verdad?** *Con tres peticiones no se sabe; con veinte, mas.*
+
+**El ejecutor esta bien** -- *los tres caminos hicieron lo que debian* --, **y lo que falta no es codigo: es
+saber a que se esta pidiendo.** *Es la decima vez en esta fase que medir antes de lanzar cambia el plan, y esta
+vez lo que evita es 173 pasadas hacia productos que no tienen ficha.*
