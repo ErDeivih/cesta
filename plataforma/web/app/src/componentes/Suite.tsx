@@ -25,6 +25,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
+import { usePorCogerDeCasa } from '../api/consultas'
 import { cx } from './ui'
 
 export type ClaveApp = 'compra' | 'recetas' | 'calorias'
@@ -93,7 +94,66 @@ export function tituloDeSeccion(ruta: string): string {
   return app.nombre
 }
 
-function EnlaceLateral({ a, texto, onNavegar }: Subseccion & { onNavegar?: () => void }) {
+/** **El contador de la entrada de Listas.** Va aqui, en el menu, y no en `Nav.tsx`.
+ *
+ *  **Medido el 11 de octubre de 2026, leyendo los consumidores reales**: todas las rutas montan
+ *  `LayoutSuite` (`App.tsx`), y su menu es este `Menu` -- **el mismo para el lateral de escritorio
+ *  (`SuiteSidebar`) y el cajon del movil (`CajonLateral`)**. El contador vivia en `Nav.tsx`, que
+ *  **ninguna ruta monta**, y alli ademas exigia un destino terminado en `/listas` mientras su
+ *  enlace apuntaba a `/cesta`: aunque se hubiera montado, no habria contado nada. Ponerlo aqui
+ *  arregla los dos sitios de una vez.
+ *
+ *  **Cuenta lo pendiente de la lista de casa, y solo eso.** Carga, error, ?no hay lista de casa? y
+ *  cero real se dicen cada uno a su manera: un cero que tambien significa ?no lo se? no informa.
+ *  El texto para quien no ve el color va en `sr-only`, y **nombra la lista**, que es la mitad del
+ *  dato: un numero sin decir de que lista es no se puede comprobar.
+ */
+function ContadorDeLaLista() {
+  const estado = usePorCogerDeCasa()
+  if (estado.tipo === 'oculto') return null
+  if (estado.tipo === 'cargando') {
+    return <span className="text-[13px] text-secundaria" aria-hidden="true">&middot;&middot;&middot;</span>
+  }
+  if (estado.tipo === 'error') {
+    return (
+      <>
+        <span className="text-[13px] text-secundaria" aria-hidden="true">?</span>
+        <span className="sr-only">No he podido contar lo que queda por coger</span>
+      </>
+    )
+  }
+  if (estado.tipo === 'sin-lista') {
+    return (
+      <>
+        <span className="text-[13px] text-secundaria" aria-hidden="true">Sin lista de casa</span>
+        <span className="sr-only">No hay lista de casa, asi que no hay nada que contar</span>
+      </>
+    )
+  }
+  return (
+    <>
+      {estado.pendientes > 0 && (
+        <span
+          aria-hidden="true"
+          className="min-w-[1.4rem] rounded-full bg-bosque px-1 text-center text-[13px]
+                     font-semibold tabular-nums text-papel"
+        >
+          {estado.pendientes}
+        </span>
+      )}
+      <span className="sr-only">
+        {estado.pendientes === 0
+          ? `En la lista de casa (${estado.lista}) no queda nada por coger`
+          : `${estado.pendientes} por coger en la lista de casa (${estado.lista})`}
+      </span>
+    </>
+  )
+}
+
+function EnlaceLateral({ a, texto, onNavegar, chapa }: Subseccion & {
+  onNavegar?: () => void
+  chapa?: ReactNode
+}) {
   return (
     <NavLink
       to={a}
@@ -101,14 +161,15 @@ function EnlaceLateral({ a, texto, onNavegar }: Subseccion & { onNavegar?: () =>
       onClick={onNavegar}
       className={({ isActive }) =>
         cx(
-          'block rounded-md px-3 py-2 text-[15px] leading-6',
+          'flex min-h-[44px] items-center justify-between gap-2 rounded-md px-3 py-2 text-[15px] leading-6',
           isActive
             ? 'font-semibold text-terracota underline decoration-terracota decoration-2 underline-offset-4'
             : 'text-tinta-fuerte hover:bg-marfil',
         )
       }
     >
-      {texto}
+      <span>{texto}</span>
+      {chapa}
     </NavLink>
   )
 }
@@ -145,7 +206,12 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
             {app.nombre}
           </p>
           {app.subsecciones.map((s) => (
-            <EnlaceLateral key={s.a} {...s} onNavegar={onNavegar} />
+            <EnlaceLateral
+              key={s.a}
+              {...s}
+              onNavegar={onNavegar}
+              chapa={s.a === '/compra/listas' ? <ContadorDeLaLista /> : undefined}
+            />
           ))}
         </nav>
       )}

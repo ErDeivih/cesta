@@ -234,6 +234,53 @@ export function usePorCoger(): number {
   return (detalle.data?.lineas ?? []).filter((l) => l.tachado_en === null).length
 }
 
+/** Lo que hay que decir en la entrada de Listas, **con las cuatro situaciones separadas**.
+ *
+ *  **Antes esto era un numero, y devolvia `0` en tres casos distintos**: mientras cargaba, si la
+ *  peticion fallaba, y si de verdad no quedaba nada por coger. Tres cosas con la misma cara, y
+ *  por eso no habia forma de saber si el contador estaba bien o roto. Medido el 11 de octubre de
+ *  2026, persiguiendo el contador tres rondas: el cero silencioso era el problema.
+ *
+ *  Y ademas **elegia `?? listas[0]`** cuando no habia lista de casa: contaba una lista que no era
+ *  la de casa **sin decirlo**. Aqui o es la de casa, o se dice que no hay.
+ */
+export type EstadoPorCoger =
+  | { tipo: 'oculto' }
+  | { tipo: 'cargando' }
+  | { tipo: 'error' }
+  | { tipo: 'sin-lista' }
+  | { tipo: 'listo'; pendientes: number; lista: string }
+
+export function usePorCogerDeCasa(): EstadoPorCoger {
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  const conSesion = sesion.data?.usuario != null
+  const listas = useQuery({
+    queryKey: ['listas'],
+    queryFn: misListas,
+    enabled: conSesion,
+  })
+  // **Solo la de casa.** Sin `?? listas[0]`: si no hay lista de casa, no hay nada que contar y se
+  // dice; elegir otra en silencio es contar una lista que nadie ha pedido.
+  const casa = listas.data?.find((l) => l.es_de_casa) ?? null
+  const detalle = useQuery({
+    queryKey: ['lista', casa?.id],
+    queryFn: () => verLista(casa?.id as string),
+    enabled: casa != null,
+  })
+
+  if (sesion.isError) return { tipo: 'error' }
+  if (sesion.isPending) return { tipo: 'cargando' }
+  if (!conSesion) return { tipo: 'oculto' }
+  if (listas.isError) return { tipo: 'error' }
+  if (listas.isPending) return { tipo: 'cargando' }
+  if (casa == null) return { tipo: 'sin-lista' }
+  if (detalle.isError) return { tipo: 'error' }
+  if (detalle.isPending) return { tipo: 'cargando' }
+  const pendientes = (detalle.data?.lineas ?? [])
+    .filter((l) => l.tachado_en === null).length
+  return { tipo: 'listo', pendientes, lista: casa.nombre }
+}
+
 /** Anade un producto a la lista de casa, que es donde se apunta la compra.
  *
  *  **La cuadricula se usa de pie y con una mano**, asi que no hay dialogo ni selector

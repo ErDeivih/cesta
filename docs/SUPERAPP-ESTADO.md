@@ -1,5 +1,57 @@
 # SUPERAPP · Estado del trabajo
 
+## Resumen vigente — 11 de octubre de 2026
+
+**Tarea actual.** Etapa de cierre de Cesta: los cinco puntos del encargo (contador, registro
+efectivo del diario, texto libre, revocación de sustituciones, y los dos recorridos con
+publicación durante el uso), y después las gráficas y la revisión integral de las tres
+aplicaciones.
+
+**Terminado, con evidencia de ejecución**
+
+- **Contador del menú servido** (`Suite.tsx`): implementado y **medido en navegador** el 11 de
+  octubre, en móvil 390 y escritorio 1440 — *chapa y API coinciden al abrir, tras tachar, tras
+  recargar y tras destachar* (2/2 · 1/1 · 1/1 · 2/2 en los dos anchos). Cuenta **solo la lista de
+  casa**; dice **de qué lista es**; y **carga, error, «sin lista de casa» y cero real** son cuatro
+  estados distintos. El defecto real: el contador vivía en `Nav.tsx`, **que ninguna ruta monta**
+  (`App.tsx` monta `LayoutSuite` en las 20 rutas, y su menú es `Suite.tsx`), y allí además exigía
+  un destino terminado en `/listas` mientras su enlace apuntaba a `/cesta`.
+- **Las tres puertas del producto**, cerradas con un dedo: el plan a la lista (3 → 5 líneas, sin
+  duplicar, sin botón cuando no hay nada que traer), la compra al diario (sus dos caminos vacíos,
+  sin ofrecer un botón que no puede hacer nada), y **el consentimiento de la sustitución** (aceptar
+  en vivo sin recargar, leer, y retirar).
+- **El trabajo de coste del 8-9 de octubre, medido con los ojos**: agrupación `1255 = 1255` · oferta
+  `1190 = 595x2` · compra guardada `595+260+260 = 1115`, tres importes conocidos, ninguno
+  desconocido · **la tienda elegida manda sobre la cadena autorizada** · **`almacen` habla en
+  identificadores y el API en sesiones** · **la migración 013 verificada en PostgreSQL**.
+- **Las cinco comprobaciones ordenadas**, las cinco ejecutadas (restauración, datos desconocidos,
+  transacción, 3x2 con datos controlados, y las cuatro superficies).
+
+**Pendiente**
+
+1. contador: el caso **«sin lista de casa»** con una cuenta nueva, y el cambio de cuenta;
+2. **el registro efectivo del diario** (cantidades, fuente del dato, cobertura, persistencia tras
+   recargar, idempotencia, aislamiento entre dos usuarios) — *los dos caminos vacíos no lo cubren*;
+3. **el texto libre en la lista**, como «Pendiente de identificar», sin precio ni equivalencia
+   inventados, con vínculo posterior explícito;
+4. **la revocación sobre la línea concreta** (identificando la pulsada, y comprobando que las demás
+   quedan intactas) — *«no más que antes» no sirve como aceptación*;
+5. **los dos recorridos**: catálogo fijo primero, y **publicación deliberada durante el uso** después;
+6. las gráficas y la revisión integral de las tres aplicaciones.
+
+**Siguiente acción concreta.** Dar de alta una cuenta nueva desde la interfaz y comprobar que el
+contador dice **«Sin lista de casa»** (y que al cambiar de cuenta no arrastra datos anteriores);
+después, el registro efectivo de una comida del diario con datos nutricionales controlados.
+
+**Estado del árbol.** La ingesta del 11 de octubre está **en curso** (`Cesta diaria`, arrancada a
+las 11:05; Carrefour 425/596 categorías; WAF y un HTTP 520 en el camino). La versión publicada sigue
+siendo `20261010-142831`. `core/datos/secciones.yml` y `docs/CIFRAS.md` **se preservan sin commitear**.
+
+**Nota de fechas.** Los encabezados de la bitácora decían «13 de octubre»; el trabajo es del **10**
+según las fechas de los commits (`7fa90d8` 13:58 → `bfc11bc` 14:35).
+
+ · Estado del trabajo
+
 ## Revisión posterior — 8 de octubre de 2026
 
 Leer [la revisión del código y correcciones](SUPERAPP-REVISION-2026-10-08.md)
@@ -1777,7 +1829,7 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 ---
 
-## 13 de octubre de 2026 — la autorizacion, acotada, y una lectura mia que estaba mal
+## 10 de octubre de 2026 — la autorizacion, acotada, y una lectura mia que estaba mal
 
 ### La correccion primero, porque el traspaso tiene que decir la verdad aunque me deje mal
 
@@ -1856,7 +1908,7 @@ nutricion de la ficha y los pasos de interfaz del diario.
 
 ---
 
-## 13 de octubre de 2026 (noche) — la ruta de la compra, ejecutada por primera vez
+## 10 de octubre de 2026 (noche) — la ruta de la compra, ejecutada por primera vez
 
 ### El motor volvio, y como
 
@@ -1943,7 +1995,7 @@ las tres aplicaciones.
 
 ---
 
-## 13 de octubre de 2026 (madrugada) ? la transaccion del cierre, demostrada
+## 10 de octubre de 2026 (madrugada) ? la transaccion del cierre, demostrada
 
 ### Tu comprobacion #3, cerrada con evidencia de ejecucion
 
@@ -1997,7 +2049,7 @@ cuatro superficies. **Las cinco mitades de cliente y los recorridos, cuando haya
 
 ---
 
-## 13 de octubre de 2026 (manana) -- las cinco comprobaciones del encargo, cerradas
+## 10 de octubre de 2026 (manana) -- las cinco comprobaciones del encargo, cerradas
 
 ### Lo que se pidio, y lo que hay
 
@@ -2054,7 +2106,7 @@ punta a punta por cada app**, con sus estados vacios, sus errores y su movil, me
 
 ---
 
-## 13 de octubre de 2026 (tarde) -- el recorrido del navegador, puesto al dia
+## 10 de octubre de 2026 (tarde) -- el recorrido del navegador, puesto al dia
 
 ### Lo que se arreglo en la prueba, y por que
 
@@ -2139,7 +2191,7 @@ chapa**; y **el arreglo de la comprobacion de 44 px**.
 
 ---
 
-## 13 de octubre de 2026 (noche) -- el puente de S10: estaba construido y muerto
+## 10 de octubre de 2026 (noche) -- el puente de S10: estaba construido y muerto
 
 ### Que se encontro, y como
 
@@ -2217,7 +2269,7 @@ quiere lineas de texto; **hoy se rechazan con honestidad**, que es lo conservado
 
 ---
 
-## 13 de octubre de 2026 (noche, segunda parte) -- S10 cerrado, con un dedo
+## 10 de octubre de 2026 (noche, segunda parte) -- S10 cerrado, con un dedo
 
 ### El recorrido entero, medido en el navegador
 
@@ -2281,7 +2333,7 @@ quiere lineas escritas a mano; hoy se rechazan con honestidad y **esta dicho en 
 
 ---
 
-## 13 de octubre de 2026 (noche, tercera parte) -- el puente de la compra al diario
+## 10 de octubre de 2026 (noche, tercera parte) -- el puente de la compra al diario
 
 ### La cuarta mitad de cliente
 
@@ -2338,7 +2390,7 @@ autorizar**, que es la tercera mitad.
 
 ---
 
-## 13 de octubre de 2026 (noche, cuarta parte) -- el consentimiento de la sustitucion
+## 10 de octubre de 2026 (noche, cuarta parte) -- el consentimiento de la sustitucion
 
 ### La tercera puerta, y la cadena de ocho eslabones que hizo falta
 
@@ -2396,7 +2448,7 @@ de la compra.
 
 ---
 
-## 13 de octubre de 2026 (noche, quinta parte) -- el coste, medido con los ojos
+## 10 de octubre de 2026 (noche, quinta parte) -- el coste, medido con los ojos
 
 ### La agrupacion, en vivo y con el catalogo real
 
@@ -2461,7 +2513,7 @@ puente de la compra.
 
 ---
 
-## 13 de octubre de 2026 (noche, sexta parte) -- las tres puertas, y el recorrido que las va a probar
+## 10 de octubre de 2026 (noche, sexta parte) -- las tres puertas, y el recorrido que las va a probar
 
 ### Lo que se cerro esta noche, y como se cerro
 
