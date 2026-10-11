@@ -315,3 +315,38 @@ con un mensaje que manda a mirar donde no es.**
 | **tarea móvil con una mano** | *por medir -- necesita la pantalla* |
 | **recarga** | *cubierta por el ensayo de F03 (la pantalla se recarga y sirve la versión nueva)* |
 | C01-C05 con Bring!/AnyList/Listonic | **estudio de competencia**, sin empezar |
+
+
+---
+
+## 6. La pantalla del recorrido: **`Cesta.tsx`, 1.779 lineas** -- y los toques siguen sin medirse de verdad
+
+*(Ronda 92.)* El recorrido de cuenta vacía vive en **`plataforma/web/app/src/paginas/Cesta.tsx`** -- *1.779
+lineas* --, y contados sus elementos interactivos:
+
+| linea | elemento | para qué |
+|---|---|---|
+| 233 | `onClick={() => setCreando(!creando)}` | *abrir el alta de lista* |
+| 584 | `placeholder="La del sábado"` | *el nombre de la lista* |
+| 587 | `<Boton ... onClick={() => crear.mutate()}>` | *crear* |
+| 537 | `onClick={() => setEscribiendo(true)}` | *empezar a escribir un producto* |
+| 450 / 459 | `cambiar(linea.id, { cantidad: … ± 1 })` | *subir y bajar la cantidad* |
+| 468 | `cambiar(linea.id, { borrado: true })` | *quitar la línea* |
+| 567 / 569 | `setAbierto(true)` | *el selector de lista* |
+
+### Y por que esto **no** es la respuesta
+
+**El criterio pide «medir pasos», y contar los botones de un fichero no es medir pasos.** *Lo que hace falta
+es **hacer el recorrido y contar los toques**: abrir la app vacía, crear la lista, buscar el producto,
+anadirlo.* **El orden y los campos que aparecen dependen del estado** -- *si ya hay lista no se crea, si no hay
+sesión se entra primero* --, **y eso no se lee: se usa.**
+
+**Asi que lo unico que puedo afirmar con esto es que los elementos existen y donde estan.** *El numero sigue
+pendiente, y ahora se sabe exactamente donde medirlo: **`Cesta.tsx`, con un navegador y una cuenta vacía**.*
+
+### Y la mitad que sí está, para no perderla
+
+**Los pasos del servidor, del §5: cuatro peticiones.** *`registrarse` → `POST /listas` → `buscar` →
+`POST /lineas`.* **Y el ensayo de F03 (`plataforma/prueba_f03_publicacion.py`) ya monta lo que hace falta**:
+*un navegador, una cuenta con sesión, una lista creada, y la pantalla de `/compra` con su buscador.*
+**Anadirle un contador de toques es trabajo pequeno y con el andamio hecho.**
