@@ -19,7 +19,8 @@ Fecha: 13 de octubre de 2026. **Todo lo que hay aquí está medido y commiteado*
 | Publicar una versión y que **la API la sirva** | **funciona** | HTTP con el código de hoy; V2 publicada cambia lo servido |
 | Reanudar una captura **sin volver a pedirla** | **funciona** | `alcampo._cache_limpia` rechaza un reto cacheado |
 | Saber **qué se ha capturado, procesado y publicado** | **funciona** | el resumen, corriendo |
-| Fichas de producto (kcal, ingredientes, Nutri-Score…) | **no, en la práctica** | **79.887 en cola, 28 hechas (0,04 %)**, y **hay ejecutor sólo para Lidl**: las otras cinco cadenas no tienen descargador ni parser |
+| Fichas de producto: **calorías / Nutri-Score** | **no se puede con estas fuentes** | **ninguna de las cinco cadenas medidas publica nutrición numérica** — por claves, sobre el crudo real |
+| Fichas: **ingredientes y alérgenos** | **el dato ya está capturado; falta extraerlo** | Mercadona (6 fichas) y Día los publican y están en disco |
 | Usar Cesta con la API caída | **no medido** | — |
 | Defensa CSRF | **no ensayado** | — |
 
@@ -100,11 +101,11 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Identificar los dos ficheros de Mercadona que contienen `energy`** (no son JSON, sin medir) y
-   **comprobar `alcampo`** (`productGroups`), que son los dos huecos del mapa. *Lo medido por claves hasta
-   ahora: **mercadona** y **dia** dan `ingredients` y `allergens` **en texto y sin cifras**; **aldi** nada
-   de eso; **carrefour** es HTML. **No se ha encontrado nutrición numérica en ninguna cadena**, y la
-   búsqueda no está completa.* *Medido
+1. **Extraer `ingredients` y `allergens` de Mercadona y Día** del crudo a la cola de fichas — *sin
+   red, el dato ya está capturado* —. *El mapa está cerrado*: **ninguna de las cinco cadenas medidas
+   publica nutrición numérica** (mercadona 6 fichas, alcampo 59 claves, aldi 18, dia, lidl documentado),
+   así que **las calorías no se pueden enseñar con estas fuentes**; los ingredientes y alérgenos **sí**.
+   Queda **carrefour** (HTML) sin medir. *Medido
    para Aldi, leyendo el crudo que el colector ya guarda: su API trae 18 campos y **ninguno es
    nutrición** — no es «no lo hemos pedido», es que **la fuente no lo publica en la API que se usa**.*
    La salida es la misma que Lidl documenta: **parsear el HTML o ir a fuente externa**. *La misma

@@ -342,3 +342,63 @@ nombre no es medir el contenido.**
 **Y la conclusion honesta, que no es la de ayer**: *en el crudo de hoy **no se ha encontrado nutricion
 numerica en ninguna cadena**, y **la busqueda no esta completa** -- queda identificar los dos ficheros de
 Mercadona con `energy` y comprobar `alcampo`.*
+
+
+---
+
+## 10. El mapa, cerrado: **ninguna cadena publica nutricion numerica** -- y no es una suposicion
+
+*(Ronda 31.)* Los dos huecos que quedaban, resueltos.
+
+### Los dos ficheros de Mercadona con `energy`
+
+**Eran listados de categoria, y `energy` estaba en el NOMBRE DE UN PRODUCTO:**
+
+```
+103c086d6c29   {"id":72,  "name":"Leche y bebidas vegetales", ...}
+   ..."slug":"batido-chocolate-colacao-energy-pack-4"...
+f9dd7a579b27   {"id":163, "name":"Isot?nico y energ?tico", ...}
+   ..."slug":"bebida-energetica-vice-guava-monster-energy-ultra-zero-azucar-lata"...
+```
+
+*Un batido que se llama «energy» y una bebida «Monster Energy».* **El escaneo por palabras habia
+encontrado una palabra en una marca, no un campo de nutricion** -- *por tercera vez en esta fase.*
+
+### Alcampo
+
+`productGroups` tiene **59 claves, y ninguna es de nutricion**. *Lo que trae es lo que se espera de un
+listado de tienda*: `brand`, `description`, `amount`, `image`, `availableFormats`, `categoryPath`,
+`alcohol`, `catchweight`... **y ni una cifra nutricional.**
+
+### Y el mapa queda asi, cerrado
+
+| cadena | nutricion **numerica** | lo que si da |
+|---|---|---|
+| **mercadona** | **no** | `ingredients` y `allergens`, en texto (6 fichas, por claves) |
+| **alcampo** | **no** | 59 claves, ninguna de nutricion |
+| **aldi** | **no** | 18 claves, ninguna de nutricion |
+| **dia** | **no** | `ingredients`, `allergen_type_code` |
+| **carrefour** | *HTML, sin medir* | -- |
+| **lidl** | **no**, y documentado | *«no es un parser incompleto, es una fuente que no los da»* |
+
+**En el crudo que el sistema captura a diario, ninguna cadena publica nutricion numerica.** *Y eso ya no
+es una impresion: es el resultado de leer las claves de ficheros reales de cinco cadenas.*
+
+### Y lo que F05 pedia, contestado
+
+El hallazgo decia: *«**no llamar toda ausencia "limitacion de fuente"**»*. **Ahora se puede decir cual es
+cual, y sale partido:**
+
+- **Las cifras (kcal, grasas, hidratos, proteinas): es limitacion de fuente.** *Cinco cadenas medidas, y
+  ninguna las publica en lo que se captura.* **No se arregla ejecutando la cola: no hay nada que pedir.**
+- **Los ingredientes y los alergenos: NO es limitacion de fuente.** *Mercadona y Dia los publican, **y ya
+  estan en disco**.* **Eso si se arregla extrayendo, y es el unico trozo de ficha que se puede cerrar hoy
+  sin red.**
+- **Y `lidl`, que si tiene ejecutor, da 28 de 5.054.** *Ahi la ausencia es trabajo sin ejecutar.*
+
+### Y esto cambia el veredicto del producto, no solo el mapa
+
+**Enseñar calorias no se puede con estas fuentes** -- *ni ejecutando la cola entera ni esperando* --.
+**Enseñar ingredientes y alergenos, si**, *y para dos cadenas el dato ya se pidio y esta guardado.*
+
+*Es la frase que faltaba en el veredicto, y ahora tiene cinco cadenas detras.*
