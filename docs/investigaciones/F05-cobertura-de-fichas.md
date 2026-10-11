@@ -132,3 +132,48 @@ cinco.**
 **Y por eso la accion siguiente no es «lanzar una pasada»**: es **escribir el descargador y el parser de
 una segunda cadena** -- *`aldi`, que tiene 3.206 pendientes y es la mas pequena --, con su `PARSER_VERSION`
 y su prueba sin red (`fetch` es inyectable, asi que se puede probar sin pedir nada).*
+
+
+---
+
+## 6. Y para Aldi la respuesta esta en el crudo que **ya esta en disco**
+
+*(Ronda 27.)* Iba a escribir `ficha_aldi.py`. **Antes de escribirlo mire que hay**, y el crudo lo
+respondio **sin una sola peticion**.
+
+`projects/cesta/collectors/aldi.py:74` -- *«sitemap oficial de productos + **API de producto por
+lotes**»* -- llama a `{BASE}/api/product/pds/{ids}?scope=...`, **guarda la respuesta entera en crudo**
+(`save_raw(FUENTE, f"pds-{lote[0]}", body)`) **y la reutiliza**. *Asi que la respuesta de Aldi esta en
+`data/raw/fuente=aldi/`, y se puede leer sin pedir nada.*
+
+**Los 18 campos que trae, medidos:**
+
+```
+assets  brandName  categoryIDs  currentPrice  isAvailable  isComingSoon  isFreezing  isRecall
+longDescription  longDescriptionFormatted  mainCategoryID  metaDescription  metaTitle
+name  objectID  productReferences  productSlug  salesUnit
+```
+
+**Ninguno es nutricion. Ni kcal, ni ingredientes, ni alergenos, ni Nutri-Score.**
+
+### Lo que eso significa, y es exactamente la distincion que F05 pide
+
+**Para Aldi NO es «no lo hemos pedido».** *El colector pide, a diario, por lotes, y la respuesta esta en
+disco.* **Es «la fuente no lo publica» -- en la API que se usa.**
+
+**Y la salida es la misma que el ejecutor de Lidl ya documenta para Lidl**: *«no es un parser incompleto,
+es una fuente que no los da. Para tenerlos hay que **parsear el HTML** de la ficha o ir a **fuente**
+[externa]».*
+
+### Y otra vez corrige la accion siguiente
+
+**Ayer escribi que habia que «escribir el descargador y el parser de una segunda cadena (`aldi`)».**
+*Medido, eso habria sido escribir un descargador para una API que **no trae nutricion**: trabajo que no
+resuelve el problema.*
+
+**Lo que hay que decidir primero es donde vive la nutricion de Aldi** -- la pagina HTML del producto, o
+una fuente externa --, y **eso es una decision con evidencia, no un modulo que se escribe por inercia.**
+*Y la misma pregunta hay que contestarla para alcampo, carrefour, dia y mercadona antes de escribir
+ninguno.*
+
+**Es la cuarta vez en esta fase que medir antes de escribir cambia el trabajo que iba a hacer.**

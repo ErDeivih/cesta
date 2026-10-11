@@ -100,10 +100,11 @@ pueda saber.**
 
 ## 5. Lo que hay que hacer a continuación, en orden
 
-1. **Escribir el descargador y el parser de una segunda cadena** (`aldi`, 3.206 pendientes) — *la cola,
-   el lease, el presupuesto y el ritmo ya están; falta el `ficha_<cadena>`* —, con su prueba **sin red**
-   (`fetch` es inyectable). *Y después medir por campo separando «no lo publica» de «no lo hemos
-   pedido», que para Lidl ya está hecho.*
+1. **Decidir de dónde sale la nutrición de cada cadena, antes de escribir ningún descargador.** *Medido
+   para Aldi, leyendo el crudo que el colector ya guarda: su API trae 18 campos y **ninguno es
+   nutrición** — no es «no lo hemos pedido», es que **la fuente no lo publica en la API que se usa**.*
+   La salida es la misma que Lidl documenta: **parsear el HTML o ir a fuente externa**. *La misma
+   pregunta, para alcampo, carrefour, dia y mercadona, antes de escribir nada.*
 2. **Los dos recorridos de navegador de F03** —*la receta está en
    `docs/investigaciones/F03-publicacion.md` §15: `CESTA_GOLD` a un sandbox, API en el 8101*—.
 3. **Decidir sobre el puntero** (`20261007-103000` contra un gold del 11): publicar o dejarlo. *Es de
