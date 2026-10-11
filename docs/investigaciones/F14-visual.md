@@ -213,3 +213,77 @@ pedido**; y `prefers-reduced-motion` **no esta porque nadie lo ha notado**.* **L
 **no se pueden leer**: el de anchuras hay que **verlo**, y el de movimiento hay que **emular la preferencia** --
 *que es exactamente lo que `capture_browser_scenario` del laboratorio auxiliar sabe hacer, con
 `reduced_motion: "reduce"` entre sus ajustes por defecto.*
+
+
+---
+
+## 4. **Correccion importante**: no es «nadie lo ha pedido» -- **la app vieja SI lo tenia, y la nueva lo perdio**
+
+*(Ronda 143, al ir a montar el ensayo.)* **Y esto cambia la naturaleza del §3.**
+
+**En la ronda 142 escribi**: *«`prefers-reduced-motion` no esta porque nadie lo ha notado»*, y lo puse en la misma
+familia que `R02`, `R05` y `R08` (**funciones que nadie ha escrito**). **Es falso.** *Al buscar donde emular la
+preferencia para el ensayo, aparece esto:*
+
+```
+plataforma/web/estilo.css              <- LA APP VIEJA
+  180  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:...}}
+  201  @media (prefers-reduced-motion:reduce){.progreso i{transition:none}}
+  276  @media (prefers-reduced-motion:reduce){.interruptor i{transition:none}}
+
+plataforma/web/app/src/estilos.css     <- LA APP NUEVA
+  0 menciones
+```
+
+### Lo que esto es, dicho con precision
+
+**La aplicacion vieja tiene **tres** reglas de movimiento reducido, y **una es global** (`*{transition:none
+!important; animation:...}`).** *O sea: **alguien lo penso, lo escribio, y lo dejo funcionando en la app que
+estaba sirviendose**.*
+
+**Y la aplicacion nueva -- la que se esta construyendo en esta fase, en `app/src` -- **no tiene ninguna**.* **No
+es que nadie lo haya pedido: es que se perdio al reescribir.**
+
+**Y eso lo convierte en un caso distinto y peor:**
+
+| | lo que es | **como se dice** |
+|---|---|---|
+| **`R02`, `R05`, `R08`** | **funciones que nadie ha escrito** | *trabajo pendiente* |
+| **`prefers-reduced-motion` en la app nueva** | **una funcion que existia y se perdio** | **una regresion** |
+
+**Es la primera regresion de esta fase** -- *y no se encontro buscandola: se encontro **yendo a hacer el
+ensayo**, que es donde se encuentran.*
+
+### Y el arreglo esta escrito, en el fichero de al lado
+
+**La regla de la app vieja es, literalmente, el arreglo de la nueva:** `@media
+(prefers-reduced-motion:reduce){*{transition:none!important;animation:...}}`. *Tres lineas, y ya estan
+pensadas.*
+
+**Y hay una decision que tomar, que es del dueno**: *una regla `*` global **apaga todo**, incluido lo que pudiera
+ser util* -- *y la vieja tenia **las dos**: la global **y** dos por componente (`:201`, `:276`).* **Cual de las
+dos formas se adopta es una eleccion, y va con las tres que ya esperan.**
+
+### Y por que el §3 dijo lo que dijo
+
+**El §3 midio `app/src` y concluyo sobre «el proyecto».** *Es la misma equivocacion de siempre en esta fase --
+**mirar una capa y concluir sobre el sistema** --, y esta vez la capa que faltaba era **la app vieja, en el
+mismo directorio, con un fichero que se llama casi igual** (`estilo.css` contra `app/src/estilos.css`).*
+
+**Lo que lo corrige no es pensar mejor: es ir a buscar donde se emula la preferencia para el ensayo, y
+encontrarse el fichero de al lado.** *Es la decimoquinta vez que la respuesta estaba en otro sitio, y la primera
+en que el otro sitio es **codigo del mismo proyecto que ya no se usa**.*
+
+### Y el estado de F14, corregido
+
+| lo que pide | **estado** |
+|---|---|
+| **contraste** | **sistema** |
+| **color** | **direccion** |
+| **modo oscuro** | **si** |
+| **teclado / foco** | **si** |
+| **reduccion de movimiento** | **NO en la app nueva, y SI en la vieja** -> **regresion**, con el arreglo ya escrito al lado |
+| **360/390/768/1440 y zoom 200 %** | *por medir, con navegador* -- *y la pila de ensayo (8102/5174) esta **parada**: hay que levantarla* |
+
+**Una regresion con el arreglo al lado, y un ensayo que necesita que se levante la pila.** *Y `F14` deja esto:
+**el unico caso de la fase que no es «falta» ni «esta bien», sino «estaba y se perdio»**.*
