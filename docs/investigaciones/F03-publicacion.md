@@ -527,3 +527,38 @@ es lo que yo deberia haber hecho en vez de confiar en `CESTA_GOLD`.*
 **Reintentar el recorrido.** *El contexto de esta sesion esta agotado y acabo de demostrar el riesgo de
 tocar esto con prisa.* **La receta corregida queda escrita, y el recorrido sigue pendiente** -- *que es
 mejor que un segundo intento a medias sobre datos reales.*
+
+
+---
+
+## 17. El recorrido de varias tablas, probado
+
+*(Ronda 52.)* La aceptación de F03 pide *«búsqueda, previa de lista, sustitución y alta de receta/comida;
+respuesta individual no mezcla versiones»*. **Las cuatro leen la misma conexión**, y una conexión puede leer
+varias tablas -- `grupos`, `enlaces` y `precio_diario` --. **Eso es lo que reproduce la prueba**, en
+`tests/test_g04_catalogo_de_ensayo.py`:
+
+```
+se abre la conexion con V1 publicado
+se leen las TRES tablas
+se publica V2 a mitad del recorrido          <- parcheando publicacion.GOLD EN EL PROCESO
+se vuelven a leer las tres
+    -> identicas: la conexion no cambia de version a mitad
+y una conexion NUEVA
+    -> lee V2, que es lo que hace que publicar sirva para algo
+```
+
+**Y publica en el sandbox parcheando `publicacion.GOLD` en el proceso** -- *no con `CESTA_GOLD`, que es el
+error del §16*.
+
+### Y lo que esta prueba demuestra, sin atribuirle mas
+
+- **Demuestra**: *la version se resuelve **al abrir la conexion**, no en cada consulta* -- *si se resolviera
+  por consulta, un recorrido de tres tablas podría enseñar el nombre de una version y el precio de la
+  siguiente.*
+- **Y demuestra** que publicar cambia lo que sirve una conexión nueva.
+- **No demuestra** lo que pasa en un **navegador**: *que la pantalla no mezcle dos respuestas de dos
+  peticiones distintas.* **Eso sigue pendiente**, y es lo que la aceptación llama «las tres apps durante el
+  uso».
+
+*Sigue sin hacerse el recorrido con navegador. Lo que hay ahora es la mitad del servidor, probada.*

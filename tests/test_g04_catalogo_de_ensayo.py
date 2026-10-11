@@ -647,3 +647,64 @@ def test_una_conexion_ve_una_sola_version(app_leyendo_el_ensayo):
     otra = catalogo.conexion()
     assert otra.execute("SELECT precio_cent FROM grupos").fetchall() != en_la_v1, (
         "una conexion nueva tiene que leer la version nueva")
+
+
+def test_un_recorrido_de_varias_tablas_no_mezcla_versiones(app_leyendo_el_ensayo):
+    """**F03: «V1 fija y V2 publicada durante el uso; respuesta individual no mezcla versiones».**
+
+    *Las cuatro cosas que pide la aceptación -- búsqueda, previa de lista, sustitución y alta -- leen **la
+    misma conexión**, y una conexión puede leer varias tablas: `grupos`, `enlaces` y `precio_diario`.* **La
+    prueba reproduce eso**: se abre la conexión con V1, se lee, **se publica V2 a mitad**, y se vuelve a
+    leer.
+
+    *Lo que tiene que pasar es que la segunda lectura siga siendo **V1**: la conexión se montó con las rutas
+    de V1, y sus vistas siguen apuntando ahí.* **Si se rehiciera a mitad, un recorrido podría enseñar el
+    nombre de una versión y el precio de la siguiente** -- que es exactamente lo que S01 prohíbe.
+
+    *Y se publica en el sandbox parcheando `publicacion.GOLD` **en el proceso**: con `CESTA_GOLD` no basta,
+    porque esa variable la lee el API y no los scripts de publicación. Aprenderlo costó un incidente real
+    sobre el gold de producción, y está escrito en `docs/investigaciones/F03-publicacion.md` §16.*
+    """
+    from datetime import datetime
+
+    from plataforma.api import catalogo
+
+    def suelta_atomico(datos):
+        for nombre, marco in datos.items():
+            write_parquet_file(marco, oro / nombre)
+
+    oro = app_leyendo_el_ensayo
+    suelta_atomico(publica_v1())
+    publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 0, 0))
+    catalogo.reiniciar()
+
+    con = catalogo.conexion()
+    # **Las tres tablas que un recorrido real toca**, leídas con la misma conexión.
+    antes = {
+        "grupos": con.execute("SELECT count(*) FROM grupos").fetchone()[0],
+        "enlaces": con.execute("SELECT count(*) FROM enlaces").fetchone()[0],
+        "diario": con.execute("SELECT count(*) FROM diario").fetchone()[0],
+        "precio": con.execute("SELECT min(precio_cent) FROM grupos").fetchone()[0],
+    }
+
+    # **Se publica V2 a mitad del recorrido.**
+    suelta_atomico(publica_v2())
+    publicacion.publicar(None, momento=datetime(2026, 10, 7, 10, 30, 0))
+
+    # **Y la conexión abierta sigue viendo lo mismo, tabla por tabla.**
+    despues = {
+        "grupos": con.execute("SELECT count(*) FROM grupos").fetchone()[0],
+        "enlaces": con.execute("SELECT count(*) FROM enlaces").fetchone()[0],
+        "diario": con.execute("SELECT count(*) FROM diario").fetchone()[0],
+        "precio": con.execute("SELECT min(precio_cent) FROM grupos").fetchone()[0],
+    }
+
+    assert despues == antes, (
+        f"una conexion abierta no puede cambiar de version a mitad de un recorrido: {antes} -> {despues}")
+
+    # **Y una conexión nueva sí lee V2** -- que es lo que hace que publicar sirva para algo.
+    catalogo.reiniciar()
+    con2 = catalogo.conexion()
+    nueva = con2.execute("SELECT min(precio_cent) FROM grupos").fetchone()[0]
+    assert nueva != antes["precio"], (
+        "una conexion nueva tiene que leer la version nueva: si no, publicar no cambia lo que se sirve")
