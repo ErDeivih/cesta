@@ -479,6 +479,20 @@ def donde_comprar(peticiones: list[Peticion],
     una_tienda = []
     for fuente, elecciones in por_cadena.items():
         resueltas = _agrupa_y_reparte([e for e in elecciones if e])
+        # **Y las agrupadas vuelven a `por_cadena`, que es lo que compara el reparto.**
+        #
+        # *Antes se quedaban solo aqui: `una_tienda` se calculaba **agrupado** y `_mejor_reparto`
+        # comparaba con los costes de **linea** -- dos numeros distintos para la misma compra, que es
+        # justo lo que el criterio de F06 prohibe con sus palabras: «suma de partes igual al total».*
+        #
+        # **Medido el 13 de octubre de 2026**, con dos lineas del mismo producto a 1,00 EUR y 3x2 en
+        # alcampo y una tercera linea a 0,50 EUR en dia: agrupado son 3,00 + 0,50 = **3,50**, por linea
+        # 4,00 + 0,50 = 4,50. El motor devolvia 4,50 con **`ahorro_cent = -50`** y
+        # `merece_la_pena = False`, asi que **descartaba el reparto que ahorra 0,50 EUR** y le decia a
+        # quien compra que no partiera la lista. *Reproducido en
+        # `tests/test_fase2_f06_reparto_agrupado.py`.*
+        pendientes = iter(resueltas)
+        por_cadena[fuente] = [next(pendientes) if e else None for e in elecciones]
         faltan = [p.nombre for p, e in zip(peticiones, elecciones, strict=True) if not e]
         if not resueltas:
             continue

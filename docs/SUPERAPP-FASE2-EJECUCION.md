@@ -6,33 +6,33 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 
 ## Siguiente acción
 
-**F02 · las unidades y la vista previa.** El reintento está **verificado en la UX** y **la carrera
-arreglada**. El encargo ya había señalado el punto —*«clave de diario escrita tras el INSERT»*— y era
-exactamente eso: el `SELECT`, el `INSERT` **sin la clave** y un `UPDATE` **después**. *Con dos envíos a
-la vez los dos `SELECT` no veían nada, los dos insertaban, y el índice único **rechazaba al segundo**:
-no deduplicaba, **fallaba** — y la fila del que fallaba se quedaba sin clave.*
+**F06 · el oráculo exhaustivo de asignaciones.** Es lo que el hallazgo pide y lo único que convierte
+«discrepancias cero» en una afirmación con contenido. *Y ya hay un defecto real detrás.*
+
+**El reparto se decidía con costes sin agrupar**, y estaba en cinco líneas de cableado de
+`donde_comprar`:
 
 ```
-ANTES   F..  IntegrityError: UNIQUE constraint failed: entrada.propietario, entrada.clave_operacion
-DESPUES ...  pasa
+por_cadena[fuente] = [...resolver...]              # SIN agrupar
+resueltas = _agrupa_y_reparte([...])               # agrupadas, variable LOCAL
+repartido = _mejor_reparto(..., por_cadena, ...)   # recibe las SIN agrupar
 ```
 
-*La reproducción fue la prueba de que discrimina: falló antes y pasa después.* **Y la clave va ahora
-dentro del `INSERT`** (`ON CONFLICT … WHERE clave_operacion IS NOT NULL DO NOTHING`), con el que no
-inserta devolviendo la fila del otro.
+*`una_tienda` se calculaba agrupado y el reparto comparaba por línea: dos números distintos para la
+misma compra.* **Medido**: dos líneas del mismo producto con 3×2 en alcampo y una tercera en día daban
+**4,50 €** cuando cuestan **3,50**, con **`ahorro_cent = -50`** y `merece_la_pena = False` — **se le
+decía a quien compra que no partiera la lista, cuando partirla ahorraba 0,50 €.** Arreglado, y la
+reproducción fue la prueba: `F.` antes, `..` después.
 
-**Lo que queda de F02**: **cantidad, unidad y base** (g, ml, raciones con conversiones trazables, y
-consumir parte del envase en vez de la compra entera) y la **vista previa congelada** a compra/líneas y
-receta/versiones.
-
-Detalle: [`investigaciones/F02-reintentos-del-diario.md`](investigaciones/F02-reintentos-del-diario.md).
-
-**Recursos que quedan levantados**: API en el **8099** y **Vite en el 5173** — *los necesita el
-recorrido de navegador que le falta a F01.*
+**Lo que falta de F06**: el **oráculo exhaustivo** (enumerar asignaciones, calcular cada conjunto
+realmente asignado, exigir discrepancias cero); **publicar la garantía y el límite** de `_mejor_reparto`
+—*hoy no está escrito qué promete*—; decidir y decir **el alcance del umbral**; y el banco de matching.
+Detalle: [`investigaciones/F06-reparto-agrupado.md`](investigaciones/F06-reparto-agrupado.md).
 
 **Lo que queda de F01**, enumerado y no cerrado: navegador; estabilidad ante reordenación (V1/V2/V3
 sobre lista y favorito, «jamás B por ordinal»); elegir comprar A otra vez como acción explícita; y
 migrar los consumidores que aún lean el ordinal.
+**Y de F02**: las unidades (g/ml/raciones) y la vista previa congelada.
 
 No reiniciar el contador ni volver a implementar los campos del diario: existen. Preservar `core/datos/secciones.yml` y `docs/CIFRAS.md`, sin incluirlos en commits. No modificar el estado de investigaciones de RadioPV/CueDigital.
 
@@ -48,7 +48,7 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 | F03 | Publicación y uso concurrente | pendiente | Pipeline→matching→puntero; tres recorridos V1/V2. |
 | F04 | Privacidad/CSRF/restauración | pendiente | HTTP A/B, origen ajeno y copia aislada. |
 | F05 | Fichas de seis cadenas/Lidl | pendiente | Inventario real por campo y workers ejecutados. |
-| F06 | Matching y oráculo multi-tienda | pendiente | Evaluación independiente y asignaciones completas. |
+| F06 | Matching y oráculo multi-tienda | **en curso** | Defecto del reparto **reproducido y arreglado**: comparaba con costes **sin agrupar** y descartaba el reparto que ahorra (`ahorro_cent = -50`). Falta el **oráculo exhaustivo**, publicar garantía/límite y el banco de matching. |
 | F07 | Compra rápida y familiar | pendiente | Investigar C01–C05 y medir UI real. |
 | F08 | Comparación/presupuesto/ahorro | pendiente | C06–C10, costes y ámbito elegibles. |
 | F09 | Recetario/importación/borradores | pendiente | R01–R04 con referencias y fixtures permitidos. |
@@ -62,26 +62,28 @@ Estados: pendiente / en curso / implementado sin ensayo / verificado / limitado 
 
 ## Continuación obligatoria antes de pausar
 
-- Paquete y criterio concreto: **F00 en curso** (los otros ocho hallazgos y la matriz S00–S12);
-  **F01 en curso** (motor, cierre y HTTP hechos; cuatro cosas enumeradas); **F02 en curso** con reintento
-  y carrera hechos, y pendientes unidades y vista previa.
-- Fichero / función / recorrido: `core/diario.py:apunta` — *la clave va **dentro** del `INSERT` con
-  `ON CONFLICT … WHERE clave_operacion IS NOT NULL DO NOTHING`; antes era un `UPDATE` **después** del
-  `INSERT`*. Y `_respuesta_del_reintento`, que **dice el conflicto** en vez de devolver la entrada
-  vieja en silencio.
-- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f02_concurrencia.py` →
-  **5 pasan**; *antes del arreglo esa misma prueba daba `F..` con
-  `IntegrityError: UNIQUE constraint failed`* (13 oct 2026). Y `tests/test_g01_diario_http.py` →
-  **16 pasan**, con el choque de clave devolviendo **400 con el motivo**.
-- Caso que falla o comprobación siguiente: **las unidades** (g/ml/raciones) y la vista previa congelada,
-  sin hacer.
-- Cambios conservados / commit: `core/diario.py`, `tests/test_fase2_f02_concurrencia.py` (nuevo),
-  `tests/test_g01_diario_http.py`, el informe de F02 y este tablero.
-- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado:* la carrera se prueba con
-  dos conexiones y una barrera contra el **mismo fichero SQLite**; *no* se ha probado con la API
-  levantada y dos peticiones HTTP a la vez — eso queda para el ensayo de navegador si hiciera falta.
-- **Acción inmediata al retomar:** las **unidades** de F02 —g, ml y raciones con conversiones trazables,
-  y consumir parte del envase en vez de la compra entera—, que es lo que queda del paquete después del
-  reintento y la carrera.
+- Paquete y criterio concreto: **F00 en curso** (ocho hallazgos y la matriz S00–S12); **F01 en curso**
+  (navegador, estabilidad de identidad); **F02 en curso** (unidades, vista previa); y **F06 en curso**
+  con el defecto del reparto arreglado y el oráculo exhaustivo pendiente.
+- Fichero / función / recorrido: `plataforma/api/cesta.py:donde_comprar` — *las elecciones agrupadas
+  vuelven a `por_cadena`, que es lo que compara `_mejor_reparto`*. **El defecto no estaba en
+  `_mejor_reparto`**, que recibe sus estructuras y está bien: estaba en quien se las daba.
+- Evidencia obtenida y comando/fecha: `uv run pytest -q tests/test_fase2_f06_reparto_agrupado.py` →
+  **2 pasan**; *antes del arreglo esa misma prueba daba `F.`, con `total_cent = 450` (son 350),
+  `ahorro_cent = -50` y `merece_la_pena = False`* (13 oct 2026). Y `uv run pytest -q` → **1682 pasan,
+  0 fallan**; `ruff` limpio.
+- Caso que falla o comprobación siguiente: **el oráculo exhaustivo de asignaciones**, sin hacer.
+  **Límite que queda, y hay que publicarlo**: la parte que se atribuye a cada línea se calcula
+  suponiendo que **todas** las líneas van a esa tienda, así que una asignación que deje sólo una parte
+  del grupo en la tienda sigue valorándose sobre un conjunto que no se compra allí.
+- Cambios conservados / commit: `plataforma/api/cesta.py`, `tests/test_fase2_f06_reparto_agrupado.py`
+  (nuevo), `docs/investigaciones/F06-reparto-agrupado.md` (nuevo) y este tablero.
+- Bloqueo real y alternativa independiente: **ninguno**. *Límite declarado, además del de arriba:* el
+  **alcance del umbral** («5 € dto comprando 20 €») no está decidido ni publicado — medido: dos líneas
+  distintas de 12 € dan **2400** en el motor y **1900** si el umbral fuera del ticket entero. *No se
+  llama defecto: se llama límite sin publicar.*
+- **Acción inmediata al retomar:** construir el **oráculo exhaustivo de asignaciones** —enumerar todas,
+  calcular cada conjunto realmente asignado, aplicar la promoción a ese conjunto y exigir
+  **discrepancias cero** contra `donde_comprar`—, y **publicar la garantía y el límite** del algoritmo.
 
 Mantener este tablero breve. Informes detallados por capacidad en `docs/investigaciones/` (crear al iniciar una investigación), con enlaces a evidencia del laboratorio cuando corresponda. Investigación entregada y función verificada son estados diferentes. No añadir otra bitácora de cientos de rondas aquí.
