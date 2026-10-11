@@ -768,3 +768,75 @@ por un razonamiento.**
 **De siete sub-criterios: seis con su capa principal medida, cuatro pasan, uno es un defecto fijado, y tres
 tienen una capa de pantalla sin mirar.** *Y las tres que faltan son la misma: **mirar la pantalla con un
 navegador**, que es lo que queda de F07 y lo que el criterio llama «uso con una mano».*
+
+
+---
+
+## 14. **`C05`, medido en la pantalla: sugiere y no afirma** -- y C03/C04 necesitan otra pantalla
+
+*(Ronda 101.)* *Las tres capas que faltaban son la misma -- **mirar la pantalla** --, asi que se anadieron al
+ensayo que ya corre (`plataforma/prueba_f07_pasos.py`), con su navegador y su sesion.*
+
+### C05: **contestado, y cumple el criterio**
+
+**Lo que la pantalla ensena de un resultado del buscador, leido literalmente:**
+
+```
+'Gofres con chocolate Hacendado
+
+mercadona · Hacendado
+
+ahorras un 7,7 %
+
+ comparable · 2 cadenas
+E
+sin Eco-Score
+33,55 EUR
+5…'
+```
+
+**Y buscadas en toda la pantalla las palabras con las que se afirmaria una identidad** -- *«confirmad»,
+«exacto», «es el mismo», «probable», «parecid», «sin confirmar», «puede ser», «identidad»* --, **no aparece
+ninguna.**
+
+**Asi que el resultado dice**: *el nombre, **la cadena** (`mercadona`), **la marca** (`Hacendado`), el ahorro,
+**«comparable · 2 cadenas»**, el Eco-Score y el precio. **Lo que no dice es que sea el mismo producto que otro**
+-- *y **«comparable · 2 cadenas» es justo lo contrario de afirmarlo**: dice en cuantas cadenas aparece, no que
+sean el mismo.*
+
+**El criterio** -- *«sugerir no significa declarar identidad exacta»* -- **se cumple, y ahora esta medido en la
+pantalla y no deducido de tres capas.** *Y la cuarta capa decia lo mismo que las otras tres, que es lo que
+habia que comprobar.*
+
+### C03 y C04: **esta pantalla no es la suya**, y se dice
+
+```
+encabezados en pantalla: 0
+menciones de lo habitual: 0
+menciones de en el carro: 0
+```
+
+**Y no es que falten: es que este ensayo corre sobre `/compra`, que es la pantalla de BUSCAR** -- *y ahi no hay
+lista con lineas, ni agrupacion por pasillo, ni mosaico de habituales, ni nada que este en el carro.* **Un cero
+aqui no dice nada de C03 ni de C04** -- *diria algo si el ensayo estuviera en la pantalla de la lista, y **no lo
+esta**.*
+
+**Decir «C03 y C04 no se ven» a partir de estos ceros seria exactamente el error de las rondas 82, 90 y 96** --
+*medir en un sitio y concluir sobre otro.* **Asi que queda dicho como lo que es: el ensayo no llega a esa
+pantalla, y para C03 y C04 hace falta **una lista con lineas y su agrupacion**, que es otra prueba.**
+
+### Y C01-C05, con las capas dichas
+
+| ID | lo que pide | **capas medidas** |
+|---|---|---|
+| **C01** | *dos sesiones sin perder cambios* | **dato** -- *el tachado gana el primero; **la cantidad es un defecto**, fijado* |
+| **C01b** | *ni exponer listas de otro hogar* | **dato, y PASA** |
+| **C02** | *guardado sin catalogo* | **dato** |
+| **C02b** | *precio desconocido visible* | **dato y pantalla, y PASA** |
+| **C03** | *pasillos / una mano / recarga* | **el agrupador, en el codigo** (`porPasillo`); **4 toques**; **recarga por F03**; *la pantalla con lista, sin mirar* |
+| **C04** | *preferencia contra necesidad* | **dato** (dos tablas, dos columnas); *la pantalla, sin mirar* |
+| **C05** | *acentos/typos/filtros; sugerir no es afirmar* | **dato, uso y pantalla** -- *y **PASA*** |
+
+**Cinco de siete con la pantalla o el dato medido; cuatro pasan; uno es un defecto fijado; y los dos que faltan
+-- `C03` y `C04` -- son **la misma prueba**: un ensayo sobre la pantalla de la lista, con lineas de varios
+pasillos y un favorito.**

@@ -135,6 +135,41 @@ def main() -> int:
                     pulsables.first.click()
                     toca("anadir el producto a la lista")
 
+            # ---------------------------------------------------------------- C03/C04/C05 EN LA PANTALLA
+            #
+            # *Las tres capas que faltaban son la misma: **mirar la pantalla**.* **Y se miran aqui, con el
+            # navegador que ya esta abierto** -- que es la leccion de esta sesion: no deducir la pantalla de
+            # las otras capas.
+            print()
+            print("  === C03/C04/C05, en la pantalla ===")
+
+            # **C05**: lo que la pantalla dice de cada resultado. *Si no afirma identidad, no habra ninguna
+            # palabra de confirmacion -- y lo que SI diga hay que leerlo, no suponerlo.*
+            if resultados.count():
+                texto = resultados.first.inner_text()
+                print(f"        un resultado dice: {texto[:220]!r}")
+                cuerpo_completo = pagina.locator("body").inner_text()
+                for palabra in ("confirmad", "exacto", "es el mismo", "probable", "parecid", "sin confirmar",
+                                "puede ser", "identidad"):
+                    if palabra in cuerpo_completo.lower():
+                        print(f"        la pantalla usa la palabra {palabra!r}")
+                print("        (y si no sale ninguna de esas, el buscador no afirma identidad)")
+
+            # **C03**: los pasillos. *Si el agrupador `porPasillo` esta haciendo su trabajo, la lista tendra
+            # encabezados; y si una linea no tiene pasillo, **va al final y sin encabezado**.*
+            encabezados = pagina.locator("h3, h2, [role=heading]")
+            print(f"        encabezados en pantalla: {encabezados.count()}")
+            for i in range(min(encabezados.count(), 5)):
+                with contextlib.suppress(Exception):
+                    print(f"          [{i}] {encabezados.nth(i).inner_text()[:40]!r}")
+
+            # **C04**: los estados. *«Lo de siempre» es el mosaico de habituales; y «en el carro» y «tachado»
+            # tienen que poder verse a la vez o por separado.*
+            habituales = pagina.locator("text=/lo de siempre|habitual/i")
+            print(f"        menciones de lo habitual: {habituales.count()}")
+            carro = pagina.locator("text=/en el carro|carrito/i")
+            print(f"        menciones de en el carro: {carro.count()}")
+
             # ---------------------------------------------------------------- el numero
             print()
             print(f"  === TOQUES DEL RECORRIDO DE CUENTA VACIA: {toques} ===")
