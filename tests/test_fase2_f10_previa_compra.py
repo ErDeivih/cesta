@@ -50,13 +50,18 @@ def test_la_misma_unidad_suma():
     assert _comprable(previa)["harina"] == 1.5, _linea(previa)
 
 
-def test_kg_y_g_no_se_suman_a_la_ligera_pero_tampoco_se_pierden():
-    """**«Mezcla kg/g compatible»** -- *y aqui esta la pregunta que la aceptacion hace: `1 kg` y `500 g` **son
-    la misma unidad canonica**, pero **escritas distinto**.*
+def test_kg_y_g_SI_se_suman_porque_son_la_misma_unidad():
+    """**«Mezcla kg/g compatible»** -- *el caso que la aceptacion nombra, y que **no** funcionaba.*
 
-    *La clave de la consolidacion es `producto|unidad` con `_unidad_canon`, que solo pasa a minusculas y quita
-    espacios -- **no convierte `g` a `kg`**.* **Asi que `1 kg` y `500 g` caen en claves distintas**, y la
-    pregunta es que hace el modulo con eso: **lo dice, o lo suma mal.**
+    *`1 kg` de harina y `500 g` de harina **son 1,5 kg de verdad**.* **Y el modulo los dejaba en dos lineas y
+    los nombraba como incompatibles**, igual que hace con `kg` y `ud` -- *medido en la ronda 121.*
+
+    **El arreglo**: `_unidad_canon` usa la tabla de `core.normalize` -- `"g": ("kg", 0.001)` --, y la cantidad se
+    convierte con su factor. *Cambiar el nombre de la unidad sin cambiar el numero seria sumar peras con
+    manzanas y decir que son todas peras.*
+
+    *Esta prueba **antes era tolerante** -- aceptaba sumar **o** nombrar --, y por eso **pasaba con el defecto**.
+    Ahora exige el resultado bueno: **una linea de 1,5 kg, y nada sin consolidar.***
     """
     previa = previa_compra.previa_de_compra([
         {"texto": "harina", "cantidad": 1, "unidad": "kg"},
@@ -64,16 +69,24 @@ def test_kg_y_g_no_se_suman_a_la_ligera_pero_tampoco_se_pierden():
     ])
     d = _linea(previa)
 
-    # **El dato, sin juicio**: o se suman, o se nombran como incompatibles.
-    sumado = _comprable(previa).get("harina")
-    nombrado = d["sin_consolidar"]
+    assert _comprable(previa) == {"harina": 1.5}, (
+        f"1 kg y 500 g son 1,5 kg, y salio: {d['lineas']}")
+    assert d["sin_consolidar"] == [], (
+        f"y no hay nada que nombrar: {d['sin_consolidar']}")
+    # **Y en la unidad canonica**, no en la que vino primero.
+    assert {f["unidad"] for f in d["lineas"]} == {"kg"}, d["lineas"]
 
-    assert sumado in (1.5, 1) or nombrado, (
-        f"ni se suman ni se nombran: comprable={d['comprable']} sin_consolidar={nombrado}")
-    # Y si se sumaron, tienen que estar en la MISMA unidad.
-    if sumado is not None and not nombrado:
-        unidades = {f["unidad"] for f in d["lineas"] if f["texto"] == "harina"}
-        assert len(unidades) == 1, f"se sumaron unidades distintas: {unidades}"
+
+def test_g_y_kg_al_reves_dan_lo_mismo():
+    """*El orden no puede cambiar el resultado: **500 g y 1 kg son 1,5 kg igual**.* *Una consolidacion que
+    dependa del orden es una consolidacion que miente la mitad de las veces.*
+    """
+    previa = previa_compra.previa_de_compra([
+        {"texto": "harina", "cantidad": 500, "unidad": "g"},
+        {"texto": "harina", "cantidad": 1, "unidad": "kg"},
+    ])
+
+    assert _comprable(previa) == {"harina": 1.5}, _linea(previa)["lineas"]
 
 
 # ---------------------------------------------------------------------------------------------

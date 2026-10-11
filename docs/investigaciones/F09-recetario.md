@@ -477,3 +477,75 @@ devolver tambien la cantidad convertida**, con la misma tabla que usa el catalog
 
 **Y el hueco tiene nombre**: *`previa_compra._unidad_canon` no usa `core/normalize._UNIDADES`, asi que `g` y `kg`
 son dos unidades distintas en vez de dos formas de decir la misma.*
+
+
+---
+
+## 8. **Arreglado**: `kg` y `g` son la misma unidad, y `ud` no
+
+*(Ronda 122.)* El hueco de la ronda 121 -- *«`previa_compra` no distingue `kg/g` de `kg/ud`»* -- **esta
+cerrado.** *Y el arreglo era lo que se dijo que era: usar la tabla que ya existia.*
+
+### El cambio, en dos funciones de `core/previa_compra.py`
+
+```python
+def _unidad_canon(unidad: str | None) -> str:
+    """...**Y `g` y `kg` son la MISMA unidad**, no dos: *la tabla de `core.normalize` ya lo sabe* --
+    `"g": ("kg", 0.001)` --, *y sin usarla `1 kg` y `500 g` de harina caian en claves distintas y se
+    nombraban como incompatibles, **que es lo que no son**.*"""
+    return _UNIDADES.get((unidad or "").strip().lower(), (...))[0]
+
+
+def _a_canonica(cantidad: float, unidad: str | None) -> float:
+    """**La cantidad, en la unidad canonica.** *Sumar `1 kg` con `500 g` sin convertir daria `501`.*
+    *Cambiar el nombre de la unidad sin cambiar el numero empeora las cosas* -- *seria sumar peras con
+    manzanas y decir que son todas peras.*"""
+    factor = _UNIDADES.get((unidad or "").strip().lower(), (None, 1.0))[1]
+    return float(cantidad) * factor
+```
+
+**Y en el bucle, una linea**: *la cantidad se convierte **antes** de acumular.*
+
+**`_UNIDADES` se importa de `core.normalize`** -- *no se copia* --, **que es la misma tabla que usa el catalogo
+para el precio por kg.** *Una sola tabla, y la de casa.*
+
+### Y el resultado, medido despues del arreglo
+
+```
+kg + kg -> SUMA     [('harina', 1.5, 'kg')]
+kg + g  -> SUMA     [('harina', 1.5, 'kg')]        <- EL CASO DEL CRITERIO
+kg + ud -> NO SUMA  SIN CONSOLIDAR: ['harina: kg y ud']
+ml + g  -> NO SUMA  SIN CONSOLIDAR: ['leche: kg y l']
+```
+
+**«Mezcla kg/g compatible y ud incompatible»** -- *las dos palabras del criterio, **ahora si distintas***.
+
+**Y las dos que no se suman siguen sin sumarse, y siguen diciendose** -- *`ml` cae en `l` y `g` en `kg`, asi que
+siguen siendo dos unidades y se nombran.* **El arreglo no relajo nada: solo junto lo que era lo mismo.**
+
+### Y una cosa que hay que decir de la prueba, porque era parte del problema
+
+**La prueba del `kg/g` **estaba escrita tolerante** en la ronda 121** -- *aceptaba que se sumara **o** que se
+nombrara como incompatible* --, **y por eso pasaba con el defecto dentro.**
+
+**Fue lo correcto en ese momento**: *no sabia cual de las dos cosas hacia, y **medir sin saber** exige una
+asercion que no invente el resultado.* **Pero una prueba tolerante no distingue el bien del mal, y hay que
+apretarla en cuanto se sabe.**
+
+**Apretada, ahora exige**: *una linea de `1,5 kg`, **nada** en `sin_consolidar`, y **la unidad canonica** --
+*y ademas al reves, `500 g` y `1 kg`, porque **una consolidacion que dependa del orden miente la mitad de las
+veces***.
+
+**De tolerante a estricta, y con eso el arreglo queda protegido**: *si alguien lo revierte, **la prueba falla**.*
+
+### Y F10, con esto
+
+| criterio | **estado** |
+|---|---|
+| **`R05`** -- modo cocina | *por medir* |
+| **`R06`** -- calendario y cola | *por medir* |
+| **`R07`** -- plan→lista | **el modulo esta, sus reglas pasan, y la conversion kg/g ya esta** |
+| **`R04`** -- la mitad de la suma | **cerrada**: se convierte lo convertible, y se nombra lo que no |
+
+**La aceptacion de F10 -- «dos recetas con ingrediente compartido, mezcla kg/g compatible y ud incompatible» --
+esta cumplida y probada, con las dos mitades distinguidas.**
