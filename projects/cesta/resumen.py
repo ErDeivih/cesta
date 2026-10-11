@@ -9,9 +9,11 @@ que cadenas han refrescado, cuanto historico hay y cuanto se ahorra hoy.
 """
 from __future__ import annotations
 
+import json
+
 import polars as pl
 
-from core import cobertura, comparacion, config
+from core import cobertura, comparacion, config, publicacion
 from projects.cesta import avisos
 
 # Por encima de esto no hay ninguna diferencia de precio real entre supermercados
@@ -160,6 +162,27 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  nota: {n} filas de {fuente} del {fecha} vienen de una "
                       f"captura apartada ({motivo}); el bronze esta en "
                       f"data/debug/descartados")
+
+    # **Y lo publicado, que era la pata que faltaba.** *El resumen decia lo **capturado** -- las
+    # cadenas de hoy -- y lo **procesado** -- catalogo e historico --, pero no **que se esta
+    # sirviendo**. Sin esto, un dia que no publico se lee igual que uno que si: medido el 13 de
+    # octubre de 2026, `/api/estado` declaraba incoherente el catalogo y el resumen no decia nada.*
+    version = publicacion.version_actual()
+    if version is None:
+        print("  publicado: NO hay version publicada: se sirve el catalogo suelto de data/gold")
+    else:
+        try:
+            puntero = json.loads(publicacion.PUNTERO.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            puntero = {}
+        print(f"  publicado: v{version}, el {puntero.get('publicado_en')}")
+        # **Y si hay catalogo procesado que no se sirve, se dice.** *Es lo que de verdad importa de
+        # esta linea: no que haya version, sino que la version **no se quede atras**.*
+        dia_publicado = str(puntero.get("publicado_en", ""))[:10]
+        dia_silver = max(d for _c, d in fechas)
+        if dia_publicado and dia_publicado < dia_silver:
+            print(f"  AVISO: lo publicado es del {dia_publicado} y el silver llega al {dia_silver}: "
+                  f"hay catalogo procesado que NO se esta sirviendo")
 
     comparables = ahorro(catalogo)
     con_letra = catalogo.filter(pl.col("calidad").is_not_null())

@@ -138,3 +138,29 @@ def test_el_pipeline_dice_que_ha_fallado_si_no_puede_publicar(gold, monkeypatch)
     assert salida != 0, (
         "si no se puede publicar, el pipeline no puede decir que ha ido bien: el puntero se queda "
         "atras y el veredicto del dia tiene que verlo")
+
+
+def test_el_resumen_distingue_capturado_procesado_y_publicado():
+    """**La tercera pata del resumen.** *F03 pide que distinga **capturado / procesado / publicado**.*
+
+    Decia lo capturado (`cadenas: 5 | todas de hoy`) y lo procesado (`catalogo: N productos`), **pero
+    no que se esta sirviendo**: un dia que no publico se leia igual que uno que si. *Y `/api/estado`
+    declaraba la incoherencia mientras el resumen callaba.*
+
+    *Se lee la fuente, como hace `tests/test_la_pasada_publica.py` con la pasada: es lo unico
+    comprobable sin montar un silver y un gold de mentira, y fija **las tres frases** que importan.*
+    """
+    fuente = (__import__("pathlib").Path(__file__).resolve().parents[1]
+              / "projects" / "cesta" / "resumen.py").read_text(encoding="utf-8")
+
+    assert '"  publicado: v' in fuente, "el resumen tiene que decir que version se sirve"
+    assert "NO hay version publicada" in fuente, "y decir cuando no hay ninguna"
+    assert "NO se esta sirviendo" in fuente, (
+        "y avisar cuando hay catalogo procesado que no se sirve: *es lo que de verdad importa de esta "
+        "linea, no que haya version, sino que la version no se quede atras*")
+
+    # **Y el aviso tiene que poder compararse**: se calcula despues de tener las fechas del silver.
+    pos_fechas = fuente.index("fechas = _fechas_por_cadena()")
+    pos_publicado = fuente.index("publicado: v")
+    assert pos_publicado > pos_fechas, (
+        "lo publicado se compara con el silver, asi que se calcula despues de leer las fechas")
