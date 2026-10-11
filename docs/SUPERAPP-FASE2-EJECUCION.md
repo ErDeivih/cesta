@@ -25,9 +25,9 @@ Fecha inicial: 11 de octubre de 2026. Base inspeccionada `480ac21`. La revisión
 | 7 | Publicación y derivados | **contestado** | publicación al final del ciclo, fallo en el veredicto, API leyendo la versión |
 | 8 | Fichas sin ejecución suficiente | **contestado** | **Día: 6.331 productos con tabla**, ya extraída; Mercadona 0; otras cuatro sin maestro |
 | 9 | Riesgo de identidad estable | **mitad contestada** | *no hay **ningún** consumidor del ordinal: las 3 menciones son comentarios, medido con `git grep`. **Falta la prueba** de lista/favorito/receta ante reordenación* |
-| 10 | CSRF no ensayado | **SIN TOCAR** | *el informe lo aplaza con una inferencia que el encargo no acepta* |
+| 10 | CSRF no ensayado | **medido en código** | *`SameSite=Lax` + `HttpOnly`; 26 que mutan, todos no-GET; el GET sospechoso dice `hace_falta_escribir=False`. **Falta el ensayo cross-origin y leer el 2.º** — [F04](investigaciones/F04-csrf.md)* |
 
-**Nueve de diez contrastados. Queda el #10 (CSRF) entero, y del #9 la prueba.**
+**Los diez contrastados.** Del #10 falta el **ensayo** (no la medición), y del #9 la **prueba**.
 
 ## Siguiente acción
 
