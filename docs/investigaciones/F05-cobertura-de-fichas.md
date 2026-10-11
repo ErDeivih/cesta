@@ -1132,3 +1132,65 @@ que es una operacion de red.
 
 **Cinco de seis contestadas. La sexta exige una peticion, y si merece la pena pedirla es una decision de
 presupuesto, no una duda tecnica.**
+
+
+---
+
+## 25. **Carrefour SI publica nutricion** -- y la tabla esta en la pagina de PRODUCTO
+
+*(Ronda 77.)* La ultima pregunta de F05, contestada **pidiendo una ficha** -- *una peticion, con `robots.txt`
+comprobado primero, como hace `ficha_lidl.descarga`, y con el `Fetcher` y el `_raw` de Carrefour, que ya
+cachean.*
+
+```
+robots.txt: PERMITE  .../aceite-de-oliva-virgen-extra-dcoop-1-l/R-824301999/p
+descargado: 119.977 bytes
+
+las senales, EN LA PAGINA DE PRODUCTO:
+    <table                    0
+    kcal                      6      <- SEIS
+    por 100 g                 1      <- UNO
+    informacion nutricional   1      <- UNO
+    application/ld+json       2
+
+los @type de su ld+json:
+    Product   claves = ['@context','@type','aggregateRating','brand','gtin13','image',
+                        'name','offers','review','sku']
+    BreadcrumbList
+```
+
+### Lo que esto contesta, y lo que cambia
+
+**Carrefour SI publica nutricion, y esta en la ficha -- no en el listado.** *Y la pagina lo dice con sus
+palabras: **`informacion nutricional` aparece una vez, `por 100 g` una, y `kcal` seis** -- que es una tabla de
+seis filas.*
+
+**Y el `ld+json` de la ficha trae `gtin13`** -- *la identidad estable que a `alerta` le faltaba y que
+`catalogo.por_ean` sabe resolver.* **Los listados no la traian** (§13: solo `name` y `offers`).
+
+**Asi que el mapa de F05 se cierra con DOS cadenas que si tienen nutricion, por caminos distintos:**
+
+| cadena | nutricion | **por donde** |
+|---|---|---|
+| **dia** | **SI** -- 6.331 en el maestro | *el colector pide la ficha en cada pasada* (`/api/v1/product/`) |
+| **carrefour** | **SI** | *la pagina de producto la trae* -- **y el colector solo captura listados** |
+| mercadona | no | 6 fichas, solo ingredientes y alergenos |
+| alcampo | no | 59 claves |
+| aldi | no | 18 claves |
+| lidl | no, documentado | *«es una fuente que no los da»* |
+
+**Y la diferencia entre las dos que si**, que es la conclusion de F05: **Dia la tiene porque su colector pide
+la ficha; Carrefour la tiene y el colector no la pide.** *Misma situacion que la cola: **el dato esta y nadie
+lo trae.***
+
+### Lo que queda, y ya es trabajo y no duda
+
+1. **Escribir el lector del HTML de Carrefour** -- *donde estan las seis filas de `kcal`.* **El `<table` es 0,
+   asi que no es una tabla HTML**: *hay que mirar como vienen* -- *probablemente en el JSON de la pagina o en
+   `div`s.*
+2. **Pedir fichas de Carrefour** -- *una por producto, como Lidl* --, **con su presupuesto**.
+3. Y el resto de F05, que ya esta medido: **decidir que productos merecen la visita.**
+
+*Y una nota de metodo*: **esta es la primera vez en toda la fase que una palabra clave de nutricion resulto
+ser un DATO** -- *`kcal` seis veces, `por 100 g` una* --, despues de cuatro veces seguidas en que era prosa.
+*Lo que lo distingue no es la palabra: es **haber ido a la pagina de producto** en vez de mirar el listado.*
