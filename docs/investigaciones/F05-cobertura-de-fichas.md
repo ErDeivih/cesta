@@ -1024,3 +1024,54 @@ de la casa.*
 | **que no se vuelva a acumular** | **hecho**: el ciclo reconcilia tras el pipeline (§22) |
 | decidir que productos merecen la visita | **pendiente** |
 | el maestro de alcampo, carrefour y aldi | **pendiente** |
+
+
+---
+
+## 23. **Correccion**: un maestro para alcampo, carrefour y aldi no daria informacion
+
+*(Ronda 75.)* Llevo varias rondas diciendo que el paso siguiente es *«construir el maestro de alcampo,
+carrefour y aldi, que es lo que convierte sus 64.092 de "sin medir" en un numero»*. **Lo he medido antes de
+hacerlo, y no es asi.**
+
+```
+ficheros que mencionan MASTER:  projects/cesta/collectors/dia.py
+                               projects/cesta/collectors/mercadona.py
+
+MASTER = config.DATA / "master" / "dia.json.gz"          (dia.py:34)
+MASTER = config.DATA / "master" / "mercadona.json.gz"    (mercadona.py:32)
+
+data/master/:  dia.json.gz (795.965 bytes)  ·  mercadona.json.gz (396.602 bytes)
+```
+
+**Solo escriben maestro las dos cadenas cuyo DETALLE pide el colector**: *Dia con `ficha(f, sku_id)` en
+`/api/v1/product/`, y Mercadona con su API de producto.* **El maestro es el sitio donde se guarda lo que
+devuelve esa visita.**
+
+**Alcampo, Carrefour, Aldi y Lidl no tienen maestro porque sus colectores no visitan el detalle**: *capturan
+listados.* **Y de esas cuatro ya se sabe lo que publican, medido por claves:**
+
+| cadena | lo que su fuente publica | medido en |
+|---|---|---|
+| **alcampo** | 59 claves, **ninguna de nutricion** | §10 |
+| **aldi** | 18 claves, **ninguna de nutricion** | §6 |
+| **lidl** | la fuente no las da -- *documentado en su ejecutor* | §7 |
+| **carrefour** | **HTML, sin medir** | §13 |
+
+**Asi que construirles un maestro daria tres ceros y ninguna informacion** -- *confirmaria lo que ya esta
+medido por claves, con trabajo de por medio.* **Lo que la cola no puede contrastar para esas tres no es un
+problema de libro mayor: es que su fuente no tiene el dato.**
+
+### Y el unico hueco de verdad es **Carrefour**
+
+**De las cuatro sin maestro, tres ya estan contestadas y la cuarta no**: *Carrefour son **2.004 crudos, todos
+HTML**, y su `ld+json` trae **1.995 bloques `Product` con solo `name` y `offers`** -- **listados de
+categoria** (§13).*
+
+**Lo que no se sabe es que hay en la pagina de PRODUCTO de Carrefour** -- *si su HTML lleva una tabla de
+nutricion.* **Y eso no se mide con un maestro: se mide con una peticion a una ficha de Carrefour, o leyendo
+una que ya este en crudo.**
+
+*Asi que el paso siguiente de F05 no es construir tres maestros: es **mirar si algun crudo de Carrefour es
+una pagina de producto** -- y si no lo es, pedir una.* **Una pregunta concreta en vez de tres libros que
+nadie va a leer.**
