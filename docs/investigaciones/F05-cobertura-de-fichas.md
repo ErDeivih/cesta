@@ -721,3 +721,64 @@ modulo que se escribe por inercia.*
 **Medir cuantos de los 79.887 tienen ya su dato por otra via.** *Dia tiene 6.331 con tabla y Mercadona 4.494
 con ingredientes: **si esos productos estan tambien en la cola como pendientes, hay fichas ya obtenidas que
 cuentan como deuda**.* **Eso es un `SELECT` contra el catalogo, sin red, y es lo siguiente.**
+
+
+---
+
+## 17. **Los 79.887 no son la deuda real: hasta un 74 % es deuda falsa**
+
+*(Ronda 68.)* El `SELECT` sin red, y el resultado cambia la cifra que llevo repitiendo toda la fase:
+
+```
+cola de fichas:  79.887 pendientes en 6 cadenas
+    alcampo     43.603      carrefour   17.283      dia          6.292
+    lidl         5.026      mercadona    4.477      aldi         3.206
+
+dia:        6.331 en el maestro, 4.695 con dato
+            de los 6.292 PENDIENTES, 4.655 YA TIENEN FICHA en el maestro
+            -> 74,0 % de los pendientes de dia son DEUDA FALSA
+
+mercadona:  4.494 en el maestro, 2.830 con dato
+            de los 4.477 PENDIENTES, 2.821 YA TIENEN FICHA
+            -> 63,0 % de los pendientes de mercadona son DEUDA FALSA
+```
+
+### Por que pasa, y no es un fallo de nadie
+
+**Hay dos caminos para conseguir una ficha, y no se hablan:**
+
+1. **El colector**, que pide la ficha **de los productos que recorre** -- *`collectors/dia.py` con
+   `ficha(f, sku_id)`, y por eso el maestro tiene 6.331 con nutricion.*
+2. **La cola**, que pide la ficha **de los productos que tiene apuntados** -- *y solo tiene ejecutor para
+   Lidl.*
+
+**Asi que un producto puede tener su ficha -- traida por el colector -- y seguir marcado `pendiente` en la
+cola**, porque *nadie le dijo a la cola que ya estaba.*
+
+**No es un fallo de codigo: es que las dos vias no comparten estado.** *Y el efecto es que **la cifra de
+cobertura de fichas que se publica mide la cola, no el catalogo**.*
+
+### Y la cifra corregida
+
+| cadena | pendientes en la cola | **ya tienen ficha** | **deuda real** |
+|---|---|---|---|
+| **dia** | 6.292 | **4.655** (74,0 %) | **1.637** |
+| **mercadona** | 4.477 | **2.821** (63,0 %) | **1.656** |
+| alcampo | 43.603 | *sin maestro* | **sin medir** |
+| carrefour | 17.283 | *sin maestro* | **sin medir** |
+| lidl | 5.026 | *28 correctas* | **4.998** |
+| aldi | 3.206 | *sin maestro* | **sin medir** |
+
+**De las dos cadenas que se pueden medir, la deuda real es un tercio o un cuarto de lo que la cola dice.**
+*Y en las otras cuatro no se sabe, porque no hay maestro con el que contrastar* -- **que es, otra vez, la
+misma distincion: lo que falta medir y lo que falta hacer.**
+
+### Y lo que esto cambia
+
+**La afirmacion «la cobertura de fichas es del 0,04 %»** -- *que escribi en la matriz y en el informe* --
+**era falsa por los dos lados**: *no es 28 de 79.887, porque **parte de esos 79.887 ya tienen ficha**; y **la
+cobertura buena no es la de la cola, es la del catalogo** -- Dia, **4.695 de 6.331 con dato**.*
+
+**Lo que hay que decir, corregido**: *la cobertura de fichas de Dia es **del 74 % de su maestro** (4.695 de
+6.331), no del 0,04 %.* **Y la de Mercadona, 2.830 de 4.494 (63 %).** *Lo que esta en el 0,04 % es **el
+trabajo de la cola**, que es otra cosa.*
