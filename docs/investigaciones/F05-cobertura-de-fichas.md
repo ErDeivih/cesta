@@ -828,3 +828,46 @@ es peor que no tocarla.*
 **El defecto queda localizado, contado (7.476 fichas entre las dos cadenas medidas) y con el arreglo
 especificado en dos piezas, la segunda de fondo.** *Es lo mismo que paso con `alerta`: especificarlo bien
 fue lo que permitio arreglarlo despues en una sola ronda.*
+
+
+---
+
+## 19. El mapeo del reconciliador, escrito y probado -- y un fallo mio que cazo la prueba
+
+*(Ronda 70.)* **La pieza que decidia era el mapeo**, y esta hecha: `projects/cesta/reconciliar_fichas.py`,
+con **siete pruebas** -- *una de ellas contra los maestros de verdad.*
+
+### Por que hacia falta un mapeo
+
+```
+fichas_lidl.py:56   CAMPOS_DE_FICHA = ("nombre", "marca", "ean", "gtin_invalido", "descripcion", "url",
+                                       "imagen")
+fichas_lidl.py:59   def _hash_util(datos): "|".join(... para k en CAMPOS_DE_FICHA ...)
+```
+
+**Esos nombres son normalizados, y los maestros usan los de su fuente** -- *Dia guarda `product_name`,
+`brand_description`, `ean_code`; Mercadona, `display_name`, `brand`, `ean`* --. **Asi que reconciliar exige
+traducir, y de eso va el modulo.** *Y es por cadena a proposito: **adivinar el nombre de un campo es como se
+escribe un mapeo que no casa.***
+
+### Y un fallo mio que la prueba cazo, no la lectura
+
+**`tiene_ficha` tenia un respaldo** -- *«un registro que ya trae campos de ficha traducibles tambien
+sirve»* -- **y estaba mal**: *un producto con nombre y marca pero **sin nutricion ni ingredientes** no tiene
+ficha*, y marcarlo `correcto` seria **dar por buena una ficha vacia** -- *exactamente el pase vacio que yo
+mismo avisaba en el docstring del modulo.*
+
+```
+FAILED test_el_dato_de_la_ficha_es_lo_que_cuenta
+    assert True is False
+```
+
+**Quitado el respaldo, y `tiene_ficha` exige el dato.** *Siete pruebas pasan.*
+
+### Lo que queda del arreglo
+
+1. **El mapeo**: **hecho y probado** ✓
+2. **El reconciliador que lo usa**: *recorrer los 79.887 pendientes, y para los que `tiene_ficha` diga que
+   si, llamar a `inventario.terminar(con, clave, CORRECTO, hash=...)` con el hash de `_hash_util` sobre los
+   campos traducidos.* **Es un bucle, y va despues de esto.**
+3. **Y el arreglo de fondo**: *que el colector avise a la cola al guardar una ficha.*
