@@ -653,15 +653,22 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
 @app.post("/api/listas/{lista_id}/lineas", status_code=201)
 def anadir(lista_id: str, linea: NuevaLinea, usuario: dict = Depends(usuario_actual)):
     _acceso(lista_id, usuario, hace_falta_escribir=True)
-    # Una linea sin destino no se puede comparar con nada, y la base lo rechaza
-    # con una restriccion (`linea_con_destino`). Sin esta comprobacion, ese
-    # rechazo llegaba como un **500** "el servidor ha fallado", que es mentira y
-    # ademas manda a mirar los registros: es una peticion mal formada, o sea un
-    # 422. La interfaz siempre manda uno de los dos, asi que esto no se ve desde
-    # la pantalla; se ve desde `curl`, que es donde se prueba una API.
-    if linea.grupo_id is None and linea.producto_id is None:
-        raise HTTPException(
-            422, "Una linea necesita el grupo o el producto al que se refiere.")
+    # **Un nombre en blanco se corta aqui, con 422.** La restriccion de la base
+    # (`linea_con_nombre`) tambien lo rechaza, pero dejarlo llegar al INSERT sale como **500** «el
+    # servidor ha fallado», que es mentira y manda a mirar los registros. Es la misma comprobacion
+    # que habia antes con el destino, puesta donde ahora hace falta.
+    if not linea.nombre.strip():
+        raise HTTPException(422, "Una linea necesita un nombre: es lo unico que se puede leer de ella.")
+    # **Aqui se exigia grupo o producto, y ya no.** La comprobacion existia porque la base tenia
+    # `linea_con_destino`: sin ella, una linea sin destino llegaba al INSERT y salia como **500**
+    # «el servidor ha fallado», que es mentira y manda a mirar los registros. Tenia razon en lo que
+    # protegia -- una linea sin destino no se puede comparar con nada --, pero **convertia en
+    # imposible apuntar «papel de cocina» o «lo que sea del mercado»**, que es la mitad de una lista
+    # de la compra. La migracion 014 cambia la restriccion por **una que exige el nombre**:
+    # *la linea existe, se lee y se identifica despues*. Lo que ya no se exige es el destino **al
+    # apuntarla**. Y lo que NO cambia: mientras no lo tenga se presenta como **«Pendiente de
+    # identificar»**, **no entra en ninguna comparacion** y **no se le inventa precio ni
+    # equivalencia** -- sus importes se quedan NULL, que es la verdad.
     return almacen.anade_linea(lista_id, usuario["id"], linea.id, linea.nombre,
                                linea.grupo_id, linea.producto_id,
                                linea.cantidad, linea.nota, linea.cadena_elegida)

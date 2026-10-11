@@ -81,6 +81,36 @@ recargar, el `refetchQueries` que no repintaba (*`onSuccess` no corría nunca*) 
 enviaba petición». Lo introduje yo al hacer que `conCuerpo` devolviera el recibo. **Una sola lectura,
 y los tres desaparecen.**
 
+### G02, primera mitad: la línea puede no tener destino (esquema y servidor)
+
+**La idea**: `linea_con_destino` **protegía la comparación y prohibía la lista**. Quien no encontraba
+el producto no podía apuntarlo y acababa apuntándolo en otro sitio. La migración **014** la sustituye
+por `linea_con_nombre`: *la línea existe, se lee, y se identifica después*. Mientras no tenga destino
+se presenta como **«Pendiente de identificar»**, **no entra en ninguna comparación** y **no se le
+inventa precio ni importe** -- sus importes quedan NULL, que es la verdad. **`favorito` no se toca**:
+un favorito es, por definición, un producto del catálogo.
+
+| | |
+|---|---|
+| migración `014`, **repetible** | ✓ `DROP CONSTRAINT IF EXISTS` + `ADD`, y dos arranques seguidos dan lo mismo |
+| la línea con solo nombre | ✓ **201**, `grupo_id`/`producto_id` NULL, **`precio_cent` e `importe_cent` NULL** |
+| sigue en la lista y se lee | ✓ |
+| el nombre en blanco | ✓ **422**, no un 500 |
+| la línea del catálogo | ✓ sin cambios |
+
+**Tres cosas que costaron rondas, y las tres eran mías**:
+
+1. **La columna se llama `nombre_visto`, no `nombre`.** El contrato de entrada la llama `nombre`; el
+   almacén la guarda `nombre_visto` («lo que se vio escrito»). Usé el nombre de la API en la migración
+   → `UndefinedColumn`; y **volví a usarlo en tres aserciones** → `assert None == 'Papel de cocina'`
+   *con la línea creada y correcta delante*. **La migración no se aplicó a medias** porque van en
+   transacción: `linea_con_destino` seguía puesta y la base quedó intacta.
+2. **La migración no era repetible.** Solo tenía el `ADD`, y el **segundo** arranque del almacén
+   moría con `DuplicateObject`. *O sea: reiniciar la API dos veces la mataba.* Lo cazó arrancar el
+   almacén **una vez por módulo** — con un arranque por prueba era invisible.
+3. **El nombre en blanco salía como 500.** La restricción nueva lo corta, pero llegar al INSERT es
+   «el servidor ha fallado», que es mentira: es una petición mal formada. Ahora es **422**.
+
 **Cómo se ejecuta la prueba del recibo** (la cadena se lee al importar, no vale `monkeypatch`):
 
     $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
