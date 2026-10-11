@@ -127,3 +127,60 @@ quien gana* -- *que es lo que el criterio pide medir y todavia no se ha medido.*
 **Y hay un tercer caso que no he mirado**: *`tachado is False` **borra la hora sin mirar `cuando`*** -- *asi que
 destachar **siempre gana** sobre tachar, sin importar el orden.* *Puede ser correcto -- destachar es una accion
 deliberada --, pero **es una asimetria que conviene tener escrita**.*
+
+
+---
+
+## 3. **Medido con dos sesiones de verdad**: el tachado cumple, y la cantidad es un defecto
+
+*(Ronda 89.)* `tests/test_fase2_f07_dos_sesiones.py` -- *cinco pruebas contra el Postgres de verdad, con su
+propio usuario y su propia lista.* **El resultado:**
+
+```
+4 passed, 1 xfailed
+```
+
+| lo que se midio | resultado |
+|---|---|
+| **el tachado gana el PRIMERO aunque llegue segundo** | **pasa** -- *`LEAST`+`COALESCE` sobre la hora del movil* |
+| **tachar dos veces no es un error** | **pasa** -- *idempotente, que es lo que pasa en el pasillo* |
+| **destachar gana siempre, sin mirar la hora** | **pasa** -- *la asimetria de §2, ahora medida* |
+| **la cantidad nueva gana si llega despues** | **pasa** |
+| **la cantidad VIEJA no gana por llegar despues** | **FALLA** -- *y por eso queda fijada* |
+
+### El defecto, con la medicion delante
+
+```
+AssertionError: gana la que llego ultima (3), no la mas nueva (5):
+                la cantidad NO mira `momento`. Medido: 3
+```
+
+**Dos personas cambian la cantidad de la misma linea sin cobertura.** *Una a las 17:50 pone 3; la otra a las
+18:30 pone 5.* **Y la de las 17:50 llega al servidor despues** -- *que es lo normal si se recupera la cobertura
+mas tarde.* **El resultado es 3.**
+
+**Y eso es exactamente lo que el comentario del tachado dice que no hay que permitir:**
+
+> *«`momento` es la hora del MOVIL, no la de llegada: tachar sin cobertura a las 18:04 y subirlo a las 18:20
+> cuenta como las 18:04, **que si no el orden de los hechos se lo inventa el servidor**.»*
+
+**El tachado lo cumple. La cantidad no: `cantidad = %s` escribe sin mirar `cuando`.** *Asi que el servidor
+**si** se inventa el orden de los hechos -- pero solo para la cantidad.*
+
+### Y queda fijado, no arreglado, a proposito
+
+```python
+@pytest.mark.xfail(strict=True, reason=(
+    "DEFECTO MEDIDO: `almacen.cambia_linea` escribe `cantidad = %s` sin mirar `momento`, asi que gana la "
+    "ultima que LLEGA y no la mas nueva. ... Arreglo: comparar `momento` contra la hora del ultimo cambio de "
+    "cantidad, como hace el tachado con LEAST+COALESCE."))
+```
+
+**No se arregla en la misma ronda en que se mide**, y por la razon de siempre: *el arreglo **necesita una
+columna** -- la hora del ultimo cambio de cantidad, que hoy no existe -- y **decidir si gana la mas nueva o la
+ultima es una decision del dueno**, no del que escribe la migracion.* *«Mi pareja cambio de 2 a 6 porque vio
+mas sitios» es un argumento legitimo para que gane la ultima llegada.*
+
+**Lo que si queda hecho es lo que hacia falta**: *la afirmacion del criterio **ya no es una suposicion** --
+**esta medida, y en rojo**, con el defecto nombrado y el arreglo descrito.* *Y el dia que se arregle, la prueba
+**fallara por pasar** y alguien lo sabra.*
