@@ -57,6 +57,11 @@ export type FichaNueva = {
 }
 
 export type NuevaEntrada = {
+  /** **La clave de la operación**, y es lo que impide que un doble clic duplique.** Se genera al
+   *  enviar y viaja **dentro de los datos**, así que un reintento de la misma operación la repite;
+   *  y al limpiarse tras el alta, la siguiente genera otra. Dos comidas iguales de verdad llevan
+   *  claves distintas y se registran las dos: no se deduplica por parecido. */
+  clave_operacion?: string | null
   fecha: string
   comida: string
   tipo: string

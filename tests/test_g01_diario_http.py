@@ -160,3 +160,24 @@ def test_borrar_una_deja_la_otra_y_el_dia_cuadrado():
     dia = como(ANA).get("/api/diario/2026-10-11").json()
     assert len(dia["entradas"]) == 1
     assert dia["conocido"]["kcal"] == pytest.approx(300.0), "queda la que no se borró"
+
+
+def test_la_misma_clave_por_http_no_duplica():
+    """El camino completo: la clave viaja en el cuerpo y el servidor devuelve la misma entrada."""
+    cuerpo = {"fecha": "2026-10-11", "comida": "comida", "tipo": "alimento",
+              "referencia": "yogur", "kcal": 300, "fuente_dato": "etiqueta",
+              "clave_operacion": "op-http-1"}
+    primera = como(ANA).post("/api/diario", json=cuerpo)
+    segunda = como(ANA).post("/api/diario", json=cuerpo)
+    assert primera.status_code == 201 and segunda.status_code == 201
+    assert primera.json()["id"] == segunda.json()["id"], "la misma operación, la misma entrada"
+    assert len(como(ANA).get("/api/diario/2026-10-11").json()["entradas"]) == 1
+
+
+def test_dos_claves_distintas_por_http_son_dos_entradas():
+    for clave in ("op-http-2", "op-http-3"):
+        r = como(ANA).post("/api/diario", json={
+            "fecha": "2026-10-11", "comida": "merienda", "kcal": 100,
+            "fuente_dato": "etiqueta", "clave_operacion": clave})
+        assert r.status_code == 201, r.text
+    assert len(como(ANA).get("/api/diario/2026-10-11").json()["entradas"]) == 2

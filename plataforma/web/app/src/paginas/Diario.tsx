@@ -213,6 +213,12 @@ function Alta({ fecha }: { fecha: string }) {
         onSubmit={(e) => {
           e.preventDefault()
           const datos: NuevaEntrada = {
+            // **Una clave por operación, generada al enviar.** Va dentro de `datos`, que es lo que
+            // se reintenta: si la respuesta se pierde y se repite, la clave es la misma y el
+            // servidor devuelve la entrada que ya creó en vez de crear otra. Tras un alta buena se
+            // limpia lo escrito, y la siguiente genera una nueva -- por eso dos meriendas iguales
+            // siguen siendo dos.
+            clave_operacion: crypto.randomUUID(),
             fecha, comida,
             tipo: esReceta ? 'receta' : 'alimento',
             referencia: esReceta ? texto.trim() || null : texto.trim() || null,

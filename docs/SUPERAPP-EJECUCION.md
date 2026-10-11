@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | el formulario manda la clave de operación |
+| G01 Diario efectivo | `en curso` | ver abajo | recorrido de navegador 390 y 1440 (alta, recarga, borrado, tendencias) |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -51,6 +51,8 @@ completo, no una compilación.**
 | **Idempotencia por operación, en el almacén y el contrato**: `clave_operacion` opcional, índice único **parcial** por dueño+clave, y repetirla devuelve **la entrada que ya hay** | `core/diario.py`, `plataforma/api/diario.py` — 4 pruebas | 11 oct 2026 |
 | Que **dos operaciones distintas con lo mismo son dos**, que **sin clave se comporta como antes**, y que **la clave no cruza entre personas** | `tests/test_g01_diario_aceptacion.py` — **15 pasan** | 11 oct 2026 |
 | **La columna `unidad` ya existía** en el esquema del diario: desbloquea el caso `ml`/`g` sin migración nueva | `core/diario.py:47` | 11 oct 2026 |
+| **El formulario manda la clave**: `crypto.randomUUID()` **al enviar**, dentro de `datos` — *así un reintento de la misma operación la repite, y el alta siguiente genera otra* | `src/paginas/Diario.tsx`, `src/api/diario.ts` — `tsc` limpio | 11 oct 2026 |
+| **La idempotencia, por HTTP montado**: la misma clave dos veces devuelve **el mismo `id`** y una sola entrada; dos claves distintas, dos entradas | `tests/test_g01_diario_http.py` — **12 pasan** | 11 oct 2026 |
 
 **Lo que ya existía y se conserva**: `tests/test_de_la_ficha_al_diario.py` (la cuenta de la ficha y
 lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valores por 100 g, que
@@ -65,10 +67,9 @@ hace la cuenta **en el servidor**.
 
 Sin esa variable **se salta diciendo qué hacer**, no conecta al 5432 por defecto.
 
-1. **El formulario todavía no manda la clave.** El almacén y el contrato ya la aceptan y están
-   probados, pero `Diario.tsx:Alta` no la genera: **la función existe y no está enganchada**, así que
-   hoy un doble clic sigue duplicando. *Acción: `crypto.randomUUID()` al enviar, **estable mientras
-   se reintenta la misma operación** y nueva en cada alta distinta.*
+1. **El recorrido en navegador 390 y 1440**: alta efectiva, lectura, recarga, borrado y tendencias,
+   guardando IDs y resultados. *Es lo único que falta para cerrar G01: el contrato está probado en
+   almacén y por HTTP, pero **no recorrido en un navegador**.*
 2. **El puente compra→diario usaba el número de la previa**, no el recibo: `Diario.tsx:62` hace
    `setAnotadas(previa?.anotarian.length ?? 0)`. *Acción: consumir `ReciboDeAlta`/lo que devuelva
    `anotarDeLaCompra`, y decir cuántas se anotaron de verdad.*
