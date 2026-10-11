@@ -11,7 +11,7 @@ completo, no una compilación.**
 
 | Paquete | Estado | Evidencia | Siguiente acción |
 |---|---|---|---|
-| G01 Diario efectivo | `en curso` | ver abajo | recorrido de navegador 390 y 1440 (alta, recarga, borrado, tendencias) |
+| G01 Diario efectivo | **`cerrado`** | recorrido medido en 390 y 1440 | **G02: texto libre útil en la lista** |
 | G02 Texto libre | `pendiente` | — | línea sin producto, «Pendiente de identificar» |
 | G03 Revocación exacta | `pendiente` | — | fixture de tres líneas, medir la pulsada |
 | G04 Dos recorridos | `pendiente` | — | depende de G01–G03 |
@@ -59,6 +59,27 @@ lo ausente-frente-a-cero) y `POST /api/diario/desde-ficha` con `gramos` + valore
 hace la cuenta **en el servidor**.
 
 ### Pendiente, y por qué
+
+### G01, cerrado: el recorrido, medido en los dos anchos
+
+| aceptación | resultado |
+|---|---|
+| alta desde el formulario, con cantidad y los tres macronutrientes | ✓ **250 kcal, sin recargar** (`POST /diario` 201) |
+| lectura y aritmética del día | ✓ 300 + 300 = **600 kcal** |
+| persistencia tras recarga | ✓ en 390 y en 1440 |
+| **repintado en vivo del alta y del borrado** | ✓ **los dos, tras el arreglo de abajo** |
+| borrado | ✓ **el día baja y la otra entrada sigue** (`DELETE` 200) |
+| cobertura y aviso de parcial | ✓ «de 1 de 2 entradas… falta el dato de 1 entrada» |
+| idempotencia por operación | ✓ almacén, contrato, HTTP y cliente |
+| aislamiento entre cuentas | ✓ 401 anónimo; B no ve, no borra y no enumera |
+
+**El defecto que cerró el paquete, y era mío**: `api/diario.ts:conCuerpo` leía el cuerpo **dos veces**
+(`respuesta.json()` y luego `respuesta.text()`), y la segunda lanza `body used already` **después de
+que el servidor ya hizo su trabajo**. Rompía **las tres mutaciones del diario** —alta, borrado y desde
+ficha— y explicaba los tres síntomas que perseguí cinco rondas: la entrada que solo aparecía al
+recargar, el `refetchQueries` que no repintaba (*`onSuccess` no corría nunca*) y el borrado que «no
+enviaba petición». Lo introduje yo al hacer que `conCuerpo` devolviera el recibo. **Una sola lectura,
+y los tres desaparecen.**
 
 **Cómo se ejecuta la prueba del recibo** (la cadena se lee al importar, no vale `monkeypatch`):
 

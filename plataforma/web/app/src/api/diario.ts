@@ -84,11 +84,19 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'DELETE', cuerpo?: un
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   })
   let detalle: string | null = null
+  // **El cuerpo se lee UNA vez y se reutiliza.** Antes esto era `await respuesta.json()` aqui y
+  // `await respuesta.text()` mas abajo: la segunda lectura lanza `body used already`, **despues de
+  // que el servidor ya haya hecho su trabajo**. Medido el 11 de octubre de 2026: el alta entraba y
+  // el cliente reventaba -- por eso la entrada solo aparecia al recargar, y por eso `onSuccess` no
+  // corria nunca y `refetchQueries` no podia repintar nada. Rompia **las tres** mutaciones del
+  // diario: alta, borrado y desde ficha.
+  let texto = ''
   try {
-    const json = (await respuesta.json()) as { detail?: unknown }
+    texto = await respuesta.text()
+    const json = JSON.parse(texto) as { detail?: unknown }
     if (typeof json?.detail === 'string') detalle = json.detail
   } catch {
-    // Un 502 de Caddy delante de una API caida no es JSON.
+    // Un 502 de Caddy delante de una API caida no es JSON, y un 204 no trae cuerpo.
   }
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalle)
   // **El recibo del servidor se devuelve, no se tira.** Antes esto era `return undefined as T`, y
@@ -96,7 +104,6 @@ async function conCuerpo<T>(ruta: string, metodo: 'POST' | 'DELETE', cuerpo?: un
   // de con lo que el servidor habia anotado de verdad: si la previa y el resultado no coinciden
   // -- lineas que ya estaban, o que dejaron de estar --, el mensaje miente. El servidor ya
   // devuelve `{id, dia}` al apuntar y `{entrada}` desde ficha; esto lo entrega.
-  const texto = await respuesta.text()
   if (!texto) return undefined as T
   return JSON.parse(texto) as T
 }
@@ -121,9 +128,9 @@ export function useApuntar() {
   return useMutation({
     mutationFn: (datos: NuevaEntrada) => conCuerpo<ReciboDeAlta>('/diario', 'POST', datos),
     onSuccess: () => {
-      // **El dia y los rangos.** Invalidar solo `['diario']` dejaba las tendencias con el dato
-      // viejo: usan `['diario-rango', ...]`, que es otra clave. Medido el 11 de octubre de 2026.
-      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      // **El dia, pedido y repintado.** Y los rangos, que usan otra clave: invalidar solo
+      // `['diario']` dejaba las tendencias con el dato viejo. Medido el 11 de octubre de 2026.
+      void cliente.refetchQueries({ queryKey: ['diario'] })
       void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
     },
   })
@@ -146,8 +153,13 @@ export function useBorrarEntrada(fecha: string) {
   return useMutation({
     mutationFn: (id: number) => conCuerpo<{ borrada: number }>(`/diario/entrada/${id}`, 'DELETE'),
     onSuccess: () => {
-      void cliente.invalidateQueries({ queryKey: ['diario'] })
-      // Y los rangos, por lo mismo que al apuntar: borrar tambien mueve las tendencias.
+      // **`refetchQueries`, no solo `invalidateQueries`.** Medido en el navegador el 11 de octubre
+      // de 2026: tras borrar una entrada el dia seguia enseñando **600 kcal y dos entradas**, y al
+      // recargar bajaba a 300 y una -- el borrado llegaba y **la pantalla no se repintaba**.
+      // Invalidar marca la consulta como obsoleta y no siempre vuelve a pedirla; `refetchQueries`
+      // pide y repinta. Es el mismo defecto que arregle en el boton de consentir del reparto, y que
+      // no habia aplicado aqui.
+      void cliente.refetchQueries({ queryKey: ['diario'] })
       void cliente.invalidateQueries({ queryKey: ['diario-rango'] })
     },
   })
