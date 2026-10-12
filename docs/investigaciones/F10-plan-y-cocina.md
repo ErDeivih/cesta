@@ -359,3 +359,61 @@ numeros** -- `Number(undefined)` es `NaN` -- y **la consulta se queda sin resolv
 **Y la (b) es la mas probable y la mas tonta**: *la ruta es `/compra/cocina/7/2` y los parametros se leen con
 `useParams()`; **si el `Route` que gana no es el mio**, `recetaId` seria `undefined`.* **Se comprueba en una
 linea: imprimir `id` y `v` en la pantalla.**
+
+
+---
+
+## 11. La causa de verdad: **el endpoint devuelve `500`, y `isLoading` lo tapa**
+
+*(Ronda 189. **Una linea, y estaba ahi desde el principio.**)*
+
+### Lo que se midio
+
+**Se capturaron **todas** las llamadas a `/api/cocina` -- y el fallo del §10 fue **filtrar por `.ts`** y no verlas:**
+
+```
+llamadas a /api/cocina: [(200, '/src/api/cocina.ts'), (500, '/api/cocina/7?version=2')]
+¿dice «Cargando»?: True
+errores JS: []
+```
+
+**El endpoint contesta `500`.** *Y la pantalla dice **«Cargando la cocina...»** para siempre.*
+
+### Y por que `isLoading` no se apaga nunca, que es lo que hay que entender
+
+**`useCocina` tiene `refetchInterval: 15000`.** *Y React Query da `isLoading` mientras **la consulta no haya tenido
+nunca `data`** y **siga intentando**.* **Con un `500` que se repite cada quince segundos, `isLoading` es cierto
+casi todo el tiempo** -- *y el `error` que si existe **no se llega a mirar**, porque `if (isLoading)` va antes.*
+
+> **Asi que la pantalla no dice «no se pudo preguntar»: dice «Cargando».** *Que es **la misma familia de fallo que
+> la causa 2 del §9** -- *una cosa es lo que pasa y otra lo que se enseña* --, **y esta vez el culpable es el
+> `refetchInterval`**: *convierte un error permanente en **una espera permanente**.*
+
+### Y la causa del `500` es lo siguiente, y esta acotada
+
+**El endpoint es `/api/cocina/{receta_id}?version=N`**, y **el `500` es nuestro**. *Los sitios donde puede romper,
+en orden de probabilidad:*
+
+1. **`_de_la_sesion`** -- *la consulta a la tabla `cocina`.* **Si la tabla no esta creada en la base que usa el
+   proceso, o el `usuario_id` no es un `UUID` valido, revienta.** *La migracion `018` **se aplico** en la base de
+   pruebas (`postgresql://...5434`), y **el proceso de la API usa esa misma** -- *pero eso hay que verlo, no
+   suponerlo.*
+2. **`datetime.fromisoformat(t["empezo_en"])`** en `_cocina_de` -- *si `psycopg` devuelve el `jsonb` ya como
+   `dict`/`list` de Python, o con las claves en otro tipo, el `fromisoformat` puede recibir algo que no es `str`.*
+3. **`version` no se usa en la consulta** -- *se recibe y **no se filtra por el**, asi que no puede ser la causa.*
+
+**Y el `500` no se ha leido.** *FastAPI lo habra escrito en el log de la API, **y ese log esta en el sandbox**:
+`data/debug/api5.log`.* **Una linea.**
+
+### Y la leccion de estas tres rondas, que conviene juntar
+
+| ronda | lo que crei | lo que era |
+|---|---|---|
+| §8 | «Vite sirve un modulo viejo» | *una comprobacion mia con `fetch` que no devuelve el fuente* |
+| §10 | «el modulo no llega» | *mi filtro `.ts` escondia la llamada al API* |
+| §11 | -- | **un `500` de mi propio endpoint** |
+
+**Las tres veces el fallo estaba **a una linea de distancia** -- un log, una peticion, un filtro que sobraba --, y
+las tres veces **construi una teoria antes de mirar lo que ya estaba delante**.** *Y la tercera es la que
+importa: **el `500` llevaba ahi desde el primer ensayo**, y lo que lo tapaba era **mi propio filtro** y **un
+`isLoading` que no se apaga**.*
