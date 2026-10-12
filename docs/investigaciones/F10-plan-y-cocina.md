@@ -534,3 +534,64 @@ peticion llego; si no, se quedo en Vite.*
 **Siete rondas (§6 a §13) para un fallo que estaba a una capa de distancia**, *y en cada una se construyo una
 teoria -- Vite viejo, el modulo que no llega, el `500`, el `200` -- **antes de mirar la pieza que faltaba**.* *Y la
 pieza que faltaba **estaba en un fichero de once lineas que nadie abrio**: `vite.config.ts`.*
+
+
+---
+
+## 14. Y se cierra: **el `500` es de Vite, y la peticion no llega a uvicorn**
+
+*(Ronda 192. **La comprobacion que el §13 dejo apuntada, y da una respuesta limpia.**)*
+
+### Lo que se midio
+
+**Se anoto el tamano del log, se hizo la peticion **desde dentro de la pagina**, y se volvio a medir:**
+
+```
+log antes:        2473 bytes
+DESDE LA PAGINA:  status 500, y el cuerpo VACIO
+log despues:      2473 bytes        <-- NO CRECIO: la peticion NO LLEGO a uvicorn
+```
+
+**Dos cosas, y las dos concluyentes:**
+
+1. **El `500` viene con **el cuerpo vacio**.** *Un error de FastAPI **siempre trae `{"detail": ...}`** -- *lo dice el
+   propio `api/cliente.ts`: «un 502 de Caddy delante de una API caida **no es JSON**»*. **Cuerpo vacio = no lo
+   genero la API.***
+2. **Y el log **no crecio ni un byte**.** *Asi que **la peticion no llego a uvicorn** -- *el log lo habria escrito,
+   porque **escribe todas**.*
+
+> **Asi que el `500` lo genera **Vite**, al no poder alcanzar su destino.** *Y el destino por defecto es
+> **`http://127.0.0.1:8000`**, que en este sandbox **no tiene la API** -- *esta en el `8102`.*
+
+### Y lo que **no** cuadra, y hay que decirlo
+
+**El log **tampoco** crecio con las otras peticiones de esta misma corrida.** *Y sin embargo **la sesion se creo** y
+las llamadas **parecieron funcionar** -- *o eso crei.* **Asi que hay dos posibilidades, y **no se sabe cual**:*
+
+- **O esta corrida entera fue contra el `8000`** -- *y lo que "funcionaba" venia de **otra cosa** en ese puerto, o
+  de **cookies de corridas anteriores**.*
+- **O `data/debug/api5.log` **no es el log del proceso que escucha ahora**.** *Se han reiniciado **cinco** procesos
+  de API en estas rondas (`api.log`, `api2`, `api3`, `api4`, `api5`), y **yo escribi en `api5.log` al reiniciar en
+  la ronda 185** -- *pero **el proceso de la ronda 185 se reinicio otra vez**, y **el log de ese esta en otro
+  sitio**.*
+
+### Y la conclusion que **si** se puede afirmar, que es bastante
+
+**El `500` de la pantalla **no es de la API**.** *Cuerpo vacio y log quieto: **lo genera la capa de delante**, que es
+**Vite**, y **porque su destino no contesta**.* **Y el destino depende de `CESTA_API`, una variable del proceso de
+Vite que **no se comprobo al arrancarlo**.*
+
+**Y eso ya estaba escrito en esta fase.** *`F03-publicacion.md` §34 -- la leccion de Caddy -- **y el propio
+`vite.config.ts`, que lo dice en un comentario de cinco lineas**.* **Siete rondas para llegar a un fichero que
+**explicaba el fallo en su comentario**, y **el comentario decia exactamente lo que habia que hacer**: *«para
+desarrollar contra la plataforma ya levantada hay que apuntar al puerto donde este»*.
+
+### Y lo que queda para la continuacion, exacto
+
+**1. Averiguar a donde apunta **el Vite que esta en pie ahora**: *`Get-Process` sobre el pid del `5173` y mirar su
+entorno, o **reiniciarlo con `CESTA_API` puesto y comprobarlo con la misma peticion**.* *La segunda es mas rapida y
+**no deja duda**.*
+
+**2. Y despues, la pregunta de verdad:** ***por que la pantalla no dice «no se pudo preguntar» en vez de
+«Cargando»***. *Eso **no depende de Vite** -- *es el `isLoading` del §11* --, y **es lo unico de toda esta cadena que
+es codigo mio y esta mal**.
