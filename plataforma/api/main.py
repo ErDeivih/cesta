@@ -12,6 +12,7 @@ cuenta, y hoy a esa pagina solo se llega desde Tailscale. Se cierra con
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from contextlib import asynccontextmanager
@@ -1248,7 +1249,75 @@ def _vigencia_del_catalogo() -> dict:
         puntero = json.loads((AJUSTES.gold / "actual.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {"comprobable": False, "motivo": "no hay catalogo publicado"}
-    return _vigencia(catalogo.fecha_de_gold(), str(puntero.get("publicado_en") or ""))
+    dicho = _vigencia(catalogo.fecha_de_gold(), str(puntero.get("publicado_en") or ""))
+    # **Y una cosa mas, que es barata y evita una conclusion falsa.** *Que las fechas cuadren **no
+    # prueba** que el contenido sea el que se publico.* El 12 de octubre de 2026 se midio una version
+    # llamada `20261007-103000` cuyo `precio_diario.parquet` era del 11 -- *y las fechas lo delataron,
+    # pero solo porque el dia del precio iba por delante. Al reves no se habria notado.*
+    #
+    # *Por eso se dice **si el puntero trae huellas**, que es lo que permite comprobarlo de verdad.*
+    # **No se calculan aqui**: son 30 MB y esto se pide en cada pantalla. *La comprobacion profunda
+    # tiene su propia ruta* (`/api/estado/publicacion`).
+    dicho["huellas_en_el_puntero"] = len(puntero.get("huellas") or {})
+    return dicho
+
+
+def _comprueba_publicacion() -> dict:
+    """**El contenido, byte a byte, contra lo que el puntero dice que se publico.**
+
+    Es la comprobacion que `/api/estado` **no** puede hacer sin arruinar cada carga: *leer y resumir los
+    seis parquet son ~30 MB.* Aqui vive aparte, para que la pida quien de verdad necesita saberlo.
+
+    **Y usa `hashlib`, no `core.publicacion`**, por la razon de siempre: *la imagen de la API no lleva
+    polars.* *Lo unico que se necesita es resumir ficheros, y eso es de la biblioteca estandar.*
+
+    Devuelve, por fichero, uno de cuatro estados -- *y **`sin_huella` no es `bien`***: es «no se puede
+    saber», que es distinto y hay que decirlo.
+    """
+    carpeta = AJUSTES.gold
+    try:
+        puntero = json.loads((carpeta / "actual.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"comprobable": False, "motivo": "no hay catalogo publicado"}
+    version = str(puntero.get("version") or "")
+    guardadas = dict(puntero.get("huellas") or {})
+    declarados = list(puntero.get("ficheros") or [])
+    if not version or not declarados:
+        return {"comprobable": False, "motivo": "el puntero no dice que version ni que ficheros"}
+
+    estado: dict[str, str] = {}
+    for nombre in declarados:
+        camino = carpeta / f"v{version}" / nombre
+        if not camino.exists():
+            estado[nombre] = "ausente"
+            continue
+        esperada = guardadas.get(nombre)
+        if not esperada:
+            estado[nombre] = "sin_huella"       # *no se puede saber, y no es lo mismo que estar bien*
+            continue
+        resumen = hashlib.sha256()
+        with camino.open("rb") as f:
+            for trozo in iter(lambda: f.read(1 << 20), b""):
+                resumen.update(trozo)
+        estado[nombre] = "bien" if resumen.hexdigest() == esperada else "cambiado"
+
+    malos = sorted(n for n, e in estado.items() if e in ("cambiado", "ausente"))
+    return {
+        "comprobable": True,
+        "version": version,
+        "publicado_en": str(puntero.get("publicado_en") or ""),
+        "por_fichero": estado,
+        # *Y el veredicto en una palabra, para que nadie tenga que interpretar el diccionario.*
+        # **`None` cuando no se puede saber** -- *ni bien ni mal.*
+        "coherente": None if any(e == "sin_huella" for e in estado.values()) else not malos,
+        "no_cuadran": malos,
+    }
+
+
+@app.get("/api/estado/publicacion")
+def estado_publicacion() -> dict:
+    """Si el catalogo servido es **de verdad** el que se publico. *Lee ~30 MB: no es para cada carga.*"""
+    return _comprueba_publicacion()
 
 
 

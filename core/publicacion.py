@@ -24,6 +24,7 @@ probados"*.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -117,11 +118,24 @@ def publicar(datos: dict[str, pl.DataFrame] | None = None, *, momento: datetime 
                 origen = GOLD / nombre
                 if not origen.exists():
                     raise PublicacionIncompleta(f"no esta {nombre} en data/gold: no se publica")
-                # Enlace duro: no se duplica un fichero de 195 MB para versionar.
-                try:
-                    os.link(origen, destino / nombre)
-                except OSError:
-                    shutil.copy2(origen, destino / nombre)
+                # **COPIA, no enlace duro.** *Y esto era un defecto, medido el 12 de octubre de 2026.*
+                #
+                # La version anterior hacia `os.link` «para no duplicar un fichero de 195 MB».
+                # *La premisa era falsa dos veces*: el fichero mayor son **19,2 MB** (no 195), y
+                # **un enlace duro no aisla la version de lo que le pase al fichero suelto**.
+                #
+                # *Lo que se midio*: `fsutil hardlink list data\gold\precio_diario.parquet` devuelve
+                # **tres nombres para un solo fichero** -- el suelto, `v20261007-103000` y
+                # `v20261011-124542` --, y el enlace seguia **intacto**. Eso prueba que el pipeline
+                # **reescribe los parquet in situ**: con un enlace, esa escritura **cambia el
+                # contenido de una version ya publicada**. *De ahi que `v20261007-103000` se llame
+                # 7 de octubre y su contenido sea del 11* -- *y que `/api/estado` lo delate con
+                # `vigencia_precio.coherente=false`, que es lo unico que ha estado funcionando bien.*
+                #
+                # **Una version publicada tiene que ser inmutable por si misma, no por la buena
+                # conducta de quien escriba el catalogo suelto.** *30 MB por version es el precio,
+                # y es barato.*
+                shutil.copy2(origen, destino / nombre)
         faltan = [n for n in exigidos if not (destino / n).exists()]
         if faltan:
             raise PublicacionIncompleta(f"faltan {', '.join(faltan)}: no se publica")
@@ -138,6 +152,58 @@ def publicar(datos: dict[str, pl.DataFrame] | None = None, *, momento: datetime 
     return version
 
 
+def _huella(camino: Path) -> str:
+    """El SHA-256 de un fichero publicado. **Es lo que hace la coherencia demostrable.**
+
+    Sin esto, «la version es coherente» se sostiene en que el nombre de la carpeta y la fecha del
+    puntero digan lo mismo -- *y eso no prueba nada sobre el contenido*: el 12 de octubre de 2026 se
+    midio una version llamada 7 de octubre **cuyo `precio_diario.parquet` era del 11**, porque un
+    enlace duro la ataba al fichero suelto y el pipeline lo reescribio in situ.
+    """
+    h = hashlib.sha256()
+    with camino.open("rb") as f:
+        for trozo in iter(lambda: f.read(1 << 20), b""):
+            h.update(trozo)
+    return h.hexdigest()
+
+
+def huellas(version: str | None = None) -> dict[str, str]:
+    """La huella de cada fichero de una version, o de la publicada si no se dice cual."""
+    elegida = version if version is not None else version_actual()
+    if elegida is None:
+        return {}
+    carpeta = carpeta_de(elegida)
+    return {n: _huella(carpeta / n) for n in FICHEROS if (carpeta / n).exists()}
+
+
+def comprueba(version: str | None = None) -> dict[str, list[str]]:
+    """**Contrasta el contenido publicado con lo que el puntero dice que se publico.**
+
+    Devuelve `{"cambiados": [...], "ausentes": [...], "sin_huella": [...]}`. *Es la comprobacion que
+    `/api/estado` no podia hacer con fechas*: una version puede tener el nombre correcto y el
+    contenido de otra, y **eso solo se ve mirando los bytes**.
+    """
+    elegida = version if version is not None else version_actual()
+    if elegida is None:
+        return {"cambiados": [], "ausentes": [], "sin_huella": []}
+    try:
+        datos = json.loads(PUNTERO.read_text(encoding="utf-8"))
+        guardadas = dict(datos.get("huellas") or {})
+    except Exception:  # noqa: BLE001
+        guardadas = {}
+    carpeta = carpeta_de(elegida)
+    cambiados, ausentes, sin_huella = [], [], []
+    for n in FICHEROS:
+        camino = carpeta / n
+        if not camino.exists():
+            ausentes.append(n)
+        elif n not in guardadas:
+            sin_huella.append(n)
+        elif _huella(camino) != guardadas[n]:
+            cambiados.append(n)
+    return {"cambiados": cambiados, "ausentes": ausentes, "sin_huella": sin_huella}
+
+
 def _mueve_puntero(version: str, ficheros: list[str],
                    momento: datetime | None = None) -> None:
     """Cambia el puntero de una vez. Un puntero a medias es peor que no tener version.
@@ -148,7 +214,10 @@ def _mueve_puntero(version: str, ficheros: list[str],
     no cuando se publico la version a la que se vuelve.
     """
     datos = {"version_puntero": VERSION_PUNTERO, "version": version,
-             "publicado_en": (momento or datetime.now()).isoformat(), "ficheros": ficheros}
+             "publicado_en": (momento or datetime.now()).isoformat(), "ficheros": ficheros,
+             # **La huella de lo que se publico.** *Es lo que permite distinguir «esta version
+             # cambio por debajo» de «la fecha no cuadra», que no son lo mismo.*
+             "huellas": {n: _huella(carpeta_de(version) / n) for n in ficheros}}
     temporal = PUNTERO.with_suffix(".json.tmp")
     temporal.write_text(json.dumps(datos, ensure_ascii=False, indent=1), encoding="utf-8")
     os.replace(temporal, PUNTERO)
