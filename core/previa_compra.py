@@ -45,6 +45,10 @@ class LineaDeCompra:
     # Los envases enteros, cuando se sabe el tamano del envase.
     envases: int | None = None
     tamano_envase: float | None = None
+    # **La unidad del envase, que no es la del ingrediente.** *Una receta pide `200 g` de algo que se
+    # vende en `1 l`, y ahi **no hay conversion**: se dice y se para.* *Suponer que son la misma seria
+    # comparar gramos con litros sin decirlo.*
+    unidad_envase: str | None = None
     sobrante: float | None = None
     de_donde: list[str] = field(default_factory=list)   # que ingredientes la formaron
 
@@ -68,6 +72,15 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
 
     Cada ingrediente es lo que guarda `core/recetas.py`: `texto`, `cantidad`, `unidad`, y
     opcionalmente `producto_id`, `grupo_id`, `fuente`, y -- si la API lo enriquecio -- el precio.
+
+    **Y el tamano del envase, cuando se sabe, viaja en `tamano_envase` y `unidad_envase`.** *Es la
+    conexion que A08 pedia: **el tamano neto publicado del articulo elegido**.*
+    *Antes no habia por donde entrara* -- *`cantidad` es **cuanto se necesita**, no **cuanto trae un
+    envase**, y confundirlas daria un pedido de un solo envase siempre.* **Si no viene, la linea se queda
+    sin calculo de envases**, *que es lo correcto: no se inventa una compra fraccionaria.*
+
+    *La unidad del envase va aparte de la del ingrediente, y no se supone igual*: *una receta pide
+    `200 g` de algo que se vende en `1 l`, y ahi **no hay conversion** -- se dice y se para.*
     """
     acumulado: dict[str, LineaDeCompra] = {}
     por_producto: dict[str, set[str]] = {}      # producto -> unidades vistas
@@ -80,6 +93,15 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         unidad = _unidad_canon(ing.get("unidad"))
         pid = ing.get("producto_id")
         pid = str(pid) if pid else None
+        # **El tamano del envase, si el ingrediente lo trae.** *Un numero que no sirve se ignora en vez de
+        # tumbar la previa* -- *y se guarda `None`, que es «no se sabe».*
+        tamano_envase = ing.get("tamano_envase")
+        if (isinstance(tamano_envase, bool) or not isinstance(tamano_envase, (int, float))
+                or not math.isfinite(tamano_envase) or tamano_envase <= 0):
+            tamano_envase = None
+        # *Y su unidad: si no viene, se cae a la del ingrediente* -- *que es lo correcto **cuando el
+        # articulo se vende en la misma unidad en la que se pide**, y lo mas frecuente.*
+        unidad_envase = ing.get("unidad_envase") or ing.get("unidad")
 
         # **Regla 2: sin cantidad no hay compra.** *Y sin inventarla.*
         if (isinstance(cantidad, bool) or not isinstance(cantidad, (int, float))
@@ -108,10 +130,20 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
             ln.cantidad += cantidad
             if texto and texto not in ln.de_donde:
                 ln.de_donde.append(texto)
+            # *Si la linea que ya estaba no traia tamano y esta si, se queda el que aparece* -- *y si las
+            # dos traen uno distinto, **se deja en `None`**: dos tamanos para el mismo producto significa
+            # que no se sabe cual vale, y elegir uno seria inventar.*
+            if ln.tamano_envase is None:
+                ln.tamano_envase = tamano_envase
+                ln.unidad_envase = unidad_envase if tamano_envase else None
+            elif tamano_envase is not None and ln.tamano_envase != tamano_envase:
+                ln.tamano_envase = None
+                ln.unidad_envase = None
         else:
             acumulado[clave] = LineaDeCompra(
                 clave=clave, texto=texto, producto_id=pid,
-                cantidad=float(cantidad), unidad=canon, de_donde=[texto])
+                cantidad=float(cantidad), unidad=canon, de_donde=[texto],
+                tamano_envase=tamano_envase, unidad_envase=unidad_envase if tamano_envase else None)
 
     for clave, ln in acumulado.items():
         originales = unidades_originales[clave]
@@ -169,7 +201,8 @@ def _envases_de(lineas: list) -> list:
     """
     for ln in lineas:
         if ln.tamano_envase and ln.tamano_envase > 0:
-            calculo = envases_de_la_linea(ln.cantidad, ln.unidad, ln.tamano_envase)
+            calculo = envases_de_la_linea(ln.cantidad, ln.unidad, ln.tamano_envase,
+                                             ln.unidad_envase)
             ln.envases = calculo["envases"]
             ln.sobrante = calculo["sobrante"]
         else:

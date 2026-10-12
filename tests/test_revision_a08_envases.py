@@ -232,3 +232,114 @@ def test_la_previa_no_toca_las_lineas_que_no_tienen_tamano_entre_las_que_si():
     assert por_clave["a|kg"].sobrante == 600.0
     assert por_clave["b|kg"].envases is None
     assert por_clave["b|kg"].sobrante is None
+
+
+# ======================================= EL RECORRIDO ENTERO: DEL INGREDIENTE AL NUMERO ===
+
+def test_el_tamano_del_envase_entra_por_el_ingrediente_y_llega_al_numero():
+    """**El eslabon que faltaba, de punta a punta.** *A08: «usar tamano neto publicado del articulo
+    elegido».*
+
+    *El ingrediente trae `cantidad` -- **cuanto se necesita** -- y, si la API lo enriquecio,
+    `tamano_envase` -- **cuanto trae un envase**.* **Y sin este camino, el tamano no tenia por donde
+    entrar**: *`cantidad` no es el tamano del envase, y confundirlas daria un pedido de un solo envase
+    siempre.*
+
+    *Se comprueba el ejemplo del criterio **por el recorrido**: 1,4 kg pedidos, envases de 1 kg -> **2
+    envases y 600 g sobrantes**.*
+    """
+    from core.previa_compra import previa_de_compra
+
+    p = previa_de_compra([
+        {"texto": "Leche entera", "cantidad": 1.4, "unidad": "kg",
+         "producto_id": "mercadona:1", "tamano_envase": 1, "unidad_envase": "kg"},
+    ])
+    assert len(p.lineas) == 1, p.lineas
+    ln = p.lineas[0]
+    assert ln.tamano_envase == 1, "el tamano no llego a la linea"
+    assert ln.unidad_envase == "kg"
+    assert ln.envases == 2, f"no se calculo por el recorrido: {ln}"
+    assert ln.sobrante == 600.0
+
+
+def test_sin_tamano_en_el_ingrediente_no_se_inventa_por_el_recorrido():
+    """*Y cuando la API no lo enriquecio, la linea se queda sin calculo* -- **que es lo correcto**:
+    *no se inventa una compra fraccionaria.*"""
+    from core.previa_compra import previa_de_compra
+
+    p = previa_de_compra([
+        {"texto": "Leche entera", "cantidad": 1.4, "unidad": "kg", "producto_id": "mercadona:1"},
+    ])
+    ln = p.lineas[0]
+    assert ln.tamano_envase is None
+    assert ln.envases is None and ln.sobrante is None
+    assert ln.envases != 0, "None no es cero: no sobra nada seria una afirmacion falsa"
+
+
+def test_un_tamano_que_no_sirve_se_ignora_y_no_tumba_la_previa():
+    """*La previa no se cae porque un campo venga mal.* **Se ignora, y se queda en «no se sabe».** *Es la
+    misma guarda que con la cantidad: `bool` fuera, `nan` fuera, cero fuera.*"""
+    from core.previa_compra import previa_de_compra
+
+    for malo in (True, float("nan"), float("inf"), 0, -1, "un kilo"):
+        p = previa_de_compra([
+            {"texto": "Leche entera", "cantidad": 1.4, "unidad": "kg",
+             "producto_id": "m:1", "tamano_envase": malo},
+        ])
+        assert p.lineas[0].envases is None, f"con {malo!r} no puede salir un numero"
+
+
+def test_una_receta_que_pide_gramos_de_algo_que_se_vende_en_litros_lo_dice():
+    """**Sin densidad documentada, 200 g y 1 l no se comparan.** *Y por eso la unidad del envase viaja
+    **aparte** de la del ingrediente: si se supusieran iguales, saldria un numero.*
+
+    *Es la misma decision que `core/identidad.py` con los gramos y los mililitros.* **Una sola regla en
+    dos sitios y ahora en tres.**
+    """
+    from core.previa_compra import previa_de_compra
+
+    p = previa_de_compra([
+        {"texto": "Nata", "cantidad": 200, "unidad": "g",
+         "producto_id": "m:2", "tamano_envase": 1, "unidad_envase": "l"},
+    ])
+    ln = p.lineas[0]
+    assert ln.unidad == "g", "el ingrediente se sigue midiendo en gramos"
+    assert ln.unidad_envase == "l", "y el envase en litros: no se suponen iguales"
+    assert ln.envases is None, "gramos contra litros no dan envases: no se sabe"
+    assert ln.sobrante is None
+    # *Y el motivo se conserva en la regla, que es la que sabe decirlo.*
+    r = envases_enteros(200, "g", 1, "l")
+    assert "no se pueden comparar" in r["motivo"]
+
+
+def test_dos_tamanos_distintos_para_el_mismo_producto_dejan_no_se_sabe():
+    """*Y esto pasa de verdad*: dos lineas del mismo producto, una enriquecida con el tamano y otra con
+    otro. **Elegir uno de los dos seria inventar cual vale**, asi que se deja en `None`."""
+    from core.previa_compra import previa_de_compra
+
+    p = previa_de_compra([
+        {"texto": "Leche entera", "cantidad": 1, "unidad": "kg",
+         "producto_id": "m:1", "tamano_envase": 1, "unidad_envase": "kg"},
+        {"texto": "Leche entera", "cantidad": 1, "unidad": "kg",
+         "producto_id": "m:1", "tamano_envase": 2, "unidad_envase": "kg"},
+    ])
+    ln = p.lineas[0]
+    assert ln.tamano_envase is None, "dos tamanos distintos: no se sabe cual vale"
+    assert ln.envases is None
+    assert ln.cantidad == 2, "y la cantidad si se suma, que para eso si se sabe"
+
+
+def test_si_solo_una_de_las_dos_trae_tamano_se_usa_ese():
+    """*Y el caso util*: **una linea sin enriquecer y otra con el tamano** -- *el que aparece se queda.*
+    *Descartarlo por prudencia dejaria sin calcular un caso que si se sabe.*"""
+    from core.previa_compra import previa_de_compra
+
+    p = previa_de_compra([
+        {"texto": "Leche entera", "cantidad": 1, "unidad": "kg", "producto_id": "m:1"},
+        {"texto": "Leche entera", "cantidad": 0.4, "unidad": "kg",
+         "producto_id": "m:1", "tamano_envase": 1, "unidad_envase": "kg"},
+    ])
+    ln = p.lineas[0]
+    assert ln.tamano_envase == 1
+    assert ln.envases == 2, "1,4 kg con envases de 1 kg"
+    assert ln.sobrante == 600.0
