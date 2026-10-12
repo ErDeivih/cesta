@@ -332,3 +332,63 @@ doble de tamano.**
 
 **Y eso se arreglo**: *dos lineas, al lado de la de despensa.* **Es un detalle pequeno y es exactamente el tipo de
 cosa que **no la caza un `tsc`** -- *compila igual con el titulo mal--, y que solo se ve **abriendo la pantalla**.*
+
+
+---
+
+## 6. «Se lee bien»: **lo que se puede medir de eso** -- *y lo que no*
+
+*(Ronda 222. **`F14` lleva en «medido» desde el principio, y su motivo escrito es que «se lee bien» es un juicio. Pero parte de un juicio tiene cifras.**)*
+
+### Lo que se midio
+
+**Tres pantallas, cuatro anchuras, y dos cosas contables:**
+
+```
+pantalla             ancho   letra minima   control minimo   controles < 44 px
+/compra/despensa      360       13,0 px          1 px            1/2
+/compra/despensa      390       12,0 px          1 px            4/8
+/compra/despensa      768       13,0 px          1 px            1/2
+/compra/despensa     1440       12,0 px          1 px            5/17
+/compra/analisis      360       12,0 px          1 px            3/15
+/compra/analisis      390       12,0 px          1 px            3/15
+/compra/analisis      768       12,0 px          1 px            3/15
+/compra/analisis     1440       12,0 px          1 px            4/24
+/compra/importar      360       13,0 px          1 px            2/4
+/compra/importar      390       13,0 px          1 px            2/4
+/compra/importar      768       13,0 px          1 px            2/4
+/compra/importar     1440       13,0 px          1 px            3/11
+```
+
+### Y la primera cifra si dice algo: **la letra mas pequena es de 12 a 13 px**
+
+**En las tres pantallas y en las cuatro anchuras.** *Y **12 px es pequeno**: *la referencia habitual para texto de
+lectura en un movil es **16 px**, y **por debajo de 12 se considera ilegible**.* **Asi que el texto mas pequeno de
+estas pantallas esta justo en el limite bajo.**
+
+> **Y esto es lo que `F14` decia que no se podia medir, medido a medias**: *«se lee bien» **sigue siendo un juicio**
+> -- *un texto de 12 px con buen contraste y buena linea se lee; uno de 16 px con gris claro, no* --, **pero «la letra
+> mas pequena mide 12 px» es un dato**, y **es el que permite decir que el juicio esta en el filo.**
+
+### Y la segunda cifra **no dice nada, y es de mi medidor**
+
+**`control minimo = 1 px` en las doce filas.** *Un control de **1 px** no existe: **lo que mi selector cogio fue otra
+cosa** -- *probablemente un `input` oculto, un separador, o un elemento con `offsetParent` visible y caja de 1 px.*
+**Y por eso la tercera columna -- «controles < 44 px» -- tampoco vale tal como esta**: *cuenta esos mismos elementos.*
+
+> **Es la misma clase de error que el §10 y el §18 de `F10`**: *un selector que **junta cosas distintas** y produce
+> **un numero que parece un dato**.* *Y aqui se ve **a simple vista** -- *un control de 1 px es imposible* --, que es
+> **la unica razon por la que se puede decir que el medidor falla y no el producto.**
+
+### Y `F14`, con esto, en su sitio
+
+| lo que `F14` tiene | **estado** |
+|---|---|
+| **contraste y color con sistema** | **medido** |
+| **cuatro anchuras y zoom 200 %** | **medido**: *nada se sale* |
+| **el `prefers-reduced-motion`** | **era una regresion, y se arreglo** |
+| **«se lee bien»** | **es un juicio** -- *y ahora se sabe **donde esta el filo**: la letra mas pequena mide **12 px*** |
+| **el tamano de los controles** | *por medir **bien**: el medidor hay que afinarlo antes* |
+
+**Asi que `F14` sigue en «medido», y **con mejor motivo que antes**: *tres cosas medidas, una **con su cifra y su
+filo***, y una **cuyo instrumento hay que arreglar antes de creerle el numero.**
