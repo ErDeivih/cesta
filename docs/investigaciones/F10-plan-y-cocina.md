@@ -475,3 +475,62 @@ se explica.*
 `password authentication failed`.* **Es la cuarta vez en esta sesion** (*rondas 175, 176, 185 y 190*), y **siempre
 igual: se escribe el script, se lanza, y falla por la variable que falta** -- *que es una linea que se puede poner
 siempre.* **Queda dicho como lo que es: un descuido repetido, no un hallazgo.**
+
+
+---
+
+## 13. La capa que no se habia mirado: **Vite proxya `/api`, y por defecto al `8000`**
+
+*(Ronda 191. **Esto es lo que el §12 dejo apuntado: «una linea en `vite.config.ts`».**)*
+
+### Lo que dice el fichero
+
+```ts
+// El destino del proxy de desarrollo. Por defecto, el puerto donde escucha
+// uvicorn si se levanta a mano. ...
+//
+//     $env:CESTA_API='http://127.0.0.1:8080'; npm run dev
+//
+// En produccion nada de esto se usa: es Caddy quien manda /api al backend.
+const destinoApi = process.env.CESTA_API ?? 'http://127.0.0.1:8000'
+...
+server: {
+  port: 5173,
+  proxy: { '/api': { target: destinoApi, changeOrigin: true } },
+},
+```
+
+### Y lo que eso significa, que son tres cosas
+
+**1. Hay **cuatro** capas, y en estas siete rondas se han mirado tres.** *El navegador, **Vite**, la API... y
+**entre Vite y la API hay un proxy que decide a donde va cada `/api/...`*** -- *y **a donde va depende de una
+variable de entorno del proceso de Vite**, no del codigo.*
+
+**2. Y el defecto **no** es `8102`: es `8000`.** *Asi que **si `CESTA_API` no llega al proceso de Vite, todas las
+peticiones de la aplicacion van al puerto `8000`** -- *que en este sandbox **no tiene nada**, o **tiene otra
+cosa***.* **Y eso produce fallos que parecen de la pantalla y son de la fontaneria.**
+
+**3. Y esto ya paso, escrito, en esta misma fase.** *`F03-publicacion.md` §34 habla de **Caddy** («un 502 de Caddy
+delante de una API caida no es JSON», dice `api/favoritos.ts`).* **La leccion estaba escrita y no se aplico:** *se
+miro el navegador, se miro uvicorn, y **no se miro la pieza de en medio**.*
+
+### Y lo que **no** cuadra todavia, dicho sin adornos
+
+**El 502/500 del navegador y el `200 OK` del log siguen sin explicarse juntos.** *Y con el proxy delante, **hay una
+tercera explicacion que no se habia considerado**:*
+
+- **`ctx.request` (Playwright) y `pag.on('response')` pueden estar viendo cosas distintas.** *`ctx.request` es un
+  cliente HTTP aparte -- **tambien pasa por `:5173`, tambien por el proxy** --, y **sus peticiones SI aparecen en el
+  log con `200`**. *Y la de la **pagina** puede ir por otro camino.*
+- **O el `500` es de una peticion que no es la que yo creia**, y **el filtro `"/api/cocina" in q.url` volvio a
+  juntar cosas distintas** -- *que es **el mismo error del §10**, cometido **dos rondas despues de escribirlo**.*
+
+**Y la comprobacion que lo decide, y que es la que habia que hacer desde el principio**: **abrir `/api/cocina/7?version=2`
+en el navegador, a mano, y leer `data/debug/api5.log` en el mismo segundo.** *Si aparece la linea en el log, la
+peticion llego; si no, se quedo en Vite.*
+
+### Y lo que hay que anotar del ensayo, porque es lo que mas ha costado
+
+**Siete rondas (§6 a §13) para un fallo que estaba a una capa de distancia**, *y en cada una se construyo una
+teoria -- Vite viejo, el modulo que no llega, el `500`, el `200` -- **antes de mirar la pieza que faltaba**.* *Y la
+pieza que faltaba **estaba en un fichero de once lineas que nadie abrio**: `vite.config.ts`.*
