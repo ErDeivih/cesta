@@ -29,9 +29,10 @@ import { useEstado, useGrupo } from '../api/consultas'
 import { Campana } from '../componentes/Campana'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
+// *La decision de si un precio recomienda tienda. **Vive fuera a proposito*** -- ver su cabecera.
+import { juzgaPrecio } from '../logica/frescura'
 import {
   cantidad as textoCantidad,
-  diasDesde,
   euros,
   eurosUnidad,
   fecha as fechaTexto,
@@ -78,54 +79,55 @@ export function Grupo() {
   // distingue esta de las demas. Ver `componentes/Titulo.tsx`.
   useTitulo(grupo?.nombre)
 
-  /** De que dia es el precio de esa cadena.
+  /** De que dia es **el precio de este producto en esa cadena**.
    *
-   *  Primero `/api/estado`, que es la fuente buena. Si esa cadena no esta ahi,
-   *  se mira la ultima fecha de la propia serie del grupo: es peor dato, pero
-   *  es mejor que decir "no se" cuando si se sabe. */
+   *  **Y no el de la cadena.** *Esto estaba mal y es el defecto que A03 nombra por su nombre*: antes se
+   *  miraba `cadenas.find(...).ultimo_dia` -- **la ultima captura de la cadena entera** --, asi que un
+   *  producto cuya ultima ficha era de hace una semana **pasaba por fresco** porque Mercadona habia
+   *  capturado otra cosa hoy. *La fecha de la cadena no dice nada de **este** producto.*
+   *
+   *  *Se mira la serie del grupo, que **si** es de este producto.* Y si no hay ninguna fecha suya,
+   *  **no se sabe** -- que no es lo mismo que ser de hoy, y por eso quien no tiene fecha no decide.
+   */
   const ultimoDiaDe = useCallback(
     (fuente: string): string | null => {
-      const deEstado = estado.data?.cadenas.find((c) => c.cadena === fuente)?.ultimo_dia
-      if (deEstado) return deEstado
       const fechas = (grupo?.serie ?? [])
-        .filter((s) => s.fuente === fuente)
+        .filter((s) => s.fuente === fuente && s.fecha)
         .map((s) => s.fecha)
         .sort()
       return fechas.length > 0 ? (fechas[fechas.length - 1] as string) : null
     },
-    [estado.data, grupo],
+    [grupo],
   )
 
-  /** Si ese precio puede decidir donde comprar. */
+  /** Si ese precio puede decidir donde comprar.
+   *
+   *  **La decision vive en `logica/frescura.ts` y aqui solo se le pone el reloj.** *Es el mismo camino que
+   *  se tomo con `estaAtascada`: la regla, pura y con sus pruebas; el componente, con lo que no se puede
+   *  probar sin un renderizador.* **Y no es una formalidad**: los tres defectos de esta pantalla -- la
+   *  fecha de la cadena, el precio sin fecha que decidi­a, y la antiguedad medida contra el catalogo --
+   *  **solo se pudieron fijar cuando la decision salio de aqui.**
+   */
   const juzga = useCallback(
-    (p: Producto): Juicio => {
-      if (estado.data?.vigencia_precio?.coherente === false) {
-        return { decide: false, motivo: 'La versión del catálogo y sus precios no son coherentes. No se recomienda una tienda con estos datos.' }
-      }
-      if (p.precio_unidad_cent === null || !(p.precio_unidad_cent > 0)) {
-        return {
-          decide: false,
-          motivo: 'No tenemos el precio por unidad de este producto, así que no entra en la comparación.',
-        }
-      }
-      const ultimo = ultimoDiaDe(p.fuente)
-      if (!ultimo) {
-        // Sin fecha no se puede decir que sea viejo. Se deja decidir y se avisa.
-        return { decide: true, motivo: null }
-      }
-      const referencia = grupo?.fecha_datos ?? estado.data?.fecha_datos ?? null
-      const dias = referencia
-        ? diasDesde(ultimo, new Date(`${referencia}T00:00:00`))
-        : diasDesde(ultimo)
-      if (dias !== null && dias > diasValidos) {
-        return {
-          decide: false,
-          motivo: `El precio de ${nombreCadena(p.fuente)} es del ${fechaTexto(ultimo)} (${dias} días): se enseña con su fecha, pero no decide.`,
-        }
-      }
-      return { decide: true, motivo: null }
-    },
-    [diasValidos, estado.data, grupo, ultimoDiaDe],
+    (p: Producto): Juicio =>
+      juzgaPrecio(
+        {
+          fuente: p.fuente,
+          precioUnidadCent: p.precio_unidad_cent,
+          // *La fecha **del producto**, no la de la cadena.* **Si no hay ninguna suya, es `null`, y quien
+          // no tiene fecha no decide** -- *no se rellena con la de la cadena, que era el defecto 1.*
+          ultimoDia: ultimoDiaDe(p.fuente),
+        },
+        {
+          // **El reloj, inyectado aqui y en ningun otro sitio.** *Asi `frescura.test.mjs` lo puede fijar.*
+          hoy: new Date(),
+          diasValidos,
+          publicacionIncoherente: estado.data?.vigencia_precio?.coherente === false,
+          nombreCadena,
+          fechaTexto,
+        },
+      ),
+    [diasValidos, estado.data, ultimoDiaDe],
   )
 
   const alternativas = useMemo(
