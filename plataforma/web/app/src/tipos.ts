@@ -92,6 +92,20 @@ export interface Producto {
   comparable: boolean
   /** Solo si sale de LEER ingredientes. */
   calidad: Letra | null
+  /**
+   * **De donde salio la letra de calidad**, y las dos opciones no son lo mismo.
+   *
+   * - `ingredientes`: leidos de la ficha **que publica la tienda**.
+   * - `ingredientes_off`: **deducidos por Open Food Facts** -- *la tienda no los publica*.
+   *
+   * *Se anadio el 12 de octubre de 2026*: **el sello decia «leida de ingredientes» para las dos**, asi
+   * que un dato de un tercero **se atribuia al supermercado**. *El caso medido: el President de
+   * Carrefour del grupo 11627, con nota 100 y letra A y su columna nativa de ingredientes vacia.*
+   *
+   * `null` cuando no hay letra, **o cuando la API no lo manda** -- *y entonces la pantalla no afirma la
+   * procedencia en vez de suponerla.*
+   */
+  calidad_de: 'ingredientes' | 'ingredientes_off' | 'precio' | null
   /** Solo si sale de ORDENAR por precio. No es calidad, y la interfaz no la
    *  puede llamar asi. */
   gama: Letra | null

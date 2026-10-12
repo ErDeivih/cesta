@@ -202,16 +202,38 @@ export function SelloDudoso({ dudoso }: { dudoso: boolean }) {
  *  `calidad` viene de leer ingredientes. `gama` viene de ordenar por precio y
  *  **A es el mas caro**, que es justo lo contrario de "mejor". Las dos son
  *  excluyentes por contrato: un producto trae una o la otra, nunca las dos.
+ *
+ *  **Y `calidad` sola no bastaba**, porque hay **dos procedencias distintas** y el sello las decia
+ *  igual: *`ingredientes` son los que **publica la tienda**; `ingredientes_off` son los que **deduce
+ *  Open Food Facts**.* *El caso medido*: **el President de Carrefour del grupo 11627 trae
+ *  `ingredientes_off`, nota 100 y letra A, con su columna nativa de ingredientes VACIA** -- *y decir
+ *  «leida de ingredientes» a secas **se lo atribuye a Carrefour, que no los publico**.*
+ *
+ *  *Por eso el sello cambia de texto, y no solo de tooltip*: **quien lee tiene que poder distinguir un
+ *  dato del supermercado de una deduccion ajena sin abrir nada.**
  */
-export function SelloLetra({ producto }: { producto: Pick<Producto, 'calidad' | 'gama'> }) {
-  const { calidad, gama } = producto
+export function SelloLetra({
+  producto,
+}: {
+  producto: Pick<Producto, 'calidad' | 'gama' | 'calidad_de'>
+}) {
+  const { calidad, gama, calidad_de } = producto
   if (calidad) {
+    // *`calidad_de` puede no venir de una API vieja*: **si no viene, no se afirma la procedencia** y se
+    // dice la parte que si consta. *Es la regla de siempre: lo que no se sabe no se rellena.*
+    const esDeducida = calidad_de === 'ingredientes_off'
     return (
       <Etiqueta
-        tono="info"
-        titulo="Leída de la lista de ingredientes: aditivos, aceite de palma, porcentaje del primero y longitud de la lista"
+        tono={esDeducida ? 'aviso' : 'info'}
+        titulo={
+          esDeducida
+            ? 'Deducida por Open Food Facts: la tienda NO publica los ingredientes de este producto. Es una estimación de un tercero, no un dato del supermercado.'
+            : 'Leída de la lista de ingredientes que publica la tienda: aditivos, aceite de palma, porcentaje del primero y longitud de la lista'
+        }
       >
-        Calidad {calidad} · leída de ingredientes
+        {esDeducida
+          ? `Calidad ${calidad} · deducida por Open Food Facts, no por la tienda`
+          : `Calidad ${calidad} · leída de los ingredientes de la tienda`}
       </Etiqueta>
     )
   }

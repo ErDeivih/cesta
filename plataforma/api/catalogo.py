@@ -821,6 +821,29 @@ def lineas_movidas(lineas: list[dict]) -> set[str]:
 
 # ------------------------------------------------------------ ficha de grupo --
 
+def _calidad_y_origen(calidad, calidad_origen) -> tuple:
+    """La letra de calidad **y de donde salio**. Pura, para poder probarla.
+
+    *Devuelve `(letra, procedencia)`.*
+
+    **Las dos procedencias que importan, y por que no son lo mismo:**
+
+      - `ingredientes`: los leyo el colector de **la ficha que publica la tienda**.
+      - `ingredientes_off`: los **dedujo Open Food Facts** -- *la tienda **no** los publica*.
+
+    *Y `precio` no es calidad: es gama.* **Se devuelve `None` en `letra` para que no se confundan** --
+    *mezclarlas produce la conclusion falsa de que lo barato es peor, y eso ya estaba resuelto.*
+    """
+    if not calidad or not calidad_origen:
+        return (None, None)
+    if calidad_origen.startswith("ingredientes"):
+        # **Y el origen viaja con la letra**, no dentro del texto del sello: *asi la pantalla puede decir
+        # la verdad sin adivinarla de una frase.*
+        return (calidad, calidad_origen)
+    # *`precio` y cualquier otro origen no dan calidad.*
+    return (None, None)
+
+
 def _por_escurrido(f: dict) -> bool:
     """¿El precio por unidad de esta fila esta calculado sobre el peso escurrido?
 
@@ -909,8 +932,21 @@ def grupo(grupo_id: int) -> dict | None:
             # sale del precio NO es calidad: es gama, y se dice como tal. En el
             # 77 % de los casos es lo segundo, y mezclarlas produce la
             # conclusion falsa de que lo barato es peor.
-            "calidad": f["calidad"] if f["calidad_origen"]
-                       and f["calidad_origen"].startswith("ingredientes") else None,
+            "calidad": _calidad_y_origen(f["calidad"], f["calidad_origen"])[0],
+            # **Y DE DONDE SALIO, que es lo que faltaba.** *`calidad_origen` tiene DOS valores que
+            # significan cosas distintas* -- `ingredientes` (leidos de la ficha que publica la tienda)
+            # e `ingredientes_off` (**deducidos por Open Food Facts**) --, *y el sello decia «leida de
+            # ingredientes» **para las dos**.*
+            #
+            # *El caso medido el 12 de octubre de 2026*: **el President de Carrefour del grupo 11627
+            # tiene `calidad_origen=ingredientes_off`, nota 100 y letra A, con su columna nativa
+            # `ingredientes` VACIA.** *No es un parser roto: **la valoracion es enriquecida**, y decir
+            # «leida de ingredientes» se la atribuye a Carrefour, que no los publico.*
+            #
+            # **A06 lo pide con estas palabras: «datos enriquecidos no se atribuyen al supermercado».**
+            # *Por eso viaja el origen en su propio campo y no dentro del texto del sello* -- *asi la
+            # pantalla puede decir la verdad sin tener que adivinarla de una frase.*
+            "calidad_de": _calidad_y_origen(f["calidad"], f["calidad_origen"])[1],
             "gama": f["calidad"] if f["calidad_origen"] == "precio" else None,
             "nutriscore": f["nutriscore"], "nova": f["nova"], "ean": f["ean"],
             "ecoscore": f["ecoscore"],
