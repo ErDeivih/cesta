@@ -87,17 +87,26 @@ def test_publicar_despues_si_recoge_lo_que_se_escribio_antes(gold):
     assert pl.read_parquet(publicacion.ruta("grupos.parquet"))["x"].to_list() == [2]
 
 
-def test_una_version_publicada_no_se_muta_si_el_escritor_renombra(gold):
-    """**El enlace duro aguanta, pero solo porque los escritores renombran.** *Y eso hay que fijarlo.*
+def test_una_version_publicada_no_se_muta_ni_escribiendo_en_el_sitio(gold):
+    """**La version publicada no cambia, y desde A01 no cambia NI AUNQUE se escriba en el sitio.**
 
-    `publicar()` **no copia**: hace un enlace duro (`os.link`) para no duplicar un fichero de 195 MB.
-    *Eso significa que la version publicada y el gold suelto **son el mismo inodo** al publicar.*
+    *Esta prueba nacio con otro nombre -- «...si el escritor renombra» -- y con otro motivo, que ya no es
+    el bueno.* Decia: *«`publicar()` **no copia**: hace un enlace duro (`os.link`) para no duplicar un
+    fichero de 195 MB. [...] **Lo que la salva es que `write_parquet_file` escribe en un temporal y
+    renombra**»*.
 
-    **Lo que la salva es que `write_parquet_file` escribe en un temporal y renombra**: el gold suelto pasa
-    a ser otro inodo y la version conserva el suyo. *Un escritor que escribiera **en el sitio** mutaria
-    todas las versiones publicadas que compartan ese inodo -- hacia atras en el tiempo.*
+    **Y eso dejo de ser verdad el 12 de octubre de 2026, en A01.** *El enlace duro **no aislaba** la
+    version: compartia inodo con el gold suelto, asi que un escritor que escribiera en el sitio mutaba
+    **todas** las versiones que compartieran ese inodo -- hacia atras en el tiempo.* **Y paso**: se midio
+    con `fsutil hardlink list`, y `v20261007-103000` tenia tres nombres sobre un solo fichero.
 
-    *Esta prueba fija la invariante: si alguien cambia el escritor por uno que no renombre, salta aqui.*
+    **Ahora `publicar()` copia (`shutil.copy2`).** *Y la invariante es la misma, pero por un motivo mas
+    fuerte:* **una version publicada es inmutable POR SI MISMA, no por la buena conducta de quien escriba
+    el original.**
+
+    *Por eso la prueba ya no se llama «...si el escritor renombra»*: **el renombrado dejo de ser la
+    condicion.** *Un docstring que explica un `assert` que pasa por otro motivo es peor que no tenerlo,
+    porque ensena lo que no es.*
     """
     write_parquet_file(pl.DataFrame({"x": [1]}), gold / "grupos.parquet")
     publicacion.adoptar(datetime(2026, 10, 7, 10, 0, 0))
@@ -109,6 +118,34 @@ def test_una_version_publicada_no_se_muta_si_el_escritor_renombra(gold):
     suelto = pl.read_parquet(gold / "grupos.parquet")
     assert publicado["x"].to_list() == [1], "la version publicada no puede cambiar sola"
     assert suelto["x"].to_list() == [2]
+
+
+def test_una_version_publicada_tampoco_se_muta_escribiendo_en_el_sitio(gold):
+    """**Y esta es la que A01 hizo posible: escribir EN EL SITIO tampoco la toca.**
+
+    *Es la prueba que el enlace duro **no** podia pasar.* **Con `os.link`, escribir directamente sobre el
+    gold suelto mutaba la version publicada**, porque eran el mismo inodo -- *y es exactamente lo que
+    pasaba en el pipeline de verdad.*
+
+    *Se comprueba escribiendo **sin renombrar**, que es justo lo que el comentario viejo decia que no
+    habia que hacer.* **Si alguien volviera a enlazar en vez de copiar, esta prueba se cae** -- *y es la
+    unica que distingue las dos implementaciones por su comportamiento y no por leer su codigo.*
+    """
+    write_parquet_file(pl.DataFrame({"x": [1]}), gold / "grupos.parquet")
+    publicacion.adoptar(datetime(2026, 10, 7, 10, 0, 0))
+
+    # **Escritura EN EL SITIO, sin renombrar**: lo que el enlace duro no aguantaba.
+    # *Y el fichero se abre a mano a proposito*: `write_parquet` con una ruta **escribe en un temporal y
+    # renombra**, que es justo lo que aqui no se quiere probar.
+    with open(gold / "grupos.parquet", "wb") as f:
+        pl.DataFrame({"x": [99]}).write_parquet(f)
+
+    suelto = pl.read_parquet(gold / "grupos.parquet")
+    publicado = pl.read_parquet(publicacion.ruta("grupos.parquet"))
+    assert suelto["x"].to_list() == [99], "el suelto si cambia: se escribio en el sitio"
+    assert publicado["x"].to_list() == [1], (
+        "LA VERSION PUBLICADA NO PUEDE CAMBIAR AL ESCRIBIR EN EL SITIO: es lo que el enlace duro no "
+        "garantizaba, y lo que A01 arreglo copiando")
 
 
 def test_el_pipeline_dice_que_ha_fallado_si_no_puede_publicar(gold, monkeypatch):
