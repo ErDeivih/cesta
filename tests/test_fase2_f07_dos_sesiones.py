@@ -74,11 +74,6 @@ def _arrancado():
 # ---------------------------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "DEFECTO MEDIDO: `almacen.cambia_linea` escribe `cantidad = %s` sin mirar `momento`, asi que gana la "
-    "ultima que LLEGA y no la mas nueva. Dos personas cambiando la cantidad a la vez se pisan, y el criterio "
-    "de F07 dice que no deberian. Arreglo: comparar `momento` contra la hora del ultimo cambio de cantidad, "
-    "como hace el tachado con LEAST+COALESCE."))
 def test_la_cantidad_vieja_no_gana_por_llegar_despues():
     """**La pregunta de F07, en el orden que importa.**
 
@@ -97,13 +92,13 @@ def test_la_cantidad_vieja_no_gana_por_llegar_despues():
 
     cantidad = _linea(lista_id, linea)["cantidad"]
 
-    # **MEDIDO, y es un defecto: la cantidad vieja gana.** *El servidor escribe la ultima que llega sin mirar
-    # `momento`, asi que **el orden de los hechos se lo inventa el servidor** -- que es exactamente lo que el
-    # comentario del tachado dice que no hay que permitir.*
+    # **ARREGLADO, y la regla esta escrita.** *Estuvo en `xfail(strict=True)` desde que se midio, con el
+    # defecto nombrado -- «gana la ultima que LLEGA y no la mas nueva» --, y **al arreglarse la prueba fallo
+    # por pasar, que es exactamente lo que se buscaba.***
     #
-    # *Se fija con `xfail(strict=True)` y el defecto nombrado*, como se hizo con `alerta` y con la contabilidad
-    # de la cola: **asi el dia que se arregle, la prueba falla por pasar, y alguien lo sabe.** *Y mientras
-    # tanto, la afirmacion del criterio -- «no pisan cantidades» -- esta **medida y en rojo**, no supuesta.*
+    # *Ahora la cantidad mira `momento` contra `cantidad_en`, que trae la migracion `019`*: **una cantidad
+    # vieja que llega tarde no se escribe.** *Y usa `GREATEST`, al contrario que el `LEAST` del tachado*
+    # -- porque tachar es «yo lo hice primero» y la cantidad es «este es el valor de ahora».
     assert cantidad == 5, (
         f"gana la que llego ultima (3), no la mas nueva (5): la cantidad NO mira `momento`. Medido: {cantidad}")
 

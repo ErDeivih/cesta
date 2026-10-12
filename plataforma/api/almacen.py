@@ -428,8 +428,25 @@ def cambia_linea(lista_id: str, linea_id: str, usuario_id: str, *,
     elif tachado is False:
         trozos += ["tachado_en = NULL", "tachado_por = NULL", "en_carrito = false"]
     if cantidad is not None:
-        trozos.append("cantidad = %s")      # gana el ultimo, a proposito
-        args.append(cantidad)
+        # **Gana el MAS NUEVO, no el que llega ultimo.** *Esto era `cantidad = %s` con el comentario «gana
+        # el ultimo, a proposito», y ese «ultimo» era **el ultimo que llega** -- asi que dos personas
+        # cambiando la cantidad sin cobertura se pisaban, y **ganaba la de las 17:50 que llego a las
+        # 18:31**. El orden de los hechos se lo inventaba el servidor.*
+        #
+        # *La regla vive en la migracion `019`, que trae `cantidad_en`*: **la cantidad no se escribe si
+        # llega una mas vieja que la que ya consta.** *`COALESCE(cantidad_en, 'epoch')` deja ganar a
+        # cualquier cambio con hora frente a una linea que nunca cambio de cantidad* -- *y ahi `NULL`
+        # significa «no consta», no «cambio en el origen de los tiempos».*
+        #
+        # **Y es `GREATEST`, al contrario que el tachado**, que usa `LEAST`. *No es una incoherencia:*
+        # tachar es «yo lo hice primero» y **gana el primero**; la cantidad es «este es el valor de
+        # ahora» y **gana el mas nuevo**. *Dos reglas opuestas, cada una con su motivo.*
+        trozos.append(
+            "cantidad = CASE WHEN %s >= COALESCE(cantidad_en, TIMESTAMPTZ 'epoch') "
+            "THEN %s ELSE cantidad END")
+        args += [cuando, cantidad]
+        trozos.append("cantidad_en = GREATEST(COALESCE(cantidad_en, %s), %s)")
+        args += [cuando, cuando]
     if nota is not SIN_CAMBIAR:
         # **Ausente = no tocar; `None` = quitarla**, igual que `cadena_elegida`, y por la
         # misma razon. Antes esto era `if nota is not None`, asi que la pantalla mandaba
