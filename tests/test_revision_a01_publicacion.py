@@ -133,7 +133,7 @@ def test_una_version_de_antes_sin_huellas_se_dice_no_se_lo_que_paso(gold):
     confunda con un cero.*
     """
     _suelto_completo(gold, 1)
-    version = publicacion.adoptar(momento=datetime(2026, 10, 7, 10, 30))
+    publicacion.adoptar(momento=datetime(2026, 10, 7, 10, 30))
     datos = json.loads((gold / "actual.json").read_text(encoding="utf-8"))
     datos.pop("huellas")  # *como quedaria un puntero escrito por la version anterior*
     (gold / "actual.json").write_text(json.dumps(datos), encoding="utf-8")

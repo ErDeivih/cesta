@@ -25,7 +25,52 @@ from core.promos import lee as lee_promo
 from .ajustes import AJUSTES
 from .catalogo import conexion
 
+# **Las cadenas, y la distincion que faltaba.** *Esto era una sola tupla de cinco, y al lado
+# `projects/cesta/run.py` tenia `ORDEN` con seis* -- *porque Lidl entra en la captura. La diferencia
+# entre las dos listas **no estaba dicha en ningun sitio**, asi que se leia como un descuido.*
+#
+# **Y no es un descuido: son dos cosas distintas.**
+#
+#   - **`CADENAS_QUE_SE_CAPTURAN`**: de las que hay colector y se les pide el catalogo. *Seis.*
+#   - **`CADENAS`**: de las que se puede **comparar precios**. *Cinco.*
+#
+# **Por que Lidl no esta en la segunda, y no es una decision pendiente.** *`collectors/lidl.py` publica
+# **ofertas semanales parciales**, no el surtido completo.* *Meterlo en las comparaciones haria que
+# pareciera tener precio para cosas que no cataloga* -- **y un «Lidl no lo tiene» que en realidad es «no
+# lo hemos capturado» es exactamente la clase de mentira que esta fase lleva cazando.** *Se declara
+# capturada y no comparable, y se dice por que.*
+#
+# **Y la lista esta repetida en `projects/cesta/auditar_escurrido.py` y `projects/cesta/peticiones.py`**
+# -- *no se unifica aqui porque `projects/` no importa de `plataforma/`, y forzar esa dependencia para
+# tres tuplas seria peor que la repeticion.* **Lo que si se hace es nombrar la distincion en las tres,
+# para que quien lea una sepa que existen las otras dos.**
+CADENAS_QUE_SE_CAPTURAN = ("carrefour", "dia", "mercadona", "aldi", "alcampo", "lidl")
+
+# *Y esta es la que decide si un precio entra en una comparacion.*
 CADENAS = ("alcampo", "aldi", "carrefour", "dia", "mercadona")
+
+
+def por_que_no_se_compara(cadena: str) -> str | None:
+    """El motivo por el que una cadena capturada no entra en las comparaciones.
+
+    *Devuelve `None` si si se compara.* **Existe para que la pantalla pueda decir por que falta una
+    cadena, en vez de dejarla simplemente ausente** -- *que es lo que A05 pide con «mantener la
+    cobertura parcial visible donde proceda».*
+    """
+    if cadena in CADENAS:
+        return None
+    if cadena == "lidl":
+        return ("Lidl se captura, pero publica **ofertas semanales parciales**, no el surtido completo: "
+                "sus precios no entran en la comparación porque no cubren el catálogo.")
+    return f"{cadena} no es una cadena conocida."
+
+
+if __name__ != "__main__":  # pragma: no cover
+    # **Una comprobacion al importar, y es barata**: *la lista comparable tiene que estar DENTRO de la
+    # capturable.* *Si alguien anade una cadena a `CADENAS` sin colector, se sabe aqui y no al comparar.*
+    _sobran = [c for c in CADENAS if c not in CADENAS_QUE_SE_CAPTURAN]
+    if _sobran:  # pragma: no cover
+        raise RuntimeError(f"estas cadenas se comparan pero no se capturan: {', '.join(_sobran)}")
 
 
 @dataclass
