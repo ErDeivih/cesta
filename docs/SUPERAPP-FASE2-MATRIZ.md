@@ -422,3 +422,33 @@ ensayos de §4, §5 y §17 a §19 de `F11`, y los del §19 de `F10`, con sus num
 nutricion, los precios ni la cobertura**, *que tienen sus propias cifras y sus propios limites, medidos aparte.*
 
 **Una puerta en verde es una puerta en verde**: *que el codigo **pasa lo que se le pide**, ni mas ni menos.*
+
+
+### Y el segundo ensayo integral, el 12 de octubre de 2026 a las 13:34 -- *despues de los arreglos*
+
+```
+1) uv run ruff check . --output-format=concise       ->  All checks passed!            (0)
+2) CESTA_POSTGRES=...5434... uv run pytest -q        ->  1842 passed, 5 xfailed        (0 fallan)
+3) cd plataforma/web/app; npm test                   ->  46 tests, 46 pass, 0 fail    (0)
+4) npx --no-install tsc --noEmit                     ->  0
+5) npm run build                                     ->  built in 6.66s                (0)
+```
+
+**Las cinco, otra vez, despues de tocar codigo.** *Y el `pytest` **sigue en 1842**: *nada de lo que se toco en la
+interfaz movio una prueba del servidor.*
+
+### Y lo que se encontro y se arreglo en este tramo, con su nombre
+
+| el defecto | **como se encontro** | **que era** |
+|---|---|---|
+| **el `refetchInterval` de la cocina** | *midiendo el «Cargando» eterno* | *volvia a disparar la consulta **antes de que el primer intento terminara**, y el estado **nunca salia de `pending`*** |
+| **la rama de error de la cocina** | *el ensayo sin conexion* | ***afirmaba «esta receta no esta empezada»* cuando lo que pasaba es que no se habia podido preguntar** |
+| **el `useEffect` del tope** | ***midiendo el alto de un campo*** | *guardaba un `setTimeout` con `[cargando]` en las dependencias, **y el reloj se reiniciaba cada vez que `isLoading` oscilaba** -- *asi que **el tope existia y no disparaba*** |
+| **el alto de los campos** | *midiendo los controles* | ***30 px**, por debajo de la referencia tactil de **44*** -- *y ahora miden **44*** |
+| **y la quinta puerta** | *buscando donde probar el tope* | *`npm test` corria **46 pruebas** y **no estaba en el `§3`** |
+
+**Los cuatro primeros son **defectos de codigo propio**, encontrados **midiendo otra cosa** en tres de los cuatro
+casos.** *Y el quinto no es un defecto: es **una puerta que llevaba ahi todo el tiempo sin estar en el documento**.*
+
+> **Y la frase que resume el tramo, que salio de un ensayo que fallo cuatro veces seguidas**: *la intermitencia del
+> sandbox **estaba tapando un fallo propio**, y **lo que lo destapo fue ir a medir otra cosa**.*
