@@ -332,3 +332,67 @@ lo anterior esta dicho.*
 
 *Los puntos 0, 1 y 2 son **cortos y concretos**. El 3 es el grueso que queda, y el 4 es **lo que hay que
 renunciar a hacer** -- que tambien hay que decirlo.*
+
+
+---
+
+## 6. **La quinta puerta: las pruebas de frontend** -- *y no la conocia*
+
+*(Rondas 203-209. **Y esto es un hallazgo de la matriz, no del codigo.**)*
+
+### Lo que hay, y no estaba en `§3`
+
+**`plataforma/web/app/package.json`:**
+
+```json
+"test": "node --test \"tests/**/*.test.mjs\""
+```
+
+**El ejecutor de pruebas de **Node**, sin `vitest`, sin `jest` y sin `@testing-library`.** *Un fichero,
+`tests/cocina.test.mjs`, **que importa `.ts` directamente** y prueba **funciones puras**: *`calcular`,
+`validarReceta`, `costeDeReceta`, `avisoDeTransporte`, `referenciaLinea`...*
+
+**Y hoy pasa asi:**
+
+```
+tests 46   pass 46   fail 0
+```
+
+**El `§3` de esta matriz lista **cuatro** puertas** -- *`ruff`, `pytest`, `tsc` y `build`* --, **y hay una quinta que
+lleva ahi todo el tiempo.** *Y no es un detalle de inventario: **`npm test` es la unica puerta que cubre el
+TypeScript de la interfaz**, y **es la que ha permitido medir el tope de espera** cuando el navegador no podia
+(§11 a §15).*
+
+### Y el patron que el proyecto tiene, que conviene decir porque guia lo que viene
+
+**`tsc` comprueba tipos; `npm test` comprueba **decisiones**.** *Y el proyecto lo tiene separado a proposito:
+**la logica va en `src/logica/` o `src/estado/` como funciones puras** -- *probables sin renderizador* --, **y el
+componente se queda fino encima.**
+
+**Y eso es lo que se hizo con el tope**: *la decision, a `src/logica/espera.ts` con **cuatro pruebas**; **el reloj,
+dos lineas de `useEffect`**, que es lo unico que no se puede probar sin un renderizador **que el proyecto ha decidido
+no tener**.*
+
+### Y la puerta, con su numero de hoy
+
+| la puerta | **como se corre** | **hoy** |
+|---|---|---|
+| `ruff` | `uv run ruff check .` | *All checks passed!* |
+| `pytest` | `$env:CESTA_POSTGRES='...5434...'; uv run pytest -q` | **1842 pasan, 5 xfailed, 0 fallan** |
+| **`npm test`** | **`cd plataforma/web/app; npm test`** | **46 pasan, 0 fallan** |
+| `tsc` | `cd plataforma/web/app; npx --no-install tsc --noEmit` | *0* |
+| `build` | `cd plataforma/web/app; npm run build` | *0* |
+
+**Cinco puertas, y las cinco en verde.** *Y la que faltaba en el documento es **la que cubre la interfaz**.*
+
+### Y lo medido en este tramo, que es lo que cambia el estado de dos paquetes
+
+| | |
+|---|---|
+| **`R05` modo cocina** | **cerrado y verificado de arriba abajo**, *incluido el «sin conexion» que su criterio pide por su nombre*: **`1785 -> 1774` con la red cortada** |
+| **`R08` despensa** | **las cinco capas medidas** -- *logica, tabla, ruta, pantalla y lista conservada sin conexion* --, **y una intermitencia que es del entorno** |
+| **el tope de espera** | **la regla, con cuatro pruebas**; *el reloj, dos lineas* |
+
+**Y lo que **no** se pudo medir, y esta dicho con su motivo**: *el tope **desde el navegador**.* *Cuatro ensayos
+(§11 a §14) y los cuatro se quedaron en lo mismo: **abortar una peticion deja la aplicacion sin montar** -- *`#raiz`
+con **cero hijos**, y **sin error de JavaScript*** --. **Se midio donde se podia, y se dijo donde no.**
