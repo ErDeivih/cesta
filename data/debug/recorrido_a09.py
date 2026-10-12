@@ -22,13 +22,15 @@ import hashlib
 import json
 import subprocess
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-RAIZ = Path(__file__).resolve().parents[1]
+# **`parents[2]`, y esto se pago caro.** *El fichero vive en `data/debug/`, asi que `parents[1]` es
+# `data/` y no la raiz: la primera corrida escribio las capturas en `data/data/capturas-a09`.*
+# *Y se descubrio porque el manifiesto no estaba donde el propio guion decia haberlo dejado.*
+RAIZ = Path(__file__).resolve().parents[2]
 SALIDA = RAIZ / "data" / "capturas-a09"
 BASE = "http://localhost:8080"
 ANCHOS = (390, 768, 1440)
@@ -51,7 +53,8 @@ def version_del_catalogo() -> str | None:
     try:
         with urllib.request.urlopen(BASE + "/api/estado", timeout=8) as r:
             return json.loads(r.read().decode("utf-8")).get("version_catalogo")
-    except Exception:
+    except Exception:  # noqa: BLE001  <- a proposito: *si la API no contesta, no hay version que dar,
+        # y el guion tiene que seguir para poder capturar justamente esa pantalla.*
         return None
 
 
@@ -128,8 +131,43 @@ def main() -> int:
         cuerpo = pag.inner_text("body")
         textos["api-caida"] = cuerpo[:600]
         guarda(pag, "04-api-caida", "la API sin contestar: lo que dice la pantalla")
-        atascada = "atasc" in cuerpo.lower() or "no se ha podido" in cuerpo.lower()
-        print(f"   error real: la pantalla {'LO DICE' if atascada else 'NO LO DICE'}")
+        # **El detector, arreglado.** *Y esto es la octava vez que el instrumento fallaba y no el objeto:*
+        # buscaba «atasc» y «no se ha podido», y **la pantalla dice «No he podido traer esto»**. *Ni una
+        # de las dos palabras estaba, asi que una pantalla que explica el error perfectamente parecio
+        # muda.*
+        #
+        # *Ahora se buscan las palabras que la aplicacion usa de verdad* -- y se guardan las dos, para
+        # que el dia que cambien el texto se note en vez de pasar por bueno.
+        dice = any(x in cuerpo for x in ("Sin cobertura", "no hay conexion", "he podido traer",
+                                         "Volver a intentarlo"))
+        print(f"   error real: la pantalla {'LO DICE' if dice else 'NO LO DICE'}")
+        assert dice, "la pantalla no explica que no se pudo traer: " + cuerpo[:200]
+
+        # ---------------------------------------------- 4. RECETAS Y CALORIAS
+        # *Lo que A09 dejo sin tocar, y es la mitad que queda.* **Se recorren las seis rutas y se guarda
+        # LO QUE DICEN**, no solo como se ven.
+        ctx2 = nav.new_context(viewport={"width": 1280, "height": 900})
+        ctx2.request.post(f"{BASE}/api/entrar",
+                          data=json.dumps({"usuario": "prueba-navegador",
+                                           "clave": "clave-de-prueba-123"}),
+                          headers={"Content-Type": "application/json"})
+        pag2 = ctx2.new_page()
+        pag2.on("pageerror", lambda e: errores.append(str(e)[:100]))
+        for ruta, nombre in [
+            ("/recetas", "05-recetario"),
+            ("/recetas/plan", "06-plan-semanal"),
+            ("/calorias", "07-calorias"),
+            ("/calorias/alimentos", "08-alimentos"),
+            ("/calorias/tendencias", "09-tendencias-calorias"),
+        ]:
+            pag2.goto(BASE + ruta, wait_until="domcontentloaded")
+            pag2.wait_for_timeout(ESPERA)
+            texto = pag2.inner_text("body")
+            guarda(pag2, nombre, f"{ruta}: {len(texto)} caracteres de texto real")
+            textos[ruta] = texto[:500]
+            # *Y se dice si la pantalla esta vacia*, que es lo que hay que saber de una ruta nueva.
+            print(f"      {ruta}: {len(texto)} car.")
+        ctx2.close()
 
         nav.close()
         print(f"   errores de JavaScript: {errores[:2] if errores else 'ninguno'}")
