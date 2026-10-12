@@ -452,3 +452,64 @@ como se escriben los informes que parecen medidos y no lo estan.*
 
 **Asi que `F14` esta **tan medido como se puede**, y su unico pendiente real sigue siendo un juicio** -- *que no es una
 medida que falte, sino **una pregunta que hay que contestar mirando**, no contando.*
+
+
+---
+
+## 8. El tamano de los controles, **medido con el medidor arreglado** -- *y hay un hallazgo*
+
+*(Ronda 224. **Era el ultimo pendiente de `F14`, y el §6 ya dijo que su medidor no valia.**)*
+
+### Y primero, el medidor, arreglado
+
+**El del §6 contaba `button, a, input, select` **sin filtrar**, y por eso daba «control minimo: 1 px»** -- *que es
+imposible y era la senal de que estaba mal.* **El de ahora hace tres cosas que le faltaban:**
+
+1. **Filtra los elementos sin caja o con caja de menos de 2 px** -- *un control de 1 px no es un control.*
+2. **Excluye `input[type=hidden]`** -- *que **no se ve** y no se puede pulsar.*
+3. **Incluye `[role=button]` y `[role=tab]`** -- *porque **un control no tiene por que ser un `<button>`**.*
+
+### Y lo que mide, ahora si
+
+```
+/compra/despensa   360    7 controles,  3 por debajo de 44 px   ->  input 177x30
+/compra/despensa   768    7 controles,  3 por debajo de 44 px   ->  input 177x30
+/compra/despensa  1440   16 controles,  4 por debajo de 44 px   ->  a 61x25 «Cesta», inputs 177x30
+/compra/importar   360    3 controles,  1 por debajo de 44 px   ->  input 294x30
+/compra/importar   768    3 controles,  1 por debajo de 44 px   ->  input 570x30
+/compra/importar  1440   10 controles,  2 por debajo de 44 px   ->  a 61x25 «Cesta», input 962x30
+```
+
+### Y el hallazgo, que es concreto
+
+**Los campos de texto miden **30 px de alto**, y son los controles con los que se escribe**: *el de declarar en la
+despensa («Que», «Cuanto», «Unidad») y el de la direccion en importar.* **Y el enlace «Cesta» mide 61x25.**
+
+**Y la referencia son **44 px**.** *Viene de **WCAG 2.5.5** (nivel AAA) y de las guias tactiles de Apple y Google, y **es
+una recomendacion, no una ley**.* **Asi que 30 px no es «roto»: es **por debajo de la referencia** -- *y en un movil,
+un campo de 30 px de alto **se pulsa peor que uno de 44**, sobre todo con el dedo y en una cocina.*
+
+> **Y es **un hallazgo de verdad** porque es **medible, concreto y arreglable**: *no es «el diseno podria estar
+> mejor», es «**estos tres campos miden 30 px y la referencia son 44**»* -- *y subirlos es **una regla de estilo**, no
+> un rediseno.*
+
+### Y una nota sobre la referencia, para no darle mas peso del que tiene
+
+**44 px **no** es un minimo legal ni una verdad universal.** *Es **la cifra que usan las guias tactiles** -- *y **por
+eso se dice de donde sale**, en vez de presentarla como un hecho.* **Un control de 30 px **funciona**; uno de 44
+**funciona mejor con el dedo**.* *Que es exactamente la distincion que esta fase aplica a todo: **una cosa es lo que
+se mide y otra lo que se concluye.***
+
+### Y `F14`, cerrado en todo lo que se puede cerrar
+
+| lo que `F14` tiene | **estado** |
+|---|---|
+| **contraste y color con sistema** | **medido** |
+| **cuatro anchuras y zoom 200 %** | **medido**: *nada se sale* |
+| **`prefers-reduced-motion`** | **era una regresion, y se arreglo** |
+| **el texto de lectura** | **14 px o mas**; *los 12-13 px son **rotulos de menu*** |
+| **el tamano de los controles** | **medido**: *los campos de texto, **30 px**; la referencia, **44*** |
+| **«se lee bien»** | **es un juicio** -- *y **ya no le queda ninguna cifra pendiente que lo desmienta*** |
+
+**Asi que `F14` esta **medido entero**, y lo unico que le queda **no es una medida que falte**: es **un juicio**, y
+**una regla de estilo de una linea** si se decide que los campos deben ser mas altos.
