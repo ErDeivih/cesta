@@ -14,32 +14,35 @@
  *  Partirlas es S08 y S09, con su almacenamiento propio; aqui ya tienen armazon, menu y rutas, que
  *  es lo que S06 pide.
  */
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import { APLICACIONES, LayoutSuite, aplicacionDe, tituloDeSeccion } from './componentes/Suite'
 import { SUFIJO } from './componentes/Titulo'
 import { Vacio } from './componentes/ui'
-import { Ajustes } from './paginas/Ajustes'
-import { Avisos } from './paginas/Avisos'
-import { Buscar } from './paginas/Buscar'
-import { Cesta } from './paginas/Cesta'
-import { Cocina, CocinaProvider } from './paginas/Cocina'
-import { Escaner } from './paginas/Escaner'
-import { Diario } from './paginas/Diario'
-import { Tendencias } from './paginas/Tendencias'
-import { ImportarReceta } from './paginas/ImportarReceta'
-import { CocinaModo } from './paginas/CocinaModo'
-import { Despensa } from './paginas/Despensa'
-import { Favoritos } from './paginas/Favoritos'
-import { Grupo } from './paginas/Grupo'
-import { Panel } from './paginas/Panel'
-import { PanelMatching } from './paginas/PanelMatching'
-import { Producto } from './paginas/Producto'
-import { Recetario } from './paginas/Recetario'
-import { RecetaDetalle } from './paginas/RecetaDetalle'
-import { PlanSemanal } from './paginas/PlanSemanal'
-import { Unirse } from './paginas/Unirse'
+const Ajustes = lazy(() => import('./paginas/Ajustes').then((m) => ({ default: m.Ajustes })))
+const Avisos = lazy(() => import('./paginas/Avisos').then((m) => ({ default: m.Avisos })))
+const Buscar = lazy(() => import('./paginas/Buscar').then((m) => ({ default: m.Buscar })))
+const Cesta = lazy(() => import('./paginas/Cesta').then((m) => ({ default: m.Cesta })))
+const [Cocina, CocinaProvider] = [
+  lazy(() => import('./paginas/Cocina').then((m) => ({ default: m.Cocina }))),
+  lazy(() => import('./paginas/Cocina').then((m) => ({ default: m.CocinaProvider }))),
+]
+const Escaner = lazy(() => import('./paginas/Escaner').then((m) => ({ default: m.Escaner })))
+const Diario = lazy(() => import('./paginas/Diario').then((m) => ({ default: m.Diario })))
+const Tendencias = lazy(() => import('./paginas/Tendencias').then((m) => ({ default: m.Tendencias })))
+const ImportarReceta = lazy(() => import('./paginas/ImportarReceta').then((m) => ({ default: m.ImportarReceta })))
+const CocinaModo = lazy(() => import('./paginas/CocinaModo').then((m) => ({ default: m.CocinaModo })))
+const Despensa = lazy(() => import('./paginas/Despensa').then((m) => ({ default: m.Despensa })))
+const Favoritos = lazy(() => import('./paginas/Favoritos').then((m) => ({ default: m.Favoritos })))
+const Grupo = lazy(() => import('./paginas/Grupo').then((m) => ({ default: m.Grupo })))
+const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Panel })))
+const PanelMatching = lazy(() => import('./paginas/PanelMatching').then((m) => ({ default: m.PanelMatching })))
+const Producto = lazy(() => import('./paginas/Producto').then((m) => ({ default: m.Producto })))
+const Recetario = lazy(() => import('./paginas/Recetario').then((m) => ({ default: m.Recetario })))
+const RecetaDetalle = lazy(() => import('./paginas/RecetaDetalle').then((m) => ({ default: m.RecetaDetalle })))
+const PlanSemanal = lazy(() => import('./paginas/PlanSemanal').then((m) => ({ default: m.PlanSemanal })))
+const Unirse = lazy(() => import('./paginas/Unirse').then((m) => ({ default: m.Unirse })))
 
 const CLAVE_ULTIMO = 'cesta.ultimo'
 
@@ -136,6 +139,13 @@ export function App() {
   }, [pathname, search])
 
   return (
+    // **Y un solo `Suspense` por fuera, que es lo que hace falta.** *`CocinaProvider` tambien es
+    // diferido, asi que el limite tiene que estar **por encima** de el* -- *ponerlo solo dentro no
+    // cubriria la carga del propio provider.*
+    //
+    // *Y el texto de espera no es «Cargando...» a secas*: **dice que se esta abriendo la pantalla**,
+    // que es lo que de verdad esta pasando y lo que hace que la espera se entienda.
+    <Suspense fallback={<p className="p-6 text-neutral-600 dark:text-neutral-400">Abriendo la pantalla…</p>}>
     <CocinaProvider>
       <Routes>
         <Route path="/" element={<Lanzador />} />
@@ -240,6 +250,7 @@ export function App() {
         />
       </Routes>
     </CocinaProvider>
+    </Suspense>
   )
 }
 
