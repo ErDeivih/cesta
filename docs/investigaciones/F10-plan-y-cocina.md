@@ -916,3 +916,62 @@ que es para lo que se puso: *para que el numero baje sin recargar.*
 **Y el veredicto de `R05`, que ya se puede dar**: *la logica, la tabla y la ruta estaban verificadas desde antes;
 **la pantalla pinta, y el temporizador se comporta como la decision decia**.* **Lo unico que falta es el ensayo con
 la red cortada, que ahora es un paso y no una duda.**
+
+
+---
+
+## 20. Sin conexion: **la pantalla ya no se pierde, y el numero sigue congelado** -- *por una razon nueva y mas simple*
+
+*(Ronda 198.)*
+
+### Lo que se midio, con la fontaneria bien y la pantalla pintando
+
+```
+CON CONEXION:       quedan 1799 s   (pinta)
+SIN CONEXION t=0:   quedan 1799 s
+SIN CONEXION t=11:  quedan 1799 s         <-- CONGELADO
+y la pantalla sigue diciendo, entera:
+    «... Cocina | Vas por el paso 1. 0 ingredientes usados.
+     | 30 min -- quedan 29 min 59 s | Paso siguiente | Temporizador de 10 min»
+```
+
+**Dos cosas, y la primera es un avance real:**
+
+1. **La pantalla **ya no se pierde**.** *Sin conexion **sigue enseñando la cocina entera** -- el paso, los usados y el
+   temporizador --, *donde antes se iba a una rama que decia «Esta receta no esta empezada» (§9) o al error.*
+   **Los arreglos del §9 y del §18 funcionan, y se ven.**
+2. **Y el numero sigue **congelado**.** *Once segundos sin conexion, y `1799` otra vez.*
+
+### Y la razon es **nueva, mas simple, y no es la misma que antes**
+
+**El calculo **esta en el sitio bueno**: *`segundosQueQuedan(t.acaba_en)` = `acaba_en - Date.now()`, y **`acaba_en`
+llega**.* **Y el numero que se enseña es correcto **cuando se pinta**.**
+
+> **Lo que falta es **que se vuelva a pintar**.** *React solo re-ejecuta el componente **cuando cambia algo de su
+> estado** -- *y sin conexion, **no llega ninguna respuesta que cambie nada**, asi que **el `Date.now()` de la
+> funcion no se vuelve a evaluar***.* **El reloj avanza; la pantalla, no.**
+
+**Asi que la cuenta esta bien y **la fuente del latido no existe**.** *Y eso es **exactamente** la diferencia entre
+«calcular el tiempo» y «enseñarlo pasar»: *lo primero ya esta; **lo segundo necesita un tic**.*
+
+### Y el arreglo, que es pequeno y **si** funciona sin conexion
+
+**Un tic local.** *Un `useState` con un contador y un `useEffect` con `setInterval(..., 1000)` que lo incremente.*
+
+**Y funciona sin conexion **por la misma razon que todo lo demas**: *`setInterval` **no pide nada a nadie** -- es el
+reloj del aparato, **igual que `Date.now()`**.* **Es la pieza que faltaba para que la promesa del §2 se cumpla
+entera**: *el instante viaja desde el servidor, **el tiempo lo calcula el aparato**, y **ahora tambien lo repinta el
+aparato**.*
+
+### Y el balance de `R05`, que ya se puede cerrar con precision
+
+| la capa | **estado** |
+|---|---|
+| **la logica** | **verificada** -- *10 pruebas, los cuatro casos* |
+| **la tabla** | **verificada** -- *migracion `018`, `paso` nullable y los instantes en `jsonb`* |
+| **la ruta** | **verificada** -- *5 endpoints, `200` veinte de veinte* |
+| **la pantalla, con conexion** | **verificada** -- ***tres de tres pintan, y el reloj encadena `29:59 -> 29:48 -> 29:37`*** |
+| **la pantalla, sin conexion** | **no se pierde** (arreglado), **y el numero necesita el tic** |
+
+**Y lo que queda es **una linea de `setInterval`**, con el sitio exacto ya identificado.** *No es una duda: es un
+pendiente con la forma escrita.*
