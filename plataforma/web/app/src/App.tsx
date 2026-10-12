@@ -28,6 +28,7 @@ import { Cocina, CocinaProvider } from './paginas/Cocina'
 import { Escaner } from './paginas/Escaner'
 import { Diario } from './paginas/Diario'
 import { Tendencias } from './paginas/Tendencias'
+import { ImportarReceta } from './paginas/ImportarReceta'
 import { CocinaModo } from './paginas/CocinaModo'
 import { Despensa } from './paginas/Despensa'
 import { Favoritos } from './paginas/Favoritos'
@@ -142,6 +143,7 @@ export function App() {
         <Route path="/compra/listas" element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>} />
         <Route path="/compra/despensa" element={<LayoutSuite app="compra"><Despensa /></LayoutSuite>} />
         <Route path="/compra/cocina/:recetaId/:version" element={<LayoutSuite app="compra"><CocinaModo /></LayoutSuite>} />
+        <Route path="/compra/importar" element={<LayoutSuite app="recetas"><ImportarReceta /></LayoutSuite>} />
         <Route
           path="/compra/listas/:listaId"
           element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>}
