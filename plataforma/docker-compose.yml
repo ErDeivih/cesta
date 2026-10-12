@@ -67,7 +67,21 @@ services:
       # Solo en la interfaz de Tailscale si esta definida; si no, en todas.
       # Lo segundo esta bien mientras el router no tenga nada abierto, pero lo
       # primero es lo correcto.
-      - "${CESTA_ESCUCHA:-0.0.0.0}:8080:8080"
+          # **Por defecto, SOLO loopback.** *Antes el valor por defecto era `0.0.0.0`, asi que la web
+    # escuchaba en **todas** las interfaces de la maquina sin que nadie lo hubiera pedido.*
+    #
+    # *Lo medido el 12 de octubre de 2026, con `docker ps`:* **de los cinco contenedores, era el UNICO
+    # en `0.0.0.0`** -- `cesta-db-1`, `cesta-prueba-db` y `facylf-postgres` estaban en `127.0.0.1`, y
+    # `cesta-api-1` no publicaba puerto. *Asi que el patrón del proyecto ya era loopback, y la web era la
+    # excepcion.*
+    #
+    # **Y no es lo mismo estar en loopback que no estarlo**, aunque no haya nada abierto a Internet:
+    # *`0.0.0.0` significa **cualquier interfaz**, y eso incluye la red de casa, la del trabajo y
+    # cualquier VPN.* *Que hoy no haya nada mirando no lo convierte en una decision.*
+    #
+    # *Para abrirlo a proposito se pone `CESTA_ESCUCHA=0.0.0.0`, que ahora hay que querer.* **El encargo
+    # lo dice con estas palabras: «no realices despliegues publicos».**
+    - "${CESTA_ESCUCHA:-127.0.0.1}:8080:8080"
     volumes:
       # La interfaz nueva. Vite compila a `web/dist` (ver `web/app/vite.config.ts`)
       # y Caddy sirve eso; antes se servia la carpeta entera, con el `index.html`
