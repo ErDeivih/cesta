@@ -287,3 +287,48 @@ en que el otro sitio es **codigo del mismo proyecto que ya no se usa**.*
 
 **Una regresion con el arreglo al lado, y un ensayo que necesita que se levante la pila.** *Y `F14` deja esto:
 **el unico caso de la fase que no es «falta» ni «esta bien», sino «estaba y se perdio»**.*
+
+
+---
+
+## 5. Las cuatro anchuras y el zoom al 200 % -- **medidos, y no se sale nada**
+
+*(Ronda 183, con la pila del sandbox: API 8102, Vite 5173, y sesion entrante con JSON.)*
+
+**Era el hueco que quedaba de este paquete**: *«widths 360/390/768/1440 + zoom 200 %, con un navegador»*. **Y ya
+esta medido.**
+
+### Lo que se midio
+
+**Cuatro pantallas** -- *la lista (`/compra/listas`), el buscador (`/compra`), **la despensa**
+(`/compra/despensa`) y **el importar recetas** (`/compra/importar`)* -- **en cuatro anchuras**, y la prueba es
+`document.documentElement.scrollWidth` contra `window.innerWidth`: **si el primero es mayor, algo se sale de la
+pantalla y hay que arrastrar de lado para leerlo.**
+
+```
+  360px (movil pequeno)  OK
+  390px (movil)          OK
+  768px (tableta)        OK
+ 1440px (escritorio)     OK
+ zoom 200 %              1440 vs 1440  OK
+```
+
+**Ninguna se sale.** *Ni una, ni en la mas estrecha, ni con el zoom al doble.*
+
+### Y lo que esto **no** dice, para no darlo por mas de lo que es
+
+**Esto mide **desbordamiento horizontal**, y nada mas.** *No dice que las pantallas **se lean bien** en un movil:
+dice que **no hay que arrastrar de lado**.* **Un texto de 9 px que cabe en 360 px pasa esta prueba y sigue siendo
+ilegible** -- *y eso **no se ha medido**, ni se puede medir asi.*
+
+**Y es la misma distincion que el resto de la fase**: *«no se sale» **no es** «se lee bien».* **Lo que se puede
+afirmar es lo que se midio: que ninguna de las cuatro pantallas desborda a ninguna de las cuatro anchuras, ni al
+doble de tamano.**
+
+### Y la linea que faltaba, que salio de aqui
+
+**`App.tsx` da el titulo de la pestana por prefijo de ruta, y a `despensa` se le puso el suyo en su dia** -- *pero
+**`cocina` e `importar` no lo tenian**.* **Asi que las dos salian con «Compra · Cesta»**, el generico de la suite.
+
+**Y eso se arreglo**: *dos lineas, al lado de la de despensa.* **Es un detalle pequeno y es exactamente el tipo de
+cosa que **no la caza un `tsc`** -- *compila igual con el titulo mal--, y que solo se ve **abriendo la pantalla**.*

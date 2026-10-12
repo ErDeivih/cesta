@@ -107,6 +107,8 @@ export function tituloDe(ruta: string): string {
   if (ruta === '/buscar' || ruta === '/compra') return 'Buscar'
   if (ruta.startsWith('/cesta') || ruta.startsWith('/compra/listas')) return 'La cesta'
   if (ruta.startsWith('/compra/despensa')) return 'Despensa'
+  if (ruta.startsWith('/compra/cocina')) return 'Cocina'
+  if (ruta.startsWith('/compra/importar')) return 'Importar una receta'
   if (ruta.startsWith('/grupo/') || ruta.startsWith('/compra/comparar/')) return 'Comparar'
   if (ruta.startsWith('/producto/') || ruta.includes('/productos/')) return 'Producto'
   if (ruta.startsWith('/favoritos') || ruta.startsWith('/compra/favoritos')) return 'Favoritos'
