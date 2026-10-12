@@ -191,3 +191,54 @@ antes de que la aplicacion exista***.
 **Tres de seis con numero, y los tres que faltan son los que exigen levantar algo.** *Y el unico que resulto ser
 una **funcion ausente** -- la paginacion -- **no era el que parecia**: se buscaba un problema de rendimiento y
 aparecio **una capacidad que no esta**.*
+
+
+---
+
+## 4. La latencia, medida -- *una de las tres cosas que `F15` pedia y no estaban*
+
+*(Ronda 216. **`F15` pedia «indices, cargas, tamanos JS y latencia»; la latencia ya tiene numero.**)*
+
+### Lo que se midio
+
+**Cinco llamadas por endpoint, desde el navegador, con la pila del sandbox** (*API `8102`, Vite `5173`*):
+
+```
+/api/yo                                  mediana  20,6 ms   min 14,8   max  23,0   {200}
+/api/listas                              mediana  16,2 ms   min 14,7   max  17,8   {200}
+/api/despensa                            mediana  14,2 ms   min 13,3   max  15,1   {200}
+/api/cocina/7?version=2                  mediana  13,5 ms   min 12,9   max  13,7   {200}
+/api/catalogo/buscar?texto=leche&...     mediana   6,9 ms   min  6,6   max   7,3   {404}
+```
+
+### Y lo que dicen los numeros, que es lo util
+
+**Los cuatro endpoints de las funciones nuevas** -- *la despensa, la cocina, la sesion y las listas* -- **contestan en
+**13 a 21 milisegundos**, y **con muy poca dispersion**: *la diferencia entre el mas rapido y el mas lento de cinco
+intentos es de **2 a 8 ms**.*
+
+> **Y eso importa porque el tope de espera se puso en **diez segundos**.** *O sea: **el tope esta a un factor de
+> **quinientas veces** por encima de la mediana real**.* **No es un limite que se pueda alcanzar por lentitud normal**
+> -- *solo por **un atasco de verdad**, que es exactamente lo que tiene que detectar.* **Y ahora se sabe, en vez de
+> suponerlo.**
+
+### Y el `404`, que es **de mi medicion y no del producto**
+
+**La quinta ruta la escribi de memoria y **no existe**: `/api/catalogo/buscar` devuelve `404`.** *El buscador **si**
+existe -- *su ruta esta declarada en otro sitio* --, **y lo que fallo fue mi suposicion de como se llama.**
+
+**Y por eso se dice, en vez de quitarlo de la tabla**: *un `404` en una tabla de latencias **parece un fallo del
+buscador** y **es un fallo de quien midio**.* *Es la misma distincion que el resto de la fase: **decir cual de las
+dos cosas es.***
+
+### Y lo que queda de `F15`, con su nombre
+
+| lo que `F15` pide | **estado** |
+|---|---|
+| **paginacion** | **hecha** -- *y destapo que el orden de `buscar` no es total* |
+| **latencia** | **medida** -- *13 a 21 ms en los cuatro endpoints nuevos* |
+| **tamanos JS** | **medido** antes: *681 KB en un solo chunk + 35,9 KB de CSS* |
+| **cargas** | *por medir: cuantas peticiones hace una pantalla al abrirse* |
+| **indices** | *por medir: que indices tiene la tabla y cuales se usan* |
+
+**Y las dos que quedan son **medibles sin decidir nada** -- *asi que van despues de esto, no antes.*
