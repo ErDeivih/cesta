@@ -860,3 +860,59 @@ cosa**, que es **la unica lectura que falta**.*
 **Y mientras tanto, algo que **si** se puede dar por bueno:** *la pantalla **pinta cuando la consulta llega**, y
 **cuando no llega sin conexion, lo dice** (§17). **Lo que no hace todavia es decir que no llego cuando la red esta
 bien y la consulta se atasca** -- *que es un caso raro, pero **es el que se ve una de cada tres veces**.*
+
+
+---
+
+## 19. **Y funciona: tres de tres, con el reloj encadenado**
+
+*(Ronda 197. **Esto cierra el tramo de §6 a §18.**)*
+
+### Lo que se midio
+
+**Tres corridas seguidas, paginas nuevas cada una:**
+
+```
+corrida 1: PINTA (quedan 29 min 59 s)
+corrida 2: PINTA (quedan 29 min 48 s)      <- 11 s menos
+corrida 3: PINTA (quedan 29 min 37 s)      <- 11 s menos
+```
+
+**Tres de tres pintan** -- *donde el §18 daba dos de tres* --, **y el tiempo encadena**:
+`29:59 -> 29:48 -> 29:37`, *once segundos por corrida, **en tres pantallas que no saben la una de la otra**.*
+
+### Y las dos cosas que esto demuestra, que son la misma
+
+**1. La pantalla pinta.** *La consulta **se resuelve**, y el temporizador **aparece**.*
+
+**2. Y el tiempo lo lleva el **instante**, no un contador.** *Tres cargas independientes, y **el numero sigue bajando**
+-- *que es **imposible** si el tiempo estuviera en la pantalla: cada carga habria empezado de cero, y las tres
+dirian `30 min 0 s`.*
+
+> **Es la decision de `core/cocina.py` y de la migracion `018` -- «un temporizador no es una cuenta atras, es una
+> hora de fin» --, **demostrada en la pantalla**: *lo que viaja es **cuando acaba**, y **lo que queda lo calcula el
+> aparato**.* **Por eso tres pantallas distintas dan tres numeros distintos y coherentes.**
+
+### Y el arreglo que lo desatasco, que fue **una linea**
+
+**`refetchInterval: 15000`** -> **`refetchInterval: (consulta) => (consulta.state.data ? 15000 : false)`**
+
+*React Query da `isPending` mientras no haya tenido **nunca** `data`, y **el intervalo volvia a disparar la consulta
+antes de que el primer intento se resolviera**, asi que **el estado observable no salia de `pending`** -- *y
+`isPending` verdadero con `error` falsy **es «Cargando» para siempre**.*
+
+**Con la condicion, el primer intento termina, y el refresco empieza despues.** *Y el refresco **sigue estando**,
+que es para lo que se puso: *para que el numero baje sin recargar.*
+
+### Y el balance honesto de este tramo
+
+| | |
+|---|---|
+| **lo que era del producto** | **el `refetchInterval`** -- *una linea*, **y era la causa de «Cargando» eterno** |
+| **lo que era del ensayo** | **`CESTA_API` sin poner** -- *Vite proxya al `8000`, donde no habia nadie* |
+| **lo que se arreglo de paso y vale** | *que la pantalla **diga** «no se pudo preguntar» en vez de afirmar que la receta no esta empezada* |
+| **lo que queda** | *medir **sin conexion** de verdad, ahora que la fontaneria esta bien y la pantalla pinta* |
+
+**Y el veredicto de `R05`, que ya se puede dar**: *la logica, la tabla y la ruta estaban verificadas desde antes;
+**la pantalla pinta, y el temporizador se comporta como la decision decia**.* **Lo unico que falta es el ensayo con
+la red cortada, que ahora es un paso y no una duda.**
