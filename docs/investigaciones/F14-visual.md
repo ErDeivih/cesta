@@ -392,3 +392,63 @@ cosa** -- *probablemente un `input` oculto, un separador, o un elemento con `off
 
 **Asi que `F14` sigue en «medido», y **con mejor motivo que antes**: *tres cosas medidas, una **con su cifra y su
 filo***, y una **cuyo instrumento hay que arreglar antes de creerle el numero.**
+
+
+---
+
+## 7. **Correccion**: los 12 px son los **rotulos del menu**, no texto de lectura
+
+*(Ronda 223. **El §6 dijo «la letra mas pequena mide 12 px» y lo dejo ahi; esto dice de quien es esa letra.**)*
+
+### Lo que se midio
+
+**Los elementos de **13 px o menos**, con su texto, en la misma pantalla y a 390 px:**
+
+```
+/compra/despensa   13 px  <p>  «Compra»
+/compra/importar   13 px  <p>  «Recetas»
+```
+
+**Y **nada mas**.** *Ni un parrafo, ni una lista, ni una celda, ni una etiqueta de campo: **los dos unicos textos de
+12-13 px de esas pantallas son los rotulos de seccion del menu lateral** -- *«Compra» y «Recetas»*.
+
+### Y por que esto cambia la lectura del §6, en la direccion buena
+
+**El §6 decia**: *«el texto mas pequeno de estas pantallas esta justo en el limite bajo»*, y lo comparaba con la
+referencia de **16 px para texto de lectura**.*
+
+**Pero un rotulo de seccion de un menu **no es texto de lectura**.** *Es una etiqueta corta, en mayusculas o casi, que
+**se lee de un vistazo** -- *y **12-13 px es lo normal en ella**, en cualquier interfaz.* **Aplicarle la regla de los
+16 px seria como medir un icono por su altura de letra.**
+
+> **Asi que la cifra del §6 era correcta y su conclusion no**: *«la letra mas pequena mide 12 px» **es un dato**; «y
+> por eso el texto esta en el filo» **era una conclusion sobre el texto de lectura, y el texto de lectura no es el
+> que mide 12 px**.*
+
+**Y el texto **de verdad** -- *el de la lista de la despensa, el de los ingredientes, el de la explicacion* -- **esta a
+14 px o mas**, *que es lo que la medicion dejo fuera por su propio corte.*
+
+### Y es el mismo error que el §6 cometio con las palabras, una ronda antes
+
+**En el §6 de `F13` busque «universo» y no encontre nada, y **el criterio si se cumplia** -- *se decia con la palabra
+«solo»*.** **Y aqui he medido «lo mas pequeno» y saque una conclusion sobre «el texto», y **lo mas pequeno no era
+texto**.**
+
+> **Las dos veces el instrumento era correcto y **la pregunta estaba mal hecha**: *«cual es la letra mas pequena» **no
+> es** «se lee bien»; y «aparece la palabra universo» **no es** «se explica el universo».*
+
+**Es la leccion de la fase en su forma mas pura**: *una cifra **cierta** y una conclusion **ajena a la cifra**, que es
+como se escriben los informes que parecen medidos y no lo estan.*
+
+### Y `F14` queda, entonces, asi
+
+| lo que `F14` tiene | **estado** |
+|---|---|
+| **contraste y color con sistema** | **medido** |
+| **cuatro anchuras y zoom 200 %** | **medido**: *nada se sale* |
+| **`prefers-reduced-motion`** | **era una regresion, y se arreglo** |
+| **el texto de lectura** | **mide 14 px o mas** -- *y el de 12-13 px son **rotulos de menu**, que es otra cosa* |
+| **«se lee bien»** | **sigue siendo un juicio** -- *pero **ya no tiene un filo medido que lo desmienta*** |
+
+**Asi que `F14` esta **tan medido como se puede**, y su unico pendiente real sigue siendo un juicio** -- *que no es una
+medida que falte, sino **una pregunta que hay que contestar mirando**, no contando.*
