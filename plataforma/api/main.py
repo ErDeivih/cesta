@@ -168,7 +168,8 @@ def buscar(q: str = "", cadenas: str | None = None, limite: int = 40,
            sellos: str | None = None, conservacion: str | None = None,
            marca_propia: bool = False, ofertas: bool = False,
            sin_alcohol: bool = False, seccion: str | None = None,
-           usuario: dict | None = Depends(usuario_opcional)):
+           usuario: dict | None = Depends(usuario_opcional),
+           desplazamiento: int = Query(0, ge=0)):
     """Buscar por texto, por pasillo, o las dos cosas.
 
     `q` deja de ser obligatorio: explorar un pasillo es una busqueda sin texto.
@@ -198,7 +199,7 @@ def buscar(q: str = "", cadenas: str | None = None, limite: int = 40,
     def busca(que: str) -> list:
         return catalogo.buscar(que, lista, limite, comparables, con_nutricion,
                                filtros, conservacion, marca_propia, ofertas,
-                               sin_alcohol, seccion)
+                               sin_alcohol, seccion, desplazamiento=desplazamiento)
 
     resultados = busca(q)
     corregido = None
@@ -401,8 +402,13 @@ def estado():
     """
     con = catalogo.conexion()
     filas = con.execute("""
-        SELECT fuente, count(*) AS productos, max(fecha)::VARCHAR AS ultimo_dia
-          FROM diario GROUP BY fuente ORDER BY fuente
+        WITH ultimas AS (
+            SELECT fuente, max(fecha) AS fecha FROM diario GROUP BY fuente
+        )
+        SELECT d.fuente, count(DISTINCT d.id_fuente) AS productos,
+               u.fecha::VARCHAR AS ultimo_dia
+          FROM diario d JOIN ultimas u ON d.fuente = u.fuente AND d.fecha = u.fecha
+         GROUP BY d.fuente, u.fecha ORDER BY d.fuente
     """).fetchall()
     hoy = catalogo.fecha_de_gold()
     return {

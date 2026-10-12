@@ -1,5 +1,10 @@
 # SUPERAPP · Estado del trabajo
 
+**Revisión independiente del 12/10/2026:** [hallazgos, correcciones y continuación A01–A10](SUPERAPP-REVISION-2026-10-12.md).
+El resumen siguiente es anterior: la revisión confirma ingesta interrumpida hoy,
+publicación incoherente, cobertura de detalles incompleta y comparaciones de familias
+presentadas como identidad exacta. No se considera lista para despliegue público.
+
 ## Resumen vigente — 11 de octubre de 2026
 
 **Tablero operativo por paquete (G01–G14): [SUPERAPP-EJECUCION.md](SUPERAPP-EJECUCION.md).**

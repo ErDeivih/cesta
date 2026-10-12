@@ -1,4 +1,6 @@
-"""F15: **la paginacion del buscador**, que era un tope -- y el defecto que destapo.
+"""F15: paginacion estable. Revision del 12/10: desempate corregido y datos controlados.
+
+Las notas siguientes describen el hallazgo historico; las pruebas ya no son xfail.
 
 El criterio (`docs/SUPERAPP-FASE2-EMPEZAR-AQUI.md:189`) pide: *«Medir busqueda/listas/fichas/graficas con
 volumen real: **paginacion**, indices, cargas, tamanos JS y latencia.»*
@@ -24,9 +26,30 @@ coinciden por azar, `xfail(strict=True)` da **XPASS** y la suite falla.* **Las d
 """
 from __future__ import annotations
 
+import duckdb
 import pytest
 
 from plataforma.api import catalogo
+
+
+@pytest.fixture(autouse=True)
+def catalogo_controlado(monkeypatch):
+    """Empates deliberados; no depende de los productos ni de las ofertas del dia."""
+    con = duckdb.connect(":memory:")
+    con.execute("""
+        CREATE TABLE buscable AS SELECT
+            i::INTEGER AS grupo_id, 'leche' AS texto, 'Leche' AS nombre,
+            'Marca' AS marca, 'dia' AS fuente, 100 AS precio_cent,
+            100 AS precio_unidad_cent, 'l' AS unidad_canon,
+            true AS precio_comparable, true AS comparacion_fiable,
+            NULL::VARCHAR AS nutriscore, NULL::VARCHAR AS nutricion,
+            NULL::VARCHAR AS imagen, NULL::VARCHAR AS promo_txt,
+            false AS promo_club, false AS promo_solo_online, false AS es_recall
+        FROM range(30, 0, -1) t(i)
+    """)
+    monkeypatch.setattr(catalogo, "conexion", lambda: con)
+    yield
+    con.close()
 
 #: *Cuanto se repite una llamada para saber si su orden es estable.* **Dos no basta; veinte si.**
 VEINTE = 20
@@ -84,14 +107,6 @@ def test_mas_alla_del_final_devuelve_vacio_y_no_falla():
 # ------------------------- y EL DEFECTO QUE LA PAGINACION DESTAPO: el orden no es total ---
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "DEFECTO MEDIDO: `buscar` ordena por `comparable DESC, cadenas DESC, min_unidad` **sin desempate**, "
-    "asi que los grupos con las mismas tres claves salen en orden ARBITRARIO. Medido el 11 de octubre de 2026 "
-    "al anadir el `OFFSET`: la misma llamada, `buscar('leche', limite=5)`, devolvio [20378, ...] una vez y "
-    "[10645, ...] otra. **Y eso hace que la paginacion pierda y repita filas**: un producto puede salir dos "
-    "veces o no salir -- *peor que no paginar, porque ademas PARECE que funciona*. El arreglo es un desempate "
-    "estable al final del `ORDER BY` (p. ej. `grupo_id`), y **no se ha hecho porque cambia el orden que ve "
-    "quien ya usa el buscador**, y eso es una decision."))
 def test_el_orden_del_buscador_es_estable_entre_llamadas():
     """**Lo que la paginacion necesita para no mentir.** *Un `OFFSET` sobre un orden que cambia no pagina: baraja.*
 
@@ -103,13 +118,9 @@ def test_el_orden_del_buscador_es_estable_entre_llamadas():
     assert len(vistas) == 1, (
         f"veinte llamadas iguales dieron {len(vistas)} ordenes distintos:\n"
         + "\n".join(f"  {v}" for v in list(vistas)[:3]))
+    assert next(iter(vistas)) == ("1", "2", "3", "4", "5")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "DEFECTO MEDIDO: el mismo que `test_el_orden_del_buscador_es_estable` -- *el orden de `buscar` no es "
-    "total, asi que `desplazamiento=0` puede dar una pagina distinta a no pasar nada.* **Veinte intentos**, "
-    "porque con dos el `xfail(strict=True)` es intermitente. Depende del `ORDER BY`, **no de la paginacion**, "
-    "que funciona."))
 def test_el_desplazamiento_por_defecto_no_cambia_nada():
     """**La mitad que evita romper lo que ya funcionaba.** *`desplazamiento` vale `0` por defecto: quien no lo
     pasa recibe lo de antes.*

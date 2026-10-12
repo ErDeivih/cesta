@@ -92,7 +92,7 @@ export function SelloEcoscore({ valor }: { valor: string | null | undefined }) {
 export function SelloComparable({ cadenas }: { cadenas: number }) {
   if (cadenas >= 2) {
     return (
-      <Etiqueta tono="bien" titulo="El mismo producto está en más de una cadena: se puede comparar">
+      <Etiqueta tono="bien" titulo="El grupo tiene precios por unidad en varias cadenas. Puede incluir marcas y formatos diferentes; no confirma un producto idéntico.">
         comparable · {cadenas} cadenas
       </Etiqueta>
     )

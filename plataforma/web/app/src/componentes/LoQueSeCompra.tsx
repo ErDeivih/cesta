@@ -122,7 +122,8 @@ export function LoQueSeCompra() {
   return (
     <Tarjeta>
       <p className="text-sm text-tinta-suave">
-        Esto compara el precio del mismo producto entre cinco supermercados. Un
+        Esto compara precios por unidad de grupos de productos entre supermercados.
+        Los grupos pueden incluir marcas y formatos diferentes. Un
         ejemplo de hoy:
       </p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

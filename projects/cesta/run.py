@@ -102,6 +102,10 @@ def _una_cadena(nombre: str) -> tuple[str, bool, float]:
             print("colector incompleto: tiene parser pero no main()")
         else:
             bien = mod.main() == 0
+    except SystemExit as exc:
+        # Un colector con CLI propia (Lidl exige origen y region) no puede
+        # terminar el proceso diario ni impedir publicar las otras cadenas.
+        print(f"FALLO: el colector termino su CLI (codigo {exc.code}); revisa su configuracion")
     except Exception as exc:  # noqa: BLE001
         print(f"FALLO: {type(exc).__name__}: {exc}")
     segundos = time.monotonic() - t0

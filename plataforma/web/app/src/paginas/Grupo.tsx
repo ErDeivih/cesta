@@ -24,6 +24,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
 import { misListas, yo } from '../api/cesta'
+import { useSeAtasca } from '../api/cliente'
 import { useEstado, useGrupo } from '../api/consultas'
 import { Campana } from '../componentes/Campana'
 import { useTitulo } from '../componentes/Titulo'
@@ -63,6 +64,7 @@ export function Grupo() {
   const navega = useNavigate()
 
   const consulta = useGrupo(Number.isFinite(id) ? id : null)
+  const atascada = useSeAtasca(consulta.isPending && consulta.fetchStatus === 'fetching')
   const estado = useEstado()
 
   // **Diagnostico temporal**, para el cuelgue de esta pantalla: se imprime el estado de la
@@ -97,6 +99,9 @@ export function Grupo() {
   /** Si ese precio puede decidir donde comprar. */
   const juzga = useCallback(
     (p: Producto): Juicio => {
+      if (estado.data?.vigencia_precio?.coherente === false) {
+        return { decide: false, motivo: 'La versión del catálogo y sus precios no son coherentes. No se recomienda una tienda con estos datos.' }
+      }
       if (p.precio_unidad_cent === null || !(p.precio_unidad_cent > 0)) {
         return {
           decide: false,
@@ -175,6 +180,10 @@ export function Grupo() {
         </Boton>
       </Vacio>
     )
+  }
+  if (consulta.isPending && atascada) {
+    return <Fallo error={new Error('La ficha tarda demasiado en responder. No se ha podido verificar la comparación.')}
+                  reintentar={() => void consulta.refetch()} />
   }
   if (consulta.isPending) return <Cargando que="el grupo" />
   if (consulta.isError) {
@@ -348,6 +357,13 @@ export function Grupo() {
           </dl>
         </div>
       </header>
+
+      {estado.data?.vigencia_precio?.coherente === false && (
+        <Aviso tono="aviso" titulo="Catálogo pendiente de verificar">
+          La versión publicada no coincide con las fechas de sus precios. Se muestran los datos,
+          pero no se recomienda una tienda hasta verificar la publicación.
+        </Aviso>
+      )}
 
       {otrasUnidades.length > 0 && (
         <Aviso tono="aviso" titulo="Este grupo mezcla unidades">

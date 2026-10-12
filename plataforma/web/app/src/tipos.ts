@@ -243,6 +243,12 @@ export interface CadenaEstado {
 
 export interface RespuestaEstado {
   fecha_datos: string
+  version_catalogo?: string | null
+  vigencia_precio?: {
+    comprobable: boolean
+    coherente: boolean | null
+    motivo?: string | null
+  }
   /** Cuantos dias aguanta un precio sin dejar de decidir donde comprar. Hoy 3. */
   dias_precio_valido: number
   cadenas: CadenaEstado[]

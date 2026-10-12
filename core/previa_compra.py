@@ -27,7 +27,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-from core import envases
+from core import envases, normalize
 
 
 @dataclass
@@ -67,6 +67,7 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
     """
     acumulado: dict[str, LineaDeCompra] = {}
     por_producto: dict[str, set[str]] = {}      # producto -> unidades vistas
+    unidades_originales: dict[str, set[str]] = {}
     sin_cantidad: list[str] = []
 
     for ing in ingredientes:
@@ -77,7 +78,8 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         pid = str(pid) if pid else None
 
         # **Regla 2: sin cantidad no hay compra.** *Y sin inventarla.*
-        if not isinstance(cantidad, (int, float)) or cantidad <= 0:
+        if (isinstance(cantidad, bool) or not isinstance(cantidad, (int, float))
+                or not math.isfinite(cantidad) or cantidad <= 0):
             if texto:
                 sin_cantidad.append(texto)
             continue
@@ -89,8 +91,13 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         # **La clave de la consolidacion: producto si lo hay, y si no el texto.** *La unidad va
         # dentro: sumar kilos con unidades seria inventar.*
         quien = pid or texto.lower()
-        clave = f"{quien}|{unidad}"
-        por_producto.setdefault(quien, set()).add(unidad)
+        # Comparar en una base comun no obliga a cambiar como se muestra una
+        # linea homogenea. Solo una mezcla g/kg se presenta en kg (ml/l en l).
+        canon, factor = normalize._UNIDADES.get(unidad, (unidad, 1.0))
+        clave = f"{quien}|{canon}"
+        por_producto.setdefault(quien, set()).add(canon)
+        unidades_originales.setdefault(clave, set()).add(unidad)
+        cantidad = round(cantidad * factor, 9)
 
         if clave in acumulado:
             ln = acumulado[clave]
@@ -100,7 +107,17 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         else:
             acumulado[clave] = LineaDeCompra(
                 clave=clave, texto=texto, producto_id=pid,
-                cantidad=float(cantidad), unidad=unidad, de_donde=[texto])
+                cantidad=float(cantidad), unidad=canon, de_donde=[texto])
+
+    for clave, ln in acumulado.items():
+        originales = unidades_originales[clave]
+        if len(originales) == 1:
+            original = next(iter(originales))
+            _, factor = normalize._UNIDADES.get(original, (original, 1.0))
+            ln.cantidad = round(ln.cantidad / factor, 9)
+            ln.unidad = original
+        else:
+            ln.cantidad = round(ln.cantidad, 9)
 
     # **Regla 1: lo que quedo en unidades incompatibles se nombra.** *No se suma ni se elige una.*
     sin_consolidar = []

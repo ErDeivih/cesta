@@ -419,7 +419,7 @@ def buscar(texto: str, cadenas: list[str] | None = None, limite: int = 40,
                cadenas >= 2 AS comparable,
                min_unidad > 0 AND max_unidad / min_unidad > {FACTOR_INCREIBLE} AS dudoso
           FROM porgrupo
-        ORDER BY comparable DESC, cadenas DESC, min_unidad
+        ORDER BY comparable DESC, cadenas DESC, min_unidad, grupo_id
         -- **`OFFSET` para poder pedir la pagina siguiente.** *Sin el, `LIMIT` es un TOPE: se ven los
         -- primeros N, y los siguientes **no se pueden pedir** -- que no es lo mismo que paginar.*
         LIMIT ? OFFSET ?
