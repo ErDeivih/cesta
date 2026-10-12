@@ -662,3 +662,58 @@ en la pantalla**, que es la capa que falta.
 
 **Y con esto F09 y F10 quedan medidos**: *tres criterios hechos, uno con un defecto fijado (`kg/g`), y uno que no
 existe.*
+
+
+---
+
+## 5. La pantalla de importar, verificada **con y sin conexion** -- *y no necesita el tope*
+
+*(Ronda 212. **Y esto separa `R02` de `R05` y `R08` por una razon de diseno, no de suerte.**)*
+
+### Lo que se midio
+
+```
+con conexion:   pinta, y dice «antes de guardar»
+SIN conexion, tras pulsar «Ver la previa»:
+      Direccion
+      Ver la previa
+      «SIN CONEXION CON CASA. Esto es lo ultimo que hay en pantalla.»
+      «No se ha leido ni guardado nada de esa direccion.»
+¿se queda en «Mirando...» para siempre?:  False
+```
+
+### Y por que aqui **no hace falta el tope de espera**, que es lo interesante
+
+**La pantalla de importar **no usa React Query**.** *Su estado es un `useState` -- `mirando` -- que se pone **al
+pulsar** y se quita **en el `finally`**.* **Asi que **no puede quedarse atascada**: *el `try`/`catch`/`finally`
+**siempre termina**, y el fallo de red **cae en el `catch`**, que escribe el aviso.
+
+> **Y eso es la diferencia con la despensa y la cocina**: *alli el estado lo lleva **una consulta**, y **una consulta
+> puede quedarse `pending` sin llegar a fallar** -- *que es lo que el tope arregla.* **Aqui el estado lo lleva un
+> boton**, y **un boton siempre acaba.**
+
+**Y no es un detalle**: *dice **donde** hace falta el tope y **donde no** -- *y evita **meter un tope donde no hay
+nada que topar***, que es lo que hace el codigo cuando se copia un arreglo sin mirar si el problema existe.*
+
+### Y dos cosas mas que aparecen en la medida, y no se sabian
+
+**1. El armazon tiene **su propio aviso de sin conexion**: «Sin conexion con casa. Esto es lo ultimo que hay en
+pantalla.»** *No lo escribio `R02`: **lo pone la aplicacion**, y **dice exactamente lo que hay que decir** -- *que
+lo que se ve **es lo ultimo que llego**, no lo de ahora.*
+
+**2. Y el aviso de la pantalla se suma al del armazon, sin contradecirse**: *«no se ha leido ni guardado nada de esa
+direccion»* -- *que es **cierto**: *la peticion no salio.*
+
+### Y `R02`, con esto, capa por capa
+
+| la capa | **el resultado** |
+|---|---|
+| **la fuente permitida** | *`core/importar_receta.py`, **7 pruebas** -- *una direccion se acepta **solo si su host esta declarado** y si no **se rechaza con el motivo*** |
+| **el borrador** | *la previa que **no escribe**; **el modulo no puede alcanzar la puerta que escribe**, y hay una prueba que lo fija* |
+| **el lector** | *`application/ld+json` con `@type: Recipe`; **6 pruebas**, y **el estandar, no un formato inventado*** |
+| **la ruta** | ***verificada**: fuente no declarada -> `400` **diciendo cual**; esquema malo -> `400`; sin receta -> `422`* |
+| **la pantalla** | ***vista, con y sin conexion*** -- *y **no se queda colgada** porque **no hay consulta que se pueda colgar*** |
+
+**Y lo unico que le falta a `R02` **no es codigo**: *es **la lista de fuentes**, que es **la quinta decision del
+dueno**.* *Con la lista vacia, la pantalla **solo puede decir «no puedo importar de ahi»** -- *que es **verdad**, y
+**es el estado real***.
