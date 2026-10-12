@@ -417,3 +417,61 @@ en orden de probabilidad:*
 las tres veces **construi una teoria antes de mirar lo que ya estaba delante**.** *Y la tercera es la que
 importa: **el `500` llevaba ahi desde el primer ensayo**, y lo que lo tapaba era **mi propio filtro** y **un
 `isLoading` que no se apaga**.*
+
+
+---
+
+## 12. El log dice `200` -- **y mi captura decia `500`**. *Una de las dos miente, y no se cual*
+
+*(Ronda 190.)*
+
+### Lo que se midio
+
+**El log del proceso de la API (`data/debug/api5.log`, 2 473 bytes) acaba asi:**
+
+```
+INFO:  127.0.0.1:3442 - "GET /api/cocina/7?version=2 HTTP/1.1"  200 OK
+INFO:  127.0.0.1:3441 - "GET /api/yo HTTP/1.1"                  200 OK
+INFO:  127.0.0.1:3443 - "GET /api/yo HTTP/1.1"                  200 OK
+INFO:  127.0.0.1:3444 - "GET /api/listas HTTP/1.1"              200 OK
+```
+
+**Y la captura del navegador del §11 decia `(500, '/api/cocina/7?version=2')`.**
+
+**El mismo endpoint, la misma ronda, dos respuestas distintas.** *Y **no se cual de las dos es la buena**, asi que
+se dice asi.*
+
+### Y las dos lecturas, con lo que las distingue
+
+1. **El `500` fue **transitorio**.** *El log **si** tiene un `200 OK` del mismo camino, y **es el unico que hay**:
+   *no hay ningun `500` en el log entero.* **Y las peticiones del log son de la ronda 189.** *Asi que **si el
+   navegador hubiera recibido un `500`, estaria escrito** -- *a menos que el `500` lo generase **otra cosa** y no
+   el proceso (un proxy, o el propio Vite).*
+
+2. **O el `500` **no era de esa peticion**.** *`pag.on("response", ...)` **captura todas las respuestas**, y yo
+   filtre por `"/api/cocina" in q.url`.* *Si **algo** contesto `500` con esa URL -- *por ejemplo **Vite**, que
+   tambien proxya `/api`* --, **la captura lo recogio y el log no**, porque **el log es de uvicorn y ese `500` no
+   paso por ahi**.*
+
+**Y la segunda lectura encaja mejor con todo**: *el `500` **no esta en el log de la API**, y **la pantalla si
+recibio un 500**.* **Lo que significa que el que contesta `500` en esa ruta no es uvicorn.**
+
+### Y por que esto importa mas que el `500` en si
+
+**El proyecto tiene una pieza delante de la API.** *`F03-publicacion.md` §34 ya habla de **Caddy** («un 502 de
+Caddy delante de una API caida no es JSON», dice el propio codigo en `api/favoritos.ts`).* **Y `vite.config` puede
+tener un proxy para `/api`.** *Asi que **hay una tercera capa** que **no se ha mirado en ningun momento de estas
+seis rondas** -- *y es exactamente donde vivio el §4 (un `404` que no era del router) y donde puede vivir esto.*
+
+### Y lo siguiente, exacto
+
+**Mirar si Vite proxya `/api`**, y **a donde**. *Una linea en `vite.config.ts`.* **Si hay proxy, el `500` es suyo
+y el `200` de uvicorn es la verdad** -- *y entonces **el problema de la pantalla es otro**, y `isLoading` tampoco
+se explica.*
+
+### Y un tropiezo que se repite, y ya van cuatro
+
+**Al escribir este script se me olvido `CESTA_POSTGRES`, otra vez** -- *el proceso se conecto al `5432` y murio con
+`password authentication failed`.* **Es la cuarta vez en esta sesion** (*rondas 175, 176, 185 y 190*), y **siempre
+igual: se escribe el script, se lanza, y falla por la variable que falta** -- *que es una linea que se puede poner
+siempre.* **Queda dicho como lo que es: un descuido repetido, no un hallazgo.**
