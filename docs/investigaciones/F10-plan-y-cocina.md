@@ -719,3 +719,82 @@ del propio componente**).
 **`if (isLoading && !error)` es correcto y se queda.** *No arregla este caso -- *porque **aqui no hay error*** --,
 pero **si arregla el caso en que la consulta falla de verdad**, que es el que el §9 encontro con la red cortada.*
 *Un arreglo que no basta **no es un arreglo que sobra**.*
+
+
+---
+
+## 17. **Es intermitente.** Dos corridas seguidas del mismo ensayo, y una pinta y la otra no
+
+*(Ronda 195. **Esto explica la contradiccion del §12 -- `200` en el log y `500` en la captura -- y cierra el
+diagnostico.**)*
+
+### Lo que se midio, en dos corridas seguidas, con la misma pila
+
+**Corrida A -- el modulo que Vite sirve, y lo que la pantalla dice:**
+
+```
+el modulo que Vite sirve: 22584 caracteres
+    SI  «isLoading && !error»      <- MI version, la de ahora
+    SI  «segundosQueQuedan»        <- MI version
+    SI  «acaba_en»                 <- MI version
+
+y la pantalla:  «...so 1. 0 ingredientes usados. | Paso siguiente | Temporizador de 10 min»   <- PINTA
+```
+
+**Corrida B -- la misma, y el mismo momento:**
+
+```
+CON CONEXION, la pantalla dice:  ... COMPRA | Compra | «CARGANDO LA COCINA...»   <- NO PINTA
+-> quedan None s
+SIN CONEXION t=0:   quedan None s
+SIN CONEXION t=12:  quedan None s
+=== y sin conexion la pantalla dice:
+    «Cocina | NO SE HA PODIDO PREGUNTAR AL SERVIDOR. Esto no quiere decir que la receta no este empezada.»
+```
+
+### Y lo que esto dice, que son tres cosas y las tres importan
+
+**1. El componente que sirve Vite **es el de ahora**.** *Comprobado **mirando el modulo que la pagina carga** -- *que
+es la forma que el §16 dejo apuntada*, y **no con `fetch`, que no devuelve el fuente (§10)**.* **Asi que
+`isLoading && !error`, `segundosQueQuedan` y `acaba_en` **estan los tres en el navegador**.*
+
+**2. Y el arreglo del §9 **funciona**, y se ve.** *Sin conexion la pantalla dice **«No se ha podido preguntar al
+servidor. Esto no quiere decir que la receta no este empezada»*** -- *que es **exactamente** lo que se queria, y
+**es lo contrario de «Esta receta no esta empezada»**.*
+
+**3. Y la pantalla es **intermitente**: la misma pila, el mismo ensayo, **una corrida pinta el temporizador y la
+siguiente se queda en «Cargando» para siempre.***
+
+### Y **eso** explica la contradiccion que llevaba seis rondas sin cuadrar
+
+**El §12 encontro que el log decia `200` y la captura del navegador decia `500`.** *Y **las dos eran verdad**:*
+
+**La consulta de `CocinaModo` es **intermitente**.** *A veces llega -- *y entonces **la pantalla pinta y el log
+escribe `200`*** --, y a veces **no llega y el proxy/la consulta falla**. *Y **como `isPending` no se apaga**
+(§16), **la pantalla se queda en «Cargando» y no dice que fallo** -- *salvo **sin conexion**, que **si** lo dice
+porque entonces `error` es verdadero.*
+
+> **Asi que el fallo real no es «la pantalla no pinta»: es que la consulta **falla a veces**, y cuando falla
+> **la pantalla no lo dice**.** *Y lo unico que hay que arreglar es **lo segundo** -- *porque **lo primero puede
+> ser la fontaneria del sandbox**, y **lo segundo es codigo mio y es lo que hace que un fallo parezca una
+> espera**.*
+
+### Y lo que queda, exacto, y son dos cosas independientes
+
+**1. Por que la consulta falla a veces.** *Candidatos: el proxy de Vite bajo carga, el `refetchInterval` de 15 s
+disparando antes de que la primera termine, o el propio sandbox (Windows + Docker + cinco procesos de API
+reiniciados).* **Se mide repitiendo la misma peticion veinte veces desde la pagina y contando cuantos `200`
+salen** -- *y **eso distingue «siempre» de «a veces»**, que es lo que lleva seis rondas sin comprobarse.*
+
+**2. Y que la pantalla lo diga.** *Hoy, con un fallo **sin** corte de red, `error` es falsy y `isPending` es
+`true`; **la pantalla dice «Cargando» y deberia decir que la consulta no ha llegado**.* **La forma de decirlo ya
+esta escrita** -- *es la rama del §9, que **funciona** cuando el error existe* --; **lo que falta es que ese error
+**exista** cuando la consulta no resuelve: *un tope de tiempo propio, o quitar el `refetchInterval` y dejar que el
+intento **termine**.*
+
+### Y una nota de honestidad sobre todo este tramo
+
+**Diez rondas (§6 a §17) para acabar diciendo «es intermitente».** *Y **ninguna de las conclusiones
+intermedias era falsa** -- *el `isLoading` no se apagaba, el `500` era de Vite, `CESTA_API` no estaba puesta --*,
+**pero ninguna era la causa**, y **la causa solo se ve repitiendo**, *que es lo unico que **no se hizo hasta
+ahora**.*
