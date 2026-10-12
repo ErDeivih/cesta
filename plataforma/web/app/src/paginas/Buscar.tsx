@@ -152,7 +152,16 @@ export function Buscar() {
             placeholder="leche entera, atún, papel de cocina…"
             autoComplete="off"
             enterKeyHint="search"
-            className="min-h-[48px] min-w-[16rem] flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-base dark:border-neutral-600 dark:bg-neutral-800"
+            // **`min-w-0`, no `min-w-[16rem]`.** *Esto desbordaba la pantalla en un movil con el zoom al
+            // 200 %* -- *medido el 12 de octubre de 2026*: **la ventana util son 390 px, `16rem` son 256,
+            // y al doblar el zoom esos 256 se dibujan como 512.** *Una barra horizontal y a arrastrar para
+            // leer, que es lo que la WCAG 1.4.4 prohibe.*
+            //
+            // *Y `min-w-0` es la pieza que faltaba, no un numero mas pequeno*: **dentro de un `flex`, un
+            // hijo no encoge por debajo de su tamano minimo de contenido salvo que se le diga** -- *y el
+            // minimo de un `input` es su `min-w`.* **Con `min-w-0` y `flex-1`, el campo ocupa lo que hay
+            // en cualquier ancho**, *que es lo que ya hacia en escritorio.*
+            className="min-h-[48px] min-w-0 flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-base dark:border-neutral-600 dark:bg-neutral-800"
           />
           {/* **El microfono, si el navegador sabe** (tarea 3): sin soporte no se dibuja, que es
               la regla del encargo («no se dibuja y falla al pulsarlo: no se dibuja»). El
