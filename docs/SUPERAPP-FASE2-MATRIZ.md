@@ -46,7 +46,7 @@ desde F03.*
    no vacio.* **Escribir no es actualizar.**
 
 *Lo que **si** esta al dia, y se ha ido escribiendo sin fallar: `docs/SUPERAPP-FASE2-EJECUCION.md` (el tablero, con
-las tres decisiones), y los **diez informes** de `docs/investigaciones/`.*
+las cinco decisiones), y los **diez informes** de `docs/investigaciones/`.*
 
 ---
 
@@ -253,7 +253,7 @@ confirma el arreglo (1→1).*
 | **probado** | *esta **y hay una prueba que lo demuestra*** | `R03`/`R04` (9 pruebas), `kg+kg` = 1,5, la publicacion, la concurrencia del diario |
 | **limite demostrado de fuente** | ***no esta porque la fuente no lo da*** | **nutricion: 22,8 %** (11.064 de 48.606); **Alcampo y Aldi, 0**; Mercadona sin tablas |
 | **pendiente** | *no esta, y se puede hacer* | `R02` importar, `R05` cocina, `R08` despensa, el «previsto» de `C09`, **la paginacion** |
-| **descartado por decision** | *no se hara, y esta dicho por que* | *las **tres decisiones** del tablero, si el dueno dice que no* |
+| **descartado por decision** | *no se hara, y esta dicho por que* | *las **cinco decisiones** del tablero, si el dueno dice que no* |
 
 **Y «limite de fuente» no es «pendiente»**, *que es lo que esta fase ha tenido que aprender:* **`porcion` tiene
 0 productos** -- *y eso **no es un hueco**: es que **la base que no tendria tamano no la usa nadie**.* **Un cero
@@ -267,7 +267,7 @@ verificada hasta el bundle), y **cuatro defectos reales** se midieron y quedaron
 
 **El veredicto, en una frase**: **para hacer la compra y llevar el diario, esto sirve hoy y esta probado -- con
 navegador, no solo con el motor; para mirar nutricion, cubre el 22,8 % y el resto es limite de la fuente o
-trabajo sin ejecutar; y para lo que falta, el tablero dice cual de las tres decisiones es la que desbloquea
+trabajo sin ejecutar; y para lo que falta, el tablero dice cual de las cinco decisiones es la que desbloquea
 mas.**
 
 ---
@@ -278,7 +278,7 @@ mas.**
 de F00 sin contrastar», de «F04 (CSRF) por hacer» y de «F07-F16», **y todo eso esta hecho**.* *Se reescribe con lo
 medido.*
 
-### 0. **Las tres decisiones del dueno**, que van primero porque desbloquean trabajo ya empezado
+### 0. **Las cinco decisiones del dueno**, que van primero porque desbloquean trabajo ya empezado
 
 *Estan en `docs/SUPERAPP-FASE2-EJECUCION.md`, y **no son trabajo: son elecciones**.*
 
@@ -324,7 +324,7 @@ el `OFFSET`, y el sitio donde ensenarlo.*
 | **La cobertura de fichas** | **72.319 pendientes / 7.593 correctas**: *trabajo sin ejecutar, no limite* |
 | **Los campos nutricionales que `F13` pide** | *cubririan el **22,8 %** del catalogo, y por eso el propio criterio dice «**solo si disponibles**»* |
 
-**Y el orden no es una preferencia**: *las tres decisiones son **puertas**; lo de F15 y F14 es **cerrar lo
+**Y el orden no es una preferencia**: *las cinco decisiones son **puertas**; lo de F15 y F14 es **cerrar lo
 empezado**; F16 es **el entregable**; y las cuatro funciones son **trabajo nuevo** -- *que solo se empieza cuando
 lo anterior esta dicho.*
 
