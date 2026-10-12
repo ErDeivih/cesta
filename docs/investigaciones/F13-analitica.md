@@ -319,3 +319,62 @@ aparece en la pestana, **el criterio se cumple y solo hay que decirlo**; **si no
 frase*** -- *y escribirla es **una linea de texto**, no una funcionalidad.*
 
 **Y esto cierra, por ahora, los casos de aceptacion de `F13` que se pueden comprobar sin decidir nada.**
+
+
+---
+
+## 7. **Y si se cumple.** *El universo se explica con la palabra «solo», y yo buscaba «universo»*
+
+*(Ronda 221. **La lectura que el §6 dejo apuntada, y da la vuelta a su conclusion.**)*
+
+### Lo que se midio, abriendo las pestanas
+
+```
+«Hoy»               984 caracteres   palabras del universo:  NINGUNA
+«Cadenas»          1216 caracteres   ->  «Mediana de la variacion,
+                                          SOLO entre los precios que se movieron»
+«Marcas»           1424 caracteres   ->  «SOLO con letras leidas de una etiqueta de verdad,
+                                          nunca con las que salen del precio»
+```
+
+### Y las dos lineas hacen **exactamente** lo que el criterio pide
+
+**1. «Mediana de la variacion, **solo** entre los precios que se movieron».** *Dice **sobre que se ha calculado**: *no
+sobre todos los precios, **solo sobre los que cambiaron**.* *Y eso es **«el filtro que cambia el universo»**: *si se
+leyera como «la variacion media del catalogo», **el numero significaria otra cosa** -- *y seria **falso**.*
+
+**2. «**Solo** con letras leidas de una etiqueta de verdad, nunca con las que salen del precio».** *Y esta es **aun mas
+precisa**: *dice **de donde salen los datos y de donde no*** -- *y **lo que se deja fuera** (las letras deducidas del
+precio, **que no valen**).* *Es **la misma regla que atraviesa toda la fase** -- *`sin_precio`, `nombre_visto`,
+`comparacion: null`* -- aplicada **al universo de una grafica**: *decir **que se cuenta y que no**.*
+
+> **Asi que el criterio de `F13` -- «filtro que cambia universo **explicado**» -- **se cumple**, y se cumple **en las
+> dos pantallas que tienen universo propio** (Cadenas y Marcas).** *La de «Hoy» no lo necesita, porque **su universo
+> es todo lo de hoy**.*
+
+### Y el error fue **mio**, y es del tipo que esta fase lleva cazando
+
+**En el §6 busque seis palabras -- «universo», «filtro», «solo», «muestra», «cambia» y «sentido» -- y salio cero en
+«Hoy».** *Y de ahi conclui que «el 3 no se ve».*
+
+**Pero «solo» **estaba en mi lista** y **no aparecia en «Hoy»**, que es la pestana que se abre por defecto** -- *y **«Hoy»
+es justo la que no necesita explicar universo**.* **O sea: mire la pantalla que no tenia que explicarlo, no encontre
+la palabra, y conclui sobre el criterio.**
+
+> **Es la leccion de siempre, otra vez y en el sitio mas pequeno: **mirar una parte y concluir sobre el todo**.** *Y
+> esta vez el aviso estaba **en mi propia lista de palabras**: *busque «solo», **salia cero en «Hoy»**, y **no se me
+> ocurrio que la razon fuera que «Hoy» no lo necesita**.*
+
+### Y `F13`, con esto, cerrado
+
+| lo que pide `F13` | **estado** |
+|---|---|
+| **las siete cosas declaradas** | **todas** |
+| **«tabla equivalente» y «huecos reales»** | **hechos, con sus palabras** |
+| **«datos controlados exactos»** | *el grafico **no calcula ni un dato*** |
+| **«filtro que cambia universo explicado»** | **se cumple** -- *«solo entre los que se movieron», «solo con letras de etiqueta»* |
+| **«fechas duplicadas»** | **no aplica a la tabla**: *`grupos` no tiene fecha por fila* |
+| **campos nutricionales** | *con la cobertura del **22,8 %** ya medida* |
+
+**Y su `§2` de la matriz ya decia «cerrado», y lo estaba.** *Lo que faltaba era **comprobarlo**, y **al comprobarlo se
+encontro que si** -- *con una palabra distinta de la que yo esperaba.*
