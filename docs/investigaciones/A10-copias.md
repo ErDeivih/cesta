@@ -97,3 +97,84 @@ mismo **sin tocar el que ya existe**.*
 **Y eso no se ha hecho tampoco**, porque *el guion está escrito para correr en un entorno desechable*, y
 adaptarlo para que conviva con una base que ya tiene 716 usuarios es **una decisión sobre qué se quiere
 medir**, no un arreglo obvio.
+
+
+---
+
+## 3. **Lo que pasó al ejecutarlo, y un daño que causé yo**
+
+*(Ronda 246. **Esto no es un hallazgo sobre el código: es un error mío, y va primero.**)*
+
+### Y lo primero es el daño
+
+**`cesta-prueba-db` tenía 716 usuarios, 2 529 listas y 2 533 líneas. Ahora tiene 2, 2 y 10.** *Los dos
+usuarios que quedan son `prueba` y `la-otra`, **los del propio ensayo e2e** -- o sea que lo que hay dentro
+es lo que el ensayo acaba de crear.*
+
+```
+antes:  716 usuarios | 2529 listas | 2533 lineas
+ahora:    2 usuarios |    2 listas |   10 lineas | 2 compras
+```
+
+*El contenedor es **el mismo** -- creado el `2026-10-10` --, así que **no se borró el contenedor: se
+borraron los datos**.* La última escritura es de las `13:28`, **mi primera corrida**.
+
+### Cómo lo hice, y por qué la culpa no es del guion
+
+**Al lanzarlo puse `$env:CESTA_POSTGRES='postgresql://...@127.0.0.1:5434/cesta'` en la línea de
+comandos.** *Y el guion, en su versión de entonces, **no ponía ese entorno para el ensayo**: lo heredaba de
+quien lo lanzara.* **Resultado: `plataforma.prueba_e2e` corrió contra la base de pruebas de verdad, y ese
+ensayo rehace el esquema.**
+
+> **La ironía es exacta y merece quedar escrita**: *en la ronda anterior identifiqué este riesgo con
+> precisión -- «empieza con `docker rm -f cesta-prueba-db`», «los 716 usuarios no son datos de casa, pero
+> son estado acumulado que no he creado yo» -- y **lo evité por el contenedor y lo provoqué por la variable
+> de entorno**.*
+>
+> **Identificar un riesgo no es lo mismo que esquivarlo.** *Lo que faltaba era **no pasarle a ese guion un
+> `CESTA_POSTGRES` que apuntara a otro sitio** -- y eso no lo comprobé, porque estaba mirando el nombre del
+> contenedor.*
+
+### Qué se ha arreglado, y qué no se puede arreglar
+
+**Arreglado**: *el guion **ya no hereda** el `CESTA_POSTGRES` de quien lo lanza.* **Le pone el suyo**,
+construido desde su propio puerto:
+
+```python
+entorno = {**os.environ,
+           "CESTA_POSTGRES": f"postgresql://cesta:prueba@127.0.0.1:{PUERTO_ENSAYO.split(':')[1]}/cesta"}
+e = corre_env(["uv", "run", "python", "-m", "plataforma.prueba_e2e"], cwd=raiz, env=entorno)
+```
+
+**Y no se puede arreglar**: *los 716 usuarios.* *No hay copia de esa base -- **que es justamente lo que este
+guion existe para comprobar que se puede hacer** --, así que no se recuperan.* **Se dice y no se disimula.**
+
+### Lo que no está en peligro, y conviene decirlo
+
+- **Los datos de casa**: `cesta-db-1` (el `5432` interno) **no publica puerto y no se ha tocado**.
+- **`facylf-postgres` (el `5433`)**: **no se ha tocado**, y el encargo lo prohíbe expresamente.
+- **El catálogo**: *los `parquet` de `data/gold` no se han tocado.*
+- **Y la suite**: *los 1 959 pasan igual*, porque **cada prueba crea sus propios usuarios** -- *que es la
+  razón de que el daño no se note en las puertas.*
+
+### Y el segundo fallo, que sigue sin explicación y se dice como tal
+
+**La segunda corrida -- ya con el arreglo -- llegó más lejos y falló en otro sitio:**
+
+```
+-- 3. el entorno separado: otro contenedor, otra base
+   base separada lista en el 5437
+   FALLO en la restauracion: psql: error: connection to server on socket
+   "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL: the database system is shutting down
+```
+
+**Y el ensayo y el volcado, esta vez, sí fueron bien** -- *porque las comprobaciones de contenido dicen «2
+en el ensayo, 10 en el ensayo, 2 en el ensayo», o sea que había datos de verdad.*
+
+**Lo que se sabe**: *`arranca()` da el contenedor por listo con `pg_isready`, y **entre esa comprobación y
+el `psql` el servidor empezó a apagarse**.* **Lo que NO se sabe**: *por qué.* *Las posibilidades que no he
+descartado: que el `docker run --rm` se lleve el contenedor al salir de algún modo, que el nombre
+`cesta-copia-db` choque con un resto de la corrida anterior, o algo del propio Docker de esta máquina.*
+
+> **Y se deja así, dicho como lo que es**: *un fallo reproducido dos veces en el mismo punto, **sin causa
+> confirmada**.* *Inventar una ahora sería lo contrario de todo lo que este documento hace.*
