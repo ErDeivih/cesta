@@ -51,6 +51,14 @@ export interface FiltrosBuscar {
   sellos: string[]
   conservacion: string
   limite: number
+  /**
+   * **Cuantos resultados se saltan**, para la pagina. *Vive en la URL como todo lo demas* -- asi un
+   * enlace lleva a la pagina tres y volver atras devuelve a ella.
+   *
+   * *No cuenta como filtro*: `cuantosFiltros` mira campo a campo, y estar en la pagina 2 no es haber
+   * puesto una traba a la busqueda.
+   */
+  desplazamiento: number
 }
 
 export const FILTROS_VACIOS: FiltrosBuscar = {
@@ -65,6 +73,7 @@ export const FILTROS_VACIOS: FiltrosBuscar = {
   sellos: [],
   conservacion: '',
   limite: 40,
+  desplazamiento: 0,
 }
 
 /** Por debajo de dos letras no se busca: `%l%` casa con media tienda y la
@@ -100,6 +109,11 @@ export function useBuscar(f: FiltrosBuscar) {
           sellos: f.sellos.join(','),
           conservacion: f.conservacion,
           limite: f.limite,
+          // **Y el salto, que era el eslabon que faltaba.** *La API ya lo recibia, pero el cliente no lo
+          // mandaba*: **la paginacion existia en el servidor y no llegaba a la pantalla.** *Y `tsc` no
+          // lo vio porque este objeto no esta tipado como `FiltrosBuscar`* -- *conviene saberlo: aqui el
+          // compilador no ayuda.*
+          desplazamiento: f.desplazamiento,
         },
         signal,
       ),

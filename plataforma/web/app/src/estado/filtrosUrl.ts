@@ -21,6 +21,7 @@ export function leerFiltros(params: URLSearchParams): FiltrosBuscar {
       .filter(Boolean)
   }
   const limite = Number(params.get('limite') ?? '')
+  const salto = Number(params.get('desplazamiento') ?? '')
   return {
     q: params.get('q') ?? '',
     cadenas: lista('cadenas'),
@@ -33,6 +34,9 @@ export function leerFiltros(params: URLSearchParams): FiltrosBuscar {
     sellos: lista('sellos'),
     conservacion: params.get('conservacion') ?? '',
     limite: Number.isFinite(limite) && limite > 0 ? limite : FILTROS_VACIOS.limite,
+    // *Un desplazamiento que no sirve vuelve a cero*: **la primera pagina, que es lo unico que se puede
+    // enseñar sin saber el total.**
+    desplazamiento: Number.isFinite(salto) && salto > 0 ? Math.floor(salto) : 0,
   }
 }
 
@@ -45,6 +49,9 @@ export function escribirFiltros(f: FiltrosBuscar): URLSearchParams {
   if (f.sellos.length) p.set('sellos', f.sellos.join(','))
   if (f.conservacion) p.set('conservacion', f.conservacion)
   if (f.limite !== FILTROS_VACIOS.limite) p.set('limite', String(f.limite))
+  // *Y no se escribe cuando es cero*: **la primera pagina es la URL sin nada**, y asi el enlace limpio
+  // sigue siendo el enlace a la busqueda entera.
+  if (f.desplazamiento > 0) p.set('desplazamiento', String(f.desplazamiento))
   return p
 }
 
