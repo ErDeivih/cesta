@@ -135,18 +135,70 @@ la pantalla decía «leída de ingredientes» para las dos procedencias**, y aho
 
 ---
 
-## 5. Lo que NO se ha medido, y se dice
+## 5. El universo de alimentos: **de qué se está hablando**
 
-*Este capítulo cubre **lo que hay en `grupos.parquet`**.* **Y hay tres cosas que su criterio pide y aquí no
+**Y esto es lo que faltaba para poder juzgar todo lo de arriba.** *«21,6 % de nutrición» no dice **de
+qué**: si una cuarta parte del catálogo es lejía, gel de ducha y comida de gato, **pedirle calorías a eso
+es pedirle peras al olmo**.*
+
+**La clasificación sale del propio catálogo, no de mi cabeza.** *Las **19 secciones** que trae, medidas una
+a una:*
+
+```
+seccion               filas   kcal  ingredientes
+despensa               7783   2745   1503      despensa, desayuno-dulces, bebidas, lacteos-huevos,
+higiene-belleza        7303      1      0      carniceria, panaderia, frutas-verduras, aperitivos,
+desayuno-dulces        6178   1435    730      congelados, pescaderia, preparados  -> COMIDA
+droguería-limpieza     3536      8      0
+mascotas               1584      0     65      higiene-belleza, droguería-limpieza, mascotas,
+hogar                    56      0      0      hogar                               -> NO
+```
+
+> **Y la separación no es una opinión: es un hecho medible.** *Las cuatro secciones que no son comida
+> aportan **nueve calorías entre 12 479 filas**.* **Nueve.** *Una sección de comida tiene miles.*
+
+**Y las mezclas se dan como mezclas.** *`promociones`, `bebe`, `parafarmacia` y `ecologico` son **cajones
+donde cabe todo**: en `bebe` hay potitos y hay toallitas.* **Resolverlas a «sí» o «no» sería inventar** --
+*y por eso el clasificador (`core/alimentos.py`, con 30 pruebas) tiene **cuatro** respuestas y no dos.*
+
+### Y el número que faltaba
+
+```
+universo: 52 087 filas    (v20261007-103000)
+    comida        36 989   (71,0 %)    kcal 11 040    ingredientes 6 821
+    no            12 479   (24,0 %)    kcal      9    ingredientes    65
+    mezcla         2 434   ( 4,7 %)    kcal    179    ingredientes   242
+    desconocido      185   ( 0,4 %)    kcal     10    ingredientes    18
+
+cobertura de energía SOBRE LA COMIDA:   techo 29,8 %   suelo 28,0 %
+sobre el catálogo entero:               21,2 %
+```
+
+**Y aquí está la lección, que es la razón de que esto importe:**
+
+> **El 21,6 % se lee como una carencia grave, y una cuarta parte de esa cifra es una categoría a la que no
+> se le puede pedir.** *Sobre la comida, la cobertura es del **28 al 30 %**.*
+>
+> **Pero el número tampoco mejora tanto como para celebrarlo.** *Aun quitando todo lo que no es comida,
+> **siete de cada diez productos de alimentación no tienen ni una caloría en el catálogo**.*
+>
+> **Y las dos cosas son verdad a la vez**: *el porcentaje estaba mal medido **y** la cobertura sigue siendo
+> mala.* *Decir sólo la primera sería consolarse; decir sólo la segunda, exagerar.*
+
+**Y las mezclas van con dos límites porque no se pueden contar ni enteras ni ignoradas.** *Si resultara que
+todas fueran comida, el universo sería el mayor (suelo 28,0 %); y si ninguna lo fuera, el menor (techo
+29,8 %).* **Devolver un solo número sería elegir uno de los dos sin decirlo.**
+
+---
+
+## 6. Lo que sigue sin medirse, y se dice
+
+*Este capítulo cubre **lo que hay en `grupos.parquet`**.* **Y hay dos cosas que el criterio pide y aquí no
 están:**
 
-- **El «universo de alimentos»**: *qué parte de los 52 087 grupos son **comida** y qué parte son
-  droguería, limpieza o mascotas.* **No se ha computado**, y sin él *el 21,6 % de nutrición no se puede
-  juzgar*: *si la mitad del catálogo no es comida, la cobertura de la comida es mejor de lo que parece -- y
-  si casi todo es comida, es peor.* **Decir un porcentaje sin haberlo mirado sería inventarlo.**
-- **El inventario por campo y por cadena**, más allá de las cuatro columnas de arriba.
+- **El inventario por campo y por cadena**, más allá de las columnas de arriba.
 - **La cola de fichas** (nuevos / cambiados / caducados) con su presupuesto y sus reintentos. *Hay una
-  `fichas` con trabajo pendiente, y **no se ha medido aquí con el detalle que su criterio pide**.*
+  cola con trabajo pendiente, y **no se ha medido aquí con el detalle que su criterio pide**.*
 
-**Y no se dan números de esas tres cosas.** *Es la misma regla de todo el material: **lo que no se sabe se
+**Y no se dan números de esas dos cosas.** *Es la misma regla de todo el material: **lo que no se sabe se
 dice, y no se deja que se confunda con un cero.***
