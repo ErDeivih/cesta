@@ -632,3 +632,47 @@ diga como «no hay nada»**, ni «Cargando» como si estuviera a punto de llegar
 > **Es la misma regla que atraviesa toda la fase, aplicada por ultima vez y en el sitio mas pequeno**: *`sin_precio`,
 > `nombre_visto`, `comparacion: null`, `sin_cantidad`, `faltantes`... **y aqui: `isLoading` no puede ser una
 > promesa eterna.***
+
+
+---
+
+## 11. Sin conexion, **la despensa conserva la lista** -- *y el tope no se pudo ejercitar, y se dice por que*
+
+*(Ronda 204. Se hizo con **el orden correcto**: cargar primero, cortar despues.)*
+
+### Lo que se midio
+
+```
+A) cargada con conexion:            PINTA (dice harina)
+   y al cortar la red, ¿conserva la lista?:  SI
+```
+
+**La despensa, ya cargada, **sigue enseñando lo que tenia** cuando se corta la red.** *Que es lo correcto y es lo
+que importa: **la lista no desaparece por perder cobertura** -- *y es **lo contrario** de lo que hacia la cocina antes
+del §9, cuando sin red afirmaba que la receta no estaba empezada.*
+
+**Y encaja con lo que el §8 arreglo sin querer**: *`if (error)` decia el error, **pero `isLoading` iba antes**; y
+**ahora que hay datos**, `isLoading` es falso, **gana la lista**, y el fallo del refresco **no se lleva nada por
+delante** -- *que es exactamente el `if (error && !data)` del §7 de la cocina.*
+
+### Y el tope de espera **no se pudo ejercitar**, y hay que decir por que
+
+**Se intento asi**: *cargar la despensa, **cortar la red**, y **navegar a otra pantalla** para que la consulta
+empezara **sin datos** y sin poder llegar.*
+
+**Y no se puede**: ***`goto` con la red cortada no carga ni el armazon de la aplicacion*** -- *el `index.html` y los
+modulos los sirve **el mismo Vite** que se acaba de cortar.* *Asi que **la navegacion falla antes de que la pantalla
+exista**, y el tope **nunca llega a ejecutarse**.*
+
+**Y es un limite del ensayo, no del codigo**: *para ejercitar el tope habria que **cortar solo `/api`** y dejar los
+modulos -- *por ejemplo **bloqueando las peticiones a `/api`** con el enrutador del navegador, en vez de cortar la
+red entera.*
+
+### Y lo siguiente, exacto
+
+**Bloquear `/api` en vez de cortar la red.** *Es **lo mismo** que se quiere medir -- *una consulta que no puede
+llegar* --, **sin cargarse la aplicacion**, y **es una linea del ensayo**: `pag.route('**/api/**', lambda r:
+r.abort())`.*
+
+**Con eso se pueden ejercitar las dos cosas que faltan**: *el tope de la despensa, **y el de la cocina** -- que
+tampoco se ha visto funcionar, porque **la cocina nunca se queda sin datos si ya los tiene**.*
