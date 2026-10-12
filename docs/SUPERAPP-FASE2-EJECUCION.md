@@ -290,7 +290,7 @@ son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
 
 | lo que era un hueco | **lo que hay hoy** | **lo que falta** |
 |---|---|---|
-| **`R02` importar recetas** | **las CUATRO piezas**: fuente permitida, borrador (*la previa que **no escribe***), lector de `application/ld+json` y **la ruta** -- *19 pruebas, y **verificada**: una fuente no declarada da `400` **diciendo cual*** | **la lista de fuentes** (*la 5.a decision*) **y la pantalla** |
+| **`R02` importar recetas** | **las CINCO piezas, y VERIFICADAS**: fuente permitida (*7 pruebas*), borrador (*la previa que **no escribe***), lector de `application/ld+json` (*6 pruebas*), **la ruta** (*400 diciendo cual*) y **la pantalla, vista con y sin conexion** -- *y **no se queda colgada** porque **no hay consulta que se pueda colgar**; el estado lo lleva un boton, y un boton siempre acaba* | **la lista de fuentes** (*la 5.a decision*) |
 | **`R05` modo cocina** | **CERRADO de arriba abajo y VERIFICADO, incluido el sin conexion**: `core/cocina.py` (*10 pruebas*), tabla `018`, **5 endpoints**, y **la pantalla vista** -- *tres de tres con el reloj encadenado `29:59 -> 29:48 -> 29:37`, y **`1785 -> 1774` con la red cortada*** | *nada* |
 | **`R08` despensa** | **CERRADO de arriba abajo y VERIFICADO**: `core/despensa.py` (*9 pruebas*), tabla `017`, **3 endpoints** y **pantalla vista** -- *y **«no se sabe cuanto» esta en pantalla*** | *nada* |
 | **la paginacion del buscador** | **hecha** (*4 pruebas*) | *nada* -- *y **destapo** que el orden de `buscar` no es total (4.a decision)* |
@@ -299,3 +299,22 @@ son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
 fase, y **ninguno era un defecto**: eran **funciones que nadie habia escrito**.* **Hoy tres tienen la logica
 hecha, probada y con las reglas del proyecto puestas en el camino** -- *y a las tres les falta **lo mismo**: la
 pantalla, que es **F14** y no una decision.*
+
+---
+
+## Y las cinco puertas, el 12 de octubre de 2026 a las 13:11
+
+```
+uv run ruff check . --output-format=concise       ->  All checks passed!            (0)
+CESTA_POSTGRES=...5434... uv run pytest -q        ->  1842 passed, 5 xfailed        (0 fallan)
+cd plataforma/web/app; npm test                   ->  46 tests, 46 pass, 0 fail    (0)
+npx --no-install tsc --noEmit                     ->  0
+npm run build                                     ->  built in 6.67s                (0)
+```
+
+**Cinco puertas, y la tercera lleva ahi todo el tiempo sin estar en el documento**: *`npm test` corre `node --test`
+sobre **funciones puras de `.ts`**, y **es la unica que cubre el TypeScript de la interfaz**.* **Es la que permitio
+medir el tope de espera cuando el navegador no podia.**
+
+**Y lo que queda, despues de todo esto, no es codigo**: *son **las cinco decisiones**, y estan arriba con su coste.*
+**Las cuatro funciones que eran «no existe» al empezar estan cerradas o esperando una de esas cinco.**
