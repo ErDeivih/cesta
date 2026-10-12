@@ -116,17 +116,17 @@ export function Despensa() {
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <label className="flex flex-col text-sm">
             Que
-            <input className="rounded border border-borde px-2 py-1" value={texto}
+            <input className="min-h-11 rounded border border-borde px-2 py-1" value={texto}
                    onChange={(ev) => setTexto(ev.target.value)} placeholder="harina" />
           </label>
           <label className="flex flex-col text-sm">
             Cuanto <span className="text-xs text-tinta-suave">(vacio = no se sabe)</span>
-            <input className="rounded border border-borde px-2 py-1" value={cantidad}
+            <input className="min-h-11 rounded border border-borde px-2 py-1" value={cantidad}
                    onChange={(ev) => setCantidad(ev.target.value)} placeholder="1" />
           </label>
           <label className="flex flex-col text-sm">
             Unidad
-            <input className="rounded border border-borde px-2 py-1" value={unidad}
+            <input className="min-h-11 rounded border border-borde px-2 py-1" value={unidad}
                    onChange={(ev) => setUnidad(ev.target.value)} placeholder="kg" />
           </label>
           <Boton onClick={mete} disabled={!texto.trim()}>Declarar</Boton>

@@ -56,7 +56,7 @@ export function ImportarReceta() {
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex min-w-[18rem] flex-1 flex-col text-sm">
             Direccion
-            <input className="rounded border border-borde px-2 py-1" value={url}
+            <input className="min-h-11 rounded border border-borde px-2 py-1" value={url}
                    onChange={(e) => setUrl(e.target.value)}
                    placeholder="https://.../receta" />
           </label>
