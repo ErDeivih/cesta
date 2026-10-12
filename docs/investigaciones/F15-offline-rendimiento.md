@@ -312,3 +312,62 @@ tiene ninguno**.*
 | **cargas** | *por medir: cuantas peticiones hace una pantalla al abrirse* |
 
 **Cuatro de cinco.** *Y la que queda -- las **cargas** -- es del navegador y **no depende de ninguna decision**.
+
+
+---
+
+## 6. Las cargas -- *y `F15` queda entero*
+
+*(Ronda 218. **La ultima de las cinco cosas que `F15` pedia.**)*
+
+### Y primero, un filtro mio que mezclaba dos cosas
+
+**El primer intento conto las llamadas al API asi:**
+
+```python
+if "/api/" in u:  ...
+```
+
+**Y eso **mezcla** `/api/despensa` con `/src/api/despensa.ts`** -- *porque los dos **contienen** `/api/`.* *Asi que el
+primer resultado decia «17 llamadas al API» y **doce de ellas eran modulos de TypeScript**.*
+
+> **Es el mismo error del §10** -- *un filtro que junta cosas distintas y produce un numero que parece un dato* --,
+> **cometido seis rondas despues de escribirlo.** *Y la correccion es la misma: **`startswith('/api/')`, no `in`**.*
+
+### Y los numeros, con el filtro bueno
+
+**Llamadas de verdad al API al abrir cada pantalla**, *con el armazon ya cargado y los modulos en cache:*
+
+```
+/compra                  4 llamadas   ['/api/listas', '/api/yo']
+/compra/despensa         4 llamadas   ['/api/despensa', '/api/listas', '/api/yo']
+/compra/importar         1 llamada    ['/api/yo']
+/compra/cocina/7/2       5 llamadas   ['/api/cocina/7', '/api/listas', '/api/yo']
+```
+
+### Y lo que dicen, que es poco y bueno
+
+**Una pantalla hace **entre una y cinco** llamadas al API.** *Y **hay dos que estan siempre**: `/api/yo` -- *quien
+eres* -- y `/api/listas` -- *la lista de casa, que el armazon enseña en el menu*.* **Lo especifico de cada pantalla es
+**una** llamada**: *`/api/despensa`, `/api/cocina/7`...*
+
+> **Y `/compra/importar` hace **una sola** -- `/api/yo` --, porque no necesita nada mas para existir**: *no hay
+> consulta hasta que se pulsa el boton.* *Y es **la misma razon** por la que **no necesita el tope de espera**: *no
+> tiene nada que pueda atascarse.*
+
+**Y el numero de llamadas **no crece con el catalogo**: *52 087 grupos y la despensa sigue haciendo **una** llamada.*
+*Que es lo que hay que comprobar y no suponer: **el coste de abrir una pantalla no depende del tamano de los datos**,
+porque **lo que viaja es lo que se va a enseñar**, no la tabla.*
+
+### Y `F15`, con sus cinco cosas, cerrado
+
+| lo que `F15` pide | **el numero** |
+|---|---|
+| **paginacion** | **hecha** -- *y destapo que el orden de `buscar` **no es total*** |
+| **latencia** | **13 a 21 ms** en los cuatro endpoints nuevos |
+| **tamanos JS** | **681 KB** en un solo chunk + **35,9 KB** de CSS |
+| **indices** | **1** en el catalogo (DuckDB, sobre `buscable`) y **4** en Postgres |
+| **cargas** | **1 a 5** llamadas al API por pantalla |
+
+**Las cinco, medidas.** *Y dos de ellas **encontraron algo que no se sabia**: *la paginacion, **que el orden no es
+total**; y los indices, **que estan en dos motores distintos**.*
