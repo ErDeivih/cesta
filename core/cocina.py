@@ -163,6 +163,11 @@ class Cocina:
             "hechos": len(self.usados),
             "temporizadores": [
                 {"paso": t.paso, "minutos": t.minutos,
+                 # **El INSTANTE, para que pueda restar quien lo tiene delante.** *Es el arreglo del §6: se
+                 # mandaba el numero ya calculado, y **sin conexion la pantalla no tenia nada que recalcular**
+                 # -- el numero se quedaba congelado.* **Con el instante, el reloj lo lleva el aparato.**
+                 "acaba_en": t.acaba_en.isoformat(),
+                 # *Y se siguen mandando los dos calculados, para quien los quiera ya hechos.*
                  "queda_segundos": int(t.queda(ahora).total_seconds()),
                  "terminado": t.ha_terminado(ahora)}
                 for t in self.temporizadores

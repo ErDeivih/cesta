@@ -22,6 +22,19 @@ function cuantoTiempo(s: number): string {
   return s < 0 ? `se paso hace ${dicho}` : `quedan ${dicho}`
 }
 
+/** **Los segundos que quedan, calculados AQUI.** *Y esto es lo que hace que funcione sin conexion.*
+ *
+ *  *Antes se pintaba `queda_segundos`, que es el numero **ya calculado por el servidor** -- *y al cortar la red
+ *  **no habia nada que recalcular: el numero se quedaba congelado** (medido el 12 de octubre de 2026: dos
+ *  lecturas separadas veinte segundos dieron **`1799` y `1799`**).*
+ *
+ *  **Ahora se resta del instante que mando el servidor**, y **el reloj lo lleva el aparato** -- *que es lo que la
+ *  decision de `core/cocina.py` decia desde el principio, y lo que **la costura no cumplia**.*
+ */
+function segundosQueQuedan(acabaEn: string): number {
+  return Math.round((new Date(acabaEn).getTime() - Date.now()) / 1000)
+}
+
 export function CocinaModo() {
   const { recetaId, version } = useParams()
   const id = Number(recetaId)
@@ -30,7 +43,11 @@ export function CocinaModo() {
   const empieza = useEmpieza(id, v)
 
   if (isLoading) return <p className="text-tinta-suave">Cargando la cocina...</p>
-  if (error) return <p className="text-red-700">{textoDeError(error)}</p>
+  // **Y el error NO se lleva la pantalla por delante cuando ya hay datos.** *Sin conexion, el refresco de cada 15
+  // segundos falla -- y **`if (error)` a secas borraba la cocina entera y el temporizador con ella*** (medido el
+  // 12 de octubre de 2026: sin red la pantalla no decia «quedan», decia el error). **Con datos en la mano, el
+  // fallo del refresco se dice y se sigue** -- *que es lo que hace que el reloj del aparato pueda seguir.*
+  if (error && !data) return <p className="text-red-700">{textoDeError(error)}</p>
 
   // **Y si no hay cocina empezada, se dice** -- *no se inventa un paso.*
   if (!data || data.paso === null) {
@@ -63,7 +80,7 @@ export function CocinaModo() {
             {data.temporizadores.map((t, i) => (
               // **Un temporizador que ya paso se pinta distinto, y sigue estando.**
               <li key={i} className={`py-2 ${t.terminado ? 'text-amber-700' : ''}`}>
-                {t.minutos} min — {cuantoTiempo(t.queda_segundos)}
+                {t.minutos} min — {cuantoTiempo(segundosQueQuedan(t.acaba_en))}
               </li>
             ))}
           </ul>

@@ -129,3 +129,52 @@ frase escrita en tres sitios -- el modulo, la migracion y el documento -- que **
 
 > **Y solo se vio cortando la red.** *Que es, literalmente, **el ensayo que el propio §5 habia dejado apuntado como
 > «aun no se ha hecho»**.*
+
+
+---
+
+## 7. El arreglo del §6: **hecho, y a medias** -- *con conexion si; sin conexion, todavia no*
+
+*(Ronda 185.)*
+
+### Lo que se cambio, y **esta bien**
+
+**Tres cambios, y los tres son los del §6:**
+
+1. **`core/cocina.py`**: el `reanuda` devuelve ademas **`"acaba_en": t.acaba_en.isoformat()`** -- *el instante, y no
+   solo el numero ya calculado.*
+2. **`api/cocina.ts`**: el tipo `Temporizador` **exige `acaba_en`**.
+3. **`CocinaModo.tsx`**: **la pantalla resta ella** -- *`segundosQueQuedan(t.acaba_en)` = `acaba_en - Date.now()`.*
+
+**Y medido**: *el servidor manda `{"paso": 0, "minutos": 30, "acaba_en": "2026-10-12T11:06:38.846371+00:00", ...}`*
+**y la pantalla pinta `30 min -- quedan 29 min 21 s`.**
+
+### Y un cuarto cambio, que salio del propio ensayo
+
+**`if (error) return <p>{textoDeError(error)}</p>`** -- *y sin conexion, **el refresco de cada 15 segundos falla y
+esa linea borraba la cocina entera**, temporizador incluido.* **Se cambio por `if (error && !data)`**, para que
+*con datos en la mano, el fallo del refresco **se diga y se siga**.*
+
+### Y lo que **todavia no funciona**
+
+```
+CON conexion:       quedan 1799 s
+SIN conexion t=0:   quedan None s
+SIN conexion t=12:  quedan None s
+```
+
+**Sigue sin recalcularse -- y esta vez `None` quiere decir que la pantalla no dice «quedan» en absoluto.**
+
+### Y lo que **no** se ha hecho, que es lo que hay que hacer
+
+**No se ha mirado QUE dice la pantalla en ese estado.** *El ensayo **solo busca la frase «quedan»**, y cuando no
+la encuentra apunta `None` -- **que no es un diagnostico, es un no-encontrado**.* **Es el mismo error del §6, otra
+vez: medir por una frase y concluir sobre la pantalla.**
+
+**Lo siguiente, exacto**: *imprimir **el cuerpo entero** con la red cortada.* **Con eso se sabra si es (a) el
+`refetchInterval` que deja la consulta en error, (b) un `pageerror` que no se estaba capturando en ese tramo, o
+(c) que la pantalla se ha ido a la rama de «no esta empezada»** -- *y cada una se arregla distinto.*
+
+**Y una hipotesis que hay que descartar primero, porque es la mas probable**: *Vite sirviendo un modulo viejo* --
+*ya paso en el §4 (un `Not Found` que era un 404 de una API de tres horas) y **se descarta mirando, no suponiendo**:
+`tsc` da 0 y el cambio esta en el fichero, pero **lo que sirve el navegador es otra cosa**.*

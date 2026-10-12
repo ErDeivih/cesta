@@ -28,7 +28,12 @@ async function conCuerpo<T>(ruta: string, cuerpo: unknown): Promise<T> {
 export interface Temporizador {
   paso: number | null
   minutos: number
-  /** **Lo que queda, calculado al leer.** *Negativo si ya paso -- y eso **es informacion, no un error**.* */
+  /** **El instante en que acaba.** *Y **es lo que hace que esto funcione sin conexion**: *con el numero ya
+   *  calculado, al cortar la red **no hay nada que recalcular** y el numero se queda congelado (medido el 12 de
+   *  octubre de 2026). **Con el instante, resta el aparato**, que es quien tiene el reloj.*
+   */
+  acaba_en: string
+  /** *Lo que quedaba cuando el servidor contesto.* **Se conserva, pero la pantalla no lo usa para el reloj.** */
   queda_segundos: number
   terminado: boolean
 }
