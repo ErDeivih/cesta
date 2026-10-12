@@ -209,3 +209,87 @@ así que `a, b = cur.fetchone()` desempaqueta **las claves**, no los valores.* *
 | `docs/aprende` | **hecho** -- los fallos (17) y la cobertura (18) |
 | **sesiones** | **medido**: caduca, y el token va hasheado |
 | **logs sin secretos** | **medido en las 140 líneas que hay** |
+
+
+---
+
+## 7. La cola de fichas: **72 319 pendientes, y de quién son**
+
+*(13 de octubre de 2026. **`A10` no la pide por su nombre, pero el capítulo 18 de `aprende` la dejó dicha
+como lo que faltaba medir** -- y era el punto de `A06` que más pesa.)*
+
+### 7.1 Dónde vive, y qué es
+
+**`core/inventario.py`**, y su cabecera explica por qué existe con un caso medido que conviene copiar:
+
+> *«DIA y Mercadona **saltan** los identificadores que ya están en su maestro (`if sku in maestro:
+> continue`), así que una ficha que se completó **no se vuelve a visitar nunca**: si el fabricante cambia
+> la fórmula, el catálogo sigue enseñando la de septiembre como si fuera la de hoy.»*
+
+**Y es una cola de verdad**, no una lista: *una fila por producto y fuente, con estado, fechas, **el hash
+del contenido útil**, la versión del parser, los intentos y **la evidencia**.* **En SQLite local, que da
+transacciones y `lease` de verdad** -- *y `tomar()` marca `en_curso` con caducidad **en una sola
+transacción**, que es lo que impide que dos pasadas se pisen.*
+
+**El fichero**: `data/inventario.sqlite`, **14,4 MB, modificado el 10 de noviembre a las 22:25.**
+
+### 7.2 Lo que hay dentro, medido hoy
+
+*Se preguntó a `inventario.resumen`, que es la función que el propio módulo tiene para esto:*
+
+```
+alcampo     pendiente 43 603
+carrefour   pendiente 17 280   error_temporal 1   no_publicado 2
+lidl        pendiente  5 026   correcto 28
+aldi        pendiente  3 206
+dia         pendiente  1 637   correcto 4 655
+mercadona   pendiente  1 567   correcto 2 910
+```
+
+**Y los totales:**
+
+```
+pendiente       72 319
+correcto         7 593
+error_temporal       1
+no_publicado         2
+```
+
+### 7.3 **Y las cifras que yo tenía apuntadas cuadran**
+
+*Esto hay que decirlo, porque en la ronda 252 pasó lo contrario.* **El capítulo 18 midió la cobertura y las
+cifras heredadas hablaban de otro universo** -- *48 606 filas contra 52 087*. **Aquí, en cambio, «72 319
+pendientes y 7 593 correctas» es exactamente lo que sale.** *Ni un número de diferencia.*
+
+> **Y las dos cosas son la lección, no una**: *una cifra heredada no es buena ni mala por ser heredada.*
+> **Hay que medirla** -- *y a veces coincide, y entonces se puede decir que coincide.*
+
+### 7.4 Y lo que la cola dice, que enlaza con el capítulo 18
+
+**Alcampo es 43 603 de los 72 319 pendientes: el 60 %.**
+
+**Y Alcampo es, exactamente, la fuente que en el capítulo 18 aparece con `kcal 0` e `ingredientes 0` sobre
+23 128 filas.** *No son dos problemas: es el mismo.* **La cadena que más catálogo aporta y menos nutrición
+tiene es también la que tiene la cola más grande sin hacer** -- *y por eso el capítulo 18 decía que la
+cobertura de nutrición **no es una propiedad del catálogo sino de cada cadena**.*
+
+**Y hay un segundo caso que conviene mirar: Lidl.** *5 026 pendientes y **28 correctas**.* **Lidl es la
+cadena que `A05` dejó **capturada y no comparable** -- y su cola está prácticamente sin empezar.** *Que las
+dos cosas coincidan no es casualidad: **no se ha trabajado porque no se compara.***
+
+**Y al revés, las dos que mejor están son DIA y Mercadona** -- *4 655 y 2 910 correctas* --, **que son
+también las dos únicas que traen ingredientes.** *La cola y la cobertura cuentan la misma historia desde
+dos sitios distintos.*
+
+### 7.5 Lo que sigue sin medir de esta cola, y se dice
+
+- **El presupuesto**: *cuánto cuesta una pasada de 72 319 fichas, y cuántas caben por día.* **No se ha
+  estimado.**
+- **Los reintentos**: *el módulo guarda `intentos` y distingue `error_temporal` de `parcial`, pero **no se
+  ha mirado la distribución de intentos**, ni cuántas fichas están en su tercer o cuarto intento.*
+- **Los vencimientos**: *`tomar()` prioriza «lo pendiente **y lo vencido**», así que hay una noción de
+  caducidad -- **y no se ha contado cuántas fichas están vencidas hoy.***
+- **Y el `lease`**: *que `tomar()` marque `en_curso` con caducidad está escrito y **no se ha probado aquí**
+  con dos procesos a la vez.*
+
+*Ninguna de las cuatro se inventa. Es la misma regla: lo que no se sabe se dice.*
