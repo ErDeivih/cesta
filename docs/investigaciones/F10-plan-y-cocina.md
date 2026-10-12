@@ -178,3 +178,62 @@ vez: medir por una frase y concluir sobre la pantalla.**
 **Y una hipotesis que hay que descartar primero, porque es la mas probable**: *Vite sirviendo un modulo viejo* --
 *ya paso en el §4 (un `Not Found` que era un 404 de una API de tres horas) y **se descarta mirando, no suponiendo**:
 `tsc` da 0 y el cambio esta en el fichero, pero **lo que sirve el navegador es otra cosa**.*
+
+
+---
+
+## 8. La lectura que decidia: **dos causas, y la segunda es un defecto de verdad**
+
+*(Ronda 186. Se imprimio **el cuerpo entero** con la red cortada, que es lo que el §7 dejo apuntado.)*
+
+### Lo que se midio
+
+```
+CON conexion:   «... Cocina | Vas por el paso 1. 0 ingredientes usados.
+                 | 30 min -- quedan 30 min 0 s | Paso siguiente | Temporizador de 10 min»
+
+¿el modulo que sirve Vite tiene `acaba_en`?:  False          <-- CAUSA 1
+
+=== CON LA RED CORTADA ===
+   ... Cocina
+   «ESTA RECETA NO ESTA EMPEZADA.»                            <-- CAUSA 2
+   «Empezar a cocinar»
+   errores JS: []
+   peticiones fallidas: []
+```
+
+### Causa 1: **Vite sirve un modulo viejo** -- *y ahora esta medido, no supuesto*
+
+**`fetch('/src/api/cocina.ts')` y buscar `acaba_en` da `False`.** *O sea que **el modulo que llega al navegador no
+tiene el arreglo del §7** -- aunque `tsc` de 0 y el fichero en disco si lo tenga.*
+
+**Es la misma cosa que el §4** (*un `Not Found` que era un 404 de una API de tres horas*) **y la misma que el §6**
+(*un «Cargando» que era prisa*): **mirar el fichero y concluir sobre lo que se sirve.** *Ya no es una hipotesis:
+**el propio navegador lo dice**, y la comprobacion es **una linea**.*
+
+### Causa 2: **sin conexion, la pantalla AFIRMA algo que no sabe** -- *y esto es un defecto del codigo, no del ensayo*
+
+**«Esta receta no esta empezada.»** *Eso es lo que dice la pantalla con la red cortada.*
+
+**Y es falso.** *La receta **si** esta empezada: *hay un paso y un temporizador de 30 minutos en la base.* **Lo que
+pasa es que la consulta no ha podido traerlo.**
+
+> **`if (!data || data.paso === null)` mete en el mismo saco dos cosas opuestas**: *«el servidor dice que no hay
+> nada» y «no he podido preguntar»*. **Y la pantalla elige la primera, que es la que afirma.**
+
+**Es exactamente el pecado que esta fase lleva cazando desde `sin_precio`**: *convertir **«no se sabe»** en
+**una afirmacion**.* **Y aqui la afirmacion es ademas la que desanima**: *alguien que este cocinando, sin cobertura
+en la cocina, abre la pantalla y **lee que no ha empezado** -- *cuando lo que pasa es que el movil no tiene
+red.*
+
+### Y el arreglo, que son dos cosas distintas
+
+1. **Para la causa 1**: *que Vite sirva lo de ahora* -- *reiniciarlo, que **ya se hizo una vez en esta misma
+   fase*** --, *y **volver a comprobar `acaba_en`** con la misma linea antes de creerse nada.*
+2. **Para la causa 2**: **separar los dos casos.** *`isLoading` ya esta; lo que falta es **distinguir «la consulta
+   fallo» de «la consulta dijo que no hay nada»**.* **Y la pantalla, cuando falla, tiene que decir **que no pudo
+   preguntar** -- *y, si hay datos viejos, **seguir enseñandolos***, que es lo que el §7 empezo a arreglar con
+   `if (error && !data)`.
+
+**Y la causa 2 es la que importa**, porque *no es del ensayo: **es de la pantalla**, y **se ve sin cortar nada** --
+*basta con que el servidor no conteste una vez.*
