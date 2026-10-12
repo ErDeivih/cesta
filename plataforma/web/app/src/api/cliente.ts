@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { estaAtascada } from '../logica/espera'
+
 /** El unico sitio del frontend que habla con el servidor.
  *
  *  Todo va por rutas relativas `/api/...`. Nunca `http://localhost:8000`:
@@ -139,7 +141,9 @@ export async function pide<T>(
 export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
   const [atascada, setAtascada] = useState(false)
   useEffect(() => {
-    if (!cargando) {
+    // **La decision la toma `estaAtascada`, que es una funcion pura y tiene sus pruebas.**
+    // *Aqui solo vive el reloj, que es lo unico que necesita React.*
+    if (!estaAtascada(cargando, 0, segundos)) {
       setAtascada(false)
       return
     }
@@ -148,3 +152,4 @@ export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
   }, [cargando, segundos])
   return atascada
 }
+
