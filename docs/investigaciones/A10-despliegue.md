@@ -123,3 +123,89 @@ servida**.*
   algoritmos y fallos reales, **enlazados a código y ejemplos reproducibles**». **No se ha tocado.***
 - **El recorrido de `A09` con «controles, textos y errores reales, no solo conteo de píxeles»**, y las
   capturas con commit/imagen/versión. *Tampoco.*
+
+
+---
+
+## 6. Las sesiones y los logs: **las dos que faltaban, medidas**
+
+*(13 de octubre de 2026. **`A10` pide «revalidar [...] sesiones [...] y logs sin secretos». Las dos estaban
+sin medir, y ya no.**)*
+
+### 6.1 La sesión caduca, y se comprobó **poniéndola en el pasado**
+
+**No basta con leer la consulta.** *La consulta lleva `AND s.expira_en > now()` -- se ve en
+`almacen.quien` --, **pero leerlo y comprobarlo son cosas distintas***, así que se hizo lo segundo:
+
+```
+1) sesion creada:                              si
+2) quien(tok) la reconoce:                     si
+5) caducidad puesta en el pasado (a mano, en la base)
+6) y ahora quien(tok) devuelve:                None
+   -> RECHAZADA, que es lo correcto
+7) dias_sesion:                                30
+```
+
+**Y `dias_sesion` fija la misma caducidad en los dos sitios**: *la columna `expira_en` de la base y el
+`max_age` de la cookie* (`main.py`, en las dos rutas que entran). **Si sólo se pusiera en uno, la sesión
+duraría lo que dijera el otro** -- *y el navegador es el que menos se puede permitir mandar.*
+
+### 6.2 **Y el token se guarda como huella, no en claro**
+
+*Esto no era lo que se iba a medir y salió al mirar la consulta*: `almacen.quien` busca por
+**`_huella(token)`**, no por el token.
+
+**Y se comprobó leyendo la fila de verdad:**
+
+```
+el token guardado:   df1c6b86364d3bc741aff8c1e1817aa62a71353b0999cce1e42b9d4a1f41979a
+el token de verdad:  VeGIejXSsqCEPH86CfkX...
+la huella de verdad: df1c6b86364d3bc741aff8c1e1817aa62a71353b0999cce1e42b9d4a1f41979a   -> COINCIDE
+```
+
+> **Lo que eso significa, y por qué importa más de lo que parece**: *una copia de la base de datos **no
+> entrega sesiones vivas**.* **El que la consiga tiene los hashes, no los tokens** -- *y con un token
+> hasheado no se puede entrar.*
+
+**Y enlaza directamente con la copia de la ronda 250**: *`plataforma/copia_programada.py` **volca esa
+misma tabla**, y el volcado queda en `data/copias/`.* **Que el token esté hasheado es lo que hace que ese
+fichero no sea un llavero.**
+
+### 6.3 Los logs: **140 líneas, y ninguna credencial**
+
+```
+docker logs cesta-api-1  ->  140 lineas
+buscando: clave-de-prueba | prueba123 | CESTA_CLAVE | postgresql:// | prueba@
+resultado: NINGUNA
+```
+
+**Y se buscaron las cadenas de verdad, no sólo la palabra «clave»**: *la contraseña que usan los ensayos
+(`clave-de-prueba-123`), la de la base (`prueba`), la variable del entorno (`CESTA_CLAVE`) y una cadena de
+conexión entera con su usuario y su contraseña.*
+
+> **Lo que esto dice, y lo que NO dice.** *Dice que en **estos** 140 líneas no hay ninguna credencial.*
+> **No dice que no pueda haberla**: *140 líneas son las de un contenedor que acaba de arrancar, y un log
+> crece.* **Lo que sí se puede afirmar es que el log de arranque y de las peticiones que ha atendido no las
+> lleva** -- *que es donde aparecerían si alguien imprimiera el entorno o la conexión.*
+
+### 6.4 Y un error mío, en esta misma medición
+
+*La primera lectura de la fila dio `guardado = "token"` y `len = 5`, y `expira = "expira_en"`.* **Parecía
+que el token guardado fuera la cadena «token».** *Y era que `almacen.cursor()` devuelve **diccionarios**,
+así que `a, b = cur.fetchone()` desempaqueta **las claves**, no los valores.* **Corregido con
+`fila["token"]`.**
+
+> *Es el mismo tipo de error que las cinco suposiciones de A09, y el más fácil de no ver*: **el resultado
+> tenía la forma correcta -- dos cadenas -- y el contenido era el nombre de las columnas.**
+
+### 6.5 Lo que queda de `A10`, entonces
+
+| lo que pide | **estado** |
+|---|---|
+| exposición de puertos | **hecho** -- de `0.0.0.0` a `127.0.0.1` |
+| bundles y separar rutas | **hecho** -- 677,8 -> 326,5 KB de entrada |
+| backups y restauración | **verificado**, y con copia programada |
+| la tarea de la copia | **escrita y verificada; sin dar de alta** -- *eso se decide* |
+| `docs/aprende` | **hecho** -- los fallos (17) y la cobertura (18) |
+| **sesiones** | **medido**: caduca, y el token va hasheado |
+| **logs sin secretos** | **medido en las 140 líneas que hay** |
