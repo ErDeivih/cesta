@@ -291,7 +291,7 @@ son «que quiere la persona que usa esto», y eso se pregunta.*\n\n
 | lo que era un hueco | **lo que hay hoy** | **lo que falta** |
 |---|---|---|
 | **`R02` importar recetas** | **las CUATRO piezas**: fuente permitida, borrador (*la previa que **no escribe***), lector de `application/ld+json` y **la ruta** -- *19 pruebas, y **verificada**: una fuente no declarada da `400` **diciendo cual*** | **la lista de fuentes** (*la 5.a decision*) **y la pantalla** |
-| **`R05` modo cocina** | **CERRADO de arriba abajo y VERIFICADO**: `core/cocina.py` (*10 pruebas*), tabla `018`, **5 endpoints** y **pantalla vista** -- *y la prueba: dos lecturas separadas 4 s dieron **`599` y `595`**, sin nada contando* | *nada* |
+| **`R05` modo cocina** | **CERRADO de arriba abajo y VERIFICADO, incluido el sin conexion**: `core/cocina.py` (*10 pruebas*), tabla `018`, **5 endpoints**, y **la pantalla vista** -- *tres de tres con el reloj encadenado `29:59 -> 29:48 -> 29:37`, y **`1785 -> 1774` con la red cortada*** | *nada* |
 | **`R08` despensa** | **CERRADO de arriba abajo y VERIFICADO**: `core/despensa.py` (*9 pruebas*), tabla `017`, **3 endpoints** y **pantalla vista** -- *y **«no se sabe cuanto» esta en pantalla*** | *nada* |
 | **la paginacion del buscador** | **hecha** (*4 pruebas*) | *nada* -- *y **destapo** que el orden de `buscar` no es total (4.a decision)* |
 

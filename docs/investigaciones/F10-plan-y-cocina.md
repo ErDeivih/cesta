@@ -975,3 +975,52 @@ aparato**.*
 
 **Y lo que queda es **una linea de `setInterval`**, con el sitio exacto ya identificado.** *No es una duda: es un
 pendiente con la forma escrita.*
+
+
+---
+
+## 21. **`R05` cerrado: el temporizador sigue con la red cortada**
+
+*(Ronda 199. **Es el criterio que `R05` pide por su nombre, medido.**)*
+
+### Lo que se midio
+
+```
+CON CONEXION:       quedan 1788 s
+SIN CONEXION t=0:   quedan 1785 s
+SIN CONEXION t=10:  quedan 1774 s
+=== HA BAJADO 11 s CON LA RED CORTADA
+```
+
+**Once segundos de reloj, once segundos de descuento, y la red cortada.** *Que es **exactamente** lo que el criterio
+pide: «**reanudacion sin conexion** cuando sea viable».*
+
+### Y el arreglo fue **un `useState` y un `useEffect`**
+
+**El tic:** *un `setInterval(..., 1000)` que incrementa un contador de estado.* **Y no hace nada mas** -- *no pide
+nada, no guarda nada, no consulta nada: **solo obliga a React a volver a evaluar el componente**, que es lo que hace
+que **`acaba_en - Date.now()` se vuelva a calcular**.*
+
+> **Y funciona sin conexion **por la misma razon que todo lo demas**: *`setInterval` **no pide nada a nadie** -- es el
+> reloj del aparato, **igual que `Date.now()`**.* **Es la pieza que faltaba para que la promesa del §2 se cumpla
+> entera: el instante viaja desde el servidor, el tiempo lo calcula el aparato, y ahora tambien lo repinta el
+> aparato.**
+
+### Y `R05`, capa por capa, con lo que se midio en cada una
+
+| la capa | **el resultado** |
+|---|---|
+| **la logica** | *`core/cocina.py`, **10 pruebas*** -- y **la decision escrita**: *un temporizador no es una cuenta atras, es una hora de fin* |
+| **la tabla** | *migracion `018`: **`paso` nullable** y **los instantes en `jsonb`*** |
+| **la ruta** | *5 endpoints; **`200` veinte de veinte*** |
+| **la pantalla, con conexion** | ***tres de tres pintan, y el reloj encadena `29:59 -> 29:48 -> 29:37` en tres paginas independientes*** |
+| **la pantalla, sin conexion** | ***`1785 -> 1774` con la red cortada*** |
+
+**Las cinco, medidas.** *Y las dos ultimas son las que importan: **el numero no vive en la pantalla** -- *si viviera,
+tres cargas habrian dado `30:00` las tres* --, **y tampoco necesita al servidor para seguir bajando**.*
+
+### Y lo que costo llegar aqui, dicho en una linea
+
+**Catorce rondas (§6 a §21) y dos causas de dos mundos distintos**: *una **del ensayo** (`CESTA_API` sin poner) y
+otra **del producto** (`refetchInterval`), **mas una tercera que solo aparecio al arreglar las dos** (el tic).*
+*Y lo que las separo, al final, fue **repetir el mismo ensayo tres veces** en vez de razonar sobre el.*

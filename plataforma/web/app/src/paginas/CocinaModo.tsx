@@ -7,6 +7,8 @@
  *  **Y por eso esto sobrevive a la pantalla**: *si se recarga, o se apaga el movil, o se va la conexion, **al
  *  volver el numero es el correcto** -- *porque **no se estaba contando**, se estaba guardando cuando empezo.*
  */
+import { useEffect, useState } from 'react'
+
 import { useParams } from 'react-router-dom'
 
 import { apuntaUsado, irAlPaso, ponTemporizador, useCocina, useEmpieza } from '../api/cocina'
@@ -40,6 +42,21 @@ export function CocinaModo() {
   const id = Number(recetaId)
   const v = Number(version)
   const { data, isLoading, error } = useCocina(id, v)
+  // **Y EL TIC, que es lo que hace que el numero BAJE.** *El calculo ya estaba en el sitio bueno -- `acaba_en -
+  // Date.now()` --, **y el numero es correcto cuando se pinta**.* **Lo que faltaba es que se volviera a pintar**:
+  // *React solo re-ejecuta el componente **cuando cambia algo de su estado**, y **sin conexion no llega ninguna
+  // respuesta que cambie nada** -- asi que **el `Date.now()` no se volvia a evaluar*** (medido el 12 de octubre de
+  // 2026: once segundos sin red y el numero seguia en `1799`).
+  //
+  // **Y este tic funciona SIN CONEXION por la misma razon que todo lo demas**: *`setInterval` **no pide nada a
+  // nadie** -- *es el reloj del aparato, **igual que `Date.now()`**.* **Es la pieza que faltaba para que la
+  // promesa del §2 se cumpla entera: el instante viaja desde el servidor, el tiempo lo calcula el aparato, y
+  // ahora tambien lo repinta el aparato.**
+  const [, setTic] = useState(0)
+  useEffect(() => {
+    const latido = setInterval(() => setTic((n) => n + 1), 1000)
+    return () => clearInterval(latido)
+  }, [])
   const empieza = useEmpieza(id, v)
 
   // **`isLoading` NO BASTA, y esta medido.** *React Query da `isLoading` mientras la consulta **no haya tenido
