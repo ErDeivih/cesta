@@ -406,3 +406,53 @@ sintoma a la capa equivocada* -- **y la misma que el §5**: *la peticion contest
 **Y la regla del criterio, sostenida en las cuatro**: *«**compra no acredita consumo ni stock restante**»* --
 *no hay ninguna funcion que sume una compra, no hay ninguna ruta, **no hay ninguna clave ajena**, y **no hay ningun
 boton**.*
+
+
+---
+
+## 7. La despensa, **otra vez en «Cargando»** -- *y esta vez no puede ser el `refetchInterval`*
+
+*(Ronda 200. **Y funcionaba en el §6.**)*
+
+### Lo que se midio
+
+```
+CON CONEXION (12 s):   «CARGANDO LA DESPENSA...»   <- ni harina, ni arroz, ni «no se sabe cuanto»
+SIN CONEXION:          «CARGANDO LA DESPENSA...»   <- y ademas PIERDE la lista
+y NO dice que no pudo preguntar
+```
+
+### Y lo que esto significa, que es mas que un fallo de la despensa
+
+**1. La despensa **funcionaba** en el §6.** *El 12 de octubre, con la misma pila, esta pantalla **pinto `harina`,
+`arroz` y `«no se sabe cuanto»»** -- *esta escrito arriba, medido.* **Ahora no pinta nada.**
+
+**2. Y **no puede ser el `refetchInterval`**.** *Ese fue el arreglo de la cocina (§18), **y la despensa nunca lo
+tuvo**: *su consulta es `useQuery({ queryKey: ['despensa'], queryFn: verDespensa })`, **sin intervalo**.*
+
+> **Asi que hay una tercera causa, y es **comun a las dos pantallas**. *Y no es la fontaneria -- *que ya se comprobo:
+> `200` veinte de veinte (§18)* -- ni el `refetchInterval`, **ni el `isLoading`**, que en la despensa **si tiene su
+> rama de error** y **no se esta viendo**.*
+
+### Y lo unico que cambio entre el §6 y ahora, que conviene mirar sin adornos
+
+**Entre las dos medidas se reinicio Vite, con `CESTA_API` puesta.** *Antes de eso, **Vite proxya al `8000`** -- *y
+sin embargo **la despensa pintaba**.* **Y despues, con el proxy bien, no pinta.**
+
+**Eso es raro, y hay dos lecturas** -- *y **no se sabe cual** es:*
+
+1. **Algo del arranque nuevo esta mal.** *El Vite de ahora se arranco con `CESTA_API` y **con `cmd.exe`**; *el
+   anterior tambien, pero **el entorno pudo ser distinto**.*
+2. **O el fallo es **intermitente tambien aqui**, y en el §6 salio cara.** *Y eso **encaja con el §17**: *la cocina
+   era intermitente **antes** del arreglo del `refetchInterval`, y **la despensa puede compartir esa causa** -- *que
+   entonces **no era el intervalo, sino algo de mas abajo: `pide()`, o el `QueryClient`.***
+
+### Y el siguiente paso, exacto, y es **una lectura que ya se sabe hacer**
+
+**Mirar el estado de la consulta de la despensa por dentro** -- *el mismo `console.log` del §17, que **ya se escribio
+y se quito***: *`status`, `fetchStatus`, `hayError`, `hayDatos`.* **Y **repetir tres veces**, que es **lo que separo
+las causas del §17** y lo que **no se ha hecho para la despensa**.*
+
+**Y una hipotesis que hay que poder descartar, porque seria la mas tonta**: ***que Vite este sirviendo una version
+anterior de `Despensa.tsx`***. *Se descarta **mirando el modulo que la pagina carga** -- *la forma que el §16 dejo
+apuntada -- **y no con `fetch`, que no devuelve el fuente (§10)**.*
