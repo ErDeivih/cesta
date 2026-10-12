@@ -291,3 +291,26 @@ es lo mismo.* **La capa que fallaba era la otra**, y **estaba a una peticion de 
 
 **Lo siguiente no es recargar Vite: es **reiniciar la API**, y volver a mirar.** *Y eso **si** es un paso y no una
 duda, porque **ahora el sintoma tiene dueno**.*
+
+
+### Y el cierre: **404 -> 401**, que es la prueba
+
+*(Misma ronda. Se reinicio la API -- **y hubo que reiniciarla dos veces**, ver abajo.)*
+
+```
+ANTES (proceso de las 21:35):   GET /api/despensa -> 404  {"detail":"Not Found"}
+AHORA (proceso nuevo):          GET /api/despensa -> 401  {"detail":"Hay que entrar primero."}
+```
+
+**Y ese cambio es la prueba, no un detalle**: *`404` quiere decir **«esa ruta no existe»**; `401` quiere decir
+**«existe, y hay que entrar»**.* **La ruta esta, y ademas pide sesion -- que es lo que tiene que hacer.**
+
+### Y el segundo tropiezo, que es del mismo tipo que el primero
+
+**El primer reinicio de la API fallo, y el log lo dijo sin rodeos**: *`psycopg.OperationalError: connection to
+server at "127.0.0.1", port 5432`.* **Se me habia olvidado `CESTA_POSTGRES`**, asi que el proceso nuevo arranco
+**contra el puerto que no es** -- *el defecto, 5432, en vez del 5434 de las pruebas* -- **y se murio al arrancar.**
+
+**O sea: la primera vez atribui el fallo a la capa equivocada (Vite), y la segunda me lleve la configuracion a
+medias.** *Las dos son la misma cosa: **montar un ensayo sin comprobar que el ensayo esta montado**.* **Y las dos
+se vieron por lo mismo: mirando el log y preguntando a la ruta, en vez de suponer.**
