@@ -78,9 +78,20 @@ export function useCocina(recetaId: number, version: number) {
   return useQuery({
     queryKey: ['cocina', recetaId, version],
     queryFn: () => reanudar(recetaId, version),
-    // *Se refresca solo, para que lo que queda baje: **pero el tiempo no depende de esto** -- si no hay
-    // conexion, el numero se calcula igual con el reloj del aparato.*
-    refetchInterval: 15000,
+    // **El refresco, SOLO cuando ya hay datos.** *Y esto es un arreglo, no un ajuste.*
+    //
+    // *Antes era `refetchInterval: 15000` a secas, y **eso es lo que dejaba la pantalla en «Cargando la cocina...»
+    // para siempre** (medido el 12 de octubre de 2026):* **React Query da `isPending` mientras no haya tenido
+    // nunca `data`** *y **el intervalo la vuelve a disparar antes de que el primer intento se resuelva**, asi que
+    // el estado observable **nunca sale de `pending`** -- *y como `isPending` es verdadero, **la pantalla se queda
+    // cargando aunque no haya ningun error***.
+    //
+    // **Y se comprobo que la red no tiene la culpa**: *veinte peticiones seguidas a `/api/cocina/7?version=2`
+    // desde la propia pagina dieron **veinte `200`**.* *El fallo estaba **en la consulta**, no en la fontaneria.*
+    //
+    // **Con la condicion, el primer intento termina** -- *en `success` o en `error`, pero **termina*** --, **y el
+    // refresco empieza despues**, que es cuando sirve: *para que lo que queda baje sin recargar.*
+    refetchInterval: (consulta) => (consulta.state.data ? 15000 : false),
   })
 }
 

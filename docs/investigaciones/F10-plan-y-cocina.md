@@ -798,3 +798,65 @@ intento **termine**.*
 intermedias era falsa** -- *el `isLoading` no se apagaba, el `500` era de Vite, `CESTA_API` no estaba puesta --*,
 **pero ninguna era la causa**, y **la causa solo se ve repitiendo**, *que es lo unico que **no se hizo hasta
 ahora**.*
+
+
+---
+
+## 18. El arreglo del `refetchInterval`: **mejora, y no basta** -- *pero deja una prueba que vale mas*
+
+*(Ronda 196.)*
+
+### Primero, lo que descarto la red
+
+**Veinte peticiones seguidas desde la propia pagina:**
+
+```
+veinte peticiones desde la pagina: {200: 20}
+=== TODAS IGUALES
+```
+
+**Veinte de veinte.** *Asi que **la red no es intermitente**: **lo es la consulta**.* **Y eso descarta el proxy, el
+sandbox y `CESTA_API`, que era lo que quedaba por descartar.**
+
+### Y el arreglo, que es el que el §17 apuntaba
+
+**`refetchInterval: 15000` a secas** -- *React Query da `isPending` mientras no haya tenido **nunca** `data`, y **el
+intervalo la vuelve a disparar antes de que el primer intento se resuelva**, asi que **el estado observable nunca
+sale de `pending`**.*
+
+**Y se cambio por `refetchInterval: (consulta) => (consulta.state.data ? 15000 : false)`.** *Con la condicion, **el
+primer intento termina** -- en `success` o en `error`, pero **termina** --, **y el refresco empieza despues**, que es
+cuando sirve.*
+
+### Y el resultado, que es **mejor y no es bueno**
+
+**Tres corridas seguidas, con `tsc` a 0:**
+
+```
+corrida 1: PINTA -- quedan 29 min 59 s
+corrida 2: PINTA -- quedan 29 min 48 s
+corrida 3: «Cargando»
+```
+
+**Dos de tres pintan.** *Antes era **intermitente sin patron**; ahora **falla una de cada tres**, y **sigue sin
+saberse por que**.*
+
+### Y dentro de este resultado hay **una prueba que vale mas que el arreglo**
+
+**La corrida 1 dijo `29 min 59 s` y la corrida 2 dijo `29 min 48 s`.** *Son **dos paginas distintas**, cargadas
+**una despues de la otra**, **sin que nada este contando**.*
+
+> **Once segundos menos, en dos pantallas que no saben la una de la otra.** *Que es **exactamente** la decision del
+> §2 y de la migracion `018` -- **un temporizador no es una cuenta atras, es una hora de fin** --, **medida ahora en
+> la pantalla y no en la API**.* **El tiempo lo lleva el instante que mando el servidor, y no ningun contador.**
+
+### Y lo que queda, exacto
+
+**Una de cada tres se queda en «Cargando», y la red esta descartada** (*veinte de veinte*). *Asi que el sospechoso
+es **el ciclo de vida de la consulta** -- *y lo siguiente es **mirarlo por dentro**: un `console.log` del estado de
+React Query (`status`, `fetchStatus`, `dataUpdatedAt`) **dira si se queda en `pending`/`fetching` o si esta en otra
+cosa**, que es **la unica lectura que falta**.*
+
+**Y mientras tanto, algo que **si** se puede dar por bueno:** *la pantalla **pinta cuando la consulta llega**, y
+**cuando no llega sin conexion, lo dice** (§17). **Lo que no hace todavia es decir que no llego cuando la red esta
+bien y la consulta se atasca** -- *que es un caso raro, pero **es el que se ve una de cada tres veces**.*
