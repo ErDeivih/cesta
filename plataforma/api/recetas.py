@@ -14,7 +14,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from core import recetas
+from core import importar_receta, recetas
 
 from .sesion import usuario_actual
 
@@ -326,3 +326,70 @@ def quitar_plan(fecha: str = Query(...), receta_id: int = Query(...),
         raise HTTPException(status_code=400, detail=str(fallo)) from fallo
     finally:
         con.close()
+
+
+# ---------------------------------------------------------------------------------------------
+# R02: importar una receta -- **la previa, que no escribe**
+# ---------------------------------------------------------------------------------------------
+
+
+class ImportarIn(BaseModel):
+    """**Lo unico que manda el cliente es de donde.** *Nada mas: lo demas lo lee el servidor.*"""
+
+    url: str = Field(min_length=1)
+
+
+@rutas.post("/importar")
+def importar(datos: ImportarIn, usuario: dict = Depends(usuario_actual)) -> dict:
+    """**Lee una receta de una fuente permitida y devuelve el borrador.** *No guarda nada.*
+
+    **Y el orden de las comprobaciones es la decision**, no un detalle:
+
+    1. **Primero, la fuente.** *Si no esta declarada, **no se lee nada** -- *ni siquiera se intenta* --, y se
+       devuelve **el motivo**: «la fuente no esta declarada: recetas.example.com». *Eso es lo que permite decir
+       **«no puedo importar de ahi»** en vez de «no he encontrado ninguna receta en esa pagina», **que son dos
+       cosas muy distintas*** y solo una es verdad.
+    2. **Y despues, el formato**: *se lee **`application/ld+json` con `@type: Recipe`**, que es **el estandar que
+       las webs de recetas publican*** -- *no un raspador a medida.* **Un sitio que no lo publique no se puede
+       leer sin escribirlo a mano, y eso es scraping**: *por eso «fuente permitida» y «formato» son la misma
+       decision.*
+    3. **Y si hay receta, sale el borrador con su `fuente` dentro** -- *que es lo que permite **volver a
+       comprobarla** dentro de un ano.* **Y no se guarda**: *`crear` escribe, y esto es la previa.*
+
+    **Y cuando no se puede, se dice cual de las tres cosas ha pasado** -- *la fuente no vale, no hay receta, o
+    hay receta y le faltan cosas* --, **porque son problemas distintos y se arreglan distinto.**
+    """
+    permiso = importar_receta.comprueba_fuente(datos.url)
+    if not permiso.permitida:
+        # **404 y no 403**, como en todo lo demas, pero aqui ademas **no tiene sentido leer**: no se ha leido.
+        raise HTTPException(400, f"No se puede importar de esa direccion: {permiso.motivo}.")
+
+    # *Se baja el HTML.* **Con tope de tiempo y de tamano**: una pagina que no contesta no puede colgar la
+    # peticion, y una que pese 40 MB no es una receta.
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(datos.url, timeout=10) as r:
+            html = r.read(2_000_000).decode("utf-8", errors="replace")
+    except Exception as e:
+        raise HTTPException(502, f"No se pudo traer la pagina: {e}.") from e
+
+    campos = importar_receta.lee_json_ld(html)
+    if campos is None:
+        # **Y esto se dice distinto que «la fuente no vale».** *Aqui la fuente SI vale, y la pagina **no trae una
+        # receta legible** -- que puede ser que no sea una receta, o que ese sitio no publique el estandar.*
+        raise HTTPException(422, "Esa pagina no trae una receta con datos estructurados "
+                                 "(application/ld+json con @type: Recipe).")
+
+    permiso2, b = importar_receta.borrador(datos.url, campos)
+    if b is None:
+        raise HTTPException(422, f"La receta no se puede previsualizar: {permiso2.motivo}.")
+
+    # **El borrador, tal cual -- y `faltantes` viaja, para que la pantalla pueda decirlo.**
+    return {
+        "nombre": b.nombre, "raciones": b.raciones, "minutos": b.minutos,
+        "preparacion": b.preparacion, "ingredientes": b.ingredientes,
+        "fuente": b.fuente, "faltantes": b.faltantes,
+        # **Y el aviso de que esto NO esta guardado**, para que nadie lo confunda con una receta.
+        "guardada": False,
+    }
