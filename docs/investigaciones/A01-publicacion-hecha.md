@@ -99,3 +99,64 @@ comprobar** su coherencia; **no ha traído datos nuevos**.*
 > verdad.**
 
 **La segunda condición -- los precios al día -- necesita que la ingesta termine**, y eso es otro trabajo.
+
+
+---
+
+## 5. La ingesta interrumpida, medida cadena por cadena
+
+*(12 de octubre de 2026. **Esto es lo que la revisión del dueño decía, y ahora está medido con la hora de
+cada fichero** en vez de con una impresión.)*
+
+```
+data/bronze/fuente=alcampo     10-11 12:45     <- AYER
+data/bronze/fuente=carrefour   10-11 12:38     <- AYER
+data/bronze/fuente=aldi        10-12 12:26     <- HOY
+data/bronze/fuente=mercadona   10-12 12:26     <- HOY
+data/bronze/fuente=dia         10-12 12:37     <- HOY
+```
+
+### Lo que dice, y no es lo que yo había supuesto
+
+**Tres de las cinco cadenas **sí** ingestaron hoy.** *Aldi, Mercadona y DIA, entre las 12:26 y las 12:37.*
+
+**Y las dos que no son Alcampo y Carrefour** -- *las dos con dato de **ayer**, el 11 a las 12:45 y 12:38.*
+
+**Y la tarea `Cesta diaria` corridó a las 12:24:20 y terminó con `3221225786`** --
+*`STATUS_CONTROL_C_EXIT`, o sea **un `^C`*** --, *que es exactamente lo que la revisión describía.*
+
+> **Así que la forma de contarlo bien no es «la ingesta no corrió».** *Corrió, hizo tres cadenas, y **la
+> mataron antes de hacer las dos que faltaban**.* **Y una de las dos -- Alcampo -- es la única que
+> necesita un navegador **visible** para pasar su WAF.**
+>
+> *Que sea justo la que falta, y justo la que necesita una persona delante, es la clase de coincidencia
+> que conviene mirar dos veces antes de llamarla casualidad.*
+
+### Y el orden importa, porque `ORDEN` empieza por Carrefour
+
+```
+ORDEN = ["carrefour", "dia", "mercadona", "aldi", "alcampo", "lidl"]
+```
+
+**Carrefour es el **primero** de la lista, y su bronze es de ayer.** *DIA, Mercadona y Aldi -- que van
+detrás -- sí tienen dato de hoy.* **O sea que no se cortó por la mitad de la lista en orden: Carrefour
+falló o se saltó, y el `^C` llegó después.**
+
+*No se ha averiguado por qué*, y **no se inventa**: *lo que consta es que su fichero es de ayer y que la
+tarea murió con un `^C`.*
+
+### Lo que se lanzó, y el límite que hay que decir
+
+**Se lanzaron las dos que faltan, sólo esas dos:**
+
+```
+uv run python -m projects.cesta.run --solo carrefour alcampo
+```
+
+**Y el límite, que es el mismo que el comentario de `config.RITMO` documenta**: *Alcampo va a **una
+petición cada 6,7 segundos** porque su WAF -- AWS -- escaló a **pedir un clic humano** tras siete cortes.*
+**Si el reto vuelve a pedir ese clic y no hay nadie delante, la cadena no se completa** -- *y eso no es un
+fallo del código: es el límite que la fuente pone.*
+
+*Carrefour, en cambio, no necesita navegador.* **Así que si Alcampo se queda a medias, Carrefour debería
+completarse igual** -- *y entonces bronze tendría cuatro de cinco al día en lugar de tres.*
