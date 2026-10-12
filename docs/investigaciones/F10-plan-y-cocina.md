@@ -595,3 +595,66 @@ entorno, o **reiniciarlo con `CESTA_API` puesto y comprobarlo con la misma petic
 **2. Y despues, la pregunta de verdad:** ***por que la pantalla no dice «no se pudo preguntar» en vez de
 «Cargando»***. *Eso **no depende de Vite** -- *es el `isLoading` del §11* --, y **es lo unico de toda esta cadena que
 es codigo mio y esta mal**.
+
+
+---
+
+## 15. **Y era la fontaneria del ensayo.** `CESTA_API` no estaba puesta al arrancar Vite
+
+*(Ronda 193. **Esto cierra la cadena entera de §6 a §14, y la cierra en contra de mis sospechas.**)*
+
+### Lo que se midio, y es limpio
+
+```
+8000:  libre                    <-- NADIE ESCUCHA AHI: el proxy de Vite iba al VACIO
+8102:  ESCUCHA (pid 34092)
+5173:  ESCUCHA, arrancado CON CESTA_API=http://127.0.0.1:8102
+
+sesion: 200
+DESDE LA PAGINA: status 200
+cuerpo: {"paso":0,"paso_actual":null,"usados":[],"hechos":0,
+         "temporizadores":[{"paso":0,"minutos":30,
+                            "acaba_en":"2026-10-12T11:17:34.722697+00:00",
+                            "queda_segundos":1792,"terminado":false}]}
+```
+
+**Dos cosas, y las dos importan:**
+
+1. **El `500` era **exactamente** lo que el §14 concluyo**: *Vite proxya `/api` a `CESTA_API`, **que por defecto es
+   el `8000`** -- y en el `8000` **no hay nadie**.* **Con `CESTA_API` puesta, la misma peticion devuelve `200`.**
+   *Confirmado, y **sin ninguna duda**: el log crecio y el cuerpo trae un JSON.*
+2. **Y `acaba_en` **si** estaba llegando.** *El arreglo del §7 **funciona**: *el servidor devuelve
+   **`"acaba_en": "2026-10-12T11:17:34.722697+00:00"`**, que es el instante y no el numero.*
+
+### Y todo lo que se concluyo entre el §6 y el §14, revisado
+
+| ronda | lo que se concluyo | **lo que era** |
+|---|---|---|
+| §8 | «Vite sirve un modulo viejo» | *la comprobacion con `fetch` no devuelve el fuente* |
+| §10 | «el modulo no llega» | *mi filtro `.ts` escondia la llamada* |
+| §11 | «el endpoint devuelve `500`» | **cierto, pero el `500` no era de la API** |
+| §12 | «el log dice `200` y mi captura `500`» | **las dos eran ciertas: eran dos destinos distintos** |
+| §13 | «hay una capa que no se ha mirado» | **correcto, y era la causa** |
+| §14 | «el `500` es de Vite» | **correcto** |
+| **§15** | -- | **Vite iba al `8000` porque `CESTA_API` no estaba puesta** |
+
+**Y la conclusion que importa, en una linea: NADA DE ESTO ERA DEL PRODUCTO.** *Todas las sospechas sobre el codigo
+-- el modulo, el `isLoading`, el endpoint -- **eran sobre un ensayo que no estaba midiendo lo que creia**.*
+
+### Y la unica cosa que **si** era del producto, y sigue en pie
+
+**El `isLoading` que no se apaga.** *El §11 lo demostro **con la API contestando**: *cinco rondas despues sigue sin
+arreglarse, y **es codigo mio**.* **Con la fontaneria bien, ahora se puede ver si la pantalla pinta el
+temporizador** -- *y si no lo pinta, **la causa sera esa y no otra**.*
+
+### Y la leccion de metodo, que es la mas cara de toda la fase
+
+**Siete rondas construyendo teorias sobre el producto** -- *Vite viejo, el modulo que no llega, el endpoint roto* --
+**cuando el fallo estaba en **como se habia arrancado el ensayo**.**
+
+> **Y el aviso estaba en **tres sitios escritos**: el comentario de cinco lineas de `vite.config.ts`, el §34 de
+> `F03-publicacion.md` (*la leccion de Caddy*), y **el propio §14, que lo dijo y no lo comprobo hasta la ronda
+> siguiente**.*
+
+**Lo que costo no fue averiguarlo**: *fue **no mirar la pieza de en medio** -- *y **la pieza de en medio estaba
+documentada en el fichero que la definia**.*
