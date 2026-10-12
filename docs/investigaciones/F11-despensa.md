@@ -676,3 +676,56 @@ r.abort())`.*
 
 **Con eso se pueden ejercitar las dos cosas que faltan**: *el tope de la despensa, **y el de la cocina** -- que
 tampoco se ha visto funcionar, porque **la cocina nunca se queda sin datos si ya los tiene**.*
+
+
+---
+
+## 12. El bloqueo de `/api` **es demasiado amplio** -- *y por eso el cuerpo se queda vacio*
+
+*(Ronda 205. **Es el paso que el §11 dejo apuntado, y hay que afinarlo.**)*
+
+### Lo que se midio
+
+**Se bloqueo con `pag.route('**/api/**', lambda r: r.abort())` -- *solo `/api`, dejando los modulos* --, y esto es lo
+que salio:*
+
+```
+DESPENSA a los 4 s:   ya no dice Cargando
+DESPENSA a los 13 s:  (vacio)
+COCINA   a los 4 s:   ya no dice Cargando
+COCINA   a los 13 s:  (vacio)
+```
+
+**Y «vacio» no es «dice que no pudo preguntar»: es que **el cuerpo no tiene texto**.**
+
+### Y por que, que es lo que hay que afinar
+
+**`**/api/**` no bloquea solo los datos: bloquea **todo lo que la aplicacion pide al servidor**.** *Y el armazon
+necesita **al menos dos** de esas cosas:*
+
+- **`/api/yo`** -- *quien eres; lo pide `LayoutSuite` para pintar el armazon.*
+- **`/api/listas`** -- *la lista de casa; **es la que aparece en el menu lateral**, junto a «Sin lista de casa».*
+
+> **Asi que bloquear `/api` entero **tumba la aplicacion antes de que la pantalla exista** -- *que es **el mismo
+> problema del §11**, solo que por otra puerta: alli se cayo la red entera, **y aqui se cae todo el API**.*
+
+**Y lo que se quiere medir es otra cosa**: ***una consulta de datos que no puede llegar, con la aplicacion en pie.***
+
+### Y el siguiente paso, exacto: bloquear **las rutas de datos**, no el prefijo
+
+**En vez de `**/api/**`**, bloquear **las dos que importan** -- *y **dejar pasar `/api/yo` y `/api/listas`***:
+
+```python
+for patrón in ("**/api/despensa*", "**/api/cocina*"):
+    pag.route(patrón, lambda r: r.abort())
+```
+
+**Con eso la aplicacion **carga entera** -- *armazon, menu y sesion* -- **y las dos consultas no llegan**.* *Y es
+**entonces** cuando el tope de diez segundos tiene que entrar: *a los cuatro segundos, «Cargando»; a los trece, «no se
+ha podido preguntar».*
+
+### Y una nota sobre el metodo, que se repite
+
+**Van tres ensayos seguidos (§11, §12 y el de la cocina) en que **lo que falla es el ensayo, no el producto**.** *Y
+los tres por lo mismo: **cortar de mas** -- *la red entera, luego todo el API* -- **cuando lo que hay que cortar es
+**una consulta**.*
