@@ -178,3 +178,74 @@ descartado: que el `docker run --rm` se lleve el contenedor al salir de algún m
 
 > **Y se deja así, dicho como lo que es**: *un fallo reproducido dos veces en el mismo punto, **sin causa
 > confirmada**.* *Inventar una ahora sería lo contrario de todo lo que este documento hace.*
+
+
+---
+
+## 4. **Y a la tercera pasó: la copia está verificada**
+
+*(Ronda 247. **Y la salida entera, porque es la prueba.**)*
+
+```
+-- 1. el ensayo
+   base de ensayo lista en el 5436
+   el ensayo pasa y deja sus datos
+
+-- 2. el volcado
+   pg_dump devuelve 30515 bytes          <- eran 643 en la primera corrida
+   guardado en data/copia-de-cesta.sql
+
+-- 3. el entorno separado: otro contenedor, otra base
+   base separada lista en el 5437
+   restaurado sin error                   <- antes: «the database system is shutting down»
+
+-- 4. el contenido, en el entorno restaurado
+   lista:        2 en el ensayo,  2 en la copia
+   lista_linea: 10 en el ensayo, 10 en la copia
+   compra:       2 en el ensayo,  2 en la copia
+   LA CONFIRMACION RESTAURADA (producto|cadena): dia:74397|dia
+
+-- 5. recoger
+   cesta-copia-ensayo: retirado
+   cesta-copia-db: retirado
+
+== TODO BIEN
+```
+
+### Y lo que esto acredita, que es lo que `A10` pide
+
+- **El volcado se hace y no sale vacío**: *30 515 bytes, y la guarda de los 1 000 lo comprueba.*
+- **Se restaura en un entorno separado** -- *otro contenedor, otra base, otro puerto.*
+- **El contenido cuadra**: *las tres tablas, con el mismo número de filas en el original y en la copia.*
+- **Y lo que de verdad importa**: **la sustitución confirmada conserva su producto y su cadena**
+  (`dia:74397|dia`). *No es «se copiaron filas»: es **se copió la decisión de una persona, con lo que
+  decidió**.*
+
+### Y el `shutting down` **era un resto, no un fallo del guion**
+
+*La corrida anterior había dejado un contenedor `cesta-copia-db`, y **`arranca()` empieza con
+`docker rm -f` de ese nombre**: el contenedor viejo **estaba apagándose** cuando el `pg_isready` del nuevo
+dio por listo... y el `psql` de la restauración llegó al que se iba.*
+
+*Se comprobó quitando los restos a mano antes de correr* -- *`docker rm -f cesta-copia-ensayo
+cesta-copia-db`* --, **y entonces pasó a la primera.**
+
+> **Así que el fallo era real y la causa también**: *un guion que se llama igual que sus restos se
+> encuentra con ellos.* **Y eso ahora está dicho**: *si se corta a medias, hay que limpiar antes de
+> repetir.*
+
+### Lo que queda dicho de las copias, entonces
+
+| | |
+|---|---|
+| **el mecanismo** | **existe** -- `plataforma/prueba_copia.py` |
+| **no toca la base de nadie** | **arreglado en esta ronda** -- nombres y puertos propios, y el `CESTA_POSTGRES` puesto por el |
+| **el volcado** | **verificado** -- 30 515 bytes, y la guarda de los 1 000 |
+| **la restauración** | **verificada** -- «restaurado sin error» |
+| **el contenido** | **verificado** -- 2/2, 10/10, 2/2 |
+| **y la decisión de una persona** | **verificada** -- `dia:74397|dia` |
+| **el daño de la ronda anterior** | **no se puede deshacer** -- los 716 usuarios |
+
+*Y lo que NO está: **no hay una copia programada**.* **Esto comprueba que se PUEDE hacer, no que se haga**
+-- *no hay una tarea que la corra, ni una retención, ni un sitio donde se guarden los volcados.* *El
+volcado de esta prueba se borra a propósito, y eso está bien para una prueba: no lo está para una copia.*
