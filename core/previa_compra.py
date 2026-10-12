@@ -27,7 +27,11 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-from core import envases, normalize
+from core import normalize
+
+# **`envases` ya no se usa aqui, y es a proposito.** *Le pedia el tamano del envase y **nunca lo tuvo**:
+# devuelve (tipo de envase, unidades del pack).* **La regla vive en `envases_enteros`.**
+from core.envases_enteros import envases_enteros
 
 
 @dataclass
@@ -145,18 +149,37 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
 
 
 def _tamano_del_envase(texto: str) -> float | None:
-    """El tamano del envase tal y como lo diga el texto, o `None`.
+    """El tamano del envase **publicado en la ficha**, o `None`. *Y del texto **no sale**.*
 
-    *Usa `core/envases.py`, que es quien sabe leer «garrafa», «malla», «Pack-6» y «a granel».* **Si
-    no se puede leer, no se inventa: `None`, y la linea se queda sin calculo de envases.**
-    """
-    if not texto:
-        return None
-    try:
-        leido = envases.lee(texto)
-    except Exception:  # noqa: BLE001  (un texto raro no puede tumbar una previa)
-        return None
-    if not leido:
-        return None
+    **Aqui estaba el defecto, medido el 12 de octubre de 2026, y era doble.** *Esto pedia el tamano asi:*
+
+    ```python
     cantidad = leido.get("cantidad") if isinstance(leido, dict) else getattr(leido, "cantidad", None)
-    return float(cantidad) if isinstance(cantidad, (int, float)) and cantidad > 0 else None
+    ```
+
+    *Y `core/envases.py::lee` devuelve `tuple[str | None, int | None]`* -- **(tipo de envase, unidades del
+    pack)** --, asi que `isinstance(leido, dict)` era **falso**, `getattr(tupla, "cantidad", None)` daba
+    **`None`**, **y `ln.envases` y `ln.sobrante` no se calculaban nunca.**
+
+    *Y aunque se hubiera arreglado el `dict`, seguiria dando `None`*: **`envases.lee` nunca devolvio un
+    tamano** -- *lee «botella», «malla», «Pack-6», que son **el tipo de envase y cuantas unidades van
+    dentro**, no cuanto pesa o cuanto cabe.*
+
+    **Asi que esta funcion ya no intenta adivinarlo del texto.** *«Leche entera 1 l» se puede leer, pero
+    **«Leche entera» a secas no dice cuanto trae**, y de ahi no se saca un numero.* **El tamano sale de
+    `ln.tamano_envase`, que lo publica la ficha del articulo elegido** -- *y si no lo trae, la linea se
+    queda sin calculo de envases, que es lo correcto: **no se inventa una compra fraccionaria.***
+
+    *Se conserva la funcion, devolviendo `None`, para no romper a quien la llame y para que **el motivo
+    este escrito donde estaba el error**.*
+    """
+    return None
+
+
+def envases_de_la_linea(cantidad, unidad, tamano_envase, unidad_envase=None) -> dict:
+    """Cuantos envases hay que comprar y cuanto sobra, **para una linea de la previa**.
+
+    *Delegacion en `core/envases_enteros.py`, que es la regla y tiene sus pruebas.* **Aqui solo se junta
+    lo que la linea sabe**: *cuanto se quiere y cuanto trae un envase.*
+    """
+    return envases_enteros(cantidad, unidad, tamano_envase, unidad_envase or unidad)
