@@ -456,3 +456,54 @@ las causas del §17** y lo que **no se ha hecho para la despensa**.*
 **Y una hipotesis que hay que poder descartar, porque seria la mas tonta**: ***que Vite este sirviendo una version
 anterior de `Despensa.tsx`***. *Se descarta **mirando el modulo que la pagina carga** -- *la forma que el §16 dejo
 apuntada -- **y no con `fetch`, que no devuelve el fuente (§10)**.*
+
+
+---
+
+## 8. **Y pinta tres de tres.** *El §7 era la misma intermitencia que la cocina*
+
+*(Ronda 201.)*
+
+### Lo que se midio
+
+**Tres corridas seguidas, con el mismo ensayo:**
+
+```
+corrida 1: PINTA
+corrida 2: PINTA
+corrida 3: PINTA
+```
+
+**Tres de tres.** *Y **la misma pantalla, con el mismo codigo, doce segundos antes, decia «Cargando la despensa...»
+y no pintaba nada (§7).*
+
+### Y lo que esto significa, que es la conclusion de las dos pantallas
+
+**Hay **una intermitencia comun** a la despensa y a la cocina**, *y **la despensa no tiene `refetchInterval`** -- *asi
+que la causa **no es el intervalo** (que fue el arreglo de la cocina, §18) **sino algo de mas abajo, que comparten
+las dos**: *`pide()`, el `QueryClient`, o **la propia fontaneria del sandbox**.*
+
+**Y la consecuencia practica es incomoda pero es la verdad**: ***una sola corrida no mide nada.*** *El §6 dio `R08`
+por visto con **una** corrida que pinto; el §7 lo dio por roto con **una** que no; **y hacen falta tres** -- *que es
+exactamente lo que costo catorce rondas en la cocina (§6 a §21) y lo que **aqui se ha hecho en la primera*.
+
+### Y lo que **si** queda firme de `R08`, que es lo que importa
+
+**Lo que se midio con conexion y con tres de tres no depende de la intermitencia:**
+
+| | |
+|---|---|
+| **la logica** | *`core/despensa.py`, **9 pruebas**, y los cuatro casos de la aceptacion* |
+| **la tabla** | *migracion `017`: **`cantidad` nullable** y **cero claves ajenas a `compra`*** |
+| **la ruta** | *3 endpoints; **`404` -> `401` -> `201`*** |
+| **la pantalla** | ***«no se sabe cuanto» esta en pantalla*** -- *medido en el §6, y **vuelto a medir aqui*** |
+| **y la regla del criterio** | ***no hay ninguna funcion que sume una compra, ninguna ruta, ninguna clave ajena y ningun boton*** |
+
+**Y lo que **no** se puede afirmar, y hay que decirlo asi**: *que la pantalla pinte **siempre**.* **Pinta tres de
+tres en el mejor de los casos y ninguna de tres en el peor** -- *y **la causa es comun con la cocina**, que es un
+sitio donde mirar una sola vez, **no dos**.*
+
+### Y lo siguiente, exacto, y sirve para las dos pantallas a la vez
+
+**Mirar el `QueryClient` y `pide()`** -- *que son **lo unico que las dos comparten y que no se ha abierto nunca**.*
+*Y **con el mismo metodo que funciono**: **tres corridas**, no una.*
