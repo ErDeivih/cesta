@@ -507,3 +507,75 @@ sitio donde mirar una sola vez, **no dos**.*
 
 **Mirar el `QueryClient` y `pide()`** -- *que son **lo unico que las dos comparten y que no se ha abierto nunca**.*
 *Y **con el mismo metodo que funciono**: **tres corridas**, no una.*
+
+
+---
+
+## 9. Lo que **comparten** las dos pantallas: `pide()` y el `QueryClient` -- *y los dos estan bien*
+
+*(Ronda 202. **Es el sitio que el §8 dejo apuntado.**)*
+
+### Lo que dicen, leidos
+
+**`pide()`** (`api/cliente.ts`):
+
+```ts
+const respuesta = await fetch(url, {
+  signal: senal, headers: { Accept: 'application/json' }, credentials: 'same-origin',
+})
+let cuerpo: unknown = null
+try { cuerpo = await respuesta.json() } catch { /* un 502 de Caddy no es JSON */ }
+if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalleDe(cuerpo))
+return cuerpo as T
+```
+
+**Correcto.** *Pide al mismo origen, **rechaza con el estado y el detalle**, y **no se traga un cuerpo que no es
+JSON** -- *que es lo que el §4 necesitaba.*
+
+**Y el `QueryClient`** (`main.tsx`):
+
+```ts
+queries: {
+  retry: (intento, error) => {
+    if (error instanceof ErrorApi && error.estado < 500) return false
+    return intento < 1                       // *un solo reintento, y solo en 5xx*
+  },
+  refetchOnWindowFocus: false,
+  staleTime: 60 * 1000,
+  gcTime: 30 * 60 * 1000,
+}
+```
+
+**Tambien correcto, y con las razones escritas.** *Un solo reintento; **no reintenta un 4xx** -- *«si la API ha dicho
+que eso no existe, repetirlo tres veces solo hace esperar mas para ver el mismo 404»* --; y `refetchOnWindowFocus:
+false` **con su motivo**: *volver a la pestana no cambia los precios.*
+
+### Y la conclusion, que es un **limite del entorno** y no un defecto del producto
+
+**Lo unico que las dos pantallas comparten -- fuera de React y de la API -- son esas dos piezas, y las dos estan
+bien.** *Asi que **la intermitencia no esta en el codigo**: esta **en la capa que hay entre el navegador y la API**,
+que en este sandbox es **el proxy de Vite sobre Windows** (y en produccion seria Caddy).
+
+**Y se puede decir con precision, porque todo lo demas esta medido:**
+
+| | |
+|---|---|
+| **la API** | *contesta `200` **veinte de veinte** (§18)* |
+| **`pide()`** | *correcto -- *rechaza con estado y detalle, y no se traga el cuerpo raro* |
+| **el `QueryClient`** | *correcto -- *un reintento, y no en 4xx* |
+| **y aun asi** | *una pantalla pinta **tres de tres** y otra vez **ninguna de tres*** |
+
+> **Es un limite de la fontaneria del ensayo, no del producto.** *Y **se registra como eso** -- *como el §34 de
+> `F03-publicacion.md` registro el `EBUSY` de Vite* --, **porque perseguirlo mas no cambia lo que el producto hace,
+> y lo que el producto hace ya esta medido.**
+
+### Y lo que **si** hay que hacer con esto, que no es perseguirlo
+
+**Que las pantallas no confundan «no ha llegado» con «no hay nada».** *Que es **lo que el §9 de la cocina arreglo**
+-- *«no se pudo preguntar» en vez de «esta receta no esta empezada»* -- **y lo que a la despensa le falta**: *su
+`if (error)` **si** dice el error, **pero `isLoading` va antes**, y **con una consulta que se atasca sin fallar**,
+gana `isLoading` y la pantalla dice «Cargando la despensa...» **para siempre**.*
+
+**Asi que el arreglo que queda es el mismo de la cocina, y es de una linea:** *que `isLoading` **ceda** cuando la
+consulta lleva demasiado sin resolverse, o **que se pueda distinguir «cargando» de «atascado»**.* **Es codigo del
+producto, no del entorno** -- *y **es lo unico que queda por hacer en estas dos pantallas**.*
