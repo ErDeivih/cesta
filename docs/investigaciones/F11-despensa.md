@@ -729,3 +729,60 @@ ha podido preguntar».*
 **Van tres ensayos seguidos (§11, §12 y el de la cocina) en que **lo que falla es el ensayo, no el producto**.** *Y
 los tres por lo mismo: **cortar de mas** -- *la red entera, luego todo el API* -- **cuando lo que hay que cortar es
 **una consulta**.*
+
+
+---
+
+## 13. El bloqueo estrecho **tambien deja el cuerpo vacio** -- *asi que el problema es el bloqueo, y no el alcance*
+
+*(Ronda 206. **El §12 suponia que era el alcance; no lo es.**)*
+
+### Lo que se midio
+
+**Bloqueando **solo las rutas de datos**, con `/api/yo` y `/api/listas` pasando:**
+
+```python
+pag.route("**/api/despensa*", lambda r: r.abort())     # despensa
+pag.route("**/api/cocina*",   lambda r: r.abort())     # cocina
+```
+
+```
+DESPENSA a los 4 s:   ya no dice Cargando
+DESPENSA a los 13 s:  (vacio)
+COCINA   a los 4 s:   ya no dice Cargando
+COCINA   a los 13 s:  (vacio)
+```
+
+**Exactamente igual que con `**/api/**`.** *Asi que **la lectura del §12 era comoda y falsa**: *no era que el bloqueo
+**se llevara por delante `/api/yo`** -- *bloquear **solo** los datos **deja el cuerpo igual de vacio**.*
+
+### Y lo que eso significa, dicho sin adornos
+
+**«Vacio» no es «no dice que no pudo preguntar»: es que **el cuerpo no tiene ni una linea de texto**.** *Ni el menu,
+ni el titulo, ni «Cargando» -- *y a los cuatro segundos, **`"Cargando" in c4` era falso porque **no habia nada**,
+**no porque hubiera cambiado de rama**.* **Es decir: la comprobacion de los cuatro segundos **tambien estaba mal
+leida** -- *«ya no dice Cargando» **sonaba a avance** y era **el sintoma**.*
+
+**Y eso apunta a que **el bloqueo rompe la aplicacion entera**, no una consulta.** *Y hay dos causas plausibles, **y
+las dos se descartan mirando**:*
+
+1. **`r.abort()` deja la peticion **sin respuesta**, y **algo del armazon se cuelga esperandola** -- *por ejemplo
+   `LayoutSuite` esperando `/api/yo`, si **mi patron lo esta interceptando tambien** (¿`**/api/despensa*` casa
+   `/api/yo`? **no**; pero **puede que Vite no reciba nada y el `index.html` no cargue**, si el `route` se aplica
+   antes del `goto` y **algo del propio Vite pasa por ahi**).*
+2. **O el `route` con `lambda` esta lanzando una excepcion** y **Playwright** corta la navegacion.
+
+**Y esto ya paso antes en esta fase**: *el §11 corto la red entera y **la pagina no cargo**; **aqui se corta el API y
+pasa lo mismo**.* **Los dos ensayos fallan por la misma razon: se corta algo que el armazon necesita para existir.**
+
+### Y el siguiente paso, exacto, y es **mirar y no suponer**
+
+**Capturar, con el bloqueo puesto, tres cosas que ya se saben leer:**
+
+1. **El `console` y los `pageerror`** -- *que es lo que dira si **hay una excepcion** (causa 2).*
+2. **La lista de peticiones y sus estados** -- *que es lo que dira **que se bloqueo de verdad** y que no (causa 1).*
+3. **El `document.body.innerHTML.length`**, *para distinguir «vacío» de «sin texto visible».*
+
+**Y si resulta que **el armazon no se puede levantar con el API cortado**, entonces **la conclusion es que este
+ensayo no sirve para medir el tope** -- *y habria que medirlo de otra forma: **con el servidor levantado y una sola
+ruta devolviendo un error**, que es **cortar una respuesta, no una conexion**.*
