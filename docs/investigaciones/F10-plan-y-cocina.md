@@ -302,3 +302,60 @@ modulo **si** llego y **lo que estaba mal era la comprobacion**.*
 
 **Y la 2 era la que importaba**: *es **codigo de la pantalla**, se ve **sin cortar nada**, y **desde luego no
 depende de Vite**.*
+
+
+---
+
+## 10. La prueba que decidia la causa 1: **el modulo SI llega** -- *y aparece otra cosa, mas simple*
+
+*(Ronda 188.)*
+
+### Lo que se midio
+
+```
+LO QUE LA PANTALLA DICE, con conexion:
+    ... Gasto y ahorro | Cuenta y preferencias | Aprender | COMPRA | Compra
+    CARGANDO LA COCINA...                       <-- ni «quedan», ni nada: se queda ahi
+
+ficheros de cocina que el navegador carga:
+    /src/estado/cocina.ts, /src/api/cocina.ts
+```
+
+### Y la conclusion de las dos causas del §8/§9 **es falsa**
+
+**El §9 decia que «el modulo no llega», y que la comprobacion `fetch('/src/api/cocina.ts')` daba `False` porque
+Vite servia otra cosa.**
+
+**Y no**: *el navegador **carga** `/src/api/cocina.ts`* -- *esta en la lista de lo que pide* --, **y la pantalla se
+queda en `«Cargando la cocina...»`, que es una frase de MI componente.** *O sea que **mi componente si esta
+montado y ejecutandose**.*
+
+> **Asi que la comprobacion del §8 estaba mal, como sospechaba la primera de las dos lecturas**: *`fetch` de un
+> `.ts` en Vite **no devuelve el fuente**, y de ahi el `False`.* **La segunda lectura -- «Vite sirve otra cosa» --
+> era la equivocada**, y **estuve a punto de tratarla como la buena.**
+
+### Y lo que hay de verdad: **la pantalla se queda cargando, y eso es mas simple**
+
+`isLoading` **no termina nunca**. *Con la consulta a `/api/cocina/7?version=2` contestando `200`.*
+
+**Y el camino probable esta en lo que SI se cargo: `/src/estado/cocina.ts`.**
+
+**Ese fichero **existe desde antes** y es de **otra cosa**: *nutrientes, `validarReceta`, `Receta`, `Ingrediente`
+-- **la pantalla de calorias**, no el modo cocina.* **Lo usan `logica/chispa.ts`, `logica/costeReceta.ts` y
+`paginas/Cocina.tsx`.** *Y `App.tsx:13` lo dice: «**servidas por la misma pantalla de cocina con un `modo`**».*
+
+**Y `paginas/Cocina.tsx` (101 lineas) **no tiene** ni `paso`, ni `temporizador`, ni `usados`, ni `reanudar`:
+**es la pantalla de calorias**, y **`CocinaModo` no la duplica**.** *Eso se comprobo antes de sacar conclusiones,
+y **la alarma inicial era falsa**.*
+
+### Y lo que queda, exacto
+
+**`isLoading` eterno con un `200` en la consulta.** *Las causas plausibles, y **cualquiera se descarta mirando**:
+(a) el `refetchInterval` de 15 s mantiene la consulta en `fetching` y **React Query v5 puede seguir dando
+`isLoading` mientras no haya habido **ningun** `data`**; (b) `useCocina` se llama con `id`/`v` que **no son
+numeros** -- `Number(undefined)` es `NaN` -- y **la consulta se queda sin resolver**; (c) **el
+`CocinaProvider`** que envuelve todo en `App.tsx:139` **intercepta la ruta**.*
+
+**Y la (b) es la mas probable y la mas tonta**: *la ruta es `/compra/cocina/7/2` y los parametros se leen con
+`useParams()`; **si el `Route` que gana no es el mio**, `recetaId` seria `undefined`.* **Se comprueba en una
+linea: imprimir `id` y `v` en la pantalla.**
