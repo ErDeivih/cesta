@@ -47,10 +47,29 @@ export function CocinaModo() {
   // segundos falla -- y **`if (error)` a secas borraba la cocina entera y el temporizador con ella*** (medido el
   // 12 de octubre de 2026: sin red la pantalla no decia «quedan», decia el error). **Con datos en la mano, el
   // fallo del refresco se dice y se sigue** -- *que es lo que hace que el reloj del aparato pueda seguir.*
-  if (error && !data) return <p className="text-red-700">{textoDeError(error)}</p>
+  // **«No pude preguntar» NO ES «no hay nada».** *Antes esta rama era `if (!data || data.paso === null)`, y
+  // metia en el mismo saco dos cosas opuestas: con la red cortada, **la pantalla afirmaba «Esta receta no esta
+  // empezada»** -- *cuando la receta **si** estaba empezada y lo que pasaba es que **no se habia podido
+  // preguntar*** (medido el 12 de octubre de 2026).*
+  //
+  // *Es el pecado que esta fase lleva cazando desde `sin_precio`: **convertir «no se sabe» en una afirmacion**.*
+  // **Y aqui la afirmacion desanima**: quien cocina sin cobertura lee que no ha empezado.
+  if (!data) {
+    return (
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">Cocina</h1>
+        <p className="text-amber-700">
+          No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la receta no este
+          empezada.
+        </p>
+        {error ? <p className="text-sm text-tinta-suave">{textoDeError(error)}</p> : null}
+      </div>
+    )
+  }
 
   // **Y si no hay cocina empezada, se dice** -- *no se inventa un paso.*
-  if (!data || data.paso === null) {
+  // **Y esto si es «no hay nada».**, porque el servidor lo ha dicho.
+  if (data.paso === null) {
     return (
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">Cocina</h1>

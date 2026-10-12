@@ -237,3 +237,68 @@ red.*
 
 **Y la causa 2 es la que importa**, porque *no es del ensayo: **es de la pantalla**, y **se ve sin cortar nada** --
 *basta con que el servidor no conteste una vez.*
+
+
+---
+
+## 9. La causa 2, **arreglada y verificada** -- *y la causa 1 sigue en pie*
+
+*(Ronda 187.)*
+
+### La causa 2: **arreglada, y el arreglo se ve**
+
+**El bloque se partio en tres, y cada uno dice una cosa distinta:**
+
+```
+45:  if (isLoading) return ...                     <- aun no ha llegado la primera respuesta
+57:  if (!data) { ... }                            <- NO SE PUDO PREGUNTAR
+72:  if (data.paso === null) { ... }               <- el servidor dice que NO HAY NADA
+```
+
+**Y medido con la red cortada, la pantalla dice:**
+
+> **«No se ha podido preguntar al servidor. Esto **no** quiere decir que la receta no este empezada.»**
+
+**Que es lo contrario de lo que decia antes** -- *«Esta receta no esta empezada»* --, **y es la verdad.** *`tsc` da 0.*
+
+**Y esa rama no afirma nada**: *dice **que no pudo preguntar**, y **avisa explicitamente de que eso no significa
+que no haya nada*** -- *que es la unica forma de no convertir un «no se sabe» en un «no hay».*
+
+### Y la causa 1: **sigue, y despues de reiniciar Vite**
+
+```
+¿Vite sirve ya `acaba_en`?:  False
+CON conexion:                quedan None s       <-- *el arreglo del §7 no llega al navegador*
+```
+
+**Se reinicio Vite, y la comprobacion sigue dando `False`.** *Asi que **el diagnostico del §8 -- «Vite sirve un
+modulo viejo» -- no basta**: reiniciarlo **no lo arregla**.*
+
+**Y hay dos lecturas, y no se sabe cual es** -- *que es exactamente lo que hay que decir cuando no se sabe:*
+
+1. **La comprobacion esta mal.** *`fetch('/src/api/cocina.ts')` **puede no devolver el fuente tal cual**: Vite lo
+   **transforma** al servirlo, y ademas **puede contestar desde su cache de `node_modules/.vite`**.*
+   *Entonces `acaba_en` **estaria en el fuente y no en lo que esa peticion devuelve**, y la conclusion del §8
+   seria **falsa**.*
+2. **O Vite de verdad sirve otra cosa**, y *reiniciarlo no basta porque **la cache esta en disco**.*
+   *Entonces el arreglo del §7 **esta escrito y no se usa**, que es peor.*
+
+### Y lo siguiente, exacto, para no dejarlo en «no se sabe» arbitrario
+
+**Mirar el fuente que el navegador tiene cargado, no pedirlo otra vez.** *En vez de `fetch`, **leer lo que el
+propio navegador ya ejecuto** -- *por ejemplo, buscando `acaba_en` en el contenido de los scripts que
+`performance.getEntriesByType('resource')` nombra, o **abriendo el fichero en la pestana de fuentes***.*
+**Y la prueba que decide**: *si la pantalla, **con conexion**, vuelve a decir **«quedan 30 min 0 s»**, entonces el
+modulo **si** llego y **lo que estaba mal era la comprobacion**.*
+
+**Y esa prueba esta a una linea**: *el ensayo del §7 ya la hizo **una vez** y dio «quedan 29 min 21 s».*
+
+### Y el balance de las dos causas, que conviene separar
+
+| | |
+|---|---|
+| **causa 2** (*«no pude preguntar» ≠ «no hay nada»*) | **arreglada, y verificada con la red cortada** |
+| **causa 1** (*el modulo que llega*) | **sin resolver, y el diagnostico del §8 no basta** |
+
+**Y la 2 era la que importaba**: *es **codigo de la pantalla**, se ve **sin cortar nada**, y **desde luego no
+depende de Vite**.*
