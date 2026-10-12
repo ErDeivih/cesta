@@ -179,3 +179,56 @@ def test_los_envases_siempre_cubren_lo_pedido(querido, por_envase, esperado):
     assert r["sobrante"] >= 0, "el sobrante nunca es negativo"
     # *Y lo comprado es exactamente lo pedido mas lo que sobra.*
     assert r["envases"] * por_envase * 1000 == pytest.approx(querido * 1000 + r["sobrante"])
+
+
+# ============================================ LA CONEXION CON LA PREVIA ===
+
+def test_la_previa_calcula_los_envases_cuando_el_tamano_consta():
+    """**La prueba de que el calculo esta CONECTADO, y no solo escrito.**
+
+    *Es la que faltaba, y por eso el defecto duro tanto*: `ln.envases` y `ln.sobrante` **no se calculaban
+    nunca** porque `_tamano_del_envase` pedia el tamano a `envases.lee`, que nunca lo tuvo. *La regla
+    estaba escrita y muerta, y **ninguna prueba lo notaba porque no fallaba: devolvia `None`.***
+
+    *Aqui se le da a la linea el tamano que publicaria la ficha del articulo* y se comprueba que sale el
+    numero del criterio: **1,4 kg con envases de 1 kg -> 2 envases y 600 g.**
+    """
+    from core.previa_compra import LineaDeCompra, _envases_de
+
+    ln = LineaDeCompra(producto_id="p", clave="leche|kg", texto="Leche entera", cantidad=1.4, unidad="kg",
+                       tamano_envase=1.0)
+    salida = _envases_de([ln])
+    assert salida[0].envases == 2, f"no se calculo: {salida[0]}"
+    assert salida[0].sobrante == 600.0
+    assert salida[0].tamano_envase == 1.0, "el tamano no se toca: viene de la ficha"
+
+
+def test_sin_tamano_en_la_ficha_la_previa_no_inventa_nada():
+    """*Y cuando la ficha no publica el tamano, los dos campos se quedan en `None`.*
+
+    **Lo que NO puede pasar**: *que se rellene con un cero -- «no sobra nada», que seria falso -- ni con
+    una compra fraccionaria.* *Y esto es lo que ya pasaba por accidente; **ahora pasa por decision**, y la
+    prueba lo fija para que no se confunda con un descuido.*
+    """
+    from core.previa_compra import LineaDeCompra, _envases_de
+
+    ln = LineaDeCompra(producto_id="p", clave="leche|kg", texto="Leche entera", cantidad=1.4, unidad="kg")
+    salida = _envases_de([ln])
+    assert salida[0].envases is None, "sin tamano no se inventa un numero de envases"
+    assert salida[0].sobrante is None, "y tampoco un sobrante: no se sabe si sobra"
+    assert salida[0].envases != 0 and salida[0].sobrante != 0, "None no es cero"
+
+
+def test_la_previa_no_toca_las_lineas_que_no_tienen_tamano_entre_las_que_si():
+    """*Y una linea sin tamano no estropea a las de al lado.* **Es lo que pasa de verdad: unas fichas lo
+    publican y otras no**, y la previa tiene que aguantar las dos en la misma lista."""
+    from core.previa_compra import LineaDeCompra, _envases_de
+
+    con = LineaDeCompra(producto_id="p", clave="a|kg", texto="Con tamano", cantidad=1.4, unidad="kg", tamano_envase=1.0)
+    sin = LineaDeCompra(producto_id="p", clave="b|kg", texto="Sin tamano", cantidad=2.0, unidad="kg")
+    salida = _envases_de([con, sin])
+    por_clave = {x.clave: x for x in salida}
+    assert por_clave["a|kg"].envases == 2
+    assert por_clave["a|kg"].sobrante == 600.0
+    assert por_clave["b|kg"].envases is None
+    assert por_clave["b|kg"].sobrante is None

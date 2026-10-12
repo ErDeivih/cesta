@@ -132,12 +132,14 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
             sin_consolidar.append(f"{nombre}: {' y '.join(sorted(unidades))}")
 
     # **Regla 3: envases enteros.** *Y el sobrante, dicho.*
-    for ln in acumulado.values():
-        tamano = _tamano_del_envase(ln.texto)
-        if tamano and tamano > 0:
-            ln.tamano_envase = tamano
-            ln.envases = math.ceil(ln.cantidad / tamano)
-            ln.sobrante = round(ln.envases * tamano - ln.cantidad, 3)
+    #
+    # *De donde sale el tamano*: **de `ln.tamano_envase`, que lo publica la ficha del articulo elegido**
+    # -- *no del texto del nombre.* **Esto llamaba a `_tamano_del_envase(ln.texto)`, que devolvia `None`
+    # siempre** (*le pedia un tamano a quien nunca lo tuvo*), **asi que ni `envases` ni `sobrante` se
+    # calculaban nunca.**
+    #
+    # *Se saca a `_envases_de` para poder probarlo*: **el fallo duro porque no habia forma de mirarlo.**
+    _envases_de(list(acumulado.values()))
 
     lineas = sorted(acumulado.values(), key=lambda x: (-x.cantidad, x.texto))
     nota = ""
@@ -146,6 +148,35 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
                 + ", ".join(sin_cantidad) + ".")
     return Previa(lineas=lineas, sin_cantidad=sin_cantidad,
                   sin_consolidar=sin_consolidar, nota=nota)
+
+
+def _envases_de(lineas: list) -> list:
+    """**Regla 3, aparte y probable**: cuantos envases enteros y cuanto sobra, linea a linea.
+
+    *Se saco de `previa_de_compra` porque el fallo que arregla duro sin que nadie lo viera*: **la regla
+    estaba escrita, se ejecutaba... y devolvia `None` siempre**, porque le pedia el tamano a
+    `envases.lee`, que nunca lo tuvo. *Una funcion que no falla y no hace nada es la clase de defecto que
+    solo se caza mirandola.*
+
+    **De donde sale el tamano**: *de `ln.tamano_envase`, que lo publica **la ficha del articulo
+    elegido**.* **Cuando consta**, el calculo lo hace `core/envases_enteros.py` -- *la regla con sus
+    pruebas: **1,4 kg con envases de 1 kg -> 2 envases y 600 g***. **Cuando no consta**, los dos campos se
+    quedan en `None`: *ni un cero -- que diria «no sobra nada», y seria falso -- ni una compra
+    fraccionaria inventada.*
+
+    *Devuelve las mismas lineas, tocadas.* **Se mutan a proposito: son las de la previa, y hacer copias
+    obligaria a emparejarlas despues.**
+    """
+    for ln in lineas:
+        if ln.tamano_envase and ln.tamano_envase > 0:
+            calculo = envases_de_la_linea(ln.cantidad, ln.unidad, ln.tamano_envase)
+            ln.envases = calculo["envases"]
+            ln.sobrante = calculo["sobrante"]
+        else:
+            # *Y no se rellena con un cero ni con una compra fraccionaria.* **`None` es «no se sabe».**
+            ln.envases = None
+            ln.sobrante = None
+    return lineas
 
 
 def _tamano_del_envase(texto: str) -> float | None:
