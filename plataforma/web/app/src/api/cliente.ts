@@ -139,17 +139,35 @@ export async function pide<T>(
  *  mentir mientras tanto**.*
  */
 export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
-  const [atascada, setAtascada] = useState(false)
+  // **Cuando empezo a cargar -- y eso es lo unico que hay que recordar.** *No un contador: **un instante.**
+  //
+  // *El primer intento guardaba un `setTimeout` con `[cargando]` en las dependencias, **y eso lo rompia**: cada vez
+  // que `cargando` cambiaba de valor, **el reloj se cancelaba y empezaba de cero** -- *y `isLoading` de React Query
+  // **oscila** cuando vuelve a intentar, asi que **el reloj nunca llegaba a los diez segundos** (medido el 12 de
+  // octubre de 2026: la despensa seguia en «Cargando» a los doce).*
+  //
+  // > **Es la misma decision que `core/cocina.py` tomo con los temporizadores**: *un temporizador **no es una cuenta
+  // > atras, es una hora de fin**.* **Y aqui: no hay que contar, hay que **recordar cuando empezo**.*
+  const [empezo, setEmpezo] = useState<number | null>(null)
+
   useEffect(() => {
-    // **La decision la toma `estaAtascada`, que es una funcion pura y tiene sus pruebas.**
-    // *Aqui solo vive el reloj, que es lo unico que necesita React.*
-    if (!estaAtascada(cargando, 0, segundos)) {
-      setAtascada(false)
-      return
-    }
-    const reloj = setTimeout(() => setAtascada(true), segundos * 1000)
-    return () => clearTimeout(reloj)
-  }, [cargando, segundos])
-  return atascada
+    // *La forma funcional de `setState` es lo que evita depender de `empezo`* -- *y por eso el efecto **solo** mira
+    // `cargando`, que es lo unico que cambia de verdad.*
+    setEmpezo((previo) => {
+      if (!cargando) return null // *Si ya no carga, deja de haber atasco: **llego**.*
+      return previo === null ? Date.now() : previo // *Y si ya habia empezado, **se respeta el instante**.*
+    })
+  }, [cargando])
+
+  // **Y el tic que hace repintar.** *`setInterval` **no pide nada a nadie** -- es el reloj del aparato.*
+  const [, setTic] = useState(0)
+  useEffect(() => {
+    const latido = setInterval(() => setTic((n) => n + 1), 1000)
+    return () => clearInterval(latido)
+  }, [])
+
+  // *La decision la toma `estaAtascada`, que es pura y tiene sus pruebas; **aqui solo esta el reloj**.*
+  return empezo !== null && estaAtascada(true, Date.now() - empezo, segundos)
 }
+
 

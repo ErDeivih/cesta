@@ -992,3 +992,53 @@ export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
 
 **Y ahora el reloj **no depende de que `cargando` este quieto**: *depende de **cuando empezo**, que no cambia.*
 *Y **el tic de un segundo** es lo que hace que se vuelva a evaluar -- *el mismo que la cocina necesita.*
+
+
+### Y el arreglo, hecho y verificado
+
+**El gancho guarda **cuando empezo** en vez de contar:**
+
+```ts
+const [empezo, setEmpezo] = useState<number | null>(null)
+useEffect(() => {
+  setEmpezo((previo) => {
+    if (!cargando) return null                 // *si ya no carga, no hay atasco*
+    return previo === null ? Date.now() : previo  // *y si ya empezo, se RESPETA el instante*
+  })
+}, [cargando])
+const [, setTic] = useState(0)
+useEffect(() => { const id = setInterval(() => setTic(n => n + 1), 1000); return () => clearInterval(id) }, [])
+return empezo !== null && estaAtascada(true, Date.now() - empezo, segundos)
+```
+
+**Y las tres cosas que lo hacen correcto, que son las tres que le faltaban:**
+
+1. **La forma funcional de `setState`** -- *`setEmpezo((previo) => ...)` -- **es lo que evita que el efecto dependa de
+   `empezo`**.* *Asi que el efecto **solo** mira `cargando`, y **`cargando` puede oscilar todo lo que quiera**: *el
+   instante **se guarda una vez y no se toca**.*
+2. **El instante, no un contador** -- *que es **la misma decision de `core/cocina.py`**: *«no es una cuenta atras, es
+   una hora de fin»*.*
+3. **Y el tic** -- *un `setInterval` de un segundo que **no pide nada a nadie**, y que hace que **la resta se vuelva a
+   evaluar**.* *Es **el mismo tic que la cocina necesita** para que el numero baje.*
+
+### Y lo que se midio
+
+```
+tsc             ->  0
+npm test        ->  46 pasan, 0 fallan      (las cuatro de `estaAtascada` siguen valiendo: la regla no cambio)
+corrida 1       ->  pinta la lista
+corrida 2       ->  pinta la lista
+corrida 3       ->  pinta la lista
+```
+
+**Tres de tres pintan**, *y las **cuatro pruebas de la regla** siguen pasando* -- *porque **lo que se arreglo no fue la
+regla, sino el reloj que la dispara**.*
+
+### Y lo que **no** se puede afirmar, con precision
+
+**Que el tope **se vea disparar**.** *Para verlo haria falta **una consulta que se atasque de verdad y se quede
+asi**, y **las tres corridas de hoy llegaron a tiempo**.* **Lo que si se puede afirmar, y es lo que importa:**
+
+- **la regla esta probada** -- *cuatro pruebas, y no cambiaron*;
+- **y el reloj ya no depende de la senal que vigila** -- *que es **el defecto concreto** que el §16 encontro, y **se
+  quito por construccion**.*
