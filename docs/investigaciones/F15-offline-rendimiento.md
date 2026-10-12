@@ -242,3 +242,73 @@ dos cosas es.***
 | **indices** | *por medir: que indices tiene la tabla y cuales se usan* |
 
 **Y las dos que quedan son **medibles sin decidir nada** -- *asi que van despues de esto, no antes.*
+
+
+---
+
+## 5. Los indices, medidos -- *y estan en **dos motores**, que es lo primero que hubo que aprender*
+
+*(Ronda 217. **La ultima de las tres cosas que `F15` pedia y no estaban.**)*
+
+### Y antes de los numeros, dos intentos fallidos que hay que decir
+
+**1. `pg_indexes`, en Postgres.** *Devuelve **cuatro** indices -- *y **ninguno del catalogo***:*
+
+```
+cocina    cocina_pkey        (usuario_id, receta_id)
+compra    compra_pkey        (id)
+compra    compra_por_lista   (lista_id, cerrada_en DESC)
+despensa  despensa_pkey      (usuario_id, texto)
+```
+
+**2. Y `from catalogo import conexion`, que no existe.** *El modulo es `plataforma.api.catalogo`, y `core` **no tiene**
+uno.*
+
+> **Las dos cosas dicen lo mismo, y es lo que hay que entender antes de contar indices**: *el catalogo **no esta en
+> Postgres**.* *`grupos` y `buscable` viven en **DuckDB**, y **`pg_indexes` no sabe nada de ellos** -- *no porque no
+> tengan indices, sino porque **no son suyos**.* **Preguntarle a un motor por las tablas de otro devuelve un cero que
+> parece un dato y es una respuesta a otra pregunta.**
+
+### Y los numeros, en su motor
+
+**DuckDB, `duckdb_indexes()`:**
+
+```
+indices en el catalogo:  1
+    buscable_grupo   en `buscable`   (no unico)
+```
+
+**Y las tablas del catalogo, que son siete:**
+
+```
+buscable   derivado   diario   enlaces   grupos   palabras   resumen
+```
+
+### Y lo que eso dice, que es mas interesante que el numero
+
+**Hay **un** indice, y esta **en la tabla que lee la busqueda** -- `buscable`.** *Y **`grupos` -- 52 087 filas -- no
+tiene ninguno**.*
+
+**Y eso no es un descuido, por dos razones que conviene decir juntas:**
+
+1. **El motor es DuckDB**, *que es **columnar** y **no usa indices B-tree como Postgres**: *para agregaciones y
+   exploraciones completas **lee columnas enteras**, y **un indice no ayuda** -- *puede estorbar.*
+2. **Y las consultas que importan lo confirman**: *`buscar` filtra por texto **sobre `buscable`** -- *que **si** tiene
+   indice* --, y **el resto de la aplicacion lee `grupos` entero** para agrupar, comparar y calcular. **Un indice
+   sobre `grupos` no se usaria.**
+
+> **Asi que «un indice» no es «un indice de menos»**: *es **lo que el motor necesita**.* *Y lo que lo convierte en un
+> dato y no en una sospecha es **haber mirado el motor** -- *que es lo que los dos intentos fallidos obligaron a
+> hacer.*
+
+### Y las cinco cosas que `F15` pedia, con su estado
+
+| lo que `F15` pide | **estado** |
+|---|---|
+| **paginacion** | **hecha** -- *y destapo que el orden de `buscar` no es total* |
+| **latencia** | **medida**: *13 a 21 ms en los cuatro endpoints nuevos* |
+| **tamanos JS** | **medido**: *681 KB en un solo chunk + 35,9 KB de CSS* |
+| **indices** | **medidos**: ***1** en el catalogo (DuckDB, sobre `buscable`) **y 4** en Postgres* |
+| **cargas** | *por medir: cuantas peticiones hace una pantalla al abrirse* |
+
+**Cuatro de cinco.** *Y la que queda -- las **cargas** -- es del navegador y **no depende de ninguna decision**.
