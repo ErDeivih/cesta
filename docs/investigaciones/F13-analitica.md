@@ -265,3 +265,57 @@ el nombre** y **no por lo que es**.* **«Fechas duplicadas» habla de fechas; `d
 
 **Y con esto `F13` queda cerrado en todo lo que se puede cerrar sin navegador** -- *que es todo menos «que el
 filtro explique el cambio de universo», que es **texto de pantalla**.*
+
+
+---
+
+## 6. «El filtro que cambia el universo» -- **medido, y no se explica en pantalla**
+
+*(Ronda 220. **Era el ultimo caso de la aceptacion de `F13` que se podia mirar sin decidir nada.**)*
+
+### Lo que se midio
+
+**Se abrio `/compra/analisis` y se leyo **todo** el texto visible:**
+
+```
+Saltar al contenido · Cesta · Compra · Recetas · Calorias
+COMPRA · Buscar · Listas · Sin lista de casa · Favoritos · Gasto y ahorro
+Cuenta y preferencias · Aprender
+COMPRA · Gasto y ahorro · Panel · Panel de matching →
+Hoy · Donde comprar · Cadenas · Marcas · Historico · Movidos · Bajadas
+```
+
+**984 caracteres, **13 controles** -- y **ni una sola linea** que hable del universo, del filtro, de lo que se esta
+mirando o de lo que se deja fuera.**
+
+**Y la busqueda fue explicita**: *se filtraron las lineas por las palabras **«universo», «filtro», «solo», «muestra»,
+«cambia» y «sentido»** -- *y **salio **cero**.***
+
+### Y lo que el criterio pide, palabra por palabra
+
+**`F13` pide**: *«**filtro que cambia universo explicado**».* **Las tres palabras importan, y son tres cosas:**
+
+1. **Un filtro** -- *y **hay 13 controles**, asi que **la parte de filtrar esta**.*
+2. **Que **cambia el universo** -- *o sea, que **lo que se ve no es un subconjunto de lo mismo, sino otra cosa***.
+3. **Y que este **explicado** -- *que **se diga**, en pantalla.
+
+**Lo medido dice: el 1 esta, y **el 3 no se ve**.**
+
+### Y la duda que queda, dicha como duda
+
+**La pantalla son **pestañas** -- «Hoy», «Donde comprar», «Cadenas», «Marcas», «Historico», «Movidos», «Bajadas» -- , y
+**984 caracteres es poco para siete pestañas**.** *Lo mas probable es que **el contenido de la pestana activa no haya
+cargado** -- *la lista de la casa esta vacia en esta cuenta, y el armazon lo dice: «**No hay lista de casa, asi que
+no hay nada que contar**»*.
+
+> **Asi que hay dos lecturas, y no se sabe cual es**: *o **la explicacion no existe**, o **existe dentro de una
+> pestana que no se abrio**.* *Y **lo que se puede afirmar es lo que se midio: **en el texto visible de la pantalla
+> de analisis no hay ninguna palabra que hable del universo**.*
+
+### Y lo siguiente, exacto
+
+**Abrir una pestana y volver a buscar las mismas seis palabras.** *Una lectura, y separa las dos lecturas: *si
+aparece en la pestana, **el criterio se cumple y solo hay que decirlo**; **si no aparece en ninguna, falta la
+frase*** -- *y escribirla es **una linea de texto**, no una funcionalidad.*
+
+**Y esto cierra, por ahora, los casos de aceptacion de `F13` que se pueden comprobar sin decidir nada.**
