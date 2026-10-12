@@ -396,3 +396,29 @@ no tener**.*
 **Y lo que **no** se pudo medir, y esta dicho con su motivo**: *el tope **desde el navegador**.* *Cuatro ensayos
 (§11 a §14) y los cuatro se quedaron en lo mismo: **abortar una peticion deja la aplicacion sin montar** -- *`#raiz`
 con **cero hijos**, y **sin error de JavaScript*** --. **Se midio donde se podia, y se dijo donde no.**
+
+
+### Y el ensayo integral, **con la quinta puerta**, el 12 de octubre de 2026 a las 13:11
+
+```
+1) uv run ruff check . --output-format=concise       ->  All checks passed!            (0)
+2) CESTA_POSTGRES=...5434... uv run pytest -q        ->  1842 passed, 5 xfailed        (0 fallan)
+3) cd plataforma/web/app; npm test                   ->  46 tests, 46 pass, 0 fail    (0)
+4) npx --no-install tsc --noEmit                     ->  0
+5) npm run build                                     ->  built in 6.67s                (0)
+```
+
+**Las cinco en verde, y **por primera vez las cinco juntas en un ensayo fechado**.** *La tercera es la nueva, y es la
+unica que cubre la interfaz.*
+
+**Y una nota que importa**: *el `pytest` sigue en **1842** despues de todo el trabajo de estas rondas.* *O sea que
+**nada de lo que se toco en la interfaz movio una sola prueba del servidor** -- *que es lo que se espera cuando la
+logica vive en su sitio, y **lo que conviene comprobar en vez de suponer**.*
+
+### Y lo que este ensayo **no** dice, para no darle mas valor del que tiene
+
+**Dice que las cinco puertas pasan.** *No dice que **el producto funcione en un navegador** -- *eso lo dicen los
+ensayos de §4, §5 y §17 a §19 de `F11`, y los del §19 de `F10`, con sus numeros* --, **ni dice nada de la
+nutricion, los precios ni la cobertura**, *que tienen sus propias cifras y sus propios limites, medidos aparte.*
+
+**Una puerta en verde es una puerta en verde**: *que el codigo **pasa lo que se le pide**, ni mas ni menos.*
