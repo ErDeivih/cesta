@@ -314,3 +314,41 @@ server at "127.0.0.1", port 5432`.* **Se me habia olvidado `CESTA_POSTGRES`**, a
 **O sea: la primera vez atribui el fallo a la capa equivocada (Vite), y la segunda me lleve la configuracion a
 medias.** *Las dos son la misma cosa: **montar un ensayo sin comprobar que el ensayo esta montado**.* **Y las dos
 se vieron por lo mismo: mirando el log y preguntando a la ruta, en vez de suponer.**
+
+
+---
+
+## 6. El ensayo en el navegador, hasta donde llego -- **y donde se quedo**
+
+*(Rondas 174-175, con la pila reiniciada: API pid 25732, Vite pid 46096.)*
+
+### Lo que **si** quedo medido
+
+| | |
+|---|---|
+| **la pantalla se pinta** | **`«La despensa»` aparece en el cuerpo** -- *y **`«Not Found»` desaparece*** |
+| **sin errores de JavaScript** | `pageerror: []` |
+| **la ruta de la API** | **existe**: *`GET /api/despensa` pasa de **`404`** (proceso viejo) a **`401`** (proceso nuevo)* |
+| **declarar funciona** | **`201`**, y el cuerpo que devuelve es **`{"texto":"harina","cantidad":null,"unidad":""}`** -- *o sea que **`null` sobrevive el viaje entero**, que es la decision de la migracion `017`* |
+| **declarar con cantidad tambien** | *`{"texto":"arroz","cantidad":2,"unidad":"kg"}` -> **`201`*** |
+
+**Y la linea del diario que se midio, que es la que importa**: *el `201` de la harina **devuelve `"cantidad":null`**.* **Es la primera vez en toda la fase que se ve `null` **salir por la API** -- *no en una prueba, sino en una respuesta de verdad.*
+
+### Y donde se quedo
+
+**La pantalla, despues de declarar dos cosas, tiene **240 caracteres** -- y el texto es **«Cargando la despensa...»**.**
+
+*O sea: **el armazon esta, la peticion se hizo, y la lista no llego a pintarse en los 3,5 s que se esperaron**.*
+
+**Y hay que decir las dos lecturas, porque no se sabe cual es:**
+
+- **o es lenta** -- *la primera carga levanta React Query, y el sandbox es un Windows con la base en Docker*
+- **o la consulta no resuelve** -- *y entonces hay un fallo que **no sale como `pageerror`**, porque un error de red de React Query **no es una excepcion de JavaScript***
+
+**Lo que **no** se puede decir es que la pantalla funcione.** *Se puede decir, y es bastante: **que la ruta esta, que el API contesta, que declarar escribe, y que `null` viaja**.*
+
+### Y los dos tropiezos del ensayo, que son el mismo
+
+**1.** *El primer reinicio de la API arranco **contra el puerto 5432** porque faltaba `CESTA_POSTGRES`.* **2.** *Y en esta misma ronda, la consulta para listar cuentas **volvio a fallar por lo mismo**.* **Las dos se vieron en el log, no por deduccion** -- *y las dos son la misma cosa que el error del §4: **montar un ensayo sin comprobar que el ensayo esta montado**.*
+
+**Y queda dicho para la continuacion**: *lo siguiente es **esperar mas** y, si sigue «Cargando», **mirar la respuesta de `/api/despensa` en la pestana de red** -- *que es la capa que aun no se ha mirado.*
