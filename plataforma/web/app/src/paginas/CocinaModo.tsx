@@ -42,7 +42,17 @@ export function CocinaModo() {
   const { data, isLoading, error } = useCocina(id, v)
   const empieza = useEmpieza(id, v)
 
-  if (isLoading) return <p className="text-tinta-suave">Cargando la cocina...</p>
+  // **`isLoading` NO BASTA, y esta medido.** *React Query da `isLoading` mientras la consulta **no haya tenido
+  // nunca `data`** y **siga intentando** -- *y con `refetchInterval: 15000`, **una consulta que falla se queda en
+  // `isLoading` para siempre**.* **Y `if (isLoading)` va ANTES de mirar el error**, asi que **el error existe y
+  // nadie lo lee**: *la pantalla dice «Cargando» donde deberia decir **que no se pudo preguntar**.*
+  //
+  // *Medido el 12 de octubre de 2026, con la API contestando `200`: la pantalla seguia en «Cargando la cocina...»
+  // y el temporizador no aparecia.* **Y sin conexion tampoco, veinte segundos despues.**
+  //
+  // **La regla, entonces: `isLoading` solo mientras NO haya error.** *En cuanto hay error y no hay datos, **manda
+  // el error** -- *que es lo unico que la persona necesita saber.*
+  if (isLoading && !error) return <p className="text-tinta-suave">Cargando la cocina...</p>
   // **Y el error NO se lleva la pantalla por delante cuando ya hay datos.** *Sin conexion, el refresco de cada 15
   // segundos falla -- y **`if (error)` a secas borraba la cocina entera y el temporizador con ella*** (medido el
   // 12 de octubre de 2026: sin red la pantalla no decia «quedan», decia el error). **Con datos en la mano, el

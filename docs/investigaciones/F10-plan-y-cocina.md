@@ -658,3 +658,64 @@ temporizador** -- *y si no lo pinta, **la causa sera esa y no otra**.*
 
 **Lo que costo no fue averiguarlo**: *fue **no mirar la pieza de en medio** -- *y **la pieza de en medio estaba
 documentada en el fichero que la definia**.*
+
+
+---
+
+## 16. Con la fontaneria bien, **el defecto del producto queda aislado**: `isPending` no resuelve y no hay error
+
+*(Ronda 194.)*
+
+### Lo que se midio, con `CESTA_API` puesta y la API contestando
+
+```
+CON conexion, la pantalla dice:
+    ... COMPRA | Compra
+    «CARGANDO LA COCINA...»
+-> quedan None s
+SIN conexion t=0:   quedan None s
+SIN conexion t=12:  quedan None s
+```
+
+**Asi que el §15 cerro la fontaneria, **y la pantalla sigue igual**.** *El defecto es **del producto**, y **esta
+aislado**: *la API contesta `200` -- *comprobado con `fetch` desde la propia pagina, en el §15* --, **y la pantalla
+no sale de `isLoading`**.*
+
+### Y se aplico el arreglo del §11 -- *y **no basta***
+
+**Se cambio `if (isLoading)` por `if (isLoading && !error)`**, con su razon escrita: *«`isLoading` solo mientras NO
+haya error»*. *`tsc` da 0.*
+
+**Y la pantalla sigue diciendo «Cargando la cocina...».** *Lo que significa, **y ahora se sabe con precision**:
+**`error` es falsy Y `isPending` es verdadero, a la vez, indefinidamente.*** *O sea: **la consulta nunca ha tenido
+exito y nunca ha fallado** -- *se queda intentando.*
+
+### Y lo que eso deja como unico sospechoso, que es el `refetchInterval`
+
+**`useCocina` tiene `refetchInterval: 15000`.** *Es lo unico de esa consulta que no es corriente, **y encaja con
+«nunca resuelve»**: *React Query da `isPending` mientras no haya `data`, y **con un intervalo que la vuelve a
+disparar, el estado observable puede quedarse en `pending` sin llegar nunca a `success` ni a `error`*** -- *sobre
+todo **si la primera promesa no se resuelve como React Query espera**.*
+
+**Y hay algo mas simple que encaja igual de bien, y hay que descartarlo primero**: ***que Vite siga sirviendo la
+version anterior del componente***. *La frase «Cargando la cocina...» **existe en las dos versiones**, asi que
+**verla no prueba que el cambio este**. *Y esto ya paso en el §4 y en el §8.*
+
+### Y el siguiente paso, exacto, y son dos comprobaciones de una linea
+
+**1. ¿Que version del componente sirve Vite?** *No con `fetch` -- **que no devuelve el fuente, §10** --, **sino
+buscando `isLoading && !error` en el bundle que el navegador ya tiene cargado** (por ejemplo, imprimiendo
+`performance.getEntriesByType('resource')` y **abriendo el fichero en la pestana de fuentes**, o **un `console.log`
+del propio componente**).
+
+**2. Y si el componente es el de ahora, `refetchInterval` es el sospechoso numero uno.** *La prueba es quitarlo:*
+**sin intervalo, la consulta hace **un** intento y **tiene que resolverse** -- *en `success` o en `error`, pero
+**resolverse**.*
+
+**Y ninguna de las dos es una teoria**: *son **dos cambios de una linea** y **una lectura** cada uno.*
+
+### Y una nota sobre el arreglo del §11, que **si** vale aunque no baste
+
+**`if (isLoading && !error)` es correcto y se queda.** *No arregla este caso -- *porque **aqui no hay error*** --,
+pero **si arregla el caso en que la consulta falla de verdad**, que es el que el §9 encontro con la red cortada.*
+*Un arreglo que no basta **no es un arreglo que sobra**.*
