@@ -786,3 +786,58 @@ pasa lo mismo**.* **Los dos ensayos fallan por la misma razon: se corta algo que
 **Y si resulta que **el armazon no se puede levantar con el API cortado**, entonces **la conclusion es que este
 ensayo no sirve para medir el tope** -- *y habria que medirlo de otra forma: **con el servidor levantado y una sola
 ruta devolviendo un error**, que es **cortar una respuesta, no una conexion**.*
+
+
+---
+
+## 14. La respuesta: **`#raiz` con cero hijos** -- *el armazon no monta, y este ensayo no puede medir el tope*
+
+*(Ronda 207. **Las tres capturas del §13, y con eso se cierra la via del navegador.**)*
+
+### Lo que se midio, con el bloqueo puesto
+
+```
+innerHTML.length: 103        texto visible: 0 caracteres
+hijos de #raiz: 0            <-- EL ARMAZON NO SE MONTA
+pageerror: []                <-- y NO hay ningun error de JavaScript
+console:   ['error: Failed to load resource: net::ERR_FAILED']
+peticiones: ... las ultimas ocho, TODAS 200 ... /src/componentes/... /src/logica/...
+```
+
+### Y lo que eso dice, sin rodeos
+
+**`#raiz` -- el nodo donde React monta -- **tiene cero hijos**.** *React **no ha pintado nada**: ni el armazon, ni el
+menu, ni la pantalla.* **Y **no hay `pageerror`**: *no es una excepcion, **es que el montaje no llega a ocurrir**.*
+
+**Y los modulos cargan todos (`200`).** *Asi que **lo unico raro de la sesion es la peticion abortada**:
+`net::ERR_FAILED`, que es **mi `route`**.*
+
+> **Conclusion: abortar `/api/despensa` **impide que la aplicacion monte**, y no por el tope -- *que es el codigo que se
+> queria medir -- sino **antes**: *la aplicacion **no llega a existir**.*
+
+### Y por que, que es lo que hay que decir aunque no se haya encontrado
+
+**`main.tsx` monta con `createRoot(raiz).render(<BrowserRouter>...<App /></BrowserRouter>)`.** *Para que eso **no
+pinte nada y no de error**, algo **antes** tiene que quedarse esperando -- *y **`#raiz` vacio con `innerHTML` de 103
+bytes es exactamente la firma de «el modulo se evalua y no se llega a montar»**.* *Lo mas probable, y **no se ha
+comprobado**: *que **el propio import de la cadena** (o el `await` de una carga diferida) se quede colgado con la
+peticion abortada.*
+
+### Y la conclusion de metodo, que es la que vale
+
+**Cuatro ensayos seguidos (§11, §12, §13 y este) y los cuatro fallan por lo mismo: **cortar algo que el armazon
+necesita**.** *Primero la red entera, luego todo el API, luego las rutas de datos -- *y ahora se sabe **por que**:
+**abortar una peticion deja la aplicacion sin montar**.*
+
+> **Y el tope de espera **sigue sin ejercitarse** -- *no porque este mal, sino porque **esta via no lo alcanza**.*
+
+### Y lo siguiente, exacto: **probar el tope donde si se puede**
+
+**`useSeAtasca` es una funcion pura de React: *recibe un booleano y devuelve otro tras un tiempo*.** **Eso se prueba
+**sin navegador y sin API** -- *con una prueba de componente, o incluso montando el gancho con un temporizador de
+mentira* --, *y **es la unica forma de medirlo que no depende del armazon**.*
+
+**Y lo que **si** queda medido del navegador, que no es poco**: *que la despensa **pinta cuando la consulta llega**
+(tres de tres), **que conserva la lista al perder la conexion**, **que «no se sabe cuanto» esta en pantalla**, y
+**que la cocina mantiene el reloj con la red cortada** (`1785 -> 1774`).* **El tope es lo unico que queda, y su sitio
+es una prueba, no un ensayo de navegador.**
