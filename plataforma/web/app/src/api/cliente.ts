@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 /** El unico sitio del frontend que habla con el servidor.
  *
  *  Todo va por rutas relativas `/api/...`. Nunca `http://localhost:8000`:
@@ -115,4 +117,34 @@ export async function pide<T>(
 
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalleDe(cuerpo))
   return cuerpo as T
+}
+
+
+/** **Si una consulta lleva demasiado cargando, se dice.** *Y esto es un arreglo, no un adorno.*
+ *
+ *  **El problema, medido el 12 de octubre de 2026**: *React Query da `isLoading` mientras la consulta **no haya
+ *  tenido nunca `data`** y **siga intentando**.* **Y si la consulta se atasca -- sin llegar a fallar --, `isLoading`
+ *  es verdadero para siempre**, *y la pantalla dice «Cargando...» **indefinidamente***:
+ *
+ *  - *la cocina, con `refetchInterval`, se quedaba en «Cargando la cocina...» para siempre;*
+ *  - *y la despensa, **que no tiene intervalo**, tambien.*
+ *
+ *  > **«Cargando» y «no ha llegado» se parecen en la pantalla y no se parecen en nada** -- *que es la misma
+ *  > distincion que esta fase usa para «limite de fuente» y «pendiente».*
+ *
+ *  **Asi que a partir de `segundos`, la pantalla deja de decir «Cargando» y dice que no pudo preguntar.** *Y no se
+ *  corta nada: **si la respuesta llega despues, se pinta igual** -- *lo unico que cambia es **que se deja de
+ *  mentir mientras tanto**.*
+ */
+export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
+  const [atascada, setAtascada] = useState(false)
+  useEffect(() => {
+    if (!cargando) {
+      setAtascada(false)
+      return
+    }
+    const reloj = setTimeout(() => setAtascada(true), segundos * 1000)
+    return () => clearTimeout(reloj)
+  }, [cargando, segundos])
+  return atascada
 }

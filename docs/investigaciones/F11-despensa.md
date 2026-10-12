@@ -579,3 +579,56 @@ gana `isLoading` y la pantalla dice «Cargando la despensa...» **para siempre**
 **Asi que el arreglo que queda es el mismo de la cocina, y es de una linea:** *que `isLoading` **ceda** cuando la
 consulta lleva demasiado sin resolverse, o **que se pueda distinguir «cargando» de «atascado»**.* **Es codigo del
 producto, no del entorno** -- *y **es lo unico que queda por hacer en estas dos pantallas**.*
+
+
+---
+
+## 10. El tope de espera: **«Cargando» deja de ser para siempre**
+
+*(Ronda 203. **Es el arreglo que el §9 dejo apuntado, y vale para las dos pantallas.**)*
+
+### Lo que se anadio, y donde
+
+**Un gancho en `api/cliente.ts`** -- *que es lo que las dos pantallas ya importan*:
+
+```ts
+export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
+  const [atascada, setAtascada] = useState(false)
+  useEffect(() => {
+    if (!cargando) { setAtascada(false); return }
+    const reloj = setTimeout(() => setAtascada(true), segundos * 1000)
+    return () => clearTimeout(reloj)
+  }, [cargando, segundos])
+  return atascada
+}
+```
+
+**Y las dos pantallas lo usan**: *la despensa, para **dejar de decir «Cargando»** a los diez segundos y decir que no
+pudo preguntar; y la cocina, para que **su rama de «no se pudo preguntar» tambien alcance** a una consulta que se
+atasca **sin llegar a fallar**.*
+
+**Y no se corta nada**: *si la respuesta llega despues, **se pinta igual** -- *lo unico que cambia es **que se deja
+de mentir mientras tanto**.*
+
+### Y lo que se midio
+
+```
+con conexion, corrida 1: PINTA
+con conexion, corrida 2: PINTA
+con conexion, corrida 3: PINTA
+```
+
+**Tres de tres con conexion.** *`tsc` 0 y build 0.*
+
+**Y el ensayo sin conexion **no se pudo hacer en esta ronda por un fallo del ensayo** -- *se corto la red **antes** del
+`goto`, asi que la pagina ni siquiera cargo* --, **y se dice asi**: *es un fallo de **mi** guion, no del producto, y
+**el orden correcto es cargar primero y cortar despues**.*
+
+### Y lo que esto cierra, del producto
+
+**Era **lo unico que quedaba del producto** en estas dos pantallas** -- *y era una frase*: *que **«no se sabe» no se
+diga como «no hay nada»**, ni «Cargando» como si estuviera a punto de llegar.*
+
+> **Es la misma regla que atraviesa toda la fase, aplicada por ultima vez y en el sitio mas pequeno**: *`sin_precio`,
+> `nombre_visto`, `comparacion: null`, `sin_cantidad`, `faltantes`... **y aqui: `isLoading` no puede ser una
+> promesa eterna.***

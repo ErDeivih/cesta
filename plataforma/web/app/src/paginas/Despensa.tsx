@@ -12,7 +12,7 @@
 import { useState } from 'react'
 
 import { declara, consume, useDespensa } from '../api/despensa'
-import { textoDeError } from '../api/cliente'
+import { textoDeError, useSeAtasca } from '../api/cliente'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
 /** **Como se lee una cantidad.** *Y `null` **no** es `0`: es «no se sabe».* */
@@ -23,6 +23,7 @@ function cuanto(e: { cantidad: number | null; unidad: string }): string {
 
 export function Despensa() {
   const { data, isLoading, error } = useDespensa()
+  const atascada = useSeAtasca(isLoading)
   const [texto, setTexto] = useState('')
   const [cantidad, setCantidad] = useState('')
   const [unidad, setUnidad] = useState('')
@@ -55,7 +56,18 @@ export function Despensa() {
     }
   }
 
-  if (isLoading) return <p className="text-tinta-suave">Cargando la despensa...</p>
+  // **Y «Cargando» no puede ser para siempre.** *Si la consulta se atasca, se dice -- ver `useSeAtasca`.*
+  if (isLoading && !atascada) return <p className="text-tinta-suave">Cargando la despensa...</p>
+  if (isLoading && atascada) {
+    return (
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">La despensa</h1>
+        <p className="text-amber-700">
+          No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la despensa este vacia.
+        </p>
+      </div>
+    )
+  }
   if (error) return <p className="text-red-700">{textoDeError(error)}</p>
 
   const existencias = data?.existencias ?? []

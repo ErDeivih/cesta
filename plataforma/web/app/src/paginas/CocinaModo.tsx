@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { apuntaUsado, irAlPaso, ponTemporizador, useCocina, useEmpieza } from '../api/cocina'
-import { textoDeError } from '../api/cliente'
+import { textoDeError, useSeAtasca } from '../api/cliente'
 import { Boton, Tarjeta } from '../componentes/ui'
 
 /** **Segundos, en palabras.** *Y **negativo es «hace»**, que es informacion y no un error.* */
@@ -42,6 +42,8 @@ export function CocinaModo() {
   const id = Number(recetaId)
   const v = Number(version)
   const { data, isLoading, error } = useCocina(id, v)
+  // **Y si la consulta se atasca, se dice** -- *ver `useSeAtasca`.*
+  const atascada = useSeAtasca(isLoading)
   // **Y EL TIC, que es lo que hace que el numero BAJE.** *El calculo ya estaba en el sitio bueno -- `acaba_en -
   // Date.now()` --, **y el numero es correcto cuando se pinta**.* **Lo que faltaba es que se volviera a pintar**:
   // *React solo re-ejecuta el componente **cuando cambia algo de su estado**, y **sin conexion no llega ninguna
@@ -69,7 +71,7 @@ export function CocinaModo() {
   //
   // **La regla, entonces: `isLoading` solo mientras NO haya error.** *En cuanto hay error y no hay datos, **manda
   // el error** -- *que es lo unico que la persona necesita saber.*
-  if (isLoading && !error) return <p className="text-tinta-suave">Cargando la cocina...</p>
+  if (isLoading && !error && !atascada) return <p className="text-tinta-suave">Cargando la cocina...</p>
   // **Y el error NO se lleva la pantalla por delante cuando ya hay datos.** *Sin conexion, el refresco de cada 15
   // segundos falla -- y **`if (error)` a secas borraba la cocina entera y el temporizador con ella*** (medido el
   // 12 de octubre de 2026: sin red la pantalla no decia «quedan», decia el error). **Con datos en la mano, el
@@ -82,6 +84,8 @@ export function CocinaModo() {
   // *Es el pecado que esta fase lleva cazando desde `sin_precio`: **convertir «no se sabe» en una afirmacion**.*
   // **Y aqui la afirmacion desanima**: quien cocina sin cobertura lee que no ha empezado.
   if (!data) {
+    // *Y aqui entra tambien **la consulta atascada**: `atascada` no se usa para decidir, sino para
+    // **dejar de decir «Cargando»** -- que es lo unico que se puede hacer sin inventar datos.*
     return (
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">Cocina</h1>
