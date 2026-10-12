@@ -352,3 +352,57 @@ se vieron por lo mismo: mirando el log y preguntando a la ruta, en vez de supone
 **1.** *El primer reinicio de la API arranco **contra el puerto 5432** porque faltaba `CESTA_POSTGRES`.* **2.** *Y en esta misma ronda, la consulta para listar cuentas **volvio a fallar por lo mismo**.* **Las dos se vieron en el log, no por deduccion** -- *y las dos son la misma cosa que el error del §4: **montar un ensayo sin comprobar que el ensayo esta montado**.*
 
 **Y queda dicho para la continuacion**: *lo siguiente es **esperar mas** y, si sigue «Cargando», **mirar la respuesta de `/api/despensa` en la pestana de red** -- *que es la capa que aun no se ha mirado.*
+
+
+### Y el cierre del §6: **era lenta, no estaba rota** -- y «no se sabe cuanto» **esta en pantalla**
+
+*(Ronda 177. **Esto cierra el §6, y lo que alli se dejo como duda queda resuelto.**)*
+
+**Se repitio el ensayo esperando **doce segundos** en vez de tres y medio, y capturando **las respuestas de red** --
+*que era, literalmente, **la capa que no se habia mirado**.*
+
+```
+sesion: 200                     <- la entrada, con JSON
+tras 12 s, el cuerpo: 513 caracteres
+   SI  «harina»                 <- el producto declarado
+   SI  «arroz»                  <- el otro
+   SI  «no se sabe cuanto»      <- ***LO QUE HABIA QUE VER***
+   no  «Cargando»
+   no  «vacia»
+```
+
+**Y las dos lineas que se buscaban desde el principio de esta pantalla:**
+
+1. **`harina` se pinta** -- *o sea que **la lista llega**, y el «Cargando» del §6 **no era un fallo: era prisa**.*
+2. **Y `harina` **dice «no se sabe cuanto»**, no un `0`.**
+
+> **Eso es exactamente lo que esta pantalla tenia que decir bien, y lo dice.** *La cantidad `null` que salio por la
+> API (`{"texto":"harina","cantidad":null}`) **llega a la pantalla y se lee como lo que es**: **no se sabe
+> cuanto**. *No como un cero, que afirmaria que no queda nada.* **La decision de la migracion `017` -- `NULL` es
+> «no se sabe», no un cero -- sobrevive la tabla, la ruta, el modulo de API y la pantalla.** *De punta a punta.*
+
+### Y lo que costo, que es lo unico que hay que aprender de este §6
+
+**El §6 se equivoco de dos formas, y las dos por lo mismo.**
+
+**1. Se espero demasiado poco.** *3,5 segundos, y la pantalla necesitaba mas.* **Y el sintoma -- «Cargando la
+despensa...» -- se leyo como «no resuelve» cuando decia «aun no ha llegado».** ***Un estado de carga y un fallo se
+parecen en una captura y no se parecen en nada*** -- *que es exactamente la frase que esta fase usa para «límite de
+fuente» y «pendiente».*
+
+**2. Y se miro la pantalla antes que la red.** *La respuesta de `/api/despensa` **estaba ahi todo el tiempo**, y
+**habria dicho en un segundo lo que costo una ronda entera**.* **Es la misma leccion que el §4** -- *atribuir el
+sintoma a la capa equivocada* -- **y la misma que el §5**: *la peticion contesta, y contesta con lo que hay.*
+
+### Y el estado final de `F11` / `R08`, de punta a punta
+
+| la capa | **estado** | **como se sabe** |
+|---|---|---|
+| **la logica** | **hecha** | *`core/despensa.py`, los cuatro casos de la aceptacion, **9 pruebas*** |
+| **la tabla** | **hecha** | *migracion `017`: **`cantidad` nullable**, y **0 claves ajenas a `compra`*** |
+| **la ruta** | **hecha y contestando** | *3 endpoints; **`404` -> `401` -> `201`*** |
+| **la pantalla** | **hecha y vista** | ***«no se sabe cuanto» esta en pantalla*** |
+
+**Y la regla del criterio, sostenida en las cuatro**: *«**compra no acredita consumo ni stock restante**»* --
+*no hay ninguna funcion que sume una compra, no hay ninguna ruta, **no hay ninguna clave ajena**, y **no hay ningun
+boton**.*
