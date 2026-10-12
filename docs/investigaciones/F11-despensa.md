@@ -841,3 +841,75 @@ mentira* --, *y **es la unica forma de medirlo que no depende del armazon**.*
 (tres de tres), **que conserva la lista al perder la conexion**, **que «no se sabe cuanto» esta en pantalla**, y
 **que la cocina mantiene el reloj con la red cortada** (`1785 -> 1774`).* **El tope es lo unico que queda, y su sitio
 es una prueba, no un ensayo de navegador.**
+
+
+---
+
+## 15. El proyecto **si** tiene ejecutor de pruebas de frontend -- *y el gancho no encaja en el*
+
+*(Ronda 208. **Esto cambia el §14: no es que «haya que hacer una prueba», es que hay que ver **cual**.)*)
+
+### Lo que hay, leido
+
+**`plataforma/web/app/package.json`:**
+
+```json
+"test": "node --test "tests/**/*.test.mjs""
+```
+
+**El ejecutor de pruebas de Node, sin `vitest`, sin `jest` y sin `@testing-library`.** *No hay ni una dependencia de
+pruebas en el `package.json`.*
+
+**Y hay **un** fichero de pruebas: `plataforma/web/app/tests/cocina.test.mjs`.** *Y lo que hace es muy claro:*
+
+```js
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { calcular, listaReceta, validarReceta } from '../src/estado/cocina.ts'
+import { costeDeReceta } from '../src/logica/costeReceta.ts'
+import { avisoDeTransporte, hayVariosViajes } from '../src/logica/transporte.ts'
+...
+```
+
+**Importa ficheros `.ts` **directamente** y prueba **funciones puras**: *`calcular`, `validarReceta`, `costeDeReceta`,
+`avisoDeTransporte`.* **Ni un componente, ni un gancho, ni un renderizador.**
+
+### Y por que `useSeAtasca` **no encaja** en ese ejecutor
+
+**`useSeAtasca` es un gancho de React**: *usa `useState` y `useEffect`, y **para probarlo hay que renderizarlo**.* **Y
+este proyecto **no tiene renderizador de pruebas** -- *ni `jsdom`, ni `happy-dom`, ni `@testing-library`* --, **y
+anadirlo seria meter una dependencia nueva** para medir **una linea de `setTimeout`.**
+
+> **Y lo que el propio proyecto dice, con su forma de probar, es mas util que anadir la dependencia**: *su patron es
+> **logica pura en `src/logica/` o `src/estado/`, probada con `node --test`, y el componente encima, fino**.*
+
+### Y lo que se puede hacer sin anadir nada: **sacar la decision a una funcion pura**
+
+**El gancho hace dos cosas**: *una **decision** -- «si lleva mas de N segundos cargando, esta atascada» -- y **el
+temporizador** que la dispara.* **Y la decision **es pura**:*
+
+```ts
+/** *Si una espera de `transcurridoMs` con `cargando` cuenta ya como atascada.* */
+export function estaAtascada(cargando: boolean, transcurridoMs: number, segundos = 10): boolean {
+  return cargando && transcurridoMs >= segundos * 1000
+}
+```
+
+**Y entonces el gancho **solo** lleva el reloj** -- *que es lo unico que necesita React* --, **y la regla se prueba con
+`node --test` como todas las demas.**
+
+**No se ha hecho todavia, y queda dicho con su forma exacta.** *Y es **la ultima pieza** de estas dos pantallas.*
+
+### Y el balance de estas cuatro rondas de ensayo (§11 a §15), que conviene juntar
+
+| ronda | lo que se intento | **lo que paso** |
+|---|---|---|
+| §11 | *cortar la red entera* | **la pagina no carga: el armazon viene del mismo Vite** |
+| §12 | *bloquear todo `/api`* | **el cuerpo queda vacio** |
+| §13 | *bloquear solo los datos* | **igual de vacio -- el §12 suponia mal** |
+| §14 | *mirar `#raiz`* | ***cero hijos*: la aplicacion no monta, y no hay error** |
+| §15 | *buscar donde probarlo* | **hay ejecutor, y el gancho no encaja en el** |
+
+**Cuatro intentos de medir el tope desde el navegador, y los cuatro dicen lo mismo: *por esa via no se llega*.** *Y lo
+que **si** quedo medido en esas mismas rondas -- *que la despensa pinta tres de tres, que conserva la lista sin
+conexion, y que la cocina mantiene el reloj con la red cortada* -- **no dependia de este ensayo**, y esta firme.*
