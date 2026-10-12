@@ -913,3 +913,82 @@ export function estaAtascada(cargando: boolean, transcurridoMs: number, segundos
 **Cuatro intentos de medir el tope desde el navegador, y los cuatro dicen lo mismo: *por esa via no se llega*.** *Y lo
 que **si** quedo medido en esas mismas rondas -- *que la despensa pinta tres de tres, que conserva la lista sin
 conexion, y que la cocina mantiene el reloj con la red cortada* -- **no dependia de este ensayo**, y esta firme.*
+
+
+---
+
+## 16. **El tope no dispara** -- *y el fallo esta en su `useEffect`, no en la regla*
+
+*(Ronda 225. **Y aparece al intentar medir otra cosa: la despensa se quedo en «Cargando» a los doce segundos.**)*
+
+### Lo que se midio
+
+```
+(240 caracteres, hijos de #raiz: 1)
+      ... COMPRA | Compra
+      «CARGANDO LA DESPENSA...»          <-- a los DOCE segundos
+pageerror: []      peticiones fallidas: []
+```
+
+**La aplicacion monta** (*`#raiz` con un hijo*), **la peticion no falla**, **y a los doce segundos sigue diciendo
+«Cargando».** *Y el tope **se puso en diez**.*
+
+### Y el fallo esta en el gancho, que es mio
+
+**`useSeAtasca` es asi:**
+
+```ts
+export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
+  const [atascada, setAtascada] = useState(false)
+  useEffect(() => {
+    if (!estaAtascada(cargando, 0, segundos)) { setAtascada(false); return }
+    const reloj = setTimeout(() => setAtascada(true), segundos * 1000)
+    return () => clearInterval(reloj)          // <-- limpieza
+  }, [cargando, segundos])                     // <-- Y AQUI ESTA EL FALLO
+  return atascada
+}
+```
+
+**El efecto depende de `cargando`.** *Asi que **cada vez que `cargando` cambia de valor, el `setTimeout` se
+**cancela** y **empieza de cero**.*
+
+> **Y `isLoading` de React Query **no es un valor estable**: *React Query **vuelve a intentar**, y **entre intento e
+> intento el estado puede oscilar**.* **Si oscila, el reloj **nunca llega a los diez segundos** -- *se reinicia una y
+> otra vez* --, **y `atascada` se queda en `false` para siempre.**
+
+**Y fijate en lo que eso significa**: *el tope **existe**, la regla **esta probada**, y **el temporizador que la
+dispara no llega a dispararse** -- *porque **depende de la misma señal que vigila**.*
+
+### Y es el mismo error que el `refetchInterval` del §18 de `F10`, en otro sitio
+
+**Alli el fallo era**: *`refetchInterval: 15000` **volvia a disparar la consulta antes de que el primer intento
+terminara**, y por eso **el estado nunca salia de `pending`**.*
+
+**Y aqui**: *`useEffect` **vuelve a arrancar el reloj cada vez que `cargando` cambia**, y por eso **el reloj nunca
+llega a los diez segundos**.*
+
+> **Los dos son la misma cosa**: *un **temporizador** que **depende del estado que vigila**, y que por eso **se
+> reinicia justo cuando deberia dispararse**.* **Y los dos se arreglan igual: *que el reloj **no dependa de la
+> oscilacion**, sino **de cuando empezo a cargar**.*
+
+### Y el arreglo, con su forma
+
+**Guardar **cuando empezo** a cargar, y calcular con eso** -- *que es **literalmente la misma decision** que
+`core/cocina.py` tomo con los temporizadores*: *«**no es una cuenta atras, es una hora de fin**»*.
+
+```ts
+export function useSeAtasca(cargando: boolean, segundos = 10): boolean {
+  const [empezo, setEmpezo] = useState<number | null>(null)
+  useEffect(() => {
+    if (cargando && empezo === null) setEmpezo(Date.now())
+    if (!cargando) setEmpezo(null)
+  }, [cargando, empezo])
+  // *Y el reloj que hace repintar, aparte.*
+  const [tic, setTic] = useState(0)
+  useEffect(() => { const id = setInterval(() => setTic(n => n + 1), 1000); return () => clearInterval(id) }, [])
+  return empezo !== null && estaAtascada(true, Date.now() - empezo, segundos)
+}
+```
+
+**Y ahora el reloj **no depende de que `cargando` este quieto**: *depende de **cuando empezo**, que no cambia.*
+*Y **el tic de un segundo** es lo que hace que se vuelva a evaluar -- *el mismo que la cocina necesita.*
