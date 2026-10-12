@@ -180,6 +180,20 @@ def _con_precios(hallada: dict) -> None:
         ing["precio_cent"] = producto.get("precio_cent")
         ing["precio_unidad_cent"] = producto.get("precio_unidad_cent")
         ing["unidad_canon"] = producto.get("unidad_canon")
+        # **Y el cuarto: el tamano neto del envase, que es lo que A08 pide.**
+        #
+        # *Es «el tamano neto publicado del articulo elegido», y aqui esta a mano*: `producto["cantidad"]`
+        # y `producto["unidad"]` **son** el tamano de un envase -- *1 kg, 1 l, 6 ud*.
+        #
+        # **Sin esto, `_envases_de` no tenia por donde calcular**: `cantidad` del ingrediente es **cuanto
+        # se necesita**, no **cuanto trae un envase**, y confundirlas daria un pedido de un solo envase
+        # siempre. *La regla estaba escrita y probada; **lo que faltaba era rellenar el dato**, y esa
+        # linea es esta.*
+        #
+        # *Y la unidad va aparte de la del ingrediente*: una receta pide `200 g` de algo que se vende en
+        # `1 l`, y ahi **no hay conversion** -- `envases_enteros` lo dice en vez de inventar un numero.
+        ing["tamano_envase"] = producto.get("cantidad")
+        ing["unidad_envase"] = producto.get("unidad")
 
 
 @rutas.get("/{receta_id}/a-la-lista")
