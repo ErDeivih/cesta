@@ -225,24 +225,6 @@ def bloque(cantidad: float | None, unidad: str | None) -> tuple:
     return (unidad, round(float(cantidad), 3))
 
 
-def _bloque(clave: tuple, a: dict, b: dict) -> tuple:
-    """**La clave de bloque de dos productos: formato, cadena de cada lado, y ZONA de cada lado.**
-
-    *Y la zona esta aqui por lo mismo que en `ocupados`*: **el reparto 1-a-1 se hace DENTRO de un bloque**, asi
-    que si un bloque mezclara zonas, `_asignacion_1a1` podria emparejar el precio de una zona con el de otra --
-    *y con `ocupados` ya distinguiendo zonas, **ese par se emitiria***, y quedaria **un grupo con dos zonas
-    dentro**, que es lo que B03 evita.
-
-    *Sin zonas la clave es `(formato, cadena, None, cadena, None)`: **la misma que hoy con dos `None` de mas**,
-    y todas las filas reciben el mismo `None`* -- **el mismo razonamiento que en `ocupados`, y la misma garantia:
-    las pruebas que ya existen.**
-
-    *Los `get` no sobran*: **las cinco fuentes que no declaran zona no traen la clave**, y pedirla con corchetes
-    reventaria. *Vacia quiere decir «no se declara por fila», no «no tiene zona».*
-    """
-    return (clave, a["fuente"], a.get("region"), b["fuente"], b.get("region"))
-
-
 class Union:
     """Union-find. Un grupo es un conjunto de productos enlazados entre si."""
 
@@ -591,7 +573,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                     # el codigo manda y la diferencia de precio es un hallazgo.
                     if precio_imposible(filas[x], filas[y]):
                         continue
-                    grupo = _bloque(clave, filas[x], filas[y])
+                    grupo = (clave, filas[x]["fuente"], filas[y]["fuente"])
                     s = parejo(x, y)
                     if s >= umbral:
                         canales["marca"][grupo].append((x, y, s))
@@ -645,26 +627,14 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
             if precio_imposible(filas[x], filas[y]):
                 continue
             clave = bloque(filas[x].get("cantidad"), filas[x].get("unidad_canon"))
-            canales["vector"][_bloque(clave, filas[x], filas[y])].append((x, y, s))
+            canales["vector"][(clave, filas[x]["fuente"],
+                               filas[y]["fuente"])].append((x, y, s))
 
     emitidos: set[tuple[int, int]] = set()
-    ocupados_todos: set[tuple] = set()
-
-    def _ocupacion(i: int, otro: dict) -> tuple:
-        """**`(producto, cadena, zona)`** -- de quien se ocupa `i`, y en que zona.
-
-        *La zona entra AQUI, y esa es **la regla** que B03 cambia.* **Un producto no puede tener dos parejas en
-        la misma cadena Y LA MISMA ZONA** -- *pero **si puede** tenerlas en la misma cadena y **otra zona**,
-        porque son dos precios distintos.*
-
-        *Y sin zonas -- que es el caso de las cinco fuentes que no la declaran -- la clave es
-        `(producto, cadena, None)`, **el mismo comportamiento que `(producto, cadena)`**: todas las filas
-        reciben el mismo `None`, asi que la comparacion sale igual.* **Que es lo que hay que garantizar.**
-        """
-        return (i, otro["fuente"], otro.get("region"))
+    ocupados_todos: set[tuple[int, str]] = set()
 
     def emitir(x, y, s, ocupados):
-        """Acepta un par si ninguno de los dos ya tiene pareja en esa cadena y zona.
+        """Acepta un par si ninguno de los dos ya tiene pareja en esa cadena.
 
         `ocupados` es **por canal**, no global, y eso es a proposito: un producto
         puede tener a la vez su identico en la otra cadena y su equivalente de
@@ -674,14 +644,13 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
         """
         if (x, y) in emitidos:
             return
-        ox, oy = _ocupacion(x, filas[y]), _ocupacion(y, filas[x])
-        if ox in ocupados or oy in ocupados:
+        if (x, filas[y]["fuente"]) in ocupados or (y, filas[x]["fuente"]) in ocupados:
             return
         emitidos.add((x, y))
-        ocupados.add(ox)
-        ocupados.add(oy)
-        ocupados_todos.add(ox)
-        ocupados_todos.add(oy)
+        ocupados.add((x, filas[y]["fuente"]))
+        ocupados.add((y, filas[x]["fuente"]))
+        ocupados_todos.add((x, filas[y]["fuente"]))
+        ocupados_todos.add((y, filas[x]["fuente"]))
         if x > y:
             x, y = y, x
         salida.append((x, y, s, nivel(filas[x], filas[y])))
@@ -690,7 +659,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # distintas). Cada canal reparte por su cuenta; lo que ya esta emitido no se
     # repite, pero un producto si puede salir en los dos.
     for canal in ("marca", "equivalente", "vector"):
-        ocupados: set[tuple] = set()
+        ocupados: set[tuple[int, str]] = set()
         # `sorted` no sobra: iterar un diccionario cuyas claves llevan texto
         # depende del hash seed del proceso. Pero **no basta**: medido el 22 de
         # septiembre, con esto puesto, dos procesos del mismo dia siguen dando
@@ -918,11 +887,11 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
     # filas reciben el mismo `None`, asi que la comparacion sale igual que comparando solo por cadena.*
     # **Que es lo que hay que garantizar, y lo que vigila `test_sin_el_parametro_de_zonas_nada_cambia` junto a
     # `test_sin_el_parametro_se_comporta_como_antes`, que ya existia.**
-    por_cadena: list[dict[tuple, set[str]]] = [{} for _ in range(n)]
+    por_cadena: list[dict[str, set[str]]] = [{} for _ in range(n)]
     if cadenas is not None:
         for i in range(n):
             cod = (eans[i] if eans else None) or f"?{i}"
-            por_cadena[i][(cadenas[i], regiones[i] if regiones else None)] = {cod}
+            por_cadena[i][cadenas[i]] = {cod}
     # Eje -> valor declarado, por componente, para la segunda red. Un eje que no
     # aparece es un eje sobre el que esa componente **no dice nada**.
     por_eje: list[dict[str, str]] = [{} for _ in range(n)]
