@@ -253,6 +253,34 @@ export interface CadenaEstado {
   productos: number
   ultimo_dia: string | null
   al_dia: boolean
+  /**
+   * **Lo que la cadena declara sobre su propia cobertura, cuando no cataloga entero.**
+   *
+   * *Y solo lo declara Lidl, y no es casualidad: es la unica cuyo catalogo es **parcial**.* El
+   * problema que esto resuelve, medido el 13 de octubre de 2026: `/api/estado` daba, por cadena,
+   * **`productos` y nada mas** --
+   *
+   *     alcampo    22816
+   *     lidl          77
+   *
+   * -- y **esos dos numeros no son la misma clase de numero**. *22 816 es un catalogo; 77 son las
+   * fichas de una campana semanal.* **Un `77` solo se lee como «Lidl tiene 77 productos», que es
+   * falso** -- y es justo lo que el plan prohibe: *«sin presentar ausencias de captura como
+   * indisponibilidad».*
+   *
+   * Va **aparte y no dentro de `productos`**, porque `productos` sigue queriendo decir lo que decia.
+   */
+  cobertura?: {
+    cobertura?: string
+    con_precio?: number
+    fichas_leidas?: number
+    guardados?: number
+    productos_padre?: number
+    region?: string | number
+    fecha?: string
+    aviso?: string
+    [k: string]: unknown
+  }
 }
 
 export interface RespuestaEstado {

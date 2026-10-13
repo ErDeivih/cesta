@@ -112,11 +112,31 @@ export function Cabecera() {
             </Resumen>
             <ul className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {data?.cadenas.map((c) => (
-                <li key={c.cadena} className="flex items-center gap-2">
-                  <span className="font-medium">{nombreCadena(c.cadena)}</span>
-                  <span className={cx(c.al_dia ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
-                    {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
+                <li key={c.cadena} className="flex flex-col gap-0.5">
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">{nombreCadena(c.cadena)}</span>
+                    <span className={cx(c.al_dia ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+                      {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
+                    </span>
                   </span>
+                  {/* **Y lo que la cadena dice de su propia cobertura.** *Solo la trae Lidl, y por eso
+                      se pinta condicional: las otras cinco catalogan entero y no declaran nada.*
+
+                      *Sin esto, `Lidl 77` se lee como «Lidl tiene 77 productos» -- y **77 son las fichas
+                      de una campana semanal**, no un catalogo.* Es exactamente lo que el plan pide: *«sin
+                      presentar ausencias de captura como indisponibilidad». Y un numero sin su cobertura
+                      al lado es una ausencia presentada como catalogo.* */}
+                  {c.cobertura?.cobertura && (
+                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                      {c.cobertura.cobertura === 'ofertas_semanales_parcial'
+                        ? 'ofertas semanales, no el catálogo entero'
+                        : c.cobertura.cobertura}
+                      {typeof c.cobertura.con_precio === 'number' &&
+                        typeof c.cobertura.fichas_leidas === 'number' && (
+                          <> · {c.cobertura.con_precio} de {c.cobertura.fichas_leidas} con precio</>
+                        )}
+                    </span>
+                  )}
                 </li>
               ))}
               {isPending && <li>…</li>}
