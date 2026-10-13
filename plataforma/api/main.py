@@ -768,21 +768,42 @@ def en_tienda(lista_id: str, datos: EnTienda, usuario: dict = Depends(usuario_ac
     poder borrar sublista o lista del tiron"*.
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
-    if datos.cadena is not None and datos.cadena not in cesta.CADENAS:
-        raise HTTPException(422, f"'{datos.cadena}' no es una de las cadenas: "
-                                 f"{', '.join(cesta.CADENAS)}")
+    # **Se admite cualquier cadena CAPTURADA, no solo las comparables.** *Y esto es un cambio del 13 de
+    # octubre de 2026, con su motivo.*
+    #
+    # *Antes la puerta era `cesta.CADENAS` -- las cinco comparables --, asi que **`lidl` se rechazaba con un
+    # 422**: no se podia decir «esta linea la compro en Lidl» **ni aunque su precio estuviera capturado y
+    # fuera valido**.*
+    #
+    # **Y eso era el veto global que B03 pide quitar**, pero **quitarlo no es anadir `lidl` a `CADENAS`**:
+    # *esa lista significa «puede cerrar una cesta», y Lidl **no puede**, porque publica ofertas semanales
+    # parciales.* **Son dos preguntas distintas y hay dos listas para ellas:**
+    #
+    #   - **`CADENAS_QUE_SE_CAPTURAN`**: de las que hay dato. *Aqui si entra Lidl.*
+    #   - **`CADENAS`**: de las que se puede **cerrar una cesta**. *Aqui no, y con su motivo dicho.*
+    #
+    # *Asi que la puerta es la primera, y la segunda decide **quien gana una cesta*** -- *que es la regla
+    # fina que el plan pide: **«Lidl no gana una cesta completa si faltan lineas; si puede ofrecer una linea
+    # exacta con precio valido»**.*
+    if datos.cadena is not None and datos.cadena not in cesta.CADENAS_QUE_SE_CAPTURAN:
+        raise HTTPException(422, f"'{datos.cadena}' no es una de las cadenas capturadas: "
+                                 f"{', '.join(cesta.CADENAS_QUE_SE_CAPTURAN)}")
+    # **Y si la cadena no puede cerrar una cesta, se dice al elegirla** -- *no se calla.* *Es el mismo
+    # patron de siempre: la pantalla tiene que poder explicar por que faltara esa tienda en el reparto, en
+    # vez de que aparezca ausente sin motivo.*
+    aviso = cesta.por_que_no_se_compara(datos.cadena) if datos.cadena else None
     if datos.borrar:
         if datos.cadena is None:
             raise HTTPException(422, "Para borrar una sublista hace falta decir de que tienda.")
         cuantas = almacen.borra_lineas_de_tienda(lista_id, datos.cadena, usuario["id"])
-        return {"borradas": cuantas, "cadena": datos.cadena}
+        return {"borradas": cuantas, "cadena": datos.cadena, "aviso": aviso}
     if datos.lineas:
         cuantas = almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], datos.lineas)
-        return {"puestas": cuantas, "cadena": datos.cadena}
+        return {"puestas": cuantas, "cadena": datos.cadena, "aviso": aviso}
     # Sin `lineas`: toda la lista, que es el boton de «todo en DIA».
     todas = [x["id"] for x in almacen.lineas_de(lista_id) if x["tachado_en"] is None]
     return {"puestas": almacen.pon_tienda(lista_id, datos.cadena, usuario["id"], todas),
-            "cadena": datos.cadena}
+            "cadena": datos.cadena, "aviso": aviso}
 
 
 @app.post("/api/listas/{lista_id}/desde-favoritos", status_code=201)
