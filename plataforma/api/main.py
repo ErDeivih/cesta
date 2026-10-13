@@ -1399,17 +1399,50 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     no duplique: el puente tiene que ser idempotente, y para eso hay que saber que hay puesto.
     """
     _acceso(lista_id, usuario, hace_falta_escribir=False)
-    planificadas, ya_en_la_lista = _del_plan(lista_id, usuario["id"], desde, hasta)
+    # **Y el tercer valor, la `Previa` entera.** *`sin_cantidad` y `sin_consolidar` son informacion que
+    # antes se tiraba, y que el criterio de B04 pide*: *un ingrediente sin cantidad no se puede comprar, y
+    # el mismo producto en unidades incompatibles no se puede sumar.* **Decirlo es la regla de la casa.**
+    planificadas, ya_en_la_lista, calculada = _del_plan(lista_id, usuario["id"], desde, hasta)
     # **Solo lo que se puede anadir de verdad.** Un ingrediente sin producto y sin grupo no puede
     # entrar: la tabla lo prohibe (`linea_con_destino`). Prometerlo era una previa que miente.
-    pueden = [x for x in planificadas
-              if x["nombre"].lower() not in ya_en_la_lista
-              and (x.get("producto_id") is not None or x.get("grupo_id") is not None)]
-    sin_destino = sorted(x["nombre"] for x in planificadas
-                         if x["nombre"].lower() not in ya_en_la_lista
-                         and x.get("producto_id") is None and x.get("grupo_id") is None)
+    #
+    # *Y ahora son `LineaDeCompra`, no diccionarios*: `ln.texto`, `ln.producto_id`, `ln.grupo_id`.
+    pueden = [ln for ln in planificadas
+              if ln.texto.lower() not in ya_en_la_lista
+              and (ln.producto_id is not None or ln.grupo_id is not None)]
+    sin_destino = sorted(ln.texto for ln in planificadas
+                         if ln.texto.lower() not in ya_en_la_lista
+                         and ln.producto_id is None and ln.grupo_id is None)
+    # **El adaptador: `LineaDeCompra` por dentro, y la MISMA forma de JSON que antes por fuera.**
+    #
+    # *Esto no es un detalle de estilo*: la interfaz lee `nombre`, `cantidad` y `unidad` -- *medido en
+    # `Grupo.tsx` y en las pantallas del plan* --, y **un refactor interno que cambie lo que ve la
+    # interfaz sin decirlo es una rotura de contrato disfrazada de mejora.**
+    #
+    # *Asi que la forma de fuera se mantiene, y se le ANADE lo que ahora se sabe*: **los envases**, **el
+    # sobrante** y **de que recetas viene**. *Lo que la interfaz no lea hoy lo puede leer mañana, y
+    # mientras no estorba.*
+    def _como_antes(ln) -> dict:
+        return {"nombre": ln.texto, "cantidad": ln.cantidad, "unidad": ln.unidad,
+                "producto_id": ln.producto_id, "grupo_id": ln.grupo_id,
+                "clave": ln.clave, "recetas": list(ln.recetas),
+                # *Y `receta`, en singular, que es lo que leia la previa de antes*: **el primer
+                # nombre.** *Se mantiene por compatibilidad, y porque una linea que viene de una
+                # sola receta se lee mejor asi.*
+                "receta": (ln.recetas[0] if ln.recetas else None),
+                # *Y los envases y el sobrante, que antes no existian en la previa del plan.*
+                "envases": ln.envases, "sobrante": ln.sobrante,
+                "unidad_envase": ln.unidad_envase}
+
+    pueden = [_como_antes(ln) for ln in pueden]
+    sin_destino = list(sin_destino)
     return {"entrarian": pueden, "ya_estaban": sorted(
-        x["nombre"] for x in planificadas if x["nombre"].lower() in ya_en_la_lista),
+        ln.texto for ln in planificadas if ln.texto.lower() in ya_en_la_lista),
+        # **Y lo que no se puede comprar, dicho por su nombre.** *Un ingrediente sin cantidad no se
+        # compra, y el mismo producto en unidades incompatibles no se suma: las dos cosas salen de
+        # `previa_compra` y las dos se dicen, en vez de desaparecer.*
+        "sin_cantidad": list(calculada.sin_cantidad),
+        "sin_consolidar": list(calculada.sin_consolidar),
         # **Y lo que no se puede, se dice.** Es la regla de la casa: un cero callado no; una lista
         # de lo que falta, si.
         "sin_catalogo": sin_destino,
@@ -1441,9 +1474,9 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
 
     ya = {str(x.get("nombre_visto") or "").lower() for x in almacen.lineas_de(lista_id)}
     recetario = _recetas.conecta(_ruta_recetas())
-    # **Consolidado por `(nombre, unidad)`**, y en orden de aparicion: *la primera receta que pide harina
-    # manda en el orden de la lista, y las demas solo suman.*
-    juntos: dict[tuple[str, str], dict] = {}
+    # **Los ingredientes de TODO el plan, escalados y con su receta.** *Se juntan primero y se consolidan
+    # despues, que es el unico orden en el que dos recetas con el mismo ingrediente suman.*
+    todos: list[dict] = []
     try:
         plan = _recetas.plan(recetario, propietario, desde, hasta)
         for linea in plan:
@@ -1460,43 +1493,29 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
             if raciones and comensales and float(raciones) > 0:
                 factor = float(comensales) / float(raciones)
             for uno in receta["ingredientes"]:
-                nombre = uno.get("texto") or ""
-                unidad = uno.get("unidad") or ""
-                cantidad = uno.get("cantidad")
-                escalada = None
-                if cantidad is not None and factor is not None:
-                    escalada = cantidad * factor
-                elif cantidad is not None:
-                    escalada = cantidad
-                clave = (nombre.lower(), str(unidad).lower())
-                if clave in juntos:
-                    # **La segunda contribucion SUMA.** *Y se guarda de que receta viene, para que la nota
-                    # pueda decir las dos* -- *que es la mitad del arreglo: antes decia «Receta 1 (100 g)»
-                    # y los otros 100 g no aparecian por ningun lado.*
-                    previo = juntos[clave]
-                    if escalada is not None:
-                        previo["cantidad"] = (previo["cantidad"] or 0) + escalada
-                    previo["recetas"].append(receta["nombre"])
-                    continue
-                juntos[clave] = {
-                    "nombre": nombre,
-                    "cantidad": escalada,
-                    "unidad": unidad,
-                    # **El destino, que antes se tiraba.** Sin el, la previa no puede saber si un
-                    # ingrediente se puede anadir, y la tabla exige `linea_con_destino`: medido el
-                    # 13 de octubre de 2026, el puente mandaba `None, None` y la base lo rechazaba
-                    # con un 500. Un ingrediente escrito a mano **no tiene destino**, y eso hay que
-                    # poder decirlo en vez de prometerlo.
-                    "producto_id": uno.get("producto_id"),
-                    "grupo_id": uno.get("grupo_id"),
-                    "receta": receta["nombre"],
-                    "recetas": [receta["nombre"]],
-                    "version": receta["version"],
-                    "fecha": linea["fecha"],
-                }
+                suyo = dict(uno)
+                if suyo.get("cantidad") is not None and factor is not None:
+                    suyo["cantidad"] = suyo["cantidad"] * factor
+                # *La receta, para que la nota pueda decir de donde viene cada aportacion.*
+                suyo["_receta"] = receta["nombre"]
+                todos.append(suyo)
     finally:
         recetario.close()
-    return list(juntos.values()), ya
+
+    # **Y AQUI ESTA LA CONSOLIDACION, QUE ES LA MISMA QUE LA DEL OTRO PUENTE.** *`traspaso` la llama para
+    # receta->lista; esto la llama para plan->lista.* **Un solo sitio para el calculo, que es lo que el
+    # docstring de arriba pedia desde el principio y no cumplia.**
+    #
+    # *Antes habia dos implementaciones, y por eso mentian las dos a la vez y cada una a su manera*: *aqui
+    # no se escalaba y se descartaba la segunda receta; alli se contaban los gramos como unidades.*
+    #
+    # **Y no se pierde nada por el camino**: `previa_compra` agrupa por `clave` -- *producto + unidad* --,
+    # **cuenta los envases enteros**, **calcula el sobrante** y **recoge de que recetas viene**.
+    from core import previa_compra as _previa
+
+    calculada = _previa.previa_de_compra(todos)
+    return list(calculada.lineas), ya, calculada
+
 
 
 @app.post("/api/listas/{lista_id}/desde-el-plan", status_code=201)
@@ -1511,18 +1530,18 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
     se guarda donde se lee.
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
-    planificadas, ya = _del_plan(lista_id, usuario["id"], desde, hasta)
+    planificadas, ya, _calculada = _del_plan(lista_id, usuario["id"], desde, hasta)
     anadidos = 0
     ya_estaban: list[str] = []
     sin_destino: list[str] = []
     for uno in planificadas:
-        nombre = uno["nombre"]
+        nombre = uno.texto
         if nombre.lower() in ya:
             ya_estaban.append(nombre)
             continue
         # **Lo que no tiene destino no se manda.** Antes se mandaba con `None, None` y la base lo
         # rechazaba con un 500: el puente no metia nada y no lo decia.
-        if uno.get("producto_id") is None and uno.get("grupo_id") is None:
+        if uno.producto_id is None and uno.grupo_id is None:
             sin_destino.append(nombre)
             continue
         # **La nota dice TODAS las recetas que aportan**, y el total ya sumado. *Antes decía solo la
@@ -1532,12 +1551,21 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         #
         # *Y la cantidad que se escribe es **la suma**, no la de la primera: es la respuesta a «cuanto
         # hay que comprar», que es la unica pregunta que esta nota contesta.*
-        nombres = uno.get("recetas") or ([uno["receta"]] if uno.get("receta") else [])
+        nombres = uno.recetas or ([uno.texto] if uno.texto else [])
         detalle = "del plan: " + " + ".join(nombres) if nombres else "del plan"
-        if uno.get("cantidad") is not None:
-            detalle += f" ({uno['cantidad']:g} {uno.get('unidad') or ''})".rstrip()
-        almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()), nombre,
-                            uno.get("grupo_id"), uno.get("producto_id"), 1, detalle)
+        if uno.cantidad is not None:
+            detalle += f" ({uno.cantidad:g} {uno.unidad or ''})".rstrip()
+        # **Y los envases y el sobrante, que ahora SI se calculan.** *Antes el puente del plan no los
+        # tenia* -- *no pasaba por `previa_compra`* --, **y el de la receta los tenia y los tiraba.**
+        # *Son la respuesta a «cuantos paquetes compro», que es la segunda pregunta de una lista.*
+        if uno.envases:
+            detalle += f" · {uno.envases} envase{'s' if uno.envases != 1 else ''}"
+            if uno.sobrante:
+                detalle += f", sobran {uno.sobrante:g} {uno.unidad_envase or uno.unidad}"
+        # *El id, determinista por la clave*: **repetir la operacion no duplica.**
+        almacen.anade_linea(lista_id, usuario["id"],
+                            str(uuid.uuid5(uuid.NAMESPACE_URL, f"{lista_id}|{uno.clave}")), nombre,
+                            uno.grupo_id, uno.producto_id, 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
         ya.add(nombre.lower())

@@ -63,21 +63,23 @@ def test_devuelve_los_campos_que_los_consumidores_leen():
     *`receta` y `recetas` son las dos formas del mismo dato*: *la primera para el caso de una sola receta,
     la segunda para la nota que nombra varias.* **Y `_del_plan` devuelve las dos a proposito.**
     """
-    lineas, _ya = _con_plan([INGREDIENTE])
+    lineas, _ya, _p = _con_plan([INGREDIENTE])
     assert len(lineas) == 1, f"una linea, y hay {len(lineas)}"
     uno = lineas[0]
-    for clave in ("nombre", "cantidad", "unidad", "producto_id", "grupo_id", "receta", "recetas"):
-        assert clave in uno, f"falta «{clave}»: los consumidores la leen. Hay: {sorted(uno)}"
-    assert uno["nombre"] == "harina"
-    assert uno["producto_id"] == "dia:fixture"
-    assert uno["grupo_id"] == 7
+    # **Y ahora son ATRIBUTOS de `LineaDeCompra`, no claves de un diccionario.** *Es el cambio que el
+    # refactor hizo, y esta prueba es la que lo fija.*
+    for clave in ("texto", "cantidad", "unidad", "producto_id", "grupo_id", "recetas"):
+        assert hasattr(uno, clave), f"falta «{clave}»: los consumidores la leen"
+    assert uno.texto == "harina"
+    assert uno.producto_id == "dia:fixture"
+    assert uno.grupo_id == 7
 
 
 def test_la_cantidad_ya_viene_escalada():
     """**El escalado es de `_del_plan`, no de quien llama.** *100 g de una receta de 2 raciones para 4
     comensales son 200 g, y salen ya multiplicados.*"""
-    lineas, _ya = _con_plan([INGREDIENTE], comensales=4, raciones=2)
-    assert lineas[0]["cantidad"] == pytest.approx(200.0)
+    lineas, _ya, _p = _con_plan([INGREDIENTE], comensales=4, raciones=2)
+    assert lineas[0].cantidad == pytest.approx(200.0)
 
 
 def test_devuelve_tambien_los_nombres_que_ya_estaban_en_la_lista():
@@ -85,27 +87,26 @@ def test_devuelve_tambien_los_nombres_que_ya_estaban_en_la_lista():
     pulsar dos veces no duplique.**"""
     # *Por el parametro y no con un parche de fuera*: `_con_plan` parchea `lineas_de` dentro,
     # asi que un parche exterior lo pisa sin querer -- **y la prueba pasaba con `ya` vacio.**
-    _lineas, ya = _con_plan([INGREDIENTE],
+    _lineas, ya, _p = _con_plan([INGREDIENTE],
                             ya_en_la_lista=[{"nombre_visto": "Harina"}, {"nombre_visto": None}])
     assert ya == {"harina", ""}, f"y el None se convierte en cadena vacia, no revienta: {ya}"
 
 
-def test_hoy_devuelve_dos_valores_y_el_refactor_pedira_tres():
-    """**El contrato de hoy, dicho tal cual: DOS valores.** *Las lineas y los nombres ya presentes.*
+def test_ahora_devuelve_tres_valores_y_la_previa_entera():
+    """**El refactor ha llegado: son TRES valores, y el tercero es la `Previa`.**
 
-    *Y aqui queda escrito lo que el refactor va a cambiar*, para que no se descubra por sorpresa:
-    `docs/investigaciones/B04-unificar-los-puentes.md` pide que `_del_plan` devuelva **tambien la
-    `Previa`** -- *porque hoy se tira, y con ella `sin_cantidad` y `sin_consolidar`, que son informacion
-    que el criterio de B04 pide.*
+    *Esta prueba nacio llamandose «hoy_devuelve_dos_valores_y_el_refactor_pedira_tres»*, y su mensaje
+    decia: *«si esto cambia, el refactor de unificacion ha empezado: mira
+    B04-unificar-los-puentes.md»*. **Y cambio, y aviso** -- *que es exactamente para lo que estaba.*
 
-    **Esta prueba es la que se retirara el dia del refactor**, *y se retira a proposito y con este
-    comentario delante: no por descuido.*
+    *Y el tercer valor no es un adorno*: trae `sin_cantidad` y `sin_consolidar`, **que son las dos cosas
+    que el criterio de B04 pide decir y que antes se tiraban.**
     """
     resultado = _con_plan([INGREDIENTE])
-    assert isinstance(resultado, tuple), "devuelve una tupla"
-    assert len(resultado) == 2, (
-        f"hoy son DOS valores -- lineas y ya --, y son {len(resultado)}. "
-        "Si esto cambia, el refactor de unificacion ha empezado: mira B04-unificar-los-puentes.md")
+    assert len(resultado) == 3, "lineas, ya y la Previa"
+    _lineas, _ya, previa = resultado
+    for clave in ("lineas", "sin_cantidad", "sin_consolidar"):
+        assert hasattr(previa, clave), f"la Previa trae «{clave}»"
 
 
 def test_lo_que_no_tiene_destino_sigue_llegando_y_se_puede_decir():
@@ -116,10 +117,10 @@ def test_lo_que_no_tiene_destino_sigue_llegando_y_se_puede_decir():
     que el puente lo prometa y la base lo rechace con un 500, que es lo que pasaba antes.*
     """
     sin_destino = {"texto": "sal", "cantidad": 5, "unidad": "g"}
-    lineas, _ya = _con_plan([sin_destino])
+    lineas, _ya, _p = _con_plan([sin_destino])
     assert len(lineas) == 1, "tiene que llegar igual: no tener destino no es no existir"
-    assert lineas[0]["producto_id"] is None and lineas[0]["grupo_id"] is None
-    assert lineas[0]["nombre"] == "sal"
+    assert lineas[0].producto_id is None and lineas[0].grupo_id is None
+    assert lineas[0].texto == "sal"
 
 
 def test_sin_recetas_en_el_plan_no_hay_lineas_y_no_revienta():
@@ -128,5 +129,5 @@ def test_sin_recetas_en_el_plan_no_hay_lineas_y_no_revienta():
         pila.enter_context(patch.object(main.almacen, "lineas_de", return_value=[]))
         pila.enter_context(patch.object(core_recetas, "conecta", return_value=Mock()))
         pila.enter_context(patch.object(core_recetas, "plan", return_value=[]))
-        lineas, ya = main._del_plan("lista-fixture", "fixture", "2026-10-19", "2026-10-25")
+        lineas, ya, _p = main._del_plan("lista-fixture", "fixture", "2026-10-19", "2026-10-25")
     assert lineas == [] and ya == set()
