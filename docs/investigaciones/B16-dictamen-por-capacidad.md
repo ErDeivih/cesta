@@ -30,7 +30,7 @@
 | **Recetas versionadas** | *** verificado *** | `receta` 42 · `version` **43** (una receta tiene dos) · `test_editar_dice_en_voz_alta_que_crea_version_nueva` |
 | **Cocina sin declarar consumo** | *** verificado *** | `core/cocina.py` importa **solo** `re`, `dataclasses`, `datetime`: **no importa el diario** |
 | **El diario personal con procedencia** | *** implementado *** | `entrada` 11 · `fuente_dato NOT NULL` · los **dos lados** de la doctrina probados |
-| *** El eje de la PREVISIÓN *** | *** *** LIMITADO *** *** | *B08: **previsto** y **objetivo** no se han encontrado por ninguno de los siete nombres probados. *** «Lo registrado esta; el eje de la prevision NO.» *** |
+| *** El eje de la PREVISIÓN *** | *** *** HECHO *** *** | *B08: la vista de previstos (`GET /api/recetas/plan/prevision`, 200, con `null` y no cero, `motivo` por linea y cobertura por nutriente) · **las tres series** (`GraficaDeLasTres` + `LeyendaDeSeries` + `puntosDeLasTres`) · y **el objetivo** por `PUT /api/preferencias` + `GET /api/yo`; **15 ensayos nuevos** (2025 -> 2033 en Python, y 74 -> 81 en el frontend)* |
 | **Nutrición en el material de aprendizaje** | *** LIMITADO *** | `docs/aprende` tiene **24 capítulos** y *** ningún capítulo de nutrición *** -- *tercera vez que «nutrición» aparece en una lista del plan sin estar en el código* |
 | **Las gráficas** | *** implementado · y limitado a lo que se observó *** | `logica/chispa.ts`: *** «lo que no se observo no se puede dibujar como si se hubiera observado» *** · **3 reglas probadas** en `tests/cocina.test.mjs:49,61,68` |
 | **CSRF, origen y GET** | *** verificado *** | `test_fase2_f04_csrf.py`: 5 ensayos, incluidos **el preflight ajeno no autoriza** y *** «ninguna ruta que muta es un GET» *** |
@@ -52,7 +52,7 @@ y el material de aprendizaje: *** `test_el_sitio_no_pide_nada_por_red` · `test_
 > *Y **no es una carencia: es lo que el encargo pide** -- «no despliegues publicamente ni abras puertos» -- *y **está
 > medido**.* *
 
-## Las tres limitaciones, dichas sin adornos
+## Las limitaciones, dichas sin adornos
 
 ```
 1) *** EL EJE DE LA PREVISION *** -- *«previsto» y «objetivo» no aparecen. Lo registrado esta (42 recetas planeadas,
