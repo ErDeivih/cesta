@@ -42,6 +42,18 @@ class LineaDeCompra:
     producto_id: str | None
     cantidad: float
     unidad: str
+    # **El grupo al que apunta el ingrediente, cuando no tiene producto exacto.** *Faltaba, y su ausencia
+    # se notaba en el puente receta->lista*: `a_la_lista` pasaba `None` de `grupo_id` **siempre**, asi que
+    # un ingrediente identificado **solo por grupo** llegaba a la lista sin destino -- *y la tabla exige
+    # `linea_con_destino`: producto **o** grupo.*
+    #
+    # *Y el modulo ya decia que lo aceptaba*: su docstring nombra `producto_id`, `grupo_id` y `fuente`
+    # entre lo que cada ingrediente puede traer. **Lo nombraba y no lo leia.**
+    #
+    # **Va aqui, despues de `unidad`, y no al lado de `producto_id`**: *un campo con valor por defecto
+    # delante de uno sin el es un `TypeError` en Python* -- *y lo dijo el import, con estas palabras:
+    # «non-default argument 'cantidad' follows default argument».*
+    grupo_id: int | None = None
     # Los envases enteros, cuando se sabe el tamano del envase.
     envases: int | None = None
     tamano_envase: float | None = None
@@ -93,6 +105,11 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         unidad = _unidad_canon(ing.get("unidad"))
         pid = ing.get("producto_id")
         pid = str(pid) if pid else None
+        # *Y el grupo, que el docstring nombraba y el codigo no leia.* **Un ingrediente puede estar
+        # identificado solo por grupo, sin producto exacto** -- *y sin esto, el puente receta->lista
+        # llegaba con `None` de destino y la tabla lo rechazaba.*
+        gid = ing.get("grupo_id")
+        gid = int(gid) if gid is not None else None
         # **El tamano del envase, si el ingrediente lo trae.** *Un numero que no sirve se ignora en vez de
         # tumbar la previa* -- *y se guarda `None`, que es «no se sabe».*
         tamano_envase = ing.get("tamano_envase")
@@ -141,7 +158,7 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
                 ln.unidad_envase = None
         else:
             acumulado[clave] = LineaDeCompra(
-                clave=clave, texto=texto, producto_id=pid,
+                clave=clave, texto=texto, producto_id=pid, grupo_id=gid,
                 cantidad=float(cantidad), unidad=canon, de_donde=[texto],
                 tamano_envase=tamano_envase, unidad_envase=unidad_envase if tamano_envase else None)
 

@@ -292,7 +292,12 @@ def a_la_lista(receta_id: int, datos: ALaLista,
                 detalle += " · " + " + ".join(ln.de_donde)
             almacen.anade_linea(
                 datos.lista_id, usuario["id"], traspaso.id_de_linea(datos.lista_id, ln.clave),
-                ln.texto, None, int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
+                ln.texto,
+                # *El grupo, que estaba clavado en `None`.* **Un ingrediente identificado solo por
+                # grupo llegaba a la lista sin destino** -- y la tabla exige `linea_con_destino`:
+                # producto **o** grupo.
+                ln.grupo_id,
+                int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
                 1, detalle, None)
         return datos.lista_id
 
