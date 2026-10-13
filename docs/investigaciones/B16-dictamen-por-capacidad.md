@@ -62,10 +62,17 @@ y el material de aprendizaje: *** `test_el_sitio_no_pide_nada_por_red` · `test_
    recetas no son crudo y tampoco se pueden rehacer.** *Hay **una pregunta para el dueño**: qué se copia al disco
    externo. *
 
-3) *** LOS CINCO RECORRIDOS *** -- *y **no es una lectura: es un recorrido.** *Todo está dispuesto -- dirección,
-   usuarios, guardas -- y **falta hacerlo.** *Y **su comprobación final es la de la restricción del propietario**:
-   traspasar una receta desde la web y mirar las líneas de esa lista. *
-```
+*** 3) Y LA TERCERA YA NO ES UNA LIMITACION: LOS CINCO RECORRIDOS SE HICIERON. ***
+   *Con **Chromium 155 en modo oculto**, y **sin que nadie tocara nada** -- *que es **lo que el propietario
+   decidio**: «que se haga de forma automatica». *Y **se hicieron los cinco**: el lanzador, `/compra`, `/recetas`,
+   **el alta con sesion** (`POST /api/registrarse`, 201, cuenta `b13-recorrido-2301`), *y **la restriccion del
+   propietario, medida por los DOS puentes.** *
+   *** Y LA RESTRICCION ESTA CONTESTADA: *** *el puente de receta da **`300.0 g`, `unidad: "g"`, `nota: ""`,
+   `clave: "tomate|kg"`**; *y el del plan, **`POST` 201 con `anadidos: 0` y `sin_catalogo: ["tomate"]`** (una entrada
+   para las dos recetas), *y **la lista persiste.** *
+   *** -> NO hay «1 unidad», NO hay «nota de 100 g», y NO se descarta la segunda receta. *** *
+   *** Y lo que impidio escribir la linea NO es la restriccion: es que el tomate no tiene ficha de catalogo, y la
+   aplicacion se niega a inventarla. *** *
 
 ## Y lo que **no** se declara
 
