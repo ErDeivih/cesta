@@ -1389,8 +1389,12 @@ def _ruta_recetas():
 
 @app.get("/api/listas/{lista_id}/desde-el-plan")
 def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(...),
-                    descontar_despensa: bool = Query(False),
-                    usuario: dict = Depends(usuario_actual)) -> dict:
+                    usuario: dict = Depends(usuario_actual),
+                    # **Y va DESPUES de `usuario`, no antes.** *Ponerlo delante desplaza el cuarto
+                    # argumento posicional, y las pruebas que llaman a esta funcion a mano -- sin pasar
+                    # por FastAPI -- empezaron a fallar con `'Depends' object is not subscriptable`.*
+                    # **Un parametro nuevo no puede mover los que ya habia.** *Lo dijo la suite.*
+                    descontar_despensa: bool = Query(False)) -> dict:
     """**La vista previa**: que ingredientes del plan entrarian en la lista, sin tocar la lista.
 
     Cada ingrediente viene de **la version que el plan guardo**, no de la ultima: si la receta cambio
@@ -1411,15 +1415,28 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     # **Lo que hay en casa, por nombre.** *Se lee la despensa de quien pregunta y solo la suya.*
     # *La comparacion es por texto en minusculas*, que es lo que la despensa guarda: **no se empareja por
     # identidad de producto, y se dice** -- *un `grupo_id` no esta en esa tabla.*
-    with almacen.cursor() as cur:
-        cur.execute("SELECT texto FROM despensa WHERE usuario_id = %s", (usuario["id"],))
-        en_casa = {str(f["texto"]).strip().lower() for f in cur.fetchall() if f["texto"]}
+    # **Y si la despensa no se puede leer, se dice «no se sabe» y NO «no lo tienes».** *La diferencia
+    # importa y es la regla de toda esta fase*: `False` afirmaria que no esta, **y no haber podido
+    # preguntar no es lo mismo que saber que no hay.** *Por eso el marcador es `None` cuando no se pudo
+    # leer* -- y `descontar_despensa` tampoco descuenta nada, porque no hay nada de lo que fiarse.
+    #
+    # *Y esto no es una precaucion teorica*: al anadirlo se cayeron SIETE pruebas que llaman a la previa
+    # con mocks, sin base de datos. *El fallo fue mio y lo dijo la suite* -- **que es para lo que esta.**
+    en_casa: set[str] | None
+    try:
+        with almacen.cursor() as cur:
+            cur.execute("SELECT texto FROM despensa WHERE usuario_id = %s", (usuario["id"],))
+            en_casa = {str(f["texto"]).strip().lower() for f in cur.fetchall() if f["texto"]}
+    except Exception:  # noqa: BLE001  <- a proposito: *sin base no se puede saber, y se dice.*
+        en_casa = None
 
     # *Y se marca cada ingrediente, haya o no descuento*: **saber que lo tienes es la mitad del valor, y
     # la persona puede querer comprarlo igual** -- *porque lo que hay en la despensa no consta que siga
     # habiendo: se compro, y puede haberse acabado.*
+    # *`None` cuando no se pudo leer*, y `True`/`False` solo cuando se pudo.
     for ln in planificadas:
-        ln.en_la_despensa = ln.texto.strip().lower() in en_casa  # type: ignore[attr-defined]
+        ln.en_la_despensa = (  # type: ignore[attr-defined]
+            None if en_casa is None else ln.texto.strip().lower() in en_casa)
 
     pueden = [ln for ln in planificadas
               if ln.texto.lower() not in ya_en_la_lista
@@ -1449,7 +1466,7 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
                 "receta": (ln.recetas[0] if ln.recetas else None),
                 # *Y los envases y el sobrante, que antes no existian en la previa del plan.*
                 "envases": ln.envases, "sobrante": ln.sobrante,
-                "en_la_despensa": bool(getattr(ln, "en_la_despensa", False)),
+                "en_la_despensa": getattr(ln, "en_la_despensa", None),
                 "unidad_envase": ln.unidad_envase}
 
     pueden = [_como_antes(ln) for ln in pueden]
