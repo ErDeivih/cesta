@@ -13,6 +13,7 @@ import { useState } from 'react'
 
 import { textoDeError } from '../api/cliente'
 import { useRango } from '../api/diario'
+import { GraficaDeLasTres } from '../componentes/GraficaDeLasTres'
 import { Tarjeta, Vacio } from '../componentes/ui'
 
 function hoy(): string {
@@ -89,6 +90,11 @@ export function Tendencias() {
                 : `media de los ${conDato.length} dias que traen dato, de ${filas.length} con algo anotado`}
             </p>
           </Tarjeta>
+
+          {/* ***Las tres series: registrado, previsto y objetivo.*** *Y la prevision **cruza a Recetas** por
+              una ruta que ya existe -- *porque comprar no es consumir, y **lo previsto no es lo registrado**.*
+              *Y si no hay objetivo, son **dos series**, y la leyenda lo dice.* */}
+          <GraficaDeLasTres desde={haceDias(dias - 1)} hasta={hoy()} />
 
           <ul className="flex flex-col gap-2">
             {filas.map((d) => (
