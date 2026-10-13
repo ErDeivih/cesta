@@ -28,6 +28,7 @@ import argparse
 import json
 import math
 import sys
+import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin
@@ -37,6 +38,7 @@ import polars as pl
 
 from core import alcance, config, peticiones
 from core.fetch import Fetcher
+from core.runlog import log_run
 from core.schemas import ESQUEMA_BRONZE
 from core.storage import save_raw, write_parquet
 from projects.cesta.sondear_lidl import (
@@ -231,6 +233,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="identificador de region observado en regionsV2; si no se da, se "
                          "acredita desde config.CODIGO_POSTAL por el nombre publicado")
     a = ap.parse_args(argv)
+    t0 = time.monotonic()
+    errores = 0
 
 
     if a.web:
@@ -238,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         f = Fetcher(rate_per_sec=config.RITMO.get(FUENTE, 1.0))
         if not _robots_permite(f):
             print("  la politica publicada de la web no permite esa ruta: no se pide")
+            log_run(FUENTE, 0, 1, time.monotonic() - t0)
             return 1
         respuesta = f.get(URL)
         save_raw(FUENTE, "ofertas-semanales", respuesta.body)
@@ -274,6 +279,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.escribir:
         if not resumen["con_precio"]:
             print("  no se publica: no hay precios regionales con vigencia comprobada")
+            log_run(FUENTE, 0, 1, time.monotonic() - t0)
             return 1
         write_parquet(marco, "bronze", FUENTE)
         # El fichero de cobertura: lo que la aplicacion tiene que poder ensenar junto al dato.
@@ -283,6 +289,13 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(resumen, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"  bronze escrito y cobertura declarada en data/cobertura/{FUENTE}-"
               f"{resumen['fecha']}.json")
+        # **El veredicto: NO es «errores == 0».** En Alcampo es `not detener and errores == 0`,
+        # y `detener` es su juicio. El de Lidl es: se leyeron las ofertas y sus precios
+        # traen vigencia comprobada. Y se apunta **solo si se escribio**: una pasada sin
+        # `--escribir` no es una captura, y apuntarla diria que Lidl salio bien sin haber
+        # guardado nada.
+        completa = bool(resumen.get("precios_con_vigencia_comprobada")) and errores == 0
+        log_run(FUENTE, marco.height, errores, time.monotonic() - t0, completa)
     else:
         print("  (sin --escribir: no se ha tocado bronze ni la cobertura del dia)")
     return 0
