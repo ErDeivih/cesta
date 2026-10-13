@@ -602,9 +602,28 @@ def _tirar_silver_posterior(fuente: str, dia) -> None:
 
 
 def _serie(silver: pl.DataFrame, fecha_por_defecto: str) -> pl.DataFrame:
-    """Las cinco columnas que forman la serie de precios, con su fecha."""
+    """Las columnas que forman la serie de precios, con su fecha.
+
+    **Eran cinco, y el 13 de octubre de 2026 paso a ser seis con `region`.** *Y no es una columna mas: es
+    parte de **que** es un precio.*
+
+    *El motivo, medido*: *el bronze de Lidl llevaba `region` desde esa misma fecha* -- *79 de 79 filas, todas
+    `\"28\"`* --, **y la serie la dejaba caer**, *asi que dos precios de zonas distintas se podian comparar
+    como si fueran el mismo.*
+
+    **Y `region` va VACIA en las otras cinco fuentes, y eso es correcto**: *Mercadona y Aldi fijan la zona al
+    pedir y su respuesta no viene etiquetada con ella; Carrefour y DIA no la publican por fila.* *Vacio quiere
+    decir «no se declara por fila», no «no tiene zona».*
+
+    *Y hoy no multiplica ninguna fila*: **una sola zona por fuente** -- *medido* --, asi que la clave pasa de
+    tres campos a cuatro y el cuarto tiene un solo valor por fuente. *El dia que una fuente publique dos
+    zonas, la clave ya estara bien puesta.*
+    """
     columnas = ["fuente", "id_fuente", "precio_cent", "precio_unidad_cent",
-                "unidad_canon"]
+                "unidad_canon",
+                # **La zona de la que es el precio, cuando la fuente la declara.** *Vacia en las cinco que
+                # no la publican por fila.*
+                "region"]
     tiene_fecha = "fecha" in silver.columns
     serie = silver.filter(pl.col("precio_comparable")).select(
         columnas + (["fecha"] if tiene_fecha else []))
