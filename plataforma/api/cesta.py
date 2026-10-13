@@ -244,7 +244,10 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # cadena, asi que la referencia se movia con la tienda: el mismo candidato podia salir exacto
     # en una y alternativa en otra, y los veredictos de dos cadenas no eran comparables.
     canonico = _canonico_de(filas)
-    for gid, pid_suelto, fuente, pid, nombre, _precio, _punit, _fiable, ean, marca in filas:
+    for fila in filas:
+        # `fila[:10]` por lo mismo que en `_canonico_de`: la consulta lleva una columna mas -- `region` --
+        # cuando la tabla la tiene, y el desempaquetado pide diez. Cortar por diez la ignora, este o no.
+        gid, pid_suelto, fuente, pid, nombre, _precio, _punit, _fiable, ean, marca = fila[:10]
         clave = (gid if gid is not None else pid_suelto, fuente)
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
             canonico[clave] = (pid, nombre, ean, marca)
@@ -270,8 +273,12 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     # **Segunda pasada: la eleccion.** Aqui se puede comparar cada fila con el canonico, asi que una
     # variante barata ya no puede tapar a la exacta.
     mejor: dict = {}
-    for (gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca,
-         pedida) in filas:
+    for fila in filas:
+        # **Las diez de siempre, y `pedida`, que va la ultima.** La fila lleva ademas `region` cuando la
+        # tabla la tiene -- y la 270 la expande con `pedida` detras --, asi que cortar por diez y tomar
+        # la ultima deja las once que este bucle espera, con `region` o sin ella.
+        (gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca,
+         pedida) = (*fila[:10], fila[-1])
         dueno = gid if gid is not None else pid_suelto
         clave = _llave_candidato(dueno, pedida, fuente)
         coste = _coste_para(cantidades.get(dueno, 1), precio, promos.get(pid))
@@ -1183,7 +1190,12 @@ def _canonico_de(filas) -> dict:
     en otra, y los veredictos de dos cadenas no se podrian comparar.
     """
     canonico: dict = {}
-    for gid, pid_suelto, _fuente, pid, nombre, _precio, _punit, _fiable, ean, marca in filas:
+    # **`fila[:10]`, y no `in filas` directo.** La consulta que alimenta esto lleva una columna mas
+    # -- `region` -- cuando la tabla la tiene, y **anadirla rompio este desempaquetado**: el
+    # desempaquetado pide diez y llegaban once, con un `ValueError` que la suite caza. Va al final,
+    # asi que cortar por diez deja las diez de siempre y **ignora la que sobre**, este o no.
+    for fila in filas:
+        gid, pid_suelto, _fuente, pid, nombre, _precio, _punit, _fiable, ean, marca = fila[:10]
         clave = gid if gid is not None else pid_suelto
         if clave not in canonico or str(pid) < str(canonico[clave][0]):
             canonico[clave] = (pid, nombre, ean, marca)
