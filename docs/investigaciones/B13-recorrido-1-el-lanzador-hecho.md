@@ -103,3 +103,34 @@ del propietario, **y ya esta probado que funciona.** *
 > *** Y **una nota de metodo, que importa para los otros cuatro**: *** *el proveedor **timeouteo en la limpieza**
 > (1000 ms), *y **la observacion salio entera.** *Asi que **el timeout no invalida los datos** -- *pero **se declara
 > cada vez**, porque **«parcial» es lo que es.** *
+
+## 5. Y **la limpieza incompleta era real**: hay restos, y **NO se tocan**
+
+```
+$ Get-Process chrome          -> *** 16 procesos ***
+$ Get-ChildItem $env:TEMP -Filter "playwright*" -Directory   -> *** 10 perfiles temporales ***
+```
+
+> *** Y **NO SE MATA NINGUNO**, y el motivo es de la misma clase que todo el encargo: ***
+>
+> ```
+> *** los 16 procesos de Chrome PUEDEN SER DEL PROPIETARIO *** -- *su navegador abierto, con sus pestanas.*
+> *** y matarlos cerraria SU navegador *** -- *que es **una accion destructiva sobre algo ajeno**,*
+>     *y el encargo dice: *** «preserva cambios ajenos» ***. *
+> *** y los 10 perfiles de `TEMP` pueden ser de ESTA sesion **y de otras** *** -- *el laboratorio REA es
+>     **compartido con otros encargos** (el plan lo dice: «el estado global incluye otros proyectos»). *
+> ```
+>
+> *** O sea: **lo correcto es DECIRLO, y no limpiarlo** *** -- *porque **no se puede distinguir lo mio de lo suyo**,
+> *y **«no se puede distinguir» es, en este proyecto, una razon para no actuar.** *
+>
+> *** Y **queda como `limitacion` del recorrido 1**, *que es **donde el proveedor ya lo puso**: *«Scenario
+> observations are partial because browser cleanup could not be confirmed.» *
+>
+> *** Y **si el propietario quiere limpiarlos**, la comprobacion es **una linea** -- *y **la decide el**, que es quien
+> sabe cual de los 16 es suyo:
+> ```
+> Get-Process chrome | Select-Object Id, StartTime, MainWindowTitle
+> ```
+> *** -- *los que **tengan `MainWindowTitle`** son **suyos**; *y los que **no**, y **hayan empezado hace minutos**,
+> son **del recorrido.** *
