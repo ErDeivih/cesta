@@ -49,8 +49,21 @@ import uuid
 PUERTO = 5434
 CLAVE = "prueba"
 # Se pone **antes** de importar la plataforma: `Ajustes.del_entorno()` se lee al importar.
+#
+# **Y `setdefault` es justo el agujero que habia que tapar**: *si `CESTA_POSTGRES` ya viene puesta -- por
+# ejemplo apuntando a la base de casa -- **la respeta**, asi que este ensayo correria contra esa base y le
+# reharia el esquema.* *Es la clase de cosa que vacio la base de pruebas el 13 de octubre de 2026.*
 os.environ.setdefault(
     "CESTA_POSTGRES", f"postgresql://cesta:{CLAVE}@127.0.0.1:{PUERTO}/cesta")
+
+# **Asi que se comprueba lo que quedo en el entorno, venga de donde venga.** *Y se comprueba aqui, antes de
+# importar la plataforma, porque el dano lo hace el esquema y no la conexion.*
+#
+# *No basta con que el script se ponga su propio DSN si viene uno de fuera: hay que **rechazarlo**.* **Y sin
+# esta linea, la guarda era una funcion que nadie llamaba** -- *el mismo hueco que `por_que_no_se_compara`.*
+from plataforma.api.ajustes import comprueba_que_es_una_prueba  # noqa: E402
+
+comprueba_que_es_una_prueba(os.environ["CESTA_POSTGRES"])
 
 
 def main() -> int:
