@@ -290,17 +290,18 @@ def _cobertura(filas: list[sqlite3.Row], columna: str, total: int) -> dict:
     return {"con_dato": con_dato, "total": total, "completa": con_dato == total and total > 0}
 
 
-def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
-    """El dia entero **de quien pregunta**: entradas, subtotal conocido y lo que no se sabe.
+def resumen(filas: list[sqlite3.Row]) -> dict:
+    """El subtotal **conocido** y su cobertura, por nutriente.
+
+    ***Vive aqui y no dentro de `dia` porque lo usan DOS cosas***: el diario, que suma lo **registrado**, y
+    la prevision, que sumara lo **planificado**. ***Y tienen que sumar IGUAL***: si cada una tuviera su
+    aritmetica, los dos numeros no serian comparables, y la grafica que los pone juntos seria una mentira
+    -- la mentira no estaria en los datos, sino en el codigo.
 
     El subtotal se llama `conocido` y no `total` a proposito. Y `completo` es la cobertura energetica de
-    las entradas **registradas**: no representa toda la ingesta real del dia, porque solo cuenta lo que
-    se anoto.
+    las filas que se le pasen: llamada desde `dia`, no representa toda la ingesta real del dia, porque
+    solo cuenta lo que se anoto.
     """
-    filas = con.execute(
-        "SELECT * FROM entrada WHERE fecha = ? AND propietario = ? ORDER BY comida, id",
-        (fecha, propietario)).fetchall()
-    entradas = [dict(f) for f in filas]
     total = len(filas)
     con_kcal = [f for f in filas if _trae_dato(f)]
 
@@ -309,10 +310,6 @@ def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
         return round(sum(valores), 1) if valores else None
 
     return {
-        "fecha": fecha,
-        "entradas": entradas,
-        "comidas": {c: [e for e in entradas if e["comida"] == c]
-                    for c in COMIDAS if any(e["comida"] == c for e in entradas)},
         "conocido": {
             "entradas": len(con_kcal),
             "kcal": round(sum(f["kcal"] for f in con_kcal), 1) if con_kcal else None,
@@ -325,10 +322,30 @@ def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
         "cobertura": {n: _cobertura(filas, c, total) for n, c in
                       (("kcal", "kcal"), ("proteinas_g", "proteinas_g"),
                        ("grasas_g", "grasas_g"), ("hidratos_g", "hidratos_g"))},
+        # `completo` significa: **todas las filas traen energia**. No significa "esto es todo lo que comi".
+        "completo": bool(filas) and all(_trae_dato(f) for f in filas),
+    }
+
+
+def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
+    """El dia entero **de quien pregunta**: entradas, subtotal conocido y lo que no se sabe.
+
+    El subtotal se llama `conocido` y no `total` a proposito. Y `completo` es la cobertura energetica de
+    las entradas **registradas**: no representa toda la ingesta real del dia, porque solo cuenta lo que
+    se anoto.
+    """
+    filas = con.execute(
+        "SELECT * FROM entrada WHERE fecha = ? AND propietario = ? ORDER BY comida, id",
+        (fecha, propietario)).fetchall()
+    entradas = [dict(f) for f in filas]
+    return {
+        "fecha": fecha,
+        "entradas": entradas,
+        "comidas": {c: [e for e in entradas if e["comida"] == c]
+                    for c in COMIDAS if any(e["comida"] == c for e in entradas)},
+        # **El subtotal y su cobertura, de `resumen`**, que es la misma aritmetica que usara la prevision.
+        **resumen(filas),
         "sin_dato": [e["id"] for e in entradas if not _trae_dato(e)],
-        # `completo` se conserva por compatibilidad, y significa: **todas las entradas registradas
-        # traen energia**. No significa "esto es todo lo que comi".
-        "completo": bool(entradas) and all(_trae_dato(f) for f in filas),
     }
 
 
