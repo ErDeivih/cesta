@@ -631,10 +631,23 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                                filas[y]["fuente"])].append((x, y, s))
 
     emitidos: set[tuple[int, int]] = set()
-    ocupados_todos: set[tuple[int, str]] = set()
+    ocupados_todos: set[tuple] = set()
+
+    def _ocupacion(i: int, otro: dict) -> tuple:
+        """**`(producto, cadena, zona)`** -- de quien se ocupa `i`, y en que zona.
+
+        *La zona entra AQUI, y esa es **la regla** que B03 cambia.* **Un producto no puede tener dos parejas en
+        la misma cadena Y LA MISMA ZONA** -- *pero **si puede** tenerlas en la misma cadena y **otra zona**,
+        porque son dos precios distintos.*
+
+        *Y sin zonas -- que es el caso de las cinco fuentes que no la declaran -- la clave es
+        `(producto, cadena, None)`, **el mismo comportamiento que `(producto, cadena)`**: todas las filas
+        reciben el mismo `None`, asi que la comparacion sale igual.* **Que es lo que hay que garantizar.**
+        """
+        return (i, otro["fuente"], otro.get("region"))
 
     def emitir(x, y, s, ocupados):
-        """Acepta un par si ninguno de los dos ya tiene pareja en esa cadena.
+        """Acepta un par si ninguno de los dos ya tiene pareja en esa cadena y zona.
 
         `ocupados` es **por canal**, no global, y eso es a proposito: un producto
         puede tener a la vez su identico en la otra cadena y su equivalente de
@@ -644,13 +657,14 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
         """
         if (x, y) in emitidos:
             return
-        if (x, filas[y]["fuente"]) in ocupados or (y, filas[x]["fuente"]) in ocupados:
+        ox, oy = _ocupacion(x, filas[y]), _ocupacion(y, filas[x])
+        if ox in ocupados or oy in ocupados:
             return
         emitidos.add((x, y))
-        ocupados.add((x, filas[y]["fuente"]))
-        ocupados.add((y, filas[x]["fuente"]))
-        ocupados_todos.add((x, filas[y]["fuente"]))
-        ocupados_todos.add((y, filas[x]["fuente"]))
+        ocupados.add(ox)
+        ocupados.add(oy)
+        ocupados_todos.add(ox)
+        ocupados_todos.add(oy)
         if x > y:
             x, y = y, x
         salida.append((x, y, s, nivel(filas[x], filas[y])))
@@ -659,7 +673,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
     # distintas). Cada canal reparte por su cuenta; lo que ya esta emitido no se
     # repite, pero un producto si puede salir en los dos.
     for canal in ("marca", "equivalente", "vector"):
-        ocupados: set[tuple[int, str]] = set()
+        ocupados: set[tuple] = set()
         # `sorted` no sobra: iterar un diccionario cuyas claves llevan texto
         # depende del hash seed del proceso. Pero **no basta**: medido el 22 de
         # septiembre, con esto puesto, dos procesos del mismo dia siguen dando
