@@ -283,6 +283,14 @@ def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) ->
     nombre dice `virgen` y otro dice `virgen extra` no es un grupo, por muy
     legitimo que sea mirado por cadenas. El porque y el numero que lo sostiene,
     en `core.matching.agrupar_enlaces`.
+    **La zona va al lado de `cadenas`, y por el mismo motivo que ellas**: *la invariante del reparto se apoya en
+    un atributo de cada fila, y **la zona es un atributo mas de esa misma clase*** -- *«dos precios del mismo
+    producto en zonas distintas **no** son el mismo grupo», igual que «dos productos de la misma cadena **no** lo
+    son».*
+
+    *Y hoy es inerte*: `agrupar_enlaces` solo la usa en la clave de la invariante, **y con todas las filas a
+    `None` se comporta igual que sin ella** -- *que es lo que vigilan `test_sin_el_parametro_se_comporta_como_antes`
+    y `test_sin_el_parametro_de_zonas_nada_cambia`.*
     """
     return agrupar_enlaces(
         enlaces_, len(filas),
@@ -290,7 +298,10 @@ def grupos_de(enlaces_: list[tuple[int, int, float, str]], filas: list[dict]) ->
                  for f in filas],
         cadenas=[f["fuente"] for f in filas],
         eans=[f.get("ean") for f in filas],
-        nombres=[f.get("nombre") for f in filas])
+        nombres=[f.get("nombre") for f in filas],
+        # **`f.get` y no `f[...]`**: *las cinco fuentes que no declaran zona **no traen la clave**, y pedirla con
+        # corchetes reventaria.* *Vacia quiere decir «no se declara por fila», no «no tiene zona».*
+        regiones=[f.get("region") for f in filas])
 
 
 def composicion(filas: list[dict], ingredientes: dict,
