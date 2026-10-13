@@ -123,7 +123,21 @@ COLUMNAS = ("fuente", "id_fuente", "nombre", "marca", "cantidad", "unidad_canon"
             # cadena que lo da. Va a la ficha para poder decirlo; **no entra en ninguna
             # cuenta** de precio, porque una oferta que exige comprar dos unidades no es el
             # precio de una. Ver core/schemas.py y docs/DATOS-QUE-NO-COGEMOS.md.
-            "promo_unidades_minimas")
+            "promo_unidades_minimas",
+            # **La zona del precio, cuando la fuente la declara.** *Y esta aqui por lo que costo averiguarlo.*
+            #
+            # *El 13 de octubre de 2026 se hizo **todo el camino** para que la zona llegara al emparejador*
+            # -- `adelgaza` la conserva, `grupos_de` la pasa, `tabla_de` la guardaria --, **se rehizo el
+            # emparejamiento entero (440 s, 51725 productos) y `grupos.parquet` salio SIN la columna**.
+            #
+            # *Porque `catalogo_actual` **selecciona esta tupla** y la zona no estaba en ella.* **El dato se
+            # caia aqui, siete capas antes de donde se notaba.**
+            #
+            # *Y esta linea -- `faltan = [c for c in COLUMNAS if c not in df.columns]; df.with_columns(
+            # pl.lit(None).alias(c) ...)` -- **ya estaba escrita para esto***: *«Un silver viejo puede no tener
+            # una columna nueva del contrato. Se rellena a None en vez de reventar.»* **Asi que las cinco
+            # fuentes que no la publican entran con `None`, que es lo que dice «no se declara por fila».**
+            "region")
 
 
 def catalogo_actual() -> pl.DataFrame:
