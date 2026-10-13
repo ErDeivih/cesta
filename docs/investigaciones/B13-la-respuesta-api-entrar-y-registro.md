@@ -16,9 +16,16 @@ l132      raise HTTPException(500, "La cuenta se creo pero no se pudo entrar.")
 
 > *** O sea: **hay DOS caminos**, y **los dos devuelven la cookie de sesion**: ***
 > 1. *** `POST /api/entrar` *** -- *con `Credenciales` (usuario y clave), *y **401 con su motivo** si no cuadran;*
-> 2. *** y una ruta que «crea una cuenta Y ENTRA CON ELLA, EN UN SOLO PASO» *** -- *y **su 500 dice que la cuenta
->    se creo y no se pudo entrar**, *que es **la doctrina otra vez**: *distingue **«no se creo»** de **«se creo y
->    fallo el paso siguiente».** *
+> 2. *** *** `POST /api/registrarse` (201) *** *** -- *con `Alta`, *y **«crea una cuenta Y ENTRA CON ELLA, EN UN SOLO
+>    PASO»**; *y **su 500 dice que la cuenta se creo y no se pudo entrar**, *que es **la doctrina otra vez**:
+>    *distingue **«no se creo»** de **«se creo y fallo el paso siguiente».** *
+>
+> *** Y **la razon del registro esta escrita, y es de UX**: ***
+> > *** «Entra sola A PROPOSITO: *** *hacer que alguien rellene un formulario, le digan **"cuenta creada"** y tenga
+> > que **escribir lo mismo otra vez** en la pantalla de [entrar]...» *
+>
+> *** O sea: **el registro entra solo para no pedir dos veces lo mismo** *** -- *y **es la misma clase de decision que
+> `Suite.tsx` y que `ABSTIENE`: **quitarle al usuario un paso que no aporta nada.** *
 
 ## 2. Y **es la decision del propietario**, tomada en B13 hace muchas rondas
 
