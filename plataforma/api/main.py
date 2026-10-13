@@ -1422,24 +1422,66 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
     **Un solo sitio para el calculo.** La vista previa y la accion que escriba tienen que decir lo mismo,
     y la unica forma de garantizarlo es que sea el mismo codigo: separarlos es como se acaba con una previa
     que miente.
+
+    **Y dos cosas que este calculo hacia mal, medidas el 13 de octubre de 2026** con
+    `scripts/auditar_puente_plan_20261013.py`:
+
+      1. **NO ESCALABA POR COMENSALES.** *El plan guarda para cuantas personas se cocina y la receta
+         declara para cuantas raciones esta escrita, y la cantidad se usaba tal cual.* **Medido**: *dos
+         recetas de 100 g con `raciones: 2`, una planificada para **4 comensales** y otra para 2, daban
+         **100 y 100** -- cuando lo que hay que comprar son **200 y 100: 300 g**.*
+      2. **NO CONSOLIDABA: DESCARTABA.** *Dos recetas con el mismo ingrediente tienen que dejar **una**
+         linea, y eso es correcto* -- **pero la segunda contribucion se tiraba en vez de sumarse.**
+         *Medido*: **una sola linea con nota «100 g», y los otros 100 g perdidos.**
+
+    **Lo que se suma es lo que se va a comprar, y por eso se consolida por `(nombre, unidad)`**: *la misma
+    harina en gramos y en kilos son dos cosas distintas y sumarlas daria un numero que no es de nadie.*
     """
     from core import recetas as _recetas
 
     ya = {str(x.get("nombre_visto") or "").lower() for x in almacen.lineas_de(lista_id)}
     recetario = _recetas.conecta(_ruta_recetas())
+    # **Consolidado por `(nombre, unidad)`**, y en orden de aparicion: *la primera receta que pide harina
+    # manda en el orden de la lista, y las demas solo suman.*
+    juntos: dict[tuple[str, str], dict] = {}
     try:
         plan = _recetas.plan(recetario, propietario, desde, hasta)
-        ingredientes: list[dict] = []
         for linea in plan:
             receta = _recetas.leer(recetario, propietario, linea["receta_id"],
                                    version=linea.get("version"))
             if receta is None:
                 continue
+            # **El factor de escalado.** *Si la receta no declara raciones, no se inventa: se deja la
+            # cantidad como esta* -- *porque multiplicar por un numero que no consta seria peor que no
+            # escalar, y **no escalar se ve**, mientras que un factor inventado no.*
+            raciones = receta.get("raciones")
+            comensales = linea.get("comensales")
+            factor = None
+            if raciones and comensales and float(raciones) > 0:
+                factor = float(comensales) / float(raciones)
             for uno in receta["ingredientes"]:
-                ingredientes.append({
-                    "nombre": uno.get("texto") or "",
-                    "cantidad": uno.get("cantidad"),
-                    "unidad": uno.get("unidad"),
+                nombre = uno.get("texto") or ""
+                unidad = uno.get("unidad") or ""
+                cantidad = uno.get("cantidad")
+                escalada = None
+                if cantidad is not None and factor is not None:
+                    escalada = cantidad * factor
+                elif cantidad is not None:
+                    escalada = cantidad
+                clave = (nombre.lower(), str(unidad).lower())
+                if clave in juntos:
+                    # **La segunda contribucion SUMA.** *Y se guarda de que receta viene, para que la nota
+                    # pueda decir las dos* -- *que es la mitad del arreglo: antes decia «Receta 1 (100 g)»
+                    # y los otros 100 g no aparecian por ningun lado.*
+                    previo = juntos[clave]
+                    if escalada is not None:
+                        previo["cantidad"] = (previo["cantidad"] or 0) + escalada
+                    previo["recetas"].append(receta["nombre"])
+                    continue
+                juntos[clave] = {
+                    "nombre": nombre,
+                    "cantidad": escalada,
+                    "unidad": unidad,
                     # **El destino, que antes se tiraba.** Sin el, la previa no puede saber si un
                     # ingrediente se puede anadir, y la tabla exige `linea_con_destino`: medido el
                     # 13 de octubre de 2026, el puente mandaba `None, None` y la base lo rechazaba
@@ -1448,12 +1490,13 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
                     "producto_id": uno.get("producto_id"),
                     "grupo_id": uno.get("grupo_id"),
                     "receta": receta["nombre"],
+                    "recetas": [receta["nombre"]],
                     "version": receta["version"],
                     "fecha": linea["fecha"],
-                })
+                }
     finally:
         recetario.close()
-    return ingredientes, ya
+    return list(juntos.values()), ya
 
 
 @app.post("/api/listas/{lista_id}/desde-el-plan", status_code=201)
@@ -1482,9 +1525,17 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         if uno.get("producto_id") is None and uno.get("grupo_id") is None:
             sin_destino.append(nombre)
             continue
-        detalle = f"del plan: {uno['receta']}"
+        # **La nota dice TODAS las recetas que aportan**, y el total ya sumado. *Antes decía solo la
+        # primera* -- *«del plan: Receta 1 (100 g)» -- **y los otros 100 g no aparecian por ningun
+        # lado**, asi que la nota no solo callaba una receta: callaba la mitad de lo que hay que
+        # comprar.*
+        #
+        # *Y la cantidad que se escribe es **la suma**, no la de la primera: es la respuesta a «cuanto
+        # hay que comprar», que es la unica pregunta que esta nota contesta.*
+        nombres = uno.get("recetas") or ([uno["receta"]] if uno.get("receta") else [])
+        detalle = "del plan: " + " + ".join(nombres) if nombres else "del plan"
         if uno.get("cantidad") is not None:
-            detalle += f" ({uno['cantidad']} {uno.get('unidad') or ''})".rstrip()
+            detalle += f" ({uno['cantidad']:g} {uno.get('unidad') or ''})".rstrip()
         almacen.anade_linea(lista_id, usuario["id"], str(uuid.uuid4()), nombre,
                             uno.get("grupo_id"), uno.get("producto_id"), 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
