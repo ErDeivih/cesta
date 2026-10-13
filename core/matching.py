@@ -821,7 +821,8 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
                     precios: list | None = None,
                     cadenas: list[str] | None = None,
                     eans: list[str | None] | None = None,
-                    nombres: list[str | None] | None = None) -> list[int]:
+                    nombres: list[str | None] | None = None,
+                    regiones: list[str | None] | None = None) -> list[int]:
     """Id de grupo por producto, con el freno contra el grupo monstruo.
 
     Los enlaces se recorren de mas parecido a menos, que es lo que hace que el
@@ -876,12 +877,21 @@ def agrupar_enlaces(enlaces_: list[tuple], n: int,
             par = _rango_de(precios, i)
             if par:
                 rango[i][par[0]] = (par[1], par[1])
-    # Cadena -> juego de EAN que hay en esa componente, para la invariante.
-    por_cadena: list[dict[str, set[str]]] = [{} for _ in range(n)]
+    # **(Cadena, zona) -> juego de EAN que hay en esa componente, para la invariante.**
+    #
+    # *La zona entra AQUI, en la clave, y no como un parametro aparte*: porque **con zona, un grupo no puede
+    # tener dos productos de la misma cadena EN LA MISMA ZONA** -- *y dos del mismo producto en zonas distintas
+    # **si pueden estar en el mismo grupo**, que es justo lo que hay que permitir.*
+    #
+    # *Y sin zonas la clave es `(cadena, None)`: **otro tipo, el mismo comportamiento*** -- *porque todas las
+    # filas reciben el mismo `None`, asi que la comparacion sale igual que comparando solo por cadena.*
+    # **Que es lo que hay que garantizar, y lo que vigila `test_sin_el_parametro_de_zonas_nada_cambia` junto a
+    # `test_sin_el_parametro_se_comporta_como_antes`, que ya existia.**
+    por_cadena: list[dict[tuple, set[str]]] = [{} for _ in range(n)]
     if cadenas is not None:
         for i in range(n):
             cod = (eans[i] if eans else None) or f"?{i}"
-            por_cadena[i][cadenas[i]] = {cod}
+            por_cadena[i][(cadenas[i], regiones[i] if regiones else None)] = {cod}
     # Eje -> valor declarado, por componente, para la segunda red. Un eje que no
     # aparece es un eje sobre el que esa componente **no dice nada**.
     por_eje: list[dict[str, str]] = [{} for _ in range(n)]

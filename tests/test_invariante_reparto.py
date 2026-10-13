@@ -61,6 +61,31 @@ def test_sin_el_parametro_se_comporta_como_antes():
     assert grupos[0] == grupos[1] == grupos[2]
 
 
+def test_sin_el_parametro_de_zonas_nada_cambia():
+    """**Y quien no pase zonas tampoco.** *La tercera vez que este fichero hace la misma comprobacion.*
+
+    *Es la prueba que la ronda 77 dijo que habia que escribir «primero», y resulta que **ya estaba escrita dos
+    veces** -- una por `cadenas` y otra por `nombres`. Esta es la del tercer parametro.*
+
+    **Y es la que importa de verdad**, porque `regiones` cambia la CLAVE de la invariante por dentro: *sin zonas,
+    la clave pasa a ser `(cadena, None)` en vez de `cadena`.* **Otro tipo, y tiene que dar el mismo resultado.**
+
+    *Si esta prueba fallara, querría decir que el cambio de B03 rompio el reparto de las cinco fuentes que no
+    declaran zona -- o sea, **todo el catalogo menos Lidl**.*
+    """
+    de_antes = agrupar_enlaces(ENLACES, 3, cadenas=CADENAS, eans=[None] * 3)
+    con_el_parametro = agrupar_enlaces(ENLACES, 3, cadenas=CADENAS, eans=[None] * 3,
+                                       regiones=None)
+    assert de_antes == con_el_parametro, (
+        "pasar `regiones=None` tiene que dar exactamente lo mismo que no pasarlo")
+    # *Y con zonas vacias en todas las filas, tampoco: es el caso de una fuente que publica la columna pero no
+    # la rellena.*
+    con_vacias = agrupar_enlaces(ENLACES, 3, cadenas=CADENAS, eans=[None] * 3,
+                                 regiones=[None, None, None])
+    assert de_antes == con_vacias, (
+        "una columna de zona vacia tiene que comportarse como no tenerla")
+
+
 def test_un_producto_sin_ean_no_se_da_por_el_mismo_que_otro():
     """Sin codigo no hay prueba: dos de la misma cadena y sin EAN no se juntan.
 
