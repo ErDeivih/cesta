@@ -150,6 +150,42 @@ def main_aceptacion() -> int:
     r = otro.post(f"/api/recetas/{ids[0]}/a-la-lista", json={"lista_id": lista})
     revisa("receta -> lista responde", r.status_code, r.status_code in (200, 201))
 
+    # ---------------------------------------------- LA DESPENSA, EXPLICITA
+    # **G12, punto 221**: *«descontar despensa solo si esta modelada y la persona lo elige, NO POR HABER
+    # COMPRADO ANTES»*. *Se prueba en las tres direcciones: que se DICE, que NO se descuenta por defecto,
+    # y que SI se descuenta cuando se pide.*
+    # *Y en una lista NUEVA*: **`entrarian` excluye lo que ya esta en la lista**, asi que comprobarlo
+    # despues de haber traido las seis lineas daba vacio -- *que es lo que paso en la primera corrida.*
+    r = otro.post("/api/listas", json={"nombre": f"Despensa {sello}"})
+    lista2 = r.json().get("id") or r.json().get("lista_id")
+
+    r = otro.post("/api/despensa", json={"texto": "patata", "cantidad": 1, "unidad": "kg"})
+    revisa("se declara una existencia en la despensa", r.status_code, r.status_code in (200, 201))
+
+    # 1) SE DICE.
+    r = otro.get(f"/api/listas/{lista2}/desde-el-plan?desde=2026-10-19&hasta=2026-10-25")
+    suyos = {x["nombre"]: x for x in r.json()["entrarian"]}
+    revisa("la previa DICE que la patata esta en casa",
+           suyos.get("patata", {}).get("en_la_despensa"),
+           suyos.get("patata", {}).get("en_la_despensa") is True)
+    revisa("y de las que no estan, dice que no",
+           suyos.get("harina", {}).get("en_la_despensa"),
+           suyos.get("harina", {}).get("en_la_despensa") is False)
+
+    # 2) Y **NO SE DESCUENTA POR DEFECTO** -- *que es la mitad que la regla prohibe.*
+    revisa("SIN pedirlo, la patata SIGUE entrando (no se descuenta sola)",
+           "patata" in suyos, "patata" in suyos)
+
+    # 3) Y **SI SE DESCUENTA CUANDO SE PIDE**, que es «la persona lo elige».
+    r = otro.get(f"/api/listas/{lista2}/desde-el-plan?desde=2026-10-19&hasta=2026-10-25"
+                 f"&descontar_despensa=true")
+    elegido = {x["nombre"]: x for x in r.json()["entrarian"]}
+    revisa("PIDIENDOLO, la patata ya no entra", elegido.get("patata"),
+           "patata" not in elegido, "sin patata")
+    revisa("y lo que no esta en casa sigue entrando", "harina" in elegido, "harina" in elegido)
+    revisa("y la lista nueva sigue VACIA: la previa no escribe",
+           len(almacen.lineas_de(lista2)), len(almacen.lineas_de(lista2)) == 0)
+
     print(f"\n== {'TODA LA ACEPTACION PASA' if not FALLOS else str(len(FALLOS)) + ' FALLO(S): ' + ', '.join(FALLOS)}")
     return 1 if FALLOS else 0
 
