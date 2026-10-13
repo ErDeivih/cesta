@@ -54,6 +54,14 @@ class LineaDeCompra:
     # delante de uno sin el es un `TypeError` en Python* -- *y lo dijo el import, con estas palabras:
     # «non-default argument 'cantidad' follows default argument».*
     grupo_id: int | None = None
+    # **De que recetas viene esta linea.** *Y faltaba por el mismo motivo que `grupo_id`: la nota del
+    # puente tiene que poder decir **las dos recetas que aportan al mismo ingrediente***, y con
+    # `de_dondo` -- *que guarda los textos de ingrediente* -- **salia «harina + harina»**, que no dice de
+    # donde viene nada.*
+    #
+    # *Un ingrediente puede venir de varias recetas de la semana, y quien mira la lista tiene derecho a
+    # saber cuales* -- *es la trazabilidad que el encargo pide por su nombre.*
+    recetas: list[str] = field(default_factory=list)
     # Los envases enteros, cuando se sabe el tamano del envase.
     envases: int | None = None
     tamano_envase: float | None = None
@@ -147,6 +155,13 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
             ln.cantidad += cantidad
             if texto and texto not in ln.de_donde:
                 ln.de_donde.append(texto)
+            # **Y de que receta viene esta aportacion.** *Sin esto, dos recetas de la semana
+            # con el mismo ingrediente suman bien la cantidad y **la nota no puede decir
+            # cuales son** -- y quien mira la lista tiene derecho a saber de donde sale lo que
+            # va a comprar.*
+            venida = ing.get("_receta")
+            if venida and venida not in ln.recetas:
+                ln.recetas.append(venida)
             # *Si la linea que ya estaba no traia tamano y esta si, se queda el que aparece* -- *y si las
             # dos traen uno distinto, **se deja en `None`**: dos tamanos para el mismo producto significa
             # que no se sabe cual vale, y elegir uno seria inventar.*
@@ -159,6 +174,7 @@ def previa_de_compra(ingredientes: list[dict]) -> Previa:
         else:
             acumulado[clave] = LineaDeCompra(
                 clave=clave, texto=texto, producto_id=pid, grupo_id=gid,
+                recetas=[ing["_receta"]] if ing.get("_receta") else [],
                 cantidad=float(cantidad), unidad=canon, de_donde=[texto],
                 tamano_envase=tamano_envase, unidad_envase=unidad_envase if tamano_envase else None)
 
