@@ -39,6 +39,18 @@ from core.runlock import ejecucion_exclusiva
 # `ORDEN` tambien es el orden de lectura de los resultados.*
 ORDEN = ["carrefour", "dia", "mercadona", "aldi", "alcampo", "lidl"]
 
+# **Los que tienen CLI propia, y con que argumentos se les llama en la pasada diaria.**
+#
+# *Solo Lidl, y por un motivo que ya costo una busqueda*: **su `main` exige `--html` o `--web`**
+# (`required=True`), *y aqui se llamaba `main()` a secas* -- *asi que `argparse` salia con `SystemExit` y
+# **el dia seguia sin Lidl, con un aviso en el log que parecia una precaucion**.*
+#
+# **`--escribir` va con `--web` a proposito**: *es lo que convierte la captura en bronze, y `--web` ya
+# respeta `robots.txt` y pide **una** pagina.* *Y `--region` **no** va aqui: el colector la acredita desde
+# `config.CODIGO_POSTAL`, y si no la puede acreditar **sale con 1 y su motivo** -- que es lo que el `except`
+# de abajo sabe recoger sin tumbar el dia.*
+ARGUMENTOS: dict[str, list[str]] = {"lidl": ["--web", "--escribir"]}
+
 _QUIEN = threading.local()
 
 
@@ -101,7 +113,18 @@ def _una_cadena(nombre: str) -> tuple[str, bool, float]:
         if not hasattr(mod, "main"):
             print("colector incompleto: tiene parser pero no main()")
         else:
-            bien = mod.main() == 0
+            # **Y los que tienen CLI propia reciben sus argumentos.** *Sin esto, Lidl salia por arriba.*
+            #
+            # *Medido el 13 de octubre de 2026*: **la pasada diaria SI intentaba lanzar Lidl** -- esta en
+            # `ORDEN` --, *y su `main` exige `--html` o `--web` (`required=True` en un grupo mutuamente
+            # excluyente)*. *Como aqui se llamaba `main()` a secas, `argparse` salia con `SystemExit`, lo
+            # recogia el `except` de abajo, **y el dia seguia sin Lidl**.*
+            #
+            # **Y solo se le pasan a quien los espera**, y eso importa: *`carrefour`, `aldi` y `alcampo`
+            # son `main()` sin argumentos, y `dia` y `mercadona` son `main(detalles_max)`* -- **asi que
+            # llamar `main(args)` a los seis romperia tres.** *De ahi que sea una tabla de los que la
+            # tienen, y no un cambio en la llamada.*
+            bien = mod.main(ARGUMENTOS[nombre]) == 0 if nombre in ARGUMENTOS else mod.main() == 0
     except SystemExit as exc:
         # Un colector con CLI propia (Lidl exige origen y region) no puede
         # terminar el proceso diario ni impedir publicar las otras cadenas.
