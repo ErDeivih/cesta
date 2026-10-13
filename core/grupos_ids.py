@@ -94,8 +94,27 @@ def estabiliza(nuevos: pl.DataFrame, anteriores: pl.DataFrame | None) -> pl.Data
 
 
 def tabla_de(filas: list[dict], grupo_id: pl.Series) -> pl.DataFrame:
-    """La tabla que se guarda para la pasada de mañana: `clave` y `grupo_id`."""
-    return pl.DataFrame({
+    """La tabla que se guarda para la pasada de mañana: `clave`, `region` y `grupo_id`.
+
+    **Y `region` esta aqui por una razon medida, no por simetria.** *La herencia de `estabiliza` se hace por
+    `clave`, y `clave` es `fuente:id_fuente` -- **sin zona**.* *Asi que el dia que un producto tenga precios de
+    dos zonas, **esta tabla guardara dos filas con la misma `clave`**, y el `join` de `estabiliza` tendra **un
+    empate cada dia**.*
+
+    *Medido:* **no revienta** -- *y por eso hay que decirlo aqui en vez de esperar a que se vea*.* **El empate
+    es determinista, pero es un empate**, y lo que evita tener que desempatar es que la clave **con la que se
+    hereda** distinga lo que hay que heredar.
+
+    **La zona, entonces, va en esta tabla para poder formar parte de esa clave.** *No es «un campo mas»: es
+    **parte de la identidad que se hereda**.*
+
+    *Y es tolerante a proposito*: **si las filas no traen `region`, se guarda vacia** -- *que es lo que dice «no
+    se declara por fila», no «no tiene zona».* *Asi, el dia que el emparejador la ponga, **llega sola**.*
+    """
+    columnas = {
         COLUMNA_CLAVE: [clave_de(f["fuente"], str(f["id_fuente"])) for f in filas],
         "grupo_id": grupo_id.cast(pl.Int32),
-    })
+    }
+    if any("region" in f for f in filas):
+        columnas["region"] = [f.get("region") for f in filas]
+    return pl.DataFrame(columnas)
