@@ -39,10 +39,25 @@ from core import alcance, config, peticiones
 from core.fetch import Fetcher
 from core.schemas import ESQUEMA_BRONZE
 from core.storage import save_raw, write_parquet
-from projects.cesta.sondear_lidl import URL, extraer, precios_region
+from projects.cesta.sondear_lidl import (
+    URL,
+    extraer,
+    precios_region,
+    region_del_cp,
+    regiones_del_html,
+)
 
 FUENTE = "lidl"
-REGION_POR_DEFECTO = "28"        # la unica observada; no es la zona del hogar de nadie
+# **Y la region sale de la zona del usuario, que YA existe en `config`.** *`REGION_POR_DEFECTO` era
+# «28», y su propio comentario decia lo que era: **«la unica observada; no es la zona del hogar de
+# nadie»**.* **Elegirla habria publicado precios de una zona que no es la de quien los lee.**
+#
+# *Y `config.CODIGO_POSTAL` («tu zona», en sus palabras) ya fija el almacen de Mercadona y el ambito
+# de Aldi.* **Asi que la zona es UNA, y es la del usuario.**
+#
+# *Pero un CP no es un id de `regionsV2`, y el plan prohibe suponerlo.* **Asi que se acredita por el
+# nombre que la propia fuente publica** (`region_del_cp`), y **si no casa, no hay region y no se
+# publica** -- *no se elige «la mas parecida».*
 COBERTURA = "ofertas_semanales_parcial"
 
 
@@ -205,13 +220,11 @@ def main(argv: list[str] | None = None) -> int:
     entrada.add_argument("--web", action="store_true", help="robots.txt y una pagina publica")
     ap.add_argument("--escribir", action="store_true",
                     help="escribir bronze y la cobertura; sin esta bandera no se toca el pipeline")
-    ap.add_argument("--region", default=REGION_POR_DEFECTO,
-                    help="identificador de region observado en regionsV2 (no un codigo postal)")
+    ap.add_argument("--region", default=None,
+                    help="identificador de region observado en regionsV2; si no se da, se "
+                         "acredita desde config.CODIGO_POSTAL por el nombre publicado")
     a = ap.parse_args(argv)
 
-    argumentos = argv if argv is not None else sys.argv[1:]
-    if a.escribir and not any(v == "--region" or v.startswith("--region=") for v in argumentos):
-        ap.error("Para publicar debes elegir --region explicitamente; no se asume Madrid")
 
     if a.web:
         peticiones.registra_al_salir(FUENTE)
@@ -225,7 +238,26 @@ def main(argv: list[str] | None = None) -> int:
     else:
         html = a.html.read_text(encoding="utf-8")
 
-    marco, resumen = captura(html, a.region, instante=datetime.now(timezone.utc))
+    # **La region: la del usuario, acreditada por el nombre que la fuente publica.**
+    #
+    # *Si se paso `--region`, se respeta -- es una eleccion explicita.* **Y si no, sale de
+    # `config.CODIGO_POSTAL`** («tu zona»), *acreditando la correspondencia por el nombre -- porque un
+    # codigo postal NO es un id de `regionsV2`, y suponerlo es lo que el plan prohibe.*
+    region = a.region
+    acreditacion = None
+    if region is None:
+        acreditacion = region_del_cp(config.CODIGO_POSTAL, regiones_del_html(html))
+        if acreditacion["estado"] != "acreditada":
+            print(f"  sin region acreditada para el CP {config.CODIGO_POSTAL}: "
+                  f"{acreditacion['estado']} -- {acreditacion.get('motivo')}")
+            print("  no se elige «la mas parecida»: se dice y se para. "
+                  "Pasa --region=<id> si sabes cual, o cambia SCRAP_CP")
+            return 1
+        region = acreditacion["region"]
+        print(f"  region acreditada por nombre: CP {config.CODIGO_POSTAL} -> "
+              f"«{acreditacion['nombre']}» (region {region})")
+
+    marco, resumen = captura(html, region, instante=datetime.now(timezone.utc))
     print(f"  ofertas conocidas de Lidl ({resumen['cobertura']}): {marco.height} guardadas de "
           f"{resumen['fichas_leidas']} fichas leidas, {resumen['fuera_de_alcance']} fuera de "
           f"alcance, {resumen['en_revision']} en revision")
