@@ -42,6 +42,77 @@ def precios_region(producto: dict, region: str) -> dict:
             "region": contexto.get("regionName"), "precios": precios or None}
 
 
+# **De donde sale la region, que es la pregunta que B03 deja abierta.**
+#
+# *El `--region` de Lidl es un identificador de `regionsV2` (un numero), y **un codigo postal no es ese
+# numero**.* **Asi que la correspondencia hay que acreditarla, no suponerla** -- *y eso es lo que el plan
+# prohibe: «no convertir CP en id de region sin correspondencia».*
+#
+# **Y se puede acreditar, porque la propia fuente publica los nombres.** *Las 55 regiones vienen con
+# `regionName`, y de ahi sale la tabla.*
+#
+# *Pero los nombres traen lo que traen:* **«Badajoz» viene escrito «Badajoz» con tilde en la a, «Ceuta» con
+# un espacio detras, y hay una region llamada «Cat 2».** *Asi que el emparejamiento **normaliza** -- minusculas
+# y sin tildes -- **y si no encuentra, dice que no sabe.*** **No hay emparejamiento difuso ni por parecido:
+# un CP que no case se queda sin region, y sin region no se publica.**
+_PROVINCIAS_POR_CP = {
+    "01": "alava", "02": "albacete", "03": "alicante", "04": "almeria", "05": "avila",
+    "06": "badajoz", "07": "baleares", "08": "barcelona", "09": "burgos", "10": "caceres",
+    "11": "cadiz", "12": "castellon", "13": "ciudad real", "14": "cordoba", "15": "a coruna",
+    "16": "cuenca", "17": "girona", "18": "granada", "19": "guadalajara", "20": "guipuzcoa",
+    "21": "huelva", "22": "huesca", "23": "jaen", "24": "leon", "25": "lleida",
+    "26": "la rioja", "27": "lugo", "28": "madrid", "29": "malaga", "30": "murcia",
+    "31": "navarra", "32": "ourense", "33": "asturias", "34": "palencia", "35": "las palmas",
+    "36": "pontevedra", "37": "salamanca", "38": "santa cruz de tenerife", "39": "cantabria",
+    "40": "segovia", "41": "sevilla", "42": "soria", "43": "tarragona", "44": "teruel",
+    "45": "toledo", "46": "valencia", "47": "valladolid", "48": "vizcaya", "49": "zamora",
+    "50": "zaragoza", "51": "ceuta", "52": "melilla",
+}
+
+
+def _sin_tildes(texto: str) -> str:
+    """*Minusculas, sin tildes y sin espacios de sobra.* **Para emparejar nombres como los escribe la
+    fuente, no como los escribiria un formulario.**"""
+    tabla = str.maketrans("áéíóúàèìòùäëïöüâêîôûãõñç", "aeiouaeiouaeiouaeiouaonc")
+    return " ".join(str(texto or "").lower().translate(tabla).split())
+
+
+def region_del_cp(cp: str, regiones: dict) -> dict:
+    """**De codigo postal a `regionPriceId`, acreditando la correspondencia por el NOMBRE publicado.**
+
+    *`regiones` es el `regionsV2` tal cual viene en la captura: `{id: {regionName, regionPriceId}}`.*
+
+    Devuelve siempre un diccionario con `estado`, y **nunca inventa**: si el CP no es de dos digitos
+    conocidos, o si su provincia no aparece entre los nombres de la fuente, devuelve
+    `region_desconocida` -- *y quien lo llame tiene que negarse a publicar, no elegir la primera.*
+    """
+    dos = str(cp or "").strip()[:2]
+    provincia = _PROVINCIAS_POR_CP.get(dos)
+    if provincia is None:
+        return {"estado": "cp_desconocido", "region": None, "nombre": None,
+                "motivo": f"el CP «{cp}» no empieza por un codigo de provincia conocido"}
+    for ident, datos in (regiones or {}).items():
+        if not isinstance(datos, dict) or datos.get("regionPriceId") is None:
+            continue
+        if _sin_tildes(datos.get("regionName")) == provincia:
+            return {"estado": "acreditada", "region": str(ident),
+                    "nombre": datos.get("regionName"), "provincia": provincia}
+    # **Y aqui esta lo que el plan pide**: *no hay «la mas parecida».*
+    return {"estado": "region_desconocida", "region": None, "nombre": None, "provincia": provincia,
+            "motivo": f"la fuente no publica ninguna region llamada «{provincia}»"}
+
+
+def regiones_del_html(html: str) -> dict:
+    """**Las 55 regiones que la propia fuente publica.** *De aqui sale la tabla, no de una lista nuestra.*"""
+    regiones: dict = {}
+    for nodo in HTMLParser(html).css("[data-grid-data]"):
+        dato = json.loads(nodo.attributes["data-grid-data"])
+        for ident, datos in (dato.get("regionsV2") or {}).items():
+            if isinstance(datos, dict) and datos.get("regionPriceId") is not None:
+                regiones[str(ident)] = datos
+    return regiones
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     entrada = ap.add_mutually_exclusive_group(required=True)
