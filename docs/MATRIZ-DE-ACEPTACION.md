@@ -75,7 +75,7 @@ parezca terminado.*
 
 | | |
 |---|---|
-| **Doméstico local** | **Registrado y verificado**: `docs/LIDL.md` dice en una línea que **«lidl.es no publica precios de alimentación»**, y `COMPETENCIA.md` añade que se **comprobó con fichas reales**; el respeto a `robots` está escrito; y **`Mecanica.SIN_REGLA` trata lo que no entiende como si no hubiera oferta**, que es «el error seguro». *No se elude un bloqueo ni se inventa un dato para cumplir una cifra.* |
+| **Doméstico local** | **Registrado y verificado, con una corrección del 13 de octubre de 2026.** *Esta celda citaba `docs/LIDL.md` diciendo que **«lidl.es no publica precios de alimentación»** -- y **ésa es la conclusión de SEPTIEMBRE, que el propio `LIDL.md` dice que no debe usarse para descartar Lidl**.* **Lo que dice su actualización verificada del 6 de octubre**: *la página pública de ofertas semanales entrega **JSON en `data-grid-data`**; se han extraído **76 fichas/variantes (70 productos padre)**, **con precios regionales y condiciones de club**; y existe **un piloto probado** (`sondear_lidl.py`) aún sin integración en la ingesta.* **Así que Lidl no está descartado: está sin integrar** -- *que son dos cosas distintas, y la celda decía la primera.* *El respeto a `robots` está escrito; y **`Mecanica.SIN_REGLA` trata lo que no entiende como si no hubiera oferta**, que es «el error seguro».* *No se elude un bloqueo ni se inventa un dato para cumplir una cifra.* |
 | **Antes de publicar** | **Nada de esto cambia al publicar, y por eso conviene decirlo**: *las obligaciones son las mismas con un usuario o con cien.* **Lo que cambia es la escala del daño si se incumplen** — *y ahí sí hace falta una decisión explícita, no una costumbre.* |
 
 ---
