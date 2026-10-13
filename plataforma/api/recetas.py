@@ -265,10 +265,35 @@ def a_la_lista(receta_id: int, datos: ALaLista,
             # **El id sale de la clave**: repetir la operacion produce los mismos ids, y el upsert
             # los actualiza en vez de anadir. *Y con `grupo_id`/`producto_id` cuando el ingrediente
             # los tenia: sin ellos la linea queda «Pendiente de identificar», que es la verdad.*
+            #
+            # **Y LA CANTIDAD VA A LA NOTA, NO AL CAMPO DE CANTIDAD.** *Esto estaba mal, y es el mismo
+            # defecto del puente del plan por el otro lado* -- *medido el 13 de octubre de 2026*:
+            #
+            #     round(ln.cantidad) or 1     -> 300 g de harina se escribian como **300 UNIDADES**
+            #
+            # *O sea «300 envases de harina», que es lo contrario de lo que dice la receta.* **Y con
+            # `None` de nota no quedaba ni rastro de los gramos**: quien leyera la lista no podia saber
+            # que eran 300 g.
+            #
+            # El campo `cantidad` de una linea de lista **cuenta unidades de un producto** -- *lo dijo la
+            # base cuando A09 intento escribir `None`: es NOT NULL, porque apuntar es decidir cuanto* --,
+            # y la receta habla en gramos. **Se anade UNA unidad y el detalle va donde se lee**, que es lo
+            # mismo que hace el puente del plan.
+            #
+            # *Y `previa_compra` ya trae lo que hace falta para decirlo bien*: **la unidad**, **los
+            # envases enteros** y **el sobrante**. *Tirarlos era quedarse con la peor mitad del calculo.*
+            # *Y `de_donde` dice que ingredientes la formaron*, que es la trazabilidad que el encargo pide.
+            detalle = f"de la receta: {ln.texto} ({ln.cantidad:g} {ln.unidad})".rstrip()
+            if ln.envases:
+                detalle += f" · {ln.envases} envase{'s' if ln.envases != 1 else ''}"
+                if ln.sobrante:
+                    detalle += f", sobran {ln.sobrante:g} {ln.unidad_envase or ln.unidad}"
+            if ln.de_donde:
+                detalle += " · " + " + ".join(ln.de_donde)
             almacen.anade_linea(
                 datos.lista_id, usuario["id"], traspaso.id_de_linea(datos.lista_id, ln.clave),
                 ln.texto, None, int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
-                round(ln.cantidad) or 1, None, None)
+                1, detalle, None)
         return datos.lista_id
 
     con = _con()
