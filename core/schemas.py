@@ -16,6 +16,20 @@ ESQUEMA_BRONZE = {
     "marca": pl.Utf8,
     "ean": pl.Utf8,
     "origen": pl.Utf8,
+    # **La zona de la que es el precio, cuando la fuente publica precios por zona.**
+    #
+    # *Y no es lo mismo que `origen`, que es el pais de fabricacion.* **Esto es de que region es
+    # el precio** -- y sin ello, dos precios de zonas distintas se pueden comparar como si fueran
+    # el mismo.*
+    #
+    # **Se anadio el 13 de octubre de 2026, midiendo el bronze de Lidl**: *su colector acreditaba
+    # `28` desde el codigo postal para **resolver** el precio, y **no lo guardaba en ninguna
+    # columna** -- asi que 79 precios de Madrid estaban en bronze **sin decir que lo eran**.*
+    #
+    # *Las otras cinco fuentes lo dejan vacio*, y eso es correcto: *Mercadona y Aldi ya fijan la
+    # zona al pedir, y las demas no la publican por fila.* **Vacio quiere decir «no se declara», no
+    # «no tiene zona»** -- la misma distincion de siempre.
+    "region": pl.Utf8,
     "proveedores_txt": pl.Utf8,
     "nombre_legal": pl.Utf8,
     "ingredientes": pl.Utf8,

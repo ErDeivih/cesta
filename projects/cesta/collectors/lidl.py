@@ -164,6 +164,13 @@ def a_registro(oferta: dict, region: str, instante: datetime | None = None) -> d
         "imagen": oferta.get("image"),
         # Publicado no es lo mismo que en stock: esta fuente no dice stock, y no se finge.
         "disponible": None,
+        # **Y la zona, que es de la que es este precio.** *Antes se usaba para resolverlo y no se
+        # guardaba*, asi que 79 precios de Madrid estaban en bronze **sin decir que lo eran** --
+        # y sin eso, dos precios de zonas distintas se pueden comparar como si fueran el mismo.
+        #
+        # *Se guarda el identificador de `regionsV2`* (hoy `"28"`), **que es el mismo que declara
+        # la cobertura del dia** -- asi que un precio y su zona se atan por el mismo numero.
+        "region": str(region),
         "capturado_en": instante or datetime.now(timezone.utc),
     }
 
