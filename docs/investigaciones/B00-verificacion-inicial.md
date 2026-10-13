@@ -78,3 +78,81 @@ hay un trabajo independiente de todo esto, que además es **la prioridad declara
 > ni la ingesta.**
 
 **Así que la continuación es: levantar Docker para poder medir, y mientras, ir al fallo de los puentes.**
+
+
+---
+
+## 6. Docker, levantado — **y las cuatro puertas, por primera vez**
+
+*(13 de octubre de 2026. **La ronda 1 dejo dicho que Docker estaba caido y que los pasos 3 y 4 de B00 no se
+podian hacer. Ya se pueden.**)*
+
+### Lo que estaba parado, y como se levanto
+
+```
+Docker Desktop.exe            -> existe (C:\Program Files\Docker\Docker\Docker Desktop.exe)
+proceso de Docker Desktop     -> NO estaba corriendo
+servicio com.docker.service   -> Stopped
+```
+
+**Se arranco `Docker Desktop.exe`** -- *accion de usuario normal, sin elevacion* -- **y el motor respondio en
+el primer intento.** *Los contenedores del compose volvieron solos: `cesta-web-1`, `cesta-api-1`,
+`cesta-db-1` y `facylf-postgres`, los cuatro sanos.*
+
+### Y faltaba uno: **el de pruebas, que se lo habia llevado el reinicio**
+
+```
+8080: en pie · 5432: en pie · 5433: en pie · 5434: NADA
+```
+
+**`cesta-prueba-db` no existia.** *Y la causa esta escrita en `docs/OPERACION.md:13`*: la orden con la que
+se crea lleva **`--rm`**:
+
+```
+docker run --rm -d --name cesta-prueba-db -e POSTGRES_PASSWORD=prueba \
+    -e POSTGRES_USER=cesta -e POSTGRES_DB=cesta -p 127.0.0.1:5434:5432 postgres:16-alpine
+```
+
+> **`--rm` quiere decir que el contenedor se retira cuando para** -- *asi que al apagar Docker Desktop se
+> fue, y con el su base.* **No es un fallo: es lo que la orden pide.** *Pero conviene saberlo, porque
+> `pytest` no puede correr sin el.*
+
+### Y las cuentas de los ensayos, que hay que volver a crear
+
+*La base nueva nace vacia, asi que los ensayos que buscan una cuenta por su nombre se saltan* -- **17, con
+este motivo:**
+
+```
+no hay cuenta de prueba y el alta tiene limite por hora agotado
+```
+
+**Se recrearon `prueba-navegador` y `recibo-de-prueba` con `almacen.crea_usuario`** -- *que no pasa por la
+ruta HTTP y por tanto no toca el limite de altas.* *Es el mismo arreglo de la sesion anterior, y por el
+mismo motivo.*
+
+### Y ahora si: **las cuatro puertas, y sin nada saltado**
+
+```
+uv run ruff check .                    ->  All checks passed!                    (0)
+uv run pytest -q                       ->  2012 passed, 0 skipped, 0 failed
+cd plataforma/web/app ; npm test       ->  74 passed, 0 failed
+npx --no-install tsc --noEmit          ->  0
+```
+
+**Y el estado publicado, que en la ronda 1 no se pudo comprobar:**
+
+```
+/api/estado             -> version 20261012-162023 · fecha_datos 2026-10-11
+                           coherente TRUE · huellas_en_el_puntero 6
+/api/estado/publicacion -> coherente TRUE · no_cuadran []
+```
+
+> **Y esto es lo que acredita que el trabajo de B04 no ha roto nada fuera de los puentes.** *Las 59 pruebas
+> del puente decian que los puentes estaban bien; **las 2012 dicen que el resto sigue bien tambien** --
+> *que es una afirmacion distinta, y sin Docker no se podia hacer.*
+
+### Y lo que sigue igual, que no hay que confundir
+
+**La ingesta.** *La tarea `Cesta diaria` seguia corriendo al levantar Docker, y **`carrefour` y `alcampo`
+siguen con dato del 11 de octubre**.* **Eso no lo arregla Docker.** *Sigue pendiente, y sin duplicar ni
+detener nada.*
