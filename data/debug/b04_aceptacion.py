@@ -186,6 +186,54 @@ def main_aceptacion() -> int:
     revisa("y la lista nueva sigue VACIA: la previa no escribe",
            len(almacen.lineas_de(lista2)), len(almacen.lineas_de(lista2)) == 0)
 
+    # ---------------------------------------------- LO QUE FALTABA DE LA ACEPTACION
+    # *Leido del plan, no supuesto:* «escenario de cinco recetas, DOS LISTAS, DOS MARCAS y plan de otra
+    # semana; preview=confirmacion=persistencia, CAMBIOS/VERSIONES Y REINTENTOS incluidos.»
+
+    # (1) **DOS LISTAS: el mismo plan, traido a dos listas distintas.**
+    # *Es lo que comprueba que el destino es una ELECCION y no un descuido.*
+    r = otro.post("/api/listas", json={"nombre": f"Segunda {sello}"})
+    lista3 = r.json().get("id") or r.json().get("lista_id")
+    r = otro.post(f"/api/listas/{lista3}/desde-el-plan?desde=2026-10-19&hasta=2026-10-25")
+    revisa("el MISMO plan entra en una SEGUNDA lista", r.json()["anadidos"],
+           r.json()["anadidos"] == 6, 6)
+    revisa("y las dos listas tienen sus lineas, sin pisarse",
+           (len(almacen.lineas_de(lista)), len(almacen.lineas_de(lista3))),
+           len(almacen.lineas_de(lista)) == 6 and len(almacen.lineas_de(lista3)) == 6)
+
+    # (2) **DOS MARCAS: un ingrediente con `producto_id` exacto, no con `grupo_id`.**
+    # *La consolidacion por identidad cuando hay producto de marca no se habia ejercitado.*
+    r = otro.post("/api/recetas", json={
+        "nombre": "Marca A", "raciones": 2,
+        "ingredientes": [{"texto": "aceite", "cantidad": 100, "unidad": "ml",
+                          "producto_id": "dia:aceite-1"}]})
+    ra = r.json()["id"]
+    r = otro.post("/api/recetas", json={
+        "nombre": "Marca B", "raciones": 2,
+        "ingredientes": [{"texto": "aceite", "cantidad": 300, "unidad": "ml",
+                          "producto_id": "dia:aceite-1"}]})
+    rb = r.json()["id"]
+    otro.post("/api/recetas/plan", json={"fecha": "2026-10-26", "receta_id": ra, "comensales": 4})
+    otro.post("/api/recetas/plan", json={"fecha": "2026-10-27", "receta_id": rb, "comensales": 4})
+    r = otro.get(f"/api/listas/{lista3}/desde-el-plan?desde=2026-10-26&hasta=2026-10-27")
+    aceites = [x for x in r.json()["entrarian"] if x["nombre"] == "aceite"]
+    revisa("DOS MARCAS del mismo producto: una sola linea",
+           len(aceites), len(aceites) == 1, 1)
+    revisa("y la cantidad suma: 100x4/2 + 300x4/2 = 800",
+           aceites[0]["cantidad"] if aceites else None,
+           bool(aceites) and aceites[0]["cantidad"] == 800.0, 800.0)
+    revisa("y conserva el producto exacto de la marca",
+           aceites[0]["producto_id"] if aceites else None,
+           bool(aceites) and aceites[0]["producto_id"] == "dia:aceite-1")
+
+    # (3) **OTRA SEMANA: «otra semana/operacion legitima si».**
+    # *La misma receta en otra semana tiene que entrar, no darse por repetida.*
+    r = otro.post("/api/listas", json={"nombre": f"Otra semana {sello}"})
+    lista4 = r.json().get("id") or r.json().get("lista_id")
+    r = otro.post(f"/api/listas/{lista4}/desde-el-plan?desde=2026-10-26&hasta=2026-11-01")
+    revisa("OTRA SEMANA entra (no se da por repetida)", r.json()["anadidos"],
+           r.json()["anadidos"] >= 1, "al menos 1")
+
     print(f"\n== {'TODA LA ACEPTACION PASA' if not FALLOS else str(len(FALLOS)) + ' FALLO(S): ' + ', '.join(FALLOS)}")
     return 1 if FALLOS else 0
 
