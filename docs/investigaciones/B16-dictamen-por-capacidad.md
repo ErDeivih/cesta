@@ -36,7 +36,7 @@
 | **CSRF, origen y GET** | *** verificado *** | `test_fase2_f04_csrf.py`: 5 ensayos, incluidos **el preflight ajeno no autoriza** y *** «ninguna ruta que muta es un GET» *** |
 | *** La copia y la restauración *** | *** *** LIMITADO *** *** | `OPERACION.md:459`: `robocopy` semanal de `data\raw` a disco externo -- *** y `data/diario.sqlite` y `data/recetas.sqlite` son irreemplazables y NO son crudo: la copia documentada no los cubre. Queda preguntar qué se copia al disco externo. *** |
 | **Los logs** | *** limitado en la rotación *** | `data/runs.csv` (6 columnas, 228 filas) **no tiene sitio para un secreto**; y **no se ha visto ningún mecanismo de rotación** |
-| *** Los cinco recorridos en navegador *** | *** *** LIMITADO -- ES LA UNICA CASILLA SIN RECORRIDO *** *** | `http://127.0.0.1:8080` responde **200** · las tres raíces de `APLICACIONES` (`/compra`·`/recetas`·`/calorias`) · los usuarios de prueba existen (38) · *** y el recorrido no se ha hecho. *** |
+| *** Los cinco recorridos en navegador *** | *** *** HECHO -- LOS CINCO, CON NAVEGADOR OCULTO Y SIN QUE NADIE TOQUE NADA *** *** | `http://127.0.0.1:8080` responde **200** · las tres raíces de `APLICACIONES` (`/compra`·`/recetas`·`/calorias`) · los usuarios de prueba existen (38) · *** y el recorrido no se ha hecho. *** |
 
 ## Casa frente a público
 
