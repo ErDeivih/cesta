@@ -120,6 +120,18 @@ def main() -> int:
     # bytes, no se sigue»**. *Sin ella, se habria restaurado una base vacia y las comprobaciones de
     # contenido habrian fallado una a una sin decir por que.*
     entorno = {**os.environ, "CESTA_POSTGRES": f"postgresql://cesta:prueba@127.0.0.1:{PUERTO_ENSAYO.split(':')[1]}/cesta"}
+    # **Y se comprueba, en vez de fiarse de haberlo construido bien.**
+    #
+    # *Fiarse de construirlo bien es lo que fallo una vez*: el ensayo heredaba un `CESTA_POSTGRES` de fuera y
+    # `setdefault` **lo respetaba**, asi que apuntaba a donde no debia. *Aqui el DSN se construye a mano, y
+    # aun asi se comprueba* -- **porque la guarda no esta para el que lo hace bien, sino para el dia que
+    # `PUERTO_ENSAYO` cambie o alguien lo importe y lo reescriba.**
+    #
+    # *Y el hijo tambien la lleva*: `plataforma/prueba_e2e.py` comprueba la suya **antes de importar nada**,
+    # asi que **hay dos comprobaciones y no una** -- *la de quien lanza y la de quien corre.*
+    from plataforma.api.ajustes import comprueba_que_es_una_prueba
+
+    comprueba_que_es_una_prueba(entorno["CESTA_POSTGRES"])
     e = corre_env(["uv", "run", "python", "-m", "plataforma.prueba_e2e"], cwd=raiz, env=entorno)
     if e.returncode != 0:
         FALLOS.append("el ensayo")
