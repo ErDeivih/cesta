@@ -136,6 +136,51 @@ export function usePlan(desde: string, hasta: string) {
   })
 }
 
+/** **La nutricion PREVISTA del plan**: lo que se **va** a comer, con su cobertura.
+ *
+ * *Y no es lo mismo que el diario: el diario es lo que **se comio**. Por eso son dos consultas y no una, y
+ * por eso esta no escribe nada.*
+ *
+ * **Y `kcal` puede ser `null`, y no es cero**: *es que el ingrediente no resolvio a un producto, o que el
+ * producto no declara energia. `motivo` dice cual de las dos, y `cobertura` dice **de cuantas lineas sale
+ * cada numero** -- *sin eso, un hueco y una ausencia se verian igual.*
+ */
+export interface LineaDePrevision {
+  texto: string
+  producto_id: string | null
+  nutrientes: Record<string, number | null> | null
+  motivo: 'sin_catalogo' | 'sin_cantidad' | null
+}
+
+export interface ComidaDePrevision {
+  fecha: string
+  receta_id: number
+  nombre: string | null
+  version: number
+  comensales: number
+  lineas: LineaDePrevision[]
+  conocido: Record<string, number | null>
+  cobertura: Record<string, { con_dato: number; total: number; completa: boolean }>
+  completo: boolean
+}
+
+export interface Prevision {
+  desde: string
+  hasta: string
+  comidas: ComidaDePrevision[]
+  /** ***Con su nombre***, como en `desde-la-compra`: *un ingrediente sin catalogo se conserva.* */
+  sin_dato: string[]
+  sin_cantidad: string[]
+}
+
+export function usePrevision(desde: string, hasta: string) {
+  const cuenta = useClaveDeCuenta()
+  return useQuery({
+    queryKey: ['prevision', cuenta, desde, hasta],
+    queryFn: () => pide<Prevision>('/recetas/plan/prevision', { desde, hasta }),
+  })
+}
+
 export function usePlanificar() {
   const cliente = useQueryClient()
   return useMutation({
