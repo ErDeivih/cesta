@@ -57,6 +57,13 @@ services:
       # dia y la API no lo toca nunca. Si un dia el scraper falla, aqui se sigue
       # sirviendo lo de ayer y la interfaz lo dice.
       - ${CESTA_DATOS:-../data}:/datos:ro
+      # **Y AQUI VA EL ESTADO PROPIO, Y ESE SI SE ESCRIBE.** El `recetas.sqlite` y
+      # el `diario.sqlite` no son crudo ni se recalculan -- son lo que la casa ha
+      # escrito --, y sin este volumen vivian **en la capa del contenedor**, donde
+      # `docker compose down` se los lleva y **`robocopy data\raw` no los ve**.
+      # *No es un `bind` a `../data` a proposito: ahi ya escribe el pipeline, y dos
+      # escritores sobre el mismo fichero es justo lo que el `ro` de arriba evita.*
+      - datos_api:/app/data
 
   web:
     image: caddy:2-alpine
@@ -135,3 +142,10 @@ services:
 volumes:
   datos_db:
   datos_caddy:
+  # **El estado propio de la API**: recetas, diario y lo que escriba. Es un volumen
+  # con nombre -- y no una carpeta del `data/` -- porque el `data/` esta montado
+  # `ro` a proposito, y meter aqui un `bind` de escritura serian dos escritores
+  # sobre el mismo arbol. Con nombre, `docker compose down -v` lo borra a
+  # proposito y `docker compose down` no; y para copiarlo,
+  # `docker run --rm -v scrap_datos_api:/de -v ...:/a alpine cp -a /de/. /a/`.
+  datos_api:
