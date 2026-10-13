@@ -1,5 +1,11 @@
 # SUPERAPP · Estado del trabajo
 
+**Encargo vigente de 13/10/2026:** [GOAL ACTUAL](SUPERAPP-GOAL-ACTUAL.md) →
+[plan de continuación B00–B16](SUPERAPP-PLAN-DEEPSEEK-2026-10-13.md) →
+[control vivo](SUPERAPP-CONTROL-DEEPSEEK-2026-10-13.md).
+La preparación confirma publicación coherente con huellas y precios del 11;
+la ingesta del 13 estaba activa. Los párrafos de debajo son históricos.
+
 **Revisión independiente del 12/10/2026:** [hallazgos, correcciones y continuación A01–A10](SUPERAPP-REVISION-2026-10-12.md).
 El resumen siguiente es anterior: la revisión confirma ingesta interrumpida hoy,
 publicación incoherente, cobertura de detalles incompleta y comparaciones de familias

@@ -1,6 +1,11 @@
 # SUPERAPP · Tablero de ejecución
 
-Objetivo y paquetes: [`SUPERAPP-GOAL-CONTINUACION-2026-10-11.md`](SUPERAPP-GOAL-CONTINUACION-2026-10-11.md).
+**Encargo vigente desde 13/10/2026:** [GOAL ACTUAL](SUPERAPP-GOAL-ACTUAL.md),
+[plan B00–B16](SUPERAPP-PLAN-DEEPSEEK-2026-10-13.md) y
+[control vivo](SUPERAPP-CONTROL-DEEPSEEK-2026-10-13.md).
+Lo que sigue conserva el tablero histórico, no reemplaza el encargo vigente.
+
+Objetivo anterior y paquetes: [`SUPERAPP-GOAL-CONTINUACION-2026-10-11.md`](SUPERAPP-GOAL-CONTINUACION-2026-10-11.md).
 Estado vivo y resumen vigente: [`SUPERAPP-ESTADO.md`](SUPERAPP-ESTADO.md).
 
 Estados permitidos por paquete: `pendiente` · `en curso` · `implementado sin ensayo real` ·

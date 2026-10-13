@@ -1,5 +1,7 @@
 # Cesta: objetivo de continuación prolongada para DeepSeek
 
+> **Continuación posterior:** este documento conserva el contrato y la base `17f140f`, no describe todo el código actual. Tras el cierre declarado en `480ac21`, seguir [la fase 2](SUPERAPP-FASE2-EMPEZAR-AQUI.md), con revisión de evidencia e investigación de competencia mediante el kit REA. No reiniciar tareas ya implementadas a partir de los hallazgos históricos de abajo.
+
 Fecha de revisión: 11 de octubre de 2026. Base inspeccionada: `17f140f`, después de `9008d99`.
 
 Este documento convierte el encargo en trabajo ejecutable. **No acredita que las tareas pendientes estén implementadas.** La revisión que lo origina fue por lectura de código, estado y contratos; no se volvió a ejecutar la suite ni el navegador. Las cifras y ensayos anteriores son evidencia registrada por el agente anterior, no una nueva ejecución de esta revisión.
