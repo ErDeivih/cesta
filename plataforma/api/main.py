@@ -412,6 +412,50 @@ def estado():
          GROUP BY d.fuente, u.fecha ORDER BY d.fuente
     """).fetchall()
     hoy = catalogo.fecha_de_gold()
+
+    # **Y la cobertura, cuando una cadena la declara.** *Y hoy solo la declara Lidl, y no es casualidad: es
+    # la unica cuyo catalogo es **parcial**.*
+    #
+    # *El problema que esto resuelve, medido el 13 de octubre de 2026*: **`/api/estado` daba, por cadena,
+    # `productos` y nada mas** --
+    #
+    #     alcampo    22816
+    #     lidl          77
+    #
+    # **-- y esos dos numeros no son la misma clase de numero.** *22 816 es un catalogo; **77 son las fichas
+    # de una campana semanal**.* **Y `productos` no lo distingue**, asi que un 77 se lee como «Lidl tiene 77
+    # productos» -- *que es falso, y es justo lo que el plan prohibe*: «sin presentar ausencias de captura
+    # como indisponibilidad».
+    #
+    # *Asi que se lee el fichero que **el propio colector ya escribe** para esto* (`data/cobertura/
+    # {fuente}-{fecha}.json`, `collectors/lidl.py:273`), **y se pone al lado del numero.** *Un `77` con
+    # `ofertas_semanales_parcial` y `con_precio 77 de 79` al lado es un dato; un `77` solo es un catalogo
+    # pequeno.*
+    #
+    # **Y si el fichero no esta, no se inventa nada**: la cadena sale sin `cobertura`, *que es lo correcto
+    # para las cinco que si catalogan entero.*
+    def _cobertura(fuente: str, dia: str | None) -> dict | None:
+        if not dia:
+            return None
+        # **La raiz es la del CATALOGO, no `config.DATA`.** *Y esto costo una comprobacion*: en el
+        # contenedor, `config.DATA` vale `/app/data` -- **que no es donde estan los datos** --, mientras
+        # que el catalogo lee `/datos/gold`.* **Medido el 13 de octubre de 2026:**
+        #
+        #     host   config.DATA = F:\aprendizaje\scrap\data
+        #     docker config.DATA = /app/data        <- y los datos en /datos
+        #
+        # *Asi que la cobertura se busca al lado del gold, que es la raiz que **si** apunta a los datos:*
+        # **el fichero existe en los dos sitios, pero solo uno es el que el contenedor ve.**
+        fichero = AJUSTES.gold.parent / "cobertura" / f"{fuente}-{dia}.json"
+        if not fichero.is_file():
+            return None
+        try:
+            return json.loads(fichero.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            # *Un fichero ilegible no puede tumbar el estado*: se dice que no se pudo leer, en vez de
+            # callarlo y que la cadena parezca completa.
+            return {"cobertura": "no_se_pudo_leer", "aviso": f"no se pudo leer {fichero.name}"}
+
     return {
         "fecha_datos": hoy,
         # **De que catalogo salen esos precios.** `fecha_datos` dice el dia; esto dice la version, que es
@@ -419,8 +463,11 @@ def estado():
         "version_catalogo": _version_del_catalogo(),
         "vigencia_precio": _vigencia_del_catalogo(),
         "dias_precio_valido": AJUSTES.dias_precio_valido,
-        "cadenas": [{"cadena": f[0], "productos": f[1], "ultimo_dia": f[2],
-                     "al_dia": f[2] == hoy} for f in filas],
+        "cadenas": [{**{"cadena": f[0], "productos": f[1], "ultimo_dia": f[2], "al_dia": f[2] == hoy},
+                     # *Y la cobertura, cuando la hay.* **Va aparte y no dentro de `productos`**, porque
+                     # `productos` sigue queriendo decir lo que decia.
+                     **({"cobertura": cub} if (cub := _cobertura(f[0], f[2])) else {})}
+                    for f in filas],
     }
 
 
