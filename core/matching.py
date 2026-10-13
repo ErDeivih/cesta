@@ -284,7 +284,25 @@ MAX_CANDIDATOS_POR_PALABRA = 200
 UNIDADES_FIABLES = ("kg", "l", "m")
 
 CAMPOS_PARA_EMPAREJAR = ("fuente", "nombre", "marca", "cantidad", "unidad_canon", "ean",
-                         "precio_unidad_cent", "precio_comparable")
+                         "precio_unidad_cent", "precio_comparable",
+                         # **La zona del precio, cuando la fuente la declara.**
+                         #
+                         # *Y esta aqui porque `adelgaza` **tira todo lo que no este en esta lista*** -- *y esa
+                         # era, medida el 13 de octubre de 2026, **la razon de que la zona no llegara al
+                         # emparejador**:*
+                         #
+                         #   `enlaces(filas_completas, ...)` -> `adelgaza(filas)` -> «se queda con estas
+                         #   columnas **y tira el resto**»
+                         #
+                         # *Asi que la zona **no llegaba a `_asignacion_1a1`**, que es donde se reparte
+                         # **1-a-1 por par de cadenas** -- y **ahi es donde nace la invariante** de que un grupo
+                         # no puede tener dos productos de la misma cadena.*
+                         #
+                         # **Conservarla es inerte hoy**: *`enlaces` solo mira las seis de arriba, asi que
+                         # anadir una clave a cada fila **no cambia ningun parentesco**.* *Lo que hace es que el
+                         # dato **pueda** llegar -- que es el primer paso, y sin el los otros tres no sirven de
+                         # nada.*
+                         "region")
 
 # Un par cuyo precio por unidad se lleva mas de 30 veces no es el mismo producto,
 # ni siquiera entre marcas. El 30 no es inventado: es `FACTOR_INCREIBLE`, el
