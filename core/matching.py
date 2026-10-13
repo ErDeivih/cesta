@@ -225,6 +225,24 @@ def bloque(cantidad: float | None, unidad: str | None) -> tuple:
     return (unidad, round(float(cantidad), 3))
 
 
+def _bloque(clave: tuple, a: dict, b: dict) -> tuple:
+    """**La clave de bloque de dos productos: formato, cadena de cada lado, y ZONA de cada lado.**
+
+    *Y la zona esta aqui por lo mismo que en `ocupados`*: **el reparto 1-a-1 se hace DENTRO de un bloque**, asi
+    que si un bloque mezclara zonas, `_asignacion_1a1` podria emparejar el precio de una zona con el de otra --
+    *y con `ocupados` ya distinguiendo zonas, **ese par se emitiria***, y quedaria **un grupo con dos zonas
+    dentro**, que es lo que B03 evita.
+
+    *Sin zonas la clave es `(formato, cadena, None, cadena, None)`: **la misma que hoy con dos `None` de mas**,
+    y todas las filas reciben el mismo `None`* -- **el mismo razonamiento que en `ocupados`, y la misma garantia:
+    las pruebas que ya existen.**
+
+    *Los `get` no sobran*: **las cinco fuentes que no declaran zona no traen la clave**, y pedirla con corchetes
+    reventaria. *Vacia quiere decir «no se declara por fila», no «no tiene zona».*
+    """
+    return (clave, a["fuente"], a.get("region"), b["fuente"], b.get("region"))
+
+
 class Union:
     """Union-find. Un grupo es un conjunto de productos enlazados entre si."""
 
@@ -573,7 +591,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
                     # el codigo manda y la diferencia de precio es un hallazgo.
                     if precio_imposible(filas[x], filas[y]):
                         continue
-                    grupo = (clave, filas[x]["fuente"], filas[y]["fuente"])
+                    grupo = _bloque(clave, filas[x], filas[y])
                     s = parejo(x, y)
                     if s >= umbral:
                         canales["marca"][grupo].append((x, y, s))
@@ -627,8 +645,7 @@ def enlaces(filas_completas: list[dict], umbral: float = 0.55,
             if precio_imposible(filas[x], filas[y]):
                 continue
             clave = bloque(filas[x].get("cantidad"), filas[x].get("unidad_canon"))
-            canales["vector"][(clave, filas[x]["fuente"],
-                               filas[y]["fuente"])].append((x, y, s))
+            canales["vector"][_bloque(clave, filas[x], filas[y])].append((x, y, s))
 
     emitidos: set[tuple[int, int]] = set()
     ocupados_todos: set[tuple] = set()
