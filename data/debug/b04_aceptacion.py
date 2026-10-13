@@ -234,6 +234,40 @@ def main_aceptacion() -> int:
     revisa("OTRA SEMANA entra (no se da por repetida)", r.json()["anadidos"],
            r.json()["anadidos"] >= 1, "al menos 1")
 
+    # (4) **CAMBIOS Y VERSIONES: el plan manda la version del dia que se planifico, NO la ultima.**
+    # *Es lo que `recetas.plan` guarda y lo que `_del_plan` lee con `version=linea.get("version")`* --
+    # **y sin probarlo, «el plan guarda la version» es una promesa del docstring.**
+    r = otro.post("/api/listas", json={"nombre": f"Versiones {sello}"})
+    lista5 = r.json().get("id") or r.json().get("lista_id")
+    r = otro.post("/api/recetas", json={
+        "nombre": "Versionada", "raciones": 2,
+        "ingredientes": [{"texto": "azucar", "cantidad": 100, "unidad": "g", "grupo_id": 21}]})
+    rv = r.json()["id"]
+    otro.post("/api/recetas/plan", json={"fecha": "2026-11-02", "receta_id": rv, "comensales": 2})
+    # *Y AHORA se edita: la receta pasa a pedir 999 g.*
+    r = otro.put(f"/api/recetas/{rv}", json={"ingredientes": [
+        {"texto": "azucar", "cantidad": 999, "unidad": "g", "grupo_id": 21}]})
+    revisa("la receta se edita y da una version nueva", r.json().get("version"),
+           (r.json().get("version") or 0) >= 2, "2 o mas")
+    r = otro.get(f"/api/listas/{lista5}/desde-el-plan?desde=2026-11-02&hasta=2026-11-02")
+    azucar = [x for x in r.json()["entrarian"] if x["nombre"] == "azucar"]
+    revisa("y el plan manda la version PLANIFICADA (100 g), no la ultima (999)",
+           azucar[0]["cantidad"] if azucar else None,
+           bool(azucar) and azucar[0]["cantidad"] == 100.0, 100.0)
+
+    # (5) **REINTENTOS: la misma llamada dos veces no duplica ni suma dos veces.**
+    # *Y se prueba sobre esta lista, que es nueva.*
+    otro.post(f"/api/listas/{lista5}/desde-el-plan?desde=2026-11-02&hasta=2026-11-02")
+    una = len(almacen.lineas_de(lista5))
+    otro.post(f"/api/listas/{lista5}/desde-el-plan?desde=2026-11-02&hasta=2026-11-02")
+    otro.post(f"/api/listas/{lista5}/desde-el-plan?desde=2026-11-02&hasta=2026-11-02")
+    tres = len(almacen.lineas_de(lista5))
+    revisa("TRES llamadas seguidas dejan las mismas lineas", f"{una} -> {tres}", una == tres)
+    # *Y sin cambiar la cantidad tampoco: si el id cambia en cada llamada, el upsert no actualiza.*
+    revisa("y la nota no se duplica", len([x for x in almacen.lineas_de(lista5)
+                                           if x["nombre_visto"] == "azucar"]),
+           len([x for x in almacen.lineas_de(lista5) if x["nombre_visto"] == "azucar"]) == 1)
+
     print(f"\n== {'TODA LA ACEPTACION PASA' if not FALLOS else str(len(FALLOS)) + ' FALLO(S): ' + ', '.join(FALLOS)}")
     return 1 if FALLOS else 0
 
