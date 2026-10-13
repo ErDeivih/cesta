@@ -14,8 +14,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from core import importar_receta, recetas
+from core import diario, importar_receta, recetas
 
+from . import catalogo
 from .sesion import usuario_actual
 
 rutas = APIRouter(prefix="/api/recetas", tags=["recetas"])
@@ -124,6 +125,91 @@ def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
         return {"plan": recetas.plan(con, usuario["id"], datos.fecha, datos.fecha)}
     except ValueError as fallo:
         raise HTTPException(status_code=404, detail=str(fallo)) from fallo
+    finally:
+        con.close()
+
+
+_GRAMOS_POR_UNIDAD = {"g": 1.0, "kg": 1000.0}
+
+
+def _gramos_de(ingrediente: dict) -> float | None:
+    """Los gramos de un ingrediente, **si la unidad es de peso**. Y `None` si no.
+
+    *Solo hay dos unidades de peso aqui (`g` y `kg`), y no se anade ninguna mas sin motivo:*
+
+    - `ml` **no se convierte a gramos**: haria falta la **densidad**, y *el encargo prohibe inventarla*.
+    - `ud` **tampoco**: una unidad no pesa lo mismo en dos productos, *y el peso de una unidad no esta en
+      el dato.*
+
+    Y si no se puede, la linea va a `sin_cantidad` -- *que es un resultado, no un fallo.*
+    """
+    cantidad, unidad = ingrediente.get("cantidad"), ingrediente.get("unidad")
+    if cantidad is None or unidad is None:
+        return None
+    factor = _GRAMOS_POR_UNIDAD.get(str(unidad).strip().lower())
+    return None if factor is None else cantidad * factor
+
+
+@rutas.get("/plan/prevision")
+def prevision_del_plan(desde: str = Query(...), hasta: str = Query(...),
+                       usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La nutricion PREVISTA del plan**, con su cobertura. *No escribe nada, y no adivina.*
+
+    **Compra no es consumo**: esto mira lo que **se va** a comer, y el diario lo que **se comio**. Por eso
+    no anota nada: *solo suma lo que ya esta enlazado.*
+
+    Y **lo que falta se dice, no se rellena.** Un ingrediente **sin `producto_id`** entra en `sin_dato`
+    **con su nombre**, porque *buscarle un producto por el texto seria atribuirle la nutricion de otro* --
+    y el propio `cesta.py` ya avisa de que la columna que lo trae **«llega sola»** el dia que el emparejador
+    la escriba. Un ingrediente con producto pero **sin cantidad en peso** entra en `sin_cantidad`.
+
+    **Y la cobertura es por nutriente**, que es lo que hace que esto no mienta: un producto puede traer
+    energia y no proteinas, y `diario.de_ficha` **ya devuelve `None` en lo que no sabe** en vez de un cero.
+    *El subtotal se llama `conocido` y no `total`, y sale de `diario.resumen`, la MISMA aritmetica que usa
+    el diario: si cada uno sumara a su manera, los dos numeros no serian comparables.*
+    """
+    con = _con()
+    try:
+        comidas: list[dict] = []
+        sin_dato: list[str] = []
+        sin_cantidad: list[str] = []
+        for entrada in recetas.plan(con, usuario["id"], desde, hasta):
+            receta = recetas.leer(con, usuario["id"], entrada["receta_id"],
+                                  version=entrada["version"], raciones=entrada["comensales"])
+            if receta is None:
+                continue
+            lineas: list[dict] = []
+            conocidos: list[dict] = []
+            for ingrediente in receta.get("ingredientes") or []:
+                texto = ingrediente.get("texto")
+                producto_id = ingrediente.get("producto_id")
+                ficha = catalogo.producto(producto_id) if producto_id else None
+                gramos = _gramos_de(ingrediente)
+                if ficha is None:
+                    motivo = "sin_catalogo"
+                    sin_dato.append(texto)
+                elif gramos is None:
+                    motivo = "sin_cantidad"
+                    sin_cantidad.append(texto)
+                else:
+                    motivo = None
+                    nutrientes = diario.de_ficha(ficha, gramos)
+                    conocidos.append(nutrientes)
+                    lineas.append({"texto": texto, "producto_id": producto_id,
+                                   "nutrientes": nutrientes, "motivo": None})
+                    continue
+                lineas.append({"texto": texto, "producto_id": producto_id,
+                               "nutrientes": None, "motivo": motivo})
+            comidas.append({
+                "fecha": entrada["fecha"], "receta_id": entrada["receta_id"],
+                "nombre": entrada.get("nombre"), "version": entrada["version"],
+                "comensales": entrada["comensales"], "lineas": lineas,
+                # **La misma aritmetica que el diario.** Y sobre las lineas que SI tienen nutrientes:
+                # las que no, ya estan dichas en `sin_dato` y en `sin_cantidad`.
+                **diario.resumen(conocidos),
+            })
+        return {"desde": desde, "hasta": hasta, "comidas": comidas,
+                "sin_dato": sin_dato, "sin_cantidad": sin_cantidad}
     finally:
         con.close()
 
