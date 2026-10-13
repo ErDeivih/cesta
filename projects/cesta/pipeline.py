@@ -620,13 +620,23 @@ def _serie(silver: pl.DataFrame, fecha_por_defecto: str) -> pl.DataFrame:
     zonas, la clave ya estara bien puesta.*
     """
     columnas = ["fuente", "id_fuente", "precio_cent", "precio_unidad_cent",
-                "unidad_canon",
-                # **La zona de la que es el precio, cuando la fuente la declara.** *Vacia en las cinco que
-                # no la publican por fila.*
-                "region"]
+                "unidad_canon"]
+    # **La zona, cuando el bronze la trae.** *Y hay dos casos en los que no la trae, y los dos son reales:*
+    #
+    #   - **el bronze de antes del 13 de octubre de 2026**, *que es de cuando se anadio la columna*;
+    #   - **y los bronce de prueba**, *que se construyen con lo justo.*
+    #
+    # *Asi que se pide **solo si esta**, en vez de darla por hecha.* **Y si no esta, se anade vacia** -- *que
+    # es lo que dice «no se declara por fila», no «no tiene zona».* *Que es la misma distincion de siempre, y
+    # aqui es lo que evita que un bronze viejo deje de poder reconstruirse.*
+    tiene_region = "region" in silver.columns
+    if tiene_region:
+        columnas = [*columnas, "region"]
     tiene_fecha = "fecha" in silver.columns
     serie = silver.filter(pl.col("precio_comparable")).select(
         columnas + (["fecha"] if tiene_fecha else []))
+    if not tiene_region:
+        serie = serie.with_columns(pl.lit(None, dtype=pl.Utf8).alias("region"))
     return serie.with_columns([
         (pl.col("fuente") + ":" + pl.col("id_fuente")).alias("producto_id"),
         (pl.col("fecha").cast(pl.Utf8) if tiene_fecha

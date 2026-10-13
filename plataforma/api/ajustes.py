@@ -56,3 +56,47 @@ class Ajustes:
 
 
 AJUSTES = Ajustes.del_entorno()
+
+
+# **Y los puertos que NO son de pruebas, nombrados una vez.**
+#
+# *El 13 de octubre de 2026 se perdieron **716 usuarios, 2529 listas y 2533 lineas** de la base de pruebas por
+# no tener esto*: *se le paso a `plataforma/prueba_copia.py` un `CESTA_POSTGRES` que apuntaba al `5434`, su e2e
+# rehizo el esquema, y **la base se vacio**.* **Y no fue un fallo del script: fue que nada impedia apuntarlo.**
+#
+# *Los tres puertos que hay en esta casa, y para que es cada uno:*
+#
+#   - **5432**: la base de casa. **La de verdad.**
+#   - **5433**: `facylf`. **De otro proyecto**, y el encargo pide no tocarlo.
+#   - **5434**: la de pruebas. *La unica que un ensayo puede rehacer.*
+#
+# **Asi que un ensayo que rehace esquema tiene que comprobar esto ANTES**, y la comprobacion vive aqui para que
+# sea la misma en todos -- *que es lo que evita que el proximo script invente la suya y se equivoque.*
+PUERTOS_PROTEGIDOS = {"5432": "la base de casa", "5433": "facylf, que es de otro proyecto"}
+
+
+def comprueba_que_es_una_prueba(dsn: str) -> None:
+    """**Se niega a seguir si el DSN apunta a una base que no es de pruebas.**
+
+    *No comprueba que la base exista, ni que sea alcanzable, ni que este vacia* -- **solo que su puerto sea el
+    de pruebas.** *Que es lo unico que se puede saber sin conectarse, y lo unico que hace falta para no
+    destruir la de casa.*
+
+    *Y si el DSN no trae puerto, **tambien se niega**:* **un DSN sin puerto es un DSN del que no se sabe donde
+    apunta**, *y «no se sabe» no es «es de pruebas».*
+    """
+    import re
+
+    if not dsn:
+        raise ValueError(
+            "sin DSN: no se puede saber si es una base de pruebas. "
+            "Un ensayo que rehace esquema necesita un CESTA_POSTGRES explicito.")
+    hallado = re.search(r":(\d{2,5})/", dsn)
+    if hallado is None:
+        raise ValueError(
+            f"el DSN no dice su puerto, y «no se sabe» no es «es de pruebas»: {dsn.split('@')[-1]}")
+    puerto = hallado.group(1)
+    if puerto in PUERTOS_PROTEGIDOS:
+        raise ValueError(
+            f"el puerto {puerto} es {PUERTOS_PROTEGIDOS[puerto]}, y un ensayo que rehace esquema "
+            f"no puede apuntarle. Usa el 5434: CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'")
