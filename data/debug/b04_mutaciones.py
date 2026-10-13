@@ -34,10 +34,14 @@ MUTACIONES = [
         "escala_por_comensales",
     ),
     (
-        "plan: descartar la segunda en vez de sumar",
-        RAIZ / "plataforma" / "api" / "main.py",
-        "                if clave in juntos:\n",
-        "                if False:\n",
+        # **Reorientada tras el refactor.** *Antes apuntaba al `if clave in juntos` de `_del_plan`, y
+        # el refactor borro ese bucle*: **la consolidacion se mudo a `previa_compra`, que es la pieza
+        # que los dos puentes comparten.** *Una mutacion que apunta a una linea que ya no existe no
+        # prueba nada -- y hay que decirlo, no dejar el guion mintiendo.*
+        "previa_compra: descartar la segunda en vez de sumar",
+        RAIZ / "core" / "previa_compra.py",
+        "        if clave in acumulado:\n",
+        "        if False:\n",
         "segunda_receta",
     ),
     (
