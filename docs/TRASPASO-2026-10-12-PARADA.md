@@ -161,3 +161,70 @@ usuarios, 2 529 listas y 2 533 líneas**.*
 > **La regla que sale de las nueve, y con la que conviene empezar la próxima vez**: *un documento se lee
 > como un relato y **se comprueba como un inventario**.* **Y «no se nota» es una afirmación que hay que
 > medir como cualquier otra** -- *la hice sobre el daño, y era falsa por diecisiete ensayos.*
+
+
+---
+
+## 9. Al retomar: **la tarea programada estaba corriendo sola**
+
+*(13 de octubre de 2026, 11:14. **Y esto cambia la acción siguiente: no hay que lanzar nada.**)*
+
+**Lo primero que pasó al retomar** fue lanzar la ingesta de `carrefour` y `alcampo` **como decía el punto
+4**. *Y se negó a arrancar:*
+
+```
+[ejecucion] ya hay otra ejecucion de cesta en marcha
+```
+
+**Y no era un cerrojo viejo de la ejecución que yo había matado.** *Lo que había era esto:*
+
+```
+Cesta diaria:  estado = RUNNING   ·   ultima = 10/13/2026 10:59:53
+python pid=33740  inicio 10-13 10:55     uv pid=36624  inicio 10-13 10:55
+python pid=43424  inicio 10-13 10:55     python pid=30960  inicio 10-13 10:59
+```
+
+### Lo que había hecho la tarea por su cuenta, mientras la sesión estaba parada
+
+```
+aldi        10-13 10:57    <- HOY
+dia         10-13 11:08    <- HOY
+mercadona   10-13 10:57    <- HOY
+carrefour   10-11 12:38    <- 11 de octubre, sin tocar
+alcampo     10-11 12:45    <- 11 de octubre, sin tocar
+```
+
+**La tarea corrió a las 10:59:53 y **volvió a hacer las tres cadenas que ya había hecho**.** *Y a las 11:22
+-- veintitrés minutos después -- **`carrefour` y `alcampo` seguían con dato del 11** y la tarea seguía
+`Running`.*
+
+> **Así que la acción siguiente del punto 4 está **mal planteada**, y conviene decirlo**: *no hay que lanzar
+> la ingesta.* **Ya está lanzada, por la tarea programada, y `runlock` impide lanzar una segunda** -- *que
+> es exactamente lo que debe hacer.*
+
+### Lo que hay que hacer entonces, y es distinto
+
+**Mirar, no lanzar.** *Y lo que hay que mirar es si la tarea llega a `carrefour` y `alcampo` o se queda por
+el camino:*
+
+```powershell
+# 1. ¿sigue corriendo?
+Get-ScheduledTask -TaskName "Cesta diaria" | Get-ScheduledTaskInfo
+
+# 2. ¿ha escrito bronze?
+Get-ChildItem dataronzeuente=carrefour,dataronzeuente=alcampo -Recurse -File |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 2
+
+# 3. y si termino, republicar:
+uv run python -c "from core import publicacion as P; print(P.publicar()); print(P.version_actual())"
+```
+
+### Y dos cosas que se aprendieron de esto
+
+1. **`runlock` funcionó.** *Mi intento de lanzar una segunda ingesta se paró solo, y el mensaje decía por
+   qué.* **Si no hubiera cerrojo, dos pasadas simultáneas sobre las mismas cadenas habrían escrito bronze a
+   la vez** -- *y el WAF de Alcampo, que ya pide un clic humano, habría visto el doble de presión.*
+2. **Y la tarea se dispara sola a las 06:00, al arrancar y al iniciar sesión.** *O sea que **el trabajo que
+   el punto 4 mandaba lanzar ya estaba en marcha**, y yo iba a lanzarlo por segunda vez.*
+   **Antes de lanzar una tarea programada, se mira si está corriendo** -- *que es la misma lección de
+   `respaldar.bat` y de esta misma tarea, en otro sitio.*
