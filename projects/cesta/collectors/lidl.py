@@ -19,8 +19,14 @@ por region. Por eso:
     precio del club de Lidl se conserva como lo que es: una condicion, no el precio general.
   - **El estado de la region no es stock.** No hay stock en esta fuente y no se finge.
 
-**No esta en la tarea de las 06:00, a proposito.** La ampliacion lo pide asi: *"pasar una captura
-acotada antes de anadirlo a la tarea diaria"*. Se ejecuta a mano y no puede romper la pasada diaria.
+**Si esta en la tarea de las 06:00, y esto es un cambio de criterio.** *Antes decia aqui, y era verdad
+entonces: «no esta en la tarea de las 06:00, a proposito... se ejecuta a mano y no puede romper la pasada
+diaria».* **Y ya no: `run.py:40` lo tiene en `ORDEN`, y `run.py:234` usa `ORDEN` como la lista de fuentes
+de la pasada diaria** -- *asi que **si corre a las 06:00**, y **lo que lo protege ya no es la ausencia,
+sino el PRESUPUESTO**: `LIMITE_POR_EJECUCION` en `fichas_lidl.py`, y el `--limite` del lanzador.*
+
+*Y esa es la forma del proyecto: **una proteccion que se quita se sustituye por otra, y la frase que la
+describia se corrige en el mismo cambio.** La que habia aqui se quedo atras, y por eso se reescribe.*
 """
 from __future__ import annotations
 
