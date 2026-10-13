@@ -1389,6 +1389,7 @@ def _ruta_recetas():
 
 @app.get("/api/listas/{lista_id}/desde-el-plan")
 def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(...),
+                    descontar_despensa: bool = Query(False),
                     usuario: dict = Depends(usuario_actual)) -> dict:
     """**La vista previa**: que ingredientes del plan entrarian en la lista, sin tocar la lista.
 
@@ -1407,9 +1408,25 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     # entrar: la tabla lo prohibe (`linea_con_destino`). Prometerlo era una previa que miente.
     #
     # *Y ahora son `LineaDeCompra`, no diccionarios*: `ln.texto`, `ln.producto_id`, `ln.grupo_id`.
+    # **Lo que hay en casa, por nombre.** *Se lee la despensa de quien pregunta y solo la suya.*
+    # *La comparacion es por texto en minusculas*, que es lo que la despensa guarda: **no se empareja por
+    # identidad de producto, y se dice** -- *un `grupo_id` no esta en esa tabla.*
+    with almacen.cursor() as cur:
+        cur.execute("SELECT texto FROM despensa WHERE usuario_id = %s", (usuario["id"],))
+        en_casa = {str(f["texto"]).strip().lower() for f in cur.fetchall() if f["texto"]}
+
+    # *Y se marca cada ingrediente, haya o no descuento*: **saber que lo tienes es la mitad del valor, y
+    # la persona puede querer comprarlo igual** -- *porque lo que hay en la despensa no consta que siga
+    # habiendo: se compro, y puede haberse acabado.*
+    for ln in planificadas:
+        ln.en_la_despensa = ln.texto.strip().lower() in en_casa  # type: ignore[attr-defined]
+
     pueden = [ln for ln in planificadas
               if ln.texto.lower() not in ya_en_la_lista
-              and (ln.producto_id is not None or ln.grupo_id is not None)]
+              and (ln.producto_id is not None or ln.grupo_id is not None)
+              # **Y aqui esta «la persona lo elige»**: con el parametro en falso -- que es por defecto --
+              # *esto no quita nada.*
+              and not (descontar_despensa and getattr(ln, "en_la_despensa", False))]
     sin_destino = sorted(ln.texto for ln in planificadas
                          if ln.texto.lower() not in ya_en_la_lista
                          and ln.producto_id is None and ln.grupo_id is None)
@@ -1432,6 +1449,7 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
                 "receta": (ln.recetas[0] if ln.recetas else None),
                 # *Y los envases y el sobrante, que antes no existian en la previa del plan.*
                 "envases": ln.envases, "sobrante": ln.sobrante,
+                "en_la_despensa": bool(getattr(ln, "en_la_despensa", False)),
                 "unidad_envase": ln.unidad_envase}
 
     pueden = [_como_antes(ln) for ln in pueden]
