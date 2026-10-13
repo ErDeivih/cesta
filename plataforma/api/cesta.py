@@ -166,16 +166,52 @@ def _llave_candidato(dueno, pedida, fuente) -> tuple:
     return ((dueno, pedida), fuente)
 
 
+def _tiene_region(con) -> bool:
+    """**Si `grupos` trae la zona.** *Y hasta que no la traiga, no se pide.*
+
+    *Esto no es una precaucion de mas: es la forma de que el cambio de B03 **no rompa nada hoy y funcione solo
+    el dia que toque**.*
+
+    **El 13 de octubre de 2026 se intento anadir `region` a estas consultas directamente, y rompio seis pruebas
+    de tres ficheros** -- *con este error, que lo dijo todo:*
+
+    ```
+    _duckdb.BinderException: Referenced column "region" not found in FROM clause!
+    Candidate bindings: "precio_cent", "seccion", "nutricion", "precio_unidad_cent", "origen"
+    ```
+
+    *Porque `grupos` **no sale de la serie de precios**: sale de `gold/grupos.parquet`, que lo escribe el
+    **emparejador** (`projects/cesta/emparejar.py`).* **Y ese fichero no la tiene todavia.**
+
+    *Asi que la columna se pide **si esta**, y el dia que el emparejador la escriba, **llega sola** -- sin tocar
+    esta funcion otra vez.*
+
+    *Y `origen` no vale como sustituta*: **es el pais de fabricacion, no la zona del precio.** *Confundirlas
+    seria el mismo error que «IAN no es EAN».*
+    """
+    # *Y con `[]` de parametros, no sin ellos*: `_Conexion.execute` **los pide**, y las conexiones de prueba
+    # tambien -- *`TypeError: execute() missing 1 required positional argument: 'params'`, que es lo que salto
+    # al poner esta linea sin ellos.*
+    columnas = {r[0] for r in con.execute("DESCRIBE SELECT * FROM grupos", []).fetchall()}
+    return "region" in columnas
+
+
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     """Por cada linea y cadena, el producto mas barato que la resuelve."""
     con = conexion()
     grupos = [p.grupo_id for p in peticiones if p.grupo_id is not None]
     sueltos = [p.producto_id for p in peticiones if p.producto_id]
+    # **La zona, AL FINAL del `SELECT` -- y solo si existe.**
+    #
+    # *Al final a proposito*: los diez campos de antes **no se mueven**, asi que **ningun indice de los que ya
+    # se leen cambia de sitio**. *Y se comprobo que esa era la forma correcta: **el error del 13 de octubre no
+    # fue de indices**, fue de una columna que no existia.*
+    col = ", region" if _tiene_region(con) else ""
     filas = []
     if grupos:
         filas += con.execute(f"""
             SELECT grupo_id, NULL, fuente, fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col}
               FROM grupos
              WHERE grupo_id IN ({','.join('?' * len(grupos))}) AND precio_cent > 0
         """, grupos).fetchall()
@@ -183,7 +219,7 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         filas += con.execute(f"""
             SELECT NULL, fuente || ':' || id_fuente, fuente,
                    fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col}
               FROM grupos
              WHERE fuente || ':' || id_fuente IN ({','.join('?' * len(sueltos))})
                AND precio_cent > 0
