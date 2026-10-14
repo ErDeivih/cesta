@@ -174,3 +174,29 @@ def test_un_ingrediente_escrito_a_mano_ENTRA_como_pendiente_y_se_dice(tmp_path, 
         "SIN destino -- ni grupo ni producto --, que es lo que la hace «pendiente de identificar»")
     assert argumentos[6] == 1, "y con su cantidad"
     assert "pendiente de identificar" in (argumentos[7] or ""), argumentos[7]
+
+
+def test_dos_marcas_con_el_mismo_texto_son_dos_compras(tmp_path, monkeypatch):
+    """**El caso que el complemento del 14/10 senala**: *«distintas marcas con el mismo texto... pueden
+    saltarse».*
+
+    *Y se saltaban porque **la identidad era el nombre en minusculas**: `_del_plan` devolvia
+    `{nombre_visto.lower()}`, y con eso una linea de la lista **de otra marca con el mismo texto** dejaba
+    al ingrediente del plan como «ya estaba», **y no entraba**.*
+
+    **Lo que se fija aqui**: *el nombre **no** es la identidad.* *Dos destinos distintos con el mismo
+    texto **son dos compras distintas**, y la lista ya tiene una de ellas.*
+
+    *Y este ensayo va AQUI y no en el de los favoritos, porque **`desde-favoritos` tiene su propio
+    dedupe** (`ya_en_la_lista`, por tuplas) **y no pasa por `_del_plan`** -- *que es donde estaba el
+    defecto.* **Un ensayo en la ruta que no toca el defecto pasa siempre, y no prueba nada.** *
+    """
+    _recetario_con_plan(tmp_path, monkeypatch)
+    # *La lista ya tiene «lentejas», pero de OTRO destino: otra marca con el mismo texto.*
+    cliente = _cliente(monkeypatch, [{"nombre_visto": "lentejas", "grupo_id": 99, "producto_id": None}])
+    r = cliente.get("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07")
+    main.app.dependency_overrides.clear()
+    cuerpo = r.json()
+    assert cuerpo["ya_estaban"] == [], (
+        f"el nombre NO es la identidad: la lista tiene otro destino, asi que esto ENTRA -- {cuerpo}")
+    assert cuerpo["total"] == 1 and len(cuerpo["entrarian"]) == 1, cuerpo
