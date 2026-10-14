@@ -818,6 +818,9 @@ def main() -> int:
     desde, hasta = lunes.isoformat(), (lunes + timedelta(days=6)).isoformat()
     previa = cliente.get(f"/api/listas/{la_casa}/desde-el-plan",
                          params={"desde": desde, "hasta": hasta})
+    # *Se lee **una vez** y arriba: el volcado de abajo la necesita.*
+    cuerpo_previa = previa.json() if previa.status_code == 200 else {}
+    ya_estaban = len(cuerpo_previa.get("ya_estaban") or [])
     if previa.status_code == 200:
         print(f"   la previa dice: {previa.json().get('total')} lineas, "
               f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
@@ -835,13 +838,20 @@ def main() -> int:
     cuerpo = cliente.get(f"/api/listas/{la_casa}").json()
     suyas = cuerpo.get("lineas") or []
     print(f"   la lista de la casa tiene {len(suyas)} lineas, y el puente trajo {traidas}")
+    # *** Y EL VOLCADO, que es lo que hacia falta ***: *las dos listas, con su identidad.*
+    if ya_estaban == 0 and traidas == 0:
+        print("   --- VOLCADO: lo que la previa dice que entraria, y lo que hay ---")
+        for x in (cuerpo_previa.get("entrarian") or []):
+            print(f"     ENTRARIA  {str(x.get('nombre'))[:14]:16s} grupo={x.get('grupo_id')} "
+                  f"producto={x.get('producto_id')}")
+        for x in suyas:
+            print(f"     LISTA     {str(x.get('nombre_visto'))[:14]:16s} grupo={x.get('grupo_id')} "
+                  f"producto={x.get('producto_id')}")
     # *** Y "no trajo nada" NO es un fallo: *puede ser que YA ESTUVIERA, *que es lo que el puente
     # tiene que hacer la segunda vez.* *** *Lo que seria un fallo es que **no trajera nada Y no
     # hubiera nada**: *eso querria decir que **el plan no llego a la lista.** *
     # *Se escribe como se lee: **una lista, y su tamano.*** *La version anterior mezclaba `and`,
     # `or` e `int()` con una lista en medio, *y **daba 0 aunque la previa dijera que si.***
-    cuerpo_previa = previa.json() if previa.status_code == 200 else {}
-    ya_estaban = len(cuerpo_previa.get("ya_estaban") or [])
     if traidas <= 0 and ya_estaban <= 0:
         fallos += 1
         print("   FALLO: el puente no trajo nada Y la previa no dice que ya estuviera nada")
