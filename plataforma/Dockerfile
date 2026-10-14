@@ -16,7 +16,17 @@ COPY plataforma/ /app/plataforma/
 ENV CESTA_GOLD=/datos/gold
 
 RUN useradd -r -u 10001 cesta && chown -R cesta /app
-USER cesta
+# **Y el arranque, que adopta el volumen antes de bajar de privilegios.**
+# *El `chown -R cesta /app` de arriba **no llega a `/app/data`**: *el volumen **se monta
+# despues**, y el montaje tapa el directorio.* *Asi que **un volumen nuevo nace de `root`**,
+# y la API -- que corre como `cesta` -- **no puede escribir**.* *El sintoma es
+# «readonly database», que manda a mirar el disco, *y la causa son los permisos.*
+# *Los motivos enteros, en `plataforma/entrar-api.sh`.*
+RUN chmod +x /app/plataforma/entrar-api.sh
+# *Y por eso **no hay `USER cesta` aqui**: *el `chown` necesita `root`, *y el guion **baja a
+# `cesta` el mismo** antes de arrancar la API.* *Si el `chown` falla, **se para** en vez de
+# seguir como `root`.*
+ENTRYPOINT ["/app/plataforma/entrar-api.sh"]
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=4s --start-period=20s \
