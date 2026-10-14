@@ -11,8 +11,15 @@ Criterio de `F11` (`docs/SUPERAPP-COMPETENCIA-Y-REA.md:108`): *«**Existencias d
 
 **No hay ninguna ruta que sume una compra a la despensa.** *No es un olvido: **es la regla del criterio, y esta
 en el camino** -- *si la ruta no existe, **no se puede llamar**.* **Es la misma forma que el `raise` de
-`diario.py:154`** (*una receta sin version no entra*) **y que el `rechaza compra` de `diario.py:140`**
-(*«comprar no es comer»*).
+`api/diario.py` cuando la referencia no es un numero** (*una receta sin version no entra*) **y que su
+rechazo de las compras** (*«comprar no es comer»*): *los tres son sitios donde **la ruta no existe o no
+deja pasar**, y el rechazo esta **escrito**, no callado.*
+
+*Y se citan **por su condicion y su mensaje, no por su linea** -- *y no es un detalle de estilo*: *
+*** las dos citas que habia aqui estaban DESPLAZADAS *** *, una por **73 lineas** y otra por **4**: *
+*apuntaban a `dia` y a `borrar`, que **no tienen nada que ver** con lo que la frase describe.*
+*Es lo mismo que pasa con un numero de version o con un suelo que cambio: **la cita sobrevive al codigo
+que describia**, y **nadie la revisa porque nadie la lee.** *Por eso aqui se cita lo que no se mueve.*
 
 **Y la logica esta aparte**, en `core/despensa.py`, con sus 9 pruebas y los cuatro casos de la aceptacion: *esta
 capa solo lee y escribe filas, y **no decide nada**.*
