@@ -896,7 +896,14 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
                             nombre, grupo_id, producto_id, 1, None)
         puestos += 1
     for producto_id in datos.producto_ids:
-        if (producto_id, None) in ya_en_la_lista:
+        # **El orden de la tupla, que estaba CAMBIADO.** *Arriba se construye
+        # `(grupo_id, producto_id)`, asi que una linea con **producto y sin grupo** guarda
+        # `(None, producto_id)`. *Y aqui se buscaba `(producto_id, None)`, que **no coincide con nada**.*
+        #
+        # *O sea: la comprobacion de «ya esta» **no encontraba nunca un producto**, y el mismo producto
+        # se podia anadir dos veces -- *justo lo que el comentario de arriba promete que no pasa*:
+        # **«pulsar dos veces el mismo favorito no puede dejar dos lineas».** *
+        if (None, producto_id) in ya_en_la_lista:
             ya_estaban += 1
             continue
         p = catalogo.producto(producto_id) or {}
