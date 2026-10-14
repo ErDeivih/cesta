@@ -411,7 +411,16 @@ def a_la_lista(receta_id: int, datos: ALaLista,
 
     con = _con()
     try:
-        return traspaso.pasar_a_lista(con, usuario["id"], receta_id, insertar=insertar)
+        # *** Y `enriquece=_con_precios`, QUE ES LO QUE HACE QUE HAYA ENVASES. *** *
+        #
+        # *Es la pieza que ya existia y que solo se usaba **al leer** una receta* (`l229`): *pone en cada
+        # ingrediente con articulo elegido el tamaño del envase de su ficha.*
+        #
+        # *Y sin esto, pasar una receta de **1.400 g** de un articulo de **1.000 g** dejaba la linea con
+        # `cantidad = 1` y los gramos **solo en la nota** -- *medido, y es el fallo del propietario.* *
+        # *Porque `traspaso` es `core` y **no puede leer el catalogo**: *el catalogo vive aqui.* *
+        return traspaso.pasar_a_lista(con, usuario["id"], receta_id, insertar=insertar,
+                                      enriquece=_con_precios)
     except ValueError as fallo:
         # *Receta de otro, o version que no existe: **404**, no un 500 con el motivo dentro.*
         raise HTTPException(status_code=404, detail=str(fallo)) from fallo

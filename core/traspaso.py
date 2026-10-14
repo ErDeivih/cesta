@@ -94,6 +94,7 @@ def pasar_a_lista(
     version: int | None = None,
     hoy: date | None = None,
     insertar: Callable[[list[previa_compra.LineaDeCompra]], int] | None = None,
+    enriquece: Callable[[dict], None] | None = None,
 ) -> dict:
     """**Pasa la receta a la lista, y repetir no duplica.**
 
@@ -128,6 +129,24 @@ def pasar_a_lista(
     if ya is not None:
         return {"lineas": int(ya[0]), "ya_estaba": True, "semana": op.semana,
                 "version": numero, "clave": op.clave, "lista_id": ya[1]}
+
+    # *** Y EL ENRIQUECEDOR, QUE ES LO QUE FALTABA PARA QUE HUBIERA ENVASES. *** *
+    #
+    # **Medido el 14/10/2026, y es el fallo que denuncio el propietario**: *pasar una receta de **1.400 g**
+    # de un articulo cuyo envase son **1.000 g** dejaba la linea de la lista con *** `cantidad = 1` *** y los
+    # gramos **solo en la nota** -- *«se calculan dos envases y se persiste cantidad 1».*
+    #
+    # *La causa **no** era el calculo*: *`previa_compra` **cuenta los envases enteros** y `envases_enteros`
+    # tiene la regla con su ejemplo. *La causa es que **`previa_compra` es pura a proposito** -- *su contrato
+    # lo dice: «solo la lista: ni conexion ni propietario»* --, *asi que **el tamaño del envase tiene que
+    # venir puesto en el ingrediente**, *y el unico que sabe leer el catalogo es `plataforma/api`. *
+    #
+    # *Y entra **inyectado** por el mismo motivo y de la misma forma que `insertar`*: *`core` no puede
+    # depender de `plataforma`, *quien sabe leer el catalogo lo pasa, *y aqui solo se llama.*
+    # **Sin `enriquece` no se inventa nada**: *el ingrediente se queda sin tamaño, `envases` sale `None`,
+    # y **la nota lo dice** -- *que es distinto de afirmar un envase.* *
+    if enriquece is not None:
+        enriquece(hallada)
 
     previa = previa_compra.previa_de_compra(hallada["ingredientes"] or [])
     lista_id = None

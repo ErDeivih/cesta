@@ -318,6 +318,66 @@ def test_sin_articulo_elegido_no_se_inventa_tamano_de_envase():
     assert "tamano_envase" not in uno or uno["tamano_envase"] is None, uno
 
 
+def test_el_puente_de_la_receta_usa_el_enriquecedor_y_calcula_los_envases():
+    """*** EL ENGANCHE `enriquece`, QUE ES LO QUE FALTABA EN EL OTRO PUENTE. ***
+
+    *Medido el 14/10/2026*: *pasar la receta de **1.400 g** de un articulo cuyo envase son **1.000 g**
+    dejaba la linea con *** `cantidad = 1` *** y los gramos **solo en la nota** -- *el fallo del propietario,
+    en el puente de la receta.* *
+
+    **Y la causa era de contrato, no de calculo**: *`previa_compra` **es pura a proposito*** -- *su propio
+    ensayo lo dice: «solo la lista: ni conexion ni propietario»* --, *asi que **el tamaño tiene que venir
+    puesto en el ingrediente**, *y el unico que sabe leer el catalogo es `plataforma/api`.*
+
+    *Aqui se prueba el enganche con un enriquecedor de mentira: *es lo unico falseable sin catalogo.
+    **Y FALLA si `pasar_a_lista` no lo llama** -- *que es lo que la hace una regresion.*
+    """
+    import sqlite3
+
+    con = sqlite3.connect(":memory:")
+    receta = {"version": 1, "raciones": 2, "nombre": "Ensalada",
+              "ingredientes": [{"texto": "tomate", "cantidad": 1400.0, "unidad": "g",
+                                "producto_id": "alcampo:99700"}]}
+    capturadas: list = []
+
+    def enriquece(hallada):
+        for ing in hallada["ingredientes"]:
+            if ing.get("producto_id"):
+                ing["tamano_envase"] = 1000.0
+                ing["unidad_envase"] = "g"
+
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(core_recetas, "_de_quien", return_value=("x",)))
+        pila.enter_context(patch.object(core_recetas, "leer", return_value=receta))
+        core_traspaso.pasar_a_lista(con, "dueno", 6, version=1,
+                                    insertar=lambda lineas: capturadas.extend(lineas) or "lista-1",
+                                    enriquece=enriquece)
+
+    assert capturadas, "tiene que haber una linea"
+    ln = capturadas[0]
+    assert ln.envases == 2, f"1.400 g en envase de 1.000 g son DOS envases, y salieron {ln.envases}"
+    assert ln.sobrante == 600.0, ln.sobrante
+
+
+def test_sin_enriquecedor_no_se_inventa_el_tamano_del_envase():
+    """**Y sin enriquecedor, `envases` es `None`** -- *y eso es correcto: **no se inventa.*** *La linea
+    queda con `1` porque la columna es `NOT NULL`, *pero **la nota dice que no se sabe.***"""
+    import sqlite3
+
+    con = sqlite3.connect(":memory:")
+    receta = {"version": 1, "raciones": 2, "nombre": "Ensalada",
+              "ingredientes": [{"texto": "tomate", "cantidad": 1400.0, "unidad": "g",
+                                "producto_id": "alcampo:99700"}]}
+    capturadas: list = []
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(core_recetas, "_de_quien", return_value=("x",)))
+        pila.enter_context(patch.object(core_recetas, "leer", return_value=receta))
+        core_traspaso.pasar_a_lista(con, "dueno", 6, version=1,
+                                    insertar=lambda lineas: capturadas.extend(lineas) or "lista-1")
+
+    assert capturadas[0].envases is None, capturadas[0].envases
+
+
 def test_el_puente_del_plan_guarda_dos_envases_y_no_uno():
     """**1,4 kg en envase de 1 kg son DOS envases, y hay que comprar dos.**
 
