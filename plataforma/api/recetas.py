@@ -391,7 +391,21 @@ def a_la_lista(receta_id: int, datos: ALaLista,
                 # grupo llegaba a la lista sin destino** -- y la tabla exige `linea_con_destino`:
                 # producto **o** grupo.
                 ln.grupo_id,
-                int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
+                # **Y el `producto_id` SE PASA TAL CUAL, porque es TEXTO.**
+                #
+                # *Aqui habia `int(ln.producto_id) if (ln.producto_id or "").isdigit() else None`, y con
+                # eso **el articulo elegido se perdia SIEMPRE**: *los identificadores del catalogo son
+                # **`fuente:id`** -- `dia:1234`, `carrefour:5678` --, y **ninguno es `isdigit()`**, asi
+                # que la linea salia con `producto_id = None` **siempre**.*
+                #
+                # *Y `lista_linea.producto_id` es **`text`**, no un entero: *el `int()` no era una
+                # conversion necesaria, era **una perdida**.* *La columna de al lado, `grupo_id`, si es
+                # `bigint`, y ahi el entero es lo correcto.*
+                #
+                # *Y es justo lo que el complemento del 14/10 senala: «un grupo puede evitar el rechazo,
+                # **pero no preservar el articulo elegido**» -- *porque un grupo es una **familia**, y la
+                # persona **eligio un articulo**.*
+                ln.producto_id,
                 ln.envases or 1, detalle, None)
         return datos.lista_id
 

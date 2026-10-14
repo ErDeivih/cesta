@@ -337,3 +337,48 @@ def test_la_receta_guarda_dos_envases_y_no_uno():
     assert insertar.call_args_list[0].args[6] == 2, (
         "DOS envases, y se guardo "
         f"{insertar.call_args_list[0].args[6]}: «dos envases» estaba solo en la nota")
+
+
+def test_la_receta_preserva_el_ARTICULO_ELEGIDO_y_no_lo_degrada():
+    """**El articulo elegido, que se perdia SIEMPRE en el puente de la receta.**
+
+    *`a_la_lista` hacia `int(ln.producto_id) if (ln.producto_id or "").isdigit() else None`. Y los
+    identificadores del catalogo son **`fuente:id`** -- `dia:1234`, `carrefour:5678` --, asi que
+    **ninguno es `isdigit()`**: *la linea salia con `producto_id = None` **siempre**.*
+
+    *Y `lista_linea.producto_id` es **`text`**, no un entero: el `int()` no era una conversion necesaria,
+    era **una perdida**.*
+
+    **Lo que se fija aqui**: *un ingrediente con **producto exacto y sin grupo** llega a la lista **con su
+    producto**, y **no se degrada a `None`** -- *porque **un grupo es una familia**, y **la persona eligio
+    un articulo**.* *Y cuando trae los dos, se conservan **los dos**.*
+    """
+    # *Producto exacto SIN grupo: el caso que se perdia del todo.*
+    exacto = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                           cantidad=300.0, unidad="g")
+    # *Y con grupo, que es «evitar el rechazo» pero no «preservar el elegido».*
+    con_grupo = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                              grupo_id=7, cantidad=300.0, unidad="g")
+    for linea, esperado_grupo in ((exacto, None), (con_grupo, 7)):
+        insertar = Mock()
+
+        # *La variable del bucle se liga como argumento, que es lo que pide `ruff` y lo que evita
+        # que las dos vueltas compartan la ultima `linea`.*
+        def captura(con, propietario, receta_id, *, _la=linea, insertar=None, **kw):
+            insertar([_la])
+            return {"lineas": 1}
+
+        with ExitStack() as pila:
+            pila.enter_context(patch.object(api_recetas, "_con", return_value=Mock()))
+            pila.enter_context(patch.object(api_almacen, "listas_de",
+                                            return_value=[{"id": "lista-fixture"}]))
+            pila.enter_context(patch.object(api_almacen, "anade_linea", insertar))
+            pila.enter_context(patch.object(core_traspaso, "pasar_a_lista", side_effect=captura))
+            api_recetas.a_la_lista(1, api_recetas.ALaLista(lista_id="lista-fixture"),
+                                   {"id": "fixture"})
+
+        argumentos = insertar.call_args_list[0].args
+        assert argumentos[5] == "dia:fixture", (
+            f"el articulo elegido tiene que llegar entero, y llego {argumentos[5]!r}")
+        assert argumentos[4] == esperado_grupo, (
+            f"y el grupo, {esperado_grupo}: {argumentos[4]!r}")
