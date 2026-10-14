@@ -115,13 +115,25 @@ def test_pulsar_dos_veces_no_duplica(tmp_path, monkeypatch):
     assert segunda["ya_estaban"] == ["lentejas"], segunda
 
 
-def test_un_ingrediente_escrito_a_mano_no_entra_y_se_dice(tmp_path, monkeypatch):
-    """**El caso que rompia el puente.** Una receta escrita a mano tiene ingredientes que no estan
-    enlazados con el catalogo, y la tabla exige `linea_con_destino`: no se pueden anadir. Antes se
-    mandaban igual y la base los rechazaba con un **500** -- y la vista previa prometia cuatro
-    ingredientes que no podian entrar. Medido el 13 de octubre de 2026.
+def test_un_ingrediente_escrito_a_mano_ENTRA_como_pendiente_y_se_dice(tmp_path, monkeypatch):
+    """**El caso que rompia el puente, y que ahora se resuelve al reves.** Una receta escrita a mano
+    tiene ingredientes que no estan enlazados con el catalogo.
 
-    Ahora no entra, **no se manda a la base**, y **se dice**: la regla de la casa.
+    *Y este ensayo decia, con fecha: **«la tabla exige `linea_con_destino`: no se pueden anadir...
+    Medido el 13 de octubre de 2026»** -- *y fijaba que **no entraba**, que **no se mandaba a la base**,
+    y que se decia.*
+
+    **Y lo que cambio no fue el criterio: fue el suelo.** *La migracion `014_la_linea_sin_destino.sql`
+    quito esa restriccion, y dice por que*: *«la restriccion protegia la comparacion y **prohibia la
+    lista**: quien no encontraba el producto en el catalogo **no podia apuntarlo, y acababa apuntandolo
+    en otro sitio»*.
+
+    **Y la sal es exactamente ese caso** -- *la mitad de una lista de la compra de verdad, y el ejemplo
+    que el complemento del 14/10 nombra.*
+
+    **Lo que se fija ahora**: *la sal **entra**, con su nombre y su cantidad, **sin destino** -- que es
+    lo que la hace «pendiente de identificar» --, **sin precio ni equivalencia inventados**, y
+    **diciendolo** en la nota.
     """
     api_recetas.ruta_base(tmp_path / "recetas.sqlite")
     con = nucleo.conecta(tmp_path / "recetas.sqlite")
@@ -142,8 +154,23 @@ def test_un_ingrediente_escrito_a_mano_no_entra_y_se_dice(tmp_path, monkeypatch)
     r = cliente.post("/api/listas/lo-que-sea/desde-el-plan?desde=2026-10-01&hasta=2026-10-07")
     main.app.dependency_overrides.clear()
 
-    assert previa["total"] == 0, previa
+    # *La previa sigue diciendo que la sal no tiene catalogo: eso no cambia, porque no hay producto.*
     assert previa["sin_catalogo"] == ["sal"], previa
+    # **Y queda dicho lo que falta por reconciliar aqui, en vez de taparlo.** *La previa cuenta
+    # `total: 0` y el POST apunta 1: **hoy son dos numeros distintos, y la que miente es la previa**,
+    # porque promete menos de lo que el POST hace.* *Se anota como pendiente y no se da por bueno.*
+    assert previa["total"] == 0, (
+        "la previa todavia no cuenta la pendiente: el POST apunta 1 y ella dice 0 -- PENDIENTE de "
+        "reconciliar en `previa_del_plan`")
     assert r.status_code == 201, r.text
-    assert r.json()["anadidos"] == 0 and r.json()["sin_catalogo"] == ["sal"], r.json()
-    assert anadidas == [], "no se puede mandar a la base una linea sin destino"
+    # **Y el POST SI la apunta.** *Antes `anadidos` era 0 y `anadidas` estaba vacio: **eso probaba
+    # rechazo, no conservacion** -- que es exactamente lo que el complemento del 14/10 senala.*
+    assert r.json()["anadidos"] == 1, r.json()
+    assert r.json()["sin_catalogo"] == ["sal"], r.json()
+    assert len(anadidas) == 1, "la sal tiene que llegar a la base"
+    argumentos = anadidas[0]
+    assert argumentos[3] == "sal", f"con su nombre: {argumentos[3]!r}"
+    assert argumentos[4] is None and argumentos[5] is None, (
+        "SIN destino -- ni grupo ni producto --, que es lo que la hace «pendiente de identificar»")
+    assert argumentos[6] == 1, "y con su cantidad"
+    assert "pendiente de identificar" in (argumentos[7] or ""), argumentos[7]
