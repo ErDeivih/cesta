@@ -12,8 +12,11 @@ from __future__ import annotations
 import sqlite3
 
 import pytest
+from starlette.testclient import TestClient
 
 from core import recetas
+from plataforma.api import main
+from plataforma.api import recetas as ruta_recetas
 
 
 @pytest.fixture
@@ -224,3 +227,82 @@ def test_duplicar_no_toca_el_plan_de_otro(con):
     # *Y **lo de `otro` sigue donde estaba**, *y **no se ha duplicado a la semana siguiente**.* *
     suyo = recetas.plan(con, "otro", "2026-11-02", "2026-11-15")
     assert [x["fecha"] for x in suyo] == ["2026-11-03"], suyo
+
+
+# ---------------------------------------------------------------------------------------------
+# *** Y LA RUTA ***, *que es lo que me debia a mi mismo: *
+#
+# *Cuando reabri B07 dije que sus **19 ensayos probaban el modulo y no la ruta**, *y que **ahi**
+# estaban las guardas que importaban. *Pues **mi propio cambio tiene el mismo defecto si no se
+# prueba su ruta** -- *asi que aqui esta.* *
+# ---------------------------------------------------------------------------------------------
+
+
+def test_la_ruta_de_duplicar_la_semana_copia_y_devuelve_el_recibo(tmp_path):
+    """*** `POST /plan/semana` **de punta a punta**, *y **con el recibo.** *** *
+
+    *Las recetas viven en **SQLite** *(-- no en Postgres --)*, *asi que la ruta se prueba **sin base de
+    datos**: *se le dice donde esta la suya con `CESTA_RECETAS`, *que es lo que ya usa el modulo.* *
+    *Y **lo que se afirma es el contrato de la ruta**: *el **201**, *el **recibo** con sus dos
+    numeros, *y que **despues se lee lo copiado.** *
+    """
+    antes = ruta_recetas.ruta_base()
+    # *** Y el mismo fichero para las dos cosas ***: *`conecta()` **sin ruta** va al de por defecto,
+    # *no al que se le dice a `ruta_base` -- *y con eso la ruta leia **una base vacia**, *y el recibo
+    # salia con **cero y cero.** *
+    destino = tmp_path / "recetas.sqlite"
+    ruta_recetas.ruta_base(destino)
+    con = recetas.conecta(destino)
+    try:
+        r = recetas.crear(con, "yo", "Tortilla", raciones=4, ingredientes=[{"texto": "4 huevos"}])
+        recetas.planificar(con, "yo", "2026-11-02", r, comida="comida", comensales=3, raciones=2)
+    finally:
+        con.close()
+
+    main.app.dependency_overrides[main.usuario_actual] = lambda: {"id": "yo"}
+    try:
+        cliente = TestClient(main.app)
+        r = cliente.post("/api/recetas/plan/semana",
+                         json={"desde": "2026-11-02", "hacia": "2026-11-09"})
+        assert r.status_code == 201, r.text
+        recibo = r.json()
+        assert recibo["creadas"] == 1, recibo
+        assert recibo["ya_estaban"] == 0, recibo
+
+        # *Y **lo copiado se lee por la ruta de leer**, *que es lo que hace que no sea un recibo solo.* *
+        leido = cliente.get("/api/recetas/plan", params={"desde": "2026-11-09", "hasta": "2026-11-15"})
+        assert leido.status_code == 200, leido.text
+        puestas = leido.json()["plan"]
+        assert [x["comida"] for x in puestas] == ["comida"], puestas
+        assert puestas[0]["raciones"] == 2, puestas
+        assert puestas[0]["comensales"] == 3, puestas
+    finally:
+        ruta_recetas.ruta_base(antes)
+        main.app.dependency_overrides.clear()
+
+
+def test_la_ruta_de_duplicar_dice_422_si_no_se_dice_a_cual(tmp_path):
+    """*Y **el error se traduce**, *en vez de salir un 500: *`ValueError` -> **422.** *"""
+    antes = ruta_recetas.ruta_base()
+    # *** Y el mismo fichero para las dos cosas ***: *`conecta()` **sin ruta** va al de por defecto,
+    # *no al que se le dice a `ruta_base` -- *y con eso la ruta leia **una base vacia**, *y el recibo
+    # salia con **cero y cero.** *
+    destino = tmp_path / "recetas.sqlite"
+    ruta_recetas.ruta_base(destino)
+    con = recetas.conecta(destino)
+    try:
+        r = recetas.crear(con, "yo", "Tortilla", raciones=4, ingredientes=[{"texto": "4 huevos"}])
+        recetas.planificar(con, "yo", "2026-11-02", r)
+    finally:
+        con.close()
+
+    main.app.dependency_overrides[main.usuario_actual] = lambda: {"id": "yo"}
+    try:
+        cliente = TestClient(main.app)
+        r = cliente.post("/api/recetas/plan/semana",
+                         json={"desde": "2026-11-02", "hacia": "2026-11-02"})
+        assert r.status_code == 422, r.text
+        assert "a cual" in r.text, r.text
+    finally:
+        ruta_recetas.ruta_base(antes)
+        main.app.dependency_overrides.clear()
