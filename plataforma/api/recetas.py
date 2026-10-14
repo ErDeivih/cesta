@@ -215,6 +215,12 @@ def prevision_del_plan(desde: str = Query(...), hasta: str = Query(...),
                 "fecha": entrada["fecha"], "receta_id": entrada["receta_id"],
                 "nombre": entrada.get("nombre"), "version": entrada["version"],
                 "comensales": entrada["comensales"], "lineas": lineas,
+                # *** Y la ocurrencia viaja con su identidad: en que comida, y con cuantas raciones. *** *
+                #
+                # *`raciones` puede ser `None`, *y **eso quiere decir «las de la receta»** *-- *
+                # *y **no se rellena aqui**: *si se copiara, *una receta que cambie de raciones *
+                # *cambiaria **lo que ya se cocino.*** *
+                "comida": entrada["comida"], "raciones": entrada.get("raciones"),
                 # **La misma aritmetica que el diario.** Y sobre las lineas que SI tienen nutrientes:
                 # las que no, ya estan dichas en `sin_dato` y en `sin_cantidad`.
                 **diario.resumen(conocidos),
