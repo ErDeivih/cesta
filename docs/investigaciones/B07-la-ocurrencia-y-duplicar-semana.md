@@ -110,3 +110,75 @@ modelo**, *y eso se vio **leyendo la clave primaria.** *
 *** `python -m plataforma.prueba_e2e` ***  *** «== TODO BIEN» *** ✓✓✓
 *** y **los scripts de un solo uso**, *borrados* ✓
 ```
+
+---
+
+## 7. *** Y **la pantalla**, *que es lo que separa «esta en el codigo» de «se ve» ***
+
+*El 14/10, despues de dejar el API entero, *mire **si alguien lo veia** -- *y **no.** *
+*Que es **la misma familia de defecto** que el encargo nombra *(-- «no consideres terminado lo que
+solo abrio una pantalla vacia» --), *solo que **al reves**: *una capacidad **en el API** que
+**la pantalla no enseña.** *
+
+```
+*** `PlanSemanal.tsx`, ANTES *** *
+   *** `const porFecha = new Map<string, { nombre; version; comensales }[]>()` *** *
+   *** `for (const linea of data?.plan ?? []) { lista.push({ nombre, version, comensales }) }` *** *
+*** -> *** agrupaba por FECHA, y descartaba `comida` y `raciones` *** ⚠️
+   *-- *porque **no existian**: *el plan era `(fecha, receta_id)`, *una receta por dia ✓
+   *-- *y **hoy la clave es `(fecha, comida, receta_id)`**, *asi que **la misma receta puede ir
+      a la comida y a la cena el mismo dia** ⚠️
+   *-- *** -> si la pantalla siguiera por fecha, se verian dos veces SIN DECIR POR QUE *** ✓
+*** y **`tipos.ts`/`api/recetas.ts`***: *** `LineaPlan` no tenia los campos *** ⚠️
+   *-- *que es **por lo que la pantalla no podia** enseñarlos: **el tipo es el sitio donde se ve
+      si algo esta a medio camino** ✓✓✓
+```
+
+### Y lo que se hizo
+
+```
+*** 1) EL TIPO ***  *** `LineaPlan` gana `comida` y `raciones` *** ✓
+   *-- *y `raciones: number | null`, *con **su porques escrito**: *`null` = «las de la receta»,
+      *que **no es un hueco** ✓
+*** 2) EL MAPA ***  *** de por *fecha* a por *fecha Y comida* *** ✓
+*** 3) DENTRO DEL DIA ***  *** una seccion por comida ***, *
+   *** y **en el orden del vocabulario** *** *-- *no en el que devuelva la consulta: *
+   *si se pintara **en el orden que llega**, *«merienda» apareceria **antes de «comida»**
+   *un dia si y otro no, *y *** la pantalla bailaria entre recargas *** ✓✓✓
+*** 4) Y LAS RACIONES ***  *** `null` NO ES CERO *** ✓
+   *-- *se dice **«las raciones de la receta»**, *y **no «0 raciones»**, *que seria **inventar un
+      dato** *y ademas **el contrario** del que hay ✓✓✓
+*** 5) Y LA CONSTANTE `COMIDAS` DEL FRONTEND ***  *** es un ESPEJO, *y lo dice *** ✓
+   *-- *«*el original esta en Python, *y **lo unico que impide que se separen** es que el ensayo
+      del diario siga pasando»* ✓
+```
+
+### Y **el boton de duplicar la semana**, *con su recibo*
+
+```
+*** `useDuplicarSemana` *** *y *** `ReciboDeSemana {creadas, ya_estaban, desde, hacia}` *** ✓
+*** y `DuplicarLaSemana` ***, *al lado de `TraerALaLista` *-- *que es **su hermana** ✓
+*** -> y *** enseña el recibo, *no un «hecho» ***: *
+   *-- *porque *** «hecho» no dice si copio tres o ninguna *** ✓
+   *-- *y **lo que ya estaba NO se pisa** *(-- lo dice B05 --)* ✓
+   *-- *y **las dos a cero tienen su propia frase**: *
+      *** «No habia nada que copiar: esta semana esta vacia.» *** *
+      *-- *que es **lo que evita que un cero se lea como un fallo** ✓✓✓
+*** y **el destino se dice**: *«a la del \<fecha\>», *igual que el de la lista ✓
+```
+
+### Y la verificacion, con **las puertas del frontend**
+
+```
+*** `npx tsc --noEmit` ***  *** cero errores *** ✓
+*** `npm test` ***  *** 81 pass · 0 fail *** ✓
+*** `npm run build` ***  *** `✓ built` *** ✓
+*** y **el error mio que casi se queda**: *al insertar el componente **borre sin querer*
+   `const dias = laSemana()`, *y **lo vi en el edit siguiente*** ⚠️✓
+   *-- *y **`tsc` lo habria cazado** *(-- `dias` sin definir --), *asi que **el instrumento estaba ahi** ✓
+```
+
+*** Y **la frase de B07 esta entera y visible**: *«Plan con *** varias comidas por dia ***, *** repetir/
+duplicar semana *** y *** raciones por ocurrencia ***»* *--* *las tres, *en el modelo, *en el API,
+*en el tipo, *y *** en la pantalla.*** *Que es **lo unico** que hace que no sea **una capacidad que
+solo existe en el codigo.*** *
