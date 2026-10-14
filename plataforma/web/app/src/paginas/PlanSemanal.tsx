@@ -93,7 +93,21 @@ function PonerEnUnDia({ fecha, alPoner }: { fecha: string; alPoner: () => void }
 function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
   const cliente = useQueryClient()
   const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
-  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  // **El destino NO se elige a dedo.** *El plan lo pide con estas palabras:
+  // «`PlanSemanal.tsx` elige la lista de casa o, si no existe, la primera lista. **Debe elegir destino
+  // explícito, no escribir en otra lista silenciosamente**.»*
+  //
+  // *Antes esto era `?? listas.data?.[0]?.id`: *si no habia lista de casa, **escribia en la primera
+  // que hubiera** -- *que puede ser una lista compartida, o de otra cosa --, *y **la pantalla no decia
+  // en cual.** *Y si **no habia ninguna**, el componente hacia `return null`: *el boton **desaparecia
+  // sin decir por que**, *que es la otra mitad del mismo defecto.*
+  //
+  // *Asi que ahora:*
+  //   - **el destino es la lista de casa, y solo esa**;
+  //   - **se dice cual es**, en el titulo;
+  //   - *y si no hay ninguna, **se dice que hace falta una** en vez de desaparecer.
+  const destino = listas.data?.find((l) => l.es_de_casa) ?? null
+  const listaId = destino?.id ?? null
   const [previa, setPrevia] = useState<PreviaDelPlan | null>(null)
   const [traido, setTraido] = useState(0)
   const [fuera, setFuera] = useState<string[]>([])
@@ -113,11 +127,26 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
     },
   })
 
-  if (listaId === null) return null
+  // **Y si no hay lista de casa, se dice** -- *no se escribe en otra, ni se desaparece.*
+  if (listaId === null) {
+    if (!listas.isSuccess) return null
+    return (
+      <Tarjeta>
+        <span className="text-[16px] text-tinta-fuerte">Del plan a la lista</span>
+        <p className="mt-2 text-[15px] text-tinta-suave">
+          Para traer el plan a la lista hace falta una lista de la casa. Crea una en Compra y vuelve.
+        </p>
+      </Tarjeta>
+    )
+  }
   return (
     <Tarjeta>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[16px] text-tinta-fuerte">Del plan a la lista</span>
+        <span className="text-[16px] text-tinta-fuerte">
+          Del plan a la lista
+          {/* **Y el destino, dicho**: *«no escribir en otra lista silenciosamente» incluye decir en cual. */}
+          {destino && <span className="text-tinta-suave"> · {destino.nombre}</span>}
+        </span>
         <Boton onClick={() => ver.mutate()} disabled={ver.isPending}>
           Ver que entraria
         </Boton>
