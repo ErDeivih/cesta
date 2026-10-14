@@ -17,11 +17,12 @@ para que el diario pueda citar una version y esa version no se mueva nunca.
 """
 from __future__ import annotations
 
-import functools
 import json
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
+
+from .dueno import dueno_como_texto
 
 RAIZ = Path(__file__).resolve().parents[1]
 BASE = RAIZ / "data" / "recetas.sqlite"
@@ -100,37 +101,7 @@ def _ingredientes_para_guardar(ingredientes: list[dict] | None) -> str:
     return json.dumps(limpios, ensure_ascii=False)
 
 
-def _dueno_como_texto(fn):
-    """**El dueno de la receta, siempre como texto, en CUALQUIER funcion que lo reciba.**
-
-    *Encontrado el 14 de octubre de 2026, **al abrir `plataforma/prueba_e2e.py` a Recetas**:
-    `sqlite3.ProgrammingError: Error binding parameter 3: type 'UUID' is not supported`.*
-
-    *Y **no era SQLite, ni la ruta, ni una funcion**: *es que este modulo **declara
-    `propietario: str` en diez funciones** *(-- y **su docstring lo dice**: *«**Privacidad,
-    implementada.** … y **todas** las operaciones [lo usan]» --) *y **no lo comprobaba en ninguna.** *
-    *Un ensayo que inyecta el usuario con `dependency_overrides[usuario_actual]` **salta la puerta
-    HTTP** y llega con un `UUID`, *y SQLite no lo acepta.* *
-
-    *Se arregla **aqui, y no en las diez**: *un decorador que **lee el tipo y convierte**, *que es
-    **lo que el proyecto eligio** *donde este error aparecio la primera vez
-    (`tests/test_revision_a09_compra_hogar.py:34-42`):*
-
-        *** «El id, siempre como texto… *Es el mismo error de siempre: dar por hecho el tipo de un
-        dato en vez de leerlo. *** Aqui se lee, y se convierte. ***» ***
-
-    *Y **no se rechaza**: *un `UUID` de dueno **es el mismo dueno con otro tipo**, *y rechazarlo seria
-    romper el uso legitimo de un ensayo.* *Lo que **no** se admite es **no leerlo.** *
-    """
-    @functools.wraps(fn)
-    def envuelto(con, propietario, *args, **kwargs):
-        if propietario is not None:
-            propietario = str(propietario)
-        return fn(con, propietario, *args, **kwargs)
-    return envuelto
-
-
-@_dueno_como_texto
+@dueno_como_texto
 def _de_quien(con: sqlite3.Connection, propietario: str, receta_id: int) -> sqlite3.Row | None:
     """La receta **si es de quien pregunta**. Es la puerta de todo lo demas."""
     if not propietario:
@@ -139,7 +110,7 @@ def _de_quien(con: sqlite3.Connection, propietario: str, receta_id: int) -> sqli
                        (receta_id, propietario)).fetchone()
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def crear(con: sqlite3.Connection, propietario: str, nombre: str, raciones: int = 2,
           preparacion: str = "", ingredientes: list[dict] | None = None, minutos: int | None = None,
           etiquetas: str = "", ahora: datetime | None = None) -> int:
@@ -203,7 +174,7 @@ def escala(ingredientes: list[dict], de_raciones: int, a_raciones: int) -> list[
     return escalados
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
          version: int | None = None, raciones: int | None = None) -> dict | None:
     """La receta **si es tuya**, con su contenido. Sin version, la ultima; con ella, **esa**."""
@@ -236,7 +207,7 @@ def leer(con: sqlite3.Connection, propietario: str, receta_id: int,
     }
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def versiones(con: sqlite3.Connection, propietario: str, receta_id: int) -> list[int]:
     """Las versiones de una receta tuya. De una que no lo es, ninguna."""
     if _de_quien(con, propietario, receta_id) is None:
@@ -245,7 +216,7 @@ def versiones(con: sqlite3.Connection, propietario: str, receta_id: int) -> list
         "SELECT numero FROM version WHERE receta_id = ? ORDER BY numero", (receta_id,)).fetchall()]
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def actualizar(con: sqlite3.Connection, propietario: str, receta_id: int, *, nombre: str | None = None,
                raciones: int | None = None, preparacion: str | None = None,
                ingredientes: list[dict] | None = None, minutos: int | None = None,
@@ -276,7 +247,7 @@ def actualizar(con: sqlite3.Connection, propietario: str, receta_id: int, *, nom
     return siguiente
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def listar(con: sqlite3.Connection, propietario: str,
            incluir_archivadas: bool = False) -> list[dict]:
     """El recetario **de quien pregunta**: nombre, ultima version y raciones, sin el contenido entero."""
@@ -294,7 +265,7 @@ def listar(con: sqlite3.Connection, propietario: str,
             for f in con.execute(sql + " ORDER BY r.nombre", (propietario,)).fetchall()]
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def archivar(con: sqlite3.Connection, propietario: str, receta_id: int,
              archivada: bool = True) -> bool:
     """Archivar **la tuya**. Archivar no borra: el diario que la cita sigue teniendo que poder leerla."""
@@ -304,7 +275,7 @@ def archivar(con: sqlite3.Connection, propietario: str, receta_id: int,
     return cur.rowcount > 0
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def planificar(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int,
                comensales: int = 2, version: int | None = None) -> None:
     """Poner **una receta tuya** en un dia. Se fija la version: el plan viejo se relee tal cual."""
@@ -319,7 +290,7 @@ def planificar(con: sqlite3.Connection, propietario: str, fecha: str, receta_id:
     con.commit()
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def plan(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> list[dict]:
     """Lo planificado **por ti** entre dos fechas. El JOIN con la receta es lo que aplica el permiso."""
     filas = con.execute(
@@ -331,7 +302,7 @@ def plan(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> l
              "nombre": f[4]} for f in filas]
 
 
-@_dueno_como_texto
+@dueno_como_texto
 def quitar_del_plan(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int) -> bool:
     """Quita una receta de un dia **del plan de quien pregunta**. Devuelve si habia algo que quitar.
 

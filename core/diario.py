@@ -19,6 +19,8 @@ import sqlite3
 from datetime import date, datetime
 from pathlib import Path
 
+from .dueno import dueno_como_texto
+
 RAIZ = Path(__file__).resolve().parents[1]
 BASE = RAIZ / "data" / "diario.sqlite"
 TABLA = "entrada"
@@ -128,6 +130,7 @@ def _respuesta_del_reintento(previa: tuple, contenido: dict, clave: str) -> int:
         f"reintento, no una comida nueva con otro contenido")
 
 
+@dueno_como_texto
 def apunta(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *,
             clave_operacion: str | None = None,
            tipo: str = ALIMENTO, referencia: str | None = None, version: str | None = None,
@@ -256,6 +259,7 @@ def de_ficha(producto: dict, gramos: float) -> dict:
     return valores
 
 
+@dueno_como_texto
 def apunta_de_ficha(con: sqlite3.Connection, propietario: str, fecha: str, comida: str, *,
                     producto: dict, gramos: float, referencia: str,
                     nota: str = "", ahora: datetime | None = None) -> int:
@@ -271,6 +275,7 @@ def apunta_de_ficha(con: sqlite3.Connection, propietario: str, fecha: str, comid
                   nota=(nota or f"{gramos:g} g, calculado de los valores por 100 g").strip(), **valores)
 
 
+@dueno_como_texto
 def borrar(con: sqlite3.Connection, propietario: str, entrada_id: int) -> bool:
     """Quitar una entrada **solo si es tuya**. Si no lo es, no se borra y se dice que no estaba."""
     cur = con.execute("DELETE FROM entrada WHERE id = ? AND propietario = ?",
@@ -327,6 +332,7 @@ def resumen(filas: list[sqlite3.Row]) -> dict:
     }
 
 
+@dueno_como_texto
 def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
     """El dia entero **de quien pregunta**: entradas, subtotal conocido y lo que no se sabe.
 
@@ -349,6 +355,7 @@ def dia(con: sqlite3.Connection, propietario: str, fecha: str) -> dict:
     }
 
 
+@dueno_como_texto
 def rango(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> list[dict]:
     """Los dias con algo anotado **tuyo**, entre dos fechas. La energia desconocida va como null."""
     filas = con.execute(
