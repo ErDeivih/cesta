@@ -13,7 +13,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { textoDeError } from '../api/cliente'
 import { misListas, previaDelPlan, traerDelPlan } from '../api/cesta'
 import type { PreviaDelPlan } from '../api/cesta'
-import { usePlan, usePlanificar, useRecetas } from '../api/recetas'
+import { useDuplicarSemana, usePlan, usePlanificar, useRecetas } from '../api/recetas'
+import type { ReciboDeSemana } from '../api/recetas'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
@@ -242,6 +243,52 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
   )
 }
 
+/**
+ * *** Duplicar la semana: *lo planeado de estos siete dias, *a los siete siguientes.** *** *
+ *
+ * *Es **la tercera frase de B07** *--* «*Plan con varias comidas por dia, *** repetir/duplicar
+ * semana *** y raciones por ocurrencia» --, *y **solo se puede ofrecer desde que la ocurrencia tiene
+ * identidad**: *antes **no habia que copiar**, *porque una receta por dia **era una fila.** *
+ *
+ * *** Y enseña el recibo, *no un «hecho». *** *Porque **«hecho» no dice si copio tres o ninguna**, *
+ * *y **lo que ya estaba NO se pisa** *(-- *lo dice B05: *«*misma clave con contenido distinto produce
+ * *** conflicto, no exito ficticio ***» --). *Asi que se dicen **los dos numeros.** *
+ */
+function DuplicarLaSemana({ desde, hasta }: { desde: string; hasta: string }) {
+  const duplicar = useDuplicarSemana()
+  const [recibo, setRecibo] = useState<ReciboDeSemana | null>(null)
+  const semanaSiguiente = fechaLocal(new Date(new Date(`${desde}T00:00:00`).getTime() + 7 * 86400000))
+
+  return (
+    <Tarjeta>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[16px] text-tinta-fuerte">
+          Repetir la semana
+          {/* *Y **a cual**, dicho* -- *igual que el destino de la lista se dice.* */}
+          <span className="text-tinta-suave"> · a la del {semanaSiguiente}</span>
+        </span>
+        <Boton
+          onClick={() => duplicar.mutate({ desde, hacia: semanaSiguiente }, { onSuccess: setRecibo })}
+          disabled={duplicar.isPending}
+        >
+          {duplicar.isPending ? 'Copiando...' : 'Copiar el plan'}
+        </Boton>
+      </div>
+
+      {duplicar.error && <p className="mt-2 text-[15px] text-error">{textoDeError(duplicar.error)}</p>}
+
+      {recibo && (
+        <p className="mt-2 text-[15px] text-tinta-fuerte">
+          {recibo.creadas === 0 && recibo.ya_estaban === 0
+            ? 'No habia nada que copiar: esta semana esta vacia.'
+            : `${recibo.creadas === 1 ? 'Ha entrado 1' : `Han entrado ${recibo.creadas}`} · ` +
+              `${recibo.ya_estaban === 1 ? '1 ya estaba' : `${recibo.ya_estaban} ya estaban`}.`}
+        </p>
+      )}
+    </Tarjeta>
+  )
+}
+
 export function PlanSemanal() {
   const dias = laSemana()
   const [abierto, setAbierto] = useState<string | null>(null)
@@ -282,6 +329,8 @@ export function PlanSemanal() {
       </p>
 
       <TraerALaLista desde={dias[0]} hasta={dias[dias.length - 1]} />
+
+      <DuplicarLaSemana desde={dias[0]} hasta={dias[dias.length - 1]} />
 
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el plan...</p>}
       {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}

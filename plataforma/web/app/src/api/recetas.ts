@@ -209,6 +209,39 @@ export function usePlanificar() {
   })
 }
 
+/**
+ * *** El recibo de duplicar una semana, *y **sus dos numeros son el contrato.** *** *
+ *
+ * *`creadas` son las que **no estaban**, *y `ya_estaban` las que **se respetaron.** *Y las dos
+ * **hacen falta**: *con solo `creadas`, *una semana que **ya estaba entera** devolveria **cero**,
+ * *y quien lo leyera **no sabria si funciono o si no habia nada.** *
+ *
+ * *Es **la misma doctrina de B05**: *«*misma clave con contenido distinto produce *** conflicto,
+ * no exito ficticio ***». *Decir «duplicado» cuando no se duplico nada **seria ese exito ficticio.** *
+ */
+export interface ReciboDeSemana {
+  creadas: number
+  ya_estaban: number
+  desde: string
+  hacia: string
+}
+
+/**
+ * *** Copia lo planeado de una semana a otra. *** *
+ *
+ * *Y **no pisa lo que hay**: *lo que ya estaba **se respeta**, *y **vuelve contado** en `ya_estaban`.* *
+ * *Por eso la pantalla **enseña el recibo** en vez de decir «hecho»: *porque **«hecho» no dice
+ * si copio tres o ninguna.** *
+ */
+export function useDuplicarSemana() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (datos: { desde: string; hacia: string }) =>
+      conCuerpo<ReciboDeSemana>('/recetas/plan/semana', 'POST', datos),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['plan'] }),
+  })
+}
+
 /** Una linea de la previa de compra. *Lo que habria que comprar, no lo que dice la receta.* */
 export interface LineaDePrevia {
   clave: string
