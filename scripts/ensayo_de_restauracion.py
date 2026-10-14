@@ -347,7 +347,14 @@ def corre(copia) -> dict:
                 f"el restaurado fallo: {metido.stderr.decode(errors='replace')[:300]}")
 
         with _conecta(dsn) as con, con.cursor() as cur:
-            for tabla in ("lista_linea", "usuario", "lista", "compra"):
+            # *** Y `lista_acceso`, QUE ES LA TERCERA PATA: LOS PERMISOS. *** *
+            #
+            # *El complemento pide «PostgreSQL, recetas/diario SQLite *** Y PERMISOS/SNAPSHOTS***», *
+            # *y `lista_acceso` es **la tabla que acredita quien puede que** sobre cada lista.* *
+            # *Comprobar su recuento **despues de restaurar** es lo que dice que **los permisos
+            # viajaron en la copia** -- *y sin esto, el ensayo restauraba datos **sin comprobar que
+            # vinieran los permisos.*** *
+            for tabla in ("lista_linea", "usuario", "lista", "compra", "lista_acceso"):
                 cur.execute(f"SELECT count(*) FROM {tabla}")  # *tabla de una lista fija, no de fuera*
                 resultado[tabla] = cur.fetchone()[0]
         return resultado
