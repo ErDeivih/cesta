@@ -45,6 +45,7 @@ import sys
 import tempfile
 import time
 import uuid
+from datetime import date, timedelta
 
 PUERTO = 5434
 CLAVE = "prueba"
@@ -754,6 +755,179 @@ def main() -> int:
             if int(antes) >= sum(int(x["precio_cent"] or 0) * int(x["cantidad"]) for x in suyas):
                 fallos += 1
                 print("   FALLO: el escenario no aplico la oferta: es obligatorio que la aplique")
+
+    # == RECETAS Y CALORIAS: el recorrido que faltaba ====================================
+    #
+    # *** Hallazgo 6 del plan (`docs/SUPERAPP-PLAN-DEEPSEEK-2026-10-13.md:65-66`): *** *
+    #   *«El recorrido de Recetas/Calorias … *** observa estados vacios ***. *Prueba que las paginas
+    #   abren, *** no cinco recetas, cantidades, consumo y persistencia»***. *
+    #
+    # *Y **era verdad**: *este fichero cubria listas, compras, permisos, ofertas, pasillos, alertas y
+    # tiempos* *-- *y **no mencionaba `recetas` ni `diario` ni una vez.*** *
+    #
+    # *** Y se hace con DATOS CONOCIDOS ***, *que es lo que el plan pide: *numeros redondos, *para que
+    # **cualquier cifra rara se vea.** *
+    print("\n== recetas y calorias: cinco recetas, cantidades, compra, consumo y persistencia")
+    # *El sello, para que dos corridas seguidas no choquen en las claves de operacion.*
+    sello = uuid.uuid4().hex[:8]
+
+    # **La lista de la casa**, que es el destino que el puente del plan usa. Si no hay, se crea.
+    caseras = [casa for casa in almacen.listas_de(str(yo["id"])) if casa.get("es_de_casa")]
+    if not caseras:
+        caseras = [almacen.crea_lista(str(yo["id"]), "Casa del recorrido", es_de_casa=True)]
+    la_casa = str(caseras[0]["id"])
+
+    # --- 1) Las cinco recetas, con sus cantidades y sus comensales ------------------------
+    # *Dos de ellas **comparten el tomate** a proposito: *es el caso del dedupe por nombre que el plan
+    # marcaba en su hallazgo 3, *y **asi el recorrido lo pisa cada vez que corre.** *
+    recetas_de_prueba = [
+        ("Arroz con tomate", 2, [("Arroz", 200, "g"), ("Tomate", 300, "g")]),
+        ("Ensalada", 2, [("Lechuga", 200, "g"), ("Tomate", 150, "g")]),
+        ("Lentejas", 4, [("Lentejas", 400, "g"), ("Cebolla", 100, "g")]),
+        ("Tortilla", 3, [("Huevo", 300, "g"), ("Patata", 500, "g")]),
+        ("Pasta", 2, [("Pasta", 250, "g"), ("Tomate", 100, "g")]),
+    ]
+    hechas = []
+    for nombre, comensales, ing in recetas_de_prueba:
+        r = cliente.post("/api/recetas", json={
+            "nombre": f"{nombre} (recorrido)", "comensales": comensales, "pasos": "",
+            "ingredientes": [{"texto": t, "cantidad": c, "unidad": u} for t, c, u in ing],
+        })
+        if r.status_code not in (200, 201):
+            fallos += 1
+            print(f"   FALLO: no se pudo crear «{nombre}»: {r.status_code} {r.text[:120]}")
+            continue
+        hechas.append((r.json(), nombre))
+    print(f"   recetas creadas: {len(hechas)} de {len(recetas_de_prueba)}")
+    if len(hechas) != 5:
+        fallos += 1
+        print("   FALLO: no son cinco recetas")
+
+    # --- 2) Al plan, y del plan a la lista -- **y con las cantidades y los envases** -------
+    #
+    # *** Y aqui va LO DEL DUEÑO ***: *una necesidad **mayor que el envase** tiene que dar
+    # **mas de un envase**, *y **el numero tiene que estar en `cantidad`**, *no solo en la nota.*
+    hoy = date.today()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    for receta, _ in hechas:
+        r = cliente.post("/api/recetas/plan", json={"receta_id": receta["id"],
+                                                    "fecha": lunes.isoformat(), "comida": "comida"})
+        if r.status_code not in (200, 201):
+            fallos += 1
+            print(f"   FALLO: no se pudo poner en el plan: {r.status_code} {r.text[:120]}")
+    desde, hasta = lunes.isoformat(), (lunes + timedelta(days=6)).isoformat()
+    previa = cliente.get(f"/api/listas/{la_casa}/desde-el-plan",
+                         params={"desde": desde, "hasta": hasta})
+    if previa.status_code == 200:
+        print(f"   la previa dice: {previa.json().get('total')} lineas, "
+              f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
+    traido = cliente.post(f"/api/listas/{la_casa}/desde-el-plan", json={"desde": desde, "hasta": hasta})
+    if traido.status_code not in (200, 201):
+        fallos += 1
+        print(f"   FALLO: no se trajo el plan a la lista: {traido.status_code} {traido.text[:120]}")
+    cuerpo = cliente.get(f"/api/listas/{la_casa}").json()
+    suyas = cuerpo.get("lineas") or []
+    print(f"   la lista de la casa tiene {len(suyas)} lineas")
+    for ln in suyas:
+        print(f"     {str(ln.get('nombre_visto'))[:30]:32s} cantidad={ln.get('cantidad')} "
+              f"{ln.get('unidad')}  envases={ln.get('envases')}  nota={(ln.get('nota') or '')[:40]!r}")
+    # **Todas con cantidad**: *el defecto del dueño era **una linea con `cantidad = 1`** *cuando
+    # hacian falta mas.* *Aqui no se exige que sean > 1 -- hay ingredientes de un envase --, *
+    # *sino que **el numero este** *y que **si hay tamaño de envase, haya envases.** *
+    for ln in suyas:
+        if not ln.get("cantidad"):
+            fallos += 1
+            print(f"   FALLO: «{ln.get('nombre_visto')}» sin cantidad")
+        if ln.get("tamano_envase") and not ln.get("envases"):
+            fallos += 1
+            print(f"   FALLO: «{ln.get('nombre_visto')}» trae tamaño de envase "
+                  f"({ln.get('tamano_envase')}) y no trae envases")
+    # *** Y el caso exacto del dueño ***: *una necesidad **mayor que su envase** tiene que dar
+    # **dos o mas envases.** *Se busca entre las lineas traidas, *y si ninguna lo cumple **se dice**,
+    # *en vez de dar el caso por bueno sin haberlo visto.*
+    dobladas = [ln for ln in suyas
+                if ln.get("tamano_envase") and ln.get("unidad_envase") == ln.get("unidad")
+                and float(ln.get("cantidad") or 0) > float(ln.get("tamano_envase") or 0) > 0]
+    if dobladas:
+        for ln in dobladas:
+            print(f"   **el caso del dueño**: {ln.get('nombre_visto')} necesita "
+                  f"{ln.get('cantidad')} {ln.get('unidad')} en envases de "
+                  f"{ln.get('tamano_envase')} {ln.get('unidad_envase')}  ->  envases={ln.get('envases')}")
+            if int(ln.get("envases") or 0) < 2:
+                fallos += 1
+                print("   FALLO: necesidad mayor que el envase y menos de dos envases")
+    else:
+        print("   (ninguna linea traida tiene necesidad mayor que su envase: "
+              "el caso del dueño NO se ha podido ver aqui, y lo digo)")
+
+    # --- 3) El consumo: las porciones, y la cobertura dicha -------------------------------
+    #
+    # *** Y aqui la regla del encargo: *** *** «Compra no es consumo: el plan calcula nutricion
+    # prevista; el diario solo registra las porciones *** confirmadas *** por cada persona, *** con
+    # receta/version/snapshot *** y *** cobertura ***». *
+    if hechas:
+        receta, _ = hechas[0]
+        apunte = cliente.post("/api/diario", json={
+            "fecha": lunes.isoformat(), "comida": "comida", "tipo": "receta",
+            "referencia": str(receta["id"]), "cantidad_g": 250,
+            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}",
+        })
+        if apunte.status_code not in (200, 201):
+            fallos += 1
+            print(f"   FALLO: no se pudo apuntar la porcion: {apunte.status_code} {apunte.text[:120]}")
+        # **Y la misma operacion otra vez**: *tiene que dar **el mismo id**, *no dos apuntes.
+        # *Es la idempotencia por operacion, *que el encargo pide explicita y trazable.*
+        otra_vez = cliente.post("/api/diario", json={
+            "fecha": lunes.isoformat(), "comida": "comida", "tipo": "receta",
+            "referencia": str(receta["id"]), "cantidad_g": 250,
+            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}",
+        })
+        if apunte.status_code in (200, 201) and otra_vez.status_code in (200, 201):
+            if str(apunte.json().get("id")) != str(otra_vez.json().get("id")):
+                fallos += 1
+                print("   FALLO: la misma clave de operacion ha dado dos ids distintos")
+            else:
+                print(f"   la misma operacion dos veces -> el mismo id ({apunte.json().get('id')})")
+        # **Y una operacion DISTINTA** -- otra clave -- *tiene que dar **otro apunte**: *
+        # *dos comidas legitimas llevan claves distintas y se registran las dos.*
+        distinta = cliente.post("/api/diario", json={
+            "fecha": lunes.isoformat(), "comida": "cena", "tipo": "receta",
+            "referencia": str(receta["id"]), "cantidad_g": 180,
+            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}-cena",
+        })
+        if distinta.status_code in (200, 201) and apunte.status_code in (200, 201):
+            if str(distinta.json().get("id")) == str(apunte.json().get("id")):
+                fallos += 1
+                print("   FALLO: dos claves distintas han dado el mismo id")
+            else:
+                print("   y otra operacion distinta -> otro apunte")
+    # --- 4) *** Y QUE PERSISTA *** -------------------------------------------------------
+    #
+    # *Se vuelve a pedir todo, *y **si algo de esto no esta, el recorrido no vale.** *Es la ultima
+    # palabra del encargo: *** «que persisten tras recargar».** *
+    despues = cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or []
+    su_diario = cliente.get(f"/api/diario/{lunes.isoformat()}")
+    print(f"   tras recargar: {len(despues)} lineas (antes {len(suyas)})")
+    if len(despues) != len(suyas):
+        fallos += 1
+        print("   FALLO: tras recargar cambian las lineas")
+    if su_diario.status_code != 200:
+        fallos += 1
+        print(f"   FALLO: no se pudo releer el diario: {su_diario.status_code}")
+    else:
+        cuerpo_diario = su_diario.json()
+        entradas = cuerpo_diario.get("entradas") or cuerpo_diario.get("apuntes") or []
+        print(f"   el diario trae {len(entradas)} apuntes · "
+              f"kcal_conocida={cuerpo_diario.get('kcal_conocida')} · "
+              f"completo={cuerpo_diario.get('completo')}")
+        if not entradas:
+            fallos += 1
+            print("   FALLO: tras recargar no esta la porcion")
+        # *** Y la cobertura se DICE ***: *si no hay dato de kcal, tiene que decirlo, *
+        # *en vez de dejar un cero que parece un cero de verdad.*
+        if cuerpo_diario.get("kcal_conocida") is None and cuerpo_diario.get("completo"):
+            fallos += 1
+            print("   FALLO: dice completo sin conocer las kcal")
 
     almacen.para()
     print(f"\n== {'TODO BIEN' if not fallos else f'{fallos} FALLO(S)'}")

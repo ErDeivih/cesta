@@ -117,6 +117,23 @@ def crear(con: sqlite3.Connection, propietario: str, nombre: str, raciones: int 
         raise ValueError("una receta sin nombre no se puede buscar despues")
     if raciones < 1:
         raise ValueError("las raciones son al menos una")
+    # *** Y el dueno, COMO TEXTO -- *que es lo que esta funcion declara.* *** *
+    #
+    # *Encontrado el 14 de octubre de 2026, **al abrir `plataforma/prueba_e2e.py` a Recetas**: *
+    #   `sqlite3.ProgrammingError: Error binding parameter 3: type 'UUID' is not supported`
+    #
+    # *Y **no era SQLite, ni la ruta**: *era que **aqui se declara `propietario: str`** *y **no se
+    # comprobaba**. *Un ensayo que inyecta el usuario con `dependency_overrides[usuario_actual]`
+    # **salta la puerta HTTP** *y llega con un `UUID`; *y SQLite no lo acepta.* *
+    #
+    # *** Y el criterio lo tenia escrito el proyecto** *, donde este error aparecio la primera vez
+    # (`tests/test_revision_a09_compra_hogar.py:34-42`): *** *** «El id, siempre como texto…
+    # *Es el mismo error de siempre: dar por hecho el tipo de un dato en vez de leerlo.
+    # *** Aqui se lee, y se convierte. ***» *** *
+    #
+    # *Asi que **se lee, y se convierte** -- *y no se rechaza*: *un `UUID` de dueno **es el mismo dueno
+    # con otro tipo**, *y rechazarlo seria romper el uso legitimo de un ensayo.* *
+    propietario = str(propietario)
     momento = _ahora(ahora)
     cur = con.execute("INSERT INTO receta (nombre, creada, propietario) VALUES (?, ?, ?)",
                       (nombre.strip(), momento, propietario))
