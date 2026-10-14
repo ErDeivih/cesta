@@ -123,5 +123,25 @@ def test_contra_el_crudo_real():
         assert "<" not in texto or clave in ("id", "ean", "nombre"), (
             f"{fichero.name}: queda marcado sin quitar en {clave}: {texto[:80]}")
     # Y el texto es largo: una ficha no son dos palabras.
+    #
+    # *** PERO UN PRODUCTO DE UN INGREDIENTE TIENE UNA FICHA DE UNA PALABRA. *** *
+    #
+    # *Medido el 14/10/2026, contra el crudo de verdad*: *la ficha `3915` es **una Granada**, y su
+    # `ingredientes` es *** `"Granadas."` *** -- *** 9 caracteres *** -- *y **es una ficha completa**:
+    # *una granada es una granada.* *Y `allergens` es `x99`, *que el lector extrajo bien.* *
+    #
+    # *El umbral existia para cazar **capturas a medias** -- *una ficha que se quedo a la mitad --,
+    # *y **lo que hacia era confundir «ficha corta» con «ficha rota»**: *cualquier producto de un solo
+    # ingrediente **lo rompia.** *Que es **justo lo que un ensayo contra el crudo real sirve para
+    # encontrar.** *
+    #
+    # *Asi que el umbral se mantiene, *y **se perdona UN caso**: *cuando el ingrediente **es el
+    # producto** -- *que es **la unica razon legitima** para una ficha de una palabra.* *
+    # *Y no se perdona nada mas: *una ficha corta **que no sea su propio nombre** sigue fallando.* *
     if "ingredientes" in leido:
-        assert len(leido["ingredientes"]) > 40, f"{fichero.name}: ingredientes sospechosamente cortos"
+        nombre = str(leido.get("nombre") or "").strip().lower()
+        corta = len(leido["ingredientes"]) <= 40
+        suyo = bool(nombre) and nombre.rstrip("s") in str(leido["ingredientes"]).strip().lower()
+        assert not corta or suyo, (
+            f"{fichero.name}: ingredientes sospechosamente cortos "
+            f"({leido['ingredientes']!r}) y no es el nombre del producto ({nombre!r})")
