@@ -46,7 +46,7 @@ def _compose(*args: str) -> subprocess.CompletedProcess:
         capture_output=True, check=False)
 
 
-def respalda(bases=BASES, destino: Path | None = None) -> list[dict]:
+def respalda(bases=BASES, destino: Path | None = None, sello: str = "") -> list[dict]:
     """**Una copia coherente por cada base que exista.** *Y de la que no exista, se dice.*
 
     *El orden importa*: *`VACUUM INTO` **dentro** del contenedor -- *alli la base se abre y se cierra sola* --,
@@ -74,24 +74,31 @@ def respalda(bases=BASES, destino: Path | None = None) -> list[dict]:
                            "nota": copia.stderr.decode(errors="replace").strip()[:200]})
             continue
         # *Y se saca del contenedor con `cp`, que es la via del propio compose.*
-        saca = _compose("cp", f"{SERVICIO}:{temporal}", str(destino / base))
+        #
+        # **CON SELLO DE TIEMPO, como las de PostgreSQL.** *Y no es un adorno*: *con un nombre fijo, la
+        # copia de hoy **pisa la de ayer**, *asi que **una base estropeada sobrescribe la ultima buena**
+        # -- *que es justo cuando un respaldo hace falta.* *Con sello, hay historia y la rotacion la
+        # gobierna el mismo `forfiles` que ya rota las de PostgreSQL.*
+        nombre = f"{base[:-len('.sqlite')]}_{sello}.sqlite" if sello else base
+        saca = _compose("cp", f"{SERVICIO}:{temporal}", str(destino / nombre))
         _compose("exec", "-T", SERVICIO, "rm", "-f", temporal)
         if saca.returncode != 0:
             hechas.append({"base": base, "estado": "fallo",
                            "nota": saca.stderr.decode(errors="replace").strip()[:200]})
             continue
-        hechas.append({"base": base, "estado": "copiada",
-                       "bytes": (destino / base).stat().st_size})
+        hechas.append({"base": base, "estado": "copiada", "fichero": nombre,
+                       "bytes": (destino / nombre).stat().st_size})
     return hechas
 
 
 def _cli() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--destino", type=Path, default=None)
+    ap.add_argument("--sello", default="", help="sello de tiempo para el nombre, como en las de PostgreSQL")
     a = ap.parse_args()
-    for uno in respalda(destino=a.destino):
+    for uno in respalda(destino=a.destino, sello=a.sello):
         if uno["estado"] == "copiada":
-            print(f"  {uno['base']}: copiada, {uno['bytes']} bytes")
+            print(f"  {uno['fichero']}: copiada, {uno['bytes']} bytes")
         else:
             print(f"  {uno['base']}: {uno['estado']} -- {uno['nota']}")
     return 0

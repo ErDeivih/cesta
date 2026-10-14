@@ -2,10 +2,23 @@
 REM ============================================================================
 REM  Cesta: respaldo de PostgreSQL.
 REM
-REM  Es lo UNICO que hay que respaldar. Gold se regenera solo desde raw con
-REM  `ejecutar.bat`, y raw se vuelve a bajar de las webs. Pero las cuentas, las
-REM  listas y los favoritos solo existen aqui: si se pierde este volumen, se
-REM  pierde todo lo que habeis escrito vosotros.
+REM  **Y NO es lo unico, aunque esta cabecera lo decia.** *Lo que no se
+REM  regenera son TRES cosas, y este guion respaldaba UNA:*
+REM
+REM    - PostgreSQL  -> las cuentas, las listas, la compra y los favoritos
+REM    - recetas.sqlite -> EL RECETARIO
+REM    - diario.sqlite  -> EL DIARIO, lo que cada uno ha comido
+REM
+REM  Gold se regenera solo desde raw con `ejecutar.bat`, y raw se vuelve a
+REM  bajar de las webs -- eso sigue siendo verdad. Pero los otros dos NO son
+REM  crudo ni se recalculan, y lo dice `docker-compose.yml:60-66` con estas
+REM  palabras: *"no son crudo ni se recalculan -- son lo que la casa ha
+REM  escrito"*, y avisa de que **`robocopy data\raw` NO LOS VE**.
+REM
+REM  *Y no son el fichero del host*: viven en el volumen `datos_api`
+REM  (`/app/data`), y el compose explica por que no es un `bind` a `../data`.
+REM  *Asi que se copian DEL VOLUMEN y con `VACUUM INTO` -- coherentes aunque
+REM  la API los tenga abiertos --, que es lo que hace `scripts/respaldar_sqlite.py`.*
 REM
 REM    respaldar.bat              guarda uno nuevo y borra los de mas de 30 dias
 REM    respaldar.bat restaurar <fichero.sql.gz>
@@ -98,9 +111,23 @@ del "%FICHERO%"
 echo   Guardado: %FICHERO%.gz
 for %%A in ("%FICHERO%.gz") do echo   Tamano:   %%~zA bytes
 
+REM *** Y LAS DOS SQLITE, que este guion no respaldaba. ***
+REM *Se copian DEL VOLUMEN y con `VACUUM INTO` -- coherentes aunque la API las tenga abiertas --,
+REM y con el MISMO sello de tiempo que la de PostgreSQL.*
+echo   Respaldando el recetario y el diario...
+uv run python "%~dp0..\scripts\respaldar_sqlite.py" --destino "%DESTINO%" --sello "%CUANDO%"
+if errorlevel 1 (
+  echo El respaldo de las SQLite fallo. El de PostgreSQL SI se guardo.
+  exit /b 1
+)
+
 REM Los de mas de 30 dias sobran: con dos usuarios esto son kilobytes, pero un
 REM directorio que crece para siempre acaba siendo un problema de otro dia.
 forfiles /p "%DESTINO%" /m *.sql.gz /d -30 /c "cmd /c del @path" 2>nul
+REM *Y las de las SQLite, con el mismo plazo.* Llevan sello de tiempo, asi que tambien se
+REM acumulan. *Si se llamaran siempre igual no haria falta -- y seria peor: la copia de hoy
+REM pisaria la de ayer, que es justo cuando un respaldo hace falta.*
+forfiles /p "%DESTINO%" /m *.sqlite /d -30 /c "cmd /c del @path" 2>nul
 
 echo.
 echo   Respaldos que hay ahora:
