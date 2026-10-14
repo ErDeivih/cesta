@@ -18,6 +18,23 @@ import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
+/** *** Las comidas del dia, *y **el orden importa.** *** *
+ *
+ * *Es **el mismo vocabulario que `core/diario.py:COMIDAS`**, *y **a proposito**: *el diario y el plan
+ * **tienen que llamar igual a lo mismo**, *porque **un plan que diga «cena» y un diario que diga
+ * «Cena»** son **dos cosas distintas para quien los lee.** *
+ *
+ * *Y **aqui hace falta la lista y no solo el dato** porque el API manda **las comidas que hay**, *
+ * *no **todas las que podrian haber**: *si se pintara en el orden que llega la consulta, *
+ * *la pantalla **bailaria** entre recargas *-- *y «merienda» apareceria antes de «comida» un dia si
+ * y otro no.* *
+ *
+ * *Si algun dia se anade una comida **al diario**, *hay que anadirla **aqui tambien**: *esta constante
+ * es **un espejo**, *y **lo unico que impide que se separen** es que **el ensayo del diario** siga
+ * pasando *(-- *y que quien lea esto sepa que el original esta en Python.* --)*
+ */
+const COMIDAS = ['desayuno', 'media manana', 'comida', 'merienda', 'cena', 'otras']
+
 function fechaLocal(d: Date): string {
   const mes = String(d.getMonth() + 1).padStart(2, '0')
   const dia = String(d.getDate()).padStart(2, '0')
@@ -229,12 +246,33 @@ export function PlanSemanal() {
   const dias = laSemana()
   const [abierto, setAbierto] = useState<string | null>(null)
   const { data, isPending, error } = usePlan(dias[0], dias[dias.length - 1])
-  const porFecha = new Map<string, { nombre: string; version: number; comensales: number }[]>()
+  // *** Y el plan se agrupa **por dia Y por comida**, *que es lo que el modelo ahora distingue. *** *
+  //
+  // *Hasta el 14/10/2026 esto era un mapa por **fecha**, *y **descartaba** la comida y las raciones
+  // porque **no existian**: *el plan era `(fecha, receta_id)`, *una receta por dia. *Hoy la clave es
+  // **`(fecha, comida, receta_id)`**, *asi que **la misma receta puede ir a la comida y a la cena**,
+  // *y **cada una con sus raciones** -- *y si la pantalla siguiera agrupando por fecha, **se verian
+  // dos veces sin decir por que.** *
+  const porFechaYComida = new Map<
+    string,
+    { nombre: string; version: number; comensales: number; comida: string; raciones: number | null }[]
+  >()
   for (const linea of data?.plan ?? []) {
-    const lista = porFecha.get(linea.fecha) ?? []
-    lista.push({ nombre: linea.nombre, version: linea.version, comensales: linea.comensales })
-    porFecha.set(linea.fecha, lista)
+    const clave = `${linea.fecha}|${linea.comida}`
+    const lista = porFechaYComida.get(clave) ?? []
+    lista.push({
+      nombre: linea.nombre,
+      version: linea.version,
+      comensales: linea.comensales,
+      comida: linea.comida,
+      raciones: linea.raciones,
+    })
+    porFechaYComida.set(clave, lista)
   }
+  // *Y **las comidas que hay ese dia**, en el orden del vocabulario del diario -- *no en el que
+  // devuelva la consulta --, *para que la pantalla **no baile** entre recargas.* *
+  const comidasDelDia = (fecha: string) =>
+    COMIDAS.filter((c) => porFechaYComida.has(`${fecha}|${c}`))
 
   return (
     <div className="flex flex-col gap-3">
@@ -250,7 +288,9 @@ export function PlanSemanal() {
 
       <ul className="flex flex-col gap-2">
         {dias.map((fecha) => {
-          const lineas = porFecha.get(fecha) ?? []
+          // *** Y dentro del dia, **una seccion por comida** *-- *y **en el orden del vocabulario**,
+          // *no en el que devuelva la consulta.* *
+          const comidas = comidasDelDia(fecha)
           return (
             <li key={fecha}>
               <Tarjeta>
@@ -267,19 +307,38 @@ export function PlanSemanal() {
                   </button>
                 </div>
 
-                {lineas.length === 0 ? (
+                {comidas.length === 0 ? (
                   <p className="mt-1 text-[13px] text-secundaria">Nada planificado.</p>
                 ) : (
-                  <ul className="mt-1 flex flex-col gap-1">
-                    {lineas.map((l) => (
-                      <li key={`${l.nombre}-${l.version}`} className="text-[16px] text-tinta-fuerte">
-                        {l.nombre}{' '}
-                        <span className="text-[13px] text-secundaria tabular-nums">
-                          v{l.version} · para {l.comensales}
-                        </span>
-                      </li>
+                  <div className="mt-1 flex flex-col gap-2">
+                    {comidas.map((comida) => (
+                      <div key={comida}>
+                        {/* *La comida, dicha **con su nombre** -- *que es lo que distingue dos
+                            lineas de la misma receta el mismo dia.* */}
+                        <p className="text-[13px] uppercase tracking-wide text-secundaria">{comida}</p>
+                        <ul className="flex flex-col gap-1">
+                          {(porFechaYComida.get(`${fecha}|${comida}`) ?? []).map((l) => (
+                            <li
+                              key={`${l.nombre}-${l.version}`}
+                              className="text-[16px] text-tinta-fuerte"
+                            >
+                              {l.nombre}{' '}
+                              <span className="text-[13px] text-secundaria tabular-nums">
+                                v{l.version} · para {l.comensales}
+                                {/* *** Y las raciones, *donde `null` NO es cero. *** *
+                                    *`null` quiere decir **«las de la receta»**, *asi que se dice
+                                    *-- *y **no se pone «0 raciones»**, *que seria **inventar un
+                                    * dato** *y ademas **el contrario** del que hay.* */}
+                                {l.raciones === null
+                                  ? ' · las raciones de la receta'
+                                  : ` · ${l.raciones} raciones`}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
 
                 {abierto === fecha && <PonerEnUnDia fecha={fecha} alPoner={() => setAbierto(null)} />}
