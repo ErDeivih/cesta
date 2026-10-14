@@ -52,8 +52,26 @@ if /i "%~1"=="restaurar" (
 for /f %%d in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm"') do set CUANDO=%%d
 set FICHERO=%DESTINO%\cesta_%CUANDO%.sql
 
-docker compose ps db 2>nul | findstr /i "running" >nul
-if errorlevel 1 (
+REM **La comprobacion, por el ID y no por una palabra de la tabla.**
+REM
+REM *Aqui habia `docker compose ps db | findstr /i "running"`, y **dejo de funcionar sin que nadie
+REM tocara el guion**: *Docker Compose cambio el formato de `ps`, y la columna STATUS hoy dice
+REM **«Up 22 hours (healthy)»**, no «running». *Asi que el `findstr` **no encontraba nada**, el
+REM `errorlevel` daba 1, y el guion **abortaba diciendo que la base no estaba levantada -- con la base
+REM levantada y sana.*
+REM
+REM *Y la consecuencia no era un mensaje feo*: **era que Cesta se quedaba SIN RESPALDO** de lo unico
+REM que no se puede regenerar. *Lo dice la cabecera de este mismo fichero: las cuentas, las listas y los
+REM favoritos solo existen en ese volumen.* *Y `data\respaldos` **no existia**: la carpeta la crea este
+REM guion, asi que **nunca se habia ejecutado con exito.***
+REM
+REM *Ahora se pregunta por el ID del contenedor.* `--status running -q` **no imprime nada si no corre**,
+REM *y eso si es una respuesta del estado y no una coincidencia de texto.* *La leccion es la misma que la
+REM del `isdigit()` y la de `linea_con_destino`: **no se comprueba por como se llama algo, sino por lo
+REM que hace.***
+set CORRIENDO=
+for /f %%i in ('docker compose ps --status running -q db 2^>nul') do set CORRIENDO=%%i
+if "!CORRIENDO!"=="" (
   echo La base de datos no esta levantada. Arranca primero con arrancar.bat
   exit /b 1
 )
