@@ -95,3 +95,60 @@ evidencia»** *—* *y la fila del control decia: *** «B07 · cerrado como lect
    *y las cinco de B05 (conflicto por contenido, concurrencia, caida a mitad, dos pestañas,
    destino distinto)* ✓
 ```
+
+---
+
+## 7. Y B07 mirado entero: **los temporizadores estan, la foto esta, y «duplicar semana» no**
+
+```
+*** LOS TEMPORIZADORES Y LA COCINA RECUPERABLE ***  *** ESTAN *** ✓ *
+   *-- `core/cocina.py` *(-- *F10 / R05 --)*, *con *** `tests/test_fase2_f10_cocina.py` *** ✓ *
+   *-- *y **la doctrina escrita**: *** «*un temporizador *** NO ES UNA CUENTA ATRAS ***» *** *
+      *-- *«*[el] transcurrido *** se pierde *** *-- *y quien esta cocinando *** no se entera ***»* *
+      *-- *** «*Un temporizador es una *** HORA DE FIN ***» ***, *y **«se guarda `empezo_en` y `minutos`»** ✓ *
+   *-- *y **«el paso actual es estado, y el estado se guarda»** *-- *que es **la reanudacion** ✓✓✓
+   *-- *y `l47`: *«*ponerle uno seria *** inventarle una instruccion a quien cocina ***» ✓
+*** LA FOTO ***  *** ESTA *** ✓ *-- `core/schemas.py:70`: `"imagen": pl.Utf8` *
+*** «REPETIR / DUPLICAR SEMANA» ***  *** NO ESTA *** ⚠️ *
+   *-- *y **ahora con fundamento**: *no un grep de palabras *(-- *que me fallo cuatro veces --)*, *
+      *** sino LA LISTA ENTERA DE RUTAS ***, *que es **el contrato de la API**: *
+      *`GET|POST /` · *`GET|POST /plan` · *`GET /plan/prevision` · *`GET /{id}` · *
+      *`GET|POST /{id}/a-la-lista` · *`GET /{id}/versiones` · *`PUT /{id}` · *
+      *`POST /{id}/archivar` · *`DELETE /plan` · *`POST /importar`* ✓
+   *-- *hay **borrar el plan** y **poner una receta en un dia**; *
+      *** no hay copiar la semana pasada a la siguiente *** ✓✓✓
+```
+
+## 8. Y los tres paquetes «cerrados por lectura», con los huecos **clasificados**
+
+```
+*** B05 ***  *** IMPLEMENTADO *** ✓ *
+   *-- *conflicto por clave · *huellas de contenido · *`momento` con **5 ensayos** de dos pestañas · *
+      *fichero de concurrencia · *lease con vencimiento · *y **`lista_id` de la URL** (destino distinto) ✓
+*** B06 ***  *** IMPLEMENTADO (5) · LIMITADO POR LA FUENTE (1) · DESCONOCIDO (1) *** ✓ *
+   *-- *densidad (7 ensayos) · *cobertura por nutriente · *inventario/cola/presupuesto · *
+      *100g/100ml/porcion con selector · *nativo vs enriquecido ✓ *
+   *-- *«preparado / vendido»: *** la fuente no lo publica *** ✓ *
+   *-- *la causa concreta de cada hueco: *** desconocida *** ✓
+*** B07 ***  *** TENIA UN SSRF (cerrado) · IMPLEMENTADO en cocina y foto · y UN HUECO (duplicar semana) *** ⚠️✓ *
+   *-- *el SSRF: *** cerrado ***, *con `abre_con_guarda` y **5 ensayos** de la ruta ✓✓✓ *
+   *-- *temporizadores y cocina: **con su doctrina y su ensayo** ✓ *
+   *-- *la foto: **la columna existe** ✓ *
+   *-- *y **«duplicar semana»: NO ESTA**, *y **es un hueco DEL PROYECTO** *(-- *se puede escribir sin
+      depender de nadie --)* ⚠️✓ *
+```
+
+> ***Y **la conclusion de la tanda**, que es lo que hay que entregar: *
+> ```
+> *** LOS TRES DECIAN «CERRADO COMO LECTURA» *** ⚠️ *
+> *** Y AL REABRIRLOS ***: *
+>    *-- *** dos huecos reales ***: *uno *** cerrado*** (SSRF), *y **otro *** medido y abierto***
+>       (duplicar semana) ✓
+>    *-- *** una limitacion de la fuente *** (preparado/vendido) ✓
+>    *-- *** y mucho implementado que la fila no contaba ***: *densidad con 7 ensayos, *cobertura por
+>       nutriente, *lease con vencimiento, *5 ensayos de dos pestañas, *modo cocina con su doctrina… ✓
+> *** -> y **los dos huecos se distinguen de la limitacion** *por **una cosa**: *
+>    *** ¿depende de que alguien publique algo? *** *
+>    *-- *el SSRF y duplicar semana: *** no *** -> **huecos del proyecto** ✓
+>    *-- *preparado/vendido: *** si *** -> **limitacion de la fuente** ✓✓✓
+> ```
