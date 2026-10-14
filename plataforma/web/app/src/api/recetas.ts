@@ -122,6 +122,25 @@ export function useArchivarReceta() {
 
 export type LineaPlan = {
   fecha: string
+  /**
+   * *** En que comida va, *que es **lo que da identidad a la ocurrencia.** *** *
+   *
+   * *El API la manda desde que el plan dejo de ser `(fecha, receta_id)`: *hoy la clave es
+   * **`(fecha, comida, receta_id)`**, *asi que **la misma receta puede ir a la comida y a la cena
+   * el mismo dia**, *y cada una **con sus raciones.** *
+   *
+   * *Y los valores son los de `core/diario.py:COMIDAS`* *-- «desayuno», «media manana», «comida»,
+   * «merienda», «cena», «otras» --, *porque **el diario y el plan tienen que llamarlo igual.** *
+   */
+  comida: string
+  /**
+   * *** Las raciones **de esa vez**, *y `null` quiere decir «las de la receta».** *** *
+   *
+   * *No es un hueco: *es **la respuesta correcta** *cuando no se dijo nada. *Y **no se rellena aqui**
+   * con las de la receta, *porque **el dia que la receta cambie**, *lo que se cocino **aquel dia
+   * no cambia.** *
+   */
+  raciones: number | null
   comensales: number
   version: number
   receta_id: number
