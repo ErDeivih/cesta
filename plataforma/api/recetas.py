@@ -74,6 +74,16 @@ class PlanIn(BaseModel):
     receta_id: int
     comensales: int = Field(default=2, ge=1)
     version: int | None = None
+    # *** Y la ocurrencia se puede nombrar: en que comida, y cuantas raciones. *** *
+    #
+    # *`comida` tiene por defecto `"comida"` **porque es lo que significaba el modelo viejo**
+    # *(-- *una receta por dia, *a la comida --)*, *asi que **un cliente que no lo mande sigue
+    # diciendo lo mismo que decia.** *
+    #
+    # *Y `raciones = None` quiere decir *** «las de la receta» *** *-- *y **no se copian**, *
+    # *porque **el dia que la receta cambie**, *lo que se cocino **aquel dia no cambia.*** *
+    comida: str = "comida"
+    raciones: int | None = Field(default=None, ge=1)
 
 
 def _como_filas(ingredientes: list[IngredienteIn] | None) -> list[dict] | None:
@@ -121,7 +131,8 @@ def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
     con = _con()
     try:
         recetas.planificar(con, usuario["id"], datos.fecha, datos.receta_id,
-                           comensales=datos.comensales, version=datos.version)
+                           comensales=datos.comensales, version=datos.version,
+                           comida=datos.comida, raciones=datos.raciones)
         return {"plan": recetas.plan(con, usuario["id"], datos.fecha, datos.fecha)}
     except ValueError as fallo:
         raise HTTPException(status_code=404, detail=str(fallo)) from fallo
@@ -471,6 +482,7 @@ def archivar(receta_id: int, archivada: bool = True,
 
 @rutas.delete("/plan")
 def quitar_plan(fecha: str = Query(...), receta_id: int = Query(...),
+                comida: str | None = Query(default=None),
                 usuario: dict = Depends(usuario_actual)) -> dict:
     """Quitar una receta de un dia. **Va al final a proposito y no puede chocar**: no hay ninguna otra ruta
     DELETE en este router, asi que la trampa del orden de rutas no aplica aqui.
@@ -480,7 +492,7 @@ def quitar_plan(fecha: str = Query(...), receta_id: int = Query(...),
     """
     con = _con()
     try:
-        if not recetas.quitar_del_plan(con, usuario["id"], fecha, receta_id):
+        if not recetas.quitar_del_plan(con, usuario["id"], fecha, receta_id, comida=comida):
             raise HTTPException(status_code=404, detail="ese dia no tiene esa receta planificada")
         return {"quitada": receta_id, "fecha": fecha}
     except ValueError as fallo:
