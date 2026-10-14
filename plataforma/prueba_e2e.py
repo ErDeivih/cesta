@@ -815,6 +815,70 @@ def main() -> int:
         if r.status_code not in (200, 201):
             fallos += 1
             print(f"   FALLO: no se pudo poner en el plan: {r.status_code} {r.text[:120]}")
+    # *** Y LA OCURRENCIA ***, *que es lo que B07 pide con «varias comidas por dia» *
+    # *y «raciones por ocurrencia» -- *y hasta el 14/10/2026 **no se podia**: *la clave era
+    # `(fecha, receta_id)`, *una receta por dia.* *
+    #
+    # *Se pone **la misma receta otra vez, a la cena**, *con **sus raciones** *-- que son **de esa
+    # ocurrencia** *y **no de la receta**.* *
+    if hechas:
+        la_primera = hechas[0][0]
+        r = cliente.post("/api/recetas/plan", json={
+            "receta_id": la_primera["id"], "fecha": lunes.isoformat(),
+            "comida": "cena", "comensales": 2, "raciones": 2})
+        if r.status_code not in (200, 201):
+            fallos += 1
+            print(f"   FALLO: no se pudo poner la cena: {r.status_code} {r.text[:120]}")
+
+        leido = cliente.get("/api/recetas/plan",
+                            params={"desde": lunes.isoformat(), "hasta": lunes.isoformat()})
+        suyas = [x for x in (leido.json().get("plan") or [])
+                 if x["receta_id"] == la_primera["id"]] if leido.status_code == 200 else []
+        comidas = sorted(x["comida"] for x in suyas)
+        if comidas != ["cena", "comida"]:
+            fallos += 1
+            print(f"   FALLO: la misma receta deberia estar a la comida y a la cena, y esta en {comidas}")
+        else:
+            print(f"   la misma receta esta dos veces el mismo dia: {comidas}")
+        la_cena = next((x for x in suyas if x["comida"] == "cena"), None)
+        if la_cena is None or la_cena.get("raciones") != 2:
+            fallos += 1
+            print(f"   FALLO: la cena deberia llevar sus 2 raciones: {la_cena}")
+        else:
+            print("   y la cena lleva sus 2 raciones, que son de la ocurrencia y no de la receta")
+
+    # *** Y LA COPIA DE SEMANA ***, *que es lo otro que B07 pide -- *y que solo se puede ofrecer
+    # desde que la ocurrencia tiene identidad: *antes **no habia que copiar.** *
+    #
+    # *Y lo que se comprueba es **el recibo**, *no un «hecho»: *porque «hecho» no dice si copio
+    # tres o ninguna, *y **lo que ya estaba NO se pisa** *(-- *lo dice B05: *misma clave con
+    # contenido distinto produce conflicto, no exito ficticio --).* *
+    siguiente = (lunes + timedelta(days=7)).isoformat()
+    copia = cliente.post("/api/recetas/plan/semana",
+                         json={"desde": lunes.isoformat(), "hacia": siguiente})
+    if copia.status_code != 201:
+        fallos += 1
+        print(f"   FALLO: no se pudo copiar la semana: {copia.status_code} {copia.text[:120]}")
+    else:
+        recibo = copia.json()
+        print(f"   copiar la semana: {recibo['creadas']} creadas, {recibo['ya_estaban']} ya estaban")
+        # *Y **la segunda vez no crea nada**, *que es lo que dice que **no pisa.** *
+        otra = cliente.post("/api/recetas/plan/semana",
+                            json={"desde": lunes.isoformat(), "hacia": siguiente})
+        if otra.status_code != 201 or otra.json()["creadas"] != 0:
+            fallos += 1
+            print(f"   FALLO: copiar dos veces deberia crear 0, y creo {otra.text[:120]}")
+        else:
+            print(f"   y copiarla otra vez crea 0 y respeta las {otra.json()['ya_estaban']} que ya estaban")
+        # *Y **el destino esta**, *que es lo que hace que el recibo no sea una promesa.* *
+        enlaotra = cliente.get("/api/recetas/plan", params={"desde": siguiente, "hasta": siguiente})
+        cuantas = len(enlaotra.json().get("plan") or []) if enlaotra.status_code == 200 else -1
+        if cuantas != recibo["creadas"]:
+            fallos += 1
+            print(f"   FALLO: el recibo dice {recibo['creadas']} y en la semana siguiente hay {cuantas}")
+        else:
+            print(f"   y en la semana siguiente hay {cuantas}, que es lo que dice el recibo")
+
     desde, hasta = lunes.isoformat(), (lunes + timedelta(days=6)).isoformat()
     previa = cliente.get(f"/api/listas/{la_casa}/desde-el-plan",
                          params={"desde": desde, "hasta": hasta})
