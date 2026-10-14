@@ -818,7 +818,6 @@ def main() -> int:
     desde, hasta = lunes.isoformat(), (lunes + timedelta(days=6)).isoformat()
     previa = cliente.get(f"/api/listas/{la_casa}/desde-el-plan",
                          params={"desde": desde, "hasta": hasta})
-    cuerpo_previa = previa.json() if previa.status_code == 200 else {}
     if previa.status_code == 200:
         print(f"   la previa dice: {previa.json().get('total')} lineas, "
               f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
