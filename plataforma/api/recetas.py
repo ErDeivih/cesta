@@ -374,8 +374,16 @@ def a_la_lista(receta_id: int, datos: ALaLista,
                 detalle += f" · {ln.envases} envase{'s' if ln.envases != 1 else ''}"
                 if ln.sobrante:
                     detalle += f", sobran {ln.sobrante:g} {ln.unidad_envase or ln.unidad}"
+            else:
+                # **Y cuando el tamano del envase no se conoce, se DICE.** *Callarlo se leia como «un
+                # envase basta», que es justo lo que no se sabe.*
+                detalle += " · no se sabe el tamano del envase"
             if ln.de_donde:
                 detalle += " · " + " + ".join(ln.de_donde)
+            # **Y la cantidad son LOS ENVASES.** *Era `1` fijo, y con eso **«dos envases» solo existia en
+            # la nota**: la linea decia 1, y el coste, el cierre y el historico leian 1.*
+            # *Y cuando no hay envases calculados queda `1`, porque la columna es `NOT NULL` -- pero
+            # **la nota ya dice que no se sabe**, asi que ese `1` no afirma nada.*
             almacen.anade_linea(
                 datos.lista_id, usuario["id"], traspaso.id_de_linea(datos.lista_id, ln.clave),
                 ln.texto,
@@ -384,7 +392,7 @@ def a_la_lista(receta_id: int, datos: ALaLista,
                 # producto **o** grupo.
                 ln.grupo_id,
                 int(ln.producto_id) if (ln.producto_id or "").isdigit() else None,
-                1, detalle, None)
+                ln.envases or 1, detalle, None)
         return datos.lista_id
 
     con = _con()

@@ -1628,9 +1628,14 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
 
     Comparte el calculo con la previa a proposito: si fueran dos codigos, uno de los dos mentiria.
 
-    **La cantidad va a la nota, no al campo de cantidad.** La lista cuenta unidades de un producto y la
-    receta habla en gramos: poner 400 en `cantidad` diria «400 envases». Se anade una unidad y el detalle
-    se guarda donde se lee.
+    **La cantidad del campo `cantidad` son LOS ENVASES, no los gramos ni una unidad fija.** La lista
+    cuenta envases de un producto y la receta habla en gramos: poner `400` diria «400 envases». *Y por eso
+    la respuesta no es `400` **ni `1`**: es **el numero de envases que la previa ya calcula** -- *«cuenta
+    los envases enteros»* --, *asi que 1,4 kg de un producto en envase de 1 kg guardan **dos**.*
+    *Y los gramos, el sobrante y de que recetas viene van a la nota, que es donde se leen.*
+
+    *Y cuando el tamano del envase no se conoce, la cantidad se queda en `1` -- la columna es
+    `NOT NULL` --, **pero la nota lo dice**, para que ese `1` no se lea como «un envase basta».*
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
     planificadas, ya, _calculada = _del_plan(lista_id, usuario["id"], desde, hasta)
@@ -1665,10 +1670,24 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
             detalle += f" · {uno.envases} envase{'s' if uno.envases != 1 else ''}"
             if uno.sobrante:
                 detalle += f", sobran {uno.sobrante:g} {uno.unidad_envase or uno.unidad}"
+        else:
+            # **Y cuando el tamano del envase no se conoce, se DICE.** *Antes se callaba, y el silencio
+            # se leia como «un envase basta» -- que es justo lo que no se sabe.*
+            detalle += " · no se sabe el tamano del envase"
         # *El id, determinista por la clave*: **repetir la operacion no duplica.**
+        #
+        # **Y la cantidad que se persiste son LOS ENVASES, no los gramos.** *El comentario de arriba
+        # tenia razon en el problema -- poner 400 diria «400 envases» -- y se equivocaba en la salida:
+        # **escribir 1 tampoco es la respuesta**, porque cuando la previa calcula **dos envases** la
+        # cantidad que se guarda tiene que ser **dos**. *Y la unidad correcta ya existia, dicha en
+        # `previa_compra`: **«cuenta los envases enteros»**.*
+        #
+        # *Y cuando no hay envases calculados, queda `1` -- porque `lista_linea.cantidad` es
+        # `integer NOT NULL` y **«no se sabe» no cabe en la columna** --, pero **la nota ya lo dice**, asi
+        # que el `1` no afirma nada.*
         almacen.anade_linea(lista_id, usuario["id"],
                             str(uuid.uuid5(uuid.NAMESPACE_URL, f"{lista_id}|{uno.clave}")), nombre,
-                            uno.grupo_id, uno.producto_id, 1, detalle)
+                            uno.grupo_id, uno.producto_id, uno.envases or 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
         ya.add(nombre.lower())
