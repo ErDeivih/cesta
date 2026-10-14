@@ -1647,11 +1647,21 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         if nombre.lower() in ya:
             ya_estaban.append(nombre)
             continue
-        # **Lo que no tiene destino no se manda.** Antes se mandaba con `None, None` y la base lo
-        # rechazaba con un 500: el puente no metia nada y no lo decia.
-        if uno.producto_id is None and uno.grupo_id is None:
+        # **Lo que no tiene destino SE APUNTA IGUAL, como «pendiente de identificar».** *Antes esta linea
+        # hacia `continue` -- y su motivo era cierto cuando se escribio: `linea_con_destino` obligaba a
+        # grupo o producto y **la base lo rechazaba con un 500**. Pero **ese suelo cambio**: la migracion
+        # `014_la_linea_sin_destino.sql` quito la restriccion, y dice por que -- *«la restriccion
+        # protegia la comparacion y **prohibia la lista**: quien no encontraba el producto en el catalogo
+        # **no podia apuntarlo, y acababa apuntandolo en otro sitio**»*.*
+        #
+        # *Y lo que la sustituye es lo que este puente tiene que hacer: la linea **existe y se lee** -- se
+        # presenta como **«Pendiente de identificar»**, no como un producto --, **no entra en ninguna
+        # comparacion de precios ni de nutricion**, *y **no se le inventa precio ni equivalencia**:
+        # `precio_cent` e `importe_cent` se quedan NULL, que es la verdad. *Y **los totales la dejan
+        # fuera**, que es distinto de contarla como cero.*
+        pendiente = uno.producto_id is None and uno.grupo_id is None
+        if pendiente:
             sin_destino.append(nombre)
-            continue
         # **La nota dice TODAS las recetas que aportan**, y el total ya sumado. *Antes decía solo la
         # primera* -- *«del plan: Receta 1 (100 g)» -- **y los otros 100 g no aparecian por ningun
         # lado**, asi que la nota no solo callaba una receta: callaba la mitad de lo que hay que
@@ -1674,6 +1684,11 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
             # **Y cuando el tamano del envase no se conoce, se DICE.** *Antes se callaba, y el silencio
             # se leia como «un envase basta» -- que es justo lo que no se sabe.*
             detalle += " · no se sabe el tamano del envase"
+        if pendiente:
+            # **Y si no tiene destino, tambien se dice.** *«Pendiente de identificar» es lo que la
+            # pantalla enseña, y `sin_catalogo` lo que devuelve esta llamada: **la misma verdad en los dos
+            # sitios**, que es lo que evita que una linea apuntada a medias parezca un producto.*
+            detalle += " · pendiente de identificar (sin catalogo)"
         # *El id, determinista por la clave*: **repetir la operacion no duplica.**
         #
         # **Y la cantidad que se persiste son LOS ENVASES, no los gramos.** *El comentario de arriba
