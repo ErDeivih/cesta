@@ -122,6 +122,28 @@ def comprueba_dsn(dsn: str) -> None:
         raise DestinoNoSeguro("el DSN no nombra una base")
 
 
+def comprueba_base_vacia(cur) -> None:
+    """**La base tiene que existir y estar VACIA.** *Y era **una regla escrita y no comprobada*** hasta
+    que se escribio esta funcion: *el docstring la pedia desde el principio y **nadie la ejecutaba.** *
+
+    *Una base **con tablas** no es un destino desechable: *es **una base con datos de alguien**, *y
+    restaurar encima de ella **sobrescribe lo que hubiera** -- *que es exactamente lo que el encargo
+    prohibe.*
+
+    *Y se pregunta por `information_schema.tables` **filtrando por `public`**: *es el esquema que el guion
+    viejo borraba, asi que es **el que hay que saber si tiene algo.** *
+    """
+    cur.execute(
+        "SELECT count(*) FROM information_schema.tables "
+        "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
+    fila = cur.fetchone()
+    cuantas = int((fila[0] if isinstance(fila, (list, tuple)) else fila) or 0)
+    if cuantas:
+        raise DestinoNoSeguro(
+            f"la base tiene {cuantas} tablas: NO es un destino desechable, es una base con datos de "
+            "alguien -- y restaurar encima sobrescribe lo que hubiera")
+
+
 def contenedores_con_etiqueta() -> list[str]:
     """**Solo los que llevan LA etiqueta del ensayo.** *Es lo que autoriza a borrarlos.*
 

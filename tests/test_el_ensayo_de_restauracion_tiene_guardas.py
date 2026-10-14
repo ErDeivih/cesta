@@ -152,3 +152,43 @@ def test_el_plan_no_toca_docker(capsys, monkeypatch):
     salida = capsys.readouterr().out
     assert "cesta-restauro-" in salida, salida
     assert "5432" in salida and "5433" in salida and "5434" in salida, salida
+
+
+# ===================== la base: tiene que estar VACIA =====================
+
+class _CursorFalso:
+    """*Un cursor de mentira que contesta lo que se le diga.* *Sin base y sin Docker.*"""
+
+    def __init__(self, cuantas):
+        self.cuantas = cuantas
+        self.pregunta = None
+
+    def execute(self, sql):
+        self.pregunta = sql
+
+    def fetchone(self):
+        return (self.cuantas,)
+
+
+def test_una_base_con_tablas_se_rechaza():
+    """*** Una base con datos de alguien NO es un destino desechable. *** *
+
+    *Y esta guarda existia **solo como regla escrita** hasta que se implemento: *es la septima vez en esta
+    sesion que **una afirmacion sobrevive al codigo que la describia** -- *y la primera en que la escribo
+    yo en el mismo commit que la declara.*
+    """
+    with pytest.raises(ensayo.DestinoNoSeguro) as fallo:
+        ensayo.comprueba_base_vacia(_CursorFalso(7))
+    assert "7 tablas" in str(fallo.value), "y el mensaje dice CUANTAS"
+
+
+def test_una_base_vacia_pasa():
+    ensayo.comprueba_base_vacia(_CursorFalso(0))
+
+
+def test_la_guarda_pregunta_por_el_esquema_public():
+    """*Y por `public`, que es **el que el guion viejo borraba**: *es el que hay que saber si tiene algo.*"""
+    cur = _CursorFalso(0)
+    ensayo.comprueba_base_vacia(cur)
+    assert "information_schema.tables" in cur.pregunta, cur.pregunta
+    assert "public" in cur.pregunta, cur.pregunta
