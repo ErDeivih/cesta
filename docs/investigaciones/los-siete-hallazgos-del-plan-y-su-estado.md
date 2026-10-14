@@ -12,7 +12,7 @@ cerrar el encargo»). **Y los leí tarde**: *llevaba cinco rondas diciendo «el 
 | # | lo que dice el plan | estado |
 |---|---|---|
 | **1** | *`run._una_cadena` llama `mod.main()`; *el colector Lidl **exige origen y region**; *«no hay adaptador que convierta **incluirlo en `ORDEN`** en una ingesta diaria funcional»* | *** corre, y se midio *** |
-| **2** | *`api/cesta.py` ***excluye Lidl globalmente*** por ser parcial; ***«parcial no significa que todos sus precios observados sean invalidos»***; *la elegibilidad **por articulo, region, fecha**; *la cobertura **por separado*** | *** NO ESTA *** ⚠️ |
+| **2** | *`api/cesta.py` ***excluye Lidl globalmente*** por ser parcial; ***«parcial no significa que todos sus precios observados sean invalidos»***; *la elegibilidad **por articulo, region, fecha**; *la cobertura **por separado*** | *** HECHO el 13/10 *** ✓✓ |
 | **3** | *`_del_plan` no escala por comensales, *deduplica por **nombre** y **anade una unidad** | *** HECHO *** ✓ |
 | **4** | *el POST de receta individual: `round(ln.cantidad) or 1`, *unidad omitida, *`isdigit()`; ***«una identidad `fuente:id` no sobrevive»*** | *** HECHO *** ✓ |
 | **5** | *`PlanSemanal.tsx` elige la lista de casa **o la primera**; ***«debe elegir destino explicito, no escribir en otra lista silenciosamente»*** | *** CONFIRMADO, sin arreglar *** ⚠️ |
@@ -29,23 +29,45 @@ cerrar el encargo»). **Y los leí tarde**: *llevaba cinco rondas diciendo «el 
    *pedia que **fuera funcional** *-- *y **eso es el 2.** *
 ```
 
-## 2 · La exclusion global — *** el unico sin mirar, y es el que el encargo repite dos veces ***
+## 2 · La exclusion global — *** Y ESTABA HECHA, el 13/10, con la regla escrita al pie ***
+
+> *** ESTA SECCION ESTUVO MAL ESCRITA, *y se corrige aqui.* *Dije que el veto global seguia en pie
+> **leyendo `cesta.py:62`** *-- *y **`cesta.py:62` no es la puerta**: *es **el aviso para la pantalla.** *
+> *La puerta esta **15 lineas mas arriba en `main.py`**, *y **admite Lidl desde el 13 de octubre.*** *
+> *** Es **el mismo error de siempre**: *leer una pieza y creer que es el todo.* *
 
 ```
-*** `plataforma/api/cesta.py:62` ***  *** `if cadena == "lidl":` *** *
-   *** -> la exclusion es POR CADENA: *cualquier articulo, region, fecha y condicion *** ⚠️
-*** y su comentario la justifica: *** *«meterlo en las comparaciones haria que **pareciera tener precio
-   para cosas que no cataloga** -- *y un «Lidl no lo tiene» que en realidad es «no lo hemos capturado»»*
-*** y el plan responde: *** *** «parcial no significa que TODOS sus precios observados sean invalidos» *** *
-*** -> y LOS DOS TIENEN RAZON: *la diferencia es **el grano*** *
-   *-- *el proyecto separo **capturar** (`CADENAS_QUE_SE_CAPTURAN`, seis) de **comparar** (`CADENAS`,
-      cinco), *y **lo dice en la pantalla** con `por_que_no_se_compara`*
-   *-- *y **falta el paso intermedio**: *«¿este precio concreto es comparable?»* *-- *por **articulo,
-      region y fecha***
-   *-- *y **la cobertura se declara aparte**: *«no aparece» **no es** «no lo tiene»*
-*** y las piezas ya estan: *** *`region` en el catalogo (`region='28'`), *`fecha` en el historico, *
-   *y `por_que_no_se_compara` para decirlo en la pantalla* ✓
+*** `plataforma/api/main.py:827-828` ***  *** «**Se admite cualquier cadena CAPTURADA, no solo las
+   comparables.** *Y esto es un cambio del *** 13 de octubre de 2026 ***, con su motivo.» *** *
+*** l830-832 ***  *** «*Antes la puerta era `cesta.CADENAS`..., asi que *** `lidl` se rechazaba con un 422 ***:
+   *no se podia decir «esta linea la compro en Lidl» *** ni aunque su precio estuviera capturado y fuera
+   valido***» *** *
+*** l834-836 ***  *** «**Y eso era el veto global que B03 pide quitar**, pero **quitarlo no es anadir `lidl`
+   a `CADENAS`**: *esa lista significa «puede cerrar una cesta», *y Lidl **no puede**...
+   *** Son dos preguntas distintas y hay dos listas para ellas ***» *** *
+*** l841-843 ***  *** «*Asi que la puerta es la primera, *y la segunda decide **quien gana una cesta** --
+   *que es la regla fina que el plan pide: *** »Lidl no gana una cesta completa si faltan lineas;
+   si puede ofrecer una linea exacta con precio valido« ***» *** *
+*** l844 ***  *** `if datos.cadena is not None and datos.cadena not in cesta.CADENAS_QUE_SE_CAPTURAN:` *** *
+   *** -> la puerta son las SEIS, con Lidl dentro *** ✓✓
+*** l850 ***  *** `aviso = cesta.por_que_no_se_compara(datos.cadena) if datos.cadena else None` *** *
+   *** -> y el aviso se da, no se calla *** ✓
 ```
+
+> *** La regla que el plan pide esta **implementada al pie de la letra**, *y coincide con el encargo
+> **frase por frase**: *
+> ```
+> *** «Lidl no gana una cesta completa si faltan lineas» *** *** -> *** «ni darle una cesta completa
+>    no cubierta» *** *
+> *** «si puede ofrecer una linea exacta con precio valido» *** *** -> *** «sin presentar ausencias de
+>    captura como indisponibilidad» *** *
+> ```
+
+*** Y entonces QUE queda de este hallazgo ***: *no **el veto**, *que ya no esta.* *Lo que queda es **el
+grano**: *la competicion de cesta se decide **por cadena** (`cesta.py:558` y `:805`, *donde `CADENAS`
+significa «puede cerrar una cesta»**)** -- *y el plan dice que **la elegibilidad** sea **por articulo,
+region y fecha.** *Eso **si es trabajo**, *y **es otra pregunta**: *no «¿hay un veto?» *sino
+*«¿la cesta la gana una cadena, o una linea?»*
 
 ## 5 · El destino silencioso — *** confirmado, literal ***
 
