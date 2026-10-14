@@ -352,15 +352,25 @@ def corre(copia) -> dict:
                 resultado[tabla] = cur.fetchone()[0]
         return resultado
     finally:
+        # *** Y LA SEGUNDA PATA: las dos SQLite -- CON SU PROPIO `try`, QUE ES UN ARREGLO MEDIDO. *** *
+        #
+        # *La primera version las ponia **aqui, antes de limpiar**, y una corrida fallo con `NameError`
+        # **en esta misma rama**: *asi que **la limpieza no se ejecuto**, *y **quedo un contenedor
+        # huerfano** (`cesta-restauro-4deeaf18fecb`, que hubo que quitar a mano).* *
+        #
+        # *O sea: **un paso de la limpieza no puede impedir la limpieza.*** *Por eso va con su `try`, *
+        # y **la limpieza queda la ultima y sin nada delante que pueda reventar.** *
+        try:
+            for uno in restaura_las_sqlite(sello=copia.stem.split("_")[-1]):
+                if uno["estado"] == "abre":
+                    print(f"  {uno['fichero']}: abre, integridad {uno['integridad']}, filas {uno['filas']}")
+                    resultado[uno["base"]] = uno["filas"]
+                else:
+                    print(f"  {uno['base']}: {uno['estado']} -- {uno['nota']}")
+        except Exception as fallo:  # noqa: BLE001  - *y la limpieza sigue pase lo que pase*
+            print(f"  las SQLite no se pudieron comprobar: {fallo}")
         # **Y se limpia SOLO lo acreditado.** *`limpia_lo_propio(nombre)` se niega si no lleva la etiqueta,
         # asi que no puede llevarse por delante un contenedor que no es suyo.*
-        # *** Y LA SEGUNDA PATA: las dos SQLite. *** *
-        for uno in restaura_las_sqlite(sello=copia.stem.split("_")[-1]):
-            if uno["estado"] == "abre":
-                print(f"  {uno['fichero']}: abre, integridad {uno['integridad']}, filas {uno['filas']}")
-                resultado[uno["base"]] = uno["filas"]
-            else:
-                print(f"  {uno['base']}: {uno['estado']} -- {uno['nota']}")
         for uno in limpia_lo_propio(nombre):
             print(f"  limpiado (era suyo): {uno}")
         print(f"  y queda: {resultado}")
