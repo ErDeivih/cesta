@@ -82,14 +82,28 @@ def test_la_cantidad_ya_viene_escalada():
     assert lineas[0].cantidad == pytest.approx(200.0)
 
 
-def test_devuelve_tambien_los_nombres_que_ya_estaban_en_la_lista():
-    """*El segundo valor de la tupla: los nombres ya presentes, en minusculas.* **Es lo que hace que
-    pulsar dos veces no duplique.**"""
+def test_devuelve_tambien_LA_IDENTIDAD_de_lo_que_ya_estaba_en_la_lista():
+    """*El segundo valor de la tupla: **la identidad de lo ya presente** -- su **destino**, y su **nombre**
+    cuando la linea no tiene destino.* **Es lo que hace que pulsar dos veces no duplique.**
+
+    *Nacio devolviendo **nombres en minusculas**, y su docstring decia por que: «es lo que hace que pulsar
+    dos veces no duplique».* **Y por eso el defecto parecia imposible de tener**: *el nombre **era** el
+    mecanismo que impedia duplicar, asi que nadie miro si el mecanismo era el correcto.*
+
+    *Y no lo era*: **dos marcas distintas con el mismo texto se pisaban**, y una linea ya puesta se volvia
+    a prometer. *El complemento del 14/10 lo dice: «distintas marcas con el mismo texto, cambios de
+    raciones y una nueva compra legitima pueden saltarse».*
+
+    *Asi que el segundo valor pasa a ser la **identidad**: `(destino, nombre)`, con **el destino mandando**
+    y **el nombre de respaldo** -- *porque **una linea pendiente no tiene destino**, y con ella el nombre
+    es lo unico que queda.*
+    """
     # *Por el parametro y no con un parche de fuera*: `_con_plan` parchea `lineas_de` dentro,
     # asi que un parche exterior lo pisa sin querer -- **y la prueba pasaba con `ya` vacio.**
     _lineas, ya, _p = _con_plan([INGREDIENTE],
                             ya_en_la_lista=[{"nombre_visto": "Harina"}, {"nombre_visto": None}])
-    assert ya == {"harina", ""}, f"y el None se convierte en cadena vacia, no revienta: {ya}"
+    assert ya == {((None, None), "harina"), ((None, None), "")}, (
+        f"y el None se convierte en nombre vacio, no revienta: {ya}")
 
 
 def test_ahora_devuelve_tres_valores_y_la_previa_entera():

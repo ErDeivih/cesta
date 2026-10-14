@@ -1519,7 +1519,7 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
             None if en_casa is None else ln.texto.strip().lower() in en_casa)
 
     pueden = [ln for ln in planificadas
-              if ln.texto.lower() not in ya_en_la_lista
+              if not _ya_estaba(ya_en_la_lista, (ln.grupo_id, ln.producto_id), ln.texto)
               # **Y el filtro del destino YA NO VA AQUI.** *Exigia producto o grupo «porque la tabla lo
               # prohibe (`linea_con_destino`)», y **la tabla ya no lo prohibe**: *la migracion
               # `014_la_linea_sin_destino.sql` quito la restriccion, y su motivo es justo este caso --
@@ -1533,7 +1533,7 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
               # *esto no quita nada.*
               and not (descontar_despensa and getattr(ln, "en_la_despensa", False))]
     sin_destino = sorted(ln.texto for ln in planificadas
-                         if ln.texto.lower() not in ya_en_la_lista
+                         if not _ya_estaba(ya_en_la_lista, (ln.grupo_id, ln.producto_id), ln.texto)
                          and ln.producto_id is None and ln.grupo_id is None)
     # **El adaptador: `LineaDeCompra` por dentro, y la MISMA forma de JSON que antes por fuera.**
     #
@@ -1560,7 +1560,8 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     pueden = [_como_antes(ln) for ln in pueden]
     sin_destino = list(sin_destino)
     return {"entrarian": pueden, "ya_estaban": sorted(
-        ln.texto for ln in planificadas if ln.texto.lower() in ya_en_la_lista),
+        ln.texto for ln in planificadas
+        if _ya_estaba(ya_en_la_lista, (ln.grupo_id, ln.producto_id), ln.texto)),
         # **Y lo que no se puede comprar, dicho por su nombre.** *Un ingrediente sin cantidad no se
         # compra, y el mismo producto en unidades incompatibles no se suma: las dos cosas salen de
         # `previa_compra` y las dos se dicen, en vez de desaparecer.*
@@ -1595,7 +1596,17 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
     """
     from core import recetas as _recetas
 
-    ya = {str(x.get("nombre_visto") or "").lower() for x in almacen.lineas_de(lista_id)}
+    # **La identidad, no el nombre.** *Antes esto era `{nombre_visto.lower()}`, y comparar por texto hace
+    # que **dos marcas distintas con el mismo nombre se pisen** -- *y que una linea ya puesta se vuelva a
+    # prometer.* *Lo que identifica una linea de la lista es **su destino**: `(grupo_id, producto_id)`,
+    # que es lo que la tabla guarda y lo que el motor usa.*
+    #
+    # *Y queda dicho lo que **no** se puede comprobar hoy*: *la lista **no guarda la unidad** de la linea,
+    # asi que la identidad es el destino y no `(destino, unidad)` -- *que es lo que el docstring de arriba
+    # pide para **consolidar**, y que `previa_compra` si cumple por dentro con su `clave`.*
+    ya = {((x.get("grupo_id"), x.get("producto_id")),
+           str(x.get("nombre_visto") or "").strip().lower())
+          for x in almacen.lineas_de(lista_id)}
     recetario = _recetas.conecta(_ruta_recetas())
     # **Los ingredientes de TODO el plan, escalados y con su receta.** *Se juntan primero y se consolidan
     # despues, que es el unico orden en el que dos recetas con el mismo ingrediente suman.*
@@ -1641,6 +1652,31 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
 
 
 
+def _ya_estaba(ya: set, destino: tuple, nombre: str | None) -> bool:
+    """**Si esa linea ya esta en la lista** -- y con que se compara, que es lo que importaba.
+
+    *Comparar **solo por nombre** era el defecto*: **dos marcas distintas con el mismo texto se pisaban**,
+    *y una linea ya puesta **se volvia a prometer**. *Asi que la identidad es **el destino** -- `(grupo_id,
+    producto_id)`, que es lo que la tabla guarda y lo que el motor usa.*
+
+    **Pero una linea PENDIENTE no tiene destino** -- *es «pendiente de identificar», y ese es su estado* --
+    *y con ella **el nombre es lo unico que queda**.* *Negar que esta seria **prometer una linea que el
+    usuario ya ve en su lista**, asi que **con una pendiente si se compara por nombre**.*
+
+    *Y lo que **no** se hace, que es la mitad que importa:* **entre dos lineas CON destino no se mira el
+    nombre.** *Dos marcas distintas con el mismo texto **son dos compras distintas**, y fundirlas era
+    exactamente el fallo que esto arregla.*
+    """
+    mio = str(nombre or "").strip().lower()
+    for otro_destino, otro_nombre in ya:
+        if destino != (None, None) and otro_destino == destino:
+            return True
+        # *El nombre, **solo si alguno de los dos es una pendiente sin destino**.*
+        if (destino == (None, None) or otro_destino == (None, None)) and otro_nombre == mio:
+            return True
+    return False
+
+
 @app.post("/api/listas/{lista_id}/desde-el-plan", status_code=201)
 def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(...),
                    usuario: dict = Depends(usuario_actual)) -> dict:
@@ -1664,7 +1700,10 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
     sin_destino: list[str] = []
     for uno in planificadas:
         nombre = uno.texto
-        if nombre.lower() in ya:
+        # **Y la identidad, no el nombre.** *`ya` son los **destinos** que ya estan en la lista, asi que
+        # comparar por texto haria que **dos marcas con el mismo nombre se pisen** -- *y que una linea ya
+        # puesta **se vuelva a prometer**, que es lo que el complemento del 14/10 senala.*
+        if _ya_estaba(ya, (uno.grupo_id, uno.producto_id), nombre):
             ya_estaban.append(nombre)
             continue
         # **Lo que no tiene destino SE APUNTA IGUAL, como «pendiente de identificar».** *Antes esta linea
@@ -1725,7 +1764,9 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
                             uno.grupo_id, uno.producto_id, uno.envases or 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
-        ya.add(nombre.lower())
+        # **Y al conjunto de lo que ya hay, por IDENTIDAD.** *Antes se anadia el nombre en minusculas:
+        # dos marcas distintas con el mismo texto quedaban como «ya estaba» y **la segunda no entraba**.*
+        ya.add(((uno.grupo_id, uno.producto_id), nombre.strip().lower()))
         anadidos += 1
     return {"anadidos": anadidos, "ya_estaban": ya_estaban,
             "sin_catalogo": sorted(sin_destino)}
