@@ -196,7 +196,16 @@ def test_una_fuente_permitida_que_redirige_a_OTRA_que_no_lo_esta(cliente):
         # *El segundo servidor **no esta declarado**: es «otra fuente».*
         otro.modo = "sin_receta"
         s.modo = "redirige"
-        s.destino = f"{otro.base}/otra"
+        # *** Y EL DESTINO TIENE QUE SER OTRO HOST, NO EL MISMO CON OTRO PUERTO. *** *
+        #
+        # *La primera version redirigia a `http://127.0.0.1:OTRO_PUERTO`, *y eso **no es un SSRF**:
+        # `comprueba_fuente` mira `urlparse(url).hostname`, *y **`hostname` no lleva el puerto**, *
+        # *asi que el destino **es la misma fuente declarada** *-- *y **seguirla es correcto.** *
+        # *Por eso el ensayo daba **422** y parecia que la guarda fallaba: *fallaba **el ensayo.*** *
+        #
+        # *Con `localhost` si es **otro nombre**, *y **no esta declarado** *(-- solo lo esta
+        # `127.0.0.1` --), *asi que aqui **si** se mide el SSRF.*
+        s.destino = f"http://localhost:{otro.server_address[1]}/otra"
         url = _declara(s)
         r = cliente.post("/api/recetas/importar", json={"url": url})
         # *** Y lo que hay que saber no es «pasa o no»: es *** QUE CODIGO DA ***, *porque cada uno
