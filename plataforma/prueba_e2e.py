@@ -821,13 +821,32 @@ def main() -> int:
     if previa.status_code == 200:
         print(f"   la previa dice: {previa.json().get('total')} lineas, "
               f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
-    traido = cliente.post(f"/api/listas/{la_casa}/desde-el-plan", json={"desde": desde, "hasta": hasta})
+    # *`desde` y `hasta` son `Query(...)` en las DOS rutas -- lo dice su firma --, *asi que van
+    # **como parametros de consulta y no en el cuerpo.***
+    traido = cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
+                          params={"desde": desde, "hasta": hasta})
     if traido.status_code not in (200, 201):
         fallos += 1
         print(f"   FALLO: no se trajo el plan a la lista: {traido.status_code} {traido.text[:120]}")
+    # *** Y se cuentan LAS MIAS, no todas ***: *la lista de casa de este ensayo ya trae lo suyo*
+    # *(-- 7 lineas de otros escenarios --), *asi que **comparar el total diria que mi puente no
+    # funciono cuando si funciono.** *La senal buena es **lo que trajo el POST:** *
+    traidas = int((traido.json() if traido.status_code in (200, 201) else {}).get("total") or 0)
     cuerpo = cliente.get(f"/api/listas/{la_casa}").json()
     suyas = cuerpo.get("lineas") or []
-    print(f"   la lista de la casa tiene {len(suyas)} lineas")
+    print(f"   la lista de la casa tiene {len(suyas)} lineas, y el puente trajo {traidas}")
+    # *** Y "no trajo nada" NO es un fallo: *puede ser que YA ESTUVIERA, *que es lo que el puente
+    # tiene que hacer la segunda vez.* *** *Lo que seria un fallo es que **no trajera nada Y no
+    # hubiera nada**: *eso querria decir que **el plan no llego a la lista.** *
+    # *Se escribe como se lee: **una lista, y su tamano.*** *La version anterior mezclaba `and`,
+    # `or` e `int()` con una lista en medio, *y **daba 0 aunque la previa dijera que si.***
+    cuerpo_previa = previa.json() if previa.status_code == 200 else {}
+    ya_estaban = len(cuerpo_previa.get("ya_estaban") or [])
+    if traidas <= 0 and ya_estaban <= 0:
+        fallos += 1
+        print("   FALLO: el puente no trajo nada Y la previa no dice que ya estuviera nada")
+    elif traidas <= 0:
+        print(f"   (no trajo nada porque YA ESTABAN las {ya_estaban}: es la idempotencia del puente)")
     for ln in suyas:
         print(f"     {str(ln.get('nombre_visto'))[:30]:32s} cantidad={ln.get('cantidad')} "
               f"{ln.get('unidad')}  envases={ln.get('envases')}  nota={(ln.get('nota') or '')[:40]!r}")
@@ -869,8 +888,13 @@ def main() -> int:
         receta, _ = hechas[0]
         apunte = cliente.post("/api/diario", json={
             "fecha": lunes.isoformat(), "comida": "comida", "tipo": "receta",
-            "referencia": str(receta["id"]), "cantidad_g": 250,
-            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}",
+            # *La version es **obligatoria** -- «sin ella no se puede releer» --, *y es lo que el
+            # encargo pide con «receta/version/snapshot»: fija **que receta se comio.*** *Y va **como
+            # texto**: *la API responde `string_type` si se manda el entero, *que es **el
+            # mismo «siempre como texto» de todo lo privado.***
+            "referencia": str(receta["id"]), "version": str(receta.get("version") or 1),
+            "cantidad_g": 250,
+            "fuente_dato": "ficha", "clave_operacion": f"recorrido-e2e-{sello}",
         })
         if apunte.status_code not in (200, 201):
             fallos += 1
@@ -879,8 +903,13 @@ def main() -> int:
         # *Es la idempotencia por operacion, *que el encargo pide explicita y trazable.*
         otra_vez = cliente.post("/api/diario", json={
             "fecha": lunes.isoformat(), "comida": "comida", "tipo": "receta",
-            "referencia": str(receta["id"]), "cantidad_g": 250,
-            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}",
+            # *La version es **obligatoria** -- «sin ella no se puede releer» --, *y es lo que el
+            # encargo pide con «receta/version/snapshot»: fija **que receta se comio.*** *Y va **como
+            # texto**: *la API responde `string_type` si se manda el entero, *que es **el
+            # mismo «siempre como texto» de todo lo privado.***
+            "referencia": str(receta["id"]), "version": str(receta.get("version") or 1),
+            "cantidad_g": 250,
+            "fuente_dato": "ficha", "clave_operacion": f"recorrido-e2e-{sello}",
         })
         if apunte.status_code in (200, 201) and otra_vez.status_code in (200, 201):
             if str(apunte.json().get("id")) != str(otra_vez.json().get("id")):
@@ -892,8 +921,9 @@ def main() -> int:
         # *dos comidas legitimas llevan claves distintas y se registran las dos.*
         distinta = cliente.post("/api/diario", json={
             "fecha": lunes.isoformat(), "comida": "cena", "tipo": "receta",
-            "referencia": str(receta["id"]), "cantidad_g": 180,
-            "fuente_dato": "medido", "clave_operacion": f"recorrido-e2e-{sello}-cena",
+            "referencia": str(receta["id"]), "version": str(receta.get("version") or 1),
+            "cantidad_g": 180,
+            "fuente_dato": "ficha", "clave_operacion": f"recorrido-e2e-{sello}-cena",
         })
         if distinta.status_code in (200, 201) and apunte.status_code in (200, 201):
             if str(distinta.json().get("id")) == str(apunte.json().get("id")):
