@@ -145,3 +145,82 @@ def test_una_base_con_la_clave_vieja_se_migra_y_no_pierde_lo_planeado(tmp_path):
         assert len(recetas.plan(con, "yo", "2026-01-02", "2026-01-02")) == 2
     finally:
         con.close()
+
+
+def test_duplicar_la_semana_copia_las_ocurrencias_con_su_comida_y_sus_raciones(con):
+    """*** La tercera frase de B07, *y la que **no se podia escribir antes.** *** *
+
+    *Mientras la ocurrencia **no tuvo identidad**, *«duplicar» **no tenia sobre que actuar**: *
+    *no se sabia **que** copiar. *Ahora se copia **cada ocurrencia**, *con **su comida**, *
+    *sus comensales y *** sus raciones *** *-- *que **es lo que se cocino**, *y es lo que hay que
+    repetir.* *
+    """
+    r = _una_receta(con)
+    recetas.planificar(con, "yo", "2026-11-02", r, comida="comida", comensales=3, raciones=2)
+    recetas.planificar(con, "yo", "2026-11-03", r, comida="cena", comensales=5)
+
+    recibo = recetas.duplicar_semana(con, "yo", "2026-11-02", "2026-11-09")
+    assert recibo["creadas"] == 2, recibo
+    assert recibo["ya_estaban"] == 0, recibo
+
+    copiadas = {x["fecha"]: x for x in recetas.plan(con, "yo", "2026-11-09", "2026-11-15")}
+    assert set(copiadas) == {"2026-11-09", "2026-11-10"}, copiadas
+    assert copiadas["2026-11-09"]["comida"] == "comida", copiadas
+    assert copiadas["2026-11-09"]["comensales"] == 3, copiadas
+    assert copiadas["2026-11-09"]["raciones"] == 2, copiadas
+    assert copiadas["2026-11-10"]["comida"] == "cena", copiadas
+    assert copiadas["2026-11-10"]["raciones"] is None, copiadas
+
+
+def test_duplicar_no_pisa_lo_que_ya_hay_y_lo_dice_en_el_recibo(con):
+    """*** «*Misma clave con contenido distinto produce *** conflicto, no exito ficticio ***». *** *
+
+    *Lo dice B05, *y por eso aqui **no se usa `INSERT OR REPLACE`**: *si en el dia destino ya hay algo
+    *(-- *esa comida y esa receta --)*, **se respeta**, *se cuenta aparte, *y **se devuelve el recibo.** *
+    *Que es **lo contrario** de decir «duplicado» cuando **no se duplico nada.** *
+    """
+    r = _una_receta(con)
+    otra = recetas.crear(con, "yo", "Ensalada", raciones=2, ingredientes=[{"texto": "1 lechuga"}])
+    recetas.planificar(con, "yo", "2026-11-02", r, comida="comida", comensales=3, raciones=2)
+    # *Y **dos** en el origen: *la Ensalada **si** se copiara, *y la tortilla **no**, *porque en el
+    # destino **ya hay** esa misma receta, esa misma comida, **con otros numeros.** *
+    recetas.planificar(con, "yo", "2026-11-03", otra, comida="cena")
+    recetas.planificar(con, "yo", "2026-11-09", r, comida="comida", comensales=9, raciones=9)
+
+    recibo = recetas.duplicar_semana(con, "yo", "2026-11-02", "2026-11-09")
+    assert recibo["creadas"] == 1, recibo
+    assert recibo["ya_estaban"] == 1, recibo
+    assert recetas.plan(con, "yo", "2026-11-10", "2026-11-10")[0]["nombre"] == "Ensalada"
+
+    # *Y **lo que ya estaba sigue como estaba**: *9 comensales y 9 raciones, *no 3 y 2.* *
+    destino = {x["receta_id"]: x for x in recetas.plan(con, "yo", "2026-11-09", "2026-11-09")}
+    assert destino[r]["comensales"] == 9, destino
+    assert destino[r]["raciones"] == 9, destino
+
+
+def test_duplicar_a_la_misma_semana_es_un_error_dicho(con):
+    """*Y **decir a cual**, *porque copiar una semana **sobre si misma** no quiere decir nada.*"""
+    r = _una_receta(con)
+    recetas.planificar(con, "yo", "2026-11-02", r)
+    with pytest.raises(ValueError, match="a cual"):
+        recetas.duplicar_semana(con, "yo", "2026-11-02", "2026-11-02")
+
+
+def test_duplicar_no_toca_el_plan_de_otro(con):
+    """*** Y **el permiso, que es lo de siempre**: *solo se copia **lo tuyo.** *** *
+
+    *La lectura del origen ya va con `propietario` *(-- *`plan` hace el JOIN con `receta` --)*, *
+    *asi que **lo de otro no entra en el origen**, *y **duplicar no es una puerta de atras.** *
+    """
+    mio = recetas.crear(con, "yo", "Mia", raciones=2, ingredientes=[{"texto": "1 x"}])
+    ajeno = recetas.crear(con, "otro", "Ajena", raciones=2, ingredientes=[{"texto": "1 y"}])
+    recetas.planificar(con, "yo", "2026-11-02", mio)
+    recetas.planificar(con, "otro", "2026-11-03", ajeno)
+
+    recibo = recetas.duplicar_semana(con, "yo", "2026-11-02", "2026-11-09")
+    assert recibo["creadas"] == 1, recibo
+    # *Y **lo de `otro` no aparece** en el destino de `yo`.* *
+    assert [x["nombre"] for x in recetas.plan(con, "yo", "2026-11-09", "2026-11-15")] == ["Mia"]
+    # *Y **lo de `otro` sigue donde estaba**, *y **no se ha duplicado a la semana siguiente**.* *
+    suyo = recetas.plan(con, "otro", "2026-11-02", "2026-11-15")
+    assert [x["fecha"] for x in suyo] == ["2026-11-03"], suyo

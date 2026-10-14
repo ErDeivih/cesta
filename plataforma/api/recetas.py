@@ -140,6 +140,37 @@ def planificar(datos: PlanIn, usuario: dict = Depends(usuario_actual)) -> dict:
         con.close()
 
 
+class DuplicarSemanaIn(BaseModel):
+    """*** De que semana a cual. *** *Y **nada mas**: *lo que se copia **lo lee el servidor** del plan.* *
+    """
+
+    desde: str
+    hacia: str
+
+
+@rutas.post("/plan/semana", status_code=201)
+def duplicar_semana(datos: DuplicarSemanaIn, usuario: dict = Depends(usuario_actual)) -> dict:
+    """*** Copia lo planeado de una semana a la siguiente. *** *
+
+    *Es **la tercera frase de B07** *--* «*Plan con varias comidas por dia, *** repetir/duplicar
+    semana *** y raciones por ocurrencia» --, *y **se puede escribir ahora y no antes** porque hasta
+    hace cuatro commits **la ocurrencia no tenia identidad**, *asi que «duplicar» **no tenia sobre que
+    actuar.** *
+
+    *** Y devuelve el recibo ***: *cuantas se crearon, *y **cuantas ya estaban.** *Porque **no pisa lo
+    que hay** *(-- *lo dice B05: *«*misma clave con contenido distinto produce *** conflicto, no exito
+    ficticio ***» --), *y **decir «duplicado» cuando no se duplico nada** seria justo eso: *un exito
+    ficticio.* *
+    """
+    con = _con()
+    try:
+        return recetas.duplicar_semana(con, usuario["id"], datos.desde, datos.hacia)
+    except ValueError as fallo:
+        raise HTTPException(status_code=422, detail=str(fallo)) from fallo
+    finally:
+        con.close()
+
+
 _GRAMOS_POR_UNIDAD = {"g": 1.0, "kg": 1000.0}
 
 

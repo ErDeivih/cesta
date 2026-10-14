@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .dueno import dueno_como_texto
@@ -391,3 +391,52 @@ def quitar_del_plan(con: sqlite3.Connection, propietario: str, fecha: str, recet
                           (fecha, comida, receta_id))
     con.commit()
     return cur.rowcount > 0
+
+
+@dueno_como_texto
+def duplicar_semana(con: sqlite3.Connection, propietario: str, desde: str, hacia: str) -> dict:
+    """*** Copia lo planeado de una semana a otra. *** *
+
+    *Esta es **la tercera frase de B07** *--* «*Plan con varias comidas por dia, *** repetir/duplicar
+    semana *** y raciones por ocurrencia» --, *y **se puede escribir ahora y no antes** por una razon
+    concreta: *hasta hace tres commits **la ocurrencia del plan no tenia identidad**, *asi que
+    «duplicar» **no tenia sobre que actuar** *-- *no se sabia **que** copiar.* *
+
+    *** Y no pisa lo que ya hay. *** *Lo dice el propio proyecto, en B05, y con estas palabras: *
+    *** «*operaciones con recibo y huella del contenido; *** misma clave con contenido distinto produce
+    conflicto, no exito ficticio ***».** *Asi que aqui **cada ocurrencia destino se respeta**: *si ya
+    habia algo en ese dia, *esa comida y esa receta, **se cuenta aparte y no se toca** *-- *y **se
+    devuelve el recibo**: *cuantas se crearon, *y cuantas **ya estaban.*** *
+
+    *Y **por eso no se usa `INSERT OR REPLACE`**, *que es lo que usan las demas: *ahi **reemplazar es
+    lo correcto** *(-- *el usuario esta diciendo «pon esta receta aqui» --)*, *y aqui **no**, *
+    *porque **copiar una semana no es una orden de sobrescribir la que ya estaba.*** *
+
+    `desde` y `hacia` son **el primer dia de cada semana** *(-- *lunes o el que sea: *lo que manda es
+    **el desfase**, *no el dia de la semana --)*. *Y se copian **las ocurrencias**, *con su comida,
+    *sus comensales y **sus raciones** *-- *que **es lo que se cocino**, *y es lo que hay que repetir.* *
+    """
+    primer = date.fromisoformat(desde)
+    segundo = date.fromisoformat(hacia)
+    salto = (segundo - primer).days
+    if salto == 0:
+        raise ValueError("para duplicar una semana hay que decir a cual")
+
+    # *Lo que hay en la semana de origen, **por ocurrencia** *-- no por dia, que es lo que cambio.*
+    origen = plan(con, propietario, desde, (primer + timedelta(days=6)).isoformat())
+
+    creadas, ya_estaban = 0, 0
+    for o in origen:
+        destino = (date.fromisoformat(o["fecha"]) + timedelta(days=salto)).isoformat()
+        # *** Y `INSERT OR IGNORE`, *no `OR REPLACE` ***: *si ya hay algo ahi, **se deja como esta.** *
+        cur = con.execute(
+            "INSERT OR IGNORE INTO plan (fecha, comida, receta_id, version, comensales, raciones)"
+            " VALUES (?,?,?,?,?,?)",
+            (destino, o["comida"], o["receta_id"], o["version"], o["comensales"], o["raciones"]))
+        if cur.rowcount:
+            creadas += 1
+        else:
+            ya_estaban += 1
+    con.commit()
+    # *** El recibo ***, *que es lo que hace que esto **no sea un exito ficticio.** *
+    return {"creadas": creadas, "ya_estaban": ya_estaban, "desde": desde, "hacia": hacia}
