@@ -428,9 +428,18 @@ def estado():
     # como indisponibilidad».
     #
     # *Asi que se lee el fichero que **el propio colector ya escribe** para esto* (`data/cobertura/
-    # {fuente}-{fecha}.json`, `collectors/lidl.py:273`), **y se pone al lado del numero.** *Un `77` con
+    # {fuente}-{fecha}.json`), **y se pone al lado del numero.** *Un `77` con
     # `ofertas_semanales_parcial` y `con_precio 77 de 79` al lado es un dato; un `77` solo es un catalogo
-    # pequeno.*
+    # pequeno.
+    #
+    # **Y aqui habia una cita POR NUMERO DE LINEA** -- *`collectors/lidl.py:273`* --, *y **se ha quitado**:
+    # *el numero **ya no apuntaba a donde se escribe la cobertura**, y **no puede apuntar bien**, porque
+    # **cualquier cambio por encima lo mueve.** *El fichero lo escribe **`lidl.main`**, despues de
+    # `write_parquet`, bajo **`config.DATA / "cobertura"`** -- *y eso **si** se puede citar, porque **el
+    # nombre de la funcion no se mueve cuando se anade una linea.** *
+    #
+    # *Lo que si se puede citar de un fichero ajeno es **lo que no cambia de sitio**: un nombre de funcion,
+    # una constante, o la RUTA del fichero que produce. *Una linea, no.**
     #
     # **Y si el fichero no esta, no se inventa nada**: la cadena sale sin `cobertura`, *que es lo correcto
     # para las cinco que si catalogan entero.*
