@@ -204,3 +204,136 @@ def test_la_nota_de_la_receta_cuenta_los_envases_y_lo_que_sobra():
     assert "2 envases" in nota, f"los envases, que ya estaban calculados: {nota!r}"
     assert "600" in nota, f"y lo que sobra: {nota!r}"
     assert "masa" in nota, f"y de que ingredientes salio: {nota!r}"
+    # **Y LA CANTIDAD, que es el fallo que el dueño reprodujo el 14/10.**
+    #
+    # *Esta prueba construia el caso exacto -- **1,4 kg en envase de 1 kg** -- y miraba **solo la nota**.
+    # Y por eso **`1` pasaba desapercibido**: las dos lineas de arriba se cumplian **con la cantidad
+    # mal**, porque «2 envases» vivia **unicamente en el texto**.*
+    #
+    # **Un ensayo que comprueba la nota y no la cantidad no fija el defecto: lo tapa.**
+    assert insertar.call_args_list[0].args[6] == 2, (
+        "DOS envases, y se guardo "
+        f"{insertar.call_args_list[0].args[6]}: «dos envases» estaba solo en la nota")
+
+
+# ============================== los envases, que es lo que se perdia ==========
+#
+# **El fallo del dueño, del 14/10/2026, en sus palabras**: *«se calculan dos envases, pero se guarda
+# cantidad 1; "dos envases" queda solamente en la nota».*
+#
+# *Y el `1` tenia un motivo escrito -- `traer_del_plan` decia «la lista cuenta unidades de un producto y la
+# receta habla en gramos: poner 400 en `cantidad` diria "400 envases"» --, **y el motivo era cierto**:
+# *400 si seria mentira.* **Pero `1` tampoco es la respuesta cuando la previa calcula dos.**
+#
+# *La unidad correcta ya estaba en el sistema: `previa_compra` **«cuenta los envases enteros»**.*
+
+def _el_puente_del_plan_con(linea):
+    """El puente del plan con UNA linea ya calculada, **sin red y sin bases**."""
+    insertar = Mock()
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(main, "_acceso", return_value=None))
+        pila.enter_context(patch.object(main.almacen, "lineas_de", return_value=[]))
+        pila.enter_context(patch.object(main.almacen, "anade_linea", insertar))
+        pila.enter_context(patch.object(main, "_del_plan", return_value=([linea], set(), None)))
+        main.traer_del_plan("lista-fixture", "2026-10-19", "2026-10-25", {"id": "fixture"})
+    return insertar
+
+
+def test_el_puente_del_plan_guarda_dos_envases_y_no_uno():
+    """**1,4 kg en envase de 1 kg son DOS envases, y hay que comprar dos.**
+
+    *Es la regresion del fallo del dueño, en el puente del plan: **la cantidad que se persiste tiene que
+    ser la que la previa calculo**, porque es la que leen el coste, el cierre y el historico.*
+    """
+    linea = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                          cantidad=1400.0, unidad="g", envases=2, tamano_envase=1000.0,
+                          unidad_envase="g", sobrante=600.0)
+    insertar = _el_puente_del_plan_con(linea)
+    assert insertar.call_count == 1, "una linea"
+    argumentos = insertar.call_args_list[0].args
+    assert argumentos[6] == 2, f"DOS envases, y se guardo {argumentos[6]}"
+    assert "2 envases" in argumentos[7] and "600" in argumentos[7], argumentos[7]
+
+
+def test_el_puente_del_plan_guarda_tres_envases_cuando_hacen_falta_tres():
+    """**Y tres, cuando hacen falta tres.** *2,4 kg en envase de 1 kg: la cantidad sigue a los envases.*"""
+    linea = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                          cantidad=2400.0, unidad="g", envases=3, tamano_envase=1000.0,
+                          unidad_envase="g", sobrante=600.0)
+    insertar = _el_puente_del_plan_con(linea)
+    assert insertar.call_args_list[0].args[6] == 3, "TRES envases"
+
+
+def test_con_tamano_desconocido_la_nota_lo_dice_y_no_se_afirma_un_envase():
+    """**Y cuando no se sabe el tamaño, se DICE -- no se calla.**
+
+    *`lista_linea.cantidad` es `integer NOT NULL`, asi que «no se sabe» **no cabe en la columna** y queda
+    `1`. **Y por eso la nota tiene que decirlo**: *callarlo se leia como «un envase basta», que es justo lo
+    que no se sabe.*
+    """
+    # *Sin `envases`: es lo que devuelve `previa_compra` cuando no conoce el tamaño del envase.*
+    linea = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                          cantidad=1400.0, unidad="g")
+    assert linea.envases is None, "el andamio tiene que dejar los envases sin calcular"
+    insertar = _el_puente_del_plan_con(linea)
+    argumentos = insertar.call_args_list[0].args
+    assert "no se sabe el tamano del envase" in argumentos[7], (
+        f"la nota tiene que decir que no se sabe, y dice {argumentos[7]!r}")
+    assert argumentos[6] == 1, "y la columna queda en 1, porque es NOT NULL"
+
+
+def test_la_receta_tambien_dice_cuando_no_se_sabe_el_tamano():
+    """**Y el otro puente, igual.** *Los dos puentes tienen que decir lo mismo, o uno de los dos miente.*"""
+    linea = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                          cantidad=1400.0, unidad="g")
+    insertar = Mock()
+
+    def captura(con, propietario, receta_id, *, insertar=None, **kw):
+        insertar([linea])
+        return {"lineas": 1}
+
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(api_recetas, "_con", return_value=Mock()))
+        pila.enter_context(patch.object(api_almacen, "listas_de",
+                                        return_value=[{"id": "lista-fixture"}]))
+        pila.enter_context(patch.object(api_almacen, "anade_linea", insertar))
+        pila.enter_context(patch.object(core_traspaso, "pasar_a_lista", side_effect=captura))
+        api_recetas.a_la_lista(1, api_recetas.ALaLista(lista_id="lista-fixture"), {"id": "fixture"})
+
+    argumentos = insertar.call_args_list[0].args
+    assert "no se sabe el tamano del envase" in argumentos[7], argumentos[7]
+    assert argumentos[6] == 1, "y la columna queda en 1"
+
+
+def test_la_receta_guarda_dos_envases_y_no_uno():
+    """**Y el caso del dueño en el puente de la receta**: *1,4 kg en envase de 1 kg, **dos**.*"""
+    linea = LineaDeCompra(clave="dia:fixture|g", texto="harina", producto_id="dia:fixture",
+                          cantidad=1400.0, unidad="g", envases=2, tamano_envase=1000.0,
+                          unidad_envase="g", sobrante=600.0)
+    insertar = Mock()
+
+    def captura(con, propietario, receta_id, *, insertar=None, **kw):
+        insertar([linea])
+        return {"lineas": 1}
+
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(api_recetas, "_con", return_value=Mock()))
+        pila.enter_context(patch.object(api_almacen, "listas_de",
+                                        return_value=[{"id": "lista-fixture"}]))
+        pila.enter_context(patch.object(api_almacen, "anade_linea", insertar))
+        pila.enter_context(patch.object(core_traspaso, "pasar_a_lista", side_effect=captura))
+        api_recetas.a_la_lista(1, api_recetas.ALaLista(lista_id="lista-fixture"), {"id": "fixture"})
+
+    argumentos = insertar.call_args_list[0].args
+    assert argumentos[6] == 2, f"DOS envases, y se guardo {argumentos[6]}"
+    assert "2 envases" in argumentos[7] and "600" in argumentos[7], argumentos[7]
+    # **Y LA CANTIDAD, que es el fallo que el dueño reprodujo el 14/10.**
+    #
+    # *Esta prueba construia el caso exacto -- **1,4 kg en envase de 1 kg** -- y miraba **solo la nota**.
+    # Y por eso **`1` pasaba desapercibido**: las dos lineas de arriba se cumplian **con la cantidad
+    # mal**, porque «2 envases» vivia **unicamente en el texto**.*
+    #
+    # **Un ensayo que comprueba la nota y no la cantidad no fija el defecto: lo tapa.**
+    assert insertar.call_args_list[0].args[6] == 2, (
+        "DOS envases, y se guardo "
+        f"{insertar.call_args_list[0].args[6]}: «dos envases» estaba solo en la nota")
