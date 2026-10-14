@@ -250,9 +250,20 @@ def main(argv: list[str] | None = None) -> int:
             print("  la politica publicada de la web no permite esa ruta: no se pide")
             log_run(FUENTE, 0, 1, time.monotonic() - t0)
             return 1
-        respuesta = f.get(URL)
-        save_raw(FUENTE, "ofertas-semanales", respuesta.body)
-        html = respuesta.body.decode("utf-8", "replace")
+        # **Y si la peticion falla, se REGISTRA.** *Sin esto, una excepcion de red salia por el
+        # `traceback` **sin tocar `runs.csv`**, y la ausencia de fila volvia a confundirse con «no se
+        # ejecuto» -- *que es exactamente lo que el complemento del 14/10 senala.*
+        #
+        # *La causa va al `traceback` y a la salida estandar, que va a `data/ejecuciones.log`; *y el CSV
+        # se queda con lo que si cabe: **que hubo intento y que no salio bien.** *
+        try:
+            respuesta = f.get(URL)
+            save_raw(FUENTE, "ofertas-semanales", respuesta.body)
+            html = respuesta.body.decode("utf-8", "replace")
+        except Exception as fallo:  # noqa: BLE001  <- *a proposito: cualquier fallo de red se registra.*
+            print(f"  la peticion fallo: {type(fallo).__name__}: {fallo}")
+            log_run(FUENTE, 0, 1, time.monotonic() - t0, completa=False)
+            return 1
     else:
         html = a.html.read_text(encoding="utf-8")
 
@@ -270,12 +281,35 @@ def main(argv: list[str] | None = None) -> int:
                   f"{acreditacion['estado']} -- {acreditacion.get('motivo')}")
             print("  no se elige «la mas parecida»: se dice y se para. "
                   "Pasa --region=<id> si sabes cual, o cambia SCRAP_CP")
+            # **Y se REGISTRA, que es lo que faltaba.** *Esta salida imprimia la causa y **retornaba 1
+            # sin tocar `runs.csv`**, asi que **la ausencia de fila no se podia distinguir de «no se
+            # ejecuto»**: *quien mirara el CSV veria que Lidl no aparece y **no sabria si fallo o si
+            # nunca corrio.** *
+            #
+            # *Y el complemento del 14/10 lo dice con estas palabras: «ausencia de fila puede ser
+            # ejecucion fallida sin telemetria, **no ausencia de ejecucion**». *
+            #
+            # *La causa **no cabe en el CSV** -- tiene seis columnas y ninguna es un motivo --, pero
+            # **si sale por la salida estandar**, que va a `data/ejecuciones.log`: *las dos lineas de
+            # arriba lo dicen, y ahora **el CSV dice que hubo intento.** *
+            #
+            # *Y `errores=1` con `completa=False`: **no es una captura buena**, y no puede servir de
+            # referencia a `check_drift`.*
+            log_run(FUENTE, 0, 1, time.monotonic() - t0, completa=False)
             return 1
         region = acreditacion["region"]
         print(f"  region acreditada por nombre: CP {config.CODIGO_POSTAL} -> "
               f"«{acreditacion['nombre']}» (region {region})")
 
-    marco, resumen = captura(html, region, instante=datetime.now(timezone.utc))
+    # **Y el parseo, igual.** *Una pagina que cambia de forma revienta en `captura`, y sin esto se
+    # llevaba por delante la fila del CSV.* *Una fuente que falla **dejando rastro** se puede arreglar;
+    # una que falla **callando** parece que no corre.*
+    try:
+        marco, resumen = captura(html, region, instante=datetime.now(timezone.utc))
+    except Exception as fallo:  # noqa: BLE001
+        print(f"  el parseo fallo: {type(fallo).__name__}: {fallo}")
+        log_run(FUENTE, 0, 1, time.monotonic() - t0, completa=False)
+        return 1
     print(f"  ofertas conocidas de Lidl ({resumen['cobertura']}): {marco.height} guardadas de "
           f"{resumen['fichas_leidas']} fichas leidas, {resumen['fuera_de_alcance']} fuera de "
           f"alcance, {resumen['en_revision']} en revision")
