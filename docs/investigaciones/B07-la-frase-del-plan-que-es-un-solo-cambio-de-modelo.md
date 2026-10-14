@@ -138,3 +138,51 @@ modelo**, *y se ve **leyendo la clave primaria de la tabla.** *
    *con **su ensayo equivalente** *(-- *que es lo que el encargo pide: *«aplica la mejora… *** con prueba
    equivalente ***» --)* ✓✓✓
 ```
+
+---
+
+## 10. *** Y el vocabulario **ya existe**, *y **colisiona** ***
+
+```
+*** `core/diario.py:38` *** *
+   *** `COMIDAS = ("desayuno", "media manana", "comida", "merienda", "cena", "otras")` *** *
+   *** -> *** LAS SEIS COMIDAS DEL DIA, *con nombre, *en una constante *** ✓✓✓
+*** `plataforma/api/recetas.py:203-210` *** *
+   *** `comidas.append({ "fecha": …, "receta_id": …, "nombre": …, "version": …,` *** *
+   *** `                  "comensales": …, "lineas": lineas, **diario.resumen(conocidos) })` *** *
+   *** -> *** y `comidas` AQUI son LAS OCURRENCIAS DEL PLAN ***: *
+      *una por `(fecha, receta_id)`, *y *** SIN NINGUN CAMPO QUE DIGA CUAL DE LAS COMIDAS ES *** ⚠️✓
+*** -> *** LA MISMA PALABRA, *DOS COSAS *** ⚠️✓✓✓
+   *-- `diario.COMIDAS` = *las seis comidas del dia ✓
+   *-- `recetas.comidas` = *las veces que una receta esta en el plan, *sin decir cual ⚠️
+```
+
+> *** Y **eso no es un detalle de estilo**: *si el plan gana `comida`, *el nombre `comidas` de la previa *
+> *** pasaria a significar «las comidas del dia» *** *--* *y **hoy significa «las ocurrencias».** *
+> ```
+> *** -> o sea: *el cambio *** no es solo anadir una columna ***: *
+>    *es *** decidir que significa `comidas` *** *
+>    *-- *renombrar la lista a *** `ocurrencias` *** *(-- *que es **lo que son** --), *
+>    *-- *o **aceptar la ambiguedad** ⚠️✓✓✓
+> ```
+
+## 11. *** Y con eso, el cambio queda con **todos los frentes medidos**, y **una sola pregunta** ***
+
+```
+*** EL ESQUEMA ***  *-- `plan` gana **la comida** *y **las raciones de la ocurrencia** ⚠️
+*** LAS TRES FUNCIONES ***  *-- `planificar` · `plan` · `quitar_del_plan` ✓
+*** LAS TRES RUTAS ***  *-- `POST /plan` · `GET /plan` · `DELETE /plan` ✓
+*** LA PREVIA ***  *-- `GET /plan/prevision` **ya devuelve `comidas`**, *y hay que decidir si ese nombre
+   sigue valiendo ⚠️
+*** Y EL VOCABULARIO ***  *** -> YA ESTA ***: `diario.COMIDAS`, *seis valores ✓✓✓
+*** -> y **lo que queda por decidir es UNA pregunta**: *
+   *** ¿una ocurrencia se puede nombrar por separado, o el par (dia, receta) es la ocurrencia? *** *
+   *-- *que **es la misma** que «¿que significa `quitar_del_plan`?» ✓
+   *-- *y **su respuesta decide** la clave, *el nombre de `comidas`, *
+      *y **si «duplicar semana» copia filas o crea ocurrencias nuevas** ✓✓✓
+```
+
+*** Y **por fin esta acotado a una pregunta**: *el plan **modela bien** «esta receta, este dia, para esta
+gente» *--* *y **lo que no modela es la ocurrencia como algo con identidad*** *--* *y **de ahi salen las
+tres frases de B07** *(-- varias comidas, duplicar semana, raciones por ocurrencia --), *y **tambien la
+ambiguedad de `comidas`.*** *Es **una pregunta**, *y **las tres features son sus consecuencias.*** *
