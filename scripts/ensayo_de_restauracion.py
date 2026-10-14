@@ -199,6 +199,33 @@ def _espera(cur, limite_s: int = 60) -> None:
     raise DestinoNoSeguro(f"la base no contesto en {limite_s} s")
 
 
+def _conecta(dsn: str, limite_s: int = 90):
+    """**Espera a que la BASE conteste, no a que el contenedor exista.**
+
+    *Y esto es un arreglo medido, no una precaucion*: *el ensayo corrio entero por primera vez, el
+    contenedor dijo *** `Up Less than a second` *** -- *o sea **arrancado** --, y `psycopg.connect`
+    **revento**: *** «server closed the connection unexpectedly» ***.* *Porque **`Up` es el contenedor y
+    no la base**: *PostgreSQL **tarda un poco mas** en aceptar conexiones, *y en ese hueco **la puerta esta
+    abierta y nadie atiende.** *
+
+    *Asi que **la espera envuelve la conexion**, *y no un `SELECT` posterior: *reintentar **conectar** es
+    lo unico que cubre ese hueco.* *Y si se agota, **se dice cuanto se espero**, *en vez de dejar un error
+    de red que parece otra cosa.* *
+    """
+    import time
+
+    import psycopg
+
+    ultimo: Exception | None = None
+    for _ in range(limite_s):
+        try:
+            return psycopg.connect(dsn, connect_timeout=5)
+        except Exception as fallo:  # noqa: BLE001  - *mientras arranca, cualquier fallo es «todavia no»*
+            ultimo = fallo
+            time.sleep(1)
+    raise DestinoNoSeguro(f"la base del ensayo no acepto la conexion en {limite_s} s: {ultimo}")
+
+
 def corre(copia) -> dict:
     """**El recorrido entero, en un destino que se crea y se destruye.**
 
@@ -206,8 +233,6 @@ def corre(copia) -> dict:
     que limpiar cuando la guarda se niegue.*
     """
     import gzip
-
-    import psycopg
 
     nombre, puerto = nombre_unico(), puerto_libre()
     comprueba_nombre(nombre)
@@ -258,8 +283,7 @@ def corre(copia) -> dict:
 
     resultado: dict = {"contenedor": nombre, "puerto": puerto}
     try:
-        with psycopg.connect(dsn, connect_timeout=10) as con, con.cursor() as cur:
-            _espera(cur)
+        with _conecta(dsn) as con, con.cursor() as cur:
             # *** LA GUARDA, ANTES DE CUALQUIER DDL. *** *
             comprueba_base_vacia(cur)
             print("  la base esta vacia: se puede restaurar aqui")
@@ -273,7 +297,7 @@ def corre(copia) -> dict:
             raise DestinoNoSeguro(
                 f"el restaurado fallo: {metido.stderr.decode(errors='replace')[:300]}")
 
-        with psycopg.connect(dsn, connect_timeout=10) as con, con.cursor() as cur:
+        with _conecta(dsn) as con, con.cursor() as cur:
             for tabla in ("lista_linea", "usuario", "lista", "compra"):
                 cur.execute(f"SELECT count(*) FROM {tabla}")  # *tabla de una lista fija, no de fuera*
                 resultado[tabla] = cur.fetchone()[0]
