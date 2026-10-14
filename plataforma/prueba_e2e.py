@@ -818,9 +818,7 @@ def main() -> int:
     desde, hasta = lunes.isoformat(), (lunes + timedelta(days=6)).isoformat()
     previa = cliente.get(f"/api/listas/{la_casa}/desde-el-plan",
                          params={"desde": desde, "hasta": hasta})
-    # *Se lee **una vez** y arriba: el volcado de abajo la necesita.*
     cuerpo_previa = previa.json() if previa.status_code == 200 else {}
-    ya_estaban = len(cuerpo_previa.get("ya_estaban") or [])
     if previa.status_code == 200:
         print(f"   la previa dice: {previa.json().get('total')} lineas, "
               f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
@@ -838,28 +836,26 @@ def main() -> int:
     cuerpo = cliente.get(f"/api/listas/{la_casa}").json()
     suyas = cuerpo.get("lineas") or []
     print(f"   la lista de la casa tiene {len(suyas)} lineas, y el puente trajo {traidas}")
-    # *** Y EL VOLCADO, que es lo que hacia falta ***: *las dos listas, con su identidad.*
-    if ya_estaban == 0 and traidas == 0:
-        print("   --- VOLCADO: lo que la previa dice que entraria, y lo que hay ---")
-        for x in (cuerpo_previa.get("entrarian") or []):
-            print(f"     ENTRARIA  {str(x.get('nombre'))[:14]:16s} grupo={x.get('grupo_id')} "
-                  f"producto={x.get('producto_id')}")
-        for x in suyas:
-            print(f"     LISTA     {str(x.get('nombre_visto'))[:14]:16s} grupo={x.get('grupo_id')} "
-                  f"producto={x.get('producto_id')}")
-    # *** Y "no trajo nada" NO es un fallo: *puede ser que YA ESTUVIERA, *que es lo que el puente
-    # tiene que hacer la segunda vez.* *** *Lo que seria un fallo es que **no trajera nada Y no
-    # hubiera nada**: *eso querria decir que **el plan no llego a la lista.** *
-    # *Se escribe como se lee: **una lista, y su tamano.*** *La version anterior mezclaba `and`,
-    # `or` e `int()` con una lista en medio, *y **daba 0 aunque la previa dijera que si.***
-    if traidas <= 0 and ya_estaban <= 0:
-        fallos += 1
-        print("   FALLO: el puente no trajo nada Y la previa no dice que ya estuviera nada")
-    elif traidas <= 0:
-        print(f"   (no trajo nada porque YA ESTABAN las {ya_estaban}: es la idempotencia del puente)")
-    for ln in suyas:
-        print(f"     {str(ln.get('nombre_visto'))[:30]:32s} cantidad={ln.get('cantidad')} "
-              f"{ln.get('unidad')}  envases={ln.get('envases')}  nota={(ln.get('nota') or '')[:40]!r}")
+    # *** Y el orden, que es lo que costo cuatro rondas entenderlo. *** *
+    #
+    # *La previa se pide **ANTES** del POST, asi que su `ya_estaban` dice lo que habia **en ese
+    # momento** -- *y **el POST trae 0 si ya estaban de una corrida anterior.*** *
+    # *Las dos cosas son verdad a la vez, *y **parecen contradecirse** si se comparan de memoria.* *
+    #
+    # *Se comprueba **lo que significa**, *no lo que parece*: *
+    #   - *si el POST trajo lineas -> **el puente funciono**;*
+    #   - *si no trajo ninguna -> **la lista ya las tenia**, *y se dice **cuales**, *
+    #     *comprobando con `_del_plan` que **de verdad estaban.** *
+    if traidas <= 0:
+        planificadas, ya, _ = main._del_plan(la_casa, str(yo["id"]), desde, hasta)
+        estaban = [ln.texto for ln in planificadas if main._ya_estaba(ya, (ln.grupo_id, ln.producto_id), ln.texto)]
+        print(f"   el puente no trajo nada, y _del_plan confirma que ya estaban {len(estaban)} de "
+              f"{len(planificadas)}: {', '.join(sorted(estaban)[:6])}")
+        if len(estaban) != len(planificadas):
+            fallos += 1
+            faltan = [ln.texto for ln in planificadas
+                      if not main._ya_estaba(ya, (ln.grupo_id, ln.producto_id), ln.texto)]
+            print(f"   FALLO: el POST no trajo nada Y estas NO estaban: {faltan}")
     # **Todas con cantidad**: *el defecto del dueño era **una linea con `cantidad = 1`** *cuando
     # hacian falta mas.* *Aqui no se exige que sean > 1 -- hay ingredientes de un envase --, *
     # *sino que **el numero este** *y que **si hay tamaño de envase, haya envases.** *
