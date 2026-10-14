@@ -130,3 +130,75 @@ def test_una_captura_manual_no_toca_el_pipeline(tmp_path, monkeypatch, capsys):
     assert codigo == 0
     assert escrito == [], "una captura manual ha escrito bronze"
     assert "sin --escribir" in capsys.readouterr().out
+
+
+# ============ la telemetria: toda salida deja fila, y ninguna escribe bronze ============
+#
+# **El complemento del 14/10 lo pide con estas palabras**: *«implementar registro de intento y resultado
+# terminal en TODOS los caminos... **fixture de region desconocida y excepcion de red debe dejar evidencia
+# de fallo, y no escribir bronze**»*.
+#
+# *Y el motivo es el que ya esta escrito en `lidl.py`: *** **una fuente que falla CALLANDO es
+# indistinguible de una que no corre** ***, *y esa confusion es la que hace que «ausencia de fila» se lea
+# como «no se ejecuto» en vez de «se intento y no salio».*
+
+def _sin_bronze(monkeypatch):
+    """*Ni por `storage` ni por el modulo del colector: escribir bronze es lo que no puede pasar.*"""
+    from core import storage
+
+    escrito: list = []
+    monkeypatch.setattr(storage, "write_parquet", lambda *a, **k: escrito.append(a))
+    monkeypatch.setattr(lidl, "write_parquet", lambda *a, **k: escrito.append(a))
+    return escrito
+
+
+def test_sin_region_acreditada_deja_FILA_y_no_escribe_bronze(tmp_path, monkeypatch, capsys):
+    """**El camino que imprimia la causa y retornaba 1 sin tocar `runs.csv`.**
+
+    *`region_del_cp` acredita la region **por el nombre que la fuente publica**, y si no casa **no se elige
+    «la mas parecida»**: se para.* *Y parar esta bien; **parar sin dejar rastro, no** -- *porque entonces
+    **la ausencia de fila se lee como que Lidl no corre**, y no como que corrio y no pudo.*
+    """
+    from core import config
+
+    filas: list = []
+    monkeypatch.setattr(lidl, "log_run", lambda *a, **k: filas.append(a))
+    escrito = _sin_bronze(monkeypatch)
+    # *Un CP que no acredita contra lo que la pagina publica: sin `--region`, se intenta por nombre.*
+    monkeypatch.setattr(config, "CODIGO_POSTAL", "00000")
+    fixture = tmp_path / "ofertas.html"
+    fixture.write_text(ficha(oferta_simple()), encoding="utf-8")
+
+    codigo = lidl.main(["--html", str(fixture), "--escribir"])
+
+    assert codigo == 1, "sin region acreditada no se sigue"
+    assert len(filas) == 1, f"tiene que quedar UNA fila de intento, y hay {len(filas)}: {filas}"
+    assert filas[0][1] == 0 and filas[0][2] == 1, f"0 filas y 1 error: {filas[0]}"
+    assert escrito == [], "y NO se escribe bronze"
+    assert "region" in capsys.readouterr().out.lower(), "y la causa se dice"
+
+
+def test_si_la_peticion_falla_deja_FILA_y_no_escribe_bronze(monkeypatch, capsys):
+    """**La excepcion de red, que salia por el `traceback` sin registrar.**
+
+    *Una peticion que revienta **no puede llevarse por delante la fila del CSV**: sin ella, el fallo
+    **borra su propia huella**.*
+    """
+    filas: list = []
+    monkeypatch.setattr(lidl, "log_run", lambda *a, **k: filas.append(a))
+    escrito = _sin_bronze(monkeypatch)
+    monkeypatch.setattr(lidl, "_robots_permite", lambda f: True)
+
+    class RedCaida:
+        def get(self, url):  # *la firma del fetcher de verdad*
+            raise RuntimeError("la red se cayo")
+
+    monkeypatch.setattr(lidl, "Fetcher", lambda **k: RedCaida())
+
+    codigo = lidl.main(["--web", "--escribir"])
+
+    assert codigo == 1, "una peticion que falla no es un exito"
+    assert len(filas) == 1, f"tiene que quedar UNA fila, y hay {len(filas)}: {filas}"
+    assert filas[0][1] == 0 and filas[0][2] == 1, f"0 filas y 1 error: {filas[0]}"
+    assert escrito == [], "y NO se escribe bronze"
+    assert "la red se cayo" in capsys.readouterr().out, "y la causa se dice"
