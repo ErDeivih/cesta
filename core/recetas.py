@@ -28,6 +28,19 @@ RAIZ = Path(__file__).resolve().parents[1]
 BASE = RAIZ / "data" / "recetas.sqlite"
 TABLA = "receta"
 
+# *Antes la clave era `(fecha, receta_id)`, *y con ella **no se podia**: *poner la misma receta
+# **dos veces el mismo dia** *(-- choca con la clave --)*, *decir **en cual de las comidas** va,
+# *decir **cuantas raciones** se cocinan ahi, *ni **copiar una semana** *(-- *que exige saber
+# **que** copiar --). *El plan **modelaba bien** «esta receta, este dia, para esta gente», *
+# *y **no modelaba la ocurrencia.** *
+#
+# *Los valores son los de `diario.COMIDAS`, **que ya existia**: *«desayuno», «media manana»,
+# «comida», «merienda», «cena», «otras». *El defecto es `'comida'` **a proposito**: *es lo que
+# significaba el modelo viejo -- **una receta por dia, a la comida** --, *asi que **una base que
+# ya exista sigue diciendo lo mismo** despues de migrar.
+# raciones se puede cocinar **para 2** un dia. *`NULL` quiere decir **«las de la receta»** --
+# *y **no se rellena con ellas**, porque **el dia que la receta cambie de raciones**, *
+# *lo que se cocino **aquel dia no cambia.** *
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS receta (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,10 +61,15 @@ CREATE TABLE IF NOT EXISTS version (
 );
 CREATE TABLE IF NOT EXISTS plan (
     fecha      TEXT NOT NULL,
+    -- *** La COMIDA, que es lo que da identidad a la ocurrencia. *** *
+    --
+    comida     TEXT NOT NULL DEFAULT 'comida',
     receta_id  INTEGER NOT NULL REFERENCES receta(id),
     version    INTEGER NOT NULL,
     comensales INTEGER NOT NULL,
-    PRIMARY KEY (fecha, receta_id)
+    -- *** Y las raciones DE ESTA OCURRENCIA ***, que **no son las de la receta**: *una receta de 4
+    raciones   INTEGER,
+    PRIMARY KEY (fecha, comida, receta_id)
 );
 """
 
@@ -67,6 +85,33 @@ def _migra(con: sqlite3.Connection) -> None:
     if "propietario" not in columnas:
         con.execute(f"ALTER TABLE {TABLA} ADD COLUMN propietario TEXT")
     con.execute("CREATE INDEX IF NOT EXISTS receta_por_dueno ON receta (propietario, archivada, nombre)")
+
+    # *** Y la migracion del PLAN, que es **la misma clase de problema que la de arriba**. *** *
+    #
+    # *`plan` paso de la clave `(fecha, receta_id)` a `(fecha, comida, receta_id)`, *y **SQLite no
+    # permite `ALTER TABLE` sobre una clave primaria**: *hay que **rehacer la tabla**. *Y se hace
+    # **aqui y no en el esquema** *por **el mismo motivo que el indice de arriba**, *que ya esta
+    # escrito unas lineas mas arriba: *en una base antigua la columna todavia no existe, *
+    # *y un `INSERT` sobre ella **reventaria** antes de que esta funcion pudiera arreglarlo.* *
+    #
+    # *Y **se conservan los datos**: *cada fila vieja pasa a `comida = 'comida'`, *
+    # **que es lo que significaba** *(-- una receta por dia, a la comida --), *y `raciones = NULL`,
+    # *que quiere decir **«las de la receta»** *-- *que es **lo que se cocinaba** con el modelo viejo.*
+    columnas_plan = {f[1] for f in con.execute("PRAGMA table_info(plan)").fetchall()}
+    if columnas_plan and "comida" not in columnas_plan:
+        con.execute("""CREATE TABLE plan_nueva (
+            fecha      TEXT NOT NULL,
+            comida     TEXT NOT NULL DEFAULT 'comida',
+            receta_id  INTEGER NOT NULL REFERENCES receta(id),
+            version    INTEGER NOT NULL,
+            comensales INTEGER NOT NULL,
+            raciones   INTEGER,
+            PRIMARY KEY (fecha, comida, receta_id)
+        )""")
+        con.execute("""INSERT INTO plan_nueva (fecha, comida, receta_id, version, comensales, raciones)
+                        SELECT fecha, 'comida', receta_id, version, comensales, NULL FROM plan""")
+        con.execute("DROP TABLE plan")
+        con.execute("ALTER TABLE plan_nueva RENAME TO plan")
     con.commit()
 
 
@@ -277,16 +322,33 @@ def archivar(con: sqlite3.Connection, propietario: str, receta_id: int,
 
 @dueno_como_texto
 def planificar(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int,
-               comensales: int = 2, version: int | None = None) -> None:
-    """Poner **una receta tuya** en un dia. Se fija la version: el plan viejo se relee tal cual."""
+               comensales: int = 2, version: int | None = None,
+               comida: str = "comida", raciones: int | None = None) -> None:
+    """Poner **una receta tuya** en un dia **y en una comida**. Se fija la version: el plan viejo se relee tal cual.
+
+    *** Y la ocurrencia tiene identidad: `(fecha, comida, receta_id)` ***, *asi que **la misma receta
+    puede ir dos veces el mismo dia** *(-- *a la comida y a la cena --), *y **cada una con sus
+    raciones**, *que **no son las de la receta**: *una receta de 4 se puede cocinar **para 2**.* *
+    *`raciones = None` quiere decir *** «las de la receta» *** *-- *y **no se copian aqui**, *
+    *porque **el dia que la receta cambie**, *lo que se cocino **aquel dia no cambia.*** *
+
+    *Y **la comida se valida** contra las de `diario.COMIDAS`*, *que son **las del diario**: *
+    *dos modulos que hablan de lo mismo **tienen que llamarlo igual.** *
+    """
     if comensales < 1:
         raise ValueError("los comensales son al menos uno")
+    if raciones is not None and raciones < 1:
+        raise ValueError("las raciones son al menos una")
     date.fromisoformat(fecha)
+    from .diario import COMIDAS as _COMIDAS
+    if comida not in _COMIDAS:
+        raise ValueError(f"esa comida no existe: {comida!r}. Son {', '.join(_COMIDAS)}")
     actual = leer(con, propietario, receta_id)
     if actual is None:
         raise ValueError(f"no hay receta {receta_id}")
-    con.execute("INSERT OR REPLACE INTO plan (fecha, receta_id, version, comensales) VALUES (?,?,?,?)",
-                (fecha, receta_id, version or actual["version"], comensales))
+    con.execute("INSERT OR REPLACE INTO plan (fecha, comida, receta_id, version, comensales, raciones)"
+                " VALUES (?,?,?,?,?,?)",
+                (fecha, comida, receta_id, version or actual["version"], comensales, raciones))
     con.commit()
 
 
@@ -294,24 +356,38 @@ def planificar(con: sqlite3.Connection, propietario: str, fecha: str, receta_id:
 def plan(con: sqlite3.Connection, propietario: str, desde: str, hasta: str) -> list[dict]:
     """Lo planificado **por ti** entre dos fechas. El JOIN con la receta es lo que aplica el permiso."""
     filas = con.execute(
-        """SELECT p.fecha, p.comensales, p.version, r.id, r.nombre
+        """SELECT p.fecha, p.comida, p.comensales, p.version, r.id, r.nombre, p.raciones
              FROM plan p JOIN receta r ON r.id = p.receta_id
             WHERE p.fecha BETWEEN ? AND ? AND r.propietario = ?
-            ORDER BY p.fecha, r.nombre""", (desde, hasta, propietario)).fetchall()
-    return [{"fecha": f[0], "comensales": f[1], "version": f[2], "receta_id": f[3],
-             "nombre": f[4]} for f in filas]
+            ORDER BY p.fecha, p.comida, r.nombre""", (desde, hasta, propietario)).fetchall()
+    return [{"fecha": f[0], "comida": f[1], "comensales": f[2], "version": f[3], "receta_id": f[4],
+             "nombre": f[5], "raciones": f[6]} for f in filas]
 
 
 @dueno_como_texto
-def quitar_del_plan(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int) -> bool:
+def quitar_del_plan(con: sqlite3.Connection, propietario: str, fecha: str, receta_id: int,
+                    comida: str | None = None) -> bool:
     """Quita una receta de un dia **del plan de quien pregunta**. Devuelve si habia algo que quitar.
 
     Comprueba lo de siempre -- que la receta sea tuya, con `_de_quien` -- y ademas que la linea sea de ese
     dia: sin lo segundo, un error de tecleo en la fecha borraria el plan de otro dia y no se notaria.
+
+    *** Y `comida` decide CUANTO se quita ***, *que es **la pregunta que el modelo viejo no tenia**: *
+      *-- *`comida = None` -> *** todas las ocurrencias de esa receta ese dia *** *(-- *lo que hacia
+         antes, *y **sigue siendo el defecto** *--)*
+      *-- *`comida = "cena"` -> *** solo esa *** ✓
+
+    *Antes **no habia eleccion** *(-- *solo habia una por dia --)*; *ahora **si**, *y el defecto
+    **conserva el sentido viejo** *-- *que es lo que hace que **nada de lo que ya llamaba a esto
+    cambie de significado sin decirlo.*** *
     """
     if _de_quien(con, propietario, receta_id) is None:
         return False
     date.fromisoformat(fecha)
-    cur = con.execute("DELETE FROM plan WHERE fecha = ? AND receta_id = ?", (fecha, receta_id))
+    if comida is None:
+        cur = con.execute("DELETE FROM plan WHERE fecha = ? AND receta_id = ?", (fecha, receta_id))
+    else:
+        cur = con.execute("DELETE FROM plan WHERE fecha = ? AND comida = ? AND receta_id = ?",
+                          (fecha, comida, receta_id))
     con.commit()
     return cur.rowcount > 0
