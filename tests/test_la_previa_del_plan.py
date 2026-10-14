@@ -156,12 +156,12 @@ def test_un_ingrediente_escrito_a_mano_ENTRA_como_pendiente_y_se_dice(tmp_path, 
 
     # *La previa sigue diciendo que la sal no tiene catalogo: eso no cambia, porque no hay producto.*
     assert previa["sin_catalogo"] == ["sal"], previa
-    # **Y queda dicho lo que falta por reconciliar aqui, en vez de taparlo.** *La previa cuenta
-    # `total: 0` y el POST apunta 1: **hoy son dos numeros distintos, y la que miente es la previa**,
-    # porque promete menos de lo que el POST hace.* *Se anota como pendiente y no se da por bueno.*
-    assert previa["total"] == 0, (
-        "la previa todavia no cuenta la pendiente: el POST apunta 1 y ella dice 0 -- PENDIENTE de "
-        "reconciliar en `previa_del_plan`")
+    # **Y la previa ya cuenta la pendiente.** *Decia `total: 0` mientras el POST apuntaba 1: **prometia
+    # menos de lo que hacia**, que es mentir igual que prometer de mas.* *Ahora los dos numeros dicen lo
+    # mismo, y `sin_catalogo` sigue nombrandola para que la pantalla la enseñe como pendiente.*
+    assert previa["total"] == 1, (
+        f"la previa tiene que contar la pendiente: dice {previa.get('total')} y el POST apunta 1")
+    assert len(previa["entrarian"]) == 1, previa
     assert r.status_code == 201, r.text
     # **Y el POST SI la apunta.** *Antes `anadidos` era 0 y `anadidas` estaba vacio: **eso probaba
     # rechazo, no conservacion** -- que es exactamente lo que el complemento del 14/10 senala.*

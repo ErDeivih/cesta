@@ -1476,8 +1476,13 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
     # antes se tiraba, y que el criterio de B04 pide*: *un ingrediente sin cantidad no se puede comprar, y
     # el mismo producto en unidades incompatibles no se puede sumar.* **Decirlo es la regla de la casa.**
     planificadas, ya_en_la_lista, calculada = _del_plan(lista_id, usuario["id"], desde, hasta)
-    # **Solo lo que se puede anadir de verdad.** Un ingrediente sin producto y sin grupo no puede
-    # entrar: la tabla lo prohibe (`linea_con_destino`). Prometerlo era una previa que miente.
+    # **Lo que entra, y lo que entra PENDIENTE.** *Un ingrediente sin producto y sin grupo **si puede
+    # entrar**: se apunta con su nombre y queda **«pendiente de identificar»**, y esta previa lo dice en
+    # `sin_destino` en vez de esconderlo.*
+    #
+    # *Antes esta previa lo filtraba, «porque la tabla lo prohibe (`linea_con_destino`)» -- y **eso dejo
+    # de ser cierto** cuando la migracion `014_la_linea_sin_destino.sql` quito la restriccion. *Prometer
+    # de menos es mentir igual que prometer de mas: **el POST apuntaba la linea y la previa decia 0.***
     #
     # *Y ahora son `LineaDeCompra`, no diccionarios*: `ln.texto`, `ln.producto_id`, `ln.grupo_id`.
     # **Lo que hay en casa, por nombre.** *Se lee la despensa de quien pregunta y solo la suya.*
@@ -1508,7 +1513,15 @@ def previa_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(.
 
     pueden = [ln for ln in planificadas
               if ln.texto.lower() not in ya_en_la_lista
-              and (ln.producto_id is not None or ln.grupo_id is not None)
+              # **Y el filtro del destino YA NO VA AQUI.** *Exigia producto o grupo «porque la tabla lo
+              # prohibe (`linea_con_destino`)», y **la tabla ya no lo prohibe**: *la migracion
+              # `014_la_linea_sin_destino.sql` quito la restriccion, y su motivo es justo este caso --
+              # *«quien no encontraba el producto en el catalogo **no podia apuntarlo, y acababa
+              # apuntandolo en otro sitio»*.*
+              #
+              # *Asi que una linea sin destino **entra**, y **se dice que va pendiente**: `sin_destino`
+              # la nombra -- para que la pantalla la enseñe como **«Pendiente de identificar»** y
+              # **los totales la dejen fuera**, que es distinto de contarla como cero.*
               # **Y aqui esta «la persona lo elige»**: con el parametro en falso -- que es por defecto --
               # *esto no quita nada.*
               and not (descontar_despensa and getattr(ln, "en_la_despensa", False))]
