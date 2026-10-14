@@ -226,6 +226,55 @@ def _conecta(dsn: str, limite_s: int = 90):
     raise DestinoNoSeguro(f"la base del ensayo no acepto la conexion en {limite_s} s: {ultimo}")
 
 
+def restaura_las_sqlite(destino=None, sello: str = "") -> list[dict]:
+    """*** LA SEGUNDA PATA: las dos SQLite, que el ensayo NO cubria. ***
+
+    *El complemento pide las tres: *** «PostgreSQL, recetas/diario SQLite Y PERMISOS/SNAPSHOTS, no solo una
+    tabla vacia». *** *Y este ensayo solo restauraba PostgreSQL.*
+
+    **Que es «restaurar» una SQLite, y que no.** *No hay servidor que levantar: *el fichero **se copia a su
+    sitio**, *y lo que hay que comprobar es que **se abre y tiene lo que tenia**.* *Asi que aqui:*
+
+      1. *Se coge **la copia** que dejo el respaldo* (`recetas_<sello>.sqlite`, hecha con `VACUUM INTO`).
+      2. *Y **se abre**, y se le pregunta: *`pragma integrity_check`, *las tablas, *y **cuantas filas**
+         tiene cada una.*
+      3. *Y **si el fichero no esta, se dice**: *el diario **se crea al primer apunte**, *y no existir
+         **no es un fallo** -- *es un diario en el que nadie ha escrito.* *Lo que **no** se hace es
+         inventar una copia vacia para que la prueba «salga».*
+
+    *Y no se toca ninguna base existente*: *se lee **la copia**, *que esta en `data/respaldos`.*
+    """
+    import sqlite3
+    from pathlib import Path as _P
+
+    # *Las dos que la casa escribe, y las mismas que respalda `scripts/respaldar_sqlite.py`.*
+    BASES = ("recetas.sqlite", "diario.sqlite")
+    carpeta = destino or (_P(__file__).resolve().parents[1] / "data" / "respaldos")
+    hechas: list[dict] = []
+    for base in BASES:
+        # *La copia lleva sello, como las de PostgreSQL: *`recetas_<sello>.sqlite`.*
+        candidatas = sorted(carpeta.glob(f"{base[:-len('.sqlite')]}_*.sqlite"))
+        if sello:
+            candidatas = [c for c in candidatas if sello in c.name] or candidatas
+        if not candidatas:
+            hechas.append({"base": base, "estado": "sin_copia",
+                           "nota": "no hay copia con sello: se crea al respaldar, y no se inventa"})
+            continue
+        copia = candidatas[-1]
+        con = sqlite3.connect(f"file:{copia}?mode=ro", uri=True)
+        try:
+            integridad = con.execute("pragma integrity_check").fetchone()[0]
+            tablas = [r[0] for r in con.execute(
+                "select name from sqlite_master where type='table' and name not like 'sqlite_%' order by name")]
+            # *Las tablas salen de `sqlite_master` del propio fichero, no de fuera.*
+            filas = {t: con.execute(f"select count(*) from {t}").fetchone()[0] for t in tablas}
+        finally:
+            con.close()
+        hechas.append({"base": base, "estado": "abre", "fichero": copia.name,
+                       "integridad": integridad, "filas": filas})
+    return hechas
+
+
 def corre(copia) -> dict:
     """**El recorrido entero, en un destino que se crea y se destruye.**
 
@@ -305,6 +354,13 @@ def corre(copia) -> dict:
     finally:
         # **Y se limpia SOLO lo acreditado.** *`limpia_lo_propio(nombre)` se niega si no lleva la etiqueta,
         # asi que no puede llevarse por delante un contenedor que no es suyo.*
+        # *** Y LA SEGUNDA PATA: las dos SQLite. *** *
+        for uno in restaura_las_sqlite(sello=copia.stem.split("_")[-1]):
+            if uno["estado"] == "abre":
+                print(f"  {uno['fichero']}: abre, integridad {uno['integridad']}, filas {uno['filas']}")
+                resultado[uno["base"]] = uno["filas"]
+            else:
+                print(f"  {uno['base']}: {uno['estado']} -- {uno['nota']}")
         for uno in limpia_lo_propio(nombre):
             print(f"  limpiado (era suyo): {uno}")
         print(f"  y queda: {resultado}")
