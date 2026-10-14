@@ -95,3 +95,46 @@ modelo**, *y se ve **leyendo la clave primaria de la tabla.** *
    *-- *para ver TODOS los sitios que escriben el plan, y saber que tocaria el cambio de clave*
    ```
 ```
+
+---
+
+## 7. *** Y el tamaño, medido: **un esquema y TRES funciones** ***
+
+```
+*** QUIEN ESCRIBE EL PLAN ***, *buscado en todo `core` y `plataforma`: *
+   *** `core/recetas.py:288` ***  *** `INSERT OR REPLACE INTO plan (fecha, receta_id, version, comensales)` *** *
+   *** `core/recetas.py:298` ***  *** `FROM plan p JOIN receta r ON r.id = p.receta_id` *** *
+   *** `core/recetas.py:315` ***  *** `DELETE FROM plan WHERE fecha = ? AND receta_id = ?` *** *
+   *** -> *** SOLO TRES SITIOS, *y los tres en UN FICHERO *** ✓✓✓
+*** Y LAS TRES FUNCIONES ***, *una por sitio: *
+   *** `planificar(con, propietario, fecha, receta_id, …)` ***  *-- escribe ✓
+   *** `plan(con, propietario, desde, hasta)` ***               *-- lee ✓
+   *** `quitar_del_plan(con, propietario, fecha, receta_id)` *** *-- borra ✓
+*** y **el unico otro resultado** *** es `plataforma/prueba_e2e.py:761`, *y **es un comentario** ✓
+*** -> *** y eso hace el cambio PEQUENO Y VERIFICABLE *** ✓✓✓
+```
+
+> *** Y **eso cambia el juicio otra vez**: *el hueco **parecía grande** *(-- «una carencia de modelo» --)*
+> *y **resulta acotado a un módulo** *--* *y **medido**, *no supuesto.* ✓ *
+
+## 8. *** Y un detalle que solo se ve **leyendo la consulta del borrado** ***
+
+```
+*** `DELETE FROM plan WHERE fecha = ? AND receta_id = ?` *** ⚠️ *
+*** -> si la clave gana `comida`, *este borrado *** borraria TODAS las comidas de esa receta ese dia *** ⚠️
+*** -> y **puede ser lo que se quiere** *(-- «quitar esta receta del dia» --)*, *
+   *** o no *** *(-- «quitar solo la cena» --)* ⚠️
+*** -> o sea: *el cambio de clave *** obliga a decidir que significa `quitar_del_plan` *** *
+   *-- *y **eso no se ve mirando el esquema**, *se ve *** mirando la consulta *** ✓✓✓
+```
+
+## 9. *** Y lo que hay que decidir, que son **tres cosas concretas y pequeñas** ***
+
+```
+*** (a) o (b) ***  *-- *la comida en la clave, *o **un `id` de ocurrencia** ✓ *
+*** EL VOCABULARIO DE LAS COMIDAS ***  *-- *desayuno / almuerzo / comida / cena ✓ *
+*** Y QUE SIGNIFICA `quitar_del_plan` ***  *-- *¿la receta del dia, *o **solo esa comida**?* ✓ *
+*** -> y **con eso decidido**, *el cambio es *** un esquema y tres funciones ***, *
+   *con **su ensayo equivalente** *(-- *que es lo que el encargo pide: *«aplica la mejora… *** con prueba
+   equivalente ***» --)* ✓✓✓
+```
