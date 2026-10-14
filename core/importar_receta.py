@@ -335,3 +335,41 @@ def lee_json_ld(html: str) -> dict | None:
         if campos is not None:
             return campos
     return None
+
+
+def abre_con_guarda(url: str, *, timeout: int = 10):
+    """**Abre una URL permitida, y NO sigue una redireccion a otra que no lo este.**
+
+    *Medido el 14/10/2026, con un servidor de fixture y **otro nombre de host**: *una fuente
+    **declarada** que redirige a `localhost` **no declarado** *hacia que el importador **siguiera la
+    redireccion**, *leyera el destino, *y **la guarda de fuente solo hubiera mirado la URL de
+    entrada.*** *Eso es un **SSRF**, *y el plan lo pide cerrar en B07: *** «guardas SSRF/*** redirecciones
+    ***/tamaño/timeout».** *
+
+    **Se arregla NO SIGUIENDO**, *y no comprobando despues*: *si se comprueba despues, *la peticion al
+    host no declarado **ya se hizo** *(-- *su DNS, *su conexion, *sus cabeceras --), *y eso es **lo que
+    un SSRF consigue.** *Aqui **se valida el destino antes de ir**, *con `comprueba_fuente`, *que ya
+    existia.* *
+
+    *Y **`timeout`** es el mismo de antes; *el tope de tamaño lo aplica quien lee.* *
+    """
+    import urllib.error
+    import urllib.request
+
+    class _SinSalirse(urllib.request.HTTPRedirectHandler):
+        """*Sigue redirecciones **solo si el destino sigue siendo una fuente permitida.***"""
+
+        def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[override]
+            permiso = comprueba_fuente(newurl)
+            if not permiso.permitida:
+                raise urllib.error.HTTPError(
+                    newurl, code,
+                    f"la redireccion lleva a una fuente que no vale: {permiso.motivo}",
+                    headers, fp)
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+    class _SoloElNuestro(urllib.request.HTTPRedirectHandler):
+        """*Y el de por defecto **no se suma**: *se va, *y manda el nuestro.*"""
+
+    abridor = urllib.request.build_opener(_SinSalirse)
+    return abridor.open(url, timeout=timeout)

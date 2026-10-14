@@ -527,11 +527,17 @@ def importar(datos: ImportarIn, usuario: dict = Depends(usuario_actual)) -> dict
 
     # *Se baja el HTML.* **Con tope de tiempo y de tamano**: una pagina que no contesta no puede colgar la
     # peticion, y una que pese 40 MB no es una receta.
+    import urllib.error
     import urllib.request
 
     try:
-        with urllib.request.urlopen(datos.url, timeout=10) as r:
+        with importar_receta.abre_con_guarda(datos.url, timeout=10) as r:
             html = r.read(2_000_000).decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as e:
+        # *Una redireccion que se sale: *se dice **cual** y **por que**, *y no se lee nada de ahi.*
+        if "fuente que no vale" in str(e.reason or ""):
+            raise HTTPException(400, f"No se puede importar de esa direccion: {e.reason}.") from e
+        raise HTTPException(502, f"No se pudo traer la pagina: {e}.") from e
     except Exception as e:
         raise HTTPException(502, f"No se pudo traer la pagina: {e}.") from e
 

@@ -170,14 +170,22 @@ def test_la_receta_buena_sale_de_borrador_con_su_fuente_y_sin_guardar(cliente):
         assert cuerpo.get("fuente"), cuerpo
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="SSRF MEDIDO el 14/10/2026: `urlopen` sigue la redireccion y el destino no se comprueba, "
-           "asi que una fuente declarada puede llevar a leer otra que no lo esta. "
-           "Cuando se arregle -- comprobando `r.geturl()` con `comprueba_fuente`, o prohibiendo "
-           "redirecciones -- este ensayo pasara y el `strict` avisara de que hay que quitar la marca.",
-)
 def test_una_fuente_permitida_que_redirige_a_OTRA_que_no_lo_esta(cliente):
+    """*** EL NEGATIVO DEL SSRF, *y ahora **cerrado.** *** *
+
+    *El plan pide, en B07: *** «URL solo fuentes revisadas, guardas SSRF/*** redirecciones ***/tamaño/
+    timeout».** *Y de las cuatro: *el **tiempo** y el **tamaño** estaban, *la **fuente** iba primero,
+    *y *** las redirecciones no se comprobaban ***: *`urlopen` **las seguia**, *y el destino **no se
+    miraba.** *
+
+    *** Y este ensayo empezo midiendo el caso equivocado ***: *redirigia al **mismo host con otro
+    puerto**, *y eso **no es un SSRF** -- *`comprueba_fuente` mira `hostname`, *que **no lleva el
+    puerto.** *Con **otro nombre** (`localhost`), *que **no esta declarado**, *si lo es: *daba **422**
+    *-- *o sea, *leia el destino --. *
+
+    *Y ahora da **400**: *la redireccion **no se sigue**, *y se dice **cual es el motivo.*** *
+    """
+
     """*** EL NEGATIVO DEL SSRF: *y aqui se MIDE, *no se afirma.** *** *
 
     *El plan pide, en B07: *** «URL solo fuentes revisadas, guardas SSRF/*** redirecciones ***/tamaño/
