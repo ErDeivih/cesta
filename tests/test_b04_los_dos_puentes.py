@@ -21,10 +21,12 @@ de nadie**.*
 from __future__ import annotations
 
 from contextlib import ExitStack
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
 
+from core import previa_compra as core_previa
 from core import recetas as core_recetas
 from core import traspaso as core_traspaso
 from core.previa_compra import LineaDeCompra
@@ -237,6 +239,83 @@ def _el_puente_del_plan_con(linea):
         pila.enter_context(patch.object(main, "_del_plan", return_value=([linea], set(), None)))
         main.traer_del_plan("lista-fixture", "2026-10-19", "2026-10-25", {"id": "fixture"})
     return insertar
+
+
+def test_el_puente_del_plan_le_pone_al_ingrediente_el_tamano_del_envase():
+    """*** Y ESTE ES EL CABLEADO QUE FALTABA, que las de arriba NO prueban. ***
+
+    *Las cuatro regresiones de envases que hay mas arriba **parchan `main._del_plan`**, asi que le pasan la
+    linea **ya calculada** -- *y por eso **pasaban con y sin el arreglo***: **saltaban el unico codigo que
+    hacia falta**. *Es el mismo error que ya se cometio una vez en esta sesion (una regresion en la ruta que
+    no era), *y aqui estaba repetido **cinco veces.** *
+
+    **Lo que se prueba aqui es el eslabon de verdad**: *que a `previa_compra` le llegue el ingrediente **con
+    `tamano_envase`** -- *que es lo que necesita para contar envases enteros, y lo que **no le llegaba**:
+    *el plan con 3.800 g de un articulo de 1.000 g acababa con `cantidad = 1` y los 3.800 g en la nota.* *
+
+    *Y de donde sale el dato*: *de **la ficha del articulo elegido**, `catalogo.producto(producto_id)` --
+    *igual que en `recetas._con_precios`.* *Aqui se falsea esa ficha, que es lo unico que no se puede tocar
+    sin red ni catalogo.*
+    """
+    visto: dict = {}
+
+    def espia(todos):
+        visto["todos"] = [dict(x) for x in todos]
+        return SimpleNamespace(lineas=[])
+
+    receta = {"nombre": "Ensalada", "raciones": 2,
+              "ingredientes": [{"texto": "tomate", "cantidad": 1400.0, "unidad": "g",
+                                "producto_id": "alcampo:99700"}]}
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(main, "_acceso", return_value=None))
+        pila.enter_context(patch.object(main.almacen, "lineas_de", return_value=[]))
+        pila.enter_context(patch.object(main, "_ruta_recetas", return_value=None))
+        pila.enter_context(patch.object(core_recetas, "conecta", return_value=Mock(close=Mock())))
+        pila.enter_context(patch.object(core_recetas, "plan",
+                                        return_value=[{"receta_id": 6, "comensales": 4}]))
+        pila.enter_context(patch.object(core_recetas, "leer", return_value=receta))
+        # *** La ficha del articulo elegido: su envase son 1.000 g. ***
+        pila.enter_context(patch.object(main.catalogo, "producto",
+                                        return_value={"cantidad": 1.0, "unidad": "kg"}))
+        pila.enter_context(patch.object(core_previa, "previa_de_compra", espia))
+        main._del_plan("lista-fixture", "2026-10-12", "2026-10-18", "b13-recorrido-2301")
+
+    uno = visto["todos"][0]
+    assert uno["tamano_envase"] == 1.0, (
+        f"el ingrediente tiene que llevar el tamano del envase de SU articulo, y lleva "
+        f"{uno.get('tamano_envase')!r}")
+    assert uno["unidad_envase"] == "kg", uno.get("unidad_envase")
+    # *Y el escalado por comensales sigue estando*: *4 comensales sobre una receta de 2 raciones.*
+    assert uno["cantidad"] == 2800.0, uno["cantidad"]
+
+
+def test_sin_articulo_elegido_no_se_inventa_tamano_de_envase():
+    """**Y si el ingrediente no tiene articulo, no se inventa nada.** *`envases` sale `None`, y la nota lo
+    dice -- *que es distinto de afirmar **un** envase.*"""
+    visto: dict = {}
+
+    def espia(todos):
+        visto["todos"] = [dict(x) for x in todos]
+        return SimpleNamespace(lineas=[])
+
+    receta = {"nombre": "Pure", "raciones": 2,
+              "ingredientes": [{"texto": "sal", "producto_id": None}]}
+    with ExitStack() as pila:
+        pila.enter_context(patch.object(main, "_acceso", return_value=None))
+        pila.enter_context(patch.object(main.almacen, "lineas_de", return_value=[]))
+        pila.enter_context(patch.object(main, "_ruta_recetas", return_value=None))
+        pila.enter_context(patch.object(core_recetas, "conecta", return_value=Mock(close=Mock())))
+        pila.enter_context(patch.object(core_recetas, "plan",
+                                        return_value=[{"receta_id": 10, "comensales": 2}]))
+        pila.enter_context(patch.object(core_recetas, "leer", return_value=receta))
+        # *Y si alguien llamara al catalogo, se entera: **no tiene que llamarlo.** *
+        pila.enter_context(patch.object(main.catalogo, "producto",
+                                        side_effect=AssertionError("no hay articulo que consultar")))
+        pila.enter_context(patch.object(core_previa, "previa_de_compra", espia))
+        main._del_plan("lista-fixture", "2026-10-12", "2026-10-18", "b13-recorrido-2301")
+
+    uno = visto["todos"][0]
+    assert "tamano_envase" not in uno or uno["tamano_envase"] is None, uno
 
 
 def test_el_puente_del_plan_guarda_dos_envases_y_no_uno():

@@ -1641,6 +1641,31 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
                     suyo["cantidad"] = suyo["cantidad"] * factor
                 # *La receta, para que la nota pueda decir de donde viene cada aportacion.*
                 suyo["_receta"] = receta["nombre"]
+                # *** Y EL TAMANO DEL ENVASE, QUE FALTABA AQUI. *** *
+                #
+                # **Y era el fallo entero, medido**: *un plan con **3.800 g** de un articulo cuyo envase
+                # son **1.000 g** acababa en la lista con *** `cantidad = 1` *** y los 3.800 g **solo en la
+                # nota** -- *que es exactamente lo que denuncio el propietario.* *
+                #
+                # *La causa no era el calculo*: *`previa_compra` **cuenta los envases enteros** y
+                # `envases_enteros` **tiene la regla con su ejemplo** («1,4 kg con envases de 1 kg son dos
+                # envases y 0,6 kg sobrantes»). *La causa era que **a `previa_compra` le llegaban los
+                # ingredientes sin `tamano_envase`**: *lo pone `recetas._con_precios` -- *que es de la API
+                # de recetas* --, *y **este camino no pasa por ahi.** *
+                #
+                # *Y por eso salia `envases=None`, y por eso la linea quedaba en `1`: *sin tamaño no se
+                # puede saber cuantos envases hacen falta, *y **el `1` afirmaba una unidad que nadie habia
+                # calculado.*** *
+                #
+                # **El dato sale de donde tiene que salir**: *de **la ficha del articulo elegido**, que es
+                # quien lo publica -- *igual que en `recetas._con_precios`.* *Y si el ingrediente **no tiene
+                # articulo**, no se inventa nada: *se queda sin tamaño, *`envases` sale `None`, *y **la nota
+                # lo dice.** *
+                ficha = (catalogo.producto(str(suyo["producto_id"]))
+                         if suyo.get("producto_id") else None)
+                if ficha:
+                    suyo["tamano_envase"] = ficha.get("cantidad")
+                    suyo["unidad_envase"] = ficha.get("unidad")
                 todos.append(suyo)
     finally:
         recetario.close()
