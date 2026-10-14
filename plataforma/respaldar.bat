@@ -1,6 +1,8 @@
 @echo off
 REM ============================================================================
-REM  Cesta: respaldo de PostgreSQL.
+REM  Cesta: respaldo de PostgreSQL, del RECETARIO y del DIARIO.
+REM  *(La primera linea decia solo «de PostgreSQL», y era lo mismo que la cabecera
+REM  de abajo: **una lista corta que se lee como completa.**)*
 REM
 REM  **Y NO es lo unico, aunque esta cabecera lo decia.** *Lo que no se
 REM  regenera son TRES cosas, y este guion respaldaba UNA:*
