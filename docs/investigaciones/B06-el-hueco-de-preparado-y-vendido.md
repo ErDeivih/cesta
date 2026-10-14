@@ -131,3 +131,48 @@ encargo prohibe inventar calorias --).* *
 *** Y **esto cierra B06**, *y **con la distincion que faltaba al principio**: *no todo lo que no esta
 *** falta ***; *a veces **la fuente no lo da** *--* *y **confundir esas dos cosas** es lo que hace que un
 plan se cierre mal: *o **declarando hecho lo que no hay**, *o **prometiendo lo que nadie publica.*** *
+
+---
+
+## 8. *** Y la «causa de cada hueco», *que era lo unico que quedaba* ***
+
+*El plan pide, en B06: *** «*Aceptar cobertura con numerador/denominador, *** origen, fecha y causa de
+huecos ***».** *Los tres primeros **ya estaban medidos**; *y **la causa** la deje como **«desconocida»**
+*-- *y **estaba**, *buscandola con la palabra del proyecto.*
+
+```
+*** `core/inventario.py:37-46` ***  *** NUEVE ESTADOS, *con la causa en el nombre *** *
+   *** `PENDIENTE` ***      *-- aun no se ha pedido ✓
+   *** `EN_CURSO` ***        *-- con `LEASE` ✓
+   *** `CORRECTO` ***        *-- se pidio y trajo ✓
+   *** `PARCIAL` ***         *-- trajo **parte**, *y **se sabe cual** ✓
+   *** `NO_PUBLICADO` ***    *-- *** la cadena NO LO PUBLICA *** ✓
+   *** `BLOQUEADO` ***       *-- WAF ✓
+   *** `ERROR_TEMPORAL` ***  *-- fallo de red ✓
+   *** `NO_ENCONTRADO` ***   *-- 404: **la ficha ya no esta** ✓
+   *** `EXCLUIDO` ***        *-- fuera de alcance ✓
+*** y *** `FINALES = (CORRECTO, PARCIAL, NO_PUBLICADO, NO_ENCONTRADO, EXCLUIDO)` *** *
+   *** -> los cinco que TERMINAN ***: *o esta, *o **no se puede**, *o **no aplica** ✓✓✓
+```
+
+> ***O sea: **la causa no es un campo suelto**: *son **los estados**, *y **los cinco finales** son
+> exactamente las razones por las que algo **no esta completo.** *
+> ```
+> *** `NO_PUBLICADO` ***   *-- la cadena **no lo da** *(-- ni se puede conseguir --)* ✓
+> *** `NO_ENCONTRADO` ***  *-- **404** ✓
+> *** `EXCLUIDO` ***       *-- fuera de alcance *-- *y eso **no es un hueco** ✓
+> *** `PARCIAL` ***        *-- trajo parte *-- *y **se sabe cual** ✓
+> *** `CORRECTO` ***       *-- esta ✓
+> ```
+>
+> ***→ Y **lo que remata la doctrina es **la separacion**: *
+> ```
+> *** `BLOQUEADO` *** *y *** `ERROR_TEMPORAL` *** *** NO estan en `FINALES` *** ✓✓✓
+>    *-- *o sea: *** un bloqueo de WAF y un fallo de red NO son un hueco permanente *** *
+>    *-- *se **reintentan**, *y **por eso no cierran la ficha** ✓
+> *** -> que es *** exactamente *** lo que el encargo pide: *
+>    *** «*no eludas CAPTCHA/WAF *** ni confundas desafio con catalogo vacio ***» ✓✓✓
+> ```
+
+*** Y **es la misma leccion de la ronda 465**: *lo que faltaba **estaba**, *y **lo que impedia verlo
+era buscar con mi vocabulario** *-- «causa» -- *en vez de **con el del proyecto** *-- *** `estado` ***.* *
