@@ -70,3 +70,41 @@ un fallo**: *un fallo te hace mirar, *y un falso negativo te hace **concluir**.*
 *Y una comprobacion mas, *que es la misma idea: *** comprobar en el sitio equivocado
 da un falso negativo ***, *y el sitio equivocado casi siempre es **el fuente cuando hay
 que mirar lo construido** *-- *o al reves.* *
+
+---
+
+## 5. *** Y un QUINTO intento que NO funciono, *y por que ***
+
+*15/10/2026. *Se intento medir el ancho del viewport **dentro de la pagina**, *para
+resolver si el movil desborda de verdad o si era un recorte de Chrome.* *
+
+```
+*** LO INTENTADO ***: *un componente temporal que escribe `innerWidth`, `clientWidth`,
+   *`scrollWidth` y **los cinco elementos mas anchos** en el DOM, *y leerlo con
+   *`chrome --headless --dump-dom` ✓
+*** Y SALIO VACIO ***: *el volcado, **0 bytes**, *en los tres anchos probados ⚠️
+*** -> *o sea que `--dump-dom` **no devuelve nada por esta via** *(-- *y ademas el
+   *primer intento lo puso en un `useEffect`, *que **volcaria antes de que corriera** --)* ✓
+*** -> *y el andamiaje se **quito entero**, *con `git checkout` de `App.tsx` y borrando
+   *el fichero: *** un instrumento de medida NO se queda dentro de la app *** ✓✓✓
+```
+
+*** Y lo que se lleva aprendido, *que es lo unico que valia la pena de este intento ***: *
+
+```
+*** `--screenshot` y `--dump-dom` NO valen para medir *** *
+   *-- *la captura no dice el ancho, *y el volcado no devuelve nada *
+*** -> *lo que hace falta es *** emulacion por CDP *** *
+   *(`Emulation.setDeviceMetricsOverride`), *que **no tiene el minimo de ventana**, *
+   *o un CDP al que preguntarle `Runtime.evaluate` ✓
+*** -> *y se intento `capture_browser_scenario` *y **fallo** *(-- *«Scenario navigation
+   *failed before the initial state was captured» --), *y ademas lanzo **Chromium 155**,
+   *que **no es el Chrome instalado** ✓
+*** -> *** y aqui se para: *gastar contexto en herramienta no arregla la app *** *
+   *-- *lo que si la arregla es `min-w-0` en vez de `min-w-[16rem]`, *que ya se hizo *
+   *y **no dependia de esta medida** ✓✓✓
+```
+
+*** Y la afirmacion «el movil desborda horizontalmente» sigue RETIRADA *** *(-- *no
+probada --), *y **eso es lo correcto**: *no se sostiene una afirmacion con una captura
+que no puede probarla.* *
