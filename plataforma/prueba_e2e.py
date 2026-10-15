@@ -887,6 +887,16 @@ def main() -> int:
               f"ya estaban {len(previa.json().get('ya_estaban') or [])}")
     # *`desde` y `hasta` son `Query(...)` en las DOS rutas -- lo dice su firma --, *asi que van
     # **como parametros de consulta y no en el cuerpo.***
+    #
+    # *** Y LA IDEMPOTENCIA POR OPERACION, *que es lo que el propietario decidio el 14/10 con
+    # «la lista ACUMULA». *** *
+    #
+    # *La clave de la linea lleva **la operacion** *(-- la semana --), *asi que: *
+    #   *-- *traer **la misma semana dos veces** -> **el mismo id** -> *no duplica ✓
+    #   *-- *traer **otra semana** -> **id distinto** -> *se acumula ✓
+    #
+    # *Y **se comprueba con el recuento de la lista**, *que es lo unico que no se puede simular.* *
+    antes_de_traer = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
     traido = cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
                           params={"desde": desde, "hasta": hasta})
     if traido.status_code not in (200, 201):
@@ -896,6 +906,36 @@ def main() -> int:
     # *(-- 7 lineas de otros escenarios --), *asi que **comparar el total diria que mi puente no
     # funciono cuando si funciono.** *La senal buena es **lo que trajo el POST:** *
     traidas = int((traido.json() if traido.status_code in (200, 201) else {}).get("total") or 0)
+
+    # *Y **las tres comprobaciones de la operacion**, *que es lo que decidio el propietario.* *
+    tras_una = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
+    otra_vez = cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
+                            params={"desde": desde, "hasta": hasta})
+    tras_repetir = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
+    if tras_repetir != tras_una:
+        fallos += 1
+        print(f"   FALLO: traer la MISMA semana dos veces no debe anadir lineas: "
+              f"{tras_una} -> {tras_repetir}")
+    else:
+        print(f"   traer la misma semana otra vez no anade nada: siguen {tras_repetir} lineas")
+
+    # *Y **otra semana**, *que si tiene que acumular. *Se usa la siguiente, que ya tiene plan*
+    # *por la copia de semana de arriba.* *
+    la_otra = (lunes + timedelta(days=7))
+    otra_semana = cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
+                               params={"desde": la_otra.isoformat(),
+                                       "hasta": (la_otra + timedelta(days=6)).isoformat()})
+    tras_otra = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
+    anadidas = int((otra_semana.json() if otra_semana.status_code in (200, 201) else {}).get("total") or 0)
+    if anadidas == 0:
+        fallos += 1
+        print("   FALLO: traer OTRA semana con plan deberia anadir lineas, y anadio 0")
+    else:
+        print(f"   y traer OTRA semana si acumula: {anadidas} lineas nuevas, "
+              f"la lista pasa de {tras_repetir} a {tras_otra}")
+    if tras_otra < tras_repetir:
+        fallos += 1
+        print(f"   FALLO: la lista no puede encoger al traer otra semana: {tras_repetir} -> {tras_otra}")
     cuerpo = cliente.get(f"/api/listas/{la_casa}").json()
     suyas = cuerpo.get("lineas") or []
     print(f"   la lista de la casa tiene {len(suyas)} lineas, y el puente trajo {traidas}")

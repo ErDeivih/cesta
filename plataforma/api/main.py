@@ -23,7 +23,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from core import gasto
+from core import gasto, traspaso
 
 from . import (
     alertas,
@@ -1793,8 +1793,29 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         # *Y cuando no hay envases calculados, queda `1` -- porque `lista_linea.cantidad` es
         # `integer NOT NULL` y **«no se sabe» no cabe en la columna** --, pero **la nota ya lo dice**, asi
         # que el `1` no afirma nada.*
+        # *** Y LA CLAVE LLEVA LA OPERACION, *que es lo que hace que dos operaciones distintas
+        # **se acumulen** en vez de pisarse. *** *
+        #
+        # *Antes esto era `uuid5(lista_id|uno.clave)`, *y `uno.clave` es *** producto + unidad ***
+        # *-- *o sea: *«200 g de tomate» --, *que **no dice de donde viene.** *Asi que
+        # **traer el plan de una semana** y **traerlo de otra** daban **el mismo id**, *
+        # *y `anade_linea` **actualizaba en vez de anadir** *-- *y **la segunda operacion se perdia
+        # sin decirlo.** *
+        #
+        # *Y **la operacion es la semana** *(-- `desde|hasta` --)*: *
+        #   *-- *traer **la misma semana dos veces** -> **el mismo id** -> *idempotente ✓
+        #   *-- *traer **semanas distintas** -> **ids distintos** -> *se acumulan ✓
+        #
+        # *Y **no se inventa la formula**: *se usa *** `traspaso.id_de_linea` ***, *que es **la misma
+        # cuenta** *y **vive en su modulo por un motivo escrito alli**: *«*Es una funcion y no dos
+        # lineas dentro del endpoint *** a proposito ***: *asi se puede probar que [es] determinista
+        # **sin base de datos ni servidor**, *que es lo unico que este proyecto no puede permitirse
+        # no probar de un id.»* *
+        #
+        # *Y **dentro de una misma pasada** se sigue consolidando por identidad* *(-- *lo hace `ya`,
+        # unas lineas mas abajo --)*, *que es lo que pide el encargo.* *
         almacen.anade_linea(lista_id, usuario["id"],
-                            str(uuid.uuid5(uuid.NAMESPACE_URL, f"{lista_id}|{uno.clave}")), nombre,
+                            traspaso.id_de_linea(lista_id, f"{uno.clave}|{desde}|{hasta}"), nombre,
                             uno.grupo_id, uno.producto_id, uno.envases or 1, detalle)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
