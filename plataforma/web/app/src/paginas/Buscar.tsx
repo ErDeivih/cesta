@@ -161,7 +161,7 @@ export function Buscar() {
             // hijo no encoge por debajo de su tamano minimo de contenido salvo que se le diga** -- *y el
             // minimo de un `input` es su `min-w`.* **Con `min-w-0` y `flex-1`, el campo ocupa lo que hay
             // en cualquier ancho**, *que es lo que ya hacia en escritorio.*
-            className="min-h-[48px] min-w-0 flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-base dark:border-neutral-600 dark:bg-neutral-800"
+            className="min-h-[48px] min-w-0 flex-1 rounded-tarjeta border border-borde bg-white px-4 py-2 text-entrada dark:bg-neutral-800"
           />
           {/* **El microfono, si el navegador sabe** (tarea 3): sin soporte no se dibuja, que es
               la regla del encargo («no se dibuja y falla al pulsarlo: no se dibuja»). El
@@ -174,7 +174,7 @@ export function Buscar() {
           <Link
             to="/escaner"
             aria-label="Escanear un código de barras"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-campo border border-borde px-3 text-cuerpo "
           >
             <IconoCodigoBarras width={18} height={18} />
             <span className="sr-only sm:not-sr-only">Escanear</span>
@@ -225,7 +225,7 @@ export function Buscar() {
               y una busqueda vieja puede no encontrar nada. */}
           {recientes.length > 0 && (
             <>
-              <p className="mt-4 text-xs uppercase tracking-wide text-tinta-suave">
+              <p className="mt-4 text-etiqueta uppercase tracking-wide text-tinta-suave">
                 Lo que has buscado
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -277,8 +277,8 @@ export function Buscar() {
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              <strong className="font-semibold text-neutral-900 dark:text-neutral-100">
+            <p className="text-cuerpo text-secundaria ">
+              <strong className="font-semibold text-tinta-fuerte ">
                 {resultados.data.resultados.length}
               </strong>{' '}
               {resultados.data.resultados.length === 1 ? 'resultado' : 'resultados'}
@@ -298,7 +298,7 @@ export function Buscar() {
           {cadenas.length > 0 && (
             <div className="flex flex-wrap items-center gap-2" role="group"
                  aria-label="Cadena de los resultados">
-              <span className="text-xs uppercase tracking-wide text-tinta-suave">Cadena</span>
+              <span className="text-etiqueta uppercase tracking-wide text-tinta-suave">Cadena</span>
               {cadenas.map((c) => {
                 const puesta = filtros.cadenas.includes(c)
                 return (
@@ -315,10 +315,10 @@ export function Buscar() {
                       })
                     }
                     className={cx(
-                      'min-h-[44px] rounded-full border px-3 text-sm font-medium',
+                      'min-h-[44px] rounded-full border px-3 text-cuerpo font-medium',
                       puesta
-                        ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500'
-                        : 'border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800',
+                        ? 'border-terracota bg-terracota text-white '
+                        : 'border-borde bg-white dark:bg-neutral-800',
                     )}
                   >
                     {nombreCadena(c)}
@@ -329,7 +329,7 @@ export function Buscar() {
                 <button
                   type="button"
                   onClick={() => ponFiltros({ ...filtros, cadenas: [] })}
-                  className="min-h-[44px] rounded-full border border-neutral-300 bg-white px-3 text-sm underline dark:border-neutral-600 dark:bg-neutral-800"
+                  className="min-h-[44px] rounded-full border border-borde bg-white px-3 text-cuerpo underline dark:bg-neutral-800"
                 >
                   Todas
                 </button>

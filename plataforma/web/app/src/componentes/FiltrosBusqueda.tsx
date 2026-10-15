@@ -63,24 +63,24 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
   return (
     <details
       open={cuantosPuestos > 0}
-      className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
     >
-      <Resumen className="text-sm font-medium">
+      <Resumen className="text-cuerpo font-medium">
         Filtros
         {cuantosPuestos > 0 && <Etiqueta tono="info">{cuantosPuestos}</Etiqueta>}
-        <span className="text-xs font-normal text-tinta-suave">
+        <span className="text-etiqueta font-normal text-tinta-suave">
           cadena, pasillo, dieta, ofertas…
         </span>
       </Resumen>
 
       <div className="mt-3 grid gap-4">
         <fieldset>
-          <legend className="mb-1 text-xs font-medium text-neutral-600 dark:text-neutral-400">
+          <legend className="mb-1 text-etiqueta font-medium text-secundaria ">
             Cadena
           </legend>
           <div className="flex flex-wrap gap-2">
             {cadenasDisponibles.length === 0 && (
-              <p className="text-sm text-tinta-suave">
+              <p className="text-cuerpo text-tinta-suave">
                 No sé qué cadenas hay: `/api/estado` no ha contestado.
               </p>
             )}
@@ -91,10 +91,10 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 aria-pressed={filtros.cadenas.includes(c)}
                 onClick={() => alternaCadena(c)}
                 className={cx(
-                  'min-h-[44px] rounded-lg border px-3 py-1 text-sm font-medium',
+                  'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium',
                   filtros.cadenas.includes(c)
-                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
-                    : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700',
+                    ? 'border-terracota bg-terracota text-white '
+                    : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel',
                 )}
               >
                 {/* `nombreCadena` y no `{c}`: el identificador viene en minusculas (`alcampo`)
@@ -105,7 +105,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
             ))}
           </div>
           {filtros.cadenas.length === 0 && cadenasDisponibles.length > 0 && (
-            <p className="mt-1 text-xs text-tinta-suave">
+            <p className="mt-1 text-etiqueta text-tinta-suave">
               Sin ninguna marcada se usan todas, o tus cadenas de casa si las tienes guardadas.
             </p>
           )}
@@ -115,7 +115,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
           <div>
             <label
               htmlFor={idSeccion}
-              className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400"
+              className="mb-1 block text-etiqueta font-medium text-secundaria "
             >
               Pasillo
             </label>
@@ -123,7 +123,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               id={idSeccion}
               value={filtros.seccion}
               onChange={(e) => onCambio({ ...filtros, seccion: e.target.value })}
-              className="min-h-[44px] w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800"
+              className="min-h-[44px] w-full rounded-campo border border-borde bg-white px-3 py-2 dark:bg-neutral-800"
             >
               <option value="">Todos</option>
               {secciones.data?.secciones.map((s) => (
@@ -133,7 +133,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               ))}
             </select>
             {secciones.data && secciones.data.secciones.length === 0 && (
-              <p className="mt-1 text-xs text-tinta-suave">
+              <p className="mt-1 text-etiqueta text-tinta-suave">
                 Todavía no hay pasillos en gold: falta que el scraper escriba la columna `seccion`.
                 Explorar un pasillo se hace sin texto, así que en cuanto estén, esto funciona.
               </p>
@@ -165,7 +165,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
         </div>
 
         <fieldset>
-          <legend className="mb-1 text-xs font-medium text-neutral-600 dark:text-neutral-400">
+          <legend className="mb-1 text-etiqueta font-medium text-secundaria ">
             Dieta y sellos
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -176,24 +176,24 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 aria-pressed={filtros.sellos.includes(s)}
                 onClick={() => alternaSello(s)}
                 className={cx(
-                  'min-h-[44px] rounded-lg border px-3 py-1 text-sm',
+                  'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo',
                   filtros.sellos.includes(s)
-                    ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
-                    : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700',
+                    ? 'border-terracota bg-terracota text-white '
+                    : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel',
                 )}
               >
                 {selloLegible(s)}
               </button>
             ))}
           </div>
-          <p className="mt-1 text-xs text-tinta-suave">
+          <p className="mt-1 text-etiqueta text-tinta-suave">
             Los sellos se comprueban en cada producto que se enseña, no en el grupo: si un miembro
             del grupo no lo cumple, no sale.
           </p>
         </fieldset>
 
         <fieldset className="flex flex-wrap gap-2">
-          <legend className="mb-1 text-xs font-medium text-neutral-600 dark:text-neutral-400">
+          <legend className="mb-1 text-etiqueta font-medium text-secundaria ">
             Otras
           </legend>
           <Casilla
@@ -223,7 +223,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
           />
         </fieldset>
 
-        <p className="text-xs text-tinta-suave">
+        <p className="text-etiqueta text-tinta-suave">
           «Solo ofertas de hoy» deja fuera las de tarjeta y las de solo internet: ninguna de las dos
           baja lo que pagas en caja.
         </p>

@@ -141,7 +141,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             <span className="cifra">
               {texto}
               {hayAbanico && (
-                <span className="block text-xs text-tinta-suave">
+                <span className="block text-etiqueta text-tinta-suave">
                   hasta {eurosUnidad(precio_unidad_max_cent, unidad)}
                 </span>
               )}
@@ -157,7 +157,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         cell: ({ row }) => (
           <span className="cifra">
             {row.original.cadenas} {row.original.cadenas === 1 ? 'cadena' : 'cadenas'}
-            <span className="block text-xs text-tinta-suave">
+            <span className="block text-etiqueta text-tinta-suave">
               {row.original.productos} {row.original.productos === 1 ? 'producto' : 'productos'}
             </span>
           </span>
@@ -183,7 +183,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             )
           }
           return (
-            <span className="cifra font-semibold text-emerald-800 dark:text-emerald-400">
+            <span className="cifra font-semibold text-bien ">
               {porcentaje(f.ahorro_pct)}
             </span>
           )
@@ -210,14 +210,14 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         <BarraDeOrden orden={orden} onOrden={setOrden} />
         {/* La cabecera de las dos columnas de precio, que es lo que en la tabla hacen los
             `th`: sin ella, «0,95 €» y «0,95 €/L» son dos números sin nombre. */}
-        <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 border-b border-neutral-200 px-1 pb-1 text-xs uppercase tracking-wide text-tinta-suave dark:border-neutral-700">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 border-b border-borde px-1 pb-1 text-etiqueta uppercase tracking-wide text-tinta-suave ">
           <span>Producto</span>
           <span className="text-right">PVP</span>
           <span className="text-right">Por unidad</span>
         </div>
         <ul
           aria-label="Resultados de la búsqueda"
-          className="divide-y divide-neutral-200 dark:divide-neutral-700"
+          className="divide-y divide-borde "
         >
           {tabla.getRowModel().rows.map((fila) => (
             <FilaCompacta
@@ -232,7 +232,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
 
   return (
     <TablaScroll etiqueta="Resultados de la búsqueda" minAncho="52rem">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-cuerpo">
         <thead>
           <tr>
             {tabla.getHeaderGroups()[0]?.headers.map((h) => (
@@ -251,7 +251,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
           {tabla.getRowModel().rows.map((fila) => (
             <tr
               key={`${fila.original.grupo_id ?? 'suelto'}-${fila.original.nombre}-${fila.index}`}
-              className="relative hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+              className="relative hover:bg-marfil dark:hover:bg-neutral-800/60"
             >
               {fila.getVisibleCells().map((celda) => (
                 <Td key={celda.id}>{flexRender(celda.column.columnDef.cell, celda.getContext())}</Td>
@@ -292,7 +292,7 @@ function BarraDeOrden({ orden, onOrden }: {
   const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
   return (
     <details className="mb-2">
-      <Resumen className="text-xs uppercase tracking-wide text-tinta-suave">
+      <Resumen className="text-etiqueta uppercase tracking-wide text-tinta-suave">
         Ordenar por
         <span className="font-semibold normal-case tracking-normal text-tinta">
           {puesto}
@@ -323,8 +323,8 @@ function BarraDeOrden({ orden, onOrden }: {
               }}
               className={
                 esElPuesto
-                  ? 'min-h-[44px] rounded-lg border border-sky-700 bg-sky-700 px-3 text-sm font-medium text-white dark:border-sky-500'
-                  : 'min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm dark:border-neutral-600 dark:bg-neutral-800'
+                  ? 'min-h-[44px] rounded-campo border border-terracota bg-terracota px-3 text-cuerpo font-medium text-white '
+                  : 'min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo dark:bg-neutral-800'
               }
             >
               {texto}
@@ -350,7 +350,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
     fila.precio_unidad_max_cent !== null &&
     fila.precio_unidad_max_cent > fila.precio_unidad_cent
   return (
-    <li className="relative hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+    <li className="relative hover:bg-marfil dark:hover:bg-neutral-800/60">
       <div className="grid grid-cols-[1fr_auto_auto] items-start gap-x-3 py-2">
         <div className="flex min-w-0 items-start gap-2">
           {fila.imagen ? (
@@ -363,16 +363,16 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
               }}
-              className="h-10 w-10 shrink-0 rounded border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+              className="h-10 w-10 shrink-0 rounded border border-borde bg-white object-contain "
             />
           ) : (
             <span
               aria-hidden="true"
-              className="h-10 w-10 shrink-0 rounded border border-dashed border-neutral-300 dark:border-neutral-600"
+              className="h-10 w-10 shrink-0 rounded border border-dashed border-borde "
             />
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium leading-snug">
+            <p className="text-cuerpo font-medium leading-snug">
               {fila.grupo_id === null ? (
                 fila.nombre
               ) : (
@@ -381,7 +381,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
                 </Link>
               )}
             </p>
-            <p className="text-xs text-tinta-suave">
+            <p className="text-etiqueta text-tinta-suave">
               {fila.cadena_mas_barata ?? 'no lo sé'}
               {fila.marca && fila.marca !== fila.cadena_mas_barata ? ` · ${fila.marca}` : ''}
             </p>
@@ -400,11 +400,11 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
             </div>
           </div>
         </div>
-        <span className="cifra text-sm font-semibold">{euros(fila.precio_cent)}</span>
-        <span className="cifra text-right text-sm">
+        <span className="cifra text-cuerpo font-semibold">{euros(fila.precio_cent)}</span>
+        <span className="cifra text-right text-cuerpo">
           {eurosUnidad(fila.precio_unidad_cent, fila.unidad)}
           {hayAbanico && (
-            <span className="block text-xs text-tinta-suave">
+            <span className="block text-etiqueta text-tinta-suave">
               hasta {eurosUnidad(fila.precio_unidad_max_cent, fila.unidad)}
             </span>
           )}
@@ -435,12 +435,12 @@ function Producto({ fila }: { fila: ResultadoBusqueda }) {
           onError={(e) => {
             e.currentTarget.style.display = 'none'
           }}
-          className="h-12 w-12 shrink-0 rounded border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+          className="h-12 w-12 shrink-0 rounded border border-borde bg-white object-contain "
         />
       ) : (
         <span
           aria-hidden="true"
-          className="h-12 w-12 shrink-0 rounded border border-dashed border-neutral-300 dark:border-neutral-600"
+          className="h-12 w-12 shrink-0 rounded border border-dashed border-borde "
         />
       )}
       <div className="min-w-0">
