@@ -210,3 +210,35 @@ mirando una pantalla**, *no aqui.* *
 *** Y LA LECCION, *que es la de toda la noche otra vez ***: *dos cosas que **se parecen**
 no son **la misma**, *y unificarlas porque se parecen es como se rompe una interfaz
 **que funcionaba.*** *
+
+---
+
+# *** 11. *Y UNA CORRECCION: la lista de «ocho sitios» estaba SOBRECONTADA *** *
+
+*15/10/2026, ronda 38. *En la seccion 10 se dijo que la pantalla de error estaba
+«*escrita a mano **siete veces**»*, *y que **ocho sitios** tenian el patron.* *
+*** Y ERA FALSO, *al menos en uno.*** *
+
+```
+*** `Escaner.tsx` NUNCA FUE UN DEFECTO ***. *Lo que hay es: *
+   *-- *`{consulta.isFetching && <Cargando que="el codigo" />}` *-- *la pieza ✓
+   *-- *`<Aviso tono="mal" titulo="Eso no es un codigo de barras">` *-- *un `Aviso`
+      *** con titulo *** ✓
+   *-- *`<Fallo error={error} reintentar={...} />` *-- *la pieza *** con reintento *** ✓
+*** -> *el `<p>{textoDeError(error)}</p>` que marque esta *** DENTRO de un `Aviso`
+   *con titulo ***: *es *** uso CORRECTO ***, *no el patron a mano* ⚠️
+*** -> *** y yo lo conte como defecto por buscar el `<p>` sin mirar lo que lo envolvia *** ✓
+*** -> *y comprobado con la captura: *`/escaner` sale con su titulo, *su campo, *su
+   *boton y su estado vacio *** centrado *** ✓✓✓
+```
+
+*** Y LA LECCION ***, *que es la misma de la seccion 10 dicha al reves*: *si dos cosas
+**se parecen**, *hay que mirar **lo que las envuelve** antes de contarlas.* *Un `<p>` con
+`textoDeError` dentro de un `Aviso` con titulo **no es** el mismo caso que un `<p>` suelto
+en el cuerpo de una pantalla* *-- *y contar el primero como el segundo **infla la lista y
+despista** sobre donde esta el trabajo.* *
+
+*** Y el censo corregido ***, *que es lo que queda de esta clase*: *los unicos sitios que
+de verdad pintan el error **sueltos en el cuerpo** eran **`Despensa`**, *** `RecetaDetalle`,
+`Recetario`, `Diario` *y* `PlanSemanal` *-- *los cinco, **arreglados** --,* *mas `Tendencias`
+**(aplicado, sin verificar)** y `Ajustes` **(que necesita titulo a medida)**.* *
