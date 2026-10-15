@@ -142,3 +142,40 @@ verdad *-- *no rompe nada --* *y **no es lo mismo que arreglar.*** *
 *** Y la correccion ***: *el patron son **las dos cosas juntas** -- *el contenedor que
 llena **y** el hijo que crece --, *y por eso los siete sitios necesitan **una pasada
 mas** que mire **cual es el bloque que debe crecer** en cada uno.* *
+
+---
+
+## 7. *** Y la CUARTA vez, *en la misma ronda: *verificar contra el test equivocado ***
+
+*15/10/2026, ronda 26. *Se intento cerrar el agujero del censo de color -- *el que no
+cuenta `white` ni `black` -- *anadiendolos a `PALETAS` en `tests/test_interfaz.py`.* *
+
+```
+*** SE PROBO CON `test_la_paleta_de_fabrica_no_crece` *** *(-- *el trinquete --), *
+   *inyectando `text-white`: *PASO ⚠️*
+*** -> *y se concluyo que el cambio era INERTE *-- *y **se revirtio** -- ✓
+*** -> *PERO `PALETAS` *** no gobierna el trinquete ***: *gobierna
+   *`test_colores_conocidos` *(-- *linea 280: *`if primero in PALETAS` --)* ✓
+*** -> *asi que la conclusion estaba bien **por casualidad**, *y el motivo era **falso** ✓
+*** -> *se volvio a poner, *y esta vez se probo *** contra los dos ***: *
+   *inyectando `text-white` pasan *** los 13 *** *-- *o sea que *** de verdad es inerte ***,
+   *en los dos ✓✓✓
+*** -> *y se volvio a quitar, *y **no se commiteo** ✓
+```
+
+*** Y la leccion, *que es la cuarta de la misma familia ***: *
+
+```
+*** una prueba tiene que ir CONTRA EL OBJETO QUE CAMBIAS *** *
+   *-- *si tocas `PALETAS`, *el test que lo usa es el que hay que correr, *
+      *no el que **te suena** que va de eso *
+*** -> *y si el resultado sale bien *** por casualidad ***, *la conclusion **no vale**,
+   *aunque sea la correcta ✓✓✓
+*** -> *por eso la segunda vez se probo **contra los dos**, *y ahi si se pudo afirmar: *
+      *** el cambio es inerte *** ✓
+```
+
+*** Y el agujero, *que SIGUE ABIERTO ***: *el censo de color de fabrica -- *el trinquete y
+`test_colores_conocidos` -- *** no ve `white` ni `black` ***, *y no se cierra anadiendolos
+a `PALETAS`.* *Hay que mirar **como cuenta cada uno**.* *Tres intentos, ninguno aplicado,
+porque **ninguno se pudo demostrar.*** *
