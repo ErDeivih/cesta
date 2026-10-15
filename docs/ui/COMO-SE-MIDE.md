@@ -474,3 +474,38 @@ la `Tarjeta`, *que **si acepta `className`.*** *
 **envolverla** en algo que si sea columna flexible con altura, *o cambiar la raiz de
 la rama.* *Y eso *** no se hace sin poder medirlo despues ***, *que es exactamente por
 lo que se dejo medido y sin tocar en la ronda 55.* *
+
+---
+
+## 16. *** El censo decia «pendiente» y la medida dijo que NO. *Otra vez el patron. ***
+
+*15/10/2026, ronda 63. *El censo de la ronda 60 dejo cinco raices `grid gap-4` sin
+`min-h-full` *como «pendientes», *y se arreglaron dos *(-- `Ajustes` *y `Avisos` --)* *
+y una *(-- `Unirse`, *con antes y despues --).* *Quedaban `Cesta:1358` *y `Favoritos:275`.* *
+
+```
+*** SE FUE A TOMAR EL ANTES DE `Favoritos` A 390 px ANTES DE TOCARLO *** *
+   *(-- *que es la regla que salio de la ronda 60 --)* ✓
+*** -> *y la captura ensena que *** EL RECUADRO YA LLENA LA PANTALLA ***: *
+   *de *** y≈196 a y≈1495 *** *de 1688, *con «Entra para ver tus favoritos» centrado ✓
+*** -> *** `Favoritos:275` NO NECESITA EL ARREGLO *** ✓✓✓
+*** -> *aunque su raiz *** sea *** `grid gap-4` sin `min-h-full` ✓
+*** -> *porque su `Vacio` *** ya lleva `grow` ***, *y **ya funciona asi** ✓✓✓
+```
+
+*** Y ESO CORRIGE DOS COSAS ***: *
+
+```
+*** 1 ***. *** El censo estaba mal ***: *tener una raiz `grid` sin `min-h-full` *
+   *** no implica que falte el patron ***. *Lo que importa es si **el bloque que debe
+   *llenar** llega a hacerlo, *y eso *** solo lo dice una captura.*** *
+*** 2 ***. *Y explica por que en la ronda 60 *** no se pudo probar *** que `Ajustes`
+   *y `Avisos` necesitaran el cambio: *sus capturas «antes» eran a **1440**, *donde
+   *ya llenaban, *y **probablemente tambien llenaban a 390**. *O sea que **es posible
+   *que aquellos dos cambios no hicieran falta.*** *Quedan como APLICADOS Y SIN
+   *VERIFICAR EN SU EFECTO, *y ahora se sabe **por que**.* *
+```
+
+*** Y LA REGLA, *que es la 4 de esta lista otra vez ***: *un censo por **clases de
+Tailwind** dice **donde mirar**, *no **si falta algo**.* *El «pendiente» de un censo
+**no es un defecto** hasta que una captura lo ensena.* *
