@@ -49,7 +49,7 @@ export function Cabecera() {
   return (
     <header
       ref={caja}
-      className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-neutral-700 dark:bg-neutral-900/95 dark:supports-[backdrop-filter]:bg-neutral-900/80"
+      className="sticky top-0 z-30 border-b border-borde bg-papel"
     >
       <div className="mx-auto flex max-w-app flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
         {/* 44 px de alto: medido antes, el enlace media **43x28** y se pulsa en
@@ -60,15 +60,15 @@ export function Cabecera() {
         <Link to="/" className="inline-flex min-h-[44px] min-w-[44px] items-center text-lg font-bold tracking-tight">
           Cesta
         </Link>
-        <nav aria-label="Recetas y alimentación" className="flex flex-wrap gap-2 text-sm">
-          <Link to="/recetas" className="inline-flex min-h-[44px] items-center rounded-lg px-3 hover:bg-sky-50 dark:hover:bg-neutral-800">Recetas</Link>
-          <Link to="/calorias" className="inline-flex min-h-[44px] items-center rounded-lg px-3 hover:bg-sky-50 dark:hover:bg-neutral-800">Calorías</Link>
+        <nav aria-label="Recetas y alimentación" className="flex flex-wrap gap-2 text-cuerpo">
+          <Link to="/recetas" className="inline-flex min-h-[44px] items-center rounded-campo px-3 hover:bg-marfil dark:hover:bg-neutral-800">Recetas</Link>
+          <Link to="/calorias" className="inline-flex min-h-[44px] items-center rounded-campo px-3 hover:bg-marfil dark:hover:bg-neutral-800">Calorías</Link>
         </nav>
 
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="text-cuerpo text-secundaria ">
           {isPending && 'Mirando de qué día son los precios…'}
           {error !== null && !isPending && (
-            <span className="text-amber-700 dark:text-amber-400">
+            <span className="text-aviso ">
               No sé de qué día son los precios: la API no contesta.
             </span>
           )}
@@ -100,14 +100,14 @@ export function Cabecera() {
         </div>
 
         {!enPanel && (
-          <details className="w-full text-xs text-neutral-600 lg:w-auto dark:text-neutral-400">
+          <details className="w-full text-etiqueta text-secundaria lg:w-auto ">
             {/* **Medido en el navegador el 23 de septiembre de 2026**: este desplegable
                 media **358 x 24 px** en un movil. Es un objetivo de toque de verdad -- esta
                 en todas las pantallas y lleva al estado de cada cadena --, asi que se le da
                 el minimo de 44. Lo mismo con el enlace de al lado («Cesta»), que medía
                 **43 px de ancho**: un pixel por debajo, que es justo la clase de cosa que
                 no se ve leyendo el codigo. */}
-            <Resumen className="text-xs">
+            <Resumen className="text-etiqueta">
               Estado de las cadenas
             </Resumen>
             <ul className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -115,7 +115,7 @@ export function Cabecera() {
                 <li key={c.cadena} className="flex flex-col gap-0.5">
                   <span className="flex items-center gap-2">
                     <span className="font-medium">{nombreCadena(c.cadena)}</span>
-                    <span className={cx(c.al_dia ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+                    <span className={cx(c.al_dia ? 'text-bien ' : 'text-aviso ')}>
                       {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
                     </span>
                   </span>
@@ -127,7 +127,7 @@ export function Cabecera() {
                       presentar ausencias de captura como indisponibilidad». Y un numero sin su cobertura
                       al lado es una ausencia presentada como catalogo.* */}
                   {c.cobertura?.cobertura && (
-                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                    <span className="text-etiqueta text-secundaria ">
                       {c.cobertura.cobertura === 'ofertas_semanales_parcial'
                         ? 'ofertas semanales, no el catálogo entero'
                         : c.cobertura.cobertura}

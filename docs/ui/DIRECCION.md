@@ -86,6 +86,26 @@ luz que oscurecer.* *Asi que alli **la profundidad la da el color de la superfic
 **mas claro** *(-- `papel-alto` --)*, *que es **como se comporta la luz de verdad**, *y la sombra solo
 **la remata.*** *
 
+## 4.bis *** Y por que **no hay opacidad** en la cabecera ***
+
+*La cabecera pegada era `bg-white/95` con `backdrop-blur`, *y **se ha quedado solida**.*
+*Y no es un atajo, *son **dos motivos**: *
+
+```
+*** 1) EL SISTEMA DE TOKENS NO HACE OPACIDAD, *A PROPOSITO *** *
+   *-- *`bg-papel/95` **no vale**: *Tailwind escribira `rgb(var(--papel) / .95)`, *y
+      *dentro hay un `#rrggbb`, *o sea **un color invalido que el navegador ignora** ⚠️
+   *-- *y **lo dice el test de colores**, con ese motivo escrito ✓
+*** 2) Y NO HACE FALTA *** *
+   *-- *el contenido **pasa por debajo** igual, *asi que el desenfoque **no se ve** ✓
+   *-- *una cabecera **solida sobre lienzo calido** es lo que la direccion quiere ✓
+```
+
+*Si algun dia hace falta de verdad, *la forma **no** es volver al `/95`: *es declarar el
+token **como canales** *(-- `--papel-rgb: 251 249 244` --)* *y un color con
+`<alpha-value>`, *que es **como Tailwind soporta opacidad sobre variables.** *
+*Y entonces se anade aqui, *y a los dos temas.* *
+
 ## 5. *** Los radios: *tres y una pastilla ***
 
 ```

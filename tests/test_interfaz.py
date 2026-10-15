@@ -631,7 +631,11 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
 # clases viejas a proposito, *para que se lea que se cambio y por que --.* *
 # *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
 # `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
-PALETA_DE_FABRICA_HOY = 495
+PALETA_DE_FABRICA_HOY = 463
+# *15/10/2026, FASE 3: *bajo de **495 a 463** *al migrar la navegacion* *(-- `Nav.tsx` y
+# `Cabecera.tsx`, *58 clases --).* *El techo **solo baja**, *y lo recuerda la propia
+# prueba cuando te olvidas.* *Los que mas quedan son las pantallas grandes: *`Panel` 66,
+# `Grupo` 52, *`Inicio` 42.* *
 
 _PALETA = ("slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|"
            "teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose")
