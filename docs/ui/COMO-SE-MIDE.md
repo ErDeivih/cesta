@@ -179,3 +179,55 @@ cuenta `white` ni `black` -- *anadiendolos a `PALETAS` en `tests/test_interfaz.p
 `test_colores_conocidos` -- *** no ve `white` ni `black` ***, *y no se cierra anadiendolos
 a `PALETAS`.* *Hay que mirar **como cuenta cada uno**.* *Tres intentos, ninguno aplicado,
 porque **ninguno se pudo demostrar.*** *
+
+---
+
+## 8. *** La causa del agujero del color, *encontrada y PROBADA ***
+
+*15/10/2026, ronda 27. *Tres intentos habian fallado *(-- *ron-
+da 26 --)* *y ninguno se pudo demostrar. *Esta ronda se encontro **por que**, *y **se
+probo con un experimento**, *que es lo que faltaba.* *
+
+```
+*** EL AGUJERO ***: *el trinquete `test_la_paleta_de_fabrica_no_crece` **no ve**
+   *`white` ni `black`, *y por eso «de 611 a 9» fue **falso** siete rondas* *
+   *(-- *el numero real era **43**, *y las 34 clases se migraron en la ronda 25 --)* ✓
+*** Y NO ES UNA LISTA INCOMPLETA ***: *el trinquete usa *** `_PALETA_DE_FABRICA` ***,
+   *que tiene **su propia expresion**, *y **no** `PALETAS`* *
+   *-- *por eso anadirlos a `PALETAS` no hacia nada: *`PALETAS` gobierna
+      *** otro test *** *(`test_colores_conocidos`, *linea 280 --)* ✓
+*** -> *la expresion exige un *** GUION DETRAS *** -- *`-(?:slate|gray|...|rose)-` --,
+   *que es lo que separa el nombre del **tono**: *`text-neutral-500` ✓
+*** -> *y `white` y `black` son *** los dos unicos colores de Tailwind SIN TONOS ***: *
+   *se escriben `text-white`, *** sin nada detras *** ✓✓✓
+*** -> *** no pueden casar NUNCA, *por mucho que se anada un nombre a una lista *** ✓
+```
+
+*** Y LA PRUEBA, *que es lo que da valor al diagnostico ***: *se reprodujo la expresion
+del test en un script y se pregunto caso por caso.* *
+
+```
+    text-neutral-500     CASA
+    text-emerald-700     CASA
+    text-white           NO CASA
+    bg-white             NO CASA
+    text-black           NO CASA
+```
+
+*** Y EL INTENTO DE ARREGLO, *que NO se aplico ***: *poner **dos ramas** en la
+expresion -- *la de siempre, *con tono, *y una segunda para `white|black` con
+`(?!\w-)` detras --.* *Se aplico y *** rompio la expresion ***: *`re.error: unbalanced
+parenthesis at position 275`, *y el fichero de test entero dejo de cargar.* *Se
+**revirtio en el acto**, *porque *** un fichero de test roto es peor que un agujero sin
+cerrar.*** *Los 18 volvieron a pasar.* *
+
+*** Y LO QUE QUEDA PARA LA PROXIMA ***: *el agujero **sigue abierto**, *pero ya no es
+un misterio.* *La rama esta **escrita entera en el mensaje del intento**, *y lo que
+hay que hacer es anadirla **con la expresion compilada a mano antes de tocar el
+fichero**, *en vez de escribirla dentro de un `rf"..."` partido en dos lineas y confiar
+en que cuadra.* *
+
+*** Y LA LECCION ***: *tres intentos se hicieron **sin entender la causa**, *y por eso
+ninguno valio.* *El cuarto fue **encontrar la causa primero**, *y esa parte si valio
+aunque el arreglo fallara.* *Cuando algo no se puede demostrar, *lo que suele faltar
+**no es el arreglo: *es el diagnostico.*** *
