@@ -1360,7 +1360,7 @@ export function Cesta() {
     : null
 
   return (
-    <div className="grid gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">La lista de la compra</h1>
         {/* **El selector de listas, siempre.** Antes solo aparecia cuando habia mas de
@@ -1568,7 +1568,7 @@ export function Cesta() {
                              ?? sesion.data?.usuario?.usuario ?? null} />
               {lineas.length === 0 && (
                 <>
-                  <Vacio titulo="La lista está vacía">
+                  <Vacio titulo="La lista está vacía" className="grow">
                     <p>
                       Busca un producto o toca uno de abajo: se apunta en un toque, y la
                       cantidad se cambia aquí.
