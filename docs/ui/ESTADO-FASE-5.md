@@ -102,3 +102,42 @@ justo el tipo de rama que **no se ve** cuando uno mira la pantalla con datos.* *
 ocupe, *o centrarla en el alto que sobra.* *Esta **medido y no hecho**, a proposito:
 la ronda que lo haga debe **poder verificarlo despues**, y la captura de 390 ya
 esta.* *
+
+---
+
+## 7. *** Y LA ESTRUCTURA QUE IMPIDE EL ARREGLO, *dicha y justificada ***
+
+*15/10/2026, ronda 57. *La decision (1) del objetivo dice: *«si al pulir una pantalla
+aparece que **su estructura impide el arreglo**, *se dice y se justifica **antes de tocar
+la estructura**».* *** Aqui esta, con el diagnostico cerrado y el plan exacto. *** *
+
+```
+*** EL DEFECTO ***: *en `/compra/listas` sin sesion, *la tarjeta de entrar *
+   *acaba a un tercio de la pantalla *y quedan *** ~600 px de vacio *** debajo ✓
+*** LA CAUSA, *leida en el fichero ***: *`Cesta.tsx:1304`, *la rama sin sesion devuelve *
+   *`<div className="*** grid gap-4 ***">`* ⚠️
+*** -> *NO es `flex min-h-full flex-col`: *es un *** grid, *sin `min-h-full` *** ✓
+*** -> *** y esa es la razon de que fallaran los dos intentos ***: *
+   *-- *** ronda 56 ***: *`grow` en la `Tarjeta` *** no hizo nada *** *
+      *(-- *el padre no es columna flexible --)* ✓
+   *-- *** ronda 46 ***: *`min-h-full` en un envoltorio *** tampoco *** *
+      *(-- *no resuelve contra un padre de altura `auto` --)* ✓
+*** -> *las dos medidas estan en `COMO-SE-MIDE.md`, *secciones 12 y 15 ✓
+```
+
+*** Y EL ARREGLO, *que es el patron de `Buscar` y esta verificado funcionando ***: *
+
+```
+*** 1 ***. *En `Cesta.tsx`, *la rama sin sesion: *
+   *`<div className="grid gap-4">` *
+   *** -> *** `<div className="flex min-h-full flex-col gap-4">` *** ✓
+*** 2 ***. *Y en `Introducir`, *la `<Tarjeta>`: *anadirle *** `className="grow"` *** ✓
+*** -> *y las dos juntas, *porque **una sola no hace nada**: *
+   *el `grow` necesita el padre flexible, *y el padre flexible necesita el hijo que crezca ✓
+```
+
+*** Y LO QUE HAY QUE SABER ANTES DE HACERLO, *que le costo a esta ronda ***: *el ancla
+de texto **no coincide** *-- *la indentacion real no es la que uno escribe *--,* *asi que
+**hay que leer el fichero y editar por posicion**, *no sustituir de memoria.* *
+*Y `/unirme/:codigo` pinta **la misma** `Introducir` *(-- `Unirse.tsx:101` --), *
+*asi que el arreglo **tambien la mejora a ella.*** *
