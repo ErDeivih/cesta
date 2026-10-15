@@ -141,3 +141,36 @@ comprobacion de `scrollWidth` contra `clientWidth` **dentro de la pagina**.* *Se
 con `capture_browser_scenario` y **fallo**; *y ademas lanzo **Chromium 155**, *que **no
 es el Chrome instalado.*** *No se ha insistido: *gastar contexto en herramienta **no
 arregla la app.*** *
+
+---
+
+## 8. *** MEDIDO: *no hay desbordamiento. *Y la hipotesis era correcta ***
+
+*15/10/2026, ronda 42. *Esto llevaba **abierto desde la ronda 17**, *veinticinco rondas,
+*diciendo que hacia falta emulacion por CDP.* *Y no hacia falta.* *
+
+```
+*** EL TRUCO QUE FALTABA ***: *no `--dump-dom` *(-- *que salio **vacio** en la ronda 18 --), *
+   *sino *** poner el numero EN LA PANTALLA y leerlo de la captura *** ✓
+*** -> *una barra roja con `viewport=… cliente=… scroll=…` *y una captura normal ✓
+*** RESULTADO, pidiendo `--window-size=390` ***: *
+   *** `viewport=500  cliente=500  scroll=500` *** ✓✓✓
+*** -> *o sea que el viewport CSS real es *** 500 ***, *no 390: *
+   *Chrome **no baja de ahi*** *(-- *y la imagen mide 390 porque es *** un recorte
+   *de un render de 500 *** --)* ✓
+*** -> *y *** `scroll == cliente` ***: *** NO HAY DESBORDAMIENTO *** ✓✓✓
+```
+
+*** Y ESTO CIERRA LA DUDA DE LA RONDA 17 ***: *aquel «Calorias se sale de la pantalla»
+*no era un desbordamiento: *era *** el recorte *** de una captura de 390 sobre un
+render de 500.* *La hipotesis era correcta **y ahora esta medida.*** *
+
+*** Y LO QUE SIGUE SIN PODERSE MEDIR, *dicho con precision ***: *por **debajo de 500 px**
+*-- *un movil de verdad mide 390 --* *** no se puede medir con esta herramienta ***,
+*porque Chrome no baja el viewport de 500.* *Lo que **si** se sabe es que **a 500 no
+desborda**, *y que el `min-w-0` de la ronda 17 **era** un defecto real por el precedente
+escrito en `Buscar.tsx`, *aunque no fuera la causa de lo que se veia.* *
+
+*** Y la regla, *que va con las otras diez ***: *cuando una herramienta **no puede bajar
+de un minimo**, *el numero que hay que leer es *** el que la pagina dice de si misma ***,
+*puesto donde se vea.* *
