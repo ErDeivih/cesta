@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { textoDeError, esErrorApi } from '../api/cliente'
+import { Fallo } from '../componentes/ui'
 import { usePasarALista, usePreviaDeCompra, useReceta } from '../api/recetas'
 import { misListas } from '../api/cesta'
 import { costeDeReceta, type IngredienteConPrecio } from '../logica/costeReceta'
@@ -137,7 +138,7 @@ export function RecetaDetalle() {
         </Vacio>
       )
     }
-    return <p className="text-[15px] text-error">{textoDeError(error)}</p>
+    return <Fallo error={error} />
   }
   if (!data) return null
 

@@ -13,7 +13,7 @@ import { useParams } from 'react-router-dom'
 
 import { apuntaUsado, irAlPaso, ponTemporizador, useCocina, useEmpieza } from '../api/cocina'
 import { textoDeError, useSeAtasca } from '../api/cliente'
-import { Boton, Tarjeta } from '../componentes/ui'
+import { Boton, Tarjeta, Cargando } from '../componentes/ui'
 
 /** **Segundos, en palabras.** *Y **negativo es «hace»**, que es informacion y no un error.* */
 function cuantoTiempo(s: number): string {
@@ -71,7 +71,7 @@ export function CocinaModo() {
   //
   // **La regla, entonces: `isLoading` solo mientras NO haya error.** *En cuanto hay error y no hay datos, **manda
   // el error** -- *que es lo unico que la persona necesita saber.*
-  if (isLoading && !error && !atascada) return <p className="text-tinta-suave">Cargando la cocina...</p>
+  if (isLoading && !error && !atascada) return <Cargando que="la cocina" />
   // **Y el error NO se lleva la pantalla por delante cuando ya hay datos.** *Sin conexion, el refresco de cada 15
   // segundos falla -- y **`if (error)` a secas borraba la cocina entera y el temporizador con ella*** (medido el
   // 12 de octubre de 2026: sin red la pantalla no decia «quedan», decia el error). **Con datos en la mano, el

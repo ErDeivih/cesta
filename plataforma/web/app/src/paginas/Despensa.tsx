@@ -13,7 +13,7 @@ import { useState } from 'react'
 
 import { declara, consume, useDespensa } from '../api/despensa'
 import { textoDeError, useSeAtasca } from '../api/cliente'
-import { Fallo } from '../componentes/ui'
+import { Fallo, Cargando } from '../componentes/ui'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
 /** **Como se lee una cantidad.** *Y `null` **no** es `0`: es «no se sabe».* */
@@ -58,7 +58,7 @@ export function Despensa() {
   }
 
   // **Y «Cargando» no puede ser para siempre.** *Si la consulta se atasca, se dice -- ver `useSeAtasca`.*
-  if (isLoading && !atascada) return <p className="text-tinta-suave">Cargando la despensa...</p>
+  if (isLoading && !atascada) return <Cargando que="la despensa" />
   if (isLoading && atascada) {
     return (
       <div className="space-y-3">
