@@ -77,3 +77,28 @@ herramientas que hay.* *Y va separado a proposito.* *
 ## 5. *Y lo que queda de verdad, *dicho en una linea *
 
 *** Falta poder pulsar.*** *Todo lo demas esta hecho, contado y con su evidencia.* *
+
+---
+
+## 6. *** Y un defecto NUEVO, *medido a 390 px: *la pantalla de entrar ***
+
+*15/10/2026, ronda 55. *Primera captura de `Cesta` a 390 px *(-- *la medida de la
+ronda 54 --), *y sale **un defecto que no habia visto**: *
+
+```
+*** `/compra/listas` sin sesion *** pinta *** la tarjeta de entrar *** *
+   *(-- Usuario, *Clave, *«Entrar», *«¿No tienes cuenta? Crea la» --)* ✓
+*** -> *y la tarjeta *** acaba a un tercio de la pantalla ***, *
+   *con *** ~600 px de vacio *** debajo ⚠️
+*** -> *NO es un estado vacio: *es *** la rama previa a la sesion ***, *
+   *y a esa tarjeta *** nadie le ha puesto el `grow` *** ✓
+```
+
+*** Y es la misma familia que todo lo demas ***: *contenido pegado arriba *y vacio
+debajo.* *Pero **en una rama distinta** *-- *la de antes de entrar --,* *que es
+justo el tipo de rama que **no se ve** cuando uno mira la pantalla con datos.* *
+
+*** Y LO QUE HAY QUE HACER, que es de una linea ***: *envolver esa tarjeta para que
+ocupe, *o centrarla en el alto que sobra.* *Esta **medido y no hecho**, a proposito:
+la ronda que lo haga debe **poder verificarlo despues**, y la captura de 390 ya
+esta.* *
