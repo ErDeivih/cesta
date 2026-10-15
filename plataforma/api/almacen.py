@@ -355,6 +355,8 @@ def lineas_de(lista_id: str) -> list[dict]:
             SELECT li.id, li.grupo_id, li.producto_id, li.nombre_visto, li.cantidad,
                    li.nota, li.tachado_en, li.anadido_en, li.en_carrito,
                    li.cadena_elegida,
+                   -- *** Y de que operacion viene, *que es lo que hace que la lista ACUMULE. *** *
+                   li.operacion,
                    qa.nombre AS anadido_por, qt.nombre AS tachado_por
               FROM lista_linea li
               LEFT JOIN usuario qa ON qa.id = li.anadido_por
@@ -368,19 +370,28 @@ def lineas_de(lista_id: str) -> list[dict]:
 def anade_linea(lista_id: str, usuario_id: str, linea_id: str, nombre: str,
                 grupo_id: int | None = None, producto_id: str | None = None,
                 cantidad: int = 1, nota: str | None = None,
-                cadena_elegida: str | None = None) -> dict:
+                cadena_elegida: str | None = None,
+                operacion: str | None = None) -> dict:
     """El id lo trae el movil. Si llega dos veces, no se duplica: se actualiza.
 
     La tienda elegida se actualiza con `COALESCE`: subir otra vez una linea que se
     anadio sin tienda **no puede borrar** la tienda que se eligio despues en otro
     movil. Y al reves si funciona: ponerla es ponerla.
+
+    *** Y `operacion` dice DE DONDE viene la linea *** *, *y es lo que hace que la lista
+    **acumule**: *dos operaciones distintas **sobre el mismo producto** tienen que dar **dos
+    lineas** *-- *y que la **misma** operacion repetida *-- *el mismo id --* **no duplique**.* *
+
+    *`NULL` quiere decir **«no viene de una operacion»** *-- *una linea escrita a mano.* *
+    *Y **en el `DO UPDATE` no se toca**: *una linea es de **la operacion que la trajo**, *
+    *y resubirla **no cambia de donde vino.*** *
     """
     with cursor() as cur:
         cur.execute("""
             INSERT INTO lista_linea
                 (id, lista_id, grupo_id, producto_id, nombre_visto, cantidad, nota,
-                 anadido_por, cadena_elegida)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 anadido_por, cadena_elegida, operacion)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
                SET cantidad = EXCLUDED.cantidad, nota = EXCLUDED.nota,
                    cadena_elegida = COALESCE(EXCLUDED.cadena_elegida,
@@ -389,7 +400,7 @@ def anade_linea(lista_id: str, usuario_id: str, linea_id: str, nombre: str,
             RETURNING id, grupo_id, producto_id, nombre_visto, cantidad, nota,
                       cadena_elegida
         """, (linea_id, lista_id, grupo_id, producto_id, nombre, cantidad, nota,
-              usuario_id, cadena_elegida))
+              usuario_id, cadena_elegida, operacion))
         return dict(cur.fetchone(), id=linea_id)
 
 

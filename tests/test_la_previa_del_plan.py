@@ -77,7 +77,7 @@ def test_la_accion_mete_lo_que_la_previa_dijo(tmp_path, monkeypatch):
     en_la_lista = []
 
     def anade(lista_id, usuario_id, linea_id, nombre, grupo_id=None, producto_id=None,
-              cantidad=1, nota=None, cadena_elegida=None):
+              cantidad=1, nota=None, cadena_elegida=None, **kwargs):
         fila = {"id": linea_id, "nombre_visto": nombre, "nota": nota, "cantidad": cantidad}
         en_la_lista.append(fila)
         return fila
@@ -100,7 +100,7 @@ def test_pulsar_dos_veces_no_duplica(tmp_path, monkeypatch):
     en_la_lista = []
 
     def anade(lista_id, usuario_id, linea_id, nombre, grupo_id=None, producto_id=None,
-              cantidad=1, nota=None, cadena_elegida=None):
+              cantidad=1, nota=None, cadena_elegida=None, **kwargs):
         fila = {"id": linea_id, "nombre_visto": nombre, "nota": nota}
         en_la_lista.append(fila)
         return fila

@@ -1613,9 +1613,25 @@ def _del_plan(lista_id: str, propietario: str, desde: str, hasta: str) -> tuple[
     # *Y queda dicho lo que **no** se puede comprobar hoy*: *la lista **no guarda la unidad** de la linea,
     # asi que la identidad es el destino y no `(destino, unidad)` -- *que es lo que el docstring de arriba
     # pide para **consolidar**, y que `previa_compra` si cumple por dentro con su `clave`.*
+    # *** Y `ya` SOLO cuenta lo de ESTA operacion. *** *
+    #
+    # *Antes eran **todas las lineas de la lista**, *y con eso **el tomate de la semana pasada**
+    # impedia que entrara **el de esta** *-- *en vez de sumarse.* *Y **dentro de una operacion**
+    # se sigue consolidando por identidad, *que es lo que pide el encargo: *dos recetas con el mismo
+    # ingrediente dejan **una** linea.* *
+    #
+    # *Y **la operacion es la semana** *(-- `desde|hasta` --)*, *que es la misma que lleva el `id`
+    # de la linea: *asi **el mismo id** y **el mismo `ya`** cuentan **lo mismo.*** *
+    #
+    # *** Y `NULL` TAMBIEN CUENTA. *** *Una linea **puesta a mano** no viene de ninguna operacion, *
+    # *y **esta ahi**: *saltarla haria que **el puente la duplicara** *-- *y eso **no es acumular**,
+    # *es repetir lo que ya hay.* *Lo cazo `test_lo_que_ya_esta_se_dice_aparte_y_no_entra`, *
+    # *que la pone **directamente**, *sin operacion* *-- *y **tenia razon.*** *
+    esta_operacion = f"{desde}|{hasta}"
     ya = {((x.get("grupo_id"), x.get("producto_id")),
            str(x.get("nombre_visto") or "").strip().lower())
-          for x in almacen.lineas_de(lista_id)}
+          for x in almacen.lineas_de(lista_id)
+          if x.get("operacion") in (None, esta_operacion)}
     recetario = _recetas.conecta(_ruta_recetas())
     # **Los ingredientes de TODO el plan, escalados y con su receta.** *Se juntan primero y se consolidan
     # despues, que es el unico orden en el que dos recetas con el mismo ingrediente suman.*
@@ -1729,6 +1745,13 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
     """
     _acceso(lista_id, usuario, hace_falta_escribir=True)
     planificadas, ya, _calculada = _del_plan(lista_id, usuario["id"], desde, hasta)
+    # *** Y la operacion, *que es la misma que usa `_del_plan` para su `ya` y para el id. *** *
+    #
+    # *Va **aqui y no dentro de `_del_plan`** porque es **esta funcion** la que **escribe**: *
+    # *`_del_plan` **calcula** y devuelve el `ya` que le corresponde, *y **la ruta lo usa para
+    # decidir y para escribir.** *Y la cadena tiene que ser *** la misma *** en los dos sitios, *
+    # o **el `ya` contaria una operacion y el id guardaria otra.** *
+    esta_operacion = f"{desde}|{hasta}"
     anadidos = 0
     ya_estaban: list[str] = []
     sin_destino: list[str] = []
@@ -1815,8 +1838,9 @@ def traer_del_plan(lista_id: str, desde: str = Query(...), hasta: str = Query(..
         # *Y **dentro de una misma pasada** se sigue consolidando por identidad* *(-- *lo hace `ya`,
         # unas lineas mas abajo --)*, *que es lo que pide el encargo.* *
         almacen.anade_linea(lista_id, usuario["id"],
-                            traspaso.id_de_linea(lista_id, f"{uno.clave}|{desde}|{hasta}"), nombre,
-                            uno.grupo_id, uno.producto_id, uno.envases or 1, detalle)
+                            traspaso.id_de_linea(lista_id, f"{uno.clave}|{esta_operacion}"), nombre,
+                            uno.grupo_id, uno.producto_id, uno.envases or 1, detalle,
+                            operacion=esta_operacion)
         # **Y al conjunto de lo que ya hay**: dos recetas de la semana con el mismo ingrediente no pueden
         # dejar dos lineas, y eso se decide dentro de esta misma pasada.
         # **Y al conjunto de lo que ya hay, por IDENTIDAD.** *Antes se anadia el nombre en minusculas:
