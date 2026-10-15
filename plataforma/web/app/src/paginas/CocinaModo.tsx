@@ -112,7 +112,7 @@ export function CocinaModo() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-full flex-col gap-4">
       <h1 className="text-xl font-semibold">Cocina</h1>
       <p className="text-cuerpo text-tinta-suave">
         Vas por el paso <strong>{(data.paso ?? 0) + 1}</strong>. {data.hechos} ingredientes usados.

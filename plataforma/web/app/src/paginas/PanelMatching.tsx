@@ -354,7 +354,7 @@ function EnlaceProducto({
  *  dejar un "algo ha ido mal" que no ayuda a nadie. */
 function SinRuta() {
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <h1 className="text-xl font-bold">Panel de matching</h1>
 
       <Vacio titulo="Este servidor todavía no tiene esa ruta">

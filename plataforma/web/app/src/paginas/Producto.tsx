@@ -216,7 +216,7 @@ export function Producto() {
   })()
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Boton variante="sutil" onClick={() => navega(-1)}>
           ← Volver

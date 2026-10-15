@@ -73,7 +73,7 @@ export function Despensa() {
   const existencias = data?.existencias ?? []
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-full flex-col gap-4">
       <h1 className="text-xl font-semibold">La despensa</h1>
       <p className="text-cuerpo text-tinta-suave">
         Lo que hay en casa. <strong>Se declara</strong>, no se deduce de lo que se ha comprado:
