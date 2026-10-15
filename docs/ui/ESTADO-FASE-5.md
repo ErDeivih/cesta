@@ -141,3 +141,59 @@ de texto **no coincide** *-- *la indentacion real no es la que uno escribe *--,*
 **hay que leer el fichero y editar por posicion**, *no sustituir de memoria.* *
 *Y `/unirme/:codigo` pinta **la misma** `Introducir` *(-- `Unirse.tsx:101` --), *
 *asi que el arreglo **tambien la mejora a ella.*** *
+
+---
+
+## 8. *** Y SE CERRO: *la tarjeta de entrar ya llena la pantalla ***
+
+*15/10/2026, ronda 58. *La seccion 7 dejo el diagnostico y el plan; *esta lo cierra. *
+*Y lo que vale no es el arreglo: *es *** como se llego a el.*** *
+
+```
+*** RONDA 55 ***: *se midio el defecto *-- *tarjeta a un tercio, *~600 px de vacio --* ✓
+*** RONDA 56 ***: *se probo `grow` **solo**, *y *** la medida lo tumbo *** *
+   *(-- *la captura salio *** byte a byte identica*** --)* ✓
+*** RONDA 57 ***: *se encontro la causa *** leyendo el fichero *** *
+   *(-- *la raiz era `grid gap-4`, *sin `min-h-full` --)* *y se dejo *** el plan
+   *escrito *** ✓
+*** RONDA 58 ***: *se cambio la raiz a `flex min-h-full flex-col` *y se le puso
+   *`grow` a la `Tarjeta` *** -- las dos juntas -- *** *
+*** -> *y la captura cambio: *`b547e089…` -> `4b1c5153…` ✓ *
+*** -> *y la tarjeta pasa *** de y≈1010 a y≈196-1495 ***: *** llena la pantalla *** ✓✓✓
+```
+
+*** Y ES EL PRIMER CAMBIO ESTRUCTURAL DE TODO EL OBJETIVO ***, *y necesito exactamente
+lo que manda la decision (1): *** decirlo y justificarlo **antes** de tocarlo.*** *
+*Tres rondas para dos lineas, *y **funciono a la primera**, *despues de **dos intentos
+fallidos.*** *
+
+*** Y LO QUE COSTO, *que ya esta escrito y no se vuelve a pagar ***: *el ancla de texto
+**no coincide** con lo que uno escribe.* *La indentacion real era de **4 y 6 espacios**
+*y se escribieron **8 y 10** tres veces.* *Se resuelve *** leyendo las lineas exactas con
+el numero delante *** *y editando con esa cadena literal.* *
+
+*** Y TAMBIEN MEJORA `/unirme/:codigo` ***, *porque pinta **la misma `Introducir`** *(-- `Unirse.tsx:101` --).* *
+
+---
+
+## 9. *** Y LO QUE QUEDA, *sin adornos y con su razon ***
+
+*** HECHO Y VERIFICADO ***: *las fases 1 a 4 y la 6; *el color de 611 a 6; *las dos
+piezas de error, vistas funcionando; *la invitacion dentro del armazon; *24 de 37
+estados vacios con `grow`; *el movil a 390 px sin desbordamiento y con la barra; *
+*y la tarjeta de entrar de `Cesta`, con antes y despues.* *
+
+*** LO QUE QUEDA, Y POR QUE ***: *
+
+```
+*** `Grupo` (34 KB) *** *y *** `Panel` (62 KB) ***: *nunca han tenido una pasada de
+   *composicion propia.* *Se les aplico **el patron** *y **las piezas de error**, *
+   *pero **no se ha medido ninguna captura suya con datos**, *y sin API no se pintan.* *
+*** 8 estados vacios ***: *llevan `grow`, *y *** necesitan la API para verse.*** *
+*** el viewport por debajo de 500 ***: *no se puede medir; *a **390 si**, *y no desborda.* *
+```
+
+*** Y LA CONCLUSION, *que es lo unico que puedo afirmar sin inventar ***: *lo que se ha
+podido medir **esta medido y esta bien**; *y lo que queda, *o *** necesita la API ***,
+*o *** necesita una sesion con datos ***.* *No queda nada que se pueda cerrar
+**mirando una pantalla vacia.*** *
