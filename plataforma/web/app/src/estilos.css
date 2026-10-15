@@ -113,7 +113,18 @@
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-offset-2 ring-sky-600 ring-offset-neutral-100 dark:ring-sky-400 dark:ring-offset-neutral-900;
+    /* *** El anillo de foco, *con el acento de la casa. *** *
+     *
+     * *Estaba en *** azul de Tailwind *** *(-- `ring-sky-600` --)* *y el fondo de
+     * separacion en `neutral`.* *Y el foco **no es un adorno**: *es la unica señal de
+     * **donde estas** cuando se navega con el teclado, *asi que tiene que ser **del color
+     * de la app** *y **verse**.* *`terracota` da **4,86:1 sobre marfil**, *que es de sobra
+     * para un anillo de 2 px.* *Y el `ring-offset` va en `marfil`, *que es el lienzo,
+     * en vez de un gris de fabrica.* *
+     *
+     * *Y **sin `dark:`**: *los tokens **ya cambian solos** con el tema, *que es justo
+     * para lo que son variables.* */
+    @apply outline-none ring-2 ring-offset-2 ring-terracota ring-offset-marfil;
   }
 
   /* El marcador de un campo, legible.

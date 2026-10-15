@@ -80,27 +80,41 @@ def test_la_letra_pequena_sobre_el_fondo_de_pagina_se_lee():
 def test_el_boton_principal_llega_al_minimo_en_los_dos_temas():
     """Blanco sobre `sky-600` en oscuro se quedaba en 4,10:1.
 
-    Se mira el color del boton en el codigo (`ui.tsx`) y el blanco del texto, que
-    es el que pone el propio boton.
-    """
-    fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
-    import re
-    oscuro = re.search(r"dark:bg-sky-(\d+)", fuente)
-    assert oscuro, "el boton principal ya no declara un fondo para el tema oscuro"
-    ESCALA = {"500": "#0ea5e9", "600": "#0284c7", "700": "#0369a1", "800": "#075985"}
-    elegido = ESCALA[oscuro.group(1)]
-    r = contraste("#ffffff", elegido)
-    assert r >= MINIMO_TEXTO, (
-        f"el boton principal en oscuro usa sky-{oscuro.group(1)} ({elegido}) y el "
-        f"texto blanco da {r}:1, por debajo de {MINIMO_TEXTO}")
+    *** Y desde el 15/10/2026 la prueba lee TOKENS, *no la escala de Tailwind. *** *
+    *Antes buscaba `dark:bg-sky-(\\d+)` y consultaba una tabla de seis azules escrita
+    a mano aqui dentro.* *Eso ya no vale, *y **es mejor que no valga**: *el boton
+    principal es **`bg-bosque`**, *y su valor **vive en `estilos.css`**, *en los dos
+    temas.* *Asi que la prueba **resuelve los dos colores de verdad** y calcula el
+    contraste.* *
 
-    # Y el hover, que es donde estaba el peor caso (2,77:1) y que el informe del
-    # diseno no llego a medir.
-    hover = re.search(r"dark:hover:bg-sky-(\d+)", fuente)
-    if hover:
-        r_hover = contraste("#ffffff", ESCALA[hover.group(1)])
-        assert r_hover >= MINIMO_TEXTO, (
-            f"el hover del boton principal da {r_hover}:1 en el tema oscuro")
+    *Y asi **mide la direccion** en vez de vigilarla de lejos: *si alguien cambia
+    `--bosque` por un tono que no se lee, *esto lo dice.* *
+
+    *Su propio texto lo pedia: *«*si has cambiado esas clases, **cambia tambien esta
+    prueba a proposito**».* *
+    """
+    import re
+
+    fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
+    m = re.search(r"principal:\s*\n?\s*'([^']*)'", fuente)
+    assert m, ("no he sabido leer la variante `principal` del boton en `ui.tsx`: "
+               "si has cambiado esa forma, cambia tambien esta prueba a proposito")
+    clases = m.group(1)
+
+    fondo = re.search(r"\bbg-([\w-]+)", clases)
+    texto = re.search(r"\btext-([\w-]+)", clases)
+    assert fondo and texto, (
+        f"el boton principal ya no declara su fondo y su texto de forma legible: "
+        f"{clases!r}")
+
+    for tema, etiqueta in ((":root", "claro"), ("oscuro", "oscuro")):
+        capa = _valor_del_token(f"--{fondo.group(1)}", tema)
+        letra = _valor_del_token(f"--{texto.group(1)}", tema)
+        r = contraste(capa, letra)
+        assert r >= MINIMO_TEXTO, (
+            f"el boton principal da {r}:1 en el tema {etiqueta} "
+            f"(`{fondo.group(1)}` {capa} con `{texto.group(1)}` {letra}) y el minimo "
+            f"es {MINIMO_TEXTO}")
 
 
 @sin_interfaz
@@ -121,31 +135,37 @@ def test_el_limite_de_un_campo_se_ve():
 
     Sin limite visible, un campo de texto parece un trozo de la pagina: no se sabe
     donde se puede escribir.
+
+    *** Y desde el 15/10/2026 se mide contra los TOKENS, *y en los dos temas. *** *
+    *Antes se buscaba `border-neutral-(\\d+) bg-white px-3 py-2 dark:border-...` *y se
+    consultaba una tabla de grises escrita aqui dentro.* *Ahora el campo es
+    **`border-borde-fuerte` sobre `bg-papel`**, *y los dos valores **se leen de
+    `estilos.css`**, *que es de donde salen de verdad.* *
+
+    *Y **la firma sigue siendo estrecha a proposito** *-- *lo pide el comentario de la
+    version anterior, *que ya se equivoco tres veces por adivinar: *`rounded-campo
+    border border-… bg-… px-3 py-2` no lo cumple ni **la tarjeta** *(-- que lleva
+    `p-4` --)* *ni **la cabecera de una tabla** *(-- que lleva `border-b` y no
+    `border` --).* *
     """
-    fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
     import re
-    # Se busca por la **firma del campo** (`px-3 py-2` con su borde claro y su borde
-    # oscuro en la misma cadena de clase), no por el nombre del componente ni por un
-    # patron suelto. Las tres versiones anteriores de esta prueba fallaron por
-    # adivinar: la primera cogia el borde de una tarjeta y medía `neutral-200`, y la
-    # segunda no encontraba los componentes. La firma no se puede confundir.
-    ESCALA = {"300": "#d4d4d4", "400": "#a3a3a3", "500": "#737373",
-              "600": "#525252", "700": "#404040"}
+
+    fuente = (SRC / "componentes" / "ui.tsx").read_text(encoding="utf-8")
     campos = re.findall(
-        r"border-neutral-(\d+) bg-white px-3 py-2 dark:border-neutral-(\d+)", fuente)
+        r"rounded-campo border border-([\w-]+) bg-([\w-]+) px-3 py-2", fuente)
     assert campos, (
         "no he sabido leer la firma de un campo en `ui.tsx`: si has cambiado esas "
         "clases, cambia tambien esta prueba a proposito")
 
-    for claro, oscuro in campos:
-        r = contraste(ESCALA[claro], "#ffffff")
-        assert r >= 3.0, (
-            f"el borde de un campo da {r}:1 sobre blanco (neutral-{claro}) y el "
-            f"minimo para un limite de control es 3")
-        r_oscuro = contraste(ESCALA[oscuro], "#262626")
-        assert r_oscuro >= 3.0, (
-            f"el borde de un campo da {r_oscuro}:1 en el tema oscuro "
-            f"(neutral-{oscuro}) y el minimo es 3")
+    for borde, capa in campos:
+        for tema, etiqueta in ((":root", "claro"), ("oscuro", "oscuro")):
+            linea = _valor_del_token(f"--{borde}", tema)
+            relleno = _valor_del_token(f"--{capa}", tema)
+            r = contraste(linea, relleno)
+            assert r >= 3.0, (
+                f"el borde de un campo da {r}:1 en el tema {etiqueta} "
+                f"(`{borde}` {linea} sobre `{capa}` {relleno}) y el minimo para un "
+                f"limite de control es 3")
 
 
 @sin_interfaz

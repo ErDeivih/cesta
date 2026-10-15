@@ -224,10 +224,34 @@ def _nombres_del_tema(texto_config: str) -> set[str]:
     return nombres
 
 
+def _codigo(fichero: Path) -> list[str]:
+    """Las lineas del fichero con los comentarios EN BLANCO, sin perder la numeracion.
+
+    *Hace falta un ayudante propio y no `_sin_comentarios`: *aquel **quita las
+    lineas enteras de comentario**, *y con ellas **se corre la numeracion** *-- *y
+    entonces un aviso como «`Cabecera.tsx:52`» **señala otra linea.*** *
+    *Aqui el comentario se sustituye por una linea vacia: *el numero sigue siendo
+    el del fichero de verdad.* *
+    """
+    texto = fichero.read_text(encoding="utf-8")
+    # *Un comentario de bloque se cambia por sus propios saltos de linea, *para no
+    # mover nada de sitio.* *
+    texto = re.sub(r"/\*.*?\*/", lambda m: "\n" * m.group(0).count("\n"), texto, flags=re.S)
+    return ["" if ln.strip().startswith("//") else ln for ln in texto.splitlines()]
+
+
 def _clases_de_color(fichero: Path) -> list[tuple[int, str]]:
-    """Las clases que usan una utilidad de color, con su numero de linea."""
+    """Las clases que usan una utilidad de color, con su numero de linea.
+
+    *** Los comentarios se quitan, y no es un detalle. *** *Hasta el 15/10/2026 no
+    se quitaban, *y **un comentario que explicaba justo lo que NO hay que hacer**
+    *(-- «`bg-bosque/90` no se puede» --)* *** hacia fallar esta prueba.*** *O sea:
+    *el test **prohibia documentar el error**, *que es lo contrario de lo que
+    quiere.* *Y el fallo se descubrio porque **el comentario era mio** y el test
+    me lo denuncio.* *
+    """
     salida = []
-    for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+    for numero, linea in enumerate(_codigo(fichero), 1):
         for palabra in re.findall(r"[A-Za-z0-9_\-:\[\]\./%#]+", linea):
             # `dark:hover:bg-neutral-700` -> `bg-neutral-700`.
             tras_variantes = palabra.rsplit(":", 1)[-1]
@@ -532,7 +556,7 @@ def test_las_escalas_que_se_escriben_existen():
     for fichero in sorted((APP / "src").rglob("*.tsx")) + sorted((APP / "src").rglob("*.ts")):
         if fichero.name.endswith(".d.ts"):
             continue
-        for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+        for numero, linea in enumerate(_codigo(fichero), 1):
             for palabra in re.findall(r"[A-Za-z0-9_\-:\[\]\./%#]+", linea):
                 # `dark:hover:shadow-alzado` -> `shadow-alzado`.
                 utilidad = palabra.rsplit(":", 1)[-1]
@@ -582,4 +606,80 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
         f"estos tamanos de letra del tema no estan en `NO_ES_COLOR`, asi que el "
         f"test de colores los leera como colores y fallara sin decir por que: "
         f"{faltan}")
+
+
+# ------------------------------------------- la paleta de fabrica, que no crezca ---
+#
+# **La causa de que la app pareciera generica TENIENDO componentes**, medida el
+# 15/10/2026: **611 clases usaban la paleta de Tailwind** *(-- `neutral` 355,
+# `sky` 113, `amber` 50, `emerald` 47, `red` 42 --)* *y **398 la propia**.* *O sea,
+# **mas de la mitad pintada de fabrica.** *
+#
+# *Y el test de colores **no lo ve**, *porque `neutral`, `sky`, `amber`, `red` y
+# `emerald` estan en `PALETAS`* *-- la lista de «esto es un color de Tailwind y es
+# legitimo» --.* *Asi que el fallo pasaba **con el test en verde.** *
+#
+# *** Por que un trinquete y no una regla. *** *Prohibirlas de golpe dejaria 495
+# fallos y **nadie podria trabajar**; *pero dejarlas crecer **sin limite** es como
+# se llego aqui.* *Asi que el numero **solo puede bajar**: *se migra una pantalla,
+# **se baja el numero a mano en el mismo commit**, *y **el test impide que suba.** *
+#
+# *Es la misma idea que el test de rutas: *compara **dos sitios que tienen que
+# decir lo mismo** *y que nadie compara.* *
+
+# *El censo del 15/10/2026, **sin contar los comentarios** *-- *que citan las
+# clases viejas a proposito, *para que se lea que se cambio y por que --.* *
+# *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
+# `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
+PALETA_DE_FABRICA_HOY = 495
+
+_PALETA = ("slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|"
+           "teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose")
+_PALETA_DE_FABRICA = re.compile(
+    rf"\b(?:bg|text|border|ring|from|to|via|divide|outline|decoration|fill|stroke|"
+    rf"placeholder|accent|caret|shadow)-(?:{_PALETA})-")
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_la_paleta_de_fabrica_no_crece():
+    """Las clases de la paleta de Tailwind solo pueden **bajar**.
+
+    *Un color de fabrica no es un error de sintaxis: *pinta, *y por eso se queda.*
+    *Y son los que hacen que la app **no tenga estilo propio** *aunque tenga
+    componentes, *porque **los grises y los azules son los de Tailwind y no los de
+    la casa.*** *
+
+    *Al migrar una pantalla, **baja el numero de `PALETA_DE_FABRICA_HOY`** en el
+    mismo commit.* *Si este test falla, es que has **anadido** color de fabrica:
+    *mira `docs/ui/DIRECCION.md` y usa un token.* *
+    """
+    cuenta = 0
+    peores: list[tuple[int, str]] = []
+    for fichero in (sorted((APP / "src").rglob("*.tsx"))
+                    + sorted((APP / "src").rglob("*.ts"))
+                    + sorted((APP / "src").rglob("*.css"))):
+        limpio = _sin_comentarios(fichero.read_text(encoding="utf-8"))
+        # *Y los comentarios de CSS, *que `_sin_comentarios` ya quita.* *
+        n = len(_PALETA_DE_FABRICA.findall(limpio))
+        if n:
+            cuenta += n
+            peores.append((n, fichero.name))
+
+    peores.sort(reverse=True)
+    detalle = ", ".join(f"{n} en {nombre}" for n, nombre in peores[:6])
+    assert cuenta <= PALETA_DE_FABRICA_HOY, (
+        f"hay {cuenta} clases de la paleta de Tailwind y el maximo acordado es "
+        f"{PALETA_DE_FABRICA_HOY}: **has anadido color de fabrica.**\n"
+        f"Los que mas tienen: {detalle}.\n"
+        f"Usa los tokens de `docs/ui/DIRECCION.md` (marfil, papel, papel-alto, "
+        f"bosque, terracota, tinta-fuerte, secundaria, borde, borde-fuerte, error, "
+        f"aviso, bien) en vez de `neutral`, `sky`, `amber`, `red` o `emerald`.")
+
+    # *Y tambien al reves: *si has migrado y no has bajado el numero, *el trinquete
+    # se queda flojo y deja de apretar.* *
+    if cuenta < PALETA_DE_FABRICA_HOY - 25:
+        pytest.fail(
+            f"has bajado a {cuenta} clases de fabrica (de {PALETA_DE_FABRICA_HOY}) "
+            f"y el suelo sigue alto. **Baja `PALETA_DE_FABRICA_HOY` a {cuenta}** en "
+            f"este mismo commit, que para eso es un trinquete.")
 
