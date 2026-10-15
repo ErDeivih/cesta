@@ -174,3 +174,38 @@ escrito en `Buscar.tsx`, *aunque no fuera la causa de lo que se veia.* *
 *** Y la regla, *que va con las otras diez ***: *cuando una herramienta **no puede bajar
 de un minimo**, *el numero que hay que leer es *** el que la pagina dice de si misma ***,
 *puesto donde se vea.* *
+
+---
+
+## 9. *** Y POR FIN A 390 px: *no desborda, *y la barra funciona ***
+
+*15/10/2026, ronda 54. *La seccion 8 cerro que **a 500 no desborda**, *y dejo dicho que
+**por debajo de 500 no se podia medir** porque Chrome no baja el viewport de ahi.* *
+*** Y si se podia.*** *
+
+```
+*** EL TRUCO ***: *REA acepta *** `environment.viewport` ***, *y ademas **si puede
+   *navegar** *(-- *descubierto en la ronda 52 --).* *
+*** -> *con `width: 390, height: 844, device_scale_factor: 2` *se obtiene *
+   *** un viewport CSS de 390 x 844 ***, *que es un movil de verdad ✓✓✓
+*** -> *y la captura sale a 780 x 1688 *-- *el doble, por el factor 2 --* ✓
+```
+
+*** Y EL RESULTADO ***: *
+
+```
+*** el armazon de movil esta ***: *el boton ☰ Compra *(-- el cajon --)* arriba, *
+   *y la *** barra de abajo *** *con Compra activo en terracota, *Recetas y Calorias ✓
+*** -> *** no se corta nada ***: *el buscador, *los botones de micro y de codigo, *
+   *«Filtros cadena, pasillo, dieta, ofertas…», *«Guardar estos filtros» ✓
+*** -> *y el estado vacio de `Buscar` *** llena la pantalla ***, *
+   *con sus *** tres chips de ejemplo centrados *** ✓✓✓
+```
+
+*** O sea que la hipotesis de la ronda 17 queda cerrada del todo ***: *aquel «Calorias se
+sale de la pantalla» era *** el recorte *** de una captura de 390 sobre un render de 500,
+*y **a 390 de verdad no desborda nada.*** *
+
+*** Y LA REGLA DE MEDIDA ***: *antes de decir que una herramienta «no alcanza», *
+*hay que mirar **que parametros acepta.*** *El `viewpor` estaba en el esquema del
+proveedor desde el principio.* *
