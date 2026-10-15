@@ -15,7 +15,7 @@ import { misListas, previaDelPlan, traerDelPlan } from '../api/cesta'
 import type { PreviaDelPlan } from '../api/cesta'
 import { useDuplicarSemana, usePlan, usePlanificar, useRecetas } from '../api/recetas'
 import type { ReciboDeSemana } from '../api/recetas'
-import { Boton, Tarjeta, Vacio, Fallo } from '../componentes/ui'
+import { Boton, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
@@ -103,7 +103,7 @@ function PonerEnUnDia({ fecha, alPoner }: { fecha: string; alPoner: () => void }
       >
         Poner
       </Boton>
-      {planificar.error && <p className="text-[14px] text-error">{textoDeError(planificar.error)}</p>}
+      {planificar.error && <Etiqueta tono="mal">{textoDeError(planificar.error)}</Etiqueta>}
     </div>
   )
 }
@@ -237,7 +237,7 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
           previa: un fallo al traer se veia exactamente igual que no haber pulsado nada. Medido el 13
           de octubre de 2026 -- un 500 invisible. */}
       {(ver.error || traer.error) && (
-        <p className="mt-2 text-[14px] text-error">{textoDeError(ver.error ?? traer.error)}</p>
+        <Etiqueta tono="mal">{textoDeError(ver.error ?? traer.error)}</Etiqueta>
       )}
     </Tarjeta>
   )
@@ -275,7 +275,7 @@ function DuplicarLaSemana({ desde, hasta }: { desde: string; hasta: string }) {
         </Boton>
       </div>
 
-      {duplicar.error && <p className="mt-2 text-[15px] text-error">{textoDeError(duplicar.error)}</p>}
+      {duplicar.error && <Etiqueta tono="mal">{textoDeError(duplicar.error)}</Etiqueta>}
 
       {recibo && (
         <p className="mt-2 text-[15px] text-tinta-fuerte">

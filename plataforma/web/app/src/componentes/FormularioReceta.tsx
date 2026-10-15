@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { textoDeError } from '../api/cliente'
 import { useCambiarReceta } from '../api/recetas'
 import type { Ingrediente, Receta } from '../api/recetas'
-import { Boton, Tarjeta } from './ui'
+import { Boton, Tarjeta, Etiqueta } from './ui'
 
 /** Las lineas del area de texto, a ingredientes. "600 g patatas" o solo "sal". */
 function aIngredientes(texto: string): Ingrediente[] {
@@ -125,7 +125,7 @@ export function FormularioReceta({ receta }: { receta: Receta }) {
           />
         </label>
 
-        {cambiar.error && <p className="text-[14px] text-error">{textoDeError(cambiar.error)}</p>}
+        {cambiar.error && <Etiqueta tono="mal">{textoDeError(cambiar.error)}</Etiqueta>}
 
         <div className="flex gap-2">
           <Boton type="submit" disabled={cambiar.isPending}>

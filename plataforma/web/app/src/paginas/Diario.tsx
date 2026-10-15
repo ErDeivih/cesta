@@ -16,7 +16,7 @@ import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import { resolver, type Pendiente } from '../logica/operacionPendiente'
 import type { NuevaEntrada } from '../api/diario'
-import { Boton, Tarjeta, Vacio, Fallo } from '../componentes/ui'
+import { Boton, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
 
 const NOMBRE_NUTRIENTE: Record<string, string> = {
   kcal: 'energia',
@@ -187,7 +187,7 @@ function DeLaCompra({ fecha }: { fecha: string }) {
             </>
           )}
           {(ver.error || anotar.error) && (
-            <p className="text-[14px] text-error">{textoDeError(ver.error ?? anotar.error)}</p>
+            <Etiqueta tono="mal">{textoDeError(ver.error ?? anotar.error)}</Etiqueta>
           )}
         </div>
       )}
@@ -371,7 +371,7 @@ function Alta({ fecha }: { fecha: string }) {
             estaba, aunque la receta haya cambiado.
           </p>
         )}
-        {apuntar.error && <p className="text-[14px] text-error">{textoDeError(apuntar.error)}</p>}
+        {apuntar.error && <Etiqueta tono="mal">{textoDeError(apuntar.error)}</Etiqueta>}
       </form>
     </Tarjeta>
   )

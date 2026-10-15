@@ -113,7 +113,7 @@ function FormularioEntrar({ alEntrar }: { alEntrar: () => void }) {
       </Boton>
       {entrar_.isError && (
         <Aviso tono="mal">
-          <p>{textoDeError(entrar_.error)}</p>
+          <Etiqueta tono="mal">{textoDeError(entrar_.error)}</Etiqueta>
         </Aviso>
       )}
     </form>
@@ -197,7 +197,7 @@ function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
           se traducen ni se resumen: se enseña lo que ha contestado. */}
       {alta.isError && (
         <Aviso tono="mal">
-          <p>{textoDeError(alta.error)}</p>
+          <Etiqueta tono="mal">{textoDeError(alta.error)}</Etiqueta>
         </Aviso>
       )}
     </form>
@@ -774,7 +774,7 @@ function CerrarCompra({ listaId, enElCarro, papel }: {
         <Boton variante="sutil" onClick={() => setConfirmando(false)}>No, déjalo</Boton>
       </div>
       {cerrar.isError && (
-        <p className="mt-2 text-cuerpo">{textoDeError(cerrar.error)}</p>
+        <Etiqueta tono="mal">{textoDeError(cerrar.error)}</Etiqueta>
       )}
     </Aviso>
   )
@@ -983,7 +983,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
       {invita.isError && (
         <div className="mt-2">
           <Aviso tono="mal" titulo="No he podido crear el enlace">
-            <p>{textoDeError(invita.error)}</p>
+            <Etiqueta tono="mal">{textoDeError(invita.error)}</Etiqueta>
           </Aviso>
         </div>
       )}
@@ -1065,7 +1065,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
       {comparte.isError && (
         <div className="mt-2">
           <Aviso tono="mal" titulo="No he podido compartirla">
-            <p>{textoDeError(comparte.error)}</p>
+            <Etiqueta tono="mal">{textoDeError(comparte.error)}</Etiqueta>
           </Aviso>
         </div>
       )}
@@ -1093,7 +1093,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         </p>
       )}
       {revoca.isError && (
-        <p className="mt-2 text-cuerpo text-aviso">{textoDeError(revoca.error)}</p>
+        <Etiqueta tono="aviso">{textoDeError(revoca.error)}</Etiqueta>
       )}
     </Tarjeta>
   )
@@ -1461,7 +1461,7 @@ export function Cesta() {
           entra aqui: eso ya no es un error, es un cambio que espera. */}
       {cambia.isError && !esSinRed(cambia.error) && (
         <Aviso tono="mal" titulo="No he podido guardar el cambio">
-          <p>{textoDeError(cambia.error)}</p>
+          <Etiqueta tono="mal">{textoDeError(cambia.error)}</Etiqueta>
           <p className="mt-1">
             La lista sigue como estaba. Aquí no se pinta un cambio que el
             servidor no ha aceptado.

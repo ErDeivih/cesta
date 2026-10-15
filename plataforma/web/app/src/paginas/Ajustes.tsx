@@ -186,7 +186,7 @@ export function Ajustes() {
               </Boton>
             </div>
             {borra.isError && (
-              <p className="text-cuerpo text-aviso">{textoDeError(borra.error)}</p>
+              <Etiqueta tono="aviso">{textoDeError(borra.error)}</Etiqueta>
             )}
           </div>
         )}

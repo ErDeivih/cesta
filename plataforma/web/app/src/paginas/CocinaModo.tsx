@@ -13,7 +13,7 @@ import { useParams } from 'react-router-dom'
 
 import { apuntaUsado, irAlPaso, ponTemporizador, useCocina, useEmpieza } from '../api/cocina'
 import { textoDeError, useSeAtasca } from '../api/cliente'
-import { Boton, Tarjeta, Cargando } from '../componentes/ui'
+import { Boton, Tarjeta, Cargando, Etiqueta } from '../componentes/ui'
 
 /** **Segundos, en palabras.** *Y **negativo es «hace»**, que es informacion y no un error.* */
 function cuantoTiempo(s: number): string {
@@ -93,7 +93,7 @@ export function CocinaModo() {
           No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la receta no este
           empezada.
         </p>
-        {error ? <p className="text-cuerpo text-tinta-suave">{textoDeError(error)}</p> : null}
+        {error ? <Etiqueta tono="mal">{textoDeError(error)}</Etiqueta> : null}
       </div>
     )
   }
@@ -106,7 +106,7 @@ export function CocinaModo() {
         <h1 className="text-xl font-semibold">Cocina</h1>
         <p className="text-cuerpo text-tinta-suave">Esta receta no esta empezada.</p>
         <Boton onClick={() => empieza.mutate()} disabled={empieza.isPending}>Empezar a cocinar</Boton>
-        {empieza.error ? <p className="text-cuerpo text-error">{textoDeError(empieza.error)}</p> : null}
+        {empieza.error ? <Etiqueta tono="mal">{textoDeError(empieza.error)}</Etiqueta> : null}
       </div>
     )
   }

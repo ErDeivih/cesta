@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { textoDeError, esErrorApi } from '../api/cliente'
-import { Fallo } from '../componentes/ui'
+import { Fallo, Etiqueta } from '../componentes/ui'
 import { usePasarALista, usePreviaDeCompra, useReceta } from '../api/recetas'
 import { misListas } from '../api/cesta'
 import { costeDeReceta, type IngredienteConPrecio } from '../logica/costeReceta'
@@ -46,7 +46,7 @@ function PasarALista({ recetaId }: { recetaId: number }) {
   return (
     <Tarjeta titulo="Lo que habria que comprar">
       {previa.isPending && <p className="text-[16px] text-secundaria">Calculando...</p>}
-      {previa.error && <p className="text-[16px] text-error">{textoDeError(previa.error)}</p>}
+      {previa.error && <Etiqueta tono="mal">{textoDeError(previa.error)}</Etiqueta>}
       {previa.data && (
         <div className="flex flex-col gap-3">
           {previa.data.lineas.length === 0 && (
@@ -106,7 +106,7 @@ function PasarALista({ recetaId }: { recetaId: number }) {
             <Boton onClick={() => { setAbierta(false); setHecho(null) }}>Cerrar</Boton>
           </div>
           {hecho && <p className="text-[15px] text-tinta-fuerte">{hecho}</p>}
-          {pasar.error && <p className="text-[15px] text-error">{textoDeError(pasar.error)}</p>}
+          {pasar.error && <Etiqueta tono="mal">{textoDeError(pasar.error)}</Etiqueta>}
         </div>
       )}
     </Tarjeta>

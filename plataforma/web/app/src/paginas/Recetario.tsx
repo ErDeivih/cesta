@@ -18,7 +18,7 @@ import {
 } from '../api/recetas'
 import type { Ingrediente } from '../api/recetas'
 import { textoDeError } from '../api/cliente'
-import { Boton, Cargando, Fallo, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, Cargando, Fallo, Tarjeta, Vacio, Etiqueta } from '../componentes/ui'
 import { etiquetasDe, filtraRecetas, textoDelVacio } from '../logica/recetario'
 
 function ListaDeIngredientes({ ingredientes }: { ingredientes: Ingrediente[] }) {
@@ -46,7 +46,7 @@ function Detalle({ id, alCerrar }: { id: number; alCerrar: () => void }) {
   if (error) {
     return (
       <Tarjeta>
-        <p className="text-[16px] text-error">{textoDeError(error)}</p>
+        <Etiqueta tono="mal">{textoDeError(error)}</Etiqueta>
       </Tarjeta>
     )
   }
@@ -181,7 +181,7 @@ function Alta() {
             className="rounded-md border border-borde-fuerte bg-papel p-2 text-[16px] leading-[22px] text-tinta-fuerte"
           />
         </label>
-        {crear.error && <p className="text-[14px] text-error">{textoDeError(crear.error)}</p>}
+        {crear.error && <Etiqueta tono="mal">{textoDeError(crear.error)}</Etiqueta>}
         <div className="flex gap-2">
           <Boton type="submit" disabled={crear.isPending}>
             {crear.isPending ? 'Guardando...' : 'Guardar'}
@@ -290,7 +290,7 @@ export function Recetario() {
                       se pulsaba y no pasaba nada visible, que es lo mismo que hacer creer que si
                       funciono. */}
                   {archivar.error && !r.archivada && (
-                    <p className="mt-1 text-[13px] text-error">{textoDeError(archivar.error)}</p>
+                    <Etiqueta tono="mal">{textoDeError(archivar.error)}</Etiqueta>
                   )}
               </Tarjeta>
               {abierta === r.id && <div className="mt-2"><Detalle id={r.id} alCerrar={() => setAbierta(null)} /></div>}

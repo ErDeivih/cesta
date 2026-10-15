@@ -122,7 +122,7 @@ export function Unirse() {
           {/* El 404 de la API ya trae su frase entera ("caduca a los siete dias, y
               puede que ya lo hayan usado. Pidele otro a quien te lo mando"), y el
               401 suya. Aqui no se reescriben: se enseñan. */}
-          <p>{textoDeError(acepta.error)}</p>
+          <Etiqueta tono="mal">{textoDeError(acepta.error)}</Etiqueta>
           <p className="mt-1">
             Tus listas de siempre siguen donde estaban:{' '}
             <Link to="/cesta" className="underline">la cesta</Link>.
