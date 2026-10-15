@@ -127,7 +127,23 @@ export function Buscar() {
   const loBuscado = filtros.q.trim() ? `«${filtros.q.trim()}»` : 'este pasillo'
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+    // *** `min-h-full`: *que la rejilla **llene el alto que le dan.** *** *
+    //
+    // *Y esto es el «60 % vacio» del dictamen, *en su forma mas simple: *la raiz era
+    // `grid grid-cols-1 gap-4` **sin altura**, *y una rejilla sin altura **mide lo que
+    // mide su contenido** *-- *asi que con cuatro bloques arriba, *los trescientos
+    // pixeles de abajo **sobraban** y la pantalla parecia **a medio hacer.*** *
+    //
+    // *Y `min-h-full` no inventa nada: *la rejilla **ya tiene** el alto, *porque el
+    // `main` de `LayoutSuite` es `flex-1` dentro de una columna de `min-h-screen`.* *
+    // *Lo unico que cambia es que **lo usa.*** *
+    //
+    // *Y las filas de una rejilla de una columna son `auto`, *y `align-content` vale
+    // `normal`, *que **se comporta como `stretch`**: *el alto que sobra **se reparte
+    // entre las filas.*** *O sea que la pantalla **se llena** sin mover nada de sitio
+    // ni inventar contenido -- *que es lo mismo que se hizo en el lanzador con
+    // `my-auto`, *pero aqui la rejilla **ya estaba**, *y solo le faltaba el alto.* *
+    <div className="grid min-h-full grid-cols-1 gap-4">
       {/* El titulo de la pantalla, para quien navega por encabezados: no se ve, porque en esta
           pantalla lo primero tiene que ser el campo de busqueda -- se usa de pie y con una
           mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
