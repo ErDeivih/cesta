@@ -121,4 +121,14 @@ def test_el_fallo_de_red_es_neutro_en_todas_las_pantallas():
         "sin cobertura tiene que ir en tono neutro, no en `role=alert`"
     # Y el rojo sigue existiendo para lo que la API contesta que no: un 403 o un 500
     # hay que mirarlos, y quitarlo de todo seria el error contrario.
-    assert 'tono="mal" titulo="No he podido traer esto"' in ui
+    # *** Y el titulo es un PARAMETRO, *no un literal. *** *
+    #
+    # *El 15/10/2026 `Fallo` gano `titulo?` porque `Ajustes` pinta errores de GUARDAR
+    # y de BORRAR, *y el titulo fijo «No he podido traer esto» decia algo FALSO en un
+    # guardado.* *El de por defecto SE QUEDO IGUAL, *asi que las diez pantallas que ya
+    # la usaban no cambian.* *
+    #
+    # *Y esta prueba afirmaba el LITERAL, *que ya no existe.* *Es el CUARTO test
+    # acoplado a un literal que saca una migracion* *-- *despues de `test_contraste`,
+    # `test_mosaico` y `test_esqueletos` --.* *Se comprueba la INTENCION.* *
+    assert 'tono="mal" titulo={titulo}' in ui

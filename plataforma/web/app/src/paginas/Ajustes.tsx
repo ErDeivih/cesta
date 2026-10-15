@@ -18,7 +18,7 @@ import { textoDeError } from '../api/cliente'
 import { borrarme, salir, yo } from '../api/cesta'
 import { useEstado } from '../api/consultas'
 import { nombreCadena } from '../api/formato'
-import { Boton, CampoTexto, Cargando, Etiqueta, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, CampoTexto, Cargando, Etiqueta, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 
 export function Ajustes() {
   const cliente = useQueryClient()
@@ -137,7 +137,7 @@ export function Ajustes() {
         )}
         {guardado && <p className="mt-2 text-cuerpo"><Etiqueta tono="bien">{guardado}</Etiqueta></p>}
         {guarda.isError && (
-          <p className="mt-2 text-cuerpo text-aviso">{textoDeError(guarda.error)}</p>
+          <Fallo error={guarda.error} titulo="No he podido guardar" />
         )}
       </Tarjeta>
 

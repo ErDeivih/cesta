@@ -392,7 +392,20 @@ export function EsqueletoRejilla({ tarjetas = 6, alto = '11rem' }:
  )
 }
 
-export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () => void }) {
+export function Fallo({ error, reintentar, titulo = 'No he podido traer esto' }: {
+  error: unknown
+  reintentar?: () => void
+  /** *** Y el titulo, *porque NO todo fallo es «traer». *** *
+   *
+   * *El 15/10/2026 se vio que `Ajustes` pinta sus errores de **guardar** y de
+   * **borrar** con un `<p>` a mano, *y **no por descuido**: *es que esta pieza
+   * decia «No he podido traer esto», *y en un guardado eso es **falso.*** *
+   *
+   * *Asi que el titulo se puede cambiar, *y el de por defecto **se queda igual**
+   * para no tocar las diez pantallas que ya la usan.* *
+   */
+  titulo?: string
+}) {
  // El texto lo pone `textoDeError`, que ya distingue "sin conexion" de "el
  // servidor ha contestado 500". Aqui no se inventa un mensaje nuevo.
  //
@@ -422,7 +435,7 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
  }
  return (
  <div className="grid grow content-center">
-        <Aviso tono="mal" titulo="No he podido traer esto">
+        <Aviso tono="mal" titulo={titulo}>
  <p>{textoDeError(error)}</p>
  {reintentar && (
  <Boton variante="normal" className="mt-2" onClick={reintentar}>
