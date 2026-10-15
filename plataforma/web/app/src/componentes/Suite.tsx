@@ -418,6 +418,58 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
 }
 
 /** El armazon completo de una aplicacion: lateral o cajon, cabecera y contenido. */
+/** *** La barra de abajo, *y solo en el movil. *** *
+ *
+ * *Estaba escrita en `Nav.tsx` y **no se pintaba**, *porque `Nav.tsx` es codigo muerto:
+ * `Suite.tsx` sustituyo al layout anterior *(-- cabecera arriba, *barra abajo --)* y se
+ * llevo **el lateral y el cajon, pero no la barra.*** *Asi que no es que no se hubiera
+ * hecho nunca: *** se perdio en un cambio de layout.*** *
+ *
+ * *Y **se rehace**, *no se copia: *los tokens y los iconos **ya existen**, *y lo unico
+ * que se reutiliza de `Nav.tsx` es **la regla del iPhone** *-- `env(safe-area-inset-
+ * bottom)` --, *que es lo unico que era dificil de recordar.* *
+ *
+ * *Y su sitio es **aqui y no fuera**: *va dentro del `div` que lleva `inert` cuando el
+ * cajon esta abierto, *asi que **se desactiva con el** *-- *que es lo correcto en algo
+ * modal: *con el cajon abierto, *lo de detras **no se toca.*** *
+ */
+function BarraAbajo({ app }: { app: Aplicacion | null }) {
+  return (
+    <nav
+      aria-label="Aplicaciones"
+      // *`lg:hidden` porque en pantalla ancha manda el lateral*, *que a su vez lleva
+      // `hidden ... lg:block`: *o sea que **los dos nunca se ven a la vez.*** *
+      //
+      // *Y el `pb` con `env(...)` es **la regla del iPhone**: *la raya de abajo tapa
+      // los ultimos pixeles de una barra fija, *y sin esto **la barra queda debajo de
+      // ella** y no se puede pulsar.* *
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-borde bg-papel pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
+      {APLICACIONES.map((otra) => {
+        const activa = app?.clave === otra.clave
+        return (
+          <NavLink
+            key={otra.clave}
+            to={otra.raiz}
+            aria-current={activa ? 'page' : undefined}
+            // *56 px y no 44: *los 44 son **el minimo de un blanco**, *y aqui el blanco
+            // lleva **icono y palabra**, *asi que necesita algo mas para que las dos
+            // cosas quepan sin apretarse.* *
+            className={cx(
+              'flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-1',
+              'text-antetitulo transition-colors duration-rapida ease-suave',
+              activa ? 'font-semibold text-terracota' : 'text-secundaria',
+            )}
+          >
+            <otra.Icono width={22} height={22} className="shrink-0" />
+            {otra.nombre}
+          </NavLink>
+        )
+      })}
+    </nav>
+  )
+}
+
 export function LayoutSuite({ app, children }: { app: ClaveApp | null; children: ReactNode }) {
   // *La ruta, que hace falta para la `key` de la entrada de pantalla.* *
   // *Se saca aqui y no dentro del `main` para que se lea una sola vez.* *
@@ -470,10 +522,11 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
         <main
           key={ruta}
           id="contenido"
-          className="entra-pantalla mx-auto w-full max-w-app flex-1 px-4 py-5 lg:px-8"
+          className="entra-pantalla mx-auto w-full max-w-app flex-1 px-4 pt-5 pb-24 lg:px-8 lg:pb-5"
         >
           {children}
         </main>
+      <BarraAbajo app={aplicacion} />
       </div>
       {abierto && (
         <div id="menu-suite">

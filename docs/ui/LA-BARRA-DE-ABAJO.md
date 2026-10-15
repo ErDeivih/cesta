@@ -72,3 +72,34 @@ cerrada sin comprobarlo.*** *
 *** Y no se copia `Nav.tsx`: *se **rehace** en `Suite.tsx` con los tokens y con los
 iconos que ya existen.* *Lo que se **reutiliza** es **la regla del iPhone**, *que es la
 unica parte que era dificil de recordar.* *
+
+---
+
+## 6. *** Y HECHA, *con un defecto que la captura ensena ***
+
+*`docs/ui/capturas/08-barra-movil.png`, *a **390 x 844**, *que es un iPhone de los
+pequenos.* *
+
+```
+*** LO QUE FUNCIONA ***: *la barra esta, *fija abajo, *con las **tres aplicaciones**,
+   *su **icono**, *y **`Compra` en terracota** porque es la activa ✓
+*** Y LO QUE NO ***: *** «Calorias» SE SALE DE LA PANTALLA *** ⚠️
+   *-- *y **no es la barra**: *en la misma captura, *«Escribe al menos dos letras,
+      *o elige un pas…» sale **cortado**, *y el buscador **se sale por la derecha** ✓
+   *-- *o sea que *** la PANTALLA ENTERA tiene desbordamiento horizontal ***, *y la
+      *barra es **una victima mas**: *`fixed inset-x-0` mide **lo ancho del viewport**,
+      *y si algo de dentro **empuja** mas alla, *los demas **lo siguen.*** *
+*** -> *** y esto NO se arregla en la barra ***: *se arregla **en lo que desborda**,
+   *y hasta saber que es, *tocar la barra seria **esconder el sintoma** ✓✓✓
+```
+
+*** Y es exactamente lo que pide la FASE 3 *** *(-- «*y la barra de abajo del movil …» --), *
+*asi que **queda a medias a proposito y dicho**: *la barra esta puesta, *y **el
+desbordamiento es lo siguiente**, *porque una barra a la que **le falta un tercio** no
+sirve para navegar.* *
+
+*** Y lo que NO se ha hecho ***: *averiguar **que** desborda.* *Se sabe que se ve en
+`/compra` y que afecta al buscador y al bloque de sugerencias; *no se sabe **cual de los
+dos** empuja, *ni si es uno o son varios.* *Y no se supone: *se mide con
+`document.scrollingElement.scrollWidth` contra `clientWidth`, *y despues se busca el
+elemento **mas ancho que su padre**.* *
