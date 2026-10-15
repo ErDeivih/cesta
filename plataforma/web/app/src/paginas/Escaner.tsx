@@ -228,7 +228,7 @@ export function Escaner() {
       )}
 
       {perdido && (
-        <Vacio titulo="No tengo ese código">
+        <Vacio titulo="No tengo ese código" className="grow">
           <p>
             <strong>Motivo:</strong> {perdido.motivo}
           </p>
@@ -341,7 +341,7 @@ export function Escaner() {
       )}
 
       {!consulta.data && !consulta.isFetching && error === null && (
-        <Vacio titulo="Escribe o pega un código">
+        <Vacio titulo="Escribe o pega un código" className="grow">
           <p>
             Con el código de barras se contesta la pregunta del pasillo: <em>esto que tengo en la
             mano, ¿está más barato en otro sitio?</em>
