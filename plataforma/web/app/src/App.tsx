@@ -54,10 +54,23 @@ function Lanzador() {
   const aplicacion = ultimo ? aplicacionDe(ultimo) : null
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-app flex-col gap-10 px-5 py-10">
-      <header className="border-b border-borde pb-6">
-        <h1 className="font-serif text-[32px] leading-[38px] font-semibold text-tinta-fuerte">Cesta</h1>
-        <p className="mt-1 text-[15px] text-secundaria">
+    // *** El lanzador, compuesto para que LLENE. *** *
+    //
+    // *Y esto arregla el «60 % vacio» de `docs/ui/capturas/01-inicio.png`, *que no
+    // era un fallo de contenido: *la pantalla **no tiene mas que decir** *-- tres
+    // accesos y por donde ibas --, *y el problema era que **el contenido se
+    // apinaba arriba y no se repartia.** *
+    //
+    // *La solucion **no es inventar datos** *(-- *ni cifras, *ni atajos que nadie
+    // ha pedido --)*: *es **composicion.** *El `my-auto` de la rejilla **la lleva
+    // al centro vertical** del hueco que queda entre la cabecera y el pie, *y asi
+    // **el vacio no sobra: *rodea.*** *
+    <div className="mx-auto flex min-h-screen max-w-app flex-col px-5 py-pagina">
+      <header className="border-b border-borde pb-bloque">
+        {/* *Los tamanos, a la escala: **`portada`** y **`cuerpo`**, *no
+            `[32px]` y `[15px]` a ojo.* */}
+        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
+        <p className="mt-1 text-cuerpo text-secundaria">
           La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa.
         </p>
       </header>
@@ -66,32 +79,48 @@ function Lanzador() {
         <button
           type="button"
           onClick={() => navegar(ultimo ?? aplicacion.raiz)}
-          className="min-h-[44px] self-start rounded-md border border-borde-fuerte px-4 text-[15px] text-tinta-fuerte hover:bg-papel"
+          className="mt-bloque min-h-[44px] self-start rounded-campo border border-borde-fuerte px-4 text-cuerpo text-tinta-fuerte transition-colors duration-rapida ease-suave hover:bg-papel"
         >
           Continuar donde estaba: <strong>{aplicacion.nombre}</strong>
         </button>
       )}
 
-      <nav aria-label="Aplicaciones" className="grid gap-4 sm:grid-cols-3">
+      {/* *`my-auto`: *esto es lo que reparte el alto.* */}
+      <nav aria-label="Aplicaciones" className="my-auto grid gap-4 sm:grid-cols-3">
         {APLICACIONES.map((app) => (
           <Link
             key={app.clave}
             to={`${app.raiz}${search}`}
-            className="flex min-h-[120px] flex-col justify-between rounded-lg border border-borde bg-papel p-5 hover:border-bosque"
+            // *** Y cada tarjeta lleva SU icono, *que es lo que la hace
+            // reconocible **antes de leerla.** *** *
+            //
+            // *El dato ya estaba desde la FASE 3: *`APLICACIONES` tiene `Icono`, *y
+            // **aqui no se usaba.*** *Y el movimiento es el de la direccion: *`normal`
+            // porque **cambia de estado**, *no `rapida`* *-- *que es para lo que
+            // responde al dedo.* *
+            className="group flex min-h-[150px] flex-col justify-between gap-bloque rounded-tarjeta border border-borde bg-papel p-5 shadow-apoyado transition duration-normal ease-suave hover:border-bosque hover:shadow-alzado"
           >
-            <span className="font-serif text-[24px] leading-8 font-semibold text-tinta-fuerte">
-              {app.nombre}
+            <span
+              aria-hidden="true"
+              className="text-bosque transition-transform duration-normal ease-suave group-hover:-translate-y-0.5"
+            >
+              <app.Icono width={26} height={26} />
             </span>
-            <span className="text-[14px] leading-[22px] text-secundaria">
-              {app.clave === 'compra' && 'Buscar, la lista, favoritos y lo que gastas.'}
-              {app.clave === 'recetas' && 'Tu recetario, el modo cocina y el plan de la semana.'}
-              {app.clave === 'calorias' && 'Tu diario, tus alimentos y las tendencias.'}
+            <span className="flex flex-col gap-1">
+              <span className="font-serif text-titulo font-semibold text-tinta-fuerte">
+                {app.nombre}
+              </span>
+              <span className="text-etiqueta text-secundaria">
+                {app.clave === 'compra' && 'Buscar, la lista, favoritos y lo que gastas.'}
+                {app.clave === 'recetas' && 'Tu recetario, el modo cocina y el plan de la semana.'}
+                {app.clave === 'calorias' && 'Tu diario, tus alimentos y las tendencias.'}
+              </span>
             </span>
           </Link>
         ))}
       </nav>
 
-      <footer className="mt-auto border-t border-borde pt-4 text-[13px] text-secundaria">
+      <footer className="mt-bloque border-t border-borde pt-4 text-etiqueta text-secundaria">
         <Link to="/ajustes" className="underline">
           Cuenta y preferencias
         </Link>
