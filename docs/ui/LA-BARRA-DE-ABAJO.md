@@ -103,3 +103,41 @@ sirve para navegar.* *
 dos** empuja, *ni si es uno o son varios.* *Y no se supone: *se mide con
 `document.scrollingElement.scrollWidth` contra `clientWidth`, *y despues se busca el
 elemento **mas ancho que su padre**.* *
+
+---
+
+## 7. *** CORRECCION: *el desbordamiento **NO esta probado** ***
+
+*** Lo que dije en la seccion 6 queda retirado. *** *
+
+```
+*** DIJE ***: *la captura a 390 x 844 demuestra desbordamiento horizontal ⚠️
+*** Y NO LO DEMUESTRA ***: *Chrome en Windows tiene un ancho de ventana *** MINIMO *** *
+   *(-- alrededor de 500 px --), *y `--window-size=390` **no puede bajar de ahi**: *
+   *la pagina se maquetaria a ~500 y la captura seria *** un RECORTE de 390 *** ✓
+*** -> *y eso explicaria **por si solo** la barra cortada, *el buscador cortado *y
+   *** «Calorias» fuera ***, *SIN que haya desbordamiento ninguno ✓✓✓
+*** -> *y ademas: *los tres botones de sugerencia *** SI llevan `flex-wrap` *** *
+   *(`Buscar.tsx:213`), *asi que la hipotesis del desbordamiento **no explica**
+   *por que se cortan ellos ✓✓✓
+```
+
+*** Y lo que SI es un defecto, *y se ha arreglado ***: *
+
+```
+*** `TablaResultados.tsx:425` tenia *** `min-w-[16rem]` *** *(-- 256 px --)* dentro de
+   *un `grid-cols-[1fr_auto_auto]`, *y en un movil de 390 px la columna `1fr` **no
+   *puede encoger por debajo de ese minimo** ✓
+*** -> *y lo concluyente **no es mi medicion**: *es que *** el arreglo ya estaba
+   *escrito en esta misma app ***, *a tres lineas del campo de `Buscar.tsx`: *
+   *«*`min-w-0`, *no `min-w-[16rem]`. *Esto desbordaba la pantalla en un movil…*» ✓✓✓
+*** -> *** el mismo defecto, *arreglado en un sitio *y DEJADO EN OTRO, *
+   *con la explicacion al lado *** ✓✓✓
+```
+
+*** Y para medirlo de verdad *** *hace falta **emulacion por CDP**
+(`Emulation.setDeviceMetricsOverride`), *que **no tiene el minimo de ventana**, *o una
+comprobacion de `scrollWidth` contra `clientWidth` **dentro de la pagina**.* *Se intento
+con `capture_browser_scenario` y **fallo**; *y ademas lanzo **Chromium 155**, *que **no
+es el Chrome instalado.*** *No se ha insistido: *gastar contexto en herramienta **no
+arregla la app.*** *

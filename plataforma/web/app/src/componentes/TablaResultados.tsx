@@ -422,7 +422,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
  */
 function Producto({ fila }: { fila: ResultadoBusqueda }) {
   return (
-    <div className="flex min-w-[16rem] items-start gap-3">
+    <div className="flex min-w-0 items-start gap-3">
       {fila.imagen ? (
         <img
           src={fila.imagen}
