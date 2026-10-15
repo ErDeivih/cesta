@@ -405,7 +405,8 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
  // volveria a nacer en rojo.
  if (esSinRed(error)) {
  return (
- <Aviso tono="aviso" titulo="Sin cobertura">
+ <div className="grid grow content-center">
+        <Aviso tono="aviso" titulo="Sin cobertura">
  <p>No he podido traer esto: no hay conexion con casa.</p>
  {reintentar && (
  <>
@@ -416,10 +417,12 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
  </>
  )}
  </Aviso>
+      </div>
  )
  }
  return (
- <Aviso tono="mal" titulo="No he podido traer esto">
+ <div className="grid grow content-center">
+        <Aviso tono="mal" titulo="No he podido traer esto">
  <p>{textoDeError(error)}</p>
  {reintentar && (
  <Boton variante="normal" className="mt-2" onClick={reintentar}>
@@ -427,6 +430,7 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
  </Boton>
  )}
  </Aviso>
+      </div>
  )
 }
 

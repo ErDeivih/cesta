@@ -522,7 +522,7 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
         <main
           key={ruta}
           id="contenido"
-          className="entra-pantalla mx-auto w-full max-w-app flex-1 px-4 pt-5 pb-24 lg:px-8 lg:pb-5"
+          className="entra-pantalla mx-auto flex w-full max-w-app flex-1 flex-col px-4 pt-5 pb-24 lg:px-8 lg:pb-5"
         >
           {children}
         </main>
