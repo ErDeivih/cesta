@@ -15,7 +15,7 @@ import { misListas, previaDelPlan, traerDelPlan } from '../api/cesta'
 import type { PreviaDelPlan } from '../api/cesta'
 import { useDuplicarSemana, usePlan, usePlanificar, useRecetas } from '../api/recetas'
 import type { ReciboDeSemana } from '../api/recetas'
-import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, Tarjeta, Vacio, Fallo } from '../componentes/ui'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
@@ -333,7 +333,7 @@ export function PlanSemanal() {
       <DuplicarLaSemana desde={dias[0]} hasta={dias[dias.length - 1]} />
 
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el plan...</p>}
-      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
+      {error && <Fallo error={error} />}
 
       <ul className="flex flex-col gap-2">
         {dias.map((fecha) => {

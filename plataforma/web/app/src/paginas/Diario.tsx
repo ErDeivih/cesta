@@ -16,7 +16,7 @@ import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import { resolver, type Pendiente } from '../logica/operacionPendiente'
 import type { NuevaEntrada } from '../api/diario'
-import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, Tarjeta, Vacio, Fallo } from '../componentes/ui'
 
 const NOMBRE_NUTRIENTE: Record<string, string> = {
   kcal: 'energia',
@@ -408,7 +408,7 @@ export function Diario() {
       </div>
 
       {isPending && <p className="text-[16px] text-secundaria">Leyendo el diario...</p>}
-      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
+      {error && <Fallo error={error} />}
 
       <DeLaCompra fecha={fecha} />
 
