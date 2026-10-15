@@ -79,7 +79,7 @@ export function Ajustes() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <header>
         <h1 className="text-xl font-semibold">Ajustes</h1>
         <p className="text-cuerpo text-tinta-suave">

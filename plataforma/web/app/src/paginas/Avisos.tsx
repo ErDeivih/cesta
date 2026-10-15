@@ -134,7 +134,7 @@ export function Avisos() {
   const esperando = alertas.filter((a) => !a.salto_en)
 
   return (
-    <div className="grid gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-baseline gap-2">
         <h1 className="text-xl font-semibold">Avisos</h1>
         <span className="text-cuerpo text-tinta-suave">
