@@ -279,7 +279,7 @@ export function App() {
         <Route
           path="*"
           element={
-            <Vacio titulo="Esa pantalla no existe" comoPagina>
+            <Vacio titulo="Esa pantalla no existe" comoPagina className="grow">
               <p>
                 Puede que el enlace este mal escrito.{' '}
                 <Link to="/" className="underline">

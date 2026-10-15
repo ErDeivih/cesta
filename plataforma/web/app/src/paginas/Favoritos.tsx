@@ -211,7 +211,7 @@ export function Favoritos() {
     // puerta, asi que el titulo es el titulo de la pagina. Antes llevaba un `h1` oculto al lado
     // para que la pagina no se quedara sin encabezado de nivel 1.
     return (
-      <Vacio titulo="Entra para ver tus favoritos" comoPagina>
+      <Vacio titulo="Entra para ver tus favoritos" comoPagina className="grow">
         <p>
           Los favoritos son tuyos, así que hacen falta tus listas. Se entra desde{' '}
           <Link to="/cesta" className="underline">la lista</Link>.

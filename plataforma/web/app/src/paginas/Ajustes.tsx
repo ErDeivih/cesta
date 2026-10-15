@@ -60,7 +60,7 @@ export function Ajustes() {
     // sitio) se quedaba mirando una frase sin salida. La de favoritos ya lo hacia bien
     // (`Favoritos.tsx`): se entra desde la cesta, y se dice.
     return (
-      <Vacio titulo="Entra para cambiar tus ajustes" comoPagina>
+      <Vacio titulo="Entra para cambiar tus ajustes" comoPagina className="grow">
         <p>
           Los ajustes son de cada uno, así que hacen falta tus listas. Se entra desde{' '}
           <Link to="/cesta" className="underline">la cesta</Link>.
