@@ -18,7 +18,7 @@ import {
 } from '../api/recetas'
 import type { Ingrediente } from '../api/recetas'
 import { textoDeError } from '../api/cliente'
-import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, Cargando, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 import { etiquetasDe, filtraRecetas, textoDelVacio } from '../logica/recetario'
 
 function ListaDeIngredientes({ ingredientes }: { ingredientes: Ingrediente[] }) {
@@ -244,8 +244,8 @@ export function Recetario() {
         <Alta />
       </div>
 
-      {isPending && <p className="text-[16px] text-secundaria">Leyendo el recetario...</p>}
-      {error && <p className="text-[16px] text-error">{textoDeError(error)}</p>}
+      {isPending && <Cargando que="el recetario" />}
+      {error && <Fallo error={error} />}
 
       {data && todas.length === 0 && (
         <Vacio titulo="Todavia no hay recetas">
