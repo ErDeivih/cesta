@@ -484,6 +484,21 @@ POR_DEFECTO = {
     "transitionTimingFunction": {"linear", "in", "out", "in-out"},
     "fontSize": {"xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl",
                  "6xl", "7xl", "8xl", "9xl"},
+    # *** Y la de espaciado, *que FALTABA, y por eso el test no cazo un fallo real. *** *
+    #
+    # *El 15/10/2026 un script mio escribio `gap-space-y-4` -- una clase **que no
+    # existe** -- *y esta prueba paso **limpia**.* *Y Tailwind **omite en silencio** las
+    # clases que no conoce, *asi que ni `tsc` ni el `build` lo ven: *es **una cadena.*** *
+    #
+    # *El hueco tenia DOS partes y la primera vez solo vi una: *faltaba `spacing` en
+    # `POR_DEFECTO` **y** los prefijos en `ESCALAS`.* *Sin la de aqui, el test ni
+    # siquiera llegaba a mirar: *reventaba con `KeyError: 'spacing'` en la linea donde
+    # se indexa esta tabla.* *
+    #
+    # *Y son **los nombres de fabrica de Tailwind**, *que en espaciado son numeros.* *
+    "spacing": {"0", "px", "auto", "0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "5", "6",
+                "7", "8", "9", "10", "11", "12", "14", "16", "20", "24", "28", "32",
+                "36", "40", "44", "48", "52", "56", "60", "64", "72", "80", "96"},
 }
 
 # prefijo de la clase -> clave del tema donde tiene que estar
@@ -492,6 +507,25 @@ ESCALAS = {
     "shadow": "boxShadow",
     "duration": "transitionDuration",
     "ease": "transitionTimingFunction",
+    # *Y las que **consumen la escala de espaciado**, *que es la que usa media
+    # aplicacion.* *Con esto, `gap-space-y-4` **falla**, *que es lo que tenia que haber
+    # hecho el 15/10/2026.* *
+    # *`gap` NO va: *`gap-x-4` se parte por el primer guion en `gap` + `x-4`, *y `x-4`
+    # no es un valor. *Un prefijo que da **falsos positivos** es peor que no tenerlo.* *
+    "space-y": "spacing",
+    "space-x": "spacing",
+    "p": "spacing",
+    "px": "spacing",
+    "py": "spacing",
+    "pt": "spacing",
+    "pb": "spacing",
+    "pl": "spacing",
+    "pr": "spacing",
+    "m": "spacing",
+    "mx": "spacing",
+    "my": "spacing",
+    "mt": "spacing",
+    "mb": "spacing",
 }
 
 
