@@ -92,7 +92,7 @@ export function Despensa() {
       {gastado && <p className="text-cuerpo text-tinta-suave">{gastado}</p>}
 
       {existencias.length === 0 ? (
-        <Vacio titulo="La despensa esta vacia">
+        <Vacio titulo="La despensa esta vacia" className="grow">
           Declara lo que tengas en casa, y ve descontandolo.
         </Vacio>
       ) : (

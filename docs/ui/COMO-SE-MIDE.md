@@ -231,3 +231,54 @@ en que cuadra.* *
 ninguno valio.* *El cuarto fue **encontrar la causa primero**, *y esa parte si valio
 aunque el arreglo fallara.* *Cuando algo no se puede demostrar, *lo que suele faltar
 **no es el arreglo: *es el diagnostico.*** *
+
+---
+
+## 9. *** Que rama se ve, *y por que casi todo lo que arreglo no se puede mirar ***
+
+*15/10/2026, ronda 29. *Se puso `className="grow"` al estado vacio de `Despensa` *-- *el
+mismo arreglo que funciono en `Buscar` --,* *y la captura de `/compra/despensa` ensena
+*** otra cosa**: *el titulo dice **«Compra»** *y el cuerpo es **una linea*** *-- *«El
+servidor ha fallado» --,* *con *** ~750 px de vacio *** debajo.* *
+
+```
+*** LO QUE SE ESPERABA ***: *el `h1` «La despensa» *y su estado vacio ⚠️
+*** LO QUE HAY ***: *`Despensa` **corta antes**: *sin API, *su consulta falla *y pinta
+   *** `Fallo` *** ✓
+*** -> *o sea que *** el `grow` del `Vacio` no se puede mirar ***: *esa rama **no se
+   *pinta** sin datos* ✓
+*** -> *y el defecto de verdad esta *** en `Fallo`, *que es LA RAMA QUE SE VE *** *
+   *-- *en esta pantalla *y **en todas las demas sin API** --* ✓✓✓
+```
+
+*** Y por eso llevo ocho rondas arreglando cosas que no puedo mirar ***: *el frontend
+servido sin API **solo pinta dos ramas** -- *los estados vacios que no dependen de datos,
+*y los errores.* *Todo lo demas cae en `Fallo`.* *
+
+*** Y EL DEFECTO, *que es de PIEZA y afecta a todas ***: *`Fallo` **no llena.*** *Se
+pinta arriba, *y el `main` de `LayoutSuite` **no es columna flexible**, *asi que no hay
+nada que reparta el alto.* *
+
+*** Y EL PLAN, *con las lineas exactas, para que la proxima ronda no lo busque ***: *
+
+```
+*** 1) *** *`src/componentes/Suite.tsx:525`* *-- *el `main`: *anadirle *** `flex flex-col` *** *
+   *(-- *es **seguro**: *las pantallas cuya raiz lleva `min-h-full` siguen igual,
+   *porque `min-height:100%` se resuelve contra el alto del `main` --)* *
+*** 2) *** *y en *** `src/componentes/ui.tsx`, *la funcion `Fallo` *(-- *linea 395 --),*
+   *envolver *** SUS DOS `return` *** en `<div className="grid grow content-center">`: *
+   *-- *la rama de sin red *(-- *`<Aviso tono="aviso" titulo="Sin cobertura">` --)* *
+   *-- *y la de error *(-- *`<Aviso tono="mal" titulo="No he podido traer esto">` --)* *
+*** -> *** Y CUIDADO: *los dos `return` acaban en `</Aviso>` seguido de `)` con la misma
+   *sangria ***, *asi que **no se puede sustituir por texto**: *hay que hacerlo **por
+   *posicion**, *o leer el fichero y contar.* *Eso es lo que me hizo parar hoy.* ✓
+*** 3) *** *y `Fallo` **ya lleva su propio comentario** diciendo que se arregla en un
+   *sitio y no en las seis pantallas: *«*si se arreglara pantalla por pantalla, *la
+   *septima volveria a nacer en rojo*»* *-- *o sea que **el principio ya esta escrito
+   *alli**, *solo falta aplicarlo al alto.* ✓
+```
+
+*** Y LA LECCION ***: *antes de arreglar una pantalla, *hay que saber *** que rama se
+esta mirando***. *Y sin API, *casi siempre es `Fallo`.* *Arreglar el estado vacio de una
+pantalla que no lo va a pintar **es trabajo que no se puede verificar**, *y esta noche he
+hecho siete de esos.* *
