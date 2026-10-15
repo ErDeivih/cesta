@@ -335,3 +335,36 @@ conclusion era falsa, *porque *** la pantalla elegida no era la que usaba la pie
 *Y se comprueba con un `git grep` del componente, *no con la intuicion: *si `Fallo` no
 aparece en el fichero de esa pantalla, *esa captura **no puede** demostrar nada sobre
 `Fallo`.* *
+
+---
+
+## 12. *** `min-h-full` no sirve para un `return` temprano, *y lo dijo la medida ***
+
+*15/10/2026, ronda 46. *Se vio en `/producto/...`: *el error sale *** pegado arriba
+con ~570 px de vacio debajo ***, *aunque `Fallo` ya lleva `grow` desde la ronda 30.* *
+*Y el motivo es que en esa pantalla el error esta en un *** RETURN TEMPRANO ***, *antes
+de la raiz `min-h-full`: *su padre **no es un contenedor flexible con altura**, *y un
+`grow` sin eso **no hace nada.*** *
+
+```
+*** LO QUE SE PROBO ***: *anadirle *** `min-h-full` *** al envoltorio de `Fallo`, *
+   *esperando que `min-height: 100%` se resolviera contra el `main` del armazon ✓
+*** -> *y la captura de `/producto/...` antes y despues dio *** EL MISMO SHA-256 *** *
+   *-- *1B216EC023CCB1E0 --:* *** no cambio NADA *** ⚠️
+*** -> *y el motivo es una sutileza de CSS: *** `min-height: 100%` NO se resuelve
+   *contra un padre de altura `auto` *** ✓
+*** -> *el `main` tiene `flex-1`, *pero su altura como elemento flexible es `auto`,
+   *asi que *** el porcentaje no resuelve *** ✓✓✓
+*** -> *se revirtio, *porque *** lo que no hace nada no se queda *** ✓
+```
+
+*** Y LO QUE ESTO ENSEÑA ***: *que el `grow` funciona cuando el padre **es** un
+contenedor flexible con altura *(-- *los casos de las secciones 10 y 11 --), *y que
+**no hay una solucion de una palabra** para el caso del `return` temprano.* *La salida
+honesta es *** una pantalla por pantalla *** *o *** una unidad de viewport ***,
+*rellenar el lado del armazon.* *Pero eso **no se elige sin medirlo**, *y hoy solo se
+sabe que `min-h-full` **no** es la respuesta.* *
+
+*** Y LA MEDIDA ES LO QUE LO DICE ***. *Sin la captura, *«le pongo `min-h-full` y ya
+esta» habria sido una afirmacion razonable, *y **falsa**, *y se habria quedado en el
+codigo pareciendo un arreglo.* *
