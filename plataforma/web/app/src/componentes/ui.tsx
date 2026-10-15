@@ -438,14 +438,16 @@ export function Fallo({ error, reintentar }: { error: unknown; reintentar?: () =
  * (medido con `data/debug/accesibilidad.py` el 27 de septiembre de 2026, que encontro cinco
  * casos asi). Las clases son las mismas: cambia la etiqueta, no lo que se ve.
  */
-export function Vacio({ titulo, children, comoPagina = false }: {
+export function Vacio({ titulo, children, comoPagina = false, className }: {
  titulo: ReactNode
  children?: ReactNode
  comoPagina?: boolean
+  /** *Para que quien lo usa pueda hacerlo **crecer.*** */
+  className?: string
 }) {
  const Titulo = comoPagina ? 'h1' : 'p'
  return (
- <div className="rounded-tarjeta border border-dashed border-borde-fuerte px-4 py-8 text-center ">
+ <div className={cx('grid content-center rounded-tarjeta border border-dashed border-borde-fuerte px-4 py-8 text-center ', className)}>
  <Titulo className="font-medium">{titulo}</Titulo>
  {children && (
  <div className="mx-auto mt-2 max-w-prose text-cuerpo text-secundaria ">

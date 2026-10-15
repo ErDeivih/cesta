@@ -143,7 +143,7 @@ export function Buscar() {
     // entre las filas.*** *O sea que la pantalla **se llena** sin mover nada de sitio
     // ni inventar contenido -- *que es lo mismo que se hizo en el lanzador con
     // `my-auto`, *pero aqui la rejilla **ya estaba**, *y solo le faltaba el alto.* *
-    <div className="grid min-h-full grid-cols-1 gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       {/* El titulo de la pantalla, para quien navega por encabezados: no se ve, porque en esta
           pantalla lo primero tiene que ser el campo de busqueda -- se usa de pie y con una
           mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
@@ -216,7 +216,7 @@ export function Buscar() {
       </section>
 
       {!busca && (
-        <Vacio titulo="Escribe al menos dos letras, o elige un pasillo">
+        <Vacio titulo="Escribe al menos dos letras, o elige un pasillo" className="grow">
           <p>
             {filtros.q.trim().length === 1
               ? 'Con una sola letra no busco: casaría con media tienda y la lista no diría nada.'
