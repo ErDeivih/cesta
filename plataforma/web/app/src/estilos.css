@@ -304,6 +304,45 @@ details[open] > summary .flecha {
   animation: entra-pantalla 220ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
+/* --------------------------------------- el cajon del menu, que se abre desde el lado ---
+
+   *** Y son DOS animaciones, *no una, *porque son dos cosas. *** *
+
+   *El **velo** se funde, *y el **cajon** entra desde la izquierda.* *Si se animara solo
+   el cajon, *el velo **apareceria de golpe** *y eso **se ve**: *la pantalla de detras
+   pasa de clara a oscura **de un fotograma al siguiente**, *que es justo lo que hace
+   que una apertura parezca **un fallo de pintado** en vez de una transicion.* *
+
+   *Y las dos con `220 ms` *(-- la duracion de **lo que entra en pantalla** --)* *y con
+   la curva `suave`, *que son los tokens.* *Y `prefers-reduced-motion` **ya las apaga**
+   con la regla global: *no hay que repetirlo aqui.* *
+ */
+@keyframes entra-velo {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.entra-velo {
+  animation: entra-velo 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes entra-cajon {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.entra-cajon {
+  animation: entra-cajon 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
 /* ------------------------------------------- lo que se mueve, para quien no lo quiere ---
 
    **Esto estaba en la aplicacion vieja y se perdio al reescribirla.** `plataforma/web/estilo.css:180`
