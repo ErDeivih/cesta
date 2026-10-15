@@ -45,7 +45,7 @@ export function ImportarReceta() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-full flex-col gap-4">
       <h1 className="text-xl font-semibold">Importar una receta</h1>
       <p className="text-cuerpo text-tinta-suave">
         Pega la direccion de una receta. Se enseña <strong>antes de guardar nada</strong>, y solo se lee

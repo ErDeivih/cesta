@@ -95,7 +95,7 @@ export function Panel() {
     cambiaCadenas(puestas.includes(c) ? puestas.filter((x) => x !== c) : [...puestas, c])
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-xl font-bold">Panel</h1>
         <Link
