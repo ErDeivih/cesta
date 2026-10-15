@@ -108,17 +108,17 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
             onClick={() => poner.mutate(puesta ? null : o.cadena)}
             title={puesta ? 'Tocar para quitarla de esta tienda' : `Comprar en ${nombreDeCadena(o.cadena)}`}
             className={cx(
-              'flex min-h-[44px] flex-col items-start justify-center rounded-lg border px-2 text-left text-xs',
+              'flex min-h-[44px] flex-col items-start justify-center rounded-campo border px-2 text-left text-etiqueta',
               puesta
-                ? 'border-sky-700 bg-sky-50 font-semibold text-sky-900 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-100'
-                : 'border-neutral-300 text-neutral-700 dark:border-neutral-600 dark:text-neutral-200',
+                ? 'border-terracota bg-marfil font-semibold text-terracota '
+                : 'border-borde text-secundaria ',
               deshabilitado && 'opacity-50',
             )}
           >
             <span>{nombreDeCadena(o.cadena)}</span>
             <span className="cifra">
               {euros(o.coste_cent)}
-              {barata && !puesta && <span className="ml-1 text-emerald-700 dark:text-emerald-400">más barata</span>}
+              {barata && !puesta && <span className="ml-1 text-bien ">más barata</span>}
             </span>
           </button>
         )
@@ -128,7 +128,7 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
           type="button"
           disabled={deshabilitado || poner.isPending}
           onClick={() => poner.mutate(null)}
-          className="min-h-[44px] px-2 text-xs underline"
+          className="min-h-[44px] px-2 text-etiqueta underline"
         >
           quitar de {nombreDeCadena(fila.elegida)}
         </button>
@@ -141,14 +141,14 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
           type="button"
           disabled={deshabilitado || consentir.isPending}
           onClick={() => consentir.mutate(true)}
-          className="min-h-[44px] min-w-[44px] rounded-lg border border-emerald-700 px-2 text-xs text-emerald-800 dark:border-emerald-500 dark:text-emerald-300"
+          className="min-h-[44px] min-w-[44px] rounded-campo border border-bien px-2 text-etiqueta text-bien "
         >
           Aceptar el de {nombreDeCadena(fila.mas_barata)}
         </button>
       )}
       {fila.autorizado === true && (
         <>
-          <span className="text-xs text-emerald-800 dark:text-emerald-300">
+          <span className="text-etiqueta text-bien ">
             Sustituto aceptado
             {fila.autorizado_cadena ? `: ${nombreDeCadena(fila.autorizado_cadena)}` : ''}
           </span>
@@ -156,7 +156,7 @@ function ElegirTienda({ fila, listaId, deshabilitado, alCambiar }: {
             type="button"
             disabled={deshabilitado || consentir.isPending}
             onClick={() => consentir.mutate(false)}
-            className="min-h-[44px] min-w-[44px] px-2 text-xs underline"
+            className="min-h-[44px] min-w-[44px] px-2 text-etiqueta underline"
           >
             Volver al mio
           </button>
@@ -240,24 +240,24 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
       )}
 
       {/* ---- la cuenta de la lista entera ---- */}
-      <div className="mb-4 rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+      <div className="mb-4 rounded-campo border border-borde p-3 ">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <p className="cifra text-2xl font-semibold">{euros(r.total_cent)}</p>
-          <p className="text-sm text-tinta-suave">
+          <p className="text-cuerpo text-tinta-suave">
             {decididas} de {r.lineas} línea{r.lineas === 1 ? '' : 's'} decidida
             {decididas === 1 ? '' : 's'}
             {r.sin_asignar.length > 0 && <> · {r.sin_asignar.length} sin decidir</>}
           </p>
         </div>
         {r.ahorro_cent > 0 && (
-          <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">
+          <p className="mt-1 text-cuerpo text-bien ">
             Con las ofertas aplicadas: sin ellas serían {euros(r.total_sin_ofertas_cent)},
             o sea <strong>{euros(r.ahorro_cent)} menos</strong>.
           </p>
         )}
         {/* La comparación: es lo que convierte el total en una decisión. */}
         {(r.una_tienda.length > 0 || r.repartido) && (
-          <p className="mt-2 text-sm text-tinta-suave">
+          <p className="mt-2 text-cuerpo text-tinta-suave">
             Sin decidir nada:
             {r.una_tienda[0] && (
               <> todo en {nombreDeCadena(r.una_tienda[0].cadena)} serían{' '}
@@ -326,11 +326,11 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
 
       {/* ---- una sublista por tienda ---- */}
       {r.sublistas.map((s) => (
-        <section key={s.cadena} className="mb-4 rounded-lg border border-neutral-200 dark:border-neutral-700">
-          <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-neutral-200 px-3 py-2 dark:border-neutral-700">
-            <h3 className="text-sm font-semibold">{nombreDeCadena(s.cadena)}</h3>
+        <section key={s.cadena} className="mb-4 rounded-campo border border-borde ">
+          <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-borde px-3 py-2 ">
+            <h3 className="text-cuerpo font-semibold">{nombreDeCadena(s.cadena)}</h3>
             <span className="cifra text-lg font-semibold">{euros(s.total_cent)}</span>
-            <span className="text-xs text-tinta-suave">
+            <span className="text-etiqueta text-tinta-suave">
               {s.lineas.length} línea{s.lineas.length === 1 ? '' : 's'} · {s.unidades} unidad
               {s.unidades === 1 ? '' : 'es'}
             </span>
@@ -345,7 +345,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
                   onClick={() => poner.mutate({
                     cadena: s.cadena, lineas: idsDe(s), borrar: true,
                   })}
-                  className="min-h-[44px] px-2 text-xs underline"
+                  className="min-h-[44px] px-2 text-etiqueta underline"
                   title="Borra todas las líneas de esta sublista"
                 >
                   Borrar la sublista
@@ -354,7 +354,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
                   type="button"
                   disabled={poner.isPending}
                   onClick={() => poner.mutate({ cadena: null, lineas: idsDe(s) })}
-                  className="min-h-[44px] px-2 text-xs underline"
+                  className="min-h-[44px] px-2 text-etiqueta underline"
                   title="Deja estas líneas sin tienda, sin borrarlas"
                 >
                   Sin tienda
@@ -372,21 +372,21 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
             </div>
           )}
 
-          <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <ul className="divide-y divide-borde ">
             {s.lineas.map((f) => (
               <li key={f.linea_id ?? `${s.cadena}-${f.nombre}`} className="grid gap-1 px-3 py-2">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">{f.nombre}</span>
-                  {f.cantidad > 1 && <span className="text-xs text-tinta-suave">×{f.cantidad}</span>}
+                  {f.cantidad > 1 && <span className="text-etiqueta text-tinta-suave">×{f.cantidad}</span>}
                   <span className="cifra ml-auto font-semibold">{euros(f.coste_cent)}</span>
                 </div>
                 {f.promo && f.coste_sin_oferta_cent > f.coste_cent && (
-                  <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                  <p className="text-etiqueta text-bien ">
                     {f.promo}: {euros(f.coste_sin_oferta_cent)} sin la oferta, o sea{' '}
                     {euros(f.coste_sin_oferta_cent - f.coste_cent)} menos
                   </p>
                 )}
-                {f.sugerencia && <p className="text-xs text-tinta-suave">{f.sugerencia}</p>}
+                {f.sugerencia && <p className="text-etiqueta text-tinta-suave">{f.sugerencia}</p>}
                 <AvisoIdentidad identidad={f.identidad} motivo={f.motivo} alternativa={f.alternativa} />
                 <ElegirTienda fila={f} listaId={listaId} deshabilitado={soloMirar}
                               alCambiar={refresca} />
@@ -395,7 +395,7 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
           </ul>
 
           {s.ofertas.length > 0 && (
-            <p className="border-t border-neutral-200 px-3 py-2 text-xs text-tinta-suave dark:border-neutral-700">
+            <p className="border-t border-borde px-3 py-2 text-etiqueta text-tinta-suave ">
               Ofertas aplicadas aquí: {s.ofertas.map((o) => o.promo).join(' · ')}. Total sin
               ellas: <span className="cifra">{euros(s.total_sin_ofertas_cent)}</span>.
             </p>
@@ -405,11 +405,11 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
 
       {/* ---- lo que falta por decidir ---- */}
       {r.sin_asignar.length > 0 && (
-        <section className="rounded-lg border border-dashed border-neutral-300 p-3 dark:border-neutral-600">
-          <h3 className="mb-1 text-sm font-semibold">
+        <section className="rounded-campo border border-dashed border-borde p-3 ">
+          <h3 className="mb-1 text-cuerpo font-semibold">
             Sin decidir <span className="text-tinta-suave">({r.sin_asignar.length})</span>
           </h3>
-          <p className="mb-2 text-xs text-tinta-suave">
+          <p className="mb-2 text-etiqueta text-tinta-suave">
             Esto no cuenta en el total de arriba hasta que elijas tienda: sumarlo por lo
             más barato daría un número que no corresponde a ninguna compra.
           </p>
@@ -418,9 +418,9 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
               <li key={p.linea_id ?? p.nombre} className="grid gap-1">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">{p.nombre}</span>
-                  {p.cantidad > 1 && <span className="text-xs text-tinta-suave">×{p.cantidad}</span>}
+                  {p.cantidad > 1 && <span className="text-etiqueta text-tinta-suave">×{p.cantidad}</span>}
                   {p.coste_cent != null ? (
-                    <span className="cifra ml-auto text-sm text-tinta-suave">
+                    <span className="cifra ml-auto text-cuerpo text-tinta-suave">
                       desde {euros(p.coste_cent)}
                       {p.mas_barata && <> en {nombreDeCadena(p.mas_barata)}</>}
                     </span>

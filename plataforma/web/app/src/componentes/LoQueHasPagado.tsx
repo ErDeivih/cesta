@@ -40,7 +40,7 @@ export function LoQueHasPagado() {
       titulo="Lo que has pagado"
       sub="De las compras que cerraste, agrupadas por la fecha en que las cerraste"
     >
-      <div className="mb-3 flex items-center gap-2 text-sm">
+      <div className="mb-3 flex items-center gap-2 text-cuerpo">
         <button
           type="button"
           onClick={() => setPorSemana(false)}
@@ -79,7 +79,7 @@ export function LoQueHasPagado() {
 
       {casa && gasto.data && gasto.data.filas.length > 0 && (
         <TablaScroll etiqueta="Lo que has pagado por periodo" minAncho="30rem">
-          <table className="w-full border-collapse text-sm">
+          <table className="w-full border-collapse text-cuerpo">
             <caption className="sr-only">
               {`Gasto pagado por ${porSemana ? 'semana' : 'mes'}, con cuántas líneas se quedaron sin precio`}
             </caption>
@@ -110,7 +110,7 @@ export function LoQueHasPagado() {
                     <Td className="cifra text-right" etiqueta="compras">
                       {numero(fila.compras, 0)}
                     </Td>
-                    <Td className={falta ? 'text-amber-700 dark:text-amber-400' : 'text-tinta-suave'}>
+                    <Td className={falta ? 'text-aviso ' : 'text-tinta-suave'}>
                       {falta ?? 'completa'}
                     </Td>
                   </tr>
@@ -122,7 +122,7 @@ export function LoQueHasPagado() {
       )}
 
       {casa && gasto.data && (
-        <p className="mt-2 text-xs text-tinta-suave">
+        <p className="mt-2 text-etiqueta text-tinta-suave">
           El gasto es de <strong className="font-medium">{casa.nombre}</strong>, sobre{' '}
           {numero(gasto.data.compras, 0)}{' '}
           {gasto.data.compras === 1 ? 'compra cerrada' : 'compras cerradas'}. Un total se suma solo con

@@ -83,8 +83,8 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
 
   return (
     <Tarjeta>
-      <p className="text-sm font-semibold">{titulo}</p>
-      <p className="mt-0.5 text-sm text-tinta-suave">
+      <p className="text-cuerpo font-semibold">{titulo}</p>
+      <p className="mt-0.5 text-cuerpo text-tinta-suave">
         Un toque y a la lista. Lo tocado se cambia en la cesta.
       </p>
 
@@ -96,7 +96,7 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
           const dentro = puestos.includes(h.grupo_id)
           return (
             <li key={h.grupo_id}
-                className="flex flex-col gap-1 rounded-xl border border-borde p-2">
+                className="flex flex-col gap-1 rounded-tarjeta border border-borde p-2">
               {h.imagen ? (
                 <img
                   src={h.imagen}
@@ -104,7 +104,7 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
                   width={80}
                   height={80}
                   loading="lazy"
-                  className="mx-auto h-20 w-20 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+                  className="mx-auto h-20 w-20 rounded-campo border border-borde bg-white object-contain "
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}
@@ -112,17 +112,17 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
               ) : (
                 // Sin foto no se inventa una: se deja el hueco del mismo tamano,
                 // que mantiene la cuadricula alineada sin ensenar nada falso.
-                <div className="mx-auto h-20 w-20 rounded-lg bg-neutral-100 dark:bg-neutral-700" />
+                <div className="mx-auto h-20 w-20 rounded-campo bg-marfil " />
               )}
 
-              <span className="line-clamp-2 text-sm font-medium leading-snug">
+              <span className="line-clamp-2 text-cuerpo font-medium leading-snug">
                 {h.nombre}
               </span>
-              <span className="cifra text-base font-semibold">
+              <span className="cifra text-entrada font-semibold">
                 {eurosUnidad(h.precio_unidad_cent, h.unidad)}
               </span>
               {h.cadena_mas_barata && (
-                <span className="text-xs text-tinta-suave">
+                <span className="text-etiqueta text-tinta-suave">
                   en {nombreCadena(h.cadena_mas_barata)}
                 </span>
               )}
@@ -159,7 +159,7 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
           pudiera pintar su error, doce tarjetas con el mismo texto rojo taparian la
           cuadricula entera por un fallo que es el mismo en todas. */}
       {anade.isError && (
-        <p className="mt-3 text-sm">
+        <p className="mt-3 text-cuerpo">
           <Etiqueta tono="aviso">
             No he podido anadirlo a la lista. Vuelve a intentarlo.
           </Etiqueta>

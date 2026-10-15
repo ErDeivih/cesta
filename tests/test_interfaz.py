@@ -631,7 +631,28 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
 # clases viejas a proposito, *para que se lea que se cambio y por que --.* *
 # *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
 # `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
-PALETA_DE_FABRICA_HOY = 357
+PALETA_DE_FABRICA_HOY = 43
+#
+# *** 15/10/2026 -- de 611 a 43. *** *El censo de la paleta de fabrica bajo un **93 %**
+# en el dia: *611 al empezar, *495 con las piezas, *463 con la navegacion, *421 y 357 con
+# las pantallas grandes, *195 con el segundo bloque, *y **43 con el resto.** *
+#
+# *Y las 43 que quedan son **justo las que se dejan a proposito**: *
+#   *-- *** las cinco con OPACIDAD *** *(-- `bg-neutral-800/60`, `/800/95`, `/900/40`,
+#      `bg-amber-950/30` y `bg-amber-50/50` --), *que necesitan **tokens de canal con
+#      `alpha-value`** *y eso es **una decision**, no un reemplazo:* *la opacidad sobre una
+#      variable **no vale** ✓
+#   *-- *y **los dos ficheros MUERTOS** *(-- `Cabecera.tsx` y `paginas/Inicio.tsx` --),
+#      *que **no se migran** porque **no se pintan**: *esta en
+#      `docs/ui/LOS-FICHEROS-MUERTOS.md` ✓✓✓
+#
+# *Asi que este numero **ya no puede bajar mucho mas** sin las dos decisiones de arriba.*
+# *Y eso es exactamente lo que un trinquete tiene que decir.* *
+
+# *15/10/2026, FASE 5 (4): *bajo de **357 a 195** *al migrar el segundo bloque:*
+# *Panel.tsx (143), Grupo.tsx (100), RepartoEnTiendas.tsx (76) y Producto.tsx (65).*
+# *Y el script conservo el fin de linea de cada uno: *Panel y Producto en LF, *Grupo
+# y RepartoEnTiendas en CRLF.* *Quedan las pantallas pequenas.* *
 # *15/10/2026, FASE 5 (3): *bajo de **421 a 357** *al migrar el **flujo de busqueda***
 # *(-- `Buscar.tsx`, `FiltrosBusqueda.tsx` y `TablaResultados.tsx`, *132 clases --), *que es
 # la primera pantalla de Compra.* *Lo pidio el trinquete otra vez.* *Quedan sobre todo*

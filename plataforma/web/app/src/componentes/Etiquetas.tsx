@@ -17,11 +17,11 @@ import { porcentaje } from '../api/formato'
 import { Etiqueta } from './ui'
 
 const COLOR_NUTRI: Record<string, string> = {
-  a: 'bg-emerald-600 text-white',
-  b: 'bg-lime-500 text-neutral-900',
-  c: 'bg-amber-400 text-neutral-900',
+  a: 'bg-bien text-white',
+  b: 'bg-lime-500 text-tinta-fuerte',
+  c: 'bg-aviso text-tinta-fuerte',
   d: 'bg-orange-500 text-white',
-  e: 'bg-red-600 text-white',
+  e: 'bg-error text-white',
 }
 
 export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
@@ -38,7 +38,7 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
   return (
     <span
       title={`Nutri-Score ${letra.toUpperCase()}`}
-      className={`inline-flex h-6 w-6 items-center justify-center rounded font-bold ${color ?? 'bg-neutral-400 text-white'}`}
+      className={`inline-flex h-6 w-6 items-center justify-center rounded font-bold ${color ?? 'bg-borde-fuerte text-white'}`}
     >
       {letra.toUpperCase()}
     </span>
@@ -52,13 +52,13 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
 // Lo publica Open Food Facts -- es atribucion obligatoria de su licencia, y ademas es lo que hace creible
 // el dato: quien lo lee puede saber de donde sale. Va en el `title`.
 const COLOR_ECO: Record<string, string> = {
-  a: 'bg-emerald-600 text-white',
-  'a-plus': 'bg-emerald-800 text-white',
-  b: 'bg-lime-500 text-neutral-900',
-  c: 'bg-amber-400 text-neutral-900',
+  a: 'bg-bien text-white',
+  'a-plus': 'bg-bien text-white',
+  b: 'bg-lime-500 text-tinta-fuerte',
+  c: 'bg-aviso text-tinta-fuerte',
   d: 'bg-orange-500 text-white',
-  e: 'bg-red-600 text-white',
-  f: 'bg-red-800 text-white',
+  e: 'bg-error text-white',
+  f: 'bg-error text-white',
 }
 
 
@@ -79,8 +79,8 @@ export function SelloEcoscore({ valor }: { valor: string | null | undefined }) {
   return (
     <span
       title={`Eco-Score ${grado === 'a-plus' ? 'A+' : grado.toUpperCase()} (Open Food Facts)`}
-      className={`inline-flex h-6 min-w-6 items-center justify-center rounded px-1 text-xs font-bold ${
-        COLOR_ECO[grado] ?? 'bg-neutral-400 text-white'
+      className={`inline-flex h-6 min-w-6 items-center justify-center rounded px-1 text-etiqueta font-bold ${
+        COLOR_ECO[grado] ?? 'bg-borde-fuerte text-white'
       }`}
     >
       {grado === 'a-plus' ? 'A+' : grado.toUpperCase()}
@@ -168,7 +168,7 @@ export function SelloAhorro({ pct, comparable, dudoso }: {
   }
   return (
     <span
-      className="cifra text-xs font-semibold text-emerald-800 dark:text-emerald-400"
+      className="cifra text-etiqueta font-semibold text-bien "
       title="Lo que te ahorras comprándolo en la cadena más barata en vez de en la más cara"
     >
       ahorras un {porcentaje(pct)}

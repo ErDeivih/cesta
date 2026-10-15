@@ -94,9 +94,23 @@ def test_el_origen_se_dice_solo_cuando_la_cuadricula_mezcla():
 
 
 def test_sin_foto_no_se_inventa_una():
+    """*** Y el relleno es el TOKEN, *no un gris de fabrica. *** *
+
+    *Hasta el 15/10/2026 esto buscaba `bg-neutral-100` *-- *el gris de Tailwind --, *y
+    ese gris paso a **`bg-marfil`**, *que es el mismo papel del resto de la app.* *
+
+    *Y **lo que esta prueba tiene que defender no es el NOMBRE del color**: *es que
+    **hay un hueco** y que **no hay una imagen inventada.** *Asi que se comprueba en
+    **dos aserciones**, *para que el fallo diga **cual de las dos** se rompio* *-- *que
+    es lo que hacia ilegible la version de una sola linea.* *
+    """
     mosaico = _leer(MOSAICO)
-    assert "h.imagen ?" in mosaico and "bg-neutral-100" in mosaico, \
-        "sin foto hay que dejar el hueco, no una imagen de relleno"
+    assert "h.imagen ?" in mosaico, (
+        "sin foto hay que dejar el hueco, no una imagen de relleno")
+    assert "bg-marfil" in mosaico, (
+        "el hueco de una ficha sin foto necesita su relleno (`bg-marfil`, que es el "
+        "papel del tema): sin el, una ficha sin imagen queda sin fondo y no se lee "
+        "como un hueco, sino como un fallo de carga")
 
 
 def test_la_consulta_pide_lo_habitual_con_su_limite():

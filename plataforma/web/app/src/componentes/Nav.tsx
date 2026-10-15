@@ -113,7 +113,7 @@ function Item({ a, texto, Icono, exacto, compacto }: (typeof ITEMS)[number] & { 
                     quedan, y un punto solo diria "queda algo". */}
                 <span
                   aria-hidden="true"
-                  className="absolute -right-3 -top-2 min-w-[1.05rem] rounded-full bg-terracota px-1 text-center text-[10px] font-semibold leading-4 text-white dark:text-neutral-900"
+                  className="absolute -right-3 -top-2 min-w-[1.05rem] rounded-full bg-terracota px-1 text-center text-[10px] font-semibold leading-4 text-white "
                 >
                   {porCoger}
                 </span>

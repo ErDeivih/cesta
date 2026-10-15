@@ -286,7 +286,7 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
             type="button"
             id={idBotonCerrar}
             onClick={onNavegar}
-            className="mt-2 min-h-[44px] rounded-md px-3 text-left text-[15px] text-secundaria hover:bg-marfil"
+            className="mt-2 min-h-[44px] rounded-campo px-3 text-left text-[15px] text-secundaria hover:bg-marfil"
           >
             Cerrar menu
           </button>
@@ -395,7 +395,7 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
           onClick={onAbrir}
           aria-expanded={abierto}
           aria-controls="menu-suite"
-          className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-md border border-borde-fuerte px-3 text-[15px] text-tinta-fuerte lg:hidden"
+          className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-campo border border-borde-fuerte px-3 text-[15px] text-tinta-fuerte lg:hidden"
         >
           <span aria-hidden="true">&#9776;</span>
           {/* El boton dice donde estas, no solo "Menu". */}
@@ -442,7 +442,7 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
     <div className="flex min-h-screen bg-marfil">
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:rounded-md focus:bg-bosque focus:px-3 focus:py-2 focus:text-papel"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:rounded-campo focus:bg-bosque focus:px-3 focus:py-2 focus:text-papel"
       >
         Saltar al contenido
       </a>

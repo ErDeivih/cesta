@@ -79,7 +79,7 @@ function Nombre({ a, deEntonces = false }: { a: Alerta; deEntonces?: boolean }) 
         {mostrado}
       </Link>
       {cambiado && (
-        <span className="block text-xs text-tinta-suave">
+        <span className="block text-etiqueta text-tinta-suave">
           ese número es hoy «{a.nombre}»
         </span>
       )}
@@ -137,7 +137,7 @@ export function Avisos() {
     <div className="grid gap-4">
       <header className="flex flex-wrap items-baseline gap-2">
         <h1 className="text-xl font-semibold">Avisos</h1>
-        <span className="text-sm text-tinta-suave">
+        <span className="text-cuerpo text-tinta-suave">
           de {alertas.length} {alertas.length === 1 ? 'producto' : 'productos'} que sigues
         </span>
       </header>
@@ -146,12 +146,12 @@ export function Avisos() {
         <Tarjeta titulo="Ha bajado" sub="Con la frase que lo explica, no un número suelto.">
           <ul className="grid gap-3">
             {saltan.map((s) => (
-              <li key={s.alerta_id} className="rounded-lg border border-borde p-3">
+              <li key={s.alerta_id} className="rounded-campo border border-borde p-3">
                 <Link to={`/grupo/${s.grupo_id}`}
                       className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium underline">
                   {s.nombre}
                 </Link>
-                <p className="mt-1 text-sm">{s.por_que}</p>
+                <p className="mt-1 text-cuerpo">{s.por_que}</p>
               </li>
             ))}
           </ul>
@@ -165,13 +165,13 @@ export function Avisos() {
         >
           <ul className="grid gap-2">
             {yaNo.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-start gap-2 rounded-lg border border-borde p-3">
+              <li key={a.id} className="flex flex-wrap items-start gap-2 rounded-campo border border-borde p-3">
                 <div className="min-w-[12rem] flex-1">
                   {/* **El nombre que salto, no el de hoy.** Esta tarjeta enseña una frase
                       guardada; el sujeto tiene que ser el mismo que el de la frase. */}
                   <Nombre a={a} deEntonces />
-                  <p className="mt-1 text-sm">{a.salto_texto ?? 'Saltó.'}</p>
-                  <p className="mt-1 text-xs text-tinta-suave">
+                  <p className="mt-1 text-cuerpo">{a.salto_texto ?? 'Saltó.'}</p>
+                  <p className="mt-1 text-etiqueta text-tinta-suave">
                     {a.salto_en && <>Saltó {hace(a.salto_en)} · {fecha(a.salto_en)}</>}
                   </p>
                 </div>
@@ -200,8 +200,8 @@ export function Avisos() {
 
       {alertas.length === 0 && (
         <Tarjeta>
-          <p className="text-base font-semibold">No sigues ningún producto</p>
-          <p className="mt-2 text-sm text-tinta-suave">
+          <p className="text-entrada font-semibold">No sigues ningún producto</p>
+          <p className="mt-2 text-cuerpo text-tinta-suave">
             Esto sirve para que <strong>la aplicación te busque a ti</strong> en vez de que tú
             entres a mirar: te aviso cuando lo que sigues esté en su precio más bajo de 90 días,
             y sale aquí, con la frase que lo explica.
@@ -209,18 +209,18 @@ export function Avisos() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
               to="/buscar"
-              className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+              className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-3 text-cuerpo font-semibold text-white "
             >
               Buscar un producto
             </Link>
             <Link
               to="/panel?pestana=bajadas"
-              className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+              className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
             >
               Ver lo que ha bajado esta semana
             </Link>
           </div>
-          <p className="mt-3 text-sm text-tinta-suave">
+          <p className="mt-3 text-cuerpo text-tinta-suave">
             En la ficha de un producto, el botón se llama «Avisarme si baja».
           </p>
         </Tarjeta>
@@ -238,15 +238,15 @@ export function Avisos() {
       {alertas.length > 0 && (
       <Tarjeta titulo="Esperando" sub="Todavía no se ha cumplido. Te aviso yo.">
         {esperando.length === 0 ? (
-          <p className="text-sm text-tinta-suave">
+          <p className="text-cuerpo text-tinta-suave">
             Ninguno esperando: los que sigues ya han saltado, y están arriba con su frase.
           </p>
         ) : (
           <ul className="grid gap-2">
             {esperando.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-borde p-2">
+              <li key={a.id} className="flex flex-wrap items-center gap-2 rounded-campo border border-borde p-2">
                 <Nombre a={a} />
-                <span className="text-sm text-tinta-suave">{promesa(a)}</span>
+                <span className="text-cuerpo text-tinta-suave">{promesa(a)}</span>
                 <Boton variante="sutil" onClick={() => quita.mutate(a.id)}>
                   Quitar
                 </Boton>

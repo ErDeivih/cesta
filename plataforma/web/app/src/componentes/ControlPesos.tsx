@@ -50,10 +50,10 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
   return (
     <section
       aria-label="Pesos del orden"
-      className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-white p-4 dark:bg-neutral-800"
     >
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">Qué te importa</h2>
+        <h2 className="text-entrada font-semibold">Qué te importa</h2>
         <div className="flex gap-2">
           <Boton variante="sutil" onClick={() => onCambio(PESOS_INICIALES)}>
             Volver a lo de siempre
@@ -72,10 +72,10 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
         {CAMPOS.map((c) => (
           <div key={c.clave}>
             <div className="flex items-baseline justify-between gap-2">
-              <label htmlFor={`peso-${c.clave}`} className="text-sm font-medium">
+              <label htmlFor={`peso-${c.clave}`} className="text-cuerpo font-medium">
                 {c.texto}
               </label>
-              <output htmlFor={`peso-${c.clave}`} className="cifra text-sm text-neutral-600 dark:text-neutral-400">
+              <output htmlFor={`peso-${c.clave}`} className="cifra text-cuerpo text-secundaria ">
                 {pesos[c.clave]}
               </output>
             </div>
@@ -90,9 +90,9 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
               aria-describedby={`ayuda-${c.clave}`}
               // El carril mide 44 px de alto para poder arrastrarlo con el dedo
               // sin acertarle a la bolita.
-              className="h-11 w-full accent-sky-700 dark:accent-sky-500"
+              className="h-11 w-full accent-terracota "
             />
-            <p id={`ayuda-${c.clave}`} className="text-xs text-neutral-600 dark:text-neutral-400">
+            <p id={`ayuda-${c.clave}`} className="text-etiqueta text-secundaria ">
               {c.ayuda}
             </p>
           </div>
@@ -101,10 +101,10 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
 
       <p
         className={cx(
-          'mt-3 rounded-lg px-3 py-2 text-sm',
+          'mt-3 rounded-campo px-3 py-2 text-cuerpo',
           todosCero
-            ? 'bg-amber-50 text-amber-950 dark:bg-amber-950 dark:text-amber-100'
-            : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200',
+            ? 'bg-marfil text-aviso '
+            : 'bg-marfil text-tinta-fuerte dark:bg-neutral-900 ',
         )}
       >
         {explicacion}

@@ -47,14 +47,14 @@ export function ImportarReceta() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Importar una receta</h1>
-      <p className="text-sm text-tinta-suave">
+      <p className="text-cuerpo text-tinta-suave">
         Pega la direccion de una receta. Se enseña <strong>antes de guardar nada</strong>, y solo se lee
         de las fuentes permitidas.
       </p>
 
       <Tarjeta>
         <div className="flex flex-wrap items-end gap-2">
-          <label className="flex min-w-[18rem] flex-1 flex-col text-sm">
+          <label className="flex min-w-[18rem] flex-1 flex-col text-cuerpo">
             Direccion
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={url}
                    onChange={(e) => setUrl(e.target.value)}
@@ -68,8 +68,8 @@ export function ImportarReceta() {
 
       {aviso && (
         <Tarjeta>
-          <p className="text-sm text-amber-700">{aviso}</p>
-          <p className="mt-1 text-xs text-tinta-suave">
+          <p className="text-cuerpo text-aviso">{aviso}</p>
+          <p className="mt-1 text-etiqueta text-tinta-suave">
             No se ha leido ni guardado nada de esa direccion.
           </p>
         </Tarjeta>
@@ -78,35 +78,35 @@ export function ImportarReceta() {
       {previa && (
         <div className="space-y-3">
           <Tarjeta>
-            <p className="text-xs text-tinta-suave">
+            <p className="text-etiqueta text-tinta-suave">
               <strong>No se ha guardado nada.</strong> Esto es la previa.
             </p>
-            <h2 className="mt-1 text-base font-semibold">{previa.nombre}</h2>
-            <p className="text-sm text-tinta-suave">
+            <h2 className="mt-1 text-entrada font-semibold">{previa.nombre}</h2>
+            <p className="text-cuerpo text-tinta-suave">
               {previa.raciones} raciones
               {previa.minutos !== null ? ` - ${previa.minutos} min` : ''}
             </p>
-            <p className="mt-1 text-xs text-tinta-suave break-all">Fuente: {previa.fuente}</p>
+            <p className="mt-1 text-etiqueta text-tinta-suave break-all">Fuente: {previa.fuente}</p>
             {previa.faltantes.length > 0 && (
-              <p className="mt-2 text-sm text-amber-700">
+              <p className="mt-2 text-cuerpo text-aviso">
                 Falta por decir: {previa.faltantes.join('; ')}
               </p>
             )}
           </Tarjeta>
 
           <Tarjeta>
-            <h3 className="text-sm font-semibold">Ingredientes ({previa.ingredientes.length})</h3>
+            <h3 className="text-cuerpo font-semibold">Ingredientes ({previa.ingredientes.length})</h3>
             <ul className="mt-1 divide-y divide-borde">
               {previa.ingredientes.map((i, n) => (
-                <li key={n} className="py-1 text-sm">{comoSeLee(i)}</li>
+                <li key={n} className="py-1 text-cuerpo">{comoSeLee(i)}</li>
               ))}
             </ul>
           </Tarjeta>
 
           {previa.preparacion && (
             <Tarjeta>
-              <h3 className="text-sm font-semibold">Preparacion</h3>
-              <p className="mt-1 whitespace-pre-line text-sm">{previa.preparacion}</p>
+              <h3 className="text-cuerpo font-semibold">Preparacion</h3>
+              <p className="mt-1 whitespace-pre-line text-cuerpo">{previa.preparacion}</p>
             </Tarjeta>
           )}
         </div>

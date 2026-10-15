@@ -100,7 +100,7 @@ export function Panel() {
         <h1 className="text-xl font-bold">Panel</h1>
         <Link
           to="/panel/matching"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo underline"
         >
           Panel de matching →
         </Link>
@@ -115,10 +115,10 @@ export function Panel() {
             aria-selected={activa === p.clave}
             onClick={() => setParams({ pestana: p.clave }, { replace: true })}
             className={
-              'min-h-[44px] rounded-lg border px-3 py-1 text-sm font-medium ' +
+              'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium ' +
               (activa === p.clave
-                ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
-                : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
+                ? 'border-terracota bg-terracota text-white '
+                : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
             }
           >
             {p.texto}
@@ -172,7 +172,7 @@ function FiltroCadenas({
   const sinFiltro = puestas.length === 0
   return (
     <div className="grid gap-1">
-      <p className="text-xs text-tinta-suave">
+      <p className="text-etiqueta text-tinta-suave">
         {sinFiltro
           ? 'Mirando las cinco cadenas.'
           : dePreferencias
@@ -187,10 +187,10 @@ function FiltroCadenas({
             aria-pressed={puestas.includes(c)}
             onClick={() => alterna(c)}
             className={
-              'inline-flex min-h-[44px] items-center rounded-full border px-3 text-sm font-medium ' +
+              'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
               (puestas.includes(c)
-                ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
-                : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
+                ? 'border-terracota bg-terracota text-white '
+                : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
             }
           >
             {nombreCadena(c)}
@@ -201,10 +201,10 @@ function FiltroCadenas({
           aria-pressed={sinFiltro}
           onClick={todas}
           className={
-            'inline-flex min-h-[44px] items-center rounded-full border px-3 text-sm font-medium ' +
+            'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
             (sinFiltro
-              ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-700'
-              : 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700')
+              ? 'border-terracota bg-terracota text-white '
+              : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
           }
         >
           Todas
@@ -248,7 +248,7 @@ function Hoy() {
                 catálogo, no lo que come nadie. *El rótulo decía «La ingesta de hoy» dentro de
                 «Gasto y ahorro», y se leía como «lo que has comido hoy» -- justo la confusion
                 entre Compra y Calorias que hay que evitar.* G06, punto 157: mensajes ambiguos. */}
-            <h2 className="text-base font-semibold">Lo que entró hoy en el catálogo</h2>
+            <h2 className="text-entrada font-semibold">Lo que entró hoy en el catálogo</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
@@ -275,7 +275,7 @@ function Hoy() {
 
           <Tarjeta titulo="Qué entró por cadena" sub="Sobre cuántos productos se ha contado cada cosa">
             <TablaScroll etiqueta="Productos por cadena" minAncho="40rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Cadena</Th>
@@ -301,15 +301,15 @@ function Hoy() {
           </Tarjeta>
 
           <Tarjeta titulo="Precios movidos hoy">
-            <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-1 text-cuerpo sm:grid-cols-2 lg:grid-cols-3">
               {d.movidos.map((m) => (
-                <li key={m.cadena} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
+                <li key={m.cadena} className="flex justify-between gap-2 border-b border-borde py-1 ">
                   <span className="font-medium">{nombreCadena(m.cadena)}</span>
                   <span className="cifra">
-                    <span className="text-emerald-800 dark:text-emerald-400">
+                    <span className="text-bien ">
                       {numero(m.bajadas, 0)} ↓
                     </span>{' '}
-                    <span className="text-red-800 dark:text-red-400">{numero(m.subidas, 0)} ↑</span>
+                    <span className="text-error ">{numero(m.subidas, 0)} ↑</span>
                   </span>
                 </li>
               ))}
@@ -347,7 +347,7 @@ function DondeComprar() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">Dónde hacer la compra</h2>
+            <h2 className="text-entrada font-semibold">Dónde hacer la compra</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
@@ -364,7 +364,7 @@ function DondeComprar() {
               se puede saber con estos datos, porque cada cadena vende su catálogo. Lo que sí
               se puede contar es en cuántos pasillos gana cada una, y eso está abajo.
             </p>
-            <p className="mt-1 text-xs">
+            <p className="mt-1 text-etiqueta">
               {d.medida}. Solo se enseñan los pasillos con {d.minimo_por_celda} productos o
               más por cadena: con menos, la mediana es el ruido de dos o tres fichas.
             </p>
@@ -375,7 +375,7 @@ function DondeComprar() {
             sub={`${d.pasillos_totales} pasillos con productos comparables de dos cadenas o más`}
           >
             <TablaScroll etiqueta="Quién gana en cada pasillo" minAncho="44rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Pasillo</Th>
@@ -411,7 +411,7 @@ function DondeComprar() {
                 </tbody>
               </table>
             </TablaScroll>
-            <p className="mt-2 text-xs text-tinta-suave">
+            <p className="mt-2 text-etiqueta text-tinta-suave">
               «Desvio» es cuánto se separa del resto del pasillo, en porcentaje: negativo es
               más barata. «Diferencia» es cuánto le saca a la siguiente; cuando es de medio
               punto, ese pasillo no decide nada.
@@ -427,7 +427,7 @@ function DondeComprar() {
                 <li key={v.cadena} className="flex items-baseline gap-3">
                   <span className="min-w-[7rem] font-medium">{nombreCadena(v.cadena)}</span>
                   <span className="cifra text-lg font-semibold">{v.pasillos}</span>
-                  <span className="text-sm text-tinta-suave">
+                  <span className="text-cuerpo text-tinta-suave">
                     de {d.pasillos_totales} pasillos
                     {d.pasillos_totales > 0 && (
                       <> ({porcentaje((100 * v.pasillos) / d.pasillos_totales, 0)})</>
@@ -442,9 +442,9 @@ function DondeComprar() {
             titulo="Dónde comprar cada producto"
             sub={`Los ${d.oportunidades.productos.length} productos donde más se nota, de mayor a menor diferencia`}
           >
-            <p className="mb-2 text-sm text-tinta-suave">{d.oportunidades.filtros}.</p>
+            <p className="mb-2 text-cuerpo text-tinta-suave">{d.oportunidades.filtros}.</p>
             <TablaScroll etiqueta="Productos donde más se nota" minAncho="44rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Producto</Th>
@@ -477,7 +477,7 @@ function DondeComprar() {
                 </tbody>
               </table>
             </TablaScroll>
-            <p className="mt-2 text-xs text-tinta-suave">
+            <p className="mt-2 text-etiqueta text-tinta-suave">
               Precio por unidad canónica (kilo, litro o unidad), no el del envase: es la única
               forma de comparar un bote de 400 g con uno de 1 kg. La ficha de cada uno dice
               además los precios de las cinco cadenas, y la lista permite ponerlo en la tienda
@@ -488,13 +488,13 @@ function DondeComprar() {
           <Tarjeta titulo="El detalle, cadena por cadena" sub="Para ver quién está segundo y por cuánto">
             {d.pasillos.slice(0, 8).map((p) => (
               <div key={p.seccion} className="mb-3">
-                <p className="text-sm font-medium">{p.nombre}</p>
-                <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                <p className="text-cuerpo font-medium">{p.nombre}</p>
+                <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-cuerpo">
                   {p.cadenas.map((c) => (
                     <li key={c.cadena}>
                       {nombreCadena(c.cadena)}{' '}
                       <span className="cifra">{porcentajeConSigno(c.desvio_pct)}</span>{' '}
-                      <span className="text-xs text-tinta-suave">
+                      <span className="text-etiqueta text-tinta-suave">
                         ({numero(c.productos, 0)})
                       </span>
                     </li>
@@ -516,7 +516,7 @@ function Cadenas() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">Quién gana y cuánto se mueve</h2>
+            <h2 className="text-entrada font-semibold">Quién gana y cuánto se mueve</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
@@ -525,7 +525,7 @@ function Cadenas() {
             sub={`Sobre ${numero(d.dispersion.grupos, 0)} grupos con dos cadenas o más`}
           >
             <TablaScroll etiqueta="Quién es más barato" minAncho="34rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Cadena</Th>
@@ -553,7 +553,7 @@ function Cadenas() {
             sub="Mediana de la variación, solo entre los precios que se movieron"
           >
             <TablaScroll etiqueta="Movimiento por cadena" minAncho="34rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Cadena</Th>
@@ -591,7 +591,7 @@ function Cadenas() {
                 {numero(d.dispersion.sospechosos, 0)}
               </Dato>
             </dl>
-            <p className="mt-2 text-xs text-tinta-suave">
+            <p className="mt-2 text-etiqueta text-tinta-suave">
               «Sospechosos» es donde la más cara vale más del triple que la más barata. Ahí casi
               siempre hay un problema de unidades o de emparejamiento, no una oferta.
             </p>
@@ -609,7 +609,7 @@ function Marcas() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">Marca propia contra marca</h2>
+            <h2 className="text-entrada font-semibold">Marca propia contra marca</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
@@ -640,7 +640,7 @@ function Marcas() {
               <Dato etiqueta="Gana la marca">{numero(d.duelo.gana_marca, 0)}</Dato>
             </dl>
             {d.duelo.grupos < 100 && (
-              <p className="mt-2 text-xs text-tinta-suave">
+              <p className="mt-2 text-etiqueta text-tinta-suave">
                 Con tan pocos grupos, esto es una pista y no una conclusión. La muestra es pequeña
                 porque son pocas las cadenas que publican ingredientes.
               </p>
@@ -649,7 +649,7 @@ function Marcas() {
 
           <Tarjeta titulo="De dónde salen las letras de calidad">
             <TablaScroll etiqueta="Origen de las letras de calidad" minAncho="24rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Origen</Th>
@@ -669,9 +669,9 @@ function Marcas() {
           </Tarjeta>
 
           <Tarjeta titulo="Marcas propias con más productos">
-            <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-1 text-cuerpo sm:grid-cols-2 lg:grid-cols-3">
               {d.marcas_propias.map((m) => (
-                <li key={`${m.cadena}-${m.marca}`} className="flex justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
+                <li key={`${m.cadena}-${m.marca}`} className="flex justify-between gap-2 border-b border-borde py-1 ">
                   <span>
                     <span className="font-medium">{m.marca}</span>{' '}
                     <span className="text-tinta-suave">({m.cadena})</span>
@@ -694,16 +694,16 @@ function Historico() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">
+            <h2 className="text-entrada font-semibold">
               {numero(d.dias, 0)} {d.dias === 1 ? 'día guardado' : 'días guardados'}
             </h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
 
           <Tarjeta titulo="Lo que se desbloquea cuando haya más días">
-            <ul className="grid grid-cols-1 gap-2 text-sm">
+            <ul className="grid grid-cols-1 gap-2 text-cuerpo">
               {d.pendientes.map((p) => (
-                <li key={p.que} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-100 py-1 dark:border-neutral-700">
+                <li key={p.que} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-borde py-1 ">
                   <span>
                     <code className="font-mono">{p.que}</code> — {p.para}
                   </span>
@@ -723,7 +723,7 @@ function Historico() {
 
           <Tarjeta titulo="Observaciones por día">
             <TablaScroll etiqueta="Observaciones por día" minAncho="26rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Día</Th>
@@ -756,14 +756,14 @@ function Movidos() {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">Lo que se ha movido hoy</h2>
+            <h2 className="text-entrada font-semibold">Lo que se ha movido hoy</h2>
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
           {d.movidos.length === 0 ? (
             <Vacio titulo="Hoy no se ha movido nada" />
           ) : (
             <TablaScroll etiqueta="Precios movidos hoy" minAncho="44rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Producto</Th>
@@ -784,7 +784,7 @@ function Movidos() {
                           </Link>
                         )}
                         {m.marca && (
-                          <span className="block text-xs text-tinta-suave">
+                          <span className="block text-etiqueta text-tinta-suave">
                             {m.marca}
                           </span>
                         )}
@@ -795,8 +795,8 @@ function Movidos() {
                         <span
                           className={
                             m.baja
-                              ? 'font-semibold text-emerald-800 dark:text-emerald-400'
-                              : 'font-semibold text-red-800 dark:text-red-400'
+                              ? 'font-semibold text-bien '
+                              : 'font-semibold text-error '
                           }
                         >
                           {m.baja ? '↓' : '↑'} {euros(m.variacion_cent)}
@@ -841,7 +841,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
                 se pidio, la pantalla ensenaria el catalogo entero bajo el titulo "Lo
                 tuyo que ha bajado". Lo encontro la verificacion contra un PostgreSQL de
                 verdad; el boton sigue diciendo lo que has pedido, que eso es un mando. */}
-            <h2 className="text-base font-semibold">
+            <h2 className="text-entrada font-semibold">
               {d.solo_mios ? 'Lo tuyo que ha' : 'Lo que más ha'}{' '}
               {subidas ? 'subido' : 'bajado'} en {numero(d.dias, 0)} días
             </h2>
@@ -860,7 +860,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
               type="button"
               aria-pressed={subidas}
               onClick={() => alterna('subidas', subidas ? 'false' : 'true')}
-              className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium dark:border-neutral-600 dark:bg-neutral-800"
+              className="min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo font-medium dark:bg-neutral-800"
             >
               Ver las subidas
             </button>
@@ -871,7 +871,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
               type="button"
               aria-pressed={soloMios}
               onClick={() => alterna('mios', soloMios ? 'false' : 'true')}
-              className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium dark:border-neutral-600 dark:bg-neutral-800"
+              className="min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo font-medium dark:bg-neutral-800"
             >
               {soloMios ? 'Ver todo el catálogo' : 'Solo lo mío'}
             </button>
@@ -895,7 +895,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
             )
           ) : (
             <TablaScroll etiqueta="Cambios de precio" minAncho="46rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Producto</Th>
@@ -987,7 +987,7 @@ function Indice({ cadenas }: { cadenas: string[] }) {
         return (
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold">El nivel de precios de cada cadena</h2>
+              <h2 className="text-entrada font-semibold">El nivel de precios de cada cadena</h2>
               <SelloFecha fechaDatos={d.fecha_datos} />
             </div>
 
@@ -999,7 +999,7 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                 ? `Solo hay una cadena en el gráfico: ${nombreCadena(baja.cadena)}, ${porcentajeConSigno(baja.variacion_pct)} desde la primera captura.`
                 : `${nombreCadena(baja.cadena)} es quien más ha bajado (${porcentajeConSigno(baja.variacion_pct)}) y ${nombreCadena(sube.cadena)} quien más ha subido (${porcentajeConSigno(sube.variacion_pct)}) en ${numero(capturas, 0)} capturas.`}
             </p>
-            <p className="text-sm text-tinta-suave">
+            <p className="text-cuerpo text-tinta-suave">
               Son décimas: en unas semanas un catálogo entero no se mueve mucho, y el valor está en
               la tendencia, no en el día.
             </p>
@@ -1010,7 +1010,7 @@ function Indice({ cadenas }: { cadenas: string[] }) {
 
             <Tarjeta titulo="Los números" sub="La tabla no es un extra: el color de cinco series no se distingue, y el dato no puede depender de verlo bien">
               <TablaScroll etiqueta="Índice de precios por cadena" minAncho="34rem">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full border-collapse text-cuerpo">
                   <thead>
                     <tr>
                       <Th>Cadena</Th>
@@ -1057,13 +1057,13 @@ function Indice({ cadenas }: { cadenas: string[] }) {
                 </table>
               </TablaScroll>
               {recortados > 0 && (
-                <p className="mt-2 text-xs text-tinta-suave">
+                <p className="mt-2 text-etiqueta text-tinta-suave">
                   «Recortados» son los relativos fuera del rango creíble: el índice no los usa. Si
                   fueran muchos, ese eslabón sería flojo y el índice estaría midiendo otra cosa.
                 </p>
               )}
               {haySaltos && (
-                <p className="mt-2 text-xs text-tinta-suave">
+                <p className="mt-2 text-etiqueta text-tinta-suave">
                   «Salto» son los días que cubre el eslabón más largo de esa cadena. Donde pasa de
                   1, la cadena no se rastreó ese día y el índice se movió sin haberlo visto: de esa
                   semana se lee la tendencia, no el día.
@@ -1117,10 +1117,10 @@ function Posicion({ cadenas }: { cadenas: string[] }) {
         return (
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold">En qué es cara cada cadena</h2>
+              <h2 className="text-entrada font-semibold">En qué es cara cada cadena</h2>
               <SelloFecha fechaDatos={d.fecha_datos} />
             </div>
-            <p className="text-sm text-tinta-suave">
+            <p className="text-cuerpo text-tinta-suave">
               Cada cadena contra <strong>las otras</strong> dentro de cada grupo de productos
               equivalentes. No es el precio medio de la sección: eso mediría el surtido, no el
               precio. Ordenado por cuánto se separan las cadenas: donde están empatadas, elegir
@@ -1146,23 +1146,23 @@ function Posicion({ cadenas }: { cadenas: string[] }) {
                       return (
                         <li
                           key={c.cadena}
-                          className="grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 text-xs"
+                          className="grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 text-etiqueta"
                         >
                           <span className="truncate font-medium">{nombreCadena(c.cadena)}</span>
                           {/* Barra a los dos lados del cero: a la izquierda lo que
                               está por debajo de las demás, a la derecha lo que está
                               por encima. El número va fuera de la barra, siempre
                               visible, porque es el dato. */}
-                          <span className="relative block h-3 w-full rounded bg-neutral-100 dark:bg-neutral-800">
+                          <span className="relative block h-3 w-full rounded bg-marfil dark:bg-neutral-800">
                             <span
                               aria-hidden
-                              className="absolute inset-y-0 left-1/2 w-px bg-neutral-300 dark:bg-neutral-600"
+                              className="absolute inset-y-0 left-1/2 w-px bg-borde "
                             />
                             <span
                               aria-hidden
                               className={
                                 'absolute inset-y-0 rounded ' +
-                                (caro ? 'bg-red-600 dark:bg-red-500' : 'bg-emerald-600 dark:bg-emerald-500')
+                                (caro ? 'bg-error ' : 'bg-bien ')
                               }
                               style={
                                 caro
@@ -1175,8 +1175,8 @@ function Posicion({ cadenas }: { cadenas: string[] }) {
                             className={
                               'cifra text-right font-semibold ' +
                               (caro
-                                ? 'text-red-800 dark:text-red-400'
-                                : 'text-emerald-800 dark:text-emerald-400')
+                                ? 'text-error '
+                                : 'text-bien ')
                             }
                           >
                             {porcentajeConSigno(c.desvio_pct)}
@@ -1216,7 +1216,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
       {(d) => (
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">
+            <h2 className="text-entrada font-semibold">
               {d.resultados.length === 0
                 ? 'Ninguna oferta sospechosa'
                 : `${numero(d.resultados.length, 0)} ofertas que conviene mirar dos veces`}
@@ -1233,7 +1233,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
             </Vacio>
           ) : (
             <>
-              <p className="text-sm text-tinta-suave">
+              <p className="text-cuerpo text-tinta-suave">
                 No son mentiras necesariamente: son las que el histórico no sostiene, y por eso
                 conviene mirarlas dos veces antes de llenar el carro.
               </p>
@@ -1244,20 +1244,20 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                   return (
                     <li
                       key={`${x.cadena}-${x.grupo_id ?? x.nombre}-${i}`}
-                      className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+                      className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
                     >
                       {x.imagen ? (
                         <img
                           src={x.imagen}
                           alt=""
                           loading="lazy"
-                          className="h-[4.5rem] w-[4.5rem] rounded-lg object-contain"
+                          className="h-[4.5rem] w-[4.5rem] rounded-campo object-contain"
                         />
                       ) : (
                         <span aria-hidden className="h-[4.5rem] w-[4.5rem]" />
                       )}
                       <div className="grid gap-1">
-                        <h3 className="text-sm font-semibold">
+                        <h3 className="text-cuerpo font-semibold">
                           {x.grupo_id === null ? (
                             x.nombre
                           ) : (
@@ -1273,13 +1273,13 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                             </Link>
                           )}
                         </h3>
-                        <p className="text-xs text-tinta-suave">
+                        <p className="text-etiqueta text-tinta-suave">
                           {x.marca ? `${x.marca} · ` : ''}
                           {nombreCadena(x.cadena)}
                         </p>
                         {/* La respuesta, antes que el precio y antes que la foto. */}
-                        <p className="text-sm font-semibold">{x.por_que}</p>
-                        <p className="flex flex-wrap items-center gap-1 text-xs">
+                        <p className="text-cuerpo font-semibold">{x.por_que}</p>
+                        <p className="flex flex-wrap items-center gap-1 text-etiqueta">
                           <span className="cifra">{eurosUnidad(x.precio_unidad_cent, x.unidad)}</span>
                           <span className="text-tinta-suave">
                             hoy · su precio de siempre{' '}
@@ -1294,17 +1294,17 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                         )}
                         {pos !== null && (
                           <div className="grid gap-1">
-                            <span className="text-xs text-tinta-suave">
+                            <span className="text-etiqueta text-tinta-suave">
                               Dónde cae hoy dentro de sus últimos 90 días
                             </span>
-                            <span className="relative block h-3 w-full rounded bg-neutral-100 dark:bg-neutral-700">
+                            <span className="relative block h-3 w-full rounded bg-marfil ">
                               <span
                                 aria-hidden
-                                className="absolute inset-y-0 w-1 rounded bg-neutral-900 dark:bg-neutral-100"
+                                className="absolute inset-y-0 w-1 rounded bg-neutral-900 "
                                 style={{ left: `calc(${pos}% - 2px)` }}
                               />
                             </span>
-                            <span className="flex justify-between text-xs text-tinta-suave">
+                            <span className="flex justify-between text-etiqueta text-tinta-suave">
                               <span className="cifra">{euros(x.min_90d_cent)}</span>
                               <span>lo más caro fue {euros(x.max_90d_cent)}</span>
                             </span>
@@ -1336,7 +1336,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
               producto. Un dato que no tenemos es «no lo sé», y esconderlo sería hacer
               parecer que la lista está completa. */}
           {d.sin_poder_juzgar.total > 0 && (
-            <p className="text-xs text-tinta-suave">
+            <p className="text-etiqueta text-tinta-suave">
               Y <strong>{numero(d.sin_poder_juzgar.total, 0)}</strong> ofertas anunciadas más no se
               juzgan aquí: {numero(d.sin_poder_juzgar.por_varias_unidades, 0)} dependen de cuántas
               unidades compres (un 3x2 no baja el precio de una),{' '}

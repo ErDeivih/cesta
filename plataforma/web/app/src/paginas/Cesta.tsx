@@ -85,7 +85,7 @@ function FormularioEntrar({ alEntrar }: { alEntrar: () => void }) {
       }}
     >
       <label className="grid gap-1">
-        <span className="text-sm font-medium">Usuario</span>
+        <span className="text-cuerpo font-medium">Usuario</span>
         <input
           value={usuario}
           onChange={(e) => setUsuario(e.target.value)}
@@ -95,17 +95,17 @@ function FormularioEntrar({ alEntrar }: { alEntrar: () => void }) {
           // a rechazar.
           autoCapitalize="none"
           spellCheck={false}
-          className="rounded-md border border-borde bg-fondo px-3 py-2"
+          className="rounded-campo border border-borde bg-fondo px-3 py-2"
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-sm font-medium">Clave</span>
+        <span className="text-cuerpo font-medium">Clave</span>
         <input
           type="password"
           value={clave}
           onChange={(e) => setClave(e.target.value)}
           autoComplete="current-password"
-          className="rounded-md border border-borde bg-fondo px-3 py-2"
+          className="rounded-campo border border-borde bg-fondo px-3 py-2"
         />
       </label>
       <Boton type="submit" disabled={entrar_.isPending}>
@@ -156,17 +156,17 @@ function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
       }}
     >
       <label className="grid gap-1">
-        <span className="text-sm font-medium">Tu nombre</span>
+        <span className="text-cuerpo font-medium">Tu nombre</span>
         <input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           autoComplete="name"
           placeholder="Como quieres que te vean"
-          className="rounded-md border border-borde bg-fondo px-3 py-2"
+          className="rounded-campo border border-borde bg-fondo px-3 py-2"
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-sm font-medium">Usuario</span>
+        <span className="text-cuerpo font-medium">Usuario</span>
         <input
           value={usuario}
           onChange={(e) => setUsuario(e.target.value)}
@@ -174,11 +174,11 @@ function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
           autoCapitalize="none"
           spellCheck={false}
           placeholder="sin tildes ni espacios"
-          className="rounded-md border border-borde bg-fondo px-3 py-2"
+          className="rounded-campo border border-borde bg-fondo px-3 py-2"
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-sm font-medium">Contraseña</span>
+        <span className="text-cuerpo font-medium">Contraseña</span>
         <input
           type="password"
           value={clave}
@@ -186,7 +186,7 @@ function FormularioAlta({ alEntrar }: { alEntrar: () => void }) {
           autoComplete="new-password"
           minLength={8}
           placeholder="ocho caracteres o más"
-          className="rounded-md border border-borde bg-fondo px-3 py-2"
+          className="rounded-campo border border-borde bg-fondo px-3 py-2"
         />
       </label>
       <Boton type="submit" disabled={alta.isPending}>
@@ -220,7 +220,7 @@ export function Introducir({ alEntrar }: { alEntrar: () => void }) {
       <h2 className="mb-1 text-lg font-semibold">
         {creando ? 'Crea tu cuenta' : 'Entra para ver tu lista'}
       </h2>
-      <p className="mb-4 text-sm text-tinta-suave">
+      <p className="mb-4 text-cuerpo text-tinta-suave">
         {creando
           ? 'La cuenta es lo que hace que la lista tenga dueño: sin ella no se guarda ni se puede compartir. Se queda en casa, en esta Cesta, y al crearla ya entras.'
           : 'La lista de la compra es tuya y de quien la compartas. Por eso hay que entrar: una lista sin dueño no se puede compartir ni recuperar.'}
@@ -228,7 +228,7 @@ export function Introducir({ alEntrar }: { alEntrar: () => void }) {
       {creando
         ? <FormularioAlta alEntrar={alEntrar} />
         : <FormularioEntrar alEntrar={alEntrar} />}
-      <div className="mt-2 flex flex-wrap items-center gap-1 text-sm text-tinta-suave">
+      <div className="mt-2 flex flex-wrap items-center gap-1 text-cuerpo text-tinta-suave">
         <span>{creando ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}</span>
         <Boton variante="sutil" compacto className="px-2" onClick={() => setCreando(!creando)}>
           {creando ? 'Entra' : 'Créala'}
@@ -249,7 +249,7 @@ function UnaTienda({ opcion, mejor }: {
   return (
     <Tarjeta>
       <header className="mb-2 flex flex-wrap items-center gap-2">
-        <h3 className="text-base font-semibold">{opcion.cadena}</h3>
+        <h3 className="text-entrada font-semibold">{opcion.cadena}</h3>
         {opcion.total_cent === mejor && <Etiqueta tono="bien">la más barata</Etiqueta>}
         {ahorro > 0 && (
           <Etiqueta tono="dato">
@@ -258,13 +258,13 @@ function UnaTienda({ opcion, mejor }: {
         )}
       </header>
       <p className="cifra text-2xl font-semibold">{euros(opcion.total_cent)}</p>
-      <p className="mt-1 text-sm text-tinta-suave">
+      <p className="mt-1 text-cuerpo text-tinta-suave">
         {opcion.encontrados} de {opcion.encontrados + opcion.faltan.length} productos
       </p>
       {opcion.faltan.length > 0 && (
         <div className="mt-2">
-          <p className="text-sm font-medium">No lo tiene:</p>
-          <p className="text-sm text-tinta-suave">{opcion.faltan.join(' · ')}</p>
+          <p className="text-cuerpo font-medium">No lo tiene:</p>
+          <p className="text-cuerpo text-tinta-suave">{opcion.faltan.join(' · ')}</p>
         </div>
       )}
     </Tarjeta>
@@ -301,7 +301,7 @@ function Repartido({ reparto }: { reparto: Reparto }) {
   return (
     <Tarjeta>
       <header className="mb-1 flex flex-wrap items-center gap-2">
-        <h3 className="text-base font-semibold">
+        <h3 className="text-entrada font-semibold">
           Repartido entre {reparto.cadenas.length} tiendas
         </h3>
         {reparto.merece_la_pena === false && (
@@ -309,7 +309,7 @@ function Repartido({ reparto }: { reparto: Reparto }) {
         )}
       </header>
       <p className="cifra text-2xl font-semibold">{euros(reparto.total_cent)}</p>
-      <p className="mt-1 text-sm text-tinta-suave">
+      <p className="mt-1 text-cuerpo text-tinta-suave">
         {reparto.cadenas.map(nombreCadena).join(' y ')}
         {reparto.ahorro_cent ? ` · ahorras ${euros(reparto.ahorro_cent)}` : ''}
       </p>
@@ -317,7 +317,7 @@ function Repartido({ reparto }: { reparto: Reparto }) {
           como las cadenas: es el dato que se mira al decidir el viaje, no un
           detalle al lado del total. */}
       {desglose.length > 0 && (
-        <p className="mt-1 flex flex-wrap gap-x-3 text-sm">
+        <p className="mt-1 flex flex-wrap gap-x-3 text-cuerpo">
           {desglose.map((d) => (
             <span key={d.cadena}>
               <span className="cifra font-medium">{d.lineas}</span> en{' '}
@@ -327,13 +327,13 @@ function Repartido({ reparto }: { reparto: Reparto }) {
         </p>
       )}
       {reparto.merece_la_pena === false && (
-        <p className="mt-2 text-sm text-tinta-suave">
+        <p className="mt-2 text-cuerpo text-tinta-suave">
           Una segunda parada por menos de 1,50 € no es un ahorro: es una
           molestia con un número delante.
         </p>
       )}
       {reparto.faltan.length > 0 && (
-        <p className="mt-2 text-sm text-tinta-suave">
+        <p className="mt-2 text-cuerpo text-tinta-suave">
           Sin encontrar: {reparto.faltan.join(' · ')}
         </p>
       )}
@@ -412,7 +412,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
   const [borrador, setBorrador] = useState(linea.nota ?? '')
 
   return (
-    <li className="grid gap-1 rounded-lg border border-borde p-2">
+    <li className="grid gap-1 rounded-campo border border-borde p-2">
       <div className="flex flex-wrap items-center gap-2">
       <Casilla
         etiqueta={
@@ -451,7 +451,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
         >
           −
         </Boton>
-        <span className="cifra w-8 text-center text-sm font-semibold">{linea.cantidad}</span>
+        <span className="cifra w-8 text-center text-cuerpo font-semibold">{linea.cantidad}</span>
         <Boton
           compacto
           disabled={guardando || linea.cantidad >= 99}
@@ -479,7 +479,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
           reparte (`catalogo.lineas_movidas`), y aqui se dice por que y se da la salida:
           buscarla y volver a anadirla. */}
       {linea.producto_movido && (
-        <p className="text-xs text-aviso">
+        <p className="text-etiqueta text-aviso">
           Este producto ya no es el mismo en el catálogo: no lo cuento ni te digo dónde
           comprarlo, porque el número al que apunta esta línea es hoy otra cosa.{' '}
           <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
@@ -496,7 +496,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
           que `novedades` y que el orden de los favoritos. */}
       <div className="flex flex-wrap items-center gap-2">
         {linea.nota && !escribiendo && (
-          <p className="min-w-[8rem] flex-1 text-xs text-tinta-suave">
+          <p className="min-w-[8rem] flex-1 text-etiqueta text-tinta-suave">
             <span className="sr-only">Nota: </span>
             {linea.nota}
           </p>
@@ -567,7 +567,7 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-tinta-suave underline"
       >
         + Lista nueva
       </button>
@@ -588,7 +588,7 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
         Crear
       </Boton>
       <button type="button" onClick={() => setAbierto(false)}
-              className="min-h-[44px] px-2 text-sm underline">
+              className="min-h-[44px] px-2 text-cuerpo underline">
         Cancelar
       </button>
     </span>
@@ -634,14 +634,14 @@ function NombreDeLaLista({ lista, alHecho }: {
           <Boton variante="principal" disabled={renombrar.isPending}
                  onClick={() => renombrar.mutate()}>Guardar</Boton>
           <button type="button" onClick={() => setRenombrando(false)}
-                  className="min-h-[44px] px-2 text-sm underline">Cancelar</button>
+                  className="min-h-[44px] px-2 text-cuerpo underline">Cancelar</button>
         </span>
       ) : (
         <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 className="text-base font-semibold">{lista.nombre}</h2>
+          <h2 className="text-entrada font-semibold">{lista.nombre}</h2>
           {lista.es_de_casa && <Etiqueta tono="dato">de casa</Etiqueta>}
           {puede && (
-            <span className="flex flex-wrap gap-2 text-xs">
+            <span className="flex flex-wrap gap-2 text-etiqueta">
               <button type="button" className="min-h-[44px] min-w-[44px] underline"
                       onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}>
                 Cambiar el nombre
@@ -667,7 +667,7 @@ function NombreDeLaLista({ lista, alHecho }: {
         </span>
       )}
       {confirmando && (
-        <p className="mt-1 text-xs text-tinta-suave">
+        <p className="mt-1 text-etiqueta text-tinta-suave">
           Desaparece de tu pantalla y de la de quien la comparta. No se borra de
           verdad: se puede recuperar.
         </p>
@@ -774,7 +774,7 @@ function CerrarCompra({ listaId, enElCarro, papel }: {
         <Boton variante="sutil" onClick={() => setConfirmando(false)}>No, déjalo</Boton>
       </div>
       {cerrar.isError && (
-        <p className="mt-2 text-sm">{textoDeError(cerrar.error)}</p>
+        <p className="mt-2 text-cuerpo">{textoDeError(cerrar.error)}</p>
       )}
     </Aviso>
   )
@@ -804,7 +804,7 @@ function QuienEstaDentro({ personas }: { personas: Persona[] }) {
   return (
     <ul className="grid gap-1">
       {personas.map((q) => (
-        <li key={q.usuario} className="flex flex-wrap items-center gap-2 text-sm">
+        <li key={q.usuario} className="flex flex-wrap items-center gap-2 text-cuerpo">
           <span className="font-medium">{q.nombre || q.usuario}</span>
           {q.nombre && <span className="text-tinta-suave">@{q.usuario}</span>}
           <Etiqueta tono={q.papel === 'dueno' ? 'dato' : 'info'}>
@@ -859,7 +859,7 @@ function Novedades({ novedades, yo }: { novedades: Novedad[]; yo: string | null 
           </li>
         ))}
       </ul>
-      {resto > 0 && <p className="mt-1 text-xs">y {resto} más.</p>}
+      {resto > 0 && <p className="mt-1 text-etiqueta">y {resto} más.</p>}
     </Aviso>
   )
 }
@@ -964,8 +964,8 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         <option value="mira">Solo mirarla</option>
       </Selector>
 
-      <h3 className="mt-4 text-sm font-semibold">Mandar un enlace</h3>
-      <p className="mt-1 text-sm text-tinta-suave">
+      <h3 className="mt-4 text-cuerpo font-semibold">Mandar un enlace</h3>
+      <p className="mt-1 text-cuerpo text-tinta-suave">
         Pedirle a alguien su nombre de usuario es pedirle que se equivoque. El
         enlace se lo lleva puesto.
       </p>
@@ -990,7 +990,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
 
       {enlace && (
         <>
-          <p className="mt-3 text-sm text-tinta-suave">
+          <p className="mt-3 text-cuerpo text-tinta-suave">
             Mándale este enlace. Caduca {hace(enlace.expira_en)} y vale para las{' '}
             {USOS_DEL_ENLACE} primeras personas que lo abran.
           </p>
@@ -1003,14 +1003,14 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
               // Al enfocarlo se selecciona entero: el dedo en el movil no acierta
               // a seleccionar 60 caracteres de codigo.
               onFocus={(e) => e.target.select()}
-              className="min-h-[44px] min-w-[12rem] flex-1 rounded-lg border border-borde bg-fondo px-3 py-2"
+              className="min-h-[44px] min-w-[12rem] flex-1 rounded-campo border border-borde bg-fondo px-3 py-2"
             />
             <Boton variante="principal" onClick={copia}>
               {copiado ?? 'Copiar'}
             </Boton>
           </div>
           {sinPortapapeles && (
-            <p className="mt-2 text-sm text-aviso">
+            <p className="mt-2 text-cuerpo text-aviso">
               Este navegador no deja copiar solo (el portapapeles necesita https,
               y esto va por http). El enlace ya está seleccionado: cópialo a mano.
             </p>
@@ -1018,8 +1018,8 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         </>
       )}
 
-      <h3 className="mt-4 text-sm font-semibold">Compartir con quien ya tiene cuenta</h3>
-      <p className="mt-1 text-sm text-tinta-suave">
+      <h3 className="mt-4 text-cuerpo font-semibold">Compartir con quien ya tiene cuenta</h3>
+      <p className="mt-1 text-cuerpo text-tinta-suave">
         Si ya usa esta Cesta, con su usuario entra sin enlace. Un nombre de
         usuario se escribe mal con una facilidad pasmosa, así que si no existe
         nadie con ese, la API lo dice y aquí se enseña.
@@ -1046,7 +1046,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         </Boton>
       </form>
       {comparte.data && (
-        <p className="mt-2 text-sm">
+        <p className="mt-2 text-cuerpo">
           {/* **Compartir contigo mismo no te quita la lista, y ahora se dice.** Medido el 28 de
               septiembre de 2026: escribir tu propio usuario metia tu fila con papel «escribe»,
               la tarjeta se cerraba -- solo se pinta para el dueno -- y la lista se quedaba sin
@@ -1070,7 +1070,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         </div>
       )}
 
-      <h3 className="mt-4 text-sm font-semibold">Quién está dentro</h3>
+      <h3 className="mt-4 text-cuerpo font-semibold">Quién está dentro</h3>
       <div className="mt-1">
         <QuienEstaDentro personas={personas} />
       </div>
@@ -1087,13 +1087,13 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
         </Boton>
       </div>
       {revocadas !== null && (
-        <p className="mt-2 text-sm text-tinta-suave">
+        <p className="mt-2 text-cuerpo text-tinta-suave">
           {revocadas ? `Anulados ${revocadas}.` : 'No había ninguno.'} A quien ya
           entró no le afecta: sigue en la lista.
         </p>
       )}
       {revoca.isError && (
-        <p className="mt-2 text-sm text-aviso">{textoDeError(revoca.error)}</p>
+        <p className="mt-2 text-cuerpo text-aviso">{textoDeError(revoca.error)}</p>
       )}
     </Tarjeta>
   )
@@ -1371,7 +1371,7 @@ export function Cesta() {
           value={listaId ?? ''}
           onChange={(e) => setElegida(e.target.value)}
           aria-label="Lista"
-          className="min-h-[44px] rounded-md border border-borde bg-fondo px-2 py-1"
+          className="min-h-[44px] rounded-campo border border-borde bg-fondo px-2 py-1"
         >
           {listas.data.map((l) => (
             <option key={l.id} value={l.id}>
@@ -1393,14 +1393,14 @@ export function Cesta() {
             Van como enlaces y no como botones porque no hacen nada: llevan a otra
             pantalla, y en el navegador eso se abre en una pestana nueva si se
             quiere. */}
-        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline">
+        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-tinta-suave underline">
           Favoritos
         </Link>
-        <Link to="/ajustes" className="inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-tinta-suave underline">
+        <Link to="/ajustes" className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-tinta-suave underline">
           Ajustes
         </Link>
         <button
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm text-tinta-suave underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-cuerpo text-tinta-suave underline"
           onClick={async () => {
             await salir()
             cliente.invalidateQueries()
@@ -1506,21 +1506,21 @@ export function Cesta() {
             <p className="cifra text-2xl font-semibold">
               {euros(detalle.data.estimacion.total_cent)}
             </p>
-            <p className="mt-1 text-sm text-tinta-suave">
+            <p className="mt-1 text-cuerpo text-tinta-suave">
               Lo que cuesta ahora mismo, comprando cada cosa donde está más barata.
               {detalle.data.estimacion.sin_precio > 0 && (
                 <> De {detalle.data.estimacion.sin_precio} no tengo precio: no los
                   cuento.</>
               )}
             </p>
-            <p className="mt-2 text-sm">
+            <p className="mt-2 text-cuerpo">
               {lineas.length} líneas
               {lineas.some((l) => l.tachado_en) && (
                 <> · {lineas.filter((l) => l.tachado_en).length} ya
                   cogidas</>
               )}
             </p>
-            <p className="mt-1 text-xs text-tinta-suave">
+            <p className="mt-1 text-etiqueta text-tinta-suave">
               Datos del {detalle.data.fecha_datos}
             </p>
           </Tarjeta>
@@ -1587,7 +1587,7 @@ export function Cesta() {
                     cuales quedan. Con el encabezado se lee uno: «Por coger 5».
                     Lo piden `docs/PANTALLAS.md` y `docs/UX-MOVIL.md`, y era lo
                     mejor que tenia la aplicacion de la que se copio la idea.
- 
+
                     El orden dentro de cada seccion es el de la API
                     (`ORDER BY en_carrito, anadido_en`, almacen.py): lo ya cogido
                     se va al final y lo ultimo anadido va arriba. **Y dentro de un
@@ -1608,7 +1608,7 @@ export function Cesta() {
                   (lineas_ as Linea[]).length === 0 ? null : (
                     <section key={titulo as string} className="mb-4">
                       {porCoger.length > 0 && enElCarro.length > 0 && (
-                        <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold">
+                        <h3 className="mb-2 flex items-baseline gap-2 text-cuerpo font-semibold">
                           {titulo as string}
                           <span className="cifra text-tinta-suave">
                             {(lineas_ as Linea[]).length}
@@ -1637,7 +1637,7 @@ export function Cesta() {
                                hay que coger» y después un nivel que no existe. Medido con
                                `data/debug/accesibilidad.py` el 27 de septiembre de 2026: era el
                                único salto de encabezados de toda la aplicación. */
-                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-xs font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
+                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
                               {pasillo}
                             </h3>
                           )}
@@ -1697,7 +1697,7 @@ export function Cesta() {
                 )}
                 {/* El numero que se mira mientras se coge: al tachar algo, esto
                     es lo unico que confirma que el cambio ha llegado. */}
-                <p className="mt-3 text-sm text-tinta-suave">
+                <p className="mt-3 text-cuerpo text-tinta-suave">
                   <span className="cifra font-medium">
                     {euros(detalle.data.estimacion.por_recoger_cent)}
                   </span>{' '}
@@ -1725,7 +1725,7 @@ export function Cesta() {
 
       {/* **Dónde compro cada cosa**: la lista partida por tiendas, con el total de cada
           sublista y el de todo.
-          
+
           **Estaba justo debajo del total, y se ha bajado, y no es un capricho.** El 27 de
           septiembre de 2026 lo midió la puerta en un móvil de 390 x 844: esta tarjeta mide
           **592 px** y, con ella delante, la primera cosa que se puede tachar quedaba a
@@ -1764,7 +1764,7 @@ export function Cesta() {
       )}
       {compra.data && compra.data.una_tienda.length > 0 && (
         <>
-          <h2 className="text-base font-semibold">La lista entera en una tienda</h2>
+          <h2 className="text-entrada font-semibold">La lista entera en una tienda</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {compra.data.una_tienda.slice(0, 6).map((t) => (
               <UnaTienda key={t.cadena} opcion={t} mejor={mejorTotal ?? t.total_cent} />

@@ -52,18 +52,18 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
 }) {
   if (!listas.length) {
     return (
-      <Link to="/cesta" className="text-sm underline">
+      <Link to="/cesta" className="text-cuerpo underline">
         Crea una lista para poder añadir
       </Link>
     )
   }
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex items-center gap-2 text-cuerpo">
       <span className="text-tinta-suave">{etiqueta}</span>
       <select
         value={valor}
         onChange={(e) => alCambiar(e.target.value)}
-        className="min-h-[44px] rounded-lg border border-neutral-300 bg-white px-2 dark:border-neutral-600 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-campo border border-borde bg-white px-2 dark:bg-neutral-800"
       >
         {listas.map((l) => (
           <option key={l.id} value={l.id}>{l.nombre}</option>
@@ -124,13 +124,13 @@ function SinMedida({ f, alQuitar, quitando }: {
           <p className="font-medium">
             {f.nombre ?? <span className="text-tinta-suave">Un producto que seguías</span>}
           </p>
-          {f.marca && <p className="text-sm text-tinta-suave">{f.marca}</p>}
+          {f.marca && <p className="text-cuerpo text-tinta-suave">{f.marca}</p>}
         </div>
         <Etiqueta tono={f.desconocido ? 'aviso' : 'dato'}>
           {f.desconocido ? 'ya no está' : 'sin comparar'}
         </Etiqueta>
       </div>
-      <p className="mt-2 text-sm text-tinta-suave">{frase}</p>
+      <p className="mt-2 text-cuerpo text-tinta-suave">{frase}</p>
       {f.precio_unidad_cent != null && (
         <p className="cifra mt-2 text-lg font-semibold">
           {eurosUnidad(f.precio_unidad_cent, f.unidad)}
@@ -140,7 +140,7 @@ function SinMedida({ f, alQuitar, quitando }: {
         {!f.desconocido && (
           <Link
             to={f.grupo_id != null ? `/grupo/${f.grupo_id}` : '/buscar'}
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
           >
             {f.grupo_id != null ? 'Ver la ficha' : 'Buscar otro'}
           </Link>
@@ -248,21 +248,21 @@ export function Favoritos() {
         {/* `h1` y no `p`: en el caso vacio esta tarjeta **es** la pantalla, y sin encabezado la
             pagina se quedaba sin titulo (lo midio `data/debug/accesibilidad.py`). El estilo es
             el mismo: lo que cambia es lo que oye quien navega por encabezados. */}
-        <h1 className="text-base font-semibold">No sigues ningún producto</h1>
-        <p className="mt-2 text-sm text-tinta-suave">
+        <h1 className="text-entrada font-semibold">No sigues ningún producto</h1>
+        <p className="mt-2 text-cuerpo text-tinta-suave">
           Aquí van los pocos que compras siempre, para ver si se mueven sin tener que
           buscarlos. Se añaden desde la ficha de un producto, con el corazón.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             to="/buscar"
-            className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+            className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-3 text-cuerpo font-semibold text-white "
           >
             Buscar un producto
           </Link>
           <Link
             to="/cesta"
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
           >
             Ver mi lista
           </Link>
@@ -278,7 +278,7 @@ export function Favoritos() {
           <h1 className="text-xl font-semibold">Favoritos</h1>
           {fechaDatos && <Etiqueta tono="dato">datos del {fecha(fechaDatos)}</Etiqueta>}
         </div>
-        <p className="text-sm text-tinta-suave">
+        <p className="text-cuerpo text-tinta-suave">
           Ordenados por lo que se han movido: primero lo que ha bajado, después lo que ha
           subido, y al final lo que no se ha movido. Los precios son por unidad, que es lo
           único comparable entre formatos.
@@ -299,17 +299,17 @@ export function Favoritos() {
               aria-pressed={ventana === d}
               onClick={() => setVentana(d)}
               className={cx(
-                'min-h-[44px] rounded-lg border px-3 text-sm font-medium tabular-nums',
+                'min-h-[44px] rounded-campo border px-3 text-cuerpo font-medium tabular-nums',
                 ventana === d
-                  ? 'border-sky-700 bg-sky-700 text-white dark:border-sky-500 dark:bg-sky-500 dark:text-neutral-900'
-                  : 'border-neutral-300 dark:border-neutral-600',
+                  ? 'border-terracota bg-terracota text-white '
+                  : 'border-borde ',
               )}
             >
               {d} días
             </button>
           ))}
         </div>
-        <p className="text-xs text-tinta-suave" aria-live="polite">
+        <p className="text-etiqueta text-tinta-suave" aria-live="polite">
           Ventana activa: {ventana} días
         </p>
 
@@ -324,7 +324,7 @@ export function Favoritos() {
           >
             {pasar.isPending ? 'Añadiendo…' : `Añadir los ${lista.length} a la lista`}
           </Boton>
-          <Link to="/cesta" className="text-sm underline">
+          <Link to="/cesta" className="text-cuerpo underline">
             {nombreDeDestino ? `Ver «${nombreDeDestino}»` : 'Ver la lista'}
           </Link>
         </div>
@@ -352,7 +352,7 @@ export function Favoritos() {
                     <span className="font-medium">{f.nombre}</span>
                   )}
                   {f.marca && (
-                    <p className="text-sm text-tinta-suave">{f.marca}</p>
+                    <p className="text-cuerpo text-tinta-suave">{f.marca}</p>
                   )}
                 </div>
                 <ElCambio f={f} />
@@ -364,12 +364,12 @@ export function Favoritos() {
                     −8,7 % no se sabe si es mucho o poco hasta que se ve de cuanto a cuanto. */}
                 {f.precio_unidad_antes_cent != null
                   && f.precio_unidad_antes_cent !== f.precio_unidad_cent && (
-                  <span className="ml-2 text-sm font-normal text-tinta-suave line-through">
+                  <span className="ml-2 text-cuerpo font-normal text-tinta-suave line-through">
                     antes {eurosUnidad(f.precio_unidad_antes_cent, f.unidad)}
                   </span>
                 )}
               </p>
-              <p className="text-sm text-tinta-suave">
+              <p className="text-cuerpo text-tinta-suave">
                 {cadena && <>en {nombreCadena(cadena)}</>}
                 {f.ahorro_pct != null && f.ahorro_pct > 0 && (
                   <> · −{porcentaje(f.ahorro_pct, 0)} frente a la más cara</>
@@ -410,8 +410,8 @@ export function Favoritos() {
       {sinCambio.length > 0 && (
         <section className="grid gap-3" aria-label="Sin cambio que medir todavía">
           <div>
-            <h2 className="text-base font-semibold">Sin cambio que medir todavía</h2>
-            <p className="text-sm text-tinta-suave">
+            <h2 className="text-entrada font-semibold">Sin cambio que medir todavía</h2>
+            <p className="text-cuerpo text-tinta-suave">
               Estos no se pueden comparar en la ventana de {ventana} días, y se dice por qué
               en vez de enseñar un cero.
             </p>

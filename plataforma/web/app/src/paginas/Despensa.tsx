@@ -62,34 +62,34 @@ export function Despensa() {
     return (
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">La despensa</h1>
-        <p className="text-amber-700">
+        <p className="text-aviso">
           No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la despensa este vacia.
         </p>
       </div>
     )
   }
-  if (error) return <p className="text-red-700">{textoDeError(error)}</p>
+  if (error) return <p className="text-error">{textoDeError(error)}</p>
 
   const existencias = data?.existencias ?? []
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">La despensa</h1>
-      <p className="text-sm text-tinta-suave">
+      <p className="text-cuerpo text-tinta-suave">
         Lo que hay en casa. <strong>Se declara</strong>, no se deduce de lo que se ha comprado:
         comprar algo no quiere decir que quede.
       </p>
 
       {data && data.sin_saber_cuanto > 0 && (
-        <p className="text-sm text-amber-700">
+        <p className="text-cuerpo text-aviso">
           {data.sin_saber_cuanto === 1
             ? 'Hay 1 cosa de la que no se sabe cuanto queda.'
             : `Hay ${data.sin_saber_cuanto} cosas de las que no se sabe cuanto queda.`}
         </p>
       )}
 
-      {aviso && <p className="text-sm text-red-700">{aviso}</p>}
-      {gastado && <p className="text-sm text-tinta-suave">{gastado}</p>}
+      {aviso && <p className="text-cuerpo text-error">{aviso}</p>}
+      {gastado && <p className="text-cuerpo text-tinta-suave">{gastado}</p>}
 
       {existencias.length === 0 ? (
         <Vacio titulo="La despensa esta vacia">
@@ -101,7 +101,7 @@ export function Despensa() {
             {existencias.map((e) => (
               <li key={e.texto} className="flex items-center justify-between gap-3 py-2">
                 <span>{e.texto}</span>
-                <span className={e.se_sabe ? 'text-tinta-suave' : 'text-amber-700'}>
+                <span className={e.se_sabe ? 'text-tinta-suave' : 'text-aviso'}>
                   {cuanto(e)}
                 </span>
                 <Boton onClick={() => gasta(e.texto)}>Gastar uno</Boton>
@@ -112,19 +112,19 @@ export function Despensa() {
       )}
 
       <Tarjeta>
-        <h2 className="text-sm font-semibold">Declarar lo que hay</h2>
+        <h2 className="text-cuerpo font-semibold">Declarar lo que hay</h2>
         <div className="mt-2 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col text-sm">
+          <label className="flex flex-col text-cuerpo">
             Que
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={texto}
                    onChange={(ev) => setTexto(ev.target.value)} placeholder="harina" />
           </label>
-          <label className="flex flex-col text-sm">
-            Cuanto <span className="text-xs text-tinta-suave">(vacio = no se sabe)</span>
+          <label className="flex flex-col text-cuerpo">
+            Cuanto <span className="text-etiqueta text-tinta-suave">(vacio = no se sabe)</span>
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={cantidad}
                    onChange={(ev) => setCantidad(ev.target.value)} placeholder="1" />
           </label>
-          <label className="flex flex-col text-sm">
+          <label className="flex flex-col text-cuerpo">
             Unidad
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={unidad}
                    onChange={(ev) => setUnidad(ev.target.value)} placeholder="kg" />

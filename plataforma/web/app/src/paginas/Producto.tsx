@@ -224,7 +224,7 @@ export function Producto() {
         {grupo && (
           <Link
             to={`/grupo/${grupo.grupo_id}`}
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
           >
             Ver las {grupo.cadenas} cadenas en columnas
           </Link>
@@ -242,12 +242,12 @@ export function Producto() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-28 w-28 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+            className="h-28 w-28 rounded-campo border border-borde bg-white object-contain "
           />
         )}
         <div className="min-w-[16rem] flex-1">
           <h1 className="text-xl font-bold leading-tight">{producto.nombre}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-cuerpo text-secundaria ">
             <Etiqueta tono="info">{nombreCadena(producto.fuente)}</Etiqueta>
             {producto.marca && <span>{producto.marca}</span>}
             <span>{textoCantidad(producto.cantidad, producto.unidad)}</span>
@@ -266,7 +266,7 @@ export function Producto() {
               comportamientos. */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
           <BotonAnadirACesta key={productoIdExacto} productoId={productoIdExacto} nombre={producto.nombre} />
-            <p className="text-sm text-tinta-suave">Añade este artículo de esta cadena, sin sustituirlo por otra marca.</p>
+            <p className="text-cuerpo text-tinta-suave">Añade este artículo de esta cadena, sin sustituirlo por otra marca.</p>
           </div>
           {grupo && (
             <div className="mt-2">
@@ -309,7 +309,7 @@ export function Producto() {
               precio_unidad_minimo: minimo,
             })
             if (!frase) return null
-            return <p className="mt-3 text-base font-semibold leading-snug">{frase}</p>
+            return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
           })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -318,7 +318,7 @@ export function Producto() {
               {eurosUnidad(producto.precio_unidad_cent, producto.unidad,
                            producto.precio_por_escurrido)}
               {producto.precio_por_escurrido && (
-                <span className="block text-xs font-normal text-tinta-suave">
+                <span className="block text-etiqueta font-normal text-tinta-suave">
                   sobre {textoCantidad((producto.peso_escurrido_g ?? 0) / 1000, 'kg')} escurridos
                 </span>
               )}
@@ -329,7 +329,7 @@ export function Producto() {
             {masBarato && (
               <Dato etiqueta="Más barato en">
                 {nombreCadena(masBarato.fuente)}
-                <span className="block text-xs font-normal text-tinta-suave">
+                <span className="block text-etiqueta font-normal text-tinta-suave">
                   {eurosUnidad(masBarato.precio_unidad_cent, producto.unidad)} · te ahorras{' '}
                   {eurosUnidad(masBarato.ahorro, producto.unidad)}
                 </span>
@@ -368,7 +368,7 @@ export function Producto() {
                 palabra en el nombre del producto, y decir "sin gluten" igual en
                 los dos casos seria mentir sin decir ninguna mentira. */}
             {origenDeSellos && (
-              <span className="text-xs text-tinta-suave">
+              <span className="text-etiqueta text-tinta-suave">
                 ({origenDeSellos})
               </span>
             )}
@@ -429,10 +429,10 @@ export function Producto() {
                     caro o barato. Las reglas (y sobre todo cuando NO hay frase) estan
                     en `logica/curva.ts`. */}
                 {curva.frase && (
-                  <p className="mt-2 text-base font-semibold leading-snug">{curva.frase}</p>
+                  <p className="mt-2 text-entrada font-semibold leading-snug">{curva.frase}</p>
                 )}
                 {curva.motivo && (
-                  <p className="mt-2 text-sm text-tinta-suave">{curva.motivo}</p>
+                  <p className="mt-2 text-cuerpo text-tinta-suave">{curva.motivo}</p>
                 )}
                 <dl className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                   <Dato etiqueta="Mínimo">{eurosUnidad(resumen.min, grupo.unidad)}</Dato>
@@ -442,7 +442,7 @@ export function Producto() {
                   <Dato etiqueta="Último dato">{eurosUnidad(resumen.ultimo, grupo.unidad)}</Dato>
                   <Dato etiqueta="Evolución">{porcentajeConSigno(evolucion)}</Dato>
                 </dl>
-                <p className="mt-2 text-xs text-tinta-suave">
+                <p className="mt-2 text-etiqueta text-tinta-suave">
                   {resumen.n} {resumen.n === 1 ? 'día' : 'días'} de histórico, del{' '}
                   {fechaTexto(historico.puntos[0]?.fecha ?? null)} al{' '}
                   {fechaTexto(historico.puntos[historico.puntos.length - 1]?.fecha ?? null)}. La
@@ -457,7 +457,7 @@ export function Producto() {
             sub={`${grupo.productos.length} productos en ${grupo.cadenas} ${grupo.cadenas === 1 ? 'cadena' : 'cadenas'} · datos del ${fechaTexto(grupo.fecha_datos ?? consulta.data?.fecha_datos ?? null)}`}
           >
             <TablaScroll etiqueta="Productos equivalentes" minAncho="44rem">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cuerpo">
                 <thead>
                   <tr>
                     <Th>Producto</Th>
@@ -497,7 +497,7 @@ export function Producto() {
                           ) / 10
                         : null
                     return (
-                      <tr key={p.producto_id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+                      <tr key={p.producto_id} className="hover:bg-marfil dark:hover:bg-neutral-800/60">
                         <Td>
                           {/* **44 px de alto, medido.** El 23 de septiembre de 2026 este
                               enlace medía 161 x **19**: es la forma de saltar a la ficha de
@@ -509,7 +509,7 @@ export function Producto() {
                             {p.nombre}
                           </Link>
                           {p.marca && (
-                            <span className="block text-xs text-tinta-suave">
+                            <span className="block text-etiqueta text-tinta-suave">
                               {p.marca}
                             </span>
                           )}
@@ -532,7 +532,7 @@ export function Producto() {
               </table>
             </TablaScroll>
             {grupo.cadenas >= 2 && (
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="mt-2 text-cuerpo text-secundaria ">
                 De la más barata a la más cara hay {porcentaje(grupo.ahorro_pct)} por unidad (
                 {euros(grupo.ahorro_cent)}). Son precios de una unidad comparable; los productos de
                 otra unidad no entran en esa cuenta.
@@ -567,7 +567,7 @@ export function Producto() {
           {miembro.alergenos && (
             // Los alérgenos van en rojo y los primeros: es lo único de esta
             // pantalla que puede hacer daño a alguien.
-            <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
+            <p className="mt-3 rounded-campo border border-error bg-marfil px-3 py-2 text-cuerpo text-error ">
               <strong>Alérgenos:</strong> {miembro.alergenos}
             </p>
           )}
@@ -580,15 +580,15 @@ export function Producto() {
                   se puede comer) y a 20 px no se acierta de pie con el carro en la otra mano.
                   Es la misma regla que la puerta comprueba ya pintada en las demás
                   pantallas. */}
-              <Resumen className="text-sm font-medium">
+              <Resumen className="text-cuerpo font-medium">
                 Ingredientes
               </Resumen>
-              <p className="mt-1 text-sm">{miembro.ingredientes}</p>
+              <p className="mt-1 text-cuerpo">{miembro.ingredientes}</p>
             </details>
           )}
 
           {miembro.descripcion && (
-            <p className="mt-3 text-sm text-neutral-700 dark:text-neutral-300">
+            <p className="mt-3 text-cuerpo text-secundaria ">
               {miembro.descripcion}
             </p>
           )}
@@ -600,18 +600,18 @@ export function Producto() {
               base dicha, mismo NO_LO_SE: es la misma informacion de otra fuente, no otra cosa. */}
           {!miembro.nutricion && filasOff.length > 0 && (
             <div className="mt-3">
-              <h3 className="text-sm font-semibold">Nutrición (por 100 g)</h3>
-              <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
+              <h3 className="text-cuerpo font-semibold">Nutrición (por 100 g)</h3>
+              <ul className="mt-1 grid gap-1 text-cuerpo sm:grid-cols-2">
                 {filasOff.map((f) => (
-                  <li key={f.clave} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
-                    <span className="text-neutral-600 dark:text-neutral-400">{f.texto}</span>
+                  <li key={f.clave} className="flex justify-between gap-2 border-b border-borde py-0.5 ">
+                    <span className="text-secundaria ">{f.texto}</span>
                     <span className="cifra font-medium">
                       {f.valor === null ? NO_LO_SE : `${NUMERO.format(f.valor)} ${f.unidad}`}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <p className="mt-1 text-[11px] text-secundaria ">
                 Datos de Open Food Facts. Pueden faltar o ser aproximados.
               </p>
             </div>
@@ -619,13 +619,13 @@ export function Producto() {
 
           {miembro.nutricion && (
             <div className="mt-3">
-              <h3 className="text-sm font-semibold">
+              <h3 className="text-cuerpo font-semibold">
                 Nutrición {miembro.nutricion_por ? `(por ${miembro.nutricion_por})` : ''}
               </h3>
-              <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
+              <ul className="mt-1 grid gap-1 text-cuerpo sm:grid-cols-2">
                 {filasNutricion(miembro.nutricion).map((f) => (
-                  <li key={f.clave} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
-                    <span className="text-neutral-600 dark:text-neutral-400">{f.texto}</span>
+                  <li key={f.clave} className="flex justify-between gap-2 border-b border-borde py-0.5 ">
+                    <span className="text-secundaria ">{f.texto}</span>
                     <span className="cifra font-medium">
                       {f.valor === null
                         ? NO_LO_SE
@@ -643,7 +643,7 @@ export function Producto() {
                 href={miembro.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm underline"
+                className="text-cuerpo underline"
               >
                 Ver en {nombreCadena(miembro.fuente)}
               </a>

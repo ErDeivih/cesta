@@ -121,7 +121,7 @@ export function LoQueSeCompra() {
 
   return (
     <Tarjeta>
-      <p className="text-sm text-tinta-suave">
+      <p className="text-cuerpo text-tinta-suave">
         Esto compara precios por unidad de grupos de productos entre supermercados.
         Los grupos pueden incluir marcas y formatos diferentes. Un
         ejemplo de hoy:
@@ -138,17 +138,17 @@ export function LoQueSeCompra() {
                   width={96}
                   height={96}
                   loading="lazy"
-                  className="h-24 w-24 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+                  className="h-24 w-24 rounded-campo border border-borde bg-white object-contain "
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}
                 />
               )}
-              <span className="text-sm font-medium leading-snug">{r.nombre}</span>
+              <span className="text-cuerpo font-medium leading-snug">{r.nombre}</span>
               <span className="cifra text-lg font-semibold">
                 {eurosUnidad(r.precio_unidad_cent, r.unidad)}
               </span>
-              <span className="text-sm text-tinta-suave">
+              <span className="text-cuerpo text-tinta-suave">
                 {r.cadena_mas_barata ? `en ${nombreCadena(r.cadena_mas_barata)}` : 'la mas barata'}
                 {pct != null && pct > 0 && ` · un ${pct} % menos`}
               </span>

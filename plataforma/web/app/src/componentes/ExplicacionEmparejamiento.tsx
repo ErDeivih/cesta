@@ -114,26 +114,26 @@ export function ExplicacionEmparejamiento({ grupo }: { grupo: Grupo }) {
 
   return (
     <div className="grid grid-cols-1 gap-2">
-      <p className="text-sm">
+      <p className="text-cuerpo">
         <Etiqueta tono="info">{campo}</Etiqueta>
       </p>
       {typeof valor === 'string' ? (
-        <p className="text-sm">{valor}</p>
+        <p className="text-cuerpo">{valor}</p>
       ) : pares.length > 0 ? (
-        <dl className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-1 text-cuerpo sm:grid-cols-2">
           {pares.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-2 border-b border-neutral-100 py-0.5 dark:border-neutral-700">
-              <dt className="text-neutral-600 dark:text-neutral-400">{k}</dt>
+            <div key={k} className="flex justify-between gap-2 border-b border-borde py-0.5 ">
+              <dt className="text-secundaria ">{k}</dt>
               <dd className="cifra font-medium">{v}</dd>
             </div>
           ))}
         </dl>
       ) : null}
       <details>
-        <Resumen className="text-xs text-sky-800 dark:text-sky-400">
+        <Resumen className="text-etiqueta text-terracota ">
           Ver el dato en crudo
         </Resumen>
-        <pre className="mt-1 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
+        <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
           {JSON.stringify(valor, null, 2)}
         </pre>
       </details>

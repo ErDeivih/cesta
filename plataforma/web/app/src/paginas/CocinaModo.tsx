@@ -89,11 +89,11 @@ export function CocinaModo() {
     return (
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">Cocina</h1>
-        <p className="text-amber-700">
+        <p className="text-aviso">
           No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la receta no este
           empezada.
         </p>
-        {error ? <p className="text-sm text-tinta-suave">{textoDeError(error)}</p> : null}
+        {error ? <p className="text-cuerpo text-tinta-suave">{textoDeError(error)}</p> : null}
       </div>
     )
   }
@@ -104,9 +104,9 @@ export function CocinaModo() {
     return (
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">Cocina</h1>
-        <p className="text-sm text-tinta-suave">Esta receta no esta empezada.</p>
+        <p className="text-cuerpo text-tinta-suave">Esta receta no esta empezada.</p>
         <Boton onClick={() => empieza.mutate()} disabled={empieza.isPending}>Empezar a cocinar</Boton>
-        {empieza.error ? <p className="text-sm text-red-700">{textoDeError(empieza.error)}</p> : null}
+        {empieza.error ? <p className="text-cuerpo text-error">{textoDeError(empieza.error)}</p> : null}
       </div>
     )
   }
@@ -114,13 +114,13 @@ export function CocinaModo() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Cocina</h1>
-      <p className="text-sm text-tinta-suave">
+      <p className="text-cuerpo text-tinta-suave">
         Vas por el paso <strong>{(data.paso ?? 0) + 1}</strong>. {data.hechos} ingredientes usados.
       </p>
 
       {data.paso_actual && (
         <Tarjeta>
-          <p className="text-base">{data.paso_actual}</p>
+          <p className="text-entrada">{data.paso_actual}</p>
         </Tarjeta>
       )}
 
@@ -129,7 +129,7 @@ export function CocinaModo() {
           <ul className="divide-y divide-borde">
             {data.temporizadores.map((t, i) => (
               // **Un temporizador que ya paso se pinta distinto, y sigue estando.**
-              <li key={i} className={`py-2 ${t.terminado ? 'text-amber-700' : ''}`}>
+              <li key={i} className={`py-2 ${t.terminado ? 'text-aviso' : ''}`}>
                 {t.minutos} min — {cuantoTiempo(segundosQueQuedan(t.acaba_en))}
               </li>
             ))}

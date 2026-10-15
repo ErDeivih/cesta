@@ -228,7 +228,7 @@ export function Grupo() {
         </Boton>
         <Link
           to="/escaner"
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-neutral-300 px-3 text-sm dark:border-neutral-600"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-campo border border-borde px-3 text-cuerpo "
         >
           <IconoCodigoBarras width={18} height={18} />
           Escanear un código
@@ -248,7 +248,7 @@ export function Grupo() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-[72px] w-[72px] shrink-0 rounded-lg border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+            className="h-[72px] w-[72px] shrink-0 rounded-campo border border-borde bg-white object-contain "
           />
         )}
         {/* **`min-w-0`, y la foto de 72 px, desde el 27 de septiembre de 2026.** Antes la
@@ -278,7 +278,7 @@ export function Grupo() {
               *antes* de él) y el espacio de detrás es duro, para que no pueda quedar colgando.
               Con `whitespace-nowrap` en todo el trozo se arreglaba lo de colgar y se rompía
               otra cosa: la línea se salía del ancho y la fecha salía cortada. */}
-          <p className="mt-1 break-words text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mt-1 break-words text-cuerpo text-secundaria ">
             <span>{grupo.productos.length} productos</span>
             <span>
               {' ·\u00a0'}
@@ -326,7 +326,7 @@ export function Grupo() {
               precio_unidad_minimo: ganadora?.producto.precio_unidad_cent ?? null,
             })
             if (!frase) return null
-            return <p className="mt-3 text-base font-semibold leading-snug">{frase}</p>
+            return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
           })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -334,7 +334,7 @@ export function Grupo() {
               {ganadora ? (
                 <>
                   {nombreCadena(ganadora.producto.fuente)}
-                  <span className="block text-xs font-normal text-tinta-suave">
+                  <span className="block text-etiqueta font-normal text-tinta-suave">
                     {eurosUnidad(ganadora.producto.precio_unidad_cent,
                                  ganadora.producto.unidad,
                                  ganadora.producto.precio_por_escurrido)}
@@ -351,7 +351,7 @@ export function Grupo() {
             </Dato>
             <Dato etiqueta="Precios que deciden">
               {decidientes.length} de {alternativas.length}
-              <span className="block text-xs font-normal text-tinta-suave">
+              <span className="block text-etiqueta font-normal text-tinta-suave">
                 los de más de {diasValidos} días no cuentan
               </span>
             </Dato>
@@ -412,10 +412,10 @@ export function Grupo() {
             ))}
           </div>
           {columnas.length > CADENAS_A_LA_VISTA && (
-            <details className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800">
-              <Resumen className="text-sm font-semibold">
+            <details className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800">
+              <Resumen className="text-cuerpo font-semibold">
                 Ver {columnas.length - CADENAS_A_LA_VISTA === 1 ? 'la otra cadena' : `las otras ${columnas.length - CADENAS_A_LA_VISTA} cadenas`}
-                <span className="ml-2 text-xs font-normal text-tinta-suave">
+                <span className="ml-2 text-etiqueta font-normal text-tinta-suave">
                   {columnas.slice(CADENAS_A_LA_VISTA).map(([c]) => nombreCadena(c)).join(' · ')}
                 </span>
               </Resumen>
@@ -466,10 +466,10 @@ function ColumnaDeCadena({ cadena, lista, indice, ganadora, serie, fechaDatos, p
     <section
       key={cadena}
       aria-label={`Alternativas de ${cadena}`}
-      className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
     >
       <header className="mb-2 flex flex-wrap items-center gap-2">
-        <h2 className="text-base font-semibold">{nombreCadena(cadena)}</h2>
+        <h2 className="text-entrada font-semibold">{nombreCadena(cadena)}</h2>
         {indice === 0 && ganadora && <Etiqueta tono="bien">la mejor contigo</Etiqueta>}
         {alDia ? (
           <Etiqueta tono="dato">al día</Etiqueta>
@@ -571,10 +571,10 @@ function FichaAlternativa({
   return (
     <article
       className={cx(
-        'rounded-lg border p-3',
+        'rounded-campo border p-3',
         alternativa.decide
-          ? 'border-neutral-200 dark:border-neutral-700'
-          : 'border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30',
+          ? 'border-borde '
+          : 'border-aviso bg-amber-50/50 dark:bg-amber-950/30',
       )}
     >
       <div className="flex items-start gap-3">
@@ -588,13 +588,13 @@ function FichaAlternativa({
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-[72px] w-[72px] shrink-0 rounded border border-neutral-200 bg-white object-contain dark:border-neutral-700"
+            className="h-[72px] w-[72px] shrink-0 rounded border border-borde bg-white object-contain "
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-snug">{p.nombre}</p>
-          {p.marca && <p className="text-xs text-neutral-600 dark:text-neutral-400">{p.marca}</p>}
-          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+          <p className="text-cuerpo font-medium leading-snug">{p.nombre}</p>
+          {p.marca && <p className="text-etiqueta text-secundaria ">{p.marca}</p>}
+          <p className="text-etiqueta text-secundaria ">
             {textoCantidad(p.cantidad, p.unidad)}
             {p.unidades_pack && ` · pack de ${p.unidades_pack}`}
             {/* **El peso escurrido, cuando la cadena lo publica** (hoy solo Mercadona, 179
@@ -614,19 +614,19 @@ function FichaAlternativa({
 
       <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="cifra text-lg font-bold">{euros(p.precio_cent)}</span>
-        <span className="cifra text-sm text-neutral-700 dark:text-neutral-300">
+        <span className="cifra text-cuerpo text-secundaria ">
           {eurosUnidad(p.precio_unidad_cent, p.unidad, p.precio_por_escurrido)}
         </span>
         <span
           className={cx(
-            'cifra text-sm font-semibold',
+            'cifra text-cuerpo font-semibold',
             !alternativa.decide
-              ? 'text-amber-800 dark:text-amber-400'
+              ? 'text-aviso '
               : alternativa.diferenciaPct === null
                 ? 'text-tinta-suave'
                 : alternativa.diferenciaPct <= 0
-                  ? 'text-emerald-800 dark:text-emerald-400'
-                  : 'text-neutral-800 dark:text-neutral-200',
+                  ? 'text-bien '
+                  : 'text-tinta-fuerte ',
           )}
         >
           {textoDiferencia(alternativa)}
@@ -650,7 +650,7 @@ function FichaAlternativa({
       </div>
 
       {p.promo && (
-        <p className="mt-1 text-xs text-neutral-700 dark:text-neutral-300">
+        <p className="mt-1 text-etiqueta text-secundaria ">
           {p.promo}
           {p.promo_hasta && ` · hasta el ${fechaTexto(p.promo_hasta)}`}
           {p.promo_club && ' · solo con tarjeta: no baja lo que pagas en caja'}
@@ -658,22 +658,22 @@ function FichaAlternativa({
       )}
 
       {p.advertencias.length > 0 && (
-        <p className="mt-1 text-xs text-amber-800 dark:text-amber-400">
+        <p className="mt-1 text-etiqueta text-aviso ">
           {p.advertencias.join('. ')}
         </p>
       )}
 
       {alternativa.motivoNoDecide && (
-        <p className="mt-1 text-xs font-medium text-amber-800 dark:text-amber-400">
+        <p className="mt-1 text-etiqueta font-medium text-aviso ">
           {/* Se dice también que va al final, porque si no la nota de abajo
               (que puede ser la más alta) no cuadra con la posición. */}
           Va la última de su columna. {alternativa.motivoNoDecide}
         </p>
       )}
 
-      <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+      <p className="mt-2 text-etiqueta text-secundaria ">
         Nota contigo:{' '}
-        <strong className="cifra font-semibold text-neutral-900 dark:text-neutral-100">
+        <strong className="cifra font-semibold text-tinta-fuerte ">
           {alternativa.puntos === null ? 'no lo sé' : numero(alternativa.puntos, 1)}
         </strong>{' '}
         de 100
@@ -685,10 +685,10 @@ function FichaAlternativa({
             de 12 px con un `cursor-pointer` no es un objetivo: es una trampa, y es de las
             cosas que se pulsan con el carro al lado. Se le dan los 44 px del minimo, que
             aqui no se notan porque va al final de la tarjeta de cada alternativa. */}
-        <Resumen className="text-xs text-sky-800 dark:text-sky-400">
+        <Resumen className="text-etiqueta text-terracota ">
           Por qué está en esta posición
         </Resumen>
-        <ul className="mt-1 grid gap-0.5 text-xs">
+        <ul className="mt-1 grid gap-0.5 text-etiqueta">
           {componentes.map((c) => (
             <li key={c.clave} className="flex justify-between gap-2">
               <span>
@@ -700,7 +700,7 @@ function FichaAlternativa({
             </li>
           ))}
         </ul>
-        <p className="mt-1 text-xs text-tinta-suave">
+        <p className="mt-1 text-etiqueta text-tinta-suave">
           La nota reparte los pesos solo entre los componentes con dato: lo que no sabemos no
           resta. Las alternativas sin precio por unidad no sacan un cero por eso.
         </p>
@@ -708,7 +708,7 @@ function FichaAlternativa({
 
       <div className="mt-2">
         {chispaBloqueada ? (
-          <p className="text-xs text-tinta-suave">
+          <p className="text-etiqueta text-tinta-suave">
             No pinto el histórico: esta cadena tiene más de un producto en el grupo y la serie de
             `/api/grupo` no dice de cuál es cada punto.
           </p>
@@ -721,10 +721,10 @@ function FichaAlternativa({
         )}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2 text-xs">
+      <div className="mt-2 flex flex-wrap gap-2 text-etiqueta">
         <Link
           to={`/producto/${p.fuente}/${p.id_fuente}`}
-          className="inline-flex min-h-[44px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
+          className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-2 font-medium hover:bg-marfil dark:hover:bg-papel"
         >
           Ficha e histórico
         </Link>
@@ -734,7 +734,7 @@ function FichaAlternativa({
             target="_blank"
             // `noopener` porque si no la pagina de destino puede manejar esta.
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center rounded-md border border-neutral-300 px-2 font-medium hover:bg-neutral-50 dark:border-neutral-600 dark:hover:bg-neutral-700"
+            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-2 font-medium hover:bg-marfil dark:hover:bg-papel"
           >
             Ver en {nombreCadena(p.fuente)}
           </a>
@@ -742,7 +742,7 @@ function FichaAlternativa({
       </div>
 
       {fechaDatos && !alternativa.decide && (
-        <p className="mt-1 text-xs text-tinta-suave">
+        <p className="mt-1 text-etiqueta text-tinta-suave">
           Datos del grupo: {fechaTexto(fechaDatos)}.
         </p>
       )}

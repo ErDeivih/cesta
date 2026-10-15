@@ -82,7 +82,7 @@ export function Ajustes() {
     <div className="grid gap-4">
       <header>
         <h1 className="text-xl font-semibold">Ajustes</h1>
-        <p className="text-sm text-tinta-suave">
+        <p className="text-cuerpo text-tinta-suave">
           Has entrado como <strong>{sesion.data.usuario.usuario}</strong>.
           <button
             className="ml-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline"
@@ -97,8 +97,8 @@ export function Ajustes() {
       </header>
 
       <Tarjeta>
-        <h2 className="mb-1 text-base font-semibold">Las cadenas que tienes cerca</h2>
-        <p className="mb-3 text-sm text-tinta-suave">
+        <h2 className="mb-1 text-entrada font-semibold">Las cadenas que tienes cerca</h2>
+        <p className="mb-3 text-cuerpo text-tinta-suave">
           Marca las que te pillan a mano. Con eso puesto, la búsqueda y el panel
           dejan de ofrecerte cosas de una cadena a la que no vas. Sin ninguna
           marcada se miran las cinco, que es lo que hace por defecto.
@@ -113,7 +113,7 @@ export function Ajustes() {
                 disabled={guarda.isPending}
                 aria-pressed={dentro}
                 className={
-                  'inline-flex min-h-[44px] items-center rounded-full border px-3 py-1 text-sm ' +
+                  'inline-flex min-h-[44px] items-center rounded-full border px-3 py-1 text-cuerpo ' +
                   (dentro
                     ? 'border-bien bg-bien-suave font-medium'
                     : 'border-borde')
@@ -123,7 +123,7 @@ export function Ajustes() {
               </button>
             )
           })}
-          {estado.isPending && <span className="text-sm text-tinta-suave">…</span>}
+          {estado.isPending && <span className="text-cuerpo text-tinta-suave">…</span>}
         </div>
         {puestas.length > 0 && (
           <Boton
@@ -135,9 +135,9 @@ export function Ajustes() {
             Quitar todas
           </Boton>
         )}
-        {guardado && <p className="mt-2 text-sm"><Etiqueta tono="bien">{guardado}</Etiqueta></p>}
+        {guardado && <p className="mt-2 text-cuerpo"><Etiqueta tono="bien">{guardado}</Etiqueta></p>}
         {guarda.isError && (
-          <p className="mt-2 text-sm text-aviso">{textoDeError(guarda.error)}</p>
+          <p className="mt-2 text-cuerpo text-aviso">{textoDeError(guarda.error)}</p>
         )}
       </Tarjeta>
 
@@ -147,7 +147,7 @@ export function Ajustes() {
           escribir el propio usuario. Un "¿seguro?" se pulsa sin leer -- lo hacia asi la
           interfaz vieja (`app.js:1571-1603`) y la razon sigue siendo la misma. */}
       <Tarjeta titulo="Darme de baja">
-        <p className="text-sm text-tinta-suave">
+        <p className="text-cuerpo text-tinta-suave">
           Se borran <strong>tus listas, tus favoritos y tu cuenta</strong>. Lo que añadiste
           a listas de otras personas se queda ahí, sin tu nombre, para no vaciarles la
           compra. Esto no se puede deshacer.
@@ -186,7 +186,7 @@ export function Ajustes() {
               </Boton>
             </div>
             {borra.isError && (
-              <p className="text-sm text-aviso">{textoDeError(borra.error)}</p>
+              <p className="text-cuerpo text-aviso">{textoDeError(borra.error)}</p>
             )}
           </div>
         )}
@@ -205,9 +205,9 @@ export function Ajustes() {
             · y los datos viven en el ordenador de casa, que es la mitad del proyecto.
 
           Sin encabezado de seccion a proposito: es un pie de pagina, no una pantalla que
-          nadie viene a mirar. `text-xs` en vez de `text-sm` porque no se lee entero, se
+          nadie viene a mirar. `text-etiqueta` en vez de `text-cuerpo` porque no se lee entero, se
           consulta; y sigue por encima del minimo de contraste (lo mide la puerta). */}
-      <footer className="mt-2 border-t border-neutral-200 pt-4 text-xs text-tinta-suave dark:border-neutral-700">
+      <footer className="mt-2 border-t border-borde pt-4 text-etiqueta text-tinta-suave ">
         <p>
           Los precios son orientativos y pueden variar: los publica cada cadena y Cesta se
           limita a leerlos. Cesta <strong>no está afiliada, asociada ni patrocinada</strong>{' '}

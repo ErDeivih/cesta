@@ -42,7 +42,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
   const conPuntos = series.filter((s) => s.puntos.length > 0)
   if (conPuntos.length === 0) {
     return (
-      <p className="text-sm text-tinta-suave">
+      <p className="text-cuerpo text-tinta-suave">
         Todavía no hay dos capturas que comparar: el índice empieza a moverse en la segunda.
       </p>
     )
@@ -76,7 +76,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
           x2={ancho - margen.derecha}
           y1={y(v)}
           y2={y(v)}
-          className="stroke-neutral-200 dark:stroke-neutral-700"
+          className="stroke-borde "
           strokeWidth={1}
         />
         <text x={margen.izquierda - 7} y={y(v) + 3.5} textAnchor="end" className="fill-current text-[9px]">
@@ -191,7 +191,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
           x2={ancho - margen.derecha}
           y1={y(100)}
           y2={y(100)}
-          className="stroke-neutral-400 dark:stroke-neutral-500"
+          className="stroke-secundaria "
           strokeWidth={1}
           strokeDasharray="4 3"
         />
@@ -200,7 +200,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
       </svg>
       {/* La leyenda es el mapa entre color y cadena. Va con el nombre escrito
           porque un color solo no dice cuál es cuál. */}
-      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-etiqueta">
         {conPuntos.map((s) => (
           <li key={s.cadena} className="flex items-center gap-1.5">
             <i
@@ -215,7 +215,7 @@ export function GraficoIndice({ series, alto = 240 }: Props) {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-tinta-suave">
+      <p className="text-etiqueta text-tinta-suave">
         Del {fechaLegible(fechas[0], true)} al {fechaLegible(fechas[fechas.length - 1], true)}. El
         dibujo ayuda a ver la tendencia; los números que se leen son los de la tabla.
         {saltos.length > 0 && (

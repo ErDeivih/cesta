@@ -153,7 +153,7 @@ export function Escaner() {
             en un móvil estira el formulario 200 px más allá de la pantalla y
             aparece scroll horizontal en toda la página. */}
         <div className="flex min-w-0 flex-col gap-1 sm:flex-1">
-          <label htmlFor="ean" className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+          <label htmlFor="ean" className="text-etiqueta font-medium text-secundaria ">
             Código de barras
           </label>
           <input
@@ -167,7 +167,7 @@ export function Escaner() {
             autoFocus
             enterKeyHint="search"
             placeholder="8410655002410"
-            className="w-full min-h-[48px] rounded-xl border border-neutral-300 bg-white px-4 py-2 font-mono text-lg tracking-wider dark:border-neutral-600 dark:bg-neutral-800"
+            className="w-full min-h-[48px] rounded-tarjeta border border-borde bg-white px-4 py-2 font-mono text-lg tracking-wider dark:bg-neutral-800"
           />
         </div>
         <Boton type="submit" variante="principal" disabled={!codigo.trim()}>
@@ -186,7 +186,7 @@ export function Escaner() {
         )}
       </form>
 
-      <p className="text-xs text-tinta-suave">
+      <p className="text-etiqueta text-tinta-suave">
         Se acepta el código como lo lea el lector: con espacios, con guiones y con ceros de más
         (EAN-13 y UPC-12 son el mismo número escrito distinto).
         {!hayDetector && (
@@ -201,11 +201,11 @@ export function Escaner() {
       {avisoCamara && <Aviso tono="aviso">{avisoCamara}</Aviso>}
 
       {camara && (
-        <div className="overflow-hidden rounded-xl border border-neutral-300 dark:border-neutral-600">
+        <div className="overflow-hidden rounded-tarjeta border border-borde ">
           {/* El vídeo no lleva `autoPlay` en el JSX: se arranca a mano al
               conectar el flujo, que es cuando el elemento ya existe. */}
           <video ref={video} playsInline muted className="max-h-[60vh] w-full bg-black object-cover" />
-          <p className="bg-white px-3 py-2 text-sm dark:bg-neutral-800">
+          <p className="bg-white px-3 py-2 text-cuerpo dark:bg-neutral-800">
             Apunta al código de barras. Cuando lo lea, se busca solo.
           </p>
         </div>
@@ -233,7 +233,7 @@ export function Escaner() {
             <strong>Motivo:</strong> {perdido.motivo}
           </p>
           {perdido.sugerencia && <p className="mt-1">{perdido.sugerencia}</p>}
-          <p className="mt-2 text-xs">
+          <p className="mt-2 text-etiqueta">
             Datos del {fecha(perdido.fecha_datos)}.{' '}
             {perdido.motivo === 'desconocido' &&
               'El motivo «sin_ean_en_esa_cadena» todavía no se da nunca: necesitaría un parámetro `cadena` que no está implementado.'}
@@ -249,7 +249,7 @@ export function Escaner() {
           <div className="flex flex-wrap items-start gap-4">
             <div className="min-w-[16rem] flex-1">
               <p className="font-medium">{hallado.producto.nombre}</p>
-              <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-cuerpo text-secundaria ">
                 <Etiqueta tono="info">{nombreCadena(hallado.producto.fuente)}</Etiqueta>
                 {hallado.producto.marca && <span>{hallado.producto.marca}</span>}
                 <span>
@@ -261,7 +261,7 @@ export function Escaner() {
                 <span className="cifra text-2xl font-bold">
                   {euros(hallado.producto.precio_cent)}
                 </span>
-                <span className="cifra text-sm text-neutral-700 dark:text-neutral-300">
+                <span className="cifra text-cuerpo text-secundaria ">
                   {eurosUnidad(hallado.producto.precio_unidad_cent, hallado.producto.unidad)}
                 </span>
               </p>
@@ -269,7 +269,7 @@ export function Escaner() {
             {hallado.grupo_id !== null ? (
               <Link
                 to={`/grupo/${hallado.grupo_id}`}
-                className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-4 font-medium text-white hover:bg-sky-800 dark:bg-sky-700"
+                className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-4 font-medium text-white hover:bg-terracota "
               >
                 Ver el grupo y las otras cadenas
               </Link>
@@ -291,7 +291,7 @@ export function Escaner() {
               </Aviso>
             ) : (
               <TablaScroll etiqueta="Comparación entre cadenas" minAncho="34rem">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full border-collapse text-cuerpo">
                   <thead>
                     <tr>
                       <Th>Cadena</Th>
@@ -321,7 +321,7 @@ export function Escaner() {
                 </table>
               </TablaScroll>
             )}
-            <p className="mt-1 text-xs text-tinta-suave">
+            <p className="mt-1 text-etiqueta text-tinta-suave">
               La diferencia se mide contra el precio por unidad más bajo de la comparación, no
               contra el precio del envase.
             </p>
@@ -329,10 +329,10 @@ export function Escaner() {
 
           {hallado.nota != null && (
             <details className="mt-3">
-              <Resumen className="text-xs text-sky-800 dark:text-sky-400">
+              <Resumen className="text-etiqueta text-terracota ">
                 La nota del producto (dato en crudo)
               </Resumen>
-              <pre className="mt-1 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
+              <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
                 {JSON.stringify(hallado.nota, null, 2)}
               </pre>
             </details>

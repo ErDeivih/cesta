@@ -36,13 +36,13 @@ export function VistasGuardadas({ consulta, onAplicar }: Props) {
       {vistas.map((v) => (
         <span
           key={v.nombre}
-          className="inline-flex items-center overflow-hidden rounded-lg border border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800"
+          className="inline-flex items-center overflow-hidden rounded-campo border border-borde bg-white dark:bg-neutral-800"
         >
           <button
             type="button"
             onClick={() => onAplicar(v.consulta)}
             title={v.consulta || 'Sin filtros'}
-            className="min-h-[44px] px-3 py-1 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-700"
+            className="min-h-[44px] px-3 py-1 text-cuerpo font-medium hover:bg-marfil dark:hover:bg-papel"
           >
             {v.nombre}
           </button>
@@ -50,7 +50,7 @@ export function VistasGuardadas({ consulta, onAplicar }: Props) {
             type="button"
             aria-label={`Borrar la vista ${v.nombre}`}
             onClick={() => setVistas(borrarVista(v.nombre))}
-            className="min-h-[44px] min-w-[44px] border-l border-neutral-300 px-2 text-tinta-suave hover:bg-neutral-50 hover:text-red-700 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-red-400"
+            className="min-h-[44px] min-w-[44px] border-l border-borde px-2 text-tinta-suave hover:bg-marfil hover:text-error dark:hover:bg-papel dark:hover:text-error"
           >
             ×
           </button>

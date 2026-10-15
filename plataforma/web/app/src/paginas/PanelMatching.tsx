@@ -99,7 +99,7 @@ export function PanelMatching() {
               <Dato etiqueta="Pasadas guardadas">{d.ejecuciones.length}</Dato>
             </dl>
             {d.ultima.huella_catalogo && (
-              <p className="mt-2 text-xs text-tinta-suave">
+              <p className="mt-2 text-etiqueta text-tinta-suave">
                 Huella del catálogo: <code>{d.ultima.huella_catalogo}</code>. Dos pasadas con la
                 misma huella se hicieron sobre el mismo catálogo y se pueden comparar.
               </p>
@@ -111,12 +111,12 @@ export function PanelMatching() {
             sub="El nombre de cada métrica es el que usa el emparejador; no se traduce"
           >
             {d.metricas.length === 0 ? (
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="text-cuerpo text-secundaria ">
                 Esta pasada no ha dejado métricas.
               </p>
             ) : (
               <TablaScroll etiqueta="Métricas del matching" minAncho="34rem">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full border-collapse text-cuerpo">
                   <thead>
                     <tr>
                       <Th>Métrica</Th>
@@ -173,13 +173,13 @@ export function PanelMatching() {
               </TablaScroll>
             )}
             {d.anterior ? (
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="mt-2 text-cuerpo text-secundaria ">
                 Comparado con la pasada anterior ({d.anterior.ejecucion_id}). La comparación con la
                 anterior es la medida de estabilidad: un emparejador que cambia de opinión cada día
                 no sirve para decidir una compra.
               </p>
             ) : (
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="mt-2 text-cuerpo text-secundaria ">
                 Es la primera pasada guardada, así que no hay con qué compararla.
               </p>
             )}
@@ -220,19 +220,19 @@ export function PanelMatching() {
                 {d.pares.map((p, i) => (
                   <li
                     key={`${p.producto_a}-${p.producto_b}-${i}`}
-                    className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"
+                    className="rounded-campo border border-borde p-3 "
                   >
-                    <p className="text-xs uppercase tracking-wide text-tinta-suave">Producto A</p>
+                    <p className="text-etiqueta uppercase tracking-wide text-tinta-suave">Producto A</p>
                     <EnlaceProducto clave={p.producto_a} nombre={p.nombre_a} fuente={p.fuente_a} />
-                    <p className="mt-2 text-xs uppercase tracking-wide text-tinta-suave">
+                    <p className="mt-2 text-etiqueta uppercase tracking-wide text-tinta-suave">
                       Producto B
                     </p>
                     <EnlaceProducto clave={p.producto_b} nombre={p.nombre_b} fuente={p.fuente_b} />
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-cuerpo">
                       <Nivel nivel={p.nivel} />
                       <span>
                         <span className="text-tinta-suave">método </span>
-                        <code className="text-xs">{p.metodo ?? 'no lo sé'}</code>
+                        <code className="text-etiqueta">{p.metodo ?? 'no lo sé'}</code>
                       </span>
                       <span title="Confianza del emparejador, de 0 a 1">
                         <span className="text-tinta-suave">confianza </span>
@@ -242,13 +242,13 @@ export function PanelMatching() {
                     {/* Los rasgos son la explicabilidad: sin ellos, un par aceptado es una caja
                         negra. */}
                     <details className="mt-2">
-                      <Resumen className="text-xs text-sky-800 dark:text-sky-400">
+                      <Resumen className="text-etiqueta text-terracota ">
                         Por qué: {Object.keys(p.features).length} rasgos
                       </Resumen>
-                      <ul className="mt-1 grid grid-cols-1 gap-0.5 text-xs">
+                      <ul className="mt-1 grid grid-cols-1 gap-0.5 text-etiqueta">
                         {Object.entries(p.features).map(([k, v]) => (
                           <li key={k} className="flex justify-between gap-3">
-                            <span className="text-neutral-600 dark:text-neutral-400">{k}</span>
+                            <span className="text-secundaria ">{k}</span>
                             <span className="cifra">
                               {v === null || v === undefined
                                 ? 'no lo sé'
@@ -270,13 +270,13 @@ export function PanelMatching() {
             )}
           </Tarjeta>
 
-          <details className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+          <details className="rounded-tarjeta border border-borde p-3 ">
             {/* El desplegable tambien se pulsa: medido el 27 de septiembre de 2026, medía
                 **332 x 20 px**. Es la puerta a la respuesta en crudo, y de pie no se acierta. */}
-            <Resumen className="text-sm">
+            <Resumen className="text-cuerpo">
               Ver la respuesta en crudo
             </Resumen>
-            <pre className="mt-2 overflow-x-auto rounded-lg bg-neutral-100 p-2 text-xs dark:bg-neutral-900">
+            <pre className="mt-2 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
               {JSON.stringify(d, null, 2)}
             </pre>
           </details>
@@ -342,7 +342,7 @@ function EnlaceProducto({
           {clave} (ya no está en el catálogo)
         </span>
       )}
-      <span className="block text-xs text-tinta-suave">{clave}</span>
+      <span className="block text-etiqueta text-tinta-suave">{clave}</span>
     </>
   )
 }
@@ -370,14 +370,14 @@ function SinRuta() {
       </Vacio>
 
       <Tarjeta titulo="Qué devuelve cuando está">
-        <ul className="grid grid-cols-1 gap-1 text-sm">
+        <ul className="grid grid-cols-1 gap-1 text-cuerpo">
           <li>· <code>ultima</code>: la ejecución de la última pasada, con versión del modelo, productos y umbral.</li>
           <li>· <code>metricas</code>: cada métrica con su nombre y su valor.</li>
           <li>· <code>cambios</code>: qué se ha movido respecto a la pasada anterior (la medida de estabilidad).</li>
           <li>· <code>pares</code>: una muestra de pares aceptados, con nivel, método, confianza y los rasgos que los sostienen.</li>
           <li>· <code>ejecuciones</code>: todas las pasadas guardadas en <code>data/gold/matching/</code>.</li>
         </ul>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mt-2 text-cuerpo text-secundaria ">
           Está en <code>catalogo.matching()</code>. Si al implementarlo cambia el contrato, se cambia
           también <code>src/tipos.ts</code> aquí.
         </p>
@@ -391,7 +391,7 @@ function SinRuta() {
         </p>
       </Aviso>
 
-      <p className="text-sm">
+      <p className="text-cuerpo">
         Mientras tanto, los números que sí existen están en{' '}
         <Link to="/panel" className="underline">
           el panel
