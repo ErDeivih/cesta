@@ -108,3 +108,37 @@ resolver si el movil desborda de verdad o si era un recorte de Chrome.* *
 *** Y la afirmacion «el movil desborda horizontalmente» sigue RETIRADA *** *(-- *no
 probada --), *y **eso es lo correcto**: *no se sostiene una afirmacion con una captura
 que no puede probarla.* *
+
+---
+
+## 6. *** Y un CAMBIO INERTE, *que es peor que un falso negativo ***
+
+*15/10/2026, ronda 24. *Se aplico `flex min-h-full flex-col gap-N` a la raiz de **siete
+pantallas** *(-- `Cesta`, *`ImportarReceta`, *`Escaner`, *`Panel`, *`Despensa`,
+*`CocinaModo`, *`PanelMatching`, *`Producto` --)* *y **solo dos hacen algo.*** *
+
+```
+*** LO QUE PARECE ***: *«poner `min-h-full` en la raiz hace que la pantalla llene» ⚠️
+*** LO QUE ES ***: *`min-h-full` *y `flex-col` hacen que *** el CONTENEDOR *** llene,
+   *pero *** los hijos NO crecen solos *** *
+*** -> *y en `Buscar` y `Cesta` **si** crecia algo, *porque ahi se le puso *** `grow`
+   *al hijo *** *(-- *el estado vacio --)* ✓
+*** -> *en las otras *** no hay ningun `grow` ***, *asi que *** el cambio es inerte ***:
+   *el contenedor mide mas, *y **nada lo ocupa.*** ⚠️⚠️
+*** -> *y se ve en `docs/ui/capturas/11-panel-FASE5.png`: *`/panel` sigue con *** unos
+   *550 px de vacio *** debajo de la tarjeta de error ✓✓✓
+```
+
+*** Y por que es peor que un falso negativo ***: *un falso negativo **al menos** no toca
+nada.* *Un cambio inerte **ensucia el historial**, *parece que se ha arreglado algo, *
+*y **cuenta como trabajo hecho** *en los informes.* *Es la version en el codigo de
+**una afirmacion sin evidencia.*** *
+
+*** Y la regla que sale ***: *un cambio de maquetacion **se comprueba mirando**, *y si no
+se puede mirar la rama donde actua, *se dice **que no se ha comprobado**, *y **no se
+cuenta como hecho.*** *Aplicarlo a siete ficheros «porque el patron es seguro» es
+verdad *-- *no rompe nada --* *y **no es lo mismo que arreglar.*** *
+
+*** Y la correccion ***: *el patron son **las dos cosas juntas** -- *el contenedor que
+llena **y** el hijo que crece --, *y por eso los siete sitios necesitan **una pasada
+mas** que mire **cual es el bloque que debe crecer** en cada uno.* *
