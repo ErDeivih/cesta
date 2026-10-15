@@ -13,6 +13,7 @@ import { useState } from 'react'
 
 import { declara, consume, useDespensa } from '../api/despensa'
 import { textoDeError, useSeAtasca } from '../api/cliente'
+import { Fallo } from '../componentes/ui'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
 
 /** **Como se lee una cantidad.** *Y `null` **no** es `0`: es «no se sabe».* */
@@ -68,7 +69,18 @@ export function Despensa() {
       </div>
     )
   }
-  if (error) return <p className="text-error">{textoDeError(error)}</p>
+  // *** Y esto era un `<p>` CRUDO, *no la pieza `Fallo`. *** *
+  //
+  // *Y no es un detalle de estilo: *la **misma** pantalla de error estaba escrita
+  // *a mano aqui, *y en `RecetaDetalle:140`, *`Recetario:248`, *`Tendencias:73`,
+  // *`PlanSemanal:336`, *`Diario:411`, *`CocinaModo:96`, *`Escaner:218` y
+  // *`Ajustes:140` -- *con *** cuatro tamanos de letra distintos *** *(-- 13, 14, 15
+  // *y 16 px --)*, *y **sin** titulo, *sin boton de reintentar y sin llenar el alto.* *
+  //
+  // *`Fallo` ya hace **las cuatro cosas**, *y su propio comentario dice que se arregla
+  // *en un sitio y no en las seis pantallas que lo usan: *«*si se arreglara pantalla por
+  // *pantalla, *la septima volveria a nacer en rojo*»*.* *Asi que se usa la pieza.* *
+  if (error) return <Fallo error={error} />
 
   const existencias = data?.existencias ?? []
 
