@@ -216,7 +216,7 @@ export function Introducir({ alEntrar }: { alEntrar: () => void }) {
   const [creando, setCreando] = useState(false)
 
   return (
-    <Tarjeta>
+    <Tarjeta className="grow">
       <h2 className="mb-1 text-lg font-semibold">
         {creando ? 'Crea tu cuenta' : 'Entra para ver tu lista'}
       </h2>
@@ -1301,7 +1301,19 @@ export function Cesta() {
   if (sesion.isLoading) return <Cargando que="tu sesión" />
   if (!sesion.data?.usuario) {
     return (
-      <div className="grid gap-4">
+      // *** Y la raiz de ESTA rama tambien lleva el patron, *y no es un detalle. *** *
+      //
+      // *Era `grid gap-4`: *un grid **sin `min-h-full`**, *y por eso la tarjeta de entrar
+      // se quedaba **a un tercio de la pantalla** con cientos de pixeles vacios debajo.* *
+      //
+      // * *Y se probaron las dos salidas faciles antes de tocar esto: *`grow` en la
+      // `Tarjeta` **no hizo nada** *(-- *el padre no era columna flexible --)*, *y
+      // `min-h-full` en un envoltorio **tampoco**, *porque no resuelve contra un padre de
+      // altura `auto`.* *Las dos medidas estan en `COMO-SE-MIDE.md`, *secciones 12 y 15.* *
+      //
+      // * *Lo que si funciona es esto, *que es **el mismo patron de `Buscar`**: *raiz
+      // `flex min-h-full flex-col`, *y el bloque que debe llenar con `grow`.* *
+      <div className="flex min-h-full flex-col gap-4">
         {/* **El título de la página, sin sesión.** `Introducir` lleva su `h2` («Entra para ver
             tu lista»), así que la pantalla se quedaba sin `h1`: quien navega por encabezados
             abría una página que no decía cómo se llama. Va oculto porque el `h2` ya lo dice en
