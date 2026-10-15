@@ -14,7 +14,7 @@ import { useState } from 'react'
 import { textoDeError } from '../api/cliente'
 import { useRango } from '../api/diario'
 import { GraficaDeLasTres } from '../componentes/GraficaDeLasTres'
-import { Tarjeta, Vacio } from '../componentes/ui'
+import { Cargando, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 
 function hoy(): string {
   const ahora = new Date()
@@ -69,8 +69,8 @@ export function Tendencias() {
         </span>
       </div>
 
-      {isPending && <p className="text-[15px] text-secundaria">Leyendo los dias...</p>}
-      {error && <p className="text-[15px] text-error">{textoDeError(error)}</p>}
+      {isPending && <Cargando que="los dias" />}
+      {error && <Fallo error={error} />}
 
       {data && filas.length === 0 && (
         <Vacio titulo="No hay nada anotado en estos dias">
