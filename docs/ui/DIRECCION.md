@@ -172,3 +172,41 @@ caracteres** y a partir de 80 la vista **se pierde de linea.*** *
    *y su lista por defecto es larga y abierta, *asi que una comprobacion por nombre daria **mas ruido
    que señal** *-- *y **un test que grita en falso se acaba ignorando** ✓
 ```
+
+---
+
+# *** 10. *Un fallo de PANTALLA y un fallo de ACCION no son lo mismo *** *
+
+*15/10/2026. *Esto no es una preferencia: *es una distincion que **costo cuatro rondas
+de no entender por que los arreglos no cundian.*** *
+
+```
+*** FALLO DE PANTALLA ***: *la consulta que llena la pantalla **fallo**, *asi que *
+   *** no hay nada que enseñar.*** *
+   *-- *se pinta *** `Fallo` ***: *panel, *con titulo, *y con «Volver a intentarlo» ✓
+   *-- *y va **donde iria el contenido**, *porque **no hay contenido.*** *
+
+*** FALLO DE ACCION ***: *una operacion concreta **fallo**, *y **el resto sigue ahi.*** *
+   *-- *«no he podido guardar», *«no he podido borrar», *«no he podido apuntar» ✓
+   *-- *lo que hace falta es *** una linea, *al lado de lo que se pulso *** *
+   *-- *y *** NO `Fallo` ***: *un panel de ancho completo con un titulo de pantalla,
+   *en medio de un formulario que sigue funcionando, *dice *** algo mas grave de lo
+   *que pasa *** ✓✓✓
+*** -> *y `Fallo` acepta `titulo`, *pero **eso no lo arregla**: *el problema de un fallo
+   *de accion **no es el texto, *es el TAMANO.*** ✓
+```
+
+*** Y de aqui sale lo que hay que hacer con los que quedan ***: *los `{x.error && <p…>}`
+*-- *`crear`, *`planificar`, *`duplicar`, *`apuntar`, *`borrar` --* *** no son el mismo
+defecto que los ocho que ya se arreglaron ***, *aunque **se parezcan**.* *Lo que
+comparten es que estan **escritos a mano y con cuatro tamanos de letra**; *lo que **no**
+comparten es que deban ser un panel.* *
+
+*** Y lo que hace falta, *que todavia NO existe ***: *una pieza pequeña de mensaje de
+accion *(-- *una linea, *tono de error o de aviso, *y sitio para un reintento al lado
+del boton --).* *`Etiqueta` **se le parece** *y podria servir de base; *pero **decidirlo
+mirando una pantalla**, *no aqui.* *
+
+*** Y LA LECCION, *que es la de toda la noche otra vez ***: *dos cosas que **se parecen**
+no son **la misma**, *y unificarlas porque se parecen es como se rompe una interfaz
+**que funcionaba.*** *
