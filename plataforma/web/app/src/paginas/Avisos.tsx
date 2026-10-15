@@ -110,7 +110,7 @@ export function Avisos() {
   if (sesion.isLoading) return <Esqueleto filas={4} alto="4.25rem" />
   if (!sesion.data?.usuario) {
     return (
-      <Vacio titulo="Entra para ver tus avisos" comoPagina>
+      <Vacio titulo="Entra para ver tus avisos" comoPagina className="grow">
         <p>
           Los avisos son de cada uno: se piden desde la ficha de un producto, con la campana,
           y salen aquí con la frase que los explica. Se entra desde{' '}

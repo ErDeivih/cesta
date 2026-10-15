@@ -368,3 +368,42 @@ sabe que `min-h-full` **no** es la respuesta.* *
 *** Y LA MEDIDA ES LO QUE LO DICE ***. *Sin la captura, *«le pongo `min-h-full` y ya
 esta» habria sido una afirmacion razonable, *y **falsa**, *y se habria quedado en el
 codigo pareciendo un arreglo.* *
+
+---
+
+## 13. *** LA CAPTURA ERA DE OTRA APLICACION, *y mate un servidor que no era mio ***
+
+*15/10/2026, ronda 48. *Esto no es un falso negativo de medida: *es **peor**, *y va
+primero porque es lo que hay que leer antes de volver a capturar nada.* *
+
+```
+*** LO QUE SE HIZO ***: *`vite preview --port 4173 --strictPort`, *esperar 7 segundos,
+   *y capturar `/avisos` ✓
+*** LO QUE SALIO ***: *una aplicacion que NO es esta* *-- «OpoFuente», *con Temario,
+   *Tests, *Simulacros, *Formacion, *tema claro *y **otra tipografia** -- ⚠️
+*** -> *** `--strictPort` significa «falla si el puerto esta ocupado» *** ✓
+*** -> *o sea que *** `vite preview` NO ARRANCO ***, *y Chrome cargo *** lo que ya
+   *estaba escuchando en 4173 *** ✓✓✓
+*** -> *y despues, *al terminar, *** mate el proceso que ocupaba el puerto *** ⚠️⚠️⚠️
+```
+
+*** Y ESO ES LO GRAVE ***: *el comando de limpieza mata «el que escuche en 4173»,
+*sin preguntar **de quien es.*** *Y esta vez **no era mio.*** *He tumbado el servidor de
+vista previa de **otro proyecto** del propietario, *sin saberlo y sin poder deshacerlo.* *
+
+*** Y LAS TRES REGLAS QUE SALEN, *que son obligatorias desde ya ***: *
+
+```
+*** 1 ***. *** Comprobar que el puerto esta LIBRE **antes** de levantar nada ***, *
+   *y si `--strictPort` falla, *NO capturar: *el servidor no es el tuyo.* *
+*** 2 ***. *** Mirar QUE APLICACION se sirvio *** antes de dar una captura por buena: *
+   *el titulo de la pestana *o el nombre del lateral tienen que decir **«Cesta»**.* *
+   *Una captura de otra app **no prueba nada** y ademas **despista**.* *
+*** 3 ***. *** No matar nunca un proceso que no se ha arrancado uno mismo ***. *
+   *Se mata **el proceso que se lanzo** *(-- *el `Start-Job` --)*, *no «el que ocupe
+   *el puerto»* *-- *que es una forma de decir «mata lo que haya», *y esta vez
+   *habia algo **ajeno** --.* *
+```
+
+*** Y LA CAPTURA DE ESTA RONDA SE DESCARTO ***, *no se commitearon sus bytes, *y el
+cambio queda como *** aplicado y SIN VERIFICAR *** *-- *que es la verdad.* *
