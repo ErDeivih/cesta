@@ -149,7 +149,7 @@ function DeLaCompra({ fecha }: { fecha: string }) {
                   ? 'No hay nada que anotar.'
                   : `Se anotarian ${previa.anotarian.length} de ${previa.cobertura.total}:`}
               </p>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex min-h-full flex-col gap-1">
                 {previa.anotarian.map((x) => (
                   <li key={x.linea_id} className="text-[15px] text-tinta-fuerte">
                     {x.nombre}
@@ -462,7 +462,7 @@ export function Diario() {
       <Alta fecha={fecha} />
 
       {data && total === 0 && (
-        <Vacio titulo="Nada anotado este dia">
+        <Vacio titulo="Nada anotado este dia" className="grow">
           <p>Anota lo primero arriba y aparecera aqui, agrupado por comidas.</p>
         </Vacio>
       )}

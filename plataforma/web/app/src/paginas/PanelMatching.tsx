@@ -64,7 +64,7 @@ export function PanelMatching() {
       </Aviso>
 
       {d.ultima === null ? (
-        <Vacio titulo="No hay ninguna pasada guardada">
+        <Vacio titulo="No hay ninguna pasada guardada" className="grow">
           <p>
             La API ha contestado bien, pero en <code>data/gold/matching/</code> no hay ninguna
             carpeta <code>ejecucion=…</code>. Cada pasada del emparejador deja la suya, con sus
@@ -205,7 +205,7 @@ export function PanelMatching() {
             sub={`los primeros ${d.pares.length} de esta pasada, con su método y sus rasgos`}
           >
             {d.pares.length === 0 ? (
-              <Vacio titulo="Esta pasada no ha dejado pares" />
+              <Vacio titulo="Esta pasada no ha dejado pares" className="grow" />
             ) : (
               /* **Una tarjeta por par, y no una tabla de seis columnas.** Era una tabla de
                  «Producto A · Producto B · Nivel · Método · Confianza · Por qué» con 52rem de
@@ -357,7 +357,7 @@ function SinRuta() {
     <div className="flex min-h-full flex-col gap-4">
       <h1 className="text-xl font-bold">Panel de matching</h1>
 
-      <Vacio titulo="Este servidor todavía no tiene esa ruta">
+      <Vacio titulo="Este servidor todavía no tiene esa ruta" className="grow">
         <p>
           Esta pantalla pide <code>GET /api/panel/matching</code> y la API ha contestado{' '}
           <strong>404</strong>. La ruta está en <code>plataforma/api/main.py</code> desde el 22 de

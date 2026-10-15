@@ -191,7 +191,7 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
               <p className="text-[15px] text-tinta-fuerte">
                 {previa.total === 1 ? 'Entraria 1 ingrediente:' : `Entrarian ${previa.total} ingredientes:`}
               </p>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex min-h-full flex-col gap-1">
                 {previa.entrarian.map((x) => (
                   <li key={`${x.receta}-${x.nombre}-${x.fecha}`} className="text-[15px] text-tinta-fuerte">
                     {x.nombre}
@@ -398,7 +398,7 @@ export function PlanSemanal() {
       </ul>
 
       {data && data.plan.length === 0 && (
-        <Vacio titulo="La semana esta vacia">
+        <Vacio titulo="La semana esta vacia" className="grow">
           <p>Pon una receta en un dia y aparecera aqui con su version y sus comensales.</p>
         </Vacio>
       )}

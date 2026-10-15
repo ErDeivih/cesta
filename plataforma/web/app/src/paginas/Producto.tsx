@@ -416,7 +416,7 @@ export function Producto() {
                 </p>
               </Aviso>
             ) : historico.puntos.length === 0 ? (
-              <Vacio titulo="Sin histórico">
+              <Vacio titulo="Sin histórico" className="grow">
                 <p>Solo tenemos un día de este precio.</p>
               </Vacio>
             ) : (

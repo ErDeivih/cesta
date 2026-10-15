@@ -760,7 +760,7 @@ function Movidos() {
             <SelloFecha fechaDatos={d.fecha_datos} />
           </div>
           {d.movidos.length === 0 ? (
-            <Vacio titulo="Hoy no se ha movido nada" />
+            <Vacio titulo="Hoy no se ha movido nada" className="grow" />
           ) : (
             <TablaScroll etiqueta="Precios movidos hoy" minAncho="44rem">
               <table className="w-full border-collapse text-cuerpo">
@@ -884,14 +884,14 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
                lista o en favoritos), que es lo que hay que decir. Y se elige por
                `d.solo_mios`, que es lo que el servidor ha hecho de verdad. */
             d.solo_mios ? (
-              <Vacio titulo={`Nada de lo tuyo ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`}>
+              <Vacio titulo={`Nada de lo tuyo ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`} className="grow">
                 <p>
                   Este filtro mira lo que tienes en tus listas y en favoritos. Si
                   apuntas la compra, la próxima vez esto contesta solo.
                 </p>
               </Vacio>
             ) : (
-              <Vacio titulo={`Nada ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`} />
+              <Vacio titulo={`Nada ha ${subidas ? 'subido' : 'bajado'} en ${d.dias} días`} className="grow" />
             )
           ) : (
             <TablaScroll etiqueta="Cambios de precio" minAncho="46rem">
@@ -968,7 +968,7 @@ function Indice({ cadenas }: { cadenas: string[] }) {
           : d.series
         if (series.length === 0) {
           return (
-            <Vacio titulo="Ninguna de esas cadenas tiene índice todavía">
+            <Vacio titulo="Ninguna de esas cadenas tiene índice todavía" className="grow">
               <p>El índice necesita dos capturas de la misma cadena para empezar a moverse.</p>
             </Vacio>
           )
@@ -1101,7 +1101,7 @@ function Posicion({ cadenas }: { cadenas: string[] }) {
           .filter((s) => s.cadenas.length > 0)
         if (visibles.length === 0) {
           return (
-            <Vacio titulo="Todavía no hay secciones comparables">
+            <Vacio titulo="Todavía no hay secciones comparables" className="grow">
               <p>
                 Esto se llena cuando la cadena publica la sección y hay grupos con dos cadenas o más.
               </p>
@@ -1225,7 +1225,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
           </div>
 
           {d.resultados.length === 0 ? (
-            <Vacio titulo="Hoy ninguna oferta anunciada se cae del histórico">
+            <Vacio titulo="Hoy ninguna oferta anunciada se cae del histórico" className="grow">
               <p>
                 Aquí salen las ofertas anunciadas cuyo precio de hoy no está por debajo de lo que ese
                 producto cuesta normalmente. Que no haya ninguna es una buena noticia.

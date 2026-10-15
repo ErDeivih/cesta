@@ -47,7 +47,7 @@ export function Tendencias() {
     : 0
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-full flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-[13px] text-secundaria" htmlFor="dias">
           Ultimos
@@ -73,7 +73,7 @@ export function Tendencias() {
       {error && <Fallo error={error} />}
 
       {data && filas.length === 0 && (
-        <Vacio titulo="No hay nada anotado en estos dias">
+        <Vacio titulo="No hay nada anotado en estos dias" className="grow">
           <p>Anota algo en el diario y aparecera aqui.</p>
         </Vacio>
       )}

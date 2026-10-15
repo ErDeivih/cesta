@@ -48,7 +48,7 @@ function PasarALista({ recetaId }: { recetaId: number }) {
       {previa.isPending && <p className="text-[16px] text-secundaria">Calculando...</p>}
       {previa.error && <Etiqueta tono="mal">{textoDeError(previa.error)}</Etiqueta>}
       {previa.data && (
-        <div className="flex flex-col gap-3">
+        <div className="flex min-h-full flex-col gap-3">
           {previa.data.lineas.length === 0 && (
             <p className="text-[16px] text-secundaria">
               Nada que comprar: ningun ingrediente tiene cantidad.
@@ -129,7 +129,7 @@ export function RecetaDetalle() {
     // **404 no es un fallo.** Se distingue del resto para no pintar en rojo algo que es una respuesta.
     if (esErrorApi(error) && error.estado === 404) {
       return (
-        <Vacio titulo="Esa receta no existe">
+        <Vacio titulo="Esa receta no existe" className="grow">
           <p>
             Puede que se haya archivado o que el enlace este mal. <Link to="/recetas" className="underline">
               Vuelve al recetario

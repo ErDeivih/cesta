@@ -141,7 +141,7 @@ function Alta() {
             },
           )
         }}
-        className="flex flex-col gap-3"
+        className="flex min-h-full flex-col gap-3"
       >
         <label className="flex flex-col gap-1 text-[13px] text-secundaria">
           Nombre
@@ -248,7 +248,7 @@ export function Recetario() {
       {error && <Fallo error={error} />}
 
       {data && todas.length === 0 && (
-        <Vacio titulo="Todavia no hay recetas">
+        <Vacio titulo="Todavia no hay recetas" className="grow">
           <p>Anade la primera y aparecera aqui, con sus ingredientes y sus raciones.</p>
         </Vacio>
       )}
