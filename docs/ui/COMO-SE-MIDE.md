@@ -445,3 +445,32 @@ datos **no se podian verificar.*** *** Y era verdad a medias.*** *
 de `/escaner` *-- «No tengo ese codigo» --* **necesita que la API conteste**, *
 *no solo poder pulsar: *sin API, *la peticion falla **por red** *y sale el `Fallo`, *
 *que es lo correcto pero **no es esa rama.*** *
+
+---
+
+## 15. *** La tarjeta de entrar, *y `grow` tampoco sirve ahi ***
+
+*15/10/2026, ronda 56. *La ronda 55 midio el defecto: *en `/compra/listas` sin sesion,
+*la tarjeta de entrar *** acaba a un tercio de la pantalla *** *y debajo quedan
+*** unos 600 px de vacio***. *Y el arreglo parecia de una linea: *`className="grow"` en
+la `Tarjeta`, *que **si acepta `className`.*** *
+
+```
+*** SE HIZO Y SE MIDIO ***: *la captura a 390 px despues del cambio tiene *
+   *** EL MISMO SHA-256 *** *-- `b547e089d0220ae1d8348091f50391ca32f93329cef796e85cfe8f1814f5842c` --,* *
+   *o sea *** byte a byte identica *** ⚠️
+*** -> *** `grow` no hizo nada *** ✓
+*** -> *y el motivo es el mismo de la ronda 46: *`grow` solo actua si el padre es
+   *** un contenedor flexible con altura***, *y **el de esa tarjeta no lo es** ✓
+*** -> *se revirtio: *** lo que no hace nada no se queda *** ✓
+```
+
+*** Y LO QUE ESTO DEJA CLARO, *que ya son dos casos ***: *el patron `grow` funciona
+**dentro** de la raiz de una pantalla *(-- *`Buscar`, *`Escaner`, *`Avisos`, *`Favoritos` --), *
+*y **no funciona** ni en un `return` temprano con `min-h-full` *(-- ronda 46 --)*
+*ni en una pieza cuyo padre no es columna flexible *(-- esta --).* *
+
+*** O sea que el defecto de la tarjeta de entrar NO es de una linea ***: *hay que
+**envolverla** en algo que si sea columna flexible con altura, *o cambiar la raiz de
+la rama.* *Y eso *** no se hace sin poder medirlo despues ***, *que es exactamente por
+lo que se dejo medido y sin tocar en la ronda 55.* *
