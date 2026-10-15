@@ -27,6 +27,33 @@
     --terracota: #a94d36;   /* acento de marca y seccion activa (4,86:1) */
     --borde-fuerte: #8a8578; /* si delimita un control: el suave da 1,43:1 */
     --error: #a12626;       /* lo que hay que mirar: 7,02:1 sobre marfil */
+
+    /* *** LA TERCERA SUPERFICIE, *y el lavado del acento. *** *
+     *
+     * *`papel` es una superficie **dentro** del lienzo. *Y hace falta una mas
+     * para **lo que flota por encima** *(-- dialogos, menus --): *sin ella, en
+     * modo oscuro **una tarjeta y un dialogo son el mismo color**, *y la
+     * profundidad no se ve por mucho que se sombree.* *
+     *
+     * *En claro, «mas alto» es **mas claro** *-- *y sobre marfil, lo mas claro
+     * que hay es el blanco.* *
+     *
+     * *Y `terracota-suave` es el acento **como fondo**, *no como linea: *para la
+     * seccion activa y los avisos suaves, *donde el terracota puro seria un
+     * grito.* *
+     */
+    --papel-alto: #ffffff;
+    --terracota-suave: #f7e8e3;
+
+    /* *** LAS SOMBRAS, *y por que son CALIDAS. *** *
+     *
+     * *Una sombra gris pura sobre marfil **se ve sucia**: *el marfil es calido y
+     * el gris es frio, *y el ojo lo nota aunque no sepa decir por que.* *
+     * *Asi que llevan el **marron del papel** dentro, *no negro.* *
+     */
+    --sombra-apoyado: 0 1px 2px rgba(74, 58, 44, 0.07), 0 1px 3px rgba(74, 58, 44, 0.09);
+    --sombra-alzado: 0 2px 4px rgba(74, 58, 44, 0.07), 0 4px 12px rgba(74, 58, 44, 0.11);
+    --sombra-flotante: 0 8px 24px rgba(74, 58, 44, 0.13), 0 24px 48px rgba(74, 58, 44, 0.17);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -45,6 +72,24 @@
     --terracota: #e08a6f;
     --borde-fuerte: #6f7a73;
     --error: #f08a7a;
+
+    /* *** Y EN OSCURO LA PROFUNDIDAD NO LA DA LA SOMBRA. *** *
+     *
+     * *Una sombra sobre un fondo casi negro **no se ve**: *no hay luz que
+     * oscurecer.* *Asi que aqui la profundidad la da **el color de la
+     * superficie** *-- lo que flota es **mas claro**, *que es como se comporta
+     * la luz de verdad --* *y la sombra solo **la remata**.* *
+     *
+     * *Y por eso `papel-alto` sube de `#1c2224` a `#252d30`: *la diferencia se
+     * tiene que **ver**, *y el salto de un pelo no basta.* *
+     */
+    --papel-alto: #252d30;
+    --terracota-suave: #3a2721;
+
+    /* *Y las sombras, mas hondas, *porque sobre negro hay que separar mas.* */
+    --sombra-apoyado: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --sombra-alzado: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.45);
+    --sombra-flotante: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.55);
     }
   }
 

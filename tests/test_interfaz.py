@@ -174,6 +174,19 @@ NO_ES_COLOR = {
     "wrap", "nowrap", "balance", "pretty", "ellipsis", "clip",
     "inset", "offset", "opacity", "gradient", "cover", "contain",
     "fixed", "local", "scroll", "repeat", "no-repeat", "auto",
+    # *** Y lo que anadio la direccion visual del 15/10/2026. *** *
+    #
+    # **Esto no es una lista de conveniencia: es una colleccion de colisiones
+    # reales.** *`text-` sirve para **color** y para **tamano**, *y `shadow-` para
+    # **color de sombra** y para **tamano de sombra**.* *Asi que los seis tamanos
+    # de letra y los tres niveles de profundidad **empiezan como una utilidad de
+    # color y no lo son**, *y sin ponerlos aqui el test de colores los denunciaria
+    # como «`titulo` no esta en el tema», *que es **cierto y no es el problema.** *
+    #
+    # *Y se comprueban donde toca: *los tamanos en
+    # `test_las_escalas_que_se_escriben_existen`, *y los de sombra en la misma.*
+    "antetitulo", "etiqueta", "cuerpo", "entrada", "titulo", "portada",
+    "apoyado", "alzado", "flotante",
 }
 
 
@@ -415,3 +428,158 @@ def test_la_interfaz_no_tiene_botones_de_validacion_humana():
     assert not encontradas, (
         f"hay botones de validacion humana ({encontradas}). El encargo dice que "
         f"el matching es automatico y que nadie valida nada.")
+
+
+# --------------------------------------------------------------- escalas ---
+#
+# **La misma familia que los colores, y el mismo fallo.** *Tailwind, cuando no
+# reconoce una clase, **no avisa: la omite.** Asi que `rounded-tarjeta` con
+# `tarjeta` sin definir **no da error**, no sale en la consola, y la tarjeta se
+# pinta con las esquinas rectas.* *`tsc` y `vite build` tampoco lo ven: una clase
+# desconocida es una cadena de texto perfectamente valida.*
+#
+# **Y esto es nuevo del 15/10/2026.** *Antes el tema tenia **paleta y una sola
+# medida** (`maxWidth.app`), *asi que **cada pantalla se inventaba sus numeros***:
+# *de ahi las 996 lineas de clases en linea y que dos tarjetas del mismo rango no
+# se parecieran.* *Ahora hay escalas, *y esto comprueba que lo que se escribe esta
+# en ellas.*
+#
+# **Lo que esta prueba NO comprueba, y se dice**: *las escalas de **espaciado** y
+# de **ancho maximo**.* *Sus utilidades son **numericas** *(-- `p-4`, `gap-6`,
+# `max-w-3xl` --)* *y su lista de valores por defecto es larga y abierta, *asi que
+# una comprobacion por nombre daria **mas ruido que señal** *-- *y un test que
+# grita en falso se acaba ignorando.* *Se revisan a ojo al migrar cada pantalla.*
+
+# *Lo que Tailwind trae de serie.* **Sin esta lista la prueba seria ruido**: *cada
+# `rounded-md` y cada `shadow-sm` que ya existen saldrian como fallo, *y el aviso
+# bueno se perderia entre cientos de falsos.*
+POR_DEFECTO = {
+    "borderRadius": {"none", "sm", "", "md", "lg", "xl", "2xl", "3xl", "full"},
+    "boxShadow": {"none", "sm", "", "md", "lg", "xl", "2xl", "inner"},
+    "transitionDuration": {"0", "75", "100", "150", "200", "300", "500", "700", "1000"},
+    "transitionTimingFunction": {"linear", "in", "out", "in-out"},
+    "fontSize": {"xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl",
+                 "6xl", "7xl", "8xl", "9xl"},
+}
+
+# prefijo de la clase -> clave del tema donde tiene que estar
+ESCALAS = {
+    "rounded": "borderRadius",
+    "shadow": "boxShadow",
+    "duration": "transitionDuration",
+    "ease": "transitionTimingFunction",
+}
+
+
+def _bloque(texto: str, clave: str) -> str:
+    """El contenido de `clave: { ... }`, contando llaves para no cortar mal."""
+    inicio = texto.find(f"{clave}:")
+    if inicio == -1:
+        return ""
+    abre = texto.find("{", inicio)
+    if abre == -1:
+        return ""
+    nivel = 0
+    for i in range(abre, len(texto)):
+        if texto[i] == "{":
+            nivel += 1
+        elif texto[i] == "}":
+            nivel -= 1
+            if nivel == 0:
+                return texto[abre + 1:i]
+    return ""
+
+
+def _nombres_de_escala(texto_config: str, clave: str) -> set[str]:
+    """Los nombres de una escala del tema, a un solo nivel.
+
+    *A un nivel porque estas escalas son planas* *(-- `nota: '4px'` --)*, *a
+    diferencia de `colors`, que anida.*
+
+    *** Y los comentarios se quitan ANTES, y no es un detalle. *** *La primera
+    version de esto no los quitaba, *y **cayo sola**: *un comentario del config
+    decia «*15 px y no **16**: ...*», *y la expresion regular leyo ese `16:` como
+    **un tamano de letra llamado `16`**.* *Y el aviso era cierto y no hablaba del
+    tema: *hablaba de que **estaba leyendo prosa.*** *
+    """
+    bloque = _bloque(_sin_comentarios(texto_config), clave)
+    # *Se quitan los objetos anidados *(-- `antetitulo: ['0.68rem', { ... }]` --)*
+    # para que el `lineHeight` de dentro no se cuele como un nombre mas.*
+    plano = re.sub(r"\{[^{}]*\}", " ", bloque)
+    return set(re.findall(r"['\"]?([\w-]+)['\"]?\s*:", plano))
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_las_escalas_que_se_escriben_existen():
+    """Toda clase de una escala propia tiene que existir en el tema.
+
+    *Un `rounded-tarjeta` mal escrito no da error: *Tailwind lo omite y la
+    tarjeta sale con las esquinas rectas. *Es el mismo fallo silencioso que los
+    colores, *y por eso se comprueba igual.*
+    """
+    config = (APP / "tailwind.config.js").read_text(encoding="utf-8")
+
+    del_tema = {clave: _nombres_de_escala(config, clave) for clave in POR_DEFECTO}
+    # *Si esto falla, es que la prueba ha dejado de leer el tema, no que el tema
+    # este mal* *-- y una prueba que no lee nada y pasa es peor que ninguna.*
+    assert del_tema["borderRadius"], "no he sabido leer `borderRadius` del tema"
+    assert del_tema["boxShadow"], "no he sabido leer `boxShadow` del tema"
+    assert del_tema["transitionDuration"], "no he sabido leer `transitionDuration`"
+    assert "nota" in del_tema["borderRadius"], sorted(del_tema["borderRadius"])
+    assert "apoyado" in del_tema["boxShadow"], sorted(del_tema["boxShadow"])
+
+    fallos = []
+    for fichero in sorted((APP / "src").rglob("*.tsx")) + sorted((APP / "src").rglob("*.ts")):
+        if fichero.name.endswith(".d.ts"):
+            continue
+        for numero, linea in enumerate(fichero.read_text(encoding="utf-8").splitlines(), 1):
+            for palabra in re.findall(r"[A-Za-z0-9_\-:\[\]\./%#]+", linea):
+                # `dark:hover:shadow-alzado` -> `shadow-alzado`.
+                utilidad = palabra.rsplit(":", 1)[-1]
+                # *Un valor a medida se escribe entre corchetes y es legitimo.*
+                if "[" in utilidad:
+                    continue
+                for prefijo, clave in ESCALAS.items():
+                    if not utilidad.startswith(f"{prefijo}-"):
+                        continue
+                    resto = utilidad[len(prefijo) + 1:]
+                    if resto in del_tema[clave] or resto in POR_DEFECTO[clave]:
+                        break
+                    fallos.append(
+                        f"{fichero.name}:{numero}: `{utilidad}` no esta en "
+                        f"`{clave}` del tema")
+                    break
+
+    assert not fallos, (
+        "hay clases de una escala que el tema no define, asi que Tailwind las "
+        "omite en silencio y el estilo no se aplica:\n  " + "\n  ".join(fallos) +
+        "\nAnadelas a `theme.extend` en tailwind.config.js, y su motivo en "
+        "docs/ui/DIRECCION.md.")
+
+
+@pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
+def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
+    """*Un `text-` es color **o** tamano, y hay que saber cual.*
+
+    *`text-titulo` no es un color: *es un tamano de letra.* *Y el test de colores
+    no puede distinguirlo solo* *-- por eso los seis nombres estan en
+    `NO_ES_COLOR` --, *asi que aqui se comprueba **la otra mitad**: que un `text-`
+    que no es color, *o es un tamano **del tema**, *o es uno de los de Tailwind,
+    *o no es un tamano y entonces lo dira el test de colores.*
+    """
+    config = (APP / "tailwind.config.js").read_text(encoding="utf-8")
+    tamanos = _nombres_de_escala(config, "fontSize")
+    assert tamanos, "no he sabido leer `fontSize` del tema"
+    for esperado in ("cuerpo", "titulo", "portada"):
+        assert esperado in tamanos, sorted(tamanos)
+
+    # *Y los seis del tema tienen que estar en `NO_ES_COLOR`.* *Si alguien anade
+    # un tamano y se olvida de la lista, el test de colores empezaria a fallar con
+    # un mensaje que no habla de esto* *-- y se perderia media tarde.*
+    faltan = sorted(t for t in tamanos
+                    if t not in NO_ES_COLOR and t not in POR_DEFECTO["fontSize"])
+    assert not faltan, (
+        f"estos tamanos de letra del tema no estan en `NO_ES_COLOR`, asi que el "
+        f"test de colores los leera como colores y fallara sin decir por que: "
+        f"{faltan}")
+

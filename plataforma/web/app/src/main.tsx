@@ -6,6 +6,17 @@ import { BrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import { VigilaCuenta } from './api/cuenta'
 import { ErrorApi } from './api/cliente'
+// *** Las fuentes van PRIMERO, y el orden importa. *** *
+//
+// *Este fichero lo genera `scripts/bajar_fuentes_locales.py` y lleva los
+// `@font-face` con los `.woff2` servidos **desde la propia app** *-- *no desde
+// `fonts.googleapis.com` --.* *Va **antes** que `estilos.css` para que la fuente
+// este pedida **en la primera pintada** y no se vea el respaldo primero.* *
+//
+// *Y el porque de servirla en casa esta medido: *hasta el 15/10/2026 **no se
+// servia**, *y los titulos salian en **Georgia** *(-- lo confirma
+// `docs/ui/capturas/01-inicio.png` --).* *
+import './fuentes.css'
 import './estilos.css'
 
 /** Ajustes de Query, y por que.
