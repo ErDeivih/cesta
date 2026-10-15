@@ -84,10 +84,10 @@ export function Unirse() {
 
   if (!sesion.data?.usuario) {
     return (
-      <div className="grid gap-4">
+      <div className="flex min-h-full flex-col gap-4">
         {/* Una `Tarjeta` de las de siempre: es lo unico que hay por encima de la
             puerta, y sin ella los dos formularios parecen salidos de la nada. */}
-        <Tarjeta>
+        <Tarjeta className="grow">
           <h1 className="text-lg font-semibold">Te han invitado a una lista</h1>
           <p className="mt-1 text-sm text-tinta-suave">
             Entra con tu cuenta —o créala, se tarda un momento— y te meto en la
@@ -111,7 +111,7 @@ export function Unirse() {
 
   if (acepta.isError) {
     return (
-      <div className="grid gap-4">
+      <div className="flex min-h-full flex-col gap-4">
         {/* **El titulo de la pagina.** `Aviso` pinta su titulo como un parrafo (es un aviso, no
             un titular), asi que esta pantalla se quedaba sin `h1`: quien llega desde un enlace
             caducado abria una pagina que no decia como se llama. Medido con
