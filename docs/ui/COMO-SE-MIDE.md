@@ -407,3 +407,41 @@ vista previa de **otro proyecto** del propietario, *sin saberlo y sin poder desh
 
 *** Y LA CAPTURA DE ESTA RONDA SE DESCARTO ***, *no se commitearon sus bytes, *y el
 cambio queda como *** aplicado y SIN VERIFICAR *** *-- *que es la verdad.* *
+
+---
+
+## 14. *** SI SE PUEDE PULSAR. *Y lo tenia delante. ***
+
+*15/10/2026, ronda 52. *Durante veinte rondas he escrito que el limite era
+«*`--screenshot` **no puede interactuar**»*, *y que por eso los estados que dependen de
+datos **no se podian verificar.*** *** Y era verdad a medias.*** *
+
+```
+*** `--screenshot` NO puede pulsar *** ✓
+*** -> *** pero `capture_browser_scenario` de REA SI ***: *
+   *`goto`, *`fill`, *`click`, *`wait_for`, *y captura al final ✓✓✓
+*** -> *y se comprobo en `/escaner`: *se relleno el campo con «NO - ES - UN - CODIGO»,
+   *se pulso «Buscar», *y la captura sale con *** el campo relleno *** *
+   *y *** el `Fallo` con su boton «Volver a intentarlo» *** ✓
+*** -> *** la capacidad que creia que faltaba estaba delante *** *
+   *-- *quinta vez en dos noches --* ✓
+```
+
+*** Y DOS COSAS QUE HAY QUE SABER ANTES DE USARLO ***: *
+
+```
+*** 1 ***. *** El servidor tiene que sobrevivir entre llamadas. *** *
+   *Un `Start-Job` dentro de una llamada a `pwsh` *** muere con su proceso***, *
+   *y REA navega *** en otra llamada ***: *por eso el primer intento dio *
+   *«Scenario navigation failed». *Hay que levantarlo como *** trabajo en segundo
+   *plano gestionado ***, *que si sobrevive ✓
+*** 2 ***. *** REA usa TEMA CLARO por defecto *** *(`color_scheme: light`), *
+   *asi que sus capturas **no** son comparables con las de `--screenshot`, *
+   *que salen en oscuro.* *Y eso, *de paso, *** ensena que el tema claro existe y
+   *funciona*** ✓
+```
+
+*** Y LO QUE SIGUE SIN PODERSE VER, *que ahora se sabe por que ***: *la rama de **400**
+de `/escaner` *-- «No tengo ese codigo» --* **necesita que la API conteste**, *
+*no solo poder pulsar: *sin API, *la peticion falla **por red** *y sale el `Fallo`, *
+*que es lo correcto pero **no es esa rama.*** *
