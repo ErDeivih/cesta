@@ -61,10 +61,23 @@ def test_el_esqueleto_reserva_sitio_y_tiene_forma():
 
 
 def test_el_cargando_de_pantalla_completa_tambien_reserva():
+    """*** Y ahora reserva con la FORMA de lo que viene. *** *
+
+    *Hasta el 15/10/2026 esto exigia `min-h-[`, *que era **como** se reservaba: *un
+    alto fijo de 6 rem.* *Y el 15/10/2026 `Cargando` paso a usar **`Esqueleto`**,
+    *que reserva **la forma** -- cuatro bloques de la altura de una fila, con el
+    mismo hueco que la lista de verdad --, *o sea **mas sitio y el correcto.*** *
+
+    *Asi que lo que se comprueba es **la propiedad mas fuerte**: *no «hay un alto»,
+    *sino **«hay la forma de lo que va a venir»*** *-- *que es lo que su propio
+    comentario pedia desde el principio y el codigo no hacia.* *
+    """
     ui = _leer(UI)
     bloque = ui.split("export function Cargando(")[1].split("export function Esqueleto(")[0]
-    assert "min-h-[" in bloque, \
-        "`Cargando` sigue siendo una linea suelta: al llegar el contenido, todo salta"
+    assert "Esqueleto" in bloque, (
+        "`Cargando` tiene que reservar el sitio con la forma de lo que viene: una linea "
+        "de texto que luego se convierte en una lista de nueve filas hace saltar todo "
+        "lo que hay debajo")
     assert 'role="status"' in bloque
 
 

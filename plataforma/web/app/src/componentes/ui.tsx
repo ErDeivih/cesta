@@ -315,17 +315,38 @@ export function CampoTexto({
 
 // ------------------------------------------------------------ estados raros ---
 
-export function Cargando({ que = 'los datos' }: { que?: string }) {
- // **Un hueco, no una linea de texto.** Lo pide el encargo (§8): *"los estados de
- // carga: nada de saltos de maquetacion. Un hueco del tamaño de lo que va a venir"*.
- // Una linea que dice "Cargando…" y despues se convierte en una lista de nueve filas
- // hace saltar todo lo que hay debajo -- y en el movil, con el pulgar ya camino del
- // boton, el boton se mueve.
- return (
- <div role="status" className="grid min-h-[6rem] place-items-center py-6">
- <p className="text-cuerpo text-secundaria ">Cargando {que}…</p>
- </div>
- )
+export function Cargando({ que = 'los datos', filas = 4 }: {
+  que?: string
+  filas?: number
+}) {
+  // *** Y AHORA HACE LO QUE SU COMENTARIO DECIA DESDE EL PRINCIPIO. *** *
+  //
+  // *El comentario de arriba lleva ahi desde antes y dice, literal: *«*Un hueco,
+  // **no una linea de texto**».* *Y el codigo pintaba `<p>Cargando {que}…</p>`, *
+  // *que es **exactamente lo que el comentario dice que no.*** *
+  //
+  // *Y `Esqueleto` **ya existia justo debajo**, *con su docstring explicando que
+  // reserva **el sitio de lo que va a venir.** *Lo que pasaba es que **nadie los
+  // habia juntado**, *y por eso las veinte pantallas que usan `Cargando` seguian
+  // ensenando una linea que luego **empuja todo lo de abajo.*** *
+  //
+  // *** Y el texto NO se pierde: *se vuelve `sr-only`. *** *
+  //
+  // *Un lector de pantalla **necesita** que le digan que esta cargando: *un
+  // esqueleto para el es **una caja vacia.** *Asi que la frase sigue, *pero
+  // **donde se oye y no donde se ve** *-- *que es lo correcto: *quien ve, ya ve
+  // **la forma** de lo que viene.* *
+  //
+  // *Y el `aria-hidden` del envoltorio no sobra: *`Esqueleto` trae su propio
+  // `role="status"`, *y dos regiones de estado anidadas **se anuncian dos veces.*** *
+  return (
+    <div role="status" aria-live="polite">
+      <span className="sr-only">Cargando {que}…</span>
+      <div aria-hidden="true">
+        <Esqueleto filas={filas} />
+      </div>
+    </div>
+  )
 }
 
 /** El hueco de una lista o una tabla que todavia no ha llegado.
