@@ -416,6 +416,9 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
 
 /** El armazon completo de una aplicacion: lateral o cajon, cabecera y contenido. */
 export function LayoutSuite({ app, children }: { app: ClaveApp | null; children: ReactNode }) {
+  // *La ruta, que hace falta para la `key` de la entrada de pantalla.* *
+  // *Se saca aqui y no dentro del `main` para que se lea una sola vez.* *
+  const { pathname: ruta } = useLocation()
   const [abierto, setAbierto] = useState(false)
   const botonMenu = useRef<HTMLButtonElement>(null)
   const { pathname } = useLocation()
@@ -450,7 +453,22 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
       <div className="flex min-w-0 flex-1 flex-col" inert={abierto || undefined}>
         <ModuleHeader app={aplicacion} abierto={abierto} onAbrir={() => setAbierto(true)}
           refBoton={botonMenu} />
-        <main id="contenido" className="mx-auto w-full max-w-app flex-1 px-4 py-5 lg:px-8">
+                {/* *** Y la `key` es LA RUTA, *que es lo que hace que se repita. *** *
+            *
+            * *React **no vuelve a montar** un elemento si su posicion no cambia, *asi
+            * que sin `key` la animacion correria **una sola vez** y al navegar no se
+            * veria.* *Con la ruta como `key`, **cada pantalla es un montaje nuevo** y
+            * la animacion corre **cada vez**.* *
+            *
+            * *Y se usa **`pathname` y no la direccion entera**: *cambiar la busqueda
+            * *(-- `?q=leche` --)* **no es cambiar de pantalla**, *y ahi **no tiene que
+            * parpadear** *-- *que es justo lo que molestaria buscando.* *
+            */}
+        <main
+          key={ruta}
+          id="contenido"
+          className="entra-pantalla mx-auto w-full max-w-app flex-1 px-4 py-5 lg:px-8"
+        >
           {children}
         </main>
       </div>

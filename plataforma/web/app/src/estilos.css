@@ -273,6 +273,37 @@ details[open] > summary .flecha {
   transform: rotate(180deg);
 }
 
+/* ------------------------------------------------ la entrada de una pantalla ---
+
+   *** Una sola animacion, y la tienen TODAS las pantallas. *** *
+
+   *`LayoutSuite` envuelve todas las rutas, *asi que ponerla aqui la pone en las
+   doce* *-- *y **no hay que acordarse de repetirla en cada una**, *que es como se
+   acaba con doce transiciones distintas.*
+
+   *Y es **fina a proposito**: *6 px de subida y el opaco, *220 ms.* *Una entrada
+   que se nota **es un peaje**, *no una bienvenida: *lo que tiene que hacer es que
+   la pantalla **no aparezca de golpe** *mientras el ojo viene de la anterior.*
+
+   *Y **no se anima la `height` ni el `width`**: *los dos obligan al navegador a
+   **recalcular la composicion en cada fotograma**, *y en un movil de gama baja eso
+   se ve como un tiron. *`opacity` y `transform` los hace la tarjeta grafica.* *
+ */
+@keyframes entra-pantalla {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entra-pantalla {
+  animation: entra-pantalla 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
 /* ------------------------------------------- lo que se mueve, para quien no lo quiere ---
 
    **Esto estaba en la aplicacion vieja y se perdio al reescribirla.** `plataforma/web/estilo.css:180`
