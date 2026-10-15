@@ -26,15 +26,45 @@ import type { ReactNode, RefObject } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 import { usePorCogerDeCasa } from '../api/consultas'
+import {
+  IconoCalendario,
+  IconoCarro,
+  IconoCorazon,
+  IconoGrafica,
+  IconoLibro,
+  IconoLupa,
+  IconoPersona,
+  IconoPlato,
+} from './iconos'
 import { cx } from './ui'
+
+import type { ComponentType, SVGProps } from 'react'
 
 export type ClaveApp = 'compra' | 'recetas' | 'calorias'
 
-type Subseccion = { a: string; texto: string }
+/* *** Y cada destino lleva su icono, *y cada aplicacion el suyo. *** *
+ *
+ * *Un icono **no es adorno**: *es lo que hace reconocible un sitio **sin
+ * leerlo**, *y en un lateral de siete destinos eso es la diferencia entre
+ * orientarse y leer una lista.* *
+ *
+ * *Y **solo tienen que distinguirse dentro de su aplicacion**, *porque las
+ * subsecciones de las otras **no se ven nunca** *-- *lo dice el campo de
+ * abajo --.* *Por eso el libro vale para «Mi recetario» **y** para «Mi
+ * diario»: *los dos **son** libros, *y **jamas se ven juntos.*** *
+ */
+type Subseccion = {
+  a: string
+  texto: string
+  Icono: ComponentType<SVGProps<SVGSVGElement>>
+}
 
 type Aplicacion = {
   clave: ClaveApp
   nombre: string
+  /** *El icono de la aplicacion, *el que la hace reconocible en el selector
+   *  sin leer su nombre.* */
+  Icono: ComponentType<SVGProps<SVGSVGElement>>
   raiz: string
   /** Las subsecciones de esta aplicacion. Nunca las de otra. */
   subsecciones: Subseccion[]
@@ -45,31 +75,34 @@ export const APLICACIONES: Aplicacion[] = [
   {
     clave: 'compra',
     nombre: 'Compra',
+    Icono: IconoCarro,
     raiz: '/compra',
     subsecciones: [
-      { a: '/compra', texto: 'Buscar' },
-      { a: '/compra/listas', texto: 'Listas' },
-      { a: '/compra/favoritos', texto: 'Favoritos' },
-      { a: '/compra/analisis', texto: 'Gasto y ahorro' },
+      { a: '/compra', texto: 'Buscar', Icono: IconoLupa },
+      { a: '/compra/listas', texto: 'Listas', Icono: IconoCarro },
+      { a: '/compra/favoritos', texto: 'Favoritos', Icono: IconoCorazon },
+      { a: '/compra/analisis', texto: 'Gasto y ahorro', Icono: IconoGrafica },
     ],
   },
   {
     clave: 'recetas',
     nombre: 'Recetas',
+    Icono: IconoLibro,
     raiz: '/recetas',
     subsecciones: [
-      { a: '/recetas', texto: 'Mi recetario' },
-      { a: '/recetas/plan', texto: 'Plan semanal' },
+      { a: '/recetas', texto: 'Mi recetario', Icono: IconoLibro },
+      { a: '/recetas/plan', texto: 'Plan semanal', Icono: IconoCalendario },
     ],
   },
   {
     clave: 'calorias',
     nombre: 'Calorias',
+    Icono: IconoPlato,
     raiz: '/calorias',
     subsecciones: [
-      { a: '/calorias', texto: 'Mi diario' },
-      { a: '/calorias/alimentos', texto: 'Mis alimentos' },
-      { a: '/calorias/tendencias', texto: 'Tendencias' },
+      { a: '/calorias', texto: 'Mi diario', Icono: IconoLibro },
+      { a: '/calorias/alimentos', texto: 'Mis alimentos', Icono: IconoPlato },
+      { a: '/calorias/tendencias', texto: 'Tendencias', Icono: IconoGrafica },
     ],
   },
 ]
@@ -150,7 +183,7 @@ function ContadorDeLaLista() {
   )
 }
 
-function EnlaceLateral({ a, texto, onNavegar, chapa }: Subseccion & {
+function EnlaceLateral({ a, texto, Icono, onNavegar, chapa }: Subseccion & {
   onNavegar?: () => void
   chapa?: ReactNode
 }) {
@@ -161,15 +194,34 @@ function EnlaceLateral({ a, texto, onNavegar, chapa }: Subseccion & {
       onClick={onNavegar}
       className={({ isActive }) =>
         cx(
-          'flex min-h-[44px] items-center justify-between gap-2 rounded-md px-3 py-2 text-[15px] leading-6',
-          isActive
-            ? 'font-semibold text-terracota underline decoration-terracota decoration-2 underline-offset-4'
-            : 'text-tinta-fuerte hover:bg-marfil',
+          // *** El icono, y el hueco con el texto. *** *
+          //
+          // *`gap-2.5` y no un `gap` a ojo: *el icono **no pega** con la palabra
+          // ni se despega, *y el mismo hueco vale en los once destinos.* *
+          //
+          // *Y el radio es **`campo`**, *que es el de **lo que se pulsa**: *antes
+          // era el `rounded-md` de fabrica, *el mismo que el de un boton ... *y por
+          // eso ninguno de los dos decia nada.* *
+          'flex min-h-[44px] items-center gap-2.5 rounded-campo px-3 py-2 text-cuerpo',
+          isActive ? 'font-semibold text-terracota' : 'text-tinta-fuerte hover:bg-marfil',
         )
       }
     >
-      <span>{texto}</span>
-      {chapa}
+      {({ isActive }) => (
+        <>
+          <Icono width={18} height={18} className="shrink-0" />
+          {/* *El subrayado va en la **palabra**, *no en toda la fila: *asi marca el
+              destino **sin** subrayar tambien el icono y el contador.* */}
+          <span
+            className={cx(
+              isActive && 'underline decoration-terracota decoration-2 underline-offset-4',
+            )}
+          >
+            {texto}
+          </span>
+          {chapa && <span className="ml-auto flex items-center">{chapa}</span>}
+        </>
+      )}
     </NavLink>
   )
 }
@@ -190,12 +242,21 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
             onClick={onNavegar}
             aria-current={app?.clave === otra.clave ? 'page' : undefined}
             className={cx(
-              'flex min-h-[44px] items-center rounded-md px-3 font-serif text-[19px] leading-7',
+              // *** El nombre de la aplicacion lleva SU icono. *** *
+              //
+              // *Es donde mas hace falta: *las tres se ven **a la vez**, *y el
+              // icono las distingue **de un vistazo** sin leer tres palabras.* *
+              //
+              // *Y el tamano es **`entrada`** (17 px) y no un `[19px]` a medida:
+              // *la escala tiene seis pasos **y este es uno**, *y un numero suelto
+              // aqui es como empezaron las 996 clases.* *
+              'flex min-h-[44px] items-center gap-2.5 rounded-campo px-3 font-serif text-entrada',
               app?.clave === otra.clave
                 ? 'bg-bosque font-semibold text-papel'
                 : 'text-tinta-fuerte hover:bg-marfil',
             )}
           >
+            <otra.Icono width={20} height={20} className="shrink-0" />
             {otra.nombre}
           </NavLink>
         ))}
@@ -216,8 +277,10 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
         </nav>
       )}
       <nav aria-label="Cuenta y ayuda" className="mt-auto flex flex-col gap-1">
-        <EnlaceLateral a="/ajustes" texto="Cuenta y preferencias" onNavegar={onNavegar} />
-        <EnlaceLateral a="/aprender" texto="Aprender" onNavegar={onNavegar} />
+        <EnlaceLateral a="/ajustes" texto="Cuenta y preferencias" Icono={IconoPersona}
+          onNavegar={onNavegar} />
+        <EnlaceLateral a="/aprender" texto="Aprender" Icono={IconoLibro}
+          onNavegar={onNavegar} />
         {idBotonCerrar && (
           <button
             type="button"

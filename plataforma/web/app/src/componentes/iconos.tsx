@@ -122,3 +122,85 @@ export function IconoCarro(props: SVGProps<SVGSVGElement>) {
     </Base>
   )
 }
+
+/* ======================= los tres del 15/10/2026 =======================
+ *
+ * *Los pide la FASE 3, y son **los tres que faltaban** para que **cada destino
+ * tenga su icono**: *el **recetario**, *el **plan semanal** *y **Calorias**.* *
+ *
+ * *** Y hay una regla que hace que no hagan falta nueve iconos distintos. *** *
+ * *`Suite.tsx` dice, de las subsecciones: *«*las de esta aplicacion. *** Nunca las
+ * de otra ***»* *-- *solo se ven **las de la aplicacion activa** --.* *Asi que un
+ * icono **solo tiene que distinguirse dentro de su aplicacion**, *y por eso el
+ * **libro** vale para «Mi recetario» **y** para «Mi diario»: *son libros los dos,
+ * *y **nunca se ven juntos.*** *
+ *
+ * *Y por eso mismo hacen falta **tres** y no nueve: *los de las subsecciones de
+ * Compra ya existian *(-- lupa, carro, corazon, grafica --)*, *y los de Recetas y
+ * Calorias son estos.* *
+ *
+ * *El trazo es el mismo que los otros diez: *`24`, *1,8 de grosor, *remates
+ * redondos, *y **dos o tres piezas**, *porque tienen que leerse a 20 px en un
+ * lateral, *de reojo y con el brillo bajo.* *
+ */
+
+/** **El recetario** *(-- y «Mi diario»: *un diario tambien es un libro --).*
+ *
+ * *Un libro cerrado visto de frente: *el bloque y **la costura del lomo**.* *
+ * *Sin hojas ni canto, *que es lo que convierte un libro en **el dibujo de un
+ * libro**: *a 20 px eso es ruido, *y el trazo tiene que decir «libro» de un
+ * vistazo.* *
+ */
+export function IconoLibro(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M5 4a1 1 0 0 1 1-1h13v18H6a1 1 0 0 1-1-1z" />
+      <path d="M8.5 3v18" />
+    </Base>
+  )
+}
+
+/** **El plan semanal**: *un calendario de la semana.* *
+ *
+ * *Va con **el lomo de arriba y las dos anillas**, *que es lo que lo distingue de
+ * una tarjeta o de una ventana.* *
+ */
+export function IconoCalendario(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z" />
+      <path d="M4 10h16M8 3v4M16 3v4" />
+    </Base>
+  )
+}
+
+/** **Calorias**: *un plato.* *
+ *
+ * *No una llama, *que seria **lo que se gasta** y no **lo que se come**, *y esta
+ * aplicacion es **el diario de lo que comes.*** *Y el plato se lee a cualquier
+ * tamano: *dos circulos, *y ya esta.* *
+ */
+export function IconoPlato(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+    </Base>
+  )
+}
+
+/** **Cuenta y preferencias**: *una persona.* *
+ *
+ * *Es el cuarto que hizo falta, *y el ultimo: *«Cuenta» **no es** ni un panel, *ni
+ * un enlace, *ni una camara*, *y **reutilizar cualquiera de los tres** habria
+ * dicho algo falso.* *Asi que se dibuja, *que son **dos trazos**: *la cabeza y los
+ * hombros.* *
+ */
+export function IconoPersona(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="7.5" r="3.5" />
+      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+    </Base>
+  )
+}
