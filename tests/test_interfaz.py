@@ -631,7 +631,11 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
 # clases viejas a proposito, *para que se lea que se cambio y por que --.* *
 # *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
 # `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
-PALETA_DE_FABRICA_HOY = 463
+PALETA_DE_FABRICA_HOY = 421
+# *15/10/2026, FASE 5 (1): *bajo de **463 a 421** *al migrar* `Inicio.tsx` *(-- *la
+# pantalla real de Compra, *64 clases --).* *Y lo pidio el propio trinquete: «has bajado
+# a 421 y el suelo sigue alto».* *Quedan sobre todo* `Panel` 66, *`Grupo` 52 y*
+# `RepartoEnTiendas` 34.* *
 # *15/10/2026, FASE 3: *bajo de **495 a 463** *al migrar la navegacion* *(-- `Nav.tsx` y
 # `Cabecera.tsx`, *58 clases --).* *El techo **solo baja**, *y lo recuerda la propia
 # prueba cuando te olvidas.* *Los que mas quedan son las pantallas grandes: *`Panel` 66,

@@ -56,7 +56,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
   const cadenas = (r?.sublistas ?? []).filter((s) => s.lineas.length > 0)
   if (lineas === 0) {
     return (
-      <Tarjeta className="border-sky-200 bg-sky-50/60 dark:border-sky-900 dark:bg-sky-950/30">
+      <Tarjeta className="border-borde bg-marfil ">
         <p className="text-sm font-semibold">Todavía no tienes lista</p>
         <p className="mt-1 text-sm text-tinta-suave">
           Busca lo que compras y añádelo. A partir de ahí esta pantalla te dice cuánto te
@@ -64,7 +64,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
         </p>
         <Link
           to="/buscar"
-          className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+          className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-terracota underline "
         >
           Ver lo de siempre y añadir
         </Link>
@@ -72,7 +72,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
     )
   }
   return (
-    <Tarjeta className="border-sky-200 bg-sky-50/60 dark:border-sky-900 dark:bg-sky-950/30">
+    <Tarjeta className="border-borde bg-marfil ">
       <p className="text-sm text-tinta-suave">Lo que te falta</p>
       <p className="mt-0.5 text-2xl font-bold leading-tight">
         {porCoger === 0 ? (
@@ -101,7 +101,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
               {r && r.ahorro_cent > 0 && (
                 <>
                   {' · '}con las ofertas te ahorras{' '}
-                  <span className="cifra font-semibold text-emerald-700 dark:text-emerald-400">
+                  <span className="cifra font-semibold text-bien ">
                     {euros(r.ahorro_cent)}
                   </span>
                 </>
@@ -112,7 +112,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
       )}
       <Link
         to="/cesta"
-        className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+        className="mt-3 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-terracota underline "
       >
         Ver la lista entera y tachar
       </Link>
@@ -184,12 +184,12 @@ function Buscador() {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             placeholder="leche entera, atún, papel de cocina…"
-            className="min-h-[44px] min-w-[44px] w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-base dark:border-neutral-700 dark:bg-neutral-900"
+            className="min-h-[44px] min-w-[44px] w-full rounded-lg border border-borde bg-white py-2 pl-10 pr-3 text-base "
           />
         </div>
         <button
           type="submit"
-          className="min-h-[44px] rounded-lg bg-sky-700 px-3 text-sm font-semibold text-white dark:bg-sky-500 dark:text-neutral-900"
+          className="min-h-[44px] rounded-lg bg-terracota px-3 text-sm font-semibold text-white "
         >
           Buscar
         </button>
@@ -204,7 +204,7 @@ function Buscador() {
             // API**: sería culpar a quien escribe de un fallo nuestro, y encima le quita las
             // ganas de reintentar. Lo mismo que hace la pantalla del buscador, con sus
             // palabras.
-            <p className="text-sm text-amber-800 dark:text-amber-400">
+            <p className="text-sm text-aviso ">
               No he podido buscar: la API no contesta. El resto de la pantalla sigue en pie.
             </p>
           ) : resultados.length === 0 ? (
@@ -217,7 +217,7 @@ function Buscador() {
             </p>
           ) : (
             <>
-              <ul className="divide-y divide-neutral-200 dark:divide-neutral-700">
+              <ul className="divide-y divide-borde ">
                 {resultados.map((f) => (
                   <li key={`${f.grupo_id ?? 'suelto'}-${f.nombre}`}>
                     <Link
@@ -244,7 +244,7 @@ function Buscador() {
               </ul>
               <Link
                 to={`/buscar?q=${encodeURIComponent(diferido)}`}
-                className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-sky-800 underline dark:text-sky-300"
+                className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-terracota underline "
               >
                 {todos.length > resultados.length
                   ? 'Ver todos los resultados'
@@ -298,7 +298,7 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
         {soloMios && (
           <Link
             to="/avisos"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-sky-800 underline dark:text-sky-300"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-terracota underline "
           >
             Avisos
           </Link>
@@ -320,12 +320,12 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
           )}
         </p>
       )}
-      <ul className="mt-2 divide-y divide-neutral-200 dark:divide-neutral-700">
+      <ul className="mt-2 divide-y divide-borde ">
         {bajadas.slice(0, 3).map((b, i) => (
           <li key={`${b.nombre}-${b.cadena}-${i}`} className="py-2">
             <div className="flex items-baseline justify-between gap-2">
               <span className="min-w-0 truncate text-sm">{b.nombre}</span>
-              <span className="cifra shrink-0 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="cifra shrink-0 text-sm font-semibold text-bien ">
                 {porcentajeConSigno(b.variacion_pct)}
               </span>
             </div>
@@ -336,7 +336,7 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
                   <span className="cifra line-through">
                     {eurosUnidad(b.precio_unidad_antes_cent, b.unidad)}
                   </span>{' '}
-                  <span className="cifra font-semibold text-neutral-900 dark:text-neutral-100">
+                  <span className="cifra font-semibold text-tinta-fuerte ">
                     {eurosUnidad(b.precio_unidad_cent, b.unidad)}
                   </span>
                 </span>
@@ -350,7 +350,7 @@ function HaBajado({ bajadas, cargando, soloMios, haySesion, hayLista }: {
         <p className="mt-2 text-xs">
           <Link
             to="/panel?pestana=bajadas"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center font-semibold text-sky-800 underline dark:text-sky-300"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center font-semibold text-terracota underline "
           >
             y <span className="cifra">{numero(bajadas.length - 3, 0)}</span> más bajadas
           </Link>
@@ -385,7 +385,12 @@ export function Inicio() {
   const sinSesion = sesion.data?.usuario == null
 
   return (
-    <div className="space-y-4">
+    // *** El ritmo, *que es lo que reparte el alto. *** *
+    //
+    // *`space-y-bloque` (1,5 rem) y no un `space-y-4` de fabrica: *el hueco
+    // **vertical** entre bloques **no existia en el tema** *-- *lo anadio la
+    // FASE 1 --, *y es lo que evita que el contenido **se apine arriba.*** *
+    <div className="space-y-bloque">
       {/* **El titulo de la pantalla, para quien navega por encabezados.** No se ve porque en
           esta pantalla la identidad la lleva la barra de abajo (el icono «Inicio» marcado) y
           poner un titular grande encima del buscador empujaria la primera respuesta hacia
@@ -422,12 +427,12 @@ export function Inicio() {
                     alto no se acierta con el pulgar en un pasillo, por mucho que se vea. */}
                 <Link
                   to="/cesta"
-                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-sky-800 underline dark:text-sky-300"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end text-xs font-semibold text-terracota underline "
                 >
                   Toca para tachar
                 </Link>
               </div>
-              <ul className="mt-2 divide-y divide-neutral-200 dark:divide-neutral-700">
+              <ul className="mt-2 divide-y divide-borde ">
                 {porCoger.slice(0, 4).map((l) => {
                   // La cadena y el precio de cada linea salen del reparto, que es quien
                   // sabe donde esta mas barata cada cosa. Si no ha cargado, se enseña el
@@ -449,7 +454,7 @@ export function Inicio() {
                         {l.pasillo && <span>{l.pasillo}</span>}
                         {enTienda && <span>en {nombreCadena(enTienda.cadena)}</span>}
                         {!enTienda && l.grupo_id == null && (
-                          <span className="text-amber-800 dark:text-amber-400">
+                          <span className="text-aviso ">
                             sin comparar: no está en el catálogo
                           </span>
                         )}
