@@ -497,7 +497,7 @@ export function Producto() {
                           ) / 10
                         : null
                     return (
-                      <tr key={p.producto_id} className="hover:bg-marfil dark:hover:bg-neutral-800/60">
+                      <tr key={p.producto_id} className="hover:bg-marfil">
                         <Td>
                           {/* **44 px de alto, medido.** El 23 de septiembre de 2026 este
                               enlace medía 161 x **19**: es la forma de saltar a la ficha de

@@ -63,7 +63,7 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
       <select
         value={valor}
         onChange={(e) => alCambiar(e.target.value)}
-        className="min-h-[44px] rounded-campo border border-borde bg-white px-2 dark:bg-neutral-800"
+        className="min-h-[44px] rounded-campo border border-borde bg-papel px-2 "
       >
         {listas.map((l) => (
           <option key={l.id} value={l.id}>{l.nombre}</option>

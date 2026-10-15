@@ -363,7 +363,7 @@ export function CajonLateral({ app, abierto, onCerrar }: {
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* El fondo cierra al pulsarlo, y no lleva foco: es decorativo. */}
-      <div className="absolute inset-0 bg-neutral-900/40" onClick={onCerrar} aria-hidden="true" />
+      <div className="absolute inset-0 bg-tinta-translucida/40" onClick={onCerrar} aria-hidden="true" />
       <div
         ref={caja}
         role="dialog"

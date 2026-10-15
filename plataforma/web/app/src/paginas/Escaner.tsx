@@ -167,7 +167,7 @@ export function Escaner() {
             autoFocus
             enterKeyHint="search"
             placeholder="8410655002410"
-            className="w-full min-h-[48px] rounded-tarjeta border border-borde bg-white px-4 py-2 font-mono text-lg tracking-wider dark:bg-neutral-800"
+            className="w-full min-h-[48px] rounded-tarjeta border border-borde bg-papel px-4 py-2 font-mono text-lg tracking-wider "
           />
         </div>
         <Boton type="submit" variante="principal" disabled={!codigo.trim()}>
@@ -205,7 +205,7 @@ export function Escaner() {
           {/* El vídeo no lleva `autoPlay` en el JSX: se arranca a mano al
               conectar el flujo, que es cuando el elemento ya existe. */}
           <video ref={video} playsInline muted className="max-h-[60vh] w-full bg-black object-cover" />
-          <p className="bg-white px-3 py-2 text-cuerpo dark:bg-neutral-800">
+          <p className="bg-papel px-3 py-2 text-cuerpo ">
             Apunta al código de barras. Cuando lo lea, se busca solo.
           </p>
         </div>
@@ -332,7 +332,7 @@ export function Escaner() {
               <Resumen className="text-etiqueta text-terracota ">
                 La nota del producto (dato en crudo)
               </Resumen>
-              <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
+              <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta ">
                 {JSON.stringify(hallado.nota, null, 2)}
               </pre>
             </details>

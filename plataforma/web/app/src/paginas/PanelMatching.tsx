@@ -276,7 +276,7 @@ export function PanelMatching() {
             <Resumen className="text-cuerpo">
               Ver la respuesta en crudo
             </Resumen>
-            <pre className="mt-2 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
+            <pre className="mt-2 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta ">
               {JSON.stringify(d, null, 2)}
             </pre>
           </details>

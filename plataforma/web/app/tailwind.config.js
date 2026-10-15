@@ -143,6 +143,19 @@ export default {
         // para la seccion activa y los avisos suaves.*
         'terracota-suave': 'var(--terracota-suave)',
         'borde-fuerte': 'var(--borde-fuerte)',
+        // *** Los dos que SI admiten opacidad. *** *
+        //
+        // *`<alpha-value>` es lo que hace que `bg-papel-translucido/95` funcione: *
+        // *Tailwind sustituye el marca-posicion por el alfa **dentro del `rgb()`**, *
+        // *y eso **si** es un color valido.* *
+        //
+        // *Y **solo estos dos**, *porque son los unicos sitios que necesitan
+        // translucidez de verdad* *(-- el velo de un dialogo y una cabecera pegada --).*
+        // *Todo lo demas va con el token opaco, *que **ya cambia con el tema.*** *
+        'papel-translucido': 'rgb(var(--papel-rgb) / <alpha-value>)',
+        'tinta-translucida': 'rgb(var(--tinta-fuerte-rgb) / <alpha-value>)',
+        // *Y el lavado de aviso, *opaco: *lo que necesita es su tono en cada tema.* *
+        'aviso-suave': 'var(--aviso-suave)',
         error: 'var(--error)',
         aviso: 'var(--aviso)',
         bien: 'var(--bien)',

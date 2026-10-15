@@ -133,7 +133,7 @@ export function ExplicacionEmparejamiento({ grupo }: { grupo: Grupo }) {
         <Resumen className="text-etiqueta text-terracota ">
           Ver el dato en crudo
         </Resumen>
-        <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta dark:bg-neutral-900">
+        <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta ">
           {JSON.stringify(valor, null, 2)}
         </pre>
       </details>

@@ -118,6 +118,16 @@ MAPA: list[tuple[str, str]] = [
     ("stroke-neutral-500", "stroke-borde-fuerte"),
     ("stroke-neutral-400", "stroke-secundaria"),
     ("stroke-neutral-200", "stroke-borde"),
+    # *** `bg-white` *** *-- *el hueco que faltaba en el mapa.* *
+    # *Se descubrio porque quedaron ocho `bg-white` en cinco ficheros despues de pasar
+    # el script: *el mapa **no lo tenia**, *y un mapa incompleto deja la migracion a
+    # medias **sin decirlo.*** *El blanco puro no es de esta casa: *la casa es de papel
+    # calido, *y `papel` es el token.* *
+    ("bg-white", "bg-papel"),
+    # *Y el semaforo: *`lime` y `orange` no son de la paleta de la casa, *pero dicen lo
+    # mismo que `bien` y `aviso`: *el tono cambia, *el significado no.* *
+    ("bg-lime-500", "bg-bien"),
+    ("bg-orange-500", "bg-aviso"),
     # *Superficies.* *
     ("bg-neutral-50", "bg-marfil"),
     ("bg-neutral-100", "bg-marfil"),
@@ -178,9 +188,13 @@ def migra(ruta: Path, seco: bool) -> tuple[int, bool]:
         for viejo, nuevo in MAPA:
             # *Las de opacidad se saltan: *`(?![\w-])` no basta, *porque `/` no es
             # palabra* *-- *asi que se comprueba a mano.* *
-            if any(viejo in salto or viejo + "/" in linea for salto in NO_SE_TOCAN):
-                continue
-            patron = rf"(?<![\w/-]){re.escape(viejo)}(?![\w-])"
+            # *** La opacidad se excluye EN LA EXPRESION, *no saltando la linea. *** *
+            #
+            # *La primera version saltaba **la linea entera** si veia una de las tres con
+            # opacidad, *y eso se llevo por delante **33 clases que si estaban en el mapa**:
+            # `dark:bg-neutral-800` convivia con `bg-neutral-800/60` en la misma linea, *y la
+            # buena **no se migraba.*** *Lo correcto es el `/` del lookahead de abajo.* *
+            patron = rf"(?<![\w/-]){re.escape(viejo)}(?![\w/-])"
             nueva, k = re.subn(patron, nuevo, nueva)
             n += k
         nueva, k = FUERA_DARK.subn("", nueva)

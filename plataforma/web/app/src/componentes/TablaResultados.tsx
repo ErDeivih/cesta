@@ -251,7 +251,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
           {tabla.getRowModel().rows.map((fila) => (
             <tr
               key={`${fila.original.grupo_id ?? 'suelto'}-${fila.original.nombre}-${fila.index}`}
-              className="relative hover:bg-marfil dark:hover:bg-neutral-800/60"
+              className="relative hover:bg-marfil"
             >
               {fila.getVisibleCells().map((celda) => (
                 <Td key={celda.id}>{flexRender(celda.column.columnDef.cell, celda.getContext())}</Td>
@@ -324,7 +324,7 @@ function BarraDeOrden({ orden, onOrden }: {
               className={
                 esElPuesto
                   ? 'min-h-[44px] rounded-campo border border-terracota bg-terracota px-3 text-cuerpo font-medium text-white '
-                  : 'min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo dark:bg-neutral-800'
+                  : 'min-h-[44px] rounded-campo border border-borde bg-papel px-3 text-cuerpo '
               }
             >
               {texto}
@@ -350,7 +350,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
     fila.precio_unidad_max_cent !== null &&
     fila.precio_unidad_max_cent > fila.precio_unidad_cent
   return (
-    <li className="relative hover:bg-marfil dark:hover:bg-neutral-800/60">
+    <li className="relative hover:bg-marfil">
       <div className="grid grid-cols-[1fr_auto_auto] items-start gap-x-3 py-2">
         <div className="flex min-w-0 items-start gap-2">
           {fila.imagen ? (
@@ -363,7 +363,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
               }}
-              className="h-10 w-10 shrink-0 rounded border border-borde bg-white object-contain "
+              className="h-10 w-10 shrink-0 rounded border border-borde bg-papel object-contain "
             />
           ) : (
             <span
@@ -435,7 +435,7 @@ function Producto({ fila }: { fila: ResultadoBusqueda }) {
           onError={(e) => {
             e.currentTarget.style.display = 'none'
           }}
-          className="h-12 w-12 shrink-0 rounded border border-borde bg-white object-contain "
+          className="h-12 w-12 shrink-0 rounded border border-borde bg-papel object-contain "
         />
       ) : (
         <span

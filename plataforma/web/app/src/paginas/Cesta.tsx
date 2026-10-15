@@ -1637,7 +1637,7 @@ export function Cesta() {
                                hay que coger» y después un nivel que no existe. Medido con
                                `data/debug/accesibilidad.py` el 27 de septiembre de 2026: era el
                                único salto de encabezados de toda la aplicación. */
-                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-neutral-800/95">
+                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-white/95 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-papel-translucido/95">
                               {pasillo}
                             </h3>
                           )}

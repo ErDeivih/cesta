@@ -118,7 +118,7 @@ export function Panel() {
               'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium ' +
               (activa === p.clave
                 ? 'border-terracota bg-terracota text-white '
-                : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
+                : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
             }
           >
             {p.texto}
@@ -190,7 +190,7 @@ function FiltroCadenas({
               'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
               (puestas.includes(c)
                 ? 'border-terracota bg-terracota text-white '
-                : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
+                : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
             }
           >
             {nombreCadena(c)}
@@ -204,7 +204,7 @@ function FiltroCadenas({
             'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
             (sinFiltro
               ? 'border-terracota bg-terracota text-white '
-              : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel')
+              : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
           }
         >
           Todas
@@ -860,7 +860,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
               type="button"
               aria-pressed={subidas}
               onClick={() => alterna('subidas', subidas ? 'false' : 'true')}
-              className="min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo font-medium dark:bg-neutral-800"
+              className="min-h-[44px] rounded-campo border border-borde bg-papel px-3 text-cuerpo font-medium "
             >
               Ver las subidas
             </button>
@@ -871,7 +871,7 @@ function Bajadas({ cadenas }: { cadenas: string[] }) {
               type="button"
               aria-pressed={soloMios}
               onClick={() => alterna('mios', soloMios ? 'false' : 'true')}
-              className="min-h-[44px] rounded-campo border border-borde bg-white px-3 text-cuerpo font-medium dark:bg-neutral-800"
+              className="min-h-[44px] rounded-campo border border-borde bg-papel px-3 text-cuerpo font-medium "
             >
               {soloMios ? 'Ver todo el catálogo' : 'Solo lo mío'}
             </button>
@@ -1153,7 +1153,7 @@ function Posicion({ cadenas }: { cadenas: string[] }) {
                               está por debajo de las demás, a la derecha lo que está
                               por encima. El número va fuera de la barra, siempre
                               visible, porque es el dato. */}
-                          <span className="relative block h-3 w-full rounded bg-marfil dark:bg-neutral-800">
+                          <span className="relative block h-3 w-full rounded bg-marfil ">
                             <span
                               aria-hidden
                               className="absolute inset-y-0 left-1/2 w-px bg-borde "
@@ -1244,7 +1244,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                   return (
                     <li
                       key={`${x.cadena}-${x.grupo_id ?? x.nombre}-${i}`}
-                      className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
+                      className="grid grid-cols-[4.5rem_1fr] gap-3 rounded-tarjeta border border-borde bg-papel p-3 "
                     >
                       {x.imagen ? (
                         <img
@@ -1300,7 +1300,7 @@ function Dudosas({ cadenas }: { cadenas: string[] }) {
                             <span className="relative block h-3 w-full rounded bg-marfil ">
                               <span
                                 aria-hidden
-                                className="absolute inset-y-0 w-1 rounded bg-neutral-900 "
+                                className="absolute inset-y-0 w-1 rounded bg-papel "
                                 style={{ left: `calc(${pos}% - 2px)` }}
                               />
                             </span>

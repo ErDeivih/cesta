@@ -248,7 +248,7 @@ export function Grupo() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-[72px] w-[72px] shrink-0 rounded-campo border border-borde bg-white object-contain "
+            className="h-[72px] w-[72px] shrink-0 rounded-campo border border-borde bg-papel object-contain "
           />
         )}
         {/* **`min-w-0`, y la foto de 72 px, desde el 27 de septiembre de 2026.** Antes la
@@ -412,7 +412,7 @@ export function Grupo() {
             ))}
           </div>
           {columnas.length > CADENAS_A_LA_VISTA && (
-            <details className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800">
+            <details className="rounded-tarjeta border border-borde bg-papel p-3 ">
               <Resumen className="text-cuerpo font-semibold">
                 Ver {columnas.length - CADENAS_A_LA_VISTA === 1 ? 'la otra cadena' : `las otras ${columnas.length - CADENAS_A_LA_VISTA} cadenas`}
                 <span className="ml-2 text-etiqueta font-normal text-tinta-suave">
@@ -466,7 +466,7 @@ function ColumnaDeCadena({ cadena, lista, indice, ganadora, serie, fechaDatos, p
     <section
       key={cadena}
       aria-label={`Alternativas de ${cadena}`}
-      className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-papel p-3 "
     >
       <header className="mb-2 flex flex-wrap items-center gap-2">
         <h2 className="text-entrada font-semibold">{nombreCadena(cadena)}</h2>
@@ -574,7 +574,7 @@ function FichaAlternativa({
         'rounded-campo border p-3',
         alternativa.decide
           ? 'border-borde '
-          : 'border-aviso bg-amber-50/50 dark:bg-amber-950/30',
+          : 'border-aviso bg-aviso-suave',
       )}
     >
       <div className="flex items-start gap-3">
@@ -588,7 +588,7 @@ function FichaAlternativa({
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-[72px] w-[72px] shrink-0 rounded border border-borde bg-white object-contain "
+            className="h-[72px] w-[72px] shrink-0 rounded border border-borde bg-papel object-contain "
           />
         ) : null}
         <div className="min-w-0 flex-1">

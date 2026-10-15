@@ -36,7 +36,7 @@ export function VistasGuardadas({ consulta, onAplicar }: Props) {
       {vistas.map((v) => (
         <span
           key={v.nombre}
-          className="inline-flex items-center overflow-hidden rounded-campo border border-borde bg-white dark:bg-neutral-800"
+          className="inline-flex items-center overflow-hidden rounded-campo border border-borde bg-papel "
         >
           <button
             type="button"

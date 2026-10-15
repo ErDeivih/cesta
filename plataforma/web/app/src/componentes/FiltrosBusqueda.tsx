@@ -63,7 +63,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
   return (
     <details
       open={cuantosPuestos > 0}
-      className="rounded-tarjeta border border-borde bg-white p-3 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-papel p-3 "
     >
       <Resumen className="text-cuerpo font-medium">
         Filtros
@@ -94,7 +94,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                   'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium',
                   filtros.cadenas.includes(c)
                     ? 'border-terracota bg-terracota text-white '
-                    : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel',
+                    : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel',
                 )}
               >
                 {/* `nombreCadena` y no `{c}`: el identificador viene en minusculas (`alcampo`)
@@ -123,7 +123,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
               id={idSeccion}
               value={filtros.seccion}
               onChange={(e) => onCambio({ ...filtros, seccion: e.target.value })}
-              className="min-h-[44px] w-full rounded-campo border border-borde bg-white px-3 py-2 dark:bg-neutral-800"
+              className="min-h-[44px] w-full rounded-campo border border-borde bg-papel px-3 py-2 "
             >
               <option value="">Todos</option>
               {secciones.data?.secciones.map((s) => (
@@ -179,7 +179,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                   'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo',
                   filtros.sellos.includes(s)
                     ? 'border-terracota bg-terracota text-white '
-                    : 'border-borde bg-white hover:bg-marfil dark:bg-neutral-800 dark:hover:bg-papel',
+                    : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel',
                 )}
               >
                 {selloLegible(s)}

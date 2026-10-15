@@ -161,7 +161,7 @@ export function Buscar() {
             // hijo no encoge por debajo de su tamano minimo de contenido salvo que se le diga** -- *y el
             // minimo de un `input` es su `min-w`.* **Con `min-w-0` y `flex-1`, el campo ocupa lo que hay
             // en cualquier ancho**, *que es lo que ya hacia en escritorio.*
-            className="min-h-[48px] min-w-0 flex-1 rounded-tarjeta border border-borde bg-white px-4 py-2 text-entrada dark:bg-neutral-800"
+            className="min-h-[48px] min-w-0 flex-1 rounded-tarjeta border border-borde bg-papel px-4 py-2 text-entrada "
           />
           {/* **El microfono, si el navegador sabe** (tarea 3): sin soporte no se dibuja, que es
               la regla del encargo («no se dibuja y falla al pulsarlo: no se dibuja»). El
@@ -318,7 +318,7 @@ export function Buscar() {
                       'min-h-[44px] rounded-full border px-3 text-cuerpo font-medium',
                       puesta
                         ? 'border-terracota bg-terracota text-white '
-                        : 'border-borde bg-white dark:bg-neutral-800',
+                        : 'border-borde bg-papel ',
                     )}
                   >
                     {nombreCadena(c)}
@@ -329,7 +329,7 @@ export function Buscar() {
                 <button
                   type="button"
                   onClick={() => ponFiltros({ ...filtros, cadenas: [] })}
-                  className="min-h-[44px] rounded-full border border-borde bg-white px-3 text-cuerpo underline dark:bg-neutral-800"
+                  className="min-h-[44px] rounded-full border border-borde bg-papel px-3 text-cuerpo underline "
                 >
                   Todas
                 </button>

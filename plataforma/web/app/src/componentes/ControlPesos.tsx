@@ -50,7 +50,7 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
   return (
     <section
       aria-label="Pesos del orden"
-      className="rounded-tarjeta border border-borde bg-white p-4 dark:bg-neutral-800"
+      className="rounded-tarjeta border border-borde bg-papel p-4 "
     >
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-entrada font-semibold">Qué te importa</h2>
@@ -104,7 +104,7 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
           'mt-3 rounded-campo px-3 py-2 text-cuerpo',
           todosCero
             ? 'bg-marfil text-aviso '
-            : 'bg-marfil text-tinta-fuerte dark:bg-neutral-900 ',
+            : 'bg-marfil text-tinta-fuerte ',
         )}
       >
         {explicacion}

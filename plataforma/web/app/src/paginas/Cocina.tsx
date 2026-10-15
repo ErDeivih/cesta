@@ -15,7 +15,7 @@ export function CocinaProvider({ children }: { children: ReactNode }) {
   const [diario, setDiario] = useState<Apunte[]>([])
   return <Contexto.Provider value={{ receta, guardar, diario, setDiario }}>{children}</Contexto.Provider>
 }
-const campo = 'min-h-[44px] w-full rounded-campo border border-borde bg-white p-2 text-tinta-fuerte dark:bg-neutral-900 dark:text-white'
+const campo = 'min-h-[44px] w-full rounded-campo border border-borde bg-papel p-2 text-tinta-fuerte dark:text-white'
 const boton = 'inline-flex min-h-[44px] items-center justify-center rounded-campo bg-terracota px-4 py-2 font-medium text-white hover:bg-terracota'
 function descargar(nombre: string, texto: string, tipo: string) {
   const url = URL.createObjectURL(new Blob([texto], { type: tipo }))

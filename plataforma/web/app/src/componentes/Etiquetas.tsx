@@ -18,9 +18,9 @@ import { Etiqueta } from './ui'
 
 const COLOR_NUTRI: Record<string, string> = {
   a: 'bg-bien text-white',
-  b: 'bg-lime-500 text-tinta-fuerte',
+  b: 'bg-bien text-tinta-fuerte',
   c: 'bg-aviso text-tinta-fuerte',
-  d: 'bg-orange-500 text-white',
+  d: 'bg-aviso text-white',
   e: 'bg-error text-white',
 }
 
@@ -54,9 +54,9 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
 const COLOR_ECO: Record<string, string> = {
   a: 'bg-bien text-white',
   'a-plus': 'bg-bien text-white',
-  b: 'bg-lime-500 text-tinta-fuerte',
+  b: 'bg-bien text-tinta-fuerte',
   c: 'bg-aviso text-tinta-fuerte',
-  d: 'bg-orange-500 text-white',
+  d: 'bg-aviso text-white',
   e: 'bg-error text-white',
   f: 'bg-error text-white',
 }

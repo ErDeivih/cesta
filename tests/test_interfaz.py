@@ -631,7 +631,7 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
 # clases viejas a proposito, *para que se lea que se cambio y por que --.* *
 # *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
 # `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
-PALETA_DE_FABRICA_HOY = 43
+PALETA_DE_FABRICA_HOY = 9
 #
 # *** 15/10/2026 -- de 611 a 43. *** *El censo de la paleta de fabrica bajo un **93 %**
 # en el dia: *611 al empezar, *495 con las piezas, *463 con la navegacion, *421 y 357 con
