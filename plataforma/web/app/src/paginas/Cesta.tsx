@@ -1355,8 +1355,8 @@ export function Cesta() {
     // compra basica o lo que compra la casa segun lo que haya) y se apunta de un toque.
     // La lista de casa la crea el propio "Añadir" si no existe (`useAnadeALaCesta`).
     return (
-      <div className="grid gap-4">
-        <Vacio titulo="No tienes ninguna lista">
+      <div className="flex min-h-full flex-col gap-4">
+        <Vacio titulo="No tienes ninguna lista" className="grow">
           <p>
             Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se
             apunta en la lista de casa, que se crea sola, y la cantidad se cambia aquí.
