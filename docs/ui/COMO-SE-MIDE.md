@@ -307,3 +307,31 @@ saltaba el armazon de la app --)* *y quedo la pregunta: *** cuantas mas lo hacen
 *** Y LA REGLA ***: *cuando un censo da **cero**, *hay que preguntarse **si el cero es
 del codigo o del patron.*** *Y la forma de saberlo es *** contarlo de dos maneras
 distintas ***: *si las dos dan cero, *es del codigo.* *
+
+---
+
+## 11. *** La medida era correcta. *La pantalla, *no. ***
+
+*15/10/2026, ronda 44. *En la ronda 30 se le puso `grow` a `Fallo` *y a `main` para que
+los errores *** llenaran la pantalla en vez de quedarse arriba con cientos de pixeles
+vacios debajo.*** *Y la comprobacion fue: *capturar `/compra/despensa` antes y despues.* *
+*Dio *** el MISMO SHA-256 ***, *o sea byte a byte identica,* *y se concluyo que el cambio
+*** no hacia nada visible.*** *
+
+```
+*** Y ERA FALSO ***. *En la ronda 44 se capturo *** `/panel` *** *-- *que si usa `Fallo` --, *
+   *y el panel de error sale *** CENTRADO ***, *en y≈495-608 de un area que va de 88 a 900.* *
+*** -> *antes estaba *** pegado arriba con ~550 px de vacio debajo *** ✓
+*** -> *** el cambio llevaba funcionando desde la ronda 30 *** ✓✓✓
+```
+
+*** Y EL ERROR NO FUE DE MEDIDA: *FUE DE PANTALLA ***. *En la ronda 30, `/compra/despensa`
+*** no usaba `Fallo`** *-- *pintaba un `<p>` crudo, *que es justo lo que se arreglo en la
+ronda 31 --,* *asi que **no habia nada que cambia** ahi.* *La captura era correcta y la
+conclusion era falsa, *porque *** la pantalla elegida no era la que usaba la pieza.*** *
+
+*** Y LA REGLA, *que es la numero doce de esta lista ***: *antes de concluir que un cambio
+«no hace nada», *hay que comprobar *** que la pantalla elegida USA lo que se cambio.*** *
+*Y se comprueba con un `git grep` del componente, *no con la intuicion: *si `Fallo` no
+aparece en el fichero de esa pantalla, *esa captura **no puede** demostrar nada sobre
+`Fallo`.* *
