@@ -282,3 +282,28 @@ nada que reparta el alto.* *
 esta mirando***. *Y sin API, *casi siempre es `Fallo`.* *Arreglar el estado vacio de una
 pantalla que no lo va a pintar **es trabajo que no se puede verificar**, *y esta noche he
 hecho siete de esos.* *
+
+---
+
+## 10. *** El cero que no era del patron, *y como se supo ***
+
+*15/10/2026, ronda 40. *Se cerro el defecto de la ronda 39 *(-- *`/unirme/:codigo` se
+saltaba el armazon de la app --)* *y quedo la pregunta: *** cuantas mas lo hacen ***.* *
+
+```
+*** LA PRIMERA PASADA ***: *una expresion que buscaba `<Route path=... element={...}>`
+   *en **una linea**, *y dio *** 0 de 16 *** ✓
+*** -> *pero esa expresion *** solo pilla las rutas de una linea ***, *
+   *y en `App.tsx` hay rutas que ocupan **varias** ⚠️
+*** -> *o sea que el cero podia ser *** del patron, *no del codigo *** ✓✓✓
+*** -> *y un cero que viene del patron es *** exactamente *** el error de la ronda 25,
+   *cuando «de 611 a 9» salio de un patron que no contaba `white` ni `black` ✓
+```
+
+*** ASI QUE SE REPITIO, *cortando por BLOQUES ***: *desde cada `<Route` hasta su `/>`,
+*sin suponer cuantas lineas ocupa.* *Y dio *** 0 otra vez ***, *con las mismas 16 rutas.* *
+*Y esta vez **si** vale, *porque el segundo patron no depende del formato.* *
+
+*** Y LA REGLA ***: *cuando un censo da **cero**, *hay que preguntarse **si el cero es
+del codigo o del patron.*** *Y la forma de saberlo es *** contarlo de dos maneras
+distintas ***: *si las dos dan cero, *es del codigo.* *
