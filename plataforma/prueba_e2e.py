@@ -896,7 +896,6 @@ def main() -> int:
     #   *-- *traer **otra semana** -> **id distinto** -> *se acumula ✓
     #
     # *Y **se comprueba con el recuento de la lista**, *que es lo unico que no se puede simular.* *
-    antes_de_traer = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
     traido = cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
                           params={"desde": desde, "hasta": hasta})
     if traido.status_code not in (200, 201):
