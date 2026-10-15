@@ -254,7 +254,20 @@ export function App() {
             </LayoutSuite>
           }
         />
-        <Route path="/unirme/:codigo" element={<Unirse />} />
+        {/* *** Y esta pantalla SE SALTABA EL ARMAZON. *** *
+              *
+              * *El 15/10/2026, *con la captura de `/unirme/CODIGO-MALO` delante, *se vio
+              *que sus tarjetas iban *** de borde a borde de la pantalla *** *-- de x=0 a
+              *x=1440 --,* *sin margen, *sin ancho maximo *y sin lateral.* *Y la causa era
+              *esta linea: *la ruta **no envolvia en `LayoutSuite`**, *asi que **no habia
+              *`main`**, *ni `mx-auto max-w-app`, *ni `px-4`.* *
+              *
+              * *Y `app={null}` **es lo correcto aqui**: *es una invitacion, *no una de las
+              *tres aplicaciones* *-- *igual que `/escaner`, *`/panel` y `/ajustes`, *que
+              *ya lo hacen asi --.* *Y el titulo tambien: *`tituloDeSeccion` ya devuelve
+              *«Invitacion» para `/unirme/`.* *
+              */}
+            <Route path="/unirme/:codigo" element={<LayoutSuite app={null}><Unirse /></LayoutSuite>} />
 
         {/* Las direcciones de antes siguen funcionando, con su query. */}
         <Route path="/buscar" element={<Navigate to={`/compra${search}`} replace />} />
