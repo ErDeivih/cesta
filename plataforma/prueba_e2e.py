@@ -918,19 +918,24 @@ def main() -> int:
     else:
         print(f"   traer la misma semana otra vez no anade nada: siguen {tras_repetir} lineas")
 
-    # *Y **otra semana**, *que si tiene que acumular. *Se usa la siguiente, que ya tiene plan*
-    # *por la copia de semana de arriba.* *
-    la_otra = (lunes + timedelta(days=7))
-    tras_otra = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
-    # *** Y se prueba LA PROPIEDAD, no el delta. *** *
+    # *** Y otra semana, *que es donde se ve que ACUMULA. *** *
     #
-    # *La primera version de esto afirmaba «otra semana tiene que anadir lineas», *y **el recorrido
-    # acumula estado entre corridas**: *en la segunda corrida **ya estaban**, *decia «y anadio 0»... *
-    # *y **las dos cosas eran verdad** *-- *las lineas **estaban**, *y **no se habia anadido nada.*** *
+    # *Y **se prueba LA PROPIEDAD, no el delta**: *el recorrido **acumula estado entre corridas**, *
+    # *asi que «otra semana tiene que anadir lineas» **no es verdad siempre** *-- *si **ya estaba**, *
+    # *anade cero y **las lineas estan.** *
     #
-    # *Lo que **si** es independiente de la corrida: *traer otra semana **no puede quitar nada**, *
+    # *Lo que **si** es verdad siempre: *traer otra semana **no puede quitar nada**, *
     # *y **volver a traerla dice que ya estaban** -- *que es **la acumulacion**: *las de la semana
     # nueva **estan**, *y **las de la vieja siguen.*** *
+    #
+    # *** Y el `POST` va ANTES de medir. *** *En una version de esto **se me fue**, *y la medida
+    # salia **igual que la de antes** *-- *y **eso no era inestabilidad del recorrido, era mi
+    # edicion**: *decia «deja la lista en 15 (venia de 15)» **sin haber traido nada.*** *
+    la_otra = (lunes + timedelta(days=7))
+    cliente.post(f"/api/listas/{la_casa}/desde-el-plan",
+                 params={"desde": la_otra.isoformat(),
+                         "hasta": (la_otra + timedelta(days=6)).isoformat()})
+    tras_otra = len(cliente.get(f"/api/listas/{la_casa}").json().get("lineas") or [])
     if tras_otra < tras_repetir:
         fallos += 1
         print(f"   FALLO: la lista no puede encoger al traer otra semana: {tras_repetir} -> {tras_otra}")
