@@ -204,7 +204,7 @@ export function Escaner() {
         <div className="overflow-hidden rounded-tarjeta border border-borde ">
           {/* El vídeo no lleva `autoPlay` en el JSX: se arranca a mano al
               conectar el flujo, que es cuando el elemento ya existe. */}
-          <video ref={video} playsInline muted className="max-h-[60vh] w-full bg-black object-cover" />
+          <video ref={video} playsInline muted className="max-h-[60vh] w-full bg-tinta-fuerte object-cover" />
           <p className="bg-papel px-3 py-2 text-cuerpo ">
             Apunta al código de barras. Cuando lo lea, se busca solo.
           </p>
@@ -269,7 +269,7 @@ export function Escaner() {
             {hallado.grupo_id !== null ? (
               <Link
                 to={`/grupo/${hallado.grupo_id}`}
-                className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-4 font-medium text-white hover:bg-terracota "
+                className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-4 font-medium text-papel hover:bg-terracota "
               >
                 Ver el grupo y las otras cadenas
               </Link>

@@ -93,7 +93,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 className={cx(
                   'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium',
                   filtros.cadenas.includes(c)
-                    ? 'border-terracota bg-terracota text-white '
+                    ? 'border-terracota bg-terracota text-papel '
                     : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel',
                 )}
               >
@@ -178,7 +178,7 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
                 className={cx(
                   'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo',
                   filtros.sellos.includes(s)
-                    ? 'border-terracota bg-terracota text-white '
+                    ? 'border-terracota bg-terracota text-papel '
                     : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel',
                 )}
               >

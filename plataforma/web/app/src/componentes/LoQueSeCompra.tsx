@@ -138,7 +138,7 @@ export function LoQueSeCompra() {
                   width={96}
                   height={96}
                   loading="lazy"
-                  className="h-24 w-24 rounded-campo border border-borde bg-white object-contain "
+                  className="h-24 w-24 rounded-campo border border-borde bg-papel object-contain "
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}

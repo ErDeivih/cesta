@@ -17,11 +17,11 @@ import { porcentaje } from '../api/formato'
 import { Etiqueta } from './ui'
 
 const COLOR_NUTRI: Record<string, string> = {
-  a: 'bg-bien text-white',
+  a: 'bg-bien text-papel',
   b: 'bg-bien text-tinta-fuerte',
   c: 'bg-aviso text-tinta-fuerte',
-  d: 'bg-aviso text-white',
-  e: 'bg-error text-white',
+  d: 'bg-aviso text-papel',
+  e: 'bg-error text-papel',
 }
 
 export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
@@ -38,7 +38,7 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
   return (
     <span
       title={`Nutri-Score ${letra.toUpperCase()}`}
-      className={`inline-flex h-6 w-6 items-center justify-center rounded font-bold ${color ?? 'bg-borde-fuerte text-white'}`}
+      className={`inline-flex h-6 w-6 items-center justify-center rounded font-bold ${color ?? 'bg-borde-fuerte text-papel'}`}
     >
       {letra.toUpperCase()}
     </span>
@@ -52,13 +52,13 @@ export function SelloNutriscore({ valor }: { valor: Nutriscore }) {
 // Lo publica Open Food Facts -- es atribucion obligatoria de su licencia, y ademas es lo que hace creible
 // el dato: quien lo lee puede saber de donde sale. Va en el `title`.
 const COLOR_ECO: Record<string, string> = {
-  a: 'bg-bien text-white',
-  'a-plus': 'bg-bien text-white',
+  a: 'bg-bien text-papel',
+  'a-plus': 'bg-bien text-papel',
   b: 'bg-bien text-tinta-fuerte',
   c: 'bg-aviso text-tinta-fuerte',
-  d: 'bg-aviso text-white',
-  e: 'bg-error text-white',
-  f: 'bg-error text-white',
+  d: 'bg-aviso text-papel',
+  e: 'bg-error text-papel',
+  f: 'bg-error text-papel',
 }
 
 
@@ -80,7 +80,7 @@ export function SelloEcoscore({ valor }: { valor: string | null | undefined }) {
     <span
       title={`Eco-Score ${grado === 'a-plus' ? 'A+' : grado.toUpperCase()} (Open Food Facts)`}
       className={`inline-flex h-6 min-w-6 items-center justify-center rounded px-1 text-etiqueta font-bold ${
-        COLOR_ECO[grado] ?? 'bg-borde-fuerte text-white'
+        COLOR_ECO[grado] ?? 'bg-borde-fuerte text-papel'
       }`}
     >
       {grado === 'a-plus' ? 'A+' : grado.toUpperCase()}

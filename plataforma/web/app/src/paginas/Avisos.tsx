@@ -209,7 +209,7 @@ export function Avisos() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
               to="/buscar"
-              className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-3 text-cuerpo font-semibold text-white "
+              className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-3 text-cuerpo font-semibold text-papel "
             >
               Buscar un producto
             </Link>

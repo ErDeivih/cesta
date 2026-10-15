@@ -323,7 +323,7 @@ function BarraDeOrden({ orden, onOrden }: {
               }}
               className={
                 esElPuesto
-                  ? 'min-h-[44px] rounded-campo border border-terracota bg-terracota px-3 text-cuerpo font-medium text-white '
+                  ? 'min-h-[44px] rounded-campo border border-terracota bg-terracota px-3 text-cuerpo font-medium text-papel '
                   : 'min-h-[44px] rounded-campo border border-borde bg-papel px-3 text-cuerpo '
               }
             >

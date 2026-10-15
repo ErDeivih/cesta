@@ -124,6 +124,20 @@ MAPA: list[tuple[str, str]] = [
     # medias **sin decirlo.*** *El blanco puro no es de esta casa: *la casa es de papel
     # calido, *y `papel` es el token.* *
     ("bg-white", "bg-papel"),
+    # *** Y BLANCO Y NEGRO, *que mi censo NUNCA CONTO. *** *
+    #
+    # *El 15/10/2026, en la ronda 25, aparecieron *** 34 clases *** de `white`/`black`
+    # que el censo no veia, *porque su patron buscaba nombres de paleta
+    # (`slate|gray|zinc|neutral|...`) *y *** `white` no esta en esa lista.*** *Asi que
+    # «de 611 a 9» **nunca fue cierto**: *el numero real es **43.*** *
+    #
+    # *Y `text-white` va a *** `text-papel` *** *y no a otro: *es **la pareja que el
+    # proyecto ya usa** *(-- `Suite.tsx` pinta la aplicacion activa con
+    # `bg-bosque text-papel` --), *y ademas **cambia con el tema**, *que es lo que
+    # `text-white` no hacia: *en tema oscuro, *`bosque` es **verde palido** *y blanco
+    # encima **no se lee.*** *
+    ("bg-black", "bg-tinta-fuerte"),
+    ("text-white", "text-papel"),
     # *Y el semaforo: *`lime` y `orange` no son de la paleta de la casa, *pero dicen lo
     # mismo que `bien` y `aviso`: *el tono cambia, *el significado no.* *
     ("bg-lime-500", "bg-bien"),

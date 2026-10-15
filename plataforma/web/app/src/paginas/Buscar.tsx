@@ -333,7 +333,7 @@ export function Buscar() {
                     className={cx(
                       'min-h-[44px] rounded-full border px-3 text-cuerpo font-medium',
                       puesta
-                        ? 'border-terracota bg-terracota text-white '
+                        ? 'border-terracota bg-terracota text-papel '
                         : 'border-borde bg-papel ',
                     )}
                   >

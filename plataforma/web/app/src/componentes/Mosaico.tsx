@@ -104,7 +104,7 @@ export function Mosaico({ limite = 12, vacia = false }: { limite?: number; vacia
                   width={80}
                   height={80}
                   loading="lazy"
-                  className="mx-auto h-20 w-20 rounded-campo border border-borde bg-white object-contain "
+                  className="mx-auto h-20 w-20 rounded-campo border border-borde bg-papel object-contain "
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}

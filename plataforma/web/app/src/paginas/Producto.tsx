@@ -242,7 +242,7 @@ export function Producto() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className="h-28 w-28 rounded-campo border border-borde bg-white object-contain "
+            className="h-28 w-28 rounded-campo border border-borde bg-papel object-contain "
           />
         )}
         <div className="min-w-[16rem] flex-1">

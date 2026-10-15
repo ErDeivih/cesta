@@ -117,7 +117,7 @@ export function Panel() {
             className={
               'min-h-[44px] rounded-campo border px-3 py-1 text-cuerpo font-medium ' +
               (activa === p.clave
-                ? 'border-terracota bg-terracota text-white '
+                ? 'border-terracota bg-terracota text-papel '
                 : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
             }
           >
@@ -189,7 +189,7 @@ function FiltroCadenas({
             className={
               'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
               (puestas.includes(c)
-                ? 'border-terracota bg-terracota text-white '
+                ? 'border-terracota bg-terracota text-papel '
                 : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
             }
           >
@@ -203,7 +203,7 @@ function FiltroCadenas({
           className={
             'inline-flex min-h-[44px] items-center rounded-full border px-3 text-cuerpo font-medium ' +
             (sinFiltro
-              ? 'border-terracota bg-terracota text-white '
+              ? 'border-terracota bg-terracota text-papel '
               : 'border-borde bg-papel hover:bg-marfil dark:hover:bg-papel')
           }
         >
