@@ -665,7 +665,7 @@ def test_las_escalas_que_se_usan_tienen_tamano_de_letra_conocido():
 # clases viejas a proposito, *para que se lea que se cambio y por que --.* *
 # *Los que mas tienen son las pantallas grandes: *`Panel` 66, *`Grupo` 52,
 # `Inicio` 42, *`RepartoEnTiendas` 34, *`FiltrosBusqueda` 32.* *
-PALETA_DE_FABRICA_HOY = 9
+PALETA_DE_FABRICA_HOY = 6
 #
 # *** 15/10/2026 -- de 611 a 43. *** *El censo de la paleta de fabrica bajo un **93 %**
 # en el dia: *611 al empezar, *495 con las piezas, *463 con la navegacion, *421 y 357 con
@@ -702,9 +702,21 @@ PALETA_DE_FABRICA_HOY = 9
 
 _PALETA = ("slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|"
            "teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose")
-_PALETA_DE_FABRICA = re.compile(
-    rf"\b(?:bg|text|border|ring|from|to|via|divide|outline|decoration|fill|stroke|"
-    rf"placeholder|accent|caret|shadow)-(?:{_PALETA})-")
+# *** Y UNA SOLA RAMA, *con alternacion interna, *y **en una linea.** *** *
+#
+# *El 15/10/2026 este censo **no veia** `white` ni `black`, *y por eso «de 611 a 9»
+# fue **falso** siete rondas: *el numero real era **43.*** *La causa **no era una
+# lista incompleta**: *la expresion exigia un *** guion detras *** *(-- *para el tono de
+# `text-neutral-500` --), *y `white` y `black` son *** los dos unicos colores de Tailwind
+# SIN TONOS ***: *se escriben sin nada detras.* *Asi que **no podian casar nunca.*** *
+#
+# *Y se probo antes de escribirlo: *se compilo a mano y se preguntaron **doce casos**
+# -- *los siete que tienen que casar, *`text-whitealgo` y `bg-blackish` que **no**,
+# y `bg-papel` y `text-terracota` que **tampoco**, *porque son tokens.* *
+#
+# *Y en **una linea**: *el intento de ayer partio un `rf"..."` en dos y **rompio la
+# expresion** *(-- *`unbalanced parenthesis` --)* *con el fichero entero sin cargar.* *
+_PALETA_DE_FABRICA = re.compile(r"\b(?:bg|text|border|ring|from|to|via|divide|outline|decoration|fill|stroke|placeholder|accent|caret|shadow)-(?:(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-|(?:white|black)(?![\w-]))")
 
 
 @pytest.mark.skipif(not APP.exists(), reason="esta copia no trae la interfaz nueva")
