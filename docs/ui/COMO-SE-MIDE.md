@@ -509,3 +509,102 @@ y una *(-- `Unirse`, *con antes y despues --).* *Quedaban `Cesta:1358` *y `Favor
 *** Y LA REGLA, *que es la 4 de esta lista otra vez ***: *un censo por **clases de
 Tailwind** dice **donde mirar**, *no **si falta algo**.* *El «pendiente» de un censo
 **no es un defecto** hasta que una captura lo ensena.* *
+
+---
+
+## 17. *** CONSOLIDAR NO ES ARREGlar: *ES FOTOGRAFIAR ***
+
+*15/10/2026. *Y esta es la que mas me ha costado ver, *porque *** la cometi mientras
+creia que estaba arreglando el problema***. *
+
+### Lo que paso
+
+```
+*** en la ronda 1 *** *de este encargo recibi un encargo explicito: *
+   *«`ESTADO-FASE-5.md` conserva afirmaciones OBSOLETAS; *hay que corregirlo» ✓
+*** -> *y lo hice: *le puse *** un resumen vigente arriba ***, *separe el historico, *
+   *y elimine las cuatro contradicciones ✓✓✓
+*** -> *** y lo di por bueno *** ⚠️
+*** -> *** y desde esa foto, *el mundo se movio ***: *
+   *-- *se monto un entorno aislado *(-- *rondas 22 a 35 --)* ✓
+   *-- *se corrio una puerta que paso *** 87 de 87 *** ✓
+   *-- *y *** cuatro documentos se quedaron atras *** sin que nadie lo notara ⚠️
+```
+
+### Y los cuatro, *uno por uno*
+
+```
+*** 1 ***. *`docs/DICTAMEN.md`, PARTE 2: *decia «el recorrido completo: *** NO HECHO ***», *
+   *«que lo servido se comporte: *** NO VERIFICADO ***»...* *-- *ronda 42 ✓
+*** 2 ***. *`docs/DICTAMEN.md`, PARTE 1: *decia que el limite era *** «el acceso a datos» ***, *
+   *y el acceso a datos *** se habia conseguido *** *-- *ronda 43 ✓
+*** 3 ***. *`docs/ui/ESTADO-FASE-5.md`: *su conclusion decia *** «el limite es UNO: *** *
+   *** hace falta API con datos controlados» ***, *y la API *** se monto y se uso *** *
+   *-- *ronda 44 ✓
+*** 4 ***. *`docs/ui/VERSION-SERVIDA.md`: *«NO VERIFICADO TODAVIA: *** que lo servido
+   *** se comporte bien» ***, *y la puerta *** navega y pulsa la aplicacion *** *
+   *-- *ronda 45 ✓✓✓
+```
+
+*** Y los tres primeros los encontre *** por casualidad***, *trabajando en otra cosa. *
+*No los busque: *tropecé.*
+
+### Y la causa, *que es lo que importa*
+
+```
+*** consolidar un documento *** no lo mantiene vivo***: *lo *** fotografia *** ✓
+*** -> *y una foto *** es cierta el dia que se hace ***, *y no despues ✓
+*** -> *** el documento no se quedo obsoleto por descuido: *
+   *** se quedo obsoleto porque EL TRABAJO SIGUIO *** ✓✓✓
+*** -> *y yo lo habia dado por bueno *** al terminarlo ***, *que es lo mismo que *
+   *dar por bueno un censo *(-- *la leccion 16 --)* ✓
+```
+
+*** Y ES EL MISMO FALLO QUE EL DE LA PUERTA MECANICA ***, *que es lo que lo hace
+interesante: *
+
+```
+*** `prueba_navegador.py` *** daba por bueno lo que ya no comprobaba*** *
+   *(una frase reescrita, *cinco rutas movidas, *una espera de carrera)* ✓
+*** -> *y *** los documentos daban por bueno lo que ya no era cierto *** ✓
+*** -> *** los dos son una foto que se confunde con un estado *** ✓✓✓
+```
+
+### Y la regla que sale
+
+```
+*** 1 ***. *** Todo documento que afirme un estado lleva CUANDO se midio***, *
+   *y *** que lo que dice caduca *** ✓
+*** 2 ***. *** Cuando el trabajo sigue, *los documentos que lo describen ***
+   *** hay que volver a mirarlos ***, *y *** enumerarlos ***, *no esperar a tropezarlos ✓
+*** 3 ***. *y la mas importante: *** «lo arregle» no es «esta arreglado» *** ✓
+   *-- *un documento consolidado el 15/10 es cierto *** ese dia ***, *
+      *y *** hay que decir de que dia es *** ✓✓✓
+```
+
+*** Y la comprobacion que deberia haber hecho antes ***: *buscar en MIS documentos
+las frases que affirman un limite *(-- *«no se puede», *«NO HECHO», *«sin verificar»,
+*«el limite es» --)* *y *** mirar si siguen siendo ciertas***. *Es una busqueda de
+un minuto, *y la hice en la ronda 45, *cuatro documentos tarde.* *
+
+### Y la comprobacion, *corrida de verdad*
+
+*** Y la he corrido *** al escribir esta seccion ***, *que es lo minimo que se puede
+hacer despues de escribir una regla. *Buscar en los documentos *** vigentes ***
+*las frases que affirman un limite *(-- *«NO HECHO», *«no se puede», *«sin verificar»,
+*«el limite es» --)* *y mirar si siguen siendo ciertas: *
+
+```
+*** `docs/DICTAMEN.md` ***: *de las seis coincidencias, *una es la regla del documento, *
+   *dos son las correcciones que acabo de hacer, *y *** tres affirman algo ***: *
+   *-- *«pantallas con sesion, con captura: *** NO HECHO ***» *-- *y *** es cierto *** ✓
+   *-- *«no se puede afirmar que el despliegue publico este listo» *-- *** cierto *** ✓
+   *-- *y la tabla de la 1.2, *que ya es la version corregida ✓
+*** `docs/ui/ESTADO-FASE-5.md` ***: *las dos coincidencias son *** las correcciones *** ✓
+*** `docs/ui/VERSION-SERVIDA.md` ***: *una, *y es *** «lo que sigue SIN VERIFICAR» ***, *
+   *que *** es cierto *** ✓
+*** -> *** NINGUNA es un limite obsoleto *** ✓✓✓
+```
+
+*** Y eso cierra la seccion ***: *la regla no sirve de nada si no se corre, *y
+*** correrla cuesta un minuto.*** *
