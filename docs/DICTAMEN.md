@@ -2921,3 +2921,49 @@ lo que el trabajo dejo atras. *
 *** Y ESTE ES EL FONDO DE LA SECCION 17, *YA COMO HERRAMIENTA***: *un documento que
 afirma un estado *** se queda atras solo***, *y la unica defensa que no depende de
 la memoria es *** una prueba que lo diga***. *Y ahora hay una. *
+
+## 7.153 *Y LAS CAPTURAS, *COMO UNA CAPACIDAD DE LA PUERTA (ronda 91)*
+
+*** Las siete pantallas con sesion *** nunca se han mirado***: *la puerta *** las
+recorre y las pasa***, *y no hay una sola foto. *Y hacer siete capturas a mano
+seria *** la cuarta vez que repito el ciclo entero***. *
+
+```
+*** la puerta hace *** 29 `carga("/…")` *** *y *** no guardaba ninguna foto *** ✓
+*** -> *y las siete que faltan son *** un subconjunto de esas 29 *** ✓
+*** -> *y anadir 7 llamadas seria *** tocar 7 sitios *** ⚠️
+*** -> *** mejor: *que `carga()` guarde la foto cuando se le pida *** ✓ *
+   *-- *** un solo cambio, *y salen las 29 *** ✓
+   *-- *y si mañana se anade una pantalla, *** sale sola *** ✓
+   *-- *y con `CESTA_CAPTURAS`, *para que *** la puerta normal no escriba nada*** *
+      *(-- *una puerta que deja basura en cada corrida es una puerta que se deja
+      *de correr --)* ✓✓✓
+```
+
+### 7.154 *Y ES EL MISMO PRINCIPIO QUE LA PRUEBA DE DOCUMENTOS*
+
+```
+*** la prueba de documentos ***: *que pase, *no que me acuerde ✓
+*** -> *las capturas ***: *que las saque la puerta, *no que las haga a mano ✓
+*** -> *** los dos son lo mismo ***: *quitar el trabajo de *** la memoria *** *
+   *y ponerlo *** donde ya se corre *** ✓✓✓
+```
+
+### 7.155 *Y RUFF ME PILLO DOS VECES, *EN EL MISMO CAMBIO*
+
+```
+*** 1 ***. *** `F821 Undefined name Path` ***: *el fichero importaba `os`, *`re`, *
+   *`json`... *y *** no `Path` *** ⚠️ *-- *y `py_compile` *** no lo ve*** ✓
+*** -> *** 2 ***. *y al anadirlo *** sustitui `import os` *** en vez de anadirlo ⚠️ *
+   *-- *y `os` *** se usa*** justo en lo que acababa de escribir *
+      *(`os.environ.get("CESTA_CAPTURAS")`) ✓
+   *-- *y `ruff` lo vio, *y lo dijo: *** 3 errores*** ✓
+*** -> *** 3 ***. *y al arreglarlo, *`I001 Import block is un-sorted` *
+   *-- *porque `from pathlib` iba *** entre los `import` simples*** ⚠️
+*** -> *** tres avisos, *los tres de `ruff`, *y *** ninguno de `py_compile` *** ✓✓✓
+```
+
+*** Y ES LA MISMA LECCION DE TODO EL DIA ***, *otra vez y en pequeño: *el cambio
+era *** una capacidad nueva*** *(-- *y esa parte esta bien pensada* --), *y lo que
+fallo fueron *** las tres lineas de al lado***: *el import que faltaba, *el que
+sustitui, *y el orden. *Y *** las tres las vio una puerta, *no yo.*** *

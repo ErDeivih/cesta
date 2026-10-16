@@ -38,6 +38,7 @@ import os
 import re
 import sys
 import time
+from pathlib import Path
 
 BASE = os.environ.get("CESTA_UI", "http://localhost:5173")
 CLAVE = "clave-de-prueba-123"
@@ -519,8 +520,37 @@ def main() -> int:
         pagina.on("pageerror", lambda e: errores.append(str(e)))
         pagina.on("console", lambda m: consola.append(m.text) if m.type == "error" else None)
 
+        # **Y las capturas, *si se piden*.** *La puerta visita 29 pantallas y no
+        # guardaba ninguna foto*: *las siete pantallas con sesion llevaban desde
+        # octubre sin que *** nadie las hubiera mirado***, *y la puerta las
+        # recorria y las pasaba.*
+        #
+        # **Va aqui, *en `carga()*, y no en las 29 llamadas**: *un solo sitio, y
+        # salen todas* -- y si mañana se anade una pantalla, *** sale sola***. *Es
+        # el mismo principio que la prueba de documentos: *que pase, *no que me
+        # acuerde.*
+        #
+        # **Y solo si se pide.** *Sin `CESTA_CAPTURAS` la puerta no escribe ni un
+        # fichero*: *una puerta que deja basura en cada corrida es una puerta que
+        # se deja de correr.* *Ver `docs/ui/COMO-SE-MIDE.md`, §18.*
+        dir_capturas = os.environ.get("CESTA_CAPTURAS")
+        if dir_capturas:
+            Path(dir_capturas).mkdir(parents=True, exist_ok=True)
+        hechas: list[str] = []
+
         def carga(ruta: str = "/") -> None:
             _carga(pagina, ruta)
+            if not dir_capturas:
+                return
+            # El nombre lleva la ruta, *legible*: `/compra/listas?x=1` se vuelve
+            # `compra-listas.png`, y el indice desempata los repetidos.
+            limpio = ruta.split("?")[0].strip("/").replace("/", "-") or "portada"
+            hechas.append(limpio)
+            cual = hechas.count(limpio)
+            sufijo = "" if cual == 1 else f"-{cual}"
+            with contextlib.suppress(Exception):
+                pagina.screenshot(path=str(
+                    Path(dir_capturas) / f"{limpio}{sufijo}.png"), full_page=True)
 
         # ---------------------------------------------- abrir: la portada y el buscador ---
         # **La raiz es la portada de las tres aplicaciones, no la compra.** Medido en un navegador
