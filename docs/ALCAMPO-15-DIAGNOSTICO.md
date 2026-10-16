@@ -102,3 +102,64 @@ exactamente lo que el encargo prohibe.* *
 *** Lo siguiente, *en orden ***: *encontrar **el error concreto** que marco `ok=False`
 *(el log tiene el recuento, *pero falta **cual**)*, *y **resolver cual de los dos
 artefactos** es el que se sirve.* *
+
+---
+
+## 7. *Y las dos preguntas abiertas, *cerradas (ronda 4)*
+
+### 7.1 *Cual de los dos artefactos se sirve: *`data/gold/actual.json`*
+
+```
+*** `data/gold/actual.json` *** contiene *** `20261015-123403` *** ✓✓✓
+*** -> *y no es el dato: *es un *** puntero con huellas ***: *
+   *`version`, *`publicado_en: 2026-10-15T12:34:03`, *6 parquet *y **su SHA-256** ✓
+*** -> *escrito el *** 15/10 a las 12:34:04 ***, *que es el identificador que dio
+   *el propietario ✓
+*** -> *** la publicacion ESTA fechada el 15 ***, *y `data/publicado/stats.json`
+   *(-- 16 de SEPTIEMBRE --)* *** no es lo que se sirve *** ✓✓✓
+```
+
+### 7.2 *Y la frescura POR CADENA, *que es lo que faltaba*
+
+*De `precio_diario.parquet` de esa publicacion, *agrupado por `fuente`:*
+
+| *cadena* | *filas* | *dias* | *** ultimo dia *** |
+|---|---|---|---|
+| *** alcampo *** | *730.860* | *30* | *** 2026-10-14 *** |
+| *aldi* | *79.610* | *38* | *2026-10-15* |
+| *carrefour* | *541.520* | *33* | *2026-10-15* |
+| *dia* | *209.702* | *37* | *2026-10-15* |
+| *** lidl *** | *** 230 *** | *** 3 *** | *2026-10-15* |
+| *mercadona* | *161.895* | *38* | *2026-10-15* |
+
+*** Y esto confirma las dos cosas que dijo el propietario, *con numeros ***: *
+
+```
+*** «Alcampo sigue con datos del 14» ***: *CONFIRMADO. *Su ultimo dia es *
+   *** 2026-10-14 *** *mientras *** todas las demas van al 15 *** ✓✓✓
+*** «Lidl es cobertura PARCIAL, *no catalogo completo» ***: *CONFIRMADO y
+   *** cuantificado ***: *** 230 filas y 3 dias ***, *frente a 730.860 de alcampo *
+   *o 541.520 de carrefour ✓✓✓
+```
+
+### 7.3 *Y el hallazgo que cambia el diagnostico*
+
+*** La publicacion funciona POR CADENA ***: *la que falla **no publica**, *y las demas
+**si**.* *
+
+```
+*** -> *«Alcampo del 14» *** NO es un fallo de la publicacion *** ✓
+*** -> *es *** la consecuencia correcta *** de una ejecucion que fallo ✓✓✓
+*** -> *y eso significa que *** el defecto esta en la EJECUCION ***, *
+   *no en la publicacion, *y que *** el control funciono *** ✓
+```
+
+*** O sea que las tres cosas que el encargo pedia separar, *ahora estan separadas *
+*y con numeros ***: *
+
+| | *alcampo* | *las demas* |
+|---|---|---|
+| *** Exito de ejecucion *** | *** `ok=False`, *1 error *** | *`ok=True`, *0 errores* |
+| *** Frescura *** | *** 14 de octubre *** | *15 de octubre* |
+| *** Cobertura *** | *730.860 filas, *30 dias* | *-- *y *** Lidl: *230 filas, *3 dias*** |
+
