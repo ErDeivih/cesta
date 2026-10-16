@@ -1390,6 +1390,35 @@ def main() -> int:
         # formas segun como la deje la pasada anterior (con lineas por coger, con todo en
         # el carro, o vacia con la cuadricula), y las tres son respuestas: lo que se mide
         # aqui son los toques, no el estado de la lista.
+        # **Y habia un cuarto sitio donde esto se quedo viejo, que es el que faltaba.**
+        # A 390 px, **las subsecciones del menu no estan visibles: viven dentro del cajon**,
+        # y el lateral -- donde tambien estan -- es `hidden lg:block`. Asi que buscar
+        # `nav a[href='/compra/listas']:visible` **caduca siempre**, no porque el enlace no
+        # exista -- que existe, y esta bien --, sino porque **esta detras del ☰**. Y el
+        # arreglo no es cambiar la ruta ni quitar el `:visible`: es **abrir el cajon**,
+        # que es lo que hace una persona. Medido en la ronda 52.
+        def toca(paso):
+            """Pulsa un paso del camino; si es una subseccion, abre antes el cajon."""
+            if paso in BARRA:
+                destino = pagina.locator(f"nav a[href='{BARRA[paso]}']:visible").first
+                try:
+                    destino.wait_for(state="visible", timeout=1200)
+                except Exception:  # noqa: BLE001
+                    # **No esta a la vista: es una subseccion, y hace falta el cajon.**
+                    # El boton se agarra por `aria-controls`, que no cambia con el idioma
+                    # ni con el texto -- que lleva el nombre de la aplicacion, no «Menu».
+                    pagina.locator(
+                        "header button[aria-controls='menu-suite']").first.click()
+                    pagina.wait_for_timeout(400)
+                    destino = pagina.locator(
+                        f"nav a[href='{BARRA[paso]}']:visible").first
+            elif paso in PESTANAS_PANEL:
+                destino = pagina.get_by_role("tab", name=paso).first
+            else:
+                destino = pagina.get_by_role("button", name=paso).first
+            destino.click()
+            pagina.wait_for_timeout(900)
+
         for que, marcas, camino in (
                 ("3: voy tachando bien (el numero de la barra lo dice sin abrir nada)",
                  ("Por coger", "En el carro", "Lo que cuesta", "No tienes ninguna lista"),
@@ -1415,14 +1444,7 @@ def main() -> int:
         ):
             carga("/")
             for paso in camino:
-                if paso in BARRA:
-                    toque = pagina.locator(f"nav a[href='{BARRA[paso]}']:visible").first
-                elif paso in PESTANAS_PANEL:
-                    toque = pagina.get_by_role("tab", name=paso).first
-                else:
-                    toque = pagina.get_by_role("button", name=paso).first
-                toque.click()
-                pagina.wait_for_timeout(900)
+                toca(paso)
             pagina.wait_for_timeout(900)
             texto = pagina.inner_text("main")
             visto = next((m for m in marcas if m in texto), None)

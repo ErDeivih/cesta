@@ -1415,3 +1415,42 @@ las subsecciones estan detras del cajon**, *y el test las busca **visibles**.* *
 *** -> *y la seccion se llama *** «cuantos toques hay desde la primera pantalla hasta
    *cada respuesta» ***, *asi que *** A es la que mide lo que dice medir *** ✓
 ```
+
+## 7.66 *Y SE ARREGLA LA PUERTA, *ABRIENDO EL CAJON (ronda 53)*
+
+*** La salida A era la que *** mide lo que la seccion dice medir***, *y es una linea
+del test, *no un cambio de producto. *Y la causa estaba medida: *a 390 px las
+subsecciones *** viven dentro del cajon ***. *
+
+```
+*** el localizador *** era *** `nav a[href='/compra/listas']:visible` *** ⚠️
+*** -> *y ese enlace *** existe y esta bien***: *lo que pasa es que esta detras del ☰ ✓
+*** -> *y el arreglo *** no es cambiar la ruta ni quitar el `:visible`***: *
+   *** es abrir el cajon ***, *que es lo que hace una persona ✓✓✓
+*** -> *y el boton se agarra por *** `aria-controls='menu-suite'` *** *
+   *-- *`Suite.tsx:413` --, *que no cambia con el idioma ni con el texto, *
+   *porque su texto lleva *** el nombre de la aplicacion ***, *no «Menu» ✓
+```
+
+### 7.67 *Y la lógica, *que es la de una persona*
+
+```
+*** 1 ***. *se busca el destino *** visible *** ✓
+*** -> *** 2 ***. *si no lo esta en 1,2 s, *se pulsa el *** ☰ *** *y se vuelve a buscar ✓
+*** -> *** 3 ***. *y se pulsa ✓
+*** -> *** o sea: *si el enlace ya se ve *(-- *la barra de abajo, *las raices --)*, *
+   *no se toca nada; *y si es una subseccion, *se abre el cajon como haria cualquiera ✓✓✓
+*** -> *y el codigo lo dice: *«no esta a la vista: *es una subseccion, *
+   *** y hace falta el cajon» *** ✓
+```
+
+*** Y `ruff` protesto por el `except Exception` *** *(-- *`BLE001` --)*, *y en vez de
+elegir yo, *mire como lo hace el fichero: *** ya lo usa seis veces con `# noqa: BLE001`***
+*(lineas 117, 125, 264, 272, 318 y 338)*, *y la 984 lo explica: *«un `except Exception`
+suelto, *y hace bien». *Asi que *** segui el patron del fichero.*** *
+
+*** Y NO SE HA VUELTO A CORRER ***, *y se dice: *el arreglo esta razonado desde la
+medida de la ronda 52 *(-- *las subsecciones estan en el cajon --)*, *y *** falta la
+ejecucion que lo confirme***, *que es el mismo limite que declare en la ronda 34 con
+la condicion de carrera. *`ruff` limpio, *compila, *LF conservado *(-- 2174, *CRLF=0 --)*, *
+*y diff 30/8.* *
