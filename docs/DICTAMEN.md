@@ -3038,3 +3038,38 @@ juicio escrito***, *en vez de una afirmacion sobre lo que la puerta decia. *
 *** Y ESTO ES LO MISMO QUE TODO EL DIA *** *(-- *una herramienta que deja basura
 no se corre* --), *y por eso el `.gitignore` lleva *** el porque *** y no solo la
 linea: *quien lo lea dentro de un año sabra *** que hay que hacer con ellas. *** *
+
+## 7.160 *Y EL AGUJERO, *MEDIDO CON NOMBRE Y APELLIDO (ronda 93)*
+
+*** Y no lo di por bueno***: *el hallazgo de la 92 decia «faltan Recetario,
+PlanSemanal y Diario», *y *** eso eran nombres de pantalla, *no rutas***. *Asi que
+se fueron a buscar *** las rutas de verdad*** en `App.tsx`. *
+
+```
+*** `/recetas` *** *→ *** `Recetario` *** ✓
+*** -> `/recetas/plan` *** *→ *** `PlanSemanal` *** ✓
+*** -> `/recetas/:recetaId` *** *→ *** `RecetaDetalle` *** ✓
+*** -> `/calorias` *** *→ *** `Diario` *** *-- *y *** ya estaba capturada *** ✓
+*** -> `/calorias/alimentos` *** *→ *** `Cocina` *** ⚠️
+*** -> `/calorias/tendencias` *** *→ *** `Tendencias` *** ⚠️
+*** -> *** y **`/diario` NO EXISTE** ***: *el Diario *** es `/calorias` *** ✓✓✓
+```
+
+### 7.161 *Y EL RECUENTO HONESTO: *CINCO RUTAS, *NO TRES*
+
+```
+*** la puerta visita *** 18 pantallas *** ✓
+*** -> *y NO visita ***: *
+   *-- *** `/recetas` *** *y *** `/recetas/plan` *** *y *** `/recetas/:recetaId` *** ⚠️ *
+      *(-- *** toda la aplicacion de Recetas *** --)*
+   *-- *** `/calorias/alimentos` *** *y *** `/calorias/tendencias` *** ⚠️
+*** -> *** cinco ***, *y el hallazgo de la 92 decia *** tres*** ✓
+   *-- *y decia tres porque *** yo supuse las rutas por el nombre de la pantalla*** ✓
+   *-- *y `Diario` *** no falta***: *es `/calorias` ✓
+*** -> *** o sea: *el hallazgo era *** mas grande de lo que dije***, *
+   *y una de las tres *** no era*** ✓✓✓
+```
+
+*** Y NO SE ANADIERON LOS CINCO `carga()` *** *en esta ronda, *y se dice por que:
+***anadirlos sin poder correr la puerta despues seria dejarlo a medias***. *
+*Quedan *** especificados***: *la ruta, *el componente, *y donde van. *
