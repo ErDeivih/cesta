@@ -1796,3 +1796,52 @@ recogerlos ***. *Y aqui *** recogerlos a ciegas habria sido peor ***: *
 *** -> *** la leccion practica ***: *`-ErrorAction SilentlyContinue` es lo que *
    *convierte «no se si funciono» en «crei que funciono» ✓✓✓
 ```
+
+## 7.86 *Y LOS CUATRO CAMINOS DESBLOQUEARON LA PUERTA ENTERA: *177 OK (ronda 64)*
+
+```
+*** antes ***: *** 87 ok ***, *cortandose en la seccion de los toques ⚠️
+*** -> *** ahora ***: *** 177 ok ***, *17 FALLO *** ✓✓✓
+*** -> *o sea *** 90 comprobaciones mas ***, *y la puerta llega hasta *
+   *«la curva de un producto, con su frase debajo» ✓
+*** -> *** el arreglo de los caminos no arreglo una seccion: *
+   *** arreglo la puerta *** ✓✓✓
+```
+
+## 7.87 *Y LO QUE SE DESBLOQUEO SON, *LITERALMENTE, *LOS PUNTOS 3 Y 5*
+
+```
+*** == cuando la API falla, cada pantalla lo dice y deja reintentar *** ✓✓✓
+*** -> == lo que se pulsa, medido ya pintado *** ✓
+*** -> == el enlace de invitacion, abierto por otra persona *** ✓
+*** -> == la curva de un producto, con su frase debajo *** ✓
+*** -> == un grupo de una sola cadena, que no da frase *** ✓
+```
+
+*** Y ESO OBLIGA A CORREGIR EL DICTAMEN ***, *porque decia cosas que ya no son
+ciertas *-- *y no porque la aplicacion cambiara, *sino porque *** la puerta nunca
+habia llegado hasta ahi***: *
+
+```
+*** el punto 3 pedia *** errores ***, *y yo dije que «no se provocan *
+   *en un servicio vivo» ⚠️ *y la puerta *** SI los comprueba *** ✓
+*** -> *el punto 5 pedia *** unidad, *periodo, *cobertura y datos desconocidos *** *
+   *y la puerta *** SI lo comprueba *** *-- *y *** falla *** en la curva ✓
+*** -> *** o sea que el dictamen rebajaba lo que la puerta ya medía *** ✓✓✓
+```
+
+### 7.88 *Y LOS FALLOS NUEVOS, *que son REALES y que nadie habia visto*
+
+```
+*** 1 ***. *** `a 'Cuenta y preferencias'` ***: *** 127 x 17 *** ⚠️ *
+   *-- *es el enlace del lateral, *que queda *** detras del cajon abierto *** ✓
+   *-- *y es *** de mi arreglo ***: *`toca()` abre el cajon, *y el enlace de al lado *
+      *se vuelve inalcanzable ✓
+*** -> *** 2 ***. *** `button 'Por mes'` (56x23) *y `Por semana'` (79x23) *** ⚠️ *
+   *-- *son *** los controles de la grafica ***, *y el punto 5 los pide ✓
+*** -> *** 3 ***. *** «la curva se pinta (el lienzo del historico esta)» *** ⚠️ *
+   *-- *** la grafica no tiene lienzo *** ✓
+*** -> *** 4 ***. *** `a 'Saltar al contenido'` *** *-- *1 fallo, *y el salto *
+   *al contenido es *** accesibilidad *** ✓
+*** -> *** y NO SE HAN INVESTIGADO ***: *se anotan con su cuenta y su seccion ✓✓✓
+```
