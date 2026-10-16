@@ -155,3 +155,60 @@ se puede afirmar que funcione** con datos reales y con dos usuarios distintos.* 
 *para el punto 3 **no hace falta**, *y para el punto 4 *** si***. *Lo que hay que
 autorizar no es «un entorno aislado»: *es *** escribir en la base domestica ***,
 *o montar una copia para escribir en ella.* *
+
+---
+
+# PARTE 5 · *** LO VERIFICADO CON DATOS REALES, *rondas 9 a 17 ***
+
+*Y esto **no** estaba en la parte 1 cuando se escribio: *entonces creia que hacia falta
+un entorno nuevo.* *** No hacia falta: *la aplicacion servida en 127.0.0.1:8080 ya*
+***tenia la API detras, *y no se abrio ningun puerto ni se levanto nada.*** *
+
+| *pantalla* | *que se vio, *con datos reales* | *veredicto* |
+|---|---|---|
+| *** `Panel` *** | *la tabla «Que entro por cadena» con PRODUCTOS, COMPARABLES, NUTRI-SCORE y EAN; *y la etiqueta «datos del 15 oct 2026»* | *** confirma mis mediciones de fichero, *cifra por cifra *** |
+| *** `Buscar` *** | *40 resultados; *precio y **precio por unidad** (EUR/l y EUR/kg); *«comparable · 5 cadenas»; *«oferta solo con tarjeta»; *ahorro en % y «hasta X»* | *** valida el punto 5 *** |
+| *** `Comparar` *** *(«Grupo»)* | *los pesos 45/25/20/10 **explicados**; *«Las letras salen de LEER INGREDIENTES, no del precio»; *«los de mas de 3 dias no cuentan»; *«Calidad A deducida por Open Food Facts, **no por la tienda**»* | *** explica su algoritmo y declara el origen del dato *** |
+| *** `Comparar` a 390 px *** | *el rail desaparece, *sale la barra de abajo, *las metricas pasan a una columna, *y **no hay desbordamiento horizontal*** | *** cumple el criterio de legibilidad *** |
+| *** el foco con teclado *** | *tras tres Tab el foco esta en «Compra» y **se ve**, *con un anillo **terracota*** | *no hay `outline: none` sin sustituto* |
+| *** el umbral del buscador *** | *con 1 letra avisa; *con 5 busca de verdad* | *el mensaje no enganya* |
+
+## 5.1 *Y las tres cosas que la pantalla desmintio, *y que yo habia anotado*
+
+```
+*** 1 ***. *«la cobertura de Alcampo no esta declarada»* *** ERA FALSO ***: *
+   *esta *** en la tabla de `Panel` ***, *con 22.905 productos y 0 con nutri-score ✓
+*** 2 ***. *«la frescura no se declara»* *** ERA FALSO ***: *«datos del 15 oct 2026» *
+   *sale en `Panel`, *`Buscar` *y `Comparar`; *y ademas *** se aplica al calculo *** ✓
+*** 3 ***. *«`Cargando` no sustituye al vacio»* *** ERA FALSO ***: *con 2 letras *
+   *** no hay busqueda que sustituir ***; *las peticiones son de los *** cuatro ejemplos *** ✓
+*** -> *las tres las saque *** mirando un fichero o una captura, *no la pantalla entera *** ✓
+```
+
+## 5.2 *Y lo que sigue SIN verificar, *dicho sin adornos*
+
+```
+*** `Cargando` el esqueleto ***: *tres intentos. *Con 1 letra no hay peticion; *
+   *con 2 letras tampoco (son los ejemplos); *y con 5 *** la captura termina antes
+   *de que se pinte*** *(-- `completeness: incomplete` --)*. *** NO LO HE VISTO. ***
+*** *** Contenido largo ***: *la busqueda devuelve 40 con paginacion *
+   *(`limite=40&desplazamiento=0`), *pero *** no he medido la tabla con 40 filas ***. *
+*** *** Errores ***: *no he provocado un fallo de la API, *y *** NO VOY A PROVOCARLO *** *
+   *en un servicio que el propietario usa. *Queda sin verificar, *con su motivo. *
+*** *** Las pantallas con sesion ***: *`Recetario`, *`PlanSemanal`, *`Diario`, *
+   *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos` -- *dan *** 401 *** *
+   *sin sesion, *y verlas con datos exige *** crear datos ***, *que es el punto 4. *
+```
+
+## 5.3 *Y las cinco veces que el instrumento enganyo*
+
+```
+*** 1 ***. *la rama equivocada *(-- *rondas 29, 31, 33 --)*
+*** 2 ***. *el `<p>` de `Escaner` contado sin mirar lo que lo envolvia *(-- ronda 38 --)*
+*** 3 ***. *el `grow` que di por inutil y llevaba funcionando desde la ronda 30 *(-- 44 --)*
+*** 4 ***. *el defecto 2 del punto 6, *«cobertura no declarada», *que la pantalla desmiente*
+*** 5 ***. *«no hay ninguna peticion con `q=le`», *leido del final de una traza de 200 KB*
+   *-- *y la peticion *** estaba ***, *mas arriba *(-- ronda 17 --)*
+*** -> *las cinco son *** la misma cosa ***: *mirar una parte y concluir del conjunto ✓
+*** -> *y las cinco se corrigieron *** mirando mas, *no razonando mas *** ✓✓✓
+```
