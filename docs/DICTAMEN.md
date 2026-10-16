@@ -3474,3 +3474,38 @@ la 670 --)*, *y *** abre y cierra el suyo*** (`escritorio.close()`, *`:567`)*. *
 *Asi que *** no deja nada abierto***. *Pero *** tampoco voy a decir que no tiene
 nada que ver***: *la primera corrida con el escritorio *** se corto***, *y eso es
 un hecho que hay que mirar antes de dar el escritorio por bueno. *
+
+## 7.185 *Y LA CAUSA DEL CORTE, *ACOTADA (ronda 104)*
+
+*** La seccion de los avisos tiene un `else` que NO caduca***, *y eso estrecha el
+sitio: *
+
+```
+*** `:1395-1397` ***: *** `else: print(f"(no hay avisos sin ver: *el punto ***
+   *** dice {cuantos}...»)` *** ✓
+*** -> *y en el `else` *** no se carga `/avisos`*** ✓
+*** -> *y *** mas abajo ***, *en la 1404 y siguientes, *es donde se carga ✓
+*** -> *** el timeout es DESPUES de ese print *** ⚠️
+*** -> *y el volcado acaba ahi porque *** el print no se vacia *** ✓
+*** -> *** lo que falla no son los avisos: *es que NO HAY AVISO *** ✓✓✓
+```
+
+### 7.186 *Y QUIEN CREA EL AVISO, *Y DE QUE DEPENDE*
+
+```
+*** `:918` ***: *** `campana = pagina.get_by_role("button", ***
+   *** name="Avisarme si baja")` *** ✓
+*** -> `:922` ***: *** `pagina.get_by_text("Te aviso").first.wait_for(timeout=20000)` *** ✓
+*** -> *** esa seccion *** crea el aviso *** ✓
+*** -> *y la de *** 1290+ *** lo mira; *si no esta, *** dice «0» y sigue *** ✓
+*** -> *y lo que caduca es *** lo de despues ***, *que lo necesita ✓
+```
+
+*** Y EL AVISO SE LLAMA *** «Avisarme si baja»***, *y eso *** depende de los
+datos***: *de que haya historico *y de que el precio *** este en minimo. *** *Con
+una base *** recien migrada***, *puede que *** no haya nada que bajar.*** *
+
+*** NO ESTA CONFIRMADO ***, *y se dice: *es *** la hipotesis que explica el «dice
+0»***, *y lo que la confirmaria es *** mirar la seccion de la 918 en una corrida
+con la base recien hecha*** *-- *que es *** exactamente lo que hay que hacer
+antes de tocar nada.*** *
