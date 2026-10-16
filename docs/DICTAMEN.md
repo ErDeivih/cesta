@@ -3287,3 +3287,46 @@ la compra a otra persona**. *Y la pantalla *** lo dice antes de que pulses***: *
 *«Lo que anadiste a listas de otras personas *** se queda ahi, sin tu nombre***,
 *para *** no vaciarles la compra***.»* *Es *** el aislamiento entre usuarios del
 punto 4***, *contado desde el otro lado.* *
+
+## 7.174 *Y `Panel`, MIRADO: *Y SU ULTIMA NOTA ES EL PUNTO 5 ENTERO (ronda 99)*
+
+```
+*** «Panel» *** *y *** «Panel de matching →» *** ✓
+*** -> *** nueve pestanas ***: *Hoy · *Donde comprar · *Cadenas · *Marcas · *
+   *Historico · *Movidos · *** Bajadas *** *· Indice · Posicion · *
+   *Ofertas dudosas ✓
+*** -> *** «Mirando las cinco cadenas» *** *y las seis, *con *** «Todas» *** *
+   *-- *** y dice cual esta mirando *** ✓
+*** -> *** «Lo tuyo que ha bajado en 7 dias» *** *· *** «Ventana: *7 dias ▾» *** ✓
+*** -> *** «datos del 16 oct 2026» *** *-- *** LA FRESCURA *** ✓
+*** -> *** el vacio ***: *«Nada de lo tuyo ha bajado en 7 dias» / *
+   *** «Este filtro mira lo que tienes en tus listas y en tus favoritos. ***
+   *** Si apuntas la compra, la proxima vez esto contesta solo.» *** ✓
+*** -> *y al final la nota: *
+   *** «...la unidad y la cantidad siguen siendo las mismas: si lo que ***
+   *** cambio fue el formato, eso no es una bajada.» *** ✓✓✓
+```
+
+### 7.175 *Y ESA NOTA ES EL PUNTO 5, *DICHO POR LA APLICACION*
+
+```
+*** distingue *** un cambio de precio real *** de *** un cambio de formato *** ✓
+*** -> *y nombra *** la unidad *** y *** la cantidad *** ✓
+*** -> *y la fecha *** «datos del 16 oct 2026» *** *-- *la frescura del punto 6 ✓
+*** -> *** o sea: *el punto 5 no hay que afirmarlo ***, *lo dice el panel ✓✓✓
+*** -> *(-- *y es la nota que la puerta *** no puede comprobar***: *esta en una *
+   *frase fija, *y *** la vi aqui, *no en el codigo --)* ✓
+```
+
+### 7.176 *Y `Panel` DICE QUE CADENAS MIRA, *QUE ES LA COBERTURA*
+
+```
+*** «Mirando las cinco cadenas» *** ✓ *-- *y las seis con «Todas» ✓
+*** -> *o sea: *el panel *** declara su alcance *** antes de enseñar nada ✓
+*** -> *y eso es *** la cobertura que el punto 5 pide***, *dicha sin que haya *
+   *que buscarla ✓✓✓
+```
+
+*** Y CON ESTA VAN CINCO CAPTURAS LEIDAS *** *(-- *Avisos, *Recetario, *Plan
+semanal, *Ajustes *y *Panel --)*, *y *** tres son de las que el punto 3 nombra***: *
+*Ajustes, *Avisos *y *Panel. *Falta *** `Cesta` ***, *que es `/compra/listas`. *
