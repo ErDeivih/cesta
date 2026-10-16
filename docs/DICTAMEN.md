@@ -212,3 +212,62 @@ un entorno nuevo.* *** No hacia falta: *la aplicacion servida en 127.0.0.1:8080 
 *** -> *las cinco son *** la misma cosa ***: *mirar una parte y concluir del conjunto ✓
 *** -> *y las cinco se corrigieron *** mirando mas, *no razonando mas *** ✓✓✓
 ```
+
+---
+
+# PARTE 6 · *** Y LAS SEIS PUERTAS: *LA DE `pytest` NO ESTA VERDE (ronda 19) ***
+
+*** Esto **no** se habia corrido en este objetivo ***, *y el propietario ya lo aviso:
+*«las 2.081 de Python y el build *** no se repitieron *** en esa comprobacion».* *
+
+## 6.1 *El estado real de las seis, *medido hoy*
+
+```
+*** ruff check . *** *** limpio *** ✓
+*** npm test *** *** 81 pass, *0 fail *** ✓
+*** tsc --noEmit *** *** limpio *** ✓
+*** npm run build *** *** ✓ built in 28.51s *** ✓
+*** pytest -q (CESTA_POSTGRES al 5434) *** *** 1 failed, 2048 passed, *** *
+   *** 17 skipped, *32 errors *** ⚠️⚠️⚠️
+*** plataforma.prueba_e2e *** *** NO CORRIDA *** ⚠️
+```
+
+*** Cuatro de seis verdes. *Y la que el encargo nombra en segundo lugar *** NO lo esta.*** *
+
+## 6.2 *Y de que son los 32 errores, *que es lo que importa*
+
+| *fichero* | *errores* | *de que es* |
+|---|---|---|
+| *`test_revision_a09_compra_hogar.py`* | *** 7 *** | *la compra del **hogar*** |
+| *`test_fase2_f07_otro_hogar.py`* | *** 6 *** | *** otro hogar *** |
+| *`test_revision_a09_sustitucion.py`* | *5* | *la sustitucion* |
+| *`test_fase2_f07_dos_sesiones.py`* | *** 5 *** | *** dos sesiones *** |
+| *`test_b07_la_ruta_de_importar_y_sus_guardas.py`* | *5* | *importar* |
+| *`test_la_lista_acumula.py`* | *4* | *la lista que acumula* |
+
+*** Y los nombres de los tests que fallan son, *literalmente, *el punto 4 ***: *
+
+```
+*** `test_las_dos_personas_anaden_lineas_y_las_dos_aparean` *** -> *dos personas ✓
+*** `test_b_ve_la_lista_de_a_despues_de_compartirla` *** -> *la lista compartida ✓
+*** `test_el_historico_queda_y_lo_ven_las_dos_personas` *** -> *el historico ✓
+*** `test_al_cerrar_la_compra_las_lineas_salen_de_la_lista` *** -> *cerrar la compra ✓
+*** `test_dos_operaciones_distintas_sobre_lo_mismo_COEXISTEN` *** -> *idempotencia ✓
+```
+
+## 6.3 *Y lo que esto significa, *dicho sin rodeos*
+
+```
+*** el punto 4 *** NO SOLO NO ESTA VERIFICADO ***: *
+   *** hay 1 fallo y 32 errores en las pruebas que lo cubren *** ⚠️⚠️⚠️
+*** -> *y cubren *** exactamente *** *lo que el encargo pide comprobar: *
+   *** cantidades, *persistencia, *IDEMPOTENCIA *** *
+   *y *** AISLAMIENTO ENTRE USUARIOS *** ✓
+*** -> *** o sea que el punto 4 empieza por un rojo, *no por un blanco *** ✓✓✓
+*** Y NO LO HE TOCADO ***, *y digo por que: *
+   *-- *no se si los 32 errores son *** de montaje *** *(-- *fixtures, *base, *sesion --)* *
+      *o *** fallos reales *** ⚠️
+   *-- *y arreglar esto *** sin saber cual de las dos cosas es *** seria *
+      *exactamente el error que llevo cinco veces cometiendo ✓
+*** -> *** lo siguiente es leer UNA traza entera ***, *no el recuento ✓
+```
