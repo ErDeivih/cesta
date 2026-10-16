@@ -1495,3 +1495,40 @@ buscando el enlace; *ahora *** lo encuentra*** *y muere en el boton. *O sea que
 *** -> *** esta vez lo pare a tiempo ***: *use `pg_isready` en bucle hasta que
    *dijo «accepting connections», *y entonces si ✓✓✓
 ```
+
+## 7.71 *Y EL FALLO NUEVO, *MEDIDO SIN GASTAR UN CICLO (ronda 55)*
+
+*** Antes de volver a levantar el entorno, *mire *** de donde sale el ☰***. *Y no
+hace falta un ciclo para eso: *esta en el codigo.*
+
+```
+*** `App.tsx:180` ***: *** `<Route path="/" element={<Lanzador />} />` *** ✓
+*** -> *y *** `Lanzador` NO envuelve en `LayoutSuite` *** ⚠️
+*** -> *y `LayoutSuite` es *** quien monta el `<header>` con el ☰ *** ✓
+*** -> *(-- *todas las demas rutas SI lo envuelven: *lineas 183 a 270 --)* ✓
+*** -> *** EN `/` NO HAY CABECERA, *Y NO HAY ☰ *** ✓✓✓
+*** -> *y el test hace *** `carga("/")` *** *y luego busca el ☰ ⚠️
+*** -> *** por eso caduca ***, *y no porque el boton no se vea ✓
+```
+
+### 7.72 *Y esto no es solo un fallo del test: *ES EL DATO QUE LA SECCION BUSCABA*
+
+```
+*** el test hace *** `carga("/")` *** y desde ahi quiere pulsar «Cesta» ✓
+*** -> *y `/` es *** el Lanzador ***: *sin armazon, *con enlaces a `/compra`, *
+   *`/recetas` *y `/calorias`, *que *** SI se ven *** ✓
+*** -> *y las *** subsecciones NO ***, *porque no hay menu ✓
+*** -> *** DESDE LA PORTADA, *PARA LLEGAR A LA LISTA HAY QUE:* ***
+   *** Compra -> abrir el cajon -> «Listas» *** ✓✓✓
+*** -> *** o sea que la medida de toques da un numero MAS ALTO *** *
+   *del que el test creia *-- *y *** eso es exactamente el dato que la seccion
+   *queria medir*** ✓✓✓
+*** -> *y la seccion se llama *** «cuantos toques hay desde la PRIMERA PANTALLA ***
+   *** hasta cada respuesta» ***, *y la primera pantalla es `/` ✓
+```
+
+*** Y `App.tsx:262` dice que *** ya hubo un defecto de este tipo antes***: *
+*«la ruta **no envolvia en `LayoutSuite`**, *asi que no habia...». *O sea que
+*** el armazon que falta en una ruta es un defecto que este proyecto ya se
+encontro una vez***, *y la portada es la que se queda sin el a proposito: *
+*el Lanzador *** es *** una pantalla sin menu, *y eso es una decision ✓
