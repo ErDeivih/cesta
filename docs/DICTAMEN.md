@@ -1532,3 +1532,34 @@ hace falta un ciclo para eso: *esta en el codigo.*
 *** el armazon que falta en una ruta es un defecto que este proyecto ya se
 encontro una vez***, *y la portada es la que se queda sin el a proposito: *
 *el Lanzador *** es *** una pantalla sin menu, *y eso es una decision ✓
+
+## 7.73 *Y EL ARREGLO EXACTO, *ESCRITO Y NO HECHO (ronda 56)*
+
+*** `toca()` ya abre el cajon cuando el enlace no se ve***, *y *** funciona***: *
+*la puerta paso de morir *** buscando el enlace*** *a morir *** en el ☰***. *
+*Y ahora se sabe por que: *** desde `/` no hay armazon ni ☰.*** *
+
+### El arreglo, *paso a paso*
+
+```
+*** 1 ***. *cada camino tiene que *** empezar por su raiz ***, *porque la portada *
+   *** SI ofrece `/compra`, *`/recetas` *y `/calorias` *** ✓
+   *-- *hoy los caminos son `("Cesta",)`, *`("Panel", "Bajadas", "Solo lo mio")` *
+      *y `("Avisos",)`, *y *** todos suponen una pantalla con menu*** ⚠️
+   *-- *y el arreglo es *** anteponer «Compra» *** *a los tres primeros, *
+      *«Recetas» *a los de recetas, *y «Calorias» *a los del diario ✓
+*** -> *** 2 ***. *y `toca()` tiene que saber pulsar *** la raiz desde el Lanzador ***, *
+   *que no es un `nav a[href]` visible *(-- *la portada no tiene armazon --)*, *
+   *sino un enlace de su propio contenido ✓
+*** -> *** 3 ***. *y entonces la medida es *** la que el titulo dice ***: *
+   *«desde la *** primera pantalla *** hasta cada respuesta» ✓✓✓
+```
+
+*** Y SUENA A POCO, *Y NO LO ES***: *son *** dos cambios coordinados*** *(-- *los
+caminos y el ayudante --)* *y *** una ejecucion que los confirme***. *Y con el
+margen que me queda, *hacerlo seria *** exactamente el error de las 22 lineas***: *
+*** tocar mucho, *deduciendo, *y sin poder comprobarlo despues.*** *
+
+*** ASI QUE NO SE HACE ***, *y queda escrito con su forma exacta, *que es mas util
+que un cambio a medias: *quien lo recoja sabe *** que hay que tocar***, *
+*** por que***, *y *** que tiene que dar***. *
