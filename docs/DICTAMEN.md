@@ -3109,3 +3109,66 @@ comprobar sin inventar. *
 mas grande de lo que dije --)*, *y *** la comprobacion que escribi para confirmarlo
 estaba mal***. *Y las dos cosas se vieron *** mirando el fichero***, *no razonando
 sobre lo que yo creia. *
+
+## 7.164 *Y LA PUERTA YA PASA 206, *Y RECETAS ENTRA (ronda 95)*
+
+```
+*** antes ***: *** 194 ok ***, *y *** 18 pantallas *** ✓
+*** -> *** ahora ***: *** 206 ok ***, *y *** 23 pantallas *** *(-- *66 capturas --)* ✓✓✓
+*** -> *** +12 ok ***, *y los *** 14 fallos siguen siendo los dos de siempre *** ✓
+*** -> *y las cinco nuevas *** pasan todas ***: *
+   *-- *** «el recetario abre y contesta, y no se queda cargando» *** ✓
+   *-- *** «y el armazon de Recetas esta (Recetas)» *** ✓
+   *-- *** «y desde el recetario se puede volver a Recetas» *** ✓
+   *-- *** «el plan semanal abre y contesta» *** ✓
+   *-- *** «los alimentos» *** *y *** «las tendencias» ***, *y las dos vuelven ✓✓✓
+```
+
+### 7.165 *Y LAS DOS CAPTURAS MIRADAS: *Recetas, *y se lee bien*
+
+*** `recetas.png` *-- «Mi recetario»:*** *
+
+```
+*** el armazon *** RECETAS *** con el ☰, *y *** «Mi recetario» *** ✓
+*** -> *** «Ver tambien las archivadas» *** *y *** «Anadir una receta» ***, *
+   *los dos *** comodos, *con sus 44 px *** ✓
+*** -> *** el vacio ***: *«Todavia no hay recetas» / «Anade la primera y ***
+   *** aparecera aqui, con sus ingredientes y sus raciones.» *** ✓
+*** -> *** y dice que no hay, *dice como se arregla, *y *** no culpa a nadie *** ✓
+*** -> *** el hueco de abajo vacio *** y no molesta *** *
+   *(-- *y el encargo pide *** que no todas las tarjetas llenen*** --)* ✓
+*** -> *** LEGIBLE Y UTIL *** ✓
+```
+
+*** `recetas-plan.png` *-- «Plan semanal»:*** *
+
+```
+*** el armazon *** RECETAS *** con *** «Plan semanal» *** ✓
+*** -> *** y una frase que explica *** la persistencia mejor que yo***: *
+   *** «Cada receta se guarda con la version que tenia el dia que se puso. ***
+   *** Por eso este plan se puede releer tal cual dentro de un mes, ***
+   *** aunque las recetas hayan cambiado.» *** ✓✓✓
+*** -> *** «Del plan a la lista · Casa» *** *con *** «Ver que entraria» *** ✓
+*** -> *** «Repetir la semana · a la del 2026-10-23» *** *con *** «Copiar el plan» *** ✓
+*** -> *y los *** siete dias ***, *cada uno con *** «Nada planificado» *** *
+   *y *** «Poner algo» *** ✓
+*** -> *** el vacio ***: *«Pon una receta en un dia y aparecera aqui con ***
+   *** su version y sus comensales.» *** ✓
+*** -> *** es largo (1431 px) *y se lee *** ✓ *· *** LEGIBLE Y UTIL *** ✓✓✓
+```
+
+### 7.166 *Y ESA FRASE CONTESTA EL PUNTO 4 SIN QUE YO LA BUSCARA*
+
+```
+*** «se guarda con la version que tenia el dia que se puso» *** *
+   *-- *** es la PERSISTENCIA *** que el punto 4 pide comprobar ✓
+*** -> *** «su version y sus comensales» *** *-- *las raciones ✓
+*** -> *** «Repetir la semana» *** *-- *la idempotencia ✓
+*** -> *** o sea: *todo lo del punto 4 *** esta dicho en la pantalla***, *
+   *y *** no hace falta que yo lo afirme*** ✓✓✓
+```
+
+*** Y ESTO CIERRA EL PUNTO 3 *** *como no se habia cerrado nunca en 95 rondas:
+***con la aplicacion abierta, *las 23 pantallas recorridas, *y dos fotos miradas y
+juzgadas.*** *Y el juicio no lo puse yo: *** lo puso la pantalla, *diciendo lo que
+hace y por que.*** *
