@@ -1972,3 +1972,34 @@ pantalla ancha, *un `block` serian *** 1200 px de ancho pulsable sin querer***. 
 puerta *(-- *127x17, *ronda 64 --)*, *y *** falta la ejecucion***. *`tsc` limpio, *
 *`npm test` 81/0, *`ruff` limpio, *LF conservado *(-- *312 CRLF, *0 LF, *como estaba --)*, *
 *y diff 9/1.* *
+
+## 7.96 *Y EL SEGUNDO «DEFECTO» NO ES UN DEFECTO: *ES UN FALSO POSITIVO DE LA PUERTA (ronda 68)*
+
+*** El resumen del dictamen decia ***, *y lo escribi yo: *«`Saltar al contenido`
+falla, *y es *** accesibilidad***». *Y al ir a arreglarlo, *resulta *** lo contrario***. *
+
+```
+*** `Suite.tsx:514-518` ***: *
+   *** `sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 ***
+   *** focus:z-[60] focus:rounded-campo focus:bg-bosque focus:px-3 focus:py-2` *** ✓
+*** -> *** es *** el patron correcto ***: *oculto hasta el foco, *y entonces *
+   *** visible y con relleno *** ✓
+*** -> *y `px-3 py-2` *** da mas de 44 px de alto *** ✓
+*** -> *** el enlace SI cumple ***, *y *** solo incumple cuando esta oculto*** ✓
+```
+
+### 7.97 *Y lo que mide mal es la puerta*
+
+```
+*** un `sr-only` *** mide 1x1 por definicion *** *(-- *asi se esconde --)* ✓
+*** -> *y la puerta lo mide *** sin enfocarlo *** ⚠️
+*** -> *** o sea que el fallo es DE LA MEDIDA ***, *no de la aplicacion ✓
+*** -> *y hay que decidir una de dos: *
+   *-- *** excluirlo ***, *porque es un enlace *** de teclado, *no tactil*** ✓
+   *-- *o *** enfocarlo antes de medir*** ✓
+*** -> *y las dos son *** decisiones de la prueba ***, *no de la aplicacion ✓✓✓
+```
+
+*** Y ME CORRIJO ***: *en el resumen escribi que era accesibilidad, *y *** no lo es***. *
+*Es *** un falso positivo de la puerta***, *y el enlace esta *** mejor hecho que
+la medida que lo acusa***. *
