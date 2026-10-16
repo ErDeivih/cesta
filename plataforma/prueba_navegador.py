@@ -1374,8 +1374,14 @@ def main() -> int:
         # sin enterarse. Y sin `:visible`, no: hay **dos barras** (`NavAbajo` en el movil y
         # `NavEscritorio`, `hidden lg:block`), y la primera del DOM es la del escritorio,
         # que en un movil de 390 px no se ve y no se puede pulsar.
-        BARRA = {"Cesta": "/cesta", "Avisos": "/avisos", "Panel": "/panel",
-                 "Buscar": "/", "Escáner": "/escaner"}
+        # **Las rutas se movieron y esto se quedo viejo.** `/cesta` ya no es una ruta: es
+        # un `<Navigate to="/compra/listas">`, o sea una redireccion, asi que **el nav no
+        # puede llevar `href='/cesta'`** y el localizador esperaba treinta segundos a algo
+        # que no existe. Y `/` no es Buscar: es el **Lanzador**. Las direcciones buenas son
+        # las de `App.tsx` -- la cesta en `/compra/listas` y el buscador en `/compra` --, y
+        # `Avisos`, `Panel` y `Escáner` no se han movido.
+        BARRA = {"Cesta": "/compra/listas", "Avisos": "/avisos", "Panel": "/panel",
+                 "Buscar": "/compra", "Escáner": "/escaner"}
         # Las pestañas del panel son `role="tab"`, no botones: `get_by_role("button")` no
         # las encuentra, y la espera se queda colgada hasta el timeout.
         PESTANAS_PANEL = ("Hoy", "Cadenas", "Marcas", "Histórico", "Movidos", "Bajadas",

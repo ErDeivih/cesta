@@ -567,3 +567,36 @@ del final.*** *Ninguna de las dos es un defecto de la aplicacion.* *
    *`cesta-api-1`, *`cesta-web-1`, *`cesta-db-1` *y *`facylf-postgres` ✓
 *** -> *** no queda nada mio levantado *** ✓✓✓
 ```
+
+## 7.14 *Y la `BARRA` estaba mal en DOS sitios, *no en uno (ronda 27)*
+
+```
+*** `BARRA = {"Cesta": "/cesta", "Avisos": "/avisos", "Panel": "/panel", *
+   *** "Buscar": "/", "Escáner": "/escaner"}` *** ✓
+*** -> *y las rutas de `App.tsx` ***: *
+   *-- *`/cesta` *** EXISTE *** *pero es *** `<Navigate to="/compra/listas">`***, *
+      *o sea una *** redireccion ***: *el nav *** no puede *** llevar `href='/cesta'` ✓
+   *-- *`/avisos` y `/panel` y `/escaner` *** si existen *** *y no se han movido ✓
+   *-- *** `/` NO es Buscar: *es el LANZADOR *** ⚠️ *-- *y la ruta de Buscar es `/compra` ✓
+*** -> *** DOS valores malos ***: *«Cesta» *y *** «Buscar» *** ✓
+```
+
+*** Se corrigieron los dos, *con el motivo escrito en el codigo ***: *
+
+```
+*** antes ***: *"Cesta": "/cesta",  "Buscar": "/"*
+*** ahora ***: *"Cesta": "/compra/listas",  "Buscar": "/compra"*
+*** -> *y se cita que `/cesta` es una redireccion y que `/` es el Lanzador ✓
+*** -> *LF conservado *(-- *2152 lineas, *CRLF=0 --)*, *y el diff acumulado *** 8/2 *** ✓
+```
+
+### 7.15 *Y LO QUE NO SE HA HECHO, *y se dice*
+
+```
+*** NO se ha vuelto a correr la puerta con estos dos arreglos *** ⚠️
+*** -> *porque exige levantar otra vez base, *API *y frontend, *
+   *y *** esta sesion ya no tiene margen para ese ciclo *** ✓
+*** -> *** los dos arreglos estan RAZONADOS, *no VERIFICADOS *** ✓✓✓
+*** -> *y el que los lea sabe exactamente que falta: *
+   *** volver a correr `prueba_navegador.py` y ver la seccion de los toques *** ✓
+```
