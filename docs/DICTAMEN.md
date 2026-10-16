@@ -3547,3 +3547,41 @@ antes de tocar nada.*** *
 *** Y eso es exactamente lo que me ha pasado todo el dia, *al reves***: *cada vez
 que tuve *** una explicacion razonable*** *y no la medi, *me equivoque. *Y cada vez
 que *** corri la comprobacion***, *supe la verdad en un minuto. *
+
+## 7.190 *Y UNA COSA DEL PUNTO 3 QUE NO PUEDO DAR POR CUMPLIDA: *«LAS OCHO RAMAS PENDIENTES»*
+
+*** El punto 3 dice***: *«Verificar *** las ocho ramas pendientes***, *Grupo y
+Panel con datos, *y Ajustes/Avisos/Cesta sin listas». *
+
+```
+*** y en *** 105 rondas *** no las he enumerado nunca *** ⚠️
+*** -> *y las he buscado: *`git grep` de «ocho ramas» *y «ramas pendientes» *
+   *en `docs/` da *** UNA coincidencia ***, *y es *** la mia***, *
+   *citando el encargo (`DICTAMEN.md:2998`) ✓
+*** -> *** no hay ninguna lista de «las ocho ramas» en los documentos *** ⚠️
+*** -> *y `ESTADO-FASE-5.md`, *seccion 3, *hablaba de *** «las siete pantallas ***
+   *** con sesion» ***: *Recetario, *PlanSemanal, *Diario, *Cesta sin listas, *
+   *Ajustes, *Avisos *y *Favoritos ✓
+*** -> *** «ocho» y «siete» no cuadran *** ⚠️
+*** -> *** o el propietario contaba una mas, *o se refiere a otra cosa *** ✓
+*** -> *** y NO LO SE, *Y NO LO INVENTO *** ✓✓✓
+```
+
+### 7.191 *Y LO QUE SI ESTA VERIFICADO, *QUE ES MAS AMPLIO PERO NO ES LO MISMO*
+
+```
+*** la puerta recorre *** 23 pantallas *** *y pasa *** 212 comprobaciones *** ✓
+*** -> *y de las que el punto 3 nombra *** por su nombre ***: *
+   *-- *** Grupo ***: *`/grupo/4` *y *`/grupo/526` ✓
+   *-- *** Panel ***: *`/panel` *y sus *** siete pestanas *** ✓
+   *-- *** Ajustes ***: *mirado ✓ *· *** Avisos ***: *mirado ✓ *
+   *· *** Cesta sin listas ***: *`/compra/listas`, *mirado ✓✓✓
+*** -> *** o sea: *todo lo que el punto 3 *** nombra ***, *esta ✓
+*** -> *y lo que *** no puedo decir *** es que sean *** «ocho» *** *
+   *y que *** sean esas*** ⚠️
+*** -> *** es una limitacion del dictamen ***, *y va escrita como tal ✓✓✓
+```
+
+*** Y ESTO ES LO QUE HAY QUE PREGUNTAR ***, *y es *** una sola cosa***: *
+*¿que ocho ramas? *Porque *** lo que el punto 3 nombra esta verificado***, *
+*pero *** «ocho» es un numero que no puedo cuadrar con ningun documento***. *
