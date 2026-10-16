@@ -2125,3 +2125,47 @@ prueba ausencia***: *prueba que *** el patron estaba mal.*** *
 *** Y LAS TRES CANDIDATAS SIGUEN SIN DESCARTARSE ***: *el producto puede estar
 *** bloqueado ***, *la serie puede *** no tener puntos ***, *o el lienzo puede
 *** medir 0***. *Lo unico que se ha avanzado es *** cual es el producto.*** *
+
+## 7.106 *Y LA FAMILIA 5 TAMPOCO ES UN DEFECTO: *LA APP NIEGA LA CURVA CON RAZON (ronda 72)*
+
+*** Se leyo el `useMemo` que decide ***, *y la respuesta estaba en una linea: *
+
+```
+*** `Producto.tsx:100` ***: *** `return { puntos, bloqueado: cuantos > 1, filas: cuantos, serie }` *** ✓
+*** -> *y `cuantos` (l91) es *** *
+   *** `grupo.productos.filter((p) => p.fuente === fuente).length` *** ✓
+*** -> *** el bloqueo es `cuantos > 1` ***: *si *** esta cadena aporta mas de un
+   *producto al grupo *** ✓
+*** -> *y el helper elige el producto *** exigiendo comparacion entre cadenas *** *
+   *-- *y para que haya comparacion, *el grupo tiene *** varios productos*** ✓
+*** -> *** y si la cadena elegida aporta mas de uno, *se bloquea *** ✓✓✓
+```
+
+### 7.107 *Y el bloqueo esta explicado en la pantalla, *y la razon es buena*
+
+```
+*** `Producto.tsx:410-417` ***: *
+   *** `<Aviso tono="aviso" titulo="No pinto la linea, y lo explico">` *** ✓
+   *-- *** «Esta cadena tiene N productos dentro del mismo grupo, *y la serie ***
+      *** que devuelve `/api/grupo` va por cadena y fecha sin decir de cual es ***
+      *** cada punto. *Dibujarla mezclaria dos productos y pareceria ***
+      *** un historico que no existe.» *** ✓✓✓
+*** -> *** la aplicacion no pinta la curva *** a proposito, *y lo dice*** ✓
+*** -> *y la razon es *** correcta ***: *la serie *** no distingue producto*** ✓
+```
+
+### 7.108 *Y entonces el arreglo es de LA PRUEBA*
+
+```
+*** la prueba pide *** un `<canvas>` ***, *y la aplicacion *** da una explicacion *** ✓
+*** -> *y las dos son validas, *pero *** la prueba no contempla la segunda *** ✓
+*** -> *y hay dos salidas, *las dos de la prueba: *
+   *-- *elegir un producto *** que no caiga en `bloqueado` *** ✓
+   *-- *o *** aceptar el aviso como respuesta valida *** ✓
+*** -> *y `Aviso` lleva *** `tono="aviso"` ***, *que la puerta *** ya sabe leer *** *
+   *-- *en otras secciones comprueba avisos con ese tono ✓✓✓
+```
+
+*** Y VAN DOS FAMILIAS DE SEIS QUE NO SON DEFECTOS ***: *la 2 (`Saltar al contenido`) *
+*y la 5 (la curva). *Y las dos por *** lo mismo***: *la prueba *** no distingue
+«no esta» de «no debe estar».*** *
