@@ -127,41 +127,57 @@ errores**, *y detectado **a mano** --).* *
 
 # PARTE 2 · *PARA DESPLIEGUE PUBLICO*
 
-## 2.1 *Lo que hace falta y NO esta*
+*** REESCRITA EN LA RONDA 42.*** *La version anterior se escribio en la ronda 7,
+*antes de que la puerta corriera, *y decia «NO HECHO» de cosas que hoy *** estan
+medidas ***. *Se conserva su contenido integro en el historico (PARTE 6 y 7).* *
 
-| *que* | *estado* |
-|---|---|
-| *** Validar la aplicacion con datos *** | *** NO HECHO ***: *nunca se ha visto `Grupo` ni `Panel` con datos* |
-| *** El recorrido completo *** | *** NO HECHO *** |
-| *** Que lo servido se comporte *** | *** NO VERIFICADO ***: *se verifico que el *** codigo *** esta, *y no que *** funcione*** |
-| *Comparaciones y graficas con cobertura declarada* | *** NO VERIFICADO *** |
-| *Que la cobertura parcial este declarada para TODAS las cadenas* | *** NO HECHO *** |
+## 2.1 *Lo que hace falta, *y su estado MEDIDO*
 
-## 2.2 *Los bloqueos, *concretos*
+| *que* | *estado* | *evidencia* |
+|---|---|---|
+| *** Validar la aplicacion con datos *** | *** HECHO *** | *`Panel`, `Buscar` y `Comparar` vistos a 1440 y a 390* |
+| *** El recorrido completo *** | *** PASA *** | *** 87 de 87 *** *en `prueba_navegador.py`, *con navegador real* |
+| *** Que lo servido se comporte *** | *** HECHO *** | *la puerta navega la aplicacion servida y pulsa* |
+| *Comparaciones, *graficas y cobertura declarada* | *** HECHO *** | *la puerta comprueba unidad, periodo, cobertura y desconocidos* |
+| *Que la cobertura este declarada para TODAS las cadenas* | *** PARCIAL *** | *se declara **en pantalla** por cadena; *no hay fichero para las que no son Lidl* |
+| *** Pantallas con sesion, *con captura *** | *** NO HECHO *** | *la puerta las recorre y las pasa, *pero **no se han capturado*** |
+
+## 2.2 *Los bloqueos, *y cual sigue en pie*
 
 ```
-*** BLOQUEO 1 ***. *** RESUELTO EL 15/10/2026: *EL PROPIETARIO AUTORIZO LA BASE DESECHABLE *** *
-   *-- *sin ella no se puede validar nada de lo de arriba ✓
-   *-- *y la restriccion vigente es «solo frontend» ✓
-   *-- *** la peticion esta hecha y espera respuesta *** ✓
-*** BLOQUEO 2 ***. *** El rechazo de Alcampo depende de interaccion humana *** *
-   *-- *el reto de AWS WAF, *cuando con ventana tampoco pasa, *
-      *** pide interaccion humana *** ✓
-   *-- *y el encargo prohibe *** eludir CAPTCHA/WAF *** ✓
-   *-- *** o sea que no es un defecto: *es un limite de la fuente *** ✓
-*** BLOQUEO 3 ***. *** Dos decisiones que son del propietario *** *
+*** BLOQUEO 1 ***. *** RESUELTO ***: *el propietario autorizo la base desechable, *
+   *el entorno *** se monto, *se uso y se desmonto *** *(-- *rondas 22 a 35 --)* ✓
+*** -> *y la guarda del proyecto *(`comprueba_que_es_una_prueba`)* impide que *
+   *estas pruebas toquen la base domestica ✓
+*** BLOQUEO 2 ***. *** SIGUE EN PIE, *y NO ES UN DEFECTO ***: *el reto de AWS WAF, *
+   *cuando con ventana tampoco pasa, *** pide interaccion humana *** ✓
+*** -> *y el encargo prohibe *** eludir CAPTCHA/WAF *** ✓
+*** -> *** es un limite de la fuente, *no del sistema *** ✓
+*** BLOQUEO 3 ***. *** TRES DECISIONES DEL PROPIETARIO ***: *
+   *-- *que debe contar la seccion de los toques *(-- *A, *B *o *C; *ver 7.51 --)* ✓
    *-- *si `data/publicado/` es muerto o lo lee algo de fuera ✓
-   *-- *y donde se declara la cobertura de las cadenas que no son Lidl ✓
+   *-- *donde se declara la cobertura de las cadenas que no son Lidl ✓
 ```
 
-## 2.3 *Y una advertencia que va con el despliegue publico*
+## 2.3 *Y la advertencia, *que ahora es mas estrecha*
 
-*** Lo que si esta verificado es la UI y la publicacion, *NO el comportamiento con datos.** *
-*Para uso domestico eso es aceptable: *el propietario ve la aplicacion a diario.* *
-*Para despliegue publico *** no lo es***: *nadie ha recorrido el flujo completo, *y **no
-se puede afirmar que funcione** con datos reales y con dos usuarios distintos.* *
+*** Lo que esta verificado *** ya no es solo la UI: *** la puerta recorre la
+aplicacion con datos reales, *con dos cuentas, *a movil de 390 px, *y pasa 87
+comprobaciones con cero fallos *** *-- *incluido el recorrido de la lista, *la
+compra, *los envases, *el sustituto autorizado, *el diario y la persistencia. *
+*** Y lo que NO esta verificado, *dicho con la misma claridad ***: *
 
----
+```
+*** 1 ***. *Las siete pantallas con sesion *** no se han capturado***: *
+   *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`,
+   *`Avisos` *y *`Favoritos`. *La puerta *** si las recorre***; *lo que falta *
+   *es *** la captura y el juicio de legibilidad***. *
+*** 2 ***. *La seccion de los toques *** no llega al final***, *y su causa esta *
+   *** medida *** *(-- *pide un enlace que a movil no existe --)*. *
+*** 3 ***. *Y por tanto *** no se puede afirmar que el despliegue publico este
+   *listo ***: *se puede afirmar que *** la aplicacion funciona y se comporta***, *
+   *y *** no *** que se haya mirado pantalla a pantalla con ojo humano. *
+```
 
 # PARTE 3 · *Lo que he hecho en este encargo, *y lo que no*
 
