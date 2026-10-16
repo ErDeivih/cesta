@@ -404,3 +404,39 @@ puertas rojas, *y *** se desmonto***. *
 *** levantadas***, *y 8080, *5432 *y *5433 *** siguen intactos.*** *
 *Los pasos *** 3 a 9 *** quedan pendientes: *pantallas con sesion, *el recorrido, *
 *dos usuarios, *cerrar la compra, *`Cargando`, *contenido largo, *y desmontar.* *
+
+## 7.5 *Y el entorno esta COMPLETO, *y no lo invente yo (ronda 23)*
+
+*** La pieza que faltaba era *como apuntar el frontend a MI API*, *porque el 8080
+proxya `/api` a `cesta-api-1`, *o sea *** a la base domestica***. *Y la respuesta estaba
+*** escrita en el proyecto ***, *en `plataforma/prueba_navegador.py`: *
+
+```
+*** `cd plataforma/web/app; $env:CESTA_API='http://127.0.0.1:8099'; npm run dev` *** ✓
+*** -> *** `CESTA_API` *** hace que el frontend en *** dev *** hable con la API que le digas ✓
+*** -> *y su propio comentario avisa: *«la imagen que corre en el 8080 *** puede ser
+   *mas vieja***» ✓
+```
+
+*** Y LOS TRES PISOS DEL ENTORNO, *verificados ***: *
+
+| *pieza* | *donde* | *verificado con* |
+|---|---|---|
+| *base desechable* | *** 5434 *** | *14 tablas, *y la guarda acepta el DSN* |
+| *API* | *** 8099 *** | *`/api/salud` -> **200**, *`vivo true`* |
+| *frontend en dev* | *** 5173 *** | *HTTP **200**, *** `title: Cesta` ***, *y *`/api/salud` responde por ahi* |
+
+*** Y 8080, *5432 *y *5433 *** siguen intactos.*** *
+
+## 7.6 *Y lo que encontro el proyecto, *que yo iba a hacer a mano y peor*
+
+```
+*** `prueba_navegador.py` define *** DOS CUENTAS FIJAS ***: *
+   *** `USUARIO = "prueba-navegador"` *** *y *** `USUARIO_INVITADA = "prueba-invitada"` *** ✓
+*** -> *y explica por que son fijas y no nuevas: *«la API limita las altas por hora» ✓
+*** -> *y por que son dos: *«tiene que ser *** otra persona***, *porque el caso que manda *
+   *es el de quien recibe el enlace y no estaba dentro» ✓✓✓
+*** -> *y usa un movil de *** 390 x 844 *** *con `has_touch`, *«de pie y con una mano» ✓
+*** -> *** o sea que el punto 4 YA TIENE su puerta mecanica escrita *** *
+   *-- *y lo que yo iba a montar a mano con REA *** ya existe, *y mejor *** ✓✓✓
+```
