@@ -1377,3 +1377,41 @@ desmentirlo. *Y no la mire por olvido, *sino *** porque ya tenia la conclusion *
 medidos, *y el cambio es de una linea *(-- *una entrada mas en el lateral --)*, *
 *pero se deja para cuando se pueda *** correr la puerta despues***, *que es la
 condicion que me he puesto toda la sesion para tocar algo.* *
+
+## 7.63 *Y EL ARREGLO DE `Avisos` NO ROMPIO NADA: *87 OK OTRA VEZ (ronda 52)*
+
+```
+*** *** 87 ok ***, *** 0 FALLO *** ✓ *-- *igual que antes del arreglo ✓
+*** -> *y `Avisos` ya tiene puerta en el lateral ✓
+```
+
+## 7.64 *Y LA SECCION DE LOS TOQUES, *POR FIN EXPLICADA DEL TODO*
+
+*** Y ahora se ve por que caduca, *y no es `Avisos`: *
+
+```
+*** el primer toque que prueba es *** «Cesta» -> `/compra/listas` *** ✓
+*** -> *y ese valor *** es correcto ***: *esta en `subsecciones` del nav ✓
+*** -> *y el localizador es *** `nav a[href='/compra/listas']:visible` *** ⚠️
+*** -> *y el *** sidebar *** es *** `hidden lg:block` *** ✓
+*** -> *y las *** subsecciones *** solo viven en el sidebar *y en el *** cajon *** *
+   *-- *que a 390 px esta *** cerrado *** ✓
+*** -> *** a movil, NINGUNA subseccion es visible sin abrir el cajon con el ☰ *** ✓✓✓
+*** -> *** por eso caduca el primer toque ***, *y no por el valor ✓
+```
+
+*** Y ESO CIERRA EL DIAGNOSTICO DE LA RONDA 37 ***, *que dije a medias: *
+*no es que «la barra de abajo lleve a las raices» sin mas -- *es que **a movil
+las subsecciones estan detras del cajon**, *y el test las busca **visibles**.* *
+
+### 7.65 *Y por tanto las salidas son otras de las que dije*
+
+```
+*** A ***. *El test *** abre el cajon *** *(-- *pulsa el ☰ --)* *antes de buscar *
+   *la subseccion. *Y entonces mide *** los toques de verdad***, *que era el proposito ✓
+*** -> *** B ***. *Cuenta los toques *** a las tres raices ***, *que es lo que la barra da ✓
+*** -> *** C ***. *Añade la cesta a la barra de abajo *-- *y eso *** si es una decision
+   *de producto ***, *no de la prueba ✓✓✓
+*** -> *y la seccion se llama *** «cuantos toques hay desde la primera pantalla hasta
+   *cada respuesta» ***, *asi que *** A es la que mide lo que dice medir *** ✓
+```
