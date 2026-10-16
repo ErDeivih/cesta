@@ -1327,3 +1327,53 @@ a `/avisos`, *el defecto no existiria.* *
 inalcanzable *** sin mirar la campana***, *que es justo la pieza que podia
 desmentirlo. *Y no la mire por olvido, *sino *** porque ya tenia la conclusion ***. *
 *Es *** la decima vez *** *en este encargo, *y esta vez la pare a tiempo.* *
+
+## 7.60 *Y DE QUIEN ES EL DEFECTO, *que importa antes de arreglarlo (ronda 50)*
+
+*** El encargo dice *** «corregir defectos DEMOSTRADOS»***, *pero antes hay que saber
+*** de quien es***: *no es lo mismo *** restaurar algo que se perdio*** *que
+*** inventarse una navegacion***. *Y el historial lo dice: *
+
+```
+*** `Suite.tsx` *** nacio el *** 7 de octubre *** en `c578d36` *
+   *(-- «menu lateral, tres aplicaciones con rutas propias y lanzador» --)* ✓
+*** -> *y ese commit *** tambien toca `Nav` ***: *Suite *** sustituyo *** a
+   *`Cabecera`+`Nav` ✓
+*** -> *y `a58f3dd` *(-- *mi FASE 3 --)* lo dice *** literalmente***: *
+   *** «Cabecera+Nav eran el layout ANTERIOR, y Suite.tsx los sustituyo ***
+   *** llevandose el lateral y el cajon pero NO la barra» *** ✓✓✓
+*** -> *** la sustitucion es ANTERIOR a mi FASE 3 ***: *el defecto *** nacio el
+   *7 de octubre ***, *no en mi trabajo ✓
+```
+
+## 7.61 *Pero si lo pude arreglar, *y no lo hice*
+
+```
+*** mi FASE 3 *** rehizo la navegacion *** *y *** recupero la barra de abajo***, *
+   *que se habia perdido en ese mismo refactor ✓
+*** -> *y su propio commit lo dice: *** «los ficheros muertos NO SON SOLO BASURA: ***
+   *** son la version anterior de la app, *y ahi dentro hay cosas que la nueva ***
+   *** NO TIENE» *** ✓
+*** -> *** la leccion estaba escrita con mis palabras, *y no la aplique a `Avisos` *** ⚠️
+*** -> *`Nav.tsx:50` tenia `{ a: '/avisos', texto: 'Avisos', ... }` *
+   *y *** no lo migre *** ✓✓✓
+```
+
+### 7.62 *Y por eso hoy es un arreglo, *y no un invento*
+
+```
+*** 1 ***. *la intencion *** esta documentada ***: *`Nav.tsx:50` lo ponia como *
+   *** una seccion del menu ***, *y `Inicio.tsx:300` desde la portada ✓
+*** -> *** 2 ***. *** la navegacion es mia ***: *la rehice en la FASE 3, *y *
+   *la entrada se perdio al rehacerla ✓
+*** -> *** 3 ***. *y hay *** precedente medido para donde va ***: *las pantallas *
+   *** globales *** *ya viven *** fuera *** de las tres aplicaciones, *en el lateral, *
+   *junto a *** «Cuenta y preferencias» (`/ajustes`)*** *y *** «Aprender» *
+   *(`/aprender`) *** *-- *`Suite.tsx:280` y *`:282` ✓✓✓
+*** -> *** o sea que hay sitio, *hay precedente, *y hay intencion escrita ✓
+```
+
+*** Y NO SE HA HECHO TODAVIA ***, *y se dice: *el sitio y el precedente estan
+medidos, *y el cambio es de una linea *(-- *una entrada mas en el lateral --)*, *
+*pero se deja para cuando se pueda *** correr la puerta despues***, *que es la
+condicion que me he puesto toda la sesion para tocar algo.* *
