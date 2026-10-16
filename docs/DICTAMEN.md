@@ -712,3 +712,47 @@ recien migrada***, *cuando con la base de la ronda 25 si salian.* *
 *** -> *y *** 8080, *5432 y 5433 siguen arriba *** ✓
 *** -> *** no queda nada mio levantado *** ✓✓✓
 ```
+
+## 7.25 *Y LA API RESPONDE PERFECTAMENTE: *EL PROBLEMA NO ES EL CATALOGO (ronda 30)*
+
+```
+*** `gold` *** existe *** *y trae los parquet: *`actual.json`, *`grupos.parquet`, *
+   *`enlaces.parquet`, *`embedding.parquet` ✓
+*** -> *y preguntandole a la API *** directamente ***, *sin navegador: *
+   *** `/api/buscar?q=leche+entera&limite=40` *** -> *** HTTP 200 ***, *** 20.719 bytes *** ✓
+   *** -> *primer resultado: *`grupo_id` *** 47808 ***, *«Leche entera», *
+      *MILSANI, *aldi, *** 96 *** centimos ✓✓✓
+*** -> *y `/api/buscar?q=leche` -> *** 200 ***, *20.281 bytes, *«Leche desnatada» ✓
+*** -> *** la API da los datos, *y el `grupo_id` de «Leche entera» es 47808 *** *
+   *-- *el *** MISMO *** que salio en la ronda 10, *y el que el test busca ✓
+```
+
+## 7.26 *Y con eso, *el problema queda acotado al frontend*
+
+```
+*** la API *** funciona ***; *el `gold` *** esta ***; *la ruta `/compra/comparar/:grupoId` *
+   *** existe *** *(`App.tsx:201`); *y `/grupo/:grupoId` *** redirige *** ahi *(`:277`) ✓
+*** -> *y el frontend *** conoce las dos ***: *`App.tsx:144` hace *
+   *`startsWith('/grupo/') || startsWith('/compra/comparar/')` ✓
+*** -> *** y aun asi el enlace no aparece en la pantalla *** ⚠️
+```
+
+## 7.27 *Y LA HIPOTESIS, *que es fuerte y NO esta medida*
+
+```
+*** `/api/salud` *** POR EL 5173 FALLO ***, *y *** DOS VECES *** *
+   *(-- *rondas 28 *y *29 --)* ⚠️⚠️⚠️
+*** -> *y lo achaque a *** IPv6 *** *y lo deje pasar ✓
+*** -> *** y quiza NO era IPv6: *quiza el dev server NO proxya `/api` a mi 8099 *** ✓
+*** -> *y eso explicaria *** todo ***: *
+   *-- *la API del 8099 *** responde 20 KB *** *si le preguntas directo ✓
+   *-- *y el NAVEGADOR le pide `/api/buscar` al *** 5173 *** ✓
+   *-- *si el 5173 *** no proxya ***, *la pantalla *** no recibe nada *** ✓
+   *-- *** y por eso no hay resultados, *ni enlaces, *ni la tarjeta *** ✓✓✓
+*** -> *** ES UNA HIPOTESIS, *NO UNA CONCLUSION *** *
+   *-- *y por eso *** NO se toca nada *** *ni se declara el punto 4 por bueno ✓
+```
+
+*** Y LA LECCION ***: *vi ese `/api/salud` fallando *** dos veces *** *y las dos lo
+explique con una causa comoda *(-- IPv6 --)* *** sin medirla.*** *Es la *** septima vez ***
+en este encargo que una suposicion comoda tapa el dato.* *
