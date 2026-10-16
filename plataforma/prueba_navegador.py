@@ -1759,11 +1759,20 @@ def main() -> int:
             # **Llegar a la cesta es la prueba**: la pantalla del enlace navega sola, y
             # solo cuando la invitacion se aplica (`Unirse.tsx:52`). Si sigue en `/unirme`,
             # o no ha entrado o la API ha dicho 429 (demasiadas altas en la ultima hora).
+            # **`/compra/listas`, que es la URL FINAL, y no `/cesta`.** `/cesta` es una
+            # **redireccion** desde el 27 de septiembre de 2026 (`App.tsx:274`):
+            # `<Navigate to={/compra/listas${search}} replace />`. *Asi que la URL
+            # **nunca «esta» en `/cesta`**: pasa por ahi y sale. *Es *** el mismo caso
+            # que se arreglo en la ronda 34 con `/grupo/`***, *y el mismo que avisa el
+            # `:1387`: *«el nav **no** puede llevar `href='/cesta'`».** *Y aqui ademas
+            # el `wait_for_url` vive dentro de un `suppress`, *asi que *** su caducidad
+            # no se ve***: *el fallo salia despues, *como «no dice a que lista ha
+            # entrado», *que es *** otra cosa***. *Medido en la ronda 81.
             with contextlib.suppress(Exception):
-                otra.wait_for_url("**/cesta", timeout=20000)
+                otra.wait_for_url("**/compra/listas", timeout=20000)
             otra.wait_for_load_state("networkidle")
             traida = otra.inner_text("body")
-            comprueba("/cesta" in otra.url and "unirme" not in otra.url,
+            comprueba("/compra/listas" in otra.url and "unirme" not in otra.url,
                       f"al aplicarse lleva a la cesta, y no deja el enlace a mano ({otra.url})")
             # **Los dos estados valen, a proposito.** La cuenta es la misma en cada pasada:
             # la primera vez entra, y a partir de la segunda la API dice que ya estaba

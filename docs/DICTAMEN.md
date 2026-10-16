@@ -2555,3 +2555,38 @@ diagnostico de la 78 *y comprobado contra `ui.tsx:438`*, *y *** falta la ejecuci
 final ***, *`/compra/listas`, *que es la que la aplicacion *** si muestra***. *
 *Y `:1775` *** pide mirar el texto ***, *que es otra cosa: *o el texto esta en otro
 sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defecto. *
+
+## 7.134 *Y LA INVITACION, *ARREGLADA CON LA CORRECCION DE LA RONDA 34 (ronda 82)*
+
+*** Dos lineas ***, *y las dos la misma cosa: *esperar y comprobar *** la URL final***. *
+
+```
+*** `otra.wait_for_url("**/cesta", ...)` *** → *** `"**/compra/listas"` *** ✓
+*** -> *y *** `comprueba("/cesta" in otra.url …)` *** → *** `"/compra/listas" in otra.url` *** ✓
+*** -> *y el motivo escrito al lado: *
+   *-- *`/cesta` es *** una redireccion *** desde el 27 de septiembre de 2026 ✓
+   *-- *`App.tsx:274`: *** `<Navigate to={/compra/listas${search}} replace />` *** ✓
+   *-- *** la URL nunca «esta» en `/cesta`: *pasa por ahi y sale *** ✓
+   *-- *y *** el `:1387` ya lo avisaba***: *«el nav **no** puede llevar `href='/cesta'`» ✓
+*** -> *y se anadio el detalle que hacia falta: *el `wait_for_url` vive dentro de *
+   *** un `suppress` ***, *asi que *** su caducidad no se ve*** *
+   *-- *y el fallo salia *** despues ***, *como «no dice a que lista ha entrado» *
+   *-- *** que es otra cosa *** ✓✓✓
+```
+
+*** Y SE COMPROBO QUE NO QUEDA NINGUNA MAS ***: *`wait_for_url("**/cesta")` *
+*y `"/cesta" in` dan *** cero coincidencias*** ✓. *Y compila, *`ruff` limpio, *
+*LF conservado *(-- *2208, *CRLF=0 --)*, *y diff 11/2.* *
+
+## 7.135 *Y CINCO ARREGLOS ESPERAN UNA SOLA EJECUCION*
+
+```
+*** 1 ***. *** los 44 px ***: *el pie del Lanzador, *`Por mes`, *`Por semana` ✓
+*** -> *** 2 ***. *** los `h1` ***: *23 etiquetas en 16 ficheros ✓
+*** -> *** 3 ***. *** el `main h1` de la puerta ***: *ahora `main h1, main h2` ✓
+*** -> *** 4 ***. *** el titulo de `Buscar` ***: *«No he podido buscar» ✓
+*** -> *** 5 ***. *** la URL de la invitacion ***: *`/compra/listas` ✓
+*** -> *y los tres primeros *** ya se verificaron en la 77*** *(-- *190 ok --)*, *
+   *y los dos ultimos *** no*** ✓
+*** -> *** la puerta lo dira *** ✓✓✓
+```
