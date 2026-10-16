@@ -2767,3 +2767,35 @@ encontro***. *
 *** Y ESTO ES EL METODO DE LA SECCION 17, *FUNCIONANDO***: *la regla no vale de
 nada si no se corre, *y *** correrla encontro tres frases que yo habia dado por
 buenas***. *Y las tres estaban *** en la primera pagina***. *
+
+## 7.144 *Y LA REGLA DE LA SECCION 17 TIENE YA SU COMPROBACION, *EN EL REPOSITORIO (ronda 87)*
+
+*** La escribi en un `$env:TEMP`, *que se borra solo***. *Y una regla que no lleva
+la comprobacion al lado es *** una regla que no se corre***. *Asi que ahora esta en
+*** `plataforma/comprueba_documentos.py`***, *y se corre asi: *
+
+```
+*** `uv run python -m plataforma.comprueba_documentos` *** ✓
+*** -> *y sale *** `== TODO BIEN` *** con *** exit code 0 *** ✓✓✓
+```
+
+### 7.145 *Y AL CORRERLO, *ENCONTRO DOS DEFECTOS EN SI MISMO*
+
+```
+*** 1 ***. *** La consola de Windows es `cp1252` ***, *y el diagnostico lleva `✓`
+   *y tildes: *el script *** petaba justo al imprimir***, *que es cuando mas falta
+   *hace que se lea.* *Se arreglo con `sys.stdout.reconfigure` ✓
+*** -> *** 2 ***. *** Y avisaba de ONCE cosas, *y las once eran falsas *** ⚠️ *
+   *-- *«NO HECHO» aparece *** legitimamente***: *el dictamen *** dice que las
+   *capturas siguen sin hacer *** ✓
+   *-- *«19 ok» aparece *** en la frase que dice 194 *** ✓
+   *-- *y la seccion 17 *** cita los patrones que busca *** ✓
+*** -> *** un comprobador que avisa de todo *** NO SE CORRE *** ✓
+*** -> *y por eso se afino: *se quitaron los patrones legitimos, *se ignora la
+   *linea que dice *** el numero bueno ***, *y se excluye *** la regla de su
+   *propia comprobacion *** ✓✓✓
+```
+
+*** Y ESTO ES LO MISMO QUE HA PASADO TODO EL DIA ***, *en pequeño*: *escribi una
+comprobacion, *la corri, *y *** la comprobacion tenia dos defectos***. *Y los dos
+se vieron *** corriéndola***, *no leyéndola. *

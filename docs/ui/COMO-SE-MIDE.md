@@ -608,3 +608,35 @@ hacer despues de escribir una regla. *Buscar en los documentos *** vigentes ***
 
 *** Y eso cierra la seccion ***: *la regla no sirve de nada si no se corre, *y
 *** correrla cuesta un minuto.*** *
+
+### 17.bis *Y LA COMPROBACION, *PARA QUE SE PUEDA CORRER MAÑANA*
+
+*** Y la escribi en un `$env:TEMP`, *que se borra solo***. *Asi que va aqui, *
+*** que es donde vive la regla***: *si la regla no lleva la comprobacion al lado,
+*es *** una regla que no se corre***. *
+
+```
+*** De los documentos VIGENTES, *no del historico ***: *el resumen y las PARTES 1
+*y 2 del dictamen, *y los tres de `docs/ui` que dicen estado. *Busca numeros y
+frases que *** el trabajo posterior dejo atras***: *
+
+    VIEJAS = 87 ok | 177 ok | 190 ok | «no llega al final» | «NO HECHO»
+
+*** En el dictamen, *el historico empieza en la PARTE 4 *y NO se mira*** ✓
+```
+
+*** Y SU PRIMERA PASADA ENCONTRO TRES *** *(-- *rondas 85 y 86 --)*: *«paso de
+19 ok a ***177 ok***» *en el resumen, *y «la seccion de los toques ***no llega al
+final***» *en las PARTES 1 y 2. *Las tres *** en la primera pagina del entregable.*** *
+
+*** Y POR QUE SE ESCAPARON ***: *el script de la ronda 85 buscaba *** un bloque
+exacto *** *y lo sustituyo, *y *** habia dos sitios con el mismo numero***. *Es
+*** el mismo error de las 22 lineas***: *arreglar un sitio y no su vecino. *Y esta
+vez lo encontro *** una comprobacion, *no mi memoria***. *
+
+*** Y EL COMANDO, *para no volver a escribirlo*** (vive en
+`plataforma/comprueba_documentos.py`): *
+
+```powershell
+uv run python -m plataforma.comprueba_documentos
+```
