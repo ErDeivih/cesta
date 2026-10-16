@@ -877,3 +877,49 @@ comoda -- IPv6, *y luego «el proxy» --* *** sin medirla.*** *Al medirla, *resu
    *-- *`BARRA`: *las rutas `/cesta` *y `/` *** si estaban mal *** *
       *-- *`/cesta` es redireccion, *y `/` es el Lanzador ✓✓✓
 ```
+
+## 7.37 *Y LA CAUSA FINAL: *UNA CONDICION DE CARRERA EN LA PRUEBA (ronda 34)*
+
+*** Con el selector revertido a `/grupo/`, *el enlace *** SI se encuentra y SI se pulsa***: *
+*el error lo demuestra, *porque ya no es `wait_for` del localizador, *sino:* *
+
+```
+*** `waiting for navigation to "**/grupo/**" until 'load'` *** ⚠️
+*** -> *o sea que `primer.wait_for()` y `primer.click()` *** pasaron *** ✓
+*** -> *y lo que caduca es la espera a que la URL *** sea `/grupo/` *** ✓
+```
+
+*** Y las tres lineas del test usan la misma ruta, *o sea que *** es coherente consigo
+mismo *** *y *** desactualizado respecto al router***: *
+
+```
+*** `primer = pagina.locator("a[href^='/grupo/']").first` *** ✓
+*** `pagina.wait_for_url("**/grupo/**", timeout=15000)` *** ⚠️
+*** `comprueba("/grupo/" in pagina.url, ...)` *** ✓
+*** -> *y la URL final es *** `/compra/comparar/47808` ***, *porque *** `/grupo/:id` redirige *** ✓
+*** -> *** la URL esta en `/grupo/` solo un instante *** ✓✓✓
+```
+
+## 7.38 *Y ESO EXPLICA QUE LA RONDA 25 DIERA 86 OK*
+
+```
+*** `wait_for_url("**/grupo/**")` *** es una espera *** DE CARRERA *** ✓
+*** -> *si Playwright mira mientras la URL es `/grupo/`: *** pasa *** ✓
+*** -> *si mira despues del redirect: *** caduca *** ⚠️
+*** -> *** la prueba es NO DETERMINISTA *** ✓✓✓
+*** -> *y eso explica *** exactamente *** *que una pasada llegara al final *
+   *y las tres siguientes se cortaran aqui ✓
+*** -> *** es un DEFECTO DEMOSTRADO, *y su causa es la no determinacion *** ✓
+```
+
+## 7.39 *Y el arreglo, *cinco lineas*
+
+```
+*** `wait_for_url("**/grupo/**")` ***: *4 -> *** 0 *** ✓
+*** -> `wait_for_url("**/compra/comparar/**")` ***: *0 -> *** 4 *** ✓
+*** -> *y el `comprueba` con la misma URL ✓
+*** -> *diff *** 5/5 ***, *LF conservado, *`ruff` limpio ✓
+*** -> *se espera la URL *** FINAL ***, *que si es determinista ✓✓✓
+*** Y NO SE HA VUELTO A CORRER ***, *y se dice: *el arreglo esta *** razonado *
+   *desde el error medido ***, *y falta la ejecucion que lo confirme ✓
+```

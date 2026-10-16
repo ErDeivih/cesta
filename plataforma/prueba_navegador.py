@@ -677,10 +677,10 @@ def main() -> int:
         primer = pagina.locator("a[href^='/grupo/']").first
         primer.wait_for(timeout=15000)
         primer.click()
-        pagina.wait_for_url("**/grupo/**", timeout=15000)
+        pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
         pagina.wait_for_load_state("networkidle")
         tiempos.append(("de la entrada a la ficha con la frase", time.monotonic() - t0))
-        comprueba("/grupo/" in pagina.url, f"el resultado abre la ficha ({pagina.url})")
+        comprueba("/compra/comparar/" in pagina.url, f"el resultado abre la ficha ({pagina.url})")
         # Se espera al boton, que solo existe cuando el dato ha llegado: leer el texto
         # antes de eso es medir la pagina a medio pintar, y eso no es un fallo de la
         # aplicacion sino de la prisa de quien mira.
@@ -809,7 +809,7 @@ def main() -> int:
         # era un fallo de la aplicacion sino de esta prueba habiendo cambiado de pantalla.
         pagina.locator("a[href^='/grupo/']").first.click()
         with contextlib.suppress(Exception):
-            pagina.wait_for_url("**/grupo/**", timeout=15000)
+            pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
             pagina.wait_for_load_state("networkidle")
         # Y se espera al boton de anadir, que es donde se ancla el bloque siguiente: sin esta
         # espera se lee la ficha a medio pintar (`patchright` no espera sola).
@@ -1437,7 +1437,7 @@ def main() -> int:
         with contextlib.suppress(Exception):
             pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
         pagina.locator("a[href^='/grupo/']").first.click()
-        pagina.wait_for_url("**/grupo/**", timeout=20000)
+        pagina.wait_for_url("**/compra/comparar/**", timeout=20000)
         pagina.wait_for_load_state("networkidle")
         pagina.wait_for_timeout(1200)
         comprueba(pagina.locator("main p.font-semibold").first.count() > 0,
@@ -1973,7 +1973,7 @@ def main() -> int:
         with contextlib.suppress(Exception):
             resultado.wait_for(timeout=15000)
         resultado.click()
-        pagina.wait_for_url("**/grupo/**", timeout=15000)
+        pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
         pagina.wait_for_load_state("networkidle")
         with contextlib.suppress(Exception):
             pagina.get_by_role("button", name="Añadir a la cesta").first.wait_for(timeout=20000)
