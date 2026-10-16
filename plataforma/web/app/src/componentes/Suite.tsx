@@ -33,6 +33,7 @@ import {
   IconoGrafica,
   IconoLibro,
   IconoLupa,
+  IconoPanel,
   IconoPersona,
   IconoPlato,
 } from './iconos'
@@ -277,6 +278,18 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
         </nav>
       )}
       <nav aria-label="Cuenta y ayuda" className="mt-auto flex flex-col gap-1">
+        {/* **Y los avisos, que llevaban sin puerta desde el 7 de octubre de 2026.**
+            `Nav.tsx:50` los tenia como una seccion del menu, y cuando `Suite.tsx`
+            sustituyo a `Cabecera`+`Nav` -- llevandose el lateral y el cajon -- la
+            entrada **se perdio**, y nadie la echo de menos porque no falla nada:
+            la pantalla existe, la API contesta y la campana deja pedir un aviso.
+            Lo que no habia era **forma de llegar**. Va aqui, con las otras dos
+            globales, porque `/avisos` no es de ninguna de las tres aplicaciones.
+            **Y queda pendiente el punto de «sin ver»**, que `Nav.tsx:98` pintaba y
+            que si es una decision: el contador ya existe (`consultas.ts`), y aqui
+            solo falta decidir donde se ve. */}
+        <EnlaceLateral a="/avisos" texto="Avisos" Icono={IconoPanel}
+          onNavegar={onNavegar} />
         <EnlaceLateral a="/ajustes" texto="Cuenta y preferencias" Icono={IconoPersona}
           onNavegar={onNavegar} />
         <EnlaceLateral a="/aprender" texto="Aprender" Icono={IconoLibro}
