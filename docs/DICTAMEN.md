@@ -1112,3 +1112,48 @@ toques a los destinos que la barra si ofrece, *o el recorrido completo pulsando
    *-- *lo unico que falla es *** el contador de toques ***, *que mide algo
    *que a movil no existe ✓
 ```
+
+## 7.49 *Y EL DATO QUE FALTABA PARA DECIDIR LA SECCION DE LOS TOQUES (ronda 40)*
+
+*** No puedo decidir que debe contar esa seccion, *pero si puedo dar la lista
+completa de lo que el nav ofrece ***, *para que la decision sea informada.* *
+
+```
+*** EL NAV TIENE ONCE ENTRADAS ***, *en `Suite.tsx:79-105`: *
+   *** COMPRA ***: *Buscar `/compra` · Listas `/compra/listas` · *
+      *Favoritos `/compra/favoritos` · Gasto y ahorro `/compra/analisis` ✓
+   *** RECETAS ***: *Mi recetario `/recetas` · Plan semanal `/recetas/plan` ✓
+   *** CALORIAS ***: *Mi diario `/calorias` · Mis alimentos `/calorias/alimentos` · *
+      *Tendencias `/calorias/tendencias` ✓
+*** -> *** y la barra de abajo *** *(`BarraAbajo`, *`to={otra.raiz}`)* lleva a *
+   *** las TRES RAICES ***: *`/compra`, *`/recetas`, *`/calorias` ✓
+```
+
+### 7.50 *Y de los CINCO destinos que la prueba quiere tocar, *solo DOS estan en el nav*
+
+| *clave de `BARRA`* | *ruta* | *esta en el nav?* |
+|---|---|---|
+| *Cesta* | *`/compra/listas`* | *** SI *** *-- *y se llama *** «Listas»*** |
+| *Buscar* | *`/compra`* | *** SI *** |
+| *Avisos* | *`/avisos`* | *** NO *** |
+| *Panel* | *`/panel`* | *** NO *** |
+| *Escáner* | *`/escaner`* | *** NO *** |
+
+*** Y a movil, *la barra de abajo solo lleva a las tres raices.*** *O sea que la
+seccion de los toques *** mide destinos que la barra no ofrece ***, *y caduca en el
+primer toque, *que ademas pide un enlace *** que a movil no esta visible.*** *
+
+## 7.51 *Y LAS TRES SALIDAS, *para que la decision sea tuya y no mia*
+
+```
+*** A ***. *Contar los toques *** a los destinos que la barra SI ofrece *** *
+   *(-- *las tres raices --)*, *que es lo que la barra puede dar ✓
+*** B ***. *Contar el recorrido *** completo***: *de la portada al destino *
+   *pulsando lo que haga falta *(-- *raiz y luego subseccion --)* ✓
+*** C ***. *Medir los toques *** a escritorio ***, *donde si esta el lateral *
+   *con las once entradas *-- *pero entonces la seccion no mide movil ✓
+*** -> *y la seccion se llama *** «cuantos toques hay desde la primera pantalla *
+   *** hasta cada respuesta» ***, *y su razon de ser *(-- *la condicion de la barra --)* *
+   *es *** el movil, *de pie y con una mano *** ✓
+*** -> *** o sea que A o B, *y C contradice el proposito de la seccion *** ✓
+```
