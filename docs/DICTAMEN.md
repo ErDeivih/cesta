@@ -1213,3 +1213,48 @@ haya errores de sintaxis, *pero *** no que el fichero siga en pie.*** *
 el fichero***, *y que *** las 2081 de Python siguen siendo validas*** *aunque haya
 tocado un `.py` *-- *porque `prueba_navegador.py` no es una prueba de `pytest`, *
 *sino *** una puerta que se corre a mano.*** *
+
+## 7.53 *Y ENCONTRADO UN DEFECTO DE VERDAD: *`Avisos` ES INALCANZABLE (ronda 47)*
+
+*** Y salio de seguir el hilo de la seccion de los toques ***, *que pedia tocar
+`/avisos` *y *`/panel`. *En vez de dar por hecho que era un fallo del test, *
+*** mire si esas pantallas tienen puerta.*** *
+
+```
+*** `Panel` ***: *** SI la tiene *** *-- *se monta en *** `/compra/analisis` *** *
+   *(`App.tsx:206`), *y esa ruta *** SI esta en el nav *** *como «Gasto y ahorro» ✓
+*** -> `Escáner` ***: *** SI la tiene *** *-- *se enlaza desde *** `Buscar.tsx:191` *** *
+   *y desde *** `Grupo.tsx:230` *** ✓
+*** -> *** `Avisos` ***: *** NO LA TIENE *** ⚠️⚠️⚠️
+```
+
+### 7.54 *Y la causa, *comprobada*
+
+```
+*** `Avisos` tiene *** todo *** *menos puerta*: *
+   *-- *ruta *`/avisos` *(`App.tsx:237`) ✓
+   *-- *titulo *(`App.tsx:151`) ✓
+   *-- *pantalla *`Avisos.tsx`, *232 lineas ✓
+   *-- *contador de no vistos *`consultas.ts:211` ✓
+*** -> *y sus *** DOS unicos enlaces estan en ficheros MUERTOS ***: *
+   *-- *** `Inicio.tsx` *** *-- *`from '.../paginas/Inicio'` da *** 0 referencias *** ✓
+   *-- *** `Nav.tsx` *** *-- *`from '.../componentes/Nav'` da *** 0 referencias *** ✓
+*** -> *** AVISOS ES INALCANZABLE DESDE LA APLICACION *** ✓✓✓
+```
+
+### 7.55 *Y esto explica la seccion de los toques, *que llevaba cinco rondas abierta*
+
+```
+*** la prueba queria tocar *** `/avisos` *y *`/panel` *** y no los encontraba ✓
+*** -> *y yo lo llame *** «una decision de diseno de la prueba» *** ⚠️
+*** -> *** y estaba equivocado: *no es el test, *ES LA APLICACION *** ✓✓✓
+*** -> *`Panel` *** si tiene puerta*** *(-- *por otra ruta --)*, *
+   *y *** `Avisos` no tiene ninguna.*** *
+*** -> *** la prueba estaba señalando un defecto real, *y yo lo estaba llamando
+   *«decision de diseno» *** ✓✓✓
+```
+
+*** Y NO SE ARREGLA AQUI ***, *y el motivo es el de siempre: *donde debe vivir
+«Avisos» en el menu *** es una decision de producto *** *(-- *una seccion propia,
+*dentro de otra, *o una campana en la cabecera --)*, *y ponerlo donde me parezca
+seria *** inventarme el diseño.*** *
