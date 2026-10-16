@@ -12,52 +12,77 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 
 # *** RESUMEN VIGENTE *** *-- *leer esto primero*
 
-*15/10/2026, *cierre de la sesion de validacion. *Las *** PARTES 1 y 2 *** son el
-dictamen; *las *** PARTES 4 a 7 *** son el *** historico de como se llego***, *
+*** ACTUALIZADO EN LA RONDA 61.*** *La version anterior era de la ronda 38, *y desde
+entonces *** se encontro y se arreglo un defecto de navegacion***, *se sirvio, *
+*y se midio la causa de la seccion de los toques. *Es *** la leccion de la seccion 17
+de `COMO-SE-MIDE.md`*** *aplicada a este mismo documento: *consolidar no es arreglar, *
+*** es fotografiar.*** *
+
+*Las *** PARTES 1 y 2 *** son el dictamen; *las *** PARTES 4 a 7 *** son el *** historico***, *
 *con sus correcciones, *y *** NO son estado vigente.*** *
 
-## *Los siete puntos del encargo*
+## *Los ocho puntos del encargo*
 
 | *punto* | *estado* | *evidencia* |
 |---|---|---|
-| *** 1 *** *documental* | *** HECHO *** | *4 contradicciones fuera; *historico separado* |
+| *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
 | *** 3 *** *ramas* | *** publicas SI *** | *`Panel`, *`Buscar`, *`Comparar` a 1440 y 390; *foco* |
 | *** 4 *** *el recorrido* | *** PASA *** | *** 87 de 87 *** *en la puerta del navegador* |
 | *** 5 *** *unidad, periodo, cobertura* | *** validado *** | *por la propia puerta* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
-| *** 7 *** *version servida* | *** VERIFICADO *** | *los 8 chunks, *y el puntero del gold* |
+| *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *con captura* |
 | *** 8 *** *dictamen* | *** este documento *** | *--* |
 
 *** Y las seis puertas ***: *`ruff` limpio · *** 2081 passed *** · *81 del frontend · *
 *`tsc` limpio · *`build` OK · *`prueba_e2e` *** «TODO BIEN» ***. *
 
-## *Lo que esta ABIERTO, *y es una decision, no un bloqueo*
+## *** Y UN DEFECTO ENCONTRADO, *ARREGLADO Y SERVIDO***
 
 ```
-*** 1 ***. *** La seccion de los toques ***: *pide *** `nav a[href='/compra/listas']` ***,
-   *y *** a movil ese enlace no existe*** *-- *la barra de abajo lleva a las tres
-   *raices (`/compra`, `/recetas`, `/calorias`)*. *Medido. *
-   *** Que debe contar esa seccion es una decision de diseno de la prueba.*** *
+*** `Avisos` *** *estaba *** hecho y sin puerta desde el 7 de octubre de 2026***: *
+   *ruta, *titulo, *pantalla de 232 lineas, *contador de no vistos *y campana, *
+   *y *** sus dos unicos enlaces en ficheros muertos*** *(`Inicio.tsx`, *`Nav.tsx`) ✓
+*** -> *lo encontro *** la puerta que se cortaba***, *y yo lo llame dos veces *
+   *** «decision de diseno de la prueba» *** *antes de mirar ✓
+*** -> *** ARREGLADO ***: *una entrada en el lateral, *junto a las otras dos globales ✓
+*** -> *** Y SERVIDO ***: *el `dist` reconstruido, *y 8080 sirve `index-COJqyF63.js`, *
+   *con la entrada comprobada *** en el bundle y en una captura *** ✓✓✓
+```
+
+## *Lo que esta ABIERTO*
+
+```
+*** 1 ***. *** La seccion de los toques ***: *su causa esta *** MEDIDA *** y *
+   *ya no es «una decision»: *el test hace `carga("/")`, *y `/` es *** el Lanzador***, *
+   *que *** no tiene menu*** *(-- *la captura de la ronda 59 lo ensena --)*. *
+   *** El arreglo esta ESCRITO*** *(-- *7.73 --)*: *cada camino empieza por su raiz, *
+   *y `toca()` sabe pulsar la raiz desde el Lanzador. *** Falta ejecutarlo.*** *
 *** 2 ***. *** Las pantallas con sesion *** *no se han capturado: *
    *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`,
    *`Avisos`, *`Favoritos`. *La puerta *** SI las recorre y las pasa***; *
    *lo que falta es *** la captura y el juicio de legibilidad***. *
 *** 3 ***. *** `data/publicado/` ***: *dos ficheros del 16 de septiembre que *
-   *** nadie lee ni escribe*** *(`git grep` da cero). *O son muertos, *
-   *o los lee algo de fuera. *** Es del propietario.*** *
-*** 4 ***. *** La cobertura de las cadenas que no son Lidl *** *no tiene fichero *
-   *como el de Lidl, *aunque *** si se declara en pantalla***. *
+   *** nadie lee ni escribe***. *O son muertos, *o los lee algo de fuera. *
+   *** Es del propietario.*** *
+*** 4 ***. *** El punto de «sin ver» de los avisos ***: *`Nav.tsx:98` lo pintaba, *
+   *y el contador ya existe; *donde se ve *** es una decision de producto***. *
+*** 5 ***. *** La cobertura de las cadenas que no son Lidl *** *no tiene fichero, *
+   *aunque *** si se declara en pantalla por cadena***. *
+*** 6 ***. *** Un perfil de REA suelto *** *(-- `playwright_chromiumdev_profile-DkaoPw` --)*, *
+   *sostenido por un Chrome que el proveedor no cerro. *** No se mata***: *
+   *no puedo distinguirlo de los navegadores ajenos *(`FacylfBot`) que hay en la maquina. *
 ```
 
-## *Y los cuatro numeros que resumen el hallazgo de fondo*
+## *Y los numeros que resumen el hallazgo de fondo*
 
 ```
 *** 6 *** *lineas de puerta arregladas *(-- *una frase, *cinco rutas* --)* *
    *+ *** 1 condicion de carrera *** quitada ✓
 *** -> *y con eso la puerta paso de *** 19 ok *** a *** 87 ok, *0 FALLO*** ✓✓✓
-*** -> *** la aplicacion funcionaba; *lo que estaba roto era la puerta que *
-   *** debia vigilarla, *desde el 12 de octubre *** ✓
+*** -> *y *** 4 documentos *** afirmaban cosas que ya no eran ciertas ✓
+*** -> *y *** 1 pantalla *** llevaba sin puerta desde el 7 de octubre ✓
+*** -> *** la aplicacion funcionaba; *lo que fallaba era todo lo que decia si funcionaba *** ✓✓✓
 ```
 
 ---
