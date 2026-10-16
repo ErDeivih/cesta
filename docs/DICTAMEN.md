@@ -1157,3 +1157,26 @@ primer toque, *que ademas pide un enlace *** que a movil no esta visible.*** *
    *es *** el movil, *de pie y con una mano *** ✓
 *** -> *** o sea que A o B, *y C contradice el proposito de la seccion *** ✓
 ```
+
+## 7.52 *Y SE VERIFICARON MIS PROPIOS CAMBIOS, *que es lo que faltaba (ronda 41)*
+
+*** He editado `prueba_navegador.py` en *** cuatro rondas***, *y `ruff` comprueba que no
+haya errores de sintaxis, *pero *** no que el fichero siga en pie.*** *
+
+```
+*** `py_compile` *** *** compila *** ✓
+*** -> *** 23 funciones ***, *con `main`, `_carga`, `_entra` y `comprueba` presentes ✓
+*** -> *** `BARRA` presente *** ✓
+*** -> *y *** `pytest --collect-only` no lo recoge *** *(-- *no empieza por `test_` --)*, *
+   *** asi que las 2081 de Python SIGUEN VALIENDO *** ✓✓✓
+*** -> *y la aritmetica cuadra: *
+   *-- *`/grupo/` *** 17 *** · *`/compra/comparar/` *** 5 *** ✓
+   *-- *y esos 5 son *** 4 `wait_for_url` + 1 `comprueba` ***, *o sea *** el arreglo de la carrera *** ✓
+   *-- *`wait_for_url` con grupo: *** 0 *** ✓
+   *-- *** 22 originales menos 5 cambiadas = 17 *** ✓
+```
+
+*** Y LO QUE ESTA VERIFICACION APORTA ***: *que mis cuatro ediciones *** no han roto
+el fichero***, *y que *** las 2081 de Python siguen siendo validas*** *aunque haya
+tocado un `.py` *-- *porque `prueba_navegador.py` no es una prueba de `pytest`, *
+*sino *** una puerta que se corre a mano.*** *
