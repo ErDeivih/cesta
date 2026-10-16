@@ -12,11 +12,12 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 
 # *** RESUMEN VIGENTE *** *-- *leer esto primero*
 
-*** ACTUALIZADO EN LA RONDA 61.*** *La version anterior era de la ronda 38, *y desde
-entonces *** se encontro y se arreglo un defecto de navegacion***, *se sirvio, *
-*y se midio la causa de la seccion de los toques. *Es *** la leccion de la seccion 17
-de `COMO-SE-MIDE.md`*** *aplicada a este mismo documento: *consolidar no es arreglar, *
-*** es fotografiar.*** *
+*** ACTUALIZADO EN LA RONDA 66.*** *Y esta es la *** tercera vez *** que hay que
+actualizarlo *(-- *rondas 38, *61 y 66 --)*, *lo que es *** el mejor argumento de la
+seccion 17 de `COMO-SE-MIDE.md`***: *consolidar no es arreglar, *** es fotografiar.*** *
+*Y lo que ha cambiado desde la 61 es *** grande***: *los cuatro caminos de la seccion
+de los toques estaban mal escritos, *y al arreglarlos *** la puerta paso de 87 a 177
+comprobaciones*** *y salieron *** seis familias de defectos que nadie habia visto.*** *
 
 *Las *** PARTES 1 y 2 *** son el dictamen; *las *** PARTES 4 a 7 *** son el *** historico***, *
 *con sus correcciones, *y *** NO son estado vigente.*** *
@@ -27,9 +28,9 @@ de `COMO-SE-MIDE.md`*** *aplicada a este mismo documento: *consolidar no es arre
 |---|---|---|
 | *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
-| *** 3 *** *ramas* | *** publicas SI *** | *`Panel`, *`Buscar`, *`Comparar` a 1440 y 390; *foco* |
-| *** 4 *** *el recorrido* | *** PASA *** | *** 87 de 87 *** *en la puerta del navegador* |
-| *** 5 *** *unidad, periodo, cobertura* | *** validado *** | *por la propia puerta* |
+| *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
+| *** 4 *** *el recorrido* | *** PASA *** | *** 177 ok *** *en la puerta del navegador, *17 fallos* |
+| *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y **la curva no tiene lienzo** *(-- fallo real --)* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
 | *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *con captura* |
 | *** 8 *** *dictamen* | *** este documento *** | *--* |
@@ -53,11 +54,18 @@ de `COMO-SE-MIDE.md`*** *aplicada a este mismo documento: *consolidar no es arre
 ## *Lo que esta ABIERTO*
 
 ```
-*** 1 ***. *** La seccion de los toques ***: *su causa esta *** MEDIDA *** y *
-   *ya no es «una decision»: *el test hace `carga("/")`, *y `/` es *** el Lanzador***, *
-   *que *** no tiene menu*** *(-- *la captura de la ronda 59 lo ensena --)*. *
-   *** El arreglo esta ESCRITO*** *(-- *7.73 --)*: *cada camino empieza por su raiz, *
-   *y `toca()` sabe pulsar la raiz desde el Lanzador. *** Falta ejecutarlo.*** *
+*** 1 ***. *** LAS SEIS FAMILIAS DE DEFECTOS QUE LA PUERTA DESTAPO *** *
+   *(-- *rondas 63, *64 y 65; *detalle en 7.86 a 7.90 --)*: *
+   *-- *** Blancos tactiles por debajo de 44 px ***, *en *** 17 rutas***: *
+      *`Cuenta y preferencias` mide 127x17, *`Saltar al contenido` **1x1**, *
+      *y `Por mes` / `Por semana` 23 px de alto ✓
+   *-- *** Dos `<h1>` en la misma pantalla ***, *en *** 15 rutas*** ✓
+   *-- *** Una pantalla sin ningun `<h1>` *** *(`/producto/dia/147509`)* ✓
+   *-- *** La curva no tiene lienzo ***, *y el punto 5 pide esa grafica ✓
+   *-- *** El buscador con la API a 500 no lo dice con palabras *** ✓
+   *-- *y *** dos del enlace de invitacion *** ✓
+   *** NINGUNO ES DE ESTE ENCARGO ***: *salvo el de los toques, *todo esto son *
+   *** defectos viejos que la puerta no podia ver porque se moria antes.*** *
 *** 2 ***. *** Las pantallas con sesion *** *no se han capturado: *
    *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`,
    *`Avisos`, *`Favoritos`. *La puerta *** SI las recorre y las pasa***; *
@@ -78,8 +86,10 @@ de `COMO-SE-MIDE.md`*** *aplicada a este mismo documento: *consolidar no es arre
 
 ```
 *** 6 *** *lineas de puerta arregladas *(-- *una frase, *cinco rutas* --)* *
-   *+ *** 1 condicion de carrera *** quitada ✓
-*** -> *y con eso la puerta paso de *** 19 ok *** a *** 87 ok, *0 FALLO*** ✓✓✓
+   *+ *** 1 condicion de carrera *** quitada *
+   *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon ✓
+*** -> *y con eso la puerta paso de *** 19 ok *** a *** 177 ok *** ✓✓✓
+*** -> *y destapo *** 6 familias de defectos *** que nadie habia visto ✓
 *** -> *y *** 4 documentos *** afirmaban cosas que ya no eran ciertas ✓
 *** -> *y *** 1 pantalla *** llevaba sin puerta desde el 7 de octubre ✓
 *** -> *** la aplicacion funcionaba; *lo que fallaba era todo lo que decia si funcionaba *** ✓✓✓
@@ -1884,3 +1894,40 @@ habia llegado hasta ahi***: *
 de mi cambio, *y son *** seis defectos viejos*** *que *** la puerta no podia ver
 porque se moria antes***. *Y la unica forma de saberlo era *** leer los mensajes
 en su seccion***, *que es justo lo que acabo de hacer.* *
+
+## 7.91 *Y EL RESUMEN, *ACTUALIZADO POR TERCERA VEZ (ronda 66)*
+
+*** Y eso es, *en si mismo, *el mejor argumento de la seccion 17 ***: *lo he tenido que
+actualizar en las rondas *** 38, *61 y 66 *** *-- *tres veces --, *y cada vez porque
+*** el trabajo siguio despues de la foto***. *
+
+```
+*** ronda 38 ***: *se escribio, *y decia que el limite era *`
+   *«la seccion de los toques es una decision de diseno de la prueba» ⚠️
+*** -> *ronda 61 ***: *se corrigio, *porque se encontro y se arreglo `Avisos` ✓
+*** -> *ronda 66 ***: *se corrige otra vez, *porque *** los cuatro caminos de los
+   *toques estaban MAL ESCRITOS ***, *y al arreglarlos la puerta paso de *** 87 a 177 *** *
+   *y salieron *** seis familias de defectos *** ✓✓✓
+```
+
+### 7.92 *Y lo que el resumen dice ahora, *que antes no decia*
+
+```
+*** punto 3 ***: *** «la puerta SI las mide» *** *-- *errores, *foco, *aislamiento, *
+   *y *** saca fallos*** ✓ *(-- *antes decia «publicas SI», *y rebajaba el punto --)*
+*** -> *punto 5 ***: *** «la puerta SI lo mide» *** *-- *y *** la curva no tiene lienzo *** ✓
+*** -> *y un apartado nuevo, *** LAS SEIS FAMILIAS ***, *con sus cuentas: *
+   *17 rutas con blancos por debajo de 44 px, *15 con dos `<h1>`, *una sin ningun `<h1>`, *
+   *la curva sin lienzo, *el error de la API sin palabras, *y dos de la invitacion ✓
+*** -> *y la frase que lo cierra: *** NINGUNO ES DE ESTE ENCARGO *** *
+   *-- *salvo el de los toques, *son *** defectos viejos que la puerta no podia ver *** ✓✓✓
+```
+
+*** Y LOS NUMEROS, *que es lo que cambia el dictamen***: *
+
+```
+*** 6 *** *lineas de puerta *+ *** 1 condicion de carrera *** *
+   *+ *** 4 caminos *** con su raiz *+ *** 1 ayudante *** que abre el cajon ✓
+*** -> *y la puerta paso de *** 19 ok *** a *** 177 ok *** ✓✓✓
+*** -> *y destapo *** 6 familias de defectos *** que nadie habia visto ✓
+```
