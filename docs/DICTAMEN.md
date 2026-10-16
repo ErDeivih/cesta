@@ -2640,3 +2640,33 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 *y las *** 15 que fallan son dos, *y las dos estan *** razonadas y son de la
 prueba***. *Asi que *** el punto 3 y el 4 quedan verificados con la puerta entera
 llegando al final, *que es lo que no pasaba desde el 12 de octubre.*** *
+
+## 7.139 *Y SE SIRVIERON LOS CINCO ARREGLOS, *Y LO SERVIDO LOS TIENE (ronda 84)*
+
+*** El punto 7 lo pide ***: *«verificar la VERSION REALMENTE SERVIDA, *no solo el
+codigo local». *Y lo servido era *** de la ronda 58***, *o sea de *** antes*** de los
+44 px, *los `h1`, *el buscador *y la invitacion. *
+
+```
+*** antes ***: *** `index-COJqyF63.js` *** *-- *336.852 bytes ✓
+*** -> *** despues ***: *** `index-uCotWUV6.js` *** *-- *336.890 bytes ✓
+*** -> *y *** `built in 12,46 s` *** ✓
+*** -> *y el `index.html` que sirve 8080 apunta a *** ESE *** ✓
+*** -> *y el contenedor lo tiene: *** 336.890 bytes ✓✓✓
+```
+
+### 7.140 *Y los cuatro estan, *comprobados uno a uno*
+
+```
+*** `min-h-[44px]` *** en el indice *** → los 44 px ✓
+*** -> `/avisos` *** en el indice → la puerta de `Avisos` ✓
+*** -> `/compra/listas` *** en el indice → la URL final de la invitacion ✓
+*** -> *y en el chunk de *** `Buscar` ***: *
+   *-- *** «No he podido buscar»: *True *** ✓
+   *-- *** «No he podido traer esto»: *False *** *-- *el viejo ya no esta ✓✓✓
+*** -> *y en el chunk de *** `Cesta` ***: *
+   *** «La lista de la compra» va con `h2` *** ✓
+```
+
+*** Y CON ESO EL FUENTE, *EL `dist` Y LO QUE SIRVE 8080 DICEN LO MISMO***, *
+*que es *** lo que el punto 7 pide.*** *
