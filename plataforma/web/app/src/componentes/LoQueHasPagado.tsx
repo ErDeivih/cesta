@@ -40,12 +40,21 @@ export function LoQueHasPagado() {
       titulo="Lo que has pagado"
       sub="De las compras que cerraste, agrupadas por la fecha en que las cerraste"
     >
+      {/* **Y estos dos controles median 23 px de alto** *-- *el alto de la linea --.*
+          Lo destapo la puerta al desbloquearse (ronda 64): **56x23 «Por mes» y
+          79x23 «Por semana»**, *«no hay nada que pulsar por debajo de 44 px»*. Y son
+          **dos botones que se pulsan de verdad**, *no adorno: cambian el periodo.*
+          El minimo de la casa son **44 px** *-- *los del lateral lo cumplen
+          (`Suite.tsx:206`), *los de la barra de abajo miden 56, *y estos se habian
+          quedado en 23--.* *Y `inline-flex` para que el blanco sea **el texto**
+          y no toda la linea, que aqui van los dos seguidos.* */}
       <div className="mb-3 flex items-center gap-2 text-cuerpo">
         <button
           type="button"
           onClick={() => setPorSemana(false)}
           aria-pressed={!porSemana}
-          className={porSemana ? 'underline' : 'font-semibold'}
+          className={`inline-flex min-h-[44px] items-center px-2 ${
+            porSemana ? 'underline' : 'font-semibold'}`}
         >
           Por mes
         </button>
@@ -56,7 +65,8 @@ export function LoQueHasPagado() {
           type="button"
           onClick={() => setPorSemana(true)}
           aria-pressed={porSemana}
-          className={porSemana ? 'font-semibold' : 'underline'}
+          className={`inline-flex min-h-[44px] items-center px-2 ${
+            porSemana ? 'font-semibold' : 'underline'}`}
         >
           Por semana
         </button>

@@ -2003,3 +2003,39 @@ falla, *y es *** accesibilidad***». *Y al ir a arreglarlo, *resulta *** lo cont
 *** Y ME CORRIJO ***: *en el resumen escribi que era accesibilidad, *y *** no lo es***. *
 *Es *** un falso positivo de la puerta***, *y el enlace esta *** mejor hecho que
 la medida que lo acusa***. *
+
+## 7.98 *Y LA TERCERA FAMILIA: *LOS DOS CONTROLES DE LA GRAFICA, *A 23 px (ronda 69)*
+
+*** La puerta los midio ***: *«56x23 Por mes» *y «79x23 Por semana» ✓ *y salen en `/panel`. *
+
+```
+*** `LoQueHasPagado.tsx:44-62` ***: *
+   *** `<button ... className={porSemana ? 'underline' : 'font-semibold'}>` *** ⚠️
+*** -> *** sin `min-h`, *sin `px` *ni `py` ✓
+*** -> *y miden *** 23 px *** *-- *justo el alto de la linea ✓
+*** -> *y son *** dos controles que se pulsan de verdad *** *
+   *-- *cambian el periodo de la grafica, *no son adorno ✓
+*** -> *y estan en *** un componente compartido***, *asi que sale donde se monte ✓
+*** -> *** es EL MISMO DEFECTO que el del Lanzador *** *(-- *7.93 --)* ✓✓✓
+```
+
+*** Y EL ARREGLO ES EL MISMO PATRON ***: *`inline-flex min-h-[44px] items-center px-2`, *
+*y `inline-flex` porque *** los dos van seguidos *y el blanco debe ser el texto***. *
+*Y eso hace *** tres sitios con el mismo defecto y el mismo arreglo***: *
+*el pie del Lanzador, *estos dos botones, *y *** ninguno mas que haya encontrado***. *
+
+*** Y EL ARREGLO NO SE HA VUELTO A CORRER ***, *y se dice. *`tsc` limpio, *
+*`npm test` 81/0, *`ruff` limpio, *LF conservado *(-- *144 LF, *0 CRLF, *como estaba --)*, *
+*y diff 12/2.* *
+
+### 7.99 *Y los tres arreglos de esta familia, *juntos*
+
+```
+*** 1 ***. *** El pie del Lanzador *** *(`App.tsx:124`)*: *127x17 -> con `min-h-[44px]` ✓
+*** -> *** 2 ***. *** `Por mes` *** *(`LoQueHasPagado.tsx`)*: *56x23 -> con `min-h-[44px]` ✓
+*** -> *** 3 ***. *** `Por semana` ***: *79x23 -> con `min-h-[44px]` ✓
+*** -> *y los tres con *** `inline-flex`***, *para que el blanco sea el texto *
+   *y no la linea entera ✓✓✓
+*** -> *y NINGUNO SE HA CORRIDO TODAVIA ***: *los tres son de la misma ronda de *
+   *medida *(-- *la 64 --)*, *y la puerta que los destapo *** no se ha vuelto a correr.*** *
+```
