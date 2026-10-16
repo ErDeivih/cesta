@@ -163,3 +163,65 @@ artefactos** es el que se sirve.* *
 | *** Frescura *** | *** 14 de octubre *** | *15 de octubre* |
 | *** Cobertura *** | *730.860 filas, *30 dias* | *-- *y *** Lidl: *230 filas, *3 dias*** |
 
+---
+
+## 8. *Y LA CAUSA, *encontrada (ronda 5)*
+
+*** Estaba en el log, *** y el sistema la habia diagnosticado solo ***: *
+
+```
+*** `tras 11 intentos en 60s, compraonline.alcampo.es sigue devolviendo el reto ***
+   *** de AWS WAF *** ✓
+*** `Prueba en visible:  uv run python -m core.waf` *** *
+*** `Si con ventana tampoco pasa, es que pide interaccion humana.` *** ✓
+```
+
+*** Y lo que convierte el fallo en **correcto** ***: *
+
+```
+*** `faltan ramas enteras respecto a la ultima captura buena:` *** *
+   *-- *`Perfumeria: *** 3031 -> 993 *** (67% menos)` *
+   *-- *`Bebidas:    *** 2146 -> 907 *** (58% menos)` *
+   *-- *`Mascotas:   *** 744 -> 83 *** (89% menos)` *
+*** `eso no es un catalogo mas pequeno, es un catalogo *** CON AGUJEROS ***.` *** *
+*** `Se conserva el anterior y manana se [reintenta]` *** ✓✓✓
+*** `[DERIVA] alcampo: 17076 filas hoy vs 22905 la ultima vez` *** ✓
+```
+
+### 8.1 *Y esto cierra el punto 6, *con una conclusion incomoda y buena*
+
+```
+*** El `ok=False` *** NO es un fallo del control ***: *es *** EL CONTROL FUNCIONANDO *** ✓
+*** -> *la causa raiz es *** el reto de AWS WAF ***, *que cuando **con ventana
+   *tampoco pasa** *** pide interaccion humana *** ✓
+*** -> *y la primera restriccion del encargo dice: *** «no eludas CAPTCHA/WAF *** *
+   *** ni confundas desafio con catalogo vacio» *** ✓
+*** -> *** el sistema RESPETA esa regla, *y por eso no publica el catalogo con agujeros *** ✓✓✓
+```
+
+### 8.2 *Y lo que el sistema YA hace bien, *y que el encargo pedia*
+
+| *el encargo pide* | *y el sistema* |
+|---|---|
+| *separar frescura de cobertura* | *las publica **por cadena**; *alcampo al 14 y las demas al 15* |
+| *no confundir desafio con catalogo vacio* | *** distingue** «mas pequeño» de **«con agujeros»*** |
+| *corregir sin relajar controles* | *no publica, *conserva el anterior *y deja `[DERIVA]`* |
+| *mantener explicita la cobertura de Lidl* | *lidl tiene **sus propios ficheros** en `data/cobertura/`* |
+
+### 8.3 *Lo que SI queda como defecto real, *y es mas pequeño de lo que parecia*
+
+*** Dos cosas, *y ninguna es «el rechazo» ***: *
+
+```
+*** 1 ***. *`data/publicado/stats.json` esta *** congelado desde el 16 de septiembre ***, *
+   *y *** no es lo que se sirve *** *(-- se sirve `data/gold/actual.json` --).*
+   *O es *** un artefacto muerto ***, *o alguien lo lee creyendo que es el publicado.* *
+   *Hay que decidir cual de las dos, *y **eso si es un defecto demostrado.** *
+*** 2 ***. *`data/cobertura/` solo tiene *** lidl-*.json ***: *la cobertura parcial de
+   *Lidl esta declarada, *y *** la de alcampo no esta declarada en ningun sitio.*** *
+   *El encargo pide «mantener explicita la de Lidl»; *y para que eso sirva, *
+   *tiene que existir *** el mismo sitio para las demas***, *o la ausencia se lee
+   *como «alcampo esta completo», *que es falso.* *
+```
+
+
