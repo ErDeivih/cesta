@@ -1636,3 +1636,38 @@ domestica del propietario***, *no un servicio compartido. *Y es *** reversible**
 *** `ruff` limpio *** ✓ · *** `tsc` limpio *** ✓ · *** `npm test` 81/0 *** ✓ *
 *** las 18 de interfaz y contraste *** ✓ · *** `build` ✓ en 10,90 s *** ✓
 ```
+
+## 7.77 *Y LA CAPTURA DE LO SERVIDO, *QUE CONFIRMA LAS DOS COSAS (ronda 59)*
+
+*** Y se capturo la portada servida *(-- *8080, *1440x900, *headless --)*, *y la
+imagen y el DOM dicen tres cosas: *
+
+```
+*** 1 ***. *el `<script>` de lo servido apunta a *** `index-COJqyF63.js` ***, *
+   *o sea *** el bundle del arreglo *** ✓ *y el `<title>` es «Cesta» ✓
+*** -> *** 2 ***. *y el DOM *** NO TIENE ARMAZON ***: *ni lateral, *ni cajon, *ni ☰ ⚠️
+   *-- *lo que hay es un `<header>` con `<h1>Cesta</h1>` ✓
+   *-- *y un `<nav aria-label="Aplicaciones">` con *** TRES TARJETAS ***: *
+      *** Compra -> `/compra` ***, *** Recetas -> `/recetas` ***, *
+      *** Calorias -> `/calorias` *** ✓
+   *-- *y un `<footer>` con *** `/ajustes` *** ✓
+*** -> *** 3 ***. *** `/` ES EL LANZADOR ***, *y *** no tiene menu *** ✓✓✓
+```
+
+### 7.78 *Y eso prueba, *con captura, *lo que medi en el codigo*
+
+```
+*** la ronda 55 midio en `App.tsx` que `/` no envuelve en `LayoutSuite` *** ✓
+*** -> *y la captura *** lo confirma con imagen ***: *no hay ☰ en la portada ✓
+*** -> *y anade el dato que faltaba: *** desde la portada, *
+   *** las tres raices estan a UN toque *** ✓✓✓
+*** -> *** o sea que el arreglo del test de los toques es exactamente eso: *
+   *** empezar por la raiz ***, *que la portada *** SI ofrece *** ✓
+*** -> *y `Ajustes` *** tambien esta en la portada *** *(-- *el footer --)*, *
+   *y *** `Avisos` no ***, *lo que confirma que *** el lateral era su unico camino *** ✓✓✓
+```
+
+*** Y LA CAPTURA TIENE UN LIMITE, *y se dice***: *el proveedor no pudo confirmar
+la limpieza del navegador *(-- *`cleanup_incomplete` --)*, *y la observacion quedo
+marcada como *** parcial ***. *La imagen y el DOM *** si *** se capturaron
+completos; *lo que no se pudo confirmar es que el navegador se cerrara.* *
