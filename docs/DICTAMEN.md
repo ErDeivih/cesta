@@ -1258,3 +1258,42 @@ tocado un `.py` *-- *porque `prueba_navegador.py` no es una prueba de `pytest`, 
 «Avisos» en el menu *** es una decision de producto *** *(-- *una seccion propia,
 *dentro de otra, *o una campana en la cabecera --)*, *y ponerlo donde me parezca
 seria *** inventarme el diseño.*** *
+
+## 7.56 *Y EL CENSO DE PUERTAS, *que esta vez SI estaba justificado (ronda 48)*
+
+*** Encontre una pantalla sin puerta *** por casualidad***, *y si hay una puede haber
+mas. *Y esta vez el censo *** no es una corazonada***: *es *** un defecto demostrado
+que pide comprobar si se repite.*** *
+
+*** Saque todos los `to="/..."` de los ficheros vivos y los compare con las rutas: *
+
+```
+*** DE LAS ~16 RUTAS DEL ROUTER, *TODAS TIENEN AL MENOS UN ENLACE VIVO *** *
+   *** excepto `/avisos` *** ✓✓✓
+*** -> `/` *(-- App.tsx:285, Grupo:207, Producto:148, Suite:307 --)* ✓
+*** -> `/ajustes` *(-- App.tsx:124, Cesta:1411 --)* ✓
+*** -> `/cesta` y `/compra/listas` *(-- Ajustes, Favoritos x4, Unirse, Avisos, Cesta --)* ✓
+*** -> `/favoritos` *(-- Cesta:1408 --)* ✓ · `/compra/analisis` *(-- el nav --)* ✓
+*** -> `/recetas` y `/recetas/plan` *(-- el nav, RecetaDetalle, Cocina --)* ✓
+*** -> `/calorias` *(-- el nav, Cocina:53 --)* ✓
+*** -> `/escaner` *(-- Buscar:191, Grupo:230 --)* ✓
+*** -> `/grupo/:id` y `/producto/:f/:id` *(-- muchos --)* ✓
+*** -> `/panel/matching` *(-- Panel:102 --)* ✓
+*** -> `/panel` *(-- solo PanelMatching:396 --)* *
+   *-- *pero *** `Panel` tambien se monta en `/compra/analisis` ***, *que si esta en el nav ✓
+*** -> *** `/avisos` *** *-- *su unico enlace vivo esta en `Inicio.tsx`, *
+   *que tiene *** cero referencias *** ⚠️⚠️⚠️
+```
+
+### 7.57 *Y el censo dice que el defecto es UNO*
+
+```
+*** no hay una familia de pantallas sin puerta: *HAY UNA *** ✓
+*** -> *y eso hace el arreglo *** pequeño ***: *no es una revision de la navegacion, *
+   *es *** decidir donde vive «Avisos» *** ✓✓✓
+*** -> *y las dos opciones que ya estan en el codigo, *muertas, *dicen por donde iba *
+   *la intencion: *
+   *-- *`Nav.tsx:50` lo ponia *** como una seccion mas del menu *** ✓
+   *-- *`Inicio.tsx:300` lo ponia *** desde la portada *** ✓
+*** -> *** o sea que el diseño ya estaba pensado; *lo que falta es decidirlo *** ✓
+```
