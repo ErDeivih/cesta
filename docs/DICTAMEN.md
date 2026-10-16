@@ -1845,3 +1845,42 @@ habia llegado hasta ahi***: *
    *al contenido es *** accesibilidad *** ✓
 *** -> *** y NO SE HAN INVESTIGADO ***: *se anotan con su cuenta y su seccion ✓✓✓
 ```
+
+## 7.89 *Y LOS 17 FALLOS NO SON MIOS: *SON SEIS FAMILIAS DE DEFECTOS VIEJOS (ronda 65)*
+
+*** Y hay que leerlos en su contexto, *no en el resumen ***. *Porque el resumen dice
+«17 fallos» *y lo que hay son *** seis familias***: *
+
+```
+*** 1 ***. *** Blancos tactiles por debajo de 44 px ***, *en *** 17 rutas*** ⚠️ *
+   *-- *«en / no hay nada que pulsar por debajo de 44 px ***
+      ***(127x17 Cuenta y preferencias)» *** ✓
+   *-- *y `Saltar al contenido` mide *** 1x1 ***, *y «Por mes» y «Por semana» 23 px de alto ✓
+   *-- *** el minimo de un blanco tactil es 44 px ***, *y eso es una regla de la casa ✓
+*** -> *** 2 ***. *** DOS `<h1>` en la misma pantalla *** *
+   *-- *«la pantalla se puede recorrer sin verla ({'encabezados': ['2 h1']})» *
+   *-- *y sale en *** 15 rutas*** ⚠️
+*** -> *** 3 ***. *** Una pantalla SIN NINGUN `<h1>` ***: `/producto/dia/147509` ✓
+*** -> *** 4 ***. *** La curva no tiene lienzo *** *(-- «el lienzo del historico esta» --)* ✓
+*** -> *** 5 ***. *** El buscador con la API a 500 no lo dice con palabras *** *
+   *-- *«lei: Saltar al contenido | ☰ | Compra | | COMPRA |» ✓
+*** -> *** 6 ***. *y *** dos del enlace de invitacion *** *(-- *lleva a la cesta y *
+   *no deja el enlace a mano; *y no dice a que lista ha entrado --)* ✓
+```
+
+## 7.90 *Y NO LOS INTRODUJO EL ARREGLO, *y se puede decir por que*
+
+```
+*** el fallo de los 44 px sale en *** 17 rutas ***, *y el arreglo de la ronda 63 *
+   *solo toco *** los cuatro caminos de la seccion de los toques *** ✓
+*** -> *y esas secciones *** NUNCA HABIAN CORRIDO ***: *la puerta moria antes ✓
+*** -> *y el fallo de `Cuenta y preferencias` mide *** 127x17 *** *
+   *-- *o sea que *** no esta tapado por el cajon: *es pequeno *** ✓✓✓
+*** -> *** y mi hipotesis de «es mi arreglo» era razonable, *y FALSA *** ✓
+*** -> *** lo que lo desmiente es leer el mensaje, *no razonar sobre el ✓
+```
+
+*** Y ESO ES LO IMPORTANTE DE ESTA RONDA ***: *«17 fallos» sonaba a daño colateral
+de mi cambio, *y son *** seis defectos viejos*** *que *** la puerta no podia ver
+porque se moria antes***. *Y la unica forma de saberlo era *** leer los mensajes
+en su seccion***, *que es justo lo que acabo de hacer.* *
