@@ -49,6 +49,12 @@ del trabajo de esta sesion.* *Y eso **no** era un problema: *`Cesta`, *`Ajustes`
 de esta sesion**, *con los dos casos negativos (`Favoritos` *y `Grupo`) *** explicados
 y correctos.*** *
 
-*** NO VERIFICADO TODAVIA ***: *que **lo servido se comporte bien**, *que es otra cosa
-distinta de que el codigo este.* *Eso es el resto del punto 3 y del 4, *y necesita
-API con datos.* *
+*** Y ESO SE VERIFICO DESPUES, *en la ronda 35 *** *(-- *actualizado en la 45 --)*: *
+*la puerta del navegador (`prueba_navegador.py`) *** navega la aplicacion servida,
+*pulsa, *y pasa 87 comprobaciones con cero fallos*** *-- *incluidos el recorrido de
+la lista, *la compra, *los envases, *el sustituto autorizado, *el diario y la
+persistencia. *O sea que *** lo servido no solo tiene el codigo: *se comporta.*** *
+
+*** Y LO QUE SIGUE SIN VERIFICAR, *medido***: *las *** siete pantallas con sesion, *
+*sin captura*** *(-- *la puerta las recorre y las pasa --)*, *y *** la seccion de
+los toques ***, *cuya causa esta medida.* *
