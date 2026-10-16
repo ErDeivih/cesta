@@ -1381,7 +1381,19 @@ def main() -> int:
         # las de `App.tsx` -- la cesta en `/compra/listas` y el buscador en `/compra` --, y
         # `Avisos`, `Panel` y `Escáner` no se han movido.
         BARRA = {"Cesta": "/compra/listas", "Avisos": "/avisos", "Panel": "/panel",
-                 "Buscar": "/compra", "Escáner": "/escaner"}
+                 "Buscar": "/compra", "Escáner": "/escaner",
+                 # **`/panel` no esta en el menu**, y por eso el camino del panel empieza
+                 # por «Gasto y ahorro»: `/compra/analisis` monta **el mismo `Panel`**
+                 # (`App.tsx:206`), y esa ruta **si** esta en el nav. Medido en la ronda 63.
+                 "Gasto y ahorro": "/compra/analisis"}
+        # **Y LAS RAICES, que son lo que el Lanzador SI ofrece.** La quinta cosa que
+        # faltaba, y la midio la captura de la ronda 59: `/` **no lleva armazon** -- ni
+        # lateral, ni cajon, ni ☰--, y lo que tiene es un `<nav aria-label="Aplicaciones">`
+        # con las **tres tarjetas**: `/compra`, `/recetas` y `/calorias`. Asi que desde la
+        # primera pantalla **solo se puede empezar por una raiz**, y eso es un dato de la
+        # aplicacion, no un estorbo de la prueba: la seccion se llama *«cuantos toques hay
+        # desde la primera pantalla»*, y desde la primera pantalla los toques **empiezan ahi**.
+        RAICES = {"Compra": "/compra", "Recetas": "/recetas", "Calorías": "/calorias"}
         # Las pestañas del panel son `role="tab"`, no botones: `get_by_role("button")` no
         # las encuentra, y la espera se queda colgada hasta el timeout.
         PESTANAS_PANEL = ("Hoy", "Cadenas", "Marcas", "Histórico", "Movidos", "Bajadas",
@@ -1399,7 +1411,12 @@ def main() -> int:
         # que es lo que hace una persona. Medido en la ronda 52.
         def toca(paso):
             """Pulsa un paso del camino; si es una subseccion, abre antes el cajon."""
-            if paso in BARRA:
+            if paso in RAICES:
+                # **La raiz, desde el Lanzador.** No hay armazon, asi que el enlace se
+                # busca en su propio `nav`, que la captura de la ronda 59 ensena que existe.
+                destino = pagina.locator(
+                    f"nav[aria-label='Aplicaciones'] a[href='{RAICES[paso]}']:visible").first
+            elif paso in BARRA:
                 destino = pagina.locator(f"nav a[href='{BARRA[paso]}']:visible").first
                 try:
                     destino.wait_for(state="visible", timeout=1200)
@@ -1422,7 +1439,7 @@ def main() -> int:
         for que, marcas, camino in (
                 ("3: voy tachando bien (el numero de la barra lo dice sin abrir nada)",
                  ("Por coger", "En el carro", "Lo que cuesta", "No tienes ninguna lista"),
-                 ("Cesta",)),
+                 ("Compra", "Cesta")),
                 ("1: que me falta y donde lo compro", ("Por coger", "En el carro",
                                                        "No tienes ninguna lista",
                                                        # **Y la lista con todo cogido.** Los
@@ -1436,11 +1453,11 @@ def main() -> int:
                                                        # aplicacion de un estado que la aplicacion
                                                        # cuenta bien.
                                                        "ya cogidas"),
-                 ("Cesta",)),
+                 ("Compra", "Cesta")),
                 ("4: lo mio que ha bajado", ("Lo tuyo que ha",),
-                 ("Panel", "Bajadas", "Solo lo mío")),
+                 ("Compra", "Gasto y ahorro", "Bajadas", "Solo lo mío")),
                 ("4: los avisos", ("que sigues",),
-                 ("Avisos",)),
+                 ("Compra", "Avisos")),
         ):
             carga("/")
             for paso in camino:
