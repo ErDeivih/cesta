@@ -49,15 +49,37 @@ eran falsas, y las desmintieron las rondas 52 y 54 de esta misma sesion *** *-- 
 
 *** Y una que NO se pudo verificar, *y se dice ***: *los cambios de patron en `Ajustes`,
 `Avisos` y `Cesta` sin listas quedaron **justificados** *(-- faltaban las dos condiciones
-del patron --)* *pero **sin captura**, *porque sus ramas dependen de datos.*
+del patron --)* *pero **sin captura**.* *** Y SE ACTUALIZA EN LA RONDA 44 ***: *la
+puerta del navegador (`prueba_navegador.py`) *** recorre y pasa*** *esas pantallas con
+datos reales, *y lo que falta es *** la captura ***, *no la verificacion.*
 
 ---
 
 ## 3. *LIMITADO -- y esto es lo que queda*
 
-*** El limite es UNO, *y no es de herramientas ***: *** hace falta API con datos
-controlados.*** *`capture_browser_scenario` **si** puede rellenar, *pulsar y medir a 390 px
-*(-- `COMO-SE-MIDE.md` §14 *y `LA-BARRA-DE-ABAJO.md` §9 --).* *Lo que no hay es **datos detras.***
+*** REESCRITA EN LA RONDA 44. *** *Esta seccion decia que «el limite es UNO: *hace
+falta API con datos controlados», *y *** eso dejo de ser cierto***: *el propietario
+autorizo la base desechable, *el entorno *** se monto, *se uso y se desmonto***, *
+*y la puerta *** paso 87 comprobaciones con cero fallos***. *Se conserva en el historico.* *
+
+*** Y LO QUE SIGUE LIMITADO, *medido***: *
+
+```
+*** 1 ***. *** Siete pantallas con sesion, *SIN CAPTURA ***: *`Recetario`, *`PlanSemanal`,
+   *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
+   *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el
+   *juicio de legibilidad *** ✓
+*** 2 ***. *** La seccion de los toques de la puerta *** *no llega al final, *y su
+   *causa esta *** medida ***: *pide `nav a[href='/compra/listas']`, *y *** a movil
+   *ese enlace no existe *** *-- *la barra de abajo lleva a las tres raices ✓
+*** 3 ***. *** Tres decisiones del propietario ***: *que cuenta la seccion de los
+   *toques; *si `data/publicado/` es muerto; *y donde se declara la cobertura de
+   *las cadenas que no son Lidl ✓
+```
+
+*** Y el limite *** ya no es de herramientas ni de datos ***: *es *** ojo humano en
+siete pantallas ***, *y *** tres decisiones ***. *Y eso es un limite mucho mas
+pequeño que el que tenia este documento cuando se escribio.* *
 
 | *que* | *que haria falta* |
 |---|---|
