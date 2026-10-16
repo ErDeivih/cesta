@@ -756,3 +756,37 @@ recien migrada***, *cuando con la base de la ronda 25 si salian.* *
 *** Y LA LECCION ***: *vi ese `/api/salud` fallando *** dos veces *** *y las dos lo
 explique con una causa comoda *(-- IPv6 --)* *** sin medirla.*** *Es la *** septima vez ***
 en este encargo que una suposicion comoda tapa el dato.* *
+
+## 7.28 *Y MI HIPOTESIS ERA FALSA, *Y SE DESCARTARON CUATRO COSAS CON MEDIDA (ronda 31)*
+
+*** Sospeche que el dev server no proxya `/api`. *** Y *** si proxya***: *
+
+```
+*** `vite.config.ts:12` ***: *** `const destinoApi = process.env.CESTA_API ?? 'http://127.0.0.1:8000'` *** ✓
+*** -> *o sea que *** el proxy existe *** *y usa `CESTA_API`, *que es lo que yo le pasaba ✓
+*** -> *y la prueba, *sin API detras: *
+   *** `/api/salud` por el 5173 *** -> *** HTTP 500 ***, *** `text/plain` *** ✓
+   *** `/` por el 5173 *** -> *** HTTP 200 ***, *** `text/html` *** ✓
+*** -> *** el 500 es de PROXY, *no el HTML de la SPA ***: *o sea que *** SI proxya *** ✓✓✓
+*** -> *y el 500 de las rondas 28 *y *29 era porque *
+   *** consulte `/api/salud` ANTES de que la API estuviera lista *** ⚠️
+```
+
+### 7.29 *Y por eso, *el metodo: *mi comprobacion previa era prematura*
+
+*** Vi el `/api/salud` fallar *** tres veces *** *y las tres lo explique con una causa
+comoda -- IPv6, *y luego «el proxy» --* *** sin medirla.*** *Al medirla, *resulta que
+*** el proxy funciona y lo que fallaba era mi reloj.*** *
+
+## 7.30 *Y LO QUE QUEDA DESCARTADO, *con medida, y lo que no*
+
+| *hipotesis* | *veredicto* | *medida* |
+|---|---|---|
+| *el dev server no proxya* | *** FALSO *** | *`/api/salud` por 5173 da *** 500 ***, *no HTML* |
+| *la API no responde* | *** FALSO *** | *** 20.719 bytes *** *por `/api/buscar`* |
+| *el `gold` no esta* | *** FALSO *** | *existe, *con `grupos.parquet` y `enlaces.parquet`* |
+| *las rutas no existen* | *** FALSO *** | *`App.tsx:201` y `:277`* |
+| *** por que el test no ve el enlace *** | *** ABIERTO *** | *** no se, *y no lo voy a inventar *** |
+
+*** Y ESTO ES LO IMPORTANTE ***: *cuatro hipotesis descartadas *** con medida ***
+*vale mas que una causa inventada, *aunque la causa siga abierta.* *
