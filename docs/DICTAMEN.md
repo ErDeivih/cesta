@@ -2039,3 +2039,54 @@ la medida que lo acusa***. *
 *** -> *y NINGUNO SE HA CORRIDO TODAVIA ***: *los tres son de la misma ronda de *
    *medida *(-- *la 64 --)*, *y la puerta que los destapo *** no se ha vuelto a correr.*** *
 ```
+
+## 7.100 *Y LA CURVA, *ACOTADA SIN PODER CERRARLA (ronda 70)*
+
+*** El fallo dice *** *«la curva se pinta (el lienzo del historico esta)»*, *y es ***
+el unico fallo funcional *** de los seis. *Y el test hace: *
+
+```
+*** `carga(f"/producto/{fuente}/{id_fuente}")` *** ✓
+*** -> *y luego *** `comprueba(pagina.locator("canvas").count() >= 1, ...)` *** ✓
+*** -> *** y no hay ningun canvas *** ⚠️
+```
+
+### 7.101 *Y la ficha SI monta la curva, *con dos condiciones*
+
+```
+*** `Producto.tsx:409` ***: *** `historico.bloqueado ? (` *** *
+   *-- *si esta bloqueado, *dice «Esta cadena tiene N productos dentro del mismo grupo…» *
+   *-- *** y no pinta la curva *** ⚠️
+*** -> `:418` ***: *** `historico.puntos.length === 0 ? (` *** *
+   *-- *si no hay puntos, *dice otra cosa *y *** tampoco la pinta *** ⚠️
+*** -> `:424` ***: *** `<Chispa puntos={...} alto={120} .../>` *** ✓
+*** -> *** o sea: *el canvas existe *** si NO esta bloqueado *Y hay puntos *** ✓✓✓
+```
+
+### 7.102 *Y el producto elegido DEBERIA tenerlos*
+
+```
+*** `_producto_caro_con_historial()` *** *(`:307`)* consulta `gold` *y exige: *
+   *-- *** `HAVING count(DISTINCT fuente) >= 2` *** *(-- *que haya comparacion --)* ✓
+   *-- *y una *** `con_serie` *** con *** varios dias *** ✓
+*** -> *y el test *** fallo en el `comprueba`***, *no imprimio «no he encontrado…», *
+   *** asi que el producto SI se encontro *** ✓
+*** -> *** la causa esta entre la eleccion y el canvas *** ✓
+```
+
+### 7.103 *Y LAS TRES CANDIDATAS, *NINGUNA MEDIDA*
+
+```
+*** 1 ***. *el producto sale *** bloqueado *** *(-- *≥2 cadenas puede bloquear la serie --)* ✓
+*** -> *** 2 ***. *o la serie *** no tiene puntos *** ✓
+*** -> *** 3 ***. *o el lienzo *** mide 0 *** *y `uPlot` *** no dibuja sin tamano *** ✓
+*** -> *** Y NO SE CUAL ES, *Y NO LO VOY A SUPONER *** ✓✓✓
+*** -> *lo que si se sabe: *no es que la ficha no monte la curva *
+   *-- *la monta, *y da tres explicaciones distintas segun el dato ✓
+```
+
+*** Y UN ERROR MIO DE METODO, *que anoto porque es el de siempre***: *busque
+`_producto_caro_con_historico` *(-- con `-ico` --)*, *el `grep` no encontro nada, *
+*y *** estuve a punto de concluir que la funcion no existia***. *Se llama
+*** `_producto_caro_con_historial` ***, *con `-ial`. *Y *** una busqueda vacia no
+prueba ausencia***: *prueba que *** el patron estaba mal.*** *
