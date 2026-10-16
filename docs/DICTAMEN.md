@@ -790,3 +790,44 @@ comoda -- IPv6, *y luego «el proxy» --* *** sin medirla.*** *Al medirla, *resu
 
 *** Y ESTO ES LO IMPORTANTE ***: *cuatro hipotesis descartadas *** con medida ***
 *vale mas que una causa inventada, *aunque la causa siga abierta.* *
+
+## 7.31 *Y LA PANTALLA FUNCIONA: *PINTA LOS 40 RESULTADOS (ronda 32)*
+
+*** Y esto se midio con el instrumento correcto, *y aislando la pregunta ***: *
+*se levanto el dev server apuntando a la API *** domestica del 8080***, *que es un
+`GET` de solo lectura que llevo veinte rondas usando, *y *** sin base ni escrituras.*** *
+
+```
+*** el proxy, *comprobado: *`/api/buscar?q=leche+entera&limite=5` por el 5173 *
+   *** -> HTTP 200 ***, *** 2.467 bytes ***, *y devuelve `grupo_id` 47808 ✓
+*** -> *o sea que la tuberia *** navegador -> 5173 -> API FUNCIONA *** ✓✓✓
+*** y la captura de REA ***: *
+   *** «40 resultados · datos del 15 oct 2026» *** ✓
+   *** -> *la tabla con *Leche entera / aldi / MILSANI / *** 0,96 € *** / *
+      *** 0,96 €/l *** / *** 5 cadenas *** / *** 34,4% *** ✓
+   *** -> *y «Leche entera sin lactosa», *«Chocolate con leche...», *«NESTLE...», *
+      *«Leche entera brik 1 L.» ✓✓✓
+```
+
+## 7.32 *Y LA CONCLUSION: *LA APLICACION ESTA BIEN, *Y LA PRUEBA BUSCA OTRA COSA*
+
+```
+*** la pantalla *** pinta 40 resultados con datos reales *** ✓
+*** -> *y el test espera *** `a[href^='/compra/comparar/']` *** ⚠️
+*** -> *y el frontend, *para pedirle los datos a la API, *usa *
+   *** `pide<Grupo>('/grupo/${grupoId}')` *** *(`consultas.ts:140`) ✓
+*** -> *** `/grupo/` es la ruta de la API, *y `/compra/comparar/` es la del ROUTER *** ✓
+*** -> *** son dos espacios de nombres distintos, *y ahi esta la confusion *** ✓✓✓
+*** -> *** el selector del test no corresponde al `href` que la tabla genera *** *
+   *-- *y *** NO he llegado a ver cual genera ***, *y lo digo en vez de suponerlo ✓
+```
+
+## 7.33 *Y LO QUE ESTA RONDA DEJA CLARO, *que es mucho*
+
+```
+*** la aplicacion *** funciona ***: *API, *gold, *rutas, *proxy, *y pantalla ✓
+*** -> *y la puerta mecanica falla por *** sus selectores ***, *no por la app ✓
+*** -> *** o sea que las «cuatro pantallas con sesion sin verificar» y el punto 4 *
+   *no estan bloqueados por la aplicacion: *estan bloqueados por *** la puerta *** ✓✓✓
+*** -> *y eso es una conclusion mucho mas util que «no se puede ver» ✓
+```
