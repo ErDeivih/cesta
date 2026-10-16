@@ -120,8 +120,16 @@ function Lanzador() {
         ))}
       </nav>
 
+      {/* **Y este enlace tenia 17 px de alto, y la regla de la casa son 44.**
+          Lo destapo la puerta al desbloquearse (ronda 64): medía **127x17** y salia
+          como *«no hay nada que pulsar por debajo de 44 px»*. Es el mismo minimo que
+          cumplen a rajatabla los del lateral (`Suite.tsx:206`, `min-h-[44px]`) y los
+          de la barra de abajo (`56 px`), y el unico que se habia quedado sin el.
+          `inline-flex` y no `block`: asi **el blanco es el texto y no la linea entera**,
+          que en una pantalla ancha serian 1200 px de ancho pulsable sin querer. */}
       <footer className="mt-bloque border-t border-borde pt-4 text-etiqueta text-secundaria">
-        <Link to="/ajustes" className="underline">
+        <Link to="/ajustes"
+          className="inline-flex min-h-[44px] items-center underline">
           Cuenta y preferencias
         </Link>
       </footer>

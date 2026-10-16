@@ -1931,3 +1931,44 @@ actualizar en las rondas *** 38, *61 y 66 *** *-- *tres veces --, *y cada vez po
 *** -> *y la puerta paso de *** 19 ok *** a *** 177 ok *** ✓✓✓
 *** -> *y destapo *** 6 familias de defectos *** que nadie habia visto ✓
 ```
+
+## 7.93 *Y EL PRIMER DEFECTO DE LAS SEIS FAMILIAS, *ARREGLADO (ronda 67)*
+
+*** La familia mas clara era la de los blancos tactiles ***, *y salia en *** 17 rutas***: *
+*«en / no hay nada que pulsar por debajo de 44 px ***(127x17 Cuenta y preferencias)»***. *
+
+```
+*** y lo primero fue buscar donde ***: *`Cuenta y preferencias` sale por `EnlaceLateral` ✓
+*** -> *** y `Suite.tsx:206` YA tiene `min-h-[44px]` *** ⚠️ *
+   *o sea que *** el del lateral esta bien *** ✓
+*** -> *y el mensaje dice *** «en `/`» *** *-- *y la portada *** no tiene lateral*** ✓
+*** -> *** y el Lanzador tiene un `<footer>` con `/ajustes` *** ✓✓✓
+```
+
+### 7.94 *Y el defecto, *localizado*
+
+```
+*** `App.tsx:124` ***: *** `<Link to="/ajustes" className="underline">` *** ⚠️
+*** -> *** sin `min-h`, *sin `px` *ni `py` ✓
+*** -> *y por eso mide *** 127 x 17 *** ✓
+*** -> *** 17 px de alto, *y la regla de la casa son 44 *** *
+   *(-- *los del lateral los cumplen, *y los de la barra de abajo miden 56 --)* ✓
+```
+
+*** Y EL ARREGLO ***: *`inline-flex min-h-[44px] items-center`, *y *** `inline-flex` y
+no `block`***, *para que *** el blanco sea el texto y no la linea entera*** *-- *en una
+pantalla ancha, *un `block` serian *** 1200 px de ancho pulsable sin querer***. *
+
+## 7.95 *Y LO QUE NO SE SABE, *dicho*
+
+```
+*** el mensaje sale *** 17 veces ***, *y el Lanzador es *** una sola ruta*** ⚠️
+*** -> *asi que *** o hay otro sitio que no he encontrado, *o son apariciones ✓
+*** -> *** y NO LO SE, *y no lo voy a suponer *** ✓
+*** -> *lo que si se sabe es que *** 17 px es un defecto mida donde mida *** ✓
+```
+
+*** Y EL ARREGLO NO SE HA VUELTO A CORRER ***: *esta razonado desde la medida de la
+puerta *(-- *127x17, *ronda 64 --)*, *y *** falta la ejecucion***. *`tsc` limpio, *
+*`npm test` 81/0, *`ruff` limpio, *LF conservado *(-- *312 CRLF, *0 LF, *como estaba --)*, *
+*y diff 9/1.* *
