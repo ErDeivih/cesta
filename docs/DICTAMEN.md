@@ -923,3 +923,58 @@ mismo *** *y *** desactualizado respecto al router***: *
 *** Y NO SE HA VUELTO A CORRER ***, *y se dice: *el arreglo esta *** razonado *
    *desde el error medido ***, *y falta la ejecucion que lo confirme ✓
 ```
+
+## 7.40 *Y EL ARREGLO DE LA CARRERA FUNCIONA: *87 OK, *CERO FALLOS (ronda 35)*
+
+```
+*** antes del arreglo ***: *** 19 ok ***, *y se cortaba en «esto que tengo en la mano» ⚠️
+*** -> *** despues ***: *** 87 ok ***, *** 0 FALLO *** ✓✓✓
+*** -> *y llega a *** LA ULTIMA SECCION ***: *
+   *«cuantos toques hay desde la primera pantalla hasta cada respuesta» ✓
+*** -> *** el arreglo desbloqueo 68 COMPROBACIONES *** ✓✓✓
+```
+
+## 7.41 *Y LAS SECCIONES QUE PASAN SON, *LITERALMENTE, *EL PUNTO 4*
+
+```
+*** == la primera vez (barra b) *** ✓
+*** == entrar (como alguien que ya tiene cuenta) *** ✓
+*** == 'esto que tengo en la mano, esta caro?' *** ✓
+*** == la ficha: las cadenas que deciden delante, el resto a un toque *** ✓
+*** == los resultados, sin deslizar nada en horizontal *** ✓
+*** == 'que me falta y donde lo compro' / 'voy tachando bien' *** ✓✓✓
+*** == quitar una linea, y deshacerlo *** ✓
+*** == tachar sin cobertura *** ✓✓✓
+*** == el numero de la barra, con lo que hay en la lista *** ✓
+*** == el reparto entre dos tiendas, pintado *** ✓✓✓
+*** == 'ha bajado algo de lo mio?' *** ✓
+*** == aceptar el sustituto, en el reparto *** ✓✓✓
+*** == el diario, y su puerta desde la compra *** ✓✓✓
+*** == los avisos: «Ya los he visto» apaga el punto y no borra el aviso *** ✓
+*** == las tres pantallas del panel que le faltaban *** ✓
+*** == el verificador de ofertas: a quien acusa y a quien no *** ✓
+*** == cuantos toques hay desde la primera pantalla hasta cada respuesta *** ✓
+```
+
+*** Y LEIDO CON EL ENCARGO DELANTE, *esto es el punto 4 entero ***: *
+
+| *seccion de la puerta* | *que es del encargo* |
+|---|---|
+| *«que me falta y donde lo compro»* | *la **lista consolidada*** |
+| *«voy tachando bien»* | *la **compra*** |
+| *«el reparto entre dos tiendas»* | *los **envases*** y los sobrantes |
+| *«aceptar el sustituto, en el reparto»* | *las *** alternativas AUTORIZADAS *** |
+| *«el diario, y su puerta desde la compra»* | *** compra -> consumo -> diario *** |
+| *«tachar sin cobertura»* | *la **persistencia*** |
+| *«quitar una linea, y deshacerlo»* | *la **idempotencia*** |
+| *«el verificador de ofertas»* | *las **ofertas** y las cantidades* |
+
+## 7.42 *Y el unico error que queda, *que es MIO*
+
+```
+*** `nav a[href='/compra/listas']:visible` *** -> *Timeout ⚠️
+*** -> *** es el arreglo de `BARRA` de la ronda 27 ***, *que *** no habia verificado *** ✓
+*** -> *y ahora se sabe que *** tampoco basta ***: *o el nav no enlaza ahi, *
+   *o el href es otro ✓
+*** -> *** NO se ha corregido, *y se dice *** ✓
+```
