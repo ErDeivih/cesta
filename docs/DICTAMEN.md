@@ -831,3 +831,49 @@ comoda -- IPv6, *y luego «el proxy» --* *** sin medirla.*** *Al medirla, *resu
    *no estan bloqueados por la aplicacion: *estan bloqueados por *** la puerta *** ✓✓✓
 *** -> *y eso es una conclusion mucho mas util que «no se puede ver» ✓
 ```
+
+## 7.34 *Y EL ULTIMO DATO, *QUE ME CONDENA A MI (ronda 33)*
+
+```
+*** `TablaResultados.tsx:379` ***: *** `<Link to={`/grupo/${fila.grupo_id}`} ...>` *** ✓
+*** -> `:451` ***: *lo mismo ✓
+*** -> *** EL FRONTEND ENLAZA A `/grupo/${grupo_id}` ***, *NO a `/compra/comparar/` ✓✓✓
+```
+
+### 7.35 *Y por tanto, *el error es MIO, *y es el octavo*
+
+```
+*** el test ORIGINAL buscaba *** `a[href^='/grupo/']` *** *
+   *** -- *y ERA CORRECTO *** ✓
+*** -> *porque el frontend *** enlaza a `/grupo/` *** ✓
+*** -> *y `/compra/comparar/:grupoId` *** existe ***, *pero *** nadie enlaza ahi*** ✓
+*** -> *es `/grupo/:id` *** la que redirige *** *a `/compra/comparar/:id` ✓
+*** -> *** yo vi que `/grupo` era una redireccion *** *
+   *** y conclui que el test estaba viejo *** ⚠️
+*** -> *** y era AL REVES: *el navegador NAVEGA a `/grupo/...`, *
+   *** y el router redirige *** ✓✓✓
+*** -> *** MI «ARREGLO» DE 22 LINEAS ROMPIO UNA PRUEBA QUE ESTABA BIEN *** ⚠️⚠️⚠️
+```
+
+### 7.36 *Y se revierte, *y el metodo queda claro*
+
+```
+*** `/compra/comparar/` ***: *22 -> *** 0 *** ✓ · *`/grupo/` ***: *0 -> *** 22 *** ✓
+*** -> *o sea que el fichero *** vuelve a como estaba ***, *
+   *con la frase arreglada *y `BARRA` arreglada, *y nada mas ✓
+```
+
+*** Y LA LECCION, *que es la mas importante de todas ***: *
+
+```
+*** arregle 22 lineas *** porque vi una redireccion y deduje que el test estaba viejo *** ⚠️
+*** -> *y *** no comprobe cual era el href que el frontend genera *** ✓
+*** -> *** una deduccion plausible sustituyo a una medida *** *
+   *-- *y es *** la octava vez *** en este encargo ✓✓✓
+*** -> *** la regla que sale ***: *antes de «arreglar» una prueba, *
+   *** mirar QUE GENERA el codigo ***, *no QUE PARECE que deberia generar.* *
+*** -> *y las dos hipotesis que quedan en pie, *y que SI estan medidas: *
+   *-- *la frase: *** reescrita a proposito, *y la prueba vieja *** *(-- *bien arreglada --)* ✓
+   *-- *`BARRA`: *las rutas `/cesta` *y `/` *** si estaban mal *** *
+      *-- *`/cesta` es redireccion, *y `/` es el Lanzador ✓✓✓
+```
