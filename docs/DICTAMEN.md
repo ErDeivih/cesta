@@ -2799,3 +2799,65 @@ la comprobacion al lado es *** una regla que no se corre***. *Asi que ahora esta
 *** Y ESTO ES LO MISMO QUE HA PASADO TODO EL DIA ***, *en pequeño*: *escribi una
 comprobacion, *la corri, *y *** la comprobacion tenia dos defectos***. *Y los dos
 se vieron *** corriéndola***, *no leyéndola. *
+
+## 7.146 *Y LA COMPROBACION *YA NO ES UN SCRIPT QUE HAY QUE ACORDARSE DE CORRER (ronda 88)*
+
+*** Y eso era *** exactamente *** lo que la seccion 17 dice que no funciona***: *
+*una regla escrita en un documento **se oxida**. *Asi que la comprobacion paso a
+ser *** una prueba***, *y corre con las demas. *
+
+```
+*** `uv run python -m plataforma.comprueba_documentos` *** *-- *a mano, *y explica
+   *por que mira unos documentos y no otros ✓
+*** -> *** y `tests/test_documentos.py` *** la llama como prueba ✓ *
+   *-- *y son *** 5 las que pasan *** en ese fichero ✓
+*** -> *** asi que si alguien deja una frase vieja, *las puertas lo dicen *** ✓✓✓
+```
+
+### 7.147 *Y DONDE VA, *QUE NO ERA UN FICHERO NUEVO*
+
+*** `tests/test_documentos.py` *** ya existia***, *y comprueba *** dos reglas***: *
+*que ningun fichero empiece por `U+FEFF`, *y que ninguno lleve *** doble
+codificado***. *Y su docstring cuenta el caso: *el 23 de septiembre de 2026,
+*`docs/CIERRE-ENCARGO-UX.md` con las comillas *** convertidas en dos caracteres
+cada una.*** *
+
+```
+*** y su docstring dice, *literalmente***: *
+   *** «es el mismo tipo de fallo que el contraste medido sobre nada: ***
+   *** un instrumento o un documento que miente sin avisar» *** ✓
+*** -> *** o sea que ese fichero *** ya se declara como el sitio de esto *** ✓
+*** -> *y la mia es *** la tercera regla ***, *con su comentario que cuenta de
+   *donde sale y por que no vale revisarlo a ojo ✓✓✓
+```
+
+### 7.148 *Y SE COMPROBO QUE DETECTA, *no solo que pasa*
+
+```
+*** una prueba que pasa no dice nada *** *si no se sabe que *** falla cuando debe*** ✓
+*** -> *y para eso se metio *** una frase vieja a proposito *** *
+   *(-- *«y la puerta daba *** 87 ok ***» --)* *en `VERSION-SERVIDA.md` ✓
+*** -> *y la prueba *** fallo ***, *senalando *** el fichero y la linea ***: *
+   *** `assert not [('docs/ui/VERSION-SERVIDA.md', 62, '…87 ok…')]` *** ✓✓✓
+*** -> *y se restauro, *y vuelve a pasar ✓
+*** -> *** eso es la diferencia entre una prueba y un adorno *** ✓
+```
+
+### 7.149 *Y LA SUITE ENTERA, *CON LA BASE LEVANTADA*
+
+*** Y salio *** 2083 passed ***, *y hay que decir las dos corridas, *porque la
+primera engaña: *
+
+```
+*** SIN base ***: *** 2050 passed ***, *** 1 failed ***, *** 32 errors *** ⚠️ *
+   *-- *y los 32 son `ERROR at setup` con `ConnectionTimeout` en `almacen.arranca()` ✓
+   *-- *y el `1 failed` *** tambien era del entorno *** ✓
+*** -> *** CON base ***: *** 2083 passed ***, *17 skipped, *** 0 failed ***, *
+   *** 0 errores ***, *y *** exit code 0 *** ✓✓✓
+*** -> *y antes de mi prueba eran *** 2081 ***: *** +2 ***, *las dos que anadi ✓
+```
+
+*** Y LA LECCION ES LA DE LA RONDA 19, *OTRA VEZ***: *una corrida sin base da un
+numero que *** no es del codigo***. *Y esta vez no lo di por bueno: *levante la
+base *y *** volvi a correr***. *(-- *y `--lf` fue lo que lo estrecho: *con la
+base levantada *** no habia ningun ultimo fallo*** --).* *

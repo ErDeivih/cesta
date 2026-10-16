@@ -125,3 +125,56 @@ def test_ningun_fichero_empieza_por_marca() -> None:
                  if r.read_bytes()[:3] == b"\xef\xbb\xbf"]
     assert not culpables, ("hay ficheros que empiezan por U+FEFF (la marca que deja "
                            "PowerShell al escribir): " + ", ".join(culpables[:5]))
+
+
+# --------------------------------------------------------------------------
+# Tercera regla: **el documento que afirma lo que el trabajo dejo atras.**
+#
+# Es la misma familia que las dos de arriba -- *un documento que miente sin
+# avisar* --, y salio el 16 de octubre de 2026: el `RESUMEN VIGENTE` del
+# dictamen decia «paso de 19 ok a **177 ok**» cuando la puerta ya daba **194**,
+# y dos secciones del dictamen seguian diciendo que «la seccion de los toques
+# **no llega al final**» cuando ya llegaba. **Las tres frases estaban en la
+# primera pagina del entregable**, y sobrevivieron a una revision a ojo.
+#
+# Y por que no vale revisarlo a mano: el script que las dejo atras buscaba *un
+# bloque exacto* y lo sustituyo, y **habia dos sitios con el mismo numero**.
+# Es el mismo error que las 22 lineas de la ronda 29: **arreglar un sitio y no
+# su vecino.** Por eso esto es una prueba y no una regla escrita en un doc:
+# *una regla sin la comprobacion al lado es una regla que no se corre.*
+#
+# La logica vive en `plataforma/comprueba_documentos.py`, que tambien se puede
+# lanzar a mano (`uv run python -m plataforma.comprueba_documentos`) y explica
+# alli por que mira unos documentos y no otros.
+# --------------------------------------------------------------------------
+
+
+def test_los_documentos_vigentes_no_afirman_lo_que_el_trabajo_dejo_atras() -> None:
+    from plataforma.comprueba_documentos import revisa
+
+    malas = revisa(RAIZ)
+    detalle = "\n".join(f"  {f}:{n}  {t}" for f, n, t in malas)
+    assert not malas, (
+        "hay frases de una foto anterior en documentos VIGENTES.\n"
+        "*Consolidar no es arreglar: es fotografiar, y el trabajo siguio.*\n"
+        f"{detalle}\n"
+        "  Se corrige la frase, no el patron: la regla esta en la seccion 17 de\n"
+        "  docs/ui/COMO-SE-MIDE.md."
+    )
+
+
+def test_la_comprobacion_de_documentos_mira_los_cuatro() -> None:
+    """**Y si alguien quita uno de la lista, esto lo dice.**
+
+    *Es el defecto que la comprobacion tiene que impedir en si misma: un
+    documento que se deja de mirar es un documento que se queda atras.*
+    """
+    from plataforma.comprueba_documentos import VIGENTES
+
+    esperados = {"docs/DICTAMEN.md", "docs/ui/ESTADO-FASE-5.md",
+                 "docs/ui/VERSION-SERVIDA.md", "docs/ui/COMO-SE-MIDE.md"}
+    assert set(VIGENTES) == esperados, (
+        "la lista de documentos vigentes cambio; si es a proposito, actualiza\n"
+        "las dos listas (aqui y en plataforma/comprueba_documentos.py):\n"
+        f"  comprobados: {sorted(VIGENTES)}\n  esperados:   {sorted(esperados)}"
+    )
