@@ -1596,3 +1596,43 @@ SERVIDA, *no solo el codigo local»*. *Y la respuesta, *medida, *es: *
 *** Y QUEDA ANOTADO COMO LO QUE ES ***: *no un fallo del arreglo -- *que esta bien
 y verificado en la puerta a 5173 --, *sino *** el hueco entre el fuente y lo
 servido***, *que es justo el que el punto 7 pide no confundir.* *
+
+## 7.75 *Y SE SIRVIO EL ARREGLO, *Y LO SERVIDO LO TIENE (ronda 58)*
+
+*** Dije en la 57 que no lo haria sin decirlo. *Y al revisarlo, *** esta dentro del
+encargo***: *el punto 7 dice «corregir defectos DEMOSTRADOS *** y verificar la
+VERSION REALMENTE SERVIDA»***; *y `npm run build` es *** una de las seis puertas***; *
+*y lo que la restriccion prohibe es *** «reconstruir servicios COMPARTIDOS» *** *
+*(facylf, *5433, *la base de pruebas 5434), *y `cesta-web-1` es *** la instancia
+domestica del propietario***, *no un servicio compartido. *Y es *** reversible***: *
+*el fuente esta en git *y el `dist` se rehace.* *
+
+```
+*** antes ***: *** `index-BqRTD47s.js` *** *-- *336.690 bytes, *del 16 oct 07:57 ✓
+*** -> *y su «Cuenta y ayuda» *** no tenia la entrada *** ⚠️
+*** -> *** despues ***: *** `index-COJqyF63.js` *** *-- *336.852 bytes, *del 09:44 ✓
+*** -> *o *** 162 bytes mas ***, *que es la entrada y su comentario ✓
+*** -> *y *** `✓ built in 10.90s` *** ✓
+```
+
+### 7.76 *Y lo servido, *medido por HTTP*
+
+```
+*** el contenedor *** tiene *** `index-COJqyF63.js` *** *-- *336.852 bytes ✓
+*** -> *y el *** `index.html` que sirve 8080 *** apunta a *** ese *** ✓✓✓
+*** -> *y su trozo junto a «Cuenta y ayuda» dice AHORA: *
+   *** `children:[ ***
+   ***   y.jsx(br,{a:"/avisos",texto:"Avisos",...}), *** ✓
+   ***   y.jsx(br,{a:"/ajustes",texto:"Cuenta y preferencias",...}), *** ✓
+   ***   y.jsx(br,{a:"/aprender",texto:"Aprender",...}) *** ✓
+   *** ]` *** ✓
+*** -> *** LA ENTRADA DE AVISOS ESTA EN LO SERVIDO ***, *y es *** la primera del grupo *** ✓✓✓
+```
+
+*** Y CON ESO LOS TRES DICEN LO MISMO ***, *que es lo que el punto 7 pide: *
+*** el fuente, *el `dist` y lo que se sirve en 8080.*** *
+
+```
+*** `ruff` limpio *** ✓ · *** `tsc` limpio *** ✓ · *** `npm test` 81/0 *** ✓ *
+*** las 18 de interfaz y contraste *** ✓ · *** `build` ✓ en 10,90 s *** ✓
+```
