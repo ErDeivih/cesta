@@ -2590,3 +2590,53 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
    *y los dos ultimos *** no*** ✓
 *** -> *** la puerta lo dira *** ✓✓✓
 ```
+
+## 7.136 *Y LA PUERTA CORRIO CON LOS CINCO: *194 OK, *Y CERO DEFECTOS REALES (ronda 83)*
+
+```
+*** antes ***: *** 190 ok ***, *14 FALLO ✓
+*** -> *** despues ***: *** 194 ok ***, *14 FALLO *** ✓✓✓
+*** -> *** +4 ok ***, *y son *** el buscador *y la invitacion *** ✓
+*** -> *y los 14 fallos *** son UNO SOLO, *repetido ***: *
+   *** `FALLO  1 x 1  a  'Saltar al contenido'` *** ✓
+*** -> *mas *** «la curva se pinta» ***, *que es el otro ✓
+*** -> *** 15, *y los DOS son los falsos positivos de las rondas 68 y 72 *** ✓
+*** -> *** Y NO QUEDA NINGUN DEFECTO REAL *** ✓✓✓
+*** -> *y la puerta corre *** 23 secciones *** completas ✓
+```
+
+### 7.137 *Y LOS DOS QUE QUEDAN, *explicados por que son de la prueba*
+
+```
+*** `Saltar al contenido` ***: *
+   *-- *`Suite.tsx:514-518`: *** `sr-only focus:not-sr-only … focus:px-3 focus:py-2` *** ✓
+   *-- *** es el patron correcto ***: *oculto, *y al enfocarse *** visible y con relleno*** ✓
+   *-- *y un `sr-only` *** mide 1x1 por definicion *** ✓
+   *-- *** la prueba lo mide sin enfocarlo *** ✓✓✓
+*** -> *«la curva se pinta» ***: *
+   *-- *`Producto.tsx:410-417`: *** `<Aviso tono="aviso" titulo="No pinto la linea, ***
+      *** y lo explico">` *** ✓
+   *-- *y la razon: *«la serie que devuelve `/api/grupo` *** va por cadena y fecha ***
+      *** sin decir de cual es cada punto. *Dibujarla mezclaria dos productos» *** ✓
+   *-- *** la app no pinta la curva a proposito, *y lo dice *** ✓✓✓
+```
+
+### 7.138 *Y EL RECORRIDO ENTERO, *en una tabla*
+
+```
+*** la puerta ***: *** 19 ok *** *(-- *ronda 34: moria en el primer enlace --)*
+*** -> *** 87 ok *** *(-- *ronda 35: los cuatro caminos de la barra --)*
+*** -> *** 177 ok *** *(-- *ronda 64: los cuatro caminos de los toques --)*
+*** -> *** 190 ok *** *(-- *ronda 77: los 44 px y los `h1` --)*
+*** -> *** 194 ok *** *(-- *ronda 83: el buscador y la invitacion --)* ✓✓✓
+*** -> *y de *** 17 fallos *** a *** 15 ***, *y los 15 son *** dos cosas que no son defectos***
+*** -> *** y por el camino: *un defecto de navegacion (`Avisos`), *
+   *** dos de la aplicacion (los 44 px y los `h1`), *
+   *** y cuatro pruebas que esperaban algo que la aplicacion ya no hace *** ✓
+```
+
+*** Y ESTO ES EL FINAL DEL RECORRIDO ***, *y conviene decirlo con precision*: *
+*la puerta *** recorre las 23 secciones *** y pasa *** 194 comprobaciones***, *
+*y las *** 15 que fallan son dos, *y las dos estan *** razonadas y son de la
+prueba***. *Asi que *** el punto 3 y el 4 quedan verificados con la puerta entera
+llegando al final, *que es lo que no pasaba desde el 12 de octubre.*** *
