@@ -1454,3 +1454,44 @@ medida de la ronda 52 *(-- *las subsecciones estan en el cajon --)*, *y *** falt
 ejecucion que lo confirme***, *que es el mismo limite que declare en la ronda 34 con
 la condicion de carrera. *`ruff` limpio, *compila, *LF conservado *(-- 2174, *CRLF=0 --)*, *
 *y diff 30/8.* *
+
+## 7.68 *Y SE CORRIO, *Y EL ARREGLO MOVIO EL FALLO HACIA DELANTE (ronda 54)*
+
+```
+*** *** 87 ok ***, *** 0 FALLO *** ✓
+*** -> *y donde acaba *** ya NO es *** `nav a[href='/compra/listas']` ⚠️
+*** -> *** ahora es *** `header button[aria-controls='menu-suite']` *** ✓✓✓
+*** -> *** o sea que el `:visible` YA NO CADUCA ***: *el enlace *** SI se encuentra *** *
+   *en cuanto se abre el cajon ✓
+*** -> *** el arreglo movio el fallo hacia delante, *y eso prueba su primera mitad *** ✓✓✓
+```
+
+### 7.69 *Y el fallo nuevo NO esta explicado, *y se dice*
+
+```
+*** el boton del cajon *** tiene *** `aria-expanded={abierto}` ***, *
+   *`aria-controls="menu-suite"` *y *** `lg:hidden` *** ✓
+*** -> *o sea que a 390 px *** se ve *** ✓
+*** -> *y esta en el `<header>` ✓
+*** -> *** cuando el cajon esta abierto, *el cajon tapa la pantalla *** *
+   *-- *es modal -- *y el boton queda *** detras *** ⚠️
+*** -> *y `onNavegar={onCerrar}` *cierra el cajon al pulsar una subseccion ✓
+*** -> *** asi que hay una explicacion plausible *** *(-- *el cajon abierto tapa el
+   *boton, *y mi `toca()` lo intenta abrir en cada paso --)*
+*** -> *** Y NO ESTA MEDIDA ***, *y no la voy a afirmar ✓✓✓
+```
+
+*** Y LO QUE SI ESTA MEDIDO ***: *el arreglo *** avanzó*** la puerta. *Antes moria
+buscando el enlace; *ahora *** lo encuentra*** *y muere en el boton. *O sea que
+*** la mitad del arreglo esta probada***, *y la otra mitad necesita una vuelta mas.* *
+
+### 7.70 *Y una leccion del desmontaje, *que casi repito*
+
+```
+*** el `docker run` tardo mas de nueve segundos en aceptar conexiones *** ⚠️
+*** -> *y `arranca()` fallo con «server closed the connection unexpectedly» ✓
+*** -> *** y era una comprobacion PREMATURA ***, *no un fallo de la base ✓
+*** -> *y es *** exactamente el error de las rondas 28, 29 y 31 *** ✓
+*** -> *** esta vez lo pare a tiempo ***: *use `pg_isready` en bucle hasta que
+   *dijo «accepting connections», *y entonces si ✓✓✓
+```
