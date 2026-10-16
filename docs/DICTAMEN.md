@@ -88,7 +88,7 @@ errores**, *y detectado **a mano** --).* *
 ## 2.2 *Los bloqueos, *concretos*
 
 ```
-*** BLOQUEO 1 ***. *** Falta API con datos controlados *** *
+*** BLOQUEO 1 ***. *** RESUELTO EL 15/10/2026: *EL PROPIETARIO AUTORIZO LA BASE DESECHABLE *** *
    *-- *sin ella no se puede validar nada de lo de arriba ✓
    *-- *y la restriccion vigente es «solo frontend» ✓
    *-- *** la peticion esta hecha y espera respuesta *** ✓
@@ -328,3 +328,49 @@ puertas rojas, *y *** se desmonto***. *
 *** -> *y se corrigio *** leyendo UNA traza entera ***, *no razonando ✓✓✓
 *** -> *y las seis se han corregido *** mirando mas *** ✓
 ```
+
+---
+
+# PARTE 7 · *** LA AUTORIZACION, *Y EL PLAN EXACTO (ronda 21) ***
+
+*** El propietario respondio el 15/10/2026 ***: *«Si, *con base desechable en el 5434».* *
+*Y con eso *** el bloqueo 1 deja de ser un bloqueo***, *y el punto 4 se puede hacer
+***sin escribir nada en la base domestica.*** *
+
+## 7.1 *La peticion, *tal como se hizo*
+
+*** Que se necesita ***: *una API en un *** puerto libre *** apuntando a una
+*** base NUEVA y desechable en el 5434 *** *(-- *libre: *5432 *y *5433 estan ocupados --)*,
+*con *** usuarios de prueba***. *Todo lo que se capture sale de ahi.* *
+
+*** Que NO se toca ***: *`casa 5432`, *`facylf 5433`, *las pruebas compartidas 5434
+*(-- *no hay: *estan libres --)*, *ninguna cuenta domestica, *
+*** y no se despliega ni se abre ningun puerto al exterior.*** *
+
+## 7.2 *Y el precedente, *que es lo que hace que la peticion sea creible*
+
+```
+*** en la ronda 20 se hizo YA, *en pequeño: *
+   *-- *se levanto `cesta-prueba-db` *(-- *`docker run --rm -d` en el 5434 --)* ✓
+   *-- *se corrieron las seis puertas: *2081 passed, *0 failed, *0 errors, *
+      *y `prueba_e2e` *** «== TODO BIEN» *** ✓
+   *-- *** y se desmonto *** *(-- *`docker rm -f` --)* ✓
+   *-- *y 5432, *5433 *y 8080 *** siguieron arriba todo el tiempo *** ✓✓✓
+*** -> *** el patron esta probado ***: *se crea, *se usa, *y se destruye ✓
+```
+
+## 7.3 *Y lo que queda por hacer, *en orden, y con lo que prueba cada cosa*
+
+| *paso* | *que se hace* | *que prueba* |
+|---|---|---|
+| *1* | *base desechable en el 5434 + migraciones* | *--* |
+| *2* | *API en puerto libre apuntando ahi* | *--* |
+| *3* | *** pantallas con sesion *** | *** punto 3 ***: *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos` |
+| *4* | *** el recorrido ***: *5 recetas -> plan -> lista -> compra -> consumo -> diario* | *** punto 4 *** |
+| *5* | *** dos usuarios *** | *** el aislamiento entre usuarios *** |
+| *6* | *** cerrar la compra *** | *** que comprar NO registra consumo automaticamente *** |
+| *7* | *`Cargando` con una busqueda lenta* | *lo que llevo tres intentos sin ver* |
+| *8* | *contenido largo: *40 filas* | *el punto 3* |
+| *9* | *** desmontar la base *** | *--* |
+
+*** Y EN CADA CAPTURA SE DIRA QUE PRUEBA Y QUE NO ***, *que es la regla del encargo. *
