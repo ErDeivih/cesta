@@ -274,7 +274,15 @@ export function Buscar() {
       {busca && resultados.isPending && <Esqueleto filas={6} />}
 
       {busca && resultados.isError && (
-        <Fallo error={resultados.error} reintentar={() => void resultados.refetch()} />
+        // **El titulo, *porque aqui no se trae: *se busca.** *`Fallo` dice por defecto
+        // «No he podido traer esto», *y `ui.tsx:398-407` **ya explico por que el titulo
+        // se puede cambiar**: *«en un guardado eso es falso»*. *Y aqui pasa lo mismo: *
+        // *al que ha escrito una busqueda *** no se le ha dejado de traer nada***, *
+        // *se le ha *** dejado de buscar***. *Y la puerta lo pide con esas palabras: *
+        // *«el buscador de la primera pantalla, *con la API a 500, *lo dice con palabras»*
+        // *esperando *** «No he podido buscar» ***. *Medido en la ronda 78. */}
+        <Fallo error={resultados.error} titulo="No he podido buscar"
+          reintentar={() => void resultados.refetch()} />
       )}
 
       {busca && resultados.data && (

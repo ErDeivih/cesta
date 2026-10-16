@@ -2478,3 +2478,35 @@ puesto para tocar algo. *
 *Y las dos son defendibles: *** el enlace da mas sitio y una pantalla entera***, *
 *y el plegado *** deja comparar sin salir***. *Asi que *** es una decision***, *
 *no un defecto -- *y por eso *** no se cambia sin decirlo.*** *
+
+## 7.129 *Y EL BUSCADOR YA LO DICE CON SU VERBO: *ARREGLADO (ronda 80)*
+
+*** Una linea, *y el punto 3 lo pide con esas palabras ***: *
+
+```
+*** `Buscar.tsx:277` *** usaba *** `<Fallo error={...} reintentar={...} />` *** *
+   *-- *** sin titulo propio *** ⚠️
+*** -> *y `Fallo` (`ui.tsx:395`)* dice por defecto *** «No he podido traer esto» *** ✓
+*** -> *y buscar *** no es traer: *es buscar *** ✓
+*** -> *y `ui.tsx:398-407` *** ya habia abierto esa puerta ***, *y lo dejo escrito: *
+   *** «El 15/10/2026 se vio que `Ajustes` pinta sus errores de guardar y de borrar ***
+   *** con un `<p>` a mano, *y no por descuido: *es que esta pieza decia ***
+   *** "No he podido traer esto", *y en un guardado eso es falso.» *** ✓
+*** -> *** asi que el arreglo es de la PANTALLA, *y es una linea *** ✓✓✓
+```
+
+### 7.130 *Y se comprobo que la pieza respeta el titulo, *antes de dártelo por hecho*
+
+```
+*** `ui.tsx:438` ***: *** `<Aviso tono="mal" titulo={titulo}>` *** ✓ *
+   *-- *o sea que *** el caso del 500 usa el titulo que le pasen *** ✓
+*** -> *y el de sin-red usa *** `titulo="Sin cobertura"` ***, *fijo ✓ *
+   *-- *y la puerta *** tambien lo acepta ***: *
+      *** `"No he podido" in texto or "Sin cobertura" in texto` *** ✓
+*** -> *** los dos caminos quedan cubiertos *** ✓✓✓
+*** -> *y `tsc` limpio, *`npm test` 81/0, *`ruff` limpio, *LF conservado, *diff 9/1 ✓
+```
+
+*** Y NO SE HA VUELTO A CORRER ***, *y se dice: *el arreglo esta razonado desde el
+diagnostico de la 78 *y comprobado contra `ui.tsx:438`*, *y *** falta la ejecucion***. *
+*Es *** la misma condicion que me he puesto toda la sesion.*** *
