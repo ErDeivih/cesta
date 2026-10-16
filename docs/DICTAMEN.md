@@ -2967,3 +2967,74 @@ seria *** la cuarta vez que repito el ciclo entero***. *
 era *** una capacidad nueva*** *(-- *y esa parte esta bien pensada* --), *y lo que
 fallo fueron *** las tres lineas de al lado***: *el import que faltaba, *el que
 sustitui, *y el orden. *Y *** las tres las vio una puerta, *no yo.*** *
+
+## 7.156 *Y LAS CAPTURAS SALIERON: *61 FOTOS, *18 PANTALLAS (ronda 92)*
+
+*** Con `CESTA_CAPTURAS` puesto***, *la puerta guardo *** 61 ficheros*** *(-- *11,2
+MB --)*, *y *** 18 pantallas distintas***. *Y la puerta dio lo mismo que siempre:
+*** 194 ok***, *14 fallos, *los dos de siempre. *
+
+```
+*** `ajustes` · `avisos` · `buscar` · `calorias` · `cesta` · `compra` · *
+*** `escaner` · `favoritos` · `grupo-4` · `grupo-526` · `panel` · *
+*** `panel-matching` · `portada` · `producto-dia-141787` · *
+*** `producto-dia-147509` · `ruta-que-no-existe` · *
+*** `unirme-codigo-que-no-existe` · `compra-listas` *** ✓
+*** -> *y cuatro de las siete que faltaban *** SI estan ***: *
+   *-- *`compra-listas` (119 KB)* · *`ajustes` (64 KB)* *
+   *-- *`avisos` (38 KB)* · *`favoritos` (13 KB)* ✓
+```
+
+### 7.157 *Y EL HALLAZGO: *FALTAN LAS TRES PANTALLAS DE RECETAS*
+
+```
+*** y NO HAY NINGUNA DE RECETAS *** ⚠️
+*** -> *ni `recetario`, *ni `plan-semanal`, *ni `diario` ✓
+*** -> *y `calorias` *** SI esta *** *(-- *su portada --)* ✓
+*** -> *** o sea: *la puerta visita 18 pantallas, *y las TRES DE RECETAS *
+   *** NO ESTAN *** ✓
+*** -> *** Recetas es UNA DE LAS TRES APLICACIONES *** *
+   *-- *y la puerta *** no la abre ni una vez *** ✓✓✓
+*** -> *y el punto 3 pide *** «las ocho ramas pendientes» *** *
+   *-- *y tres de ellas *** nunca se han visitado*** ✓
+*** -> *** y la lista de la ronda 44 decia «siete pantallas con sesion» *** *
+   *-- *y yo asumi que *** la puerta las recorria *** ⚠️
+   *-- *y la puerta *** solo afirmaba que las pasaba*** ✓✓✓
+```
+
+### 7.158 *Y LA PRIMERA CAPTURA MIRADA: *`Avisos`, *y se lee bien*
+
+```
+*** lo que se ve ***: *
+   *-- *** «Avisos» *** con *** «de 1 producto que sigues» *** ✓
+   *-- *** «Ha bajado» ***: *«Leche entera — esta al precio mas bajo de los *
+      *** ultimos 90 dias: *0.96 EUR/l en aldi» *** ✓
+   *-- *** «Esperando» ***: *«Te aviso cuando esté en su precio más bajo de *
+      *** 90 días» ***, *con *** «Quitar» *** ✓
+*** -> *y el armazon: *el ☰, *el titulo, *y la barra *** Compra · Recetas · Calorias *** ✓
+*** -> *** y los 44 px SE VEN ***: *«Quitar» *y el ☰ estan comodos ✓
+*** -> *y el hueco de abajo *** esta vacio y no molesta *** *
+   *-- *(-- *y el encargo dice que no todas las tarjetas tienen que llenar --)* ✓
+*** -> *** ES LEGIBLE Y UTIL *** ✓✓✓
+```
+
+*** Y ES LA PRIMERA VEZ EN TODO EL ENCARGO *** *que hay *** una foto delante y un
+juicio escrito***, *en vez de una afirmacion sobre lo que la puerta decia. *
+
+### 7.159 *Y LAS CAPTURAS, *QUE NO SON DEL REPOSITORIO*
+
+*** Una corrida deja *** 61 ficheros y 11,2 MB***. *Y eso no se commitea: *
+*se mira, *y se tira. *
+
+```
+*** `.gitignore` ***: *** `docs/ui/capturas/` *** ✓
+*** -> *y el motivo escrito al lado: *
+   *** «lo que se conserva es el juicio escrito, *no la foto» *** ✓
+*** -> *y la excepcion: *** las que se citan en el dictamen ***, *
+   *y esas van *** enumeradas una a una *** ✓
+*** -> *y ahora `git status` *** no ve ninguna *** ✓✓✓
+```
+
+*** Y ESTO ES LO MISMO QUE TODO EL DIA *** *(-- *una herramienta que deja basura
+no se corre* --), *y por eso el `.gitignore` lleva *** el porque *** y no solo la
+linea: *quien lo lea dentro de un año sabra *** que hay que hacer con ellas. *** *

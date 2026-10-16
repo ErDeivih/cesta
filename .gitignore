@@ -35,3 +35,11 @@ plataforma/web/dist/
 # envejece en cada commit y que nadie lee. Se sirve montado desde el PC (`/aprende`), asi que
 # existe donde tiene que existir sin estar en git.
 plataforma/web/aprende/
+
+# **Las capturas de la puerta, *que son material de trabajo y no del repositorio*.**
+# Se sacan con `CESTA_CAPTURAS=<dir> uv run python -m plataforma.prueba_navegador`
+# (ver `docs/ui/COMO-SE-MIDE.md`, §18), y una corrida deja **61 ficheros y 11 MB**.
+# Se miran para juzgar lo que no se puede medir -- si una pantalla se lee bien --,
+# y se tiran: **lo que se conserva es el juicio escrito, no la foto.** La excepcion
+# son las que se citan en el dictamen, y esas van enumeradas una a una.
+docs/ui/capturas/
