@@ -78,17 +78,32 @@ dictamen; *las *** PARTES 4 a 7 *** son el *** historico de como se llego***, *
 | *** La frescura por cadena *** | *** medida ***: *alcampo al *** 14 ***, *y las demas al *** 15*** |
 | *** La cobertura de Lidl *** | *** cuantificada ***: *** 230 filas y 3 dias *** *frente a 730.860 de alcampo* |
 
-## 1.2 *Lo que esta limitado, *y por que*
+*** REESCRITA EN LA RONDA 43.*** *Esta seccion se escribio en la ronda 7, *antes de
+que la puerta corriera, *y su tabla decia «API» como lo que faltaba *** cuando la API
+ya se habia montado y usado.*** *Se conserva integra en el historico (PARTES 5, 6 y 7).* *
 
-| *que* | *que haria falta* |
-|---|---|
-| *Las ramas que dependen de datos: *`Grupo`, *`Panel` con datos, *`Ajustes`/`Avisos`/`Cesta` sin listas* | *API con datos controlados* |
-| *** El recorrido completo ***: *5 recetas → plan → lista → compra → consumo → diario* | *** API *** |
-| *Comparaciones, *ofertas y graficas* | *API, *y datos de varias fuentes* |
-| *Que lo servido *** se comporte bien *** | *API; *hoy solo se sabe que *** el codigo esta*** |
+## 1.2 *Lo que estaba limitado, *y dejo de estarlo*
 
-*** Y el limite es UNO, *y no es de herramientas ***: *** el acceso a datos.*** *
-*Las dos cosas que parecian imposibles -- pulsar y medir a 390 px -- *** se hicieron.*** *
+| *lo que se decia en la ronda 7* | *lo que es* | *evidencia* |
+|---|---|---|
+| *«las ramas con datos -> API»* | *** HECHO *** | *`Panel`, *`Buscar` y *`Comparar` vistos con datos, *a 1440 y a 390* |
+| *«el recorrido completo -> API»* | *** PASA *** | *** 87 de 87 *** *en la puerta del navegador* |
+| *«comparaciones y graficas -> API»* | *** HECHO *** | *unidad, *periodo, *cobertura *y desconocidos: *los comprueba la puerta* |
+| *«que lo servido se comporte»* | *** HECHO *** | *la puerta *** navega y pulsa la aplicacion servida*** * |
+| *«el limite es UNO: *el acceso a datos»* | *** RESUELTO *** | *el propietario autorizo la base desechable; *se monto, *se uso y *** se desmonto*** |
+
+*** Y LO QUE SI SIGUE LIMITADO, *dicho igual de claro ***: *
+
+```
+*** 1 ***. *** Las siete pantallas con sesion, *SIN CAPTURA ***: *`Recetario`, *
+   *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
+   *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el juicio
+   *de legibilidad *** ✓
+*** 2 ***. *** La seccion de los toques *** *no llega al final, *y su causa esta *
+   *** medida ***: *pide un enlace *** que a movil no existe*** ✓
+*** 3 ***. *`data/publicado/` *y la cobertura de las cadenas que no son Lidl: *
+   *** dos decisiones del propietario *** ✓
+```
 
 ## 1.3 *Y el rechazo de Alcampo, *que parecia un fallo y no lo es*
 
@@ -105,7 +120,7 @@ dictamen; *las *** PARTES 4 a 7 *** son el *** historico de como se llego***, *
 fallo*** *(-- *18 de septiembre: *20.571 en vez de 23.573, *dado por **completo con cero
 errores**, *y detectado **a mano** --).* *
 
-## 1.4 *Los dos defectos demostrados, *que NO he tocado*
+## 1.4 *Y los dos asuntos que quedan, *uno corregido y otro tuyo*
 
 ```
 *** 1 ***. *** `data/publicado/` son dos artefactos MUERTOS *** *
@@ -116,11 +131,13 @@ errores**, *y detectado **a mano** --).* *
    *-- *** POR QUE NO LOS BORRO ***: *son *** datos del propietario***, *
       *y *** no puedo saber si algo FUERA del codigo los lee *** *
       *(-- *un panel, *una tarea, *un documento --).* *Es *** una decision suya*** ✓
-*** 2 ***. *** La cobertura de Alcampo no esta declarada *** *
-   *-- *`data/cobertura/` solo tiene `lidl-*.json` ✓
-   *-- *y *** la ausencia se lee como «alcampo esta completo»***, *que es falso ✓
-   *-- *** POR QUE NO LO ARREGLO ***: *donde declararla es *** una decision de diseño***, *
-      *y hacerlo a ciegas seria inventarme el sitio ✓✓✓
+*** 2 ***. *** La cobertura de Alcampo NO esta declarada: *CORREGIDO *** *
+   *-- *yo lo anote como defecto mirando solo `data/cobertura/`, *que solo tiene *
+      *`lidl-*.json` ⚠️
+   *-- *** y la pantalla lo desmiente ***: *`Panel` la declara *** por cadena ***, *
+      *con PRODUCTOS, *COMPARABLES *y NUTRI-SCORE ✓
+   *-- *** la ausencia de fichero es un hueco, *no una mentira *** ✓✓✓
+   *-- *y si se quiere el fichero, *donde ponerlo *** es una decision de diseño *** ✓
 ```
 
 ---
