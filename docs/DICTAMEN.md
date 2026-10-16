@@ -489,3 +489,51 @@ muchisimo ***, *y falla en un sitio concreto.* *
 a proposito y el test quedo viejo, *o si se perdio sin querer. *Eso *** es del
 propietario***, *y las dos salidas son distintas: *si se quito a proposito, *
 *el test hay que actualizarlo; *si se perdio, *la pantalla hay que arreglarla.* *
+
+## 7.10 *Y LA PUERTA DEL PUNTO 4, *ARRANCADA Y CORRIDA ENTERA (ronda 25)*
+
+*** El fallo de la frase *** se resolvio leyendo el diff del commit que la quito ***: *
+
+```
+*** el commit `21c48a5` dice: *«se conserva el trabajo del dueno, *que estaba SIN *
+   *** COMMITEAR» ***, *y *** «El commit es suyo: *aqui solo se preserva» *** ✓
+*** -> *y el diff ***: *
+   *** - Esto compara el precio del mismo producto entre cinco supermercados. ***
+   *** + Esto compara precios por unidad de grupos de productos entre supermercados. *** ✓
+*** -> *** LA FRASE SE REESCRIBIO A PROPOSITO, *Y POR EL PROPIETARIO *** ✓
+*** -> *y la nueva es *** MAS PRECISA***: *dice «por unidad» (EUR/kg, *EUR/l) *
+   *y «de grupos de productos», *que es lo que la aplicacion hace ✓
+*** -> *** la PRUEBA estaba vieja, *no la pantalla *** ✓✓✓
+```
+
+*** Y el arreglo, *una linea, *con el texto viejo citado en un comentario para que
+nadie vuelva a dudar de cual era la buena ***: *
+
+```
+*** antes ***: *`comprueba("Esto compara el precio" in primera, ...)`*
+*** ahora ***: *`comprueba("Esto compara precios por unidad" in primera, ...)`*
+*** -> *y se comprueba un *** PREFIJO *** *a proposito: *para que otra reescritura *
+   *de la cola de la frase *** no la vuelva a romper *** ✓
+*** -> *LF conservado *(-- *2146 lineas, *CRLF=0 --)*, *y el diff *** 10/1 *** ✓
+```
+
+### 7.11 *Y EL RESULTADO: *86 COMPROBACIONES PASAN, *CERO FALLOS*
+
+```
+*** *** 86 ok ***, *0 FALLO *** ✓✓✓
+*** -> *y llega a *** LA ULTIMA SECCION *** del script: *
+   *«cuantos toques hay desde la primera pantalla hasta cada respuesta» ✓
+*** -> *y el unico error que queda es un `TimeoutError` al buscar *
+   *** `nav a[href='/cesta']` ***, *que es *** OTRO asunto *** ✓
+```
+
+*** Y entre los 86 hay comprobaciones que son *** literalmente *el punto 5 ***: *
+
+| *lo que comprueba la puerta* | *que es del encargo* |
+|---|---|
+| *«el indice contesta con una frase, no solo con un dibujo»* | *** las graficas dicen lo que son *** |
+| *«y ensena sobre cuantos productos y cuantas capturas lo dice»* | *** PERIODO y COBERTURA *** |
+| *«cada oferta acusada dice en que unidad esta su precio»* | *** la UNIDAD *** |
+| *«lo que no se juzga se cuenta por motivo»* | *** los DATOS DESCONOCIDOS *** |
+| *«filtrar por una cadena deja una sola serie en el indice»* | *** la comparacion exacta *** |
+| *«el panel de posicion contesta 'En que es cara cada cadena'»* | *** las alternativas *** |

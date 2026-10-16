@@ -596,7 +596,16 @@ def main() -> int:
         comprueba(pagina.get_by_text("Escribe al menos dos letras").count() >= 1,
                   "sin escribir nada hay algo que leer, no una pantalla vacia")
         primera = pagina.inner_text("main")
-        comprueba("Esto compara el precio" in primera,
+        # **La frase se reescribio a proposito**: el dueno la cambio el 12 de octubre de
+        # 2026 de «Esto compara el precio del mismo producto entre cinco supermercados» a
+        # «Esto compara precios por unidad de grupos de productos entre supermercados»
+        # (commit `21c48a5`, que solo conservaba su trabajo sin commitear). La nueva es mas
+        # exacta -- la aplicacion compara **por unidad** (EUR/kg, EUR/l) y sobre **grupos
+        # de productos comparables**, no sobre el mismo producto. La prueba se quedo con el
+        # texto viejo y llevaba fallando desde entonces, y como se corta en el primer fallo,
+        # todo el recorrido de despues no corria. Se comprueba un **prefijo** estable, para
+        # que otra reescritura de la cola no la vuelva a romper.
+        comprueba("Esto compara precios por unidad" in primera,
                   "sin sesion sale la tarjeta de la primera vez (no un esqueleto)")
         comprueba("visita guiada" not in primera.lower()
                   and pagina.get_by_role("button", name="Siguiente").count() == 0,
