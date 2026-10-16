@@ -3440,3 +3440,37 @@ puede comprobar sin inventar. *
 *** Y ESTA SIN CORRER ***, *y se dice: *falta la ejecucion que confirme que a 1280
 **el nav mide mas de 200 px** *y que **las tres abren***. *Esta *** razonado desde
 `hidden lg:block`*** *y desde el `:1466`, *pero *** razonado no es medido.*** *
+
+## 7.183 *Y EL ESCRITORIO CORRIO, *Y FUNCIONA (ronda 103)*
+
+```
+*** «a 1280 el nav de escritorio ocupa de verdad *** *** (1208 px)» *** ok ✓✓✓
+*** -> *** «y a 1280 Compra abre y contesta» *** ok ✓
+*** -> *** «y sigue siendo la ventana ancha en /compra» *** ok ✓
+*** -> *** «y a 1280 Recet abre y contesta» *** ok ✓
+*** -> *** «y sigue siendo la ventana ancha en /recetas» *** ok ✓
+*** -> *** 1208 px de 1280 *** *-- *el nav ocupa casi todo el ancho ✓
+*** -> *** las cinco pasan *** ✓✓✓
+*** -> *** y habia una cara que nadie habia visto ***, *y ahora esta medida ✓
+```
+
+### 7.184 *Y TAMBIEN SE CORTO, *Y NO SE POR QUE*
+
+```
+*** la corrida dio *** 88 ok *** *y se paro en *** los avisos *** ⚠️
+*** -> *y esa seccion *** imprimio***: *
+   *** «(no hay avisos sin ver: *el punto dice 0. *La cara de «Ya los he ***
+   *** visto» no se puede medir en esta p...)» *** ✓
+*** -> *y despues *** `patchright TimeoutError: Timeout 30000ms exceeded` *** ⚠️
+*** -> *** fallo de TIEMPO ***, *no de asercion ✓
+*** -> *** y en la corrida de 206 esa misma seccion paso *** ⚠️
+*** -> *y el aviso lo crea *** una seccion anterior de la misma corrida*** ✓
+*** -> *** NO SE LA CAUSA, Y NO LA INVENTO *** ✓✓✓
+```
+
+*** Y MI SITIO NO ES EL CULPABLE, *y eso si lo comprobe***: *el contexto de
+escritorio esta en la linea *** 539***, *antes de la sesion *(-- *que empieza en
+la 670 --)*, *y *** abre y cierra el suyo*** (`escritorio.close()`, *`:567`)*. *
+*Asi que *** no deja nada abierto***. *Pero *** tampoco voy a decir que no tiene
+nada que ver***: *la primera corrida con el escritorio *** se corto***, *y eso es
+un hecho que hay que mirar antes de dar el escritorio por bueno. *
