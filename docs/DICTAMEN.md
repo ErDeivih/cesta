@@ -663,3 +663,52 @@ del final.*** *Ninguna de las dos es un defecto de la aplicacion.* *
 *** -> *** y el arreglo de `BARRA` de la ronda 27 sigue SIN VERIFICAR ***, *
    *porque el script se corta antes de llegar a los toques ✓
 ```
+
+## 7.21 *Y LAS 22 REFERENCIAS SUSTITUIDAS, *Y UNA CORRECCION MIA (ronda 29)*
+
+*** Dije que arreglar `/grupo/` «no es una linea, es revisar el fichero entero», ***
+*** y era MAS DRAMATICO QUE EL PROBLEMA ***: *los veintidos sitios usan el mismo
+prefijo y el destino es siempre el mismo, *asi que es una sustitucion literal. *
+
+```
+*** `/grupo/` *** antes 22 *** -> *** despues 0 *** ✓
+*** `/compra/comparar/` *** antes 0 *** -> *** despues 22 *** ✓
+*** -> *ninguno sin barra final; *diff *** 22/22 ***; *LF conservado *(-- 2152, *CRLF=0 --)* ✓
+```
+
+## 7.22 *Y AL CORRERLA CON LOS TRES ARREGLOS, *SE CORTA EN EL MISMO SITIO*
+
+```
+*** *** 17 ok ***, *0 FALLO *** ✓
+*** -> *y para en «esto que tengo en la mano, *esta caro?» ⚠️
+*** -> *y el error *** cita MI sustitucion ***: *
+   *** `waiting for locator("a[href^='/compra/comparar/']").first to be visible` *** ✓
+*** -> *** o sea que la sustitucion se aplico *y el test sigue sin encontrar el enlace *** ⚠️
+```
+
+*** Y LO QUE HACE ESA SECCION ***: *`carga("/compra")`, *escribe *** «leche entera» *** *en
+el buscador, *y espera *** quince segundos *** *a que salga un resultado. *Y *** no sale.*** *
+
+## 7.23 *Y NO SE POR QUE, *Y NO LO VOY A AFIRMAR*
+
+```
+*** el catalogo *** SI esta ***: *`gold` apunta por defecto a *** `data/gold` ***, *
+   *que existe *(-- *vi `v20261015-123403` *y `resumen.parquet` --)* ✓
+*** -> *y la cuenta *** se creo ***, *y el buscador *** se rellena *** ✓
+*** -> *y la pasada de *** 86 ok *** *(-- ronda 25 --)* *** llego al final *** ✓
+*** -> *** y con base nueva, *dos veces, *se corta aqui *** ⚠️
+*** -> *** NO SE LA CAUSA ***, *y no la voy a inventar: *diria «es el gold» *
+   *o «es el estado de la base» *** sin haberlo medido *** ✓✓✓
+```
+
+*** LO QUE SI SE SABE ***: *la sustitucion esta *** hecha y aplicada*** *(-- *el error
+la cita --)*, *y *** lo que falta por saber es por que no salen resultados con una base
+recien migrada***, *cuando con la base de la ronda 25 si salian.* *
+
+## 7.24 *Y EL DESMONTAJE, *verificado otra vez*
+
+```
+*** 5173: cerrado *** · *** 8099: cerrado *** · *** 5434: cerrado *** ✓
+*** -> *y *** 8080, *5432 y 5433 siguen arriba *** ✓
+*** -> *** no queda nada mio levantado *** ✓✓✓
+```
