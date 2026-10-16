@@ -2385,3 +2385,51 @@ las 22 lineas de la ronda 29 es *** una sola y decisiva***: *
 ficheros***, *la puerta *** los tumbo***, *y *** se supo en treinta segundos y por
 que***. *La diferencia no es que yo haya mejorado: *es que *** esta vez el
 instrumento llega al final.*** *
+
+## 7.123 *Y DE LAS TRES FAMILIAS QUE QUEDAN, *UNA YA ESTA DIAGNOSTICADA (ronda 78)*
+
+*** Y la del error es la del punto 3 ***, *que pide «errores» con estas palabras. *
+*La puerta la prueba asi *** (`:1679-1694`)** : *
+
+```
+*** `carga("/compra")` *** *-- *«la primera pantalla» del buscador ✓
+*** -> *escribe *** «leche entera» *** *con la API a 500 ✓
+*** -> *y espera *** `pagina.get_by_text("No he podido buscar")` *** ✓
+*** -> *y el fallo dice *** «lei: Saltar al contenido | ☰ | Compra | | COMPRA |» *** ⚠️
+   *-- *** el cuerpo solo tiene el ARMAZON *** ✓
+*** -> *y `:1681` *** avisa: *«es justo el fallo que tenia esta pantalla ***
+   *** cuando se escribio (27 sep 2026)» *** ✓
+```
+
+### 7.124 *Y la causa es que el texto NO COINCIDE*
+
+```
+*** `Buscar.tsx:276-277` *** *** SI tiene el estado de error ***: *
+   *** `{busca && resultados.isError && (<Fallo error={...} reintentar={...} />)}` *** ✓
+*** -> *o sea que la pantalla *** esta bien construida *** ✓
+*** -> *y `Fallo` viene de `ui.tsx:395`, *y su titulo por defecto es ***
+   *** `'No he podido traer esto'` *** ✓
+*** -> *y si no hay red, *** `titulo="Sin cobertura"` *** ✓
+*** -> *** o sea que `Fallo` dice «No he podido traer esto» o «Sin cobertura» *** ✓
+*** -> *y el test busca *** «No he podido buscar» *** ⚠️
+*** -> *** EL TEXTO NO COINCIDE *** ✓✓✓
+```
+
+### 7.125 *Y las dos partes tienen razon*
+
+```
+*** el test quiere *** el verbo correcto ***: *buscar, *no traer ✓
+*** -> *y `ui.tsx:398-407` *** YA PENSO ESO ***: *
+   *-- *«El 15/10/2026 se vio que `Ajustes` pinta sus errores de guardar y de borrar ***
+      *** con un `<p>` a mano, *y no por descuido: *es que esta pieza decia ***
+      *** "No he podido traer esto", *y en un guardado eso es falso.» *** ✓
+   *-- *y por eso *** el titulo se puede cambiar*** ✓
+*** -> *y `Buscar.tsx:277` *** NO lo cambia *** ⚠️
+*** -> *y buscar *** no es «traer»: *es buscar *** ✓
+*** -> *** la pieza tiene la puerta abierta, *y la pantalla no la cruza *** ✓✓✓
+```
+
+*** ASI QUE EL ARREGLO ES DE LA PANTALLA ***, *y de una linea: *
+*`<Fallo titulo="No he podido buscar" ... />`. *Y *** no se hace en esta ronda***
+*porque *** pide correr la puerta despues***, *y esa es la condicion que me he
+puesto para tocar algo. *
