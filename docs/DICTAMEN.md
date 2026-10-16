@@ -3373,3 +3373,37 @@ semanal, *Ajustes *y *Panel --)*, *y *** tres son de las que el punto 3 nombra**
 aplicacion: *** cobertura *** *(-- *nadie la vende --)* *y *** frescura *** *(-- *ya
 no esta --)*, *en la misma frase y distinguidas. *Y yo habia escrito esa distincion
 *** en el dictamen, atribuyendomela***; *resulta que *** la dice la pantalla.*** *
+
+## 7.179 *Y EL ULTIMO AGUJERO DEL PUNTO 3: *NO SE HA MIRADO NUNCA EL ESCRITORIO (ronda 101)*
+
+*** El punto 3 dice ***, *con estas palabras: *«Probar *** movil Y escritorio***,
+*contenido largo, *teclado, *foco, *errores y carga». *
+
+```
+*** y las 66 capturas son *** de 390x844 *** ⚠️
+*** -> *y *** «contenido largo» *** *-- *algunas son de 1886 px *(-- *eso si --)* ✓
+*** -> *y *** teclado, *foco, *errores y carga ***: *la puerta *** los mide *** ✓
+*** -> *** falta ESCRITORIO *** ⚠️ *
+   *-- *** `:515` ***: *`viewport={"width": 390, "height": 844}, has_touch=True, *
+      *is_mobile=True` ✓
+   *-- *y *** `:1826` ***: *lo mismo, *el segundo navegador ✓
+   *-- *** los dos son de movil *** ✓
+```
+
+### 7.180 *Y LA PUERTA LO SABE, *Y LO DESCARTA A PROPOSITO*
+
+```
+*** `:1466-1467` *** dice, *literalmente: *
+   *** «`NavEscritorio`, *`hidden lg:block`), *y la primera del DOM es la del ***
+   *** escritorio, *que en un movil de 390 px *** no se ve y no se puede pulsar» *** ✓
+*** -> *** o sea: *la puerta tiene un nav de escritorio *** identificado ***,
+   *y *** lo descarta a proposito *** ✓
+*** -> *y *** nunca abre un navegador de escritorio *** ⚠️
+*** -> *y el codigo *** tiene ramas de escritorio ***: *`hidden lg:block` ✓
+*** -> *** hay una cara que nadie ha visto *** ✓✓✓
+```
+
+*** Y ES *** EL MISMO AGUJERO QUE EL DE RECETAS***, *y con la misma forma: *
+*una parte de la aplicacion que *** la puerta no abre***, *y que *** solo se ve
+mirando.*** *Y es *** exactamente lo que dice la ronda 44 de `Avisos`***: *
+*** una cara que no se mide es una cara que nadie ha visto.*** *
