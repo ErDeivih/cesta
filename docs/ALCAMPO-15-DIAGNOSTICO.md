@@ -222,6 +222,65 @@ artefactos** es el que se sirve.* *
    *El encargo pide «mantener explicita la de Lidl»; *y para que eso sirva, *
    *tiene que existir *** el mismo sitio para las demas***, *o la ausencia se lee
    *como «alcampo esta completo», *que es falso.* *
+
+---
+
+## 9. *Y `core/cobertura.py` reescribe el punto entero (ronda 6)*
+
+*Su cabecera explica **el fallo que lo obligo a existir**, *y es *** el mismo de Alcampo,
+un mes antes***: *
+
+```
+*** «El *** 18 de septiembre de 2026 ***, *Alcampo entrego *** 20.571 *** productos en vez de *
+   *** 23.573 *** *y la ejecucion se dio por *** completa, con cero errores ***».*
+*** -> *«Faltaba la rama *** Frescos entera ***: *2.646 productos el dia anterior, *
+   *** 91 ese dia ***».*
+*** -> *«Nadie se entero hasta que alguien comparo los dos dias *** a mano ***».*
+*** -> *y los tres controles que habia *** miraban el TOTAL ***: *
+   *-- `check_drift` *-- *«aviso en el log, *** no decide nada***»*
+   *-- `MERMA_ACEPTABLE` *-- *«solo se aplica si la ejecucion *** ya se dio por parcial***»*
+   *-- `errores == 0` *-- *«nadie fallo, *** simplemente no se pidio***»*
+*** -> *** «Un total puede bajar un 13% por mil razones normales. *Lo que no es normal *
+   *** es que una rama con 2.646 productos se quede en 91 mientras las demas *** *
+   *** siguen igual. *El total lo esconde; *LA RAMA LO GRITA.» *** ✓✓✓
+```
+
+### 9.1 *Y eso explica **el `1 error` que no encontraba***
+
+```
+*** `cobertura.revisa` *** devuelve error *** cuando ve una rama caida *
+   *-- *su docstring: *«la ejecucion no esta completa por mucho que no haya habido
+   *errores» ✓
+*** -> *** ese error ES el `1` de `runs.csv` *** ✓✓✓
+*** -> *** y NO es un rechazo del WAF ***: *el WAF causo la captura *** incompleta***, *
+   *y *** la cobertura la detecto *** ✓✓✓
+```
+
+### 9.2 *Asi que el punto 6 se cierra asi*
+
+```
+*** El 15 de octubre el sistema *** HIZO LO CORRECTO, *y por tres capas ***: *
+   *-- *el WAF impidio completar la captura ✓
+   *-- *`core/cobertura.py` *** detecto las ramas caidas *** *(-- Perfumeria -67%,
+      *Bebidas -58%, *Mascotas -89% --)* ✓
+   *-- *y la publicacion *** no publico alcampo, *conservo el del 14 *** ✓
+*** -> *** no hay nada que corregir en el rechazo ***: *el rechazo *** es el acierto *** ✓✓✓
+```
+
+*** Y LO QUE SI HAY QUE CORREGIR, *los dos defectos de verdad ***: *
+
+```
+*** 1 ***. *`data/publicado/` tiene *** dos ficheros, *los dos del 16/09 con 16 segundos *
+   *de diferencia *** *(-- `grupos.json` 1,9 MB *y `stats.json` 865 B --)*, *
+   *y *** `git grep` no encuentra ni quien los escribe ni quien los lee *** en `*.py`.* *
+   *Y el mecanismo real es *** `core/publicacion.py` *+ `data/gold/actual.json` ***. *
+   *O sea que son *** artefactos MUERTOS *** *que parecen la publicacion.* *
+*** 2 ***. *`data/cobertura/` solo tiene *** lidl-*.json *** *-- registro por dia --, *
+   *y *** no hay el mismo registro para las demas cadenas.*** *La cobertura de Lidl
+   *esta declarada, *y *** la de alcampo no***: *y la ausencia *** se lee como
+   *«alcampo esta completo»***, *que es falso.* *
+```
+
 ```
 
 
