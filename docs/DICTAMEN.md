@@ -2334,3 +2334,54 @@ las 22 lineas de la ronda 29 es *** una sola y decisiva***: *
 *** -> *** mire el total y conclui del total ***, *que es el error de siempre ✓
 *** -> *** y esta vez lo pare ANTES de commitear***, *fichero a fichero ✓
 ```
+
+## 7.120 *Y LA PUERTA CORRIO CON LOS CUATRO ARREGLOS: *190 OK (ronda 77)*
+
+```
+*** antes ***: *** 177 ok ***, *17 FALLO ✓
+*** -> *** despues ***: *** 190 ok ***, *14 FALLO *** ✓✓✓
+*** -> *o sea *** +13 ok ***, *y *** 3 fallos menos *** ✓
+*** -> *y los 14 que quedan son *** DOS cosas***: *
+   *-- *** `Saltar al contenido`: *14 veces *** ✓
+   *-- *** «la curva se pinta»: *1 *** ✓
+*** -> *** 15, *y los dos son LOS QUE YO HABIA LLAMADO FALSOS POSITIVOS *** ✓✓✓
+   *-- *el `sr-only` *** mide 1x1 a proposito *** ✓
+   *-- *la curva *** la niega la app con razon *** ✓
+*** -> *** mis dos analisis quedan CONFIRMADOS por la medida *** ✓
+```
+
+### 7.121 *Y LA PUERTA TUMBO MI ARREGLO, *y por eso hay que correrla*
+
+```
+*** a la primera pasada *** se corto en *** 24 ok *** con ***
+   *** `Locator.bounding_box: Timeout 30000ms` *** ⚠️
+*** -> *y el culpable era *** `prueba_navegador.py:724` ***: *
+   *** `nombre = pagina.locator("main h1").first.bounding_box()` *** ✓
+*** -> *y ese `main h1` era *** el NOMBRE DEL PRODUCTO *** *
+   *-- *`Producto.tsx:249`, *que *** yo habia convertido a `h2` *** ✓
+*** -> *y el `h1` que queda *(-- *el del armazon --)* esta en *** `<header>`, *no en `main` *** ✓
+*** -> *** el localizador se quedo sin coincidencias, *y `bounding_box` tumbo la puerta *** ✓
+*** -> *y el `:418` *** ya avisaba de ese fallo exacto ***: *
+   *** «un localizador sin coincidencias tumbo la puerta entera» *** ✓✓✓
+*** -> *** se arreglo de forma robusta ***: *`main h1, main h2` *** ✓
+   *-- *lo que se mide es *** el nombre del producto***, *y su nivel es otra cosa ✓
+```
+
+### 7.122 *Y YO INTRODUJE UN DEFECTO, *y lo dijo la puerta*
+
+```
+*** la portada salio con *** `{'encabezados': ['0 h1']}` *** ⚠️
+*** -> *y era *** mio ***: *`App.tsx` es uno de los 16, *y le converti el `h1` a `h2` ✓
+*** -> *** pero `/` es el LANZADOR, *y NO MONTA `LayoutSuite` *** *
+   *-- *o sea que *** nadie mas le pone el `h1` *** ✓
+*** -> *** era la unica pantalla que necesitaba ponerlo ella *** ✓
+*** -> *y se le devolvio, *con el motivo escrito al lado ✓✓✓
+*** -> *y ahora los `h1` son *** tres ***: *`App.tsx` (el Lanzador, *sin armazon), *
+   *`Suite.tsx` (el armazon) *e *`Inicio.tsx` (muerto) ✓
+```
+
+*** Y ESTA RONDA ES LA LECCION DE LA 29, *AL REVES***: *entonces rompi una prueba *
+***deduciendo*** *y no pude comprobarlo. *Y ahora he hecho *** 39 cambios en 17
+ficheros***, *la puerta *** los tumbo***, *y *** se supo en treinta segundos y por
+que***. *La diferencia no es que yo haya mejorado: *es que *** esta vez el
+instrumento llega al final.*** *

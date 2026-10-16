@@ -721,7 +721,15 @@ def main() -> int:
         visibles = pagina.locator("section[aria-label^='Alternativas de']:visible")
         comprueba(visibles.count() == 2,
                   f"se enseñan dos cadenas sin pedirlas ({visibles.count()})")
-        nombre = pagina.locator("main h1").first.bounding_box()
+        # **`main h1, main h2`, y no `main h1` a secas.** El 76 el `h1` de las paginas
+        # paso a `h2`, porque el `h1` lo pone el armazon: **lo pide la regla de abajo**
+        # (`if (h1 !== 1)`, un solo `h1` por pantalla, `:386`). Y este localizador se
+        # quedo apuntando a `h1`, que ya no existe **dentro de `main`** -- el del armazon
+        # esta en el `<header>` --, y **`bounding_box()` sin coincidencias tumbo la puerta
+        # entera durante treinta segundos** (el mismo fallo que avisa el `:418`).
+        # Se acepta cualquiera de los dos: **lo que se mide es el nombre del producto**,
+        # y cual sea su nivel es cosa del contrato de encabezados, no de esta medida.
+        nombre = pagina.locator("main h1, main h2").first.bounding_box()
         comprueba(nombre is not None and nombre["y"] < 300,
                   f"y el nombre del producto esta arriba, no debajo de la foto "
                   f"({None if nombre is None else round(nombre['y'])} px)")

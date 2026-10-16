@@ -68,8 +68,14 @@ function Lanzador() {
     <div className="mx-auto flex min-h-screen max-w-app flex-col px-5 py-pagina">
       <header className="border-b border-borde pb-bloque">
         {/* *Los tamanos, a la escala: **`portada`** y **`cuerpo`**, *no
-            `[32px]` y `[15px]` a ojo.* */}
-        <h2 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h2>
+            `[32px]` y `[15px]` a ojo.* *
+            **Y este `h1` se queda en `h1`.** El 76 se convirtieron a `h2` los de las
+            paginas, *porque en las demas el `h1` lo pone `Suite.tsx`. *Y `/` es *** el
+            Lanzador: *NO monta `LayoutSuite`***, *asi que quitandole el suyo ***la
+            portada se quedo con cero*** -- *lo dijo la puerta: *«en / la pantalla se
+            puede recorrer sin verla ({'encabezados': ['0 h1']})».** *Es *** la unica
+            pantalla sin armazon***, *y por eso *** la unica que tiene que ponerlo ella.*** */}
+        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
         <p className="mt-1 text-cuerpo text-secundaria">
           La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa.
         </p>
