@@ -600,3 +600,66 @@ del final.*** *Ninguna de las dos es un defecto de la aplicacion.* *
 *** -> *y el que los lea sabe exactamente que falta: *
    *** volver a correr `prueba_navegador.py` y ver la seccion de los toques *** ✓
 ```
+
+## 7.16 *Y SE VOLVIO A CORRER LA PUERTA: *EL ARREGLO DE LA FRASE FUNCIONA (ronda 28)*
+
+```
+*** *** 19 ok ***, *** 0 FALLO *** ✓✓✓
+*** -> *y pasa *** «sin sesion sale la tarjeta de la primera vez (no un esqueleto)» *** *
+   *** -- *que era EL fallo -- *** ✓✓✓
+*** -> *y pasa los cuatro ejemplos, *y «la cuenta prueba-navegador entra» ✓
+*** -> *** EL ARREGLO DE LA FRASE ESTA VERIFICADO *** ✓
+```
+
+## 7.17 *Y DONDE SE CORTA AHORA, *que es un TERCER sitio del mismo patron*
+
+```
+*** `pagina.wait_for_url("**/grupo/**", timeout=15000)` *** ⚠️
+*** -> *y `/grupo/:id` *** es una REDIRECCION a `/compra/comparar/:id` *** ✓
+*** -> *o sea que la URL final *** no contiene `/grupo/` ***, *y la espera caduca ✓
+```
+
+*** Y AL CONTAR LOS SITIOS, *el asunto es mucho mayor ***: *
+
+```
+*** `a[href^='/grupo/']` *** aparece en *** MAS DE VEINTE PUNTOS *** del fichero: *
+   *572, *580, *583, *677, *680, *683, *758, *782, *800, *804, *810, *812, *
+   *1438, *1439, *1440, *1456, *1477, *1574, *1917, *1972, *1976, *2070 ✓
+*** -> *y `App.tsx` *** NO tiene ninguna ruta `/grupo` *** ✓
+*** -> *** `/grupo/...` ya no es una URL: *el frontend genera `/compra/comparar/...` *** ✓
+*** -> *** la prueba esta vieja en mas de veinte sitios, *no en uno *** ✓✓✓
+```
+
+### 7.18 *Y por eso NO se toca mas*
+
+```
+*** arreglar esto *** no es una linea ***: *es revisar el fichero entero ✓
+*** -> *y hacerlo a trozos, *con el margen que queda, *seria *** exactamente *** *
+   *el error que llevo *** SEIS VECES *** cometiendo en este encargo ✓
+*** -> *** se para, *y se deja escrito *** ✓✓✓
+```
+
+## 7.19 *Y el desmontaje, *otra vez verificado*
+
+```
+*** `job_kill` a los dos jobs propios *** ✓ · *** `docker rm -f cesta-prueba-db` *** ✓
+*** -> *** 5173: cerrado *** · *** 8099: cerrado *** · *** 5434: cerrado *** ✓
+*** -> *y *** 8080, *5432 y 5433 siguen arriba ***, *y los contenedores son los cuatro ✓
+*** -> *** no queda nada mio levantado *** ✓✓✓
+```
+
+## 7.20 *Y EL BALANCE DE LA PUERTA, *con lo que se sabe ahora*
+
+*** Lo que se ha visto con datos, *y es mucho ***: *
+
+```
+*** 86 comprobaciones *** pasaron en la ronda 25 *** *(-- *la puerta llego al final --)* ✓
+*** -> *y entre ellas, *lo del punto 5: *unidad, *periodo, *cobertura, *
+   *datos desconocidos *y comparacion exacta ✓✓✓
+*** -> *** y eso NO se ha perdido: *fue una pasada real, *con su log *** ✓
+*** Y lo que queda por hacer en el fichero ***: *
+   *-- *** sustituir `/grupo/` por `/compra/comparar/` en los veintitantos sitios *** ⚠️
+   *-- *y volver a correr, *que entonces deberia llegar al final ✓
+*** -> *** y el arreglo de `BARRA` de la ronda 27 sigue SIN VERIFICAR ***, *
+   *porque el script se corta antes de llegar a los toques ✓
+```
