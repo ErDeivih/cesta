@@ -215,7 +215,7 @@ un entorno nuevo.* *** No hacia falta: *la aplicacion servida en 127.0.0.1:8080 
 
 ---
 
-# PARTE 6 · *** Y LAS SEIS PUERTAS: *LA DE `pytest` NO ESTA VERDE (ronda 19) ***
+# PARTE 6 · *** LAS SEIS PUERTAS: *ESTABAN ROJAS POR EL ENTORNO, *Y CON LA BASE LEVANTADA ESTAN VERDES (rondas 19 y 20) ***
 
 *** Esto **no** se habia corrido en este objetivo ***, *y el propietario ya lo aviso:
 *«las 2.081 de Python y el build *** no se repitieron *** en esa comprobacion».* *
@@ -270,4 +270,61 @@ un entorno nuevo.* *** No hacia falta: *la aplicacion servida en 127.0.0.1:8080 
    *-- *y arreglar esto *** sin saber cual de las dos cosas es *** seria *
       *exactamente el error que llevo cinco veces cometiendo ✓
 *** -> *** lo siguiente es leer UNA traza entera ***, *no el recuento ✓
+```
+
+## 6.4 *Y LA CONCLUSION, *que corrige lo que yo mismo escribi en la 6.3 (ronda 20)*
+
+*** En la parte 6.3 escribi que «el punto 4 empieza por un ROJO». *** Era una lectura
+correcta del recuento, *y *** la causa era otra.*** *
+
+```
+*** `AJUSTES.postgres` *** sale de `os.environ.get(...)` *y su valor por defecto es *
+   *** `postgresql://cesta:cesta@localhost:5432/cesta` *** *-- *LA BASE DOMESTICA ✓
+*** -> *y habia *** un mensaje escrito justo para esto ***: *
+   *«no puede apuntarle. *Usa el 5434: *CESTA_POSTGRES=...» ✓
+*** -> *y lo decisivo: *** `5434 NO ESCUCHA` ***, *y *** no habia contenedor
+   *`cesta-prueba-db` *** ✓
+*** -> *** los 32 errores eran `psycopg.errors.ConnectionTimeout` EN EL SETUP *** *
+   *-- *`ERROR at setup of ...` -> `almacen.arranca()` -> `psycopg.connect(...)` ✓
+*** -> *** NO ERA UN DEFECTO DE LA APLICACION: *ERA QUE NO HABIA BASE *** ✓✓✓
+```
+
+## 6.5 *Y con la base desechable levantada, *las seis estan verdes*
+
+*El comando esta en `docs/BACKLOG.md:1909`, *y el propio encargo lo cita: *`docker run
+--rm -d` en el *** 5434 ***, *«que no es el de casa»*. *Se levanto, *se corrieron las dos
+puertas rojas, *y *** se desmonto***. *
+
+```
+*** pytest -q *** *** 2081 passed, *17 skipped, *0 failed, *0 errors *** *
+   *en 204,49 s ✓✓✓ *-- *** exactamente los 2.081 que no se habian corrido *** ✓
+*** plataforma.prueba_e2e *** *** «== TODO BIEN» *** ✓✓✓
+*** -> *y su salida dice, *literalmente: *
+   *** «la misma operacion dos veces -> el mismo id (74)» *** *
+      *** = la IDEMPOTENCIA *** ✓
+   *** «y otra operacion distinta -> otro apunte» *** ✓
+   *** «tras recargar: 23 lineas (antes 23)» *** *** = la PERSISTENCIA *** ✓
+   *** «el diario trae 2 apuntes · kcal_conocida=None · completo=False» *** *
+      *** = y declara LOS DATOS DESCONOCIDOS *** ✓✓✓
+```
+
+## 6.6 *Y las seis, *medidas*
+
+| *puerta* | *estado* |
+|---|---|
+| *`uv run ruff check .`* | *** limpio *** |
+| *** `uv run pytest -q` (5434) *** | *** 2081 passed, *0 failed, *0 errors *** |
+| *`npm test`* | *** 81 pass, *0 fail *** |
+| *`npx tsc --noEmit`* | *** limpio *** |
+| *`npm run build`* | *** OK en 28,51 s *** |
+| *** `plataforma.prueba_e2e` *** | *** «TODO BIEN» *** |
+
+## 6.7 *Y la leccion, *que es la SEXTA de la misma familia*
+
+```
+*** escribi «el punto 4 empieza por un ROJO» leyendo el RECUENTO *** ⚠️
+*** -> *y la causa era *** que no habia base ***, *no la aplicacion ✓
+*** -> *** sexta vez: *mirar una parte (el recuento) *y concluir del conjunto *** ✓
+*** -> *y se corrigio *** leyendo UNA traza entera ***, *no razonando ✓✓✓
+*** -> *y las seis se han corregido *** mirando mas *** ✓
 ```
