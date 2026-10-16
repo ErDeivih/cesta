@@ -2169,3 +2169,46 @@ prueba ausencia***: *prueba que *** el patron estaba mal.*** *
 *** Y VAN DOS FAMILIAS DE SEIS QUE NO SON DEFECTOS ***: *la 2 (`Saltar al contenido`) *
 *y la 5 (la curva). *Y las dos por *** lo mismo***: *la prueba *** no distingue
 «no esta» de «no debe estar».*** *
+
+## 7.109 *Y LAS FAMILIAS 3 Y 4 SI SON DEFECTOS: *EL ARMAZON Y LA PAGINA COMPITEN POR EL `h1` (ronda 73)*
+
+*** Y la regla de la puerta esta escrita ***: *`prueba_navegador.py:345` dice
+*** «encabezados sin huecos y con un solo `h1`»***, *y el `:386` lo implementa: *
+*`if (h1 !== 1) problemas.encabezados.push(...)`. *Y el `:382` mira los huecos. *
+
+```
+*** las 15 rutas *** dan *** 2 h1 *** ⚠️ *y `/producto/dia/147509` da *** 0 *** ⚠️
+*** -> *y las dos son *** la misma regla en dos direcciones *** ✓
+*** -> *y *** SI son defectos ***: *un lector de pantalla *** navega por los `h1`***, *
+   *y dos (o ninguno) *** lo desorientan *** ✓✓✓
+*** -> *o sea que 3 y 4 SI, *a diferencia de 2 y 5 *** ✓
+```
+
+### 7.110 *Y la causa, *encontrada*
+
+```
+*** `Suite.tsx:424` ***: *** `<h1 className="truncate font-serif text-[28px] ...">` *** ✓
+   *-- *** es el `h1` del ARMAZON ***, *el titulo de la seccion ✓
+*** -> *y *** cada pagina *** tiene el suyo: *
+   *-- *`Cesta.tsx:1377` «La lista de la compra», *`Avisos.tsx:139`, *`Ajustes.tsx:84`, *
+      *`Escaner.tsx:142`, *`Favoritos.tsx:278`, *`Panel.tsx:100`, *`Grupo.tsx:262`, *
+      *`Producto.tsx:249`... ✓
+*** -> *** armazon + pagina = DOS `h1` *** ✓✓✓
+*** -> *y hay una *** segunda causa***: *paginas con `<h1 className="sr-only">` *
+   *-- *`Cesta.tsx:1322` «Lista», *`Buscar.tsx:151` «Buscar», *`Unirse.tsx:120` ✓
+   *-- *** y esas tambien dan dos *** ✓
+```
+
+### 7.111 *Y el `0 h1` de `/producto/dia/147509`, *que es la otra cara*
+
+```
+*** `Producto.tsx:249` *** *** tiene `<h1>` *** ✓
+*** -> *pero *** dentro de un condicional ***, *y en el camino que toca *** no se monta *** ✓
+*** -> *y es *** el mismo producto *** que falla la curva *(-- *7.104 --)* *
+   *-- *o sea que *** esa pantalla, *en ese dato, *no tiene `h1` NI curva *** ✓✓✓
+```
+
+*** Y ES UN DEFECTO DE ARQUITECTURA ***, *y no se arregla en una pagina: *
+*** se decide quien manda.*** *Y el `sr-only` de `Cesta`, *`Buscar` *y *`Unirse`
+*** sugiere que alguien ya lo intento*** *-- *poner el `h1` invisible para que
+mande el armazon --, *y *** no funciona: *siguen siendo dos.*** *
