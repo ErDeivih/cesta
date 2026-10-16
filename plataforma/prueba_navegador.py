@@ -1238,6 +1238,59 @@ def main() -> int:
         comprueba("entrada" in cuerpo or "entradas" in cuerpo,
                   "el dia dice de cuantas entradas es el subtotal")
 
+        # ------------------------- Recetas: la aplicacion entera, que no se abria -----------------
+        # **Las tres pantallas de Recetas no las abria ninguna puerta.** Medido en la ronda
+        # 92, al sacar las capturas con `CESTA_CAPTURAS`: salieron **61 fotos y 18
+        # pantallas**, y **no habia ninguna de Recetas** -- ni el recetario, ni el plan, ni
+        # una receta. *Y Recetas es **una de las tres aplicaciones**:* la puerta
+        # **recorria Compra y Calorias enteras y no entraba en la tercera.**
+        #
+        # **Y el recuento estaba mal**, que es la parte que importa: el hallazgo decia
+        # «faltan Recetario, PlanSemanal y Diario», y **eso eran nombres de pantalla, no
+        # rutas**. Fueron a buscarse a `App.tsx` (ronda 93): `/recetas` monta `Recetario`,
+        # `/recetas/plan` monta `PlanSemanal`, `/recetas/:recetaId` monta `RecetaDetalle`
+        # -- y **`/diario` NO EXISTE**: el Diario **es `/calorias`**, y ya se visitaba.
+        # Son **cinco rutas**, no tres, y una de las tres **no faltaba**.
+        #
+        # **Se comprueba lo que se puede comprobar sin inventar**, que en estas pantallas
+        # es: que **abren**, que **no se quedan en «Cargando…»**, y que **el armazon de
+        # Recetas esta** (el `nav` de la aplicacion). *Lo que dice cada una se mira en la
+        # captura, no aqui:* **juzgar si una pantalla se lee bien es mirarla.**
+        print("\n== Recetas entera: el recetario, el plan y una receta, que no se abrian")
+        for ruta, que, senal in (
+                ("/recetas", "el recetario", "Recetas"),
+                ("/recetas/plan", "el plan semanal", "plan"),
+                ("/recetas/cualquiera-que-no-existe", "una receta que no esta", None),
+        ):
+            carga(ruta)
+            texto = pagina.inner_text("body")
+            # **Que la pantalla conteste algo, y que no sea «Cargando…» para siempre.**
+            # El esqueleto eterno es el fallo que ya se vio en `/avisos`: una cara que no
+            # se mide es una cara que nadie ha visto.
+            comprueba("Cargando" not in texto or len(texto) > 400,
+                      f"{que} abre y contesta, y no se queda cargando")
+            if senal:
+                comprueba(senal.lower() in texto.lower(),
+                          f"y el armazon de Recetas esta ({senal})")
+            # **Y que la puerta de vuelta exista**: la barra lleva a las tres raices, y
+            # volver es lo que hace una persona cuando se equivoca de pantalla.
+            comprueba(pagina.locator("nav a[href='/recetas']").count() >= 1,
+                      f"y desde {que} se puede volver a Recetas")
+
+        # ------------------------- Calorias: las dos de abajo -------------------------
+        # `/calorias` ya se visitaba (es el Diario, `:1207`). **Estas dos no**: los
+        # alimentos y las tendencias. Y son las que llevan **la tabla y las graficas**,
+        # o sea justo lo que el punto 5 pide que diga unidad, periodo y cobertura.
+        print("\n== Calorias: los alimentos y las tendencias")
+        for ruta, que in (("/calorias/alimentos", "los alimentos"),
+                          ("/calorias/tendencias", "las tendencias")):
+            carga(ruta)
+            texto = pagina.inner_text("body")
+            comprueba("Cargando" not in texto or len(texto) > 400,
+                      f"{que} abre y contesta, y no se queda cargando")
+            comprueba(pagina.locator("nav a[href='/calorias']").count() >= 1,
+                      f"y desde {que} se puede volver a Calorias")
+
         # ------------------------- los avisos: el punto, y lo que se apaga -----------------
         # **«Ya los he visto» no lo pulsaba ninguna puerta.** Estaba solo comprobado leyendo
         # el codigo (`tests/test_alertas_pantalla.py`), y es una accion de verdad: el punto del

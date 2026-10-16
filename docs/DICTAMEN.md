@@ -3073,3 +3073,39 @@ se fueron a buscar *** las rutas de verdad*** en `App.tsx`. *
 *** Y NO SE ANADIERON LOS CINCO `carga()` *** *en esta ronda, *y se dice por que:
 ***anadirlos sin poder correr la puerta despues seria dejarlo a medias***. *
 *Quedan *** especificados***: *la ruta, *el componente, *y donde van. *
+
+## 7.162 *Y LAS CINCO RUTAS YA ESTAN EN LA PUERTA (ronda 94)*
+
+*** Se anadio una seccion nueva***, *con las cinco, *y con lo que se puede
+comprobar sin inventar. *
+
+```
+*** «== Recetas entera: *el recetario, *el plan y una receta, *que no se abrian» *** *
+   *-- *** `/recetas` *** *· *** `/recetas/plan` *** *· *** `/recetas/cualquiera-que-no-existe` *** ✓
+   *-- *y por cada una: *que *** abre y contesta*** *(-- *y no se queda en
+   *«Cargando…» --)*, *que *** el armazon de Recetas esta***, *y que *** se puede
+   *volver a Recetas *** ✓
+*** -> *** «== Calorias: *los alimentos y las tendencias» *** *
+   *-- *** `/calorias/alimentos` *** *· *** `/calorias/tendencias` *** ✓
+   *-- *y las dos llevan *** la tabla y las graficas***, *o sea *** justo lo que
+   *el punto 5 pide***: *unidad, *periodo *y cobertura ✓✓✓
+*** -> *y *** no se comprueba lo que dicen***, *a proposito: *
+   *** «juzgar si una pantalla se lee bien es mirarla» *** ✓
+```
+
+### 7.163 *Y MI PROPIA COMPROBACION FALLO, *OTRA VEZ POR EL PATRON*
+
+```
+*** escribi un `foreach` que buscaba *** `carga("/recetas")` *** literal ✓
+*** -> *y el codigo dice *** `carga(ruta)` ***, *con la ruta en una tupla ✓
+*** -> *y la comprobacion contesto *** «no» *** a las cinco *** ⚠️
+*** -> *y las cinco *** SI estaban*** *(-- *l. 1261 a 1286 --)* ✓
+*** -> *** es la leccion de la ronda 70, *exacta***: *
+   *** una busqueda vacia prueba que el patron esta mal, *no que falte *** ✓✓✓
+*** -> *y esta vez *** no conclui: *fui a mirar el fichero *** ✓
+```
+
+*** Y ESTA RONDA ES TODO EL DIA EN DOS LINEAS ***: *el agujero era real* *(-- *y
+mas grande de lo que dije --)*, *y *** la comprobacion que escribi para confirmarlo
+estaba mal***. *Y las dos cosas se vieron *** mirando el fichero***, *no razonando
+sobre lo que yo creia. *
