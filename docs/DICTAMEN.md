@@ -122,3 +122,36 @@ se puede afirmar que funcione** con datos reales y con dos usuarios distintos.* 
 *** Y NO SE HA CREADO NINGUN DEFECTO NUEVO ***: *todo lo tocado lleva sus puertas, *
    *y los dos defectos hallados *** no se han tocado a proposito *** ✓
 ```
+
+---
+
+# PARTE 4 · *** Y ESTO CAMBIA EL PLAN: *la API ya esta detras del Caddy ***
+
+*15/10/2026, ronda 8. *No estaba comprobado antes, *y cambia **el punto 2 entero.*** *
+
+```
+*** `plataforma/Caddyfile` ***: *`:8080 { handle /api/* { reverse_proxy api:8000 } }` *** ✓
+*** -> *** el 8080 sirve la API EN EL MISMO ORIGEN ***, *y su comentario lo dice: *
+   *«asi que no hay lios de *** CORS *** ni cookies que se pierden entre puertos» ✓
+*** -> *y comprobado EN VIVO: *`/api/salud` *** HTTP 200 ***, *`/api/yo` *** 200 ***, *
+   *y `/api/recetas` y `/api/alertas` *** 401 *** *(-- piden sesion --)* ✓✓✓
+*** -> *** la API esta viva y accesible en 127.0.0.1:8080 *** ✓
+*** -> *y el 8080 *** ya estaba publicado ***: *** no hay que abrir ningun puerto *
+   *ni reconstruir nada *** *-- *las dos prohibiciones del encargo ✓✓✓
+```
+
+## Y la distincion que hay que hacer, *que no estaba en el plan*
+
+```
+*** el `/api` del 8080 apunta a `cesta-db-1` *** *(-- casa 5432 --)* ⚠️
+*** -> *** PUNTO 3 ***, *ver las ramas con datos: *se puede hacer *** LEYENDO *** ✓
+   *-- *y *** NO necesita autorizacion nueva ***, *porque *** no modifica nada *** ✓✓✓
+*** -> *** PUNTO 4 ***, *el recorrido completo: *** SI necesita autorizacion *** ⚠️
+   *-- *porque *** crearia *** recetas, *listas y diario *** en la base domestica *** ✓
+*** -> *y el encargo dice *** «sin modificar cuentas ni bases domesticas» *** ✓✓✓
+```
+
+*** O sea que la autorizacion del punto 2 es MAS PEQUEÑA de lo que yo creia ***: *
+*para el punto 3 **no hace falta**, *y para el punto 4 *** si***. *Lo que hay que
+autorizar no es «un entorno aislado»: *es *** escribir en la base domestica ***,
+*o montar una copia para escribir en ella.* *
