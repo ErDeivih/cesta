@@ -2510,3 +2510,48 @@ puesto para tocar algo. *
 *** Y NO SE HA VUELTO A CORRER ***, *y se dice: *el arreglo esta razonado desde el
 diagnostico de la 78 *y comprobado contra `ui.tsx:438`*, *y *** falta la ejecucion***. *
 *Es *** la misma condicion que me he puesto toda la sesion.*** *
+
+## 7.131 *Y LA CUARTA FAMILIA ES *LA MISMA DE SIEMPRE*: *LA PRUEBA ESPERA LA RUTA VIEJA (ronda 81)*
+
+*** Y la invitacion **no** falla por la invitacion: *falla por `/cesta`.** *
+
+```
+*** `:1763` ***: *** `otra.wait_for_url("**/cesta", timeout=20000)` *** ⚠️
+*** -> `:1766` ***: *** `comprueba("/cesta" in otra.url and "unirme" not in otra.url, ***
+   *** "al aplicarse lleva a la cesta, y no deja el enlace a mano")` *** ✓
+*** -> *y el fallo dice *** `http://localhost:5173/compra/listas` *** ✓
+*** -> *** y `/cesta` REDIRIGE *** *-- *`App.tsx:274`: *
+   *** `<Route path="/cesta" element={<Navigate to={/compra/listas${search}} replace />} />` *** ✓
+*** -> *** la URL SI es la cesta, *pero *** no dice «/cesta» *** ✓
+*** -> *** falla el `"/cesta" in otra.url` *** ✓
+*** -> *y `:1775` *** busca *** «Ya estás en» *** o *** «Ya estabas en» *** *
+   *-- *y tampoco aparece *** ⚠️
+```
+
+### 7.132 *Y el `wait_for_url` no dio error, *y por eso llego al `comprueba`*
+
+```
+*** `:1762` ***: *** `with contextlib.suppress(Exception):` *** ✓ *
+   *-- *o sea que *** si el `wait_for_url` caduca, *se traga la excepcion*** ✓
+*** -> *y sigue *** a leer el cuerpo *** y a comprobar ✓
+*** -> *** y por eso el fallo sale como «no dice a que lista ha entrado» *** *
+   *-- *cuando *** el problema real es que esperaba `/cesta` *** ✓✓✓
+```
+
+### 7.133 *Y es LA CUARTA VEZ el mismo patron*
+
+```
+*** ronda 29-34 ***: *`/grupo/` *frente a *`/compra/comparar/` *-- *espera de carrera ✓
+*** -> *ronda 63 ***: *el `toca()` que no abria el cajon ✓
+*** -> *ronda 81 ***: *`/cesta` *frente a *`/compra/listas` *** ⚠️
+*** -> *** las cuatro son lo mismo ***: *
+   *-- *la aplicacion *** movio una ruta y dejo una redireccion *** ✓
+   *-- *y la prueba *** sigue esperando la vieja *** ✓
+   *-- *y la redireccion es *** instantanea ***, *asi que la URL ***
+      *** nunca esta en la vieja *** ✓✓✓
+```
+
+*** Y EL ARREGLO ES EL MISMO QUE EN LA 34 ***: *esperar y comprobar *** la URL
+final ***, *`/compra/listas`, *que es la que la aplicacion *** si muestra***. *
+*Y `:1775` *** pide mirar el texto ***, *que es otra cosa: *o el texto esta en otro
+sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defecto. *
