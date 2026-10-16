@@ -569,7 +569,7 @@ def main() -> int:
         campo.fill("leche entera")
         aparece = False
         with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=15000)
+            pagina.locator("a[href^='/compra/comparar/']").first.wait_for(timeout=15000)
             aparece = True
         comprueba(aparece, "escribir busca: los resultados salen debajo, sin pulsar nada")
         con_precios = pagina.inner_text("body")
@@ -577,10 +577,10 @@ def main() -> int:
                   "y la fecha de los precios va CON ellos, que es donde hace falta")
         # **Anclado en lo que hay hoy, no en la redaccion de ayer.** Medido el 13 de octubre de 2026:
         # esas dos frases ya no existen en la pantalla; lo que hay son **40 filas de producto
-        # enlazadas** (`a[href^='/grupo/']`), que es por donde se abre un producto entero.
+        # enlazadas** (`a[href^='/compra/comparar/']`), que es por donde se abre un producto entero.
         comprueba(pagina.get_by_text("Abrir en el buscador").count() >= 1
                   or pagina.get_by_text("Ver todos los resultados").count() >= 1
-                  or len(pagina.query_selector_all("a[href^='/grupo/']")) >= 1,
+                  or len(pagina.query_selector_all("a[href^='/compra/comparar/']")) >= 1,
                   "y hay por donde abrirlo entero")
         campo.fill("")
         pagina.wait_for_timeout(600)
@@ -674,13 +674,13 @@ def main() -> int:
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
         # Se espera a que el resultado exista de verdad: esperar un numero fijo de
         # milisegundos es como se escriben las pruebas que fallan solas.
-        primer = pagina.locator("a[href^='/grupo/']").first
+        primer = pagina.locator("a[href^='/compra/comparar/']").first
         primer.wait_for(timeout=15000)
         primer.click()
-        pagina.wait_for_url("**/grupo/**", timeout=15000)
+        pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
         pagina.wait_for_load_state("networkidle")
         tiempos.append(("de la entrada a la ficha con la frase", time.monotonic() - t0))
-        comprueba("/grupo/" in pagina.url, f"el resultado abre la ficha ({pagina.url})")
+        comprueba("/compra/comparar/" in pagina.url, f"el resultado abre la ficha ({pagina.url})")
         # Se espera al boton, que solo existe cuando el dato ha llegado: leer el texto
         # antes de eso es medir la pagina a medio pintar, y eso no es un fallo de la
         # aplicacion sino de la prisa de quien mira.
@@ -755,7 +755,7 @@ def main() -> int:
             campo_buscar.wait_for(timeout=30000)
             campo_buscar.fill("leche entera")
         with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=25000)
+            pagina.locator("a[href^='/compra/comparar/']").first.wait_for(timeout=25000)
         desliza = pagina.evaluate("""() => {
           const caja = document.querySelector('.tabla-scroll');
           if (caja) return {ancho: caja.scrollWidth, cabe: caja.clientWidth, quien: 'la tabla'};
@@ -779,7 +779,7 @@ def main() -> int:
                   f"y las cadenas a un toque, encima de los resultados ({chips.count()})")
         if chips.count():
             nombre_cadena = chips.first.inner_text().strip()
-            antes = pagina.locator("a[href^='/grupo/']").count()
+            antes = pagina.locator("a[href^='/compra/comparar/']").count()
             chips.first.click()
             pagina.wait_for_timeout(3000)
             marcadas = pagina.locator(
@@ -797,19 +797,19 @@ def main() -> int:
             comprueba(not ajenas,
                       f"solo salen resultados de «{nombre_cadena}» "
                       f"({len(ajenas)} de {len(filas)} filas son de otra)")
-            despues = pagina.locator("a[href^='/grupo/']").count()
+            despues = pagina.locator("a[href^='/compra/comparar/']").count()
             print(f"   «{nombre_cadena}»: de {antes} resultados a {despues}")
             pagina.get_by_role("button", name="Todas").click()
             pagina.wait_for_timeout(3000)
-            comprueba(pagina.locator("a[href^='/grupo/']").count() == antes,
+            comprueba(pagina.locator("a[href^='/compra/comparar/']").count() == antes,
                       "y «Todas» los trae de vuelta")
         # **Se vuelve a la ficha del grupo**: el bloque siguiente cuenta con estar en ella
         # (anade a la lista desde ahi). Medido el 27 de septiembre de 2026: sin esto, el bloque
         # de la pregunta 1 y 3 fallaba en «se puede anadir a la lista desde la ficha», que no
         # era un fallo de la aplicacion sino de esta prueba habiendo cambiado de pantalla.
-        pagina.locator("a[href^='/grupo/']").first.click()
+        pagina.locator("a[href^='/compra/comparar/']").first.click()
         with contextlib.suppress(Exception):
-            pagina.wait_for_url("**/grupo/**", timeout=15000)
+            pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
             pagina.wait_for_load_state("networkidle")
         # Y se espera al boton de anadir, que es donde se ancla el bloque siguiente: sin esta
         # espera se lee la ficha a medio pintar (`patchright` no espera sola).
@@ -1435,9 +1435,9 @@ def main() -> int:
         carga("/compra")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
         with contextlib.suppress(Exception):
-            pagina.locator("a[href^='/grupo/']").first.wait_for(timeout=20000)
-        pagina.locator("a[href^='/grupo/']").first.click()
-        pagina.wait_for_url("**/grupo/**", timeout=20000)
+            pagina.locator("a[href^='/compra/comparar/']").first.wait_for(timeout=20000)
+        pagina.locator("a[href^='/compra/comparar/']").first.click()
+        pagina.wait_for_url("**/compra/comparar/**", timeout=20000)
         pagina.wait_for_load_state("networkidle")
         pagina.wait_for_timeout(1200)
         comprueba(pagina.locator("main p.font-semibold").first.count() > 0,
@@ -1453,7 +1453,7 @@ def main() -> int:
         if solo_uno is None:
             print("   (no he encontrado ninguno hoy: no se puede comprobar)")
         else:
-            carga(f"/grupo/{solo_uno}")
+            carga(f"/compra/comparar/{solo_uno}")
             texto_uno = pagina.inner_text("main")
             frases = ("Es la mas barata", "Es la más barata", "Cuesta un",
                       "Esta al mismo precio", "Está al mismo precio")
@@ -1474,7 +1474,7 @@ def main() -> int:
         # visto nadie porque esta pantalla no la medía ninguna pasada.
         rutas = ["/", "/cesta"]
         if solo_uno is not None:
-            rutas.append(f"/grupo/{solo_uno}")
+            rutas.append(f"/compra/comparar/{solo_uno}")
         rutas += ["/avisos", "/panel", "/ajustes", "/escaner"]
         # Las tres pestanas nuevas del panel, cada una con su propia forma: una grafica
         # con deslizador de tabla, barras y tarjetas con una regla. Entran aqui porque
@@ -1571,7 +1571,7 @@ def main() -> int:
                 # diseñan** -- cargando, con contenido, vacia y rota --: la rota solo estaba
                 # medida en cuatro de las trece. Es la misma leccion que el esqueleto eterno de
                 # `/avisos`: una cara que no se mide es una cara que nadie ha visto.
-                ("la ficha del grupo", "grupo", "/grupo/526", None),
+                ("la ficha del grupo", "grupo", "/compra/comparar/526", None),
                 ("la ficha del producto", "producto", "/producto/dia/141787", None),
                 ("los favoritos", "favoritos", "/favoritos", None),
                 ("el panel", "panel/hoy", "/panel", None),
@@ -1914,7 +1914,7 @@ def main() -> int:
                       "y la medida de los porcentajes mira (con el tope a 0 encuentra algo)")
             # La misma medida en la pantalla del grupo, que es donde vive el dato grande
             # de "de la mas barata a la mas cara".
-            enlace_grupo = pagina.locator("a[href^='/grupo/']").first
+            enlace_grupo = pagina.locator("a[href^='/compra/comparar/']").first
             if enlace_grupo.count():
                 grupo_url = enlace_grupo.get_attribute("href") or ""
                 carga(grupo_url)
@@ -1969,11 +1969,11 @@ def main() -> int:
 
         carga("/compra")
         pagina.get_by_placeholder("leche entera, atún, papel de cocina…").fill("leche entera")
-        resultado = pagina.locator("a[href^='/grupo/']").first
+        resultado = pagina.locator("a[href^='/compra/comparar/']").first
         with contextlib.suppress(Exception):
             resultado.wait_for(timeout=15000)
         resultado.click()
-        pagina.wait_for_url("**/grupo/**", timeout=15000)
+        pagina.wait_for_url("**/compra/comparar/**", timeout=15000)
         pagina.wait_for_load_state("networkidle")
         with contextlib.suppress(Exception):
             pagina.get_by_role("button", name="Añadir a la cesta").first.wait_for(timeout=20000)
@@ -2067,7 +2067,7 @@ def main() -> int:
             # **Y buscar**, que estrena el microfono y el boton del escaner: es la pantalla con
             # mas controles de la aplicacion, y hasta hoy no la miraba esta prueba.
             for ruta in ("/", "/cesta", "/buscar?q=leche+entera", "/avisos", "/favoritos",
-                         "/ajustes", "/grupo/526") + (
+                         "/ajustes", "/compra/comparar/526") + (
                     (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)
