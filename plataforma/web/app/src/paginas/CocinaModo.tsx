@@ -88,7 +88,7 @@ export function CocinaModo() {
     // **dejar de decir «Cargando»** -- que es lo unico que se puede hacer sin inventar datos.*
     return (
       <div className="space-y-3">
-        <h1 className="text-xl font-semibold">Cocina</h1>
+        <h2 className="text-xl font-semibold">Cocina</h2>
         <p className="text-aviso">
           No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la receta no este
           empezada.
@@ -103,7 +103,7 @@ export function CocinaModo() {
   if (data.paso === null) {
     return (
       <div className="space-y-3">
-        <h1 className="text-xl font-semibold">Cocina</h1>
+        <h2 className="text-xl font-semibold">Cocina</h2>
         <p className="text-cuerpo text-tinta-suave">Esta receta no esta empezada.</p>
         <Boton onClick={() => empieza.mutate()} disabled={empieza.isPending}>Empezar a cocinar</Boton>
         {empieza.error ? <Etiqueta tono="mal">{textoDeError(empieza.error)}</Etiqueta> : null}
@@ -113,7 +113,7 @@ export function CocinaModo() {
 
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <h1 className="text-xl font-semibold">Cocina</h1>
+      <h2 className="text-xl font-semibold">Cocina</h2>
       <p className="text-cuerpo text-tinta-suave">
         Vas por el paso <strong>{(data.paso ?? 0) + 1}</strong>. {data.hechos} ingredientes usados.
       </p>

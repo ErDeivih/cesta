@@ -148,7 +148,7 @@ export function Buscar() {
           pantalla lo primero tiene que ser el campo de busqueda -- se usa de pie y con una
           mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
           `data/debug/accesibilidad.py` el 27 de septiembre de 2026. */}
-      <h1 className="sr-only">Buscar</h1>
+      <h2 className="sr-only">Buscar</h2>
       {estado.data?.vigencia_precio?.coherente === false && (
         <Aviso tono="aviso" titulo="Catálogo pendiente de verificar">
           La versión publicada no coincide con las fechas de sus precios. Estos resultados

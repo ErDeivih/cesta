@@ -136,7 +136,7 @@ export function Avisos() {
   return (
     <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-baseline gap-2">
-        <h1 className="text-xl font-semibold">Avisos</h1>
+        <h2 className="text-xl font-semibold">Avisos</h2>
         <span className="text-cuerpo text-tinta-suave">
           de {alertas.length} {alertas.length === 1 ? 'producto' : 'productos'} que sigues
         </span>

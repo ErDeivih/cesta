@@ -48,7 +48,7 @@ export function Cocina({ modo }: { modo: 'recetas' | 'calorias' }) {
   }
   return <section className="mx-auto max-w-3xl space-y-6">
     <div><p className="text-cuerpo font-semibold text-terracota ">Cocina y alimentación · versión inicial</p>
-      <h1 className="mt-1 text-3xl font-bold">{modo === 'recetas' ? 'Mis recetas' : 'Calorías de mis comidas'}</h1>
+      <h2 className="mt-1 text-3xl font-bold">{modo === 'recetas' ? 'Mis recetas' : 'Calorías de mis comidas'}</h2>
       <p className="mt-2 text-tinta-suave">Prepara cantidades y anota lo que comes. Comprar un producto no significa haberlo consumido.</p></div>
     <nav aria-label="Cocina" className="flex flex-wrap gap-3"><Link className={boton} to="/recetas">Recetas</Link><Link className={boton} to="/calorias">Calorías</Link></nav>
     <p className="rounded-tarjeta border border-aviso bg-marfil p-4 text-cuerpo text-aviso">Cuaderno de esta pestaña, sin sincronización con tu cuenta. Se pierde al recargar o cerrar: descarga lo que quieras conservar. Los datos nutricionales se introducen desde la etiqueta; aún no se completan desde el catálogo.</p>

@@ -248,7 +248,7 @@ export function Favoritos() {
         {/* `h1` y no `p`: en el caso vacio esta tarjeta **es** la pantalla, y sin encabezado la
             pagina se quedaba sin titulo (lo midio `data/debug/accesibilidad.py`). El estilo es
             el mismo: lo que cambia es lo que oye quien navega por encabezados. */}
-        <h1 className="text-entrada font-semibold">No sigues ningún producto</h1>
+        <h2 className="text-entrada font-semibold">No sigues ningún producto</h2>
         <p className="mt-2 text-cuerpo text-tinta-suave">
           Aquí van los pocos que compras siempre, para ver si se mueven sin tener que
           buscarlos. Se añaden desde la ficha de un producto, con el corazón.
@@ -275,7 +275,7 @@ export function Favoritos() {
     <div className="grid gap-4">
       <header className="grid gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-xl font-semibold">Favoritos</h1>
+          <h2 className="text-xl font-semibold">Favoritos</h2>
           {fechaDatos && <Etiqueta tono="dato">datos del {fecha(fechaDatos)}</Etiqueta>}
         </div>
         <p className="text-cuerpo text-tinta-suave">

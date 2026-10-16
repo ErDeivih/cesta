@@ -88,7 +88,7 @@ export function Unirse() {
         {/* Una `Tarjeta` de las de siempre: es lo unico que hay por encima de la
             puerta, y sin ella los dos formularios parecen salidos de la nada. */}
         <Tarjeta className="grow">
-          <h1 className="text-lg font-semibold">Te han invitado a una lista</h1>
+          <h2 className="text-lg font-semibold">Te han invitado a una lista</h2>
           <p className="mt-1 text-sm text-tinta-suave">
             Entra con tu cuenta —o créala, se tarda un momento— y te meto en la
             lista. El código del enlace no se pierde: sigue en la barra de
@@ -117,7 +117,7 @@ export function Unirse() {
             caducado abria una pagina que no decia como se llama. Medido con
             `data/debug/accesibilidad.py` el 27 de septiembre de 2026. Oculta porque el aviso ya
             lo dice en voz alta, y repetirlo encima seria ruido. */}
-        <h1 className="sr-only">Invitación a una lista</h1>
+        <h2 className="sr-only">Invitación a una lista</h2>
         <Aviso tono="mal" titulo="No he podido meterte en la lista">
           {/* El 404 de la API ya trae su frase entera ("caduca a los siete dias, y
               puede que ya lo hayan usado. Pidele otro a quien te lo mando"), y el

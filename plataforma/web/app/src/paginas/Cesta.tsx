@@ -1319,7 +1319,7 @@ export function Cesta() {
             abría una página que no decía cómo se llama. Va oculto porque el `h2` ya lo dice en
             voz alta. Medido con `data/debug/accesibilidad.py --sin-sesion` el 27 de septiembre
             de 2026, que es la cara que no había mirado nadie: el instrumento entraba siempre. */}
-        <h1 className="sr-only">Lista</h1>
+        <h2 className="sr-only">Lista</h2>
         <Introducir
           alEntrar={() => {
             // Al entrar hay que volver a preguntar quien soy y que listas tengo:
@@ -1374,7 +1374,7 @@ export function Cesta() {
   return (
     <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">La lista de la compra</h1>
+        <h2 className="text-xl font-semibold">La lista de la compra</h2>
         {/* **El selector de listas, siempre.** Antes solo aparecia cuando habia mas de
             una, y eso hace que no se pueda **crear la segunda**: el boton de «nueva
             lista» vivia detras de un desplegable que no existia hasta que ya tuvieras

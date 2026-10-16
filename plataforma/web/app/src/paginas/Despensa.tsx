@@ -62,7 +62,7 @@ export function Despensa() {
   if (isLoading && atascada) {
     return (
       <div className="space-y-3">
-        <h1 className="text-xl font-semibold">La despensa</h1>
+        <h2 className="text-xl font-semibold">La despensa</h2>
         <p className="text-aviso">
           No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la despensa este vacia.
         </p>
@@ -86,7 +86,7 @@ export function Despensa() {
 
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <h1 className="text-xl font-semibold">La despensa</h1>
+      <h2 className="text-xl font-semibold">La despensa</h2>
       <p className="text-cuerpo text-tinta-suave">
         Lo que hay en casa. <strong>Se declara</strong>, no se deduce de lo que se ha comprado:
         comprar algo no quiere decir que quede.

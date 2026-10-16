@@ -47,7 +47,7 @@ export function PanelMatching() {
   return (
     <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-bold">Panel de matching</h1>
+        <h2 className="text-xl font-bold">Panel de matching</h2>
         <Etiqueta tono="dato">datos del {fecha(d.fecha_datos)}</Etiqueta>
         {d.ultima && (
           <Etiqueta tono="info">pasada {d.ultima.ejecucion_id}</Etiqueta>
@@ -355,7 +355,7 @@ function EnlaceProducto({
 function SinRuta() {
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <h1 className="text-xl font-bold">Panel de matching</h1>
+      <h2 className="text-xl font-bold">Panel de matching</h2>
 
       <Vacio titulo="Este servidor todavía no tiene esa ruta" className="grow">
         <p>

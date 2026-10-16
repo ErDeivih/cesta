@@ -139,7 +139,7 @@ export function Escaner() {
 
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <h1 className="text-xl font-bold">Escáner</h1>
+      <h2 className="text-xl font-bold">Escáner</h2>
 
       <form
         className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-end"

@@ -246,7 +246,7 @@ export function Producto() {
           />
         )}
         <div className="min-w-[16rem] flex-1">
-          <h1 className="text-xl font-bold leading-tight">{producto.nombre}</h1>
+          <h2 className="text-xl font-bold leading-tight">{producto.nombre}</h2>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-cuerpo text-secundaria ">
             <Etiqueta tono="info">{nombreCadena(producto.fuente)}</Etiqueta>
             {producto.marca && <span>{producto.marca}</span>}

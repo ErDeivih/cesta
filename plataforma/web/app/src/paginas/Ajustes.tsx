@@ -81,7 +81,7 @@ export function Ajustes() {
   return (
     <div className="flex min-h-full flex-col gap-4">
       <header>
-        <h1 className="text-xl font-semibold">Ajustes</h1>
+        <h2 className="text-xl font-semibold">Ajustes</h2>
         <p className="text-cuerpo text-tinta-suave">
           Has entrado como <strong>{sesion.data.usuario.usuario}</strong>.
           <button

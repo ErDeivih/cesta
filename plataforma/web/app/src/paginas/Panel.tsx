@@ -97,7 +97,7 @@ export function Panel() {
   return (
     <div className="flex min-h-full flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-xl font-bold">Panel</h1>
+        <h2 className="text-xl font-bold">Panel</h2>
         <Link
           to="/panel/matching"
           className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo underline"

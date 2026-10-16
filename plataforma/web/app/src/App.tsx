@@ -69,7 +69,7 @@ function Lanzador() {
       <header className="border-b border-borde pb-bloque">
         {/* *Los tamanos, a la escala: **`portada`** y **`cuerpo`**, *no
             `[32px]` y `[15px]` a ojo.* */}
-        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
+        <h2 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h2>
         <p className="mt-1 text-cuerpo text-secundaria">
           La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa.
         </p>

@@ -2292,3 +2292,45 @@ en `h2` *** *(-- *o se quitan, *si son invisibles *y no aportan --)*. *Y eso es 
 *** un cambio de 16 ficheros***, *y por eso *** no se hace en esta ronda***: *
 *es exactamente el tamaño de cambio que *** no debo empezar sin poder correr la
 puerta al final***.* *
+
+## 7.117 *Y EL `h1` ARREGLADO: *16 FICHEROS, *23 ETIQUETAS, *Y SE PUEDE COMPROBAR (ronda 76)*
+
+*** Y el arreglo de la familia 3+4 *** si se puede hacer***, *y la diferencia con
+las 22 lineas de la ronda 29 es *** una sola y decisiva***: *
+
+```
+*** entonces *** no habia forma de comprobarlo *** ⚠️
+*** -> *y ahora *** la puerta cuenta los `h1` *** *
+   *-- *`if (h1 !== 1) problemas.encabezados.push(...)` ✓
+*** -> *** el instrumento que encontro el defecto es el que lo verifica *** ✓✓✓
+```
+
+### 7.118 *Y el cambio*
+
+```
+*** el armazon *** se queda con el `h1` *** *(`Suite.tsx`)* ✓
+*** -> *y *** las 23 etiquetas de las paginas *** pasan a `h2` ✓
+   *-- *** 16 ficheros***, *y *** una linea por etiqueta***: *
+      *App 1 · Ajustes 1 · Avisos 1 · Buscar 1 · Cesta 2 · Cocina 1 · CocinaModo 3 · *
+      *Despensa 2 · Escaner 1 · Favoritos 2 · Grupo 1 · ImportarReceta 1 · Panel 1 · *
+      *PanelMatching 2 · Producto 1 · Unirse 2 ✓
+*** -> *y *** el CRLF de cada fichero se conservo***: *8 eran CRLF *y *8 LF ✓
+*** -> *y *** cero descuadres***: *ningun `<h1` sin su `</h1>` ✓✓✓
+*** -> *y solo quedan *** `Suite.tsx` (1) *e `Inicio.tsx` (1) *** *
+   *-- *el del armazon *** manda***, *y el de `Inicio` es *** codigo muerto*** ✓
+*** -> *** y `tsc` limpio, *`npm test` 81/0, *`ruff` limpio, *18 de interfaz ✓
+```
+
+### 7.119 *Y UN ERROR MIO, *PARADO ANTES DE COMMITEAR*
+
+```
+*** mire el diff de total *** y vi *** 20 ficheros, *1920 inserciones, *451 borrados*** ⚠️
+*** -> *y *** 1920 lineas por cambiar 23 etiquetas es imposible *** ✓
+*** -> *y estuve a punto de pensar que *** mi script habia reescrito ficheros enteros *** ⚠️
+*** -> *y era *** el total, *que incluye LOS TUYOS***: *
+   *-- *`docs/SUPERAPP-CONTROL-DEEPSEEK-*.md`: *** 1821/408 *** ✓
+   *-- *`core/datos/secciones.yml`: *51/0 · *`docs/CIFRAS.md`: *21/20 ✓
+*** -> *y mis 16 suman *** 23/23 ***, *una linea por etiqueta ✓✓✓
+*** -> *** mire el total y conclui del total ***, *que es el error de siempre ✓
+*** -> *** y esta vez lo pare ANTES de commitear***, *fichero a fichero ✓
+```
