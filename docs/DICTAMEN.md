@@ -374,3 +374,33 @@ puertas rojas, *y *** se desmonto***. *
 | *9* | *** desmontar la base *** | *--* |
 
 *** Y EN CADA CAPTURA SE DIRA QUE PRUEBA Y QUE NO ***, *que es la regla del encargo. *
+
+## 7.4 *Y los pasos 1 y 2, *HECHOS Y VERIFICADOS (ronda 22)*
+
+```
+*** PASO 1 *** *** HECHO ***:*
+   *-- *`docker run --rm -d --name cesta-prueba-db ... -p 127.0.0.1:5434:5432 postgres:16-alpine` ✓
+   *-- *y las migraciones por *** la funcion del propio proyecto *** *
+      *(-- *`almacen.arranca()` -> `migra()`, *`almacen.py:137` --)* ✓
+   *-- *** 14 tablas ***: *alerta, *cocina, *compra, *compra_linea, *despensa, *
+      *favorito, *invitacion, *lista, *lista_acceso, *lista_linea, *preferencia, *sesion... ✓
+*** PASO 2 *** *** HECHO ***:*
+   *-- *`uv run uvicorn plataforma.api.main:app --host 127.0.0.1 --port 8099` ✓
+   *-- *`/api/salud` -> *** 200 ***: *`{"vivo":true,"fecha_datos":"2026-10-15"}` ✓
+   *-- *`/api/yo` -> *** 200 ***: *`{"usuario":null,"preferencias":{}}` ✓
+```
+
+*** Y LA GUARDA DEL PROYECTO, *que es lo que hace esto seguro ***: *
+
+```
+*** `plataforma/prueba_e2e.py` llama a *** `comprueba_que_es_una_prueba(CESTA_POSTGRES)` *** *
+*** -> *y su comentario: *«No basta con que el script se ponga su propio DSN si viene *
+   *uno de fuera: *hay que *** RECHAZARLO***» ✓
+*** -> *al arrancar salio *** «la guarda ACEPTA el DSN: es de prueba» *** ✓✓✓
+*** -> *** el codigo YA impide que estas pruebas toquen la base domestica *** ✓
+```
+
+*** ESTADO AL CERRAR LA RONDA 22 ***: *la base desechable y la API del 8099 estan
+*** levantadas***, *y 8080, *5432 *y *5433 *** siguen intactos.*** *
+*Los pasos *** 3 a 9 *** quedan pendientes: *pantallas con sesion, *el recorrido, *
+*dos usuarios, *cerrar la compra, *`Cargando`, *contenido largo, *y desmontar.* *
