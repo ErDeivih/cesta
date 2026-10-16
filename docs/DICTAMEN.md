@@ -1297,3 +1297,33 @@ que pide comprobar si se repite.*** *
    *-- *`Inicio.tsx:300` lo ponia *** desde la portada *** ✓
 *** -> *** o sea que el diseño ya estaba pensado; *lo que falta es decidirlo *** ✓
 ```
+
+## 7.58 *Y ANTES DE DARLO POR BUENO, *MIRÉ LA CAMPANA (ronda 49)*
+
+*** Casi afirmo que `Avisos` es inalcanzable sin mirar la pieza que mas probablemente
+llevaria alli: *la campana *** *(`Campana.tsx`), *que su comentario presenta como
+*** «la otra mitad del punto 6»***. *Y hay que mirarla, *porque si la campana llevara
+a `/avisos`, *el defecto no existiria.* *
+
+```
+*** `Campana.tsx` *** usa *** `crearAlerta`, *`borrarAlerta` *y *`misAlertas` *** ✓
+*** -> *** son mutaciones y consultas: *PIDE un aviso, *NO lleva a verlos *** ✓
+*** -> *y su cabecera lo dice: *«La campana: *"avisame si baja", *desde la ficha» ✓
+*** -> *** la campana no navega a `/avisos` *** ✓✓✓
+```
+
+### 7.59 *Y eso hace el defecto MAS claro, *no menos*
+
+```
+*** la API de alertas *** SE USA *** *(-- `misAlertas`, *`crearAlerta`, *`borrarAlerta` --)* ✓
+*** -> *la pantalla que las muestra *** EXISTE *** *(-- *232 lineas --)* ✓
+*** -> *el contador de no vistos *** EXISTE *** *(-- `consultas.ts:211` --)* ✓
+*** -> *y la campana *** deja pedir un aviso *** *desde la ficha ✓
+*** -> *** Y NO HAY FORMA DE LLEGAR A VERLOS *** ⚠️⚠️⚠️
+*** -> *** los datos fluyen, *la pantalla esta, *y no hay puerta *** ✓✓✓
+```
+
+*** Y LA LECCION DE LA RONDA ***: *estuve a un paso de afirmar que `Avisos` es
+inalcanzable *** sin mirar la campana***, *que es justo la pieza que podia
+desmentirlo. *Y no la mire por olvido, *sino *** porque ya tenia la conclusion ***. *
+*Es *** la decima vez *** *en este encargo, *y esta vez la pare a tiempo.* *
