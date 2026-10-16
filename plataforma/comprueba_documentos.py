@@ -47,16 +47,24 @@ VIGENTES = (
 # citando la regla --)*. Lo que se busca es *** el numero de la puerta cuando ya
 # no es el suyo***.
 VIEJAS = re.compile(
-    r"\b19 ok\b|\b87 ok\b|\b177 ok\b|\b190 ok\b|no llega al final"
+    r"\b19 ok\b|\b87 ok\b|\b177 ok\b|\b190 ok\b|\b194 ok\b"
+    r"|no llega al final"
     # **Y el censo de `pytest`**, *que cambio al anadir las pruebas de documentos:*
     # *2081 -> 2083. *Sin esto, **la comprobacion solo miraba lo que se me
     # ocurrio mirar**, *que es el defecto que vino a arreglar.*
     r"|\b2081 passed\b"
 )
 
-# **Y el numero de hoy**, para no acusar a la linea que dice el bueno: *la frase
+# **Y los numeros de hoy**, para no acusar a la linea que dice el bueno: *la frase
 # «paso de 19 ok a 194 ok» es **la correcta**, y sin esto se acusaba a si misma.*
-BUENO = re.compile(r"\b194 ok\b")
+#
+# **Y va una lista, *no uno*.** *Porque esto ya paso: al subir la puerta de 194 a
+# 206 se puso `206` y **se dejo `194` aqui**, *y la frase que dice los dos numeros
+# **volvio a acusarse a si misma**.* *Es el mismo defecto que este fichero vino a
+# arreglar, **un escalon mas abajo** -- y por eso ahora son varios, y crecen con la
+# puerta.* *Si el numero de hoy no esta aqui, **la comprobacion se queja de la
+# frase que dice la verdad**, y entonces se deja de correr.*
+BUENO = re.compile(r"\b194 ok\b|\b206 ok\b")
 
 # En el dictamen, el historico empieza aqui y NO se mira: sus frases viejas son
 # el registro de como se llego, y eso es lo que se quiere conservar.

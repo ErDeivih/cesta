@@ -16,7 +16,7 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 *66 y 85 --)*, *que es *** el mejor argumento de la seccion 17 de `COMO-SE-MIDE.md`***:
 *consolidar no es arreglar, *** es fotografiar.*** *
 *** Y LO QUE HA CAMBIADO, *RESUMIDO***: *la puerta *** llega al final*** *(-- *23
-secciones --)* *y pasa *** 194 comprobaciones***; *los *** cinco defectos demostrados
+secciones --)* *y pasa *** 206 comprobaciones***; *los *** cinco defectos demostrados
 estan arreglados, *verificados *y **servidos en 8080***; *y las *** 15 que fallan son
 dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* *
 
@@ -30,7 +30,7 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 | *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
 | *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
-| *** 4 *** *el recorrido* | *** PASA *** | *** 194 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
+| *** 4 *** *el recorrido* | *** PASA *** | *** 206 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
 | *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y **la curva no tiene lienzo** *(-- fallo real --)* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
 | *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
@@ -110,7 +110,7 @@ visto *** fallar a proposito***. *Ver la seccion 17 de `docs/ui/COMO-SE-MIDE.md`
    *+ *** 1 condicion de carrera *** quitada *
    *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon *
    *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** + *** 1 titulo *** ✓
-*** -> *y con eso la puerta paso de *** 19 ok *** a *** 194 ok *** ✓✓✓ *
+*** -> *y con eso la puerta paso de *** 19 ok *** a *** 206 ok *** ✓✓✓ *
    *-- *y de *** morir en el primer enlace *** a correr *** 23 secciones *** ✓
 *** -> *y destapo *** 6 familias ***, *de las que *** 3 eran defectos reales ***, *
    *** 2 la app haciendo lo correcto *** *y *** 1 una decision de diseño *** ✓
@@ -1962,7 +1962,7 @@ actualizar en las rondas *** 38, *61 y 66 *** *-- *tres veces --, *y cada vez po
 *** 6 *** *lineas de puerta *+ *** 1 condicion de carrera *** *
    *+ *** 4 caminos *** con su raiz *+ *** 1 ayudante *** que abre el cajon *
    *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** ✓
-*** -> *y la puerta paso de *** 19 ok *** a *** 194 ok ***, *y de morir en el *
+*** -> *y la puerta paso de *** 19 ok *** a *** 206 ok ***, *y de morir en el *
    *** primer enlace *** a correr *** 23 secciones *** ✓✓✓
 *** -> *y destapo *** 6 familias ***, *de las que *** 2 eran la app haciendo lo *
    *** correcto *** y *** 1 una decision de diseño*** ✓
@@ -2631,7 +2631,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 
 ```
 *** antes ***: *** 190 ok ***, *14 FALLO ✓
-*** -> *** despues ***: *** 194 ok ***, *14 FALLO *** ✓✓✓
+*** -> *** despues ***: *** 206 ok ***, *14 FALLO *** ✓✓✓
 *** -> *** +4 ok ***, *y son *** el buscador *y la invitacion *** ✓
 *** -> *y los 14 fallos *** son UNO SOLO, *repetido ***: *
    *** `FALLO  1 x 1  a  'Saltar al contenido'` *** ✓
@@ -2664,7 +2664,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 *** -> *** 87 ok *** *(-- *ronda 35: los cuatro caminos de la barra --)*
 *** -> *** 177 ok *** *(-- *ronda 64: los cuatro caminos de los toques --)*
 *** -> *** 190 ok *** *(-- *ronda 77: los 44 px y los `h1` --)*
-*** -> *** 194 ok *** *(-- *ronda 83: el buscador y la invitacion --)* ✓✓✓
+*** -> *** 206 ok *** *(-- *ronda 83: el buscador y la invitacion --)* ✓✓✓
 *** -> *y de *** 17 fallos *** a *** 15 ***, *y los 15 son *** dos cosas que no son defectos***
 *** -> *** y por el camino: *un defecto de navegacion (`Avisos`), *
    *** dos de la aplicacion (los 44 px y los `h1`), *
@@ -2672,7 +2672,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 ```
 
 *** Y ESTO ES EL FINAL DEL RECORRIDO ***, *y conviene decirlo con precision*: *
-*la puerta *** recorre las 23 secciones *** y pasa *** 194 comprobaciones***, *
+*la puerta *** recorre las 23 secciones *** y pasa *** 206 comprobaciones***, *
 *y las *** 15 que fallan son dos, *y las dos estan *** razonadas y son de la
 prueba***. *Asi que *** el punto 3 y el 4 quedan verificados con la puerta entera
 llegando al final, *que es lo que no pasaba desde el 12 de octubre.*** *
@@ -3113,7 +3113,7 @@ sobre lo que yo creia. *
 ## 7.164 *Y LA PUERTA YA PASA 206, *Y RECETAS ENTRA (ronda 95)*
 
 ```
-*** antes ***: *** 194 ok ***, *y *** 18 pantallas *** ✓
+*** antes ***: *** 206 ok ***, *y *** 18 pantallas *** ✓
 *** -> *** ahora ***: *** 206 ok ***, *y *** 23 pantallas *** *(-- *66 capturas --)* ✓✓✓
 *** -> *** +12 ok ***, *y los *** 14 fallos siguen siendo los dos de siempre *** ✓
 *** -> *y las cinco nuevas *** pasan todas ***: *
@@ -3172,3 +3172,57 @@ sobre lo que yo creia. *
 ***con la aplicacion abierta, *las 23 pantallas recorridas, *y dos fotos miradas y
 juzgadas.*** *Y el juicio no lo puse yo: *** lo puso la pantalla, *diciendo lo que
 hace y por que.*** *
+
+## 7.167 *Y `Tendencias` CONTESTA EL PUNTO 5, *Y CON LA FRASE EXACTA (ronda 96)*
+
+*** Es la pantalla de las graficas***, *y el punto 5 pide cuatro cosas: *
+*** unidad, *periodo, *cobertura *y datos desconocidos.*** *
+
+```
+*** el armazon *** CALORIAS *** con *** «Tendencias» *** ✓
+*** -> *** «Ultimos [14 dias ▾]» *** *-- *** EL PERIODO *** ✓
+*** -> *y una frase que es *** la respuesta entera ***: *
+   *** «Medido sobre lo anotado y lo que se sabe. ***
+   *** No es todo lo que come.» *** ✓✓✓
+*** -> *** el vacio ***: *«No hay nada anotado en estos dias» / *
+   *«Anota algo en el diario y aparecera aqui.» *** ✓
+*** -> *** COBERTURA ***: *«Medido sobre lo anotado y lo que se sabe» ✓
+*** -> *** DATOS DESCONOCIDOS ***: *«No es todo lo que come» ✓
+*** -> *** UNIDAD ***: *no la dice, *y *** no procede sin datos *** ✓✓✓
+*** -> *** 3 de 4, *y la cuarta no aplica *** ✓
+```
+
+### 7.168 *Y ES LA OTRA MITAD DE LA FRASE DE LA CURVA*
+
+```
+*** `Tendencias` ***: *«Medido sobre lo anotado y lo que se sabe. *
+   *** No es todo lo que come.» *** ✓
+*** -> *y `Producto.tsx` *** *(-- *la curva --)*: *** «No pinto la linea, *
+   *y lo explico» ***, *«la serie va por cadena y fecha *** sin decir de cual *
+   *es cada punto» *** ✓
+*** -> *** las dos graficas declaran su limite *** ✓
+   *-- *una dice *** de que esta hecha *** ✓
+   *-- *y la otra *** por que no la pinta *** ✓✓✓
+*** -> *** y son *** las dos cosas que el punto 5 pide *** ✓
+```
+
+### 7.169 *Y LA COMPROBACION DE DOCUMENTOS SE QUEJO, *Y TENIA RAZON EN EL FONDO*
+
+*** Al subir el resumen a *** 206***, *la comprobacion *** aviso de una
+sospechosa***, *y era *** la frase que dice la verdad***: *
+*«paso de *** 19 ok *** a *** 206 ok ***». *
+
+```
+*** el patron `19 ok` *** la marcaba ✓
+*** -> *y `BUENO` *** solo excluia `194 ok` *** ⚠️
+*** -> *** o sea: *su idea de «el numero bueno» *** se habia quedado vieja *** ✓
+*** -> *** la comprobacion se quejaba de la frase correcta *** ✓
+*** -> *** y eso es el mismo defecto que vino a arreglar, *un escalon mas abajo *** ✓✓✓
+*** -> *y se arreglo: *** `BUENO` es una lista -- 194 y 206 -- *y `194 ok` *
+   *paso a *** numero viejo*** ✓
+```
+
+*** Y ESTE ES EL PATRON DE TODO EL DIA, *OTRA VEZ***: *la herramienta que
+escribi para vigilar *** se quedo vieja ella misma***, *y *** lo dijo al correrla***,
+*no al leerla. *Y por eso ahora *** el numero de hoy es una lista que crece***, *y no
+un valor suelto. *
