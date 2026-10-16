@@ -978,3 +978,44 @@ mismo *** *y *** desactualizado respecto al router***: *
    *o el href es otro ✓
 *** -> *** NO se ha corregido, *y se dice *** ✓
 ```
+
+## 7.43 *Y EL VALOR DE `BARRA` SI ES CORRECTO, *MEDIDO (ronda 36)*
+
+*** Y esta vez *** mire lo que el nav genera ***, *no lo que parece: *
+
+```
+*** `Suite.tsx:79-84` ***, *la aplicacion «Compra» y sus subsecciones: *
+   *** `{ a: '/compra',           texto: 'Buscar' }` *** ✓
+   *** `{ a: '/compra/listas',    texto: 'Listas' }` *** ✓✓✓
+   *** `{ a: '/compra/favoritos', texto: 'Favoritos' }` *** ✓
+   *** `{ a: '/compra/analisis',  texto: 'Gasto y ahorro' }` *** ✓
+*** -> *** `/compra/listas` SI es un enlace del nav *** ✓
+*** -> *y el texto es *** «Listas» *** *-- *no «Cesta» ✓
+*** -> *y `BARRA` dice *** `"Cesta": "/compra/listas"` ***, *o sea que *** MI VALOR ES CORRECTO *** ✓✓✓
+```
+
+*** Y ADEMAS, *el propio codigo lo confirma ***: *`Suite.tsx:136` dice que el enlace de
+`Nav.tsx` «apuntaba a `/cesta`: *aunque se hubiera montado, *no habria contado nada». *
+*** O sea que `/cesta` NUNCA fue un destino valido del menu***, *y el valor original de
+`BARRA` estaba mal. *Lo que he medido lo confirma.* *
+
+## 7.44 *Y EL TIMEOUT ES OTRA COSA, *Y NO LA SUPONGO*
+
+```
+*** el test usa *** `:visible` ***, *y el sidebar es *** `hidden lg:block` *** ✓
+*** -> *y su primer toque es *** «Cesta» ***, *o sea `/compra/listas` ✓
+*** -> *** mi valor es correcto y el enlace NO esta visible *** ⚠️
+*** -> *puede ser que *** `BarraAbajo` *** no incluya esa seccion a 390 px, *
+   *o que el primer paso del recorrido sea una pantalla sin nav ✓
+*** -> *** NO LO SUPONGO ***, *y queda anotado como lo unico abierto de la puerta ✓
+```
+
+## 7.45 *Y LA PUERTA, *en su estado final de esta sesion*
+
+```
+*** *** 87 ok ***, *** 0 FALLO ***, *y llega a *** LA ULTIMA SECCION *** ✓✓✓
+*** -> *y el unico error es el localizador de los toques, *que es de *** mi arreglo ***, *
+   *con el valor *** medido y correcto *** ✓
+*** -> *** o sea que el recorrido del punto 4 PASA, *y lo unico que falta *
+   *es la seccion que *** cuenta los toques *** ✓
+```
