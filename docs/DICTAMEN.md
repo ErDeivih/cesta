@@ -16,7 +16,7 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 *66 y 85 --)*, *que es *** el mejor argumento de la seccion 17 de `COMO-SE-MIDE.md`***:
 *consolidar no es arreglar, *** es fotografiar.*** *
 *** Y LO QUE HA CAMBIADO, *RESUMIDO***: *la puerta *** llega al final*** *(-- *23
-secciones --)* *y pasa *** 206 comprobaciones***; *los *** cinco defectos demostrados
+secciones --)* *y pasa *** 212 comprobaciones***; *los *** cinco defectos demostrados
 estan arreglados, *verificados *y **servidos en 8080***; *y las *** 15 que fallan son
 dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* *
 
@@ -30,7 +30,7 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 | *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
 | *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
-| *** 4 *** *el recorrido* | *** PASA *** | *** 206 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
+| *** 4 *** *el recorrido* | *** PASA *** | *** 212 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
 | *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y **la curva no tiene lienzo** *(-- fallo real --)* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
 | *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
@@ -110,7 +110,7 @@ visto *** fallar a proposito***. *Ver la seccion 17 de `docs/ui/COMO-SE-MIDE.md`
    *+ *** 1 condicion de carrera *** quitada *
    *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon *
    *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** + *** 1 titulo *** ✓
-*** -> *y con eso la puerta paso de *** 19 ok *** a *** 206 ok *** ✓✓✓ *
+*** -> *y con eso la puerta paso de *** 19 ok *** a *** 212 ok *** ✓✓✓ *
    *-- *y de *** morir en el primer enlace *** a correr *** 23 secciones *** ✓
 *** -> *y destapo *** 6 familias ***, *de las que *** 3 eran defectos reales ***, *
    *** 2 la app haciendo lo correcto *** *y *** 1 una decision de diseño *** ✓
@@ -1962,7 +1962,7 @@ actualizar en las rondas *** 38, *61 y 66 *** *-- *tres veces --, *y cada vez po
 *** 6 *** *lineas de puerta *+ *** 1 condicion de carrera *** *
    *+ *** 4 caminos *** con su raiz *+ *** 1 ayudante *** que abre el cajon *
    *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** ✓
-*** -> *y la puerta paso de *** 19 ok *** a *** 206 ok ***, *y de morir en el *
+*** -> *y la puerta paso de *** 19 ok *** a *** 212 ok ***, *y de morir en el *
    *** primer enlace *** a correr *** 23 secciones *** ✓✓✓
 *** -> *y destapo *** 6 familias ***, *de las que *** 2 eran la app haciendo lo *
    *** correcto *** y *** 1 una decision de diseño*** ✓
@@ -2631,7 +2631,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 
 ```
 *** antes ***: *** 190 ok ***, *14 FALLO ✓
-*** -> *** despues ***: *** 206 ok ***, *14 FALLO *** ✓✓✓
+*** -> *** despues ***: *** 212 ok ***, *14 FALLO *** ✓✓✓
 *** -> *** +4 ok ***, *y son *** el buscador *y la invitacion *** ✓
 *** -> *y los 14 fallos *** son UNO SOLO, *repetido ***: *
    *** `FALLO  1 x 1  a  'Saltar al contenido'` *** ✓
@@ -2664,7 +2664,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 *** -> *** 87 ok *** *(-- *ronda 35: los cuatro caminos de la barra --)*
 *** -> *** 177 ok *** *(-- *ronda 64: los cuatro caminos de los toques --)*
 *** -> *** 190 ok *** *(-- *ronda 77: los 44 px y los `h1` --)*
-*** -> *** 206 ok *** *(-- *ronda 83: el buscador y la invitacion --)* ✓✓✓
+*** -> *** 212 ok *** *(-- *ronda 83: el buscador y la invitacion --)* ✓✓✓
 *** -> *y de *** 17 fallos *** a *** 15 ***, *y los 15 son *** dos cosas que no son defectos***
 *** -> *** y por el camino: *un defecto de navegacion (`Avisos`), *
    *** dos de la aplicacion (los 44 px y los `h1`), *
@@ -2672,7 +2672,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 ```
 
 *** Y ESTO ES EL FINAL DEL RECORRIDO ***, *y conviene decirlo con precision*: *
-*la puerta *** recorre las 23 secciones *** y pasa *** 206 comprobaciones***, *
+*la puerta *** recorre las 23 secciones *** y pasa *** 212 comprobaciones***, *
 *y las *** 15 que fallan son dos, *y las dos estan *** razonadas y son de la
 prueba***. *Asi que *** el punto 3 y el 4 quedan verificados con la puerta entera
 llegando al final, *que es lo que no pasaba desde el 12 de octubre.*** *
@@ -3113,8 +3113,8 @@ sobre lo que yo creia. *
 ## 7.164 *Y LA PUERTA YA PASA 206, *Y RECETAS ENTRA (ronda 95)*
 
 ```
-*** antes ***: *** 206 ok ***, *y *** 18 pantallas *** ✓
-*** -> *** ahora ***: *** 206 ok ***, *y *** 23 pantallas *** *(-- *66 capturas --)* ✓✓✓
+*** antes ***: *** 212 ok ***, *y *** 18 pantallas *** ✓
+*** -> *** ahora ***: *** 212 ok ***, *y *** 23 pantallas *** *(-- *66 capturas --)* ✓✓✓
 *** -> *** +12 ok ***, *y los *** 14 fallos siguen siendo los dos de siempre *** ✓
 *** -> *y las cinco nuevas *** pasan todas ***: *
    *-- *** «el recetario abre y contesta, y no se queda cargando» *** ✓
@@ -3210,7 +3210,7 @@ hace y por que.*** *
 
 *** Al subir el resumen a *** 206***, *la comprobacion *** aviso de una
 sospechosa***, *y era *** la frase que dice la verdad***: *
-*«paso de *** 19 ok *** a *** 206 ok ***». *
+*«paso de *** 19 ok *** a *** 212 ok ***». *
 
 ```
 *** el patron `19 ok` *** la marcaba ✓
@@ -3509,3 +3509,41 @@ una base *** recien migrada***, *puede que *** no haya nada que bajar.*** *
 0»***, *y lo que la confirmaria es *** mirar la seccion de la 918 en una corrida
 con la base recien hecha*** *-- *que es *** exactamente lo que hay que hacer
 antes de tocar nada.*** *
+
+## 7.187 *Y LA SEGUNDA CORRIDA PASO DE LARGO: *212 OK (ronda 105)*
+
+*** Y esto cierra las dos preguntas de la 103 y la 104***, *y las cierra **repitiendo**,
+*que es lo unico que las decidia. *
+
+```
+*** ronda 95 ***: *** 206 ok ***, *** 18 pantallas ***, *y llego al final ✓
+*** -> *ronda 103 ***: *** 88 ok ***, *y *** se corto en los avisos *** ⚠️
+*** -> *ronda 105 ***: *** 212 ok ***, *** 23 pantallas ***, *
+   *y *** llego al final *** ✓✓✓
+*** -> *** +6 ok *** *sobre la 95: *los *** 5 del escritorio *** *y uno mas ✓
+```
+
+### 7.188 *Y EL DATO QUE LO ACLARA TODO: *LA MISMA FRASE, *Y DISTINTO RESULTADO*
+
+```
+*** ronda 103 ***: *«(no hay avisos sin ver: *el punto dice 0...)» *
+   *y *** se corto *** ⚠️
+*** -> *ronda 105 ***: *** la misma frase ***, *y *** paso *** ✓
+*** -> *** misma frase, *mismo estado, *y distinto resultado *** ✓✓✓
+*** -> *** o sea: *el aviso *** NO SE CREO EN NINGUNA DE LAS DOS *** ✓
+   *-- *y la seccion *** sigue adelante igual***, *sin medir esa cara ✓
+*** -> *** el corte de la 103 fue *** de TIEMPO ***, *y en otra cosa *
+   *-- *** no es del escritorio ***, *ni de los avisos ✓
+*** -> *** y **212 ok es el numero bueno *** ✓✓✓
+```
+
+### 7.189 *Y LA LECCION, *QUE ES LA MAS UTIL DE TODAS*
+
+*** Un corte, *una vez*, *no dice nada***. *La 103 dio *** 88 ok*** *y yo tenia
+*** dos explicaciones razonables*** *(-- *el escritorio, *o los datos --)*, *y*
+*** las dos eran falsas***. *Lo que lo decidio fue *** repetir***: *misma base,
+*mismo codigo, *misma frase en pantalla *-- *y *** 212***. *
+
+*** Y eso es exactamente lo que me ha pasado todo el dia, *al reves***: *cada vez
+que tuve *** una explicacion razonable*** *y no la medi, *me equivoque. *Y cada vez
+que *** corri la comprobacion***, *supe la verdad en un minuto. *

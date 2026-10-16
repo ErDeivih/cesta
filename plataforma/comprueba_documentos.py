@@ -52,7 +52,7 @@ VIEJAS = re.compile(
     # **Y el censo de `pytest`**, *que cambio al anadir las pruebas de documentos:*
     # *2081 -> 2083. *Sin esto, **la comprobacion solo miraba lo que se me
     # ocurrio mirar**, *que es el defecto que vino a arreglar.*
-    r"|\b2081 passed\b"
+    r"|\b2081 passed\b|\b206 ok\b"
 )
 
 # **Y los numeros de hoy**, para no acusar a la linea que dice el bueno: *la frase
@@ -64,7 +64,7 @@ VIEJAS = re.compile(
 # arreglar, **un escalon mas abajo** -- y por eso ahora son varios, y crecen con la
 # puerta.* *Si el numero de hoy no esta aqui, **la comprobacion se queja de la
 # frase que dice la verdad**, y entonces se deja de correr.*
-BUENO = re.compile(r"\b194 ok\b|\b206 ok\b")
+BUENO = re.compile(r"\b194 ok\b|\b206 ok\b|\b212 ok\b")
 
 # En el dictamen, el historico empieza aqui y NO se mira: sus frases viejas son
 # el registro de como se llego, y eso es lo que se quiere conservar.
