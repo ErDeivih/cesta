@@ -39,6 +39,13 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 *** Y las seis puertas ***: *`ruff` limpio · *** 2083 passed *** · *81 del frontend · *
 *`tsc` limpio · *`build` OK · *`prueba_e2e` *** «TODO BIEN» ***. *
 
+*** Y LA SEPTIMA, *QUE ES LA DEL PUNTO 1***: *
+*** `uv run python -m plataforma.comprueba_documentos` *** *-- *y en las puertas,
+*** `tests/test_documentos.py` *** *-- *falla si un documento vigente afirma lo que
+el trabajo dejo atras. *Es la unica que *** vigila a los documentos***, *y se le ha
+visto *** fallar a proposito***. *Ver la seccion 17 de `docs/ui/COMO-SE-MIDE.md`.* *
+
+
 ## *** Y UN DEFECTO ENCONTRADO, *ARREGLADO Y SERVIDO***
 
 ```
@@ -2893,3 +2900,24 @@ base levantada *** no habia ningun ultimo fallo*** --).* *
 escribi para que los documentos no mintieran *** tenia su propio punto ciego*** *
 *(*solo miraba los patrones que se me ocurrieron*)*. *Y lo encontre porque ***
 cambie un numero y la prueba no dijo nada***. *
+
+## 7.152 *Y LA SEPTIMA PUERTA, *CONTADA EN EL RESUMEN (ronda 90)*
+
+*** El resumen decia *** «las seis puertas»***, *y desde la ronda 88 hay *** una
+septima***: *`tests/test_documentos.py`, *que falla si un documento vigente afirma
+lo que el trabajo dejo atras. *
+
+```
+*** y no es una puerta mas del monton ***: *
+   *-- *las otras seis *** miden el codigo *** ✓
+   *-- *y esta *** vigila a los documentos ***, *que es *** el punto 1 *** ✓
+*** -> *** y el resumen no la nombraba *** ⚠️ *
+   *-- *** o sea: *el propio resumen no contaba una de las cosas que vigilan *** ✓
+*** -> *y ahora la cuenta, *con las dos formas de correrla: *
+   *** a mano *(`comprueba_documentos`) *y en las puertas *(`test_documentos.py`) ✓
+*** -> *y se dice que *** se le ha visto fallar a proposito *** ✓✓✓
+```
+
+*** Y ESTE ES EL FONDO DE LA SECCION 17, *YA COMO HERRAMIENTA***: *un documento que
+afirma un estado *** se queda atras solo***, *y la unica defensa que no depende de
+la memoria es *** una prueba que lo diga***. *Y ahora hay una. *
