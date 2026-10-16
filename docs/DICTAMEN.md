@@ -1732,3 +1732,42 @@ completos; *lo que no se pudo confirmar es que el navegador se cerrara.* *
 *es una frase que *** deja recursos ***, *y el que los deja *** no siempre puede
 recogerlos ***. *Y aqui *** recogerlos a ciegas habria sido peor ***: *
 *`FacylfBot` es la prueba de que *** en esta maquina hay navegadores que no son mios.*** *
+
+## 7.83 *Y LA LIMPIEZA DE LOS PERFILES, *HECHA A MEDIAS Y EXPLICADA (ronda 60)*
+
+*** Se intento borrar los dos perfiles *** con la ruta resuelta y comprobada***, *
+*y las tres condiciones (existe, *dentro de `%TEMP%`, *nombre exacto). *
+
+```
+*** `..._gL8ZxH` ***: *** ya no estaba *** *(-- *lo recogio el proceso --)* ✓
+*** -> `..._DkaoPw` ***: *existe, *dentro, *nombre exacto, *y *** se intento borrar*** ⚠️
+*** -> *** y a la primera no se supo si funciono ***, *porque lleve *
+   *`-ErrorAction SilentlyContinue`, *que *** se traga el error *** ✓
+*** -> *y al repetirlo *** sin tragarmelo ***: *
+   *** `IOException`: «El proceso no puede obtener acceso al archivo ***
+   *** '000003.log' porque esta siendo utilizado en otro proceso» *** ✓✓✓
+```
+
+### 7.84 *Y ese error DEMUESTRA que mi deduccion anterior era falsa*
+
+```
+*** antes habia dicho *** «ningun Chrome mio: el proceso que lo usaba ya no esta» ⚠️
+*** -> *y lo deduje de buscar `*DkaoPw*` en la linea de comandos de los Chrome ✓
+*** -> *** y SOLO EL PROCESO PRINCIPAL lleva el perfil en su linea de comandos *** *
+   *-- *los hijos (`--type=renderer`, *`--type=gpu-process`) *** no lo llevan *** ✓
+*** -> *** asi que mi busqueda solo podia encontrar al padre *** *
+   *-- *y los hijos sostienen el fichero ✓
+*** -> *** y el fichero bloqueado lo demuestra *** ✓✓✓
+*** -> *** la medida correcta era EL FICHERO OCUPADO, *no mi criterio de busqueda *** ✓
+```
+
+### 7.85 *Y el estado final, *sin adornos*
+
+```
+*** `..._gL8ZxH` ***: *no esta ✓
+*** -> `..._DkaoPw` ***: *** SIGUE ***, *sostenido por un Chrome que REA no cerro ⚠️
+*** -> *y *** no se mata ningun proceso ***: *no puedo distinguir el mio de *
+   *`FacylfBot` *ni de los demas con el mismo binario ✓
+*** -> *** la leccion practica ***: *`-ErrorAction SilentlyContinue` es lo que *
+   *convierte «no se si funciono» en «crei que funciono» ✓✓✓
+```
