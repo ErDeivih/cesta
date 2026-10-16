@@ -2212,3 +2212,47 @@ prueba ausencia***: *prueba que *** el patron estaba mal.*** *
 *** se decide quien manda.*** *Y el `sr-only` de `Cesta`, *`Buscar` *y *`Unirse`
 *** sugiere que alguien ya lo intento*** *-- *poner el `h1` invisible para que
 mande el armazon --, *y *** no funciona: *siguen siendo dos.*** *
+
+## 7.112 *Y EL MAPA COMPLETO DE LOS `h1`, *QUE ES PEOR DE LO QUE PARECIA (ronda 74)*
+
+*** Y antes de decidir quien manda, *habia que contar ***: *
+
+```
+*** EL ARMAZON ***: *** 1 *** *(`Suite.tsx:424`)* ✓
+*** -> *** 16 FICHEROS DE PAGINAS CON *** 23 `h1` *** ⚠️ *
+   *-- *la mayoria *** 1***, *que con el armazon dan *** 2 *** ✓
+   *-- *** `CocinaModo.tsx`: *3 *** ⚠️ *-- *tres en un solo fichero ✓
+   *-- *** 2 *** en *`Cesta`, *`Despensa`, *`Favoritos`, *`PanelMatching` *y *`Unirse` ✓
+   *-- *y *** `App.tsx`: *1 *** *-- *el Lanzador ✓
+*** -> *** Y CINCO PAGINAS CON *** NINGUN `h1` *** ⚠️⚠️⚠️ *
+   *** -- *`Diario`, *`PlanSemanal`, *`RecetaDetalle`, *`Recetario`, *`Tendencias` *** ✓
+*** -> *mas *** `Inicio.tsx` ***, *que tiene 1 *y es *** codigo muerto *** ✓
+```
+
+### 7.113 *Y el defecto NO es «2 h1»*
+
+```
+*** el mensaje de la puerta dice *** «2 h1» ***, *y eso es *** el sintoma *** ⚠️
+*** -> *** el defecto es que hay 23 repartidos de cualquier manera *** *
+   *-- *16 ficheros, *con 0, *1, *2 o *3 cada uno ✓
+*** -> *y *** `Producto` *** ensena la consecuencia: *
+   *-- *su `h1` esta *** dentro de un condicional ***, *y cuando no se monta *
+      *** la pantalla queda con 0 *** ✓
+*** -> *** o sea: *el `h1` *** no esta garantizado por nadie *** ✓✓✓
+```
+
+### 7.114 *Y las cinco sin `h1` son cinco de las siete pantallas con sesion*
+
+```
+*** `Recetario`, *`PlanSemanal`, *`Diario`, *`Tendencias` *y *`RecetaDetalle` *** ✓
+*** -> *y son *** justo las que nunca se habian capturado *** ✓
+*** -> *y su `h1` *** lo pone el armazon ***, *que les da *** el titulo de la seccion*** *
+   *-- *no el de la pantalla ✓
+*** -> *** y eso funciona mientras el armazon lo ponga *** ✓
+*** -> *** pero `Producto` demuestra que a veces no lo pone *** ✓✓✓
+```
+
+*** ASI QUE LA DECISION NO ES «ARMAZON O PAGINA»***, *como escribi en 7.111. *
+*Es *** mas grande y mas simple a la vez***: *hoy *** nadie garantiza un `h1`***, *
+*y hay *** 23 sueltos en 16 ficheros***. *Arreglarlo pide *** decidir el contrato
+y aplicarlo*** *-- *y eso es *** un cambio de 16 a 20 ficheros***, *no de uno.* *
