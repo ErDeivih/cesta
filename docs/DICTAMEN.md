@@ -537,3 +537,33 @@ nadie vuelva a dudar de cual era la buena ***: *
 | *«lo que no se juzga se cuenta por motivo»* | *** los DATOS DESCONOCIDOS *** |
 | *«filtrar por una cadena deja una sola serie en el indice»* | *** la comparacion exacta *** |
 | *«el panel de posicion contesta 'En que es cara cada cadena'»* | *** las alternativas *** |
+
+## 7.12 *Y EL SEGUNDO ASUNTO, *que es del MISMO tipo (ronda 26)*
+
+*** El unico error que quedaba era `TimeoutError` buscando `nav a[href='/cesta']`. ***
+*Y la causa es la misma clase de cosa:* *
+
+```
+*** la ruta *** `/cesta` NO EXISTE *** en `App.tsx` ✓
+*** -> *y el test espera *** `BARRA = {"Cesta": "/cesta", "Avisos": "/avisos", *
+   *"Panel": "/panel", ...}` *** ⚠️
+*** -> *y las rutas reales son *** `/compra/...` *** ✓
+*** -> *** la prueba de los TOQUES usa rutas que ya no existen *** ✓✓✓
+*** -> *y por eso el timeout: *no hay ningun `nav a[href='/cesta']` ✓
+```
+
+*** O sea que hay *** DOS pruebas desactualizadas ***, *y del mismo tipo: *
+*una frase reescrita y unas rutas movidas. *Y las dos *** cortan el script antes
+del final.*** *Ninguna de las dos es un defecto de la aplicacion.* *
+
+## 7.13 *Y EL DESMONTAJE, *hecho y verificado (paso 9)*
+
+```
+*** `job_kill` a los dos jobs propios *** *(-- *el frontend dev y la API --)* ✓
+*** `docker rm -f cesta-prueba-db` *** ✓
+*** -> *** 5173: cerrado *** · *** 8099: cerrado *** · *** 5434: cerrado *** ✓✓✓
+*** -> *y *** 8080, *5432 y 5433 siguen arriba *** ✓
+*** -> *y los contenedores son los cuatro de siempre: *
+   *`cesta-api-1`, *`cesta-web-1`, *`cesta-db-1` *y *`facylf-postgres` ✓
+*** -> *** no queda nada mio levantado *** ✓✓✓
+```
