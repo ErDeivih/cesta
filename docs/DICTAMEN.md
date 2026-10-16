@@ -3330,3 +3330,46 @@ punto 4***, *contado desde el otro lado.* *
 *** Y CON ESTA VAN CINCO CAPTURAS LEIDAS *** *(-- *Avisos, *Recetario, *Plan
 semanal, *Ajustes *y *Panel --)*, *y *** tres son de las que el punto 3 nombra***: *
 *Ajustes, *Avisos *y *Panel. *Falta *** `Cesta` ***, *que es `/compra/listas`. *
+
+## 7.177 *Y `Cesta`, MIRADA: *CONTESTA LOS PUNTOS 3, 4, 5 Y 6 EN UNA PANTALLA (ronda 100)*
+
+*** Y con esta, *** las cuatro que el punto 3 nombra estan miradas***: *
+*Ajustes, *Avisos, *Cesta *y *Panel. *
+
+```
+*** «Listas» *** *y *** «La lista de la compra» *** *con *** «Casa (1) ▾» *** ✓
+*** -> *** «0,96 €» *** *y *** «Lo que cuesta ahora mismo, comprando cada ***
+   *** cosa donde esta mas barata.» *** ✓
+*** -> *** «1 lineas · 1 ya cogidas» *** *· *** «Datos del 2026-10-16» *** ✓
+*** -> *** «Marca lo que ya llevas en el carro. ***
+   *** Lo tachado sigue contando en el total, pero sale de la cuenta ***
+   *** de donde comprar.» *** ✓
+*** -> *** «La lista es de quien la creo y de quien entre por aqui. Quien ***
+   *** entre puede escribir en ella o solo mirarla, y eso se elige aqui abajo.» *** ✓
+*** -> *** «Pedirle a alguien su nombre de usuario es pedirle que se equivoque. ***
+   *** El enlace se lo lleva puesto.» *** ✓
+*** -> *** «Madre @prueba-navegador» *** *con *** «creo la lista» *** ✓
+*** -> *** el vacio ***: *«No puedo decir donde / De esta lista no tengo ningun ***
+   *** producto que se pueda comparar. Puede que sean cosas que ninguna de ***
+   *** las cinco cadenas venda, o que ya no esten.» *** ✓✓✓
+```
+
+### 7.178 *Y LOS CUATRO PUNTOS, *DICHOS POR LA APLICACION*
+
+```
+*** PUNTO 3 ***: *la pantalla larga (1886 px) *se lee entera ✓
+*** -> *** PUNTO 4, aislamiento ***: *«La lista es de quien la creo y de quien ***
+   *** entre por aqui» ***, *con el papel elegible, *y *** «creo la lista» *** ✓
+*** -> *** PUNTO 4, comprar NO consume ***: *«Lo tachado sigue contando en el ***
+   *** total, pero sale de la cuenta de donde comprar» *** *
+   *-- *** tachar no es consumir *** ✓✓✓
+*** -> *** PUNTO 5 ***: *«0,96 EUR, comprando cada cosa donde esta mas ***
+   *** barata» *** *mas *** «Datos del 2026-10-16» *** ✓
+*** -> *** PUNTO 6 ***: *el vacio *** separa COBERTURA de FRESCURA***: *
+   *** «ninguna de las cinco cadenas venda» *** *frente a *** «o que ya no esten» *** ✓✓✓
+```
+
+*** Y ESA ULTIMA FRASE ES LA SEPARACION QUE EL PUNTO 6 PIDE ***, *escrita por la
+aplicacion: *** cobertura *** *(-- *nadie la vende --)* *y *** frescura *** *(-- *ya
+no esta --)*, *en la misma frase y distinguidas. *Y yo habia escrito esa distincion
+*** en el dictamen, atribuyendomela***; *resulta que *** la dice la pantalla.*** *
