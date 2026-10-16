@@ -1563,3 +1563,36 @@ margen que me queda, *hacerlo seria *** exactamente el error de las 22 lineas***
 *** ASI QUE NO SE HACE ***, *y queda escrito con su forma exacta, *que es mas util
 que un cambio a medias: *quien lo recoja sabe *** que hay que tocar***, *
 *** por que***, *y *** que tiene que dar***. *
+
+## 7.74 *Y LO SERVIDO NO TIENE EL ARREGLO, *Y ESO ES EL PUNTO 7 (ronda 57)*
+
+*** Y hay una consecuencia del arreglo de `Avisos` que no habia comprobado: *
+`cesta-web-1` sirve *** el `dist` construido ***, *no el fuente. *Y el `dist` es
+*** de antes del arreglo.*** *
+
+```
+*** el bundle servido *** *(-- `index-BqRTD47s.js`, *336.690 bytes, *del 16 oct 07:57 --)*
+*** -> *y el trozo junto a *** «Cuenta y ayuda» *** dice: *
+   *** `children:[ ... subsecciones.map(...) ]` *** *
+   *-- *** y no hay ninguna entrada de `/avisos` ahi *** ✓✓✓
+*** -> *y sus dos `/avisos` son *** la ruta *** *y el titulo, *no un enlace ✓
+*** -> *** LO QUE SE SIRVE EN 8080 NO TIENE LA PUERTA DE AVISOS *** ✓✓✓
+*** -> *y el fuente *** si *** la tiene *(`a="/avisos"` = True)* ✓
+```
+
+*** Y ESO ES *** EXACTAMENTE *** EL PUNTO 7 ***: *«verificar la VERSION REALMENTE
+SERVIDA, *no solo el codigo local»*. *Y la respuesta, *medida, *es: *
+
+```
+*** el codigo local *** tiene el arreglo ✓
+*** -> *y la version servida *** no ***, *porque el `dist` es anterior ✓
+*** -> *** y servirlo exige *** volver a construir *** *
+   *-- *y `cesta-web-1` monta `plataforma/web/dist` como `/srv` ✓
+   *-- *o sea que reconstruir *** cambia lo que ve el propietario en 8080 *** ⚠️
+*** -> *** Y ESO NO LO HAGO SIN DECIRLO ***: *es su instancia domestica, *
+   *y cambiarla es una decision suya, *no un paso de mi trabajo ✓✓✓
+```
+
+*** Y QUEDA ANOTADO COMO LO QUE ES ***: *no un fallo del arreglo -- *que esta bien
+y verificado en la puerta a 5173 --, *sino *** el hueco entre el fuente y lo
+servido***, *que es justo el que el punto 7 pide no confundir.* *
