@@ -3247,3 +3247,43 @@ sirve 8080 es *** el `dist` de la ronda 84***. *Asi que la pregunta es: *
 *** Y ESO ES LO QUE EL PUNTO 7 PIDE *** *-- *«verificar la VERSION REALMENTE
 SERVIDA, *no solo el codigo local» --, *y esta vez *** no por afirmacion: *porque
 la aplicacion no se ha tocado *** en los doce commits que van desde el build.*** *
+
+## 7.171 *Y `Ajustes`, MIRADO: *Y CONTESTA EL PUNTO 6 Y LA ATRIBUCION (ronda 98)*
+
+*** El punto 3 nombra tres pantallas *** *y solo habia mirado una: *
+*«Grupo y Panel con datos, *y *** Ajustes/Avisos/Cesta sin listas»***. *Asi que se
+miro `Ajustes`. *
+
+```
+*** «Ajustes» *** *y *** «Has entrado como prueba-navegador. *Salir» *** ✓
+*** -> *** «Las cadenas que tienes cerca» ***: *
+   *** «Marca las que te pillan a mano. Con eso puesto, la busqueda y el ***
+   *** panel dejan de ofrecerte cosas de una cadena a la que no vas. Sin ***
+   *** ninguna marcada se miran las cinco, que es lo que hace por defecto.» *** ✓
+   *-- *y las *** seis ***: *Alcampo · Aldi · Carrefour · DIA · Lidl · Mercadona ✓
+*** -> *** «Darme de baja» ***: *
+   *** «Se borran tus listas, tus favoritos y tu cuenta. Lo que anadiste a ***
+   *** listas de otras personas se queda ahi, sin tu nombre, para no ***
+   *** vaciarles la compra. Esto no se puede deshacer.» *** ✓✓✓
+*** -> *** y el aviso legal ***, *que es *** la respuesta al punto 6 ***: *
+   *** «Los precios son orientativos y pueden variar: los publica cada ***
+   *** cadena y Cesta se limita a leerlos. Cesta no esta afiliada...» *** ✓
+```
+
+### 7.172 *Y LA ATRIBUCION, *QUE ES LA REGLA DE «NO COPIAR SIN DECIRLO»*
+
+```
+*** «Informacion nutricional de Open Food Facts, bajo licencia ODbL» *** ✓
+*** -> *** los precios: *** «los publica cada cadena» *** ✓
+*** -> *la nutricion: *** «Open Food Facts, bajo licencia ODbL» *** ✓
+*** -> *y *** «Cesta no esta afiliada» *** ✓✓✓
+*** -> *** la declaracion de fuentes esta EN LA PANTALLA *** ✓
+```
+
+### 7.173 *Y EL «Darme de baja» *DICE LO QUE NO BORRA*
+
+*** Y eso es lo mas dificil de acertar***: *una baja que borra «todo» **le vacia
+la compra a otra persona**. *Y la pantalla *** lo dice antes de que pulses***: *
+*«Lo que anadiste a listas de otras personas *** se queda ahi, sin tu nombre***,
+*para *** no vaciarles la compra***.»* *Es *** el aislamiento entre usuarios del
+punto 4***, *contado desde el otro lado.* *
