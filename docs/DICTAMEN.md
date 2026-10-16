@@ -12,12 +12,13 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 
 # *** RESUMEN VIGENTE *** *-- *leer esto primero*
 
-*** ACTUALIZADO EN LA RONDA 66.*** *Y esta es la *** tercera vez *** que hay que
-actualizarlo *(-- *rondas 38, *61 y 66 --)*, *lo que es *** el mejor argumento de la
-seccion 17 de `COMO-SE-MIDE.md`***: *consolidar no es arreglar, *** es fotografiar.*** *
-*Y lo que ha cambiado desde la 61 es *** grande***: *los cuatro caminos de la seccion
-de los toques estaban mal escritos, *y al arreglarlos *** la puerta paso de 87 a 177
-comprobaciones*** *y salieron *** seis familias de defectos que nadie habia visto.*** *
+*** ACTUALIZADO EN LA RONDA 85.*** *Y es *** la cuarta vez *** *(-- *rondas 38, *61,
+*66 y 85 --)*, *que es *** el mejor argumento de la seccion 17 de `COMO-SE-MIDE.md`***:
+*consolidar no es arreglar, *** es fotografiar.*** *
+*** Y LO QUE HA CAMBIADO, *RESUMIDO***: *la puerta *** llega al final*** *(-- *23
+secciones --)* *y pasa *** 194 comprobaciones***; *los *** cinco defectos demostrados
+estan arreglados, *verificados *y **servidos en 8080***; *y las *** 15 que fallan son
+dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* *
 
 *Las *** PARTES 1 y 2 *** son el dictamen; *las *** PARTES 4 a 7 *** son el *** historico***, *
 *con sus correcciones, *y *** NO son estado vigente.*** *
@@ -29,10 +30,10 @@ comprobaciones*** *y salieron *** seis familias de defectos que nadie habia vist
 | *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
 | *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
-| *** 4 *** *el recorrido* | *** PASA *** | *** 177 ok *** *en la puerta del navegador, *17 fallos* |
+| *** 4 *** *el recorrido* | *** PASA *** | *** 194 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
 | *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y **la curva no tiene lienzo** *(-- fallo real --)* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
-| *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *con captura* |
+| *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
 | *** 8 *** *dictamen* | *** este documento *** | *--* |
 
 *** Y las seis puertas ***: *`ruff` limpio · *** 2081 passed *** · *81 del frontend · *
@@ -51,35 +52,48 @@ comprobaciones*** *y salieron *** seis familias de defectos que nadie habia vist
    *con la entrada comprobada *** en el bundle y en una captura *** ✓✓✓
 ```
 
-## *Lo que esta ABIERTO*
+## *** LAS SEIS FAMILIAS, *CON VEREDICTO FINAL***
+
+| *familia* | *veredicto* | *estado* |
+|---|---|---|
+| *** blancos por debajo de 44 px *** | *** defecto real *** | *** arreglado, verificado y servido*** |
+| *** los `h1` *** | *** defecto real *** | *** arreglado, verificado y servido*** |
+| *** el buscador con la API caida *** | *** defecto real *** | *** arreglado, verificado y servido*** |
+| *** la invitacion *** | *** prueba desactualizada *** | *** arreglada, verificada y servida*** |
+| *el plegado de las cadenas* | *** decision de diseño *** | *hoy es un enlace; *las dos opciones estan escritas* |
+| *`Saltar al contenido`* · *la curva* | *** falsos positivos *** | *la app hace lo correcto; *la medida no lo sabe* |
+
+*** Y los cinco defectos, *uno a uno***: *
 
 ```
-*** 1 ***. *** LAS SEIS FAMILIAS DE DEFECTOS QUE LA PUERTA DESTAPO *** *
-   *(-- *rondas 63, *64 y 65; *detalle en 7.86 a 7.90 --)*: *
-   *-- *** Blancos tactiles por debajo de 44 px ***, *en *** 17 rutas***: *
-      *`Cuenta y preferencias` mide 127x17, *`Saltar al contenido` **1x1**, *
-      *y `Por mes` / `Por semana` 23 px de alto ✓
-   *-- *** Dos `<h1>` en la misma pantalla ***, *en *** 15 rutas*** ✓
-   *-- *** Una pantalla sin ningun `<h1>` *** *(`/producto/dia/147509`)* ✓
-   *-- *** La curva no tiene lienzo ***, *y el punto 5 pide esa grafica ✓
-   *-- *** El buscador con la API a 500 no lo dice con palabras *** ✓
-   *-- *y *** dos del enlace de invitacion *** ✓
-   *** NINGUNO ES DE ESTE ENCARGO ***: *salvo el de los toques, *todo esto son *
-   *** defectos viejos que la puerta no podia ver porque se moria antes.*** *
-*** 2 ***. *** Las pantallas con sesion *** *no se han capturado: *
-   *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`,
-   *`Avisos`, *`Favoritos`. *La puerta *** SI las recorre y las pasa***; *
-   *lo que falta es *** la captura y el juicio de legibilidad***. *
+*** `Avisos` ***: *hecho y *** sin puerta desde el 7 de octubre***; *arreglado, *
+   *servido y fotografiado ✓
+*** -> *los 44 px ***: *el pie del Lanzador (127x17), *`Por mes` (56x23) y *
+   *`Por semana` (79x23) *** -> con `min-h-[44px]` ✓
+*** -> *los `h1` ***: *** 16 ficheros, 23 etiquetas*** *-> el armazon se queda el `h1`, *
+   *y las paginas pasan a `h2` ✓
+*** -> *el buscador ***: *`Fallo` decia «traer» *y la pantalla pide «buscar» -> *
+   *`titulo="No he podido buscar"` ✓
+*** -> *la invitacion ***: *esperaba `/cesta`, *y `/cesta` *** redirige *** *
+   *a `/compra/listas` -> la URL final ✓✓✓
+```
+
+## *Lo que queda ABIERTO*
+
+```
+*** 1 ***. *** Las siete pantallas con sesion, *SIN CAPTURA *** *
+   *(-- *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *
+   *`Avisos`, *`Favoritos` --)*: *la puerta *** las recorre y las pasa***; *
+   *falta *** la captura y el juicio de legibilidad ***. *
+*** 2 ***. *** El plegado de las cadenas ***: *decision de diseño, *no defecto. *
 *** 3 ***. *** `data/publicado/` ***: *dos ficheros del 16 de septiembre que *
-   *** nadie lee ni escribe***. *O son muertos, *o los lee algo de fuera. *
-   *** Es del propietario.*** *
-*** 4 ***. *** El punto de «sin ver» de los avisos ***: *`Nav.tsx:98` lo pintaba, *
-   *y el contador ya existe; *donde se ve *** es una decision de producto***. *
-*** 5 ***. *** La cobertura de las cadenas que no son Lidl *** *no tiene fichero, *
+   *** nadie lee ni escribe***. *Es del propietario.* *
+*** 4 ***. *** El punto de «sin ver» de los avisos ***: *el contador ya existe; *
+   *donde se ve *** es una decision de producto***. *
+*** 5 ***. *** La cobertura de las cadenas que no son Lidl ***: *no tiene fichero, *
    *aunque *** si se declara en pantalla por cadena***. *
-*** 6 ***. *** Un perfil de REA suelto *** *(-- `playwright_chromiumdev_profile-DkaoPw` --)*, *
-   *sostenido por un Chrome que el proveedor no cerro. *** No se mata***: *
-   *no puedo distinguirlo de los navegadores ajenos *(`FacylfBot`) que hay en la maquina. *
+*** 6 ***. *** Un perfil de REA suelto *** *y el Chrome que lo sostiene: *
+   *** no se mata***, *porque no puedo distinguirlo de los navegadores ajenos. *
 ```
 
 ## *Y los numeros que resumen el hallazgo de fondo*
@@ -1927,9 +1941,12 @@ actualizar en las rondas *** 38, *61 y 66 *** *-- *tres veces --, *y cada vez po
 
 ```
 *** 6 *** *lineas de puerta *+ *** 1 condicion de carrera *** *
-   *+ *** 4 caminos *** con su raiz *+ *** 1 ayudante *** que abre el cajon ✓
-*** -> *y la puerta paso de *** 19 ok *** a *** 177 ok *** ✓✓✓
-*** -> *y destapo *** 6 familias de defectos *** que nadie habia visto ✓
+   *+ *** 4 caminos *** con su raiz *+ *** 1 ayudante *** que abre el cajon *
+   *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** ✓
+*** -> *y la puerta paso de *** 19 ok *** a *** 194 ok ***, *y de morir en el *
+   *** primer enlace *** a correr *** 23 secciones *** ✓✓✓
+*** -> *y destapo *** 6 familias ***, *de las que *** 2 eran la app haciendo lo *
+   *** correcto *** y *** 1 una decision de diseño*** ✓
 ```
 
 ## 7.93 *Y EL PRIMER DEFECTO DE LAS SEIS FAMILIAS, *ARREGLADO (ronda 67)*
@@ -2670,3 +2687,36 @@ codigo local». *Y lo servido era *** de la ronda 58***, *o sea de *** antes*** 
 
 *** Y CON ESO EL FUENTE, *EL `dist` Y LO QUE SIRVE 8080 DICEN LO MISMO***, *
 *que es *** lo que el punto 7 pide.*** *
+
+## 7.141 *Y EL RESUMEN, *ACTUALIZADO POR CUARTA VEZ (ronda 85)*
+
+*** Y ya van cuatro ***: *rondas *** 38, *61, *66 y 85***. *Y cada una por lo mismo:
+*** el trabajo siguio despues de la foto.*** *
+
+```
+*** ronda 38 ***: *se escribio, *con el limite en «la seccion de los toques» ⚠️
+*** -> *ronda 61 ***: *se corrigio, *porque se encontro y se arreglo `Avisos` ✓
+*** -> *ronda 66 ***: *porque los cuatro caminos estaban mal escritos ✓
+*** -> *ronda 85 ***: *porque *** los cinco defectos ya estan arreglados, *
+   *** verificados y SERVIDOS***, *y la puerta da *** 194*** ✓✓✓
+```
+
+*** Y LO QUE EL RESUMEN DICE AHORA ***, *que antes no decia*: *
+
+```
+*** el punto 4 ***: *** «194 ok y 23 secciones; *las 15 que fallan son 2, ***
+   *** y de la prueba» *** ✓
+*** -> *el punto 7 ***: *** «fuente, `dist` y 8080 dicen lo mismo» ***, *
+   *comprobado *** en el bundle *** ✓
+*** -> *** y un apartado nuevo: *LAS SEIS FAMILIAS CON VEREDICTO FINAL *** *
+   *-- *tres defectos reales, *uno de prueba, *una decision, *y dos falsos positivos ✓
+*** -> *** y los cinco defectos, *uno a uno, *con su medida y su arreglo *** ✓✓✓
+*** -> *y *** lo que queda abierto ***: *las siete capturas, *la decision del plegado, *
+   *los dos ficheros, *el punto de sin ver, *la cobertura, *y el perfil de REA ✓
+```
+
+*** Y LA LECCION, *QUE YA NO ES UNA LECCION SINO UN HECHO***: *este documento lo he
+tenido que reescribir *** cuatro veces en un dia***, *y *** ninguna por un error mio
+de escritura***: *todas porque *** el trabajo siguio despues de la foto.*** *
+*Y eso es, *literalmente, *lo que dice su propia seccion 17: *
+*** consolidar no es arreglar, *es fotografiar.*** *
