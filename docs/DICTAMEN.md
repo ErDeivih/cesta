@@ -2433,3 +2433,48 @@ instrumento llega al final.*** *
 *`<Fallo titulo="No he podido buscar" ... />`. *Y *** no se hace en esta ronda***
 *porque *** pide correr la puerta despues***, *y esa es la condicion que me he
 puesto para tocar algo. *
+
+## 7.126 *Y LA TERCERA FAMILIA TAMBIEN ESTA DIAGNOSTICADA: *LA PRUEBA BUSCA ALGO QUE YA NO EXISTE (ronda 79)*
+
+*** La puerta (`:736-743`) espera *** un `<details>` con su `<summary>` ***: *
+
+```
+*** `plegado = pagina.locator("main details summary").filter(has_text="Ver ")` *** ✓
+*** -> *y `:737` ***: *** `comprueba(plegado.count() == 1, "con el resto de cadenas plegado ***
+   *** y dicho en el resumen")` *** ✓
+*** -> *y `:742` ***: *** `comprueba(abiertas.count() > 2, "y al abrirlo salen las demas ***
+   *** ({n} cadenas)")` *** ✓
+*** -> *y los dos fallaron: *el segundo con *** «(2 cadenas)» *** ✓
+```
+
+### 7.127 *Y en el codigo hay un ENLACE, *no un `<details>`*
+
+```
+*** `Producto.tsx:225-230` ***: *
+   *** `<Link to={/grupo/${grupo.grupo_id}} className="… min-h-[44px] …"> ***
+      *** Ver las {grupo.cadenas} cadenas en columnas ***
+   *** </Link>` *** ✓
+*** -> *** es un ENLACE que lleva a *** la ficha del grupo *** ✓
+*** -> *y su texto *** empieza por «Ver » *** ✓
+*** -> *y `git grep` de `<details` en `Producto.tsx` da *** UNO *** *
+   *-- *el de *** los ingredientes *** (`:576`), *cuyo `summary` dice «Ingredientes» ✓
+*** -> *** o sea que el plegado de las cadenas YA NO ES UN `<details>` *** ✓✓✓
+```
+
+### 7.128 *Y por eso fallan los DOS, *y son el mismo*
+
+```
+*** `plegado.count()` *** es *** 0 *** *-- *no hay `details summary` con «Ver » ✓
+*** -> `:737` *** espera *** 1 *** → *** FALLA *** ✓
+*** -> `:738` *** `if plegado.count():` *** no entra *** ✓
+*** -> *y `abiertas` *** se queda con las dos que ya se veian *** ✓
+*** -> `:742` *** espera *** > 2 *** → *** FALLA con «(2 cadenas)» *** ✓
+*** -> *** los dos fallos son el mismo ***, *y la causa es *** una *** ✓✓✓
+```
+
+*** Y LA PREGUNTA QUE QUEDA ES DE DISEÑO ***, *no de medida*: *
+*¿la ficha debe *** plegar *** las cadenas, *o *** llevar *** a la ficha del grupo? *
+*-- *porque *** hoy hace lo segundo***, *y la prueba espera lo primero. *
+*Y las dos son defendibles: *** el enlace da mas sitio y una pantalla entera***, *
+*y el plegado *** deja comparar sin salir***. *Asi que *** es una decision***, *
+*no un defecto -- *y por eso *** no se cambia sin decirlo.*** *
