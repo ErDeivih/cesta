@@ -3407,3 +3407,36 @@ no esta --)*, *en la misma frase y distinguidas. *Y yo habia escrito esa distinc
 *una parte de la aplicacion que *** la puerta no abre***, *y que *** solo se ve
 mirando.*** *Y es *** exactamente lo que dice la ronda 44 de `Avisos`***: *
 *** una cara que no se mide es una cara que nadie ha visto.*** *
+
+## 7.181 *Y SE ANADIO EL ESCRITORIO, *A 1280 (ronda 102)*
+
+*** Con la misma jugada que las cinco de Recetas***: *un contexto mas, *y lo que se
+puede comprobar sin inventar. *
+
+```
+*** `navegador.new_context(viewport={"width": 1280, "height": 900})` *** ✓
+*** -> *y se comprueba, *sin sesion *(-- *la portada y las tres raices no la piden --)*: *
+   *-- *** que a 1280 el nav de escritorio ocupa de verdad *** *
+      *(`bounding_box()["width"] > 200`)* ✓
+   *-- *** que las tres aplicaciones se abren desde ahi *** *
+      *(-- *no basta con que el nav exista --)* ✓
+   *-- *y *** que sigue siendo la ventana ancha *** ✓✓✓
+*** -> *** o sea: *se mide *** lo que a 390 no habia ***, *que es el nav ancho ✓
+```
+
+### 7.182 *Y AL ANADIRLO, *EL VECINO OTRA VEZ*
+
+```
+*** `dir_capturas` *** vive en la linea *** 582 *** ✓
+*** -> *y mi seccion quedo en la *** 539 *** ⚠️
+*** -> *** usaba `dir_capturas` 43 lineas antes de que exista *** ✓
+*** -> *y `ruff` lo dijo: *** `F821 Undefined name dir_capturas` *** x2 ✓
+*** -> *** es la leccion de la ronda 91, *exacta ***: *
+   *** el import que faltaba, *el que sustitui, *y ahora la variable *** *
+   *-- *** el vecino que se rompe al arreglar el de al lado *** ✓✓✓
+*** -> *y se quito la captura de escritorio, *con el motivo escrito al lado ✓
+```
+
+*** Y ESTA SIN CORRER ***, *y se dice: *falta la ejecucion que confirme que a 1280
+**el nav mide mas de 200 px** *y que **las tres abren***. *Esta *** razonado desde
+`hidden lg:block`*** *y desde el `:1466`, *pero *** razonado no es medido.*** *

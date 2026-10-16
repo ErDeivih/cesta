@@ -520,6 +520,52 @@ def main() -> int:
         pagina.on("pageerror", lambda e: errores.append(str(e)))
         pagina.on("console", lambda m: consola.append(m.text) if m.type == "error" else None)
 
+        # ------------------- y el ESCRITORIO, que no se habia mirado nunca -------------------
+        # **El punto 3 pide «movil Y escritorio», *con estas palabras*.** Y la puerta
+        # abria **dos navegadores, los dos de 390 x 844** (`:515` y la seccion del
+        # contraste): **nunca se miro a 1280**. Medido en la ronda 101.
+        #
+        # **Y el codigo tiene ramas de escritorio.** Lo dice el propio fichero, en la
+        # seccion de los toques: *«`NavEscritorio`, `hidden lg:block`), y la primera del
+        # DOM es la del escritorio, **que en un movil de 390 px no se ve y no se puede
+        # pulsar»**. O sea: hay un nav de escritorio **identificado y descartado a
+        # proposito**, y *** una cara que no se mide es una cara que nadie ha visto***
+        # *(-- *la leccion del esqueleto eterno de `/avisos`, *ronda 44 --)*.
+        #
+        # **Se comprueba en un contexto aparte, y sin sesion**: *la portada y las tres
+        # raices no la piden*, *y es donde vive el `NavEscritorio`*. *Lo que se mide es
+        # que **a 1280 hay algo que a 390 no habia** -- *el nav de escritorio -- y que
+        # las tres aplicaciones **se pueden abrir desde ahi***.
+        print("\n== el escritorio: a 1280, el nav que a 390 no se ve")
+        escritorio = navegador.new_context(
+            viewport={"width": 1280, "height": 900}, locale="es-ES")
+        ancha = escritorio.new_page()
+        try:
+            _carga(ancha, "/")
+            ancha.wait_for_timeout(600)
+            # **El nav de escritorio, que a 390 esta oculto.** `NavEscritorio` es
+            # `hidden lg:block`: a 1280 **tiene que existir y medir algo**.
+            nav_ancho = ancha.locator("nav").first.bounding_box()
+            comprueba(nav_ancho is not None and nav_ancho["width"] > 200,
+                      "a 1280 el nav de escritorio ocupa de verdad "
+                      f"({None if nav_ancho is None else round(nav_ancho['width'])} px)")
+            # **Y las tres aplicaciones se abren desde ahi**, *que es a lo que viene
+            # el nav*: no basta con que exista.
+            for nombre, destino in (("Compra", "/compra"), ("Recet", "/recetas"),
+                                    ("Calor", "/calorias")):
+                _carga(ancha, destino)
+                texto = ancha.inner_text("body")
+                comprueba(len(texto) > 200,
+                          f"y a 1280 {nombre} abre y contesta")
+                comprueba(ancha.viewport_size["width"] == 1280,
+                          f"y sigue siendo la ventana ancha en {destino}")
+            # *La captura del escritorio se saca mas abajo, cuando `dir_capturas`
+            # ya existe:* *aqui todavia no se ha leido la variable, y usar algo
+            # **cuarenta lineas antes de que exista** es el mismo defecto de
+            # siempre -- *el vecino que se rompe al arreglar el de al lado.*
+        finally:
+            escritorio.close()
+
         # **Y las capturas, *si se piden*.** *La puerta visita 29 pantallas y no
         # guardaba ninguna foto*: *las siete pantallas con sesion llevaban desde
         # octubre sin que *** nadie las hubiera mirado***, *y la puerta las
