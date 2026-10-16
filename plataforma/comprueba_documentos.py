@@ -46,7 +46,13 @@ VIGENTES = (
 # aparecen **legitimamente** *(-- *diciendo que algo sigue sin hacerse, *o
 # citando la regla --)*. Lo que se busca es *** el numero de la puerta cuando ya
 # no es el suyo***.
-VIEJAS = re.compile(r"\b19 ok\b|\b87 ok\b|\b177 ok\b|\b190 ok\b|no llega al final")
+VIEJAS = re.compile(
+    r"\b19 ok\b|\b87 ok\b|\b177 ok\b|\b190 ok\b|no llega al final"
+    # **Y el censo de `pytest`**, *que cambio al anadir las pruebas de documentos:*
+    # *2081 -> 2083. *Sin esto, **la comprobacion solo miraba lo que se me
+    # ocurrio mirar**, *que es el defecto que vino a arreglar.*
+    r"|\b2081 passed\b"
+)
 
 # **Y el numero de hoy**, para no acusar a la linea que dice el bueno: *la frase
 # «paso de 19 ok a 194 ok» es **la correcta**, y sin esto se acusaba a si misma.*

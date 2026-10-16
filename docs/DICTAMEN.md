@@ -36,7 +36,7 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 | *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
 | *** 8 *** *dictamen* | *** este documento *** | *--* |
 
-*** Y las seis puertas ***: *`ruff` limpio · *** 2081 passed *** · *81 del frontend · *
+*** Y las seis puertas ***: *`ruff` limpio · *** 2083 passed *** · *81 del frontend · *
 *`tsc` limpio · *`build` OK · *`prueba_e2e` *** «TODO BIEN» ***. *
 
 ## *** Y UN DEFECTO ENCONTRADO, *ARREGLADO Y SERVIDO***
@@ -2861,3 +2861,35 @@ primera engaña: *
 numero que *** no es del codigo***. *Y esta vez no lo di por bueno: *levante la
 base *y *** volvi a correr***. *(-- *y `--lf` fue lo que lo estrecho: *con la
 base levantada *** no habia ningun ultimo fallo*** --).* *
+
+## 7.150 *Y LA COMPROBACION TENIA *EL DEFECTO QUE VINO A ARREGLAR (ronda 89)*
+
+*** Al anadir las pruebas de documentos, *el censo de `pytest` cambio:*** *
+*2081 -> *** 2083***. *Y el resumen vigente seguia diciendo *** 2081***. *
+
+```
+*** y la comprobacion *** no lo pillaba*** ⚠️
+*** -> *porque sus patrones eran *** `19 ok`, `87 ok`, `177 ok`, `190 ok`, *
+   *`no llega al final`*** ✓
+*** -> *** y no estaba el censo de `pytest` *** ✓
+*** -> *** la comprobacion solo miraba lo que se me ocurrio mirar *** *
+   *-- *** que es exactamente el defecto que vino a arreglar *** ✓✓✓
+```
+
+### 7.151 *Y se arreglo, *y el corte resulto ser el correcto*
+
+```
+*** se anadio *** `\b2081 passed\b` *** a los patrones ✓
+*** -> *y el resumen paso de *** 2081 *** a *** 2083 *** ✓
+*** -> *y las *** PARTES 6 *** siguen diciendo *** 2081 passed *** ⚠️ *
+   *-- *y la comprobacion *** no se queja*** ✓
+   *-- *porque el corte del historico es *** `# PARTE 4` *** ✓
+*** -> *** y esta bien ***: *la PARTE 6 dice «las seis puertas, *medidas el 15/10» ✓
+   *-- *y ese numero *** era cierto ese dia ***: *es *** el registro*** ✓✓✓
+*** -> *y el resumen *** es el que manda ***, *y ahora dice 2083 ✓
+```
+
+*** Y ESTA RONDA ES LA LECCION DE LA 88, *UN ESCALON MAS ABAJO***: *la prueba que
+escribi para que los documentos no mintieran *** tenia su propio punto ciego*** *
+*(*solo miraba los patrones que se me ocurrieron*)*. *Y lo encontre porque ***
+cambie un numero y la prueba no dijo nada***. *
