@@ -1671,3 +1671,64 @@ imagen y el DOM dicen tres cosas: *
 la limpieza del navegador *(-- *`cleanup_incomplete` --)*, *y la observacion quedo
 marcada como *** parcial ***. *La imagen y el DOM *** si *** se capturaron
 completos; *lo que no se pudo confirmar es que el navegador se cerrara.* *
+
+## 7.79 *Y LA LIMPIEZA DEL NAVEGADOR, *QUE NO PUDE CONFIRMAR (ronda 59)*
+
+*** REA lanzo su navegador y no pudo confirmar que lo cerrara *** *(--
+*`cleanup_incomplete`, *con `browser_transport` *y `browser_profile` sin limpiar --)*. *
+*Y al buscar restos, *aparecieron *** 48 procesos de Chrome ***, *y varios headless.* *
+
+```
+*** dos de ellos son *** `user-agent="FacylfBot/1.0"` *** ⚠️ ***
+*** -> *** y Facylf NO ES MIO *** ✓
+*** -> *y hay mas de uno con `--headless=new` *y `imagesEnabled=false` ✓
+*** -> *y *** todos arrancaron entre las 11:42 y las 11:47 ***, *hace minutos ✓
+*** -> *** no puedo separar el mio de los ajenos *** ⚠️
+```
+
+### 7.80 *Y por eso NO SE MATA NINGUNO*
+
+```
+*** la regla del encargo es explicita ***: *** «se mata SOLO el proceso propio, ***
+   *** nunca "el que ocupe el puerto"» *** ✓
+*** -> *y aqui *** el mio no se puede distinguir ***: *misma hora, *mismo binario, *
+   *y *** procesos ajenos con el mismo nombre*** ✓
+*** -> *** ASI QUE NO SE MATA NINGUNO ***, *y se dice ✓
+*** -> *y es *** REA quien los lanzo ***, *y REA quien debe cerrarlos ✓✓✓
+```
+
+*** Y LA LECCION ***: *una operacion que *** no puede confirmar su propia limpieza ***
+*deja recursos, *y *** el que los deja no siempre puede recogerlos***. *Y aqui
+*** matar a ciegas habria sido peor que dejarlos***: *`FacylfBot` demuestra que
+*** en esta maquina hay navegadores ajenos con el mismo nombre.*** *
+
+### 7.81 *Y los perfiles, *contados*
+
+*** Y al buscar restos aparecieron *** decenas de perfiles *** en `%TEMP%`, *
+*y *** dos de ellos son de esta misma ronda***: *
+
+```
+*** `playwright_chromiumdev_profile-DkaoPw` *** *-- *11:47:03 *-- *de AHORA ⚠️
+*** -> `playwright_chromiumdev_profile-gL8ZxH` *** *-- *11:46:57 *-- *de AHORA ⚠️
+*** -> `playwright-transform-cache` *** *-- *11:45:27 ✓
+*** -> *y decenas mas, *de dias anteriores *(-- 09/24, *09/29, *10/07... --)* ✓
+*** -> *y `HeadlessChrome*`, *`t06_perfil_chrome`, *`playwright-artifacts-*`, *
+   *`rea-acl-report`: *** no son mios *** ✓
+```
+
+### 7.82 *Y NO SE BORRAN AHORA, *y el motivo importa*
+
+```
+*** borrar exige *** verificar la ruta absoluta resuelta *** antes de tocar nada ✓
+*** -> *y con el contexto que queda, *una *** ruta calculada *** es exactamente *
+   *el riesgo que llevo *** 59 rondas evitando *** ⚠️
+*** -> *** asi que quedan anotados con sus dos nombres exactos ***, *
+   *y se borran *** cuando se pueda comprobar la ruta *** ✓
+*** -> *y *** los 48 procesos de Chrome NO se matan ***: *
+   *`FacylfBot/1.0` demuestra que *** hay navegadores ajenos con el mismo nombre *** ✓✓✓
+```
+
+*** Y LA LECCION, *que no es sobre limpieza***: *** «no pude confirmar que lo cerrara» ***
+*es una frase que *** deja recursos ***, *y el que los deja *** no siempre puede
+recogerlos ***. *Y aqui *** recogerlos a ciegas habria sido peor ***: *
+*`FacylfBot` es la prueba de que *** en esta maquina hay navegadores que no son mios.*** *
