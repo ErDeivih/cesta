@@ -69,9 +69,17 @@ autorizo la base desechable, *el entorno *** se monto, *se uso y se desmonto***,
    *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
    *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el
    *juicio de legibilidad *** ✓
-*** 2 ***. *** La seccion de los toques de la puerta *** *no llega al final, *y su
-   *causa esta *** medida ***: *pide `nav a[href='/compra/listas']`, *y *** a movil
-   *ese enlace no existe *** *-- *la barra de abajo lleva a las tres raices ✓
+*** 2 ***. *** ACTUALIZADO EN LA RONDA 86: *LA PUERTA YA LLEGA AL FINAL *** *
+   *-- *su causa estaba *** medida ***: *a movil las subsecciones *** viven dentro
+   *del cajon ***, *y ademas *** los cuatro caminos empezaban en una pantalla
+   *sin menu *** ✓
+   *-- *y se arreglo: *** un ayudante *** que abre el cajon + *** los cuatro
+   *caminos *** empezando por su raiz ✓
+   *-- *** y la puerta paso de morir en el primer enlace a ***
+      *** 194 comprobaciones sobre 23 secciones *** ✓✓✓
+   *-- *y las *** 15 que fallan son dos ***, *y las dos son de la prueba: *
+      *el `sr-only` de «Saltar al contenido» *y la curva que la app *** niega
+      *con razon *** *(-- *lo explica en pantalla --)* ✓
 *** 3 ***. *** Tres decisiones del propietario ***: *que cuenta la seccion de los
    *toques; *si `data/publicado/` es muerto; *y donde se declara la cobertura de
    *las cadenas que no son Lidl ✓

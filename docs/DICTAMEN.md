@@ -101,9 +101,12 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 ```
 *** 6 *** *lineas de puerta arregladas *(-- *una frase, *cinco rutas* --)* *
    *+ *** 1 condicion de carrera *** quitada *
-   *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon ✓
-*** -> *y con eso la puerta paso de *** 19 ok *** a *** 177 ok *** ✓✓✓
-*** -> *y destapo *** 6 familias de defectos *** que nadie habia visto ✓
+   *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon *
+   *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** + *** 1 titulo *** ✓
+*** -> *y con eso la puerta paso de *** 19 ok *** a *** 194 ok *** ✓✓✓ *
+   *-- *y de *** morir en el primer enlace *** a correr *** 23 secciones *** ✓
+*** -> *y destapo *** 6 familias ***, *de las que *** 3 eran defectos reales ***, *
+   *** 2 la app haciendo lo correcto *** *y *** 1 una decision de diseño *** ✓
 *** -> *y *** 4 documentos *** afirmaban cosas que ya no eran ciertas ✓
 *** -> *y *** 1 pantalla *** llevaba sin puerta desde el 7 de octubre ✓
 *** -> *** la aplicacion funcionaba; *lo que fallaba era todo lo que decia si funcionaba *** ✓✓✓
@@ -148,8 +151,13 @@ ya se habia montado y usado.*** *Se conserva integra en el historico (PARTES 5, 
    *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
    *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el juicio
    *de legibilidad *** ✓
-*** 2 ***. *** La seccion de los toques *** *no llega al final, *y su causa esta *
-   *** medida ***: *pide un enlace *** que a movil no existe*** ✓
+*** 2 ***. *** ACTUALIZADO EN LA RONDA 86: *LA PUERTA YA LLEGA AL FINAL *** *
+   *-- *su causa estaba *** medida ***: *a movil las subsecciones *** viven dentro
+   *del cajon ***, *y los cuatro caminos *** empezaban en una pantalla sin menu*** ✓
+   *-- *y se arreglo: *un *** ayudante *** que abre el cajon + *** los cuatro
+   *caminos *** empezando por su raiz ✓
+   *-- *** la puerta corre 194 comprobaciones sobre 23 secciones ***, *
+   *y las *** 15 que fallan son dos ***, *y las dos son *** de la prueba *** ✓✓✓
 *** 3 ***. *`data/publicado/` *y la cobertura de las cadenas que no son Lidl: *
    *** dos decisiones del propietario *** ✓
 ```
@@ -238,8 +246,12 @@ compra, *los envases, *el sustituto autorizado, *el diario y la persistencia. *
    *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`,
    *`Avisos` *y *`Favoritos`. *La puerta *** si las recorre***; *lo que falta *
    *es *** la captura y el juicio de legibilidad***. *
-*** 2 ***. *La seccion de los toques *** no llega al final***, *y su causa esta *
-   *** medida *** *(-- *pide un enlace que a movil no existe --)*. *
+*** 2 ***. *** ACTUALIZADO EN LA RONDA 86: *la puerta ya llega al final*** *
+   *-- *corre *** 194 comprobaciones sobre 23 secciones ***, *y las *** 15 que
+   *fallan son dos ***, *y las dos son *** de la prueba ***, *con su razon escrita
+   *al lado del codigo ✓
+   *-- *y por eso se puede decir algo mas que antes: *** la aplicacion no solo
+   *funciona, *ademas *** se comporta como dice que se comporta*** ✓✓✓
 *** 3 ***. *Y por tanto *** no se puede afirmar que el despliegue publico este
    *listo ***: *se puede afirmar que *** la aplicacion funciona y se comporta***, *
    *y *** no *** que se haya mirado pantalla a pantalla con ojo humano. *
@@ -2720,3 +2732,38 @@ tenido que reescribir *** cuatro veces en un dia***, *y *** ninguna por un error
 de escritura***: *todas porque *** el trabajo siguio despues de la foto.*** *
 *Y eso es, *literalmente, *lo que dice su propia seccion 17: *
 *** consolidar no es arreglar, *es fotografiar.*** *
+
+## 7.142 *Y LA COMPROBACION DE LA SECCION 17 ENCONTRO DOS FRASES VIEJAS *MAS* (ronda 86)*
+
+*** Y esta vez no las busque a ojo ***: *escribi *** una comprobacion *** que mira
+los documentos *** vigentes *** *buscando numeros y frases viejas, *y *** las
+encontro***. *
+
+```
+*** la comprobacion *** busca en *** el resumen y en las PARTES 1 y 2 ***, *
+   *no en el historico, *esto: *
+   *** `\b87 ok\b` *· *`\b177 ok\b` *· *`\b190 ok\b` *· *«no llega al final» *** ✓
+*** -> *y a la primera pasada salieron *** 17 coincidencias *** ⚠️
+*** -> *y de esas 17, *** 15 eran del historico *** *(-- *correctamente fechadas --)* ✓
+*** -> *y *** DOS eran del dictamen vigente ***: *
+   *-- *** `DICTAMEN.md:105` ***, *en el resumen: *«paso de 19 ok a *** 177 ok ***» ⚠️
+   *-- *** `DICTAMEN.md:154` *y *`:244` ***, *en las PARTES 1 y 2: *
+      *«la seccion de los toques *** no llega al final ***» ⚠️
+*** -> *** tres frases, *en el documento que se lee primero *** ✓✓✓
+```
+
+### 7.143 *Y por que se me escaparon en la ronda 85*
+
+```
+*** el script de la 85 *** buscaba *** un bloque exacto ***, *y lo sustituyo ✓
+*** -> *pero *** habia DOS sitios con el mismo numero *** *
+   *-- *uno en el apartado de las familias ✓
+   *-- *y otro en *** «los numeros que resumen el hallazgo» *** ⚠️
+*** -> *** y solo cambio uno *** ✓
+*** -> *** es el mismo error de las 22 lineas: *arreglar un sitio y no su vecino *** ✓
+*** -> *** y esta vez lo encontro una COMPROBACION, *no mi memoria *** ✓✓✓
+```
+
+*** Y ESTO ES EL METODO DE LA SECCION 17, *FUNCIONANDO***: *la regla no vale de
+nada si no se corre, *y *** correrla encontro tres frases que yo habia dado por
+buenas***. *Y las tres estaban *** en la primera pagina***. *
