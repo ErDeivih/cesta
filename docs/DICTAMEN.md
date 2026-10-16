@@ -1019,3 +1019,44 @@ mismo *** *y *** desactualizado respecto al router***: *
 *** -> *** o sea que el recorrido del punto 4 PASA, *y lo unico que falta *
    *es la seccion que *** cuenta los toques *** ✓
 ```
+
+## 7.46 *Y EL ULTIMO ERROR, *MEDIDO: *la barra de abajo lleva a las RAICES (ronda 37)*
+
+```
+*** `BarraAbajo` ***, *en `Suite.tsx:436`, mapea sobre *** `APLICACIONES` *** *
+   *y usa *** `to={otra.raiz}` *** ✓
+*** -> *** la barra de abajo lleva a las RAICES ***: *`/compra`, *`/recetas`, *`/calorias` ✓
+*** -> *** NO lleva a `/compra/listas` *** ⚠️
+*** -> *y el test, *a 390 px, *busca *** `nav a[href='/compra/listas']:visible` *** *
+   *** -> timeout *** ✓✓✓
+```
+
+### 7.47 *Y el defecto es del test, *y es concreto*
+
+```
+*** la seccion se llama *** «cuantos toques hay desde la primera pantalla hasta
+   *** cada respuesta» ***, *o sea que *** mide toques a movil *** ✓
+*** -> *y a movil, *la barra de abajo *** solo tiene las tres raices *** ✓
+*** -> *y la cesta se alcanza *** por `/compra` y luego «Listas» *** *
+   *** -- *no por un enlace directo en la barra *** ✓
+*** -> *** `BARRA` pide un enlace que a movil NO EXISTE *** ✓✓✓
+*** -> *o sea que la prueba de los toques *** mide algo que la aplicacion no ofrece ***, *
+   *y por eso caduca ✓
+```
+
+*** Y NO SE HA TOCADO ***: *arreglarlo exige decidir *** que se cuenta *** *(-- *los
+toques a los destinos que la barra si ofrece, *o el recorrido completo pulsando
+«Listas» desde Compra --)*, *y *** eso es una decision de diseño de la prueba ***,
+*no un valor que se pueda medir y sustituir como los otros. *
+
+## 7.48 *Y LA PUERTA, *en su estado final*
+
+```
+*** *** 87 ok ***, *** 0 FALLO ***, *y llega a *** LA ULTIMA SECCION *** ✓✓✓
+*** -> *y el unico error es el localizador de los toques ✓
+*** -> *y su causa esta *** medida ***, *no supuesta: *
+   *** la barra de abajo lleva a las raices, *y el test pide `/compra/listas` *** ✓
+*** -> *** el recorrido del punto 4 PASA ENTERO *** *
+   *-- *lo unico que falla es *** el contador de toques ***, *que mide algo
+   *que a movil no existe ✓
+```
