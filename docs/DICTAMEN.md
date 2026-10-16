@@ -440,3 +440,52 @@ proxya `/api` a `cesta-api-1`, *o sea *** a la base domestica***. *Y la respuest
 *** -> *** o sea que el punto 4 YA TIENE su puerta mecanica escrita *** *
    *-- *y lo que yo iba a montar a mano con REA *** ya existe, *y mejor *** ✓✓✓
 ```
+
+## 7.7 *Y LA PUERTA DEL PUNTO 4 **ESTA ROTA**, *y se sabe desde cuando (ronda 24)*
+
+*** Se corrio `plataforma/prueba_navegador.py` contra el entorno aislado. *** Y pasa
+muchisimo ***, *y falla en un sitio concreto.* *
+
+```
+*** ok *** *la portada dice que hay tres aplicaciones*
+*** ok *** *el buscador se ve en la primera pantalla, sin buscar el boton*
+*** ok *** *escribir busca: los resultados salen debajo, sin pulsar nada*
+*** ok *** *y la fecha de los precios va CON ellos, que es donde hace falta*
+*** ok *** *sin escribir nada hay algo que leer, no una pantalla vacia*
+*** ok *** *y no es una visita guiada: no hay pasos que pasar*
+*** ok *** *la tarjeta ensena ejemplos (4)*
+*** ok *** *los CUATRO ejemplos hablan de lo que se busca*
+*** ok *** *sin sesion la lista pide entrar, y lo explica*
+*** ok *** *el alta pide nombre, usuario y clave*
+*** ok *** *la cuenta prueba-navegador entra*
+*** FALLO *** *** sin sesion sale la tarjeta de la primera vez (no un esqueleto) *** ***
+```
+
+### 7.8 *Y WHAT falla, *exactamente*
+
+```
+*** el test exige *** `"Esto compara el precio" in main` *** en `/buscar` ✓
+*** -> *y la frase *** NO EXISTE ***: *`git grep` en `src` da *** CERO ***, *
+   *y tampoco esta en el bundle ni en `index` ✓
+*** -> *y `git log -S` dice que *** existio ***: *escrita el *** 23/09 *** en `783fcc9`, *
+   *y *** quitada *** en *** `21c48a5` *** *(-- «REVISION INDEPENDIENTE DEL 12 DE
+   *OCTUBRE: *se conserva el trabajo del dueno, *que estaba SIN COMMITEAR» --)* ✓
+*** -> *** la frase se quito, *y el test no se actualizo *** ✓
+```
+
+### 7.9 *Y por que esto importa mas que el fallo en si*
+
+```
+*** `prueba_navegador.py` *** es la puerta mecanica del punto 4 *** *
+   *-- *y el propio fichero lo dice: *«lo que este script no pase, *
+      *** no se le puede pedir a una persona» *** ✓
+*** -> *** y se CORTA en el primer fallo ***: *todo lo que venia despues *** no corre *** ⚠️
+*** -> *** o sea que el punto 4 no esta sin verificar porque falte entorno: *
+   *** esta sin verificar porque su puerta no llega al final *** ✓✓✓
+*** -> *y eso explica tambien por que el encargo pide «verificar» y no «confiar» ✓
+```
+
+*** Y NO SE HA TOCADO EL TEST ***, *y se dice por que ***: *no se si la frase se quito
+a proposito y el test quedo viejo, *o si se perdio sin querer. *Eso *** es del
+propietario***, *y las dos salidas son distintas: *si se quito a proposito, *
+*el test hay que actualizarlo; *si se perdio, *la pantalla hay que arreglarla.* *
