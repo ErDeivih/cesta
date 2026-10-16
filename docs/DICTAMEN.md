@@ -2256,3 +2256,39 @@ mande el armazon --, *y *** no funciona: *siguen siendo dos.*** *
 *Es *** mas grande y mas simple a la vez***: *hoy *** nadie garantiza un `h1`***, *
 *y hay *** 23 sueltos en 16 ficheros***. *Arreglarlo pide *** decidir el contrato
 y aplicarlo*** *-- *y eso es *** un cambio de 16 a 20 ficheros***, *no de uno.* *
+
+## 7.115 *Y LA DECISION, *QUE EL MAPA HACE UNICA (ronda 75)*
+
+*** El objetivo es *** exactamente un `h1` por pantalla***, *y el mapa de 7.112 deja
+*** dos caminos***: *
+
+```
+*** A ***. *el *** armazon mantiene el `h1` ***, *y las paginas *** no ponen ninguno *** *
+   *-- *pide *** quitar o convertir 23 `h1` en 16 ficheros *** ⚠️
+*** -> *** B ***. *el *** armazon baja a `h2` ***, *y cada pagina pone *** exactamente uno *** *
+   *-- *pide *** anadir en 5 y unificar en 6 ***, *y el titulo de la seccion *
+      *** dejaria de ser el `h1` *** ⚠️
+*** -> *** A ES LA CORRECTA ***: *el `h1` de la pantalla *** es el de la seccion *** *
+   *-- *el armazon ya lo pone ✓
+   *-- *y las *** cinco paginas sin `h1` ya funcionan asi*** ✓✓✓
+```
+
+### 7.116 *Y hay una pista que confirma A: *alguien ya empezo*
+
+```
+*** `Cesta`, *`Buscar` *y *`Unirse` *** tienen un *** `<h1 className="sr-only">` *** ✓
+*** -> *y eso es *** medio arreglo de A***: *hacer invisible el `h1` de la pagina *
+   *** para que mande el del armazon *** ✓
+*** -> *** pero `Cesta` tiene DOS ***: *el `sr-only` *** y *** el visible ⚠️
+*** -> *y en `Buscar` *y `Unirse` *el `sr-only` *** convive con otro visible *** ✓
+*** -> *** alguien empezo A y no lo termino *** ✓✓✓
+*** -> *y `Inicio.tsx:400` tiene *** otro `sr-only` ***, *y `Inicio` es *** muerto *** *
+   *-- *o sea que *** el intento es viejo *** ✓
+```
+
+*** Y EL ARREGLO, *en una frase***: *el armazon *** se queda con el `h1`***, *
+*y las *** 23 de las paginas*** *-- *incluidos los tres `sr-only` --* *** se convierten
+en `h2` *** *(-- *o se quitan, *si son invisibles *y no aportan --)*. *Y eso es *
+*** un cambio de 16 ficheros***, *y por eso *** no se hace en esta ronda***: *
+*es exactamente el tamaño de cambio que *** no debo empezar sin poder correr la
+puerta al final***.* *
