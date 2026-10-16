@@ -2090,3 +2090,38 @@ el unico fallo funcional *** de los seis. *Y el test hace: *
 *y *** estuve a punto de concluir que la funcion no existia***. *Se llama
 *** `_producto_caro_con_historial` ***, *con `-ial`. *Y *** una busqueda vacia no
 prueba ausencia***: *prueba que *** el patron estaba mal.*** *
+
+## 7.104 *Y LA PRIMERA COSA QUE SE PUDO MEDIR: *EL PRODUCTO ELEGIDO (ronda 71)*
+
+```
+*** `_producto_caro_con_historial()` *** lee *** `gold` *** *
+   *(-- *parquet en disco, *no la base --)*, *asi que *** se puede ejecutar sin
+   *levantar nada*** ✓
+*** -> *y devuelve *** `('dia', '147509')` *** ✓
+*** -> *y el fallo del test decia *** «/producto/dia/147509 ... {'encabezados': ['0 h1']}» *** ✓
+*** -> *** es el MISMO producto ***, *y ademas falla TAMBIEN la familia 4 *
+   *(-- *la pantalla sin `<h1>` --)* ✓✓✓
+```
+
+## 7.105 *Y UN HALLAZGO LATERAL, *QUE SE SOSTIENE SOLO*
+
+*** Y de paso, *buscando la serie, *aparecio esto ***: *
+
+```
+*** `resumen` *** tiene *** 76.223 filas *y 76.223 ids distintos*** *
+   *-- *o sea *** un id por producto, *y SIN la fuente *** ✓
+*** -> *y solo *** `core/derive.py:117` *** lo ESCRIBE *** *
+   *-- *** y `git grep` no encuentra quien lo LEA *** *
+   *-- *ni en `plataforma/api` *ni en `core` ⚠️
+*** -> *** es una tabla que se escribe y no se lee *** ✓
+*** -> *y sus ids *** no llevan fuente ***, *asi que *** `dia/147509` *
+   *puede ser otro `147509` de otra cadena *** ✓✓✓
+```
+
+*** Y ME HE IDO POR UNA RAMA ***, *y lo digo: *la ficha decide la curva por
+*** `grupo.serie` ***, *que viene de *** la API ***, *no de `resumen`. *Asi que
+`resumen` *** no pinta nada en este fallo.*** *
+
+*** Y LAS TRES CANDIDATAS SIGUEN SIN DESCARTARSE ***: *el producto puede estar
+*** bloqueado ***, *la serie puede *** no tener puntos ***, *o el lienzo puede
+*** medir 0***. *Lo unico que se ha avanzado es *** cual es el producto.*** *
