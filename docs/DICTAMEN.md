@@ -3226,3 +3226,24 @@ sospechosa***, *y era *** la frase que dice la verdad***: *
 escribi para vigilar *** se quedo vieja ella misma***, *y *** lo dijo al correrla***,
 *no al leerla. *Y por eso ahora *** el numero de hoy es una lista que crece***, *y no
 un valor suelto. *
+
+## 7.170 *Y EL PUNTO 7 SE SOSTIENE, *Y SE COMPROBO (ronda 97)*
+
+*** Las capturas se hicieron contra *** el servidor de desarrollo***, *y lo que
+sirve 8080 es *** el `dist` de la ronda 84***. *Asi que la pregunta es: *
+*** ¿ha cambiado la aplicacion desde entonces?*** *
+
+```
+*** `git diff --stat 7a75634 HEAD -- plataforma/web/app/src/` ***: *** vacio *** ✓
+*** -> *12 commits despues, *y *** ninguno toco la aplicacion *** ✓
+   *-- *fueron: *la puerta, *los documentos, *el `.gitignore` *y `tests/` ✓
+*** -> *y lo que sirve 8080: *** `index-uCotWUV6.js` ***, *336.890 bytes ✓
+   *-- *y *** el contenedor lo tiene, *el mismo *** ✓
+   *-- *y el *** `index.html` apunta a ese *** ✓
+*** -> *y el `dist` local *** tambien *** *-- *los tres, *iguales ✓✓✓
+*** -> *** FUENTE, `dist` Y 8080 DICEN LO MISMO *** ✓
+```
+
+*** Y ESO ES LO QUE EL PUNTO 7 PIDE *** *-- *«verificar la VERSION REALMENTE
+SERVIDA, *no solo el codigo local» --, *y esta vez *** no por afirmacion: *porque
+la aplicacion no se ha tocado *** en los doce commits que van desde el build.*** *
