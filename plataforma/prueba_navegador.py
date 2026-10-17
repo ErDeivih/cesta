@@ -250,8 +250,20 @@ def _toques_pequenos(pagina) -> list[dict]:
         .filter(n => {
           const r = n.getBoundingClientRect();
           const s = getComputedStyle(n);
+          // **Y AQUI SE CAIAN CATORCE FALLOS QUE NO ERAN DEFECTOS.**
+          // *El enlace «Saltar al contenido» mide **1x1 a proposito**: es `sr-only`, o sea una
+          // ayuda para lectores de pantalla, y **al recibir el foco crece** (`focus:not-sr-only`
+          // en `Suite.tsx:516`). Medirlo en reposo **es medir algo que nadie puede tocar**: la
+          // regla de los 44 px es para el dedo, y a ese enlace no se llega con el dedo hasta que
+          // tiene el foco.*
+          // *Asi que se excluye lo que esta **recortado a un pixel** -- la marca del `sr-only`,
+          // que es tamano 1x1 **y** recorte, no solo tamano: un boton de 1x1 de verdad sigue
+          // contando.*
+          const soloLector = r.width <= 1 && r.height <= 1
+            && (s.overflow === 'hidden' || s.clip !== 'auto'
+                || (s.clipPath || '').indexOf('inset') === 0);
           return r.width > 0 && r.height > 0 && s.display !== 'none'
-                 && s.visibility !== 'hidden';
+                 && s.visibility !== 'hidden' && !soloLector;
         })
         .map(n => {
           const objetivo = (n.tagName === 'INPUT' && n.closest('label')) || n;

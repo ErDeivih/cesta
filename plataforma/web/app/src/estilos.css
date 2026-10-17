@@ -16,7 +16,8 @@
     --fondo: #fafafa; /* superficie dentro de una tarjeta */
     --borde: #e5e5e5;
     --aviso: #b45309; /* texto de aviso, legible sobre blanco */
-    --bien: #059669; /* borde de lo que ha salido bien */
+    /* EL VERDE NO SE LEIA. Medido por la puerta: sobre marfil daba 3.58 («la mejor contigo», /grupo/526) y 3.32 («ahorras un 3...», /buscar), y el minimo es 4.5. Y sobre blanco daba 3.77, asi que el texto claro encima de bg-bien tampoco. Con #047857 da 5.21 sobre marfil y 5.48 sobre blanco, y de paso arregla bg-bien + text-papel, que estaba en 3.77. El tono sigue siendo verde: no cambia la identidad, cambia que se lea. */
+--bien: #047857;
     --bien-suave: #ecfdf5; /* fondo de lo que ha salido bien */
     /* Direccion visual de SUPERAPP-01: archivo domestico, no panel generico. */
     --marfil: #f4f0e8;      /* lienzo calido */
