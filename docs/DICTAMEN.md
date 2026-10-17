@@ -12,114 +12,178 @@ mezclan: *** implementado *** *(esta escrito), *** verificado *** *(se ha visto)
 
 # *** RESUMEN VIGENTE *** *-- *leer esto primero*
 
-*** ACTUALIZADO EN LA RONDA 85.*** *Y es *** la cuarta vez *** *(-- *rondas 38, *61,
-*66 y 85 --)*, *que es *** el mejor argumento de la seccion 17 de `COMO-SE-MIDE.md`***:
-*consolidar no es arreglar, *** es fotografiar.*** *
-*** Y LO QUE HA CAMBIADO, *RESUMIDO***: *la puerta *** llega al final*** *(-- *23
-secciones --)* *y pasa *** 212 comprobaciones***; *los *** cinco defectos demostrados
-estan arreglados, *verificados *y **servidos en 8080***; *y las *** 15 que fallan son
-dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* *
+*** UN SOLO ESTADO ACTUAL. *Reescrito entero el 17/10/2026.*** *Lo anterior era una acumulacion
+de fotos de dias distintos, *y por eso se contradecia consigo mismo.* *Este sustituye a todas.*
 
-*Las *** PARTES 1 y 2 *** son el dictamen; *las *** PARTES 4 a 7 *** son el *** historico***, *
-*con sus correcciones, *y *** NO son estado vigente.*** *
-
-## *Los ocho puntos del encargo*
-
-| *punto* | *estado* | *evidencia* |
-|---|---|---|
-| *** 1 *** *documental* | *** HECHO *** | *5 documentos coherentes; *la regla y su comprobacion* |
-| *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
-| *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
-| *** 4 *** *el recorrido* | *** PASA *** | *** 212 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
-| *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y la curva **se niega a pintarse a proposito, y lo explica**; no es un fallo* |
-| *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
-| *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
-| *** 8 *** *dictamen* | *** este documento *** | *--* |
-
-*** Y las seis puertas ***: *`ruff` limpio · *** 2083 passed *** · *81 del frontend · *
-*`tsc` limpio · *`build` OK · *`prueba_e2e` *** «TODO BIEN» ***. *
-
-*** Y LA SEPTIMA, *QUE ES LA DEL PUNTO 1***: *
-*** `uv run python -m plataforma.comprueba_documentos` *** *-- *y en las puertas,
-*** `tests/test_documentos.py` *** *-- *falla si un documento vigente afirma lo que
-el trabajo dejo atras. *Es la unica que *** vigila a los documentos***, *y se le ha
-visto *** fallar a proposito***. *Ver la seccion 17 de `docs/ui/COMO-SE-MIDE.md`.* *
-
-
-## *** Y UN DEFECTO ENCONTRADO, *ARREGLADO Y SERVIDO***
-
-```
-*** `Avisos` *** *estaba *** hecho y sin puerta desde el 7 de octubre de 2026***: *
-   *ruta, *titulo, *pantalla de 232 lineas, *contador de no vistos *y campana, *
-   *y *** sus dos unicos enlaces en ficheros muertos*** *(`Inicio.tsx`, *`Nav.tsx`) ✓
-*** -> *lo encontro *** la puerta que se cortaba***, *y yo lo llame dos veces *
-   *** «decision de diseno de la prueba» *** *antes de mirar ✓
-*** -> *** ARREGLADO ***: *una entrada en el lateral, *junto a las otras dos globales ✓
-*** -> *** Y SERVIDO ***: *el `dist` reconstruido, *y 8080 sirve `index-COJqyF63.js`, *
-   *con la entrada comprobada *** en el bundle y en una captura *** ✓✓✓
-```
-
-## *** LAS SEIS FAMILIAS, *CON VEREDICTO FINAL***
-
-| *familia* | *veredicto* | *estado* |
-|---|---|---|
-| *** blancos por debajo de 44 px *** | *** defecto real *** | *** arreglado, verificado y servido*** |
-| *** los `h1` *** | *** defecto real *** | *** arreglado, verificado y servido*** |
-| *** el buscador con la API caida *** | *** defecto real *** | *** arreglado, verificado y servido*** |
-| *** la invitacion *** | *** prueba desactualizada *** | *** arreglada, verificada y servida*** |
-| *el plegado de las cadenas* | *** decision de diseño *** | *hoy es un enlace; *las dos opciones estan escritas* |
-| *`Saltar al contenido`* · *la curva* | *** falsos positivos *** | *la app hace lo correcto; *la medida no lo sabe* |
-
-*** Y los cinco defectos, *uno a uno***: *
-
-```
-*** `Avisos` ***: *hecho y *** sin puerta desde el 7 de octubre***; *arreglado, *
-   *servido y fotografiado ✓
-*** -> *los 44 px ***: *el pie del Lanzador (127x17), *`Por mes` (56x23) y *
-   *`Por semana` (79x23) *** -> con `min-h-[44px]` ✓
-*** -> *los `h1` ***: *** 16 ficheros, 23 etiquetas*** *-> el armazon se queda el `h1`, *
-   *y las paginas pasan a `h2` ✓
-*** -> *el buscador ***: *`Fallo` decia «traer» *y la pantalla pide «buscar» -> *
-   *`titulo="No he podido buscar"` ✓
-*** -> *la invitacion ***: *esperaba `/cesta`, *y `/cesta` *** redirige *** *
-   *a `/compra/listas` -> la URL final ✓✓✓
-```
-
-## *Lo que queda ABIERTO*
-
-```
-*** 1 ***. *** Las siete pantallas con sesion, *capturadas*** *
-   *(-- *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *
-   *`Avisos`, *`Favoritos` --)*: *la puerta *** las recorre y las pasa***; *
-   *falta *** la captura y el juicio de legibilidad ***. *
-*** 2 ***. *** El plegado de las cadenas ***: *decision de diseño, *no defecto. *
-*** 3 ***. *** `data/publicado/` ***: *dos ficheros del 16 de septiembre que *
-   *** nadie lee ni escribe***. *Es del propietario.* *
-*** 4 ***. *** El punto de «sin ver» de los avisos ***: *el contador ya existe; *
-   *donde se ve *** es una decision de producto***. *
-*** 5 ***. *** La cobertura de las cadenas que no son Lidl ***: *no tiene fichero, *
-   *aunque *** si se declara en pantalla por cadena***. *
-*** 6 ***. *** Un perfil de REA suelto *** *y el Chrome que lo sostiene: *
-   *** no se mata***, *porque no puedo distinguirlo de los navegadores ajenos. *
-```
-
-## *Y los numeros que resumen el hallazgo de fondo*
-
-```
-*** 6 *** *lineas de puerta arregladas *(-- *una frase, *cinco rutas* --)* *
-   *+ *** 1 condicion de carrera *** quitada *
-   *+ *** 4 caminos *** con su raiz + *** 1 ayudante *** que abre el cajon *
-   *+ *** 23 etiquetas *** + *** 3 botones *** + *** 2 URLs *** + *** 1 titulo *** ✓
-*** -> *y con eso la puerta paso de *** 19 ok *** a *** 212 ok *** ✓✓✓ *
-   *-- *y de *** morir en el primer enlace *** a correr *** 23 secciones *** ✓
-*** -> *y destapo *** 6 familias ***, *de las que *** 3 eran defectos reales ***, *
-   *** 2 la app haciendo lo correcto *** *y *** 1 una decision de diseño *** ✓
-*** -> *y *** 4 documentos *** afirmaban cosas que ya no eran ciertas ✓
-*** -> *y *** 1 pantalla *** llevaba sin puerta desde el 7 de octubre ✓
-*** -> *** la aplicacion funcionaba; *lo que fallaba era todo lo que decia si funcionaba *** ✓✓✓
-```
+*** Y SE ORDENA EN TRES COSAS QUE NO SON LO MISMO***, *que es lo que el encargo pide distinguir:*
+***VERIFICADO*** *(-- *se ha visto funcionando, *y hay como repetirlo --)*, ***LIMITADO*** *(-- *no
+se puede ver, *y se dice por que --)*, *y ***ABIERTO*** *(-- *se ha demostrado que falla, *y no
+esta arreglado --)*. *Lo meramente ***implementado*** va con lo limitado, y se marca.*
 
 ---
+
+## *** 1 · LO VERIFICADO ***
+
+### 1.1 *La puerta del navegador recorre la aplicacion y llega al final (con una excepcion)*
+
+*** `plataforma/prueba_navegador.py` ***: *la ultima corrida completa dio *** 213 comprobaciones
+en `ok` ***, *sobre *** 23 pantallas ***, *y *** 14 fallos ***, *que son *** todos el mismo ***
+(-- *`Saltar al contenido`, *un `sr-only` que mide 1x1 a proposito --)*.
+
+*** Y el recorrido incluye: *** *las tres aplicaciones, *la lista, *el reparto entre tiendas, *
+*el diario, *los avisos, *las nueve pestanas del panel, *el escaner, *la invitacion con dos
+personas, *el contraste, *los 44 px, *y el lateral de **escritorio** *-- *este ultimo
+implementado y **NO verificado**, *ver 3.1 --.*
+
+### 1.2 *Los avisos, con escenario determinista*
+
+*** Se siembra un aviso de verdad en la base desechable*** *(-- *`almacen.crea_alerta` --)*, *se
+hace una pasada del *** vigilante *** *(-- *que es quien apunta `salto_en`; `evalua_con_memoria`
+solo evalua al leer y NO persiste, *medido --)*, *y se comprueba:* *que la pantalla *** cuenta ***
+los pendientes, *que al pulsar «Ya los he visto» *** la cuenta baja a 0 ***, *que *** el aviso
+sigue en la pantalla ***, *que *** el boton desaparece ***, *y que *** al recargar no vuelve ***.
+*Y si no se puede sembrar, *** falla ***: *no se omite.*
+
+### 1.3 *Ingestas, frescura y cobertura, por cadena (17/10/2026)*
+
+```
+runs.csv, 16/10
+  alcampo    09:04   22804 filas   0 errores   ok=True      <- captura aceptada
+  carrefour  08:42   16507 filas   1 error     ok=True      <- aceptada CON un error
+  lidl       07:13      79 filas   0 errores   ok=True      <- cobertura PARCIAL declarada
+/api/estado (8080), las seis al dia (16/10)
+  alcampo 22790 · carrefour 16507 · dia 5755 · mercadona 4167 · aldi 2511 · lidl 76
+```
+
+*** Y HAY TRES COSAS QUE NO SE PUEDEN CONFUNDIR, *y que se confundian***: *
+
+- *** `ok=True` NO es «cero errores»***: *Carrefour tiene `ok=True` **y** `errores=1`.*
+- *** FILAS no es PRODUCTOS ***: *Alcampo 22 804 filas, *22 790 productos distintos
+  (`count(DISTINCT id_fuente)`).*
+- *** CAPTURA ACEPTADA NO es CATALOGO COMPLETO ***, *ni *** RECHAZO PROTECTOR es COLECTOR
+  REPARADO***: *Alcampo se rechazo el 15 y se acepto el 16; *eso **no** demuestra que el
+  colector este arreglado, *y no se afirma.*
+
+*** Y la cobertura: *** *solo *** Lidl *** la declara *(-- *4 ficheros, *13 a 16, *todos
+`ofertas_semanales_parcial` --)*, *con su aviso literal: *«no su catalogo completo: no certifica
+stock, ni identidad de producto, ni que un producto ausente se haya retirado»*. *Alcampo,
+Carrefour, Aldi, Mercadona y DIA *** no tienen fichero de cobertura***, *y eso es una limitacion
+declarada, *no un olvido de esta revision.*
+
+### 1.4 *El contraste y los tamanos*
+
+*** 18 pruebas de interfaz y contraste *** *pasan*, *y *** 81 del frontend***. *Las siete puertas
+estan mas abajo, en el punto 4.*
+
+---
+
+## *** 2 · LO IMPLEMENTADO Y CORREGIDO, *CON SU DEFECTO DEMOSTRADO ***
+
+*Cinco defectos demostrados, *cinco arreglados, *verificados y servidos:*
+
+| *defecto* | *como se demostro* | *estado* |
+|---|---|---|
+| *** `Avisos` sin puerta *** *desde el 7 oct* | *sus dos enlaces vivian en ficheros muertos* | ***arreglado*** |
+| *** tres blancos < 44 px *** | *127x17 el pie del Lanzador, 56x23 y 79x23* | ***arreglado*** |
+| *** dos `h1` en 15 rutas *** | *el del armazon mas el de la pagina* | ***arreglado*** |
+| *** el buscador decia «traer» *** | *`Fallo` sin su titulo propio* | ***arreglado*** |
+| *** la invitacion esperaba `/cesta` *** | *que hoy es una redireccion* | ***arreglado*** |
+
+*** Y se sirvio: *** *lo que 8080 entrega es el mismo bundle que sale del fuente, *comprobado
+contra el `dist` y contra el `index.html` servido.*
+
+---
+
+## *** 3 · LO LIMITADO Y LO ABIERTO ***
+
+### 3.1 *** ABIERTO: *la ficha de producto no se puede abrir, *y se lleva la aplicacion entera ***
+
+*** Y es lo mas grave que hay ahora mismo***, *y por eso va primero:*
+
+```
+/compra/productos/dia/<id>   sobre 8080
+  a   800 ms   #raiz = 9109 caracteres: el armazon PINTADO
+  a  3000 ms   #raiz = 0
+  pageerror y consola: VACIOS   ·   href: sin cambios   ·   history: sin cambios
+```
+
+*** Y esta acotado, midiendo***: *la app *** arranca***, *el armazon *** se pinta***, *el chunk de
+`Producto` *** se pide y se carga***, *la API *** contesta 200 con JSON valido***, *y despues ***
+React vacia el arbol entero, sin error y sin navegar***.
+
+*** Se ha reproducido el mecanismo a proposito***: *inyectando una excepcion en un efecto sobre
+`/compra` *(-- *que pinta bien --)*, *la aplicacion se vacia igual y tambien en silencio.* *Asi
+que es *** una excepcion dentro de un efecto de React***. *Y el titulo, que el efecto de `App`
+pondria antes de esa linea, *** se queda en `Cesta` ***: *el efecto muere antes de su segunda
+linea.*
+
+*** DEScartado midiendo***: *el servidor (mismo `index.html`), *un chunk que falte (esta, 16 778
+B), *un error de transformacion (200, 116 216 B), *el arranque (una ruta inexistente pinta), *la
+redireccion (se probo la ruta real), *la sesion, *un `ErrorBoundary` (no hay), *el `fallback` de
+`Suspense` (tiene texto), *y `useTitulo` (lo usa `Grupo`, que pinta).*
+
+*** CONSECUENCIA, *y es lo que hay que decir sin adornos***: *mientras esto siga asi, *el punto 3
+del encargo no esta cumplido, *la seccion de la curva no se puede medir, *y *** la ficha de
+producto no sirve para uso domestico***. *La puerta se corta ahi (salida 3, «no pudo terminar de
+medir»), *y ese corte *** es consecuencia de este defecto***, *no un fallo suyo.*
+
+### 3.2 *** LIMITADO: *el lateral de escritorio, *implementado y no verificado ***
+
+*Porque la puerta se corta antes (3.1).* *Lo que si esta medido es que a 1280 el lateral
+*** existe y mide 248 px*** *(-- *`aside[aria-label="Menu de la suite"]`, *`w-[248px]` --)*, *y
+que *** el `nav` de la portada mide 1208 px*** *y no es un menu: *eso fue el error de la version
+anterior de la prueba, *que medía el menu de tarjetas y lo llamaba «el nav de escritorio».*
+
+### 3.3 *** LIMITADO: *la chapa de «sin ver» no se pinta en el lateral ***
+
+*** Y es una decision, *no un olvido***: *`Suite.tsx:288` lo dice -- «queda pendiente el punto de
+"sin ver", que `Nav.tsx:98` pintaba y que **si es una decision**».* *Asi que la comprobacion «el
+icono y la pantalla dicen lo mismo» *** se quito***, *porque exigia algo que la app no hace, *y
+en su lugar se comprueba lo que existe y se declara la limitacion.*
+
+### 3.4 *** LIMITADO: *las pantallas que nadie ha mirado ***
+
+*Hay *** 66 capturas ***, *y se han mirado *** cinco***: *`Avisos`, *`Mi recetario`, *`Plan
+semanal`, *`Ajustes` *y *`Panel`. *Las cinco hacen lo mismo -- ***declaran su limite, *dicen que
+hacer si estan vacias, *y no culpan a nadie*** --, *pero ***las otras 61 no las ha mirado nadie***,
+*y juzgar legibilidad es mirarlas.* *Prioridad para la proxima: *listas pobladas, *comparacion,
+*plan semanal, *diario *y *graficas.*
+
+### 3.5 *** LIMITADO: *cuatro decisiones que son del propietario, *y no se tocan ***
+
+*El plegado de las cadenas en la ficha *(-- *hoy es un enlace; *la prueba esperaba un
+`<details>` --)* · *los dos ficheros de `data/publicado/`* · *donde se ve el punto de «sin ver»* ·
+*y donde vive la cobertura de las cadenas que no son Lidl.*
+
+---
+
+## *** 4 · LAS SIETE PUERTAS, *Y QUE CERTIFICA CADA UNA ***
+
+```
+uv run ruff check .                          ->  All checks passed!
+uv run pytest -q (CESTA_POSTGRES al 5434)    ->  2083 passed, 17 skipped, 0 failed
+cd plataforma/web/app && npm test            ->  81 pass, 0 fail
+npx --no-install tsc --noEmit                ->  sin salida (limpio)
+npm run build                                ->  OK
+uv run python -m plataforma.prueba_e2e        ->  == TODO BIEN
+uv run python -m plataforma.comprueba_documentos -> == TODO BIEN
+```
+
+*** Y LA SEPTIMA ES LA QUE VIGILA ESTE DOCUMENTO***, *y hay que decir que *** NO certifica
+coherencia***: *busca numeros y frases de fotos anteriores, *y *** no sabe si el documento se contradice***. *Es una ayuda. *Este resumen se
+reescribio a mano, *entero, *y asi seguira: *cuando cambie el estado, *** se reescribe***, *no se
+parchea.*
+
+---
+
+## *** 5 · LO QUE ESTE RESUMEN SUSTITUYE ***
+
+*Se reescribio entero el 17/10/2026 porque el anterior acumulaba cuatro actualizaciones de dias
+distintos y *** se contradecia***: *decia «sin capturar» de siete pantallas que ya estaban
+capturadas, *daba la curva por fallo real cuando lo que pasaba es que la pantalla no llegaba a montarse,
+*y mantenia numeros de la puerta ya viejos.* *Todo eso *** se ha borrado***, *no corregido con
+una nota al lado.* ***Lo historico esta desde la PARTE 4, y ahi no se toca: alli las fotos viejas
+son el registro.***
 
 # PARTE 1 · *PARA USO DOMESTICO*
 
