@@ -450,3 +450,45 @@ el ayudante `__name`, o las optimizaciones que apaga.* *Ninguna de las dos esta 
 servida**; *la causa esta **en la minificacion** (medido con y sin), *`keepNames` **la evita**
 (medido), *y **no se sabe por que***. *No se declara resuelto.*
 
+
+=== DUODECIMA: EL `lazy` DE `App.tsx:41` QUEDA DESCARTADO CON EVIDENCIA ===
+
+Se construyeron los dos `index` (normal y con `keepNames`) y se leyo **la expresion del `lazy` de
+`Producto`** en los dos:
+
+  NORMAL     eE=x.lazy(()=>Gt(()=>import("./Producto-VSQkdDS4.js"),
+                              __vite__mapDeps([21,1,17,13,18,5])).then(n=>({default:n.Producto})))
+  KEEPNAMES  QT=_.lazy(()=>It(()=>import("./Producto-C86V4kNv.js"),
+                              __vite__mapDeps([21,1,17,13,18,5])).then(r=>({default:r.Producto})))
+
+*** IDENTICAS en estructura, y con la MISMA lista de dependencias `[21,1,17,13,18,5]`.*** *Solo
+cambian los nombres de las variables (por la minificacion) y el hash del fichero.*
+
+*** Asi que el `lazy` de `App.tsx:41` NO es la causa.*** *Queda descartado leyendo los dos ficheros, no
+suponiendo.*
+
+=== Y LO QUE SI CAMBIA ENTRE LOS DOS, *que esta a la vista* ===
+
+    KEEPNAMES   function D2(r,c){...} u(D2,"useProducto");
+    NORMAL      (sin esas llamadas)
+
+*`keepNames` mete llamadas `u(fn, "nombre")` en cada funcion y clase.* *Que `__name` diera 0 en el
+recuento es porque esbuild lo llama `u`, no `__name`.*
+
+*** Y AQUI HAY UNA CONTRADICCION QUE NO SE RESUELVE, *y no se va a tapar***: *las llamadas que
+`keepNames` anade **solo sirven para que `fn.name` valga algo**; *la aplicacion **no lee `.name` en
+ninguna parte** (`grep`: cero). *Asi que **lo que lee un `.name` es una dependencia**, y **no se ha
+identificado cual**.* *Y `keepNames` tambien apaga optimizaciones, asi que podria no ser el nombre.
+**Las dos posibilidades siguen abiertas.***
+
+=== LO QUE QUEDA, Y ES LO QUE HAY QUE HACER ===
+
+1. **`keepNames` con `minifySyntax` y `minifyWhitespace` por separado**, para ver cual de las tres
+   cosas es la que importa. *Tres construcciones, cada una con su prueba de la ruta.*
+2. **Si sigue sin aclararse**: montar una pagina minima que pinte solo `<Producto />` con el build
+   minificado. *Si ahi tambien queda en blanco, el fallo esta en el componente; si pinta, esta en el
+   armazon o en el router.*
+
+*Limpieza: `vite.config.kn.ts` y `dist-kn` borrados, verificando la ruta antes de borrar. `dist` real
+intacto (10:19:29).*
+
