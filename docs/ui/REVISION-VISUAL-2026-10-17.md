@@ -1,6 +1,7 @@
 # *** REVISION VISUAL *** *-- *17/10/2026, sobre las capturas de la ronda 121*
 
-*** CINCO PANTALLAS MIRADAS, *Y TRES DEFECTOS CONCRETOS QUE NO SON DE ESTA REVISION.*** *No se
+*** CINCO PANTALLAS MIRADAS, *Y DOS DEFECTOS CONCRETOS* (-- *y uno que retire, *porque
+ era mio --)*. *No se
 cuentan capturas: *se cuenta lo que esta mal, *donde, *y con que se prueba.*
 
 *Las capturas estan en `docs/ui/capturas/ronda-121/`, hechas por `plataforma/prueba_navegador.py`
@@ -28,7 +29,7 @@ posicion de ventana.** *Eso NO es un defecto, y no se cuenta.*
 
 ---
 
-## *** 2 · LOS TRES DEFECTOS CONCRETOS ***
+## *** 2 · LOS DOS DEFECTOS CONCRETOS, *Y EL QUE RETIRE ***
 
 ### 2.1 *** CONCORDANCIA: *el singular se escribe en plural ***
 
@@ -52,17 +53,24 @@ un defecto de texto, no de datos, *y se ve en una pantalla normal sin buscarlo.*
 fecha en ISO y el dia de la semana en castellano.* *Para una persona que lee «sabado 17», *el
 «2026-10-24» de al lado no es una fecha: es un codigo.*
 
-### 2.3 *** NUMERO: *coma y punto en la misma pantalla ***
+### 2.3 *** RETIRADO: *el del numero era un error MIO, y se queda escrito ***
 
-*** En `cesta-13.png`:*
+*** En la primera version de esta revision escribi que `cesta-13.png` tenia la misma cantidad
+escrita con coma y con punto:***
 
 ```
-0,96 €                        <- arriba, con COMA
-0.00 € por coger · 0.96 € en el carro    <- abajo, con PUNTO
+0,96 EUR                     <- arriba, con COMA
+0.00 EUR por coger ...       <- abajo, con PUNTO
 ```
 
-*** La misma cantidad, *en la misma pantalla, *escrita de dos formas.*** *Una de las dos esta mal
-en castellano, *y ademas hace dudar de si son la misma cifra.*
+*** Y ES FALSO.*** *Las dos cifras salen de `euros()`, que es
+`Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })` (`formato.ts`), *y con
+`es-ES` el separador decimal es **siempre la coma**.* *Lo que pasa es que **lei mal la captura**,
+en una linea que ademas queda cortada por la barra de abajo.*
+
+*** Se retira.*** *Y se deja aqui, en vez de borrarlo, porque **una lista de problemas que
+incluye falsos problemas es tan inutil como una que no los incluye** -- *y porque el error no fue
+de la aplicacion, fue de quien miro.*
 
 ---
 

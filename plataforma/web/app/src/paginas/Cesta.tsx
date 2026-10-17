@@ -39,7 +39,10 @@ import type {
   CambioDeCola, CambioLinea, CierreDeCompra, Invitacion, Novedad, Persona,
 } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
-import { euros, hace, nombreCadena } from '../api/formato'
+// **`fecha`, que es la que escribe las fechas en castellano.** *Sin ella esta pantalla
+// ponia el ISO crudo -- «Datos del 2026-10-16» -- mientras el diario ponia «17/10/2026».
+// *Medido en la revision visual del 17/10/2026.*
+import { euros, fecha as fechaTexto, hace, nombreCadena } from '../api/formato'
 import {
   apuntaCambio, leerCola, vaciaCola,
 } from '../estado/cola'
@@ -1526,14 +1529,17 @@ export function Cesta() {
               )}
             </p>
             <p className="mt-2 text-cuerpo">
-              {lineas.length} líneas
+              {/* **Y en singular cuando es una.** *En la lista de una linea ponia
+                  «1 lineas», y al lado «1 ya cogidas». *Con la captura delante.* */}
+              {lineas.length} {lineas.length === 1 ? 'línea' : 'líneas'}
               {lineas.some((l) => l.tachado_en) && (
-                <> · {lineas.filter((l) => l.tachado_en).length} ya
-                  cogidas</>
+                <> · {lineas.filter((l) => l.tachado_en).length}{' '}
+                  {lineas.filter((l) => l.tachado_en).length === 1
+                    ? 'ya cogida' : 'ya cogidas'}</>
               )}
             </p>
             <p className="mt-1 text-etiqueta text-tinta-suave">
-              Datos del {detalle.data.fecha_datos}
+              Datos del {fechaTexto(detalle.data.fecha_datos)}
             </p>
           </Tarjeta>
 

@@ -279,7 +279,8 @@ export function Grupo() {
               Con `whitespace-nowrap` en todo el trozo se arreglaba lo de colgar y se rompía
               otra cosa: la línea se salía del ancho y la fecha salía cortada. */}
           <p className="mt-1 break-words text-cuerpo text-secundaria ">
-            <span>{grupo.productos.length} productos</span>
+            <span>{grupo.productos.length}{' '}
+            {grupo.productos.length === 1 ? 'producto' : 'productos'}</span>
             <span>
               {' ·\u00a0'}
               {grupo.cadenas} {grupo.cadenas === 1 ? 'cadena' : 'cadenas'}
