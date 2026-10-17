@@ -1508,6 +1508,27 @@ def _cuerpo() -> int:
             # igual.*
             umbral = int(hoy) + 1 if isinstance(hoy, (int, float)) else 10 ** 6
             almacen.crea_alerta(usuario_id, grupo, "baja_de", umbral)
+            # **Y QUE SALTE, *que es lo que lo deja pendiente*.** *Esto es lo que
+            # costo una corrida entera entender, y la culpa era **mia**, no de la
+            # aplicacion:* *`evalua_con_memoria` **evalua al leer y no persiste**
+            # `salto_en`;* *quien lo apunta es *** el vigilante***, con
+            # `almacen.marca_alerta_saltada` (`:967`).* *Y el contador cuenta
+            # `salto_en` puesto **y** `vista_en` vacio.*
+            #
+            # *Asi que sin esta pasada: el aviso **existe**, *la condicion **se
+            # cumple**, **y el contador sigue en 0** -- *que es *** exactamente lo que
+            # midio este escenario la primera vez que se corrio***, y por eso **fallo**.
+            # *Que fallara fue lo correcto:* *el escenario estaba mal, y lo dijo.*
+            #
+            # *Medido antes de escribirlo:* `{"miradas": 1, "saltan": 1, "apuntadas":
+            # 1}`, `salto_en` puesto, `vista_en` vacio, *y la frase «ha bajado de 0.82
+            # EUR/l: hoy 0.81 en aldi».* *Y el repo ya lo sabia:* *`prueba_e2e.py:34`
+            # dice «el vigilante -- una pasada de verdad: mira, salta y apunta
+            # `salto_en`».*
+            from plataforma.api import vigilante
+
+            pasada = vigilante.una_pasada()
+            print(f"   (el vigilante: {pasada})")
             print(f"   (sembrado: grupo {grupo}, umbral {umbral} cent, precio de hoy "
                   f"{hoy} cent -- el umbral va POR ENCIMA a proposito)")
             return True
