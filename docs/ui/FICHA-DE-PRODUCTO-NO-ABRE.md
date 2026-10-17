@@ -705,3 +705,43 @@ pagina que se ejecuta con dato y no se ha mirado.*
 *** ESTADO DEL PUNTO 3 ***: *carrera demostrada y orientada; **`Producto` lanza antes de su primer
 `return` cuando hay dato**; **el tramo 85-133 es lo unico que queda sin leer**; **no resuelto**.*
 
+
+=== DECIMOCTAVA: *LEIDO `85-133` Y `loQueDiceLaCurva`. LIMPIOS. *Y SE ACOTA EL RESTO ***
+=== *POR PRIMERA VEZ, DONDE NO ESTA* ===
+
+Se leyo el tramo entero y las funciones que llama:
+
+- **`historico` (`:85-101`)**: *`grupo.serie.filter`, `grupo.productos.filter`,
+  `.map`, `.sort` con `ms(fecha)`.* *Nada que lanzar, y las dos listas llegan bien del JSON.*
+- **`curva` (`:108-111`)**: *`loQueDiceLaCurva(...)`.*
+- **`resumen` (`:113-131`)**: *`Math.min(...valores)` sobre **111** elementos,* *lejos del limite de
+  pila de JavaScript (-- *que revienta con decenas de miles --)*.*
+- **`loQueDiceLaCurva` (`logica/curva.ts`)**: *filtra, un `Set` de unidades, y `Math.min`/`Math.max`
+  sobre los que tienen precio.* *Se corta con `con.length < 2`.*
+- **`diasAlMismoPrecio`**: *un `for` acotado que baja desde el final y para al cambiar el precio.*
+- **y `grep` de `while` en `curva.ts` y `Producto.tsx`: CERO.** *No hay bucle infinito posible.*
+
+*** O SEA: EL TRAMO QUE SE EJECUTA CON DATO **ANTES** DEL PRIMER `return` ESTA LIMPIO.***
+*Y eso es un resultado: **mueve el foco de sitio**, *que es lo que faltaba.*
+
+=== DONDE ESTA AHORA, *y por que* ===
+
+*`Producto` no pinta ninguno de sus tres caminos (`<Cargando>`, el de «no encontrado», ni el cuerpo),
+*asi que **lanza (o no termina) en su render**.* *Ya se descarto todo lo que pasa **antes** del primer
+`return`.*
+
+*** Queda el cuerpo del render (`:135-656`) y los hijos que pinta.*** *Y entre esos hijos hay uno que
+**solo se pinta cuando hay dato y que no se ha mirado nunca**:*
+
+    **`Chispa`** (`componentes/Chispa.tsx`) -- *el que dibuja la serie.*
+
+*Es el unico que cumple las tres condiciones: **depende del dato**, **la ficha es la unica pagina que
+lo usa**, y **no se ha leido**.* *Es el sitio mas probable y **esta sin mirar**.*
+
+*** SIGUIENTE PASO, UNA SOLA COSA ***: **leer `componentes/Chispa.tsx` entero.** *Si ahi no esta, el
+siguiente es el cuerpo del render de `Producto` desde `:135`.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (0/8, 3/8, 8/8); **`Producto` lanza en su render con
+dato**; **todo lo anterior al primer `return` esta descartado leyendolo**; **`Chispa` es el sospechoso
+y no se ha leido**; **no resuelto**.*
+
