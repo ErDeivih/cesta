@@ -580,3 +580,44 @@ respuesta de la API: era **el momento**, no el contenido.*
 dato**; no resuelta.* *Y se retiran las dos atribuciones anteriores: no es la minificacion (ronda 20)
 y no es el contenido de la respuesta (ronda 24).*
 
+
+=== DECIMOQUINTA: *LA CARRERA, DEMOSTRADA. 1 DE 10.* ===
+
+Lo que habia que hacer desde la primera ronda: **repetir la misma ruta, sin tocar nada, y contar.**
+
+    URL: http://127.0.0.1:8080/compra/productos/dia/147509
+    repeticiones: 10        PINTA: 1        VACIA: 9
+
+      1..9   main=0  texto=0    vacia
+     10.     main=1  texto=99   PINTA
+
+*** Ya no es una hipotesis: es un hecho medido.*** *Y el que «pinta» muestra **99 caracteres**, o sea
+**el armazon sin el producto**: asi que **la carrera se pierde las diez veces**, *solo que una vez se
+queda a medio camino en vez de en blanco del todo.*
+
+*** ESTO CIERRA LA PREGUNTA «¿ES UNA CARRERA?» CON UN SI***, *y de paso explica por que todas las
+atribuciones anteriores fallaron:*
+  - **la minificacion** (rondas 20-23): *al cambiar el build cambie tambien los tiempos;*
+  - **la respuesta de la API** (ronda 24): *al interceptar cambie el momento de llegada;*
+  - **el «intermitente» de la primera ronda**: *era esto, y estaba bien dicho desde el principio.*
+
+=== LO QUE QUEDA, Y ES UNA SOLA PREGUNTA ===
+
+**Quien pierde la carrera.** *Candidatos, y hay que mirarlos en este orden:*
+  1. **`Producto.tsx`**: *un `useEffect` con una dependencia que cambia, o un `setState` despues del
+     desmontaje.* *Es donde ocurre, porque sin dato pinta y con dato no.*
+  2. **`useTitulo`**: *escribe `document.title` en un efecto con `[texto]`;* *`texto` cambia al llegar
+     el dato.* *No puede lanzar, pero **si puede provocar un render extra en mal momento**.*
+  3. **El `lazy` de `Producto` + el `Suspense` de `App.tsx:191`**: *el limite de espera esta **por
+     fuera** del armazon, asi que mientras carga se pinta el fallback;* *si el chunk resuelve justo
+     cuando el dato llega, **los dos cambian a la vez**.*
+
+*** Y HAY UNA FORMA BARATA DE VERLO ***: *repetir la ruta 10 veces **con la API abortada** (-- *que
+pinta siempre, medido --)* y 10 veces **con un retraso artificial en la respuesta**. *Si con retraso
+pinta siempre, la carrera es por **llegar pronto**; y entonces el sospechoso es el que reacciona a la
+llegada, no el que carga.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1 de 10); **quien** la pierde, no identificado.*
+*No se declara resuelto. Y las atribuciones retiradas -- minificacion y contenido de la respuesta --
+siguen retiradas.*
+
