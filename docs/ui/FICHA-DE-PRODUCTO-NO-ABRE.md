@@ -1219,3 +1219,39 @@ verdad.*
 en el primer render con dato**; **el primer intento de bisecar no vale porque el build fallo, y se
 dice**; **el metodo corregido es `{false && ...}` en el JSX**; **no resuelto**.*
 
+
+=== TRIGESIMA: *EL SEGUNDO CORTE TAMPOCO SE PUDO HACER, *Y LA GUARDA LO IMPIDIO* ===
+
+*Localizado el cuerpo del componente: `return (` en `:218` y su cierre en `:655`, con el JSX en
+`:219-654`.*
+
+*Se intento comentarlo entero con `{/* ... */}`, que **si** saca el codigo del chequeo de tipos.*
+*** Y SE COMPROBO ANTES DE ESCRIBIR, que es lo que faltaba otras veces***: *si dentro de `:219-654`
+aparece un `*/`, el comentario se cierra antes de tiempo y el fichero se rompe.* ***Aparece.***
+*Asi que **no se escribio nada**: el fichero quedo **intacto** (-- *`tsc` limpio, y el `dist` con el
+mismo tamano, 336 938 B --)*.
+
+*** PERO EL INTENTO ACLARA EL CAMINO ***: *el fichero **compila tal cual**, *asi que **`{false && ( ... )}`
+si es viable** -- *el codigo original es correcto en su sitio, y ese envoltorio **no lo saca de su sitio**.*
+
+*Lo que fallo en la ronda 41 fue **el `return` temprano**: *al poner codigo inalcanzable, TypeScript dejo
+de estrechar los tipos y dio cuatro errores.* *Con `{false && ( <> ... </> )}` eso no pasa.*
+
+=== EL CORTE BUENO, *para la siguiente, y es una sola cosa* ===
+
+    return (
+      <p>MARCA-DE-BISECCION-OK</p>
+      {false && <>
+        ...las 436 lineas de :219-654, sin tocar...
+      </>}
+    )
+
+*** Si la marca aparece en pantalla, el fallo esta en lo apagado.*** *Y si no aparece, esta **antes** de
+`:219`, o sea en las constantes de `:203-217`.* *En los dos casos, el resultado **vale**, porque el build
+compila.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1/10); «en desarrollo funciona» refutado; **el fallo esta
+en el primer render con dato**; **dos intentos de bisecar, los dos detenidos por una comprobacion previa
+-- uno por el build, otro por un `*/` --**; **el tercero tiene forma concreta y compila**; **no
+resuelto**.*
+
