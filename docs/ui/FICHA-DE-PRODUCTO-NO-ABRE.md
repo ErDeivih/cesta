@@ -492,3 +492,50 @@ identificado cual**.* *Y `keepNames` tambien apaga optimizaciones, asi que podri
 *Limpieza: `vite.config.kn.ts` y `dist-kn` borrados, verificando la ruta antes de borrar. `dist` real
 intacto (10:19:29).*
 
+
+=== DECIMOTERCERA, *Y ESTA ES LA BUENA*: NO ES EL BUILD, *ES LA RESPUESTA DE LA API ***
+=== *Y TRES CONCLUSIONES MIAS ANTERIORES ERAN FALSAS* ===
+
+La prueba, sobre 8080, la misma ruta, abortando o no las llamadas a la API:
+
+  CON api                main=0   texto=0     raiz=0
+  SIN api (abortada)     main=1   texto=207   raiz=9598    <- ¡LA PANTALLA SE PINTA!
+
+*** Abortando la API, la ficha se pinta entera. Con la API, no.*** *Asi que **lo que mata la
+pantalla es la respuesta de `/api/producto/...`**, no el build.*
+
+=== POR QUE MIS CONCLUSIONES SOBRE LA MINIFICACION ERAN FALSAS ===
+
+*En las rondas 20, 21 y 23 compare construcciones distintas **en servidores distintos**, y los dos
+servidores no se diferenciaban solo en el build:*
+
+  - `vite preview` (5180, 5181) **NO tiene API**: las llamadas dan error y la pantalla PINTA.
+  - 8080 **SI tiene API**: contesta 200 con JSON y la pantalla NO pinta.
+
+*Cambiaban **dos** cosas a la vez -- el build **y** la API -- y atribui el efecto al build.*
+*** «Es la minificacion» era una conclusion con una variable de mas.*** *Y `keepNames` «arreglaba»
+porque el build con `keepNames` lo probe **solo en el servidor sin API**;* *al servirlo 8080, con
+`keepNames` y con API, **tambien falla** (medido: main=0).*
+
+*Se retira el `keepNames` del `vite.config.ts` (era un arreglo de un diagnostico equivocado, y
+costaba un 10 % de bundle) y se deja el `dist` reconstruido sin el.*
+
+=== LO QUE AHORA SE SABE, Y ES LO UNICO QUE SE SABE ===
+
+- La aplicacion **esta bien**: en desarrollo con API pinta, y en 8080 **sin API tambien**.
+- Lo que la rompe es **la respuesta de `/api/producto/<fuente>/<id>`** segun lo que sirve el 8080.
+- La misma ruta con la API del 8099 (desarrollo) **pinta**. *Asi que **el dato que llega por 8080
+  es distinto**, o llega de otra forma.*
+- Y el fallo es **silencioso**: sin `pageerror`, sin consola, y desmontando el arbol entero.
+
+=== EL SIGUIENTE PASO, *y es concreto y barato* ===
+
+1. **Comparar las dos respuestas**, la de `/api/producto/dia/147509` en 8080 y en 8099: *longitud,
+   claves de primer nivel, y si alguna trae `null` donde la otra trae un numero.* *Se pueden pedir
+   las dos con `Invoke-WebRequest` y compararlas como JSON.*
+2. **Y si son iguales**, mirar las **cabeceras** (tipo de contenido, codificacion) y si el 8080
+   responde por un camino distinto (Caddy -> API, frente al proxy de Vite).
+
+*** ESTADO DEL PUNTO 3 ***: *la causa esta **acotada a la respuesta de la API**, y **no se declara
+resuelto**.* *Lo que si se retira es todo lo escrito sobre la minificacion, que era un camino falso.*
+
