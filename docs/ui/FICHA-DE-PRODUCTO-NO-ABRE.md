@@ -882,3 +882,49 @@ cero eventos --)*.*
 *** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **la hipotesis del bucle, refutada midiendo**; **el
 armazon pinta y la grafica no se crea ni una vez**; **no resuelto**.*
 
+
+=== VIGESIMOSEGUNDA: *`texto=99` NO ES «NO PINTA NADA»: ES EL ESQUELETO DE `Cargando`* ===
+*** Y ESO INVIERTE LA CONCLUSION DE LAS ULTIMAS RONDAS ***
+
+
+*Leyendo `ui.tsx`:* **`<Cargando>` no pinta texto.** *Su propio comentario lo dice, y su codigo ahora lo
+cumple:* *«Un hueco, **no una linea de texto**»*. *Pinta un **esqueleto**.*
+
+*** CONSECUENCIA, *y es grande***: *`texto=99` -- *el armazon y su menu, y nada mas* -- **es exactamente
+lo que se ve cuando `Producto` esta MONTADO y `consulta.isPending` es cierto**.* *No es «no pinta»: es
+**el esqueleto de la espera**, que por diseno no tiene ni una letra.*
+
+*** ASI QUE LO QUE SE VENIA DICIENDO EN LAS RONDAS 28 A 32 -- «`Producto` no pinta ninguno de sus tres
+caminos», «lanza antes de su primer `return`» -- ES FALSO.*** *Lo que pasa es mucho mas simple y mucho
+menos roto:*
+
+*** `Producto` SE MONTA, Y SU CONSULTA NO TERMINA NUNCA.***
+
+=== Y ESTO ENCAJA CON TODO LO MEDIDO, *incluido lo que no cuadraba* ===
+
+| *medido* | *por que encaja ahora* |
+|---|---|
+| *`texto=99`, sin texto de la ficha* | *es el esqueleto de `<Cargando>`: no tiene texto* |
+| *`canvas=0` siempre* | *sin dato no hay `Chispa`, y sin `Chispa` no hay canvas* |
+| *con la API **abortada**: pinta y `texto=207`* | *ahi la consulta **si termina** (en error) y sale `<Fallo>`, que **si** tiene texto* |
+| *sin error, sin consola, frames a 16 ms* | *una consulta pendiente es silenciosa y no bloquea nada* |
+| *0/8, 3/8, 8/8* | *depende de si la peticion llega a resolverse, y eso depende del tiempo* |
+
+*** O SEA QUE EL DEFECTO NO ESTA EN EL RENDER: ESTA EN QUE LA PETICION NO SE RESUELVE.*** *Y eso
+devuelve la investigacion al sitio de la ronda 24, *pero con una pregunta distinta y mucho mas
+concreta:* **no «que tiene el JSON», sino «por que la peticion no termina».**
+
+=== LO QUE HAY QUE MEDIR, *y es una sola cosa* ===
+
+*** El estado de la consulta en la pagina.*** *`react-query` guarda su cache en el cliente; **si la
+consulta esta en `pending` a los 10 s, es que la promesa no se resolvio**. *Y el evento que lo dice es
+**`requestfinished`** de la peticion de `/api/producto/...`:*
+  - *si **nunca** llega `requestfinished` para esa URL, la peticion no termina;*
+  - *si llega, pero la consulta sigue `pending`, el problema es del lado del cliente.*
+
+*Eso separa las dos mitades en una sola medida, **sin tocar la aplicacion.***
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **bucle refutado**; **y ahora se corrige el
+diagnostico: `Producto` si monta, y su consulta no termina**; **el defecto esta en la peticion, no en
+el render**; **no resuelto**.*
+
