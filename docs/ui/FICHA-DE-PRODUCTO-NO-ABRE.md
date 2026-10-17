@@ -1181,3 +1181,41 @@ sigue vacio, esta entre `:135` y `:203` del JSX.*
 se ha visto la ficha con dato**; **el fallo esta en el primer render con dato y solo ahi**; **no
 resuelto**.*
 
+
+=== VIGESIMONOVENA: *EL PRIMER CORTE SE INTENTO, *Y NO VALE -- *EL BUILD FALLO* ===
+
+*Se inserto el corte de biseccion justo antes de `const masBarato` (`:199`), para saltarse el resto de
+las constantes **y** el JSX:*
+
+    return <p>MARCA-DE-BISECCION-OK</p>
+
+*Y el resultado fue `marca=False  main=0  texto=0` en tres intentos.* *** Un resultado que NO VALE.***
+
+*** PORQUE EL BUILD FALLO.*** *`tsc` dio errores de tipos (-- *TS18048: `producto` is possibly
+'undefined'; TS18047: `mio`/`miembro` is possibly 'null' --*), *y `npm run build` **no llego a generar el
+`dist`**.* *Asi que se probo **el `dist` viejo**: la marca no salio porque **el codigo nuevo no se
+sirvio**, no porque el fallo estuviera antes.*
+
+*** SE RETIRA EL CORTE Y SE RECONSTRUYE.*** *`git diff` del fichero: **vacio**; el `dist` regenerado
+(`index-BxckfJaz.js`, 336 938 B, 11:01:44).*
+
+=== LO QUE ESTE INTENTO ENSEÑA, *y sirve para el siguiente* ===
+
+*** El corte tiene que COMPILAR.*** *Y no compila porque **`producto` y `miembro` son `undefined`/`null`
+para TypeScript en ese punto**, *aunque el codigo ya los haya comprobado: **`if (!producto)` NO estrecha el
+tipo para TypeScript dentro de los `useMemo` y las funciones que vienen despues** (-- *porque `producto`
+es un `const` que viene de una propiedad opcional, y `miembro` de un `useMemo` que puede ser `null` --).*
+
+*O sea: **el corte hay que hacerlo sin romper tipos**, y eso se consigue:*
+  - **devolviendo la marca al principio del JSX** y no antes (`-- *pero el JSX esta despues de las
+    constantes, asi que no sirve para saltarselas --`*), o
+  - **cortando por el otro lado**: *en vez de saltarse lo de abajo, **comentar bloques del JSX con
+    `{false && (...)}`**, que **no cambia el tipado** y si quita lo que se pinta.*
+
+*** LA SEGUNDA ES LA BUENA***: *comentar JSX con `{false && ...}` compila siempre, y permite bisecar de
+verdad.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1/10); «en desarrollo funciona» refutado; **el fallo esta
+en el primer render con dato**; **el primer intento de bisecar no vale porque el build fallo, y se
+dice**; **el metodo corregido es `{false && ...}` en el JSX**; **no resuelto**.*
+
