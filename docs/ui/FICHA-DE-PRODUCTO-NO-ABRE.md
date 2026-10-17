@@ -977,3 +977,48 @@ el primer render con dato.*
 *** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **peticion descartada** (200 y FINISHED); **el fallo
 esta en el primer render CON DATO de `Producto`, sin excepcion**; **no resuelto**.*
 
+
+=== VIGESIMOCUARTA: *`miembro` SE ENCUENTRA, *Y `fraseDePrecio` ESTA BIEN. *OTRA DESCARTADA ***
+=== *Y APARECE UN DEFECTO LATENTE, *REAL AUNQUE NO SEA ESTE* ===
+
+*** HIPOTESIS: *`miembro` es `null` y el render lo usa sin `?.`.*** *El `useMemo` de `:64` busca
+`grupo.productos.find(p => p.fuente === producto.fuente && p.id_fuente === idFuente)`, *y `idFuente` es
+el texto de la URL.*
+
+*** SE MIDIO, Y ES FALSA***: *el grupo de `dia/147509` trae tres productos, y **`id_fuente` viene como
+texto**:*
+
+    carrefour  '699603651'  str
+    mercadona  '8370'       str
+    dia        '147509'     str      <- y el de la ruta es '147509' (texto)
+
+*Asi que `===` casa, **`miembro` no es `null`**, y los 25 accesos sin `?.` **no revientan aqui**.*
+
+*** PERO EL DEFECTO LATENTE EXISTE Y SE ANOTA ***: *hay **25** usos de `miembro.x` sin optional
+chaining (`:237`, `:307`, `:552`...).* *Si un producto no estuviera en `grupo.productos` -- *cosa que
+puede pasar si la API cambia o si el grupo no lo trae --* **la ficha entera reventaria.** *No es este
+fallo, y **no se arregla aqui**; queda anotado con su linea.*
+
+*** Y `fraseDePrecio` (`logica/frase.ts`) TAMBIEN QUEDA DESCARTADA***: *leida entera; **todos los `null`
+contemplados**, `este <= minimo` con guarda, y `Math.round` sobre finitos.* *No puede lanzar.*
+
+=== EL ESTADO, *y es donde se queda esta ronda* ===
+
+*** DESCARTADO, LEYENDO O MIDIENDO, TODO ESTO ***: *la red (200 y FINISHED), el build, la minificacion, el
+`lazy`, el bucle del `ResizeObserver`, los tres `useMemo` de `:64`/`:85`/`:113`, `loQueDiceLaCurva`,
+`diasAlMismoPrecio`, `fraseDePrecio`, `useTitulo`, y que `miembro` sea `null`.*
+
+*** LO QUE QUEDA, *y no es poco***: *el cuerpo del render (`:135-656`, *500 lineas de JSX) y **los hijos**:
+`Chispa`, `Etiquetas`, `ExplicacionEmparejamiento`, `Campana`, `BotonAnadirACesta`, `Dato`, `TablaScroll`,
+`Resumen`.*
+
+*** Y `canvas=0` sigue siendo el dato mas util***: *dice que **`Chispa` no llega a crearse**, *asi que o el
+fallo es **antes** de ella en el JSX, *o **ella revienta en su primer render**.*
+
+*** SIGUIENTE PASO, *y es el bueno***: *cortar el render por la mitad.* *En vez de seguir leyendo 500
+lineas, **comentar la mitad de abajo y ver si entonces el armazon queda con texto**.* *El primer corte
+que haga aparecer contenido acota el fallo a la mitad que se quito, y en dos o tres cortes esta.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **red y build descartados**; **el fallo esta en el primer
+render con dato, en el JSX o en un hijo**; **`Chispa` no llega a crearse**; **no resuelto**.*
+
