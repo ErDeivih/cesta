@@ -1131,3 +1131,53 @@ demostrado falso.*
 dos entornos fallan igual con la misma API**; **el sospechoso vuelve a ser el render con dato**;
 **no resuelto**.*
 
+
+=== VIGESIMOCTAVA: *LA CONTRADICCION, RESUELTA. *Y ERA EL CAMINO DE ERROR LEIDO COMO EXITO* ===
+
+
+*Repetida la medida contradictoria, y comprobando **antes** que el proxy apunta a donde se cree:*
+
+    /api/producto via dev (5173)   status=200  bytes=18060    <- el proxy SI va a 8080
+
+    intento 1:  main=0  texto=0  canvas=0
+    intento 2:  main=0  texto=0  canvas=0
+    intento 3:  main=0  texto=0  canvas=0
+
+*** TRES DE TRES FALLAN.*** *La medida de la ronda 18 (`texto=180`) **no se reproduce**.*
+
+*** Y AHORA SE VE POR QUE, *y hay que decirlo claro***: *aquel `180` esta a un paso del **`207`** que da el
+camino de **error** (`-- <Fallo>, cuando la API no contesta --`).* *Si aquel `npm run dev` **no heredo**
+`CESTA_API`, su proxy mandaba a `127.0.0.1:8000` -- **donde no hay nada** --,* *la consulta terminaba
+**en error**, *`Producto` entraba en `<Fallo>` -- **que si pinta, y pinta unos 200 caracteres** -- *y yo
+lei ese `180` como «la ficha se pinta».*
+
+*** NO ERA «FUNCIONA». ERA EL CAMINO SIN DATOS, LEIDO COMO SI FUERA EL BUENO.***
+
+=== LO QUE ESTO CAMBIA, *y es todo* ===
+
+*** NUNCA HA HABIDO UN «EN DESARROLLO FUNCIONA».*** *La pagina **nunca** se ha visto pintar **con dato**,
+ni en desarrollo ni en lo servido.* *Lo unico que se ha visto pintar siempre es **el camino de error**.*
+
+*Asi que:*
+  - *el **build** queda descartado **de verdad** (-- *no es que en un sitio funcione y en otro no: **en
+    ninguno funciona** --);*
+  - *la **minificacion**, igual;*
+  - *y el `ResizeObserver`, y el `lazy`, y el `Suspense`, y todo lo que se descarto **comparando los dos
+    entornos** -- *porque **la comparacion no era entre «funciona» y «no funciona», sino entre dos
+    formas de no funcionar**.*
+
+*** LO QUE QUEDA ES UNA SOLA COSA, *y por fin sin ruido***: *** `Producto` con dato no pinta; `Producto`
+sin dato (error) si pinta. ***El fallo esta en el primer render CON DATO, y solo ahi.***
+
+=== LO QUE HAY QUE HACER ===
+
+*** Cortar el render, que es lo que se venia escribiendo y nunca se hizo.*** *Ahora, por fin, el resultado
+significara algo: **no hay ningun «en desarrollo funciona» que lo explique**.*
+
+*Comentar `:203-656`, construir, probar. *Si con eso el armazon queda con texto, el fallo esta ahi; si
+sigue vacio, esta entre `:135` y `:203` del JSX.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1/10); **el «en desarrollo funciona» refutado**; **nunca
+se ha visto la ficha con dato**; **el fallo esta en el primer render con dato y solo ahi**; **no
+resuelto**.*
+
