@@ -1086,3 +1086,48 @@ primer nodo de la ficha; la peticion termina con 200; no hay excepcion visible; 
 
 *Dos cortes como maximo lo acotan. **No hace falta leer 450 lineas: hace falta cortar dos veces.***
 
+
+=== VIGESIMOSEPTIMA: *CON LA MISMA API, EL SERVIDOR DE DESARROLLO **TAMBIEN** FALLA* ===
+*** Y ESO TIRA EL SUPUESTO EN EL QUE SE APOYABAN VEINTE RONDAS ***
+
+
+*El experimento que habia que hacer, y que hasta ahora no se habia hecho: **el mismo API para los dos
+servidores**.*
+
+    DEV  5173  + API 8080    main=0   texto=0   canvas=0     <- ¡TAMBIEN FALLA!
+    DIST 8080  + API 8080    main=0   texto=0   canvas=0
+
+*** CON LA MISMA API, EL DESARROLLO TAMBIEN DEJA LA PANTALLA VACIA.***
+
+*** Y ESO TIRA UN SUPUESTO QUE SE VENIA USANDO DESDE LA RONDA 18 ***: *«el mismo codigo funciona en
+desarrollo y no en lo servido»*. *Ese supuesto era el que sostenia que el fallo estaba en el build, y
+luego en el render, y luego en el JSX.* **Los tres caminos se apoyaban en el.**
+
+*** Y HAY UNA CONTRADICCION QUE NO SE TAPA ***: *en la ronda 18, el servidor de desarrollo apuntando a
+`CESTA_API='http://127.0.0.1:8080'` dio `raizHtml=9552, texto=180`.* *Hoy, con la misma configuracion,
+da `texto=0`.* *** Las dos medidas no pueden ser ciertas a la vez***, *y no se elige la que conviene.*
+
+*Dos explicaciones posibles, ninguna comprobada:*
+  - *la ronda 18 midio el servidor de desarrollo con el proxy **sin** aplicar la variable de entorno
+    (-- *`npm run dev` en un proceso que no la heredo --)*, *y entonces hablaba con `127.0.0.1:8000`,
+    que no existe, y aun asi pinto 180: eso seria el camino de error, no el de dato;*
+  - *o algo cambio en la API entre las dos medidas.*
+
+*** LO QUE QUEDA EN PIE, *y es poco pero es firme***: *(1) con la API de 8080, **los dos servidores dejan
+la pantalla vacia**; (2) **abortando la API, los dos pintan** (-- *medido en 8080: `texto=207` --)*;
+*(3) la peticion termina con 200;* *(4) no hay excepcion visible.*
+
+*** O SEA QUE EL SOSPECHOSO VUELVE A SER **LO QUE SE HACE CON LA RESPUESTA**, *no el build.* *** Y eso es
+exactamente `Producto` con dato -- *pero ahora **sin** el atajo de «en desarrollo funciona», que se ha
+demostrado falso.*
+
+=== LO QUE HAY QUE HACER, *y ya no hay atajos* ===
+
+*** Con el supuesto caido, el camino es el que se descarto por creerlo innecesario: **cortar el render**.***
+*Comentar `:203-656`, construir, probar. *Y ahora **el resultado significara algo**, porque ya no hay un
+«en desarrollo funciona» que lo explique todo.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **el supuesto «en desarrollo funciona» refutado**; **los
+dos entornos fallan igual con la misma API**; **el sospechoso vuelve a ser el render con dato**;
+**no resuelto**.*
+
