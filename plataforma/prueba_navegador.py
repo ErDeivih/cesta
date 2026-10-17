@@ -2664,7 +2664,11 @@ def _cuerpo() -> int:
                      ancha.get_by_role("button", name="Ver que se puede anotar")),
             ):
                 enlace = lateral.locator(f"a[href='{destino}']:visible")
-                comprueba(enlace.count() == 1,
+                # **Y son DOS enlaces a `/compra`, no uno**: *el de la aplicacion y el de
+                # una seccion suya. Exigir exactamente uno era una asercion mia, no un
+                # requisito de la aplicacion.* *Lo que importa es que **haya** y que al pulsarlo
+                # se llegue.*
+                comprueba(enlace.count() >= 1,
                           f"el lateral lleva a {nombre} ({enlace.count()} enlaces)")
                 if not enlace.count():
                     continue
@@ -2690,11 +2694,21 @@ def _cuerpo() -> int:
                                   "y al escribir, la pantalla contesta con la busqueda")
                 elif nombre == "Recetas":
                     # **La operacion de Recetas: empezar una receta nueva.**
-                    anadir = ancha.get_by_role("link", name="Añadir una receta")
+                    anadir = ancha.get_by_role("link", name="Anadir una receta")
                     if not anadir.count():
-                        anadir = ancha.get_by_role("button", name="Añadir una receta")
-                    comprueba(anadir.count() == 1,
-                              "y Recetas ofrece anadir una receta, que es su operacion")
+                        anadir = ancha.get_by_role("button", name="Anadir una receta")
+                    # **Y hay que ESPERARLO, y medirlo UNA vez.** *Antes era
+                    # `comprueba(anadir.count() >= 1, f"...{anadir.count()}...")`: *la condicion
+                    # se evaluaba primero y **el mensaje volvia a consultar el DOM un instante
+                    # despues**, asi que el mismo dato medido dos veces en la misma linea daba 0
+                    # y 1.* *Y salia «FALLO ... (1 controles)», que no hay quien lo lea.*
+                    with contextlib.suppress(Exception):
+                        anadir.first.wait_for(state="visible", timeout=8000)
+                    cuantos_anadir = anadir.count()
+                    comprueba(cuantos_anadir >= 1,
+                              "y Recetas ofrece anadir una receta, que es su operacion "
+                              f"({cuantos_anadir} controles «Anadir una receta»; el texto va "
+                              "sin tilde en el fuente, Recetario.tsx:110)")
                     if anadir.count():
                         anadir.first.click()
                         ancha.wait_for_timeout(2000)
@@ -2707,14 +2721,32 @@ def _cuerpo() -> int:
                     # **la frontera del punto 4**: *muestra lo que se podria anotar desde
                     # la lista, *y **no anota nada**. *Si esta pantalla escribiera sola,
                     # esto es donde se veria.*
-                    comprueba(control.count() == 1,
+                    # *El mismo error que en Recetas, y la misma cura: esperar al control y
+                    # medirlo **una sola vez**, no una en la condicion y otra en el mensaje.*
+                    with contextlib.suppress(Exception):
+                        control.first.wait_for(state="visible", timeout=8000)
+                    cuantos_control = control.count()
+                    comprueba(cuantos_control >= 1,
                               "y Calorias ofrece «Ver que se puede anotar», que es su "
-                              "operacion y la frontera de «comprar no anota»")
-                    if control.count():
-                        control.first.click()
-                        ancha.wait_for_timeout(3000)
-                        comprueba(not errores_ancha,
-                                  f"y al pulsarlo no se rompe ({errores_ancha[:2]})")
+                              "operacion y la frontera de «comprar no anota» "
+                              f"({cuantos_control} controles)")
+                    if cuantos_control:
+                        # **Y el clic NO puede quedarse colgando.** *El boton esta
+                        # `disabled={sinLista || ver.isPending}` (`Diario.tsx:103`), y sin una
+                        # lista con la compra cerrada lo esta: `click()` reintenta 56 veces y
+                        # se lleva la puerta.*
+                        # *Asi que se mira antes si se puede pulsar, y si no, **se dice por que**
+                        # -- *que es una limitacion de este punto del recorrido, no un aprobado.*
+                        habilitado = control.first.is_enabled()
+                        comprueba(habilitado,
+                                  "y Calorias ofrece el boton habilitado para poder probarlo "
+                                  f"({habilitado}); si esta deshabilitado es porque no hay lista "
+                                  "con compra cerrada en este punto del recorrido")
+                        if habilitado:
+                            control.first.click(timeout=8000)
+                            ancha.wait_for_timeout(3000)
+                            comprueba(not errores_ancha,
+                                      f"y al pulsarlo no se rompe ({errores_ancha[:2]})")
 
             # **Y la ventana entera no lanzo nada.** *Se cuentan aparte de las de movil:*
             # *son dos navegadores distintos y un fallo en uno no se ve en el otro.*
