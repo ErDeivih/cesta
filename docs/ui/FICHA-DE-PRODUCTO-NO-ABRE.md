@@ -113,3 +113,46 @@ NOTA DE HIGIENE: el servidor de desarrollo de esta ronda se arranco con `Start-P
 es un trabajo gestionado; se comprobo que el proceso de 5173 era el mio (0,6 minutos de edad)
 antes de matarlo, y 5173 quedo cerrado.
 
+
+=== CUARTA MEDIDA: LA PAGINA PINTA Y SE VACIA SOLA EN MENOS DE TRES SEGUNDOS ===
+
+Muestreo del DOM en el tiempo, sobre 8080 y la ruta del producto:
+
+  a  1000 ms   main=1  texto=  99   <- LA APP ESTA PINTADA
+  a  3000 ms   main=0  texto=   0   <- y a los tres segundos esta vacia
+  a  7000 ms   main=0  texto=   0
+  a 12000 ms   main=0  texto=   0
+  eventos (pageerror + consola): CERO
+
+Y en la primera medida se habia visto que SI se piden las cosas: el chunk
+`Producto-D_Gro43H.js`, `/api/yo` DOS VECES, y `/api/producto/dia/147509`. Es decir: el
+armazon se pinto, `Producto` se monto, los datos llegaron (la API da 200 con 18060 bytes de
+JSON sano) ... y despues React desmonto el arbol ENTERO, sin decir por que.
+
+=== Y UN DEFECTO DE MI PROPIA SONDA, QUE HAY QUE DECIR ===
+
+La sonda calculaba `raiz = (document.getElementById('raiz') || {}).innerHTML ? ... : -1`. El
+`innerHTML` de un `div` vacio es la cadena vacia, que es FALSA, asi que devolvia -1. O sea que
+`-1` NO significaba «el div no existe» (como escribi en la ronda anterior), sino «el div existe
+y esta vacio». La conclusion no cambia -- sigue vacio -- pero la lectura anterior era erronea y
+se corrige aqui. Es el mismo error de siempre: una sonda que no distingue dos estados y yo
+leyendo el numero como si los distinguiera.
+
+=== LO QUE ESTO DEJA ===
+
+HECHO: la aplicacion SI arranca en esa ruta, SI monta el armazon, SI carga el chunk de la
+pagina, SI pide los datos, y la API contesta 200 con JSON valido.
+Y DESPUES se desmonta todo, entre 1 y 3 segundos, SIN error visible.
+
+DESCARTADO ADEMAS: que algo del fuente borre la raiz o recargue -- `git grep` de
+`location.reload`, `location.href =`, `document.write`, `documentElement` y `.remove()` en
+`src/` da CERO coincidencias (solo `getElementById('raiz')` en main.tsx:44, para montar).
+Tambien descartado `VigilaCuenta`: solo llama a `cliente.clear()` (cache de react-query).
+
+LO SIGUIENTE, Y ES UNA SOLA COSA: un desmontaje total y silencioso de React, con la API
+contestando 200, apunta a una excepcion DURANTE EL RENDER de `Producto` con los datos ya
+dentro. Y si React no la esta registrando, hay que verlo desde dentro: ejecutar la pagina con
+`page.on("pageerror")` Y ademas parchear `window.onerror` y `console.error` ANTES de que cargue
+el bundle (`add_init_script`), porque el listener de Playwright puede llegar tarde. Eso es lo
+que hay que hacer en la siguiente ronda, y es lo unico.
+
