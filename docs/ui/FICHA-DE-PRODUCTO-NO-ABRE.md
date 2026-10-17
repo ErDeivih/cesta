@@ -928,3 +928,52 @@ consulta esta en `pending` a los 10 s, es que la promesa no se resolvio**. *Y el
 diagnostico: `Producto` si monta, y su consulta no termina**; **el defecto esta en la peticion, no en
 el render**; **no resuelto**.*
 
+
+=== VIGESIMOTERCERA: *LA PETICION TERMINA BIEN. EL DEFECTO ES DEL CLIENTE.* ===
+*** Y AHORA SI SE SABE DONDE, *sin dudas de por medio* ***
+
+*Seguimiento de los cuatro eventos de la peticion, doce segundos:*
+
+    REQUEST   producto/dia/147509
+    RESPONSE  200 producto/dia/147509
+    FINISHED  producto/dia/147509        <- completa Y TERMINA
+
+*Y el estado al final de esos doce segundos:*
+
+    main=0   texto=0   canvas=0
+
+*** LA PETICION SE RESUELVE CON 200 Y TERMINA.*** *La mitad de red **queda descartada**.*
+
+*** Y con las dos medidas de texto que ya habia, el cuadro es este ***:
+
+    a  2,5 s   texto=99   <- el esqueleto de <Cargando>
+    a 12,0 s   texto= 0   <- y VACIO en cuanto el dato llega
+
+*** O SEA: `Producto` monta, espera, **recibe el dato**, empieza a renderizar **con** el dato, *y el
+arbol se vacia**.* *Sin `pageerror`, sin consola, sin frame lento.*
+
+=== LO QUE ESTO DEJA, *y es lo mas estrecho de toda la investigacion* ===
+
+*** El fallo esta en el render CON DATO de `Producto` o de un hijo suyo, y no produce excepcion.***
+
+*Ya se descarto, leyendolo, **todo lo que se ejecuta antes del primer `return` (`:47-133`)** y
+`loQueDiceLaCurva`. *Queda:*
+
+1. **El cuerpo del render (`:135-656`)** -- *JSX y llamadas a funciones de formato (`euros`,
+   `porcentaje`, `fechaTexto`, `selloLegible`, `fraseDePrecio`, `filasNutricion`, ...).*
+2. **Los hijos que pinta** -- *`Chispa`, `Etiquetas`, `ExplicacionEmparejamiento`, `Campana`,
+   `BotonAnadirACesta`.* *Y `canvas=0` dice que **`Chispa` no llega a crearse**: o el fallo es antes,
+   o `Chispa` revienta en su primer render.*
+
+*** LO MAS BARATO PARA ACOTARLO, *y no depende de leer 500 lineas***: *en la pagina, **envolver
+`console.error` y montar el componente a mano no sirve** (-- *no esta exportado al vuelo --)*, *pero
+**si sirve** hacer `document.title = 'x'` desde una funcion de formato y ver si se llama.*
+
+*Mejor todavia, y es una sola linea de sonda:* ***comprobar en la pagina si el `<Cargando>` llega a
+desaparecer***. *Si a los 2,5 s esta el esqueleto y a los 3 s ya no hay NADA (ni esqueleto ni ficha), el
+fallo ocurre **entre el desmontaje del esqueleto y el primer nodo de la ficha**, que es **exactamente**
+el primer render con dato.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **peticion descartada** (200 y FINISHED); **el fallo
+esta en el primer render CON DATO de `Producto`, sin excepcion**; **no resuelto**.*
+
