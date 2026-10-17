@@ -1022,3 +1022,41 @@ que haga aparecer contenido acota el fallo a la mitad que se quito, y en dos o t
 *** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **red y build descartados**; **el fallo esta en el primer
 render con dato, en el JSX o en un hijo**; **`Chispa` no llega a crearse**; **no resuelto**.*
 
+
+=== VIGESIMOCUINTA: *`canvas=0` NO PRUEBA QUE `Chispa` REVIENTE. *SE CORRIGE.* ===
+
+*He escrito dos veces que `canvas=0` significa que `Chispa` «no llega a crearse» y que eso apunta a que
+revienta en su primer render.* *** Puede ser mucho mas simple, y conviene decirlo antes de que la
+inferencia se quede en el documento como un hecho.***
+
+    :35   const [ancho, setAncho] = useState(0)      <- EMPIEZA EN CERO
+    :58   if (!el || ancho < 20 || puntos.length === 0) return   <- y SALE si ancho < 20
+    :40-49  el unico que cambia `ancho` es el `ResizeObserver`
+
+*** Si el `ResizeObserver` no dispara, `ancho` se queda en `0`, el efecto sale por `:58`, `uPlot` no se
+crea y `canvas=0`.*** *Sin ningun fallo, sin ninguna excepcion, y con la pagina entera funcionando.*
+
+*** ASI QUE `canvas=0` ES COMPATIBLE CON «TODO VA BIEN».*** *No distingue «revienta» de «no le llego el
+ancho», y por tanto **no se puede usar como prueba de que `Chispa` sea el problema**.*
+
+*Y hay una razon concreta para que no dispare:* *el `div` del contenedor (`:140-146`) **no tiene alto
+propio**; *su altura la pondria `uPlot` al insertar el canvas.* *Si el `ResizeObserver` observa un `div`
+**vacio y sin altura**, *su primer aviso puede llegar con `width` valido pero **antes** de que el `div`
+tenga caja*, *o no llegar hasta que algo lo cambie.* *No es una afirmacion: es una posibilidad que
+explica el cero **sin** postular una excepcion.*
+
+=== LO QUE ESTO CAMBIA EN EL METODO ===
+
+*Lo que queda por explicar es **una sola cosa**, y las medidas que tengo no la separan:*
+
+*** el arbol se vacia entre el esqueleto y la ficha.*** *Y ese hecho **no depende de `Chispa`**: `Chispa`
+esta **dentro** del cuerpo de la ficha, asi que si el arbol se vacia **antes** de que ella se cree, el
+problema es anterior.*
+
+*Asi que el siguiente paso **sigue siendo el que estaba escrito**: **cortar el render por la mitad**.*
+*Y ahora con una razon mas: **no vale mirar `Chispa` para explicar el vacio, porque ella no llega a
+existir, y eso puede ser normal.***
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; red y build descartados; **el fallo esta en el primer
+render con dato**; **`canvas=0` no lo explica -- es compatible con que todo vaya bien**; **no resuelto**.*
+
