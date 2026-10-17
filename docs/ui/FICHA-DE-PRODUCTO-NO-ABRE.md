@@ -795,3 +795,41 @@ ciclo a veces no llega a estabilizarse igual.* *No es una explicacion medida, y 
 mecanismo encaja con las cuatro observaciones**; **NO se declara resuelto**, y **no se aplica un
 arreglo sin medirlo primero**.*
 
+
+=== VIGESIMA: *EL INTENTO DE MEDIR EL CICLO, *Y NO SALIO* ===
+
+Se intento contar los disparos del `ResizeObserver` envolviendolo antes de que cargara el bundle
+(`add_init_script`), para convertir la hipotesis en hecho o tumbarla.
+
+*** NO SALIO.*** *El objeto que puse en `window` volvio **vacio**, asi que **el contador no se
+instalo** y no hay ningun dato sobre el ciclo.* *No se saca ninguna conclusion de una medida que no
+se hizo.*
+
+*Lo unico que el sondeo confirma, y ya estaba medido:*
+
+    a 1500 ms   main=1     <- el armazon se pinta
+    a 3000 ms   main=0     <- y a los 3 s esta vacio
+    a 6000 ms   main=0
+
+*** LA HIPOTESIS SIGUE ABIERTA, *y sigue siendo la mejor que hay***: *`Chispa` observa con
+`ResizeObserver` el mismo nodo en el que `uPlot` escribe, y `ancho` esta en las dependencias del
+efecto que crea la grafica.* *Encaja con las cuatro observaciones (solo con dato, solo esta pagina,
+depende del tiempo, sin excepcion de JavaScript), **pero encajar no es probar**.*
+
+=== COMO MEDIRLO, *para la proxima, y es facil* ===
+
+*El fallo del intento fue que el parche no llego a aplicarse.* *La forma que **si** funciona, y es la
+que hay que usar:*
+  1. **Contar los `destroy` de uPlot**, que es mas directo que contar los `ResizeObserver`: *envolver
+     `uPlot.prototype.destroy` desde la pagina,* *o simplemente **leer cuantas veces aparece y
+     desaparece un `<canvas>`** dentro del contenedor con un `MutationObserver`.* *Eso no depende de
+     reemplazar un constructor global y se puede hacer desde la propia pagina.*
+  2. **O, mas simple todavia**: *en la pagina, `performance.now()` antes y despues de un
+     `requestAnimationFrame`.* *Si el hilo esta ocupado en un ciclo de medida y repintado, los
+     frames tardan mucho mas de 16 ms.* *Eso se mide **sin tocar nada** y distingue «se vacia» de
+     «se queda pensando».*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (0/8, 3/8, 8/8); **sospechoso identificado y leido**;
+**el mecanismo encaja con las cuatro observaciones**; **el intento de medirlo no salio y se dice**;
+**no resuelto**.*
+
