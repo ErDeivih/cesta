@@ -247,3 +247,44 @@ Lo siguiente: mirar `tituloDe` y `tituloDeSeccion` (`App.tsx:150-168`) para la r
 lanza para esa ruta y no para las otras, ahi esta. Se puede probar SIN navegador, importando el
 modulo en node o replicando sus comparaciones.
 
+
+=== SEPTIMA: UNA INFERENCIA MIA QUE NO SE SOSTIENE, Y UN DEFECTO PEQUENO QUE APARECE ===
+
+Durante varias rondas sostuve que «el efecto de `App` no corre», apoyandome en que el titulo de la
+pestana se quedaba en 'Cesta' cuando deberia decir 'Producto'. Y de ahi saque que la excepcion
+ocurria ANTES de la segunda linea de un `useEffect`.
+
+LEYENDO `Titulo.tsx`, ESA INFERENCIA SE CAE:
+
+    export function useTitulo(texto?: string | null) {
+      useEffect(() => {
+        const limpio = (texto ?? '').trim()
+        document.title = limpio ? `${limpio} ${SUFIJO}` : 'Cesta'
+      }, [texto])
+    }
+
+`Producto.tsx:58` llama `useTitulo(producto?.nombre ?? grupo?.nombre)`. Mientras el dato no ha
+llegado, `limpio` es la cadena vacia y el efecto pone **'Cesta'**. O sea que el titulo en 'Cesta'
+NO prueba que el efecto no corriera: prueba justo lo contrario, que corrio sin dato.
+
+Asi que:
+- La inferencia «el efecto muere antes de la segunda linea» NO esta sostenida por esa medida.
+- Sigue en pie lo demas: la pantalla se pinta a los 800 ms y a los 3000 esta vacia, sin error y
+  sin navegar; el mecanismo (una excepcion en un efecto vacia el arbol) se reprodujo a proposito.
+- Pero YA NO SE SABE si la excepcion esta en un efecto o en otra parte.
+
+Y APARECE UN DEFECTO PEQUENO Y REAL: `Producto` **pisa** el titulo de la ruta con 'Cesta'
+mientras carga, porque `useTitulo` escribe 'Cesta' cuando no hay texto, en vez de no tocar nada y
+dejar el que puso `App` («Producto · Cesta»). Se ve en la pestana: parpadea a 'Cesta' y luego
+cambia.
+
+=== LO QUE HAY QUE HACER AHORA, Y ES DISTINTO DE LO QUE DECIA ===
+
+No buscar «el efecto que lanza», porque no se sabe que sea un efecto. Lo siguiente es **ver la
+excepcion**, y las tres cosas que se probaron (listener de Playwright, parchear console.error y
+window.onerror con add_init_script) dieron CERO eventos. La cuarta via, que no se ha probado:
+**capturar `console.error` desde el propio `main.tsx`** -- es decir, envolver `createRoot(...).render`
+en un `try`/`catch` temporal y un `window.addEventListener('error')` dentro del bundle. *Si ahi
+tampoco sale nada, la conclusion seria que **no hay excepcion**, y habria que buscar por otro lado:
+un `createRoot` duplicado, un `StrictMode` que desmonta, o algo que quite los hijos del contenedor.
+
