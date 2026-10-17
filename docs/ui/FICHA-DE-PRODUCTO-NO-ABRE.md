@@ -331,3 +331,41 @@ minificar. Los candidatos, ninguno medido:
      `--minify false` y volviendo a probar la ruta: si con eso pinta, es la minificacion.
 La (c) es la mas barata y la que mas discrimina, y es la siguiente que hay que hacer.
 
+
+=== NOVENA Y CONCLUYENTE: **ES LA MINIFICACION** ===
+
+Se construyo el MISMO fuente dos veces, el mismo dia, y se sirvio cada uno en su sitio:
+
+  SIN MINIFICAR (vite build --minify false, servido en 5180)
+      raiz=9552   main=1   texto=180    <- LA FICHA SE PINTA ENTERA
+
+  MINIFICADO (lo que sirve 8080)
+      raiz=0      main=0   texto=0      <- y aqui no hay nada
+
+*** Misma fuente. *Mismo dia. *Lo unico que cambia es `--minify false`.***
+
+Y una objecion que hay que responder, porque los dos entornos no son identicos: **el de prueba no
+tiene API** (da cuatro errores de consola) y **el de 8080 si la tiene**. *Pero el de prueba, **sin
+API ninguna, pinta el armazon**; y el de 8080, **con la API contestando 200**, no pinta nada.* *Asi
+que la API no es lo que decide: **decide el build**.*
+
+*** CONSECUENCIA, *y es grave***: *no es que la ficha este rota en el codigo. Es que **el paso de
+construir la rompe**.* *Y eso afecta a **todo lo que se sirve**, no solo a esta pantalla: la ficha es
+donde se nota, pero el build es el mismo para todas.*
+
+=== EL SIGUIENTE PASO, YA CONCRETO ===
+
+Bisecar la minificacion. Los candidatos, en orden de probabilidad:
+  1. **`React.lazy` + `import()` dinamico**: *esbuild reescribe las importaciones dinamicas al
+     minificar, y esta app usa `lazy` en todas las paginas.* *Pero `Grupo` tambien es lazy y pinta,
+     asi que no es el `lazy` en general.*
+  2. **Un nombre de propiedad o de funcion que la minificacion acorta** y algo lee por cadena.
+  3. **Un importe circular** que en un solo trozo de 336 kB se resuelve distinto que en 917 kB.
+Empezar por construir con `--minify esbuild` y `--minify terser` por separado, y con
+`build.minify: 'esbuild'` + `keepNames: true`: si con `keepNames` pinta, es un nombre acortado, y
+eso acota mucho.
+
+*** Y HAY QUE DECIR UNA COSA MAS ***: *durante siete rondas se busco el defecto en el codigo de la
+pantalla. *El codigo estaba bien desde el principio. *Lo que fallaba era el build, y no se comprobo
+porque **se dio por hecho que lo servido era lo escrito**.*
+
