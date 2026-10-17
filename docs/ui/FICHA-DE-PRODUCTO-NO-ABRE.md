@@ -288,3 +288,46 @@ en un `try`/`catch` temporal y un `window.addEventListener('error')` dentro del 
 tampoco sale nada, la conclusion seria que **no hay excepcion**, y habria que buscar por otro lado:
 un `createRoot` duplicado, un `StrictMode` que desmonta, o algo que quite los hijos del contenedor.
 
+
+=== OCTAVA Y DECISIVA: EN EL SERVIDOR DE DESARROLLO **FUNCIONA** ===
+
+La misma ruta, el mismo dia, dos servidores:
+
+  DEV 5173    raizHtml=9552   main=1   texto=180    <- LA FICHA SE PINTA ENTERA
+  DIST 8080   raizHtml=0      main=0   texto=0      <- y aqui no hay nada
+
+Mismo codigo fuente, `git diff` vacio en `src/` durante toda esta investigacion. Asi que **el
+defecto NO esta en el codigo**: esta en **lo que sirve 8080**, o en la diferencia entre desarrollo
+y construido.
+
+Y se descarto lo obvio, midiendo:
+  - El `dist` del host esta recien construido: `index-BxckfJaz.js`, 336938 B.
+  - 8080 sirve ESE bundle (se comprobo en su HTML).
+  - Y con ese bundle nuevo la ruta SIGUE vacia en 8080. O sea que no era un `dist` viejo.
+  - Todos los recursos responden 200 desde 8080:
+      /assets/Producto-VSQkdDS4.js   status=200  16697 B
+      /assets/index-BxckfJaz.js      status=200  336913 B
+      /compra/listas                 status=200     892 B
+  - Y el nodo de montaje existe y esta CONECTADO a los 4 s, con un hijo: no es que React pinte en
+    un nodo desprendido.
+
+*** ESTO CAMBIA EL DIAGNOSTICO ***, y hay que decirlo: lo que se venia escribiendo -- «la
+aplicacion no llega a ejecutarse en esa ruta» -- **es falso en lo que respecta al codigo**. *El
+codigo monta la ficha. Lo que falla es la version construida y servida.*
+
+Y una cosa mas que hay que anotar: **el `dist` se construye en `plataforma/web/dist`, no en
+`plataforma/web/app/dist`**. *Durante varias rondas mire la carpeta equivocada y por eso no vi que
+el bundle que servia 8080 era otro.*
+
+=== LO QUE QUEDA POR HACER, Y AHORA ES MUCHO MAS ESTRECHO ===
+
+Comparar el comportamiento de las dos versiones del MISMO bundle, y encontrar que cambia al
+minificar. Los candidatos, ninguno medido:
+  a) `StrictMode`: en desarrollo monta y desmonta y vuelve a montar; en produccion no. Si algo
+     depende de ese doble montaje, en produccion se ve distinto.
+  b) Un `Suspense`/`lazy` que en produccion resuelve de otra forma. *Pero `Grupo` tambien es lazy
+     y pinta, asi que no es el lazy en general.*
+  c) Una minificacion que rompe algo. Se puede comprobar construyendo con
+     `--minify false` y volviendo a probar la ruta: si con eso pinta, es la minificacion.
+La (c) es la mas barata y la que mas discrimina, y es la siguiente que hay que hacer.
+
