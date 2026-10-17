@@ -169,7 +169,12 @@ export function tituloDe(ruta: string): string {
 }
 
 export function App() {
-  const { pathname, search } = useLocation()
+  // **Y `state`, que es lo que se perdia.** *Las redirecciones de abajo mandaban
+  // `search` pero no `state`, asi que al cruzar por ellas **se borraba lo que llevaba
+  // la navegacion**: `Unirse` deja ahi el aviso de «Ya estas en <lista>» y el
+  // `listaId` al que hay que entrar, y el redirect se los comia.* *Medido: la
+  // puerta lo comprueba desde hace rondas y fallaba siempre.*
+  const { pathname, search, state } = useLocation()
 
   useEffect(() => {
     const nombre = tituloDe(pathname)
@@ -284,9 +289,9 @@ export function App() {
             <Route path="/unirme/:codigo" element={<LayoutSuite app={null}><Unirse /></LayoutSuite>} />
 
         {/* Las direcciones de antes siguen funcionando, con su query. */}
-        <Route path="/buscar" element={<Navigate to={`/compra${search}`} replace />} />
-        <Route path="/cesta" element={<Navigate to={`/compra/listas${search}`} replace />} />
-        <Route path="/favoritos" element={<Navigate to={`/compra/favoritos${search}`} replace />} />
+        <Route path="/buscar" element={<Navigate to={`/compra${search}`} state={state} replace />} />
+        <Route path="/cesta" element={<Navigate to={`/compra/listas${search}`} state={state} replace />} />
+        <Route path="/favoritos" element={<Navigate to={`/compra/favoritos${search}`} state={state} replace />} />
         <Route path="/producto/:fuente/:idFuente" element={<RedirigeACompra base="productos" />} />
         <Route path="/grupo/:grupoId" element={<RedirigeACompra base="comparar" />} />
 
@@ -312,7 +317,7 @@ export function App() {
 
 /** Reenvia una ruta antigua con parametros a su sitio nuevo, conservando la query. */
 function RedirigeACompra({ base }: { base: 'productos' | 'comparar' }) {
-  const { search, pathname } = useLocation()
+  const { search, pathname, state } = useLocation()
   const partes = pathname.split('/').filter(Boolean)
-  return <Navigate to={`/compra/${base}/${partes.slice(1).join('/')}${search}`} replace />
+  return <Navigate to={`/compra/${base}/${partes.slice(1).join('/')}${search}`} state={state} replace />
 }
