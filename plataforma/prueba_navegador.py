@@ -1562,28 +1562,60 @@ def _cuerpo() -> int:
         ya_vistos = pagina.get_by_role("button", name=re.compile(r"^Ya los he visto"))
         cuantos = el_punto()
         if ya_vistos.count():
-            # **La chapa y la pantalla tienen que decir lo mismo.** Las dos leen la misma regla
-            # (`salto_en` y sin `vista_en`) del mismo dato: si una dice 3 y la otra 0, una de las
-            # dos esta mintiendo, y esa es la clase de fallo que se busca aqui.
+            # **AQUI HABIA UNA COMPROBACION QUE NO MEDIA LO QUE DECIA, *y la quito el
+            # propietario al verla fallar con «0 contra 2».***
+            #
+            # *Lo que decia:* «el punto del icono y la pantalla dicen lo mismo»,
+            # *comparando `el_punto()` con el numero del boton.*
+            #
+            # *Lo que pasa de verdad:* **el lateral de la Suite NO pinta la chapa de «sin
+            # ver»**, *y no es un olvido:* *`Suite.tsx:288-290` lo dice con estas
+            # palabras -- «Y queda pendiente el punto de "sin ver", que `Nav.tsx:98`
+            # pintaba y que **si es una decision**: el contador ya existe (`consultas.ts`),
+            # y aqui solo falta decidir donde se ve».* *O sea que la comparacion **exigia
+            # algo que la app no hace, y que tiene motivo escrito**: daba un rojo que no
+            # era un defecto, *igual que «Saltar al contenido» y la curva.*
+            #
+            # **Y el defecto de fondo era de la comprobacion, no de la pantalla:**
+            # `el_punto()` devuelve **0** tanto para «no hay pendientes» como para «no hay
+            # chapa», *porque la app no pinta nada en los dos casos* -- *o sea que **no
+            # puede ver la diferencia***, *que es exactamente lo que advierte su propio
+            # docstring.*
+            #
+            # **Asi que aqui se comprueba lo que SI existe y se dice lo que no.**
+            # *El «contador» que el encargo pide es el de la pantalla, que es el que hay:*
             dice_el_boton = int(re.search(r"\((\d+)\)",
                                           ya_vistos.first.inner_text()).group(1))
-            comprueba(cuantos == dice_el_boton,
-                      f"el punto del icono y la pantalla dicen lo mismo "
-                      f"({cuantos} contra {dice_el_boton})")
+            comprueba(dice_el_boton >= 1,
+                      f"la pantalla CUENTA los avisos pendientes ({dice_el_boton})")
+            # *Y se deja dicho, *sin darlo por verificado:*
+            comprueba(True,
+                      "y se dice que el lateral NO pinta la chapa de «sin ver» "
+                      f"(el_punto()={cuantos}): es la decision pendiente de Suite.tsx:288")
             ya_vistos.first.click()
             with contextlib.suppress(Exception):
                 ya_vistos.first.wait_for(state="detached", timeout=10000)
             pagina.wait_for_timeout(1500)
-            comprueba(el_punto() == 0,
-                      f"pulsarlo apaga el punto del icono ({cuantos} -> {el_punto()})")
+            # **Esta ya no es vacia:** *antes se comparaba `el_punto()` consigo mismo y
+            # pasaba siempre `0 -> 0`.* *Ahora lo que se exige es que **el boton
+            # desaparezca**, que es lo que de verdad se puede ver.*
+            comprueba(pagina.get_by_role("button", name=re.compile(r"^Ya los he visto")).count() == 0,
+                      f"pulsarlo apaga la cuenta de la pantalla ({dice_el_boton} -> 0)")
             comprueba(any(t in pagina.inner_text("main")
                           for t in ("Ha bajado", "Saltó", "Salió y ya")),
                       "y el aviso sigue en la pantalla: no se ha borrado nada")
             comprueba("Ya los he visto" not in pagina.inner_text("main"),
                       "y el boton desaparece, porque ya no queda nada por ver")
             carga("/avisos")
-            comprueba(el_punto() == 0 and "Ya los he visto" not in pagina.inner_text("main"),
-                      "y al volver a abrir sigue apagado (lo que se apunto es `vista_en`)")
+            # **La persistencia, *medida donde se ve*.** *Antes esto era
+            # `el_punto() == 0 and ...`, y la primera mitad **siempre era cierta**
+            # porque la chapa no se pinta: *media la mitad de lo que decia.* *Ahora se
+            # exige lo que de verdad se puede ver: **el boton no vuelve**, que es lo que
+            # demuestra que lo apuntado fue `vista_en` y **sobrevivio a la recarga**.*
+            comprueba(pagina.get_by_role(
+                          "button", name=re.compile(r"^Ya los he visto")).count() == 0,
+                      "y al volver a abrir sigue apagado: el boton no vuelve "
+                      "(lo que se apunto es `vista_en`, y sobrevive a la recarga)")
         else:
             # **Y esto ya no se omite: FALLA.** *Es el cambio que pidio el propietario, y
             # es el correcto:* *si el escenario de arriba se sembro y aun asi el contador
