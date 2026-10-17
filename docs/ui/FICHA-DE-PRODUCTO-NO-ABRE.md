@@ -1255,3 +1255,44 @@ en el primer render con dato**; **dos intentos de bisecar, los dos detenidos por
 -- uno por el build, otro por un `*/` --**; **el tercero tiene forma concreta y compila**; **no
 resuelto**.*
 
+
+=== TRIGESIMOPRIMERA: *EL TERCER CORTE ROMPIO EL FICHERO. *RESTAURADO CON GIT.* ===
+
+*El `{false && <> ... </>}` era la forma correcta, **y aun asi salio mal**:* *al escribir la linea de
+apertura **sobrescribi** la primera linea del JSX en vez de **insertar antes** de ella.* ***Se perdio una
+linea del fuente.***
+
+*El `tsc` lo dijo al instante (`TS1005: ')' expected`), y **se restauro con `git checkout`**, que es exacto:*
+
+    git checkout -- plataforma/web/app/src/paginas/Producto.tsx
+    git diff -> vacio
+    tsc      -> limpio
+    dist     -> reconstruido (index-BxckfJaz.js, 336 938 B, 11:06:42)
+
+*** NADA SE PERDIO, Y SE SABE PORQUE SE COMPROBO, NO PORQUE SE SUPONGA.***
+
+=== TRES INTENTOS DE BISECAR, TRES VECES DETENIDO ANTES DE DAR UN RESULTADO FALSO ===
+
+| *intento* | *que salio mal* | *como se supo* |
+|---|---|---|
+| 1 (`return` temprano) | *codigo inalcanzable: 4 errores de tipos, y el `build` no genero el `dist`* | *se miraron los errores de `tsc`, no el resultado* |
+| 2 (`{/* */}`) | *hay un `*/` dentro del bloque y el comentario se cerraria antes* | *se comprobo antes de escribir* |
+| 3 (`{false && <>`) | *sobrescribi una linea en vez de insertar* | *`tsc` dio `TS1005` al instante* |
+
+*** Los tres se detuvieron ANTES de producir un «resultado».*** *Y eso es la diferencia con las veinte
+rondas anteriores, donde el resultado se leia primero y se comprobaba despues.*
+
+=== LO QUE HAY QUE HACER, *y esta vez con el como exacto* ===
+
+*No sobrescribir: **insertar**. Y el sitio es justo despues de `return (` en `:218`:*
+
+    ls[218:218] = ['    <p>MARCA-DE-BISECCION-OK</p>', '    {false && <>']   <- INSERTAR, no asignar
+    ls[655:655] = ['    </>}']                                              <- contando el
+                                                                            desplazamiento
+
+*** Y comprobar con `tsc` ANTES de construir.*** *Si `tsc` no esta limpio, el resultado no existe.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1/10); «en desarrollo funciona» refutado; **el fallo esta
+en el primer render con dato**; **tres intentos de bisecar, los tres detenidos a tiempo**; **fuente
+intacto**; **no resuelto**.*
+
