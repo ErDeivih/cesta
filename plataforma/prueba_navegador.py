@@ -2255,127 +2255,149 @@ def _cuerpo() -> int:
         # primer dia y **no decia nada** -- una linea que sube y baja es un adorno del
         # dato. Esto es lo que ningun `grep` puede comprobar: que la frase se pinte, que
         # diga un plazo de verdad y que este **antes** que la tabla.
-        print("\n== la curva de un producto, con su frase debajo")
-        producto = _producto_caro_con_historial()
-        if producto is None:
-            print("   (no he encontrado ningun producto comparable con historico)")
-        else:
-            fuente, id_fuente = producto
-            # **`/compra/productos/...`, *que es la ruta de verdad*, y NO
-            # `/producto/...`.** *Y esto es el hallazgo de tres corridas seguidas
-            # cortandose aqui:*
-            #
-            # *`App.tsx:290` declara `/producto/:fuente/:idFuente` como *** una
-            # REDIRECCION*** *(-- `<RedirigeACompra base="productos" />` --), *y la
-            # pantalla de verdad es `App.tsx:211`,
-            # `/compra/productos/:fuente/:idFuente`.* *Asi que al pedir la vieja, *el
-            # router **redirige**, *y `carga()` puede volver *** antes de que la nueva
-            # monte***: *entonces no hay `main`, *ni `canvas`, *ni nada -- *y
-            # `inner_text("main")` caduca a los treinta segundos.*
-            #
-            # *Que pareciera *** intermitente *** era eso: **una carrera** entre la
-            # redireccion y la lectura. *Y explica tambien por que «la curva se pinta»
-            # salia en rojo: *el lienzo no faltaba porque la app se negara a pintar,
-            # *** sino porque la pantalla aun no estaba.*** *Anteriormente conclui lo
-            # primero, y era falso.*
-            #
-            # *Es *** la quinta vez*** el mismo patron en esta sesion:* *`/cesta` ->
-            # `/compra/listas`, *`/grupo/` -> `/compra/comparar/`, *y ahora
-            # `/producto/` -> `/compra/productos/`. *Siempre lo mismo: **la ruta se
-            # movio y quedo una redireccion**, *y la prueba seguia pidiendo la vieja.*
-            carga(f"/compra/productos/{fuente}/{id_fuente}")
-            pagina.wait_for_timeout(900)
-            comprueba(pagina.locator("canvas").count() >= 1,
-                      "la curva se pinta (el lienzo del historico esta)")
-            ficha = pagina.inner_text("main")
-            formas = ("Es el precio más bajo", "Es el precio más alto", "Lleva ",
-                      "Está un ")
-            frase = next((f for f in formas if f in ficha), None)
-            comprueba(frase is not None,
-                      f"debajo de la curva hay una FRASE que la contesta ({producto})")
-            if frase:
-                # **El plazo tiene que ser el de verdad.** El encargo pone como ejemplo
-                # "esta mas barato que en los ultimos 90 dias", y hoy el historico son 18
-                # dias: decir 90 seria una mentira tranquila -- suena mejor y no es verdad.
-                # La frase dice los dias que hay, y esto lo comprueba ya pintado.
+        try:
+            print("\n== la curva de un producto, con su frase debajo")
+            producto = _producto_caro_con_historial()
+            if producto is None:
+                print("   (no he encontrado ningun producto comparable con historico)")
+            else:
+                fuente, id_fuente = producto
+                # **`/compra/productos/...`, *que es la ruta de verdad*, y NO
+                # `/producto/...`.** *Y esto es el hallazgo de tres corridas seguidas
+                # cortandose aqui:*
                 #
-                # Se mira **la frase y no la pantalla entera**: en esta ficha la campana
-                # dice «te aviso cuando este en su precio mas bajo de 90 dias», y ahi el
-                # plazo es el de la alerta (`minimo_90d`), que si son 90 dias. Un `in` sobre
-                # todo el texto suspenderia por una frase correcta que no es esta.
-                desde = ficha.find(frase)
-                la_frase = ficha[desde:desde + 140]
-                comprueba("días que tenemos" in la_frase or "días al mismo precio" in la_frase,
-                          "y el plazo que dice es el que tenemos, no uno inventado")
-                comprueba("90 días" not in la_frase,
-                          "y no promete 90 dias de historico en la frase de la curva")
-                html = pagina.content()
-                comprueba(html.find(frase) < html.find("Su grupo de equivalencias"),
-                          "la frase va ANTES que la tabla de equivalencias")
-                print(f"   la frase: «{la_frase.strip()[:90]}»")
-            # Y el ahorro **en euros**, que es el apartado 2: el producto se eligio para
-            # que haya algo que ahorrar, asi que este dato tiene que estar. El texto se
-            # busca en minusculas porque la etiqueta del dato se pinta en mayusculas
-            # (`Dato` lleva `uppercase`), y buscar "Más barato en" no encontraba nada --
-            # que es como esta prueba se puso roja la primera vez, por el instrumento.
-            comprueba("más barato en" in ficha.lower() and "te ahorras" in ficha,
-                      "y dice donde esta mas barato y cuanto se ahorra, en euros por unidad")
-            # **Y desde aquí se puede apuntar y seguir.** A esta pantalla se llega escaneando
-            # el código de barras: hasta el 27 de septiembre de 2026 no había ni «Añadir a la
-            # cesta» ni la campana, así que el flujo documentado («+ ficha + añadir»,
-            # `docs/PANTALLAS.md` §6) obligaba a volver al grupo a buscarlo, con el paquete en
-            # la mano. Se comprueba que están, y que la frase sigue dicha con sus tildes y con
-            # la cadena como se llama: «Cuesta un 41 % más que en Mercadona.»
-            comprueba(pagina.get_by_role("button", name="Añadir a la cesta").count() == 1,
-                      "desde la ficha del producto se puede añadir a la cesta")
-            comprueba(pagina.get_by_role("button", name="Avisarme si baja").count() == 1
-                      or pagina.get_by_text("Te aviso").count() >= 1,
-                      "y pedir el aviso, sin volver al grupo")
-            # La frase se mira **sola**, no en toda la pantalla: en el texto de la ficha hay
-            # valores de tabla y notas donde «mas» sin tilde no es un fallo de esta frase.
-            la_frase_de_precio = pagina.locator("main p.font-semibold").first.inner_text()
-            comprueba("mas que" not in la_frase_de_precio
-                      and " mercadona" not in la_frase_de_precio,
-                      "y la frase va con tildes y con la cadena como se llama "
-                      f"({la_frase_de_precio.strip()[:60]!r})")
-            # **Y ninguna diferencia imposible en pantalla.** El producto elegido es del
-            # grupo que destapo el fallo (unidades mezcladas), asi que aqui se ve si la
-            # columna «Diferencia» y el ahorro vuelven a cruzar unidades.
-            gordos = _porcentajes_gordos(pagina)
-            comprueba(not gordos,
-                      "y ningun porcentaje de la ficha pasa del tope de 'esto no es una "
-                      f"oferta' ({[(n, t[:46]) for n, t in gordos[:2]]})")
-            # Y la prueba de que **esa** medida mira, en la misma pantalla: con el tope a
-            # cero tiene que salir cualquier porcentaje. Sin esto, un cero puede ser "todo
-            # bien" o "no he sabido leer un numero en castellano" (162.943,5 %).
-            comprueba(len(_porcentajes_gordos(pagina, 0.0)) > 0,
-                      "y la medida de los porcentajes mira (con el tope a 0 encuentra algo)")
-            # La misma medida en la pantalla del grupo, que es donde vive el dato grande
-            # de "de la mas barata a la mas cara".
-            enlace_grupo = pagina.locator("a[href^='/grupo/']").first
-            if enlace_grupo.count():
-                grupo_url = enlace_grupo.get_attribute("href") or ""
-                carga(grupo_url)
-                pagina.wait_for_timeout(700)
-                gordos_grupo = _porcentajes_gordos(pagina)
-                comprueba(not gordos_grupo,
-                          "y tampoco en la pantalla del grupo "
-                          f"({[(n, t[:46]) for n, t in gordos_grupo[:2]]})")
+                # *`App.tsx:290` declara `/producto/:fuente/:idFuente` como *** una
+                # REDIRECCION*** *(-- `<RedirigeACompra base="productos" />` --), *y la
+                # pantalla de verdad es `App.tsx:211`,
+                # `/compra/productos/:fuente/:idFuente`.* *Asi que al pedir la vieja, *el
+                # router **redirige**, *y `carga()` puede volver *** antes de que la nueva
+                # monte***: *entonces no hay `main`, *ni `canvas`, *ni nada -- *y
+                # `inner_text("main")` caduca a los treinta segundos.*
+                #
+                # *Que pareciera *** intermitente *** era eso: **una carrera** entre la
+                # redireccion y la lectura. *Y explica tambien por que «la curva se pinta»
+                # salia en rojo: *el lienzo no faltaba porque la app se negara a pintar,
+                # *** sino porque la pantalla aun no estaba.*** *Anteriormente conclui lo
+                # primero, y era falso.*
+                #
+                # *Es *** la quinta vez*** el mismo patron en esta sesion:* *`/cesta` ->
+                # `/compra/listas`, *`/grupo/` -> `/compra/comparar/`, *y ahora
+                # `/producto/` -> `/compra/productos/`. *Siempre lo mismo: **la ruta se
+                # movio y quedo una redireccion**, *y la prueba seguia pidiendo la vieja.*
+                carga(f"/compra/productos/{fuente}/{id_fuente}")
+                pagina.wait_for_timeout(900)
+                comprueba(pagina.locator("canvas").count() >= 1,
+                          "la curva se pinta (el lienzo del historico esta)")
+                # **Y aqui NO se puede tumbar la puerta.** *Esta pantalla esta rota -- lo demuestra
+                # `docs/ui/FICHA-DE-PRODUCTO-NO-ABRE.md`: se pinta a los 800 ms y a los 3000 no hay
+                # nada --, *y `inner_text("main")` sin `main` **caduca a los treinta segundos y se
+                # lleva por delante las treinta secciones que vienen despues**, *que es como se
+                # quedo sin verificar el lateral de escritorio durante tres rondas.*
+                #
+                # *Una pantalla rota tiene que *** FALLAR SU COMPROBACION***, *no matar la puerta:
+                # *si no hay `main`, se lee vacio, *la frase no aparece, *y se apunta como fallo
+                # con su motivo y su documento al lado.*
+                ficha = (pagina.inner_text("main", timeout=5000)
+                         if pagina.locator("main").count() else "")
+                formas = ("Es el precio más bajo", "Es el precio más alto", "Lleva ",
+                          "Está un ")
+                frase = next((f for f in formas if f in ficha), None)
+                comprueba(frase is not None,
+                          f"debajo de la curva hay una FRASE que la contesta ({producto})"
+                          + ("" if ficha else " -- y la pantalla esta VACIA: ver "
+                             "docs/ui/FICHA-DE-PRODUCTO-NO-ABRE.md"))
+                if frase:
+                    # **El plazo tiene que ser el de verdad.** El encargo pone como ejemplo
+                    # "esta mas barato que en los ultimos 90 dias", y hoy el historico son 18
+                    # dias: decir 90 seria una mentira tranquila -- suena mejor y no es verdad.
+                    # La frase dice los dias que hay, y esto lo comprueba ya pintado.
+                    #
+                    # Se mira **la frase y no la pantalla entera**: en esta ficha la campana
+                    # dice «te aviso cuando este en su precio mas bajo de 90 dias», y ahi el
+                    # plazo es el de la alerta (`minimo_90d`), que si son 90 dias. Un `in` sobre
+                    # todo el texto suspenderia por una frase correcta que no es esta.
+                    desde = ficha.find(frase)
+                    la_frase = ficha[desde:desde + 140]
+                    comprueba("días que tenemos" in la_frase or "días al mismo precio" in la_frase,
+                              "y el plazo que dice es el que tenemos, no uno inventado")
+                    comprueba("90 días" not in la_frase,
+                              "y no promete 90 dias de historico en la frase de la curva")
+                    html = pagina.content()
+                    comprueba(html.find(frase) < html.find("Su grupo de equivalencias"),
+                              "la frase va ANTES que la tabla de equivalencias")
+                    print(f"   la frase: «{la_frase.strip()[:90]}»")
+                # Y el ahorro **en euros**, que es el apartado 2: el producto se eligio para
+                # que haya algo que ahorrar, asi que este dato tiene que estar. El texto se
+                # busca en minusculas porque la etiqueta del dato se pinta en mayusculas
+                # (`Dato` lleva `uppercase`), y buscar "Más barato en" no encontraba nada --
+                # que es como esta prueba se puso roja la primera vez, por el instrumento.
+                comprueba("más barato en" in ficha.lower() and "te ahorras" in ficha,
+                          "y dice donde esta mas barato y cuanto se ahorra, en euros por unidad")
+                # **Y desde aquí se puede apuntar y seguir.** A esta pantalla se llega escaneando
+                # el código de barras: hasta el 27 de septiembre de 2026 no había ni «Añadir a la
+                # cesta» ni la campana, así que el flujo documentado («+ ficha + añadir»,
+                # `docs/PANTALLAS.md` §6) obligaba a volver al grupo a buscarlo, con el paquete en
+                # la mano. Se comprueba que están, y que la frase sigue dicha con sus tildes y con
+                # la cadena como se llama: «Cuesta un 41 % más que en Mercadona.»
+                comprueba(pagina.get_by_role("button", name="Añadir a la cesta").count() == 1,
+                          "desde la ficha del producto se puede añadir a la cesta")
+                comprueba(pagina.get_by_role("button", name="Avisarme si baja").count() == 1
+                          or pagina.get_by_text("Te aviso").count() >= 1,
+                          "y pedir el aviso, sin volver al grupo")
+                # La frase se mira **sola**, no en toda la pantalla: en el texto de la ficha hay
+                # valores de tabla y notas donde «mas» sin tilde no es un fallo de esta frase.
+                la_frase_de_precio = pagina.locator("main p.font-semibold").first.inner_text()
+                comprueba("mas que" not in la_frase_de_precio
+                          and " mercadona" not in la_frase_de_precio,
+                          "y la frase va con tildes y con la cadena como se llama "
+                          f"({la_frase_de_precio.strip()[:60]!r})")
+                # **Y ninguna diferencia imposible en pantalla.** El producto elegido es del
+                # grupo que destapo el fallo (unidades mezcladas), asi que aqui se ve si la
+                # columna «Diferencia» y el ahorro vuelven a cruzar unidades.
+                gordos = _porcentajes_gordos(pagina)
+                comprueba(not gordos,
+                          "y ningun porcentaje de la ficha pasa del tope de 'esto no es una "
+                          f"oferta' ({[(n, t[:46]) for n, t in gordos[:2]]})")
+                # Y la prueba de que **esa** medida mira, en la misma pantalla: con el tope a
+                # cero tiene que salir cualquier porcentaje. Sin esto, un cero puede ser "todo
+                # bien" o "no he sabido leer un numero en castellano" (162.943,5 %).
+                comprueba(len(_porcentajes_gordos(pagina, 0.0)) > 0,
+                          "y la medida de los porcentajes mira (con el tope a 0 encuentra algo)")
+                # La misma medida en la pantalla del grupo, que es donde vive el dato grande
+                # de "de la mas barata a la mas cara".
+                enlace_grupo = pagina.locator("a[href^='/grupo/']").first
+                if enlace_grupo.count():
+                    grupo_url = enlace_grupo.get_attribute("href") or ""
+                    carga(grupo_url)
+                    pagina.wait_for_timeout(700)
+                    gordos_grupo = _porcentajes_gordos(pagina)
+                    comprueba(not gordos_grupo,
+                              "y tampoco en la pantalla del grupo "
+                              f"({[(n, t[:46]) for n, t in gordos_grupo[:2]]})")
 
-        # -------------------- las cuatro respuestas caben en la primera pantalla --------
-        # La condicion (a) se juzga con el movil en la mano y **sin saber donde esta el
-        # boton**: una respuesta que obliga a desplazar la pantalla no se lee en quince
-        # segundos ni sabiendo donde esta. Esto no cierra (a) -- eso lo dice una persona --,
-        # pero descarta de antemano lo que no quepa: la banda util son 678 px de 844
-        # (109 de cabecera arriba y 57 de barra abajo, medidos en `_franja_util`).
-        #
-        # Se mide **lo que contesta cada pregunta**, no la pantalla entera:
-        #
-        #   1 y 3  la primera linea de la lista, que es lo que hay que coger
-        #   2      la frase que contesta "¿esto esta caro?", en el grupo al que se llega
-        #          buscando (y que ya esta comprobado que va antes que la tabla)
-        #   4      la tabla de "lo tuyo que ha bajado", con su titulo; y en los avisos,
-        #          la seccion que dice lo que ha bajado
+            # -------------------- las cuatro respuestas caben en la primera pantalla --------
+            # La condicion (a) se juzga con el movil en la mano y **sin saber donde esta el
+            # boton**: una respuesta que obliga a desplazar la pantalla no se lee en quince
+            # segundos ni sabiendo donde esta. Esto no cierra (a) -- eso lo dice una persona --,
+            # pero descarta de antemano lo que no quepa: la banda util son 678 px de 844
+            # (109 de cabecera arriba y 57 de barra abajo, medidos en `_franja_util`).
+            #
+            # Se mide **lo que contesta cada pregunta**, no la pantalla entera:
+            #
+            #   1 y 3  la primera linea de la lista, que es lo que hay que coger
+            #   2      la frase que contesta "¿esto esta caro?", en el grupo al que se llega
+            #          buscando (y que ya esta comprobado que va antes que la tabla)
+            #   4      la tabla de "lo tuyo que ha bajado", con su titulo; y en los avisos,
+            #          la seccion que dice lo que ha bajado
+        except Exception as exc:  # noqa: BLE001 -- *cualquier fallo de esta pantalla* *es un fallo suyo, no de la puerta*
+            # **Si esta pantalla se rompe, FALLA y se sigue.** *Estaba tumbando la puerta
+            # entera a los treinta segundos, y con ella las secciones de despues* -- *que es
+            # como el lateral de escritorio se quedo sin verificar durante tres rondas.*
+            # *La causa esta en `docs/ui/FICHA-DE-PRODUCTO-NO-ABRE.md`: la pantalla se pinta
+            # a los 800 ms y a los 3000 no hay nada, y sin un solo error.*
+            comprueba(False, "la ficha del producto se puede abrir y medir "
+                      f"({type(exc).__name__}: {str(exc)[:50]}); la pantalla se queda "
+                      "vacia: ver docs/ui/FICHA-DE-PRODUCTO-NO-ABRE.md")
         print("\n== las respuestas, en la primera pantalla de un movil")
         arriba, abajo = _franja_util(pagina)
         print(f"   la banda util: {arriba}..{abajo} px de {pagina.viewport_size['height']}")
