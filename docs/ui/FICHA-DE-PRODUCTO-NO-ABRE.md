@@ -621,3 +621,44 @@ llegada, no el que carga.*
 *No se declara resuelto. Y las atribuciones retiradas -- minificacion y contenido de la respuesta --
 siguen retiradas.*
 
+
+=== DECIMOSEXTA: *LA CARRERA ES POR LLEGAR PRONTO, *Y EL PRODUCTO NO SE PINTA NUNCA* ===
+
+Tres condiciones, ocho repeticiones cada una, sobre 8080:
+
+    API abortada              pinta 8/8   textos=[207,207,207,207,207,207,207,207]
+    API con 2,5 s de retraso  pinta 3/8   textos=[0,0,0,99,99,0,0,99]
+    sin tocar nada            pinta 0/8   textos=[0,0,0,0,0,0,0,0]
+
+*** Tres cosas, y las tres son datos duros***:
+
+1. **Abortando la API pinta SIEMPRE (8/8)**, *con 207 caracteres: el camino de error.*
+   *-- el mensaje de que no se pudo cargar, que es corto y no depende del dato --*
+2. **Retrasando 2,5 s sube de 0/8 a 3/8.** *** Cuanto mas rapido llega el dato, peor.***
+   *Eso confirma que es una carrera, y la orienta: **el que pierde es el que reacciona a la
+   llegada**, no el que carga el trozo.*
+3. **Y LO MAS IMPORTANTE**: *los que «pintan» muestran **99** caracteres, o sea **el armazon**,
+   **nunca 180, que es la ficha entera** (-- *medido en desarrollo --*).*
+   *** El contenido del producto NO se pinta ni una sola vez, en ninguna de las tres condiciones.***
+
+*** LO QUE ESTO ACOTA, *y es lo mas estrecho que se ha estado***: *el armazon se pinta; **el render de
+`Producto` con datos es el que se pierde siempre**; y **cuanto antes llega el dato, mas probable es
+perderlo**.* *Eso es propio de **un efecto que reacciona al dato y desmonta o rompe el arbol**, no de
+un problema de carga.*
+
+=== DONDE MIRAR AHORA, YA SIN DUDAS DE POR DONDE ===
+
+**En `Producto.tsx`, los efectos y los renders condicionales que dependen de `consulta.data`:**
+  - `useTitulo(producto?.nombre ?? grupo?.nombre)` (`:58`): *efecto con `[texto]`, y `texto` cambia
+    exactamente al llegar el dato.* **Es el unico efecto de la pagina que reacciona al dato.**
+  - `if (consulta.isPending) return <Cargando .../>` (`:133`) y `if (!producto) { ... }` (`:144`):
+    *los dos caminos sin dato.*
+  - **`Chispa`**, que dibuja la serie: *es lo unico que la ficha hace y las demas no, y solo se pinta
+    cuando hay dato.*
+
+*El siguiente paso es leer esos tres sitios enteros, **no probar mas configuraciones**.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (0/8 normal, 3/8 con retraso, 8/8 abortando); **el
+armazon pinta y la ficha nunca**; **el fallo esta en el render con dato**; **quien lo rompe, sin
+identificar**.* *No se declara resuelto.*
+
