@@ -539,3 +539,44 @@ costaba un 10 % de bundle) y se deja el `dist` reconstruido sin el.*
 *** ESTADO DEL PUNTO 3 ***: *la causa esta **acotada a la respuesta de la API**, y **no se declara
 resuelto**.* *Lo que si se retira es todo lo escrito sobre la minificacion, que era un camino falso.*
 
+
+=== DECIMOCUARTA: *CON LA MISMA RESPUESTA, INTERCEPTADA, LA PANTALLA PINTA ***
+=== *LUEGO ES UNA CARRERA, NO EL DATO NI EL BUILD* ===
+
+Se intercepto `/api/producto/**` y se re-sirvio la MISMA respuesta desde el intermediario, tocandola
+solo en tres variantes:
+
+  respuesta intacta    main=1   texto= 99    <- ¡PINTA!
+  sin grupo.serie      main=0   texto=  0
+  sin grupo            main=0   texto=  0
+  sin producto         main=1   texto=114
+
+*** La misma respuesta, servida por otro camino, hace que la pantalla se pinte.*** *Y si se le quita
+`grupo` o su `serie`, no pinta -- pero eso es lo esperable: `Producto` necesita el grupo.*
+
+*** LO QUE ESTO DICE, *y hay que decirlo con cuidado***: *el contenido del JSON **no** es la causa;
+lo que cambia entre pinta y no pinta es **por donde y cuando llega la respuesta**.* *Con la
+intercepcion, la respuesta viaja por el intermediario: **cambia el momento**, y quiza las cabeceras.*
+
+*** ASI QUE LO MAS PROBABLE ES UNA CARRERA***, *y eso encaja con TODO lo medido antes, que parecia
+contradictorio:*
+  - en desarrollo pinta (otros tiempos, y Vite sirve el proxy de otra forma);
+  - en el construido sin API pinta (no hay carrera que perder);
+  - en 8080 a veces no pinta y con la respuesta interceptada si;
+  - y el corte parecia «intermitente» desde la primera ronda.
+
+*** Y ESTO RETIRA TAMBIEN LA CONCLUSION DE LA RONDA ANTERIOR ***, *que atribuia el fallo a la
+respuesta de la API: era **el momento**, no el contenido.*
+
+=== LO QUE HAY QUE MEDIR AHORA, *y es corto* ===
+
+1. **Repetir la misma ruta en 8080 N veces sin tocar nada** y contar cuantas pinta y cuantas no.
+   *Si unas veces pinta y otras no, la carrera queda demostrada y deja de ser una hipotesis.*
+2. **Si es una carrera**, buscar quien llega tarde: *el `Suspense` de `App.tsx:191`, el `lazy` de
+   `Producto`, o un efecto que desmonta al cambiar de estado.* *Y el sitio probable es un `useEffect`
+   con una dependencia que cambia, o un `setState` despues de desmontar.*
+
+*** ESTADO DEL PUNTO 3 ***: *la causa esta **acotada a una carrera entre el montaje y la llegada del
+dato**; no resuelta.* *Y se retiran las dos atribuciones anteriores: no es la minificacion (ronda 20)
+y no es el contenido de la respuesta (ronda 24).*
+
