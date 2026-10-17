@@ -414,3 +414,39 @@ esta cumplido y el aviso de la portada tiene una pantalla que no lleva a ningun 
 *Limpieza: el config temporal y el directorio `dist-keepnames` se borraron, verificando la ruta antes
 de borrar. `dist` real intacto. 5181 cerrado.*
 
+
+=== UNDECIMA: EL TROZO DEL PRODUCTO SE CARGA Y EXPORTA BIEN ===
+
+Se importo el trozo a mano desde la propia pagina de 8080, provocando el `import()` para que **una
+excepcion, si la hubiera, saliera a la luz** (-- *es la unica forma de verla, porque el `import()` lo
+provoco yo --)*:
+
+    await import('/assets/Producto-VSQkdDS4.js')
+    ->  { ok: true, claves: ['Producto'] }
+
+*** El trozo carga, ejecuta y exporta `Producto`.*** *No esta roto.*
+
+*** ENTONCES DONDE FALLA, *dicho con precision***: *o en como el `index` minificado lo usa, *o
+**dentro del render de `Producto` ya minificado**.* *Y no se puede distinguir todavia, porque ese
+camino no produce ninguna excepcion visible.*
+
+=== Y UN ARGUMENTO QUE VA CONTRA «ES UN NOMBRE», *y hay que decirlo***:
+
+*`keepNames` **no toca los nombres de propiedades**;* *y el `lazy` de esta app depende de una
+propiedad:* `lazy(() => import('./paginas/Producto').then((m) => ({ default: m.Producto })))`
+(`App.tsx:41`). *Si el fallo fuera un nombre de propiedad acortado, **`keepNames` no lo arreglaria**,
+y lo arregla.* *Asi que lo que `keepNames` cambia y aqui importa es **otra de las cosas que hace**:
+el ayudante `__name`, o las optimizaciones que apaga.* *Ninguna de las dos esta medida.*
+
+=== LO QUE QUEDA, Y ES LO QUE HAY QUE HACER ===
+
+1. **Comparar el `index` minificado con y sin `keepNames`**, buscando el trozo de codigo del `lazy`
+   de `Producto`. *Es un `diff` de dos ficheros que ya se pueden generar; no hace falta adivinar.*
+2. **Y si ahi no se ve**, montar una pagina minima que pinte solo `<Producto />` con el build
+   minificado: *si ahi tambien queda en blanco, el fallo esta en el componente y no en el armazon ni
+   en el router.*
+
+*** ESTADO DEL PUNTO 3 DEL ENCARGO ***: *la ficha de producto **no se puede abrir en la version
+servida**; *la causa esta **en la minificacion** (medido con y sin), *`keepNames` **la evita**
+(medido), *y **no se sabe por que***. *No se declara resuelto.*
+
