@@ -833,3 +833,52 @@ que hay que usar:*
 **el mecanismo encaja con las cuatro observaciones**; **el intento de medirlo no salio y se dice**;
 **no resuelto**.*
 
+
+=== VIGESIMOPRIMERA: *LA HIPOTESIS DEL CICLO QUEDA REFUTADA, *MIDIENDO* ===
+
+*La medida que se puede hacer sin parchear nada:* `performance.now()` alrededor de
+`requestAnimationFrame`. *Si el hilo estuviera ocupado en un ciclo de medida y repintado, los frames
+tardarian mucho mas de 16 ms.*
+
+    /compra                       frames: n=40  mediana 16.7 ms  max 18.0 ms   main=1  canvas=0
+    /compra/productos/dia/147509  frames: n=40  mediana 16.6 ms  max 18.1 ms   main=1  canvas=0
+
+*** Los tiempos son identicos y normales.*** *No hay bucle de `ResizeObserver`, ni hilo ocupado, ni
+nada que se quede pensando.*
+
+*** ASI QUE LA HIPOTESIS DE LA RONDA 30 QUEDA REFUTADA ***: *`Chispa` + `ResizeObserver` **no** esta
+girando.* *Se cae, y se dice.*
+
+=== Y UN SEGUNDO DATO DE ESTA MISMA MEDIDA, *que vale por si solo* ===
+
+*En esta corrida, `main=1`*: *** la pagina SI renderizo el armazon.*** *Y `canvas=0`: **no hay
+grafica**.*
+
+*O sea: el armazon se pinta (como estaba medido), **la grafica no llega a crearse** (ni una sola vez),
+y **los frames van a 16 ms**.* *Eso es lo contrario de un ciclo: es que **`Producto` no llega a pintar
+la `Chispa`**, ni una vez.*
+
+*** LO QUE ESTO DEJA, *y es mas estrecho que ayer***: *el armazon pinta; **`Producto` no pinta su
+contenido ni crea su grafica**; y **no es un bucle ni una excepcion visible** (-- *frames normales,
+cero eventos --)*.*
+
+=== LO QUE HAY QUE MIRAR AHORA ===
+
+*Con el bucle descartado, quedan dos familias, y las dos se pueden medir:*
+
+1. **Que `Producto` no se llegue a montar nunca**, *aunque el armazon si.* *El `Suspense` esta en
+   `App.tsx:191`, **por fuera** del armazon: si `Producto` (que es `lazy`) **no resuelve**, se queda
+   el fallback y el armazon **no se veria**... pero se ve. *Asi que el armazon pinta **sin** esperar a
+   `Producto`, cosa que `LayoutSuite` hace porque el `children` va dentro.* *Comprobarlo: **¿hay un
+   `Suspense` propio alrededor del contenido?***
+2. **Que `Producto` monte y su primer render no produzca nada visible**, *por un `return` que no se ha
+   visto.* *Para eso, **contar los `return` de `Producto`**: ya se vieron `:133` (`Cargando`) y
+   `:144` (`!producto`); **si ninguno de los dos sale, hay un tercero antes del cuerpo**.*
+
+*Y la medida barata para separarlas: **buscar en la pagina el texto de `<Cargando que="la ficha">`**.
+*Si aparece, `Producto` esta montado y esperando dato; si no aparece y el armazon si, `Producto` no se
+*monto.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **la hipotesis del bucle, refutada midiendo**; **el
+armazon pinta y la grafica no se crea ni una vez**; **no resuelto**.*
+
