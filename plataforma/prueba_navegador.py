@@ -1906,7 +1906,7 @@ def _cuerpo() -> int:
         rutas += ["/buscar?q=leche+entera", "/favoritos", "/ruta-que-no-existe"]
         con_historial = _producto_caro_con_historial()
         if con_historial is not None:
-            rutas.append(f"/producto/{con_historial[0]}/{con_historial[1]}")
+            rutas.append(f"/compra/productos/{con_historial[0]}/{con_historial[1]}")
         for ruta in rutas:
             carga(ruta)
             pagina.wait_for_timeout(800)
@@ -1979,7 +1979,7 @@ def _cuerpo() -> int:
                 # medida en cuatro de las trece. Es la misma leccion que el esqueleto eterno de
                 # `/avisos`: una cara que no se mide es una cara que nadie ha visto.
                 ("la ficha del grupo", "grupo", "/grupo/526", None),
-                ("la ficha del producto", "producto", "/producto/dia/141787", None),
+                ("la ficha del producto", "producto", "/compra/productos/dia/141787", None),
                 ("los favoritos", "favoritos", "/favoritos", None),
                 ("el panel", "panel/hoy", "/panel", None),
                 ("el panel de matching", "panel/matching", "/panel/matching", None),
@@ -2261,7 +2261,29 @@ def _cuerpo() -> int:
             print("   (no he encontrado ningun producto comparable con historico)")
         else:
             fuente, id_fuente = producto
-            carga(f"/producto/{fuente}/{id_fuente}")
+            # **`/compra/productos/...`, *que es la ruta de verdad*, y NO
+            # `/producto/...`.** *Y esto es el hallazgo de tres corridas seguidas
+            # cortandose aqui:*
+            #
+            # *`App.tsx:290` declara `/producto/:fuente/:idFuente` como *** una
+            # REDIRECCION*** *(-- `<RedirigeACompra base="productos" />` --), *y la
+            # pantalla de verdad es `App.tsx:211`,
+            # `/compra/productos/:fuente/:idFuente`.* *Asi que al pedir la vieja, *el
+            # router **redirige**, *y `carga()` puede volver *** antes de que la nueva
+            # monte***: *entonces no hay `main`, *ni `canvas`, *ni nada -- *y
+            # `inner_text("main")` caduca a los treinta segundos.*
+            #
+            # *Que pareciera *** intermitente *** era eso: **una carrera** entre la
+            # redireccion y la lectura. *Y explica tambien por que «la curva se pinta»
+            # salia en rojo: *el lienzo no faltaba porque la app se negara a pintar,
+            # *** sino porque la pantalla aun no estaba.*** *Anteriormente conclui lo
+            # primero, y era falso.*
+            #
+            # *Es *** la quinta vez*** el mismo patron en esta sesion:* *`/cesta` ->
+            # `/compra/listas`, *`/grupo/` -> `/compra/comparar/`, *y ahora
+            # `/producto/` -> `/compra/productos/`. *Siempre lo mismo: **la ruta se
+            # movio y quedo una redireccion**, *y la prueba seguia pidiendo la vieja.*
+            carga(f"/compra/productos/{fuente}/{id_fuente}")
             pagina.wait_for_timeout(900)
             comprueba(pagina.locator("canvas").count() >= 1,
                       "la curva se pinta (el lienzo del historico esta)")
@@ -2484,7 +2506,7 @@ def _cuerpo() -> int:
             # mas controles de la aplicacion, y hasta hoy no la miraba esta prueba.
             for ruta in ("/", "/cesta", "/buscar?q=leche+entera", "/avisos", "/favoritos",
                          "/ajustes", "/grupo/526") + (
-                    (f"/producto/{producto[0]}/{producto[1]}",) if producto else ()):
+                    (f"/compra/productos/{producto[0]}/{producto[1]}",) if producto else ()):
                 carga(ruta)
                 pagina.wait_for_timeout(600)
                 malos = _contraste_flojo(pagina)
