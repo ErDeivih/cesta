@@ -96,36 +96,49 @@ contra el `dist` y contra el `index.html` servido.*
 
 ## *** 3 · LO LIMITADO Y LO ABIERTO ***
 
-### 3.1 *** ABIERTO: *la ficha de producto no se puede abrir, *y se lleva la aplicacion entera ***
+### 3.1 *** ABIERTO: *la ficha de producto no se abre **en lo construido**, y no en el codigo ***
 
-*** Y es lo mas grave que hay ahora mismo***, *y por eso va primero:*
+*** Y esta es la version corregida, *porque la anterior afirmaba mas de lo que se sabia.***
 
 ```
-/compra/productos/dia/<id>   sobre 8080
-  a   800 ms   #raiz = 9109 caracteres: el armazon PINTADO
-  a  3000 ms   #raiz = 0
-  pageerror y consola: VACIOS   ·   href: sin cambios   ·   history: sin cambios
+la MISMA ruta, el MISMO dia, dos servidores:
+  DEV 5173    raizHtml=9552   main=1   texto=180    <- LA FICHA SE PINTA ENTERA
+  DIST 8080   raizHtml=0      main=0   texto=0      <- y aqui no hay nada
 ```
 
-*** Y esta acotado, midiendo***: *la app *** arranca***, *el armazon *** se pinta***, *el chunk de
-`Producto` *** se pide y se carga***, *la API *** contesta 200 con JSON valido***, *y despues ***
-React vacia el arbol entero, sin error y sin navegar***.
+*** El codigo fuente funciona.*** *Se comprobo con `git diff` de `src/` vacio durante toda la
+investigacion: **la ficha monta en desarrollo**.* *Lo que falla es **la version construida y
+servida**, y esa diferencia es lo unico que queda por explicar.*
 
-*** Se ha reproducido el mecanismo a proposito***: *inyectando una excepcion en un efecto sobre
-`/compra` *(-- *que pinta bien --)*, *la aplicacion se vacia igual y tambien en silencio.* *Asi
-que es *** una excepcion dentro de un efecto de React***. *Y el titulo, que el efecto de `App`
-pondria antes de esa linea, *** se queda en `Cesta` ***: *el efecto muere antes de su segunda
-linea.*
+*** Y se descarto lo obvio, midiendo***: *el `dist` esta recien construido
+(`index-BxckfJaz.js`, 336 938 B); *8080 sirve **ese** bundle; *con el bundle nuevo **sigue
+vacia**; *todos los recursos dan 200 (`Producto-VSQkdDS4.js`, 16 697 B); *y el nodo de montaje
+*** existe y esta conectado a los 4 s***, con un hijo -- *no es que React pinte en un nodo
+desprendido.*
 
-*** DEScartado midiendo***: *el servidor (mismo `index.html`), *un chunk que falte (esta, 16 778
-B), *un error de transformacion (200, 116 216 B), *el arranque (una ruta inexistente pinta), *la
-redireccion (se probo la ruta real), *la sesion, *un `ErrorBoundary` (no hay), *el `fallback` de
-`Suspense` (tiene texto), *y `useTitulo` (lo usa `Grupo`, que pinta).*
+*** LO QUE SE RETIRA DE LA VERSION ANTERIOR DE ESTA SECCION, *y hay que decirlo***:
 
-*** CONSECUENCIA, *y es lo que hay que decir sin adornos***: *mientras esto siga asi, *el punto 3
-del encargo no esta cumplido, *la seccion de la curva no se puede medir, *y *** la ficha de
-producto no sirve para uso domestico***. *La puerta se corta ahi (salida 3, «no pudo terminar de
-medir»), *y ese corte *** es consecuencia de este defecto***, *no un fallo suyo.*
+- *«el efecto de `App` muere antes de su segunda linea, porque el titulo se queda en `Cesta`».*
+  *** Falso.*** *`useTitulo` (`Titulo.tsx:21`) escribe `'Cesta'` **cuando no hay texto**, *y
+  `Producto.tsx:58` lo llama con el nombre del producto **antes de que llegue**:* *el titulo en
+  `Cesta` prueba que el efecto corrio **sin dato**, no que no corriera.*
+- *«asi que es una excepcion dentro de un efecto de React».* *** No esta sostenido.*** *El
+  mecanismo (una excepcion en un efecto vacia el arbol) **si se reprodujo a proposito** sobre
+  `/compra`, *pero eso demuestra el mecanismo, **no que sea lo que pasa aqui**.*
+- *«`useTitulo` descartado porque lo usa `Grupo`, que pinta»*: *el motivo era flojo;* *el bueno es
+  el de arriba, y ademas `useTitulo` no puede lanzar.*
+
+*** LO QUE QUEDA, *y es mas estrecho***: *la diferencia entre desarrollo y construido.*
+*Candidatos, ninguno medido:* **(a)** `StrictMode` *(-- en desarrollo monta, desmonta y remonta;
+en produccion no --)*; **(b)** *un `Suspense`/`lazy` que resuelve de otra forma (pero `Grupo`
+tambien es lazy y pinta)*; **(c)** *una minificacion que rompe algo.*
+
+*La (c) es la mas barata de discriminar: construir con la minificacion apagada y probar la ruta.*
+*Si con eso pinta, es la minificacion; si no, es `StrictMode`.*
+
+*** CONSECUENCIA***: *mientras siga asi, **el punto 3 del encargo no esta cumplido**, *y **la ficha
+de producto no sirve en la version servida**.* *La puerta se corta ahi, y ese corte **es
+consecuencia de este defecto**, *no un fallo suyo.*
 
 ### 3.2 *** LIMITADO: *el lateral de escritorio, *implementado y no verificado ***
 
