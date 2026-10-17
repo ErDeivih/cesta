@@ -204,7 +204,14 @@ _TRAMPA = """() => {
   malo.style.color = 'rgb(238, 238, 238)';
   malo.style.backgroundColor = 'rgb(255, 255, 255)';
   malo.textContent = 'Este texto no se lee';
-  document.querySelector('main').prepend(malo);
+  // **Y si no hay donde ponerla, se DICE.** *Antes era `querySelector('main').prepend(malo)`
+  // a secas, y en una pantalla sin `main` -- la portada, por ejemplo -- reventaba con
+  // `Cannot read properties of null (reading 'prepend')` y se llevaba por delante la puerta
+  // entera.* *El autocontrol tiene que poder fallar solo el, no tumbar lo demas.*
+  const donde = document.querySelector('main') || document.body;
+  if (!donde) return false;
+  donde.prepend(malo);
+  return true;
 }"""
 
 
@@ -2541,10 +2548,13 @@ def _cuerpo() -> int:
         # salir. Sin esto, un `0` puede significar "todo bien" o "no he mirado nada".
         pagina.emulate_media(color_scheme="light")
         carga("/")
-        pagina.evaluate(_TRAMPA)
+        puesta = pagina.evaluate(_TRAMPA)
         vistos = _contraste_flojo(pagina)
-        comprueba(any("no se lee" in m["texto"] for m in vistos),
-                  "la medida del contraste ve un texto ilegible puesto a mano")
+        comprueba(bool(puesta) and any("no se lee" in m["texto"] for m in vistos),
+                  "la medida del contraste ve un texto ilegible puesto a mano"
+                  + ("" if puesta else
+                     " -- y no se pudo poner la trampa: la pantalla no tiene donde "
+                     "meterla, asi que la medida NO queda comprobada"))
 
         # --------------------------------- el escaner: la pregunta 2 de verdad, en la tienda --
         # §3 del encargo: la lista y la ficha se usan **de pie y con una mano**, y lo que
