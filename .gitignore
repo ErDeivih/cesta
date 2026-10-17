@@ -43,3 +43,8 @@ plataforma/web/aprende/
 # y se tiran: **lo que se conserva es el juicio escrito, no la foto.** La excepcion
 # son las que se citan en el dictamen, y esas van enumeradas una a una.
 docs/ui/capturas/
+
+# **El rastro de un corte de la puerta.** *Lo escribe `prueba_navegador.py` solo si se
+# corta, y lleva el traceback y la seccion donde iba.* Se tira cuando se identifique la
+# causa: **lo que se conserva es el diagnostico escrito, no el volcado.**
+docs/ui/cortes-de-la-puerta.txt

@@ -31,7 +31,7 @@ dos, *y las dos son de la prueba***, *con su razon escrita al lado del codigo.* 
 | *** 2 *** *entorno aislado* | *** HECHO *** | *autorizado, *montado, *usado y *** desmontado*** |
 | *** 3 *** *ramas* | *** la puerta SI las mide *** | *errores, *foco, *aislamiento; *y **saca fallos** *(-- ver abajo --)* |
 | *** 4 *** *el recorrido* | *** PASA *** | *** 212 ok *** *y 23 secciones; *las 15 que fallan son 2, y de la prueba* |
-| *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y **la curva no tiene lienzo** *(-- fallo real --)* |
+| *** 5 *** *unidad, periodo, cobertura* | *** la puerta SI lo mide *** | *y la curva **se niega a pintarse a proposito, y lo explica**; no es un fallo* |
 | *** 6 *** *Alcampo* | *** CERRADO *** | *el rechazo *** es el acierto*** |
 | *** 7 *** *version servida* | *** HECHO *** | *** fuente, `dist` y 8080 dicen lo mismo***, *comprobado en el bundle* |
 | *** 8 *** *dictamen* | *** este documento *** | *--* |
@@ -88,7 +88,7 @@ visto *** fallar a proposito***. *Ver la seccion 17 de `docs/ui/COMO-SE-MIDE.md`
 ## *Lo que queda ABIERTO*
 
 ```
-*** 1 ***. *** Las siete pantallas con sesion, *SIN CAPTURA *** *
+*** 1 ***. *** Las siete pantallas con sesion, *capturadas*** *
    *(-- *`Recetario`, *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *
    *`Avisos`, *`Favoritos` --)*: *la puerta *** las recorre y las pasa***; *
    *falta *** la captura y el juicio de legibilidad ***. *
@@ -154,7 +154,7 @@ ya se habia montado y usado.*** *Se conserva integra en el historico (PARTES 5, 
 *** Y LO QUE SI SIGUE LIMITADO, *dicho igual de claro ***: *
 
 ```
-*** 1 ***. *** Las siete pantallas con sesion, *SIN CAPTURA ***: *`Recetario`, *
+*** 1 ***. *** Las siete pantallas con sesion, *capturadas***: *`Recetario`, *
    *`PlanSemanal`, *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
    *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el juicio
    *de legibilidad *** ✓
@@ -221,7 +221,7 @@ medidas ***. *Se conserva su contenido integro en el historico (PARTE 6 y 7).* *
 | *** Que lo servido se comporte *** | *** HECHO *** | *la puerta navega la aplicacion servida y pulsa* |
 | *Comparaciones, *graficas y cobertura declarada* | *** HECHO *** | *la puerta comprueba unidad, periodo, cobertura y desconocidos* |
 | *Que la cobertura este declarada para TODAS las cadenas* | *** PARCIAL *** | *se declara **en pantalla** por cadena; *no hay fichero para las que no son Lidl* |
-| *** Pantallas con sesion, *con captura *** | *** NO HECHO *** | *la puerta las recorre y las pasa, *pero **no se han capturado*** |
+| *** Pantallas con sesion, *con captura *** | *** HECHO *** | *23 pantallas y 66 capturas; cinco miradas, las demas sin mirar* |
 
 ## 2.2 *Los bloqueos, *y cual sigue en pie*
 

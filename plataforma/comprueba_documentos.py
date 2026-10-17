@@ -49,6 +49,12 @@ VIGENTES = (
 VIEJAS = re.compile(
     r"\b19 ok\b|\b87 ok\b|\b177 ok\b|\b190 ok\b|\b194 ok\b"
     r"|no llega al final"
+    # **Las que el propietario encontro en el resumen el 17/10/2026:** el resumen
+    # decia «SIN CAPTURA» de siete pantallas *que ya estaban capturadas*, *y daba la
+    # curva sin lienzo por *** fallo real*** cuando la app se niega a pintarla a
+    # proposito. *El comprobador no las cazaba porque **no las buscaba**:* *y eso es
+    # lo que hay que arreglar, no el texto.*
+    r"|SIN CAPTURA|no tiene lienzo"
     # **Y el censo de `pytest`**, *que cambio al anadir las pruebas de documentos:*
     # *2081 -> 2083. *Sin esto, **la comprobacion solo miraba lo que se me
     # ocurrio mirar**, *que es el defecto que vino a arreglar.*

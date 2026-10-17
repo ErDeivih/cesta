@@ -65,7 +65,7 @@ autorizo la base desechable, *el entorno *** se monto, *se uso y se desmonto***,
 *** Y LO QUE SIGUE LIMITADO, *medido***: *
 
 ```
-*** 1 ***. *** Siete pantallas con sesion, *SIN CAPTURA ***: *`Recetario`, *`PlanSemanal`,
+*** 1 ***. *** Siete pantallas con sesion, *capturadas***: *`Recetario`, *`PlanSemanal`,
    *`Diario`, *`Cesta` sin listas, *`Ajustes`, *`Avisos`, *`Favoritos`. *
    *-- *la puerta *** las recorre y las pasa***; *falta *** la captura y el
    *juicio de legibilidad *** ✓

@@ -48,6 +48,13 @@ USUARIO = "prueba-navegador"
 # porque el caso que manda es el de quien recibe el enlace y no estaba dentro.
 USUARIO_INVITADA = "prueba-invitada"
 
+# **Por donde ha ido la puerta, *para que un corte se pueda mirar*.** *El traceback
+# dice **que** linea fallo, *y esto dice **donde estaba** cuando fallo:* *y esa es la
+# diferencia entre «`inner_text("main")` caduco» *y «`inner_text("main")` caduco en
+# `/producto/dia/147509`, *que es una pantalla concreta que no monto»*.
+# *Lo llena `carga()` y lo lee el diagnostico de `main()`.*
+_RUMBO: list[str] = []
+
 
 def _carga(pagina, ruta: str = "/") -> None:
     """Abre una ruta y espera a que la pantalla deje de pedir cosas."""
@@ -494,7 +501,99 @@ def _contesta_mal(pagina, endpoint: str):
     return filtro
 
 
+class _Diario:
+    """La salida de siempre, **y las ultimas lineas guardadas**.
+
+    *Para que un corte deje rastro de **por donde iba**, que es lo que faltaba el
+    16/10/2026:* *la puerta se corto con `Timeout 30000ms exceeded` y **no se supo en
+    que seccion**, asi que no se pudo mirar.* *Y una segunda corrida correcta **no
+    explica ni descarta** la primera: **un corte, una vez, no dice nada.***
+    """
+
+    def __init__(self, de_verdad, guardar: int = 400) -> None:
+        self._de_verdad = de_verdad
+        self._guardar = guardar
+        self.ultimas: list[str] = []
+
+    def write(self, texto: str) -> int:
+        for linea in texto.splitlines():
+            self.ultimas.append(linea)
+        del self.ultimas[:-self._guardar]
+        return self._de_verdad.write(texto)
+
+    def flush(self) -> None:
+        self._de_verdad.flush()
+
+    def reconfigure(self, **kw) -> None:
+        self._de_verdad.reconfigure(**kw)
+
+    def __getattr__(self, nombre: str):
+        return getattr(self._de_verdad, nombre)
+
+
+def _ultima_seccion(diario: _Diario) -> str:
+    """La ultima cabecera `== ...` que se imprimio, que es donde iba la puerta."""
+    for linea in reversed(diario.ultimas):
+        if linea.lstrip().startswith("== "):
+            return linea.strip()
+    return "(no se llego a imprimir ninguna seccion)"
+
+
 def main() -> int:
+    """**Envuelve el cuerpo** para que un corte deje rastro, *y no se declare resuelto.*
+
+    *El 16/10/2026 la puerta se corto con `patchright TimeoutError: Timeout 30000ms
+    exceeded`, *y a la corrida siguiente paso de largo.* *Lo que **no** se puede hacer
+    con eso es darlo por bueno:* **un fallo que aparece una vez y no se reproduce es un
+    fallo INTERMITENTE, y se clasifica como tal** *hasta que se identifique su causa.*
+
+    *Asi que aqui: se escribe el traceback y el contexto **en un fichero**, *se dice en
+    que seccion iba, *y se sale con **3**, *que es distinto de 1:* *un 1 son fallos
+    medidos; *un 3 es *** la puerta que no pudo terminar de medir.***
+    """
+    diario = _Diario(sys.stdout)
+    de_verdad = sys.stdout
+    sys.stdout = diario  # type: ignore[assignment]
+    try:
+        return _cuerpo()
+    except BaseException as e:  # noqa: BLE001
+        import traceback
+
+        traza = traceback.format_exc()
+        seccion = _ultima_seccion(diario)
+        cuando = time.strftime("%Y-%m-%dT%H:%M:%S")
+        rastro = Path("docs/ui/cortes-de-la-puerta.txt")
+        try:
+            rastro.parent.mkdir(parents=True, exist_ok=True)
+            with rastro.open("a", encoding="utf-8") as f:
+                f.write(f"\n{'=' * 72}\n{cuando}  {type(e).__name__}: {str(e)[:200]}\n")
+                f.write(f"seccion: {seccion}\n\n{traza}\n")
+        except Exception:  # noqa: BLE001
+            rastro = Path("(no se pudo escribir el rastro)")
+        print("\n" + "=" * 72)
+        print("*** LA PUERTA SE CORTO: fallo INTERMITENTE, causa NO identificada ***")
+        print("=" * 72)
+        print(f"   cuando:  {cuando}")
+        print(f"   seccion: {seccion}")
+        print(f"   tipo:    {type(e).__name__}")
+        print(f"   mensaje: {str(e)[:300]}")
+        print(f"   rastro:  {rastro}")
+        # **Y por donde iba.** *El traceback dice **que** linea fallo; *esto dice **en que
+        # pantalla**, *que es lo que permite mirarla.* *Sin esto, «`inner_text("main")`
+        # caduco» no se puede perseguir; *con esto, se sabe **que pantalla no monto.***
+        print("   por donde iba (las ultimas 8):")
+        for rumbo in _RUMBO[-8:]:
+            print(f"     {rumbo}")
+        print("\n   **NO SE DECLARA RESUELTO.** Una corrida correcta despues no explica")
+        print("   ni descarta esta. Se queda clasificado como intermitente hasta que se")
+        print("   identifique la causa. El traceback entero va al fichero de arriba.\n")
+        print(traza)
+        return 3
+    finally:
+        sys.stdout = de_verdad
+
+
+def _cuerpo() -> int:
     with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     from patchright.sync_api import sync_playwright
@@ -520,51 +619,26 @@ def main() -> int:
         pagina.on("pageerror", lambda e: errores.append(str(e)))
         pagina.on("console", lambda m: consola.append(m.text) if m.type == "error" else None)
 
-        # ------------------- y el ESCRITORIO, que no se habia mirado nunca -------------------
-        # **El punto 3 pide «movil Y escritorio», *con estas palabras*.** Y la puerta
-        # abria **dos navegadores, los dos de 390 x 844** (`:515` y la seccion del
-        # contraste): **nunca se miro a 1280**. Medido en la ronda 101.
+        # ------------------- el ESCRITORIO: *aqui NO, *y se explica -------------------
+        # **Esta seccion estuvo aqui, *y estaba mal*, *y la reviso el propietario.** *
+        # Lo que media: `ancha.locator("nav").first` sobre `/`. *Y en `/` no hay
+        # `LayoutSuite`*, *asi que ese `nav` **no puede ser el lateral**: *es
+        # `App.tsx:95`, *`<nav aria-label="Aplicaciones" className="my grid gap-4
+        # sm:grid-cols-3">`*, *** el menu de tarjetas de la portada.*** *Los **1208 px**
+        # que salieron eran *** la rejilla de tres columnas a 1280***, *no el lateral,
+        # que son *** 248*** (`Suite.tsx:317`, *`w-[248px]`)*. *Y el nombre de la
+        # comprobacion decia «el nav de escritorio»*, *o sea que *** mentia el nombre
+        # ademas del numero***.
         #
-        # **Y el codigo tiene ramas de escritorio.** Lo dice el propio fichero, en la
-        # seccion de los toques: *«`NavEscritorio`, `hidden lg:block`), y la primera del
-        # DOM es la del escritorio, **que en un movil de 390 px no se ve y no se puede
-        # pulsar»**. O sea: hay un nav de escritorio **identificado y descartado a
-        # proposito**, y *** una cara que no se mide es una cara que nadie ha visto***
-        # *(-- *la leccion del esqueleto eterno de `/avisos`, *ronda 44 --)*.
+        # **Y despues abria las rutas con `_carga(destino)`** *en vez de *** pulsar sus
+        # enlaces***, *que es justo lo que hay que probar del menu; *y daba por buena
+        # una pantalla con *** `len(texto) > 200`***, *que lo cumple hasta una pantalla
+        # rota con armazon.*
         #
-        # **Se comprueba en un contexto aparte, y sin sesion**: *la portada y las tres
-        # raices no la piden*, *y es donde vive el `NavEscritorio`*. *Lo que se mide es
-        # que **a 1280 hay algo que a 390 no habia** -- *el nav de escritorio -- y que
-        # las tres aplicaciones **se pueden abrir desde ahi***.
-        print("\n== el escritorio: a 1280, el nav que a 390 no se ve")
-        escritorio = navegador.new_context(
-            viewport={"width": 1280, "height": 900}, locale="es-ES")
-        ancha = escritorio.new_page()
-        try:
-            _carga(ancha, "/")
-            ancha.wait_for_timeout(600)
-            # **El nav de escritorio, que a 390 esta oculto.** `NavEscritorio` es
-            # `hidden lg:block`: a 1280 **tiene que existir y medir algo**.
-            nav_ancho = ancha.locator("nav").first.bounding_box()
-            comprueba(nav_ancho is not None and nav_ancho["width"] > 200,
-                      "a 1280 el nav de escritorio ocupa de verdad "
-                      f"({None if nav_ancho is None else round(nav_ancho['width'])} px)")
-            # **Y las tres aplicaciones se abren desde ahi**, *que es a lo que viene
-            # el nav*: no basta con que exista.
-            for nombre, destino in (("Compra", "/compra"), ("Recet", "/recetas"),
-                                    ("Calor", "/calorias")):
-                _carga(ancha, destino)
-                texto = ancha.inner_text("body")
-                comprueba(len(texto) > 200,
-                          f"y a 1280 {nombre} abre y contesta")
-                comprueba(ancha.viewport_size["width"] == 1280,
-                          f"y sigue siendo la ventana ancha en {destino}")
-            # *La captura del escritorio se saca mas abajo, cuando `dir_capturas`
-            # ya existe:* *aqui todavia no se ha leido la variable, y usar algo
-            # **cuarenta lineas antes de que exista** es el mismo defecto de
-            # siempre -- *el vecino que se rompe al arreglar el de al lado.*
-        finally:
-            escritorio.close()
+        # **La seccion de verdad esta al final del recorrido, *y no aqui***: *cuando
+        # la puerta ya ha creado la cuenta y la lista, *que es lo que hace que se pueda
+        # probar *** con sesion y con datos***. *Ver «el lateral de escritorio, con
+        # sesion y datos», *antes de `navegador.close()`.*
 
         # **Y las capturas, *si se piden*.** *La puerta visita 29 pantallas y no
         # guardaba ninguna foto*: *las siete pantallas con sesion llevaban desde
@@ -586,6 +660,11 @@ def main() -> int:
 
         def carga(ruta: str = "/") -> None:
             _carga(pagina, ruta)
+            # **Y por donde va, apuntado.** *Se guarda **antes** de la captura, que va
+            # despues, *y **siempre**, aunque no se pidan capturas:* *es el contexto que
+            # hace falta si esto se corta.*
+            _RUMBO.append(f"{ruta}  ->  {pagina.url}")
+            del _RUMBO[:-60]
             if not dir_capturas:
                 return
             # El nombre lleva la ruta, *legible*: `/compra/listas?x=1` se vuelve
@@ -1344,6 +1423,98 @@ def main() -> int:
         # que no se ha leido -- pero el aviso **tiene que seguir ahi**. Son dos relojes distintos
         # (`vista_en` y `salto_en`) y es justo aqui donde se ve que no se confunden.
         print("\n== los avisos: «Ya los he visto» apaga el punto y no borra el aviso")
+
+        # **El escenario de avisos, *sembrado a proposito*. Y si no se puede sembrar,
+        # ESTO FALLA: *no se omite.***
+        #
+        # **Por que hacia falta.** La version anterior medIa el contador y, si salia 0,
+        # *** se saltaba la comprobacion entera*** *con un `print` que decia «no hay
+        # avisos sin ver... no se puede medir en esta pasada»*. *O sea que la cara que
+        # mas importa de `/avisos` -- que «Ya los he visto» **apague el punto y no borre
+        # el aviso**, que son dos relojes distintos -- **no se media nunca** con una base
+        # recien hecha.* *Y salia 0 **siempre**, y no por casualidad: `_por_que`
+        # (`alertas.py:169`) devuelve `None` mientras la condicion no se cumple. *Una
+        # alerta **existe** desde que la pides, *pero **no salta** hasta que se cumple.*
+        #
+        # **Como se siembra.** *Con *** la funcion de la propia aplicacion***,
+        # `almacen.crea_alerta`, *y no con SQL a mano*: *asi el escenario pasa por el
+        # mismo camino que pulsar la campana, y no por uno paralelo que se puede
+        # desviar.* *Y el umbral se pone *** por encima *** del precio de hoy, que es lo
+        # que **fuerza** la condicion (`hoy <= umbral`). *Es a proposito y se dice: ese
+        # umbral no es un dato de nadie, es *** un mando de la prueba.***
+        #
+        # **Y la cache no estorba**: `evalua_con_memoria` guarda por
+        # `(identidad, tipo, umbral_cent)` (`alertas.py:298`), *asi que cambiar el umbral
+        # **cambia la clave** y la respuesta vieja no se reutiliza.*
+        def _siembra_un_aviso_pendiente() -> bool:
+            """Deja un aviso pendiente de verdad. Devuelve si lo ha conseguido."""
+            try:
+                from plataforma.api import alertas as mod_alertas
+                from plataforma.api import almacen
+                from plataforma.api.ajustes import comprueba_que_es_una_prueba
+            except Exception as e:  # noqa: BLE001
+                print(f"   (no se pudo importar almacen/alertas: {e})")
+                return False
+            # **La guarda, *antes de tocar nada*.** *Es la misma que usa `prueba_e2e.py`
+            # (`:65`), y por el mismo motivo:* **se niega a seguir si el DSN apunta a una
+            # base que no es de pruebas** *-- *5432 es la de casa y 5433 es facylf*
+            # (`ajustes.py:75`) --, *y tambien si el DSN **no trae puerto**, porque «no se
+            # sabe» no es «es de pruebas».* *Un escenario que **escribe** no puede correr
+            # sin ella.*
+            try:
+                comprueba_que_es_una_prueba(os.environ.get("CESTA_POSTGRES", ""))
+            except Exception as e:  # noqa: BLE001
+                print(f"   (no se siembra, y se dice por que: {e})")
+                return False
+            # **Y el almacen, arrancado.** *La puerta es un test **de navegador** y nunca
+            # lo arranca; *si no, `cursor()` levanta **`RuntimeError: el almacen no esta
+            # arrancado`** (`almacen.py:124`)* -- *que es *** exactamente el corte*** que
+            # cazo este escenario **la primera vez que se corrio**, *con su traceback en
+            # `docs/ui/cortes-de-la-puerta.txt`.* *Y `arranca()` no destruye nada: es
+            # idempotente y llama a `migra()`, *que es lo que hace **la propia API en cada
+            # arranque** contra la base de casa.*
+            if not almacen.arrancado():
+                almacen.arranca()
+            sesion = almacen.entra(USUARIO, CLAVE)
+            if not sesion:
+                print(f"   (la cuenta {USUARIO} no existe todavia: no se puede sembrar)")
+                return False
+            _, quien = sesion
+            usuario_id = quien.get("id") if isinstance(quien, dict) else None
+            if not usuario_id:
+                print(f"   (no se pudo leer el id de {USUARIO})")
+                return False
+            # **De que grupo**: *el que ya vigila, si pulso la campana; *si no, uno suyo.*
+            grupo = None
+            for a in almacen.alertas_de(usuario_id):
+                if a.get("grupo_id"):
+                    grupo = a["grupo_id"]
+                    break
+            if grupo is None:
+                suyos = almacen.mis_grupos(usuario_id)
+                grupo = suyos[0] if suyos else None
+            if grupo is None:
+                print(f"   ({USUARIO} no vigila ningun grupo: no hay donde sembrar)")
+                return False
+            # **El umbral, por encima del precio de hoy**, *preguntado con la misma
+            # funcion que decide si salta.*
+            mejor = mod_alertas._mejor_de_cada_grupo([grupo]).get(grupo) or {}
+            hoy = mejor.get("precio_unidad_cent")
+            # **`hoy` viene como numero, *y puede ser decimal*:** *la primera version
+            # exigia `int` y con `96.0` se caia al `10 ** 6`*, *que sembraba un aviso con
+            # una frase absurda («ha bajado de 10000.00 EUR/l»).* *El escenario tiene que
+            # ser *** verosimil***, *no solo efectivo:* *un umbral realista es **el precio
+            # de hoy mas un centimo**, *y con eso la condicion `hoy <= umbral` se cumple
+            # igual.*
+            umbral = int(hoy) + 1 if isinstance(hoy, (int, float)) else 10 ** 6
+            almacen.crea_alerta(usuario_id, grupo, "baja_de", umbral)
+            print(f"   (sembrado: grupo {grupo}, umbral {umbral} cent, precio de hoy "
+                  f"{hoy} cent -- el umbral va POR ENCIMA a proposito)")
+            return True
+
+        comprueba(_siembra_un_aviso_pendiente(),
+                  "el escenario de avisos se puede sembrar (y si no, FALLA: no se omite "
+                  "la cara que mas importa de /avisos)")
         carga("/avisos")
 
         def el_punto() -> int:
@@ -1393,8 +1564,15 @@ def main() -> int:
             comprueba(el_punto() == 0 and "Ya los he visto" not in pagina.inner_text("main"),
                       "y al volver a abrir sigue apagado (lo que se apunto es `vista_en`)")
         else:
-            print(f"   (no hay avisos sin ver: el punto dice {cuantos}. "
-                  "La cara de «Ya los he visto» no se puede medir en esta pasada)")
+            # **Y esto ya no se omite: FALLA.** *Es el cambio que pidio el propietario, y
+            # es el correcto:* *si el escenario de arriba se sembro y aun asi el contador
+            # dice 0, entonces **el aviso no salta**, *y eso ***es*** un hallazgo -- *no
+            # una excusa para no medir.* *Lo unico que lo justificaria es que la siembra
+            # no haya podido hacerse, *y para eso esta la comprobacion de
+            # `_siembra_un_aviso_pendiente`, que habra fallado antes con su motivo.*
+            comprueba(False,
+                      f"con un aviso sembrado, el punto del icono lo cuenta "
+                      f"(dice {cuantos}, y tiene que decir mas de 0)")
 
         # **Y la otra mitad de la pregunta 4: lo que ha bajado de lo mio sin haber pedido
         # ningun aviso.** Son dos cosas distintas y las dos contestan a la misma pregunta:
@@ -2307,10 +2485,136 @@ def main() -> int:
                       "un codigo que no esta dice que no lo sabe, en vez de callarse")
             comprueba(not errores, f"y la pantalla no se rompe ({errores[:2]})")
 
+        # ------------- el LATERAL de escritorio, *con sesion y datos* (revisado) -------------
+        # **Aqui, y no al principio, y con la sesion ya abierta.** *La seccion anterior vivia
+        # en la linea 539 y medIa otra cosa* *(-- *ver el comentario de alli --)*. *Aqui la
+        # cuenta y la lista **ya existen**, *que es lo que hace que se pueda probar de verdad:
+        # **el lateral, con sesion y con datos**, *y **pulsando sus enlaces** *en vez de
+        # escribir la URL.*
+        #
+        # **Lo que se comprueba, y por que cada cosa:**
+        #
+        # 1. **Que el lateral es el lateral.** `aside[aria-label="Menu de la suite"]:visible`
+        #    *es `Suite.tsx:315`, *`hidden h-screen w-[248px] … lg:block`*. *Se exige que
+        #    mida *** entre 240 y 260 px***, *que es lo que distingue un lateral de una
+        #    rejilla:* *el `nav` de la portada (`App.tsx:95`) mide *** 1208*** *a 1280, *y
+        #    medirlo a el y llamarlo «el nav de escritorio» *fue *** el fallo que el
+        #    propietario encontro.*** *
+        # 2. **Que los tres enlaces estan y llevan a donde dicen**, *pulsandolos:* *URL
+        #    comprobada despues del clic, *no antes.*
+        # 3. **Que cada aplicacion hace algo**, *no solo que pinta:* *una operacion de
+        #    verdad por aplicacion*, *y la de Calorias es *** la frontera del punto 4*** *
+        #    *(-- *«Ver que se puede anotar» **muestra** lo que se podria anotar: *comprar
+        #    *** no*** registra consumo --)*.
+        # 4. **Que nada de eso lanza una excepcion de JavaScript** en esa ventana.
+        #
+        # *Y el contenido esperado es **el propio control de la operacion**, *y no un
+        # `len(texto) > 200`:* *eso ultimo lo cumple **hasta una pantalla rota con armazon**,
+        # *que es lo que el propietario senalo.*
+        print("\n== el lateral de escritorio, con sesion y datos")
+        escritorio = navegador.new_context(
+            viewport={"width": 1280, "height": 900}, locale="es-ES")
+        ancha = escritorio.new_page()
+        errores_ancha: list[str] = []
+        ancha.on("pageerror", lambda e: errores_ancha.append(str(e)))
+        try:
+            _carga(ancha, "/compra")
+            # **La misma cuenta fija**, *que a estas alturas ya existe con su lista*:
+            # *por eso esta seccion va al final y no al principio.*
+            print(f"   (la cuenta del escritorio: "
+                  f"{_entra(ancha, USUARIO, CLAVE, 'Prueba', comprueba, puerta='Entra para ver tu lista')})")
+            _carga(ancha, "/compra")
+
+            lateral = ancha.locator("aside[aria-label='Menu de la suite']:visible")
+            comprueba(lateral.count() == 1,
+                      f"a 1280 hay UN lateral visible ({lateral.count()})")
+            caja = lateral.first.bounding_box() if lateral.count() else None
+            comprueba(caja is not None and 240 <= caja["width"] <= 260,
+                      "y es el lateral de 248 px, no la rejilla de tarjetas de la "
+                      f"portada ({None if caja is None else round(caja['width'])} px)")
+
+            # **Y una operacion de verdad por aplicacion.** *El contenido esperado es el
+            # control de la operacion*, *asi que si la pantalla no trae su control, esto
+            # falla por lo mismo que fallaria la operacion.*
+            for nombre, destino, control in (
+                    ("Compra", "/compra",
+                     ancha.get_by_placeholder("leche entera, atún, papel de cocina…")),
+                    ("Recetas", "/recetas",
+                     lateral.get_by_role("link", name="Recetas")),
+                    ("Calorias", "/calorias",
+                     ancha.get_by_role("button", name="Ver que se puede anotar")),
+            ):
+                enlace = lateral.locator(f"a[href='{destino}']:visible")
+                comprueba(enlace.count() == 1,
+                          f"el lateral lleva a {nombre} ({enlace.count()} enlaces)")
+                if not enlace.count():
+                    continue
+                # **Se PULSA**, *que es lo que hay que probar de un menu.*
+                enlace.first.click()
+                with contextlib.suppress(Exception):
+                    ancha.wait_for_url(f"**{destino}", timeout=15000)
+                ancha.wait_for_load_state("networkidle")
+                comprueba(ancha.url.rstrip("/").endswith(destino),
+                          f"y al pulsarlo la URL es la de {nombre} ({ancha.url})")
+
+                if nombre == "Compra":
+                    # **La operacion de Compra: buscar.** *Buscar es lo que hace esta
+                    # pantalla, y es lo que se puede hacer sin depender del catalogo:*
+                    # *si el buscador no responde, la aplicacion no sirve, *y eso no lo
+                    # dice ningun `len(texto) > 200`.*
+                    comprueba(control.count() >= 1,
+                              "y Compra trae su buscador, que es su operacion")
+                    if control.count():
+                        control.first.fill("leche")
+                        ancha.wait_for_timeout(2500)
+                        comprueba("leche" in ancha.inner_text("main").lower(),
+                                  "y al escribir, la pantalla contesta con la busqueda")
+                elif nombre == "Recetas":
+                    # **La operacion de Recetas: empezar una receta nueva.**
+                    anadir = ancha.get_by_role("link", name="Añadir una receta")
+                    if not anadir.count():
+                        anadir = ancha.get_by_role("button", name="Añadir una receta")
+                    comprueba(anadir.count() == 1,
+                              "y Recetas ofrece anadir una receta, que es su operacion")
+                    if anadir.count():
+                        anadir.first.click()
+                        ancha.wait_for_timeout(2000)
+                        comprueba("receta" in ancha.url or
+                                  ancha.locator("form input").count() >= 1,
+                                  f"y al pulsarlo se abre el alta de receta ({ancha.url})")
+                        _carga(ancha, "/recetas")
+                else:
+                    # **La operacion de Calorias: «Ver que se puede anotar»**, *que es
+                    # **la frontera del punto 4**: *muestra lo que se podria anotar desde
+                    # la lista, *y **no anota nada**. *Si esta pantalla escribiera sola,
+                    # esto es donde se veria.*
+                    comprueba(control.count() == 1,
+                              "y Calorias ofrece «Ver que se puede anotar», que es su "
+                              "operacion y la frontera de «comprar no anota»")
+                    if control.count():
+                        control.first.click()
+                        ancha.wait_for_timeout(3000)
+                        comprueba(not errores_ancha,
+                                  f"y al pulsarlo no se rompe ({errores_ancha[:2]})")
+
+            # **Y la ventana entera no lanzo nada.** *Se cuentan aparte de las de movil:*
+            # *son dos navegadores distintos y un fallo en uno no se ve en el otro.*
+            comprueba(not errores_ancha,
+                      f"y la ventana de 1280 no lanza excepciones ({errores_ancha[:2]})")
+
+            if dir_capturas:
+                with contextlib.suppress(Exception):
+                    _carga(ancha, "/compra")
+                    ancha.screenshot(path=str(
+                        Path(dir_capturas) / "escritorio-lateral.png"), full_page=False)
+        finally:
+            escritorio.close()
+
         # Un `pageerror` es una excepcion de JavaScript: eso si invalida todo lo demas. Un
         # 401 en `/api/yo` es como la aplicacion pregunta "¿hay sesion?" antes de entrar, y
         # sale en la consola sin ser un fallo. Se cuentan por separado a proposito.
         comprueba(not errores, f"sin excepciones de JavaScript ({errores[:2]})")
+
         if avisos_401 := [e for e in consola if "401" in e]:
             print(f"   (nota: {len(avisos_401)} respuestas 401 en la consola, "
                   f"que es como se pregunta si hay sesion)")
