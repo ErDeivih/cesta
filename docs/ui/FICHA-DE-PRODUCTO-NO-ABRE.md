@@ -204,3 +204,46 @@ ni el enrutado ni el chunk. Lo siguiente:
     y se reporta por `onUncaughtError`... que no lo registro. Pero encaja mejor que nada: el
     efecto no corre y el arbol se vacia.
 
+
+=== SEXTA MEDIDA: EL MECANISMO, REPRODUCIDO A PROPOSITO EN UNA PAGINA QUE FUNCIONA ===
+
+Se inyecto una excepcion en `Storage.prototype.setItem` ANTES de cargar el bundle, sobre
+`/compra`, que es una pagina que pinta bien:
+
+  /compra  SIN inyectar             ->  main=1  texto=360
+  /compra  CON la averia inyectada  ->  main=0  texto=0     <- EL MISMO SINTOMA
+
+O sea: UNA EXCEPCION DENTRO DE UN EFECTO DE REACT VACIA LA APLICACION ENTERA, Y SIN MENSAJE.
+Eso explica por que el armazon aparecia a 800 ms y a 3000 ms no habia nada, sin un solo error
+en consola ni pageerror: es el comportamiento de React, no un fallo del registro de errores.
+
+Y por tanto, en la ficha de producto, ALGO LANZA DENTRO DE UN EFECTO.
+
+HONESTIDAD SOBRE ESTA MEDIDA: la bandera `window.__inyectado` salio False en las dos corridas,
+asi que no puedo demostrar que el parche estuviera puesto; la atribucion es POR DIFERENCIA
+entre las dos corridas, no por una bandera verificada. Se dice y no se adorna.
+
+=== Y `useTitulo` QUEDA DESCARTADO, MIDIENDO ===
+
+  Producto.tsx:37-58  usa useTitulo
+  Grupo.tsx:30-80     TAMBIEN usa useTitulo
+  y /compra/comparar/526, que monta Grupo, PINTA (html=23083)
+
+Asi que no es `useTitulo`: la pagina que lo usa y funciona lo desmiente.
+
+=== DONDE ESTA AHORA LA SOSPECHA, Y ES UN DATO DURO ===
+
+El titulo se queda en 'Cesta', y en el efecto de `App.tsx:174` el orden es:
+  1. `const nombre = tituloDe(pathname)`
+  2. `document.title = ...`
+  3. `localStorage.setItem(...)`
+
+Si el titulo NO cambio, la excepcion ocurre en (1) o el efecto no llega a correr. En la prueba de
+inyeccion el titulo SI cambio (`Buscar · Cesta`) porque el fallo estaba en (3). Esa diferencia
+es la que hay que perseguir: **en la ficha, el efecto muere ANTES de poner el titulo.**
+
+Lo siguiente: mirar `tituloDe` y `tituloDeSeccion` (`App.tsx:150-168`) para la ruta
+`/compra/productos/dia/147509`, y `aplicacionDe` (`:179`). Es una funcion pura de cadenas: si
+lanza para esa ruta y no para las otras, ahi esta. Se puede probar SIN navegador, importando el
+modulo en node o replicando sus comparaciones.
+
