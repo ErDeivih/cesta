@@ -100,15 +100,32 @@ contra el `dist` y contra el `index.html` servido.*
 
 *** Y esta es la version corregida, *porque la anterior afirmaba mas de lo que se sabia.***
 
+*** ESTA SECCION SE CORRIGIO EL 17/10/2026, *porque afirmaba algo que la medida desmintio.***
+
+*Decia, con estas palabras, que **«el codigo fuente funciona»** porque en el servidor de desarrollo la
+ficha se pintaba (`texto=180`).* *** Es falso, y se retira.***
+
+*** LO QUE SE MIDIO AL REPETIRLO ***, *comprobando **antes** que el proxy apunta donde se cree:*
+
 ```
-la MISMA ruta, el MISMO dia, dos servidores:
-  DEV 5173    raizHtml=9552   main=1   texto=180    <- LA FICHA SE PINTA ENTERA
-  DIST 8080   raizHtml=0      main=0   texto=0      <- y aqui no hay nada
+/api/producto via dev (5173)   status=200  bytes=18060   <- el proxy SI va al 8080
+
+intento 1:  main=0  texto=0  canvas=0
+intento 2:  main=0  texto=0  canvas=0
+intento 3:  main=0  texto=0  canvas=0
 ```
 
-*** El codigo fuente funciona.*** *Se comprobo con `git diff` de `src/` vacio durante toda la
-investigacion: **la ficha monta en desarrollo**.* *Lo que falla es **la version construida y
-servida**, y esa diferencia es lo unico que queda por explicar.*
+*** TRES DE TRES FALLAN.*** *Aquel `180` estaba a un paso del **`207`** que da el **camino de error**
+(`<Fallo>`, cuando la API no contesta).* *Si aquel `npm run dev` no heredo `CESTA_API`, su proxy mandaba a
+`127.0.0.1:8000` -- donde no hay nada --, la consulta terminaba **en error**, y lo que se pinto fue
+**`<Fallo>`, no la ficha**.*
+
+*** ASI QUE LA FRASE CORRECTA ES LA CONTRARIA ***: ***la ficha NUNCA se ha visto pintar CON DATO, ni en
+desarrollo ni en lo servido.*** *Lo unico que se ha visto pintar siempre es **el camino de error**.*
+
+*** Y ESO CAMBIA EL DIAGNOSTICO ENTERO ***: *el build, la minificacion y todo lo que se descarto
+**comparando los dos entornos** queda descartado **por otro motivo** -- *no porque un sitio funcione y el
+otro no, sino porque **los dos fallan igual**.*
 
 *** Y se descarto lo obvio, midiendo***: *el `dist` esta recien construido
 (`index-BxckfJaz.js`, 336 938 B); *8080 sirve **ese** bundle; *con el bundle nuevo **sigue
