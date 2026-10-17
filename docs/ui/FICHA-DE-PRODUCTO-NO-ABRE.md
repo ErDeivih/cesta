@@ -73,3 +73,43 @@ Los tres siguientes pasos, por orden:
      algun camino, el armazon SI deberia estar. Que no lo este es lo que no cuadra, y por eso
      (a) y (b) van antes que (c).
 
+
+=== TERCERA MEDIDA: EL MODULO Y EL CHUNK ESTAN BIEN ===
+
+  dist/assets/Producto-D_Gro43H.js   16778 bytes   <- el chunk EXISTE
+  GET /src/paginas/Producto.tsx -> 200, 116216 bytes transformados por Vite  <- el modulo CARGA
+
+O sea que el `lazy(() => import('./paginas/Producto'))` (App.tsx:41) tiene a que resolverse, en
+desarrollo y en el build. Se descarta el chunk que falta y el error de transformacion.
+
+=== LO QUE YA ESTA DESCARTADO, TODO MIDIENDO ===
+
+  el servidor de ficheros   -> sirve el mismo index.html (892 B) en las tres rutas
+  el punto de montaje       -> se llama `raiz`, existe en las tres
+  un chunk que falte        -> Producto-D_Gro43H.js esta, 16778 B
+  un error de transformacion-> /src/paginas/Producto.tsx da 200 con 116216 B
+  el arranque de la app     -> /ruta-que-no-existe pinta (79 caracteres)
+  la redireccion            -> se paso a la ruta real y sigue vacia
+  la sesion                 -> con sesion abierta, igual
+  un ErrorBoundary          -> no hay ninguno en la app (git grep: 0)
+  el fallback de Suspense   -> tiene texto («Abriendo la pantalla...») y no aparece
+  los errores               -> pageerror VACIO y consola VACIA (ni los dos 401 de /compra)
+  la forma de la ruta       -> /compra/comparar/:x (1 param) y /compra/cocina/:x/:y (2) pintan
+
+=== EL ESTADO, SIN ADORNOS ===
+
+ENUNCIADO: en lo que sirve 8080, `/compra/productos/:fuente/:idFuente` deja `#raiz` vacio
+(html=31, texto=0, main=0) SIN un solo error en consola ni pageerror, mientras que las otras
+seis rutas de /compra y hasta una ruta inexistente SI pintan.
+
+NO SE SABE POR QUE. No se inventa.
+
+LO SIGUIENTE, Y ES UNA SOLA COSA: mirar `LayoutSuite` (`Suite.tsx`) buscando un camino que
+devuelva `null` o no pinte el `main`. Es el unico sitio que queda entre «el arbol de rutas» y
+«el componente de la pagina», y explicaria que no haya ni armazon ni 401 (el armazon es quien
+pide `/api/yo`). Las demas hipotesis estan descartadas con medida, no por opinion.
+
+NOTA DE HIGIENE: el servidor de desarrollo de esta ronda se arranco con `Start-Process`, que NO
+es un trabajo gestionado; se comprobo que el proceso de 5173 era el mio (0,6 minutos de edad)
+antes de matarlo, y 5173 quedo cerrado.
+
