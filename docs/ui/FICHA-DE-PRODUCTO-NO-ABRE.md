@@ -369,3 +369,48 @@ eso acota mucho.
 pantalla. *El codigo estaba bien desde el principio. *Lo que fallaba era el build, y no se comprobo
 porque **se dio por hecho que lo servido era lo escrito**.*
 
+
+=== DECIMA: `keepNames` LO ARREGLA, *PERO ESO NO PRUEBA QUE SEA UN NOMBRE* ===
+
+Segundo bisecado, con un `vite.config.keepnames.ts` temporal (-- *el del repo no se toco, y el
+`dist` real siguio con la misma marca de tiempo, 10:19:29 --)*:
+
+  keepNames (minificado, conservando nombres de funciones y clases)
+      raiz=9552   main=1   texto=180    <- FUNCIONA
+
+  minificado normal
+      raiz=0      main=0   texto=0      <- no
+
+*** Asi que `keepNames: true` arregla la pantalla.*** *Y eso acota mucho: es una de las cosas que
+`keepNames` cambia.*
+
+*** PERO NO SE PUEDE DECIR QUE SEA «UN NOMBRE ACORTADO», *y aqui esta el porque***:
+
+- `keepNames` **no solo** conserva nombres: *tambien mete llamadas al ayudante `__name` y **apaga
+  algunas optimizaciones**.* *Cualquiera de esas diferencias podria ser la causa.*
+- Y **no hay ni una lectura de `.name` en toda la aplicacion**: `grep` de `constructor.name`,
+  `.name ===` y `displayName` en `src/` da **CERO**.
+- Como `Grupo` tambien es `lazy` y pinta con la minificacion normal, **tampoco puede ser el `lazy`
+  en general.**
+
+*** CONCLUSION HONESTA***: *el defecto **esta en la minificacion** (medido dos veces, con y sin), *y
+`keepNames` **lo evita** (medido)*, *pero **no se sabe por que***. *Decir «es un nombre acortado»
+seria exactamente el tipo de afirmacion que este encargo pide no hacer.*
+
+=== EL SIGUIENTE PASO, CONCRETO ===
+
+Con `keepNames` como palanca, bisecar **que parte de `keepNames`** es la que importa:
+  1. Construir con `esbuild: { keepNames: true, minifyIdentifiers: true, minifySyntax: false }` y
+     luego con `minifySyntax: true` y `minifyWhitespace: true`. *Si falla con `minifySyntax: false`
+     y funciona con `true`, es la sintaxis; si al reves, *es otra cosa.*
+  2. Si ninguna de esas lo explica, mirar los **tres** `import()` dinamicos del trozo: `Producto`,
+     `Grupo` y `CocinaModo`. *Comparar el codigo minificado del importe de `Producto` con el de
+     `Grupo`, que si pinta, es lo que mas discrimina y no depende de adivinar.*
+
+*** Y LO QUE ESTO SIGNIFICA PARA EL ENCARGO ***: *la ficha de producto **no se puede abrir en la
+version servida**, y **la causa es el build, no el codigo**. *Mientras no se arregle, el punto 3 no
+esta cumplido y el aviso de la portada tiene una pantalla que no lleva a ningun sitio.*
+
+*Limpieza: el config temporal y el directorio `dist-keepnames` se borraron, verificando la ruta antes
+de borrar. `dist` real intacto. 5181 cerrado.*
+
