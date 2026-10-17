@@ -1060,3 +1060,29 @@ existir, y eso puede ser normal.***
 *** ESTADO DEL PUNTO 3 ***: *carrera demostrada; red y build descartados; **el fallo esta en el primer
 render con dato**; **`canvas=0` no lo explica -- es compatible con que todo vaya bien**; **no resuelto**.*
 
+
+=== VIGESIMOSEXTA: *LEIDO `:155-202`. *LIMPIO TAMBIEN.* ===
+
+- **`evolucion` (`:156-159`)**: *guardada con `!== null` en los dos extremos y `> 0` en el primero.*
+- **`filasOff` (`:179-197`)**: *recorre siete campos y **cada uno** pasa por
+  `typeof producto[clave] === 'number'`;* *lo que no es numero se descarta con `.filter`. No lanza.*
+- **`masBarato` (`:199-...`)**: *guarda con `!grupo`, `=== null`, `Number.isFinite(mio)` y `mio <= 0`.*
+
+*** Nada nuevo que descartar: otra tanda limpia.***
+
+=== DONDE ESTA EL TRABAJO, *dicho para quien siga* ===
+
+*** El cuerpo del render va de `:135` a `:656`, y se ha leido hasta `:202`. Quedan `:203-656`.*** *Y
+`canvas=0` **ya no sirve** como pista (-- *es compatible con que todo vaya bien, `:58` --)*, *asi que no
+hay atajo: **queda leer o cortar**.*
+
+*** LO UNICO QUE SIGUE EN PIE, Y ES POCO ***: *el arbol se vacia entre el esqueleto de `Cargando` y el
+primer nodo de la ficha; la peticion termina con 200; no hay excepcion visible; y todo lo anterior a
+`:202` esta descartado.*
+
+*** EL SIGUIENTE PASO NO ES UNA IDEA, ES UN METODO***: **cortar.** *Comentar `:203-656`, construir y probar.
+*Si entonces el armazon queda con texto, el fallo esta en lo comentado; si sigue vacio, esta antes de
+`:203` en el JSX -- y entonces el problema no es una funcion, es una **expresion del JSX**.*
+
+*Dos cortes como maximo lo acotan. **No hace falta leer 450 lineas: hace falta cortar dos veces.***
+
