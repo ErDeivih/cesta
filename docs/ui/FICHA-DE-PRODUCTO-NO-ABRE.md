@@ -156,3 +156,51 @@ dentro. Y si React no la esta registrando, hay que verlo desde dentro: ejecutar 
 el bundle (`add_init_script`), porque el listener de Playwright puede llegar tarde. Eso es lo
 que hay que hacer en la siguiente ronda, y es lo unico.
 
+
+=== QUINTA MEDIDA: EL ARMAZON SE PINTA, Y LUEGO SE VACIA SIN ERROR NI NAVEGACION ===
+
+Se instrumento la pagina ANTES de que cargara el bundle (`add_init_script`), parcheando
+`console.error`, `console.warn`, `window.onerror` y `unhandledrejection`. Resultado: CERO
+eventos. O sea que no hay ninguna excepcion que se este escapando: no hay excepcion.
+
+Y el volcado del DOM:
+  a   800 ms  #raiz = 9109 caracteres: el <aside aria-label="Menu de la suite">, el enlace
+              «Saltar al contenido», el nav «Aplicaciones»... EL ARMAZON ESTA PINTADO.
+              Titulo: 'Cesta'.
+  a  3000 ms  #raiz = 0 caracteres.
+  a  8000 ms  #raiz = 0 caracteres.
+  href: identico en todas las muestras.  history.length: 2, sin cambios.
+
+O sea: NO navega (la URL y el historial no cambian), NO da error (cero eventos con la
+instrumentacion por delante), y React VACIA SU CONTENEDOR entre 800 y 3000 ms.
+
+Y UN DATO QUE SE ME HABIA ESCAPADO: EL TITULO SE QUEDA EN «Cesta». El `useEffect` de
+`App.tsx:174` pone `document.title` con `tituloDe(pathname)`, y para esta ruta `tituloDe`
+devuelve 'Producto' (`App.tsx:159`, `ruta.includes('/productos/')`). Si el titulo sigue en
+'Cesta', ESE EFECTO NO SE EJECUTO. Pero el armazon si se pinto, y el armazon vive dentro de
+`<Routes>` dentro de `App`. Esa combinacion -- armazon pintado y efecto de `App` sin correr --
+es la pista mas concreta que hay hasta ahora.
+
+=== CORRECCION DE LO QUE DIJE ANTES ===
+
+Dije que «el armazon no se pinta» porque en la consola no habia los dos 401. Era FALSO: el
+armazon SI se pinta (9109 caracteres a 800 ms). Lo que pasa es que `/api/yo` se pide dos veces
+(medido) y las respuestas no dejan mensaje de consola en esta ruta -- puede que lleguen DESPUES
+del desmontaje y el error de red no se registre. La conclusion «no se pinta el armazon» era
+mia y era erronea.
+
+=== LO QUE QUEDA, Y ES UNA SOLA COSA ===
+
+El efecto de `App` no corre y el arbol se vacia, sin error y sin navegar. Eso ya no es la API
+ni el enrutado ni el chunk. Lo siguiente:
+  - Comprobar si `StrictMode` (`main.tsx:50`) esta desmontando y remontando: en React 19 el
+    doble montaje de desarrollo no aplica al build, pero conviene confirmarlo.
+  - Mirar `Producto.tsx` entero buscando un `useEffect` que llame a `navega(...)` o a algo que
+    desmonte, y `useTitulo` (`:37`), que es lo unico que esta pagina hace y las otras no en ese
+    orden.
+  - Y comprobar si el efecto de `App` (`:174`) lee `localStorage` y ese acceso lanza en este
+    contexto: `aplicacionDe(pathname)` y `localStorage.setItem`. Si `localStorage` lanza, el
+    efecto revienta DESPUES del render, y en React 19 un error en un efecto desmonta el arbol
+    y se reporta por `onUncaughtError`... que no lo registro. Pero encaja mejor que nada: el
+    efecto no corre y el arbol se vacia.
+
