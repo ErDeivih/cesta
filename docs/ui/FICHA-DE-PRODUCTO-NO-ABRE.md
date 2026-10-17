@@ -662,3 +662,46 @@ un problema de carga.*
 armazon pinta y la ficha nunca**; **el fallo esta en el render con dato**; **quien lo rompe, sin
 identificar**.* *No se declara resuelto.*
 
+
+=== DECIMOSEPTIMA: *LEIDOS LOS TRES SITIOS. NO ESTA AHI, *Y SE DICE* ===
+
+**`Producto.tsx:52-58`:**
+
+    const producto = consulta.data?.producto
+    const grupo = consulta.data?.grupo ?? null
+    // Mientras el dato viaja se queda "Producto", que lo pone `App` por ruta:
+    // aqui solo se mejora cuando se sabe mas.
+    useTitulo(producto?.nombre ?? grupo?.nombre)
+
+*** El comentario y el comportamiento se contradicen***: *`useTitulo` **no** deja el titulo que puso
+`App`; escribe `'Cesta'` cuando no hay texto (`Titulo.tsx:24`).* *Asi que **pisa** justo lo que el
+comentario dice respetar.* **Es un defecto real y pequeno, ya anotado, y NO puede lanzar.**
+
+**Los `useMemo` (`:64` y `:85`)** *llaman a `grupo.productos.find(...)` y `grupo.serie.filter(...)`:
+*lanzarian si alguna no fuera una lista, **y el JSON medido las trae bien** (111 puntos de serie,
+`productos` presente).*
+
+*** O SEA QUE EL SITIO NO ESTA EN LO QUE SE HA LEIDO, Y NO SE VA A DECIR QUE SI.***
+
+=== Y UN DATO QUE ACOTA MAS, *sacado de los textos medidos* ===
+
+*Cuando «pinta», el texto es **99 caracteres**: el armazon y su menu, **nada mas**.* *Y `Producto` tiene
+**tres** caminos que pintan algo:*
+
+    :133   if (consulta.isPending) return <Cargando que="la ficha" />
+    :144   if (!producto) { ... }              <- un bloque con texto
+    :...   el cuerpo de la ficha              <- 180 caracteres en desarrollo
+
+*** No se pinta NINGUNO de los tres.*** *Ni el de «cargando», ni el de «no encontrado», ni el cuerpo.*
+*O sea que **`Producto` no llega a devolver nada: lanza antes de su primer `return`**.*
+
+*** Y ESO ES LO QUE HAY QUE BUSCAR***: *algo entre la linea 47 y la 133 que solo se ejecuta **con
+`consulta.data` ya presente**, *y que **no se ha leido todavia**:* *las lineas **85-133**, que es donde
+se calcula el historico, la frase y los sellos.*
+
+*** SIGUIENTE PASO, *una sola cosa***: **leer `Producto.tsx:85-133` entero.** *Es el unico tramo de la
+pagina que se ejecuta con dato y no se ha mirado.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada y orientada; **`Producto` lanza antes de su primer
+`return` cuando hay dato**; **el tramo 85-133 es lo unico que queda sin leer**; **no resuelto**.*
+
