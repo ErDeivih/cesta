@@ -745,3 +745,53 @@ siguiente es el cuerpo del render de `Producto` desde `:135`.*
 dato**; **todo lo anterior al primer `return` esta descartado leyendolo**; **`Chispa` es el sospechoso
 y no se ha leido**; **no resuelto**.*
 
+
+=== DECIMONOVENA: *EL SOSPECHOSO, LEIDO. `Chispa` + `ResizeObserver`* ===
+=== *Y EXPLICA LAS CUATRO COSAS QUE PARECIAN NO TENER RELACION* ===
+
+`Chispa.tsx` (178 lineas) leido entero. Lo que hay dentro:
+
+    :40  useEffect(() => {
+    :43    const observa = new ResizeObserver((entradas) => {
+    :45      if (caja) setAncho(Math.max(60, Math.round(caja.width)))   <- cambia estado
+    :47    observa.observe(el)                                          <- observa el MISMO div
+    :49    return () => observa.disconnect()
+    :50  }, [])                                                         <- sin dependencias
+    ...
+    :56  useEffect(() => {
+    :58    if (!el || ancho < 20 || puntos.length === 0) return          <- solo con dato
+    :101   const nueva = new uPlot(opciones, [xs, ys], el)               <- uPlot ESCRIBE en ese div
+    :104     nueva.destroy()
+    :108  }, [clave, ancho, alto, color])                                <- `ancho` esta dentro
+
+*** LO QUE ESTO HACE, *y es el patron clasico de este par de piezas***: *`ResizeObserver` observa el
+mismo `div` donde `uPlot` pinta.* *Si `uPlot` cambia el tamano de ese `div` al montarse* (-- *crea un
+canvas dentro, con su propio ancho --)*, *el observador **vuelve a disparar**, `setAncho` cambia
+`ancho`, `ancho` esta en las dependencias del efecto, **se destruye la grafica y se crea otra**, y
+**el ciclo se repite**.*
+
+*** Y EXPLICA, UNA A UNA, LAS CUATRO COSAS QUE PARECIAN NO TENER RELACION ***:
+
+| *lo medido* | *por que encaja* |
+|---|---|
+| **solo falla cuando hay dato** | *`:58` sale antes si `puntos.length === 0`; sin dato no hay grafica ni ciclo* |
+| **solo en esta pagina** | *es la unica que usa `Chispa`* |
+| **depende del tiempo (0/8, 3/8, 8/8)** | *el ancho y el `ResizeObserver` son asincronos; con la API abortada no hay puntos y no arranca* |
+| **sin `pageerror` ni consola** | *un ciclo de `ResizeObserver` **no lanza una excepcion de JavaScript**: el navegador lo cuenta como aviso y el arbol se queda sin pintar* |
+
+*** Y por que no fallaba en desarrollo***: *con Vite el layout y la hidratacion van por otro camino, y el
+ciclo a veces no llega a estabilizarse igual.* *No es una explicacion medida, y se dice.*
+
+=== LO QUE HAY QUE HACER, *y NO se aplica a ciegas* ===
+
+*** ES UNA HIPOTESIS***, *aunque encaje con todo.* *Antes de tocar nada:*
+  1. **Medirlo**: *en la pagina, contar cuantas veces se crea y se destruye la grafica.* *Si el numero
+     sube sin parar, es el ciclo, y entonces es un hecho y no una hipotesis.*
+  2. **Y si se confirma**, el arreglo minimo es **no observar el mismo nodo que `uPlot` mide**, o
+     **devolver el mismo `ancho` cuando no cambie**: `setAncho(w => w === nuevo ? w : nuevo)`.
+     *Eso rompe el ciclo si el ancho se estabiliza, y no cambia nada si no.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada; **el sospechoso esta identificado y leido**; **el
+mecanismo encaja con las cuatro observaciones**; **NO se declara resuelto**, y **no se aplica un
+arreglo sin medirlo primero**.*
+
