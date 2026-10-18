@@ -1219,3 +1219,43 @@ naturaleza:*
 pruebas esta caida, y que el catalogo de casa no esta en una base sintetica -- las dos cosas de
 entorno, ninguna de codigo.*
 
+### M05 / 18/10/2026 / «Compra cotidiana completa»: la mitad de su aceptacion, medida
+
+*La especificacion pide, con estas palabras:*
+
+> «Aceptacion: lista de 30 lineas, duplicados deliberados, dos marcas parecidas, reposicion de
+> favoritos y otra lista compartida; busqueda no destruye la seleccion.»
+
+*Se ha escrito `scripts/aceptacion_m05.py`, que lo mide por HTTP contra el banco de ensayo:*
+
+    anadidas: 32 de 32
+    la lista devuelve 32 linea(s)
+    nombres repetidos: 5            -> los duplicados deliberados NO se fusionan
+    arroces: 2, producto_id distintos: 2  -> las dos marcas parecidas se distinguen
+    la lista sigue igual despues de leerla dos veces  -> leer no destruye nada
+
+    TODO BIEN
+
+*Treinta lineas (25 distintas y 5 repeticiones **deliberadas**, que es lo que pasa cuando apuntas lo
+mismo dos veces porque no te acordabas), mas las dos marcas del mismo grupo con su `producto_id`
+cada una.*
+
+**Y dos fallos mios en la MEDICION, los dos del mismo tipo:**
+
+1. Contaba `len(datos)` cuando la API envuelve en `{lineas: [...]}`; `len()` de un dict cuenta claves.
+   *Ya paso con las recetas en la ronda 73, y volvio a pasar aqui.*
+2. Buscaba el campo `nombre` en la linea, y se llama **`nombre_visto`**. *Con `nombre` salia `None`
+   repetido, y eso parecia «los duplicados se han fusionado» -- un defecto inventado.*
+
+*Los dos se descubrieron volcando **la forma** de la respuesta, no razonando sobre el numero. Es la
+tercera vez en la sesion que un campo supuesto me hace reportar un defecto falso.*
+
+**Lo que NO esta medido de M05, y se dice:**
+- *la busqueda por titulo, marca, EAN, variantes y sinonimos con filtros*
+- *pegar varias lineas con previa, y que «2 kg» no se lea como dos envases*
+- *modo tienda por pasillos, deshacer, contador, articulo manual sin precio, reordenar y restaurar*
+- *reposicion de favoritos y la otra lista compartida*
+
+*O sea: **una de las cinco cosas que pide la aceptacion**, medida. Las otras cuatro son el trabajo de
+M05.*
+
