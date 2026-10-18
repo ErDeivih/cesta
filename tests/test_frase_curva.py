@@ -215,10 +215,17 @@ def test_el_ahorro_en_euros_no_cruza_unidades():
     ficha = _fuente("paginas", "Producto.tsx")
     assert "más barato en" in ficha.lower(), "la ficha no dice donde esta mas barato"
     assert "te ahorras" in ficha
-    assert "p.unidad === producto.unidad" in ficha, (
-        "el ahorro se calcula entre productos de distinta unidad")
-    assert "p.comparable &&" in ficha, (
-        "el ahorro cuenta precios que el catalogo marca como no fiables")
+    # LAS DOS GARANTIAS SE MOVIERON A grupo.ts, y aqui se exige lo que importa:
+    # que la ficha DELEGUE y que la logica comun tenga las dos comprobaciones.
+    assert "construyeComparacion" in ficha, (
+        "la ficha no usa la comparacion comun: si vuelve a calcular el ahorro por su cuenta, "
+        "vuelven las unidades mezcladas")
+    logica = _fuente("logica", "grupo.ts")
+    assert "precioComparable" in logica, "la logica comun no tiene la comprobacion de unidad"
+    assert "ua !== ub" in logica, (
+        "la comparacion no normaliza la unidad: dos cadenas que la escriban distinto se "
+        "compararian como si fuera la misma")
+    assert "comparable" in logica, "la comparacion comun no mira si el precio es fiable"
 
 
 def test_la_pantalla_del_grupo_no_compara_unidades_distintas():
