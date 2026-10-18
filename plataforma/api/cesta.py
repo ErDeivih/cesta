@@ -969,7 +969,7 @@ def _serializa(e: Eleccion) -> dict:
             "alternativa": e.alternativa}
 
 
-def cotiza(lineas: list[dict]) -> dict:
+def cotiza(lineas: list[dict], version_catalogo: str | None = None) -> dict:
     """*** LO QUE LA PANTALLA ENSEÑA, CON UN SELLO PARA PODER DECIR «ESTO ES LO QUE VISTE». ***
 
     *La especificacion lo exige asi (M06, regla 2): «Conservar la estimacion que se confirmo:
@@ -1011,13 +1011,24 @@ def cotiza(lineas: list[dict]) -> dict:
             linea.get("autorizado_producto"),
             linea.get("autorizado_cadena"),
         )))
+    # *** Y LA VERSION DEL CATALOGO ENTRA EN EL SELLO. ***
+    # *Regla 3: «un hash valido antes no impide publicar catalogo o editar cantidades despues».
+    # Sin la version, publicar un catalogo nuevo -- con otro precio para el mismo producto -- deja
+    # el sello igual y el cierre guarda el precio nuevo contra una previa vieja.* *Con ella, la
+    # publicacion invalida la cotizacion y el cierre contesta 409, que es lo que la spec pide.*
+    if version_catalogo:
+        piezas.insert(0, "catalogo:" + str(version_catalogo))
     sello = hashlib.sha256("\n".join(piezas).encode("utf-8")).hexdigest()[:16]
     return {"sello": sello, "total_cent": total["total_cent"],
             # *Se leen con `.get()`: el total es lo unico obligatorio, y un doble de `estimacion` que
             # solo traiga eso no puede tumbar el cierre -- ni un dia en que la funcion devuelva menos.*
             "por_recoger_cent": total.get("por_recoger_cent"),
             "sin_precio": total.get("sin_precio"),
-            "lineas": total.get("lineas")}
+            "lineas": total.get("lineas"),
+            # *Los precios por linea, que son los que se han validado. El cierre los **usa tal cual**:
+            # recalcularlos despues es justo lo que la regla 3 prohibe.*
+            "por_linea": coste,
+            }
 
 
 def estimacion(lineas: list[dict]) -> dict:

@@ -30,6 +30,7 @@ import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ))
 PUERTO = 8110
 
 
@@ -176,6 +177,40 @@ def main() -> int:
              estado < 300 and (r or {}).get("confirmado") is True)
         vale("con el sello bueno la diferencia es cero, no null",
              (r or {}).get("diferencia_cent") == 0)
+
+        # *** CAMBIO ENTRE LA COMPROBACION Y LA PERSISTENCIA (regla 3). ***
+        # *No entre dos llamadas a funciones: **entre la previa que se sirvio y el cierre**.* *Se
+        # publica un catalogo nuevo con otro precio para el mismo producto, y el sello -- que ahora
+        # lleva la version del catalogo -- deja de valer.*
+        print("== cambiar el catalogo DESPUES de la previa ==")
+        _pide(f"/api/listas/{lid}/lineas", galleta, "POST",
+              {"nombre": "Arroz redondo marca A 1 kg", "grupo_id": 900001,
+               "producto_id": "ensayo:arroz-a"})
+        _, detalle4 = _pide(f"/api/listas/{lid}", galleta)
+        lineas4 = (detalle4 or {}).get("lineas") or []
+        for ln in lineas4:
+            if ln.get("en_carrito") is False:
+                _pide(f"/api/listas/{lid}/lineas/{ln['id']}", galleta, "PATCH", {"en_carrito": True})
+        _, detalle5 = _pide(f"/api/listas/{lid}", galleta)
+        sello_antes = ((detalle5 or {}).get("cotizacion") or {}).get("sello")
+        print("   sello antes de publicar: " + str(sello_antes))
+
+        import plataforma.construye_gold_ensayo as _cge
+        for _of in _cge.OFERTAS:
+            if _of.get("ean") == "9000000000017":
+                _of["precio_cent"] = 200
+                _of["precio_unidad_cent"] = 200.0
+                _of["precio_ref_canon_cent"] = 200.0
+        _cge.construye(Path(man["gold"]))
+        print("   catalogo republicado: el arroz A pasa de 120 a 200")
+
+        estado, r = _pide(f"/api/listas/{lid}/cerrar?sello_esperado={sello_antes}", galleta, "POST")
+        nuevo2 = ((r or {}).get("detail") or {}).get("cotizacion_nueva") or {}
+        print("   cerrar con el sello de antes -> " + str(estado)
+              + "  sello nuevo=" + str(nuevo2.get("sello"))
+              + "  total=" + str(nuevo2.get("total_cent")))
+        vale("publicar otro catalogo invalida la previa y da 409", estado == 409)
+        vale("y el sello nuevo es distinto del viejo", nuevo2.get("sello") != sello_antes)
 
         print()
         print("== " + ("TODO BIEN" if fallos == 0 else str(fallos) + " FALLO(S)") + " ==")

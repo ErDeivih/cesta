@@ -679,7 +679,7 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual),
     # mande el cliente, es la huella de las entradas de las que salio el numero que vio.* *Si no
     # coincide, el precio, la cantidad o la tienda cambiaron -- o la publicacion --, y el cierre
     # **no escribe**: devuelve 409 con la previa nueva para que la persona confirme.*
-    actual = cesta.cotiza(en_el_carro)
+    actual = cesta.cotiza(en_el_carro, _version_del_catalogo())
     if sello_esperado is not None and sello_esperado != actual["sello"]:
         raise HTTPException(
             409,
@@ -689,7 +689,10 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual),
                 "cotizacion_nueva": actual,
             },
         )
-    precios = cesta.coste_por_linea(en_el_carro)
+    precios = actual.get("por_linea") or cesta.coste_por_linea(en_el_carro)
+    # *Arriba, si: los precios salen de la cotizacion QUE SE HA VALIDADO -- recalcularlos aqui
+    # es justo lo que la regla 3 prohibe.* *El `or` es por si una cotizacion no los trae:
+    # entonces se recalcula, que es peor pero no miente.*
     hecho = almacen.cierra_compra(lista_id, usuario["id"], precios)
     # *** «CAMBIO DE PRECIO DURANTE EL CIERRE»: SE DICE, NO SE CALLA. ***
     # *La especificacion pide que la estimacion, el cierre y el historico sean la misma cifra
@@ -845,7 +848,8 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
         #   `estimacion` ..... lo que costaria **toda la lista**, que es lo que se mira al anadir
         #   `cotizacion` ..... lo que va a costar **lo que te llevas**, con su sello
         # *El segundo es el que se confirma al cerrar; el primero no se firma porque no se cierra.*
-        "cotizacion": cesta.cotiza([ln for ln in lineas if ln.get("en_carrito")]),
+        "cotizacion": cesta.cotiza([ln for ln in lineas if ln.get("en_carrito")],
+                                      _version_del_catalogo()),
         "cotizacion_lista_cent": cesta.cotiza(lineas)["total_cent"],
         "novedades": nuevo,
         "personas": almacen.quienes_en(lista_id),
