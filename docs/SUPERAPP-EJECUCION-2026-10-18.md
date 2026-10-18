@@ -631,3 +631,36 @@ corregidos, tres estan verificados en pantalla.*
 **Lo que falta para cerrar M01**: mirar `Grupo.tsx` y `Favoritos.tsx` en pantalla con el ensayo,
 y mirar `LoQueSeCompra.tsx` con una cuenta sin historial. **Tres miradas, no mas codigo.**
 
+**M01 / intento de las tres miradas con el ensayo: NO se han podido hacer, y se dice por que.**
+
+*Se levanto el ensayo entero: `prepara` + `siembra` + API en **8109** apuntando al DSN y al gold
+del ensayo + servidor de desarrollo en **5173** apuntando a esa API.* *Y se comprobo que la API
+del ensayo responde con SUS datos:*
+
+    /api/estado                  -> 200    371 B
+    /api/grupo/900001            -> 200  2 448 B
+    /api/producto/ensayo/arroz-a -> 200  2 757 B
+
+*Asi que el banco de ensayo funciona como banco de ensayo.*
+
+**Pero las tres miradas no se han hecho, y estas son las razones exactas:**
+
+- `/compra` (442 caracteres) y `/grupo/900001` (2 357) **pintan** (`main=1`, cero errores JS),
+  pero **no contienen lo que habia que mirar**: ni «marcas y formatos diferentes» (la tarjeta de
+  `LoQueSeCompra`), ni la salvedad del grupo.
+- **No se pudo entrar como `c_sin_listas`**: `/compra` en 5173 **no muestra formulario de
+  entrada** -- sus unicos `input` son un `search` y casillas --, asi que o hay una sesion previa,
+  o el formulario vive en un estado que no he reproducido. *Y sin sesion, `/favoritos` sale vacio
+  y `/compra` no tiene historial que mirar.*
+- Y `Vite` escucha en **`::1`**, no en `127.0.0.1`: *el primer intento dio `ERR_CONNECTION_REFUSED`
+  y hubo que usar `localhost`.* *Comprobado con `Get-NetTCPConnection`, no supuesto.*
+
+**Lo que esto deja claro, y es util para el resto del encargo**: *tener el ensayo levantado **no**
+es tener la sesion de una persona del ensayo.* *Falta un paso que no existe todavia: **entrar en
+la interfaz como una cuenta del banco**.* *Y eso es exactamente M03: «selector explicito de lista,
+carga/error/no seleccion son estados distintos».* *M01 no puede cerrar sus miradas hasta que M03
+exista.*
+
+**Asi que M01 queda con cinco correcciones hechas y tres miradas pendientes, y la dependencia
+declarada: M03 primero.** *No se cierra por contar rondas.*
+
