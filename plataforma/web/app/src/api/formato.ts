@@ -141,7 +141,39 @@ export function cantidad(
   unidad: string | null | undefined,
 ): string {
   if (cantidad === null || cantidad === undefined) return unidad ?? NO_LO_SE
-  return `${numero(cantidad, 3)} ${unidad ?? ''}`.trim()
+  const u = (unidad ?? '').trim()
+  const enMinuscula = u.toLowerCase()
+
+  // **NUNCA «0 kg».** *Medido el 18/10/2026 en la ficha del azafran: el envase es de 0,4 g y la
+  // pantalla decia **«0 kg»**, porque `numero(0.0004, 3)` es `0`.* *Un cero no es un redondeo
+  // feo: dice que el paquete **no pesa**, y es falso.*
+  //
+  // *Asi que si el valor es positivo y con tres decimales saldria `0`, se baja de unidad:*
+  // *kg -> g -> mg, y l -> ml.* *El numero que se enseña es el mismo, en la unidad en la que se
+  // lee.*
+  // *Y **la misma guarda en todos los caminos**: un valor positivo nunca se escribe `0`.* *Se
+  // dan mas decimales antes que mentir con un cero.* *La primera version de este arreglo solo la
+  // tenia en el camino general, y **la prueba la encontro**: `1e-10 kg` salia «0 mg».*
+  const positivo = (valor: number, unidad: string): string => {
+    for (const decimales of [3, 6, 9, 12]) {
+      const texto = numero(valor, decimales)
+      if (texto !== '0' && texto !== '-0') return `${texto} ${unidad}`.trim()
+    }
+    return `<${numero(1e-12, 12)} ${unidad}`.trim()
+  }
+
+  if (Number.isFinite(cantidad) && cantidad > 0) {
+    if (enMinuscula === 'kg' && cantidad < 0.001) {
+      const g = cantidad * 1000
+      return g >= 0.001 ? positivo(g, 'g') : positivo(g * 1000, 'mg')
+    }
+    if (enMinuscula === 'l' && cantidad < 0.001) {
+      return positivo(cantidad * 1000, 'ml')
+    }
+    return positivo(cantidad, u)
+  }
+
+  return `${numero(cantidad, 3)} ${u}`.trim()
 }
 
 export const SELLOS_LEGIBLES: Record<string, string> = {

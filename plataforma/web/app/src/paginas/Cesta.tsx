@@ -574,12 +574,20 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
   // **Se marca la primera y solo la primera**: *el diseño habla de «la lista de casa», en
   // singular, y las demas son las otras (`:552`).* *Si ya hay una, la nueva no lo es.*
   //
+  // *Y se corrige una afirmacion mia: **no era cierto que ninguna lista creada desde la interfaz
+  // fuera de casa** -- *ya habia un camino que la creaba* --. *Lo que este cambio hace es que la
+  // primera lista de `NuevaLista` tambien lo sea, que es el hueco real que quedaba.*
+  //
   // *`useQuery` va **aqui arriba**, con los otros hooks y **antes** del `if (!abierto) return` de
   // abajo: es la misma regla que se acaba de arreglar en `Producto.tsx`.*
   const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
-  const yaHayCasa = listas.data?.some((l) => l.es_de_casa) ?? false
+  // **Solo se marca «de casa» si se SABE que no hay ninguna.**
+  // *Con `listas.data` sin cargar, `yaHayCasa` seria `false` y se intentaria crear una segunda
+  // «de casa»: la base lo prohibe (`lista_de_casa_por_dueno`) y responderia 409.* *Asi que sin dato
+  // **no se marca**, y la lista se crea como las demas.* *Antes de saberlo, no se decide.*
+  const hayCasa = listas.data?.some((l) => l.es_de_casa)
   const crear = useMutation({
-    mutationFn: () => crearLista(nombre.trim() || 'Lista', !yaHayCasa),
+    mutationFn: () => crearLista(nombre.trim() || 'Lista', hayCasa === false),
     onSuccess: (l) => {
       setNombre('')
       setAbierto(false)

@@ -36,6 +36,7 @@ import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
+import { esMismoArticulo, alternativas } from '../logica/grupo'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
@@ -218,6 +219,11 @@ export function Producto() {
       (p) =>
         p.fuente !== producto.fuente &&
         p.comparable &&
+        // **Y tiene que ser EL MISMO ARTICULO, no solo el mismo grupo.**
+        // *Antes bastaba con estar en el grupo de equivalencias, y por eso el azafran Pote de DIA
+        // se comparaba con el Hacendado y se anunciaba «un 41 % mas barato»: **otra marca, otro
+        // EAN**.* La regla vive en `logica/grupo.ts`.
+        esMismoArticulo(producto, p) &&
         p.precio_unidad_cent !== null &&
         p.precio_unidad_cent > 0 &&
         p.unidad === producto.unidad,
@@ -304,8 +310,15 @@ export function Producto() {
             if (!grupo || !miembro) return null
             // Solo cuentan los productos con precio y marcados como comparables
             // por la API: es su señal, no una regla reinventada aqui.
+            // **Solo el mismo articulo.** *La frase dice «cuesta un X % mas que en ...», y eso
+            // solo es cierto si es **el mismo producto**.* *Con el grupo entero, el azafran Pote
+            // de DIA salia «un 41 % mas que en Mercadona» comparado con el **Hacendado**.*
             const conPrecio = grupo.productos.filter(
-              (p) => p.comparable && p.precio_unidad_cent != null,
+              (p) =>
+                p.comparable &&
+                p.precio_unidad_cent != null &&
+                esMismoArticulo(producto, p) &&
+                p.unidad === producto.unidad,
             )
             if (conPrecio.length < 2) return null
             const minimo = Math.min(
@@ -324,6 +337,48 @@ export function Producto() {
             })
             if (!frase) return null
             return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
+          })()}
+
+          {/* *** LO QUE NO ES ESTE ARTICULO VA APARTE, Y NO SE RESTA. ***
+              *Medido el 18/10/2026 con el azafran `dia/147509`: el grupo traia el **Hacendado** de
+              Mercadona (otro EAN, otra marca) y el **mismo Pote** de Carrefour pero **medido por
+              unidad** en vez de por kilo.* *Con eso, la ficha decia «Cuesta un 41 % mas que en
+              Mercadona», que es comparar Pote con Hacendado.*
+
+              **Aqui no se resta nada y no se sustituye nada**: se enseña que existe, con su nombre
+              y su marca, para que quien mire decida. *Un ahorro que no es del articulo elegido es
+              una afirmacion falsa, y la pantalla no la hace.* */}
+          {(() => {
+            if (!grupo) return null
+            const otras = alternativas(producto, grupo.productos).filter(
+              (p) => p.fuente !== producto.fuente && p.precio_unidad_cent != null,
+            )
+            if (!otras.length) return null
+            return (
+              <section className="mt-4 rounded-lg border border-tinta-suave p-3">
+                <h2 className="text-entrada font-semibold">Otras opciones del mismo grupo</h2>
+                <p className="mt-1 text-xs text-tinta-suave">
+                  No son este art&iacute;culo: cambian de marca, de formato o de unidad. Van aparte y
+                  no se restan de su precio.
+                </p>
+                <ul className="mt-2 grid gap-1 text-xs">
+                  {otras.map((p) => (
+                    <li
+                      key={`${p.fuente}:${p.id_fuente}`}
+                      className="flex flex-wrap justify-between gap-2"
+                    >
+                      <span>
+                        {p.nombre}
+                        {p.marca ? ` \u00b7 ${p.marca}` : ''}
+                      </span>
+                      <span className="tabular-nums">
+                        {eurosUnidad(p.precio_unidad_cent, p.unidad, p.precio_por_escurrido)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
           })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -547,9 +602,20 @@ export function Producto() {
             </TablaScroll>
             {grupo.cadenas >= 2 && (
               <p className="mt-2 text-cuerpo text-secundaria ">
-                De la más barata a la más cara hay {porcentaje(grupo.ahorro_pct)} por unidad (
-                {euros(grupo.ahorro_cent)}). Son precios de una unidad comparable; los productos de
-                otra unidad no entran en esa cuenta.
+                {/* *** SON ARTICULOS DISTINTOS, Y HAY QUE DECIRLO. ***
+                    *Esta frase decia solo «de la mas barata a la mas cara hay 41 % por unidad
+                    (2000,00 EUR)», y hablaba de la **unidad** pero no del **articulo**.* *En el
+                    azafran `dia/147509` compara el Pote de DIA con el **Hacendado** de Mercadona:
+                    **otro artículo**.* *Leido de corrido parece el ahorro del que tienes en la
+                    mano, y no lo es.*
+
+                    **El dato se queda** -- *la horquilla del grupo existe y es verdad* --, *pero se
+                    dice de que es: de articulos distintos.* */}
+                Entre el articulo mas barato y el mas caro del grupo hay{" "}
+                {porcentaje(grupo.ahorro_pct)} de diferencia por unidad ({euros(grupo.ahorro_cent)}).{" "}
+                <strong>Son articulos distintos</strong> -- cambian de marca o de formato --, asi que
+                esa diferencia <strong>no es un ahorro del que estas mirando</strong>. Los de otra
+                unidad tampoco entran en esa cuenta.
               </p>
             )}
           </Tarjeta>
