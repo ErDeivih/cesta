@@ -393,6 +393,14 @@ def _normaliza(ruta: str) -> str:
     ruta = ruta.split("?")[0]
     ruta = re.sub(r"\$\{[^}]*\}", "{}", ruta)   # un parametro del front
     ruta = re.sub(r"\{[^}]*\}", "{}", ruta)     # un parametro de FastAPI
+    # *** UN PARAMETRO DE RUTA VA ENTRE BARRAS; UNA CONSULTA NO. ***
+    # *`/listas/${id}/cerrar${consulta}` -- donde `consulta` es `?sello_esperado=...` o vacio --
+    # dejaba `/listas/{}/cerrar{}`, y la API tiene `/listas/{}/cerrar`.* *La diferencia no es una
+    # ruta inventada: es una **query** que la normalizacion no habia quitado, porque no lleva `?`
+    # en el literal.*
+    # *Se quita cualquier `{}` que no vaya precedido de barra: esos son plantillas de consulta, no
+    # segmentos del camino.*
+    ruta = re.sub(r"(?<!/)\{\}", "", ruta)
     return ruta.rstrip("/") or "/"
 
 
