@@ -208,7 +208,8 @@ def _docker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["docker", *args], capture_output=True, text=True, check=False)
 
 
-def prepara(nombre: str = "propio", puerto_pg: int = 55432, espera_s: int = 60) -> Manifiesto:
+def prepara(nombre: str = "propio", puerto_pg: int = 55432, espera_s: int = 60,
+            dos_cadenas: bool = False) -> Manifiesto:
     """*Crea el banco de ensayo y deja anotado **cada** recurso.* *No siembra: eso es `siembra`.*"""
     plan = plan_para(nombre, puerto_pg)
     if plan.directorio.exists():
@@ -247,7 +248,7 @@ def prepara(nombre: str = "propio", puerto_pg: int = 55432, espera_s: int = 60) 
         )
 
         destino_gold = plan.directorio / "gold"
-        construye_gold(destino_gold)
+        construye_gold(destino_gold, segunda_cadena=dos_cadenas)
         man.gold = str(destino_gold)
         man.guarda()
         man.notas.append("catalogo del apartado 8 construido en " + str(destino_gold))
@@ -537,7 +538,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if fallos == 0 else 1
 
     if orden == "prepara":
-        man = prepara(nombre)
+        man = prepara(nombre, dos_cadenas="--dos-cadenas" in args)
         print("  ensayo preparado: " + man.nombre)
         print("      contenedor " + man.contenedor + "  id " + man.contenedor_id[:12])
         print("      dsn        " + man.dsn)

@@ -82,7 +82,10 @@ def main() -> int:
     rutas = sys.argv[3:] or ["/compra", "/grupo/900001", "/favoritos"]
 
     print("== 1. el ensayo ==")
-    _orden("prepara", "propio")
+    # *`ENSAYO_DOS_CADENAS=1` construye la variante del gold: con dos cadenas,
+    # `fraseDePrecio` devuelve frase y se puede leer la salvedad del grupo.*
+    _orden("prepara", "propio",
+           *(["--dos-cadenas"] if os.environ.get("ENSAYO_DOS_CADENAS") else []))
     _orden("siembra", "propio")
     man = json.loads((RAIZ / "data/ensayo/propio.manifiesto.json").read_text(encoding="utf-8"))
 
@@ -139,9 +142,9 @@ def main() -> int:
                 print(f"   {ruta:20} main={pg.locator('main').count()} "
                       f"texto={len(texto):5} errores={errores}")
                 for linea in texto.split("\n"):
-                    if any(x in linea for x in
-                           ("Diferencia", "sin dato", "del grupo", "Elige", "de casa",
-                            "articulos distintos", "formatos diferentes")):
+                    if any(x in linea.lower() for x in
+                           ("diferencia", "sin dato", "del grupo", "elige", "de casa",
+                            "articulos", "formatos diferentes", "mas barata", "cadena")):
                         print("        | " + linea.strip()[:110])
             ctx.close()
             nav.close()
