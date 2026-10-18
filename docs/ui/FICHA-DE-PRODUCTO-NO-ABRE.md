@@ -1296,3 +1296,52 @@ rondas anteriores, donde el resultado se leia primero y se comprobaba despues.*
 en el primer render con dato**; **tres intentos de bisecar, los tres detenidos a tiempo**; **fuente
 intacto**; **no resuelto**.*
 
+
+=== TRIGESIMOSEGUNDA: *EL CORTE, HECHO Y VALIDO. *LA MARCA NO SALE, Y ESO ACOTA***
+
+
+*El corte que compila, y que no rompe tipos:* **borrar el JSX (`:219-654`) y devolver una marca.** *Con
+`git checkout` se restaura despues, asi que no se pierde nada.*
+
+    tsc    -> limpio
+    build  -> index-pLOd0s8C.js, 336 895 B, 11:38:50    <- fresco, con el corte dentro
+    ruta   -> intento 1..4:  main=0   MARCA=False   texto=0
+
+*** LA MARCA NO APARECE, CUATRO VECES DE CUATRO.*** *Y el `build` estaba fresco y `tsc` limpio, asi que
+**la prueba vale** (-- *que es lo que no se podia decir de los tres intentos anteriores --)*.
+
+*** O SEA: `Producto` REVIENTA ANTES DE DEVOLVER NADA.*** *El fallo **no esta en el JSX**: esta en lo que
+se ejecuta **antes** de `:218`.*
+
+*** Y ESO ES UN RESULTADO, *no un intento fallido***: *descarta las 436 lineas del JSX de una vez.*
+
+=== LO QUE SE DESCARTA CON ESO, *leyendolo* ===
+
+*Todo lo que corre antes de `:218`, y ya esta limpio:*
+
+| *que* | *por que es seguro* |
+|---|---|
+| `historico` `:85-101` | *filtros y `ms(fecha)`; las listas llegan bien* |
+| `curva` `:108` | *`loQueDiceLaCurva`: guardas y `con.length < 2`* |
+| `resumen` `:113-131` | *`Math.min` sobre 111 elementos* |
+| `evolucion` `:156` | *`!== null` en los dos extremos y `> 0`* |
+| `filasOff` `:179-197` | *cada campo pasa por `typeof === 'number'`* |
+| `masBarato` `:199-216` | *`!grupo`, `=== null`, `Number.isFinite`, `mio <= 0`, `!otros.length`, `otro?.fuente`* |
+| `textoOrigenSello` `:80` | *`if (!origen) return null`* |
+| `ms` | *`iso.length`; lanzaria con algo que no fuera texto, y la API manda texto* |
+
+*** Y `main=0` encaja***: *no hay `ErrorBoundary` en la app, *asi que **una excepcion en `Producto` desmonta la
+raiz entera** -- *el armazon incluido --. **No es que el armazon falle: es que se lo lleva por delante.**
+
+=== LO QUE QUEDA, *y es una sola cosa* ===
+
+*** `useProducto(fuente, idFuente)` (`Producto.tsx:49`), el hook de `api/consultas.ts`.*** *Es **lo unico
+grande del camino que no se ha leido**, *y es lo unico que corre con la consulta **y** con el dato.*
+
+*Y hay una pista que encaja:* *si el hook lanzara **al resolverse** la consulta -- *por ejemplo, al
+transformar la respuesta o al calcular algo con ella --*, *el arbol se desmontaria **justo** cuando llega el
+dato, que es exactamente lo medido: `texto=99` (esqueleto) a los 2,5 s y `texto=0` cuando el dato llega.*
+
+*** ESTADO DEL PUNTO 3 ***: *carrera demostrada (1/10); **el JSX descartado con un corte valido**; **el
+fallo esta antes de `:218`**; **todo lo de ese tramo esta limpio salvo `useProducto`**; **no resuelto**.*
+
