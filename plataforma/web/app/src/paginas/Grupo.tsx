@@ -327,7 +327,23 @@ export function Grupo() {
               precio_unidad_minimo: ganadora?.producto.precio_unidad_cent ?? null,
             })
             if (!frase) return null
-            return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
+            // *** Y SE DICE DE QUE ES LA DIFERENCIA. ***
+            // *`fraseDePrecio` recibe `grupo.ahorro_cent`, la horquilla **del grupo de equivalencias**:
+            // del mas barato al mas caro, **que pueden ser articulos distintos**.* *En la ficha del
+            // azafran `dia/147509` eso daba 41 % comparando el **Pote** con el **Hacendado**.*
+            //
+            // *Aqui la frase es correcta -- dice «frente a la mas cara», que es la del grupo --, pero
+            // **no dice que sean articulos distintos**, y leido de corrido parece el ahorro del que se
+            // lleva.* *La salvedad va debajo, con la frase, no en un comentario.*
+            return (
+              <>
+                return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
+                <p className="mt-1 text-xs text-tinta-suave">
+                  La diferencia es entre los articulos del grupo, que no tienen por que ser el mismo:
+                  mismo envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
+                </p>
+              </>
+            )
           })()}
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
