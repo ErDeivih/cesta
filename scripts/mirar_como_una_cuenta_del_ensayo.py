@@ -144,6 +144,20 @@ def main() -> int:
             for ruta in rutas:
                 pg.goto(f"http://localhost:{INTERFAZ}{ruta}", wait_until="domcontentloaded")
                 pg.wait_for_timeout(6000)
+                # *** SI LA RUTA TRAE `?q=`, SE ESCRIBE EN EL BUSCADOR. ***
+                # *Pasar la consulta por la URL **no carga resultados**: la pantalla los pide al
+                # escribir. Medido: `/compra?q=arroz` da 650 caracteres y ningun resultado, y en
+                # cambio escribiendo en el campo salen 7 000.* *Ese fue uno de los dos errores de
+                # medicion que arrastre durante rondas.*
+                if "?q=" in ruta:
+                    consulta = ruta.split("?q=", 1)[1].split("&")[0]
+                    try:
+                        campo = pg.locator("input[type='search']").first
+                        campo.fill(consulta)
+                        pg.keyboard.press("Enter")
+                        pg.wait_for_timeout(7000)
+                    except Exception as exc:  # noqa: BLE001
+                        print("      no se pudo buscar: " + str(exc)[:60])
                 texto = pg.inner_text("body")
                 print(f"   {ruta:20} main={pg.locator('main').count()} "
                       f"texto={len(texto):5} errores={errores}")
