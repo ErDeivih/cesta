@@ -7,10 +7,10 @@
  *  Y por eso el alta obliga a declarar **de donde sale el dato**: etiqueta, ficha, estimacion o
  *  desconocido. Es la unica manera de que el subtotal signifique algo.
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { anotarDeLaCompra, misListas, previaDeLaCompra } from '../api/cesta'
+import { anotarDeLaCompra, guardaPreferencia, misListas, previaDeLaCompra, yo } from '../api/cesta'
 import type { PreviaDeLaCompra, ReciboDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
@@ -75,6 +75,16 @@ function DeLaCompra({ fecha }: { fecha: string }) {
   // de esta pantalla y de esta sesion: no se escribe una preferencia que luego decida por la
   // persona en otro sitio.*
   const [elegida, setElegida] = useState<string | null>(null)
+  // *** LA ELECCION SE RECUERDA POR PERSONA, *no por navegador*. ***
+  // *`/api/yo` devuelve `preferencias`, y las guarda el servidor por `usuario_id`.* *Asi que dos
+  // personas en el mismo aparato no se pisan: lo que elige A no cambia lo que ve B.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
+  const guardada = sesion.data?.preferencias?.lista_del_diario
+  useEffect(() => {
+    // *Solo se adopta lo guardado si la persona no ha elegido ya en esta pantalla.* *Al reves
+    // se le pisaria la eleccion cada vez que `yo()` se refresque.*
+    if (elegida === null && typeof guardada === 'string' && guardada) setElegida(guardada)
+  }, [guardada, elegida])
   const casa = listas.data?.find((l) => l.es_de_casa) ?? null
   const listaId = elegida ?? casa?.id ?? null
   const [comida, setComida] = useState('comida')
