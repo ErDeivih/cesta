@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import time
+import traceback
 import unicodedata
 from collections import deque
 from datetime import datetime, timezone
@@ -21,7 +22,7 @@ import polars as pl
 from core import alcance, cobertura, config, peticiones, waf
 from core.fetch import Fetcher, HTTPStatusError
 from core.promos import fechas
-from core.runlog import check_drift, log_run
+from core.runlog import check_drift, log_error, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
 from core.sellos import conservacion_de, de_etiquetas
 from core.state import js_object
@@ -719,6 +720,7 @@ def main() -> int:
         f = _fetcher()
     except RuntimeError as exc:
         log_run(FUENTE, 0, 1, time.monotonic() - t0)
+        log_error(FUENTE, f"{type(exc).__name__}: {exc}\n" + traceback.format_exc())
         print(f"  {exc}")
         return 1
 
@@ -730,6 +732,7 @@ def main() -> int:
         return 1
     except Exception as exc:  # noqa: BLE001
         log_run(FUENTE, 0, 1, time.monotonic() - t0)
+        log_error(FUENTE, f"{type(exc).__name__}: {exc}\n" + traceback.format_exc())
         print(f"  no se pudo leer el arbol de categorias: {exc}")
         return 1
     arranque = _desde_donde(len(cats))

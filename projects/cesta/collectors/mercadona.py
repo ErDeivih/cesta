@@ -14,6 +14,7 @@ import gzip
 import json
 import re
 import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from selectolax.parser import HTMLParser
 
 from core import alcance, cobertura, config, envases, peticiones, sellos
 from core.fetch import Fetcher
-from core.runlog import check_drift, log_run
+from core.runlog import check_drift, log_error, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
 from core.storage import save_raw, write_parquet
 
@@ -264,6 +265,7 @@ def main(detalles_max: int | None = None) -> int:
         cats = categorias(f)
     except Exception as exc:  # noqa: BLE001
         log_run(FUENTE, 0, 1, time.monotonic() - t0)
+        log_error(FUENTE, f"{type(exc).__name__}: {exc}\n" + traceback.format_exc())
         print(f"  no se pudo iniciar el catalogo: {exc}")
         return 1
     print(f"  {len(cats)} categorias de nivel 2")
