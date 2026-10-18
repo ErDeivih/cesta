@@ -950,3 +950,26 @@ esquema desfasado en la base compartida, y uno de ellos es una prueba fragil».*
 ahora se puede decidir: o se migra 5434, o cada uno corre su base. La segunda es lo que recomienda el
 propio ensayo.*
 
+**La prueba fragil de cierre: intentada y revertida, y empeoro.**
+
+*Se intento arreglar la dependencia de orden de `tests/test_g03_cierre.py` limpiando
+`dependency_overrides` **antes** de ceder en el fixture `limpio`, no solo despues.*
+
+    antes:  1 failed, 22 passed
+    despues: 3 failed, 19 passed
+
+*** Peor. *** *Y el motivo importa: las pruebas de ese fichero **no son independientes a proposito**;
+algunas dependen del estado que monta el fixture de modulo. Limpiar antes rompe las que se apoyan en
+el.*
+
+*Revertido con `git checkout`: ruff limpio, documentos TODO BIEN, diff vacio, y la base desechable
+fuera.*
+
+**Es el segundo arreglo de la sesion que empeora lo que toca** -- *el primero fue el `return` anidado
+en `Grupo.tsx`.* *Y en los dos la leccion es la misma: cuando una prueba falla por orden, la pregunta
+no es solo «como la aislo», sino **«de que depende»**; y limpiar sin saberlo rompe mas de lo que
+arregla.*
+
+**Lo que queda en el control, sin adornos**: *la prueba es fragil, **el arreglo no es limpiar antes**,
+y hay que entender que estado comparte antes de tocarla.* *No se prueba otra cosa a ciegas.*
+
