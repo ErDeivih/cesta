@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import re
 import time
+import traceback
 from datetime import datetime, timezone
 
 import polars as pl
 
 from core import alcance, cobertura, config, peticiones
 from core.fetch import Fetcher, HTTPStatusError
-from core.runlog import check_drift, log_run
+from core.runlog import check_drift, log_error, log_run
 from core.schemas import ESQUEMA_BRONZE, vacio
 from core.sellos import conservacion_de, de_etiquetas
 from core.state import js_object, to_cents
@@ -425,6 +426,11 @@ def main() -> int:
         cats = categorias(f)
     except Exception as exc:  # noqa: BLE001
         log_run(FUENTE, 0, 1, time.monotonic() - t0)
+        # *** EL TEXTO, *que antes se tiraba*. ***
+        # *`except ... as exc` y luego `log_run` sin `exc`: la excepcion se capturaba y se
+        # descartaba.* *El 18/10/2026 Carrefour fallo en 5,2 s con cero filas y su causa no se
+        # pudo investigar porque **no quedo escrita**.* *Ahora si.*
+        log_error(FUENTE, f"{type(exc).__name__}: {exc}\n" + traceback.format_exc())
         print(f"  no se pudieron leer las categorias: {exc}")
         return 1
     print(f"  {len(cats)} categorias del sitemap")
