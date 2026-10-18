@@ -335,3 +335,42 @@ son, para decidir si cubren el apartado 8 o hay que ampliarlos; despues, poner `
 `plataforma/ensayo.py` para que `prepara` deje el ensayo con su catalogo, y sembrar recetas,
 despensa y ofertas sobre el.
 
+### M00 / 18/10/2026 / LA DECISION TOMADA: el gold de ensayo NO cubre el apartado 8
+
+**La consulta que estaba pendiente, hecha.** Abierto `data/debug/ensayo-gold` con
+`CESTA_GOLD`, estos son sus dos grupos:
+
+    dia/ens-dia-1       150 centimos   kg   promo=True     fecha 2026-01-01
+    alcampo/ens-alc-1   220 centimos   kg   promo=False    fecha 2026-01-01
+
+**Y el esquema, que es lo que faltaba saber** (consultado, no supuesto):
+
+    grupos (19 columnas): fuente, id_fuente, precio_cent, precio_unidad_cent,
+      precio_ref_canon_cent, unidad_ref_canon, promo, promo_hasta, promo_txt, nombre,
+      marca, cantidad, unidad_canon, ean, cantidad_fiable, comparacion_fiable,
+      precio_comparable, calidad, ...
+    diario  (7 columnas): fuente, id_fuente, precio_cent, precio_unidad_cent,
+      unidad_canon, producto_id, fecha
+
+**DECISION: no cubre el apartado 8, y hay que ampliarlo.** *No son arroz, leche ni huevos:
+son dos productos de dos cadenas para probar comparacion y promocion (el `dia` con
+`promo=True`).* *Sirve de **esqueleto con el esquema correcto**, que es justo lo que hacia
+falta para construir el otro sin adivinar.*
+
+**Lo que queda, concreto.** Generar un gold de ensayo con los tres grupos del apartado 8
+-- arroz con **dos marcas y EAN distintos**, leche de una sola marca y huevos de pack de
+seis -- y los precios del escenario (120, 100, 180), usando **estas 19 y 7 columnas**.
+*Despues: `CESTA_GOLD` apuntando a ese gold desde `plataforma/ensayo.py`, para que
+`prepara` deje el ensayo con su catalogo; y solo entonces tienen sentido las recetas, la
+despensa y las ofertas.*
+
+**Y `plataforma/ensayo/catalogo.json` queda como la especificacion de esos tres grupos**,
+*que es para lo que sirve: dice que productos, con que precios y con que resultados
+esperados, y `tests/test_catalogo_ensayo.py` comprueba que sus cifras cuadran.* *El gold es
+el almacen; el JSON es el guion.* *Lo que NO hacen falta son dos verdades distintas: cuando
+el gold exista, el JSON y sus pruebas siguen valiendo como contrato.*
+
+**Siguiente comando concreto.** Construir el gold del apartado 8 a partir del esquema real
+(19 + 7 columnas) y cargarlo con `CESTA_GOLD` para comprobar que `catalogo.grupo(...)`
+devuelve los tres grupos con sus productos.
+
