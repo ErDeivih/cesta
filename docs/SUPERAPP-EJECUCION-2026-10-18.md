@@ -374,3 +374,62 @@ el gold exista, el JSON y sus pruebas siguen valiendo como contrato.*
 (19 + 7 columnas) y cargarlo con `CESTA_GOLD` para comprobar que `catalogo.grupo(...)`
 devuelve los tres grupos con sus productos.
 
+### M00 / 18/10/2026 / EL ESQUEMA COMPLETO DEL CATALOGO, Y COMO SE AGRUPA
+
+**Consultadas las seis vistas del gold de ensayo. Esto es lo que hay que escribir para
+construir el del apartado 8, y ya no se adivina nada:**
+
+    GRUPOS    62 columnas, una fila por oferta. Incluye grupo_id, ean, precio_ref_canon_cent,
+              unidad_ref_canon, cantidad_fiable, comparacion_fiable, precio_comparable,
+              calidad, sellos, nutricion, unidades_pack, kcal_100g y el resto de nutrientes.
+    ENLACES   4 columnas: i, j, parecido, nivel -- i y j son INDICES DE FILA de `grupos`.
+              El ejemplo trae nivel=identico y parecido=1.0.
+    DIARIO    7 columnas: fuente, id_fuente, precio_cent, precio_unidad_cent, unidad_canon,
+              producto_id, fecha
+    DERIVADO  21 columnas por (fuente, id_fuente, fecha): precio_anterior_cent, variacion_cent,
+              ha_bajado, ha_subido, min_90d_cent, max_90d_cent, promo_inferida, posicion_90d,
+              descuento_real, promo_empieza, promo_acaba, oferta_sospechosa...
+    RESUMEN   10 columnas, UNA FILA POR producto_id: precio_hoy, posicion_90d, min_90d, max_90d,
+              descuento_real, en_promo, oferta_sospechosa, dias_de_historico, tendencia_30d
+    promos_por_cadena: el fichero existe pero LA VISTA NO SE MONTA -- no esta entre las cinco
+              que crea catalogo.conexion(). No se usa, y conviene no contarlo.
+
+**El agrupamiento se hace de dos formas a la vez**: `grupos` lleva `grupo_id`, y `enlaces`
+lleva **pares de indices de fila con un nivel**. *El ejemplo trae nivel=identico y
+parecido=1.0 para dos ofertas del MISMO producto (mismo producto_id 8490000000001).*
+
+**La pregunta que queda, y es pequena pero decide**: *para el arroz del apartado 8, las dos
+marcas son **el mismo grupo** pero **no identicas** (EAN distinto).* *Que nivel les
+corresponde no se sabe: solo se ha visto identico.* *Hay que averiguar los niveles que
+entiende el emparejamiento antes de escribir el fichero, o el escenario nacera con las dos
+marcas fusionadas -- exactamente lo que M11 prohibe.* *No se inventa un nivel.*
+
+**Siguiente comando concreto.** Buscar los valores de `nivel` que produce el emparejamiento y,
+con eso, escribir el gold del apartado 8 con sus cuatro ofertas y sus enlaces.
+
+**RESUELTO: los niveles son tres, y ya se cual le toca a cada cosa.**
+
+    emparejar.py:7   «enlaces.parquet   pares (i, j) con parecido y nivel identico/equivalente»
+    data/gold/enlaces.parquet           -> ['ean', 'identico', 'equivalente']
+    data/debug/gold-f03/enlaces.parquet -> ['identico', 'equivalente', 'ean']
+
+*Tres niveles: **`ean`** (el mas fuerte: mismo codigo), **`identico`** y **`equivalente`**.*
+*Y el gold de ensayo actual solo usa `identico` con `parecido=1.0`, entre dos ofertas del
+**mismo** producto.*
+
+**Para el apartado 8, entonces:**
+
+    900001  arroz marca A (9000000000017) <--equivalente--> arroz marca B (9000000000024)
+            *Mismo grupo y **equivalente**, NO `ean` ni `identico`: asi no se fusionan como
+            el mismo articulo, que es lo que M11 prohibe.*
+    900002  leche marca A: sola, sin enlaces.
+    900003  huevos marca A pack 6: solo, sin enlaces.
+
+*Con eso, el fichero ya se puede escribir sin adivinar ni una cosa: seis vistas, sus
+columnas, y el nivel que le corresponde a la unica pareja que lo necesita.*
+
+**Siguiente comando concreto.** Escribir `plataforma/ensayo/construye_gold.py` que genere
+los seis parquet del apartado 8 (62 + 4 + 7 + 21 + 10 columnas), con la pareja de arroz en
+`equivalente`, y comprobarlo cargandolo con `CESTA_GOLD` y llamando a `catalogo.grupo(...)`
+para ver los tres grupos y sus cuatro ofertas.
+
