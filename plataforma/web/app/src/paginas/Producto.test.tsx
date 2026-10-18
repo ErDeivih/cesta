@@ -1,4 +1,4 @@
-﻿/** *** LA PRUEBA QUE HABRIA CAZADO EL BLANCO DEL 18/10/2026. ***
+/** *** LA PRUEBA QUE HABRIA CAZADO EL BLANCO DEL 18/10/2026. ***
  *
  *  *`Producto` se montaba, esperaba, recibia el dato… y el arbol se quedaba **vacio**.* *No habia
  *  ninguna prueba que montara el componente: las del repo eran de funciones, y una funcion no tiene

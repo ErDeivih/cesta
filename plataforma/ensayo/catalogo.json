@@ -1,0 +1,141 @@
+{
+  "version": "ensayo-1",
+  "fecha": "2026-10-18",
+  "sintetico": true,
+  "proposito": "Catalogo minimo y versionado del banco de ensayo. NO es el catalogo de produccion y NO depende del producto del dia. Sus cifras son las que fija el apartado 8 de la especificacion maestra, para que el escenario de cinco recetas, dos personas y dos listas sea reproducible.",
+  "no_es": [
+    "un catalogo real de ninguna cadena",
+    "precios observados en ningun supermercado",
+    "una fuente de nutricion acreditada"
+  ],
+  "grupos": [
+    {
+      "grupo_id": 900001,
+      "unidad": "kg",
+      "nota": "Dos marcas de arroz en el MISMO grupo y SIN fusionar: es lo que exige M11 para probar que dos marcas no se juntan.",
+      "productos": [
+        {
+          "producto_id": "ensayo:arroz-a",
+          "fuente": "ensayo",
+          "id_fuente": "arroz-a",
+          "ean": "9000000000017",
+          "nombre": "Arroz redondo marca A 1 kg",
+          "marca": "Marca A",
+          "cantidad": 1.0,
+          "unidad": "kg",
+          "precio_cent": 120,
+          "precio_unidad_cent": 120,
+          "comparable": true,
+          "peso_neto_g": 1000,
+          "kcal_100g": 360,
+          "hidratos_100g": null,
+          "proteinas_100g": null,
+          "grasas_100g": null,
+          "sal_100g": null
+        },
+        {
+          "producto_id": "ensayo:arroz-b",
+          "fuente": "ensayo",
+          "id_fuente": "arroz-b",
+          "ean": "9000000000024",
+          "nombre": "Arroz redondo marca B 1 kg",
+          "marca": "Marca B",
+          "cantidad": 1.0,
+          "unidad": "kg",
+          "precio_cent": 135,
+          "precio_unidad_cent": 135,
+          "comparable": true,
+          "peso_neto_g": 1000,
+          "kcal_100g": 360,
+          "hidratos_100g": null,
+          "proteinas_100g": null,
+          "grasas_100g": null,
+          "sal_100g": null
+        }
+      ]
+    },
+    {
+      "grupo_id": 900002,
+      "unidad": "l",
+      "nota": "Leche elegida, una sola marca: el escenario no autoriza anadir otra sin permiso.",
+      "productos": [
+        {
+          "producto_id": "ensayo:leche-a",
+          "fuente": "ensayo",
+          "id_fuente": "leche-a",
+          "ean": "9000000000031",
+          "nombre": "Leche entera marca A 1 l",
+          "marca": "Marca A",
+          "cantidad": 1.0,
+          "unidad": "l",
+          "precio_cent": 100,
+          "precio_unidad_cent": 100,
+          "comparable": true,
+          "peso_neto_g": null,
+          "kcal_100g": null,
+          "kcal_100ml": 60,
+          "hidratos_100g": null,
+          "proteinas_100g": null,
+          "grasas_100g": null,
+          "sal_100g": null
+        }
+      ]
+    },
+    {
+      "grupo_id": 900003,
+      "unidad": "ud",
+      "nota": "Huevos en un pack de seis: el sobrante de tres sale de aqui.",
+      "productos": [
+        {
+          "producto_id": "ensayo:huevos-a",
+          "fuente": "ensayo",
+          "id_fuente": "huevos-a",
+          "ean": "9000000000048",
+          "nombre": "Huevos frescos marca A, pack de 6",
+          "marca": "Marca A",
+          "cantidad": 6,
+          "unidad": "ud",
+          "precio_cent": 180,
+          "precio_unidad_cent": 30,
+          "comparable": true,
+          "unidades_pack": 6,
+          "peso_neto_g": null,
+          "kcal_100g": null,
+          "hidratos_100g": null,
+          "proteinas_100g": null,
+          "grasas_100g": null,
+          "sal_100g": null,
+          "kcal_ud": 80
+        }
+      ]
+    }
+  ],
+  "escenario": {
+    "recetas": [
+      { "id": "R1", "nombre": "Arroz con leche de la casa", "raciones": 2, "necesita": { "producto_id": "ensayo:arroz-a", "texto": "arroz", "cantidad": 150, "unidad": "g" }, "kcal_racion": 270, "kcal_media_racion": 135 },
+      { "id": "R2", "nombre": "Arroz al horno", "raciones": 2, "necesita": { "producto_id": "ensayo:arroz-a", "texto": "arroz", "cantidad": 200, "unidad": "g" }, "kcal_racion": 0, "kcal_media_racion": 0 },
+      { "id": "R3", "nombre": "Bechamel", "raciones": 2, "necesita": { "producto_id": "ensayo:leche-a", "texto": "leche", "cantidad": 500, "unidad": "ml" }, "kcal_racion": 0, "kcal_media_racion": 0 },
+      { "id": "R4", "nombre": "Salsa de leche", "raciones": 2, "necesita": { "producto_id": "ensayo:leche-a", "texto": "leche", "cantidad": 500, "unidad": "ml" }, "kcal_racion": 0, "kcal_media_racion": 0 },
+      { "id": "R5", "nombre": "Tortilla de tres huevos", "raciones": 2, "necesita": { "producto_id": "ensayo:huevos-a", "texto": "huevos", "cantidad": 3, "unidad": "ud" }, "kcal_racion": 0, "kcal_media_racion": 0 }
+    ],
+    "resultados_esperados": {
+      "arroz_total_g": 350,
+      "arroz_despensa_confirmada_g": 100,
+      "arroz_deficit_g": 250,
+      "arroz_envases": 1,
+      "arroz_restante_del_envase_g": 750,
+      "leche_total_ml": 1000,
+      "leche_botellas": 1,
+      "huevos_total_ud": 3,
+      "huevos_pack": 6,
+      "huevos_sobrantes_ud": 3,
+      "r1_a_cuatro_raciones_g": 300,
+      "energia_cinco_preparaciones_kcal": 2100,
+      "una_racion_de_cada_kcal": 1050,
+      "gasto_tres_envases_cent": 400,
+      "coste_ingrediente_usado_cent": 42,
+      "compra_necesaria_arroz_cent": 120
+    },
+    "nota_resultados": "2100 kcal son las cinco preparaciones; 1050 la suma de UNA racion de cada una. Es un subconjunto de la semana, NO una ingesta total. Y 42 centimos (arroz usado) no es lo mismo que 120 (envase que hay que comprar): aplicar despensa no convierte en gratis lo ya comprado."
+  }
+}

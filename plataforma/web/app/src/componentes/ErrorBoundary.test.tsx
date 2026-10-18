@@ -1,4 +1,4 @@
-﻿/** *** LA PRUEBA QUE FALTABA: un componente MONTADO que revienta. ***
+/** *** LA PRUEBA QUE FALTABA: un componente MONTADO que revienta. ***
  *
  *  *No comprueba una constante ni una funcion: monta un arbol de React de verdad, con jsdom, y mira
  *  lo que ve una persona.* *Es lo que M02 pide y lo que el 18/10/2026 no existia.*
