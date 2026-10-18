@@ -1014,3 +1014,31 @@ pantalla o prueba que lo fije se convierta en «cerrado».*
 distintos como si fueran el mismo, que esta probado en el contrato y leido en cuatro pantallas, y que
 lo que falta para cada tipo de uso esta escrito con su motivo.*
 
+**CORRECCION: lo de «dependencia de orden» era falso. Depende del CATALOGO DE CASA.**
+
+*En la ronda 56 escribi que `test_g03_cierre.py` «depende de estado que deja otra prueba» y que era
+«una dependencia de orden».* **Es falso, y se corrige aqui.**
+
+*Lo que hay, leido en el propio fichero:*
+
+    GRUPO = 6803
+    TIENDA = "alcampo"
+    PRECIO_CON_ALTERNATIVA = 518     # «los numeros son los medidos», 13 oct 2026
+
+*Son **constantes medidas del catalogo real de casa**.* *Asi que:*
+
+    en una base limpia  -> el grupo 6803 no existe -> la prueba SE SALTA
+    con otras pruebas   -> alguna siembra un catalogo que no da 518 -> FALLA
+
+*** No es el orden: es que estas pruebas necesitan el catalogo de verdad. ***
+
+*Y eso cambia el dictamen: no se arreglan migrando 5434 ni aislando el orden.* *O corren contra casa
+-- que las guardas prohiben --, o contra una **copia** del catalogo de casa, o se reescriben para
+sembrar su propio catalogo controlado (que es lo que ya hace
+`tests/test_fase2_f01_sustitucion.py`, y su comentario lo dice: «con un catalogo controlado donde A y
+B difieren en precio y en oferta»).*
+
+**Lo que esto significa para el piloto**: *estas pruebas no pueden formar parte de una puerta automatica
+sobre una base sintetica.* *O se siembra el catalogo, o se marcan como «necesitan datos reales» y se
+corren aparte.* *Hoy no estan marcadas, y por eso fallan sin decir que les falta.*
+
