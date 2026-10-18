@@ -923,3 +923,30 @@ documentado, que no es de este trabajo; y 13 que necesitan su propia base.*
 **Estado honesto de esto**: *no es un cierre. Es saber por fin, despues de cincuenta y cuatro rondas,
 cuantas pruebas hay, cuantas pasan y cual falla por que.*
 
+**Los trece fallos de integracion: era el esquema de 5434, no el codigo.**
+
+*Se levanto una base **propia y desechable** en **55433** -- fuera de 5432, 5433 y 5434, que estan
+prohibidos -- y se corrieron alli las pruebas que fallaban:*
+
+    tests/test_revision_a09_sustitucion.py ................. 5 passed
+    las de integracion (postgres, almacen, sustitucion) ... 22 passed, 1 failed
+
+*O sea: **los trece errores de 5434 eran de esquema**, no del codigo.* *La base compartida no tiene las
+migraciones al dia, y las pruebas piden una base viva.*
+
+**El unico que falla en base limpia es una dependencia de orden, no un defecto.**
+
+    tests/test_g03_cierre.py::test_con_la_sustitucion_aceptada_se_archiva_el_precio_de_su_tienda
+
+*Corriendo **sola**: `1 skipped`. Corriendo con las demas: falla.* *Asi que depende de estado que deja
+otra prueba.* *Es una prueba fragil, no una aplicacion rota -- y arreglarla es aislarla, no tocar el
+codigo de cierre.*
+
+**Y la base se borro al terminar**: *`cesta-prueba-propia` fuera, 55433 cerrado, y `facylf-postgres`
+intacto.*
+
+**Lo que esto cambia en el estado del proyecto:** *de «13 fallos sin explicar» a «13 fallos explicados:
+esquema desfasado en la base compartida, y uno de ellos es una prueba fragil».* *No es lo mismo, y
+ahora se puede decidir: o se migra 5434, o cada uno corre su base. La segunda es lo que recomienda el
+propio ensayo.*
+
