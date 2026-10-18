@@ -1320,3 +1320,44 @@ se pintan (el panel de compartir sale, y es de la misma region).*
 **Y lo que NO se puede decir hoy:** *que «pegar varias lineas con previa» este terminado.* *Esta el
 parser (probado), el componente (probado) y el montaje (sin ver).* *Falta que se vea.*
 
+**CORRECCION: el cuadro de pegar SI se pinta. Lo de «montado y no visto» era falso.**
+
+*En la ronda 81 escribi: «M05 / el cuadro de pegar, MONTADO Y NO VISTO. Y la causa no esta aislada», y
+lo commitee.*
+
+*** Era falso. *** *El componente se pinta, en escritorio y en movil:*
+
+    /compra/listas (escritorio 1280x900)
+      | Pegar una lista
+      | Una linea por renglon. Se ensena antes de guardar nada.
+      | Lo que quieres pegar
+      | No hay ninguna linea que anadir.
+      | Anadir 0 lineas
+
+    /compra/listas (movil 390x844, has_touch)
+      | Pegar una lista
+      | Una linea por renglon. Se ensena antes de guardar nada.
+      | Lo que quieres pegar
+      | Anadir 0 lineas
+
+**Por que me equivoque, y es lo que importa.** *En la ronda 81 filtre el texto de la pagina con un
+`Select-String` y no vi «Pegar»; conclui «no se pinta» y escribi una teoria -- «el bloque entero no se
+esta pintando», «mismo patron que Grupo.tsx» -- **que sonaba bien y no tenia el dato detras**.*
+
+*Lo que faltaba era volcar el texto entero y buscar a mano, que es lo que he hecho ahora.*
+
+*** Es el tercer diagnostico falso de esta sesion *** -- *«dependencia de orden» (ronda 56), «B ve una
+receta de A» (ronda 73, por `len()` de un dict), y este.* *Los tres con la misma forma: un filtro o un
+campo supuesto, y una conclusion escrita antes de ver el dato crudo.*
+
+**Y la leccion, que ya esta escrita y no se cumplio:** *volcar la FORMA y el TEXTO entero antes de
+afirmar que algo falta.* *Un filtro que no encuentra algo puede estar mal escrito; el texto completo,
+no.*
+
+**Lo que queda de M05, entonces, es lo que de verdad falta:**
+- *mirar la previa CON texto dentro (escribir dos lineas y ver que salen), que es lo unico que el
+  volcado de una lista vacia no prueba*
+- *buscador con filtros*
+- *modo tienda medido*
+- *reposicion de favoritos (M08) y la otra lista compartida*
+
