@@ -960,7 +960,23 @@ def estimacion(lineas: list[dict]) -> dict:
         esperada = _llave_candidato(peticion.grupo_id if peticion.grupo_id is not None else peticion.producto_id, peticion.producto_id, None)[0]
         opciones = [(v[1], k[1], v[3]) for k, v in mejor.items()
                     if k[0] == esperada and k[-1] != "alternativa"]
-        candidatas.append(min(opciones) if opciones else None)
+        # *** SI LA PERSONA ELIGIO TIENDA, SE CUENTA ESA -- *no la mas barata*. ***
+        # *El cierre (`coste_por_linea`) ya lo hacia, y lo dice su docstring: «guardar la mas
+        # barata cuando alguien decidio comprarlo en DIA apuntaria un precio que no se pago».
+        # **La estimacion no lo miraba**: se quedaba con `min(opciones)`, que es el mas barato
+        # de cualquier cadena.*
+        #
+        # *Medido el 18/10/2026 con una linea de DIA a 100 y Aldi a 90: la lista decia **90**,
+        # el recibo guardaba **100**. Diez centimos por linea, y una por cada cosa que se compre
+        # en una tienda que no sea la mas barata -- en una lista de treinta, el total que se mira
+        # mientras se anade no es el que se va a pagar.*
+        #
+        # *Se copia el patron del cierre (`cesta.py`, `elegida = linea.get("cadena_elegida")`):
+        # si la cadena elegida tiene candidato, se usa **ese**; si no lo tiene, se sigue cogiendo
+        # el mas barato, que es lo unico honesto cuando la tienda elegida no vende el producto.*
+        elegida = linea.get("cadena_elegida")
+        suya = next((op for op in opciones if op[1] == elegida), None) if elegida else None
+        candidatas.append(suya or (min(opciones) if opciones else None))
     # **Agrupar por producto efectivo Y cadena, y repartir.** Dos lineas a la misma tienda comparten la
     # oferta; a tiendas distintas no se agrupan, porque seria inventarle un descuento a una compra que no
     # existe. La suma de las lineas es siempre el total del grupo.
