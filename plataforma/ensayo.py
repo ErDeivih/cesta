@@ -299,6 +299,83 @@ def estado(nombre: str | None = None) -> dict:
     return {"manifiestos": manifiestos, "suelto": suelto}
 
 
+# --- La siembra -----------------------------------------------------------
+
+
+def siembra(nombre: str = "propio") -> dict:
+    """*** Las cuentas y las listas del escenario, en el banco de ensayo. ***
+
+    *Lo que pide M03 para poder probarse: **sin listas, sin casa y con casa**.* *Son tres personas
+    distintas y no se puede simular con una sola, asi que se siembran tres.*
+
+        A  casa     hogar: lista «Casa» (es_de_casa) + lista «Viaje» (personal)
+        B  sin casa  una lista normal, ninguna de casa
+        C  sin listas  ninguna lista
+
+    *Y una cuarta, **D**, que no se siembra: existe para probar que **no** ve lo de A.*
+
+    *** Lo que NO siembra, y por que ***: *recetas, despensa y ofertas necesitan el **catalogo de
+    ensayo**, que todavia no existe.* *La especificacion pide que sea «pequeno y versionado» y que no
+    dependa del producto del dia; inventarlo ahora con cuatro productos sueltos seria justo lo que
+    advierte que no se haga.* *Se siembra lo que se puede comprobar y se dice lo que falta.*
+
+    *Devuelve un resumen con lo creado, para que la prueba pueda afirmarlo sin creerse nada.*
+    """
+    import os
+
+    man = Manifiesto.lee(nombre)
+    # *La guarda otra vez: el DSN que se va a usar tiene que ser el de este ensayo.*
+    comprueba_dsn(man.dsn)
+
+    # *`almacen` lee la variable al arrancar: se pone **antes** de importarlo.*
+    os.environ["CESTA_POSTGRES"] = man.dsn
+    from plataforma.api import almacen  # a proposito: despues de poner el entorno
+
+    almacen.arranca()
+
+    resumen: dict = {"cuentas": {}, "listas": {}, "recetas": [], "despensa": [], "avisos": []}
+
+    # *** Las tres configuraciones que pide M03.*** *La clave es unica: dos corridas fallan en vez
+    # de duplicar, que es lo que hace falta para que el escenario sea reproducible.*
+    cuentas = [
+        ("a_casa", "A con casa", [("Casa", True), ("Viaje", False)]),
+        ("b_sin_casa", "B sin casa", [("Mi lista", False)]),
+        ("c_sin_listas", "C sin listas", []),
+    ]
+    for usuario, nombre_largo, listas in cuentas:
+        try:
+            # *** IDEMPOTENTE: si la cuenta ya esta, se reutiliza. ***
+            # *«Dos ejecuciones reproducen el mismo escenario»: la segunda no puede reventar por
+            # clave duplicada, tiene que dejar lo mismo.* *`entra` es el login de verdad, asi que
+            # sirve de comprobacion sin inventar una consulta nueva.*
+            ya = almacen.entra(usuario, "prueba-larga-1")
+            if ya:
+                quien = ya[1]
+                resumen["cuentas"][usuario] = quien["id"]
+                # *Y las listas que falten se anaden; las que ya estan no se duplican.*
+                existentes = {x["nombre"] for x in almacen.listas_de(quien["id"])}
+                creadas = []
+                for nombre_lista, es_casa in listas:
+                    if nombre_lista in existentes:
+                        creadas.append({"nombre": nombre_lista, "es_de_casa": es_casa, "id": "(ya estaba)"})
+                    else:
+                        lista = almacen.crea_lista(quien["id"], nombre_lista, es_casa)
+                        creadas.append({"nombre": nombre_lista, "es_de_casa": es_casa, "id": lista["id"]})
+                resumen["listas"][usuario] = creadas
+                continue
+            quien = almacen.crea_usuario(usuario, nombre_largo, "prueba-larga-1")
+            resumen["cuentas"][usuario] = quien["id"]
+            creadas = []
+            for nombre_lista, es_casa in listas:
+                lista = almacen.crea_lista(quien["id"], nombre_lista, es_casa)
+                creadas.append({"nombre": nombre_lista, "es_de_casa": es_casa, "id": lista["id"]})
+            resumen["listas"][usuario] = creadas
+        except Exception as exc:  # noqa: BLE001  (se informa, no se traga)
+            resumen["cuentas"][usuario] = "ERROR: " + str(exc)[:160]
+
+    return resumen
+
+
 # --- Las guardas, probadas antes de DDL -----------------------------------
 
 
@@ -347,6 +424,23 @@ def main(argv: list[str] | None = None) -> int:
         print("      contenedor " + man.contenedor + "  id " + man.contenedor_id[:12])
         print("      dsn        " + man.dsn)
         print("      directorio " + man.directorio)
+        return 0
+
+    if orden == "siembra":
+        resumen = siembra(nombre)
+        print("  cuentas y listas sembradas:")
+        for usuario, idc in resumen["cuentas"].items():
+            listas = resumen["listas"].get(usuario, [])
+            detalle = ", ".join(
+                ("Casa" if x["es_de_casa"] else x["nombre"]) for x in listas
+            ) or "(ninguna)"
+            print(f"      {usuario:14} {'ok' if not str(idc).startswith('ERROR') else idc}   listas: {detalle}")
+        print("  NO sembrado todavia: recetas, despensa y ofertas (falta el catalogo de ensayo)")
+        # *Un error de siembra NO puede salir con 0.*
+        fallos = [u for u, i in resumen["cuentas"].items() if str(i).startswith("ERROR")]
+        if fallos:
+            print("  FALLO en: " + ", ".join(fallos))
+            return 1
         return 0
 
     if orden == "limpia":
