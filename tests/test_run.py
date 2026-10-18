@@ -207,7 +207,10 @@ def test_una_cadena_caida_no_convierte_el_dia_en_perdido():
         _resultado({"carrefour": True, "dia": True, "mercadona": True,
                     "aldi": True, "alcampo": False}),
         ["alcampo"])
-    assert codigo == 0
+    # Dia hecho pero no entero: 3, no 0. El dia NO se da por perdido (eso seria 1),
+    # pero desde fuera se tiene que poder distinguir de un dia limpio (M18).
+    assert codigo == 3
+    assert codigo != 1
 
 
 def test_si_no_refresca_ninguna_cadena_el_dia_se_reintenta():

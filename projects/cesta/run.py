@@ -223,7 +223,9 @@ def _veredicto(resultados: list[tuple[str, bool, float]], fallos: list[str]) -> 
     if fallos:
         print(f"=== dia completado con {len(cadenas_ok)} de {len(resultados)} "
               f"cadenas ===")
-        return 0
+        # Dia hecho pero no entero: sale con 3, no con 0, para que quien mire el
+        # codigo de salida lo sepa sin leer la salida (M18).
+        return 3
     print("=== todo correcto ===")
     return 0
 
