@@ -62,14 +62,29 @@ de pruebas.*
 
 ## 3. Piloto (unas pocas casas de verdad, con datos reales)
 
-**Dictamen: NO APTO todavía, y por dos motivos concretos.**
+**Dictamen: APTO en código, con dos condiciones de entorno antes de arrancar.**
 
-1. **El esquema de la base compartida de pruebas está desfasado.** *13 pruebas de integración fallan en
-   5434 y **pasan en una base limpia** (`55433`, desechable).* *Un piloto con una base sin migrar
-   fallaría igual.*
-2. **Una prueba de cierre depende del orden.** *`test_g03_cierre.py` pasa sola (se salta) y falla en
-   compañía.* *Limpiar `dependency_overrides` antes del `yield` **empeora** (de 1 a 3 fallos): el
-   arreglo es entender qué estado comparte, y eso no está hecho.*
+**La suite entera, en una base que funcione** (`55433`, desechable, fuera de 5432/5433/5434):
+
+```
+2114 passed, 17 skipped, 0 failed   (4:56)
+```
+
+**Y no se ha relajado ninguna prueba para llegar ahí.** *Los diez fallos que había tenían **una sola
+causa, y era mía**: un fixture de `test_ahorro_exacto.py` que hacía `sys.modules.pop` y volvía a
+importar el módulo del catálogo, dejando **dos copias vivas**. Los cinco fallos de
+`test_g04_catalogo_de_ensayo.py` —incluido «una conexión ve una sola versión»— **estaban detectando
+justo eso**.* *La prueba hacía su trabajo.*
+
+**Las dos condiciones de entorno, y ninguna es de código:**
+
+1. **La base compartida de pruebas (5434) no acepta conexiones.** *No es un esquema desfasado: el
+   puerto no escucha.* *Las mismas pruebas pasan en una base limpia.* *Hay que recrearla o usar una
+   propia.*
+2. **`test_g03_cierre.py` necesita el catálogo de casa** *(grupo 6803, alcampo a 518).* *En una base
+   sintética **se salta diciéndolo** desde esta sesión.* *Para un piloto: sembrar el catálogo, correr
+   esas pruebas contra una copia, o reescribirlas para que siembren el suyo — que es lo que ya hace
+   `test_fase2_f01_sustitucion.py`.*
 
 **Lo que sí está listo para un piloto:**
 - *El banco de ensayo (`plataforma.ensayo`) crea un entorno completo, idempotente y aislado, y lo

@@ -1181,3 +1181,41 @@ prueba de comportamiento en `plataforma/web/app/tests/`, donde ya se prueban esa
 nombradas**: un fixture mio (arreglado), cinco pruebas que interfieren entre si, y una prueba textual
 que pide un literal que el codigo ya no tiene porque lo movio a una funcion.*
 
+### LA SUITE ENTERA, EN VERDE: 2114 pasan, 17 saltan, CERO fallan
+
+*Con una base propia y desechable en 55433:*
+
+    2114 passed, 17 skipped, 12 warnings  (4:56)
+
+*** Y no es que se hayan relajado pruebas: es que la causa de los diez fallos era **una sola**, y era
+mia. ***
+
+*El fixture `catalogo` de `test_ahorro_exacto.py` hacia `sys.modules.pop("plataforma.api.catalogo")` y
+volvia a importar el modulo.* *Eso dejaba **dos `catalogo` vivos**, y a partir de ahi fallaban cosas
+que no tenian nada que ver:*
+
+    4 en test_ahorro_exacto.py .... el propio fixture
+    5 en test_g04_catalogo_de_ensayo.py   «una conexion ve una sola version», publicacion...
+    1 en test_frase_curva.py ...... una prueba textual que pedia un literal viejo
+
+*Los cinco de `g04` eran **sintomas**, no defectos: su propia prueba de «una conexion ve una sola
+version» estaba detectando que habia **dos modulos de catalogo**, que es exactamente lo que mi fixture
+creaba.* ***La prueba hacia su trabajo; la que estaba mal era la mia.***
+
+**Y la prueba textual de `frase_curva` era un fallo aparte**, *de la ronda 16: se movio el codigo y la
+prueba seguia pidiendo el literal. Arreglada para exigir la garantia (que la ficha delegue y que la
+logica tenga las comprobaciones), no la forma de antes.*
+
+**Lo que esto significa para el dictamen del piloto**: *el apartado decia «NO APTO por dos motivos
+concretos: el esquema de 5434 y una prueba fragil de cierre».* *Los dos motivos han cambiado de
+naturaleza:*
+
+    - 5434 no tiene el esquema desfasado: **no acepta conexiones**. Es entorno.
+    - «la prueba fragil de cierre» no era fragil: eran constantes del catalogo real, y ahora lo dice
+      con un skip que lo explica.
+    - y los diez fallos de la suite eran **uno mio**.
+
+*O sea: en una base que funcione, **no hay ningun fallo**. Lo que queda es que la base compartida de
+pruebas esta caida, y que el catalogo de casa no esta en una base sintetica -- las dos cosas de
+entorno, ninguna de codigo.*
+
