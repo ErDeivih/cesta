@@ -56,6 +56,22 @@ def con_almacen():
     global _CUENTA
     try:
         almacen.arranca(espera=10)
+        # *** Y QUE EL CATALOGO DE REFERENCIA ESTE, *o se salta diciendolo*. ***
+        # *Estas pruebas usan constantes MEDIDAS del catalogo real de casa:*
+        # *GRUPO=6803, TIENDA=alcampo, 518 y 260.* *En una base sintetica ese grupo no existe, y antes
+        # pasaba una de dos cosas: se saltaba sin decir por que, o fallaba en compania de otra prueba
+        # que sembraba un catalogo distinto -- y parecia una dependencia de orden, que no lo era.*
+        # *Ahora se comprueba el grupo y, si no esta, se salta con el motivo escrito.*
+        try:
+            with almacen.cursor() as _cur:
+                _cur.execute("SELECT count(*) AS n FROM grupos WHERE grupo_id = %s", (GRUPO,))
+                _hay = _cur.fetchone()["n"]
+        except Exception:  # noqa: BLE001
+            _hay = 0
+        if not _hay:
+            pytest.skip(
+                f"estas pruebas necesitan el catalogo de casa (grupo {GRUPO}); en una base "
+                f"sintetica no existe. Sembrarlo, o correrlas contra una copia del catalogo.")
     except Exception as fallo:  # noqa: BLE001
         pytest.skip(f"sin almacen en CESTA_POSTGRES al importar. Ejecuta con "
                     f"$env:CESTA_POSTGRES='{BASE}' | {type(fallo).__name__}: {fallo}")
