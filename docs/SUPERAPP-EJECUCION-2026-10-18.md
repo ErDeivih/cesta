@@ -1502,3 +1502,62 @@ eso el caso encaja mejor ahi que aqui.*
 *** Lo unico que falta es verlo con los ojos. Y el camino para verlo no es este: es publicar una
 version nueva, que es lo que M04 ya sabe hacer. ***
 
+### M07 / 18/10/2026 / MEDIDO ANTES DE EMPEZAR: el nucleo esta, el banco no, y el banco que hay estaba roto
+
+*M07 pide identidad resuelta en pipeline: GTIN validado, marca, variante, pack, contenido, y **un banco
+etiquetado de al menos 200 pares** con procedencia, precision, recall, abstencion y matriz por estrato.*
+
+**Lo que hay, contado en vez de supuesto:**
+
+    core/identidad.py ......... 13 KB y un API de verdad: `normaliza_gtin`, `atributos(nombre)`,
+                                 `RE_PACK` (multipack «3x2» y «pack de N»), `decide()` con cinco
+                                 niveles -- exacto, probable, alternativa, cuarentena, abstiene --,
+                                 `candidatos_por_gtin`, `candidatos_por_bloque`, `ampliar_grupo`
+    sombra .................... `data/identidad-sombra/identidad-2026-10-08.json`, con el diff
+
+*O sea: **el pipeline esta**. Lo que mi grep de «multipack» no encontraba era porque el codigo dice
+`pack`.*
+
+**Lo que NO hay: el banco de 200 pares.**
+
+*Y el fichero que parecia serlo **no lo es**: `docs/banco-verdad/etiquetas.csv` etiqueta `cesta` /
+`no_cesta` -- **si un producto pertenece a la compra** --, no «estos dos son el mismo producto».* *Sus
+columnas son `id,etiqueta,motivo,quien,fecha`: no hay dos identificadores por fila, asi que no puede
+haber pares.*
+
+*** El banco de identidad de M07 no existe. Y lo digo antes de empezar, no al final. ***
+
+**Y el banco que hay estaba roto, que es el defecto de esta ronda.**
+
+*6 de sus 37 filas tenian **cinco comas en vez de cuatro**: el `motivo` llevaba una coma sin comillas,
+y cualquier lector desplazaba las columnas. El sintoma era visible leyendo `quien`:*
+
+    quien=resultado correcto
+    quien=pero es reparacion y no reposicion semanal
+    quien=que la politica manda a revision
+
+*No son nombres de quien etiqueto: son trozos de `motivo` que se habian corrido de columna.*
+
+**Arreglado.** *Se reconstruyeron las 6 filas -- `id`, `etiqueta`, todo lo de en medio como `motivo`, y
+los dos ultimos -- y se reescribio con `csv`, que pone comillas donde hacen falta.* *Verificado
+leyendo con `DictReader`: **37 filas, 0 mal formadas**, y `quien` es `agente-dsh` en las 37.*
+
+*Y los motivos largos siguen intactos: «cepillo de pelo: duradero. Excluido por la palabra raqueta:
+mala razon, resultado correcto».*
+
+**Por que importa un banco roto.** *Un banco de evaluacion con columnas corridas **mide otra cosa**:
+las etiquetas siguen ahi, pero quien lo lea saca el motivo como si fuera el autor, y cualquier recuento
+por autor o por motivo miente.* *Es el mismo tipo de fallo que la sesion lleva cazando: el dato esta y
+la forma es la que engana.*
+
+**Lo que hace falta para M07, y una parte no la puedo hacer yo:**
+- *el banco de 200 pares, estratificado por cadena y categoria, con dificiles y desconocidos* -- **hay
+  que etiquetarlo**, y la spec pide «procedencia de etiqueta»
+- *la medida: precision, recall, abstencion y matriz por estrato* -- *esto si es codigo, y es lo
+  siguiente*
+- *umbral automatico documentado*
+
+*Lo de etiquetar 200 pares es trabajo humano o de agente con procedencia declarada; en este repo ya hay
+precedente (`quien=agente-dsh` en las 37).* *No lo doy por hecho: lo pregunto cuando toque, porque la
+spec lo llama interaccion humana.*
+

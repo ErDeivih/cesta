@@ -8,15 +8,15 @@ c8e3174c2625,no_cesta,colchoneta de paseo: duradera,agente-dsh,2026-10-06
 1fa652ff0a13,no_cesta,protector de sofa: textil de hogar,agente-dsh,2026-10-06
 989c72257e61,no_cesta,manta poncho: textil,agente-dsh,2026-10-06
 328afe7b479b,no_cesta,sustrato de jardin: no es cesta,agente-dsh,2026-10-06
-55c63b780a28,no_cesta,cepillo de pelo: duradero. Excluido por la palabra raqueta: mala razon, resultado correcto,agente-dsh,2026-10-06
-881cbf785816,duda,pegamento para calzado: se gasta, pero es reparacion y no reposicion semanal,agente-dsh,2026-10-06
+55c63b780a28,no_cesta,"cepillo de pelo: duradero. Excluido por la palabra raqueta: mala razon, resultado correcto",agente-dsh,2026-10-06
+881cbf785816,duda,"pegamento para calzado: se gasta, pero es reparacion y no reposicion semanal",agente-dsh,2026-10-06
 c77e4f393ee7,cesta,albahaca en maceta: es hierba fresca de alimentacion. FALSO DESCARTE por la palabra maceta,agente-dsh,2026-10-06
-040691eeada8,duda,lubricante: higiene intima de reposicion, pero la politica lo excluye por parafarmacia,agente-dsh,2026-10-06
+040691eeada8,duda,"lubricante: higiene intima de reposicion, pero la politica lo excluye por parafarmacia",agente-dsh,2026-10-06
 2734fb4d8e96,no_cesta,drenante con alcachofa: producto de finalidad medica,agente-dsh,2026-10-06
-81539441178e,no_cesta,gasa esteril: botiquin. La higiene comun entra, el material de curas no,agente-dsh,2026-10-06
+81539441178e,no_cesta,"gasa esteril: botiquin. La higiene comun entra, el material de curas no",agente-dsh,2026-10-06
 d80ed12fd466,duda,capsulas de cafe verde con zinc: suplemento; frontera poco clara,agente-dsh,2026-10-06
 0c212fd6d309,cesta,apositos para ampollas: consumible de botiquin domestico. FALSO DESCARTE,agente-dsh,2026-10-06
-8158937fdc3d,cesta,cambiador desechable: se gasta. FALSO DESCARTE, y lo introdujo el termino cambiador que anadi hoy,agente-dsh,2026-10-06
+8158937fdc3d,cesta,"cambiador desechable: se gasta. FALSO DESCARTE, y lo introdujo el termino cambiador que anadi hoy",agente-dsh,2026-10-06
 a962fff55a84,no_cesta,perlas sol: suplemento de bronceado,agente-dsh,2026-10-06
 edc6b84b5b3c,cesta,preservativos: consumible de higiene de reposicion. FALSO DESCARTE,agente-dsh,2026-10-06
 12899e279062,cesta,tofu: alimento. La politica lo deja en revision,agente-dsh,2026-10-06
@@ -27,7 +27,7 @@ eb04f9537112,cesta,regalices: golosina,agente-dsh,2026-10-06
 8a80003aac95,cesta,gel para el pelo: higiene de reposicion. Falta el pasillo cuidado-del-cabello,agente-dsh,2026-10-06
 9577e690f652,cesta,caramelos: golosina. Falta golosinas en el vocabulario,agente-dsh,2026-10-06
 e99dbf3e8b3e,no_cesta,camiseta: ropa. La politica lo deja en revision: falta el pasillo,agente-dsh,2026-10-06
-00f1f812d071,cesta,agua mineral: bebida. Esta en ofertas, que la politica manda a revision,agente-dsh,2026-10-06
+00f1f812d071,cesta,"agua mineral: bebida. Esta en ofertas, que la politica manda a revision",agente-dsh,2026-10-06
 250e92a0340a,cesta,chorizo: alimento. Pasillo de barbacoa sin declarar,agente-dsh,2026-10-06
 c4310bc30c06,cesta,alas de pollo: carne,agente-dsh,2026-10-06
 e6df9a97e797,cesta,golosinas Haribo: golosina,agente-dsh,2026-10-06
