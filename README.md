@@ -3,8 +3,12 @@
 Monorepo de proyectos de scraping recurrente -> limpieza -> modelado -> producto.
 Proyecto 1: **cesta**, comparador de precios de supermercado.
 
-Estado real y hoja de ruta: [docs/AUDITORIA.md](docs/AUDITORIA.md). Hoy hay tres
-colectores ejecutables; DIA, Carrefour, Lidl, matching e interfaz siguen pendientes.
+Estado real y hoja de ruta: [docs/AUDITORIA.md](docs/AUDITORIA.md). Hoy hay cinco
+cadenas en el ciclo diario -- alcampo, aldi, carrefour, dia y mercadona, que es lo que declara
+`plataforma/api/cesta.py` en `CADENAS` -- y Lidl va por su propia via con cobertura **parcial**.
+*Esto decia «tres colectores ejecutables; DIA, Carrefour, Lidl, matching e interfaz siguen
+pendientes», y era un estado de hacia meses: DIA, Carrefour y Lidl **se ejecutan**.*
+**Cobertura no es catalogo completo**: que una cadena corra no dice que su surtido este entero.
 
 ## Empezar (fase 1: todo local)
 
