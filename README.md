@@ -54,4 +54,11 @@ Buscar productos sin escribir SQL:
 3. Idempotencia: reejecutar el mismo dia no duplica filas.
 4. Escalera de acceso: API interna -> httpx -> curl_cffi -> Patchright -> pagar.
 5. Ritmo conservador por dominio, con reintentos y pausas. Cero datos personales.
-6. Ningun campo se queda vacio: nativo, derivado, externo o inferido, pero siempre algo.
+6. **Un dato que falta se queda vacio, y se dice.** *Nativo, derivado, externo o inferido; si
+   no hay ninguno, `null` -- que es **«no lo sabemos»**, y **no es un cero**.*
+
+   *Esta regla decia lo contrario: «Ningun campo se queda vacio... pero siempre algo».*
+   *** Era falsa, y peligrosa ***: *rellenar un hueco nutricional para cumplir una frase
+   convierte un dato que falta en un dato que parece medido.* *La especificacion maestra del
+   18/10/2026 lo pide con estas palabras: «No rellenar huecos nutricionales por cumplir una
+   frase».* *Un cero conocido se conserva como cero; lo demas, `null`.*
