@@ -70,7 +70,14 @@ def mide(pares: Iterable[dict]) -> dict:
     for par in pares:
         veredicto = identidad.decide(par["a"], par["b"])
         estado = veredicto["estado"]
-        cierto = bool(par["cierto"])
+        # *** DESCONOCIDO NO ES FALSO. ***
+        # *La version anterior hacia `bool(par["cierto"])`, y `bool(None)` es `False`: una etiqueta
+        # **desconocida** se contaba como «no son el mismo producto», asi que si el motor decia
+        # «exacto» se apuntaba un **falso exacto que no existia**.* *Y al reves: un desconocido no
+        # entra en el `cierto`, asi que el recall tampoco lo contaba.*
+        # *Ahora solo se acepta un booleano de verdad. Cualquier otra cosa -- `None`, 0/1, "", la
+        # cadena `"False"` -- se rechaza en vez de convertirse en una etiqueta que nadie puso.*
+        cierto = _etiqueta_estricta(par.get("cierto"), par)
         estrato = str(par.get("estrato") or "(sin estrato)")
 
         dice_igual = estado in _DICE_IGUAL
@@ -78,15 +85,26 @@ def mide(pares: Iterable[dict]) -> dict:
 
         for destino in (global_, por_estrato[estrato]):
             destino["total"] += 1
-            destino["matriz"][(estado, cierto)] += 1
+            # *** UN DESCONOCIDO NO ENTRA EN LA MATRIZ DE ACIERTO. ***
+            # *Meterlo con `cierto=False` es lo que convertia una etiqueta que nadie puso en un falso
+            # exacto.* *Se cuenta en `desconocidos` y no se suma a `cierto`.*
+            if cierto is None:
+                destino["desconocidos"] += 1
+            else:
+                destino["matriz"][(estado, cierto)] += 1
             if cierto:
                 destino["cierto"] += 1
             if dice_igual:
                 destino["exactos"] += 1
-                if cierto:
+                # *Y con un desconocido NO se apunta ni acierto ni error: se apunta que no se sabe.*
+                # *Sin esto, `if cierto:` cae en el `else` cuando `cierto` es `None`, que es el mismo
+                # fallo de antes un piso mas abajo.*
+                if cierto is True:
                     destino["exactos_bien"] += 1
-                else:
+                elif cierto is False:
                     destino["exactos_mal"] += 1
+                else:
+                    destino["exactos_sin_etiqueta"] += 1
             if no_se_moja:
                 destino["abstiene"] += 1
 
@@ -101,9 +119,30 @@ def mide(pares: Iterable[dict]) -> dict:
     }
 
 
+def _etiqueta_estricta(valor, par) -> bool:
+    """*** Solo un booleano de verdad es una etiqueta. *** *Lo demas se rechaza.*
+
+    *`bool(None)` es `False`, y `bool("False")` es `True`: convertir a ciegas inventa etiquetas en las
+    dos direcciones.* *Una etiqueta que nadie puso no puede contar ni como acierto ni como error.*
+    """
+    if isinstance(valor, bool):
+        return valor
+    # *`None` es **el desconocido explicito**, y el contrato lo admite: «admite bool real para
+    # igualdad acreditada y desconocido explicito».* *No es una etiqueta negativa: es una etiqueta que
+    # no se puso, y se cuenta aparte.*
+    if valor is None:
+        return None
+    # *Y lo ambiguo se rechaza: `bol("False")` es `True` y `bool(0)` es `False`, asi que convertir a
+    # ciegas inventa etiquetas en las dos direcciones.*
+    raise ValueError(
+        "etiqueta no valida en el par " + str(par.get("id") or "(sin id)") + ": "
+        + repr(valor) + ". Se admite True, False o None (desconocido); no cadenas ni numeros."
+    )
+
+
 def _cuenta() -> dict:
     return {"total": 0, "cierto": 0, "exactos": 0, "exactos_bien": 0, "exactos_mal": 0,
-            "abstiene": 0, "matriz": defaultdict(int)}
+            "abstiene": 0, "desconocidos": 0, "exactos_sin_etiqueta": 0, "matriz": defaultdict(int)}
 
 
 def _cierra(c: dict) -> dict:
@@ -117,7 +156,14 @@ def _cierra(c: dict) -> dict:
         "exactos": c["exactos"],
         "exactos_bien": c["exactos_bien"],
         "exactos_mal": c["exactos_mal"],
+        # *Dijo «exacto» sobre pares que nadie etiqueto. No es un acierto ni un fallo: es una
+        # pregunta sin contestar, y se cuenta para que no desaparezca.*
+        "exactos_sin_etiqueta": c["exactos_sin_etiqueta"],
         "abstiene": c["abstiene"],
+        # *Cuantas etiquetas no se pusieron. Va aparte de la abtencion del motor: una es del banco y
+        # otra del que decide.*
+        "desconocidos": c["desconocidos"],
+        "cobertura_anotacion": ((total - c["desconocidos"]) / total) if total else None,
         "cobertura": (total - c["abstiene"]) / total if total else None,
         "matriz": {f"{k[0]}|{k[1]}": v for k, v in sorted(c["matriz"].items())},
     }

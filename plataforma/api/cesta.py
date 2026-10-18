@@ -15,6 +15,7 @@ producto, abarata el par. Sin eso, el reparto sale peor que el real.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, replace
 from datetime import date
 from itertools import combinations, product
@@ -609,7 +610,9 @@ _LIMITE_EXHAUSTIVO = 200_000
 # *No es un gasto medido: es una estimacion de tiempo y viaje, y se llama asi para que quien la
 # lea sepa que no es una cuenta.* *Estaba escrita dentro de una comparacion (`>= 150`), sin
 # nombre y sin salir nunca al que la pantalla pudiera leer.*
-VIAJE_CENT = 150
+# *Ya **no** hay un coste de viaje por defecto.* *Se conserva el nombre por si alguien lo importa,
+# pero **no se aplica**: el valor lo tiene que dar quien lo sepa. Sin el, `viaje_cent` es None.*
+VIAJE_CENT = None  # type: ignore[assignment]
 
 
 def _coste_con_lo_agrupado(elecciones: list[Eleccion]) -> int:
@@ -641,7 +644,8 @@ def _asignaciones(peticiones, por_cadena, cadenas, max_tiendas):
             for i in range(len(peticiones)))
 
 
-def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | None:
+def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda,
+                   viaje_cent: int | None = None) -> dict | None:
     """La mejor combinacion de hasta `max_tiendas`, si gana a ir a una sola.
 
     **Cada asignacion se puntua con el conjunto que de verdad va a cada tienda.** *Antes se repartia con
@@ -758,9 +762,22 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
         # *150 centimos es una **estimacion de tiempo y viaje**, no un dato medido: por eso se
         # llama `VIAJE_CENT` y no se presenta como un gasto real. Quien lo pinte puede decir de
         # donde sale.*
-        mejor["viaje_cent"] = VIAJE_CENT
-        mejor["neto_cent"] = mejor["ahorro_cent"] - VIAJE_CENT
-        mejor["merece_la_pena"] = mejor["ahorro_cent"] >= VIAJE_CENT
+        # *** EL VIAJE ES OPCIONAL, Y NO SE IMPONE. ***
+        # *Antes esto descontaba 150 centimos **siempre**, y ademas ponia «no merece la pena»
+        # como si fuera un hecho.* *Un coste que la persona no ha introducido es una valoracion
+        # inventada: puede ir andando, o pasar por delante de camino a otro sitio.*
+        #
+        # *Ahora, sin valor introducido, las dos cifras son **None** -- no cero -- y el booleano
+        # tambien: no se dictamina nada.* *Cero introducido es cero conocido, y entonces si se
+        # calcula.*
+        if viaje_cent is None:
+            mejor["viaje_cent"] = None
+            mejor["neto_cent"] = None
+            mejor["merece_la_pena"] = None
+        else:
+            mejor["viaje_cent"] = int(viaje_cent)
+            mejor["neto_cent"] = mejor["ahorro_cent"] - int(viaje_cent)
+            mejor["merece_la_pena"] = mejor["ahorro_cent"] >= int(viaje_cent)
     return mejor
 
 
@@ -952,6 +969,57 @@ def _serializa(e: Eleccion) -> dict:
             "alternativa": e.alternativa}
 
 
+def cotiza(lineas: list[dict]) -> dict:
+    """*** LO QUE LA PANTALLA ENSEÑA, CON UN SELLO PARA PODER DECIR «ESTO ES LO QUE VISTE». ***
+
+    *La especificacion lo exige asi (M06, regla 2): «Conservar la estimacion que se confirmo:
+    identificador/revision de cotizacion ligada a usuario/lista/lineas/cantidades/elecciones/condiciones
+    y publicacion. Obtener sus cifras de una referencia servida y verificable, no aceptar como verdad un
+    total arbitrario enviado por el cliente.»*
+
+    *Y añade por que recalcular no sirve (regla 3): «Recalcular ambas cifras al cerrar no permite
+    detectar lo que cambio desde que la persona lo vio.»*
+
+    **Eso es exactamente lo que pasaba:** *el cierre volvia a llamar a `estimacion()` **despues de
+    guardar**, asi que las dos cifras eran la misma por construccion y la diferencia salia siempre
+    cero.* *Comparar una funcion consigo misma no detecta ningun cambio.*
+
+    *Lo que hace esto: devolver el total **y un sello** que resume las entradas de las que salio --
+    cantidades, tiendas elegidas, precios, promociones y el producto efectivo de cada linea.* *Si algo
+    de eso cambia, el sello cambia, y entonces se puede decir «lo que viste era otro precio» **sin**
+    fiarse de un numero que mande el cliente.*
+
+    *El sello no es una firma criptografica: es una huella para comparar dos momentos del mismo
+    servidor.* *Se dice para que nadie lo use como prueba de autorizacion.*
+    """
+    total = estimacion(lineas)
+    coste = coste_por_linea(lineas)
+    # *Lo que entra en el sello: por linea y en orden, para que dos listas iguales den el mismo.*
+    piezas = []
+    for linea in sorted(lineas, key=lambda x: str(x.get("id"))):
+        clave = str(linea.get("id"))
+        suyo = coste.get(clave) or {}
+        piezas.append("|".join(str(p) for p in (
+            clave,
+            linea.get("cantidad"),
+            linea.get("cadena_elegida"),
+            suyo.get("cadena"),
+            suyo.get("precio_cent"),
+            suyo.get("producto_id"),
+            suyo.get("promo"),
+            linea.get("autorizado"),
+            linea.get("autorizado_producto"),
+            linea.get("autorizado_cadena"),
+        )))
+    sello = hashlib.sha256("\n".join(piezas).encode("utf-8")).hexdigest()[:16]
+    return {"sello": sello, "total_cent": total["total_cent"],
+            # *Se leen con `.get()`: el total es lo unico obligatorio, y un doble de `estimacion` que
+            # solo traiga eso no puede tumbar el cierre -- ni un dia en que la funcion devuelva menos.*
+            "por_recoger_cent": total.get("por_recoger_cent"),
+            "sin_precio": total.get("sin_precio"),
+            "lineas": total.get("lineas")}
+
+
 def estimacion(lineas: list[dict]) -> dict:
     """Lo que va a costar la lista, ahora mismo, cogiendo cada cosa donde este
     mas barata.
@@ -996,7 +1064,14 @@ def estimacion(lineas: list[dict]) -> dict:
         # el mas barato, que es lo unico honesto cuando la tienda elegida no vende el producto.*
         elegida = linea.get("cadena_elegida")
         suya = next((op for op in opciones if op[1] == elegida), None) if elegida else None
-        candidatas.append(suya or (min(opciones) if opciones else None))
+        # *Y si la tienda elegida no tiene oferta, **no se coge la mas barata de otra**:*
+        # *eso seria enseñar un precio de una tienda donde la persona no va a comprar.* *Se queda
+        # sin candidato, que es lo que hace que la linea salga sin precio y con su motivo.*
+        candidata_elegida = elegida is not None
+        if candidata_elegida:
+            candidatas.append(suya)
+        else:
+            candidatas.append(min(opciones) if opciones else None)
     # **Agrupar por producto efectivo Y cadena, y repartir.** Dos lineas a la misma tienda comparten la
     # oferta; a tiendas distintas no se agrupan, porque seria inventarle un descuento a una compra que no
     # existe. La suma de las lineas es siempre el total del grupo.
@@ -1082,6 +1157,7 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
     ese precio exacto, que se equivoca con dos productos al mismo precio y **no encontraba nada cuando
     el precio venia de una alternativa aceptada**.*
     """
+    # *Las dos claves que explican una linea sin precio. Se inicializan por linea, no aqui.*
     salida: dict[str, dict] = {}
     if not lineas:
         return salida
@@ -1095,6 +1171,10 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
     mejor = _candidatos(peticiones, _fecha_de_hoy())
     for linea, peticion in zip(lineas, peticiones, strict=True):
         cadena = precio = promo = efectivo = None
+        # *Por defecto no hay motivo ni alternativas: solo existen si la tienda elegida no tiene
+        # oferta. Inicializarlas aqui evita que la clave dependa de por que rama se paso.*
+        motivo = None
+        alternativas: list[dict] = []
         if not linea.get("producto_movido"):
             # **Por la llave del motor**, no por el grupo: la llave lleva el producto concreto cuando la
             # linea lo pide, y comparar contra el grupo dejaba esas lineas guardandose **sin precio**.
@@ -1127,10 +1207,30 @@ def coste_por_linea(lineas: list[dict]) -> dict[str, dict]:
                 elegida = linea.get("cadena_elegida")
                 if elegida and any(f == elegida for f, *_ in suyos):
                     cadena, precio, promo, efectivo = next(x for x in suyos if x[0] == elegida)
+                elif elegida:
+                    # *** ELEGISTE UNA TIENDA Y NO TIENE OFERTA: NO SE ELIGE OTRA. ***
+                    # *Antes se caia aqui y se cogia la mas barata de otra cadena, asi que el cierre
+                    # guardaba Aldi a 90 en una linea donde la persona habia elegido DIA.* *Y no es que
+                    # los datos demuestren que DIA no lo venda: no hay captura de ese dia, asi que tampoco
+                    # demuestran lo contrario.*
+                    # *La linea sale como parcial explicita: sin precio, con motivo, y las alternativas
+                    # **separadas** -- no elegidas.*
+                    cadena, precio, promo, efectivo = None, None, None, None
+                    motivo = ('elegiste ' + str(elegida) + ' y no tengo oferta suya para esta linea; no se cambia de tienda sin preguntarte')
+                    alternativas = [{'cadena': f, 'precio_cent': p} for f, p, _, _ in suyos]
                 elif suyos:
+                    # *Sin tienda elegida si se coge la mas barata: para eso esta el reparto.*
                     cadena, precio, promo, efectivo = min(suyos, key=lambda par: par[1])
-        salida[str(linea.get("id"))] = {"cadena": cadena, "precio_cent": precio,
-                                        "promo": promo, "producto_id": efectivo}
+        salida[str(linea.get("id"))] = {
+            "cadena": cadena, "precio_cent": precio,
+            "promo": promo, "producto_id": efectivo,
+            # *Por que no hay precio, y las otras tiendas **sin elegirlas**. Viajan para que la
+            # pantalla lo explique y las ofrezca.*
+            # *El motivo y las alternativas solo existen cuando la linea **no tiene precio** por la
+            # tienda elegida: ahi son la explicacion, y sin ellas la linea seria un cero mudo.*
+            # *Cuando si hay precio no se añaden, para que la forma de una linea con precio no cambie.*
+            **({"motivo": motivo, "alternativas": alternativas} if motivo else {}),
+        }
 
     # **Y la parte de cada linea, repartida.** La promocion se decide **aqui**, que es donde se conoce: el
     # cierre solo tiene que escribir el numero. Se agrupa por producto efectivo y cadena elegida -- dos lineas

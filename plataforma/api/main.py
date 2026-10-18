@@ -617,7 +617,8 @@ def borrar_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
 
 
 @app.post("/api/listas/{lista_id}/cerrar")
-def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
+def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual),
+                  *, sello_esperado: str | None = None):
     """«He terminado la compra»: lo del carro se guarda como compra y sale de la lista.
 
     Lo pidio el encargo (tarea 10) y es la mitad que le faltaba al bucle: hasta hoy la
@@ -669,6 +670,25 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
                     ' lo que quedo: no se ha perdido nada.',
                 )
         raise HTTPException(409, "No hay nada en el carro: marca lo que te llevas y vuelve.")
+    # *** SI LO QUE VIO NO ES LO QUE HAY, SE LE DICE ANTES DE GUARDAR NADA. ***
+    # *Regla 3 de M06: «Si la revision o elegibilidad cambia, devolver una nueva previa y exigir
+    # confirmacion antes del cierre, o un conflicto explicito recuperable»; «sin escritura previa
+    # silenciosa».*
+    #
+    # *El sello viene de `cotiza()`, que es lo que sirvio el GET de la lista: no es un total que
+    # mande el cliente, es la huella de las entradas de las que salio el numero que vio.* *Si no
+    # coincide, el precio, la cantidad o la tienda cambiaron -- o la publicacion --, y el cierre
+    # **no escribe**: devuelve 409 con la previa nueva para que la persona confirme.*
+    actual = cesta.cotiza(en_el_carro)
+    if sello_esperado is not None and sello_esperado != actual["sello"]:
+        raise HTTPException(
+            409,
+            {
+                "detalle": ("lo que viste ha cambiado; mira la previa nueva y confirma"),
+                "sello_visto": sello_esperado,
+                "cotizacion_nueva": actual,
+            },
+        )
     precios = cesta.coste_por_linea(en_el_carro)
     hecho = almacen.cierra_compra(lista_id, usuario["id"], precios)
     # *** «CAMBIO DE PRECIO DURANTE EL CIERRE»: SE DICE, NO SE CALLA. ***
@@ -686,12 +706,19 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
     #
     # *El precio que se guarda sigue siendo el real, que es el que se pago: **no se congela el
     # de la estimacion**, porque eso apuntaria un importe que no salio de la cuenta.*
-    estimado = cesta.estimacion(en_el_carro)
+    # *Y aqui NO se recalcula: se usa la cotizacion que se acaba de comparar.*
+    # *Antes se llamaba a `estimacion()` **despues** de guardar, asi que las dos cifras eran la
+    # misma y la diferencia salia siempre cero: comparar una funcion consigo misma no detecta
+    # nada.*
+    # *Sin sello no hay nada que comparar: la diferencia es **None**, no cero.*
+    # *Un cero diria «comprobe que no cambio», y sin sello no se ha comprobado nada.* *Es la
+    # misma regla del resto de la sesion: `null` no es `0`.*
+    estimado = actual if sello_esperado is not None else None
     return hecho | {
         "total_cent": hecho["total_cent"],
-        "estimado_cent": estimado["total_cent"],
-        # *La diferencia con signo: positiva si costo mas de lo que decia.*
-        "diferencia_cent": hecho["total_cent"] - estimado["total_cent"],
+        # *Sin sello, `estimado` es None y las dos cifras son None: no se finge un cero.*
+        "estimado_cent": (estimado["total_cent"] if estimado else None),
+        "diferencia_cent": ((hecho["total_cent"] - estimado["total_cent"]) if estimado else None),
     }
 
 
@@ -796,7 +823,11 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
         # Lo que va a costar, ahora mismo, en la cadena mas barata de cada cosa.
         # Es lo primero que se mira al ir anadiendo, mucho antes de calcular
         # donde comprarla entera.
+        # *** Y la cotizacion con su sello: es lo que permite decir «esto es lo que viste». ***
+        # *Regla 2 de M06: la estimacion que se confirma tiene que salir de una referencia servida y
+        # verificable, no de un total que mande el cliente.*
         "estimacion": cesta.estimacion(lineas),
+        "cotizacion": cesta.cotiza(lineas),
         "novedades": nuevo,
         "personas": almacen.quienes_en(lista_id),
         "fecha_datos": catalogo.fecha_de_gold(),

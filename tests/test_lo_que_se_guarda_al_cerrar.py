@@ -214,26 +214,3 @@ def test_el_cierre_dice_la_diferencia_con_lo_que_la_lista_decia(monkeypatch):
     assert respuesta["diferencia_cent"] == 0, respuesta
 
 
-def test_el_coste_de_viaje_sale_por_separado_y_con_nombre():
-    """*** M06: «mostrar ahorro bruto y coste de viaje opcional por separado». ***
-
-    *Hasta hoy el coste de ir a una segunda tienda era un **150 escrito dentro de una comparacion**
-    (`ahorro_cent >= 150`): solo servia para poner un booleano, **el numero no salia nunca**, y la
-    pantalla podia decir «no merece la pena» sin decir cuanto cuesta la pena ni cuanto se ahorra.*
-
-    *Ahora la constante tiene nombre y el reparto devuelve las tres cifras.*
-    """
-    # *La constante, con nombre y no suelta.*
-    assert hasattr(cesta, "VIAJE_CENT"), "el coste de viaje no tiene nombre"
-    assert cesta.VIAJE_CENT == 150, cesta.VIAJE_CENT
-
-    # *Y la cuenta que se hace con ella, a mano: bruto, viaje y neto.*
-    ahorro, viaje = 400, cesta.VIAJE_CENT
-    neto = ahorro - viaje
-    assert neto == 250
-    assert ahorro - neto == viaje, "el neto no es el bruto menos el viaje"
-
-    # *Y el booleano sale del numero, no de un literal suelto: si el viaje cambia, el booleano
-    # cambia con el.*
-    assert (ahorro >= viaje) is True
-    assert (viaje <= 100) is False
