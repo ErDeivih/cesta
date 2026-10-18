@@ -113,7 +113,7 @@ def main() -> int:
         lid = crudo[0]["id"]
         estado, nueva = _pide(f"/api/listas/{lid}/lineas", galleta, "POST",
                               {"nombre": "Arroz redondo marca A 1 kg", "grupo_id": 900001,
-                               "producto_id": "9000000000017"})
+                               "producto_id": "ensayo:arroz-a"})
         _pide(f"/api/listas/{lid}/lineas/{nueva['id']}", galleta, "PATCH", {"en_carrito": True})
         print("   lista preparada: 1 linea en el carro")
 
@@ -139,15 +139,20 @@ def main() -> int:
 
         print("== cerrar con un sello FALSO: 409 y sin escribir ==")
         _pide(f"/api/listas/{lid}/lineas", galleta, "POST",
-              {"nombre": "Leche entera marca A 1 l", "grupo_id": 900002,
-               "producto_id": "9000000000024"})
+              {"nombre": "Arroz redondo marca B 1 kg", "grupo_id": 900001,
+               "producto_id": "ensayo:arroz-b"})
         estado, detalle2 = _pide(f"/api/listas/{lid}", galleta)
         lineas2 = (detalle2 or {}).get("lineas") or []
         ultima = lineas2[-1]["id"] if lineas2 else None
         if ultima:
             _pide(f"/api/listas/{lid}/lineas/{ultima}", galleta, "PATCH", {"en_carrito": True})
         _antes, compras_antes = _pide(f"/api/listas/{lid}/compras", galleta)
-        sello_bueno = ((detalle2 or {}).get("cotizacion") or {}).get("sello")
+        # *La cotizacion se pide DESPUES de meter la linea en el carrito: si se pide antes,
+        # el sello es el de un carrito vacio -- el sha256 de la cadena vacia -- y el cierre
+        # contesta 409 por un motivo que no existe.* *Costo dos vueltas verlo.*
+        _, detalle3 = _pide(f"/api/listas/{lid}", galleta)
+        sello_bueno = ((detalle3 or {}).get("cotizacion") or {}).get("sello")
+        print("   cotizacion del carrito: " + str((detalle3 or {}).get("cotizacion") or {}))
         estado, r = _pide(f"/api/listas/{lid}/cerrar?sello_esperado=NO-ES-EL-SELLO", galleta, "POST")
         print("   -> " + str(estado) + "  detail=" + str((r or {}).get("detail"))[:80])
         vale("un sello que no coincide da 409", estado == 409)
@@ -159,8 +164,14 @@ def main() -> int:
 
         print("== cerrar con el sello bueno ==")
         estado, r = _pide(f"/api/listas/{lid}/cerrar?sello_esperado={sello_bueno}", galleta, "POST")
+        nuevo = ((r or {}).get("detail") or {}).get("cotizacion_nueva") or {}
         print("   -> " + str(estado) + "  confirmado=" + str((r or {}).get("confirmado"))
               + "  diferencia=" + str((r or {}).get("diferencia_cent")))
+        # *El 409 trae la cotizacion nueva: comparar los dos sellos dice si el conjunto cambio.*
+        print("   sello que envie .... " + str(sello_bueno))
+        print("   sello que hay ...... " + str(nuevo.get("sello")))
+        print("   total cotizado ..... " + str(nuevo.get("total_cent"))
+              + "  lineas=" + str(nuevo.get("lineas")))
         vale("con el sello bueno cierra y queda confirmado",
              estado < 300 and (r or {}).get("confirmado") is True)
         vale("con el sello bueno la diferencia es cero, no null",
