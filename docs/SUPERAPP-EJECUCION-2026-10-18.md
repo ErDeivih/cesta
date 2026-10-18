@@ -1103,3 +1103,28 @@ etiqueta**.*
 esto. El contrato ya distingue (`ahorro_pct` y `ahorro_exacto_pct`), y lo que queda es que cada
 pantalla use el campo que le toca -- dos de las cuales ya lo hacen y estan leidas en pantalla.*
 
+**LA CAUSA DE FONDO DE LOS «13 FALLOS»: LA BASE DE PRUEBAS 5434 RECHAZA CONEXIONES.**
+
+*Se corrio el mismo fichero en los dos sitios:*
+
+    tests/test_revision_a09_compra_hogar.py
+      en 55433 (base limpia y desechable) ... 7 passed
+      en 5434 (la compartida) .............. 7 errors, y todos EN EL SETUP
+
+*Y el error es de conexion (`conn_errors` del pool de psycopg), no de ninguna asercion.*
+
+**O sea: los «13 fallos, 32 errores» que la suite daba con 5434 no eran del codigo ni de las pruebas.
+La base compartida no acepta conexiones.** *Y eso explica tambien por que en una base limpia los mismos
+ficheros pasan.*
+
+**Lo que si queda comprobado, y era la duda de esta ronda:** *`main.py` cambio (el mensaje de dos
+pestanas), y la prueba que cierra una lista vacia -- `test_cerrar_una_lista_vacia_no_falla_ni_inventa_una_compra`
+-- **pasa** en base limpia.* *Asi que la llamada nueva a `compras_de` no rompe el caso del carro vacio.*
+
+**Y 38 pruebas de interfaz, contraste, movil y documentos, verdes** en la misma pasada.
+
+**Lo que esto cambia en el dictamen del piloto**: *de «13 pruebas fallan por esquema desfasado» a «la
+base de pruebas compartida no acepta conexiones, y las mismas pruebas pasan en una base limpia».* *Es
+un problema de entorno, y se arregla reiniciando o recreando 5434 -- **que no hago, porque es compartida
+y no es mia**.*
+
