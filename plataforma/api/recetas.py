@@ -9,6 +9,7 @@ la sesion, en cambio, **si** es una dependencia, y por eso la prueba del anonimo
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -33,7 +34,19 @@ def ruta_base(ruta: Path | str | None = None) -> Path | None:
 
 
 def _con():
-    return recetas.conecta(_ruta_base)
+    # LA RUTA TAMBIEN SE PUEDE DAR POR ENTORNO, como el gold y el Postgres.
+    # Hasta hoy solo se fijaba en codigo, con ruta_base(...), y eso valia para las pruebas
+    # del propio modulo pero NO para el banco de ensayo: su API arrancaba sin forma de
+    # decirle cual era su recetario, asi que leia data/recetas.sqlite -- el de casa -- y
+    # devolvia cero recetas aunque la siembra hubiera creado cinco.
+    # Se midio asi el 18/10/2026: a_casa pedia /api/recetas y recibia 0, con las cinco
+    # creadas en el SQLite del ensayo. No era un problema de permisos: miraba otro fichero.
+    # CESTA_RECETAS es el mismo patron que CESTA_GOLD y CESTA_POSTGRES: el entorno dice
+    # donde estan los datos, y el codigo no tiene que saber si es casa o un ensayo.
+    if _ruta_base is not None:
+        return recetas.conecta(_ruta_base)
+    del_entorno = os.environ.get("CESTA_RECETAS")
+    return recetas.conecta(Path(del_entorno) if del_entorno else None)
 
 
 class ALaLista(BaseModel):
