@@ -165,7 +165,14 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
       },
       {
         id: 'ahorro',
-        header: 'Ahorro',
+        // *** «AHORRO» ERA UN NOMBRE QUE PROMETIA MAS QUE LO QUE DA. ***
+        // *`f.ahorro_pct` es la horquilla **del grupo de equivalencias** -- del mas barato al
+        // mas caro --, y esos pueden ser **articulos distintos**: en la ficha del azafran
+        // `dia/147509` comparaba el **Pote** con el **Hacendado**, otro EAN.*
+        // *Llamar «Ahorro» a eso hace que se lea como «lo que te ahorras comprando este», y no
+        // es eso: es la diferencia dentro del grupo.* *El nombre lo dice ahora, y la ayuda
+        // tambien.*
+        header: 'Diferencia del grupo',
         accessorFn: (f) => (f.comparable && !f.dudoso ? f.ahorro_pct : null),
         sortingFn: porNumero,
         cell: ({ row }) => {
@@ -183,7 +190,14 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             )
           }
           return (
-            <span className="cifra font-semibold text-bien ">
+            <span
+              className="cifra font-semibold text-bien "
+              title={
+                'Del mas barato al mas caro del grupo de equivalencias. ' +
+                'No son necesariamente el mismo articulo: mismo envase y marca si, pero cada uno ' +
+                'con su EAN. No es el ahorro de uno solo.'
+              }
+            >
               {porcentaje(f.ahorro_pct)}
             </span>
           )
@@ -286,7 +300,7 @@ function BarraDeOrden({ orden, onOrden }: {
     ['orden_servidor', 'Lo de siempre'],
     ['precio', 'Precio'],
     ['unidad', 'Precio por unidad'],
-    ['ahorro', 'Ahorro'],
+    ['ahorro', 'Diferencia del grupo'],
     ['cadenas', 'Dónde'],
   ]
   const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
