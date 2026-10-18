@@ -776,3 +776,40 @@ pantalla: hay que conseguir el dato.* *Y eso no se arregla con codigo, se arregl
 - *La estimacion «con el error declarado» que pide la especificacion: **no se puede hacer** sin el
   dato de partida. Inventar un margen sobre un numero que no existe seria peor que no darlo.*
 
+**M03 / correccion de mi propio estado: la previa y la cobertura YA ESTABAN.**
+
+*En las rondas anteriores escribi que M03 tenia «pendiente: la previa de compra sin escrituras,
+con cantidades y cobertura» y «las porciones que la persona confirma».* *Al ir a hacerlo, resulta
+que estaba hecho. Se corrige, porque un estado que se queda corto tambien es un estado falso.*
+
+**Lo que ya habia, y no habia que tocar:**
+
+    ProximaDeLaCompra (api/cesta.ts)   anotarian[].cantidad: number | null
+                                       sin_dato: string[]
+                                       cobertura: { con_dato, total }
+
+    Diario.tsx:227   «Se anotarian N de M»
+    Diario.tsx:241   «N no traen nutricion en el catalogo, asi que se anotarian como «sin dato»:
+                      [nombres]»  -- *con los nombres, no un numero*
+    Diario.tsx:513   *«La cobertura, nutriente a nutriente. El total de energia puede estar completo
+                      y faltar otro»*
+    Diario.tsx:279   formulario manual con `cantidad_g`: **la persona escribe cuanto**, no se
+                     supone
+    GraficaDeLasTres.tsx:76  «Ingredientes sin producto en el catalogo: ... No se les...»
+
+*O sea: la previa **no escribe**, dice **cuantas de cuantas**, dice **que falta y con que nombre**, y
+no supone porciones.* *Que es exactamente lo que M03 pide.*
+
+**Lo que SI faltaba, y es lo que se hizo en estas rondas:**
+- *El **selector explicito de lista**, con los tres estados (cargando / sin ninguna / con otras pero
+  sin casa), porque decir «no tienes ninguna lista» cuando hay tres es falso.*
+- *Que la eleccion **se recuerde por persona** (`PUT /api/preferencias`, servidor, no navegador).*
+- *Que la previa **explique por que no da nada** cuando falla (`ver.isError`), en vez de no hacer
+  nada.*
+
+**Lo que queda de M03, ahora si, sin adornos:**
+- *La **concurrencia A / pestaña 2**: dos pestañas cerrando la misma compra. Hay cola de cambios sin
+  cobertura en `Cesta.tsx`, pero **el conflicto de dos cierres simultaneos no lo he probado.***
+- *Y mirarlo todo en pantalla: sigue sin verificarse, porque no he conseguido entrar como una cuenta
+  del banco.*
+
