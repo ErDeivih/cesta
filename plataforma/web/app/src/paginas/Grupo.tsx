@@ -338,13 +338,14 @@ export function Grupo() {
             return (
               <>
                 <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
-                <p className="mt-1 text-xs text-tinta-suave">
-                  La diferencia es entre los articulos del grupo, que no tienen por que ser el mismo:
-                  mismo envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
-                </p>
               </>
             )
           })()}
+
+          <p className="mt-2 text-xs text-tinta-suave">
+            La diferencia es entre los articulos del grupo, que no tienen por que ser el mismo:
+            mismo envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
+          </p>
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Alternativa que gana contigo">
