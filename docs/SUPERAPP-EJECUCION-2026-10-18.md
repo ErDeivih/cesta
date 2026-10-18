@@ -1042,3 +1042,39 @@ B difieren en precio y en oferta»).*
 sobre una base sintetica.* *O se siembra el catalogo, o se marcan como «necesitan datos reales» y se
 corren aparte.* *Hoy no estan marcadas, y por eso fallan sin decir que les falta.*
 
+### M01 / 18/10/2026 / EL BARRIDO QUE FALTABA: *todos* los «ahorr» del frontend, clasificados
+
+*La ronda 65 encontro un sexto defecto en `Etiquetas.tsx` que mi auditoria no miro, porque busque
+«ahorro» en `TablaResultados.tsx` y no «ahorras» en todo el frontend.* *Asi que este es el barrido
+sistematico: **71 coincidencias de «ahorr» en las paginas y componentes**, y cada una clasificada.*
+
+**AHORROS DE VERDAD (no se tocan):**
+
+    Etiquetas.tsx:193 ......... el sello de contradiccion: «no doy un ahorro que no se sostiene»
+    Producto.tsx:457 .......... «te ahorras X» con `masBarato.ahorro`, calculado contra el MISMO
+                                articulo (`mio - minimo`)
+    RepartoEnTiendas:252,337 .. `r.ahorro_cent` del reparto: lo que se ahorra yendo a dos tiendas
+    Cesta.tsx:251 ............. `total_sin_ofertas - total_con_ofertas`: ofertas, dinero real
+    Inicio.tsx:101 ............ `r.ahorro_cent` «con las ofertas te ahorras»
+    Panel.tsx:633 ............. media agregada de marca propia contra marca, sobre N grupos
+    Suite.tsx:85 .............. el nombre del menu «Gasto y ahorro»
+
+**YA HONESTOS (dicen de que son):**
+
+    Grupo.tsx:365 ............. «Diferencia entre la mas cara y la mas barata»
+    Favoritos.tsx:378 ......... «frente a la mas cara del grupo»      (corregido en la ronda 18)
+    TablaResultados.tsx:303 ... «Diferencia del grupo»                 (corregido en la ronda 19)
+    Producto.tsx:678 .......... «otro articulo»                       (corregido en la ronda 16)
+
+**EL DEFECTO (corregido en la ronda 65):**
+
+    Etiquetas.tsx:172,174 ..... `SelloAhorro`: decia «ahorras un 22,7 %» con la horquilla del grupo.
+
+**Y el balance de la auditoria, con el barrido incluido**: *seis defectos del mismo tipo, seis
+corregidos, cinco leidos en pantalla.* *El que faltaba no estaba en las seis superficies que audite: 
+estaba en un componente que pinta un sello, y aparecio midiendo el buscador en movil.*
+
+*** Que es exactamente la razon de barrer por texto y no por fichero. *** *«Buscar ahorro en
+TablaResultados» y «buscar ahorras en todas partes» no son la misma operacion, y la segunda tardo una
+ronda mas en hacerse porque la primera parecia suficiente.*
+
