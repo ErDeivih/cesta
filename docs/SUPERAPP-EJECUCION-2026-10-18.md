@@ -1442,3 +1442,30 @@ una linea cambie entre la estimacion y el cierre, y decidir **que tiene que pasa
 precio congelado de la estimacion, o usa el nuevo y **lo dice**.* *Probar sin decidir eso seria escribir
 una prueba que confirma lo que el codigo haga hoy, que es como no probar.*
 
+**M06 / EL AVISO DEL CIERRE, LEIDO EN PANTALLA. Y no dice nada cuando no hay nada que decir.**
+
+*Se anadio `ENSAYO_CERRAR=1` al guion: apunta una linea por la API, la pone en el carro, recarga y
+pulsa «He terminado la compra» y «Si, he terminado». Y en movil:*
+
+      lista preparada: 1 linea en el carro
+    | Compra guardada: 1 cosa, 0,00 EUR
+
+*** Y no hay ninguna frase de «ha cambiado»: la diferencia era cero, y no se dice. ***
+
+*Que es la decision nº 1 del aviso, comprobada donde se ve: «decir 0,00 de diferencia cada vez que se
+cierra seria ruido, y el ruido hace que no se lea el dia que importa».*
+
+**Lo que NO se ha podido leer es el aviso CON diferencia**, *porque hace falta que el precio cambie
+entre la estimacion y el cierre: habria que tocar el gold mientras la lista esta cargada.* *Lo que si
+esta probado es que el dato llega (`test_si_el_precio_cambia...` y `test_el_cierre_dice_la_diferencia...`,
+10 pruebas en el fichero) y que la pantalla no lo enseña cuando es cero.*
+
+**Y dos fallos mios por el camino, los dos de sustituir a ciegas:**
+
+  1. un `replace` de `galleta` -> `cesta_sesion` toco **el nombre de un parametro** y dejo el fichero
+     con un `SyntaxError`. *Se revirtio con git y se rehizo insertando por lineas.*
+  2. el segundo boton se llama «Si, he terminado» y yo puse «Si, terminada».
+
+*El primero es el mismo error de siempre -- sustituir texto sin mirar donde cae --; el segundo, el de
+suponer un literal en vez de leerlo.* *Los dos se vieron al ejecutar, no al escribir.*
+

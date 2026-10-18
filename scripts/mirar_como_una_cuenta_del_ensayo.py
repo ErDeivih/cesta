@@ -152,6 +152,42 @@ def main() -> int:
                 # *** `ENSAYO_PEGAR=1` escribe en el cuadro de pegar y lee la previa. ***
                 # *Es lo unico que un volcado de lista vacia no prueba: que la previa salga **con
                 # texto dentro**, que es cuando se puede leer.*
+                # *** `ENSAYO_CERRAR=1`: apunta una linea, la pone en el carro, cierra y lee. ***
+                # *Con el precio quieto la diferencia es cero, asi que esto comprueba lo que tiene
+                # que **no** decir: ni «0,00 de diferencia» ni ruido. Es la mitad de la decision que
+                # se puede verificar sin cambiar el gold a mitad de vuelo.*
+                if os.environ.get("ENSAYO_CERRAR"):
+                    try:
+                        def _api(ruta, metodo="GET", cuerpo=None):
+                            datos = json.dumps(cuerpo).encode() if cuerpo else None
+                            pet = urllib.request.Request(
+                                "http://127.0.0.1:8109" + ruta, data=datos, method=metodo,
+                                headers={"Content-Type": "application/json",
+                                         "Cookie": "cesta_sesion=" + token},
+                            )
+                            with urllib.request.urlopen(pet, timeout=20) as r:
+                                return json.loads(r.read() or b"null")
+
+                        todas = _api("/api/listas")
+                        crudo = todas.get("listas") if isinstance(todas, dict) else todas
+                        if crudo:
+                            lid = crudo[0]["id"]
+                            nueva = _api("/api/listas/" + lid + "/lineas", "POST",
+                                         {"nombre": "Arroz redondo marca A 1 kg",
+                                          "grupo_id": 900001,
+                                          "producto_id": "9000000000017"})
+                            _api("/api/listas/" + lid + "/lineas/" + nueva["id"], "PATCH",
+                                 {"en_carrito": True})
+                            print("      lista preparada: 1 linea en el carro")
+                        pg.reload()
+                        pg.wait_for_timeout(3000)
+                        for texto in ("He terminado la compra", "Sí, he terminado", "Si, he terminado"):
+                            b = pg.get_by_role("button", name=texto)
+                            if b.count():
+                                b.first.click()
+                                pg.wait_for_timeout(2500)
+                    except Exception as exc:  # noqa: BLE001
+                        print("      no se pudo cerrar: " + str(exc)[:80])
                 if os.environ.get("ENSAYO_PEGAR"):
                     try:
                         caja = pg.locator("textarea#pegar-lista")
