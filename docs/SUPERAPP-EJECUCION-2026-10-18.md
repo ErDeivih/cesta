@@ -541,3 +541,33 @@ lo mismo: **una prueba por superficie antes de cambiar el contrato**, o se rompe
 campo `identidad`, con su prueba en `tests/`, **sin cambiar** `ahorro_pct`; despues migrar
 `Grupo.tsx` y `Favoritos.tsx` con una prueba de componente cada uno.
 
+### M01 / 20/10/2026 / LAS SUPERFICIES DE COMPARACION, UNA A UNA (estado real)
+
+**Lo hecho y verificado en lo servido:**
+
+| superficie | cambio | verificado en 8080 |
+|---|---|---|
+| `Producto.tsx` tabla | `comp.minimo` + mismo EAN | **si**: «diferencia +41 %» ya no sale |
+| `Producto.tsx` apartado | «Mismo articulo, precio no comparable» | **si** |
+| `Grupo.tsx` frase | salvedad: la diferencia es del grupo | **pendiente de mirar** |
+| `Favoritos.tsx` | «frente a la mas cara **del grupo**» | **pendiente de mirar** |
+| `TablaResultados.tsx` | columna «Ahorro» -> «**Diferencia del grupo**» | **si**: leidos los `<th>` tras buscar «arroz» |
+| `LoQueSeCompra.tsx` | «un X % menos **que la mas cara del grupo**» | **NO se ha podido ver**: no encuentro la tarjeta |
+
+**Sobre `LoQueSeCompra.tsx`, y se dice claro**: *el cambio compila y pasa `tsc`, `lint`,
+`build` y las 104 pruebas, pero **no he conseguido que la tarjeta se pinte** ni en `/`, ni en
+`/compra`, ni en `/recetas`, ni tras buscar «arroz» o «leche entera» (7 188 caracteres de
+resultados).* *O es condicional de algo que no he reproducido, o vive en otra ruta.* **Asi que
+el cambio esta hecho pero NO verificado en pantalla**, y no se cuenta como cerrado.
+
+**Y dos mediciones mias que no bastaban, corregidas en la misma sesion:**
+- *Escribi que `/compra?q=arroz` servia para probar la columna. No: pasar `?q=` por la URL da
+  260 caracteres y no carga resultados. La medicion buena es **escribir en el campo** y leer
+  los `<th>`: `['PRODUCTO','Cadena','Marca','Precio','Por unidad','Donde','Diferencia del
+  grupo']`.*
+- *Y el «Ahorro» que seguia apareciendo era **el enlace del menu «Gasto y ahorro»**, no la
+  columna.*
+
+**Lo que falta de M01**: `Panel.tsx:397,473,628` (tres sitios del panel de gasto y ahorro), y
+**verificar en pantalla** las tres superficies que estan hechas sin mirar.
+
