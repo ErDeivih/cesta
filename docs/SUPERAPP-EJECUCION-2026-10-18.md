@@ -707,3 +707,42 @@ cadena sin surtido; es una pasada que no llego a hacer su trabajo.*
 y fecha) y del **traceback**, en un fichero rotado; despues, reproducir Carrefour desde lo que se
 guarde, **sin lanzar otra ingesta** hasta verificar tarea y lock.
 
+### M12 / 18/10/2026 / LAS 2100 kcal DEL APARTADO 8 NO SE PUEDEN COMPROBAR, Y SE SABE POR QUE
+
+*La especificacion da como cifra del escenario «**2 100 kcal** las cinco preparaciones, **1 050**
+una racion de cada una».* *Se podria haber escrito una prueba con esos numeros.* **Habria sido
+mentira, y aqui esta la medida de por que.**
+
+**El dato existe en el esquema.** `grupos.parquet` tiene `kcal_100g`, `hidratos_100g`,
+`proteinas_100g`, `grasas_100g` y `grasas_sat_100g`. *Y el diario ya lo trata bien: «ausencia no
+es cero, una entrada sin dato nutricional no aporta 0 kcal, aporta nada».*
+
+**Pero la cobertura es del 21,8 %.** Medido hoy sobre el gold de casa:
+
+    grupos.parquet: 52 109 filas · 11 371 con kcal · 21,8 %
+
+**Y los productos del apartado 8 no lo tienen.** Consultados por nombre:
+
+    AUCHAN Bebida de arroz ...            kcal_100g = None
+    GALLO Pasta spaghettini al huevo ...  kcal_100g = None
+    LA FALLERA Arroz bomba ...            kcal_100g = None
+    PRODUCTO ALCAMPO Arroz bomba ...      kcal_100g = None
+    ...y los ocho consultados, todos None
+
+*Asi que **las 2 100 kcal no se pueden calcular** con el catalogo de hoy: no es que falte codigo,
+es que **falta el dato para el arroz, la leche y los huevos**, que son los ingredientes del
+escenario.* *Escribir una prueba que diera 2 100 habria sido inventar el numero y luego comprobar
+que el invento cuadra.*
+
+**Lo que SI esta probado** (`tests/test_escenario_cinco_recetas.py`, siete casos): *las cantidades
+-- 350 g de arroz, 250 de deficit, 1 000 ml de leche, 3 huevos de 6, 300 g a cuatro raciones -- y
+que lo que no tiene cantidad **no la gana** al escalar.*
+
+**Que haria falta para cerrar M12 de verdad**: *que las fichas de esos tres ingredientes traigan
+`kcal_100g` de una etiqueta leida, no de una estimacion.* *Es el mismo limite que el resto del
+encargo: sin fuente, no hay dato; y sin dato, `null` no es cero.*
+
+**Y la consecuencia practica, que importa mas que el paquete**: *Calorias puede enseñar el dato de
+uno de cada cinco productos.* *Decir «2 100 kcal» en la pantalla seria cierto solo si los cinco
+ingredientes estuvieran entre ese 21,8 %, y hoy no lo estan.*
+
