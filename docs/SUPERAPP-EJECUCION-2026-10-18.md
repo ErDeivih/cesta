@@ -973,3 +973,44 @@ arregla.*
 **Lo que queda en el control, sin adornos**: *la prueba es fragil, **el arreglo no es limpiar antes**,
 y hay que entender que estado comparte antes de tocarla.* *No se prueba otra cosa a ciegas.*
 
+### ENTREGABLE / 18/10/2026 / EL DICTAMEN POR TIPO DE USO
+
+*El encargo pide «un release candidate local y un **dictamen separado** para uso domestico, movil,
+piloto y publico».* *Ese documento no existia.*
+
+**Escrito: `docs/SUPERAPP-DICTAMEN-2026-10-18.md`.** *Cuatro apartados, un veredicto por cada uno, y
+cada afirmacion con lo que se ha medido:*
+
+    DOMESTICO   APTO con reservas de DATOS
+                comparacion corregida en 4 pantallas (leidas, no compiladas)
+                lista recordada por persona (servidor, no navegador)
+                ausencia no es cero (12 pruebas)
+                reserva: calorias al 21,8 % y los 3 ingredientes del escenario sin dato
+                reserva: el ensayo tiene UNA fecha de precios
+                reserva: LoQueSeCompra no se ha visto en pantalla
+
+    MOVIL       APTO en lo medido; NO VERIFICADO en lo que toca este trabajo
+                la puerta mide la ficha a 390x844 (test_ui_movil, 33 verdes)
+                44 px cumplidos
+                reserva: las 4 correcciones se leyeron en escritorio, no en movil
+                reserva: la PWA no se ha probado en esta sesion
+
+    PILOTO      NO APTO, por dos motivos concretos
+                el esquema de 5434 esta desfasado (13 pruebas pasan en base limpia)
+                una prueba de cierre depende del orden, y limpiar antes EMPEORA (1 -> 3)
+                lo que si esta listo: el banco de ensayo, idempotente y sin tocar nada ajeno
+
+    PUBLICO     NO APTO, y no por trabajo pendiente
+                no hay multi-inquilino probado
+                no hay TLS ni despliegue (y el encargo prohibe desplegar)
+                cobertura de catalogo parcial
+                calorias al 21,8 %
+
+**Y una seccion final, «lo que este dictamen NO dice»**: *que la aplicacion este terminada (quedan
+M05-M22), que lo verificado lo este en todas partes (escritorio, no movil), y que nada sin lectura en
+pantalla o prueba que lo fije se convierta en «cerrado».*
+
+**Lo unico que se firma hoy**: *que la comparacion de precios ya no puede presentar dos articulos
+distintos como si fueran el mismo, que esta probado en el contrato y leido en cuatro pantallas, y que
+lo que falta para cada tipo de uso esta escrito con su motivo.*
+
