@@ -83,40 +83,47 @@ colores, instalación de dependencias de test o cambios normales de implementaci
 
 ## Estado por entrega
 
-### M00 / 18/10/2026 / en curso (guardas y manifiesto hechos; siembra pendiente)
+### M00 / 18/10/2026 / en curso (sandbox verificado; siembra pendiente)
 
-**Capacidad y alcance.** Comando de banco de ensayo propio con manifiesto:
-`uv run python -m plataforma.ensayo {guardas|prepara|estado|limpia}` en
-`plataforma/ensayo.py`.
+**Capacidad y alcance.** Banco de ensayo propio en `plataforma/ensayo.py`:
+`uv run python -m plataforma.ensayo {guardas|prepara|estado|limpia}`.
 
-**Caso reproducido antes.** No habia ningun comando que rechazara un DSN protegido
-antes de escribir: los ensayos se hacian a mano contra 5434, que el encargo prohibe
-como destino de restauracion.
+**Caso reproducido antes.** No habia comando que rechazara un DSN protegido antes de
+escribir; los ensayos se hacian a mano sobre 5434, que el encargo prohibe.
 
-**Cambio y contrato.** Tres guardas que se comprueban **antes** de cualquier DDL:
-puerto 5432/5433/5434 prohibido; el nombre de la base tiene que empezar por
-`cesta_ensayo_`; solo loopback. Y el contenedor tiene que empezar por `cesta-ensayo-`
-y no existir ya. El manifiesto anota nombre, **id** de contenedor, DSN, directorio y
-SQLite; la limpieza **solo** borra lo anotado, comprueba que el id sigue siendo el
-mismo nombre, y no mata procesos ajenos ni borra directorios sin el marcador
-`.cesta-ensayo`.
+**Cambio y contrato.** Guardas antes de cualquier DDL: puertos 5432/5433/5434
+prohibidos; la base empieza por `cesta_ensayo_`; solo loopback; contenedor con
+prefijo `cesta-ensayo-` y no existente. Manifiesto con nombre, **id completo** de
+contenedor, DSN, directorio y SQLite. `limpia` solo borra lo anotado, comprueba que el
+id sigue siendo el mismo nombre, no mata procesos y no borra directorios sin el
+marcador `.cesta-ensayo`.
 
-**Comandos ejecutados + exit codes.**
-- `uv run python -m plataforma.ensayo guardas` -> **exit 0**, 8 casos, 0 con veredicto
-  equivocado: casa 5432, facylf 5433, ensayos 5434, base llamada `cesta`, fuera de
-  loopback, no-PostgreSQL, puerto no numerico -> **rechazados**; un ensayo valido ->
-  aceptado.
-- `data/ensayo` **no existe** despues de correr las guardas: **no se escribio nada**.
+**Comandos ejecutados + exit codes + resultados.**
+- `... ensayo guardas` -> **exit 0**. 8 casos, 0 con veredicto equivocado. Rechazados:
+  casa 5432, facylf 5433, ensayos 5434, base llamada `cesta`, fuera de loopback,
+  no-PostgreSQL, puerto no numerico. Aceptado: un ensayo valido. `data/ensayo` **no
+  se creo**: no se escribio nada.
+- `... ensayo prepara propio` -> **exit 0**. Contenedor `cesta-ensayo-propio`
+  (id `73b35193...`), DSN en 55432, manifiesto escrito con los seis campos.
+  `estado` lo vio `running`.
+- `... ensayo limpia propio` -> **exit 0**. Borrados contenedor, directorio y
+  manifiesto.
+- **Recursos ajenos, contados antes y despues: 25 y 25; ninguno falta.** Incluidos
+  `cesta-db-1` (5432) y `facylf-postgres` (5433). El contenedor propio ya no esta.
 - `uv run ruff check plataforma/ensayo.py` -> limpio.
 
-**Que NO se ha probado.** La siembra (usuarios A/B, listas con y sin casa, 5 recetas,
-despensa, ofertas, avisos) **no esta hecha**: faltan los contratos de recetas,
-despensa y ofertas de ensayo. Por tanto el criterio «dos ejecuciones reproducen el
-mismo escenario» **no esta cumplido**. `prepara` y `limpia` no se han ejecutado
-todavia contra Docker.
+**Aceptacion de M00, criterio por criterio.** rechaza DSN protegido sin escribir:
+**cumplido** (8/8 y nada creado) · limpieza no toca recursos ajenos: **cumplido**
+(25/25) · se conoce cada proceso creado: **cumplido para el contenedor** (id completo
+en el manifiesto) · **dos ejecuciones reproducen el mismo escenario: NO cumplido**.
 
-**Siguiente comando concreto.**
-`uv run python -m plataforma.ensayo prepara propio` y despues
-`uv run python -m plataforma.ensayo limpia propio`, para probar las otras dos
-aceptaciones de M00 (limpieza no toca recursos ajenos; se conoce cada proceso creado).
+**Que NO se ha probado.** La siembra -- usuarios A/B, listas con y sin casa, 5
+recetas, despensa, ofertas y avisos -- **no esta hecha**. Faltan los contratos de
+recetas, despensa y ofertas de ensayo; la API de usuarios y listas si esta localizada
+(`crea_usuario`, `crea_lista`, `crea_alerta`, `guarda_preferencia`). No se inventan
+esos contratos para aparentar cierre.
+
+**Siguiente ID + comando concreto.** M00 sigue abierto: contrato de recetas/despensa
+de ensayo y `... ensayo siembra propio`, dos veces, comparando el resultado.
+Despues M01, que ya tiene su defecto localizado: la tabla de `Producto.tsx`.
 
