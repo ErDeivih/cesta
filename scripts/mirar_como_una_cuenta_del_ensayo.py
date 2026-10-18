@@ -181,6 +181,19 @@ def main() -> int:
                             print("      lista preparada: 1 linea en el carro")
                         pg.reload()
                         pg.wait_for_timeout(3000)
+                        # *** `ENSAYO_CERRAR=cambio`: se sube el precio DESPUES de cargar y SIN
+                        # recargar. *** *Asi la pantalla tiene la estimacion vieja y el servidor
+                        # cierra con la nueva: es el caso del dueño, sin fingirlo.*
+                        if os.environ.get("ENSAYO_CERRAR") == "cambio":
+                            import plataforma.construye_gold_ensayo as _cge
+
+                            for _of in _cge.OFERTAS:
+                                if _of.get("ean") == "9000000000017":
+                                    _of["precio_cent"] = 150
+                                    _of["precio_unidad_cent"] = 150.0
+                                    _of["precio_ref_canon_cent"] = 150.0
+                            _cge.construye(Path(man["gold"]))
+                            print("      gold reescrito: el arroz A pasa de 120 a 150")
                         for texto in ("He terminado la compra", "Sí, he terminado", "Si, he terminado"):
                             b = pg.get_by_role("button", name=texto)
                             if b.count():

@@ -1469,3 +1469,36 @@ esta probado es que el dato llega (`test_si_el_precio_cambia...` y `test_el_cier
 *El primero es el mismo error de siempre -- sustituir texto sin mirar donde cae --; el segundo, el de
 suponer un literal en vez de leerlo.* *Los dos se vieron al ejecutar, no al escribir.*
 
+**M06 / EL AVISO CON DIFERENCIA: INTENTADO, NO CONSEGUIDO. Y por que.**
+
+*Falta la otra mitad: ver la frase «Desde que miraste la lista, el total ha cambiado» **con una
+diferencia de verdad**. Se intento asi:*
+
+    1. apuntar una linea (arroz A, 120) y ponerla en el carro
+    2. cargar la pagina -> la estimacion dice 120
+    3. **reescribir el gold con el arroz a 150, sin recargar**
+    4. pulsar cerrar -> el servidor cierra con 150 y la pantalla deberia decir «mas de 0,30 EUR»
+
+*Y no funciona como prueba, por una razon que solo se ve al intentarlo: **al reescribir el gold, la
+pagina deja de poder comparar la linea** -- sale «De esta lista no tengo ningun producto que se pueda
+comparar» y «No puedo decir donde» --, y el bloque de cierre no aparece igual.*
+
+**O sea: el precio que se cambia por debajo no solo cambia el total, cambia **si la linea tiene
+precio**.* *No es un cambio de precio: es un cambio de catalogo, y la pantalla lo nota antes de llegar
+al cierre.*
+
+**Lo que hay que hacer para verlo de verdad, y es mas pequeño de lo que parece:** *que el gold tenga
+**dos versiones** del arroz a distinto precio -- el sandbox ya sabe hacerlo con `segunda_cadena` y con
+el puntero de version --, y publicar la segunda **entre** la estimacion y el cierre.* *Asi la linea
+sigue teniendo precio, solo que otro.* *Es el mismo mecanismo de M04 (publicacion durante uso), y por
+eso el caso encaja mejor ahi que aqui.*
+
+**Lo que si esta comprobado de este aviso:**
+  - que el dato llega: `main.py /cerrar` devuelve `estimado_cent` y `diferencia_cent`
+  - que se calcula con el mismo `cesta.estimacion` que la pantalla (no una tercera cuenta)
+  - que **no se dice nada cuando la diferencia es cero**, leido en pantalla en movil
+  - y que con diferencia se pinta, por construccion (`diferencia_cent !== 0`)
+
+*** Lo unico que falta es verlo con los ojos. Y el camino para verlo no es este: es publicar una
+version nueva, que es lo que M04 ya sabe hacer. ***
+
