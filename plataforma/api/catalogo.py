@@ -1074,6 +1074,48 @@ def grupo(grupo_id: int) -> dict | None:
                  if p["unidad"] == unidad and p["precio_unidad_cent"] and p["comparable"]]
     barato = del_mismo[0]["precio_unidad_cent"] if del_mismo else None
     caro = del_mismo[-1]["precio_unidad_cent"] if del_mismo else None
+
+    # *** `ahorro_pct` ES LA HORQUILLA DEL GRUPO, *y no el ahorro de un articulo*. ***
+    #
+    # *Esto filtra por **unidad** y por **comparable**, y **no por EAN**.* *Asi que dice cuanto
+    # va del mas barato al mas caro **del grupo de equivalencias**, que pueden ser articulos
+    # distintos: el 18/10/2026, en la ficha del azafran `dia/147509`, daba 41 % comparando el
+    # **Pote** con el **Hacendado**.*
+    #
+    # *** No se cambia su significado ***, *porque seis pantallas lo usan como horquilla
+    # (`Grupo.tsx`, `Favoritos.tsx`, `TablaResultados.tsx`, `LoQueSeCompra.tsx`, `Panel.tsx`) y
+    # cambiarlo las romperia en silencio.* *Lo que se añade es **el dato que faltaba**: por cada
+    # producto, cuanto se ahorra contra **su mismo articulo** -- mismo EAN y misma base.*
+    #
+    # *Sin EAN no se afirma nada: `ahorro_exacto_pct` queda en `None`, que no es cero.*
+    def _exacto(p: dict) -> tuple[float | None, int | None]:
+        """*El ahorro contra las ofertas del **mismo EAN** y la **misma base**.*"""
+        su_ean = (p.get("ean") or "").strip()
+        suyo = p.get("precio_unidad_cent")
+        if not su_ean or not suyo or not p.get("comparable"):
+            return None, None
+        iguales = [
+            q["precio_unidad_cent"]
+            for q in productos
+            if (q.get("ean") or "").strip() == su_ean
+            and q.get("unidad") == p.get("unidad")
+            and q.get("precio_unidad_cent")
+            and q.get("comparable")
+        ]
+        if len(iguales) < 2:
+            return None, None  # *no hay con que comparar su propio articulo*
+        el_mas_barato = min(iguales)
+        if suyo <= el_mas_barato:
+            return 0.0, 0
+        return (
+            round(100 * (suyo - el_mas_barato) / el_mas_barato, 1),
+            int(suyo - el_mas_barato),
+        )
+
+    for _p in productos:
+        _pct, _cent = _exacto(_p)
+        _p["ahorro_exacto_pct"] = _pct
+        _p["ahorro_exacto_cent"] = _cent
     return {
         "grupo_id": grupo_id,
         "nombre": productos[0]["nombre"],
