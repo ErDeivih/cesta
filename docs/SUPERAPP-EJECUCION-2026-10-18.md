@@ -1396,3 +1396,49 @@ probado (6 pruebas), montado en la lista, y **leido en pantalla en movil**.
 - *modo tienda medido: deshacer, contador, reordenar, restaurar tras recarga*
 - *reposicion de favoritos (es M08) y la otra lista compartida*
 
+### M06 / 18/10/2026 / LA ACEPTACION, MEDIDA CASO POR CASO ANTES DE TOCAR NADA
+
+*La especificacion pide siete casos concretos:*
+
+> «3x2 en una linea/varias lineas, club si/no, oferta vencida, dos tiendas, centimos impares, cambio
+> de precio durante cierre y sustitucion revocada de UNA linea.»
+
+*Se contaron las pruebas que hay hoy para cada uno, en vez de suponer:*
+
+    3x2 / tres por dos ....................... 90 coincidencias
+    club ..................................... 46
+    vencida / caducada ....................... 14
+    dos tiendas / segunda parada .............  6
+    centimos impares ......................... 46
+    sustitucion / revocada ................... 48
+    *** cambio de precio durante cierre ......  0 ***
+
+*Se busco de otras formas antes de darlo por ausente (`durante el cierre`, `precio al cerrar`,
+`coste_por_linea`, `precio_congelado`, `snapshot`): hay 24 de `coste_por_linea`, y el fichero
+`test_lo_que_se_guarda_al_cerrar.py` cubre cuatro cosas:*
+
+    una linea con producto concreto guarda su precio
+    una linea de grupo tambien
+    la tienda decidida manda sobre la mas barata
+    una linea que apunta a otro producto no se inventa precio
+
+*** Ninguna de las cuatro es un CAMBIO de precio entre la estimacion y el cierre. ***
+
+**Y el codigo dice por que importa.** *`coste_por_linea` lee el precio **al cerrar** -- «el mas barato
+de hoy» --, mientras que la estimacion se calculo antes.* *La especificacion exige
+**«Estimacion = cierre = historico»**, y las tres cifras se guardan en sitios distintos:*
+
+    estimacion ....... lo que la pantalla dice que va a costar
+    cierre ........... lo que `coste_por_linea` lee en ese instante
+    historico ........ lo que queda escrito en `compra`
+
+*Si el precio cambia entre una y otro, **la pantalla dijo una cifra y se guardo otra**, y hoy no hay
+ninguna prueba que lo mire.*
+
+*** Es el caso que el dueño nombro, y es el unico de los siete sin cubrir. ***
+
+**Lo que hace falta para cerrarlo, y no es adivinar:** *una prueba con un gold en el que el precio de
+una linea cambie entre la estimacion y el cierre, y decidir **que tiene que pasar**: o el cierre usa el
+precio congelado de la estimacion, o usa el nuevo y **lo dice**.* *Probar sin decidir eso seria escribir
+una prueba que confirma lo que el codigo haga hoy, que es como no probar.*
+
