@@ -68,6 +68,14 @@ PREFIJO_CONTENEDOR = "cesta-ensayo-"
 MARCADOR = ".cesta-ensayo"
 
 
+# *** El catalogo del apartado 8, que es el guion del escenario. ***
+# *Se lee del fichero versionado `plataforma/ensayo/catalogo.json`, no de constantes escritas en
+# este modulo: el guion y el almacen son cosas distintas y no pueden divergir.*
+CATALOGO_8 = json.loads(
+    (Path(__file__).resolve().parent / "ensayo" / "catalogo.json").read_text(encoding="utf-8")
+)
+
+
 class GuardaRota(RuntimeError):
     """*Una guarda dijo que no.* *Se lanza **antes** de escribir nada.*"""
 
@@ -399,6 +407,49 @@ def siembra(nombre: str = "propio") -> dict:
         except Exception as exc:  # noqa: BLE001  (se informa, no se traga)
             resumen["cuentas"][usuario] = "ERROR: " + str(exc)[:160]
 
+    # *** LAS CINCO RECETAS DEL APARTADO 8, *y en el SQLite DEL ENSAYO*. ***
+    #
+    # *`core.recetas.conecta(ruta)` hace `Path(ruta) if ruta else BASE`: **sin ruta escribe en el
+    # recetario de casa**.* *Asi que aqui se le pasa `man.sqlite` **siempre**, y si el manifiesto no
+    # lo trae, se falla en vez de escribir donde no se debe.*
+    if not man.sqlite:
+        resumen["recetas"] = ["ERROR: el manifiesto no tiene ruta de SQLite; no se escribe nada"]
+    else:
+        from core import recetas as core_recetas  # a proposito: despues de validar la ruta
+
+        con = core_recetas.conecta(man.sqlite)
+        try:
+            for r in CATALOGO_8["escenario"]["recetas"]:
+                try:
+                    n = r["necesita"]
+                    receta_id = core_recetas.crear(
+                        con,
+                        propietario=str(resumen["cuentas"]["a_casa"]),
+                        nombre=r["nombre"],
+                        raciones=r["raciones"],
+                        preparacion="Receta sintetica del banco de ensayo (apartado 8).",
+                        ingredientes=[
+                            {
+                                "texto": n["texto"],
+                                "cantidad": n["cantidad"],
+                                "unidad": n["unidad"],
+                                "producto_id": n["producto_id"],
+                            }
+                        ],
+                        etiquetas="ensayo",
+                    )
+                    resumen["recetas"].append({"id": r["id"], "receta_id": receta_id, "nombre": r["nombre"]})
+                except Exception as exc:  # noqa: BLE001
+                    resumen["recetas"].append({"id": r["id"], "ERROR": str(exc)[:140]})
+        finally:
+            con.close()
+
+    # *** LA DESPENSA: PENDIENTE, *y se dice sin disfrazarlo de error*. ***
+    # *La tabla de existencias de `despensa.py` usa un contrato (`ExistenciaIn`) que hay que
+    # respetar; meter filas a mano con SQL seria inventarlo.* *Y la primera version de este bloque
+    # comprobaba la tabla con `to_regclass` y acababa imprimiendo «ERROR: 0», que no informa de nada:
+    # un mensaje que no dice que pasa es peor que no tenerlo.*
+    resumen["despensa"] = ["pendiente: el contrato de existencias (ExistenciaIn) no se ha sembrado"]
     return resumen
 
 
@@ -464,8 +515,11 @@ def main(argv: list[str] | None = None) -> int:
         # *El catalogo ya existe (lo construye `prepara`), asi que **ya no es el motivo**.* *Lo que
         # falta ahora es distinto: sembrar recetas, despensa y ofertas **sobre** el, y eso es el
         # siguiente paso, no una carencia de datos.*
-        print("  el catalogo del apartado 8 esta listo (arroz A y B, leche, huevos)")
-        print("  falta sembrar SOBRE el: recetas, despensa y ofertas")
+        print("  recetas: " + str(len(resumen["recetas"])) + " intentadas")
+        for r in resumen["recetas"]:
+            print("      " + str(r))
+        print("  despensa: " + str(resumen["despensa"]))
+        print("  catalogo del apartado 8: arroz A y B, leche, huevos")
         # *Un error de siembra NO puede salir con 0.*
         fallos = [u for u, i in resumen["cuentas"].items() if str(i).startswith("ERROR")]
         if fallos:
