@@ -173,6 +173,21 @@ function DeLaCompra({ fecha }: { fecha: string }) {
         </div>
       )}
 
+      {/* *** SI LA PREVIA NO SE PUEDE DAR, SE DICE POR QUE. ***
+          *`ver` tenia `onSuccess` y **ningun sitio donde enseñar el fallo**: si
+          `previaDeLaCompra` devolvia un error -- por ejemplo **porque la compra no esta cerrada
+          todavia** --, el boton no hacia nada y la pantalla se quedaba igual.* *Desde fuera, eso
+          se lee como «la aplicacion no responde», que es peor que un mensaje.*
+          *M03 lo pide con estas palabras: «una compra sin cerrar explica por que no propone
+          contenido, no bloquea toda la app».* */}
+      {ver.isError && (
+        <p className="mt-2 text-[15px] text-secundaria">
+          {ver.error instanceof Error && ver.error.message
+            ? ver.error.message
+            : 'No he podido mirar la compra. Vuelve a intentarlo en un momento.'}
+        </p>
+      )}
+
       {recibo && (
         <div className="mt-2 flex flex-col gap-1 text-[15px]">
           <p className="text-tinta-fuerte">
