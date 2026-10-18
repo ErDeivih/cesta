@@ -128,7 +128,12 @@ def main() -> int:
 
         with sync_playwright() as p:
             nav = p.chromium.launch(headless=True)
-            ctx = nav.new_context(viewport={"width": 1280, "height": 900}, locale="es-ES")
+            # *`ENSAYO_MOVIL=1` mide en un movil de 390x844, que es donde el dictamen decia que
+            # no se habia verificado nada.*
+            ancho, alto = ((390, 844) if os.environ.get("ENSAYO_MOVIL") else (1280, 900))
+            ctx = nav.new_context(viewport={"width": ancho, "height": alto}, locale="es-ES",
+                                  has_touch=bool(os.environ.get("ENSAYO_MOVIL")),
+                                  is_mobile=bool(os.environ.get("ENSAYO_MOVIL")))
             ctx.add_cookies([{
                 "name": "cesta_sesion", "value": token,
                 "domain": "localhost", "path": "/", "httpOnly": True, "sameSite": "Lax",

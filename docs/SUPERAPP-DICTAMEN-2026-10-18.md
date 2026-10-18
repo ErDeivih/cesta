@@ -43,9 +43,11 @@ de pruebas.*
 | Una pantalla sin red no pierde los cambios: se encolan y se suben al volver | *`Cesta.tsx`, cola sin cobertura* |
 
 **Reservas:**
-- ***Las cuatro superficies de comparación que corregí se han verificado en un navegador de
-  escritorio (1280×900), no en el móvil de 390×844.*** *La puerta mide la ficha, pero no he leído esas
-  cuatro correcciones en la puerta.*
+- ***De las cuatro superficies corregidas, una está leída también en móvil.*** *La salvedad del grupo
+  se ha leído a **390×844 con `has_touch`**: «La diferencia es entre los artículos del grupo…» **sale**,
+  y la página mide 3 504 caracteres sin un error de JavaScript.* *Las otras tres (tabla de la ficha,
+  columna del buscador, tarjeta de ejemplos) **siguen verificadas sólo en escritorio**.*
+- *La PWA (instalación, offline real, arranque en frío) **no se ha probado** en esta sesión.*
 - *La PWA (instalación, offline real, arranque en frío) **no se ha probado** en esta sesión.*
 
 ---
