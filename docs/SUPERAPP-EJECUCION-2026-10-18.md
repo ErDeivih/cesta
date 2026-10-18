@@ -845,3 +845,36 @@ hace falta un favorito, y eso no lo siembra el ensayo.*
 **Lo que SI queda verificado en pantalla hoy**: *las tres rutas pintan sin errores, y `c_sin_listas`
 dice «Sin lista de casa, asi que no hay nada que contar» -- que es el estado honesto de M03.*
 
+**M04 / 18/10/2026 / la variante de dos cadenas existe y esta probada. El interruptor de `prepara`, no.**
+
+**Lo que SI esta hecho y commiteado** (`f6e7dc2`): *`construye_gold_ensayo.construye(destino,
+segunda_cadena=True)` construye el gold con **dos cadenas**, y con eso:*
+
+    cadenas ..................... 2
+    ahorro_pct (la horquilla) ... 22,7 %    de 110 a 135, articulos distintos
+    Marca A  ensayo-b  110,0  exacto = 0,0
+    Marca A  ensayo    120,0  exacto = 9,1   9,1 % sobre SU MISMO articulo
+
+*** 22,7 y 9,1: la horquilla y el ahorro exacto son numeros distintos, y hay una prueba que lo
+fija *** (`test_con_dos_cadenas_el_ahorro_exacto_es_un_numero_de_verdad`). *Y las nueve pruebas del
+escenario siguen dando 350, 250, 1 000, 3 y 300, porque la variante no entra por defecto.*
+
+**Lo que NO esta, y se dice.** *Para leer la salvedad de `Grupo.tsx` en pantalla hace falta que el
+**ensayo** construya esa variante, y eso pide un interruptor en `plataforma/ensayo.py`.*
+
+*Lo intente en dos pasos, y el segundo **rompio el fichero**:*
+
+1. *Añadir `dos_cadenas` a la firma de `prepara` y pasarlo a `construye_gold`.* *Se aplico, y la
+   sustitucion cayo **dentro de un `try`**, metiendo un comentario de tres lineas donde iba una
+   llamada simple.* *`SyntaxError: expected 'except' or 'finally' block`, y `ruff` dio seis errores.*
+2. *Revertido con `git checkout -- plataforma/ensayo.py`, y comprobado: `ruff` limpio, 10 pruebas
+   verdes, `prepara` y `limpia` funcionando, `diff` vacio.*
+
+*Es el tercer fichero que rompo reescribiendo texto en esta sesion (`run.py`, `Diario.tsx`, y este),
+y las tres veces el mismo motivo: **sustituir un bloque con comentarios dentro de una estructura que
+no admite comentarios ahi**.*
+
+**El siguiente comando, ahora si, con el cuidado que pide:** *añadir `dos_cadenas` a la firma de
+`prepara` (que es una sustitucion de una linea, sin comentarios), y **despues**, en otra tanda,
+cambiar la llamada a `construye_gold` por lineas -- comprobando que sigue dentro de su `try`.*
+
