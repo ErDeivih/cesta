@@ -571,3 +571,26 @@ el cambio esta hecho pero NO verificado en pantalla**, y no se cuenta como cerra
 **Lo que falta de M01**: `Panel.tsx:397,473,628` (tres sitios del panel de gasto y ahorro), y
 **verificar en pantalla** las tres superficies que estan hechas sin mirar.
 
+**RESUELTO: por que no se veia `LoQueSeCompra`, y cuando se ve.**
+
+*No era un fallo del cambio: era la condicion de render.* `Mosaico.tsx:70-72`:
+
+    const tarjetas = habituales.data?.habituales ?? []
+    const soloBasico = (habituales.data?.origenes ?? []).every((o) => o === 'basico')
+    if (tarjetas.length === 0 || (soloBasico && !vacia)) return <LoQueSeCompra />
+
+*La tarjeta se enseña **solo a quien no tiene historial** (-- *cuando los «habituales» son los
+cuatro basicos de relleno, `soloBasico` es cierto* --).* *Y la cuenta de 8080, `prueba-navegador`,
+tiene historial de todas las pasadas del recorrido: sus habituales son reales, `soloBasico` es
+`false`, y la tarjeta no se pinta.* ***Por eso no la encontraba en `/`, ni en `/compra`, ni tras
+buscar.***
+
+**Y esto cierra el circulo con M00**: *verla exige **una cuenta sin historial**, que es justo lo
+que da el banco de ensayo.* *Asi que la comprobacion pendiente de `LoQueSeCompra` no se hace
+contra 8080: se hace contra el ensayo, con la cuenta `c_sin_listas` recien creada.*
+
+**Lo que queda de M01, entonces, es una lista corta y con el como:**
+- `Panel.tsx:397,473,628` -- tres sitios del panel de gasto y ahorro.
+- Mirar en pantalla `Grupo.tsx` y `Favoritos.tsx` (hechos, sin revisar).
+- Mirar `LoQueSeCompra.tsx` **con una cuenta sin historial**, en el ensayo.
+
