@@ -717,6 +717,15 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual),
     return hecho | {
         "total_cent": hecho["total_cent"],
         # *Sin sello, `estimado` es None y las dos cifras son None: no se finge un cero.*
+        # *** SI NO VINO REVISION, NO ES UN CIERRE CONFIRMADO. ***
+        # *Regla 2: «compatibilidad sin revision, si se mantiene, se identifica como tal y no se
+        # certifica como cierre confirmado».* *Asi una compra sin sello se puede leer despues y se
+        # sabe que nadie confirmo la previa -- en vez de parecer igual que las demas.*
+        # Y regla 4: **el importe es calculado, no pagado**. *El precio del catalogo no es
+        # evidencia de lo que salio de caja; la procedencia viaja con el importe para que el
+        # historico pueda distinguirlo el dia que exista el gasto declarado o acreditado.*
+        "confirmado": sello_esperado is not None,
+        "procedencia_importe": "calculado",
         "estimado_cent": (estimado["total_cent"] if estimado else None),
         "diferencia_cent": ((hecho["total_cent"] - estimado["total_cent"]) if estimado else None),
     }
@@ -827,7 +836,17 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
         # *Regla 2 de M06: la estimacion que se confirma tiene que salir de una referencia servida y
         # verificable, no de un total que mande el cliente.*
         "estimacion": cesta.estimacion(lineas),
-        "cotizacion": cesta.cotiza(lineas),
+        # *** LA COTIZACION ES LA DEL CARRITO, NO LA DE LA LISTA. ***
+        # *El cierre solo cierra lo que esta en el carro (`en_el_carro`), asi que el sello tiene que
+        # ser del **mismo conjunto** en los dos extremos.* *Con toda la lista, una linea pendiente
+        # cambiaba el sello sin que cambiara ningun precio, y el cierre contestaba 409 por nada.*
+        #
+        # *Y son dos numeros distintos, que es lo que la especificacion pide distinguir:*
+        #   `estimacion` ..... lo que costaria **toda la lista**, que es lo que se mira al anadir
+        #   `cotizacion` ..... lo que va a costar **lo que te llevas**, con su sello
+        # *El segundo es el que se confirma al cerrar; el primero no se firma porque no se cierra.*
+        "cotizacion": cesta.cotiza([ln for ln in lineas if ln.get("en_carrito")]),
+        "cotizacion_lista_cent": cesta.cotiza(lineas)["total_cent"],
         "novedades": nuevo,
         "personas": almacen.quienes_en(lista_id),
         "fecha_datos": catalogo.fecha_de_gold(),

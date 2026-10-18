@@ -151,7 +151,18 @@ def _cierra(c: dict) -> dict:
         "total": total,
         "cierto": c["cierto"],
         # *`None` y no `0.0` cuando no dijo ninguno: no es que acierte el 0 %, es que no opino.*
-        "precision": (c["exactos_bien"] / c["exactos"]) if c["exactos"] else None,
+        # *** LA PRECISION ES SOBRE LOS EVALUABLES, NO SOBRE TODAS LAS PREDICCIONES. ***
+        # *Dividir por `exactos` metia en el denominador los pares que **no tienen etiqueta**: un
+        # acierto conocido mas un exacto sin etiqueta daba 0,5 cuando la precision sobre lo evaluable
+        # es 1,0.* *Un par sin etiqueta no es un fallo del motor: es una pregunta que nadie ha
+        # contestado, y no puede diluir la precision.*
+        "precision": (
+            c["exactos_bien"] / (c["exactos_bien"] + c["exactos_mal"])
+            if (c["exactos_bien"] + c["exactos_mal"]) else None
+        ),
+        # *Las tres cifras por separado, que es lo que hace legible la de arriba.*
+        "predicciones": c["exactos"],
+        "evaluables": c["exactos_bien"] + c["exactos_mal"],
         "recall": (c["exactos_bien"] / c["cierto"]) if c["cierto"] else None,
         "exactos": c["exactos"],
         "exactos_bien": c["exactos_bien"],
@@ -177,7 +188,13 @@ def _sirve(c: dict) -> dict:
     """
     if c["total"] == 0:
         return {"vale": False, "motivo": "el banco esta vacio"}
-    if c["exactos"] == 0:
+    evaluables = c["exactos_bien"] + c["exactos_mal"]
+    if evaluables == 0:
+        # *Sin pares con etiqueta conocida no hay precision que leer, aunque haya predicciones.*
+        if c["exactos"]:
+            return {"vale": False,
+                    "motivo": (str(c["exactos"]) + " predicciones y ninguna con etiqueta conocida: "
+                               "la precision no se puede leer")}
         return {"vale": False,
                 "motivo": "no dijo «exacto» ni una vez: la precision no es 0, es que no hay"}
     cobertura = (c["total"] - c["abstiene"]) / c["total"]

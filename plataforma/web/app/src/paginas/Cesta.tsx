@@ -745,17 +745,20 @@ function NombreDeLaLista({ lista, alHecho }: {
  *    compra y no en el total -- contarlas como cero seria mentir en la cifra que se
  *    acaba de guardar.
  */
-function CerrarCompra({ listaId, enElCarro, papel }: {
+function CerrarCompra({ listaId, enElCarro, papel, sello }: {
   listaId: string
   enElCarro: number
   papel: string
+  /** *La revision de la cotizacion que se sirvio con la lista.* **Sin ella el cierre no es
+   *  confirmado**: el servidor no puede saber si cambio algo desde que se miro. */
+  sello?: string | null
 }) {
   const cliente = useQueryClient()
   const [confirmando, setConfirmando] = useState(false)
   const [hecho, setHecho] = useState<CierreDeCompra | null>(null)
 
   const cerrar = useMutation({
-    mutationFn: () => cerrarCompra(listaId),
+    mutationFn: () => cerrarCompra(listaId, sello),
     onSuccess: (r) => {
       setHecho(r)
       setConfirmando(false)
@@ -789,7 +792,7 @@ function CerrarCompra({ listaId, enElCarro, papel }: {
             diferencia existe y de cuanto es.*
             *La cifra sale de la API, que la calcula con el mismo `cesta.estimacion` que pinta la
             lista: no es una tercera cuenta.* */}
-        {hecho.diferencia_cent !== undefined && hecho.diferencia_cent !== 0 && (
+        {hecho.diferencia_cent !== null && hecho.diferencia_cent !== 0 && (
           <>
             {' '}
             Desde que miraste la lista, el total ha cambiado en{' '}
@@ -1794,6 +1797,7 @@ export function Cesta() {
                     listaId={listaId as string}
                     enElCarro={enElCarro.length}
                     papel={detalle.data.papel}
+                    sello={detalle.data.cotizacion?.sello ?? null}
                   />
                 </div>
             </>

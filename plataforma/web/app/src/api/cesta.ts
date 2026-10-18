@@ -160,6 +160,18 @@ export interface DetalleLista {
   papel: string
   lineas: Linea[]
   estimacion: Estimacion
+  /** *** La cotizacion del CARRITO, con su sello. ***
+   *
+   *  *Es la que se confirma al cerrar: viaja con la lista y vuelve en `POST /cerrar` como
+   *  `sello_esperado`. El servidor contesta 409 si no coincide, sin escribir.*
+   *
+   *  *No es lo mismo que `estimacion`, que es lo que costaria **toda** la lista: el cierre solo
+   *  cierra lo que esta en el carro, asi que el sello tiene que ser del mismo conjunto en los dos
+   *  extremos.*
+   */
+  cotizacion?: { sello: string; total_cent: number }
+  /** *Lo que costaria la lista entera. Solo informativo: no se firma porque no se cierra.* */
+  cotizacion_lista_cent?: number
   personas: Persona[]
   fecha_datos: string
   /**
@@ -326,14 +338,20 @@ export interface CierreDeCompra {
   /** De esas, cuantas se quedaron sin precio: van en la compra y **no** en el total. */
   sin_precio: number
   total_cent: number
-  /** *Lo que la lista decia que iba a costar, con el mismo calculo que la pantalla.*
+  /** *Lo que la cotizacion confirmada decia que iba a costar.*
    *
-   *  *Se calcula al cerrar, no antes: si el precio cambio entre que se miro la lista y se cerro,
-   *  estas dos cifras **no coinciden**, y la diferencia dice cuanto.* *Opcional porque un servidor
-   *  anterior no lo manda.* */
-  estimado_cent?: number
-  /** *`total_cent - estimado_cent`, con signo: positiva si costo mas de lo que decia.* */
-  diferencia_cent?: number
+   *  *** `null` cuando no se mando revision: no es cero. *** *Un cero diria «comprobe que no
+   *  cambio», y sin sello no se ha comprobado nada.* *Por eso es `number | null` y no `number`
+   *  opcional: el campo **siempre** viene, y a veces viene vacio a proposito.* */
+  estimado_cent: number | null
+  /** *`total_cent - estimado_cent`, con signo. `null` si no hay con que comparar.* */
+  diferencia_cent: number | null
+  /** *Si el cierre llevaba la revision de la cotizacion.* **Sin revision no es un cierre
+   *  confirmado**, y se guarda asi para poder distinguirlo despues. */
+  confirmado: boolean
+  /** *De donde sale el importe.* *`calculado` es lo unico que hay hoy: precio de catalogo, **no**
+   *  dinero pagado en caja.* */
+  procedencia_importe: string
   /** Cuantas siguen en la lista, que son las que no se cogieron. */
   quedan: number
 }
@@ -342,9 +360,22 @@ export interface CierreDeCompra {
  *
  *  La API contesta 409 si no hay nada en el carro: pulsar el boton sin haber tachado nada
  *  no puede inventar una compra vacia, y el texto del error se pinta tal cual. */
-export async function cerrarCompra(listaId: string): Promise<CierreDeCompra> {
+/** *** Cierra la compra CON LA REVISION QUE SE VIO. ***
+ *
+ *  *El contrato exige que el cierre lleve la revision de la cotizacion que se sirvio: sin ella el
+ *  servidor no puede saber si el precio, la cantidad o la tienda cambiaron desde que la persona
+ *  miro la lista, y guardaria una cifra que quizas nadie aprobo.*
+ *
+ *  *La revision viaja como `sello_esperado` y el servidor contesta **409** con la previa nueva si
+ *  no coincide -- sin escribir nada.*
+ */
+export async function cerrarCompra(
+  listaId: string,
+  sello?: string | null,
+): Promise<CierreDeCompra> {
+  const consulta = sello ? `?sello_esperado=${encodeURIComponent(sello)}` : ''
   return await escribe<CierreDeCompra>(
-    `/listas/${encodeURIComponent(listaId)}/cerrar`, 'POST')
+    `/listas/${encodeURIComponent(listaId)}/cerrar${consulta}`, 'POST')
 }
 
 /* ---------------------------------------------------------------- escribir -- */
