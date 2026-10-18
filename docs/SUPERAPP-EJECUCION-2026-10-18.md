@@ -1286,3 +1286,37 @@ sin base»-- ya estaba resuelta y probada. No hace falta tocarla:*
 *** De las cinco, una medida (30 lineas con duplicados y dos marcas), una ya estaba y probada (los
 envases), y tres por hacer. *** *Es el estado real de M05, y no se redondea.*
 
+**M05 / el cuadro de pegar, MONTADO Y NO VISTO. Y la causa no esta aislada.**
+
+*Se monto en `Cesta.tsx`, entre el cierre de una tarjeta y la de «Lo que hay que coger» (linea 1576),
+que parecia un punto de nivel superior.*
+
+*Y no sale. Medido en la ruta de verdad -- `/compra/listas`, no `/compra`, que es el buscador:*
+
+    /compra/listas   main=1  texto=1816  errores=[]
+
+*Y en ese texto estan «Compartir», «Quien esta dentro», «No puedo decir donde»... pero **no estan ni
+mi cuadro de pegar ni la tarjeta de «N lineas»**.*
+
+*** O sea: el bloque entero donde lo monte no se esta pintando, y no he aislado por que. ***
+
+**Lo que se sabe, y lo que no:**
+
+  - NO es un fallo de tipo ni de compilacion: tsc limpio, lint 0 errores, build ok, 15 pruebas de
+    componente con el componente montado y funcionando.
+  - NO es que la pagina no cargue: pinta 1816 caracteres sin un error de JavaScript.
+  - NO es que `a_casa` no tenga lista: tiene Casa y Viaje, y la pagina enseña su panel de compartir.
+  - **SI es que hay un condicional por encima que no se cumple con esta lista** -- probablemente
+    «cuando hay lineas» o «cuando hay detalle» --, y mi montaje quedo dentro.
+
+**Es el mismo patron que la salvedad de `Grupo.tsx`, y esta vez lo he vuelto a cometer en el mismo
+dia:** *creer que un punto es de nivel superior porque lo parece en el fichero, sin leer la estructura
+que lo envuelve.*
+
+**Lo que hace falta, y no es adivinar:** *leer desde donde empieza el bloque que contiene la linea
+1576 hasta su condicion -- esta entre 1400 y 1500 -- y **mover el montaje fuera**, junto a los que si
+se pintan (el panel de compartir sale, y es de la misma region).*
+
+**Y lo que NO se puede decir hoy:** *que «pegar varias lineas con previa» este terminado.* *Esta el
+parser (probado), el componente (probado) y el montaje (sin ver).* *Falta que se vea.*
+
