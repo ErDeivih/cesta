@@ -795,6 +795,14 @@ export interface Reparto {
   ahorro_cent?: number
   /** Con ahorros de menos de 1,50 EUR no compensa la segunda parada. */
   merece_la_pena?: boolean
+  /** *Lo que se estima que cuesta ir a la segunda tienda, en centimos.*
+   *
+   *  *Sale de `VIAJE_CENT` en `plataforma/api/cesta.py`.* **No es un gasto medido**: es una
+   *  estimacion de tiempo y viaje, y por eso lo que se enseña dice «se estima». */
+  viaje_cent?: number
+  /** *`ahorro_cent - viaje_cent`: lo que queda despues de pagar el viaje.* **Puede ser negativo**,
+   *  y entonces es cuando el booleano dice que no compensa. */
+  neto_cent?: number
   /** Cuantas lineas de la lista se compran en cada cadena, por nombre:
    *  `{ alcampo: 7, dia: 3 }`. Son LINEAS, no unidades: "3 en dia" son tres
    *  cosas que coger, aunque una sea "2 botes".

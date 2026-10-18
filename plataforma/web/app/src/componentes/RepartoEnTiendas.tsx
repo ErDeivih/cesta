@@ -269,6 +269,30 @@ export function RepartoEnTiendas({ listaId, papel, className }: {
             {r.repartido && (
               <>; repartido entre {r.repartido.cadenas.map(nombreDeCadena).join(' y ')}:{' '}
                 <span className="cifra">{euros(r.repartido.total_cent)}</span>
+                {/* *** LAS TRES CIFRAS, POR SEPARADO. ***
+                    *M06: «mostrar ahorro bruto y coste de viaje opcional por separado».*
+                    *Antes solo salia un booleano («el ahorro no paga la segunda parada»): decia
+                    **si** merece la pena y no **cuanto** cuesta ni cuanto queda.* *Ahora se ven el
+                    ahorro bruto, lo que se estima el viaje y el neto -- y el viaje se llama
+                    «estimado», porque no es una cuenta.* */}
+                {r.repartido.viaje_cent !== undefined && (
+                  <>
+                    {' '}
+                    <span className="block text-etiqueta text-tinta-suave">
+                      te ahorras {euros(r.repartido.ahorro_cent)}, el viaje se estima en{' '}
+                      {euros(r.repartido.viaje_cent)}
+                      {r.repartido.neto_cent !== undefined && (
+                        <>
+                          {' '}y te quedan{' '}
+                          <strong>
+                            {r.repartido.neto_cent >= 0 ? '+' : '−'}
+                            {euros(Math.abs(r.repartido.neto_cent))}
+                          </strong>
+                        </>
+                      )}
+                    </span>
+                  </>
+                )}
                 {r.repartido.merece_la_pena === false && ' (el ahorro no paga la segunda parada)'}
               </>
             )}
