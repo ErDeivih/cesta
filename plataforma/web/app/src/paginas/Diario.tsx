@@ -66,8 +66,17 @@ function DeLaCompra({ fecha }: { fecha: string }) {
   // `find(es_de_casa)?.id ?? listas.data?.[0]?.id`: si no habia lista de casa, anotaba en la primera
   // que hubiera, que puede ser la de otra persona del hogar o una lista de ideas. El documento lo
   // pide explicito: *no confundir esa eleccion con una decision del usuario*.
+  // *** LA LISTA SE ELIGE, *y solo si hace falta*. ***
+  // *Antes solo habia la de casa; si no habia, la pantalla decia «no tienes ninguna lista»
+  // **aunque tuvieras tres sin casa**.* *M03 pide poder elegir una lista **autorizada**, y que
+  // «sin casa» se diga como lo que es.*
+  //
+  // *Sin elegir, manda la de casa: el comportamiento de siempre no cambia.* *Y la eleccion es
+  // de esta pantalla y de esta sesion: no se escribe una preferencia que luego decida por la
+  // persona en otro sitio.*
+  const [elegida, setElegida] = useState<string | null>(null)
   const casa = listas.data?.find((l) => l.es_de_casa) ?? null
-  const listaId = casa?.id ?? null
+  const listaId = elegida ?? casa?.id ?? null
   const [comida, setComida] = useState('comida')
   const [previa, setPrevia] = useState<PreviaDeLaCompra | null>(null)
   // **El recibo, no el numero de la previa.** `anotadas` era `previa?.anotarian.length`, es decir
@@ -105,10 +114,43 @@ function DeLaCompra({ fecha }: { fecha: string }) {
         </Boton>
       </div>
 
-      {sinLista && (
+      {/* *** TRES ESTADOS, *y no dos*. *** *Antes «cargando» y «no hay listas» se decian
+          igual, y «no hay listas» se decia tambien cuando habia tres pero ninguna de casa.*
+          *M03 pide separarlos: carga, ausencia y **sin casa pero con otras**.* */}
+      {sinLista && listas.isPending && (
+        <p className="mt-2 text-[15px] text-secundaria">Mirando tus listas…</p>
+      )}
+
+      {sinLista && !listas.isPending && (listas.data?.length ?? 0) === 0 && (
         <p className="mt-2 text-[15px] text-secundaria">
-          {listas.isPending ? 'Mirando tu lista?' : 'Todavia no tienes ninguna lista.'}
+          Todavia no tienes ninguna lista. Crea una en Compra y aqui podras anotar lo que compres.
         </p>
+      )}
+
+      {/* *** CON LISTAS PERO SIN CASA: se dice, y se deja elegir. *** *Decir «no tienes ninguna
+          lista» cuando tiene tres de casa ajena es falso; y dejarla sin salida es peor.* */}
+      {sinLista && !listas.isPending && (listas.data?.length ?? 0) > 0 && (
+        <div className="mt-2 flex flex-col gap-2">
+          <p className="text-[15px] text-secundaria">
+            No tienes una lista marcada como de casa. Elige con cual quieres anotar: la eleccion
+            es tuya, y no cambia lo que hayan anotado los demas.
+          </p>
+          <label className="flex flex-wrap items-center gap-2 text-[15px]">
+            <span className="text-tinta-fuerte">Lista</span>
+            <select
+              className="rounded-campo border border-borde bg-papel px-2 py-1"
+              defaultValue=""
+              onChange={(e) => setElegida(e.target.value || null)}
+            >
+              <option value="">Elige una lista</option>
+              {(listas.data ?? []).map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       )}
 
       {recibo && (
