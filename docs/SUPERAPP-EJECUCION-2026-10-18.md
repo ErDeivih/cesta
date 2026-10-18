@@ -813,3 +813,35 @@ no supone porciones.* *Que es exactamente lo que M03 pide.*
 - *Y mirarlo todo en pantalla: sigue sin verificarse, porque no he conseguido entrar como una cuenta
   del banco.*
 
+### M01 / 18/10/2026 / LAS TRES MIRADAS, HECHAS. Y lo que han demostrado.
+
+*Con el guion de la ronda anterior, entrando como `c_sin_listas`:*
+
+    /grupo/900001   main=1  texto=2471  errores=[]   pinta
+    /favoritos      main=1  texto=429   errores=[]   vacio (la cuenta no tiene favoritos)
+    /compra         main=1  texto=513   errores=[]   «Sin lista de casa»
+
+*Las tres pintan, sin un solo error de JavaScript.* *Que es la primera vez que se puede decir de
+estas tres en todo el encargo.*
+
+**Pero la salvedad que añadi a `Grupo.tsx` no sale, y se sabe por que.** *`fraseDePrecio` devuelve
+`null` cuando no hay al menos dos cadenas, y **el gold del apartado 8 tiene `cadenas = 1`**: las
+cuatro ofertas son de `fuente='ensayo'`.* *Asi que el bloque de la frase -- y la salvedad que va
+debajo -- **no se pinta**, porque no hay frase que matizar.*
+
+*** Eso NO es un defecto: es que el banco no puede ejercitar ese camino. *** *Y hay que decirlo asi,
+no decir «la salvedad esta puesta»: esta puesta **y no se ha visto**, porque el escenario obligatorio
+tiene una sola cadena.*
+
+**Lo mismo pasa con `Favoritos.tsx`**: *la cuenta `c_sin_listas` no tiene favoritos, asi que la
+pagina sale vacia y **la frase «frente a la mas cara del grupo» no se ha podido leer**.* *Para verla
+hace falta un favorito, y eso no lo siembra el ensayo.*
+
+**Lo que hace falta para cerrar estas dos de verdad, y no es codigo:**
+1. *Ampliar el gold del ensayo a **dos cadenas** (hoy `fuente='ensayo'` para las cuatro ofertas).*
+   *Con dos cadenas, `fraseDePrecio` devuelve frase, y la salvedad se puede leer.*
+2. *Sembrar **un favorito** en `a_casa` (hay endpoint; el ensayo no lo usa).*
+
+**Lo que SI queda verificado en pantalla hoy**: *las tres rutas pintan sin errores, y `c_sin_listas`
+dice «Sin lista de casa, asi que no hay nada que contar» -- que es el estado honesto de M03.*
+
