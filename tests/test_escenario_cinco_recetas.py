@@ -47,7 +47,7 @@ LAS_CINCO = [
 @pytest.fixture()
 def libro(tmp_path: Path) -> sqlite3.Connection:
     con = recetas.conecta(tmp_path / "recetas.sqlite3")
-    for clave, nombre, raciones, ingredientes in LAS_CINCO:
+    for _clave, nombre, raciones, ingredientes in LAS_CINCO:
         recetas.crear(con, "ana", nombre, raciones=raciones, ingredientes=ingredientes)
     return con
 
