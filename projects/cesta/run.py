@@ -23,11 +23,17 @@ import io
 import sys
 import threading
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from core import cobertura, config
 from core.runlock import ejecucion_exclusiva
+
+# *** `log_error`: *el texto del fallo, para poder investigarlo despues*. ***
+# *El 18/10/2026 Carrefour fallo en 5,2 s con cero filas y su error solo se IMPRIMIO por
+# pantalla: no quedo en ningun sitio, y la causa no se pudo buscar. Aqui se guarda.*
+from core.runlog import log_error
 
 # Orden a proposito para el modo en fila: primero los lentos. En paralelo el orden
 # solo decide quien arranca antes, pero se conserva porque tambien es el orden en
@@ -129,8 +135,15 @@ def _una_cadena(nombre: str) -> tuple[str, bool, float]:
         # Un colector con CLI propia (Lidl exige origen y region) no puede
         # terminar el proceso diario ni impedir publicar las otras cadenas.
         print(f"FALLO: el colector termino su CLI (codigo {exc.code}); revisa su configuracion")
+        # *Y se guarda: una salida de CLI tambien es un fallo que hay que poder leer.*
+        log_error(nombre, f"salida de CLI (codigo {exc.code})")
     except Exception as exc:  # noqa: BLE001
         print(f"FALLO: {type(exc).__name__}: {exc}")
+        # *** EL TEXTO Y LA TRAZA, *no solo un print*. ***
+        # *Esto era un `print` y nada mas: el mensaje se perdia con la consola.* *El 18/10/2026
+        # Carrefour fallo en 5,2 s con cero filas y su causa no se pudo investigar porque el
+        # error no estaba en ningun sitio.* *Ahora va a data/errores.log con su traza.*
+        log_error(nombre, f"{type(exc).__name__}: {exc}\n" + traceback.format_exc())
     segundos = time.monotonic() - t0
     print(f"terminado en {segundos:.0f}s")
     # Devolver la etiqueta a como estaba: si no, todo lo que imprima despues el
