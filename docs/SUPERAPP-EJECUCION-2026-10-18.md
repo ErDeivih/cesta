@@ -292,3 +292,46 @@ sin alerta y sin errores JS.
 usuarios de sandbox. Antes hay que cerrar la siembra de M00 (que es lo que permite
 tener «sin listas, sin casa y con casa»).
 
+### M00 / 18/10/2026 / EL CATALOGO DE ENSAYO YA EXISTIA (hallazgo de arquitectura)
+
+**Lo que se descubrio, y cambia el plan.** *Iba a construir un catalogo de ensayo. **Ya habia
+uno.*** *Y por el camino se aclaro donde vive el catalogo, que no era donde yo suponia.*
+
+**Arquitectura real del catalogo.** `catalogo.conexion()` **no usa PostgreSQL**: abre DuckDB en
+memoria y monta **cinco vistas sobre parquet** (`grupos`, `enlaces`, `precio_diario`,
+`precio_derivado`, y el resumen), resueltas por **`AJUSTES.gold`** -- `ajustes.py:27`,
+`gold=_ruta("CESTA_GOLD", raiz/"data"/"gold")` -- y `version_vigente.ruta(...)`.
+*Asi que el catalogo y los datos privados son **dos almacenes distintos**: Postgres/SQLite para
+lo privado, parquet para el catalogo.* *Es lo mismo que da por supuesto M19 cuando habla de
+«PostgreSQL y SQLite privados + catalogo/manifiestos».*
+
+**El gold de ensayo que ya existe**: `data/debug/ensayo-gold`, con su puntero `actual.json`
+(version `20260101-000000`, publicada el 11/10) y **los seis parquet**, mas la carpeta de
+version. **Comprobado cargandolo:**
+
+    CESTA_GOLD=data/debug/ensayo-gold
+      grupos      2 filas
+      enlaces     1 fila
+      diario      2 filas
+      derivado    2 filas
+
+*Pequeno, versionado y ya construido.* **No hay que fabricarlo: hay que usarlo.**
+
+**Lo que queda por decidir, y se dice en vez de improvisarlo.** Ese gold tiene **2 grupos**, y
+el escenario del apartado 8 necesita arroz (dos marcas), leche y huevos. **O se amplia el gold
+hasta cubrirlo, o se comprueba que esos dos grupos ya son los que hacen falta.** *No se decide
+por leer el nombre de un fichero: hay que abrir `grupos.parquet` y ver que productos tiene.*
+Y `plataforma/ensayo/catalogo.json` (el fichero versionado de esta misma tanda) queda como
+**especificacion del escenario**, no como almacen: si el gold ya lo cumple, sobra el JSON; si no,
+es la lista de lo que hay que anadirle. **Esa decision necesita ver los datos, y no se ha tomado.**
+
+**Un defecto mio corregido en esta tanda.** El catalogo JSON se escribio con
+`Set-Content -Encoding UTF8`, que **pone BOM**. Se limpiaron **33 ficheros con BOM**: 3 mios y
+**30 preexistentes en `data/debug/`** que no estan seguidos por git. `test_ningun_fichero_
+empieza_por_marca` pasa.
+
+**Siguiente comando concreto.** Abrir `grupos.parquet` del gold de ensayo y ver que dos grupos
+son, para decidir si cubren el apartado 8 o hay que ampliarlos; despues, poner `CESTA_GOLD` en
+`plataforma/ensayo.py` para que `prepara` deje el ensayo con su catalogo, y sembrar recetas,
+despensa y ofertas sobre el.
+
