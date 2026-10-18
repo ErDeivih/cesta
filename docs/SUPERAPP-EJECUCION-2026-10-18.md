@@ -1361,3 +1361,38 @@ no.*
 - *modo tienda medido*
 - *reposicion de favoritos (M08) y la otra lista compartida*
 
+**M05 / «pegar varias lineas con previa»: MEDIDO CON TEXTO DENTRO, Y EN MOVIL.**
+
+*Lo que el volcado de una lista vacia no probaba es la previa **con texto**. Se anadio al guion
+`ENSAYO_PEGAR=1`, que escribe tres lineas en el cuadro y lee lo que sale:*
+
+    /compra/listas (movil 390x844, has_touch)
+
+      | Pegar una lista
+      | Lo que quieres pegar
+      | 3 lineas, 2 con cantidad. La cantidad va a la nota tal como la escribiste:
+      |   no se convierte en envases.
+      | arroz
+      | queda anotado: 2 kg
+      | leche
+      | leche
+      | queda anotado: 1 l
+      | Anadir 3 lineas
+
+*** Y ahi estan las tres cosas que la especificacion pide, leidas en pantalla: ***
+
+  1. **pegar varias lineas**: tres, de un texto con tres renglones
+  2. **con previa**: se ven antes de guardar, y el boton dice cuantas va a anadir
+  3. **sin interpretar «2 kg» como dos envases**: la cantidad va **a la nota** («queda anotado: 2 kg»),
+     y la frase lo dice con esas palabras -- «no se convierte en envases»
+
+*Y las dos leche seguidas se conservan: no se fusionan.*
+
+**Con esto, «pegar varias lineas con previa» queda cumplido de punta a punta**: *logica probada, componente
+probado (6 pruebas), montado en la lista, y **leido en pantalla en movil**.
+
+**Lo que sigue faltando de M05, y no se toca aqui:**
+- *buscador con filtros (categoria, formato, tienda, oferta, preferencias)*
+- *modo tienda medido: deshacer, contador, reordenar, restaurar tras recarga*
+- *reposicion de favoritos (es M08) y la otra lista compartida*
+

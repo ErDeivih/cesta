@@ -149,13 +149,23 @@ def main() -> int:
                 # escribir. Medido: `/compra?q=arroz` da 650 caracteres y ningun resultado, y en
                 # cambio escribiendo en el campo salen 7 000.* *Ese fue uno de los dos errores de
                 # medicion que arrastre durante rondas.*
+                # *** `ENSAYO_PEGAR=1` escribe en el cuadro de pegar y lee la previa. ***
+                # *Es lo unico que un volcado de lista vacia no prueba: que la previa salga **con
+                # texto dentro**, que es cuando se puede leer.*
+                if os.environ.get("ENSAYO_PEGAR"):
+                    try:
+                        caja = pg.locator("textarea#pegar-lista")
+                        caja.fill("2 kg de arroz\nleche\n1 l de leche")
+                        pg.wait_for_timeout(1500)
+                    except Exception as exc:  # noqa: BLE001
+                        print("      no se pudo escribir en el cuadro: " + str(exc)[:70])
                 if "?q=" in ruta:
                     consulta = ruta.split("?q=", 1)[1].split("&")[0]
                     try:
                         campo = pg.locator("input[type='search']").first
                         campo.fill(consulta)
                         pg.keyboard.press("Enter")
-                        pg.wait_for_timeout(7000)
+                        pg.wait_for_timeout(12000)
                     except Exception as exc:  # noqa: BLE001
                         print("      no se pudo buscar: " + str(exc)[:60])
                 texto = pg.inner_text("body")
@@ -165,7 +175,10 @@ def main() -> int:
                     print("      ---- texto entero ----")
                     for linea in texto.split("\n"):
                         if linea.strip():
-                            print("      | " + linea.strip()[:120])
+                            # *El texto de la pagina trae simbolos (el menu ☰) que la consola
+                            # de Windows no sabe escribir: se filtran, no se cae el guion.*
+                            limpio = linea.strip()[:120]
+                            print("      | " + limpio.encode("ascii", "replace").decode("ascii"))
                 for linea in texto.split("\n"):
                     if any(x in linea.lower() for x in
                            ("diferencia", "sin dato", "del grupo", "elige", "de casa",
