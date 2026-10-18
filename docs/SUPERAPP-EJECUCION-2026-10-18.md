@@ -664,3 +664,46 @@ exista.*
 **Asi que M01 queda con cinco correcciones hechas y tres miradas pendientes, y la dependencia
 declarada: M03 primero.** *No se cierra por contar rondas.*
 
+### M16 / 18/10/2026 / CARREFOUR DEL 18: lo que se sabe, y por que no se puede saber mas
+
+**Los datos que hay.** `runs.csv`:
+
+    2026-10-17T07:36:20  carrefour  16561 filas  1 error  6114,1 s  ok=True
+    2026-10-18T09:03:43  carrefour      0 filas  1 error     5,2 s  ok=False
+
+*Y el registro de peticiones del dia, `data/peticiones/carrefour-2026-10-18.json`:*
+
+    peticiones totales: 1342   (de todas las fuentes)
+    www.carrefour.es:      9   <- frente a 550 de dia, 467 de alcampo, 162 de mercadona
+    evitadas: 15  (mercadona 4, dia 3, alcampo 8)  ·  motivos: [«fuera-de-alcance»]
+
+**Lo que eso dice, y lo que no.** *Carrefour hizo **nueve** peticiones y produjo **cero** filas en
+**5,2 segundos**; el dia anterior tardo **6 114 s** para 16 561.* *Asi que no «trajo poco»: **se
+paro casi al empezar**.*
+
+*Pero `evitadas` y `motivos` son del **total del dia**, y ahi no hay ninguna evitada de Carrefour.
+Asi que el fichero de peticiones **no explica** por que se paro.*
+
+**Lo que NO se puede saber, y es un defecto de la herramienta, no de la investigacion.**
+*`runs.csv` guarda **cuantas** errores hubo, pero **no su texto**.* *Y en disco no queda nada mas
+de esa pasada:*
+
+    ningun fichero escrito entre las 08:50 y las 09:10 del 18
+    ningun raw de carrefour del 18
+    ningun bronze de carrefour del 18
+
+*O sea: **la causa del fallo no esta en ningun sitio**. Se puede decir «fallo en 5 segundos con 9
+peticiones» y no se puede decir por que, porque el error no se guardo.*
+
+*** Y eso es lo que hay que arreglar primero ***: *sin el texto del error, el siguiente fallo de
+Carrefour volvera a ser invisible.* *M18 lo pide con estas palabras: «codigos de salida distinguen
+exito/degradado/fallo» y «log rotado».* *Hoy hay un codigo y no hay log.*
+
+**Y lo que YA se sabe con certeza, que era la confusion a evitar**: *«0 filas» **no** es «catalogo
+vacio», y este caso lo demuestra: el dia anterior trajo 16 561.* *Un cero con error **no** es una
+cadena sin surtido; es una pasada que no llego a hacer su trabajo.*
+
+**Siguiente comando concreto.** Anadir a la pasada el guardado del **texto** del error (por fuente
+y fecha) y del **traceback**, en un fichero rotado; despues, reproducir Carrefour desde lo que se
+guarde, **sin lanzar otra ingesta** hasta verificar tarea y lock.
+
