@@ -97,7 +97,7 @@ def construye(destino: Path, plantilla: Path = PLANTILLA_POR_DEFECTO) -> dict:
         "resumen": "resumen.parquet",
     }
     # *La plantilla tiene que existir: es de donde sale el esquema.*
-    for nombre, fichero in FICHERO.items():
+    for _nombre, fichero in FICHERO.items():
         if not (plantilla / fichero).exists():
             raise SystemExit(f"falta {plantilla / fichero}: sin plantilla no hay esquema")
 
