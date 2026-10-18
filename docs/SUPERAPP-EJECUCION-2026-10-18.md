@@ -1660,3 +1660,47 @@ permisos -- es cierto; lo que no median es dinero.**
 - **la prueba de componente** de que la pantalla enseña el 409 y pide confirmar
 - **la suite entera**: se interrumpio dos veces; 53 pruebas dirigidas pasan
 
+### M06 / REGLA 3 CERRADA EN LO QUE SE PUEDE MEDIR. Estado de la entrega correctiva.
+
+*La cadena **cotizacion -> confirmacion -> persistencia** se demuestra por HTTP, con servidor y base de
+verdad (`scripts/aceptacion_m06_cierre.py`):*
+
+    ok    la lista trae la cotizacion con su sello
+    ok    sin sello se puede cerrar, pero NO se marca confirmado
+    ok    el importe dice de donde sale (calculado)
+    ok    un sello que no coincide da 409
+    ok    el 409 NO ha escrito ninguna compra
+    ok    con el sello bueno cierra y queda confirmado
+    ok    con el sello bueno la diferencia es cero, no null
+    ok    publicar otro catalogo invalida la previa y da 409
+    ok    y el sello nuevo es distinto del viejo
+
+    == TODO BIEN ==
+
+*Y la novena y la decima son la regla 3: **el sello lleva la version del catalogo**, y se prueba con un
+cambio **entre la comprobacion y la persistencia**, no entre dos funciones: se republica el gold con el
+arroz a 200 y el cierre con el sello viejo da 409 con la previa nueva.*
+
+*Ademas, `cotiza` devuelve `por_linea` y `/cerrar` **usa esos precios tal cual** en vez de recalcular:
+lo que se comprueba y lo que se guarda salen del mismo calculo.*
+
+*Y el diagnostico de David sigue con los cuatro casos correctos: `estimado_cent` null, `cadena` null con
+motivo y alternativas, `exactos_mal` 0, `precision_observada` 1,0, `viaje_fijo_cent` null.*
+
+**Puertas de esta entrega:**
+
+    suite entera ....... 2125 passed, 17 skipped, 0 failed
+    ruff ............... limpio
+    documentos ......... TODO BIEN
+    diagnostico ........ los cuatro casos correctos
+
+**Lo que sigue pendiente del contrato, y no se disfraza:**
+- **serializar los cierres concurrentes en la transaccion** y que un reintento no cree otra compra
+  (`almacen.cierra_compra` sigue releyendo lineas).
+- **prueba de componente** de que la pantalla enseña el 409 y pide confirmar.
+- **construir el banco M07** (200 pares con evidencia y autoria declaradas) y seguir M07-M22.
+
+*Y tres fallos mios por el camino, los tres del mismo tipo: mandar el EAN donde el motor espera
+`fuente:id_fuente`; pedir el sello de un carrito vacio antes de meter la linea; y un `del` que se llevo
+por delante el cierre de un `raise`. **Los tres los cazo el dato, no el razonamiento.***
+
