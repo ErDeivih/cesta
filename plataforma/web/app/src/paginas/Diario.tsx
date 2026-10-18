@@ -150,7 +150,17 @@ function DeLaCompra({ fecha }: { fecha: string }) {
             <select
               className="rounded-campo border border-borde bg-papel px-2 py-1"
               defaultValue=""
-              onChange={(e) => setElegida(e.target.value || null)}
+              onChange={(e) => {
+                const id = e.target.value || null
+                setElegida(id)
+                // *** Y SE GUARDA, *por persona*. ***
+                // *El servidor la guarda por `usuario_id` (`PUT /api/preferencias`), asi que lo
+                // que elige A no lo ve B en el mismo aparato.*
+                // *Si el guardado falla, la eleccion **sigue valiendo para esta pantalla**: no se
+                // deshace lo que la persona acaba de elegir por un fallo de red. La proxima vez
+                // que entre no la encontrara, y eso es lo peor que pasa.*
+                if (id) void guardaPreferencia('lista_del_diario', id).catch(() => {})
+              }}
             >
               <option value="">Elige una lista</option>
               {(listas.data ?? []).map((l) => (
