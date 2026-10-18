@@ -108,6 +108,18 @@ export async function yo(): Promise<Sesion> {
   }
 }
 
+/** *** UNA PREFERENCIA DE ESTA PERSONA, *y solo suya*. ***
+ *
+ *  *El servidor la guarda por `usuario_id` (`almacen.guarda_preferencia`) y la devuelve en
+ *  `/api/yo` dentro de `preferencias`.* *Asi que **no** es una preferencia del navegador: dos
+ *  personas en el mismo aparato no se pisan.*
+ *
+ *  *La usa el diario para recordar con que lista se anota.*
+ */
+export async function guardaPreferencia(clave: string, valor: unknown): Promise<void> {
+  await escribe<{ ok?: boolean }>('/preferencias', 'PUT', { clave, valor })
+}
+
 export async function misListas(): Promise<Lista[]> {
   const r = await pide<{ listas: Lista[] }>('/listas')
   return r.listas ?? []
@@ -346,7 +358,7 @@ export async function cerrarCompra(listaId: string): Promise<CierreDeCompra> {
  *  lee; sin cuerpo tampoco se pone `Content-Type`, que es lo mismo dicho al
  *  reves.
  */
-export async function escribe<T>(ruta: string, metodo: 'POST' | 'PATCH' | 'DELETE',
+export async function escribe<T>(ruta: string, metodo: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
                                  cuerpo?: unknown): Promise<T> {
   const respuesta = await fetch(`/api${ruta}`, {
     method: metodo,
