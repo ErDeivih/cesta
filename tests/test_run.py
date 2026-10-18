@@ -90,6 +90,59 @@ def test_una_cadena_que_revienta_no_tumba_a_las_demas():
         ("dia", True), ("aldi", False), ("mercadona", True)]
 
 
+def test_la_cadena_que_revienta_DEJA_SU_ERROR_ESCRITO(monkeypatch, tmp_path):
+    """*** El 18/10/2026 Carrefour fallo y su error no quedo en ningun sitio. ***
+
+    *Se imprimia por pantalla y nada mas, y esa pantalla no la guarda nadie.* *Asi que la causa
+    de un fallo de **5,2 segundos con cero filas** no se pudo investigar.*
+
+    *Esta prueba fija lo que ahora pasa: la cadena que revienta llama a `log_error` con **su
+    nombre** y con **el texto y la traza** del fallo.*
+    """
+    llamadas = []
+    monkeypatch.setattr(run, "log_error", lambda fuente, texto: llamadas.append((fuente, texto)))
+
+    def falso(nombre):
+        modulo = mock.Mock()
+        if nombre == "carrefour":
+            modulo.main.side_effect = RuntimeError("la web devolvio un desafio")
+        else:
+            modulo.main.return_value = 0
+        return modulo
+
+    with mock.patch.object(run.importlib, "import_module", side_effect=lambda r: falso(r.split(".")[-1])):
+        run._una_cadena("carrefour")
+
+    assert len(llamadas) == 1, "un fallo, una entrada"
+    fuente, texto = llamadas[0]
+    assert fuente == "carrefour"
+    assert "RuntimeError" in texto, "el tipo, para saber que clase de fallo fue"
+    assert "desafio" in texto, "el mensaje del servidor, que es el que dice POR QUE"
+    assert "Traceback" in texto, "y la traza, que dice DONDE"
+
+
+def test_una_cadena_que_sale_por_su_CLI_tambien_deja_constancia(monkeypatch):
+    """*Lidl tiene CLI propia y puede cerrarse sola. Ese camino tambien es un fallo.*"""
+    llamadas = []
+    monkeypatch.setattr(run, "log_error", lambda fuente, texto: llamadas.append((fuente, texto)))
+
+    def falso(nombre):
+        modulo = mock.Mock()
+        if nombre == "lidl":
+            modulo.main.side_effect = SystemExit(2)
+        else:
+            modulo.main.return_value = 0
+        return modulo
+
+    with mock.patch.object(run.importlib, "import_module", side_effect=lambda r: falso(r.split(".")[-1])):
+        _, bien, _ = run._una_cadena("lidl")
+
+    assert bien is False
+    assert len(llamadas) == 1
+    assert llamadas[0][0] == "lidl"
+    assert "codigo" in llamadas[0][1].lower()
+
+
 def test_el_registro_de_ejecuciones_aguanta_varios_hilos(tmp_path):
     import csv
 
