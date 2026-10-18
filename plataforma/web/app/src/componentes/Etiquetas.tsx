@@ -169,9 +169,9 @@ export function SelloAhorro({ pct, comparable, dudoso }: {
   return (
     <span
       className="cifra text-etiqueta font-semibold text-bien "
-      title="Lo que te ahorras comprándolo en la cadena más barata en vez de en la más cara"
+      title="Del mas barato al mas caro del grupo de equivalencias. No son necesariamente el mismo articulo: cada uno con su EAN. No es el ahorro de este."
     >
-      ahorras un {porcentaje(pct)}
+      hasta un {porcentaje(pct)} en el grupo
     </span>
   )
 }
