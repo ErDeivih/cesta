@@ -443,6 +443,11 @@ function DondeComprar() {
             sub={`Los ${d.oportunidades.productos.length} productos donde más se nota, de mayor a menor diferencia`}
           >
             <p className="mb-2 text-cuerpo text-tinta-suave">{d.oportunidades.filtros}.</p>
+            <p className="mt-2 text-cuerpo text-tinta-suave">
+              La diferencia es entre la cadena mas barata y la mas cara de cada grupo, y los
+              dos extremos se ven en la tabla con su cadena: pueden ser articulos distintos -- mismo
+              envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
+            </p>
             <TablaScroll etiqueta="Productos donde más se nota" minAncho="44rem">
               <table className="w-full border-collapse text-cuerpo">
                 <thead>
