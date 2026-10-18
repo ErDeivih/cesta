@@ -244,3 +244,51 @@ cargaba**, no una regresion; se comprobo antes de dar nada por roto.*
 **Siguiente ID + comando.** M02: prueba de componente de `Producto` con respuesta
 controlada (pendiente -> dato -> ficha), que es la que habria cazado el blanco del 18.
 
+### M02 / CERRADO con alcance / 18/10/2026
+
+**Capacidad y alcance.** Comprobador oficial de hooks, `ErrorBoundary` montado, y
+**prueba de componente montado de `Producto` con la respuesta real de la API**. Es la
+aceptacion literal de M02.
+
+**Caso reproducido antes.** El 18/10/2026 la ficha se quedo **en blanco** por una
+infraccion de hooks y **ninguna prueba lo vio**: todas eran de funciones.
+
+**Cambio y contrato.**
+- `eslint.config.js` con `react-hooks/rules-of-hooks` en **error**; scripts `lint` y
+  `lint:hooks`.
+- `src/componentes/ErrorBoundary.tsx`, montado en `App.tsx` envolviendo `<Routes>`.
+- `vitest.config.ts` (jsdom), `src/pruebas/setup.ts` con `matchMedia` y
+  `ResizeObserver` (que jsdom no trae), y `npm run test:componentes`.
+- **`src/pruebas/fixtures/producto-147509.json`: la respuesta REAL capturada** --
+  `producto` con **13 claves y sin `ean`**; `grupo.productos` con **55 claves y `ean`**.
+  *Es el fixture de contrato que pide M04, y sustituyo a los datos escritos a mano, que
+  se dejaban campos y hacian reventar el componente por un dato incompleto.*
+
+**Comandos ejecutados + exit codes + resultados.**
+- `npx eslint` sobre un fichero con las tres infracciones -> **3 errores, exit 1**:
+  retorno de una linea, **retorno partido** y **componente flecha**. *Las dos ultimas
+  son las que la prueba textual no ve.*
+- `npm run test:componentes` -> **9 pruebas, 9 pasan** (4 de `ErrorBoundary`, 5 de
+  `Producto`).
+- `npm run lint` -> exit 0, 0 errores, 3 avisos. `npx tsc --noEmit` limpio.
+- `npm test` (runner de Node) -> **104 pass, 0 fail**. `npm run build` ok.
+- `ruff` limpio; `comprueba_documentos` TODO BIEN.
+
+**Evidencia visual revisada.** Servido por 8080: ficha **2505 caracteres a 3, 5 y 9 s**,
+sin alerta y sin errores JS.
+
+**Limitaciones y que NO se ha probado.**
+- **El reintento del `ErrorBoundary` no esta probado como remontaje.** *React 19
+  reintenta en sincrono ante un fallo concurrente, asi que la prueba medía el reintento
+  de React; se sustituyo por «el boton existe y se puede pulsar» y queda dicho.*
+- **`Producto` se prueba con la consulta doblada**, no contra HTTP real: eso es lo que
+  hara M04 con endpoint montado. **No se ha probado el cambio de articulo ni la cache.**
+- Quedan 3 avisos de lint (directivas sobrantes) y el `exhaustive-deps` de
+  `Unirse.tsx:81`, que **es un aviso real**.
+- **`canonical` del fixture:** el JSON capturado es de la base de **casa** (8080). Para
+  llevarlo a un ensayo hay que recapturarlo contra el sandbox de M00.
+
+**Siguiente ID + comando.** **M03**: eleccion explicita de lista en Calorias, con
+usuarios de sandbox. Antes hay que cerrar la siembra de M00 (que es lo que permite
+tener «sin listas, sin casa y con casa»).
+

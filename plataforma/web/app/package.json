@@ -12,7 +12,8 @@
     "test": "node --test \"tests/**/*.test.mjs\"",
     "test:cocina": "node --test tests/cocina.test.mjs",
     "lint": "eslint src",
-    "lint:hooks": "eslint src --rule '{\"react-hooks/rules-of-hooks\":\"error\"}'"
+    "lint:hooks": "eslint src --rule '{\"react-hooks/rules-of-hooks\":\"error\"}'",
+    "test:componentes": "vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.2",
