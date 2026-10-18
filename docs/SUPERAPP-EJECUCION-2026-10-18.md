@@ -594,3 +594,40 @@ contra 8080: se hace contra el ensayo, con la cuenta `c_sin_listas` recien cread
 - Mirar en pantalla `Grupo.tsx` y `Favoritos.tsx` (hechos, sin revisar).
 - Mirar `LoQueSeCompra.tsx` **con una cuenta sin historial**, en el ensayo.
 
+**M01 / la auditoria de `Panel.tsx`, y su conclusion: NO tiene el defecto.**
+
+*Los tres sitios que quedaban, mirados uno a uno:*
+
+    :397 y :473  «Oportunidades»: una tabla con el producto, la cadena MAS BARATA con su
+                 precio, la MAS CARA con su precio, y la diferencia **con su unidad**
+                 (`eurosUnidad(p.diferencia_cent, p.unidad)`).
+                 *No dice «te ahorras X»: enseña los dos extremos.* Es honesta por construccion.
+    :628         «Precio por unidad ... sobre N grupos que tienen a la vez marca propia y de
+                 marca»: media de propia, media de marca y su diferencia.
+                 *Es una **estadistica agregada**, no el ahorro de un articulo delante de ti.*
+
+*Asi que `Panel.tsx` **no tiene el defecto** que si tenian la ficha, la tabla del buscador, el
+grupo y favoritos.* *Se dice, porque una auditoria que encuentra un defecto en cada sitio es
+tan sospechosa como una que no encuentra ninguno.*
+
+**Lo unico que le falta, y es menor**: *la tabla de oportunidades no dice que el grupo puede
+mezclar articulos distintos.* *No la engaña -- se ven las dos cadenas y los dos precios --,
+pero podria decirlo.* *Queda anotado como mejora, no como defecto.*
+
+**Y CON ESTO TERMINA LA AUDITORIA DE M01.** *Las seis superficies, con su estado real:*
+
+    1. Producto.tsx (tabla) ......... corregida y VERIFICADA en pantalla
+    2. Producto.tsx (apartado) ...... corregida y VERIFICADA en pantalla
+    3. TablaResultados.tsx .......... corregida y VERIFICADA en pantalla (los <th>)
+    4. Grupo.tsx .................... corregida; PENDIENTE de mirar
+    5. Favoritos.tsx ................ corregida; PENDIENTE de mirar
+    6. LoQueSeCompra.tsx ............ corregida; la condicion de render esta explicada
+                                      (solo con cuenta sin historial) y se comprueba en el ensayo
+    Panel.tsx ....................... auditada: NO tiene el defecto
+
+*De siete sitios, cinco tenian el defecto y estan corregidos; uno no lo tenia; y de los seis
+corregidos, tres estan verificados en pantalla.*
+
+**Lo que falta para cerrar M01**: mirar `Grupo.tsx` y `Favoritos.tsx` en pantalla con el ensayo,
+y mirar `LoQueSeCompra.tsx` con una cuenta sin historial. **Tres miradas, no mas codigo.**
+
