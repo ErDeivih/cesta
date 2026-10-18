@@ -21,6 +21,18 @@ de pruebas.*
 | La lista elegida se recuerda **por persona**, no por navegador | *`PUT /api/preferencias`, servidor por `usuario_id`* |
 | Ausencia de dato no se convierte en cero | *7 pruebas del §8 + 5 del diario + las de `Cocina`/`Tendencias`* |
 | El error de una cadena de recolección ya no se pierde | *`log_error` con rotación, y dos pruebas de que se llama* |
+| **El escenario del §8 pasa entero, medido por HTTP** | *A: Casa + Viaje y **5 recetas**; B: Mi lista y **0 recetas**; C: ninguna. `B → /api/listas/<la de A>` = **404**.* *Y dos marcas con dos EAN sin fusionar* |
+| **La suite entera, en una base que funcione** | *`2114 passed, 17 skipped, 0 failed`* |
+
+**Y una nota sobre cómo se ha medido el escenario**, porque es la parte que más se suele saltar:
+*no se ha declarado por una pantalla que pinte. Se ha medido con tres cuentas reales del banco de
+ensayo, pidiendo `/api/listas` y `/api/recetas` con la cookie de cada una, y comprobando **lo que no se
+ve**: B pidiendo la lista de A recibe un **404**.*
+
+*Detrás de eso había un defecto que ninguna pantalla podía enseñar: la API de recetas abría
+`data/recetas.sqlite` —**el de casa**— porque la ruta sólo se podía fijar en código. Devolvía cero
+recetas para todo el mundo, y una pantalla vacía no distingue «no tienes recetas» de «estoy mirando el
+recetario de otra casa». Se arregló con `CESTA_RECETAS`.*
 
 **Reservas, y son de datos, no de código:**
 - *Calorías sólo puede enseñar el dato de **1 de cada 5** productos (21,8 % de `grupo` con `kcal_100g`).*
