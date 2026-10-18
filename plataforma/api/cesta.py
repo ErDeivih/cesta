@@ -604,7 +604,12 @@ def donde_comprar(peticiones: list[Peticion],
 # 8 lineas son 1,7 millones --, asi que la exploracion exhaustiva de verdad no cabe para una lista de
 # la compra de verdad. *Por debajo del limite se enumera y el resultado es el optimo; por encima se usa
 # la heuristica, y la respuesta lo dice.*
-_LIMITE_EXHAUSTIVO = 200_000
+_LIMITE_EXHAUSTIVO = 200_000
+# *** Lo que se estima que cuesta ir a una segunda tienda, en centimos. ***
+# *No es un gasto medido: es una estimacion de tiempo y viaje, y se llama asi para que quien la
+# lea sepa que no es una cuenta.* *Estaba escrita dentro de una comparacion (`>= 150`), sin
+# nombre y sin salir nunca al que la pantalla pudiera leer.*
+VIAJE_CENT = 150
 
 
 def _coste_con_lo_agrupado(elecciones: list[Eleccion]) -> int:
@@ -739,8 +744,23 @@ def _mejor_reparto(peticiones, por_cadena, max_tiendas, una_tienda) -> dict | No
         return None
     if referencia is not None:
         mejor["ahorro_cent"] = referencia - mejor["total_cent"]
-        # Ir a dos tiendas cuesta tiempo. Si el ahorro es ridiculo, se dice.
-        mejor["merece_la_pena"] = mejor["ahorro_cent"] >= 150
+        # *** EL COSTE DE VIAJE, POR SEPARADO Y CON NOMBRE. ***
+        # *La especificacion pide «mostrar ahorro bruto y coste de viaje opcional por
+        # separado» (M06).* *Hasta hoy el coste existia como un **150 escrito dentro de una
+        # comparacion** -- `ahorro_cent >= 150` -- que solo servia para poner un booleano:*
+        # **el numero no salia nunca**, asi que la pantalla podia decir «no merece la pena»
+        # sin decir cuanto cuesta la pena ni cuanto se ahorra.*
+        #
+        # *Ahora viajan las tres cifras: lo que se ahorra (**bruto**), lo que cuesta ir, y lo
+        # que queda.* *El booleano se sigue dando, porque hay pantallas que solo necesitan eso,
+        # pero se calcula con el numero de arriba y no con un literal suelto.*
+        #
+        # *150 centimos es una **estimacion de tiempo y viaje**, no un dato medido: por eso se
+        # llama `VIAJE_CENT` y no se presenta como un gasto real. Quien lo pinte puede decir de
+        # donde sale.*
+        mejor["viaje_cent"] = VIAJE_CENT
+        mejor["neto_cent"] = mejor["ahorro_cent"] - VIAJE_CENT
+        mejor["merece_la_pena"] = mejor["ahorro_cent"] >= VIAJE_CENT
     return mejor
 
 
