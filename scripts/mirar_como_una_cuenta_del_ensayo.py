@@ -80,6 +80,7 @@ def main() -> int:
     usuario = sys.argv[1] if len(sys.argv) > 1 else "c_sin_listas"
     clave = sys.argv[2] if len(sys.argv) > 2 else "prueba-larga-1"
     rutas = sys.argv[3:] or ["/compra", "/grupo/900001", "/favoritos"]
+    volcar = os.environ.get("ENSAYO_VOLCAR") == "1"
 
     print("== 1. el ensayo ==")
     # *`ENSAYO_DOS_CADENAS=1` construye la variante del gold: con dos cadenas,
@@ -141,6 +142,11 @@ def main() -> int:
                 texto = pg.inner_text("body")
                 print(f"   {ruta:20} main={pg.locator('main').count()} "
                       f"texto={len(texto):5} errores={errores}")
+                if volcar:
+                    print("      ---- texto entero ----")
+                    for linea in texto.split("\n"):
+                        if linea.strip():
+                            print("      | " + linea.strip()[:120])
                 for linea in texto.split("\n"):
                     if any(x in linea.lower() for x in
                            ("diferencia", "sin dato", "del grupo", "elige", "de casa",

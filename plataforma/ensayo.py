@@ -368,7 +368,7 @@ def siembra(nombre: str = "propio") -> dict:
 
     almacen.arranca()
 
-    resumen: dict = {"cuentas": {}, "listas": {}, "recetas": [], "despensa": [], "avisos": []}
+    resumen: dict = {"cuentas": {}, "listas": {}, "recetas": [], "despensa": [], "avisos": [], "favoritos": []}
 
     # *** Las tres configuraciones que pide M03.*** *La clave es unica: dos corridas fallan en vez
     # de duplicar, que es lo que hace falta para que el escenario sea reproducible.*
@@ -492,6 +492,15 @@ def siembra(nombre: str = "propio") -> dict:
                                   "id": aviso.get("id")})
     except Exception as exc:  # noqa: BLE001
         resumen["avisos"].append("ERROR: " + str(exc)[:160])
+
+    # *** UN FAVORITO, para ver la pantalla de favoritos con algo dentro. ***
+    # *Sin el, Favoritos.tsx sale vacia y su frase no se puede leer: la correccion esta hecha
+    # y NO verificada.* *El favorito es del grupo del arroz (900001).*
+    try:
+        almacen.anade_favorito(str(resumen["cuentas"]["a_casa"]), 900001, None)
+        resumen["favoritos"] = [900001]
+    except Exception as exc:  # noqa: BLE001
+        resumen["favoritos"] = ["ERROR: " + str(exc)[:160]]
     return resumen
 
 
@@ -562,6 +571,7 @@ def main(argv: list[str] | None = None) -> int:
             print("      " + str(r))
         print("  despensa: " + str(resumen["despensa"]))
         print("  avisos: " + str(resumen["avisos"]))
+        print("  favoritos: " + str(resumen["favoritos"]))
         print("  catalogo del apartado 8: arroz A y B, leche, huevos")
         # *Un error de siembra NO puede salir con 0.*
         fallos = [u for u, i in resumen["cuentas"].items() if str(i).startswith("ERROR")]
