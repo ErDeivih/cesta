@@ -1,72 +1,120 @@
-/** *** QUE ES «EL MISMO ARTICULO» Y QUE ES UNA ALTERNATIVA. ***
+/** *** TRES DECISIONES DISTINTAS, QUE ESTABAN METIDAS EN UNA. ***
+
+ *  *Caso real medido el 18/10/2026, ficha de `dia/147509` («Azafran en hebras Pote 0,4 g»):*
  *
- *  *Esto decide si una diferencia de precio se puede contar como ahorro **del articulo que has
- *  elegido**, o si es otra cosa y hay que decirlo.*
+ *      ELEGIDO   dia:147509        Pote       0,0004 kg   687500 ¢/kg   2,75 EUR
+ *      GRUPO
+ *        carrefour 699603651       Pote       (sin cantidad) ud   299 ¢/ud   2,99 EUR
+ *        mercadona 8370            Hacendado  0,0004 kg   487500 ¢/kg   1,95 EUR
  *
- *  **El defecto que lo trajo, medido el 18/10/2026 con datos reales de la ficha de
- *  `dia/147509`:**
+ *  *** Y la ficha metia tres preguntas en una sola: ***
  *
- *      elegido    dia:147509      EAN 8412206003235   Pote       0,4 g   687 500 ¢/kg   2,75 EUR
- *      grupo
- *        carrefour 699603651      EAN 8412206003235   Pote       400 mg        299 ¢/ud   2,99 EUR
- *        mercadona 8370           EAN 8402001022050   Hacendado  0,4 g     487 500 ¢/kg   1,95 EUR
- *        dia       147509         EAN 8412206003235   Pote       0,4 g     687 500 ¢/kg   = este
- *      ahorro_pct del grupo: 41,0
+ *  1. **¿Es el mismo articulo?** *Solo lo dice el **EAN**.*
+ *  2. **¿Se pueden comparar los precios?** *Solo si la base es la misma: **misma unidad**, y
+ *     **peso neto con peso neto** o **escurrido con escurrido**.* *`ud` frente a `kg` no se resta,
+ *     aunque sea el mismo paquete.*
+ *  3. **¿Se puede ofrecer?** *Y eso es otra cosa mas.*
  *
- *  *La ficha decia **«Cuesta un 41 % mas que en Mercadona»**.* *Y Mercadona es **azafran
- *  Hacendado**: otra marca, otro EAN, **otro articulo**.* *Un 41 % de ahorro del articulo elegido
- *  que no existe.*
+ *  *Al mezclarlas salieron los dos errores:*
  *
- *  *** Dos condiciones, y las dos hacen falta ***:
+ *  - *el Pote de Carrefour tiene **el mismo EAN** y salia en «no son este articulo», **que es
+ *    falso**: es el mismo articulo; lo que no se puede es comparar 2,99 EUR/ud con 6,87 EUR/g.*
+ *  - *y el Hacendado, que es **otro articulo**, se restaba del elegido y daba «un 41 % mas barato»,
+ *    **que tambien es falso**.*
  *
- *  1. **Mismo EAN.** *Es el unico identificador que dice «es el mismo producto».* *Marcas y nombres
- *     se parecen y no bastan.* *Sin EAN en alguno de los dos **no se afirma**: no saberlo no es
- *     saber que son iguales.*
- *  2. **Misma unidad de comparacion.** *El propio codigo ya avisa de esto: restar EUR/kg de EUR/ud
- *     es el disparate que el proyecto tiene escrito en tres sitios.* *En el caso de arriba,
- *     Carrefour **si** tiene el mismo EAN pero su precio va **por unidad** y el elegido **por kg**:
- *     no se comparan, y por eso el mismo articulo **no da ninguna frase** aqui.*
+ *  *** Y una cuarta trampa, la que costo una ronda entera ***: *el objeto `producto` que devuelve
+ *  `/api/producto` **no trae `ean`** (tiene 13 claves y ninguna es esa).* *Asi que filtrar con
+ *  `producto.ean` **rechazaba tambien las coincidencias exactas**, y el defecto se disfrazaba de
+ *  arreglo: la frase incorrecta desaparecia porque desaparecia **todo**.*
  *
- *  *Lo que no cumple las dos es **una alternativa**, y va en su apartado, con su nombre y su
- *  marca, **sin restar nada**.*
+ *  *Por eso aqui no se pregunta «¿son iguales?» con un `boolean` que confunde «no» con «no lo se»:*
+ *  *se devuelve **`'no-verificada'`** cuando falta el dato, y la pantalla lo dice asi.*
  */
 
-/** Lo minimo que hace falta para decidir: el EAN y la unidad de comparacion. */
-export interface ConEanYUnidad {
+/** Lo minimo para decidir. */
+export interface ConIdentidad {
   ean?: string | null
   unidad?: string | null
+  /** *El precio va por peso escurrido.* *Mezclarlo con el neto es restar dos cosas distintas.* */
+  precio_por_escurrido?: boolean | null
+}
+
+/** *** ¿Es el mismo articulo? *** *`'no-verificada'` NO es «no»: es que no se sabe.* */
+export type Identidad = 'mismo' | 'distinto' | 'no-verificada'
+
+/** *El EAN, sin espacios.* *Vacio es «no lo se», no «no tiene».* */
+function limpiaEan(ean: string | null | undefined): string {
+  return (ean ?? '').trim()
 }
 
 /**
- * ¿Son el mismo articulo? Mismo EAN **y** misma unidad.
+ * **La identidad del articulo, con tres respuestas y no dos.**
  *
- * *Sin EAN en alguno de los dos devuelve `false`: **no se puede afirmar**, y una afirmacion sin
- * dato es justo lo que no se hace.*
+ * *Sin EAN en cualquiera de los dos: `'no-verificada'`.* *Decir «distinto» sin dato seria afirmar
+ * algo que no se sabe -- y la pantalla lo diria con esas palabras.*
  */
-export function esMismoArticulo(a: ConEanYUnidad, b: ConEanYUnidad): boolean {
-  const eanA = (a.ean ?? '').trim()
-  const eanB = (b.ean ?? '').trim()
-  if (!eanA || !eanB) return false
-  if (eanA !== eanB) return false
-  return (a.unidad ?? null) === (b.unidad ?? null)
+export function identidad(elegido: ConIdentidad, candidato: ConIdentidad): Identidad {
+  const a = limpiaEan(elegido.ean)
+  const b = limpiaEan(candidato.ean)
+  if (!a || !b) return 'no-verificada'
+  return a === b ? 'mismo' : 'distinto'
 }
 
-/** Los que **son** el mismo articulo que el elegido.
+/**
+ * **¿Se pueden restar los precios?** *Misma base: misma unidad y misma convencion de peso.*
  *
- *  *Ojo: **incluye al elegido si esta en la lista**.* *Esta funcion no puede distinguirlo -- solo ve
- *  EAN y unidad --, asi que **quien la llama tiene que quitarlo** si su lista lo trae.* *Se dice
- *  aqui porque el primer comentario afirmaba lo contrario, y la prueba lo encontro.* */
-export function mismosArticulos<T extends ConEanYUnidad>(
-  elegido: ConEanYUnidad,
-  candidatos: T[],
-): T[] {
-  return candidatos.filter((c) => esMismoArticulo(elegido, c))
+ * *`ud` y `kg` no se restan ni siendo el mismo paquete: es el disparate que el proyecto tiene
+ * escrito en tres sitios.*
+ */
+export function precioComparable(a: ConIdentidad, b: ConIdentidad): boolean {
+  if ((a.unidad ?? null) !== (b.unidad ?? null)) return false
+  return Boolean(a.precio_por_escurrido) === Boolean(b.precio_por_escurrido)
 }
 
-/** Los que **no** lo son: se enseñan aparte, como alternativas, y no restan nada. */
-export function alternativas<T extends ConEanYUnidad>(
-  elegido: ConEanYUnidad,
+/** *Mismo articulo **y** precios comparables: el unico caso en que una diferencia es un ahorro.* */
+export function esAhorroDelElegido(a: ConIdentidad, b: ConIdentidad): boolean {
+  return identidad(a, b) === 'mismo' && precioComparable(a, b)
+}
+
+export interface Clasificado<T> {
+  /** *Mismo articulo y se puede comparar: aqui si hay ahorro del elegido.* */
+  comparables: T[]
+  /** *Mismo articulo, pero el precio va en otra base: **se dice**, no se resta.* */
+  mismoSinComparar: T[]
+  /** *Otro articulo: alternativa, y no se resta.* */
+  distintas: T[]
+  /** *No se sabe si es el mismo: ni se resta ni se llama alternativa.* */
+  sinVerificar: T[]
+}
+
+/**
+ * **Parte el grupo en cuatro, no en dos.** *Quien pinta usa los cuatro: los dos del medio son los
+ * que antes se perdian.*
+ *
+ * *El elegido, si viene en la lista, cae en `comparables` consigo mismo; quien llame lo quita.*
+ */
+export function clasificaGrupo<T extends ConIdentidad>(
+  elegido: ConIdentidad,
   candidatos: T[],
-): T[] {
-  return candidatos.filter((c) => !esMismoArticulo(elegido, c))
+): Clasificado<T> {
+  const salida: Clasificado<T> = {
+    comparables: [],
+    mismoSinComparar: [],
+    distintas: [],
+    sinVerificar: [],
+  }
+  for (const c of candidatos) {
+    switch (identidad(elegido, c)) {
+      case 'mismo':
+        if (precioComparable(elegido, c)) salida.comparables.push(c)
+        else salida.mismoSinComparar.push(c)
+        break
+      case 'distinto':
+        salida.distintas.push(c)
+        break
+      default:
+        salida.sinVerificar.push(c)
+    }
+  }
+  return salida
 }

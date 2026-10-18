@@ -36,7 +36,7 @@ import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
-import { esMismoArticulo, alternativas } from '../logica/grupo'
+import { clasificaGrupo, esAhorroDelElegido } from '../logica/grupo'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
@@ -211,6 +211,18 @@ export function Producto() {
       .filter((f) => f.valor !== null)
   })()
 
+  // **La identidad sale de `miembro`, NO de `producto`.**
+  //
+  // *El objeto `producto` que devuelve `/api/producto` tiene 13 claves y **ninguna es `ean`**
+  // (medido el 18/10/2026).* *Filtrar con `producto.ean` rechazaba **todo**, tambien las
+  // coincidencias exactas, y el defecto se disfrazaba de arreglo: la frase incorrecta desaparecia
+  // porque desaparecia todo.*
+  //
+  // *`miembro` es la entrada del grupo que corresponde a este producto -- se busca por `fuente` e
+  // `id_fuente` mas arriba --, y **esa si trae `ean`**.* *Si no lo trae, `identidad()` devuelve
+  // `'no-verificada'`: no se afirma ni que si ni que no.*
+  const conIdentidad = miembro ?? producto
+
   const masBarato = (() => {
     if (!grupo || producto.precio_unidad_cent === null) return null
     const mio = producto.precio_unidad_cent
@@ -219,11 +231,10 @@ export function Producto() {
       (p) =>
         p.fuente !== producto.fuente &&
         p.comparable &&
-        // **Y tiene que ser EL MISMO ARTICULO, no solo el mismo grupo.**
-        // *Antes bastaba con estar en el grupo de equivalencias, y por eso el azafran Pote de DIA
-        // se comparaba con el Hacendado y se anunciaba «un 41 % mas barato»: **otra marca, otro
-        // EAN**.* La regla vive en `logica/grupo.ts`.
-        esMismoArticulo(producto, p) &&
+        // **Mismo articulo Y precios comparables**: son dos decisiones distintas y aqui hacen
+        // falta las dos. *Antes bastaba con estar en el grupo, y el azafran Pote de DIA se
+        // comparaba con el Hacendado (otra marca, otro EAN).* La regla vive en `logica/grupo.ts`.
+        esAhorroDelElegido(conIdentidad, p) &&
         p.precio_unidad_cent !== null &&
         p.precio_unidad_cent > 0 &&
         p.unidad === producto.unidad,
@@ -317,8 +328,7 @@ export function Producto() {
               (p) =>
                 p.comparable &&
                 p.precio_unidad_cent != null &&
-                esMismoArticulo(producto, p) &&
-                p.unidad === producto.unidad,
+                esAhorroDelElegido(conIdentidad, p),
             )
             if (conPrecio.length < 2) return null
             const minimo = Math.min(
@@ -350,33 +360,71 @@ export function Producto() {
               una afirmacion falsa, y la pantalla no la hace.* */}
           {(() => {
             if (!grupo) return null
-            const otras = alternativas(producto, grupo.productos).filter(
-              (p) => p.fuente !== producto.fuente && p.precio_unidad_cent != null,
+            // *** CUATRO CAJONES, NO DOS. ***
+            // *Mismo articulo comparable, mismo articulo con otra base de precio, otro articulo, e
+            // identidad sin verificar.* *Antes solo habia «este» y «no este», y ahi se perdian dos
+            // cosas: el mismo articulo con otra unidad se llamaba «no es este articulo» (falso), y
+            // una identidad desconocida se presentaba como alternativa (afirmar sin dato).*
+            const c = clasificaGrupo(conIdentidad, grupo.productos)
+            const sinEl = <T extends { fuente: string }>(xs: T[]) =>
+              xs.filter((p) => p.fuente !== producto.fuente)
+            const mismaBase = sinEl(c.mismoSinComparar)
+            const otras = sinEl(c.distintas)
+            const sinVerificar = sinEl(c.sinVerificar)
+            if (!mismaBase.length && !otras.length && !sinVerificar.length) return null
+            const fila = (p: { fuente: string; nombre: string; marca?: string | null; unidad?: string | null; precio_unidad_cent?: number | null; precio_por_escurrido?: boolean | null }, nota: string) => (
+              <li key={`${p.fuente}:${p.nombre}`} className="flex flex-wrap justify-between gap-2">
+                <span>
+                  {p.nombre}
+                  {p.marca ? ` \u00b7 ${p.marca}` : ''}
+                  {nota && <span className="text-tinta-suave"> -- {nota}</span>}
+                </span>
+                <span className="tabular-nums">
+                  {p.precio_unidad_cent == null
+                    ? 'sin precio'
+                    : eurosUnidad(p.precio_unidad_cent, p.unidad ?? null, p.precio_por_escurrido ?? false)}
+                </span>
+              </li>
             )
-            if (!otras.length) return null
             return (
               <section className="mt-4 rounded-lg border border-tinta-suave p-3">
-                <h2 className="text-entrada font-semibold">Otras opciones del mismo grupo</h2>
-                <p className="mt-1 text-xs text-tinta-suave">
-                  No son este art&iacute;culo: cambian de marca, de formato o de unidad. Van aparte y
-                  no se restan de su precio.
-                </p>
-                <ul className="mt-2 grid gap-1 text-xs">
-                  {otras.map((p) => (
-                    <li
-                      key={`${p.fuente}:${p.id_fuente}`}
-                      className="flex flex-wrap justify-between gap-2"
-                    >
-                      <span>
-                        {p.nombre}
-                        {p.marca ? ` \u00b7 ${p.marca}` : ''}
-                      </span>
-                      <span className="tabular-nums">
-                        {eurosUnidad(p.precio_unidad_cent, p.unidad, p.precio_por_escurrido)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <h2 className="text-entrada font-semibold">El mismo articulo y otras opciones</h2>
+                {mismaBase.length > 0 && (
+                  <>
+                    <h3 className="mt-2 text-xs font-semibold">Mismo articulo, precio no comparable</h3>
+                    <p className="text-xs text-tinta-suave">
+                      Es el mismo producto (mismo EAN), pero su precio va en otra base (por unidad de
+                      venta en vez de por kilo, o al reves). No se resta.
+                    </p>
+                    <ul className="mt-1 grid gap-1 text-xs">
+                      {mismaBase.map((p) => fila(p, 'mismo articulo, otra base'))}
+                    </ul>
+                  </>
+                )}
+                {otras.length > 0 && (
+                  <>
+                    <h3 className="mt-3 text-xs font-semibold">Otras opciones del grupo</h3>
+                    <p className="text-xs text-tinta-suave">
+                      No son este articulo: cambian de marca o de formato. Van aparte y no se restan
+                      de su precio.
+                    </p>
+                    <ul className="mt-1 grid gap-1 text-xs">
+                      {otras.map((p) => fila(p, ''))}
+                    </ul>
+                  </>
+                )}
+                {sinVerificar.length > 0 && (
+                  <>
+                    <h3 className="mt-3 text-xs font-semibold">Sin identidad verificada</h3>
+                    <p className="text-xs text-tinta-suave">
+                      No hay EAN con el que confirmar si es el mismo articulo. No se afirma ni que si
+                      ni que no, y no se resta.
+                    </p>
+                    <ul className="mt-1 grid gap-1 text-xs">
+                      {sinVerificar.map((p) => fila(p, 'identidad no verificada'))}
+                    </ul>
+                  </>
+                )}
               </section>
             )
           })()}
@@ -611,8 +659,13 @@ export function Producto() {
 
                     **El dato se queda** -- *la horquilla del grupo existe y es verdad* --, *pero se
                     dice de que es: de articulos distintos.* */}
+                {/* *** LA MAGNITUD TAMBIEN LLEVA UNIDAD. ***
+                    *Decia «2000,00 EUR» cuando la diferencia es **2000 EUR/kg**.* *Sin la unidad,
+                    el numero se lee como un ahorro de dinero en la compra, y no lo es: es la
+                    horquilla de precios **por unidad** entre articulos distintos del grupo.* */}
                 Entre el articulo mas barato y el mas caro del grupo hay{" "}
-                {porcentaje(grupo.ahorro_pct)} de diferencia por unidad ({euros(grupo.ahorro_cent)}).{" "}
+                {porcentaje(grupo.ahorro_pct)} de diferencia{" "}
+                <strong>por {grupo.unidad ?? ''}</strong> ({euros(grupo.ahorro_cent)} por {grupo.unidad ?? ''}).{" "}
                 <strong>Son articulos distintos</strong> -- cambian de marca o de formato --, asi que
                 esa diferencia <strong>no es un ahorro del que estas mirando</strong>. Los de otra
                 unidad tampoco entran en esa cuenta.
