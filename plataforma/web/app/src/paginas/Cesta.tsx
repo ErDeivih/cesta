@@ -557,8 +557,29 @@ function UnaLinea({ linea, guardando, cambiar }: {
 function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
   const [abierto, setAbierto] = useState(false)
   const [nombre, setNombre] = useState('')
+  // **La PRIMERA lista es la de casa, y hasta hoy no lo era nunca.**
+  //
+  // *El 18/10/2026 se encontro el porque de un boton que nadie podia pulsar: «Ver que se puede
+  // anotar», en el diario, estaba `disabled` **para todo el mundo**.* *La cadena era esta:*
+  //
+  //   `Diario.tsx:69`  const casa = listas.data?.find((l) => l.es_de_casa) ?? null
+  //   `Diario.tsx:98`  const sinLista = listaId === null
+  //   `Diario.tsx:103` disabled={sinLista || ver.isPending}
+  //
+  // *Y `es_de_casa` **no se ponia nunca**: esta pantalla llamaba `crearLista(nombre)` y el
+  // segundo parametro vale `false` por defecto (`cesta.ts:118`).* *Asi que **ninguna lista creada
+  // desde la interfaz era «de casa»**, `casa` era siempre `null`, y la funcion «de la compra al
+  // diario» **no se podia usar**.*
+  //
+  // **Se marca la primera y solo la primera**: *el diseño habla de «la lista de casa», en
+  // singular, y las demas son las otras (`:552`).* *Si ya hay una, la nueva no lo es.*
+  //
+  // *`useQuery` va **aqui arriba**, con los otros hooks y **antes** del `if (!abierto) return` de
+  // abajo: es la misma regla que se acaba de arreglar en `Producto.tsx`.*
+  const listas = useQuery({ queryKey: ['listas'], queryFn: misListas })
+  const yaHayCasa = listas.data?.some((l) => l.es_de_casa) ?? false
   const crear = useMutation({
-    mutationFn: () => crearLista(nombre.trim() || 'Lista'),
+    mutationFn: () => crearLista(nombre.trim() || 'Lista', !yaHayCasa),
     onSuccess: (l) => {
       setNombre('')
       setAbierto(false)

@@ -176,7 +176,21 @@ export function Producto() {
    *  o el grupo no tiene con qué compararlo --: un *"te ahorras 0,00 €"* es ruido. */
   // Los nutrientes de Open Food Facts, en el orden en que se lee una etiqueta de verdad. Null es
   // "no lo sabemos", nunca cero: la guarda de la extraccion ya dejo fuera lo imposible.
-  const filasOff = useMemo(() => {
+  // **NO ES UN `useMemo`, *y ese era el fallo*.**
+  //
+  // *Estaba escrito con `useMemo` **despues de los tres retornos condicionales** de
+  // arriba (`:133` cargando, `:134` error, `:144` producto ausente).*
+  // **Una regla de React: los hooks se llaman en el mismo orden en todos los renders.**
+  // *Durante la carga ese `useMemo` no se ejecutaba; al llegar el producto, si.*
+  // *Un hook mas que en el render anterior => React lanza **#310** y desmonta la raiz:*
+  // *por eso se veia el esqueleto y luego la pantalla vacia, y por eso no habia
+  // mensaje en el build (-- *en produccion el #310 va minificado* --).*
+  //
+  // *Se calcula como una expresion normal, que **no es un hook** y por tanto puede ir
+  // detras de los retornos sin romper el orden.* *Los siete campos y su guarda son los
+  // mismos: lo que no es numero sigue siendo `null` y se descarta, **no se convierte en
+  // cero**.*
+  const filasOff = (() => {
     const campos: [keyof typeof producto, string, string][] = [
       ['kcal_100g', 'Energia', 'kcal'],
       ['grasas_100g', 'Grasas', 'g'],
@@ -194,7 +208,7 @@ export function Producto() {
         valor: typeof producto[clave] === 'number' ? (producto[clave] as number) : null,
       }))
       .filter((f) => f.valor !== null)
-  }, [producto])
+  })()
 
   const masBarato = (() => {
     if (!grupo || producto.precio_unidad_cent === null) return null
