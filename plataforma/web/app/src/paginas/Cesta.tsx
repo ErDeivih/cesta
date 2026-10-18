@@ -53,6 +53,7 @@ import {
   Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
   Tarjeta, Vacio, cx,
 } from '../componentes/ui'
+import { PegarEnLaLista } from '../componentes/PegarEnLaLista'
 import type { Linea, Reparto } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
@@ -1571,6 +1572,18 @@ export function Cesta() {
               Datos del {fechaTexto(detalle.data.fecha_datos)}
             </p>
           </Tarjeta>
+
+          {/* *** PEGAR UNA LISTA ENTERA, *viendola antes de guardar*. ***
+              *M05: «pegar varias lineas con previa».* *La regla de que «2 kg» no son dos envases
+              vive en `logica/pegar.ts`, y aqui solo se monta: el componente no tiene campo de
+              envases, asi que no puede inventarlo.*
+              *La nota lleva lo que la persona escribio; la cantidad de envases la pone ella en la
+              lista, que es donde se ve.* */}
+          <PegarEnLaLista
+            alAnadir={async ({ nombre, nota }) => {
+              await anadirLinea(listaId as string, { nombre, nota, grupo_id: null, producto_id: null })
+            }}
+          />
 
           <Tarjeta
             titulo="Lo que hay que coger"
