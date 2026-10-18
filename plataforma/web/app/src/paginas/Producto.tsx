@@ -36,7 +36,7 @@ import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
-import { clasificaGrupo, esAhorroDelElegido } from '../logica/grupo'
+import { construyeComparacion } from '../logica/grupo'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
@@ -223,21 +223,28 @@ export function Producto() {
   // `'no-verificada'`: no se afirma ni que si ni que no.*
   const conIdentidad = miembro ?? producto
 
+  // *** UN UNICO RESULTADO, Y TODO SALE DE AQUI. ***
+  // *La frase y las tarjetas recibian `grupo.cadenas` y `grupo.ahorro_cent`, que son del **grupo
+  // entero** -- alternativas incluidas --, aunque los candidatos estuvieran filtrados.* *Si el
+  // elegido era el mas barato, se podia anunciar un ahorro y un numero de cadenas que no eran de
+  // ese articulo.*
+  //
+  // *`construyeComparacion` solo cuenta candidatos **exactos** (`'mismo'`) y con **base declarada y
+  // coincidente**.* *Las alternativas no entran ni en las cadenas, ni en el minimo, ni en el
+  // ahorro.*
+  const comp = construyeComparacion(conIdentidad, grupo?.productos ?? [])
+
   const masBarato = (() => {
     if (!grupo || producto.precio_unidad_cent === null) return null
     const mio = producto.precio_unidad_cent
     if (!Number.isFinite(mio) || mio <= 0) return null
-    const otros = grupo.productos.filter(
+    // *De `comp`, no del grupo: solo exactos y con base declarada.*
+    const otros = comp.comparables.filter(
       (p) =>
         p.fuente !== producto.fuente &&
         p.comparable &&
-        // **Mismo articulo Y precios comparables**: son dos decisiones distintas y aqui hacen
-        // falta las dos. *Antes bastaba con estar en el grupo, y el azafran Pote de DIA se
-        // comparaba con el Hacendado (otra marca, otro EAN).* La regla vive en `logica/grupo.ts`.
-        esAhorroDelElegido(conIdentidad, p) &&
         p.precio_unidad_cent !== null &&
-        p.precio_unidad_cent > 0 &&
-        p.unidad === producto.unidad,
+        p.precio_unidad_cent > 0,
     )
     if (!otros.length) return null
     const minimo = Math.min(...otros.map((p) => p.precio_unidad_cent as number))
@@ -324,26 +331,26 @@ export function Producto() {
             // **Solo el mismo articulo.** *La frase dice «cuesta un X % mas que en ...», y eso
             // solo es cierto si es **el mismo producto**.* *Con el grupo entero, el azafran Pote
             // de DIA salia «un 41 % mas que en Mercadona» comparado con el **Hacendado**.*
-            const conPrecio = grupo.productos.filter(
-              (p) =>
-                p.comparable &&
-                p.precio_unidad_cent != null &&
-                esAhorroDelElegido(conIdentidad, p),
+            // *** LAS CIFRAS SALEN DE `comp`, NO DEL GRUPO. ***
+            // *Esto recibia `grupo.ahorro_cent` y `grupo.cadenas`, que cuentan las alternativas.*
+            // *Ahora solo cuenta lo exacto y comparable: `comp.cadenas`, `comp.diferenciaCent` y
+            // `comp.diferenciaPct`.*
+            const conPrecio = comp.comparables.filter(
+              (p) => p.comparable && p.precio_unidad_cent != null,
             )
             if (conPrecio.length < 2) return null
-            const minimo = Math.min(
-              ...conPrecio.map((p) => p.precio_unidad_cent as number),
-            )
-            const barato = conPrecio.find((p) => p.precio_unidad_cent === minimo)
+            // *Sin cifras no hay frase: no se inventa un cero.*
+            if (comp.diferenciaPct == null || comp.diferenciaCent == null) return null
+            const barato = conPrecio.find((p) => p.precio_unidad_cent === comp.minimo)
             const frase = fraseDePrecio({
-              cadenas: grupo.cadenas,
-              ahorro_pct: grupo.ahorro_pct,
-              ahorro_cent: grupo.ahorro_cent,
-              fiable: grupo.cadenas >= 2 && conPrecio.length >= 2,
+              cadenas: comp.cadenas,
+              ahorro_pct: comp.diferenciaPct,
+              ahorro_cent: comp.diferenciaCent,
+              fiable: comp.unidad !== null && comp.cadenas >= 2 && conPrecio.length >= 2,
               cadena_mas_barata: barato?.fuente ?? null,
               cadena_de_este: miembro.fuente,
               precio_unidad_este: miembro.precio_unidad_cent,
-              precio_unidad_minimo: minimo,
+              precio_unidad_minimo: comp.minimo,
             })
             if (!frase) return null
             return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
@@ -365,8 +372,8 @@ export function Producto() {
             // identidad sin verificar.* *Antes solo habia «este» y «no este», y ahi se perdian dos
             // cosas: el mismo articulo con otra unidad se llamaba «no es este articulo» (falso), y
             // una identidad desconocida se presentaba como alternativa (afirmar sin dato).*
-            const c = clasificaGrupo(conIdentidad, grupo.productos)
-            const sinEl = <T extends { fuente: string }>(xs: T[]) =>
+            const c = comp
+            const sinEl = <T extends { fuente?: string }>(xs: T[]) =>
               xs.filter((p) => p.fuente !== producto.fuente)
             const mismaBase = sinEl(c.mismoSinComparar)
             const otras = sinEl(c.distintas)
@@ -648,7 +655,7 @@ export function Producto() {
                 </tbody>
               </table>
             </TablaScroll>
-            {grupo.cadenas >= 2 && (
+            {comp.cadenas >= 2 && comp.unidad !== null && (
               <p className="mt-2 text-cuerpo text-secundaria ">
                 {/* *** SON ARTICULOS DISTINTOS, Y HAY QUE DECIRLO. ***
                     *Esta frase decia solo «de la mas barata a la mas cara hay 41 % por unidad
@@ -663,12 +670,18 @@ export function Producto() {
                     *Decia «2000,00 EUR» cuando la diferencia es **2000 EUR/kg**.* *Sin la unidad,
                     el numero se lee como un ahorro de dinero en la compra, y no lo es: es la
                     horquilla de precios **por unidad** entre articulos distintos del grupo.* */}
-                Entre el articulo mas barato y el mas caro del grupo hay{" "}
-                {porcentaje(grupo.ahorro_pct)} de diferencia{" "}
-                <strong>por {grupo.unidad ?? ''}</strong> ({euros(grupo.ahorro_cent)} por {grupo.unidad ?? ''}).{" "}
-                <strong>Son articulos distintos</strong> -- cambian de marca o de formato --, asi que
-                esa diferencia <strong>no es un ahorro del que estas mirando</strong>. Los de otra
-                unidad tampoco entran en esa cuenta.
+                De la mas barata a la mas cara <strong>de este mismo articulo</strong> hay{" "}
+                {porcentaje(comp.diferenciaPct)} de diferencia por {comp.unidad ?? 'unidad'} (
+                {euros(comp.diferenciaCent)} por {comp.unidad ?? 'unidad'}).{" "}
+                {comp.ahorroEnvaseCent != null && (
+                  <>
+                    Lo que te ahorras en el envase son{" "}
+                    <strong>{euros(comp.ahorroEnvaseCent)}</strong>.{" "}
+                  </>
+                )}
+                <span className="text-tinta-suave">
+                  Las alternativas -- otro EAN -- no entran en esta cuenta.
+                </span>
               </p>
             )}
           </Tarjeta>
