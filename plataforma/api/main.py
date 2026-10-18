@@ -649,6 +649,25 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
     lineas = [_linea_movida(ln) if str(ln.get("id")) in movidas else ln for ln in lineas]
     en_el_carro = [ln for ln in lineas if ln.get("en_carrito")]
     if not en_el_carro:
+        # DOS PESTANAS CERRANDO A LA VEZ: SE DISTINGUE DE UN CARRO VACIO.
+        # Antes, la segunda pestana recibia 'no hay nada en el carro, marca lo que te llevas'
+        # -- y eso es falso: SI habia algo, y otra pestana acaba de cerrarlo.
+        # El conflicto se detectaba (409, y sin compra duplicada), pero el mensaje mandaba a
+        # buscar un problema donde no estaba.
+        # La compra que acaba de cerrarse esta en compras_de con su cerrada_en: si es de hace
+        # menos de dos minutos, es eso y se dice.
+        _recientes = almacen.compras_de(lista_id, limite=1)
+        if _recientes:
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
+        
+            _cuando = _dt.fromisoformat(_recientes[0]['cerrada_en'])
+            if (_dt.now(_tz.utc) - _cuando).total_seconds() < 120:
+                raise HTTPException(
+                    409,
+                    'Otra pestana acaba de cerrar esta compra. Abre la lista otra vez para ver'
+                    ' lo que quedo: no se ha perdido nada.',
+                )
         raise HTTPException(409, "No hay nada en el carro: marca lo que te llevas y vuelve.")
     hecho = almacen.cierra_compra(lista_id, usuario["id"], cesta.coste_por_linea(en_el_carro))
     return hecho | {"total_cent": hecho["total_cent"]}
