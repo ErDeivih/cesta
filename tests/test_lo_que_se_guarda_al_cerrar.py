@@ -59,3 +59,95 @@ def test_una_linea_que_apunta_a_otro_producto_no_se_inventa_precio(monkeypatch):
     _monta(monkeypatch)
     salida = cesta.coste_por_linea([_linea(movido=True)])
     assert salida["l1"]["precio_cent"] is None, salida
+
+
+# ------------------------------------------------------------------ M06 ---
+
+# *** «ESTIMACION = CIERRE = HISTORICO»: LA MISMA CUENTA, NO TRES. ***
+#
+# *La especificacion lo pide con estas palabras (M06): «Estimacion=cierre=historico, incluidos
+# importes por linea persistidos, articulo efectivo, cantidad y tienda».*
+#
+# *Y el caso que el dueño nombro entre los siete de la aceptacion es «cambio de precio durante
+# cierre»: la pantalla dijo una cifra, se cerro, y **se guardo otra**.*
+#
+# *Estas pruebas no deciden QUE tiene que pasar cuando el precio cambia -- eso es una decision de
+# producto, no de codigo.* *Lo que fijan es lo que si es obligatorio: **que sobre los mismos datos
+# las dos cuentas den lo mismo**, porque son la misma cuenta vista por partes.*
+
+
+def test_la_estimacion_y_el_cierre_cuentan_lo_mismo(monkeypatch):
+    """*El total de la estimacion y la suma del cierre, sobre las mismas lineas.*
+
+    **Si estos dos numeros no coinciden, la pantalla dice una cifra y el recibo guarda otra.**
+    *Y no hace falta que cambie ningun precio para que pase: basta con que las dos funciones
+    apliquen la promo o la cantidad de forma distinta.*
+    """
+    _monta(monkeypatch)
+    lineas = [
+        _linea("l1"),
+        _linea("l2", cantidad=2),
+        _linea("l3", producto_id="P1"),
+        _linea("l4", cadena_elegida="dia"),
+    ]
+    est = cesta.estimacion(lineas)
+    cierre = cesta.coste_por_linea(lineas)
+
+    total_cierre = sum(
+        c["coste_cent"] for c in cierre.values() if c.get("coste_cent") is not None
+    )
+    assert est["total_cent"] == total_cierre, (
+        f"la estimacion dice {est['total_cent']} y el cierre suma {total_cierre}: "
+        "la pantalla y el recibo no dan la misma cifra"
+    )
+
+
+def test_el_cierre_guarda_una_linea_por_cada_una_de_la_lista(monkeypatch):
+    """*El cierre no se deja lineas: las que no tengan precio van con `None`, no fuera.*
+
+    *Una linea que desaparece del cierre es una linea que se compro y no quedo escrita.*
+    """
+    _monta(monkeypatch)
+    lineas = [_linea(f"l{i}") for i in range(1, 6)]
+    cierre = cesta.coste_por_linea(lineas)
+    assert set(cierre) == {ln["id"] for ln in lineas}
+    for una in cierre.values():
+        # *Y cada una dice de que producto es y en que tienda: el «articulo efectivo» que pide la
+        # especificacion. `None` es un valor valido en las dos, pero la clave tiene que estar.*
+        assert "producto_id" in una
+        assert "cadena" in una
+
+
+def test_el_precio_que_se_guarda_es_el_de_la_tienda_decidida(monkeypatch):
+    """*Si alguien decidio comprarlo en dia (100), se guarda 100 y no el 90 de aldi.*
+
+    *Es la mitad que importa del «cambio de precio»: el cierre no puede elegir por su cuenta una
+    tienda distinta de la que la persona decidio, porque apuntaria un precio que no se pago.*
+    """
+    _monta(monkeypatch)
+    cierre = cesta.coste_por_linea([_linea("l1", cadena_elegida="dia")])
+    assert cierre["l1"]["cadena"] == "dia"
+    assert cierre["l1"]["precio_cent"] == 100
+
+
+def test_cual_de_las_cuatro_lineas_no_cuadra(monkeypatch):
+    """*Diagnostico: se compara linea a linea para saber cual es la que difiere.*
+
+    *Se deja como prueba porque el dia que se arregle dira cual era; y mientras tanto, **falla con
+    el nombre de la linea**, no con un total.*
+    """
+    _monta(monkeypatch)
+    casos = {
+        "cantidad 1": _linea("a"),
+        "cantidad 2": _linea("b", cantidad=2),
+        "producto concreto": _linea("c", producto_id="P1"),
+        "tienda decidida": _linea("d", cadena_elegida="dia"),
+    }
+    diferencias = {}
+    for nombre, ln in casos.items():
+        est = cesta.estimacion([ln])
+        cierre = cesta.coste_por_linea([ln])
+        total = sum(c["coste_cent"] for c in cierre.values() if c.get("coste_cent") is not None)
+        if est["total_cent"] != total:
+            diferencias[nombre] = (est["total_cent"], total)
+    assert not diferencias, f"no cuadran: {diferencias}"
