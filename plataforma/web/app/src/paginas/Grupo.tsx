@@ -337,7 +337,7 @@ export function Grupo() {
             // lleva.* *La salvedad va debajo, con la frase, no en un comentario.*
             return (
               <>
-                return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
+                <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
                 <p className="mt-1 text-xs text-tinta-suave">
                   La diferencia es entre los articulos del grupo, que no tienen por que ser el mismo:
                   mismo envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
