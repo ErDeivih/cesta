@@ -203,3 +203,44 @@ hay configuracion de vitest ni un solo `.test.tsx`**. Y no se ha anadido
 **Siguiente ID + comando.** M02 sigue: `vitest.config` + primera prueba de componente
 de `Producto` con respuesta controlada (carga -> dato -> ficha), y `ErrorBoundary`.
 
+### M02 (continuacion) / 18/10/2026 / ErrorBoundary y primera prueba de componente hechos
+
+**Capacidad y alcance.** Recuperacion de errores de render y ensayo de componentes
+montados. **No cierra M02**: la prueba de componente de `Producto` sigue pendiente.
+
+**Cambio y contrato.**
+- `src/componentes/ErrorBoundary.tsx`: atrapa el error, **dice que algo fallo**, da una
+  **referencia local** (`F-XXXXXX`, tambien en consola) y ofrece **Reintentar**.
+  **No oculta el error, no finge exito y no manda nada fuera** (privacidad).
+  Avisa de que reintentar **pierde lo no guardado**.
+- Montado en `src/App.tsx` envolviendo `<Routes>` (3 lineas, **CRLF preservado:
+  324/324**). *Un ErrorBoundary sin montar es codigo muerto.*
+- `vitest.config.ts` (jsdom), `src/pruebas/setup.ts` y `src/componentes/ErrorBoundary.test.tsx`.
+  Dependencias anadidas: `@testing-library/user-event` y `@testing-library/dom` (peer).
+  **Los dos runners conviven**: `node --test` sigue con `tests/`, vitest con `src/**/*.test.tsx`.
+
+**Comandos ejecutados + exit codes.** `npx vitest run ErrorBoundary.test.tsx` ->
+**4 pruebas, 4 pasan**. `npm run lint` -> **exit 0** (0 errores, 3 avisos de directivas
+sobrantes). `npx tsc --noEmit` limpio. `npm test` **104 pass**. `npm run build` ok.
+`ruff` limpio; `comprueba_documentos` TODO BIEN.
+
+**Evidencia visual revisada.** Servido por 8080 tras reconstruir (`index-CxtaUf09.js`,
+338 366 B): `/` 270 caracteres y sin `[role=alert]`; `/compra` `main=1`; ficha
+`/compra/productos/dia/147509` **2505 caracteres a 3, 5 y 9 s, sin alerta y sin errores
+JS**. *Un primer sondeo dio 182: era **el esqueleto de `Cargando` medido mientras
+cargaba**, no una regresion; se comprobo antes de dar nada por roto.*
+
+**Limitaciones y que NO se ha probado.**
+- **La prueba de componente de `Producto` (carga -> dato -> ficha y armazon) NO esta
+  hecha**, que es la aceptacion literal de M02. Lo que hay es una prueba de componente
+  real, pero del `ErrorBoundary`.
+- **El reintento del ErrorBoundary no esta probado como remontaje.** *React 19, ante un
+  fallo en modo concurrente, **reintenta en sincrono antes de rendirse**, asi que la
+  prueba que escribi medía el reintento de React, no el mio; se sustituyo por «el boton
+  existe y se puede pulsar» y **queda dicho que el remontaje no se comprueba**.*
+- Quedan 3 avisos de lint (directivas `eslint-disable` que ya no hacen falta) y el
+  `exhaustive-deps` de `Unirse.tsx:81`.
+
+**Siguiente ID + comando.** M02: prueba de componente de `Producto` con respuesta
+controlada (pendiente -> dato -> ficha), que es la que habria cazado el blanco del 18.
+

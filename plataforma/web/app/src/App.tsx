@@ -15,6 +15,7 @@
  *  es lo que S06 pide.
  */
 import { Suspense, lazy, useEffect } from 'react'
+import { ErrorBoundary } from './componentes/ErrorBoundary'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import { APLICACIONES, LayoutSuite, aplicacionDe, tituloDeSeccion } from './componentes/Suite'
@@ -195,7 +196,7 @@ export function App() {
     // que es lo que de verdad esta pasando y lo que hace que la espera se entienda.
     <Suspense fallback={<p className="p-6 text-neutral-600 dark:text-neutral-400">Abriendo la pantalla…</p>}>
     <CocinaProvider>
-      <Routes>
+      <ErrorBoundary que="esta pantalla"><Routes>
         <Route path="/" element={<Lanzador />} />
 
         {/* Compra: la lista, el buscador, la ficha y el gasto. */}
@@ -309,7 +310,7 @@ export function App() {
             </Vacio>
           }
         />
-      </Routes>
+      </Routes></ErrorBoundary>
     </CocinaProvider>
     </Suspense>
   )
