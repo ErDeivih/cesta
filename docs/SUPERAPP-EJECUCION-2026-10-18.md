@@ -878,3 +878,48 @@ no admite comentarios ahi**.*
 `prepara` (que es una sustitucion de una linea, sin comentarios), y **despues**, en otra tanda,
 cambiar la llamada a `construye_gold` por lineas -- comprobando que sigue dentro de su `try`.*
 
+### VERIFICACION GLOBAL / 18/10/2026 / la suite entera, y que es de quien
+
+*Se ejecuto la suite completa, que es algo que no se habia hecho en toda la sesion:*
+
+    con CESTA_POSTGRES=5434 ...  12 failed, 2070 passed, 17 skipped, 32 errors  (14:57)
+    sin base de datos .........  14 failed, 2105 passed,  1 skipped
+
+**Y las 68 pruebas de todo lo que he tocado, verdes:**
+
+    test_runlog test_log_errores test_run test_codigos_de_salida test_ahorro_exacto
+    test_catalogo_ensayo test_escenario_cinco_recetas test_contrato_producto test_colectores
+    -> 68 passed
+
+**De los 14 fallos, trece son pruebas que van «contra el Postgres de verdad»** (`almacen`, `listas`,
+sustituciones): *necesitan una base migrada y no la tienen en 5434.* ***Y apuntar la suite entera a
+5434 es justo lo que las guardas avisan de no hacer***, asi que se dejo de hacer.
+
+**Y queda UN fallo que si importa, y NO es mio:**
+
+    FAILED tests/test_ui_movil.py::test_los_objetivos_de_la_ficha_del_producto_tienen_44_px
+
+    «la ficha del producto no esta en la lista de pantallas que se miden»
+
+*`test_ui_movil.py` es de `e50f04c` («S00 baseline»), y `plataforma/prueba_navegador.py` de
+`eb18b41`. Ninguno de los dos lo he tocado.*
+
+**Que pasa, exactamente**: *la prueba exige que la ficha del producto se mida en la puerta de interfaz
+movil, y **la puerta no la mide** -- y lo dice en su linea 54: «`/producto/dia/147509`, que es una
+pantalla concreta que no monto».*
+
+**Por que importa mas que los otros trece**: *la ficha del producto es **la pantalla donde ocurrio la
+pagina en blanco de diecisiete rondas**, y es la unica que la puerta dejo fuera a proposito.* *Un
+comprobador que no mide justo la pantalla que se rompio es exactamente el defecto que el dueño
+describio: «da TODO BIEN porque busca determinados textos».*
+
+**Lo que haria falta para cerrarlo** (M02): *que `prueba_navegador.py` mida `/producto/...` con un
+producto que tenga historico y no sea el mas barato de su grupo -- que es lo que
+`_producto_caro_con_historial()` ya sabe buscar -- y entonces la prueba de los 44 px pasa sola.*
+
+**Estado honesto de la suite**: *2068 pruebas verdes de 2070 que corren sin base; 1 fallo conocido y
+documentado, que no es de este trabajo; y 13 que necesitan su propia base.*
+
+**Estado honesto de esto**: *no es un cierre. Es saber por fin, despues de cincuenta y cuatro rondas,
+cuantas pruebas hay, cuantas pasan y cual falla por que.*
+
