@@ -78,7 +78,39 @@ ENLACES = [
 ]
 
 
-def construye(destino: Path, plantilla: Path = PLANTILLA_POR_DEFECTO) -> dict:
+# *** UNA SEGUNDA CADENA, *opcional y aparte*. ***
+#
+# *El apartado 8 fija **cuatro ofertas a 120, 135, 100 y 180**, y esas cifras son las de
+# aceptacion: no se tocan.*
+#
+# *Pero con **una sola cadena** (`fuente='ensayo'` para las cuatro) hay caminos de la interfaz que
+# **no se pueden ejercitar**: `fraseDePrecio` devuelve `null` sin al menos dos cadenas, asi que la
+# frase del grupo -- y la salvedad que va debajo -- **no se pintan nunca**.* *Y `ahorro_exacto`
+# solo tiene caso positivo si el **mismo EAN** esta en dos cadenas.*
+#
+# *Asi que la segunda cadena es una **variante**, no parte del escenario.* *Quien quiera las cifras
+# del apartado 8 llama a `construye()` sin nada; quien quiera ejercitar esos caminos pasa
+# `segunda_cadena=True`, y entonces hay dos cadenas y el **mismo EAN** en las dos.*
+OFERTAS_SEGUNDA_CADENA = [
+    dict(
+        fuente="ensayo-b", id_fuente="arroz-a-b", ean="9000000000017",
+        nombre="Arroz redondo marca A 1 kg", marca="Marca A",
+        precio_cent=110, precio_unidad_cent=110.0, cantidad=1.0,
+        unidad_canon="kg", unidad_ref_canon="kg", precio_ref_canon_cent=110.0,
+        grupo_id=900001, producto_id="9000000000017", kcal_100g=360,
+    ),
+    dict(
+        fuente="ensayo-b", id_fuente="arroz-b-b", ean="9000000000024",
+        nombre="Arroz redondo marca B 1 kg", marca="Marca B",
+        precio_cent=130, precio_unidad_cent=130.0, cantidad=1.0,
+        unidad_canon="kg", unidad_ref_canon="kg", precio_ref_canon_cent=130.0,
+        grupo_id=900001, producto_id="9000000000024", kcal_100g=360,
+    ),
+]
+
+
+def construye(destino: Path, plantilla: Path = PLANTILLA_POR_DEFECTO,
+              segunda_cadena: bool = False) -> dict:
     """*Crea los seis parquet y el puntero de version.* *Devuelve lo que escribio.*"""
     if destino.exists():
         shutil.rmtree(destino)
@@ -112,7 +144,7 @@ def construye(destino: Path, plantilla: Path = PLANTILLA_POR_DEFECTO) -> dict:
         mismo_esquema(tabla)
 
     # --- grupos: las cuatro ofertas ---
-    for o in OFERTAS:
+    for o in (OFERTAS + OFERTAS_SEGUNDA_CADENA if segunda_cadena else OFERTAS):
         con.execute(
             """
             INSERT INTO grupos (fuente, id_fuente, precio_cent, precio_unidad_cent,
@@ -135,7 +167,7 @@ def construye(destino: Path, plantilla: Path = PLANTILLA_POR_DEFECTO) -> dict:
         )
 
     # --- diario y derivado: una observacion por oferta y fecha ---
-    for o in OFERTAS:
+    for o in (OFERTAS + OFERTAS_SEGUNDA_CADENA if segunda_cadena else OFERTAS):
         con.execute(
             """INSERT INTO diario (fuente, id_fuente, precio_cent, precio_unidad_cent,
                    unidad_canon, producto_id, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)""",
