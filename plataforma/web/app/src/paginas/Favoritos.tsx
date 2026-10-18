@@ -372,7 +372,10 @@ export function Favoritos() {
               <p className="text-cuerpo text-tinta-suave">
                 {cadena && <>en {nombreCadena(cadena)}</>}
                 {f.ahorro_pct != null && f.ahorro_pct > 0 && (
-                  <> · −{porcentaje(f.ahorro_pct, 0)} frente a la más cara</>
+                  // *La diferencia es **del grupo**, no de este articulo: puede ser otra marca con su
+                  // propio EAN. Se dice «del grupo» para que no se lea como el ahorro de este.*
+
+                  <> · −{porcentaje(f.ahorro_pct, 0)} frente a la más cara del grupo</>
                 )}
                 {f.n_cadenas != null && f.n_cadenas > 1 && (
                   <> · {f.n_cadenas} cadenas</>
