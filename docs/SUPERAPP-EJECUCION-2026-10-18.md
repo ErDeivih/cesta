@@ -486,3 +486,58 @@ escribir, ni banco reproducible, ni catalogo de ensayo.
 **Siguiente ID + comando.** **M01**: las superficies de comparacion que faltan (buscador,
 favoritos, avisos, reparto, estimacion, graficas), con el banco de ensayo ya disponible.
 
+### M01 / 18/10/2026 / LA RAIZ DEL DEFECTO ESTA EN EL CONTRATO, NO EN SEIS PANTALLAS
+
+**La auditoria que pide M01, hecha con una busqueda, no a ojo.** *114 usos de ahorro,
+diferencia o «mas barato» en el frontend.* *Y todos los que enseñan un ahorro **del articulo
+elegido** cuelgan del mismo sitio.*
+
+**La raiz, en `catalogo.py:1073-1087`:**
+
+    del_mismo = [p for p in productos
+                 if p["unidad"] == unidad and p["precio_unidad_cent"] and p["comparable"]]
+    barato = del_mismo[0]["precio_unidad_cent"]
+    caro   = del_mismo[-1]["precio_unidad_cent"]
+    "ahorro_pct": round(100 * (caro - barato) / barato, 1)
+
+*Filtra por **unidad** y por **comparable**, y **no filtra por EAN**.* *Asi que `ahorro_pct`
+es **la horquilla del grupo de equivalencias**, no el ahorro de ningun articulo concreto.*
+*Y eso es verdad: la horquilla existe.* *El defecto es que **se presenta como el ahorro del
+articulo elegido**.*
+
+**Las superficies que lo consumen asi, y que por tanto heredan el defecto:**
+
+    Grupo.tsx:318,350        grupo.ahorro_pct y ahorro_cent en la frase y en el resumen
+    Favoritos.tsx:374        «-X % frente a la mas cara»
+    TablaResultados.tsx:167  la columna «Ahorro» de CADA fila del buscador
+    LoQueSeCompra.tsx:66     su propia diferencia, min y max del grupo
+    Panel.tsx:397,473,628    tres sitios del panel
+    Producto.tsx             YA CORREGIDA con construyeComparacion
+
+*** LA LECCION, Y ES LA QUE IMPORTA ***: *no son seis defectos de seis pantallas; es **uno
+del contrato**.* *Parchear seis pantallas dejaria el septimo sitio roto el dia que alguien
+pinte `ahorro_pct` otra vez.* *Por eso M01 y M04 son el mismo trabajo: **primero el contrato,
+despues las pantallas**.*
+
+**El arreglo que propongo, y por que no es cambiar `ahorro_pct` a secas.** *Cambiar su
+significado romperia en silencio las seis pantallas que lo usan como horquilla.* *Lo que hay
+que hacer es que el contrato **distinga**:*
+
+    ahorro_pct / ahorro_cent ............ la horquilla del grupo (lo que es hoy). Se queda.
+    ahorro_exacto_pct / _cent ........... solo ofertas con el MISMO EAN y la misma base.
+    identidad ........................... 'exacta' | 'por_grupo' | 'sin_verificar', por grupo.
+
+*Y que las pantallas que dicen «te ahorras» usen **`ahorro_exacto`**, mientras las que dicen
+«en el grupo va de X a Y» sigan con la horquilla y lo digan con esas palabras.* *La ficha ya
+lo hace asi desde `5204e2b`; falta el resto.*
+
+**Por que NO se ha hecho ya.** *Tocar el contrato de `grupo()` afecta a seis pantallas y a
+las pruebas que las cubren.* *Con la ficha se hizo porque el defecto estaba reproducido con
+datos reales y habia una prueba de componente que lo fijaba.* *Para las otras seis hace falta
+lo mismo: **una prueba por superficie antes de cambiar el contrato**, o se rompen en silencio.*
+*Es el siguiente paso de M01, y no se hace a ciegas.*
+
+**Siguiente comando concreto.** Añadir a `catalogo.grupo()` el bloque `ahorro_exacto` y el
+campo `identidad`, con su prueba en `tests/`, **sin cambiar** `ahorro_pct`; despues migrar
+`Grupo.tsx` y `Favoritos.tsx` con una prueba de componente cada uno.
+
