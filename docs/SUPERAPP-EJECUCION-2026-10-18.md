@@ -1078,3 +1078,28 @@ estaba en un componente que pinta un sello, y aparecio midiendo el buscador en m
 TablaResultados» y «buscar ahorras en todas partes» no son la misma operacion, y la segunda tardo una
 ronda mas en hacerse porque la primera parecia suficiente.*
 
+**El barrido del servidor: consistente. No hay un septimo defecto.**
+
+*El barrido del frontend encontro uno. El del servidor, que es el mismo trabajo por el otro lado, se
+hizo tambien: **13 coincidencias de `ahorro_pct`/`ahorro_cent`** en la API, y **todas coherentes**.*
+
+    catalogo.py:442 ........ `(max - min) / min` -- la horquilla del grupo, solo si `comparable` y
+                             no `dudoso`, y **0.0 como centinela**. *Exactamente la misma semantica
+                             que `grupo()`.✓
+    catalogo.py:1128 ....... lo mismo, en `grupo()`. *Es la que se documento en la ronda 16.*
+    main.py:1229 ........... el favorito recibe `g["ahorro_pct"]` -- la horquilla del grupo.
+                             *Y `Favoritos.tsx` ya lo dice asi desde la ronda 18.✓
+    main.py:1179,1246 ...... `None` y 1 cadena: no hay comparacion, y se dice.✓
+    cesta.py:741,862,888 ... **ahorros de ofertas**: `total_sin_ofertas - total_con_ofertas`. Dinero
+                             real, no una horquilla.✓
+    panel.py:325 ........... media de marca propia contra marca sobre N grupos: agregado.✓
+
+*O sea: **el servidor nunca presenta la horquilla como ahorro de un articulo; lo que hacia eso era la
+pantalla, y eran seis sitios.*** *Que los seis estuvieran en el frontend y ninguno en la API explica
+por que el defecto parecia de interfaz: **el dato siempre fue correcto; lo que mentia era la
+etiqueta**.*
+
+**Y una consecuencia util para lo que queda de M01/M04**: *no hay que tocar el servidor para cerrar
+esto. El contrato ya distingue (`ahorro_pct` y `ahorro_exacto_pct`), y lo que queda es que cada
+pantalla use el campo que le toca -- dos de las cuales ya lo hacen y estan leidas en pantalla.*
+
