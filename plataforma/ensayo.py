@@ -419,7 +419,22 @@ def siembra(nombre: str = "propio") -> dict:
 
         con = core_recetas.conecta(man.sqlite)
         try:
+            # *** IDEMPOTENTE TAMBIEN AQUI. ***
+            # *La primera version creaba las cinco cada vez: la segunda corrida dejo recetas con id
+            # 10 y 11 en vez de reproducir el mismo escenario.* *Se mira lo que ya hay por nombre y
+            # no se repite. Es lo que pide M00 con «dos ejecuciones reproducen el mismo escenario».*
+            ya = {}
+            try:
+                for fila in core_recetas.listar(con, str(resumen["cuentas"]["a_casa"])):
+                    ya[str(fila["nombre"])] = fila["id"]
+            except Exception:  # noqa: BLE001  (si no se puede listar, se intenta crear)
+                ya = {}
             for r in CATALOGO_8["escenario"]["recetas"]:
+                if r["nombre"] in ya:
+                    resumen["recetas"].append(
+                        {"id": r["id"], "receta_id": ya[r["nombre"]], "nombre": r["nombre"], "ya estaba": True}
+                    )
+                    continue
                 try:
                     n = r["necesita"]
                     receta_id = core_recetas.crear(
