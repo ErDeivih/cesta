@@ -1128,3 +1128,56 @@ base de pruebas compartida no acepta conexiones, y las mismas pruebas pasan en u
 un problema de entorno, y se arregla reiniciando o recreando 5434 -- **que no hago, porque es compartida
 y no es mia**.*
 
+### M02/M04 / 18/10/2026 / LA SUITE COMPLETA EN UNA BASE QUE FUNCIONA: 2104 pasan, 10 fallan
+
+*Con 5434 caida, la suite entera no decia nada. Se levanto una base **propia y desechable** en 55433
+-- fuera de 5432, 5433 y 5434 -- y se corrio alli:*
+
+    10 failed, 2104 passed, 17 skipped  (5:07)
+
+*Los diez, por fichero:*
+
+    4 x test_ahorro_exacto.py        <- MIO
+    5 x test_g04_catalogo_de_ensayo.py
+    1 x test_frase_curva.py
+
+**1. Los cuatro de `test_ahorro_exacto.py` eran de mi propio fixture, y estan arreglados.**
+
+*El fixture `catalogo` hacia `sys.modules.pop("plataforma.api.catalogo")` y **volvia a importar** el
+modulo.* *Funcionaba aislada (5 passed) y **rompia la suite entera**: los demas modulos se quedaban
+con la referencia vieja y habia dos `catalogo` vivos.*
+
+*Ahora cambia **el objeto de ajustes** y `monkeypatch` lo devuelve como estaba:*
+
+    monkeypatch.setattr(mod, "AJUSTES", dataclasses.replace(mod.AJUSTES, gold=gold))
+
+*Medido: aislada 5 passed; y junto a los ficheros que interferian, **27 passed, 1 skipped**.*
+
+**2. Los cinco de `test_g04_catalogo_de_ensayo.py` (version, publicacion) PASAN AISLADOS.**
+
+    tests/test_g04_catalogo_de_ensayo.py -> 13 passed, 1 skipped
+
+*Asi que son interferencia entre pruebas -- publicacion de versiones --, no codigo roto.* *Queda
+pendiente aislarlos, y es el mismo patron que el resto: estado compartido entre ficheros.*
+
+**3. Y queda uno que si importa, y es una prueba TEXTUAL.**
+
+    tests/test_frase_curva.py::test_el_ahorro_en_euros_no_cruza_unidades
+      assert "p.unidad === producto.unidad" in ficha
+
+*`ficha` es **el texto de `Producto.tsx`**, y la prueba exige que contenga esa cadena literal.* *Mi
+refactor de la ronda 16 sustituyo ese calculo por `construyeComparacion`, que **hace la misma
+comprobacion** pero sin el literal.*
+
+*** El comportamiento esta; el literal no. *** *La garantia vive ahora en `grupo.ts:65`
+(`precioComparable`), que exige que las dos unidades esten declaradas.*
+
+*Arreglarlo bien no es devolver el literal: es que `test_frase_curva.py` compruebe **que
+`Producto.tsx` usa `construyeComparacion`** y que `grupo.ts` tiene la comprobacion -- o, mejor, una
+prueba de comportamiento en `plataforma/web/app/tests/`, donde ya se prueban esas funciones con
+`node --test`.* *Queda escrito; no se hace a ciegas.*
+
+**Lo que esto cambia en el dictamen del piloto**: *de «13 fallos sin explicar» a **tres causas
+nombradas**: un fixture mio (arreglado), cinco pruebas que interfieren entre si, y una prueba textual
+que pide un literal que el codigo ya no tiene porque lo movio a una funcion.*
+

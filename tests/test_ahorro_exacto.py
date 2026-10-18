@@ -14,8 +14,6 @@ comparando un **Pote** con un **Hacendado**: otro EAN, otro articulo.*
 romperia en silencio.*
 """
 
-import os
-import sys
 from pathlib import Path
 
 import pytest
@@ -33,14 +31,19 @@ def gold(tmp_path_factory) -> Path:
     return destino
 
 
-@pytest.fixture(scope="module")
-def catalogo(gold):
-    os.environ["CESTA_GOLD"] = str(gold)
-    sys.modules.pop("plataforma.api.catalogo", None)
+@pytest.fixture()
+def catalogo(gold, monkeypatch):
+    """*El catalogo apuntando al gold del apartado 8, SIN reimportar el modulo.*
 
-    sys.modules.pop("plataforma.api.ajustes", None)
+    *Antes esto hacia `sys.modules.pop("plataforma.api.catalogo")` y lo volvia a importar.*
+    *Funcionaba sola y rompia la suite entera: los demas modulos se quedaban con la
+    referencia vieja, y a partir de ahi habia dos `catalogo` vivos.*
+    """
+    import dataclasses
+
     from plataforma.api import catalogo as mod
 
+    monkeypatch.setattr(mod, "AJUSTES", dataclasses.replace(mod.AJUSTES, gold=gold))
     return mod
 
 
