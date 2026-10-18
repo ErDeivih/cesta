@@ -459,12 +459,38 @@ def siembra(nombre: str = "propio") -> dict:
         finally:
             con.close()
 
-    # *** LA DESPENSA: PENDIENTE, *y se dice sin disfrazarlo de error*. ***
-    # *La tabla de existencias de `despensa.py` usa un contrato (`ExistenciaIn`) que hay que
-    # respetar; meter filas a mano con SQL seria inventarlo.* *Y la primera version de este bloque
-    # comprobaba la tabla con `to_regclass` y acababa imprimiendo «ERROR: 0», que no informa de nada:
-    # un mensaje que no dice que pasa es peor que no tenerlo.*
-    resumen["despensa"] = ["pendiente: el contrato de existencias (ExistenciaIn) no se ha sembrado"]
+    # *** LA DESPENSA: 100 g de arroz confirmados. ***
+    # *Es lo que hace que el deficit del apartado 8 sea **250 g y no 350**.*
+    #
+    # *El contrato es `ExistenciaIn`: texto, cantidad (**None es «no se sabe cuanto», y NO es un
+    # cero**), unidad, donde, caduca.* *Y el INSERT de `despensa.py:93` ya es un **UPSERT**
+    # (`ON CONFLICT (usuario_id, texto) DO UPDATE`), asi que sembrarlo dos veces deja lo mismo.*
+    # *Se usa **la misma sentencia** que la aplicacion, no una parecida: si cambia alli, esto se
+    # vera al fallar, no al producir un dato distinto en silencio.*
+    try:
+        with almacen.cursor() as cur:
+            cur.execute(
+                "INSERT INTO despensa (usuario_id, texto, cantidad, unidad, donde, caduca, actualizado_en) "
+                "VALUES (%s, %s, %s, %s, %s, %s, now()) "
+                "ON CONFLICT (usuario_id, texto) DO UPDATE SET "
+                "  cantidad = EXCLUDED.cantidad, unidad = EXCLUDED.unidad, "
+                "  donde = EXCLUDED.donde, caduca = EXCLUDED.caduca, actualizado_en = now()",
+                (str(resumen["cuentas"]["a_casa"]), "arroz", 100.0, "g", "", ""),
+            )
+        resumen["despensa"].append({"texto": "arroz", "cantidad": 100.0, "unidad": "g"})
+    except Exception as exc:  # noqa: BLE001
+        resumen["despensa"].append("ERROR: " + str(exc)[:160])
+
+    # *** Y UN AVISO, sobre el grupo del arroz. ***
+    # *`crea_alerta` **ya es idempotente** (-- *«repetirla la actualiza en vez de duplicarla» --*),
+    # asi que sembrarla dos veces no deja dos avisos.* *Los tipos validos son los de
+    # `ALERTA_TIPOS`: baja_de, minimo_90d, cualquier_bajada.*
+    try:
+        aviso = almacen.crea_alerta(str(resumen["cuentas"]["a_casa"]), 900001, "baja_de", 100)
+        resumen["avisos"].append({"grupo_id": 900001, "tipo": "baja_de", "umbral_cent": 100,
+                                  "id": aviso.get("id")})
+    except Exception as exc:  # noqa: BLE001
+        resumen["avisos"].append("ERROR: " + str(exc)[:160])
     return resumen
 
 
@@ -534,6 +560,7 @@ def main(argv: list[str] | None = None) -> int:
         for r in resumen["recetas"]:
             print("      " + str(r))
         print("  despensa: " + str(resumen["despensa"]))
+        print("  avisos: " + str(resumen["avisos"]))
         print("  catalogo del apartado 8: arroz A y B, leche, huevos")
         # *Un error de siembra NO puede salir con 0.*
         fallos = [u for u, i in resumen["cuentas"].items() if str(i).startswith("ERROR")]

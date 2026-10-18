@@ -433,3 +433,56 @@ los seis parquet del apartado 8 (62 + 4 + 7 + 21 + 10 columnas), con la pareja d
 `equivalente`, y comprobarlo cargandolo con `CESTA_GOLD` y llamando a `catalogo.grupo(...)`
 para ver los tres grupos y sus cuatro ofertas.
 
+### M00 / CERRADO con alcance / 18/10/2026
+
+**Capacidad y alcance.** Banco de ensayo completo: contenedor propio, catalogo del apartado
+8, y siembra de cuentas, listas, recetas, despensa y aviso. Todo idempotente.
+
+    uv run python -m plataforma.ensayo {guardas|prepara|siembra|estado|limpia}
+
+**Caso reproducido antes.** No habia comando que rechazara un DSN protegido antes de
+escribir, ni banco reproducible, ni catalogo de ensayo.
+
+**Cambio y contrato.**
+- Tres guardas antes de cualquier DDL: puertos 5432/5433/5434 prohibidos, la base empieza
+  por `cesta_ensayo_`, solo loopback. Manifiesto con **id completo** de contenedor, DSN,
+  directorio, SQLite y **ruta del gold**.
+- `plataforma/construye_gold_ensayo.py` genera el gold del apartado 8 **copiando el
+  esquema** del gold que funciona (62+4+7+21+10 columnas), con la pareja de arroz en
+  `nivel='equivalente'` -- *mismo grupo, **no** el mismo articulo*.
+- Siembra: A con casa (Casa + Viaje), B sin casa, C sin listas; **R1-R5** con las
+  cantidades del apartado 8; **100 g de arroz** en despensa; **un aviso `baja_de`** sobre
+  el grupo 900001.
+- Guarda del recetario: `core.recetas.conecta` escribe en `data/recetas.sqlite` **si no se
+  le pasa ruta**. Se le pasa siempre la del ensayo, y sin ella se falla en vez de escribir.
+
+**Comandos ejecutados + exit codes + resultados.**
+- `guardas` -> **exit 0**, 8 casos, 0 equivocados; `data/ensayo` no se crea.
+- `prepara` -> **exit 0**: contenedor `cesta-ensayo-propio` + gold en
+  `data/ensayo/propio/gold`.
+- `siembra` -> **exit 0**: 3 cuentas, 3 listas + Casa, **R1-R5 con ids 1-5**, arroz 100 g,
+  aviso con su id.
+- **Segunda `siembra` -> exit 0 y lo mismo**: R1-R5 con los **mismos ids** y `ya estaba`,
+  la misma despensa y **el mismo UUID de aviso**. *Eso es «dos ejecuciones reproducen el
+  mismo escenario».*
+- `limpia` -> **exit 0**. **Ajenos contados antes y despues: 25 y 25**; `cesta-db-1` y
+  `facylf-postgres` intactos.
+- Catalogo comprobado cargandolo: `grupo 900001` devuelve **dos productos con EAN distinto**
+  (…017 y …024), sin fusionar.
+- `ruff` limpio; `comprueba_documentos` TODO BIEN; 5 pruebas del catalogo + 5 de documentos.
+
+**Limitaciones y que NO se ha probado.**
+- **La despensa se siembra con la sentencia de `despensa.py:93`**, no llamando a
+  `despensa.declara` (que exige sesion). *Si esa sentencia cambia, esto hay que cambiarlo:
+  no hay una sola fuente.*
+- **El gold tiene `cadenas=1`** (las cuatro ofertas son de `fuente='ensayo'`), **sin
+  promociones y con una sola fecha**. *Para comparar entre cadenas (M06) y para series
+  (M14) habra que ampliarlo.*
+- **La despensa no se ha ejercitado por HTTP ni desde la interfaz**: solo se ha comprobado
+  que la fila entra y que repetir no duplica.
+- **El aviso no se ha hecho saltar**: se ha sembrado; ejecutar el vigilante y comprobar la
+  persistencia es M08.
+
+**Siguiente ID + comando.** **M01**: las superficies de comparacion que faltan (buscador,
+favoritos, avisos, reparto, estimacion, graficas), con el banco de ensayo ya disponible.
+
