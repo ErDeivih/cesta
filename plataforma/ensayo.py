@@ -260,7 +260,21 @@ def prepara(nombre: str = "propio", puerto_pg: int = 55432, espera_s: int = 60,
     while time.monotonic() < limite:
         listo = _docker("exec", plan.contenedor, "pg_isready", "-U", "cesta")
         if "accepting connections" in (listo.stdout or ""):
-            return man
+            # pg_isready NO BASTA, y eso costo tres pasadas.
+            # Postgres contesta accepting-connections durante el servidor TEMPORAL de initdb, y
+            # despues se reinicia. Asi que prepara volvia diciendo que estaba listo, siembra se
+            # lanzaba detras, y fallaba con server-closed-the-connection-unexpectedly: le hablaba al
+            # servidor temporal, que ya se estaba cerrando.
+            # Lo que vale es una CONEXION DE VERDAD, y con reintentos: entre el reinicio y el nuevo
+            # servidor hay unos segundos.
+            for _intento in range(max(1, espera_s)):
+                try:
+                    import psycopg
+            
+                    psycopg.connect(plan.dsn, connect_timeout=5).close()
+                    return man
+                except Exception:  # noqa: BLE001
+                    time.sleep(1)
         time.sleep(2)
     man.notas.append(f"no respondio en {espera_s} s")
     man.guarda()
