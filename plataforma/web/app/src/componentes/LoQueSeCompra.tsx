@@ -150,7 +150,7 @@ export function LoQueSeCompra() {
               </span>
               <span className="text-cuerpo text-tinta-suave">
                 {r.cadena_mas_barata ? `en ${nombreCadena(r.cadena_mas_barata)}` : 'la mas barata'}
-                {pct != null && pct > 0 && ` · un ${pct} % menos`}
+                {pct != null && pct > 0 && ` · un ${pct} % menos que la mas cara del grupo`}
               </span>
             </li>
           )
