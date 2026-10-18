@@ -782,6 +782,24 @@ function CerrarCompra({ listaId, enElCarro, papel }: {
         {hecho.sin_precio > 0 && (
           <> {hecho.sin_precio} sin precio conocido, contadas aparte del total.</>
         )}
+        {/* *** SI EL TOTAL CAMBIO DESDE QUE MIRASTE LA LISTA, SE DICE. ***
+            *El cierre lee el precio de ese momento, y lo que se paga es lo que se paga: eso no se
+            toca. Lo que no puede pasar es que la pantalla dijera una cifra y el recibo guarde otra
+            **sin decirlo** -- el precio de un super cambia, y quien cierra merece saber que la
+            diferencia existe y de cuanto es.*
+            *La cifra sale de la API, que la calcula con el mismo `cesta.estimacion` que pinta la
+            lista: no es una tercera cuenta.* */}
+        {hecho.diferencia_cent !== undefined && hecho.diferencia_cent !== 0 && (
+          <>
+            {' '}
+            Desde que miraste la lista, el total ha cambiado en{' '}
+            <strong>
+              {hecho.diferencia_cent > 0 ? 'mas' : 'menos'} de{' '}
+              {euros(Math.abs(hecho.diferencia_cent))}
+            </strong>
+            . Lo guardado es lo que costaba al cerrar.
+          </>
+        )}
       </Aviso>
     )
   }

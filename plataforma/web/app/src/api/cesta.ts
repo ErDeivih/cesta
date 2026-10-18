@@ -326,6 +326,14 @@ export interface CierreDeCompra {
   /** De esas, cuantas se quedaron sin precio: van en la compra y **no** en el total. */
   sin_precio: number
   total_cent: number
+  /** *Lo que la lista decia que iba a costar, con el mismo calculo que la pantalla.*
+   *
+   *  *Se calcula al cerrar, no antes: si el precio cambio entre que se miro la lista y se cerro,
+   *  estas dos cifras **no coinciden**, y la diferencia dice cuanto.* *Opcional porque un servidor
+   *  anterior no lo manda.* */
+  estimado_cent?: number
+  /** *`total_cent - estimado_cent`, con signo: positiva si costo mas de lo que decia.* */
+  diferencia_cent?: number
   /** Cuantas siguen en la lista, que son las que no se cogieron. */
   quedan: number
 }
