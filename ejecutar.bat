@@ -60,8 +60,16 @@ set CODIGO=!errorlevel!
 REM La marca se pone si el dia ha ido bien, y el codigo 0 significa "el pipeline corrio
 REM con algo fresco dentro" -- no "colaboraron las cinco cadenas". Si el pipeline no
 REM llego a correr, o no trajo nada fresco, se reintenta en el proximo arranque.
+REM *** 3 TAMBIEN ES UN DIA HECHO. ***
+REM *run.py devuelve 3 cuando el dia esta hecho pero falta alguna cadena, y 1 cuando hay que
+REM reintentarlo (ver _veredicto).* *La marca tiene que escribirse con 0 **y con 3**: si solo
+REM se escribe con 0, un dia degradado se reintentaria en cada arranque -- noventa minutos
+REM para volver a chocar con el mismo WAF.*
 if !CODIGO!==0 (
   echo !HOY!> "%MARCA%"
+) else if !CODIGO!==3 (
+  echo !HOY!> "%MARCA%"
+  echo Cesta: el dia esta hecho con alguna cadena menos. No se reintenta; el resumen dice cual.
 ) else (
   echo Cesta: la ejecucion de !HOY! no llego a dejar el dato fresco; se reintentara en el proximo arranque.
 )
