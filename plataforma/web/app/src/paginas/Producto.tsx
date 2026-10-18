@@ -36,7 +36,7 @@ import { Chispa, type PuntoChispa } from '../componentes/Chispa'
 import { loQueDiceLaCurva } from '../logica/curva'
 import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
-import { construyeComparacion } from '../logica/grupo'
+import { construyeComparacion, identidad, precioComparable } from '../logica/grupo'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
@@ -602,22 +602,28 @@ export function Producto() {
                     // 2,99 EUR/ud. La API ya calcula su `ahorro_pct` asi (`catalogo.py`),
                     // y la nota de abajo dice exactamente eso: que los productos de otra
                     // unidad no entran en la cuenta. Ahora la columna lo cumple.
-                    const delMismo = grupo.productos
-                      .filter(
-                        (q) =>
-                          q.comparable &&
-                          q.unidad === p.unidad &&
-                          q.precio_unidad_cent !== null &&
-                          q.precio_unidad_cent > 0,
-                      )
-                      .map((q) => q.precio_unidad_cent as number)
-                    const referencia = delMismo.length > 0 ? Math.min(...delMismo) : null
+                    // *** LA DIFERENCIA SOLO SE CALCULA DONDE HAY IDENTIDAD Y BASE. ***
+                    //
+                    // *Esto filtraba por `comparable` y por **misma unidad**, pero **no por
+                    // EAN**.* *Asi que en la ficha del azafran la fila de DIA (kg) se comparaba
+                    // con el **Hacendado** (kg, otro articulo) y salia «diferencia +41 %»: el
+                    // mismo defecto que ya se habia corregido en la frase y en el apartado,
+                    // vivo en la tercera superficie.*
+                    //
+                    // *Ahora: **mismo articulo** (`identidad`) **y** precio comparable (`misma
+                    // unidad` y misma convencion de peso).* *Si no, la celda lo dice en vez de
+                    // inventar un porcentaje.*
+                    const esEste = identidad(conIdentidad, p) === 'mismo'
+                    const comparableConEste = esEste && precioComparable(conIdentidad, p)
+                    const referencia = comparableConEste ? comp.minimo : null
                     const dif =
                       referencia !== null &&
+                      referencia > 0 &&
                       p.precio_unidad_cent !== null &&
+                      Number.isFinite(p.precio_unidad_cent) &&
                       p.precio_unidad_cent > 0
                         ? Math.round(
-                            (100 * (p.precio_unidad_cent - referencia)) / referencia * 10,
+                            ((100 * (p.precio_unidad_cent - referencia)) / referencia) * 10,
                           ) / 10
                         : null
                     return (
@@ -644,7 +650,15 @@ export function Producto() {
                           {eurosUnidad(p.precio_unidad_cent, p.unidad)}
                         </Td>
                         <Td className="cifra" etiqueta="diferencia">
-                          {dif === null ? 'no lo sé' : dif <= 0 ? 'el más barato' : `+${porcentaje(dif)}`}
+                          {esEste && !comparableConEste
+                                ? 'mismo articulo, otra base'
+                                : !esEste
+                                  ? 'otro articulo'
+                                  : dif === null
+                                    ? 'no lo sé'
+                                    : dif <= 0
+                                      ? 'el más barato'
+                                      : `+${porcentaje(dif)}`}
                         </Td>
                         <Td etiqueta="letra">
                           <SelloLetra producto={p} />

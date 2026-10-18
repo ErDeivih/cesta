@@ -127,3 +127,41 @@ esos contratos para aparentar cierre.
 de ensayo y `... ensayo siembra propio`, dos veces, comparando el resultado.
 Despues M01, que ya tiene su defecto localizado: la tabla de `Producto.tsx`.
 
+### M01 / 18/10/2026 / en curso (la tabla de la ficha, corregida; faltan las demas superficies)
+
+**Capacidad y alcance.** La columna «Diferencia» de la tabla de cadenas de la ficha.
+
+**Caso reproducido antes.** `Producto.tsx` calculaba `delMismo` sobre el **grupo entero**
+filtrando por `comparable` y **misma unidad**, pero **no por EAN**. En la ficha de
+`dia/147509` (azafran Pote 0,4 g) la fila de DIA (kg) se comparaba con el **Hacendado**
+(kg, **otro articulo, otro EAN**) y la columna decia **«diferencia +41 %»**. Era el
+mismo defecto ya corregido en la frase y en el apartado de alternativas, vivo en la
+tercera superficie.
+
+**Cambio y contrato.** La celda solo calcula cifra si `identidad(...) === 'mismo'` **y**
+`precioComparable(...)`, y la referencia es `comp.minimo` (el construido en M-de-la-
+comparacion, que incluye al elegido). Si no, la celda **dice por que**:
+«mismo articulo, otra base» / «otro articulo», en vez de un porcentaje inventado.
+
+**Comandos ejecutados + exit codes.** `npx tsc --noEmit` -> limpio;
+`npm test` -> **104 pass, 0 fail**; `npm run build` -> ok; `ruff` -> limpio;
+`comprueba_documentos` -> TODO BIEN.
+
+**Version realmente servida.** `index-*` reconstruido y servido por 8080; comprobado
+en navegador: `main=1`, `texto=2505`, **cero errores JS**.
+
+**Evidencia visual revisada (que demuestra).** En la ficha servida:
+**«diferencia +41 %» NO SALE**; y **si salen** «otro articulo», «mismo articulo, otra
+base» y «el más barato». Es decir, la columna ya no resta el Hacendado como ahorro
+del Pote.
+
+**Limitaciones y que NO se ha probado.** No se capturo el **mapeo fila a fila** (mi
+extractor devolvio filas vacias porque `Td` no se lee como `td` simple): se comprobo
+que las etiquetas estan, **no cual lleva cada fila**. Y de M01 quedan **sin auditar**
+las otras superficies que la especificacion nombra: buscador, favoritos, avisos,
+reparto, estimacion y graficas. Faltan tambien los casos de aceptacion «mismo articulo
+mas barato» y «sin EAN» como pruebas de componente.
+
+**Siguiente ID + comando.** M01 sigue abierto: auditar las otras superficies y anadir
+las pruebas de aceptacion. M00 sigue abierto por la siembra del banco de ensayo.
+
