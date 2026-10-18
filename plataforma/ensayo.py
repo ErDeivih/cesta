@@ -168,6 +168,8 @@ class Manifiesto:
     dsn: str = ""
     directorio: str = ""
     sqlite: str = ""
+    # *El catalogo del ensayo: su propio gold de parquet, con su version.*
+    gold: str = ""
     procesos: list[int] = field(default_factory=list)
     notas: list[str] = field(default_factory=list)
 
@@ -227,6 +229,23 @@ def prepara(nombre: str = "propio", puerto_pg: int = 55432, espera_s: int = 60) 
         raise GuardaRota("no se pudo crear el contenedor: " + (creado.stderr or "").strip()[:200])
     man.contenedor_id = creado.stdout.strip()
     man.guarda()  # *Anotado ANTES de esperar: si se corta aqui, la limpieza sabe que existe.*
+
+    # *** Y SU CATALOGO. *** *Un ensayo sin datos no sirve para nada: el escenario del apartado 8
+    # necesita arroz (dos marcas), leche y huevos, y el gold de casa no los tiene.* *Se construye
+    # aqui, con el generador versionado, en vez de copiar un parquet suelto.*
+    try:
+        from plataforma.construye_gold_ensayo import (
+            construye as construye_gold,
+        )
+
+        destino_gold = plan.directorio / "gold"
+        construye_gold(destino_gold)
+        man.gold = str(destino_gold)
+        man.guarda()
+        man.notas.append("catalogo del apartado 8 construido en " + str(destino_gold))
+    except Exception as exc:  # noqa: BLE001
+        man.notas.append("el catalogo NO se pudo construir: " + str(exc)[:200])
+        man.guarda()
 
     limite = time.monotonic() + espera_s
     while time.monotonic() < limite:
@@ -329,6 +348,13 @@ def siembra(nombre: str = "propio") -> dict:
 
     # *`almacen` lee la variable al arrancar: se pone **antes** de importarlo.*
     os.environ["CESTA_POSTGRES"] = man.dsn
+    # *** Y EL CATALOGO, que va aparte. *** *`catalogo.py` monta sus vistas sobre parquet y
+    # resuelve `AJUSTES.gold` con **`CESTA_GOLD`** (`ajustes.py:27`).* *Sin esto el ensayo tendria
+    # cuentas y listas, pero la ficha no encontraria ni un producto.*
+    if man.gold and Path(man.gold).exists():
+        os.environ["CESTA_GOLD"] = man.gold
+    else:
+        man.notas.append("sin catalogo: no hay gold en el manifiesto")
     from plataforma.api import almacen  # a proposito: despues de poner el entorno
 
     almacen.arranca()
@@ -435,7 +461,11 @@ def main(argv: list[str] | None = None) -> int:
                 ("Casa" if x["es_de_casa"] else x["nombre"]) for x in listas
             ) or "(ninguna)"
             print(f"      {usuario:14} {'ok' if not str(idc).startswith('ERROR') else idc}   listas: {detalle}")
-        print("  NO sembrado todavia: recetas, despensa y ofertas (falta el catalogo de ensayo)")
+        # *El catalogo ya existe (lo construye `prepara`), asi que **ya no es el motivo**.* *Lo que
+        # falta ahora es distinto: sembrar recetas, despensa y ofertas **sobre** el, y eso es el
+        # siguiente paso, no una carencia de datos.*
+        print("  el catalogo del apartado 8 esta listo (arroz A y B, leche, huevos)")
+        print("  falta sembrar SOBRE el: recetas, despensa y ofertas")
         # *Un error de siembra NO puede salir con 0.*
         fallos = [u for u, i in resumen["cuentas"].items() if str(i).startswith("ERROR")]
         if fallos:
