@@ -746,3 +746,33 @@ encargo: sin fuente, no hay dato; y sin dato, `null` no es cero.*
 uno de cada cinco productos.* *Decir «2 100 kcal» en la pantalla seria cierto solo si los cinco
 ingredientes estuvieran entre ese 21,8 %, y hoy no lo estan.*
 
+**M12 / la pantalla de calorias SI es honesta. Lo que falta es el dato, no el codigo.**
+
+*Despues de medir que solo el 21,8 % de los grupos trae `kcal_100g`, lo siguiente era mirar que hace
+la pantalla cuando falta.* *Y hace lo correcto, sitio por sitio:*
+
+    Cocina.tsx:89    `resumen[k].valor === null ? 'Sin datos' : ...`  y ademas
+                     «Datos incompletos: N sin valor»
+    Cocina.tsx:94    «Subtotal **conocido**: N kcal» -- no «total»
+    Cocina.tsx:95    «El dia esta incompleto: faltan datos nutricionales. **No es tu consumo
+                     total**.»
+    Diario.tsx:496   `data.conocido.kcal === null ? 'sin dato' : ...`
+    Diario.tsx:3     *«Las dos cifras van juntas. "Conocido: 1.250 kcal" sin decir cuantas entradas
+                     no traen dato es un...»*
+    Tendencias.tsx   *«un dia sin objetivo no es un dia de 0 kcal»*
+    GraficaDeLasTres *«longitud cero diria "cero kcal", y eso no es lo que paso: es que no se
+                     anoto»*
+
+*Y `Cocina.tsx:40` filtra por `a.kcal !== null` y **lo llama «Subtotal conocido»**, que es
+exactamente lo que es.*
+
+**Asi que M12 no tiene el defecto de las otras seis superficies.** *No hay que arreglar la
+pantalla: hay que conseguir el dato.* *Y eso no se arregla con codigo, se arregla leyendo etiquetas
+-- que es justo lo que la especificacion dice que no se invente.*
+
+**Lo que queda de M12, entonces, con el limite escrito:**
+- *La pantalla: hecha y honesta.*
+- *El dato: 21,8 %, y los tres ingredientes del escenario sin el.*
+- *La estimacion «con el error declarado» que pide la especificacion: **no se puede hacer** sin el
+  dato de partida. Inventar un margen sobre un numero que no existe seria peor que no darlo.*
+
