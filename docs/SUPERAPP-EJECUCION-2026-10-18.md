@@ -1259,3 +1259,30 @@ tercera vez en la sesion que un campo supuesto me hace reportar un defecto falso
 *O sea: **una de las cinco cosas que pide la aceptacion**, medida. Las otras cuatro son el trabajo de
 M05.*
 
+**M05 / «2 kg no son dos envases»: YA ESTABA, y con el fallo del dueño como caso.**
+
+*De las cinco cosas que pide la aceptacion de M05, la segunda --«no interpretar «2 kg» como dos envases
+sin base»-- ya estaba resuelta y probada. No hace falta tocarla:*
+
+    tests/test_b04_los_dos_puentes.py:358
+      assert ln.envases == 2, "1.400 g en envase de 1.000 g son DOS envases, y salieron ..."
+    tests/test_b04_los_dos_puentes.py:223
+      «El fallo del dueño, del 14/10/2026: se calculan dos envases, cantidad 1; "dos envases" queda
+       solamente en la nota»
+
+*Y las pruebas pasan: 17 del fichero, 9 de las de envase.*
+
+**Lo que SI falta de M05, comprobado y no supuesto:**
+
+    pegar varias lineas con previa ....... NO EXISTE. `ImportarReceta.tsx` es de recetas, no de la
+                                            lista de la compra. Es el hueco mas claro de M05.
+    busqueda con filtros ................. hay buscador (TablaResultados), pero sin los filtros de
+                                            categoria, formato, tienda, oferta y preferencias
+    modo tienda por pasillos ............. existe `en_carrito` en la linea y `Cesta.tsx`; falta medir
+                                            deshacer, contador, reordenar y restaurar tras recarga
+    reposicion de favoritos .............. M08
+    y otra lista compartida .............. hay invitaciones; falta medirlo
+
+*** De las cinco, una medida (30 lineas con duplicados y dos marcas), una ya estaba y probada (los
+envases), y tres por hacer. *** *Es el estado real de M05, y no se redondea.*
+
