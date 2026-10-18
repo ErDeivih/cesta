@@ -669,8 +669,30 @@ def cerrar_compra(lista_id: str, usuario: dict = Depends(usuario_actual)):
                     ' lo que quedo: no se ha perdido nada.',
                 )
         raise HTTPException(409, "No hay nada en el carro: marca lo que te llevas y vuelve.")
-    hecho = almacen.cierra_compra(lista_id, usuario["id"], cesta.coste_por_linea(en_el_carro))
-    return hecho | {"total_cent": hecho["total_cent"]}
+    precios = cesta.coste_por_linea(en_el_carro)
+    hecho = almacen.cierra_compra(lista_id, usuario["id"], precios)
+    # *** «CAMBIO DE PRECIO DURANTE EL CIERRE»: SE DICE, NO SE CALLA. ***
+    # *La especificacion pide que la estimacion, el cierre y el historico sean la misma cifra
+    # (M06), y prueba el caso de que el precio cambie entre que la persona lo mira y cierra.*
+    #
+    # *Hasta hoy, si el precio cambiaba, el cierre guardaba el nuevo **y la pantalla no decia
+    # nada**: se veia un total antes de cerrar y otro en el recibo, sin explicacion, y el de la
+    # lista se quedaba en el historico como si siempre hubiera sido ese.*
+    #
+    # *Ahora se devuelven las dos cifras -- **lo que costo** y **lo que la lista decia que iba a
+    # costar**, calculado con el mismo `cesta.estimacion` que pinta la pantalla.* *Si no
+    # coinciden, quien cierre lo puede decir; y si coinciden, se dice que coinciden, que es la
+    # mitad que hace util la comprobacion.*
+    #
+    # *El precio que se guarda sigue siendo el real, que es el que se pago: **no se congela el
+    # de la estimacion**, porque eso apuntaria un importe que no salio de la cuenta.*
+    estimado = cesta.estimacion(en_el_carro)
+    return hecho | {
+        "total_cent": hecho["total_cent"],
+        "estimado_cent": estimado["total_cent"],
+        # *La diferencia con signo: positiva si costo mas de lo que decia.*
+        "diferencia_cent": hecho["total_cent"] - estimado["total_cent"],
+    }
 
 
 @app.get("/api/listas/{lista_id}/compras")

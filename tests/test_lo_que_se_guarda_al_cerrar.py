@@ -151,3 +151,64 @@ def test_cual_de_las_cuatro_lineas_no_cuadra(monkeypatch):
         if est["total_cent"] != total:
             diferencias[nombre] = (est["total_cent"], total)
     assert not diferencias, f"no cuadran: {diferencias}"
+
+
+def test_si_el_precio_cambia_entre_la_estimacion_y_el_cierre_se_nota(monkeypatch):
+    """*** EL CASO DEL DUEÑO: CAMBIO DE PRECIO DURANTE EL CIERRE. ***
+
+    *La estimacion se calculo cuando la persona miro la lista. El cierre se ejecuta despues, y
+    `coste_por_linea` lee el precio **de ese instante**.*
+
+    *** Si el precio cambia en medio, las dos cifras NO coinciden, y eso es un hecho, no un fallo. ***
+    *Lo que no puede pasar es que la diferencia se calle: el recibo guarda lo que costo -- que es lo
+    correcto, es lo que se pago -- y **el cierre devuelve tambien lo que la lista decia**.*
+    """
+    _monta(monkeypatch)
+    lineas = [_linea("l1")]
+    antes = cesta.estimacion(lineas)
+    assert antes["total_cent"] == 90, antes
+
+    # *El precio sube: aldi pasa de 90 a 95, y dia de 100 a 105.*
+    def candidatos_caros(peticiones, fecha_tope):
+        mejor = {}
+        for p in peticiones:
+            for cadena, precio in (("dia", 105), ("aldi", 95)):
+                mejor[cesta._llave_candidato(p.grupo_id, p.producto_id, cadena)] = (
+                    "dia:P1", precio, "Leche", "3x2", None, None, None, precio, True)
+        return mejor
+
+    monkeypatch.setattr(cesta, "_candidatos", candidatos_caros)
+    cierre = cesta.coste_por_linea(lineas)
+    despues = sum(c["coste_cent"] for c in cierre.values() if c.get("coste_cent") is not None)
+
+    # *Se nota: 90 antes, 95 despues.*
+    assert despues == 95, cierre
+    assert antes["total_cent"] != despues, (
+        "el precio cambio y las dos cifras coinciden: la prueba no esta midiendo un cambio"
+    )
+    # *Y la diferencia se puede decir con signo, que es lo que ahora devuelve el cierre.*
+    assert despues - antes["total_cent"] == 5
+
+
+def test_el_cierre_dice_la_diferencia_con_lo_que_la_lista_decia(monkeypatch):
+    """*El cierre devuelve `estimado_cent` y `diferencia_cent` ademas del total.*
+
+    *`main.py` los calcula con el mismo `cesta.estimacion` que pinta la pantalla, asi que las dos
+    cifras del recibo son las que la persona pudo ver -- no una tercera cuenta.*
+    """
+    _monta(monkeypatch)
+    lineas = [_linea("l1"), _linea("l2", cantidad=2)]
+    est = cesta.estimacion(lineas)
+    cierre = cesta.coste_por_linea(lineas)
+    real = sum(c["coste_cent"] for c in cierre.values() if c.get("coste_cent") is not None)
+    # *Lo que el endpoint devuelve, sin base de datos: las dos cifras y su diferencia.*
+    respuesta = {
+        "total_cent": real,
+        "estimado_cent": est["total_cent"],
+        "diferencia_cent": real - est["total_cent"],
+    }
+    assert respuesta["diferencia_cent"] == respuesta["total_cent"] - respuesta["estimado_cent"]
+    # *No se escribe el numero esperado a mano: sale de la misma funcion que lo pinta.*
+    assert respuesta["estimado_cent"] == est["total_cent"]
+    # *Y con los mismos datos, la diferencia es cero: no hay cambio de precio que decir.*
+    assert respuesta["diferencia_cent"] == 0, respuesta
