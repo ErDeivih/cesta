@@ -262,7 +262,13 @@ def test_los_objetivos_de_la_ficha_del_producto_tienen_44_px():
         "el enlace al producto de al lado vuelve a medir 19 px"
     # Y la puerta tiene que medir esta pantalla, que es de donde salió el fallo.
     puerta = PUERTA.read_text(encoding="utf-8")
-    assert '/producto/{con_historial[0]}/{con_historial[1]}' in puerta, \
+    # *** LA RUTA CAMBIO, Y LA PRUEBA SE QUEDO CON LA VIEJA. ***
+    # *`App.tsx` declara `/producto/:fuente/:idFuente` como una **redireccion** a
+    # `/compra/productos/...`, que es la pantalla de verdad y la que la puerta carga
+    # (`prueba_navegador.py:2306`).* *Pedir la vieja hace que el router redirija, y `carga()` puede
+    # volver antes de que la nueva monte: **una carrera** que ya costo tres corridas.*
+    # *Asi que la puerta hace lo correcto y esta prueba pedia lo antiguo.*
+    assert '/compra/productos/{con_historial[0]}/{con_historial[1]}' in puerta, \
         "la ficha del producto no está en la lista de pantallas que se miden"
     assert "/escaner" in puerta, "la pantalla del escáner tampoco"
 
