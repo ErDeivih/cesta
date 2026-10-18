@@ -10,6 +10,22 @@ from core import config
 LOG = config.DATA / "runs.csv"
 FIELDS = ["ts", "fuente", "filas", "errores", "segundos", "ok"]
 
+# *** EL TEXTO DEL ERROR VA APARTE, *y no es un detalle*. ***
+#
+# *El 18/10/2026 Carrefour fallo en **5,2 segundos** con **cero** filas, despues de haber
+# traido 16 561 el dia anterior.* *`runs.csv` guardo `errores=1` -- **cuantos**, no **cuales**
+# --, y en disco no quedo **nada**: ni raw, ni bronze, ni un mensaje.*
+# *Asi que la causa no se pudo investigar, y el siguiente fallo habria sido igual de invisible.*
+#
+# *`runs.csv` sigue teniendo seis columnas: **las pruebas y `check_drift` dependen de ellas**, y
+# meter aqui un texto libre con saltos de linea rompe el CSV.* *El detalle va a su propio
+# fichero, **rotado por tamano**, que es lo que pide M18.*
+LOG_ERRORES = config.DATA / "errores.log"
+
+#: *Cuando el log de errores pasa de este tamano, se rota a `.1`.* *No crece sin fin y no
+#: necesita un servicio de logs para hacerlo.*
+MAXIMO_LOG_ERRORES = 1_000_000
+
 
 # Con las cadenas en paralelo, cinco hilos terminan y escriben aqui casi a la vez.
 # Dos filas a medio escribir en el mismo renglon dejan el fichero ilegible, y este
@@ -58,6 +74,32 @@ def _escribe(fuente: str, filas: int, errores: int, segundos: float,
             "segundos": round(segundos, 1),
             "ok": (errores == 0 if completa is None else completa) and filas > 0,
         })
+
+
+def log_error(fuente: str, texto: str) -> None:
+    """*** El texto de un fallo, *para que se pueda investigar despues*. ***
+
+    *Se separa de `runs.csv` a proposito: el CSV apunta **cuantas** cosas fallaron y este
+    fichero **que** fallo.* *Un texto con saltos de linea dentro de una columna CSV rompe el
+    CSV, y el CSV es la unica prueba de que una pasada ocurrio.*
+
+    *Se rota por tamano: cuando pasa de `MAXIMO_LOG_ERRORES`, el anterior se queda como `.1`.*
+    *No se borra historia sin dejar rastro: se conserva la ultima pasada.*
+    """
+    with _CANDADO:
+        LOG_ERRORES.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            if LOG_ERRORES.exists() and LOG_ERRORES.stat().st_size > MAXIMO_LOG_ERRORES:
+                anterior = LOG_ERRORES.with_suffix(LOG_ERRORES.suffix + '.1')
+                anterior.unlink(missing_ok=True)
+                LOG_ERRORES.rename(anterior)
+        except OSError:
+            # *Si no se puede rotar, se sigue escribiendo: perder el mensaje es peor que un
+            # log grande.*
+            pass
+        with LOG_ERRORES.open('a', encoding='utf-8') as fh:
+            fh.write(datetime.now(timezone.utc).isoformat() + '\t' + fuente + '\t' +
+                     texto.replace('\n', ' | ')[:4000] + '\n')
 
 
 def check_drift(fuente: str, filas_hoy: int, tolerancia: float = 0.10) -> str | None:
