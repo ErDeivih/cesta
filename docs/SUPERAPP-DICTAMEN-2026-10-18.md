@@ -43,10 +43,18 @@ de pruebas.*
 | Una pantalla sin red no pierde los cambios: se encolan y se suben al volver | *`Cesta.tsx`, cola sin cobertura* |
 
 **Reservas:**
-- ***De las cuatro superficies corregidas, una está leída también en móvil.*** *La salvedad del grupo
-  se ha leído a **390×844 con `has_touch`**: «La diferencia es entre los artículos del grupo…» **sale**,
-  y la página mide 3 504 caracteres sin un error de JavaScript.* *Las otras tres (tabla de la ficha,
-  columna del buscador, tarjeta de ejemplos) **siguen verificadas sólo en escritorio**.*
+- ***De las cuatro superficies corregidas, dos están leídas también en móvil (390×844, `has_touch`).***
+  *La salvedad del grupo: «La diferencia es entre los artículos del grupo…» **sale** (3 504 caracteres,
+  cero errores).* *Y **la tabla de la ficha**, que es la que tuvo el defecto original:*
+
+      /compra/productos/ensayo/arroz-a  main=1  texto=2479  errores=[]
+        «diferencia +9,1 %»            <- el ahorro EXACTO de su mismo articulo
+        «diferencia otro articulo» x2  <- las dos marcas distintas, NO como ahorro
+        «De la mas barata a la mas cara de este MISMO articulo hay 9 % de diferencia por kg»
+
+  *** El 41 % que comparaba el Pote con el Hacendado ya no puede aparecer: *** *el arroz A muestra su
+  **9,1 %** real contra el mismo EAN, y el arroz B sale marcado como «otro articulo».*
+- *La columna del buscador y la tarjeta de ejemplos **siguen verificadas sólo en escritorio**.*
 - *La PWA (instalación, offline real, arranque en frío) **no se ha probado** en esta sesión.*
 - *La PWA (instalación, offline real, arranque en frío) **no se ha probado** en esta sesión.*
 
