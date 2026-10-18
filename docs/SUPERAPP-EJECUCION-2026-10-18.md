@@ -1,5 +1,50 @@
 # Ejecución de la especificación maestra
 
+## Continuación vigente tras `758cec8`
+
+M06 sigue en curso, no reabrir una investigación de 90 rondas. La especificación
+incluye cuatro comprobaciones concretas: alcance carrito frente a lista entera,
+cliente/sello obligatorio y nullables, snapshot/concurrencia y precisión del banco
+sobre etiquetas evaluables. Completar en una entrega con HTTP, componente y
+persistencia, además de la procedencia de importes y el viaje opcional ya exigidos.
+
+Evidencia propia de esta revisión: 15 pruebas dirigidas pasan (banco/cierre).
+Reproducción controlada: mismos precios y una línea pendiente → sellos distintos;
+un acierto conocido + un exacto desconocido → precisión 0,5 (esperada 1 sobre los
+evaluables). No se ha repetido toda la suite ni modificado la lógica de producto.
+
+Después M07 (banco autorizado) → M08 y el resto. Lo no auditado no se llama
+inexistente ni cerrado. Si el bucle externo aparece «Inactive Goal», este fichero
+no puede reactivarlo: reanudar desde el control de DeepSeek; no afirmar actividad
+del agente solo porque su resumen diga que el objetivo sigue activo.
+
+---
+
+## Punto vigente tras revisión de `dae4cf4` — 18/10/2026
+
+Leer primero la aclaración M06/M07 al principio de la especificación maestra.
+Reabre M06: cotización vista no retenida; cambio silencioso de tienda; viaje
+arbitrario; importe de catálogo presentado como pago. M07 no está bloqueado
+por permiso de anotación: el agente puede preparar pares documentados y marcar
+ambiguos sin inventar verdad ni atribuirlos a humanos.
+
+Diagnóstico ejecutado por GPT, sin red ni bases:
+`uv run python -m scripts.auditar_cierre_y_banco_20261018` → exit 0.
+Resultados: antes 100 / actual 120 / endpoint diferencia 0; DIA elegido ausente
+→ Aldi guardado; etiqueta None → falso exacto; viaje fijo 150.
+Exit 0 significa que corrió el diagnóstico, NO que los contratos sean correctos.
+
+Próximo bloque: regresiones HTTP y componente + corrección vertical M06 con
+cotización/reconfirmación, viaje opcional y tienda preservada; después construir
+el banco M07 con evidencia y continuar M08–M22. No devolver estos defectos a
+David como preguntas de producto: los defaults ya están decididos en el contrato.
+No se han reejecutado aquí las 2.126 pruebas ni auditado todos los cierres previos.
+
+El resto del documento conserva las entradas de DeepSeek; los estados anteriores
+que contradigan este punto son antecedentes, no cierre vigente de M06/M07.
+
+---
+
 Contrato: [especificación maestra](SUPERAPP-ESPECIFICACION-MAESTRA-2026-10-18.md).
 Preparado el 18/10/2026 por GPT; revisión inspeccionada `5204e2b`.
 Esto es una cola de trabajo, no una certificación de carencias ni una activación
@@ -1560,4 +1605,58 @@ la forma es la que engana.*
 *Lo de etiquetar 200 pares es trabajo humano o de agente con procedencia declarada; en este repo ya hay
 precedente (`quien=agente-dsh` en las 37).* *No lo doy por hecho: lo pregunto cuando toque, porque la
 spec lo llama interaccion humana.*
+
+### M06 / SEGUNDA CORRECCION: lo cerrado, y lo que la prueba HTTP dejo al descubierto
+
+*Los dos fallos que reprodujo David estan corregidos y medidos:*
+
+  precision ......... dividia por `exactos`, que incluia los pares **sin etiqueta**: un acierto
+                      conocido mas un exacto sin etiqueta daba 0,5. Ahora el denominador son los
+                      **evaluables**, y van tres cifras separadas (predicciones, evaluables,
+                      sin etiqueta). **Medido: 0,5 -> 1,0.**
+  cotizacion ........ el GET firmaba **toda la lista** y `/cerrar` el **carrito**. Ahora el GET sirve
+                      la cotizacion del **carrito** -- el mismo conjunto que se cierra -- y aparte
+                      `cotizacion_lista_cent`, que no se firma porque no se cierra.
+
+*Y se cerro el resto del contrato:* `confirmado` y `procedencia_importe: "calculado"` en la respuesta;
+`cerrarCompra(listaId, sello)` en el cliente; `CerrarCompra` recibe el sello de la pantalla; y los
+nullable alineados en TS (`estimado_cent: number | null`), donde **`tsc` cazo el sitio exacto en que
+formateaba null como cero**.
+
+**Pero la prueba HTTP real (regla 6) dejo dos comprobaciones sin pasar:**
+
+    ok    la lista trae la cotizacion con su sello
+    ok    sin sello se puede cerrar, pero NO se marca confirmado
+    ok    el importe dice de donde sale
+    ok    un sello que no coincide da 409
+    ok    el 409 NO ha escrito ninguna compra
+    FALLO con el sello bueno cierra y queda confirmado
+    FALLO con el sello bueno la diferencia es cero
+
+**Y el volcado dice por que, aunque no lo he terminado de aislar:**
+
+    sello=1aa286d0127fc9be  total=0  sin_precio=1  lineas=1  lista_entera=0
+
+*La linea del arroz **no tiene precio en el banco de ensayo**, asi que el carrito cotiza 0 y el
+conjunto que se firma y el que se cierra no coinciden.*
+
+**Lo que se descarto, midiendo:**
+- *no es la ventana de validez: el gold esta fechado el 1 de enero y la ventana es de 3 dias, asi que
+  se abrio a 100.000 dias solo para el ensayo -- y **siguio dando `sin_precio=1`**.*
+- *no es el filtro por cadena: `_candidatos` no filtra por `fuente` en el SQL.*
+- *no es que el catalogo no se lea: `/api/grupo/900001` devuelve los dos arroces con sus dos EAN.*
+
+*Queda por mirar si `_candidatos` exige `comparacion_fiable`, o si hay un filtro de fecha que no he
+visto, o si la vista `grupos` del ensayo no trae `precio_cent > 0`. **No lo doy por resuelto.***
+
+*** Y hay una consecuencia mas grande que el propio cierre: si ninguna linea del banco tiene precio,
+todas las comprobaciones de dinero que se han hecho en el ensayo (aceptaciones de M05, el escenario de
+dos personas) se hicieron **sin precios reales**. *Lo que si median -- lineas, duplicados, marcas,
+permisos -- es cierto; lo que no median es dinero.**
+
+**Lo que sigue pendiente de este contrato:**
+- *que el sello bueno cierre (la causa esta acotada a tres descartes y un pendiente)*
+- **snapshot y concurrencia** (regla 3): `cotiza` y `/cerrar` siguen recalculando por separado
+- **la prueba de componente** de que la pantalla enseña el 409 y pide confirmar
+- **la suite entera**: se interrumpio dos veces; 53 pruebas dirigidas pasan
 

@@ -75,8 +75,14 @@ def main() -> int:
     _orden("prepara", "propio")
     _orden("siembra", "propio")
     man = json.loads((RAIZ / "data/ensayo/propio.manifiesto.json").read_text(encoding="utf-8"))
+    # *** EL GOLD DEL ENSAYO ESTA FECHADO EL 1 DE ENERO, Y LA VENTANA ES DE 3 DIAS. ***
+    # *O sea que hoy (18/10/2026) el catalogo del banco tiene 290 dias y **ningun precio vale**:
+    # todas las lineas salen `sin_precio` y la cesta cotiza 0.*
+    # *No es un fallo de la aplicacion -- con un catalogo viejo no hay precio, y decirlo es lo
+    # correcto --, pero deja el banco sin poder probar el cierre con dinero.*
+    # *Se abre la ventana **solo para el ensayo**: la aplicacion de casa sigue con sus 3 dias.*
     entorno = dict(os.environ, CESTA_POSTGRES=man["dsn"], CESTA_GOLD=man["gold"],
-                   CESTA_RECETAS=man["sqlite"])
+                   CESTA_RECETAS=man["sqlite"], CESTA_DIAS_PRECIO="100000")
     api = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "plataforma.api.main:app",
          "--host", "127.0.0.1", "--port", str(PUERTO)],
