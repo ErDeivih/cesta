@@ -165,3 +165,41 @@ mas barato» y «sin EAN» como pruebas de componente.
 **Siguiente ID + comando.** M01 sigue abierto: auditar las otras superficies y anadir
 las pruebas de aceptacion. M00 sigue abierto por la siembra del banco de ensayo.
 
+### M02 / 18/10/2026 / en curso (ESLint con rules-of-hooks hecho; falta la prueba de componente)
+
+**Capacidad y alcance.** El comprobador oficial de las reglas de hooks, y las
+dependencias de ensayo del frontend.
+
+**Dependencias instaladas** (autorizadas por la especificacion; `package-lock.json`
+escrito): `eslint` 10, `@eslint/js` 10, `typescript-eslint` 8,
+`eslint-plugin-react-hooks` 7, `vitest` 5, `jsdom` 30,
+`@testing-library/react` 16 y `@testing-library/jest-dom` 7.
+
+**Cambio y contrato.** `eslint.config.js` (flat config) con
+`react-hooks/rules-of-hooks` en **error** y `exhaustive-deps` en aviso. Scripts
+nuevos: `npm run lint` y `npm run lint:hooks`. **Solo las reglas de hooks**: no se
+activa el preset entero para no tapar el aviso que importa con cientos ajenos.
+
+**Prueba de la aceptacion, con las tres formas del fallo.** Fichero temporal con tres
+infracciones y `npx eslint`:
+- hook detras de un retorno **de una linea** -> error en 7:16;
+- retorno **partido en varias lineas** -> error en 17:16;
+- componente escrito como **funcion flecha** -> error en 25:16.
+**3 problemas, 3 errores, exit 1.** Es la aceptacion literal de M02, y las dos ultimas
+son **exactamente las que la prueba textual de `tests/hooks.test.mjs` no ve**: queda
+dicho que aquella protege el patron concreto, no sustituye a esta regla.
+
+**Comandos ejecutados + exit codes.** `npm run lint` -> **exit 0**, 0 errores y 4
+avisos (3 directivas `eslint-disable` que ya no hacen falta y 1
+`exhaustive-deps` en `Unirse.tsx:81`, que **es un aviso real**: falta la dependencia
+`acepta`). `npx tsc --noEmit` limpio; `npm test` **104 pass, 0 fail**; `npm run build`
+ok; `ruff` limpio; `comprueba_documentos` TODO BIEN.
+
+**Limitaciones y que NO se ha probado.** **La prueba de componente montado con
+respuesta controlada no esta hecha**: vitest, jsdom y RTL estan instalados pero **no
+hay configuracion de vitest ni un solo `.test.tsx`**. Y no se ha anadido
+`ErrorBoundary`. Los 4 avisos de lint siguen ahi.
+
+**Siguiente ID + comando.** M02 sigue: `vitest.config` + primera prueba de componente
+de `Producto` con respuesta controlada (carga -> dato -> ficha), y `ErrorBoundary`.
+
