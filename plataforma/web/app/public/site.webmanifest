@@ -1,0 +1,16 @@
+{
+  "name": "Cesta",
+  "short_name": "Cesta",
+  "description": "La compra de la semana, bien hilada: que comprar, donde, cuanto cuesta y que se cocina con ello.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f2f3",
+  "theme_color": "#f1f2f3",
+  "icons": [
+    { "src": "/icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
