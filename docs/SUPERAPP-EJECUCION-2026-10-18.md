@@ -592,7 +592,35 @@ de Carrefour que **si** tienen el hueco del 18 y se pasaron por `rellena_huecos`
 grupo lo sirva asi -- es la linea de `catalogo.py` que ya esta puesta, y **esa si necesita la base para verse en
 pantalla**.*
 
+## El coste de receta, con productos reales: falta el numero de envases (ronda 203)
+
+*Se calcularon tres recetas con productos **de verdad** del gold, y el tercero destapo algo:*
+
+    «ANA MARIA LAJUSTICIA Complemento alimenticio», envase **0,131 kg** por **924 cent**
+      usar 200 g cuesta ....... **1410,69 cent** (14,11 EUR)
+      «comprar» dice .......... **924 cent** (9,24 EUR)
+
+*** Usar cuesta MAS que comprar, y no es un error de calculo: es que 200 g no caben en 131 g. ***
+
+**La cuenta esta bien:** *`costeUsadoCent = unitario * cantidad`* da 14,11 EUR porque el €/kg de ese envase es altisimo.
+*Y `costeEnvaseCent = envase` es **el precio de UN envase**, que es exactamente lo que su nombre dice: «lo que cuesta
+comprar **el envase**», en singular.*
+
+*** El campo no miente. Lo que falta es **cuantos envases hacen falta**. ***
+
+*Y eso importa porque la historia del modulo -- escrita en su cabecera -- es «lo que cuesta hacer el plato, y **lo que
+sale de tu bolsillo**».* *Para esta receta salen de tu bolsillo **1.848 cent**, no 924.*
+
+**El arreglo, localizado y no hecho:**
+*`costeEnvaseCent` se queda como esta -- es el de un envase y esta bien nombrado --, y se anade
+`envasesQueHacenFalta: Math.ceil(cantidad / cantidadEnvase)` por ingrediente y en la suma.* *La pantalla puede decir
+«necesitas 2 envases» sin cambiar ningun numero existente.*
+
+*No se hace hoy porque cambia el contrato de un modulo que usa la pantalla de recetas, y **con casi nada de contexto
+es exactamente cuando se rompen las cosas que funcionan**.*
+
 ## Próximo comando
+
 
 
 
