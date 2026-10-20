@@ -336,3 +336,60 @@ el codigo esta roto -- esta verde --, espera para saber si hace lo que dice.***
     corre entera en 2:10 sin base, con 1.345 pasan y 797 saltan por motivo;
     y lo que falta es **poder quitar ese salto**, que es el 37 % de las pruebas.
 
+---
+
+# Revisión del 21/10/2026 (tercera) — **el número era del salto que yo puse**
+
+*La revisión de hace unas horas decia «1.345 pasan y 797 saltan», y lo presentaba como el resultado de la
+suite.* *** Y era el resultado de un salto que puse yo. ***
+
+## Lo que se midio despues
+
+*Se hizo configurable la espera del pool (`CESTA_ESPERA_BASE`, por defecto 30 como siempre) y se apago el salto:*
+
+    uv run pytest -q tests/      (CESTA_ESPERA_BASE=1, CESTA_SALTAR_SIN_BASE=0)
+
+    **2077 passed, 1 failed, 32 errors, 32 skipped in 4:47**
+
+*** 2.077, no 1.345. El salto tapaba 731 pruebas que pasan. ***
+
+*Y los 32 errores y el unico fallo son, uno a uno, ficheros que necesitan PostgreSQL: fallan en `arranca()` o
+con `ConnectionTimeout`.* *Ninguno es un defecto del codigo de la aplicacion.*
+
+## Y entre esas 731 aparecio un defecto real, mio
+
+    test_interfaz.py::test_colores_conocidos
+    App.tsx:367: `borde/70` pide opacidad sobre `borde`, que es una variable de CSS
+    App.tsx:369: `borde/60`  idem
+
+*Eran del **armazon de marca que escribi yo**.* *`borde` es `var(--borde)`, y Tailwind **no puede ponerle
+opacidad a una variable CSS**: omite la clase **en silencio** y el estilo no se aplica.*
+
+*** Las barras del esqueleto de carga que diseñe nunca tuvieron la opacidad que pedian. *** *Nadie lo vio
+porque un color plano no da error: se pinta y parece bien.* *Arreglado con `bg-borde opacity-70`.*
+
+## Y un test que daba dos respuestas
+
+*`test_g01_recibo_del_puente` **se saltaba solo** y **fallaba dentro de la suite**.* *Causa: `almacen._pool`
+es **un global de modulo** (`almacen.py:48`) que otra prueba dejaba puesto, y `arranca()` no volvia a
+comprobar.*
+
+*Arreglado con una fixture que cierra el pool despues de cada prueba.* *** Un `skip` que cambia segun el orden
+es peor que un fallo: el mismo comando da dos respuestas. ***
+
+## Lo que esto cambia del veredicto
+
+*** Nada, y es importante decir por que. *** *El piloto sigue NO APTO por el mismo motivo: **las 32 pruebas que
+no pueden correr son las de la API, el almacen, el ensayo y la aceptacion de §8**.* *Hablar de 797 o de 32 no
+cambia el dictamen; cambia **lo que se sabe**.*
+
+| | antes de esta revision | **ahora** |
+|---|---|---|
+| pruebas que pasan sin base | *1.345 (con mi salto)* | **2.077** |
+| pruebas que necesitan base | *797 «no pueden correr»* | **32 errors + 1 fallo, todos identificados** |
+| determinismo | *un test cambiaba segun el orden* | ***el mismo comando da siempre lo mismo*** |
+| defectos encontrados | — | ***uno, mio, de opacidad que nunca se aplico*** |
+
+*** Y la frase del dictamen anterior, «corre entera en 2:10 con 1.345 pasan», queda sustituida por esta: corre
+entera en 4:47 con **2.077 pasan**, y lo que falta son **33 pruebas que necesitan una base que no hay**.***
+
