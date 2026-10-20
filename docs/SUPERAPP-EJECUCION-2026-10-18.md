@@ -2132,3 +2132,37 @@ remoto, y este repo se trabaja en local.* *Los dos trabajos de Python necesitan 
 lleva doce rondas sin responder -- asi que la suite y `comprueba_documentos` **no se han podido correr
 aqui**, solo comprobar que `uv sync --extra plataforma` instala lo que necesitan.*
 
+**M02 / `src/estado/` SE PUEDE PROBAR A MEDIAS, Y HOY SE APRENDIO POR QUE.**
+
+*La misma idea que dio 15 de 15 en `logica/` no funciona igual en `estado/`, y conviene dejarlo escrito
+con el intento y su motivo.*
+
+**Lo que se consiguio ayer:** *`estado/cola.ts` tiene 10 pruebas.* *Se puede probar porque **no importa
+nada**: solo usa `window.localStorage`, y la prueba le pone un almacen de mentira.*
+
+**Lo que no se consiguio hoy, con `estado/filtrosUrl.ts`:**
+
+*Importa un tipo y una constante de `api/consultas` -- `FiltrosBuscar` y `FILTROS_VACIOS`.* *El mismo
+`ERR_MODULE_NOT_FOUND` que tenian `frase.ts` y `curva.ts`.* *Se intento el arreglo estructural obvio:
+mover el tipo y la constante a `src/tipos/filtros.ts`, que es donde deberian estar -- **un tipo no
+deberia arrastrar un cliente HTTP** -- y dejar que `api/consultas.ts` los re-exporte.*
+
+    tsc .......... limpio
+    node --test .. **`Cannot find module 'src/tipos/filtros'`**
+
+*Porque **node no resuelve un import relativo sin extension**, y ponerle `.ts` exige
+`allowImportingTsExtensions` en el `tsconfig`: un cambio que afecta a **todos** los imports del proyecto.*
+
+*** Se revirtio todo. *** *La suite queda en 219 y el build verde, comprobado despues de revertir.*
+*No se deja un cambio a medias por haberlo empezado.*
+
+**Lo que haria falta, para la proxima vez que alguien lo intente:**
+
+  - *o `allowImportingTsExtensions: true` en el tsconfig (Vite y `tsc --noEmit` lo soportan; es cambiarlo
+    y correr las 219)*
+  - *o un cargador que resuelva `.ts` sin extension (un `--experimental-loader`, mas piezas)*
+  - *o dejar `estado/` como esta y probar solo los modulos que no importan nada, que hoy es `cola`*
+
+*Cualquiera de las tres es una decision de proyecto, no una limpieza de ronda.* ***Y por eso no se toma
+hoy: se documenta.***
+
