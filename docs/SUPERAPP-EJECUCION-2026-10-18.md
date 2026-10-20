@@ -81,7 +81,34 @@ esqueleto de marca nunca tuvieron la opacidad que pedían, y se veían «bien» 
 **del salto que yo mismo puse**. Con el salto apagado, **2.077 pasan**.* *** El salto tapaba 731 pruebas que
 funcionan, y una de ellas destapo un defecto real. ***
 
+## Lo que la suite destapa ahora que corre (ronda 166)
+
+**`tests/test_interfaz.py`: 13 de 13 pasan.** *Y una de ellas es un chequeo de contrato que solo se puede
+hacer con esto corriendo:*
+
+    test_la_interfaz_solo_llama_a_rutas_que_la_api_tiene
+
+*** Cada ruta que el cliente llama existe en la API. *** *Que no es lo mismo que decir que funcionen -- eso
+necesita datos -- pero si que **no hay una pantalla pidiendo algo que no existe**, que es el fallo mas facil
+de dejar y el mas caro de encontrar.*
+
+*Y las otras doce, que valen lo suyo:*
+
+    vite compila al sitio que ensena el readme
+    docker compose sirve lo que vite compila
+    caddy sirve una sola pagina y manda /api al backend
+    el CSP no permite origenes de fuera para codigo ni fuentes
+    la interfaz pide la API por rutas RELATIVAS (un solo origen, sin CORS)
+    los colores del tema tienen valor en los DOS temas
+    la interfaz no tiene botones de validacion humana
+    las escalas que se escriben existen · las que se usan tienen tamano de letra conocido
+    la paleta de fabrica no crece
+
+*La del CSP y la de rutas relativas son las dos que mas me interesan para el dictamen: **una dice que el
+navegador no cargara codigo de fuera, y la otra que no hay CORS de por medio**.*
+
 ## Próximo comando
+
 
 
 ```powershell
