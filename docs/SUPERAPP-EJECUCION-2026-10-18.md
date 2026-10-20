@@ -334,7 +334,31 @@ ni guarda ni filtro que lo impidiera.*
 **Lo que sigue bloqueado, y es lo mismo que hace veinte rondas:** *las 50 pruebas que necesitan PostgreSQL, y con
 ellas la aceptacion completa de §8 -- **el cierre de compras de dos listas**.*
 
+## El sitio `aprende`, generado y comprobado (ronda 191)
+
+*Es un entregable que no se habia mirado nunca, y cuyas 20 pruebas llevaban veinte rondas saltandose por el extra
+`docs`.* *Ahora corren, y ademas se ha generado el sitio entero:*
+
+    uv run python -m plataforma.aprende
+
+    documentos de la ref. ... 109 (+ una pagina de indice)
+    palabras del curso ...... **47.730**
+    escrito en .............. plataforma/web/aprende
+    ficheros generados ...... **141, 5,42 MB**
+    index.html .............. **27 enlaces a paginas, y las 27 existen**
+    charset ................. utf-8
+
+*** Y el titulo esta bien: «Aprender datos con un proyecto de verdad · Cesta». ***
+
+*Lo cuento porque casi lo doy por defecto: la primera lectura mostro «Â·», que es el `·` UTF-8 leido como ANSI.*
+*** El defecto estaba en mi forma de leer, no en el fichero *** *-- la tercera vez esta semana, despues del conteo
+de `<Vacio>` y del `len()` de un diccionario.*
+
+*Y `plataforma/web/aprende/` esta en `.gitignore` con su motivo escrito: **es un artefacto**, se regenera entero, y
+guardarlo seria versionar HTML que envejece en cada commit.*
+
 ## Próximo comando
+
 
 
 
