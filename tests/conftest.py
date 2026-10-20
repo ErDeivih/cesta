@@ -31,3 +31,64 @@ def sin_vectores_en_disco(monkeypatch):
     # canal de vectores lee el parquet **en SQL** en vez de traerlo a Python.
     # Apagando solo `carga()` las pruebas volverian a leer `data/gold/` de verdad.
     monkeypatch.setattr(embeddings, "disponible", lambda *a, **k: None)
+
+# ---------------------------------------------------------------- la base ---
+
+# *** SI NO HAY BASE, LOS TESTS QUE LA NECESITAN SE SALTAN. NO SE CUELGAN. ***
+#
+# *El 21 de octubre de 2026 se intento correr `pytest -q tests/` sin PostgreSQL y **se quedo seis minutos sin
+# sacar una linea**: cada intento de conexion espera su `connect_timeout`, y son cientos.*
+#
+# *** Y de ahi salio una frase que estuvo diecinueve rondas en el estado: «la suite no se puede correr». ***
+# *Falso: **1.345 pruebas de los 135 ficheros que no tocan la base pasan en cinco minutos**.*
+# *Lo que pasa es que, sin este bloque, **la suite no falla rapido: se cuelga**, y un cuelgue parece un
+# impedimento.*
+#
+# *Se mira una vez por sesion, con **dos segundos** de tope, y si no hay base se saltan los ficheros que la
+# usan -- con el motivo escrito, para que se vea en el resumen.*
+_SIN_BASE = None
+
+# *Los ficheros que necesitan PostgreSQL de verdad. Se detectan por lo que importan, no por el nombre.*
+_MARCAS = ("plataforma.api", "plataforma.almacen", "almacen", "psycopg")
+
+
+def _hay_base() -> bool:
+    """*Un unico intento, corto. Si no contesta en dos segundos, no hay base.*"""
+    global _SIN_BASE
+    if _SIN_BASE is not None:
+        return not _SIN_BASE
+    try:
+        import psycopg
+
+        from plataforma.api.ajustes import AJUSTES
+
+        psycopg.connect(AJUSTES.postgres, connect_timeout=2).close()
+        _SIN_BASE = False
+    except Exception:
+        # *Cualquier fallo es «no hay base»: no importa cual, el resultado es el mismo.*
+        _SIN_BASE = True
+    return not _SIN_BASE
+
+
+def pytest_collection_modifyitems(config, items):
+    """*Salta los tests de base cuando no la hay, en vez de dejar que esperen.*"""
+    if _hay_base():
+        return
+    import pytest as _pytest
+
+    marca = _pytest.mark.skip(reason="sin PostgreSQL: este fichero necesita la base")
+    saltados = 0
+    for item in items:
+        fichero = getattr(item, "fspath", None)
+        if fichero is None:
+            continue
+        try:
+            fuente = fichero.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if any(m in fuente for m in _MARCAS):
+            item.add_marker(marca)
+            saltados += 1
+    if saltados:
+        print(f"\n  sin base: {saltados} pruebas de PostgreSQL saltadas")
+
