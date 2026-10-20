@@ -48,7 +48,21 @@ def sin_vectores_en_disco(monkeypatch):
 # usan -- con el motivo escrito, para que se vea en el resumen.*
 _SIN_BASE = None
 
-# *Los ficheros que necesitan PostgreSQL de verdad. Se detectan por lo que importan, no por el nombre.*
+# *** La marca, lo mas estrecha posible, y por que. ***
+#
+# *La primera version miraba tambien `plataforma.api` y `almacen`, y saltaba **111 ficheros**.*
+# *Se probaron tres de ellos sin base -- `test_ahorro_exacto`, `test_analisis`, `test_alertas` -- y
+# **33 pruebas pasaron en 7,2 s**.* *** O sea que 100 de los 111 no necesitaban la base: solo la
+# mencionaban. ***
+#
+# *** Se probo a estrecharla a `psycopg`/`CESTA_POSTGRES`/`ConnectionPool`, y NO sirve: con esa marca
+# `pytest -q tests/` se vuelve a colgar. *** *Los ficheros que caen solo por la marca ancha no importan
+# `psycopg`, pero **llaman a la API, y la API conecta**.*
+#
+# *Asi que la marca se queda ancha -- conserva el «no se cuelga» -- y se dice lo que se ha medido:*
+# *tres de esos ficheros (`test_ahorro_exacto`, `test_analisis`, `test_alertas`) **pasan sin base, 33
+# pruebas en 7,2 s**.* *** Ese es el suelo medido de pruebas que este salto esconde: al menos 33. ***
+# *No se sabe cuantas mas hay sin irlas sacando de una en una, y por eso se dice «al menos».*
 _MARCAS = ("plataforma.api", "plataforma.almacen", "almacen", "psycopg")
 
 
@@ -75,7 +89,16 @@ def _hay_base() -> bool:
 
 
 def pytest_collection_modifyitems(config, items):
-    """*Salta los tests de base cuando no la hay, en vez de dejar que esperen.*"""
+    """*Salta los tests de base cuando no la hay, en vez de dejar que esperen.*
+
+    *Se puede apagar con `CESTA_SALTAR_SIN_BASE=0`, y hace falta para una cosa concreta: **medir si un
+    fichero necesita la base de verdad o solo la menciona**.* *Sin la salida, el propio salto impide
+    averiguarlo.*
+    """
+    import os
+
+    if os.environ.get("CESTA_SALTAR_SIN_BASE", "1") != "1":
+        return
     if _hay_base():
         return
     import pytest as _pytest
