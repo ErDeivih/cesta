@@ -62,8 +62,15 @@ ventana de 12 lineas no alcanza a un boton que esta 140 lineas mas arriba.*
         `psycopg.errors.ConnectionTimeout` en localhost:5432 -> **necesita la base**, no es un defecto.
 
     test_g01_recibo_del_puente::test_una_linea_ajena_se_devuelve_en_vez_de_ignorarse
-        **se salta corriendo solo y falla dentro de la suite.** *No se ha averiguado por que; queda anotado
-        como lo unico que no se explica de esta corrida.*
+        *** AVERIGUADO. *** *Corre contra `BASE = postgresql://cesta:prueba@127.0.0.1:5434/cesta` -- **la base
+        desechable del 5434**, que es justo la que las guardas prohiben tocar con restauraciones destructivas.*
+        *Sola no la encuentra y **se salta con motivo**; dentro de la suite, `almacen._pool` es **un global de
+        modulo** (`almacen.py:48`) que otra prueba dejo puesto, asi que no vuelve a comprobar y sigue hasta
+        fallar.*
+
+        *** No es un defecto del codigo de la aplicacion: es una prueba que necesita el 5434 y un global de
+        modulo que no se reinicia entre ficheros. *** *Las dos cosas estan dichas y ninguna se toca: el 5434
+        es guarda, y el `_pool` global se cambia con la base delante.*
 
 *** Y el defecto de color que aparecio al medir era mio y esta arreglado: *** *`borde/70` y `borde/60` en
 `App.tsx` pedían opacidad sobre `var(--borde)`, y Tailwind **omite la clase en silencio**.* *Las barras del
