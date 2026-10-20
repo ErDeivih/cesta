@@ -27,6 +27,7 @@
  *     es el sitio donde debe estar.
  */
 import { useQuery } from '@tanstack/react-query'
+import { listaDelDiario } from '../logica/listaDelDiario'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -367,7 +368,7 @@ export function Inicio() {
     queryFn: misListas,
     enabled: sesion.data?.usuario != null,
   })
-  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  const listaId = listaDelDiario(listas.data, null) ?? null
   const detalle = useQuery({
     queryKey: ['lista', listaId],
     queryFn: () => verLista(listaId as string),

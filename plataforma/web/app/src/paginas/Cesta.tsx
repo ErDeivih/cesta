@@ -26,6 +26,7 @@
  *  es un sitio donde aparecen cosas que no has puesto tu.
  */
 import { useEffect, useRef, useState } from 'react'
+import { listaDelDiario } from '../logica/listaDelDiario'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
@@ -1230,7 +1231,7 @@ export function Cesta() {
     enabled: sesion.data?.usuario != null,
   })
 
-  const listaId = elegida ?? listas.data?.[0]?.id ?? null
+  const listaId = listaDelDiario(listas.data, elegida)
   const detalle = useQuery({
     queryKey: ['lista', listaId],
     queryFn: () => verLista(listaId as string),

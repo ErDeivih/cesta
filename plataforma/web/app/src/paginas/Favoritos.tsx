@@ -20,6 +20,7 @@
  *  Necesita sesion, como la cesta: los favoritos son de cada uno.
  */
 import { useState } from 'react'
+import { listaDelDiario } from '../logica/listaDelDiario'
 import { Link } from 'react-router-dom'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -171,7 +172,7 @@ export function Favoritos() {
   // que elija la persona, sin volver a preguntarlo en cada tarjeta.
   const [destino, setDestino] = useState<string>('')
   const [dicho, setDicho] = useState<string | null>(null)
-  const elegida = destino || listas.data?.[0]?.id || ''
+  const elegida = listaDelDiario(listas.data, destino) ?? ''
 
   const quitar = useMutation({
     mutationFn: (f: { grupo_id: number | null; producto_id?: string | null }) =>

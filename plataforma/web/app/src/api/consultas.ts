@@ -9,6 +9,7 @@
  *  lo mismo cuarenta veces para recibir la misma respuesta.
  */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { listaDelDiario } from '../logica/listaDelDiario'
 
 import { anadirLinea, crearLista, misListas, verLista, yo } from './cesta'
 import { misAlertas } from './alertas'
@@ -208,7 +209,7 @@ export function usePorCoger(): number {
     queryFn: misListas,
     enabled: sesion.data?.usuario != null,
   })
-  const listaId = listas.data?.find((l) => l.es_de_casa)?.id ?? listas.data?.[0]?.id ?? null
+  const listaId = listaDelDiario(listas.data, null) ?? null
   const detalle = useQuery({
     queryKey: ['lista', listaId],
     queryFn: () => verLista(listaId as string),
