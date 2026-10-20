@@ -107,7 +107,18 @@ de dejar y el mas caro de encontrar.*
 *La del CSP y la de rutas relativas son las dos que mas me interesan para el dictamen: **una dice que el
 navegador no cargara codigo de fuera, y la otra que no hay CORS de por medio**.*
 
+**Y los auditores de contrato y aceptacion, que tampoco corrian: 48 de 48 pasan.**
+
+    test_contrato_producto · test_auditar_identidad · test_auditar_crudo
+    test_auditar_escurrido · test_auditar_secciones
+    test_b04_contrato_del_plan · test_g01_diario_aceptacion
+
+*** `test_g01_diario_aceptacion` es una aceptacion del diario, y pasa sin base. *** *Es el primer trozo de
+aceptacion de un espacio que se puede correr en veinte rondas. No es la de §8 --esa necesita las dos personas y
+las dos listas-- pero es de la misma clase y esta verde.*
+
 ## Próximo comando
+
 
 
 
