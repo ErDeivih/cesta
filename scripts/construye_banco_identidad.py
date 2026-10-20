@@ -63,6 +63,10 @@ OBJETIVO = {
     "pack_contra_unidad": 20,
     "sin_evidencia": 20,
     "mismo_ean_misma_cadena": 10,
+    # *Y el medio catalogo que no tiene EAN: aqui el motor **no puede** decir «exacto»,
+    # asi que lo que se mide no es su acierto sino **si ofrece un candidato correcto**.*
+    "sin_ean_misma_marca": 40,
+    "sin_ean_distinta_cantidad": 20,
 }
 
 
@@ -74,8 +78,7 @@ def _carga() -> list[dict]:
                cantidad_declarada, unidad_declarada, fecha
           FROM read_parquet('{BRONZE}/fuente=*/fecha=*/part.parquet',
                           hive_partitioning=true, union_by_name=true)
-         WHERE ean IS NOT NULL AND length(trim(ean)) >= 8
-           AND nombre IS NOT NULL AND length(trim(nombre)) > 3
+         WHERE nombre IS NOT NULL AND length(trim(nombre)) > 3
     """).fetchall()
     columnas = ["fuente", "id_fuente", "nombre", "marca", "ean", "categoria", "es_pack",
                 "cantidad", "unidad", "fecha"]
@@ -83,7 +86,8 @@ def _carga() -> list[dict]:
     unicos: dict[tuple, dict] = {}
     for fila in filas:
         p = dict(zip(columnas, fila, strict=True))
-        clave = (p["fuente"], p["ean"])
+        # *Se incluye `id_fuente`: sin EAN, dos fichas de la misma cadena son dos productos.*
+        clave = (p["fuente"], p["ean"] or ("id:" + str(p["id_fuente"])))
         if clave not in unicos or str(p["fecha"]) > str(unicos[clave]["fecha"]):
             unicos[clave] = p
     return list(unicos.values())
@@ -239,6 +243,58 @@ def construye() -> dict:
             continue
         anade(_par(a, b, "desconocido", None, "sin_evidencia",
                    f"misma categoria ({categoria}) y nada mas en comun: la evidencia no permite decidir"))
+
+    # --- SIN EAN: la mitad del catalogo donde el motor no puede decir «exacto» ---
+    # *Aqui la identidad no se puede acreditar con un codigo, asi que la etiqueta sale de **datos
+    # declarados**: misma marca, misma cantidad, misma unidad y nombres compatibles -> es el mismo
+    # producto. Misma marca y **cantidad distinta** -> no lo es.*
+    # *Lo que se mide con esto no es la precision del motor -- que aqui no opina -- sino **si ofrece un
+    # candidato correcto**, que es la cobertura que falta.*
+    sin_ean: dict[tuple, list[dict]] = {}
+    for p in todos:
+        if p["ean"]:
+            continue
+        if not p["marca"] or not p["cantidad"] or not p["unidad"]:
+            continue
+        clave = (str(p["marca"]).strip().lower(), p["unidad"], float(p["cantidad"]))
+        sin_ean.setdefault(clave, []).append(p)
+
+    for (marca, unidad, cantidad), suyos in sin_ean.items():
+        if not cabe("sin_ean_misma_marca") or len(suyos) < 2:
+            continue
+        a, b = suyos[0], suyos[1]
+        if a["id_fuente"] == b["id_fuente"] and a["fuente"] == b["fuente"]:
+            continue
+        comunes = len(set((a["nombre"] or "").lower().split())
+                      & set((b["nombre"] or "").lower().split()))
+        if comunes < 3:
+            continue
+        anade(_par(a, b, "mismo", True, "sin_ean_misma_marca",
+                   f"sin EAN, misma marca ({marca}), misma cantidad ({cantidad} {unidad}) y "
+                   f"{comunes} palabras del nombre en comun"))
+
+    # *Y el contrario, que es el que un motor se puede creer: misma marca y nombre, **cantidad
+    # distinta**.* *No son el mismo producto, y un motor que mire solo el texto diria que si.*
+    for (marca, unidad, cantidad), suyos in sin_ean.items():
+        if not cabe("sin_ean_distinta_cantidad") or len(suyos) < 2:
+            continue
+        a = suyos[0]
+        # *Se busca otro de la misma marca con otra cantidad.*
+        otros = [p for p in todos
+                 if not p["ean"] and p["marca"]
+                 and str(p["marca"]).strip().lower() == marca
+                 and p["unidad"] == unidad and p["cantidad"]
+                 and float(p["cantidad"]) != cantidad]
+        if not otros:
+            continue
+        b = otros[0]
+        comunes = len(set((a["nombre"] or "").lower().split())
+                      & set((b["nombre"] or "").lower().split()))
+        if comunes < 2:
+            continue
+        anade(_par(a, b, "distinto", False, "sin_ean_distinta_cantidad",
+                   f"sin EAN, misma marca ({marca}) y nombres parecidos ({comunes} palabras), pero "
+                   f"{cantidad} {unidad} contra {b['cantidad']} {b['unidad']}: no son el mismo producto"))
 
     # --- se escribe, y se cuenta ---
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
