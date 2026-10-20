@@ -894,7 +894,46 @@ prueba negativa no corrio porque el bloque anterior acababa en `cd plataforma\we
     ruff limpio · documentos TODO BIEN · tsc limpio · lint cero avisos · build ok
     docker: sigue el 500 en /version
 
+## Las cabeceras del `Caddyfile`, revisadas (ronda 220)
+
+*Se miro si la CSP deja pasar lo que la app necesita -- porque la prueba de la portada del 218 dice «ningun script en
+linea» justamente por ella.*
+
+**La CSP encaja con la app:**
+
+    default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self';
+    connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+
+    la unica URL externa del codigo (`openfoodfacts.org`) es un `<a href>`, **no un `fetch`** -> la CSP no la bloquea
+    `dangerouslySetInnerHTML`: **0 usos** -> coherente con `script-src 'self'`
+    y en el build: **0 ficheros con `<style>` incrustado**
+
+**Cuatro cabeceras ausentes, y no pesan lo mismo:**
+
+    Strict-Transport-Security .... **ausente, y es correcto**: el servidor es `:8080` en HTTP local. Con TLS, si.
+    Permissions-Policy ........... ausente, riesgo bajo: `X-Frame-Options DENY` ya impide embeberla
+    Cross-Origin-Opener-Policy ... ausente, aislamiento menor
+    **Cache-Control .............. **ausente, y este si importa**
+
+*** El problema concreto: `sw.js` no lleva `Cache-Control`.** *Si el navegador cachea **el propio service worker**,
+no ve la version nueva **nunca** -- y la app se queda clavada en el armazon viejo que el propio SW ya no sirve.*
+
+*Lo que **no** es un problema, y conviene decirlo: el SW ya versiona su cache (`CACHE = 'cesta-' + VERSION`) y **al
+activarse borra las que no son la suya**, sin `skipWaiting`.* *Los trozos llevan hash.* *** El armazon viejo no se queda
+sirviendo por dentro; lo que falta es que el navegador **se entere** de que hay uno nuevo. ***
+
+**El arreglo, localizado y no hecho:**
+
+    header /sw.js Cache-Control "no-cache, must-revalidate"
+    header /assets/* Cache-Control "public, max-age=31536000, immutable"
+    header /index.html Cache-Control "no-cache"
+
+*Tres lineas en `plataforma/Caddyfile`.* *No se hacen hoy porque **no hay forma de comprobar el efecto sin el servidor
+levantado**: `docker` sigue con el 500, y una cabecera que se anade a ciegas es justo lo que no se nota hasta
+produccion.*
+
 ## Próximo comando
+
 
 
 
