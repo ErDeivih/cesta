@@ -78,6 +78,7 @@ export function Unirse() {
     acepta.mutate()
     // `acepta` no esta en la lista a proposito: la identidad de `mutate` cambia
     // en cada render y meterla aqui dejaria el efecto disparandose sin parar.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sesion.data?.usuario, codigo])
 
   if (sesion.isLoading) return <Cargando que="tu sesión" />
