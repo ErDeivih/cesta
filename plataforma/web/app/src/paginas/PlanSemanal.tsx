@@ -8,6 +8,7 @@
  *  en un dia que ya paso es empezar por lo que no se puede decidir.
  */
 import { useState } from 'react'
+import { listaDelDiario } from '../logica/listaDelDiario'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { textoDeError } from '../api/cliente'
@@ -125,7 +126,10 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
   //   - **se dice cual es**, en el titulo;
   //   - *y si no hay ninguna, **se dice que hace falta una** en vez de desaparecer.
   const destino = listas.data?.find((l) => l.es_de_casa) ?? null
-  const listaId = destino?.id ?? null
+  // *** La misma regla que el diario, y ahora en un solo sitio: *** *sin lista elegida manda la
+  // de casa, y si no hay, `null` -- nunca «la primera que haya».* *`logica/listaDelDiario.ts`
+  // tiene las pruebas de esa decision; aqui solo se usa.*
+  const listaId = listaDelDiario(listas.data, null)
   const [previa, setPrevia] = useState<PreviaDelPlan | null>(null)
   const [traido, setTraido] = useState(0)
   const [fuera, setFuera] = useState<string[]>([])
