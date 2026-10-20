@@ -121,3 +121,29 @@ test('sin precio de envase ni por unidad, el motivo lo dice', () => {
   assert.equal(r.ingredientes[0].costeUsadoCent, null)
   assert.ok(r.ingredientes[0].motivo, 'tiene que haber un motivo legible')
 })
+
+// --------------------------------------------------- sin cantidad no hay coste ---
+
+test('*** un ingrediente con cantidad 0 NO cuesta 0: es un ingrediente SIN DATOS ***', () => {
+  // *Lo que pasaba: `cantidad: 0` daba `costeUsadoCent: 0`, `motivo: null` y **el total se declaraba
+  // completo**. O sea que un ingrediente del que no se sabe cuanto lleva contaba como que no cuesta nada.*
+  const r = costeDeReceta([
+    ing({ nombre: 'Sal', cantidad: 0, precio: { precioUnidadCent: 0.5 } }),
+    ing({ nombre: 'Arroz' }),
+  ])
+  const sal = r.ingredientes[0]
+  assert.equal(sal.costeUsadoCent, null, 'sin cantidad, no hay coste')
+  assert.ok(sal.motivo, 'y un motivo que dar')
+  assert.match(sal.motivo, /cantidad/)
+  // *Y el total lo dice: existe (24) pero **no esta completo**.*
+  assert.equal(r.usadoCent, 24, 'el de los que si se saben')
+  assert.equal(r.completo, false, 'y NO se declara completo')
+  assert.deepEqual(r.sinDatos, ['Sal'], 'con su nombre')
+})
+
+test('*** y una cantidad negativa tampoco es un coste ***', () => {
+  const r = costeDeReceta([ing({ cantidad: -5 })])
+  assert.equal(r.ingredientes[0].costeUsadoCent, null)
+  assert.equal(r.usadoCent, null)
+})
+

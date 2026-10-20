@@ -84,6 +84,15 @@ function precioUnidad(p: PrecioDeIngrediente): number | null {
 function costeDeUno(i: IngredienteConPrecio): CosteDeIngrediente {
   const p = i.precio ?? null
   const base = { nombre: i.nombre, cantidad: i.cantidad, unidad: i.unidad }
+  // *** SIN CANTIDAD NO HAY COSTE, Y NO ES CERO. ***
+  // *`cantidad: 0` daba `costeUsadoCent: 0` y `completo: true`: un ingrediente del que no se sabe
+  // cuanto lleva se contaba como que no cuesta nada, y el total se declaraba **completo**.
+  // Es la regla de siempre -- «null no es 0» -- en el coste de una receta.*
+  // *Va lo PRIMERO, antes de mirar el precio: sin cantidad no hay nada que multiplicar.*
+  if (!(base.cantidad > 0)) {
+    return { ...base, costeUsadoCent: null, costeEnvaseCent: null,
+             motivo: 'la receta no dice cuanta cantidad' }
+  }
   if (!p) {
     return { ...base, costeUsadoCent: null, costeEnvaseCent: null,
       motivo: 'sin precio en el catálogo' }
