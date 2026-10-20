@@ -658,7 +658,35 @@ node, build ok, ruff limpio, documentos TODO BIEN. ***
 sale mal de una forma concreta -- los cambios caen en el sitio equivocado y el compilador lo dice, pero cada
 arreglo introduce otro.*** *Reconocerlo a la quinta y revertir entero cuesta menos que seguir.*
 
+## El barrido que no pude hacer, y por que (ronda 207)
+
+*El metodo que encontro el fallo del envase de 131 g fue **barrer productos reales buscando valores imposibles**.*
+*Se intento con 200 productos del gold y **no salio**:*
+
+    SyntaxError: Unexpected token 'import'
+
+*Node no cargo el `.ts` desde el script suelto, aunque **el mismo patron si habia funcionado** cuatro rondas antes
+(`probe.mjs` leyo `api/formato.ts` y devolvio `1,50 EUR`).* *** No se ha averiguado por que, y con el contexto que
+queda averiguarlo cuesta mas que la ronda entera. ***
+
+*Se deja escrito con su sintoma exacto para que no se redescubra, y se borro la sonda suelta que quedaba en la raiz
+(`probe6.mjs`, 688 B: **no es un entregable**).*
+
+**Lo que si se verifico esta ronda, y es lo que cuenta:**
+
+    ruff .................... limpio
+    comprueba_documentos .... TODO BIEN
+    tsc --noEmit ............ limpio
+    npm run lint ............ **cero avisos**
+    npm test ................ **340 pasan**
+    componentes ............. **22 pasan**
+    nada mio sin commitear
+    docker .................. **sigue el 500 en `/version`**
+
+*** Un intento que no sale, delimitado y borrado, vale mas que un cambio a medias. ***
+
 ## Próximo comando
+
 
 
 
