@@ -6,6 +6,8 @@ falle segun lo que haya ese dia en el disco. Una prueba que depende del estado d
 """
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 
@@ -131,4 +133,36 @@ def pytest_collection_modifyitems(config, items):
             saltados += 1
     if saltados:
         print(f"\n  sin base: {saltados} pruebas de PostgreSQL saltadas")
+
+# ------------------------------------------- el pool, entre pruebas ---
+
+# *** `almacen._pool` ES UN GLOBAL DE MODULO, Y ESO CONTAMINA ENTRE FICHEROS. ***
+#
+# *Se vio el 21 de octubre de 2026 con `test_g01_recibo_del_puente`: **solo**, no encuentra la base desechable
+# del 5434 y **se salta con motivo**; **dentro de la suite**, falla -- porque otra prueba dejo `_pool` puesto,
+# `arranca()` no vuelve a comprobar y sigue hasta chocar.*
+#
+# *Un `skip` que cambia de comportamiento segun el orden es peor que un fallo: **el mismo comando da dos
+# respuestas**.*
+#
+# *Se cierra y se pone a `None` despues de cada prueba.* *No cambia el comportamiento de nada -- `arranca()`
+# lo vuelve a crear cuando hace falta -- y quita la unica forma en que dos ficheros se hablaban sin querer.*
+
+
+@pytest.fixture(autouse=True)
+def _el_pool_no_sobrevive_a_la_prueba():
+    """*Cada prueba empieza sin pool heredado de la anterior.*"""
+    yield
+    try:
+        from plataforma.api import almacen
+
+        pool = getattr(almacen, "_pool", None)
+        if pool is not None:
+            # *Cerrar un pool a medio abrir puede lanzar; **no puede tumbar el final de la prueba**.*
+            with contextlib.suppress(Exception):
+                pool.close()
+        almacen._pool = None
+    except ImportError:
+        # *Si `plataforma` no esta, esta prueba no va de esto.*
+        pass
 
