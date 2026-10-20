@@ -571,7 +571,29 @@ uv run pytest -q tests/
     5. el viaje de la cola offline ........ `POST /sincronizar` aplica, la cola se vacia al confirmar
     6. la serie con huecos ................ comprobar contra datos reales que el 18 de octubre sale como hueco
 
+## El relleno de huecos, comprobado con datos REALES (ronda 202)
+
+*No hacia falta la base para esto: el gold esta en disco (`data/gold/v20261020-162341`).* *Se cogieron dos productos
+de Carrefour que **si** tienen el hueco del 18 y se pasaron por `rellena_huecos`.*
+
+    ANTES                          DESPUES
+    carrefour:100401608            carrefour:100401608
+      2026-10-16    5.0              2026-10-16    5.0
+      2026-10-17    5.0              2026-10-17    5.0
+      2026-10-19    5.0              2026-10-18    **None  <-- HUECO**
+      2026-10-20    5.0              2026-10-19    5.0
+                                     2026-10-20    5.0
+
+*Y lo mismo con `carrefour:2000750151` (22,1429).*
+
+*** Los dos huecos aparecen, y **ningun precio se inventa**: 5,0 antes y 5,0 despues. ***
+
+*O sea: la funcion hace lo que dice sobre los datos que hay, no sobre un fixture.* *Lo que falta -- que la ficha del
+grupo lo sirva asi -- es la linea de `catalogo.py` que ya esta puesta, y **esa si necesita la base para verse en
+pantalla**.*
+
 ## Próximo comando
+
 
 
 ```powershell
