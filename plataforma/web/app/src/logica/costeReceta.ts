@@ -47,6 +47,11 @@ export interface CosteDeIngrediente {
   costeUsadoCent: number | null
   /** **Lo que cuesta comprar el envase.** `null` si no se sabe el precio. */
   costeEnvaseCent: number | null
+  /** *** Cuantos envases hay que comprar para tener la cantidad pedida. ***
+   * *Uno, casi siempre; **dos o mas cuando la receta pide mas de lo que trae un envase**.*
+   * `null` si no se sabe cuanto trae el envase.
+   */
+  envasesQueHacenFalta: number | null
   /** Por que falta lo que falta, para poder decirlo en pantalla. */
   motivo: string | null
 }
@@ -57,6 +62,9 @@ export interface CosteDeReceta {
   usadoCent: number | null
   /** Suma de los envases **solo** de los que se sabe. `null` si no se sabe de ninguno. */
   envaseCent: number | null
+  /** *** Lo que sale del bolsillo: cada envase por los que hacen falta. ***
+   * *No es `envaseCent`, que suma **un** envase por ingrediente.* */
+  envasesCent: number | null
   /** Cuantos ingredientes entraron en las sumas. */
   conDatos: number
   /** **Cuantos se quedaron fuera, y sus nombres.** *Un total sobre la mitad no es el total.* */
@@ -90,11 +98,11 @@ function costeDeUno(i: IngredienteConPrecio): CosteDeIngrediente {
   // Es la regla de siempre -- «null no es 0» -- en el coste de una receta.*
   // *Va lo PRIMERO, antes de mirar el precio: sin cantidad no hay nada que multiplicar.*
   if (!(base.cantidad > 0)) {
-    return { ...base, costeUsadoCent: null, costeEnvaseCent: null,
+    return { ...base, costeUsadoCent: null, costeEnvaseCent: null, envasesQueHacenFalta: null,
              motivo: 'la receta no dice cuanta cantidad' }
   }
   if (!p) {
-    return { ...base, costeUsadoCent: null, costeEnvaseCent: null,
+    return { ...base, costeUsadoCent: null, costeEnvaseCent: null, envasesQueHacenFalta: null,
       motivo: 'sin precio en el catálogo' }
   }
   const envase = p.precioEnvaseCent ?? null
@@ -102,9 +110,12 @@ function costeDeUno(i: IngredienteConPrecio): CosteDeIngrediente {
   // **En unidades no se prorratea**: un huevo no tiene fraccion. *Lo que usas cuesta el envase.*
   if (!esProrrateable(i.unidad)) {
     if (envase === null) {
-      return { ...base, costeUsadoCent: null, costeEnvaseCent: null, motivo: 'sin precio en el catálogo' }
+      return { ...base, costeUsadoCent: null, costeEnvaseCent: null, envasesQueHacenFalta: null,
+                     motivo: 'sin precio en el catálogo' }
     }
-    return { ...base, costeUsadoCent: envase, costeEnvaseCent: envase, motivo: null }
+    // *En unidades no se prorratea, pero **el envase es uno**: o lo compras o no.*
+    return { ...base, costeUsadoCent: envase, costeEnvaseCent: envase, envasesQueHacenFalta: 1,
+             motivo: null }
   }
 
   const unitario = precioUnidad(p)
@@ -114,6 +125,7 @@ function costeDeUno(i: IngredienteConPrecio): CosteDeIngrediente {
       ...base,
       costeUsadoCent: null,
       costeEnvaseCent: envase,
+      envasesQueHacenFalta: null,
       motivo: envase === null
         ? 'sin precio en el catálogo'
         : 'se sabe el precio del envase, pero no cuánto trae',
@@ -124,6 +136,12 @@ function costeDeUno(i: IngredienteConPrecio): CosteDeIngrediente {
     ...base,
     costeUsadoCent: Math.round(unitario * i.cantidad),
     costeEnvaseCent: envase,
+    // *** Cuantos envases hacen falta de verdad. ***
+    // *Un envase de 131 g no cubre 200 g: hacen falta **dos**, y lo que sale del bolsillo es el doble.*
+    envasesQueHacenFalta:
+      p.cantidadEnvase !== undefined && p.cantidadEnvase !== null && p.cantidadEnvase > 0
+        ? Math.max(1, Math.ceil(i.cantidad / p.cantidadEnvase))
+        : null,
     motivo: null,
   }
 }
@@ -140,6 +158,9 @@ export function costeDeReceta(ingredientes: IngredienteConPrecio[]): CosteDeRece
     ingredientes: filas,
     usadoCent: usados.length ? usados.reduce((s, v) => s + v, 0) : null,
     envaseCent: envases.length ? envases.reduce((s, v) => s + v, 0) : null,
+    envasesCent: filas.some((f) => f.costeEnvaseCent !== null)
+      ? filas.reduce((s, f) => s + (f.costeEnvaseCent ?? 0) * (f.envasesQueHacenFalta ?? 1), 0)
+      : null,
     conDatos: filas.length - sinDatos.length,
     sinDatos,
     completo: sinDatos.length === 0,

@@ -147,3 +147,44 @@ test('*** y una cantidad negativa tampoco es un coste ***', () => {
   assert.equal(r.usadoCent, null)
 })
 
+// ------------------------------------- cuantos envases hacen falta de verdad ---
+
+test('*** un envase de 131 g NO cubre 200 g: hacen falta DOS ***', () => {
+  // *El caso que lo destapo, con numeros del gold: «ANA MARIA LAJUSTICIA Complemento alimenticio», envase de
+  // 0,131 kg por 924 cent.* *Usar 200 g salia a 1410,69 cent y «comprar» decia 924 -- porque 200 g no caben
+  // en 131.* *Lo que sale del bolsillo son **1.848** cent, dos envases.*
+  const r = costeDeReceta([{
+    nombre: 'Complemento', cantidad: 200, unidad: 'g',
+    precio: { precioEnvaseCent: 924, cantidadEnvase: 131, unidadEnvase: 'g' },
+  }])
+  assert.equal(r.ingredientes[0].envasesQueHacenFalta, 2, 'dos envases de 131 g')
+  assert.equal(r.envaseCent, 924, 'el de UN envase, como siempre')
+  assert.equal(r.envasesCent, 1848, 'y lo que sale del bolsillo: dos')
+})
+
+test('*** con un envase que llega, es UNO ***', () => {
+  const r = costeDeReceta([ing({ cantidad: 200 })])
+  assert.equal(r.ingredientes[0].envasesQueHacenFalta, 1)
+  assert.equal(r.envasesCent, 120, 'igual que `envaseCent`: el envase llega')
+})
+
+test('*** y la suma mezcla los dos casos ***', () => {
+  const r = costeDeReceta([
+    ing({ nombre: 'Complemento', cantidad: 200,
+      precio: { precioEnvaseCent: 924, cantidadEnvase: 131, unidadEnvase: 'g' } }),
+    ing({ nombre: 'Arroz', cantidad: 200 }),
+  ])
+  assert.equal(r.envasesCent, 924 * 2 + 120, 'dos del primero y uno del segundo')
+})
+
+test('*** en unidades, el envase es uno: o lo compras o no ***', () => {
+  const r = costeDeReceta([ing({ unidad: 'ud', cantidad: 2,
+    precio: { precioEnvaseCent: 180, cantidadEnvase: 6, unidadEnvase: 'ud' } })])
+  assert.equal(r.ingredientes[0].envasesQueHacenFalta, 1)
+})
+
+test('*** y si falta el dato, `null`: no se inventa un envase ***', () => {
+  const r = costeDeReceta([ing({ cantidad: 0 })])
+  assert.equal(r.ingredientes[0].envasesQueHacenFalta, null)
+})
+
