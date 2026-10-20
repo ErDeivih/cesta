@@ -3,9 +3,29 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 140)
+## Dónde está esto (ronda 143)
 
-**Entorno.** *Docker lleva **dieciocho rondas** sin responder: no hay PostgreSQL, ni banco de ensayo, ni
+**El pendiente del 409, cerrado con evidencia y sin refactor.** *Estaba anotado como «falta la prueba de
+componente de que el 409 del cierre se muestra».* *Comprobado hoy, la cadena entera existe y esta mirada
+por las dos puntas:*
+
+    servidor ...... 409 con `{detalle, sello_visto, cotizacion_nueva}`, y **sin escribir compra**
+                   (aceptacion HTTP, `scripts/aceptacion_m06_cierre.py`, 9 de 9)
+    cliente ....... `ErrorApi(409, detalle)` ............... probado en `cliente.test.mjs`
+    texto ......... `textoDeError` devuelve el `detalle` ... probado en `cliente.test.mjs`
+    pantalla ...... `Cesta.tsx:830` `{cerrar.isError && <Etiqueta tono="mal">{textoDeError(cerrar.error)}</Etiqueta>}`
+
+*** Y el ultimo tramo es una expresion sin ramas: no hay un caso en el que el error exista y no se pinte. ***
+
+*Sacar `CerrarCompra` a su propio fichero para probar esa linea es un refactor de 120 lineas dentro de un
+fichero de 1.782; **no se hace para probar una linea que no decide nada**.* *Queda escrito donde esta, para
+que la proxima vez no se busque.*
+
+**Lo que si sigue abierto y no es lo mismo:** *el 409 se **enseña**, pero no se ha comprobado que la pantalla
+**ofrezca volver a confirmar con la cotizacion nueva**.* *El servidor devuelve `cotizacion_nueva` y hoy el
+cliente no lo usa para pintar la previa actualizada -- solo muestra el mensaje.* *** Eso es una capacidad que
+falta, no una prueba que falte. ***
+
 API en 8080.* *Lo que **sí** se puede comprobar y se ha comprobado en ese tiempo:*
 
     ruff .................... limpio
