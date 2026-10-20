@@ -149,9 +149,22 @@ def construye() -> dict:
         a, b = suyos[0], suyos[1]
         if a["id_fuente"] == b["id_fuente"]:
             continue
-        anade(_par(a, b, "desconocido", None, "mismo_ean_misma_cadena",
-                   "mismo EAN y misma cadena pero dos fichas distintas: "
-                   "puede ser un cambio de ficha, no se puede decidir"))
+        # *Mismo EAN y misma cadena, dos fichas: **¿dicen lo mismo?***
+        # *El codigo de barras es la identidad, asi que si los nombres son compatibles es el **mismo
+        # producto** con dos fichas -- un cambio de redaccion, no otro articulo.*
+        # *Y si los nombres **no** son compatibles, entonces una de las dos fichas tiene mal el EAN:
+        # eso es un desconocido con causa, no un «si».*
+        # *Se exigen tres palabras en comun; por debajo, la evidencia no basta y se queda desconocido.*
+        comunes = len(set((a["nombre"] or "").lower().split())
+                      & set((b["nombre"] or "").lower().split()))
+        if comunes >= 3:
+            anade(_par(a, b, "mismo", True, "mismo_ean_misma_cadena",
+                       f"mismo EAN ({ean}) en la misma cadena y {comunes} palabras del nombre en "
+                       "comun: es el mismo producto con dos fichas"))
+        else:
+            anade(_par(a, b, "desconocido", None, "mismo_ean_misma_cadena",
+                       f"mismo EAN ({ean}) pero los nombres solo comparten {comunes} palabra(s): "
+                       "una de las dos fichas tiene mal el codigo, y no se puede decidir cual"))
 
     # --- misma marca, nombres parecidos, EAN distinto: DIFICIL ---
     por_marca: dict[str, list[dict]] = {}
