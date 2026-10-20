@@ -468,7 +468,32 @@ quede una copia con el texto malo.*
 
     ruff limpio · documentos TODO BIEN · 2.099 pasan
 
+## Los huecos de la serie, buscados en las tres series (ronda 199)
+
+*Despues de arreglar `catalogo.py`, se miro si el mismo problema estaba en las otras series. Resultado:*
+
+    `catalogo.py` (la del grupo) .... **NO lo decia**: solo mandaba los dias capturados
+                                       -> **arreglado** rellenando con `None`, que es lo que `chispa.ts` espera
+
+    `analisis.py` (el indice) ....... **si lo decia, y de otra forma**: cada punto lleva
+                                       `"dias_del_salto": salto` -- *cuantos dias cubre el salto*
+
+    `alertas.py` .................... *no es una serie continua: son umbrales*
+
+*** Y el cliente usa `dias_del_salto`:** `GraficoIndice.tsx:95` -- `(p.dias_del_salto ?? 1) > 1 ? [...]`,
+*y lo pinta como «cubre N dias» en un `title`.* *La linea 155 registra ademas una regresion que ya se arreglo:
+«la nueva no lo pintaba».*
+
+*** O sea: de las dos formas honestas de decir un hueco -- rellenarlo con `null`, o decir cuantos dias abarca --
+el proyecto ya tenia la segunda en el indice, y le faltaba la primera en la ficha del grupo. ***
+*Ahora tiene las dos, cada una donde el cliente correspondiente sabe leerla.*
+
+**Y una cosa que se aprende de esto, que vale para lo que queda:** *el mismo problema estaba resuelto en un sitio y
+sin resolver en otro, a dos ficheros de distancia.* *** Buscar la regla en el resto del codigo -- lo que ha dado
+resultado cuatro veces esta semana -- es lo que lo encuentra. ***
+
 ## Próximo comando
+
 
 
 
