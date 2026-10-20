@@ -49,7 +49,33 @@
 los otros 30 **no se han mirado**. El conteo automatico que hice hoy **no vale** -- lo dije en el commit: una
 ventana de 12 lineas no alcanza a un boton que esta 140 lineas mas arriba.*
 
+## La suite, medida de verdad (ronda 161)
+
+*Con `CESTA_ESPERA_BASE=1` y el salto apagado, la suite entera corre sin base y da su resultado:*
+
+    **2077 passed, 2 failed, 32 errors, 31 skipped in 4:37**
+
+*Los **32 errors** son ficheros que necesitan PostgreSQL: fallan en el `arranca()` y se cuentan aparte.*
+*Los **2 failed**, mirados uno a uno:*
+
+    test_la_lista_acumula::test_dos_lineas_a_mano_con_ids_distintos_son_dos
+        `psycopg.errors.ConnectionTimeout` en localhost:5432 -> **necesita la base**, no es un defecto.
+
+    test_g01_recibo_del_puente::test_una_linea_ajena_se_devuelve_en_vez_de_ignorarse
+        **se salta corriendo solo y falla dentro de la suite.** *No se ha averiguado por que; queda anotado
+        como lo unico que no se explica de esta corrida.*
+
+*** Y el defecto de color que aparecio al medir era mio y esta arreglado: *** *`borde/70` y `borde/60` en
+`App.tsx` pedían opacidad sobre `var(--borde)`, y Tailwind **omite la clase en silencio**.* *Las barras del
+esqueleto de marca nunca tuvieron la opacidad que pedían, y se veían «bien» porque un color plano no da error.*
+*Arreglado con `bg-borde opacity-70`.*
+
+**Lo que esto corrige del estado de ayer, y es lo importante:** *«1.345 pasan y 797 saltan» era el resultado
+**del salto que yo mismo puse**. Con el salto apagado, **2.077 pasan**.* *** El salto tapaba 731 pruebas que
+funcionan, y una de ellas destapo un defecto real. ***
+
 ## Próximo comando
+
 
 ```powershell
 docker ps
