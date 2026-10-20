@@ -398,7 +398,35 @@ falta.*
 *Lo que si queda es lo otro, y no es configuracion: **50 pruebas que no pueden correr porque no hay base**, y la
 aceptacion completa de §8 entre ellas.*
 
+## El fallo de Carrefour del 18, medido (ronda 195)
+
+*El encargo lo pide con dos condiciones: **investigarlo** y **sin duplicar una ingesta activa**.* *Las dos, hechas.*
+
+**1. No hay ingesta activa.** *Comprobado: ningun proceso de `python` ni `uv` arrancado en las ultimas dos horas.*
+*Asi que mirarlo no compite con nada ni duplica una captura.*
+
+**2. El hueco esta en los datos, y se puede medir:**
+
+    carrefour: 37 dias con captura entre 2026-09-07 y 2026-10-20
+    dias SIN captura: **7**
+    el 18 de octubre esta en la lista: **si**
+    los huecos recientes: 2026-10-12 y 2026-10-18
+    la racha mas larga: 2 dias
+
+*Y el documento que lo investiga existe desde el 13 de octubre:*
+`docs/investigaciones/B02-carrefour-tambien-tiene-resistencia.md`
+
+> *«Carrefour **tambien** tiene resistencia -- y con esto se caen mis cinco conclusiones [...]. Un bloqueo por
+> sospecha de bot se levanta solo, y lo que hace falta es estar ahi cuando se levante.»*
+> *`carrefour.py:518-537` -- vueltas de rescate con espera creciente.*
+
+**Lo que esto significa para la entrega, sin adornos:** *Carrefour pierde **1 de cada 5 dias** (7 de 44), y el 18 es
+uno de ellos.* *No es un fallo del codigo de la aplicacion: es la cadena bloqueando y el colector reintentando.*
+*** Lo que si es una decision pendiente: aceptar el hueco como normal, o dar el dia por perdido y decirlo en el
+estado de la cadena.*** *Hoy no se dice en ningun sitio que ese dia falte.*
+
 ## Próximo comando
+
 
 
 
