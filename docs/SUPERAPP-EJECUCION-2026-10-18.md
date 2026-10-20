@@ -3,53 +3,68 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 154)
+## Dónde está esto (ronda 168)
 
-**Lo que se puede afirmar hoy, con la comprobación al lado.**
+**El estado corto, con lo medido y lo no medido separados.**
 
-    docker .......... **caido (19 rondas)** -- sin PostgreSQL, sin banco de ensayo, sin API
-    pytest ......... *** SE PUEDE CORRER EN PARTE, Y HOY SE HA CORRIDO. ***
-                      **1.345 pasan, 15 saltan, 0 fallan** (5:18)
-                      *Son los 135 ficheros de `tests/` que **no tocan PostgreSQL**.
-                      Los otros 111 -- los de la API, el almacen y el ensayo -- si lo necesitan.*
+    docker .......... **caido (20+ rondas)** -- sin PostgreSQL, sin banco de ensayo, sin API en 8080
+
+    PRUEBAS QUE CORREN Y PASAN
+    pytest .......... **2.077 pasan** (suite entera sin base, 4:47, determinista)
+                      + 13 de contrato de interfaz  + 48 de contrato y aceptacion
+                      *** 2.138 pruebas de Python, 0 fallos que no sean de base ***
+    npm test ........ 320
+    componentes ..... 22
     ruff ............ limpio
     lint ............ **cero avisos**
     tsc --noEmit .... limpio
-    npm test ........ **320 pasan**
-    componentes ..... 22 pasan
-    build ........... ok, y **verificado desde cero**: se borro el dist y se reconstruyo
+    build ........... ok, y verificado **desde cero** (se borro el dist y se reconstruyo)
     documentos ...... TODO BIEN
     nada sin commitear
 
-**Los paquetes, sin adornos.**
+    PRUEBAS QUE NO PUEDEN CORRER
+    **33 pruebas** necesitan PostgreSQL: 32 `errors` y 1 `failed` (`ConnectionTimeout`).
+    *Todas de la API, el almacen, el ensayo y la aceptacion de §8.*
+
+**Los paquetes.**
 
     M00–M05 ..... cerrados y verificados
-    M06 ......... la cadena del cierre esta probada por HTTP (9 de 9). **El 409 ya reconfirma**: el dato
-                  viaja y la pantalla ofrece cerrar con el total nuevo.
+    M06 ......... la cadena del cierre probada por HTTP (9 de 9). **El 409 reconfirma**: el cuerpo viaja en
+                  `ErrorApi.cuerpo`, la pantalla dice el total nuevo y ofrece cerrar con el.
                   **Abierto: dos cierres a la vez pueden crear dos compras.** Es del servidor.
-    M07 ......... cerrado: banco de **210 pares**, precision **100 %** sobre 52, especificidad **100 %**
-                  sobre 70, los cuatro estados suman 210, umbral documentado como arbol de diez reglas.
-                  Abierto: cobertura del 49,7 % del catalogo que no tiene EAN.
-    M08–M14, M16–M22 ... **implementados**: 9.254 lineas de pagina, cliente de API y ruta para cada uno.
-                  Su logica pura esta probada. **Sin verificar con datos**: eso necesita la base.
-    M15 ......... instalable, armazon de marca, offline desde la 2.a visita, y la cola probada **por los dos
-                  lados del cable**. El viaje real necesita la API.
-    CI .......... tres trabajos, dependencias verificadas, sin ejecutar en remoto.
+    M07 ......... cerrado: banco de **210 pares**, precision **100 %** sobre 52, especificidad **100 %** sobre
+                  70, los cuatro estados suman 210, umbral como arbol de diez reglas.
+                  Abierto: cobertura del 49,7 % del catalogo sin EAN.
+    M08–M14, M16–M22 ... **implementados**: 9.254 lineas de pagina, cliente y ruta para cada uno; su logica
+                  pura probada; el diario ademas con una **aceptacion que pasa sin base**.
+                  **Sin verificar con datos**: eso necesita la base.
+    M15 ......... instalable, armazon de marca, offline desde la 2.a visita, cola probada por los dos lados.
+    CI .......... tres trabajos, dependencias verificadas, **y `CESTA_SALTAR_SIN_BASE=0` para que un fallo de
+                  base no la deje verde**. Sin ejecutar en remoto.
 
-> *** CORRECCION IMPORTANTE. *** *Durante **diecinueve rondas** escribi «`pytest` no se puede correr» en
-> este fichero.* *** Es falso. *** *Se puede correr **la mitad**: 135 de los 246 ficheros de `tests/` no
-> tocan la base, y contienen **1.345 pruebas**. Hoy se han corrido todas: **1.345 pasan, 15 saltan, 0
-> fallan**.*
->
-> *Lo que **si** esta bloqueado son los **111** ficheros que necesitan PostgreSQL: la API, el almacen, el
-> ensayo y la aceptacion de §8.* *Pero «la suite no se puede correr» era una frase que me ahorraba el trabajo
-> de averiguar **cual** no se puede -- y el trabajo era un `grep`.*
+**Lo que se ha corregido esta semana y era mio, no de la aplicacion.**
 
-**Lo que hoy no se ha podido cerrar, dicho como es.** *La auditoria de vacios se hizo **a mano en 7 de 37**;
-los otros 30 **no se han mirado**. El conteo automatico que hice hoy **no vale** -- lo dije en el commit: una
-ventana de 12 lineas no alcanza a un boton que esta 140 lineas mas arriba.*
+    el defecto de opacidad de `App.tsx` .......... `borde/70` sobre `var(--borde)`; Tailwind lo omitia EN
+                                                    SILENCIO y las barras nunca tuvieron la opacidad pedida
+    un test que daba dos respuestas ............... `almacen._pool`, global de modulo, no se reiniciaba
+    tres afirmaciones repetidas sin medir .......... «la suite no se puede correr», «M08–M22 sin empezar»,
+                                                    la cabecera vieja del estado
 
-## La suite, medida de verdad (ronda 161)
+## Próximo comando
+
+```powershell
+docker ps
+```
+
+*Lo primero, si responde:* `uv run pytest -q tests/`  *(base real: deberian pasar las 2.138)*.
+
+*Despues, en este orden:* el cierre concurrente de M06 (`FOR UPDATE` + el indice unico de la migracion 021),
+la aceptacion de §8 --**cinco recetas, dos personas, dos listas**--, la procedencia del importe en el historico,
+y el viaje real de la cola offline.
+
+*Lo que **no** se puede hacer sin base, y ya esta medido: 33 pruebas, entre ellas **todo §8**.*
+
+# La suite, medida de verdad (ronda 161)
 
 *Con `CESTA_ESPERA_BASE=1` y el salto apagado, la suite entera corre sin base y da su resultado:*
 
