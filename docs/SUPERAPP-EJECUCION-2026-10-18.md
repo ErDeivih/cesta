@@ -1,5 +1,79 @@
 # Ejecución de la especificación maestra
 
+> *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
+> que algo esté hecho. ***
+
+## Dónde está esto (ronda 140)
+
+**Entorno.** *Docker lleva **dieciocho rondas** sin responder: no hay PostgreSQL, ni banco de ensayo, ni
+API en 8080.* *Lo que **sí** se puede comprobar y se ha comprobado en ese tiempo:*
+
+    ruff .................... limpio
+    comprueba_documentos .... TODO BIEN
+    tsc --noEmit ............ limpio
+    npm test ................ **311 pasan**
+    npm run test:componentes  15 pasan
+    npm run lint ............ 0 errores
+    npm run build ........... ok (sella 31 trozos)
+    PyYAML sobre la CI ...... válido
+
+**Paquetes.**
+
+    M00–M05 ..... cerrados y verificados
+    M06 ......... la cadena cotizacion->confirmacion->persistencia esta probada por HTTP (9 de 9).
+                  **Abierto: el cierre concurrente puede crear dos compras.** La idempotencia del
+                  cliente esta probada; la del servidor (migracion 021) esta escrita y **sin usar**.
+    M07 ......... cerrado: banco de **210 pares** (objetivo 200), con evidencia, autor y fecha;
+                  precision 100 % sobre 52, especificidad 100 % sobre 70, los cuatro estados suman 210;
+                  umbral documentado como diez reglas. Abierto: cobertura del 49,7 % sin EAN.
+    M15 ......... instalable, armazon de marca, offline desde la 2.a visita. La cola offline esta probada
+                  **por los dos lados del cable** (guardar 10 pruebas, mandar 8). El viaje real necesita
+                  la API.
+    CI .......... tres trabajos (python/web/documentos), dependencias verificadas. **Sin ejecutar en
+                  remoto**: necesita un push, y este repo se trabaja en local.
+    M08–M14, M16–M22 ..... sin empezar.
+
+**Codigo puro del cliente.** *`logica/` 15 de 15 con prueba y sin una sola dependencia de `api/`;
+`estado/` 6 de 6; `api/formato` y `api/cliente` y las dos rutas de `api/cesta` que importan
+(`cerrarCompra` con sello, `sincronizar`) tambien.* *Total: 311 pruebas.*
+
+## Próximo comando
+
+```powershell
+cd F:\aprendizaje\scrap
+docker ps                                   # si responde, seguir por lo de abajo
+```
+
+*Si Docker vuelve, **en este orden**:*
+
+1. `uv run pytest -q tests/` — *la suite completa lleva dieciocho rondas sin correr; es lo primero que hay
+   que saber.*
+2. *M06: el cierre concurrente.* *Dos cierres simultaneos tienen que crear **una** compra; hoy pueden
+   crear dos.* *Con `SELECT 1 FROM lista WHERE id=%s FOR UPDATE` dentro de `cierra_compra` y el indice
+   unico de `021`.*
+3. *M06: la procedencia del importe en el historico* (`calculado` / `declarado` / `acreditado`; las filas
+   viejas se quedan `desconocido`, sin reescribir nada).
+4. *M15: el viaje real de la cola* — que `POST /sincronizar` aplique, que la cola se vacie solo cuando
+   confirme, y que al volver la red se suba sola.
+
+*Si Docker sigue caido: M08–M14 y M16–M22 tienen partes que no necesitan base* (*graficos, textos,
+estados vacios, permisos del cliente*). *Lo que **no** se puede hacer sin ella: la aceptacion de §8
+—cinco recetas, dos personas, dos listas—, que es el criterio integral del encargo.*
+
+## Guardas que no se tocan
+
+*facylf ni 5433 · casa 5432 · pruebas compartidas 5434 con restauraciones destructivas.* *No se commitean
+`core/datos/secciones.yml`, `docs/CIFRAS.md`, `docs/SUPERAPP-CONTROL-*.md` ni `docs/SUPERAPP-GOAL-ACTUAL.md`.*
+*No hay despliegue publico, y no lo habra.*
+
+---
+
+# HISTORIA
+
+*Lo que sigue son las rondas anteriores, en orden inverso de interes: primero la continuacion que estaba
+vigente, luego el detalle.* ***Nada de aqui es prueba de que algo funcione hoy:*** *la prueba son los
+comandos de arriba.*
+
 ## Continuación vigente tras `758cec8`
 
 M06 sigue en curso, no reabrir una investigación de 90 rondas. La especificación
