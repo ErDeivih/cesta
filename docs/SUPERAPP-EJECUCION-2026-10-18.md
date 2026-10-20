@@ -453,7 +453,23 @@ porque el texto se lee y el dibujo se mira.*
 *Toca `catalogo.py:1134` (la construccion) y **nada del cliente**: los tres tipos y las pruebas ya esperan nulls.*
 *No se hace en esta ronda porque necesita la base para verificar que no se duplican puntos, y hoy no la hay.*
 
+## La cuenta, despues del cambio del 197 (ronda 198)
+
+*Se volvio a correr la suite entera despues de tocar `catalogo.py`, para comprobar que el cambio no dejaba nada peor:*
+
+    antes del cambio .... 2.092 pasan · 1 falla · 32 errors · 17 saltan
+    ahora .............. **2.099 pasan** · 1 falla · 32 errors · 17 saltan
+
+*** +7, que son exactamente las siete pruebas nuevas de `serie_con_huecos`. Nada mas se movio. ***
+
+*Y el fallo y los 32 errores son **los mismos de siempre**: ficheros que necesitan PostgreSQL.*
+*La prueba que me cazo el mojibake (`test_documentos`) vuelve a pasar, y el sitio `aprende` se regenero para que no
+quede una copia con el texto malo.*
+
+    ruff limpio · documentos TODO BIEN · 2.099 pasan
+
 ## Próximo comando
+
 
 
 
