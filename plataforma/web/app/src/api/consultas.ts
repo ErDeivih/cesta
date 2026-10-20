@@ -39,42 +39,10 @@ const CINCO_MIN = 5 * 60 * 1000
 const UNA_HORA = 60 * 60 * 1000
 
 /** Filtros del buscador, tal como viajan a `/api/buscar`. */
-export interface FiltrosBuscar {
-  q: string
-  cadenas: string[]
-  seccion: string
-  comparables: boolean
-  conNutricion: boolean
-  ofertas: boolean
-  marcaPropia: boolean
-  sinAlcohol: boolean
-  sellos: string[]
-  conservacion: string
-  limite: number
-  /**
-   * **Cuantos resultados se saltan**, para la pagina. *Vive en la URL como todo lo demas* -- asi un
-   * enlace lleva a la pagina tres y volver atras devuelve a ella.
-   *
-   * *No cuenta como filtro*: `cuantosFiltros` mira campo a campo, y estar en la pagina 2 no es haber
-   * puesto una traba a la busqueda.
-   */
-  desplazamiento: number
-}
+import type { FiltrosBuscar } from '../tipos/filtros.ts'
 
-export const FILTROS_VACIOS: FiltrosBuscar = {
-  q: '',
-  cadenas: [],
-  seccion: '',
-  comparables: false,
-  conNutricion: false,
-  ofertas: false,
-  marcaPropia: false,
-  sinAlcohol: false,
-  sellos: [],
-  conservacion: '',
-  limite: 40,
-  desplazamiento: 0,
-}
+export { FILTROS_VACIOS, type FiltrosBuscar } from '../tipos/filtros.ts'
+
 
 /** Por debajo de dos letras no se busca: `%l%` casa con media tienda y la
  *  respuesta tarda y no dice nada. La API de hoy no lo corta sola, asi que la

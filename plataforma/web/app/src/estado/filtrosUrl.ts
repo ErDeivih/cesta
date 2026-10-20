@@ -7,7 +7,7 @@
  *   - Guardar una combinacion de filtros es guardar una cadena de texto, sin
  *     inventar un formato aparte ni un endpoint que no existe.
  */
-import { FILTROS_VACIOS, type FiltrosBuscar } from '../api/consultas'
+import { FILTROS_VACIOS, type FiltrosBuscar } from '../tipos/filtros.ts'
 
 const booleanos = ['comparables', 'conNutricion', 'ofertas', 'marcaPropia', 'sinAlcohol'] as const
 
