@@ -357,7 +357,27 @@ de `<Vacio>` y del `len()` de un diccionario.*
 *Y `plataforma/web/aprende/` esta en `.gitignore` con su motivo escrito: **es un artefacto**, se regenera entero, y
 guardarlo seria versionar HTML que envejece en cada commit.*
 
+## Los tres extras, revisados (ronda 192)
+
+*El `pyproject.toml` tiene tres grupos opcionales, y **dos de ellos escondian pruebas** sin que se notara:*
+
+    `plataforma` ... fastapi, psycopg, uvicorn .... **FALTABA**: sin el, la suite de la API se saltaba
+    `docs` ......... markdown-it-py, linkify-it-py . **FALTABA**: sin el, 20 pruebas de `aprende` se saltaban
+    `extras` ....... playwright, rapidfuzz,
+                     sentence-transformers, streamlit . **no hace falta para las pruebas**
+
+*El tercero se ha comprobado: **ni `core/` ni `plataforma/` importan `rapidfuzz` ni `sentence_transformers`**, asi
+que ninguna prueba depende de ese grupo.* *Y `playwright` solo lo usa `scripts/mirar_como_una_cuenta_del_ensayo.py`,
+que no es una prueba.* **Y `dbt-duckdb` y `streamlit` tampoco aparecen en `tests/`.*
+
+*** O sea: de los tres extras, dos escondian pruebas y el tercero no. Y los dos que escondian estaban en la CI mal
+puestos hasta hace treinta rondas. ***
+
+*Los dos pasos de `uv sync` del workflow instalan ahora `plataforma` **y** `docs`; `extras` no se instala, y no hace
+falta.*
+
 ## Próximo comando
+
 
 
 
