@@ -63,6 +63,19 @@ _SIN_BASE = None
 # *tres de esos ficheros (`test_ahorro_exacto`, `test_analisis`, `test_alertas`) **pasan sin base, 33
 # pruebas en 7,2 s**.* *** Ese es el suelo medido de pruebas que este salto esconde: al menos 33. ***
 # *No se sabe cuantas mas hay sin irlas sacando de una en una, y por eso se dice «al menos».*
+#
+# *** Y donde esta el cuelgue, que se busco y se encontro: *** *no es el `connect_timeout` de la conexion
+# -- se probo un DSN que rechaza al instante (`127.0.0.1:1`) y **seguia colgado**.*
+#
+#     `almacen.py:59`  `def arranca(espera: float = 30)`
+#     `almacen.py:80`  `tope = max(int(espera), 3)`          -> 30
+#     `almacen.py:99`  `_pool.wait(timeout=tope * 2 + 5)`    -> **65 segundos por intento**
+#
+# *Y `arranca()` se llama por modulo.* *** 65 s x N no es lento: es un cuelgue. ***
+#
+# *El arreglo de verdad, para cuando se retome: **`arranca(espera=1)` en las pruebas**, o una marca de
+# pytest que lo haga.* *No se hace aqui porque toca `plataforma/api/almacen.py` y hay que verlo con la base
+# delante.*
 _MARCAS = ("plataforma.api", "plataforma.almacen", "almacen", "psycopg")
 
 
