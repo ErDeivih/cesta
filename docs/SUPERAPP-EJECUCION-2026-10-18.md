@@ -706,7 +706,27 @@ que una resta mal hecha produciria.*
 *** Buscar los defectos por otra puerta es lo que ha salvado la ronda: el instrumento de ayer no servia, y el de hoy
 --que ya existia-- si. ***
 
+## Los dos calculadores del plan, barridos con datos reales (ronda 209)
+
+*El metodo del 208 se aplico al otro calculador puro. `core/previa_compra.py` es **Python**, asi que no hizo falta el
+puente por JSON: se llama directamente.*
+
+    200 productos reales del gold (kg, l, ud)
+    una receta pide 200 g / 200 ml / 2 ud de cada uno
+    se busca: excepcion, total negativo, o total cero con algo pedido
+
+    **200 revisados · 0 raros**
+
+*** Y el coste de receta ya se habia barrido igual en el 208: **200 revisados, 0 raros**. ***
+
+*Los dos calculadores que sostienen «plan -> necesidades -> lo que hay que comprar» aguantan 200 productos reales sin
+un solo valor imposible.* *No es lo mismo que decir que acierten con los datos -- eso lo dira §8 cuando haya base --,
+pero si que **no se rompen ni mienten con lo que hay**.*
+
+    ruff limpio · documentos TODO BIEN
+
 ## Próximo comando
+
 
 
 
