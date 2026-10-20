@@ -1742,3 +1742,49 @@ Coger los de los tres espacios -- Compra, Recetas, Calorias -- uno a uno, leer e
 donde de verdad no haya salida, anadirla **con su prueba de componente**.* *Los paneles de operador se
 dejan como estan.*
 
+### 20/10/2026 / LA MARCA, VERIFICADA POR HTTP. Y una pista que NO se puede confirmar.
+
+**Verificado, con la app servida en `http://localhost:8080`:**
+
+    / ......................... 200  text/html
+    /site.webmanifest ......... 200  application/manifest+json  744 B
+    /icono.svg ................ 200  image/svg+xml               738 B
+    /icono-192.png ............ 200  image/png                  1162 B
+    /icono-512.png ............ 200  image/png                  3135 B
+    /icono-maskable-512.png ... 200  image/png                  3125 B
+
+*Los seis con su tipo correcto. **La marca y lo instalable estan servidos de verdad**, no solo en el
+build.*
+
+**Y una pista que no se puede dar por defecto.** *Con `patchright` a 390x844 la portada sale entera:*
+
+    | Cesta
+    | La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa
+    | Compra · Recetas · Calorias · Cuenta y preferencias
+
+*Y a **1280x900** esa misma carga devolvio **0 caracteres** y ningun error de JavaScript.*
+
+*** No lo doy por defecto: *** *el entorno se cayo justo despues (Docker dejaba de responder, `networkidle`
+empezaba a agotar el tiempo, y la captura fallaba).* ***Una medicion que no se puede repetir no es una
+medicion.***
+
+**Lo que hay que hacer con esta pista, y es barato:** *repetir la carga a 1280x900 con la app sana y
+**esperar `domcontentloaded` y no `networkidle`** -- la app sondea y `networkidle` no llega nunca --,
+y mirar `document.getElementById('raiz').children.length`.* *Si a 1280 sigue en 0 y a 390 no, hay un
+defecto real de maquetacion o de carga en escritorio, y seria grave: **la pantalla de entrada vacia en
+el monitor de casa.*** *Si sale contenido, era el entorno.*
+
+**Aviso para quien lo repita:** *`patchright`, no `playwright`, es lo que usa este repo
+(`scripts/mirar_como_una_cuenta_del_ensayo.py:127`).* *Y la portada **no** pide sesion: `/` la sirve
+sin cookie, asi que se puede mirar sin base.*
+
+### El entorno de esta sesion, que ya no da mas
+
+*Docker dejo de responder y ya no volvio (`docker ps` sin contestar en 20 s, repetido en tres rondas).*
+*Con el, se fue la capacidad de correr `pytest` (necesita PostgreSQL) y de levantar el banco de ensayo.*
+*Quedan: `ruff`, los documentos, `tsc`, `npm test`, los componentes y el build -- que es con lo que se
+ha cerrado esta entrega.*
+
+*Lo que esto deja pendiente y no se puede hacer sin base:* **re-probar el lock del cierre**, la
+idempotencia, la procedencia del importe y el aislamiento entre cuentas.*
+
