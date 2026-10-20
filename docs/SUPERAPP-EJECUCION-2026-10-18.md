@@ -135,7 +135,30 @@ redondeado.*
 
 *** 2.092 + 50 = 2.142 pruebas contadas. Las 50 que no corren son todas de la base. ***
 
+## La CI, validada (ronda 175)
+
+*Leido del YAML, no de memoria:*
+
+    trabajos ....... python (5 pasos, 25 min) · web (8 pasos, 20 min) · documentos (4 pasos, 10 min)
+    dispara ........ push, pull_request, workflow_dispatch
+    env de python .. CESTA_POSTGRES, CESTA_DIAS_PRECIO, CESTA_SALTAR_SIN_BASE
+
+*Las tres cosas que se corrigieron, y por que cada una:*
+
+    `uv sync --extra plataforma`  ....  faltaba `fastapi`/`psycopg`; la suite se habria saltado
+    `--extra docs` ..................  faltaban 29 pruebas de `test_aprende`; se habrian saltado
+    `CESTA_SALTAR_SIN_BASE: "0"` ....  un fallo de base habria dejado la CI **verde sin correr nada**
+
+*** Las tres son el mismo defecto con tres caras: **la CI parecia bien y no habria comprobado lo que dice**. ***
+
+*Los 25 minutos del trabajo de Python dan de sobra: la suite sin base tarda 6:58, y con base anade las 50 que
+esperan.*
+
+**Y lo que sigue sin verificarse de la CI: que GitHub la ejecute.** *Necesita un push al remoto, y este repo se
+trabaja en local. Todo lo demas esta leido del fichero.*
+
 ## Próximo comando
+
 
 
 
