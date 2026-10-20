@@ -580,3 +580,56 @@ un defecto de precio encontrado por mirar numeros de verdad. ***
 ***43 pruebas que necesitan PostgreSQL, y de ellas el cierre de dos listas. Docker lleva veinte rondas con el motor
 atascado -- no caido: contestando 500 -- y su reinicio apaga tambien facylf, que no se toca.***
 
+---
+
+# Revisión del 21/10/2026 (séptima) — **lo que hace falta para instalar la app, y lo que le faltaba**
+
+*Las seis revisiones anteriores miraban la aplicación: el motor, los calculos, las pantallas.* *Esta mira **lo que la
+rodea y decide si se puede instalar y actualizar**, que hasta hoy no se habia mirado.*
+
+## Lo que estaba bien, y ahora tiene prueba
+
+*Tres piezas que funcionaban y que **nadie vigilaba**. No eran defectos; eran correcciones que se habrian roto sin que
+nadie se enterase.*
+
+    public/sw.js (5 pruebas) ....... el armazon con las cuatro piezas para abrir sin red (y `/` ES el index.html),
+                                     los dos marcadores del sello, guardar **una a una y no `addAll`** (atomico: una
+                                     URL que falle deja el armazon vacio), navegacion desde la cache, y el precache
+                                     aparte del armazon
+    site.webmanifest (5) ........... nombre, start_url, display, los dos colores, los cuatro iconos con su `type`,
+                                     **el maskable distinto del normal** (el recorte se comeria el dibujo), y el
+                                     tamano declarado igual al real (lee la cabecera PNG)
+    index.html (6) ................. lang="es", viewport con initial-scale y **viewport-fit=cover**, dos theme-color
+                                     distintos, titulo/icono/manifiesto/apple, descripcion y og:, y **ningun script
+                                     ni estilo en linea** -- que es lo que la CSP permite
+
+*** Y las tres se comprobaron por el lado que falla. *** *La de la portada, metiendo un `<script>alert(1)</script>` de
+verdad: la prueba fallo, y al restaurar volvio a pasar con el fichero identico al commit.*
+
+## Y un defecto de verdad, en un fichero que no es codigo
+
+    plataforma/Caddyfile: **no llevaba `Cache-Control`**
+
+*El problema concreto: `sw.js` sin `Cache-Control`.* *** Si el navegador cachea el propio service worker, no ve la
+version nueva **nunca**, y la app se queda clavada en el armazon viejo. *** *Es el fallo clasico de una PWA, y no se
+nota en desarrollo porque ahi no hay cache de por medio.*
+
+*Arreglado, con tres lineas y cuatro pruebas:* `no-cache` para `sw.js` e `index.html`, `immutable` para `/assets/*`
+*(llevan hash: pedirlos otra vez es gastar red sin motivo).*
+
+## Lo que esto cambia en el dictamen, y lo que no
+
+     domestico ...... **APTO con reservas menores** -- sin cambios: nada de esto se nota en el uso diario
+     movil .......... **APTO en lo medido** -- y ahora un poco mas: el maskable y el viewport-fit estan comprobados
+     piloto ......... **NO APTO, por §8** -- sin cambios: sigue siendo el cierre de dos listas
+     publico ........ **NO APTO** -- y ahora se puede decir **por que, con nombre**: faltaba `Cache-Control`, que ya
+                      esta; y siguen faltando la auditoria externa, los datos de otras casas y el equipo de guardia
+
+*** Lo unico que cambia es que el «NO APTO» del publico tiene una linea menos y un motivo mas concreto. ***
+
+## Sin cambios, y hay que repetirlo
+
+*** 43 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas. ***
+*Docker lleva veinte rondas con el motor atascado -- no caido: contestando 500 en `/version` -- y su reinicio apaga
+tambien facylf, que no se toca.*
+
