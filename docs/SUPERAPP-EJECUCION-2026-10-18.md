@@ -198,7 +198,29 @@ el boton** -- que es el patron correcto, porque el `onChange` ya se aplico hace 
 *Resultado: **una busqueda, dos hallazgos, cero defectos.** Que tambien es un resultado y hay que escribirlo: de
 los dos patrones que se arreglaron esta semana, uno tenia 5 copias mas y el otro ninguna.*
 
+## El patron «devuelve lo que quiso guardar», buscado entero (ronda 182)
+
+*El defecto aparecio tres veces en el cliente. Se busco en los dos lenguajes, y el resultado es este:*
+
+    escrituras que devuelven la intencion:
+      estado/cola.ts .................. **correcto desde el principio**: dice `null`
+      estado/busquedasRecientes.ts .... **ARREGLADO** (ronda 135)
+      estado/vistasGuardadas.ts ....... **ARREGLADO** (ronda 181)
+
+    `except` que se traga el error, en la API:
+      almacen.py:220 (contrasena) ..... **correcto**: devuelve `None`, y **gasta el mismo tiempo que si el
+                                        usuario existiera** para no delatar por cuanto tarda
+      main.py:1429 y 1459 ............. **correcto**: devuelven
+                                        `{"comprobable": false, "motivo": "no hay catalogo publicado"}`
+                                        -- *** no mienten: dicen que no pueden comprobar ***
+
+*** Los dos del servidor no son el defecto: son la misma regla bien aplicada -- «si no puedes, dilo». ***
+
+*Y el recuento queda: **tres sitios en el cliente con el defecto, los tres cerrados; cero en la API**.*
+*Los dos del servidor son justo el modelo que faltaba en `vistasGuardadas`.*
+
 ## Próximo comando
+
 
 
 
