@@ -812,7 +812,25 @@ empeorar lo de al lado». ***
 
     ruff limpio · documentos TODO BIEN · el motor no se toco
 
+## El release candidate, rehecho despues de los arreglos (ronda 213)
+
+*El `dist` se habia construido **antes** del numero de envases y del cambio de `RecetaDetalle`, asi que el artefacto
+que habia en disco **no llevaba los dos arreglos**.* *Se borro y se reconstruyo:*
+
+    43 ficheros · 0,82 MB
+    /assets/index-D7wWidYN.js  <- **hash nuevo** (antes Ce80Yn88): el cambio esta dentro
+    /assets/index-C6-EEKz2.css, /icono.svg, /icono-192.png, /site.webmanifest -> las cinco existen
+    32 trozos precacheados · **faltan 0**
+
+*Y `plataforma/web/dist/` esta en `.gitignore` con su motivo: es un artefacto.*
+
+*** El hash del JS es la prueba de que el artefacto es nuevo: si hubiera reusado el `dist` viejo, el nombre seria el
+mismo y los arreglos no estarian en lo que se entrega. ***
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
