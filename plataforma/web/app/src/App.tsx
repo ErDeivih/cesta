@@ -364,9 +364,9 @@ function ArmazonDeLaMarca() {
         {[0, 1, 2].map((i) => (
           <div key={i} className="rounded-tarjeta border border-borde bg-papel-alto p-4">
             <div className="h-3 w-1/3 rounded-full bg-borde" />
-            <div className="mt-2 h-2 w-2/3 rounded-full bg-borde/70" />
+            <div className="mt-2 h-2 w-2/3 rounded-full bg-borde opacity-70" />
             {i === 0 && (
-              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-borde/60">
+              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-borde opacity-60">
                 <div className="h-full w-1/3 origin-left animate-[cargando_1.4s_ease-in-out_infinite] rounded-full bg-bien motion-reduce:animate-none motion-reduce:w-1/2" />
               </div>
             )}

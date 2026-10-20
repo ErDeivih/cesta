@@ -56,7 +56,7 @@ class DemasiadasAltas(RuntimeError):
     """Se ha llegado al tope de cuentas nuevas por hora."""
 
 
-def arranca(espera: float = 30) -> None:
+def arranca(espera: float = float(os.environ.get("CESTA_ESPERA_BASE", "30"))) -> None:
     """Arranca el almacen: el pool de conexiones y, si toca, las migraciones.
 
     `espera` es cuanto se aguanta a que la base conteste, y existe por la cadena
