@@ -36,7 +36,38 @@ necesitando la base -- y sigue sin comprobarse.*
     build ........... ok
     documentos ...... TODO BIEN
 
+## Release candidate, verificado hoy desde cero
+
+*Se borro `plataforma/web/dist` **entero** y se construyo de nuevo, para no confundir «hay un dist» con «se
+puede construir un dist».*
+
+    build ......... ok en 3,88 s, **42 ficheros, 0,82 MB**
+    index.html .... 1.768 B
+    sw.js ......... 6.436 B, `VERSION = '2026102015'`
+    assets ........ **31 trozos**
+    iconos ........ svg + 192 + 512 + maskable
+
+**Y se comprobo que lo que el `index.html` pide existe, uno a uno:**
+
+    /assets/index-BjBCItSW.js ... existe
+    /assets/index-C6-EEKz2.css . existe
+    /icono.svg ................. existe
+    /icono-192.png ............. existe
+    /site.webmanifest .......... existe
+
+**Y que el precache del service worker lista los 31 trozos, sin faltar ninguno:**
+
+    ARMAZON  = ['/', '/site.webmanifest', '/icono.svg', '/icono-192.png']
+    PRECACHE = los 31 de /assets/  ->  **faltan en el precache: ninguno**
+
+*** Eso es un release candidate: el artefacto se construye desde cero, sus referencias no estan rotas, y el
+service worker precachea exactamente lo que hay. ***
+
+*Lo que **no** es: un release candidate **probado con datos**.* *Se construye y se sirve; que las pantallas
+pinten lo correcto con una base real sigue sin comprobarse, y por eso el dictamen no sube de donde esta.*
+
 ## Próximo comando
+
 
 ```powershell
 docker ps
