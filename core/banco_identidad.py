@@ -83,6 +83,11 @@ def mide(pares: Iterable[dict]) -> dict:
 
         dice_igual = estado in _DICE_IGUAL
         no_se_moja = estado in _NO_SE_MOJA
+        # *** Y «sugiere»: `PROBABLE` y `ALTERNATIVA`. ***
+        # *No son «exacto» ni son abstencion: son «creo que si, pero no lo afirmo».* *Dejarlos fuera de
+        # los dos contadores hacia que 40 pares dificiles no aparecieran en ninguna cifra -- ni como
+        # decision ni como abtencion --, y eso es esconder informacion en el sitio donde mas importa.*
+        sugiere = estado in (identidad.PROBABLE, identidad.ALTERNATIVA)
 
         for destino in (global_, por_estrato[estrato]):
             destino["total"] += 1
@@ -106,8 +111,19 @@ def mide(pares: Iterable[dict]) -> dict:
                     destino["exactos_mal"] += 1
                 else:
                     destino["exactos_sin_etiqueta"] += 1
+            destino["por_estado"][estado] += 1
             if no_se_moja:
                 destino["abstiene"] += 1
+            if sugiere:
+                destino["sugiere"] += 1
+            # *** Y LOS RECHAZOS: cuando el par NO es el mismo y el motor no dijo «exacto». ***
+            # *La medida solo miraba «¿dijo exacto?», asi que un `ALTERNATIVA` sobre un par que
+            # **si** es distinto se contaba como nada.* *Y es un acierto: la respuesta correcta a «no
+            # son el mismo» es decir que no.* *Sin esto, 128 de 210 pares quedaban sin contabilidad.*
+            if cierto is False:
+                destino["rechazos"] += 1
+                if not dice_igual:
+                    destino["rechazos_bien"] += 1
 
         procedencias[str(par.get("quien") or "(sin procedencia)")] += 1
 
@@ -143,7 +159,9 @@ def _etiqueta_estricta(valor, par) -> bool:
 
 def _cuenta() -> dict:
     return {"total": 0, "cierto": 0, "exactos": 0, "exactos_bien": 0, "exactos_mal": 0,
-            "abstiene": 0, "desconocidos": 0, "exactos_sin_etiqueta": 0, "matriz": defaultdict(int)}
+            "abstiene": 0, "sugiere": 0, "rechazos": 0, "rechazos_bien": 0,
+            "desconocidos": 0, "exactos_sin_etiqueta": 0,
+            "matriz": defaultdict(int), "por_estado": defaultdict(int)}
 
 
 def _cierra(c: dict) -> dict:
@@ -172,6 +190,13 @@ def _cierra(c: dict) -> dict:
         # pregunta sin contestar, y se cuenta para que no desaparezca.*
         "exactos_sin_etiqueta": c["exactos_sin_etiqueta"],
         "abstiene": c["abstiene"],
+        # *Sugiere: ni afirma ni se calla. Va aparte para que se vea.*
+        "sugiere": c["sugiere"],
+        # *De los pares que NO son el mismo, cuantos no se dieron por exactos (lo correcto).*
+        "rechazos": c["rechazos"],
+        "rechazos_bien": c["rechazos_bien"],
+        "especificidad": ((c["rechazos_bien"] / c["rechazos"]) if c["rechazos"] else None),
+        "por_estado": dict(sorted(c["por_estado"].items())),
         # *Cuantas etiquetas no se pusieron. Va aparte de la abtencion del motor: una es del banco y
         # otra del que decide.*
         "desconocidos": c["desconocidos"],
@@ -265,6 +290,12 @@ def informe(medida: dict) -> str:
         "precision: " + pct(g["precision"]) + "   recall: " + pct(g["recall"]),
         "exactos: " + str(g["exactos"]) + "   bien " + str(g["exactos_bien"])
         + "   MAL " + str(g["exactos_mal"]) + "   abstiene: " + str(g["abstiene"]),
+        "rechazos: " + str(g["rechazos_bien"]) + " de " + str(g["rechazos"])
+        + " pares distintos NO se dieron por exactos"
+        + "   especificidad: " + pct(g["especificidad"]),
+        "sugiere (probable/alternativa): " + str(g["sugiere"])
+        + "   se calla (abstiene/cuarentena): " + str(g["abstiene"]),
+        "por estado: " + ", ".join(k + "=" + str(v) for k, v in g["por_estado"].items()),
         "cobertura del motor: " + pct(g["cobertura"])
         + "   cobertura de anotacion: " + pct(g["cobertura_anotacion"]),
         "sirve: " + str(medida["sirve"]["vale"]) + " -- " + medida["sirve"]["motivo"],
