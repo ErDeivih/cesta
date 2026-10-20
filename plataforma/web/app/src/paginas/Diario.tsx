@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { anotarDeLaCompra, guardaPreferencia, misListas, previaDeLaCompra, yo } from '../api/cesta'
+import { listaDelDiario } from '../logica/listaDelDiario'
 import type { PreviaDeLaCompra, ReciboDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
