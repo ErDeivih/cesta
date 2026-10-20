@@ -431,11 +431,11 @@ export interface PanelCadenas {
     observaciones: number
     movidos: number
     pct: number
-    mediana_cent: number
+    mediana_cent: number | null
   }[]
   dispersion: {
     grupos: number
-    mediana_pct: number
+    mediana_pct: number | null
     p90_pct: number
     sospechosos: number
   }

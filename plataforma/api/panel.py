@@ -246,10 +246,10 @@ def cadenas():
                             "pct": round(100 * b[2] / b[1], 1)} for b in barata],
             "movimiento": [{"cadena": m[0], "observaciones": m[1], "movidos": m[2],
                             "pct": round(100 * m[2] / m[1], 2),
-                            "mediana_cent": round(m[3] or 0)} for m in movimiento],
+                            "mediana_cent": round(m[3]) if m[3] is not None else None} for m in movimiento],
             "dispersion": {"grupos": dispersion[0],
-                           "mediana_pct": round(dispersion[1], 1),
-                           "p90_pct": round(dispersion[2], 1),
+                           "mediana_pct": round(dispersion[1], 1) if dispersion[1] is not None else None,
+                           "p90_pct": round(dispersion[2], 1) if dispersion[2] is not None else None,
                            "sospechosos": dispersion[3]},
         }
     return _al_dia("cadenas", calcula)
