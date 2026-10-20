@@ -300,7 +300,42 @@ porque `round(None)` no existe. Se buscaron todas las apariciones de `round(...)
 *Y el defecto de verdad sigue siendo el de la ronda 188: en `panel.py` la cifra **si** podia ser nula y no habia
 ni guarda ni filtro que lo impidiera.*
 
+## Verificacion final consolidada (ronda 190)
+
+*Todo lo de abajo ejecutado hoy, en una sola pasada, con el `dist` borrado antes:*
+
+    build desde cero ....... ok · 32 trozos precacheados
+    referencias del HTML ... todas existen
+    tsc --noEmit ........... limpio
+    npm run lint ........... **cero avisos**
+    npm test ............... **335 pasan**
+    componentes ............ **22 pasan**
+    ruff ................... limpio
+    comprueba_documentos ... TODO BIEN
+    pytest sin base ........ **2.092 pasan** (4:55, determinista)
+    nada sin commitear
+
+    **2.092 + 335 + 22 = 2.449 pruebas**, y 50 mas que necesitan PostgreSQL.
+
+**Lo que se ha cerrado en estas ultimas rondas, y no es codigo nuevo:**
+
+    el defecto de opacidad de App.tsx .......... `borde/70` sobre `var(--borde)`, que Tailwind omitia en
+                                                  silencio
+    la regla de «que lista» ..................... 6 sitios con la caida a «la primera que haya», los 6
+                                                  cerrados, y la regla en un solo modulo con 10 pruebas
+    `null` convertido en `0` .................... 8 arregladas (una afirmaba un ahorro del 100 %, otra era
+                                                  un `TypeError` latente), 8 revisadas y correctas
+    escrituras que devuelven la intencion ....... 3 sitios, los 3 cerrados
+    la suite .................................... de «no se puede correr» a 2.092 pasan con 50
+                                                  identificadas y con motivo
+    la CI ....................................... de «puede salir verde sin correr nada» a tres trabajos
+                                                  con las dependencias y el salto comprobados
+
+**Lo que sigue bloqueado, y es lo mismo que hace veinte rondas:** *las 50 pruebas que necesitan PostgreSQL, y con
+ellas la aceptacion completa de §8 -- **el cierre de compras de dos listas**.*
+
 ## Próximo comando
+
 
 
 
