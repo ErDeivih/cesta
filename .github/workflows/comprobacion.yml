@@ -1,0 +1,105 @@
+# *** LO QUE SE COMPRUEBA EN CADA PUSH. ***
+#
+# *Hasta hoy el unico trabajo de Actions era el diario de recoleccion, que se lanza a mano.* *Nada
+# comprobaba que un cambio no rompiera la aplicacion: la suite, los tipos y el build los corria quien se
+# acordaba, en su maquina.*
+#
+# **Este trabajo es el que evita que la suite se oxiie**, y es barato: no toca la red, no publica nada y
+# no necesita ningun secreto. *Los datos no estan en el repo, asi que las pruebas que los necesitan se
+# saltan solas -- y lo dicen.*
+#
+# *Los tres trabajos son independientes a proposito: si fallan los tipos, la suite sigue corriendo y se
+# ven **las dos** cosas en la misma pasada.*
+
+name: comprobacion
+
+"on":
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # *Un push nuevo cancela el anterior de la misma rama: no hace falta comprobar dos veces lo viejo.*
+  group: comprobacion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python (ruff y la suite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      # *PostgreSQL de verdad, porque la suite lo necesita.* *Es un servicio del trabajo: se va con el y
+      # no toca ninguna base de nadie.*
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: prueba
+          POSTGRES_USER: cesta
+          POSTGRES_DB: cesta_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cesta"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # *La ventana de precios se abre para las pruebas: el gold de ensayo esta fechado y sin esto sus
+      # precios no cuentan.* *La aplicacion de casa no cambia: alli la variable no se pone.*
+      CESTA_POSTGRES: postgresql://cesta:prueba@127.0.0.1:5432/cesta_ci
+      CESTA_DIAS_PRECIO: "100000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: ruff
+        run: uv run ruff check .
+      - name: la suite
+        # *`-q` y el resumen al final: lo que se mira en el registro es cuantas pasan y cuantas no.*
+        run: uv run pytest -q tests/
+
+  web:
+    name: Web (tipos, pruebas, componentes y build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: plataforma/web/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: plataforma/web/app/package-lock.json
+      # *** `npm ci` y no `npm install`: `ci` falla si el `package-lock.json` no cuadra con el
+      # `package.json`, que es justo lo que hay que saber antes de publicar.** *
+      - name: dependencias
+        run: npm ci
+      - name: tipos
+        run: npx --no-install tsc --noEmit
+      - name: lint
+        # *Avisos no tumban la comprobacion; errores si. Hay tres avisos conocidos en otros ficheros.*
+        run: npm run lint
+      - name: pruebas de node
+        run: npm test
+      - name: pruebas de componente
+        run: npm run test:componentes
+      - name: build
+        run: npm run build
+
+  documentos:
+    name: Documentos coherentes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # *`comprueba_documentos` revisa que la documentacion no se contradiga a si misma: que las cifras
+      # citadas existan y que los planes no prometan lo que el codigo no tiene.*
+      - name: documentos
+        run: uv run python -m plataforma.comprueba_documentos
