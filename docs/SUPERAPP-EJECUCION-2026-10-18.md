@@ -2023,3 +2023,44 @@ prometer «funciona sin conexion» a secas.*
 - sincronizacion ... **no probada**: *la cola de cambios necesita la API viva, y Docker lleva nueve rondas
   caido*
 
+**M07 / POR QUE «CERO FALSOS EXACTOS» NO ES SUERTE: SOLO HAY UNA VIA AL EXACTO.**
+
+*A la pregunta de la especificacion -- «prioridad a evitar falsos exactos» -- hay una respuesta
+estructural, y se puede leer en el codigo:*
+
+    identidad.py:159  docstring de `decide`: «Nunca "exacto" sin GTIN valido»
+    identidad.py:183  return {"estado": EXACTO, "motivos": ["mismo GTIN valido y presentacion
+                      compatible"]}
+
+*** Es la unica linea de `decide()` que devuelve `EXACTO`. *** *No hay camino por nombre, ni por marca,
+ni por parecido de texto, ni por fuzzy.* *La unica forma de que el motor afirme «es el mismo producto»
+es que los dos codigos de barras sean validos e iguales **y** que la presentacion sea compatible.*
+
+**Eso significa que un falso exacto no puede venir de una heuristica equivocada.** *Solo puede venir de
+**un EAN mal puesto en los datos**: dos articulos distintos con el mismo codigo.* *Y eso no lo arregla
+ningun motor de identidad: lo arregla la captura.*
+
+**Y por eso los estratos dificiles dan 0 exactos, que era el hueco que quedaba:**
+
+    misma_marca_parecidos  40 pares  exactos 0
+    pack_contra_unidad     20 pares  exactos 0
+    sin_evidencia          20 pares  exactos 0
+
+*No es que el motor los acierte: es que **no opina** ahi.* *Dice `probable`, `alternativa` o se abstiene,
+que es justo lo que la especificacion pide («no pasar clasificandolo todo como desconocido» **y**
+«embeddings/fuzzy solo para candidatos/familias, nunca sustitucion exacta automatica»).*
+
+**Y la mitad del catalogo donde esto importa de verdad:** *de **1 958 963** filas del bronze, **973 841 no
+tienen EAN** (el 49,7 %).* *Ahi el motor **nunca** podra decir «exacto» -- por construccion --, y lo que
+hace es proponer candidato o abstenerse.* *O sea: en la mitad dificil del catalogo el comportamiento
+seguro es el que ya tiene, y lo que falta no es precision sino **cobertura**, que es otra conversacion y
+necesita etiquetas humanas.*
+
+**Lo que esto cierra del criterio de M07:** *«prioridad a evitar falsos exactos» **esta garantizado por
+construccion**, no por una prueba que salio bien.* *Y lo que queda abierto, dicho con precision:*
+- *cobertura sobre el 49,7 % sin EAN: **no medida**, necesitaria un banco de esos pares*
+- *los 44 pares que faltan para 200*
+- *el umbral automatico documentado*
+- *y `PROBABLE`/`ALTERNATIVA` no cuentan como abstencion en la medida; en 60 pares el motor dijo una de
+  las dos*
+
