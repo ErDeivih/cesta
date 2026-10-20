@@ -93,6 +93,11 @@ docker ps
 *Despues, en este orden:* el cierre concurrente de M06 (`FOR UPDATE` + el indice unico de la migracion 021),
 la procedencia del importe en el historico, y el viaje real de la cola offline.
 
+**Y un riesgo que cree yo, cerrado en la CI.** *El salto de `conftest` existe para que `pytest` no se
+cuelgue en un portatil sin Docker.* *En la CI **hay** base, asi que ese salto solo podria dispararse por un
+fallo de arranque del servicio -- y entonces la CI saldria **verde con 797 pruebas sin correr**, que es peor
+que roja.* *Se pone `CESTA_SALTAR_SIN_BASE: "0"` en el trabajo de Python: ahi no se salta nada.*
+
 *Si no responde, lo que queda sin base:* la aceptacion de §8 --cinco recetas, dos personas, dos listas--, que
 es **el criterio integral del encargo**; los otros 30 vacios; y ver el boton del 409 con datos.
 

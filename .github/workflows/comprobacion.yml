@@ -49,6 +49,13 @@ jobs:
       # precios no cuentan.* *La aplicacion de casa no cambia: alli la variable no se pone.*
       CESTA_POSTGRES: postgresql://cesta:prueba@127.0.0.1:5432/cesta_ci
       CESTA_DIAS_PRECIO: "100000"
+      # *** AQUI NO SE SALTA NADA. ***
+      # *`tests/conftest.py` se salta los ficheros que necesitan base cuando no la encuentra, para que
+      # `pytest` no se cuelgue en un portatil sin Docker.* *En la CI **hay** base, asi que ese salto solo
+      # podria pasar por un fallo de arranque del servicio -- y entonces la CI saldria **verde con 797
+      # pruebas sin correr**, que es peor que roja.*
+      # *Con esto a `0`, el salto se apaga y un fallo de base se ve como lo que es.*
+      CESTA_SALTAR_SIN_BASE: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
