@@ -83,7 +83,11 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
  *  lleva tres dias en el catalogo dice tres. */
 function ElCambio({ f }: { f: Favorito }) {
   if (!f.comparable) return null
-  const pct = f.variacion_pct ?? 0
+  // *** Y si no hay variacion, tampoco: `SinMedida` es quien lo explica. ***
+  // *`?? 0` convertiria «no hay con que compararlo» en «no ha cambiado» -- y el propio
+  // `SinMedida` dice, tres lineas mas abajo, que un «0 %» ahi es MENTIRA.*
+  if (f.variacion_pct === null || f.variacion_pct === undefined) return null
+  const pct = f.variacion_pct
   const dias = f.dias_medidos ?? f.dias ?? 7
   const sentido = pct < 0 ? 'baja' : pct > 0 ? 'sube' : 'igual'
   return (

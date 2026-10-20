@@ -219,7 +219,35 @@ los dos patrones que se arreglaron esta semana, uno tenia 5 copias mas y el otro
 *Y el recuento queda: **tres sitios en el cliente con el defecto, los tres cerrados; cero en la API**.*
 *Los dos del servidor son justo el modelo que faltaba en `vistasGuardadas`.*
 
+## `null` convertido en `0`, buscado (ronda 183)
+
+*La regla central del proyecto es «`null` no es `0`». Se buscaron las 24 apariciones de `?? 0` en el cliente y
+se miraron una a una.*
+
+**Correctas** *(0 es el valor bueno ahi)*: contadores y acumuladores (`porDia.set(..., (antes ?? 0) + kcal)`),
+longitudes de lista (`data?.entradas.length ?? 0`), `cuantosPorUnidad` de `pesos.ts`, y `gasto.ts:48`, donde
+`lineas_sin_precio ?? 0` cuenta huecos.
+
+**Arreglada una, y era del tipo exacto que la regla prohibe:**
+
+    Favoritos.tsx:86 ... const pct = f.variacion_pct ?? 0
+                          const sentido = pct < 0 ? 'baja' : pct > 0 ? 'sube' : 'igual'
+
+*** Con la variacion desconocida decia «igual» -- o sea, «no ha cambiado». ***
+
+*Y lo peor es que **el propio modulo lo sabia**: `SinMedida`, tres lineas mas abajo, dice literalmente*
+
+> *«Un «0 %» aqui seria mentira: no es que no se haya movido, es que no hay con que compararlo.»*
+
+*Ahora, sin variacion, `ElCambio` no pinta nada y `SinMedida` lo explica -- que es lo que el modulo ya decia que
+habia que hacer.*
+
+**Y queda una sin resolver, anotada:** `Inicio.tsx:419` pasa `total={rep.data?.total_cent ?? 0}` a la cabecera.
+*Si el total llegara nulo, la cabecera diria «0 €».* *No se ha tocado porque hay que ver que hace `Cabecera` con
+un `total` nulo, y eso es una decision de interfaz, no una sustitucion.*
+
 ## Próximo comando
+
 
 
 
