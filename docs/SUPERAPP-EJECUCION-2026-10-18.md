@@ -376,7 +376,30 @@ puestos hasta hace treinta rondas. ***
 *Los dos pasos de `uv sync` del workflow instalan ahora `plataforma` **y** `docs`; `extras` no se instala, y no hace
 falta.*
 
+## «Que esconde pruebas», cerrado del todo (ronda 193)
+
+*Se ha revisado **todo** lo que decide que se comprueba. El resultado:*
+
+    EXTRAS DE PYTHON
+      `plataforma` .... FALTABA -> arreglado en la CI
+      `docs` .......... FALTABA -> arreglado (20 pruebas de `aprende`)
+      `extras` ........ innecesario, **comprobado**: nada de `core/` ni `plataforma/` lo usa
+
+    CONFIGURACION DE PYTEST
+      `testpaths = ["tests"]` ... y **no hay ni un fichero de prueba fuera de `tests/`** (comprobado: 0)
+      `addopts` ................. solo `-p no:cacheprovider`, **sin filtros ni `-m`**
+
+    Y LA CUENTA CUADRA
+      **2.142 recogidas** = 2.092 pasan + 50 que necesitan PostgreSQL
+      246 ficheros de prueba en `tests/`
+
+*** O sea: no queda ninguna prueba «escondida» por configuracion. Las 2.142 que hay son todas las que hay. ***
+
+*Lo que si queda es lo otro, y no es configuracion: **50 pruebas que no pueden correr porque no hay base**, y la
+aceptacion completa de §8 entre ellas.*
+
 ## Próximo comando
+
 
 
 
