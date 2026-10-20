@@ -3,28 +3,55 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 150)
+## Dónde está esto (ronda 154)
 
-**Auditoria de «pantalla vacia» en los tres espacios que faltaban: sin callejon, y con el motivo.**
+**Lo que se puede afirmar hoy, con la comprobación al lado.**
 
-*El encargo avisa: **«no declares capacidad por una pantalla vacia»**.* *Se miraron los vacios de `Despensa`,
-`Diario` y `PlanSemanal`, que eran los tres que no estaban auditados.*
+    docker .......... **caido (19 rondas)** -- sin PostgreSQL, sin banco de ensayo, sin API
+    pytest ......... **NO SE HA PODIDO CORRER** desde hace 19 rondas
+    ruff ............ limpio
+    lint ............ **cero avisos**
+    tsc --noEmit .... limpio
+    npm test ........ **320 pasan**
+    componentes ..... 22 pasan
+    build ........... ok, y **verificado desde cero**: se borro el dist y se reconstruyo
+    documentos ...... TODO BIEN
+    nada sin commitear
 
-    Despensa ..... `<Vacio titulo="La despensa esta vacia">`, l.107
-                   *y el formulario «Declarar» esta en la l.144, **fuera del condicional**: se ve en los
-                   dos casos*
-    Diario ....... `<Vacio titulo="Nada anotado este dia">`, l.542
-                   *dice «anota lo primero arriba», y la forma esta arriba*
-    PlanSemanal .. `<Vacio titulo="La semana esta vacia">`, l.401
-                   *y `PonerEnUnDia` esta por dia, en la l.393*
+**Los paquetes, sin adornos.**
 
-*** Los tres apuntan a una accion que esta en la misma pantalla. Ninguno es un callejon. ***
+    M00–M05 ..... cerrados y verificados
+    M06 ......... la cadena del cierre esta probada por HTTP (9 de 9). **El 409 ya reconfirma**: el dato
+                  viaja y la pantalla ofrece cerrar con el total nuevo.
+                  **Abierto: dos cierres a la vez pueden crear dos compras.** Es del servidor.
+    M07 ......... cerrado: banco de **210 pares**, precision **100 %** sobre 52, especificidad **100 %**
+                  sobre 70, los cuatro estados suman 210, umbral documentado como arbol de diez reglas.
+                  Abierto: cobertura del 49,7 % del catalogo que no tiene EAN.
+    M08–M14, M16–M22 ... **implementados**: 9.254 lineas de pagina, cliente de API y ruta para cada uno.
+                  Su logica pura esta probada. **Sin verificar con datos**: eso necesita la base.
+    M15 ......... instalable, armazon de marca, offline desde la 2.a visita, y la cola probada **por los dos
+                  lados del cable**. El viaje real necesita la API.
+    CI .......... tres trabajos, dependencias verificadas, sin ejecutar en remoto.
 
-*Y lo que **no** dice esta auditoria: que esos tres espacios **funcionen**.* *Un vacio con su accion al lado
-es lo correcto **cuando no hay datos**; que con datos pinten bien el diario, el plan y la despensa sigue
-necesitando la base -- y sigue sin comprobarse.*
+**Lo que hoy no se ha podido cerrar, dicho como es.** *La auditoria de vacios se hizo **a mano en 7 de 37**;
+los otros 30 **no se han mirado**. El conteo automatico que hice hoy **no vale** -- lo dije en el commit: una
+ventana de 12 lineas no alcanza a un boton que esta 140 lineas mas arriba.*
 
-## Entorno, lo que se puede y no se puede (sigue)
+## Próximo comando
+
+```powershell
+docker ps
+```
+
+*Lo primero, si responde:* `uv run pytest -q tests/`.
+
+*Despues, en este orden:* el cierre concurrente de M06 (`FOR UPDATE` + el indice unico de la migracion 021),
+la procedencia del importe en el historico, y el viaje real de la cola offline.
+
+*Si no responde, lo que queda sin base:* la aceptacion de §8 --cinco recetas, dos personas, dos listas--, que
+es **el criterio integral del encargo**; los otros 30 vacios; y ver el boton del 409 con datos.
+
+# Entorno, lo que se puede y no se puede (sigue)
 
     docker .......... caido (19 rondas)
     ruff ............ limpio
