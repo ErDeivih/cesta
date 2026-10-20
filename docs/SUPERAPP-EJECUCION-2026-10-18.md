@@ -114,7 +114,29 @@ gancho.*
 siempre ficheros que necesitan PostgreSQL.*** *El baile de `skipped` no se ha explicado; queda anotado en vez de
 redondeado.*
 
+## Los saltos, cerrados del todo (ronda 174)
+
+*Los 14 que quedan **no son un misterio**: todos dicen lo mismo.*
+
+    sin almacen en CESTA_POSTGRES al importar. Ejecuta con $env:CESTA_POSTGRES='postgresql://...'
+    sin CESTA_POSTGRES al importar: esta prueba necesita el almacen real
+    sin almacen en CESTA_POSTGRES al importar (la cadena se lee al importar, no ahora)
+
+*** Necesitan PostgreSQL de verdad, y lo dicen al saltarse. No hay nada que arreglar ahi. ***
+
+*Y el recuento de saltos queda asi, con su causa cada uno:*
+
+    29 ... faltaba el extra `docs` ......... **ARREGLADO** (uv sync --extra docs)
+    14 ... necesitan CESTA_POSTGRES ....... **no es un defecto: es la base que no hay**
+
+**El resultado de la suite sin base, definitivo:**
+
+    **2.092 pasan · 14 saltan (base) · 1 falla (base) · 35 errors (base)** en 6:58
+
+*** 2.092 + 50 = 2.142 pruebas contadas. Las 50 que no corren son todas de la base. ***
+
 ## Próximo comando
+
 
 
 
