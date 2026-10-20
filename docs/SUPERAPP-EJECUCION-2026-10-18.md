@@ -8,7 +8,10 @@
 **Lo que se puede afirmar hoy, con la comprobación al lado.**
 
     docker .......... **caido (19 rondas)** -- sin PostgreSQL, sin banco de ensayo, sin API
-    pytest ......... **NO SE HA PODIDO CORRER** desde hace 19 rondas
+    pytest ......... *** SE PUEDE CORRER EN PARTE, Y HOY SE HA CORRIDO. ***
+                      **1.345 pasan, 15 saltan, 0 fallan** (5:18)
+                      *Son los 135 ficheros de `tests/` que **no tocan PostgreSQL**.
+                      Los otros 111 -- los de la API, el almacen y el ensayo -- si lo necesitan.*
     ruff ............ limpio
     lint ............ **cero avisos**
     tsc --noEmit .... limpio
@@ -32,6 +35,15 @@
     M15 ......... instalable, armazon de marca, offline desde la 2.a visita, y la cola probada **por los dos
                   lados del cable**. El viaje real necesita la API.
     CI .......... tres trabajos, dependencias verificadas, sin ejecutar en remoto.
+
+> *** CORRECCION IMPORTANTE. *** *Durante **diecinueve rondas** escribi «`pytest` no se puede correr» en
+> este fichero.* *** Es falso. *** *Se puede correr **la mitad**: 135 de los 246 ficheros de `tests/` no
+> tocan la base, y contienen **1.345 pruebas**. Hoy se han corrido todas: **1.345 pasan, 15 saltan, 0
+> fallan**.*
+>
+> *Lo que **si** esta bloqueado son los **111** ficheros que necesitan PostgreSQL: la API, el almacen, el
+> ensayo y la aceptacion de §8.* *Pero «la suite no se puede correr» era una frase que me ahorraba el trabajo
+> de averiguar **cual** no se puede -- y el trabajo era un `grep`.*
 
 **Lo que hoy no se ha podido cerrar, dicho como es.** *La auditoria de vacios se hizo **a mano en 7 de 37**;
 los otros 30 **no se han mirado**. El conteo automatico que hice hoy **no vale** -- lo dije en el commit: una
