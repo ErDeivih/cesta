@@ -94,7 +94,28 @@ rondas detras de mi salto.*
 
 *En total, los seis ficheros de SQLite: **6 de 6 corren, 61 pruebas, cero fallos**.*
 
+## Las cinco puertas, medidas a la vez (ronda 172)
+
+| puerta | resultado |
+|---|---|
+| `ruff check .` | **limpio** |
+| `comprueba_documentos` | **TODO BIEN** |
+| `tsc --noEmit` | **limpio** |
+| `npm run lint` | **cero avisos** |
+| `npm test` | **320 pasan** |
+| `npm run test:componentes` | **22 pasan** |
+| `pytest -q tests/` sin base | **2 077 pasan · 1 falla · 35 errors · 29 saltan** |
+
+*Y una comprobacion de mi propio `conftest`: **la variable `CESTA_SALTAR_SIN_BASE` se mira ANTES del sondeo de
+base**, asi que en la CI (donde vale `0`) ni se toca la base ni se salta nada. *Verificado leyendo el orden del
+gancho.*
+
+*** Ojo a un numero: los `skipped` bailan entre 29 y 32 segun la corrida, y el unico fallo y los 35 `errors` son
+siempre ficheros que necesitan PostgreSQL.*** *El baile de `skipped` no se ha explicado; queda anotado en vez de
+redondeado.*
+
 ## Próximo comando
+
 
 
 ```powershell
