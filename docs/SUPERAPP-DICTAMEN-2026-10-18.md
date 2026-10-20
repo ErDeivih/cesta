@@ -186,3 +186,87 @@ que **no** se han podido medir.*
 *** Un dictamen que diga «APTO» sin poder correr la suite es un dictamen que no vale. Por eso el de
 piloto y público siguen siendo NO APTO. ***
 
+---
+
+# Revisión del 21/10/2026 — qué cambia, y qué no
+
+*Han pasado **veinticinco rondas** desde la revisión del 20.* *Docker **no ha vuelto**: ya no es «diez
+rondas», son **dieciocho** al cerrar esta revisión.* *Así que lo que sigue separa con cuidado **lo que se ha
+medido** de **lo que sigue sin medirse**, porque confundirlos es lo que invalidaria el dictamen entero.*
+
+## Lo que ahora está verificado y antes no
+
+**1. El banco de identidad existe y se mide.** *Paso de «no hay banco» a:*
+
+    **210 pares** (el objetivo eran 200), estratificados, con evidencia por par, autor y fecha.
+    El **42 %** toca la mitad del catalogo que no tiene EAN.
+    precision **100 %** sobre 52 predicciones · especificidad **100 %** sobre 70 pares distintos.
+    Los cuatro estados suman 210: 52 exacto, 4 probable, 128 alternativa, 26 cuarentena.
+
+*** Y lo que hace esa precision creible no es el numero: es que el motor **solo puede** decir «exacto» por una
+via -- dos GTIN validos e iguales --, comprobado contando las lineas de `decide()`.*** *Un falso exacto
+exigiria **un EAN mal puesto en los datos**, no una heuristica equivocada.*
+
+*El umbral queda **documentado** como un arbol de diez reglas, no como una cifra de confianza inventada.*
+
+**2. El cierre ya no es un callejon sin salida.** *Cuando el total cambia entre mirar la lista y cerrarla, el
+servidor contesta 409 con la cotizacion nueva.* *Ese cuerpo **se recibia y se tiraba**.* *Ahora viaja en
+`ErrorApi.cuerpo`, la pantalla **dice el total nuevo** y ofrece **cerrar con el**, reintentando con el sello
+nuevo.*
+
+*** Es la primera vez que el 409 es una conversacion y no un error. ***
+
+**3. El codigo puro del cliente esta entero.** *113 → **320 pruebas de node** y 15 → 22 de componente.*
+
+    `logica/` ... **16 modulos, todos con prueba, y sin una sola dependencia de `api/`**
+    `estado/` ... **6 de 6**, incluida la cola offline (guardar y mandar)
+    `api/` ....... formato, cliente HTTP y las dos rutas del cierre
+
+*Y por el camino se quitaron **dos acoplamientos** que impedian probarlo (`frase` y `curva` importaban
+`api/formato`; `filtrosUrl` importaba de `api/consultas`), y se corrigio **una mentira**: `busquedasRecientes`
+decia «guardado» cuando el navegador no habia dejado guardar.*
+
+**4. Hay CI.** *`.github/workflows/comprobacion.yml` con tres trabajos: `ruff` + `pytest` con PostgreSQL de
+servicio, `tsc` + lint + pruebas + build, y `comprueba_documentos`.* *** Verificado que los comandos
+funcionan y que `uv sync --extra plataforma` instala lo que la suite necesita (el primer intento no lo
+hacia, y se corrigio). *** *Sin ejecutar en remoto.*
+
+## Lo que empeora el dictamen, y hay que decirlo
+
+*** La suite completa lleva **dieciocho rondas** sin correr. *** *El ultimo dato es **2 125 pasan, 17
+salten, 0 fallan**, de antes de que Docker cayera.* *Las 320 pruebas de node no lo sustituyen: **no tocan ni
+una linea de Python**.*
+
+*** Y una afirmacion que hay que retirar: *** *durante decenas de rondas escribi **«M08–M14 y M16–M22: sin
+empezar»**.* *Es **falso**: hay **9.254 lineas de pagina** y cliente de API para cada uno de esos espacios,
+con sus rutas registradas.*
+
+*Lo que sigue siendo cierto es lo otro: **que exista la pagina no es que funcione**.* *Ninguno de esos
+espacios esta verificado con datos.*
+
+## Veredicto revisado, por audiencia
+
+| audiencia | antes | **ahora** | por qué |
+|---|---|---|---|
+| **doméstico** | APTO con reservas de datos | **APTO con reservas, y las reservas son menores** | *El cierre ya dialoga en vez de bloquearse, y la identidad esta medida con especificidad 100 %. Siguen faltando las pruebas de Python.* |
+| **móvil** | APTO en lo medido | **APTO en lo medido, con más medido** | *La cola offline esta probada **por los dos lados del cable**. Lo que falta es el viaje con servidor.* |
+| **piloto** | NO APTO | **NO APTO, y por menos motivos** | *Queda **uno**: la suite completa sin correr tras dieciocho rondas y el cierre concurrente sin resolver. Antes eran dos.* |
+| **público** | NO APTO | **NO APTO** | *Por lo mismo, y por lo que no cambia: sin auditoría externa, sin datos de otras casas, sin equipo de guardia.* |
+
+*** Lo que separa «doméstico» de «piloto» es una sola cosa: que la suite se pueda correr. *** *No es una
+carencia de funcionalidad; es una carencia de **prueba**, y por eso el piloto sigue siendo NO APTO aunque el
+uso domestico este mejor.*
+
+## Lo que no se ha podido medir, y sigue sin poder medirse
+
+    `pytest` completo ................... necesita PostgreSQL (Docker, 18 rondas caido)
+    la aceptacion de §8 ................ cinco recetas, dos personas, dos listas -- **el criterio integral
+                                         del encargo**, y no se puede hacer sin base
+    el cierre concurrente ............... dos cierres a la vez; necesita base
+    el viaje de la cola offline ......... que `POST /sincronizar` aplique y la vacie al confirmar
+    el separador de miles de `euros` .... depende del ICU del navegador; node puede no agrupar y el
+                                         navegador si
+    un iPhone fisico .................... `safe-area` esta en el codigo, sin verificar en aparato
+
+*** Nada de lo de arriba se declara hecho, y ninguno de los «APTO» de arriba depende de ello. ***
+
