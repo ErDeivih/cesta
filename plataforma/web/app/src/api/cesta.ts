@@ -14,8 +14,8 @@
  *  cuerpo, y el mismo trato del error: `ErrorApi` con el `detail` de la API para
  *  que la pantalla pueda decir QUE ha fallado y no solo que fallo.
  */
-import { ErrorApi, pide } from './cliente'
-import type { Donde, Estimacion, Linea, Lista, RepartoTiendas, Sesion } from '../tipos'
+import { ErrorApi, pide } from './cliente.ts'
+import type { Donde, Estimacion, Linea, Lista, RepartoTiendas, Sesion } from '../tipos.ts'
 
 /** Entra con usuario y clave. La cookie la pone la API en la respuesta. */
 export async function entrar(usuario: string, clave: string,
