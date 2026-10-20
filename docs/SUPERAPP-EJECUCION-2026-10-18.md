@@ -1937,3 +1937,44 @@ defecto real, y con este entorno no se distingue.*
 falsos que descubri leyendo mejor el codigo; esta es distinta: **la medicion no era repetible y lo digo
 en vez de elegir el numero que me gustaba** (el de 48 s, que era el mas dramatico). ***
 
+**RETIRO «OFFLINE VERIFICADO». No se reproduce, y el defecto es de diseno.**
+
+*La primera prueba dio 270 caracteres con la red cortada y la di por buena. Repetida cuatro veces mas,
+con las mismas tres cargas:*
+
+    intento 1: trozos en cache = 1   sin red =  53 car.   <-- SOLO el armazon
+    intento 2: trozos en cache = 0   sin red =   0 car.
+    (y antes, una vez: 3 trozos -> 270 car.)
+
+*** 53 caracteres es exactamente el armazon solo: `Lanzador`, que es el trozo de la portada, no estaba
+en cache. ***
+
+**La causa es de diseno, no de suerte.** *Mi `fetch` cachea los trozos **cuando se piden**.* *Asi que un
+trozo solo acaba en la cache si paso por ahi **despues** de que el SW estuviera controlando.* *La
+portada necesita `index` y `Lanzador`; si `Lanzador` se pidio antes de que el SW controlara, no esta, y
+la app abre con el marco y sin contenido.*
+
+*** Un service worker que depende de que el usuario haya hecho suficientes visitas no es un service
+worker: es una cache que a veces acierta. ***
+
+**El arreglo correcto, y no es pequeno:** ***precachear en `install` los trozos de la entrada***, no
+esperar a que se pidan. *Para eso el build tiene que decirle al SW **que ficheros existen y con que
+hash** -- un manifiesto de precache que `sella-sw.mjs` ya puede escribir, porque es el mismo sitio donde
+se sella la version:*
+
+    1. `vite build` escribe `dist/assets/*` con su hash
+    2. `sella-sw.mjs` lee el `index.html` del build, saca los `<script src>` y `<link href>`
+    3. escribe esa lista dentro de `sw.js` (como `PRECACHE`)
+    4. el `install` guarda **esa lista**, una a una, y falla si no puede: sin precache, no hay offline
+
+*Y la prueba que vale, que es la que intente y no se sostiene con el diseno actual:* ***instalar,
+recargar una vez, cortar la red y ver la portada entera*** -- *con los trozos precacheados, no con los
+que hubieran pasado por casualidad.*
+
+**Lo que SI queda de la ronda anterior, y era el defecto real que encontro la prueba:** *`c.addAll()` es
+atomico y dejaba la cache vacia al fallar una URL; ahora se guarda una a una.* *Eso es una mejora cierta,
+aunque no bastara para el offline.*
+
+*** Septima vez que un numero me hace retroceder. Y esta es la que mas importaba: habia escrito
+«M15 VERIFICADO» en el mensaje de un commit por **una** pasada buena. ***
+
