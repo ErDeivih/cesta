@@ -44,6 +44,19 @@ const cliente = new QueryClient({
 const raiz = document.getElementById('raiz')
 if (!raiz) throw new Error('Falta el <div id="raiz"> en index.html.')
 
+// *** EL SERVICE WORKER: LA APP ABRE SIN RED. ***
+// *Se registra **solo en produccion**: en desarrollo cachearia el armazon y los cambios no se verian,
+// que es el error clasico de los service workers.*
+// *Y no se espera a que este listo: registrar tarda y no hace falta para pintar.*
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {
+      // *No poder cachear no puede romper la app: sin SW funciona igual, solo que con red.*
+    })
+  })
+}
+
+
 createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={cliente}>
