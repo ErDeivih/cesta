@@ -1788,3 +1788,33 @@ ha cerrado esta entrega.*
 *Lo que esto deja pendiente y no se puede hacer sin base:* **re-probar el lock del cierre**, la
 idempotencia, la procedencia del importe y el aislamiento entre cuentas.*
 
+**RESUELTA LA PISTA: no era un defecto. Era «aun cargando», y el culpable es la base caida.**
+
+*Se repitio la carga a 1280x900 muestreando el texto cada pocos segundos:*
+
+    intento 1 @1280  t=1000ms ... 21 car   «Abriendo la pantalla...»
+    intento 1 @1280  t=3000ms ... 21 car   «Abriendo la pantalla...»
+    intento 1 @1280  t=6000ms ... 270 car  «Cesta» -- la portada ENTERA
+
+*** A 1280x900 renderiza igual que a 390x844. *** *La primera medicion esperaba 4 s, justo dentro de la
+ventana de carga, y de ahi el «0 caracteres».*
+
+**Y la lentitud tiene causa, que si es un dato util:** *el armazon no pinta hasta resolver la sesion, y
+la sesion es una llamada a la API; la API necesita PostgreSQL, y Docker lleva tres rondas caido.* *Con
+la base muerta, esa llamada tarda segundos en fallar y la pantalla se queda en «Abriendo la
+pantalla...».*
+
+**Dos cosas que se sacan de aqui, y valen para el producto:**
+
+1. **El arranque depende de la red para pintar el armazon.** *Un `Abriendo la pantalla...` de 3-6
+   segundos es mucho para una app que se abre en el pasillo del super.* *Y con la base lenta, no hay
+   pantalla: no es que falte un dato, es que **no hay nada**.* *Una app con marca propia deberia pintar
+   su armazon **sin esperar a la sesion**, y decir «sin conexion» dentro.*
+2. **Es exactamente lo que el service worker arregla** (M15): *con el armazon cacheado, la app abre
+   aunque no haya red, y la sesion se resuelve despues.*
+
+**Y la leccion de metodo, la quinta vez:** *«0 caracteres» no es «en blanco». Es «no habia terminado».
+Antes de llamarlo defecto hay que muestrear en el tiempo, no mirar una foto.*
+
+*Con esto, la pista queda cerrada: **la marca y la portada estan bien en los dos tamanos.***
+
