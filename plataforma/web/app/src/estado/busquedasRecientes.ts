@@ -40,14 +40,24 @@ export function leerBusquedas(): string[] {
   }
 }
 
-function escribir(busquedas: string[]): string[] {
-  try {
-    window.localStorage.setItem(CLAVE, JSON.stringify(busquedas))
-  } catch {
-    // Sin sitio o sin permiso: la busqueda no se recuerda y ya esta.
+  /** *** Devuelve lo que se guardo DE VERDAD, o `null` si no se pudo guardar. ***
+   *
+   * *Antes devolvia `busquedas` aunque el `setItem` hubiera lanzado: la pantalla pintaba un chip de una
+   * busqueda que no estaba guardada, y al recargar desaparecia sin explicacion.*
+   *
+   * *Es la misma regla que `cola.ts`, que por eso devuelve `null`: **«una cola que no se guarda es una
+   * promesa que se pierde al cerrar la pestaña»**.* *Aqui la promesa es un chip, no un cambio de la
+   * compra, pero la mentira es la misma.*
+   */
+  function escribir(busquedas: string[]): string[] | null {
+    try {
+      window.localStorage.setItem(CLAVE, JSON.stringify(busquedas))
+      return busquedas
+    } catch {
+      // *Sin sitio o sin permiso: no se guardo, y quien llama tiene que poder decir la verdad.*
+      return null
+    }
   }
-  return busquedas
-}
 
 /** Apunta una busqueda. La mas reciente va primera y **no se repite**.
  *
@@ -61,9 +71,11 @@ export function apuntaBusqueda(texto: string): string[] {
   if (limpio.length < MINIMO) return leerBusquedas()
   const ya = leerBusquedas()
   const otras = ya.filter((b) => b.toLowerCase() !== limpio.toLowerCase())
-  return escribir([limpio, ...otras].slice(0, CUANTAS))
+  // *Si no se pudo guardar, se devuelve **lo que de verdad hay guardado** -- no lo que se
+  // intento guardar.* *La pantalla enseña lo que se recuerda, no lo que se deseaba.*
+  return escribir([limpio, ...otras].slice(0, CUANTAS)) ?? leerBusquedas()
 }
 
 export function olvidaBusquedas(): string[] {
-  return escribir([])
+  return escribir([]) ?? leerBusquedas()
 }

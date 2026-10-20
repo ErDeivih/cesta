@@ -84,23 +84,26 @@ test('olvidar vacia la lista', () => {
   assert.deepEqual(leerBusquedas(), [])
 })
 
-test('*** si el navegador no deja guardar, no rompe... pero TAMPOCO lo dice ***', () => {
-  // *Lo cace porque la prueba fallo: yo esperaba `[]` -- «no finge haberlo guardado» -- y devuelve
-  // `['arroz']`.*
-  // *** Y aqui hay una inconsistencia real, que se anota en vez de taparse: ***
-  //   `cola.ts` devuelve `null` cuando no puede guardar, «porque una cola que no se guarda es una
-  //   promesa que se pierde al cerrar la pestaña».
-  //   `busquedasRecientes.ts` devuelve la lista como si hubiera guardado.
-  // *No se arregla hoy: cambiarlo obliga a tocar la pantalla que lo usa, y las busquedas recientes son
-  // chips, no una cola de cambios. Pero queda escrito, con sus dos nombres, para que no se descubra dos
-  // veces.*
+test('*** si el navegador no deja guardar, la lista dice la VERDAD: lo que hay, no lo que se quiso ***', () => {
+  // *Ayer esta prueba fijo el defecto: `apuntaBusqueda` devolvia `['arroz']` aunque el `setItem` hubiera
+  // lanzado, o sea que la pantalla pintaba un chip de algo que no estaba guardado y desaparecia al
+  // recargar sin explicacion.*
+  // *** Hoy esta arreglado, y esta prueba fija el arreglo: ***
+  //   `escribir` devuelve `null` si no pudo guardar -- como `cola.ts` --, y `apuntaBusqueda` devuelve
+  //   `leerBusquedas()`, que es **lo que de verdad se recuerda**.
   conAlmacen(almacen({ falla: true }))
   assert.deepEqual(leerBusquedas(), [], 'sin poder leer, vacio')
   assert.deepEqual(
     apuntaBusqueda('arroz'),
-    ['arroz'],
-    'devuelve lo que INTENTO guardar, aunque no se guardara',
+    [],
+    'y devuelve el estado REAL, no la lista que intento guardar',
   )
+})
+
+test('*** y olvidar tampoco finge: si no pudo guardar, sigue estando ***', () => {
+  // *El mismo defecto, en la otra funcion.*
+  conAlmacen(almacen({ falla: true }))
+  assert.deepEqual(olvidaBusquedas(), [], 'no hay nada que borrar, porque no hay nada guardado')
 })
 
 test('el minimo y el maximo son los que dice el modulo', () => {
