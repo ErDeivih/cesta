@@ -38,14 +38,24 @@ export function leerVistas(): VistaGuardada[] {
   }
 }
 
-function escribir(vistas: VistaGuardada[]): VistaGuardada[] {
-  try {
-    window.localStorage.setItem(CLAVE, JSON.stringify(vistas))
-  } catch {
-    // Sin sitio o sin permiso: la vista no se guarda y la pantalla lo dice.
+  /** *** Devuelve lo que se guardo DE VERDAD, o `null` si no se pudo guardar. ***
+   *
+   * *Antes devolvia `vistas` aunque el `setItem` hubiera lanzado, y el comentario decia «la vista no se
+   * guarda y la pantalla lo dice» -- **pero la pantalla no podia saberlo**, porque recibia la lista como
+   * si se hubiera guardado.**
+   *
+   * *Es el mismo defecto que tenia `busquedasRecientes`, arreglado igual: `escribir` dice `null` y quien
+   * llama devuelve el estado **real** (`leerVistas()`), que es lo que hay que enseñar.*
+   */
+  function escribir(vistas: VistaGuardada[]): VistaGuardada[] | null {
+    try {
+      window.localStorage.setItem(CLAVE, JSON.stringify(vistas))
+      return vistas
+    } catch {
+      // *Sin sitio o sin permiso: no se guardo, y quien llama tiene que poder decir la verdad.*
+      return null
+    }
   }
-  return vistas
-}
 
 export function guardarVista(nombre: string, consulta: string): VistaGuardada[] {
   const limpio = nombre.trim()
@@ -53,9 +63,9 @@ export function guardarVista(nombre: string, consulta: string): VistaGuardada[] 
   // Una vista con el mismo nombre se sustituye: guardar dos veces "Sin lactosa"
   // y acabar con dos chips identicos no ayuda a nadie.
   const otras = leerVistas().filter((v) => v.nombre !== limpio)
-  return escribir([...otras, { nombre: limpio, consulta }].slice(-40))
+  return escribir([...otras, { nombre: limpio, consulta }].slice(-40)) ?? leerVistas()
 }
 
 export function borrarVista(nombre: string): VistaGuardada[] {
-  return escribir(leerVistas().filter((v) => v.nombre !== nombre))
+  return escribir(leerVistas().filter((v) => v.nombre !== nombre)) ?? leerVistas()
 }

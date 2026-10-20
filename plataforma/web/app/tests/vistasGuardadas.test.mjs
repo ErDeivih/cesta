@@ -76,3 +76,27 @@ test('*** una vista con forma invalida se descarta al leer ***', () => {
   assert.equal(r.length, 1, 'solo la que tiene nombre y consulta')
   assert.equal(r[0].nombre, 'Buena')
 })
+
+// ------------------------------------------- si no se puede guardar, se dice ---
+
+test('*** si el navegador no deja guardar, la lista dice la VERDAD: lo que hay ***', () => {
+  // *Antes `escribir` devolvia la lista aunque el `setItem` hubiera lanzado, y el comentario del modulo decia
+  // «la pantalla lo dice» -- pero la pantalla no podia saberlo.*
+  // *Es el mismo defecto que tenia `busquedasRecientes`, arreglado igual.*
+  conAlmacen(almacen({ falla: true }))
+  assert.deepEqual(guardarVista('Sin lactosa', '?a=1'), [], 'devuelve el estado REAL, no la vista que quiso guardar')
+})
+
+test('*** y borrar tampoco finge ***', () => {
+  conAlmacen(almacen({ falla: true }))
+  assert.deepEqual(borrarVista('A'), [], 'no hay nada que borrar, porque no hay nada guardado')
+})
+
+test('*** con el almacen bien, guardar SI devuelve lo guardado ***', () => {
+  // *La otra mitad: la correccion no puede convertir el caso bueno en uno vacio.*
+  conAlmacen(almacen())
+  const r = guardarVista('Ofertas', '?ofertas=true')
+  assert.equal(r.length, 1)
+  assert.equal(r[0].nombre, 'Ofertas')
+})
+
