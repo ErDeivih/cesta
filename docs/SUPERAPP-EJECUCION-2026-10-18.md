@@ -3,63 +3,54 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 148)
+## Dónde está esto (ronda 150)
 
-**Los 3 avisos de lint, diagnosticados y NO arreglados, con el motivo.**
+**Auditoria de «pantalla vacia» en los tres espacios que faltaban: sin callejon, y con el motivo.**
 
-*Son tres `eslint-disable-next-line react-hooks/exhaustive-deps` que el linter marca como **sobrantes**:*
+*El encargo avisa: **«no declares capacidad por una pantalla vacia»**.* *Se miraron los vacios de `Despensa`,
+`Diario` y `PlanSemanal`, que eran los tres que no estaban auditados.*
 
-    Buscar.tsx:94, Buscar.tsx:109, Cesta.tsx:1336
+    Despensa ..... `<Vacio titulo="La despensa esta vacia">`, l.107
+                   *y el formulario «Declarar» esta en la l.144, **fuera del condicional**: se ve en los
+                   dos casos*
+    Diario ....... `<Vacio titulo="Nada anotado este dia">`, l.542
+                   *dice «anota lo primero arriba», y la forma esta arriba*
+    PlanSemanal .. `<Vacio titulo="La semana esta vacia">`, l.401
+                   *y `PonerEnUnDia` esta por dia, en la l.393*
 
-*Ayer quite uno y aparecieron **dos avisos reales** que estaban tapados:*
+*** Los tres apuntan a una accion que esta en la misma pantalla. Ninguno es un callejon. ***
 
-    Buscar.tsx:101  missing dependencies: 'filtros' y 'ponFiltros'
-    Cesta.tsx:1352  missing dependency: 'sube'
+*Y lo que **no** dice esta auditoria: que esos tres espacios **funcionen**.* *Un vacio con su accion al lado
+es lo correcto **cuando no hay datos**; que con datos pinten bien el diario, el plan y la despensa sigue
+necesitando la base -- y sigue sin comprobarse.*
 
-*** O sea que no son cosmeticos: detras hay dos `useEffect` que pueden estar leyendo valores viejos. ***
+## Entorno, lo que se puede y no se puede (sigue)
 
-**El diagnostico, que hoy no se cierra.** *Las directivas estan colocadas **antes del `return`** de cada
-efecto, y el aviso se reporta en la linea de la lista de dependencias.* *Por eso el linter las llama
-sobrantes: cubren la linea equivocada.* *Con la directiva fuera, el aviso aparece en la linea de deps -- que es
-lo que paso ayer.*
+    docker .......... caido (19 rondas)
+    ruff ............ limpio
+    lint ............ **cero avisos**  *(era 3; los 3 eran directivas sobrantes, y quitarlas bien llevo dos
+                                       intentos -- el primero quito tambien las dos que hacian falta)*
+    tsc --noEmit .... limpio
+    npm test ........ **320 pasan**
+    componentes ..... 22 pasan
+    build ........... ok
+    documentos ...... TODO BIEN
 
-**Se intento moverlas a la linea correcta y salio peor:** *un reemplazo a ciegas de `}, [...])` toco una linea
-que no era un efecto y **subieron a 4 avisos**, uno de ellos en `Buscar.tsx:56`.*
-
-*** Se revirtio, y se comprobo despues de revertir: *** *lint 3 avisos (los de siempre), `tsc` limpio, 320
-pruebas, build ok.*
-
-*Lo que haria falta, para quien lo retome: **mover cada directiva a mano, mirando las cuatro lineas del
-efecto**, no con un reemplazo por patron.* *Y despues **mirar** los dos avisos que aparecen, que son los que
-importan -- `useEffect` que lee `filtros` o `sube` sin tenerlos en la lista.*
-
-**Lo demas sigue igual.** *\(Ver el bloque de la ronda 143 y anteriores para el detalle de paquetes; lo unico
-nuevo es este diagnostico.\)*
-
-# Próximo comando
+## Próximo comando
 
 ```powershell
-cd F:\aprendizaje\scrap
-docker ps                                   # si responde, seguir por lo de abajo
+docker ps
 ```
 
-*Si Docker vuelve, **en este orden**:*
+*Si responde: `uv run pytest -q tests/` — **la suite lleva 19 rondas sin correr y es lo primero**. Despues el
+cierre concurrente de M06 (necesita `FOR UPDATE` mas el indice unico de la migracion 021), la particion del
+importe en el historico, y el viaje real de la cola offline.*
 
-1. `uv run pytest -q tests/` — *la suite completa lleva dieciocho rondas sin correr; es lo primero que hay
-   que saber.*
-2. *M06: el cierre concurrente.* *Dos cierres simultaneos tienen que crear **una** compra; hoy pueden
-   crear dos.* *Con `SELECT 1 FROM lista WHERE id=%s FOR UPDATE` dentro de `cierra_compra` y el indice
-   unico de `021`.*
-3. *M06: la procedencia del importe en el historico* (`calculado` / `declarado` / `acreditado`; las filas
-   viejas se quedan `desconocido`, sin reescribir nada).
-4. *M15: el viaje real de la cola* — que `POST /sincronizar` aplique, que la cola se vacie solo cuando
-   confirme, y que al volver la red se suba sola.
+*Si no responde: queda **el reparto del 409 en la pantalla** (el dato ya viaja; falta comprobar el boton nuevo
+en un navegador con datos) y **la auditoria de vacios de las paginas que faltan** -- que se puede hacer sin
+base, mirando el codigo, como hoy.*
 
-*Si Docker sigue caido: M08–M14 y M16–M22 tienen partes que no necesitan base* (*graficos, textos,
-estados vacios, permisos del cliente*). *Lo que **no** se puede hacer sin ella: la aceptacion de §8
-—cinco recetas, dos personas, dos listas—, que es el criterio integral del encargo.*
-
-## Guardas que no se tocan
+# Guardas que no se tocan
 
 *facylf ni 5433 · casa 5432 · pruebas compartidas 5434 con restauraciones destructivas.* *No se commitean
 `core/datos/secciones.yml`, `docs/CIFRAS.md`, `docs/SUPERAPP-CONTROL-*.md` ni `docs/SUPERAPP-GOAL-ACTUAL.md`.*
