@@ -1704,3 +1704,41 @@ motivo y alternativas, `exactos_mal` 0, `precision_observada` 1,0, `viaje_fijo_c
 `fuente:id_fuente`; pedir el sello de un carrito vacio antes de meter la linea; y un `del` que se llevo
 por delante el cierre de un `raise`. **Los tres los cazo el dato, no el razonamiento.***
 
+### M15/M10 / 19-20/10/2026 / LOS ESTADOS VACIOS, CONTADOS Y LUEGO LEIDOS
+
+*La especificacion pide, para P2: «Cada vacio debe decir **que hacer ahora** con un boton que lo haga»,
+y el encargo lo repite: «no declares capacidad por una pantalla vacia».*
+
+**Lo contado.** *37 `<Vacio>` en 18 ficheros. Solo **10** tienen un `<Boton>`, un `<Link>` o un `onClick`
+dentro.*
+
+**Lo leido, y por que el numero engana.** *Se miraron los tres que parecian peores:*
+
+    Cesta.tsx:1413 «No tienes ninguna lista» .... **no es un callejon**: debajo hay un `<Mosaico>` con
+                                                 seis productos que se apuntan de un toque, y el texto
+                                                 dice «toca uno de abajo».
+    Cesta.tsx:1652 «La lista esta vacia» ....... idem: mismo mosaico justo debajo.
+    PlanSemanal.tsx:401 «La semana esta vacia» . **tampoco**: `PonerEnUnDia` se pinta en la linea 393,
+                                                 dentro del bucle de los siete dias. Cada dia tiene su
+                                                 control para poner una receta; el `Vacio` es un
+                                                 mensaje **adicional**, no la unica salida.
+
+*** O sea: la cuenta de etiquetas sobra. Lo que importa -- «¿puede el usuario seguir?» -- no se
+responde contando `<Boton>`, porque una accion tambien es un mosaico, un control por dia o una
+instruccion con el siguiente paso al lado.***
+
+**Y es la cuarta vez en la sesion que leer un bloque se parece a leer el flujo.** *Las otras tres
+fueron: la «dependencia de orden» que era mi `sys.modules.pop`, el «B no ve recetas» que era `len()`
+de un dict, y el «montado y no visto» que era un filtro mal escrito.* *Las cuatro veces el codigo
+tenia razon y mi lectura no.*
+
+**Lo que si es un hallazgo, y sirve para el agente:** *de los 37, **muchos son paneles de operador**
+(`Panel.tsx` 6, `PanelMatching.tsx` 3, `Tendencias.tsx`, `LoQueHasPagado.tsx`), donde un boton no
+tiene por que existir porque el que mira no actua: **lee**.* *La auditoria de vacios tiene que
+separar **usuario** de **operador** antes de contar, o el numero no significa nada.*
+
+**La recomendacion, que es lo que queda de esta ronda:** *no convertir los 27 en botones a ciegas.
+Coger los de los tres espacios -- Compra, Recetas, Calorias -- uno a uno, leer el flujo entero, y
+donde de verdad no haya salida, anadirla **con su prueba de componente**.* *Los paneles de operador se
+dejan como estan.*
+
