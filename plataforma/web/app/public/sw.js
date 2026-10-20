@@ -33,8 +33,17 @@ const CACHE = 'cesta-' + VERSION;
 const ARMAZON = ['/', '/site.webmanifest', '/icono.svg', '/icono-192.png'];
 
 self.addEventListener('install', (evento) => {
+  // *** UNA A UNA, Y NO `addAll`. ***
+  // *`addAll` es **atomico**: si una sola de las URLs falla -- un 404, un cambio de nombre, un
+  // servidor que no contesta a tiempo -- **no se guarda ninguna**, y el armazon se queda sin cache sin
+  // que nadie se entere.* *Lo encontro la prueba: el SW quedaba «registrado» y `caches.keys()` volvia
+  // vacio.*
+  // *Guardando una a una, lo que se pueda guardar se guarda, y lo que no se queda para la proxima
+  // carga.*
   evento.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ARMAZON)).catch(() => undefined),
+    caches.open(CACHE).then((c) => Promise.all(
+      ARMAZON.map((url) => c.add(url).catch(() => undefined)),
+    )),
   );
 });
 
