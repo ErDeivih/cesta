@@ -941,7 +941,31 @@ sirviendo por dentro; lo que falta es que el navegador **se entere** de que hay 
 levantado**: `docker` sigue con el 500, y una cabecera que se anade a ciegas es justo lo que no se nota hasta
 produccion.*
 
+## El `sw.js` que se entrega, comprobado (ronda 225)
+
+*El 216 se probo el `sw.js` **de origen**: que llevara los dos marcadores y el armazon.* *Falta la otra mitad: que el
+sello los **rellene** en el que se entrega.* *Si `sella-sw.mjs` fallara, el `dist` llevaria `__PRECACHE__` sin sustituir
+y el service worker romperia en el movil.*
+
+    __VERSION__ ....... **rellenado** (no queda el marcador)
+    __PRECACHE__ ...... **rellenado**
+    VERSION ........... 2026102021
+    ARMAZON ........... '/', '/site.webmanifest', '/icono.svg', '/icono-192.png'
+    PRECACHE .......... **32 rutas · faltan 0**
+
+    y la cuenta del artefacto:
+      en disco 32 js/css · en el precache 32 · **en disco y NO precacheados: 0**
+
+*** Cada trozo del disco esta precacheado, y cada entrada del precache existe. Las dos direcciones. ***
+
+**Y un defecto mio por el camino, el quinto de la semana:** *la primera medicion dijo «0 rutas» porque el sello escribe
+el array con `JSON.stringify` -- **comillas dobles** -- y mi regex buscaba simples.* *Un «cero» que era del
+instrumento otra vez.*
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
