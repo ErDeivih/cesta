@@ -290,6 +290,26 @@ details[open] > summary .flecha {
    **recalcular la composicion en cada fotograma**, *y en un movil de gama baja eso
    se ve como un tiron. *`opacity` y `transform` los hace la tarjeta grafica.* *
  */
+/* *** La barra del armazon: lo que se ve mientras llega la pantalla. ***
+ *
+ *  *Se mueve despacio y poco, y **no hace falta que se mueva**: `ArmazonDeLaMarca` lleva
+ *  `motion-reduce:animate-none`, asi que quien pida menos movimiento ve la barra quieta a media
+ *  anchura, que sigue diciendo «esto esta en marcha».*
+ *
+ *  *Solo `transform`: es lo que hace la tarjeta grafica y no obliga a repintar.*
+ */
+@keyframes cargando {
+  from {
+    transform: translateX(-100%) scaleX(1);
+  }
+  50% {
+    transform: translateX(150%) scaleX(1.4);
+  }
+  to {
+    transform: translateX(400%) scaleX(1);
+  }
+}
+
 @keyframes entra-pantalla {
   from {
     opacity: 0;

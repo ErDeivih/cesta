@@ -194,7 +194,18 @@ export function App() {
     //
     // *Y el texto de espera no es «Cargando...» a secas*: **dice que se esta abriendo la pantalla**,
     // que es lo que de verdad esta pasando y lo que hace que la espera se entienda.
-    <Suspense fallback={<p className="p-6 text-neutral-600 dark:text-neutral-400">Abriendo la pantalla…</p>}>
+        // *** Y LO QUE SE VE MIENTRAS LLEGA ES EL ARMAZON DE LA MARCA, NO UN PARRAFO. ***
+        // *Antes esto era un `<p>` con «Abriendo la pantalla…»: una linea de texto gris en una
+        // pantalla desnuda.* *Es lo primero que ve alguien que abre la app, y no se parecia a nada.*
+        //
+        // *Ahora se pinta **el marco**: el nombre, su sitio y una forma de carga con los colores de la
+        // casa.* *No es adorno: es lo que hace que una espera parezca la aplicacion abriendose en vez
+        // de una pagina rota.* *Y como es HTML y CSS, sale **antes** de que llegue ningun trozo.*
+        //
+        // *No lleva `aria-live` a proposito: no hay nada que anunciar, es una espera corta.* *Lo que
+        // si lleva es `role="status"` para que un lector de pantalla sepa que la pagina esta en
+        // marcha.*
+        <Suspense fallback={<ArmazonDeLaMarca />}>
     <CocinaProvider>
       <ErrorBoundary que="esta pantalla"><Routes>
         <Route path="/" element={<Lanzador />} />
@@ -321,4 +332,47 @@ function RedirigeACompra({ base }: { base: 'productos' | 'comparar' }) {
   const { search, pathname, state } = useLocation()
   const partes = pathname.split('/').filter(Boolean)
   return <Navigate to={`/compra/${base}/${partes.slice(1).join('/')}${search}`} state={state} replace />
+}
+
+/** *** Lo que se ve mientras llega la pantalla: el marco de la casa. ***
+ *
+ *  *Se pinta con HTML y CSS del trozo principal, asi que aparece **antes** de que llegue ningun trozo
+ *  diferido.* *No depende de la sesion ni de la API: es el armazon, y por eso no puede quedarse en
+ *  blanco aunque el servidor no conteste.*
+ *
+ *  *La forma de carga es una barra que se mueve despacio, en el verde de la marca, y **respeta
+ *  `prefers-reduced-motion`**: quien haya pedido menos movimiento ve la barra quieta, que sigue
+ *  diciendo «esto esta en marcha».*
+ */
+function ArmazonDeLaMarca() {
+  return (
+    <div
+      className="min-h-screen bg-papel px-5 py-pagina text-tinta"
+      role="status"
+      aria-label="Abriendo Cesta"
+    >
+      <header className="border-b border-borde pb-bloque">
+        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
+        <p className="mt-1 text-cuerpo text-secundaria">
+          La compra de casa, las recetas y lo que comes.
+        </p>
+      </header>
+
+      {/* *Tres formas del alto de una tarjeta, con la misma separacion que la portada de verdad.*
+          *Y la primera con la barra de carga dentro.* */}
+      <div className="mt-bloque grid gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-tarjeta border border-borde bg-papel-alto p-4">
+            <div className="h-3 w-1/3 rounded-full bg-borde" />
+            <div className="mt-2 h-2 w-2/3 rounded-full bg-borde/70" />
+            {i === 0 && (
+              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-borde/60">
+                <div className="h-full w-1/3 origin-left animate-[cargando_1.4s_ease-in-out_infinite] rounded-full bg-bien motion-reduce:animate-none motion-reduce:w-1/2" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
