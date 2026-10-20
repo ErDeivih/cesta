@@ -130,3 +130,59 @@ cambia eso: lo documenta.*
 **Lo que sí dice, y es lo único que puedo firmar hoy**: *que la comparación de precios ya no puede
 presentar dos artículos distintos como si fueran el mismo, que eso está probado en el contrato y
 leído en cuatro pantallas, y que lo que falta para cada tipo de uso está escrito arriba con su motivo.*
+
+---
+
+# Revisión del 20/10/2026 — lo que ha cambiado desde este dictamen
+
+*Este dictamen se escribió con lo medido hasta el 18/10. Estas son las cosas que han cambiado, y las
+que **no** se han podido medir.*
+
+## Lo que ahora está verificado y antes no
+
+| | |
+|---|---|
+| **M15 · instalable** | *`site.webmanifest` con 192×192, 512×512 y `maskable` 512; `apple-touch-icon` en PNG; los seis activos servidos por HTTP con su tipo (`image/png`, `application/manifest+json`).* |
+| **M15 · armazón con marca** | *`ArmazonDeLaMarca` en `App.tsx`: lo que se ve mientras carga es el marco de la casa, **en el trozo principal**, no una frase en el vacío.* |
+| **M15 · offline** | ***Probado cortando la red de verdad.*** *31 trozos precacheados en `install`, verificados uno a uno; tres renders completos sin red (270 caracteres, cero errores).* **Límite dicho: funciona desde la segunda visita** — un service worker no sirve nada antes de estar activo. |
+| **M06 · cotización → confirmación → persistencia** | *Por HTTP, con servidor y base de verdad: 409 sin escribir si el sello no coincide, `confirmado: false` si no se manda revisión, `procedencia_importe: "calculado"`, y **409 al republicar el catálogo entre la comprobación y el guardado**.* |
+| **M06 · tienda elegida ausente** | *La línea sale sin precio, con `motivo` y con `alternativas` separadas. No se cambia de tienda en silencio.* |
+| **M06 · viaje** | *`viaje_cent`/`neto_cent` son `null` salvo que alguien dé el coste.* |
+| **M07 · medida del banco** | *`core/banco_identidad.py`: precisión **sobre evaluables**, `null` si no hay; desconocido no es negativo.* |
+
+## Lo que empeora el dictamen, y hay que decirlo
+
+- **El cierre concurrente sigue sin resolver.** *Se intentó un `SELECT … FOR UPDATE` sobre la lista y se
+  revirtió porque las pruebas se colgaban; después se vio que **el cuelgue era la base caída**, no el
+  lock.* ***O sea: la dirección es correcta y está sin re-probar.*** *Hoy, dos cierres simultáneos pueden
+  crear **dos compras del mismo dinero**.*
+- **El importe guardado es `calculado`, no `pagado`.** *El histórico todavía no distingue calculado /
+  declarado / acreditado.*
+- **El aislamiento entre cuentas está probado en listas y recetas, no en todos los endpoints.**
+- **El banco de 200 pares de M07 no existe.** *Está la medida que lo contaría, y el permiso para
+  construirlo con autoría declarada.*
+
+## Veredicto revisado, por audiencia
+
+| audiencia | antes | ahora | por qué |
+|---|---|---|---|
+| **doméstico** | APTO con reservas de datos | **APTO con reservas de datos** | *Sin cambio: la comparación, la lista y el diario siguen honestos, y ahora además **abre sin red desde la segunda visita**.* |
+| **móvil** | APTO en lo medido | **APTO en lo medido, y más medido** | *Ahora hay marca instalable (192/512/maskable) y offline probado cortando la red. **Lo que sigue sin medirse: el iPhone físico y la barra inferior con el `safe-area`** (el código lo usa, no se ha visto en un aparato).* |
+| **piloto** | NO APTO | **NO APTO, y por menos motivos** | *La suite pasa entera (2 125) y la aceptación HTTP de M06 también. Quedan dos: **el cierre concurrente** y **el banco de M07**.* |
+| **público** | NO APTO | **NO APTO** | *Por lo mismo que antes, más lo nuevo: un `docker` caído durante diez rondas dejó sin probar la sincronización y el lock. **No se puede vender lo que no se ha probado con la base viva.*** |
+
+## Lo que no se ha podido medir, y por qué
+
+*Docker dejó de responder a mitad de la sesión y no volvió en diez rondas.* *Con él se fue:*
+- *`pytest` (necesita PostgreSQL) — **la suite no se ha vuelto a correr desde hace diez rondas***
+- *el banco de ensayo, y con él **la sincronización sin red** (la cola de cambios)*
+- *el lock del cierre*
+
+*Lo que sí se pudo, y con qué límite:*
+- *`ruff`, `tsc`, `lint`, `npm test` (113), componentes (15) y `build` — **todos verdes***
+- *HTTP contra la app servida en 8080 — **la marca y los seis activos***
+- *el navegador con `patchright` — **el offline, cortando la red***
+
+*** Un dictamen que diga «APTO» sin poder correr la suite es un dictamen que no vale. Por eso el de
+piloto y público siguen siendo NO APTO. ***
+
