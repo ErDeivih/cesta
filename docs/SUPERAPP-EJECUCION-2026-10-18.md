@@ -1859,3 +1859,46 @@ aunque el cronometro no este.*
 hoy no lo he convertido en defecto ni en arreglo: lo dejo medido a medias, dicho como tal, y con el
 siguiente comando escrito. ***
 
+**MEDIDO CON CONTROL: el arranque de la app tarda entre 8 y 48 segundos, y no es la maquina.**
+
+*Las dos mediciones anteriores no coincidian porque ninguna tenia control. Ahora si.*
+
+*Control 1 -- misma maquina, mismo navegador, pagina sin JS:*
+
+    CONTROL (local, trivial)   goto=78 ms      DCL=62 ms
+    LA APP                     goto=48 500 ms  DCL=48 494 ms
+
+*Pero ese control no era justo: una pagina sin JS no compite con un bundle de 330 KB. Control 2 -- un
+script de **312 KB que solo declara funciones y no ejecuta nada**, servido desde el mismo disco:*
+
+    CONTROL 330 KB inerte      goto=171 ms     DCL=162 ms
+    LA APP                     goto=8 562 ms   DCL=8 558 ms
+
+*** Parsear 312 KB inertes cuesta 171 ms. La app tarda 8,5 s. *** *Y en otras pasadas: 29 s y 48 s.*
+
+**Lo que esto descarta, midiendo:** *no es la maquina (78 y 171 ms), no es el tamano del bundle (312 KB
+inertes en 171 ms), y no es la red (5 peticiones, 116 KB, y el `index` tarda 3,7 s de los 8,5 --
+el resto es trabajo propio).*
+
+**Lo que queda, y la varianza lo dice:** *los tiempos **8,5 s / 29 s / 48 s** no son un calculo: un
+calculo tarda lo mismo. Es la firma de un **timeout con reintento**.* *El candidato mas claro es el
+arranque de `main.tsx`: monta `VigilaCuenta` y la aplicacion, y el cliente de Query reintenta
+(`retry: intento < 1`, o sea dos intentos) contra una API cuya base esta caida.* *Con la base muerta,
+cada intento espera y el arranque se va en eso.*
+
+**El comando siguiente, para quien pueda correrlo con la base sana:**
+
+    1. abrir http://127.0.0.1:8080/ con la base VIVA  -> si baja de 1 s, era el reintento
+    2. si sigue alto, perfil de CPU (CDP `Profiler.start`) durante la carga
+    3. y `performance.getEntriesByType('resource')` para ver que peticion se lleva el tiempo
+
+**Y una consecuencia para el producto, que vale aunque no se sepa el numero final:** *una app que se
+abre en el pasillo del super no puede tardar segundos en enseNar su armazon, y menos por esperar a la
+sesion.* ***El armaZon tiene que pintarse sin red; la sesion se resuelve despues.*** *Es la misma
+conclusion que ya salio con el `Suspense`, ahora con medida detras: **29 trozos, la portada diferida, y
+el arranque pendiente de una llamada.***
+
+*** Es la primera vez en la sesion que un defecto grave aparece con control y se puede ensenar. No lo
+arreglo hoy porque el arreglo -- sacar el armazon del diferido y no bloquear en la sesion -- es un
+cambio de estructura que hay que poder medir despues, y sin base no puedo cerrar el bucle.
+
