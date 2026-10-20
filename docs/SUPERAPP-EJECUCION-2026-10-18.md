@@ -246,7 +246,37 @@ habia que hacer.*
 *Si el total llegara nulo, la cabecera diria «0 €».* *No se ha tocado porque hay que ver que hace `Cabecera` con
 un `total` nulo, y eso es una decision de interfaz, no una sustitucion.*
 
+## `completo: true` falso, buscado en el resto (ronda 186)
+
+*El defecto del coste de receta (`completo: true` con un ingrediente sin cantidad) hizo buscar los otros sitios que
+declaran completitud. Son cinco:*
+
+    diario.py:331 ...... `bool(filas) and all(_trae_dato(f))` ....... **honesto**
+    diario.py:372 ...... `con_dato == entradas and entradas > 0` .... **honesto**
+    gasto.py:131 ....... `sin_importe == 0` ......................... **honesto**
+    gasto.py:226 ....... `a.get("completo", True)` .................. **honesto, y parecia que no**
+    cesta.py:480 ....... `not pendientes` .......................... **honesto**
+    costeReceta.ts ..... `sinDatos.length === 0` ................... **arreglado hoy**
+
+*** Y el de `gasto.py:226` merece contarse, porque lo di por defecto y no lo era. ***
+
+*`a.get("completo", True)` parece un valor por defecto optimista -- «si falta el dato, completo» -- y es lo que
+escribi primero. Pero el bucle pone `a["completo"] = False` en cuanto una compra trae lineas sin precio
+(`gasto.py:213`), asi que el `True` significa **«empieza completo y cualquier problema lo pone a False»**, que es
+lo contrario de optimista.*
+
+*Y mi version -- `sin_importe == 0 and lineas_sin_precio == 0` -- no era equivalente: marcaba incompleta una
+compra con **total desconocido pero sin lineas sin precio**, que es otro caso. Las pruebas pasaban igual con las
+dos, o sea que mi cambio **no estaba cubierto** y habria cambiado comportamiento a escondidas.*
+
+*** Se revirtio. *** *`core/gasto.py` volvio a su sitio, `test_g05_gasto.py` da 14 pasan, y `ruff` y los documentos
+siguen limpios.*
+
+*El recuento queda: **un sitio con el defecto** (el coste de receta, arreglado), **cinco honestos**, y **uno que
+parecia defecto y era un patron deliberado**.*
+
 ## Próximo comando
+
 
 
 
