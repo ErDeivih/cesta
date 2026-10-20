@@ -778,7 +778,42 @@ formas.* *Ahi el motor se pasa de cauto -- y en la direccion segura.*
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## El arreglo «obvio» de la marca, medido y descartado (ronda 212)
+
+*Ayer se anoto que «monster» y «monster energy» parecian la misma marca escrita de dos formas, y que ahi el motor se
+pasaba de cauto.* *Hoy se fue a arreglar, y **los datos lo desmintieron dos veces**.*
+
+**Intento 1: «una marca que contiene a otra es la misma marca».**
+
+    3 344 pares en el catalogo donde una marca contiene a otra
+      «EUCERIN» y «EUCERIN DERMATOCLEAN»   <- misma casa, pero es una LINEA de producto
+      «VEGAS BAÑEZANAS» y «S&B»            <- nada que ver
+
+*** 3.344 pares. Fusionarlos seria destrozar el catalogo. ***
+
+**Intento 2, mas fino: «la larga es la corta mas UNA palabra».**
+
+    345 pares
+    las palabras que se anaden:  7 «baby» · 6 «zero» · 5 «bio» · 4 «collection» · 4 «men» · 4 «nature»
+                                 3 «max» · 3 «blanco»
+
+*** Y esas palabras no son la marca: son **variantes de producto**. «Monster» y «Monster Zero» no son lo mismo;
+«Dodot» y «Dodot Baby» no son lo mismo. ***
+
+*** Las dos reglas fallan por el mismo motivo: en una marca, una palabra de mas suele ser un producto distinto. ***
+
+*Y el caso que lo disparo -- «monster» / «monster energy» -- es un unico capricho del catalogo, no una regla.*
+
+**Conclusion: el motor se queda como esta.** *Se pasa de cauto en ese caso y en unos pocos mas, **siempre en la direccion
+segura** -- cuarentena en vez de exacto --, y arreglarlo en general romperia 345 pares que hoy estan bien.*
+
+*** Es la tercera vez esta semana que un «esto esta mal» resulta ser «esto esta bien y no se puede mejorar sin
+empeorar lo de al lado». ***
+
+    ruff limpio · documentos TODO BIEN · el motor no se toco
+
 ## Próximo comando
+
 
 
 
