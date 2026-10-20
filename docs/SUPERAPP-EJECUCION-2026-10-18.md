@@ -685,7 +685,29 @@ queda averiguarlo cuesta mas que la ronda entera. ***
 
 *** Un intento que no sale, delimitado y borrado, vale mas que un cambio a medias. ***
 
+## El barrido, hecho por otra puerta: 200 productos reales, cero raros (ronda 208)
+
+*Ayer no salio porque Node no cargaba el `.ts` desde un script suelto.* *Hoy se hizo por la puerta que **si**
+funciona: un fichero de prueba de Node, que carga `.ts` sin problema desde el primer dia.*
+
+*El unico obstaculo real era que **`duckdb` es de Python y Node no lo tiene**, asi que se paso por JSON:*
+
+    Python lee los 200 productos del gold y escribe mostrar.json
+    el fichero de prueba de Node los recorre y busca imposibles
+
+*** Y el resultado: **200 revisados, 0 raros**. ***
+
+*Los «imposibles» que se buscaban: coste negativo, `NaN`, o **un coste usado de cero con cantidad pedida** -- los tres
+que una resta mal hecha produciria.*
+
+    ruff limpio · documentos TODO BIEN · 340 pasan · arbol limpio
+    (el barrido y el JSON se borraron: eran temporales, no entregables)
+
+*** Buscar los defectos por otra puerta es lo que ha salvado la ronda: el instrumento de ayer no servia, y el de hoy
+--que ya existia-- si. ***
+
 ## Próximo comando
+
 
 
 
