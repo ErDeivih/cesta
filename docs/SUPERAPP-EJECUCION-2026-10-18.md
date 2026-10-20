@@ -526,7 +526,53 @@ resultado cuatro veces esta semana -- es lo que lo encuentra. ***
     **50 pruebas que necesitan PostgreSQL.** De ellas, **la aceptacion completa de §8: cerrar compras de dos
     listas.** *Es el unico motivo del NO APTO del piloto, y no se puede sustituir con nada de lo anterior.*
 
+## El diagnostico de Docker, que no era «caido» (ronda 201)
+
+*** Veintiuna rondas diciendo «Docker caido», y no estaba caido. ***
+
+    `docker version` ... **el motor responde**, con
+                         `500 Internal Server Error` en `/version`
+    contexto activo .... `desktop-linux` -> `npipe:////./pipe/dockerDesktopLinuxEngine`
+    procesos ........... Docker Desktop vivo, `Responding=True`
+    puertos 5432 y 5433 . **los ocupa `com.docker.backend`** (PID 4560)
+
+*** O sea: no es que no haya Docker, es que el motor esta atascado y su proxy sigue ocupando los puertos. ***
+*Por eso `docker ps` se cuelga -- el motor contesta mal -- y por eso los puertos parecen abiertos y luego dan
+`ConnectionTimeout`: hay alguien escuchando, pero no atiende.*
+
+**Y una consecuencia que cambia el mapa:** ***el 5432 no es «casa». Es el proxy de Docker.*** *La base aislada que se
+autorizo tambien vive ahi, asi que reiniciar el motor es el paso previo para todo.*
+
+*Se ha pedido a David que reinicie **Docker Desktop** desde su interfaz, no por CLI: reiniciar el motor apaga tambien
+el 5433, que es **facylf**, y esa es una guarda que no se toca.*
+
+## La secuencia exacta, para cuando el motor vuelva
+
+*Todo lo de abajo esta escrito y probado; solo falta la base.*
+
+```powershell
+cd F:\aprendizaje\scrap
+docker ps                                   # 1. el motor contesta?
+
+# 2. las 2.142 pruebas enteras, sin saltarse nada
+$env:CESTA_SALTAR_SIN_BASE = "0"
+$env:CESTA_ESPERA_BASE = "1"
+uv run pytest -q tests/
+```
+
+*Lo que se espera, y con que se compara:* **2.099 pasan hoy sin base; con base deberian pasar las 2.142.** *Los 32
+`errors` y el `failed` son `ConnectionTimeout` contra el 5432, y con el motor vivo dejan de serlo.*
+
+*Despues, en este orden:*
+
+    3. el cierre concurrente de M06 ....... `SELECT 1 FROM lista WHERE id=%s FOR UPDATE` dentro de `cierra_compra`,
+                                            mas el indice unico de `021_el_sello_del_cierre.sql`
+    4. la aceptacion de §8 ................ las dos listas con compras cerradas (hoy: 13 errors)
+    5. el viaje de la cola offline ........ `POST /sincronizar` aplica, la cola se vacia al confirmar
+    6. la serie con huecos ................ comprobar contra datos reales que el 18 de octubre sale como hueco
+
 ## Próximo comando
+
 
 ```powershell
 docker ps
