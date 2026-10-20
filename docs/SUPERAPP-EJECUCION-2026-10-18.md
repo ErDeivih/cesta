@@ -275,7 +275,33 @@ siguen limpios.*
 *El recuento queda: **un sitio con el defecto** (el coste de receta, arreglado), **cinco honestos**, y **uno que
 parecia defecto y era un patron deliberado**.*
 
+## `round(None)` buscado en todo el servidor (ronda 189)
+
+*La ronda 188 dejo una categoria nueva: un `null` convertido en `0` puede ademas ser un `TypeError` esperando,
+porque `round(None)` no existe. Se buscaron todas las apariciones de `round(...)` sobre un indice de fila:*
+
+    con guarda (`if f[n] is not None else None`)
+      analisis.py:189, :190
+      movimientos.py:410, :411, :412
+
+    SIN guarda
+      alertas.py:112, :165 .......... **correcto**: la consulta filtra `AND b.precio_unidad_cent > 0`
+      movimientos.py:242, :243, :245 . **correcto**: filtra `AND d.precio_unidad_cent > 0` en los dos lados
+
+*** Las cinco sin guarda no son un descuido: son columnas que la consulta garantiza que no son nulas. ***
+*Y las guardas estan puestas **exactamente** en las que si pueden serlo (`min_90d_cent`, `precio_base_cent`,
+`posicion_90d`).*
+
+*O sea: **el mismo autor puso la guarda donde hace falta y no donde no**, y desde fuera las dos cosas se parecen.*
+
+*** Es la tercera vez esta semana que «falta una comprobacion» resulta ser «la comprobacion no hace falta». ***
+*Las tres veces lo que lo desmintio fue **leer la consulta**, no el codigo de al lado.*
+
+*Y el defecto de verdad sigue siendo el de la ronda 188: en `panel.py` la cifra **si** podia ser nula y no habia
+ni guarda ni filtro que lo impidiera.*
+
 ## Próximo comando
+
 
 
 
