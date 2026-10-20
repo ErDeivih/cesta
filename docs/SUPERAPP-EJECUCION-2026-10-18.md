@@ -858,7 +858,44 @@ diccionario, el mojibake, y hoy una regex. ***
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## La entrega instalable, puesta bajo prueba (rondas 216-218)
+
+*Tres cosas que estaban **bien** y que **nadie vigilaba**. No son defectos: son correcciones que se habrian roto en
+silencio.*
+
+    public/sw.js .......... 5 pruebas (tests/sw.test.mjs)
+      el armazon lleva las cuatro piezas para abrir sin red -- y `/` ES el index.html
+      los dos marcadores que rellena el sello (__VERSION__ y __PRECACHE__)
+      se guarda UNA A UNA y no con addAll (atomico: una URL que falle deja el armazon vacio)
+      la navegacion se sirve desde la cache
+      el precache viaja aparte del armazon (solo uno de los dos no sirve)
+
+    site.webmanifest ...... 5 pruebas (tests/manifiesto.test.mjs)
+      nombre, start_url `/`, display standalone
+      los dos colores del arranque
+      los cuatro iconos, y cada uno existe con su type
+      el maskable es un fichero DISTINTO del normal (el recorte se comeria el dibujo)
+      el tamano declarado es el tamano real (lee la cabecera PNG)
+
+    index.html ............ 6 pruebas (tests/portada.test.mjs)
+      lang="es" · viewport con initial-scale y viewport-fit=cover
+      dos theme-color, uno por tema, y distintos
+      titulo, icono, manifiesto, apple-touch-icon
+      descripcion y og: · **ningun script ni estilo en linea** (la CSP de Caddy los bloquearia)
+
+*** Y las tres se comprobaron por el lado que falla. *** *La de la portada, metiendo un `<script>alert(1)</script>` de
+verdad en `index.html`: la prueba **fallo**, y al restaurar volvio a pasar con el fichero identico al commit.*
+
+**Los defects que salieron eran del instrumento, no del artefacto:**
+*la prueba del script en linea cazo primero la palabra `<script>` **dentro del comentario que explica la CSP**; y la
+prueba negativa no corrio porque el bloque anterior acababa en `cd plataforma\web\app` y **la ruta se duplico**.*
+
+    node 340 -> **356** (+5 sw, +5 manifiesto, +6 portada)
+    ruff limpio · documentos TODO BIEN · tsc limpio · lint cero avisos · build ok
+    docker: sigue el 500 en /version
+
 ## Próximo comando
+
 
 
 
