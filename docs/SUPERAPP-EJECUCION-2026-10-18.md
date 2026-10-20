@@ -747,7 +747,39 @@ es justo el 49,7 % del catalogo sin EAN que ya esta anotado como abierto en M07.
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## La otra mitad del invariante: mismo EAN, y por que NO es exacto (ronda 211)
+
+*El 210 midio que **con GTIN distinto nunca dice `exacto`** (62 pares, cero).* *Hoy se midio la otra mitad: **con el
+MISMO EAN, ¿dice siempre `exacto`?***
+
+*** No. Y los motivos son la parte interesante. ***
+
+    195 pares con el mismo EAN en dos cadenas
+      exacto ......................... 43
+      cuarentena ..................... 56 en la muestra de 99; en los 195, los motivos:
+        17  mismo GTIN con **presentacion incompatible**   (Mostaza Heinz 220 ml vs 240 g)
+         8  **unidad no comparable** (g y ud)
+         5  **marcas distintas** (dr. oetker y ristorante)
+         5  **marcas distintas** (monster y monster energy)
+         3  **unidad no comparable** (ud y g)
+
+*** Todos los motivos son el motor negandose a ser exacto porque el nombre, la marca o la unidad CONTRADICEN al EAN.
+Y en un EAN, eso significa que el dato esta mal. ***
+
+*Es exactamente lo que M07 tenia escrito desde hace cien rondas -- «los exactos falsos necesitan EAN malos, no heuristicas
+malas» -- y ahora esta **medido**: de 195 pares con el mismo codigo, los que no son exactos lo son por contradiccion
+del dato, no por duda del motor.*
+
+**Lo que esto NO dice, y conviene no confundir:**
+*que el motor tenga razon en los 43 exactos.* *Para eso hacen falta etiquetas humanas, y siguen sin haber.*
+
+**Y un caso que si parece exceso de precaucion:** *«monster» y «monster energy» son la misma marca escrita de dos
+formas.* *Ahi el motor se pasa de cauto -- y en la direccion segura.*
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
