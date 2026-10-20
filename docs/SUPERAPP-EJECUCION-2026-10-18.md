@@ -1902,3 +1902,38 @@ el arranque pendiente de una llamada.***
 arreglo hoy porque el arreglo -- sacar el armazon del diferido y no bloquear en la sesion -- es un
 cambio de estructura que hay que poder medir despues, y sin base no puedo cerrar el bucle.
 
+**RETIRO EL «DEFECTO DE ARRANQUE DE 8-48 s». La medicion de la ronda anterior no se sostiene.**
+
+*Se probo mi propia hipotesis -- «el arranque espera a la API y reintenta» -- interceptando `/api/*`
+en el navegador:*
+
+    1) tal cual ........................... 18 077 ms
+    2) /api/* responde 401 al instante .... 73 953 ms   <-- MAS LENTO
+    3) /api/* aborta tras 3 s ............. 33 530 ms
+
+*** Si la API fuera la causa, interceptarla no puede ir peor que no interceptarla. ***
+
+*Y los tiempos de todas las pasadas de estas dos rondas, juntos:*
+
+    8 562 / 18 077 / 29 314 / 33 530 / 48 500 / 73 953  ms
+
+*** Oscilan casi diez veces sin correlacion con nada que yo controle: ni la API, ni el tamano del
+bundle, ni el viewport, ni el orden de las pasadas. *** *Eso no es un defecto medido: es una maquina que
+no puede medir. Docker lleva cuatro rondas sin responder y el contenedor de la web esta degradado.*
+
+**Lo que SI queda de la ronda 102, y es cierto:**
+- *un script de **312 KB inertes** tarda **171 ms** en la misma maquina y el mismo navegador: **el
+  navegador puede ser rapido**, asi que no es el navegador ni el disco.*
+- *el `Suspense` de `App.tsx:197` pinta «Abriendo la pantalla...», y la portada (`Lanzador`) **es un
+  trozo diferido** de los 29 del build. **Eso es un hecho de estructura, no una medicion.***
+- *que el armaZon se diferencie y que la portada dependa de un fichero es una decision de diseno
+  discutible **aunque no haya cronometro**: el marco (cabecera, marca, sitio del contenido) deberia ir
+  en el trozo principal y lo diferido deberian ser las pantallas.*
+
+**Lo que NO queda:** *que la app tarde 8-48 s. No lo se. Puede ser la maquina, el contenedor, o un
+defecto real, y con este entorno no se distingue.*
+
+*** Sexta vez en la sesion que un numero me hace retroceder. Las cinco anteriores eran diagnosticos
+falsos que descubri leyendo mejor el codigo; esta es distinta: **la medicion no era repetible y lo digo
+en vez de elegir el numero que me gustaba** (el de 48 s, que era el mas dramatico). ***
+
