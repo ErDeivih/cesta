@@ -425,7 +425,36 @@ uno de ellos.* *No es un fallo del codigo de la aplicacion: es la cadena bloquea
 *** Lo que si es una decision pendiente: aceptar el hueco como normal, o dar el dia por perdido y decirlo en el
 estado de la cadena.*** *Hoy no se dice en ningun sitio que ese dia falte.*
 
+## El hueco del 18, hasta el final del hilo (ronda 196)
+
+*Un dia sin captura no se comunica, y ahora se sabe exactamente por que y donde se arregla.*
+
+**El dato viaja asi:** `catalogo.py:1134` devuelve la serie con **solo los dias capturados**:
+
+    "serie": [{"producto_id":…, "fuente":…, "fecha":…, "precio_unidad_cent":…, "unidad_canon":…}]
+
+**El cliente ya sabe pintar huecos:** *los tres tipos lo dicen con `| null` --*
+`curva.ts:32` (`precio_unidad_cent: number | null`), `chispa.ts:21` y `:99` (`valor: number | null`) --
+*y `chispa.ts` tiene una prueba que se llama exactamente asi:* *** «un dia sin valor se coloca como HUECO, no se
+salta» *** *, y explica por que: «saltarlo juntaria dos dias que no son seguidos, y la linea mentiria».*
+
+*** Y el servidor no manda ni un solo hueco. ***
+
+**Consecuencia, con el caso real:** *el 17 de octubre y el 19 son dias seguidos en la serie de Carrefour, porque el 18
+falta.* *La chispa une los dos puntos como si fueran consecutivos, y **un salto de dos dias se lee como un salto de
+uno**.*
+
+**Lo que ya esta bien, y hay que decirlo:** *`curva.ts` **no** dice «los ultimos 90 dias» sino **cuantos dias hay de
+verdad** -- «es el precio mas alto de los 18 dias».* *O sea: **el texto es honesto y el dibujo no**, que es peor,
+porque el texto se lee y el dibujo se mira.*
+
+**El arreglo, localizado y no hecho hoy:**
+*rellenar los dias que faltan en la serie con `precio_unidad_cent: null` antes de devolverla.*
+*Toca `catalogo.py:1134` (la construccion) y **nada del cliente**: los tres tipos y las pruebas ya esperan nulls.*
+*No se hace en esta ronda porque necesita la base para verificar que no se duplican puntos, y hoy no la hay.*
+
 ## Próximo comando
+
 
 
 
