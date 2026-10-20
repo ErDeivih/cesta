@@ -3,52 +3,61 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 168)
+## Dónde está esto (ronda 224)
 
-**El estado corto, con lo medido y lo no medido separados.**
+**El estado corto. Lo que sigue, debajo, es historia: sirve para no repetir trabajo.**
 
-    docker .......... **caido (20+ rondas)** -- sin PostgreSQL, sin banco de ensayo, sin API en 8080
+    docker .......... **motor ATASCADO, no caido**: `500` en `/version` y su proxy ocupa los
+                      puertos 5432 y 5433. 21+ rondas asi. Sin PostgreSQL, sin banco, sin API.
+                      *Reiniciar el motor apaga tambien facylf (5433), y eso no se toca.*
 
     PRUEBAS QUE CORREN Y PASAN
-    pytest .......... **2.077 pasan** (suite entera sin base, 4:47, determinista)
-                      + 13 de contrato de interfaz  + 48 de contrato y aceptacion
-                      *** 2.138 pruebas de Python, 0 fallos que no sean de base ***
-    npm test ........ 320
-    componentes ..... 22
-    ruff ............ limpio
-    lint ............ **cero avisos**
-    tsc --noEmit .... limpio
-    build ........... ok, y verificado **desde cero** (se borro el dist y se reconstruyo)
-    documentos ...... TODO BIEN
+    pytest (sin base) ... **2.099**  · de **2.142** recogidas, **43 no pueden** (todas de base)
+    npm test ............ **360**
+    componentes ......... **22**
+    test_aprende ........ **20**
+                          *** total: 2.099 + 360 + 22 + 20 = 2.501 ***
+    ruff ................ limpio
+    comprueba_documentos  TODO BIEN
+    lint ................ **cero avisos**
+    tsc --noEmit ........ limpio
+    build ............... ok, y verificado **desde cero** (borrado y rehecho, hash nuevo)
     nada sin commitear
 
     PRUEBAS QUE NO PUEDEN CORRER
-    **33 pruebas** necesitan PostgreSQL: 32 `errors` y 1 `failed` (`ConnectionTimeout`).
-    *Todas de la API, el almacen, el ensayo y la aceptacion de §8.*
+    **43** necesitan PostgreSQL: 32 `errors`, 17 `skipped`, 1 `failed`, todas con el motivo
+    escrito (`sin almacen en CESTA_POSTGRES al importar`).
+    *** Y la cuenta cierra: 2.142 = 2.099 + 43. ***
 
-**Los paquetes.**
-
+    LOS PAQUETES
     M00–M05 ..... cerrados y verificados
-    M06 ......... la cadena del cierre probada por HTTP (9 de 9). **El 409 reconfirma**: el cuerpo viaja en
-                  `ErrorApi.cuerpo`, la pantalla dice el total nuevo y ofrece cerrar con el.
-                  **Abierto: dos cierres a la vez pueden crear dos compras.** Es del servidor.
-    M07 ......... cerrado: banco de **210 pares**, precision **100 %** sobre 52, especificidad **100 %** sobre
-                  70, los cuatro estados suman 210, umbral como arbol de diez reglas.
-                  Abierto: cobertura del 49,7 % del catalogo sin EAN.
-    M08–M14, M16–M22 ... **implementados**: 9.254 lineas de pagina, cliente y ruta para cada uno; su logica
-                  pura probada; el diario ademas con una **aceptacion que pasa sin base**.
-                  **Sin verificar con datos**: eso necesita la base.
-    M15 ......... instalable, armazon de marca, offline desde la 2.a visita, cola probada por los dos lados.
-    CI .......... tres trabajos, dependencias verificadas, **y `CESTA_SALTAR_SIN_BASE=0` para que un fallo de
-                  base no la deje verde**. Sin ejecutar en remoto.
+    M06 ......... la cadena del cierre probada por HTTP (9 de 9); el **409 reconfirma** y la
+                  pantalla ofrece cerrar con el total nuevo.
+                  **Abierto: dos cierres a la vez pueden crear dos compras** (servidor).
+    M07 ......... banco de 210 pares, precision 100 % sobre 52, especificidad 100 % sobre 70,
+                  y el invariante **medido con datos**: 62 pares con GTIN distinto -> 0 exactos;
+                  195 con el mismo EAN -> los no exactos lo son por contradiccion del dato.
+                  **Abierto: el 49,7 % del catalogo sin EAN.**
+    M08–M14,
+    M16–M22 ..... implementados: pagina, cliente y ruta para cada uno, con la logica pura
+                  probada. **Sin verificar con datos**: eso necesita la base.
+    M15 ......... instalable y offline, **y ahora con 20 pruebas** (sw, manifiesto, portada,
+                  Caddyfile). *Eran tres correcciones que nadie vigilaba.*
+    CI .......... tres trabajos con las dependencias y `CESTA_SALTAR_SIN_BASE=0` para que un
+                  fallo de base no la deje verde. **Sin ejecutar en remoto** (repo local).
 
-**Lo que se ha corregido esta semana y era mio, no de la aplicacion.**
+    LO QUE SE HA MEDIDO CON DATOS REALES, no leyendo codigo
+    motor de identidad ...... 62 + 195 pares reales; el invariante, por sus dos mitades
+    costeDeReceta ........... 200 productos del gold -> **0 valores imposibles**
+    previa_de_compra ........ 200 productos del gold -> **0 valores imposibles**
+    el hueco del 18 ......... `rellena_huecos` sobre el gold: el 18 aparece como `None`, y
+                              ningun precio se inventa
+    y un defecto de esos datos: un envase de 131 g y una receta de 200 g -> la pantalla decia
+    que comprar costaba **la mitad** de lo que cuesta. Arreglado, 16 pruebas.
 
-    el defecto de opacidad de `App.tsx` .......... `borde/70` sobre `var(--borde)`; Tailwind lo omitia EN
-                                                    SILENCIO y las barras nunca tuvieron la opacidad pedida
-    un test que daba dos respuestas ............... `almacen._pool`, global de modulo, no se reiniciaba
-    tres afirmaciones repetidas sin medir .......... «la suite no se puede correr», «M08–M22 sin empezar»,
-                                                    la cabecera vieja del estado
+    LO QUE FALTA, EN UNA LINEA
+    *** 43 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas:
+    es el unico motivo del NO APTO del piloto. ***
 
 ## §8, medido pieza por pieza (ronda 169)
 
