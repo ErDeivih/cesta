@@ -39,6 +39,7 @@ import type {
   CambioDeCola, CambioLinea, CierreDeCompra, Invitacion, Novedad, Persona,
 } from '../api/cesta'
 import { esSinRed, textoDeError } from '../api/cliente'
+import { cotizacionDelConflicto } from '../logica/conflicto'
 // **`fecha`, que es la que escribe las fechas en castellano.** *Sin ella esta pantalla
 // ponia el ISO crudo -- «Datos del 2026-10-16» -- mientras el diario ponia «17/10/2026».
 // *Medido en la revision visual del 17/10/2026.*
