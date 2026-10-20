@@ -51,7 +51,7 @@ import { IconoLupa } from '../componentes/iconos'
 function Cabecera({ reparto: r, porCoger, total, lineas }: {
   reparto: RepartoTiendas | undefined
   porCoger: number
-  total: number
+  total: number | null
   lineas: number
 }) {
   const cadenas = (r?.sublistas ?? []).filter((s) => s.lineas.length > 0)
@@ -96,7 +96,7 @@ function Cabecera({ reparto: r, porCoger, total, lineas }: {
               </span>
             ))}
           </p>
-          {total > 0 && (
+          {total !== null && total > 0 && (
             <p className="mt-1 text-sm text-tinta-suave">
               Total estimado <span className="cifra font-semibold">{euros(total)}</span>
               {r && r.ahorro_cent > 0 && (
@@ -416,7 +416,7 @@ export function Inicio() {
       ) : (
         <>
           <Cabecera reparto={rep.data} porCoger={porCoger.length}
-                    total={rep.data?.total_cent ?? 0} lineas={lineas.length} />
+                    total={rep.data?.total_cent ?? null} lineas={lineas.length} />
 
           {porCoger.length > 0 && (
             <Tarjeta>
