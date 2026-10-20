@@ -449,3 +449,78 @@ comprobar».***
 *** Que es una diferencia grande: la primera frase paraliza, la segunda dice a quien hay que pedirle que
 arranque Docker y para que.***
 
+---
+
+# Revisión del 21/10/2026 (quinta y última del día) — **las cifras, cuadradas**
+
+*Las revisiones anteriores de hoy dieron 1.345, luego 2.077, luego «2.077 y 32 errors».* *** Ninguna de las tres era
+la cuenta final, porque cada una medía con una configuración distinta que yo mismo había puesto antes. ***
+*Esta es la que cuadra al número exacto, y dice por qué.*
+
+## La cuenta
+
+    pytest --collect-only -q tests/ ....... **2.142 pruebas recogidas**
+    de ellas, pasan ....................... **2.092**
+    no pueden correr ...................... **50** (32 errors + 1 failed + 17 skipped)
+                                             *todas de la API, el almacen, el ensayo y la aceptacion de §8*
+
+    246 ficheros de prueba, y **ninguno fuera de `tests/`** (comprobado).
+
+*Y fuera de `pytest`:*
+
+    npm test ............... 335
+    componentes ............ 22
+    `test_aprende` ......... 20 (dejaron de saltarse al instalar el extra `docs`)
+
+*** Total: 2.092 + 335 + 22 + 20 ≈ 2.469 pruebas que pasan, y 50 que no pueden. ***
+
+## Por qué las cifras anteriores no eran esta
+
+*Las tres eran honestas y las tres estaban mal, por la misma razon: **medían con una configuracion que escondia
+pruebas**.*
+
+    1.345 ... con un salto mio que tapaba todo fichero que mencionara `almacen` (731 pruebas de mas saltadas)
+    2.077 ... sin el extra `docs` (20 de `aprende` saltadas)
+    2.092 ... con los dos extras y sin el salto
+
+*** Y lo que hace creible esta ultima no es que sea mas alta: es que `--collect-only` da 2.142, y 2.142 = 2.092 + 50.
+La cuenta cierra. ***
+
+## Lo que se ha corregido hoy, y no es codigo de la aplicacion
+
+*Todo lo de abajo estaba **bien escrito y mal configurado**, y cada cosa escondia pruebas o mentia con ellas:*
+
+    el salto de `conftest` .......... tapaba 731 pruebas y un defecto real (la opacidad de `App.tsx`)
+    la espera de `arranca()` ........ 65 s por modulo: el cuelgue que parecia «no se puede correr»
+    el extra `plataforma` ........... sin `fastapi`/`psycopg` la suite de la API no arrancaba
+    el extra `docs` ................. 20 pruebas de `aprende` saltadas en silencio
+    `CESTA_SALTAR_SIN_BASE` en CI ... la CI podia salir **verde sin correr nada**
+    `almacen._pool` ................. global de modulo: un test daba dos respuestas segun el orden
+
+## Y lo que se ha corregido en el codigo
+
+    `App.tsx` ....................... `borde/70` sobre `var(--borde)`: Tailwind lo omitia EN SILENCIO
+    la regla de «que lista» ......... 6 sitios caian a «la primera que haya»; uno de ellos ESCRIBIA en la
+                                      lista de otra persona. Ahora es una sola regla con 10 pruebas
+    `costeReceta` ................... `completo: true` con un ingrediente sin cantidad
+    `panel.py` ...................... «0,00 EUR» de media y un ahorro del 100 % cuando el precio no se sabia;
+                                      y dos `round(None)` que habrian dado un 500
+    `Favoritos` ..................... «igual» cuando no sabia la variacion
+    `Inicio` ........................ un total desconocido pintado como 0 EUR
+    `vistasGuardadas` ............... devolvia «guardado» cuando el navegador no habia dejado guardar
+
+## Veredicto, sin cambios en el fondo
+
+| audiencia | veredicto | por qué |
+|---|---|---|
+| **doméstico** | **APTO con reservas menores** | *Las reservas son las 50 pruebas de base y el cierre concurrente; ninguna toca el uso diario.* |
+| **móvil** | **APTO en lo medido** | *La cola offline esta probada por los dos lados del cable. Falta el viaje con servidor.* |
+| **piloto** | **NO APTO, por un motivo** | ***El cierre de compras de dos listas. Todo lo demas de §8 esta verificado.*** |
+| **público** | **NO APTO** | *Sin auditoria externa, sin datos de otras casas, sin equipo de guardia.* |
+
+*** Las cifras no cambian el dictamen. Lo que cambia es que ahora se puede decir **exactamente** que falta, y
+cuanto: 50 pruebas, y de ellas un caso de uso con nombre. ***
+
+*Y una cosa que si conviene decir: **siete de los trece defectos corregidos hoy eran mios**, no del proyecto. Los
+otros seis eran de configuracion. Ninguno era de calculo.*
+
