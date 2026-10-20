@@ -176,7 +176,30 @@ lista de otra persona -- esta cerrado, y el comentario dice exactamente cual era
 guarda la preferencia y que sin lista de casa no elige otra en silencio.* *Es la misma situacion que el 409: la
 logica esta, la prueba no.* *Y esta si se puede escribir sin base, porque el selector vive en el cliente.*
 
+## Buscar el mismo defecto en los demas (ronda 180)
+
+*La leccion del 179 fue: **arreglar un sitio y no buscarlo en los demas deja el defecto vivo**.* *Se aplico a los
+dos patrones que ya se habian arreglado una vez.*
+
+**1. «cae a la primera lista»** -- *ya buscado y cerrado el 179: **6 sitios**, los 6 arreglados, y
+`?.[0]?.id` no aparece fuera de comentarios.*
+
+**2. `setState` seguido de `mutate()` en el mismo manejador** -- *el fallo del 409, donde el reintento mandaba el
+sello viejo.*
+
+    busqueda: un `set...(` con un `.mutate()` sin argumento en las 4 lineas siguientes
+    hallazgos: **2**, los dos en `Cesta.tsx` (617, 665)
+
+*Y los dos son **falsos positivos**: son `crearLista(nombre.trim() || 'Lista', ...)`, que lee el estado **al pulsar
+el boton** -- que es el patron correcto, porque el `onChange` ya se aplico hace rato.*
+
+*** El fallo solo existe cuando `setX()` y `mutate()` estan en el MISMO manejador, y no hay ninguno mas. ***
+
+*Resultado: **una busqueda, dos hallazgos, cero defectos.** Que tambien es un resultado y hay que escribirlo: de
+los dos patrones que se arreglaron esta semana, uno tenia 5 copias mas y el otro ninguna.*
+
 ## Próximo comando
+
 
 
 
