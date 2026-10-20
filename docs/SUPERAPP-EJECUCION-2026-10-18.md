@@ -2064,3 +2064,49 @@ construccion**, no por una prueba que salio bien.* *Y lo que queda abierto, dich
 - *y `PROBABLE`/`ALTERNATIVA` no cuentan como abstencion en la medida; en 60 pares el motor dijo una de
   las dos*
 
+**M07 / EL UMBRAL AUTOMATICO DOCUMENTADO: NO ES UN NUMERO, ES UN ARBOL DE DECISION.**
+
+*La especificacion pide «umbral automatico documentado, **no una cifra de calidad inventada**».* *Y
+tiene razon en la advertencia: aqui no hay un «0,93 de confianza» que nadie pueda justificar.* *Lo que hay
+son **ocho reglas en orden**, y cada una dice que se afirma y con que evidencia.*
+
+*Leidas del codigo (`core/identidad.py`, `decide()`), en el orden en que se aplican:*
+
+| # | cuando | estado | por que |
+|---|---|---|---|
+| 1 | los dos tienen GTIN, son **iguales**, y las marcas **no** cuadran | `CUARENTENA` | *el mismo codigo con marcas distintas no es identidad: es una de las dos fichas mintiendo* |
+| 2 | los dos tienen GTIN **iguales** y la presentacion es compatible | **`EXACTO`** | *la unica via que autoriza a decir «es el mismo»* |
+| 3 | los dos tienen GTIN **iguales** y la presentacion **no** cuadra | `CUARENTENA` | *el codigo dice que si, la ficha dice que no: no se decide* |
+| 4 | los dos tienen GTIN y son **distintos** | `ALTERNATIVA` | *«no se fusiona por parecido de nombre»* |
+| 5 | sin GTIN y **marcas incompatibles** | `ALTERNATIVA` | *dos fabricantes distintos son dos productos* |
+| 6 | sin GTIN y presentacion **incompatible** | `ALTERNATIVA` | *la presentacion desmiente el parecido* |
+| 7 | sin GTIN y presentacion **no comparable** | `ABSTIENE` | *no hay con que decidir* |
+| 8 | sin GTIN, nombre igual **y** (misma marca **o** una sin marca) | `PROBABLE` | *«nombre y presentacion coinciden, pero falta un GTIN»* |
+| 9 | sin GTIN, nombre igual **o** marca igual | `PROBABLE` | *«coincidencia parcial sin GTIN»* |
+| 10 | nada de lo anterior | `ABSTIENE` | *«sin evidencia suficiente»* |
+
+*** Y ese es el umbral: **no hay ninguna puntuacion**. *** *La regla que convierte un par en «el mismo
+producto» es una sola -- los dos GTIN validos e iguales -- y las demas o lo niegan, o proponen sin
+afirmar, o se callan.*
+
+**Por que esto es mejor que un umbral numerico, y no es una opinion:** *un umbral de confianza habria que
+**calibrarlo**, y calibrarlo exige un banco con el que ajustar y otro con el que evaluar.* *Con un
+arbol, la garantia no depende de que el banco salga bien: **depende de que no haya otra puerta al
+`exacto`, y no la hay** -- se comprobo contando las lineas de `decide()`.*
+
+**Y el numero que la spec no quiere que invente, no se inventa.** *Lo que se publica son cifras medidas:*
+*precision 100 % sobre 52, especificidad 100 % sobre 70, recall 65,8 %, y los cuatro estados sumando 210.*
+
+=== LO QUE M07 TIENE AHORA, Y LO QUE LE FALTA ===
+
+    pipeline .......... `core/identidad.py`; una sola via al exacto
+    umbral ............ **documentado**: el arbol de diez reglas de arriba, leido del codigo
+    banco ............. 210 pares (objetivo: 200), con evidencia por par, autor y fecha; 42 % sin EAN
+    medida ............ precision 100 %, especificidad 100 %, recall 65,8 %, matriz completa
+    falsos exactos .... imposibles por construccion
+
+    abierto ........... la **particion ajuste/evaluacion por familias** (el banco es solo de
+                        evaluacion; no hay conjunto de ajuste porque no hay nada que ajustar en un
+                        arbol sin parametros) -- **y eso hay que decirlo asi, no fingir una particion**
+                        el **49,7 % sin EAN**: cobertura no medida, necesita etiquetas humanas
+
