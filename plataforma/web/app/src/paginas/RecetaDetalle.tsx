@@ -267,7 +267,7 @@ export function RecetaDetalle() {
                 <li>
                   Comprando los envases enteros:{' '}
                   <strong className="text-tinta-fuerte">
-                    {c.envaseCent === null ? 'no se puede calcular todavía' : `${c.envaseCent / 100} EUR`}
+                    {c.envasesCent === null ? 'no se puede calcular todavía' : `${c.envasesCent / 100} EUR`}
                   </strong>
                 </li>
               </ul>
