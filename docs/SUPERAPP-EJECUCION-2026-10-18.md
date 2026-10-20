@@ -725,7 +725,30 @@ pero si que **no se rompen ni mienten con lo que hay**.*
 
     ruff limpio · documentos TODO BIEN
 
+## El invariante del motor de identidad, medido con datos reales (ronda 210)
+
+*En la ronda 113 se dijo, **leyendo el codigo**, que el motor solo puede decir «exacto» por una via: dos GTIN validos
+e iguales.* *Y se anoto el limite: **no se habia comprobado con datos**.*
+
+*Ahora si. Se cogieron 400 productos reales del gold con EAN y categoria, se emparejaron los de la misma categoria, y se
+descartaron los pares con el mismo EAN (esos no prueban nada).*
+
+    62 pares con GTIN DISTINTO
+    estados: {'alternativa': 62}
+    de ellos, EXACTO: **0**
+
+*** En los 62, el motor dijo `alternativa`. Ni un solo `exacto`. ***
+
+*Que era lo que decia el codigo, y ahora tambien lo que dicen los datos: **la garantia no depende de que el motor
+acierte, sino de que no tenga otra puerta** -- y con 62 pares reales de por medio, no la uso.*
+
+*Lo que sigue sin medirse: **cuantos de esos 62 pares son de verdad alternativas**.* *Eso necesita etiquetas humanas, y
+es justo el 49,7 % del catalogo sin EAN que ya esta anotado como abierto en M07.*
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
