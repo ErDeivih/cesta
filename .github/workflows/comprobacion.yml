@@ -54,6 +54,13 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+      # *** HAY QUE PEDIR EL EXTRA `plataforma`. ***
+      # *`ruff` y `pytest` viven en el grupo `dev`, que `uv run` instala por defecto. Pero **`fastapi`,
+      # `psycopg` y `uvicorn` estan en `[project.optional-dependencies] plataforma`**, y sin ese extra la
+      # suite no puede importar `plataforma.api`.*
+      # *Sin esto, el trabajo fallaria o -- peor -- se saltaria en silencio por los `importorskip`.*
+      - name: dependencias
+        run: uv sync --extra plataforma
       - name: ruff
         run: uv run ruff check .
       - name: la suite
@@ -101,5 +108,8 @@ jobs:
           enable-cache: true
       # *`comprueba_documentos` revisa que la documentacion no se contradiga a si misma: que las cifras
       # citadas existan y que los planes no prometan lo que el codigo no tiene.*
+      # *Y aqui lo mismo: `comprueba_documentos` vive en `plataforma`, que necesita el extra.*
+      - name: dependencias
+        run: uv sync --extra plataforma
       - name: documentos
         run: uv run python -m plataforma.comprueba_documentos
