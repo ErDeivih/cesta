@@ -1978,3 +1978,48 @@ aunque no bastara para el offline.*
 *** Septima vez que un numero me hace retroceder. Y esta es la que mas importaba: habia escrito
 «M15 VERIFICADO» en el mensaje de un commit por **una** pasada buena. ***
 
+**M15 OFFLINE: LA CAUSA ERA `CocinaProvider`, Y EL PRECACHE DE TODOS LOS TROZOS LO ARREGLA.**
+
+*Tres pasadas seguidas, con 6 s entre cargas y tres cargas cada una:*
+
+    1) precacheados=4  sin red = 270 car.  OK
+    2) precacheados=2  sin red =  53 car.  INCOMPLETO
+    3) precacheados=2  sin red =  53 car.  INCOMPLETO
+
+*** Con `precacheados=2` la app abria **solo el armazon**: 53 caracteres. ***
+
+**La causa, y es exacta:** *el `Suspense` de `App.tsx` envuelve tambien **`CocinaProvider`, que es un trozo
+diferido**.* *Ese trozo **no aparece en el `index.html`** -- solo lo pide el JavaScript cuando arranca --,
+asi que mi precache, que leia los `<script>` del HTML, no lo incluia.* *Sin el, el `Suspense` no resuelve
+nunca y la pantalla se queda en el armazon.*
+
+*** Un service worker que solo guarda lo que viene en el HTML no sabe nada de los trozos que el propio
+JavaScript va a pedir despues. ***
+
+**El arreglo:** *`sella-sw.mjs` ya no lee el HTML: **lista `dist/assets/`** y precachea **todos** los
+`.js` y `.css`.*
+
+    sella-sw: version 2026102014, 31 trozos precacheados
+    const PRECACHE = ["/assets/Ajustes-...js","/assets/Avisos-...js","/assets/Buscar-...js", ...]
+
+**Y con eso, tres pasadas:**
+
+    1) entorno: ERR_INTERNET_DISCONNECTED   <- el SW AUN no estaba activo (primera visita)
+    2) en cache=17  sin red = 270 car.  OK
+    3) en cache=37  sin red = 270 car.  OK
+
+*** Cero incompletas. *** *Sumando la pasada de la ronda anterior, **tres renders completos sin red** y
+ninguno a medias desde que se precachean todos los trozos.*
+
+**La que fallo es la primera visita, y eso no es un defecto:** *un service worker no puede servir nada
+antes de estar activo.* *Es el comportamiento normal, y conviene saberlo: **la primera vez que se abre la
+app hace falta red;** de ahi en adelante, no.* *Y es lo que hay que decir en la ficha de la app, no
+prometer «funciona sin conexion» a secas.*
+
+**Lo que M15 tiene ahora, y lo que no:**
+- instalable ....... manifiesto con 192/512/maskable, y servido
+- armazon propio ... `ArmazonDeLaMarca`, en el trozo principal
+- offline .......... **si, desde la segunda visita**; 31 trozos precacheados y verificados en `install`
+- sincronizacion ... **no probada**: *la cola de cambios necesita la API viva, y Docker lleva nueve rondas
+  caido*
+
