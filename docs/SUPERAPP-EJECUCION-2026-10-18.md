@@ -619,7 +619,47 @@ sale de tu bolsillo**».* *Para esta receta salen de tu bolsillo **1.848 cent**,
 *No se hace hoy porque cambia el contrato de un modulo que usa la pantalla de recetas, y **con casi nada de contexto
 es exactamente cuando se rompen las cosas que funcionan**.*
 
+## El numero de envases: intentado cinco veces, revertido (ronda 204)
+
+*Ayer quedo localizado: `costeReceta` no dice **cuantos envases** hacen falta, y con un envase de 131 g y una receta de
+200 g «usar» sale mas caro que «comprar».* *Es un defecto real y el arreglo es aditivo: un campo nuevo, sin tocar los
+que ya hay.*
+
+*** Hoy se intento, y no salio. ***
+
+*Cinco intentos, y los cinco con el mismo problema de fondo: **estaba editando un fichero de 150 lineas con
+`replace` sobre textos, sin poder mirarlo entero.*** *Los tropiezos, en orden:*
+
+    1. los campos anadidos al tipo, pero sin valores -> tsc: falta la propiedad en 5 salidas
+    2. los valores, puestos con `replace` -> `cantidadEnvase` no existe en esa funcion (se desestructuraba
+       dentro de `precioUnidad`)
+    3. se lee del precio -> el `replace` dejo un `const` **dentro de un ternario** (TS1109)
+    4. el ternario, arreglado -> falta el campo en el **total**, no solo por ingrediente
+    5. el total -> se inserto la **implementacion dentro del tipo** (TS1131), porque el `replace` cayo en la
+       interfaz y no en el `return`
+
+*** Se revirtio entero con `git checkout`, y se comprobo despues: tsc limpio, 11 pruebas de costeReceta pasan, 335 de
+node, build ok, ruff limpio, documentos TODO BIEN. ***
+
+*Lo que hay que hacer, para quien lo retome, con el fichero delante entero y no a trozos:*
+
+    1. `CosteDeIngrediente` gana `envasesQueHacenFalta: number | null`
+    2. `CosteDeReceta` gana `envasesCent: number | null`
+    3. en `costeDeUno`, las CUATRO salidas llevan el campo:
+         - sin precio            -> `null`
+         - sin cantidad          -> `null`
+         - se sabe el envase pero no cuanto trae -> `null`
+         - `ud` (no se prorratea) -> `1`
+         - normal                -> `Math.max(1, Math.ceil(i.cantidad / p.cantidadEnvase))`
+    4. en `costeDeReceta`, `envasesCent` = suma de `costeEnvaseCent * envasesQueHacenFalta`
+    5. las 11 pruebas de `costeReceta.test.mjs` tienen que seguir pasando **sin tocarlas**
+
+*** Y la leccion, que no es sobre este campo: editar por `replace` un fichero que no cabe en la ventana de contexto
+sale mal de una forma concreta -- los cambios caen en el sitio equivocado y el compilador lo dice, pero cada
+arreglo introduce otro.*** *Reconocerlo a la quinta y revertir entero cuesta menos que seguir.*
+
 ## Próximo comando
+
 
 
 
