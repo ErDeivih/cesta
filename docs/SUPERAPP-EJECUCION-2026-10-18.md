@@ -964,7 +964,37 @@ instrumento otra vez.*
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## «Las 43 dicen el motivo», comprobado — y mi medicion estaba mal (ronda 226)
+
+*Lo he afirmado varias veces sin medirlo.* *Se midio, y la primera medicion dio esto:*
+
+    13  connection timeout expired
+     3  $env:CESTA_POSTGRES='...5434/cesta' | Conne...
+     1  esta prueba necesita el almacen real
+
+*** Y parecia un hallazgo: «13 de 17 saltos dicen un sintoma, no un motivo». ***
+
+**Era falso, y el defecto estaba en mi agrupacion:** *parti el mensaje por `": "` y me quede con el ultimo trozo, que
+en estas lineas es el detalle de la excepcion.*
+
+*El mensaje real, entero, es este:*
+
+    SKIPPED [1] tests\test_g03_cierre.py:152: sin almacen en CESTA_POSTGRES al importar.
+      Ejecuta con $env:CESTA_POSTGRES='postgresql://cesta:prueba@127.0.0.1:5434/cesta'
+      | ConnectionTimeout: connection timeout expired
+
+*** Dice las tres cosas que tiene que decir: **que falta** (el almacen), **como se arregla** (la variable con su
+valor) y **que paso** (el tipo de excepcion y el detalle). ***
+
+*Y `conftest.py:121` ademas marca los ficheros enteros con «sin PostgreSQL: este fichero necesita la base».*
+
+*** Asi que la afirmacion se sostiene -- y ahora esta medida. Pero la medicion que la sostenia era falsa, y eso casi
+la convierte en una afirmacion sin prueba. ***
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
