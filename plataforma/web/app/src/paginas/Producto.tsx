@@ -107,7 +107,7 @@ export function Producto() {
    *  `Chispa` solo necesita fecha y valor, y la unidad es lo que impide comparar dos
    *  series pegadas (`logica/curva.ts`). */
   const curva = useMemo(
-    () => loQueDiceLaCurva(historico.bloqueado ? [] : historico.serie),
+    () => loQueDiceLaCurva(historico.bloqueado ? [] : historico.serie, { numero }),
     [historico.bloqueado, historico.serie],
   )
 

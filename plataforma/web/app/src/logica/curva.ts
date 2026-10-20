@@ -24,7 +24,6 @@
  *  No pinta nada: solo decide que se dice, para poder probarlo sin montar la pantalla.
  *  La misma separacion que `logica/frase.ts`.
  */
-import { numero } from '../api/formato'
 
 /** Un punto del historico tal como lo manda `/api/grupo`. */
 export interface PuntoDeLaCurva {
@@ -33,6 +32,20 @@ export interface PuntoDeLaCurva {
   precio_unidad_cent: number | null
   /** La unidad con la que se midio ese dia, si la API la manda. */
   unidad_canon?: string | null
+}
+
+/** *** LO QUE LA CURVA NECESITA DEL FORMATO, Y QUE LE DA QUIEN LA LLAMA. ***
+ *
+ * *Mismo arreglo que `frase.ts`, y por el mismo motivo: importaba `numero` de `../api/formato`, y
+ * `api/formato` arrastra cosas que la aplicacion usa en el navegador, asi que **`node --test` no podia
+ * cargar el modulo** -- `ERR_MODULE_NOT_FOUND`.*
+ *
+ * *Con esto, `logica/` **no importa nada de `api/`**: las quince piezas puras se pueden probar sin
+ * navegador.*
+ */
+export interface FormatoDeLaCurva {
+  /** *Un porcentaje sin decimales de mas, como lo escribe la aplicacion.* */
+  numero: (valor: number) => string
 }
 
 export interface LoQueDiceLaCurva {
@@ -59,7 +72,10 @@ function diasAlMismoPrecio(puntos: ConPrecio[]): number {
 type ConPrecio = PuntoDeLaCurva & { precio_unidad_cent: number }
 
 /** Lo que hay que decir debajo de la curva. */
-export function loQueDiceLaCurva(puntos: PuntoDeLaCurva[]): LoQueDiceLaCurva {
+export function loQueDiceLaCurva(
+  puntos: PuntoDeLaCurva[],
+  formato: FormatoDeLaCurva,
+): LoQueDiceLaCurva {
   // Dias con precio: un punto sin precio no cuenta ni para el minimo ni para el plazo.
   const con = puntos.filter(
     (p): p is ConPrecio => p.precio_unidad_cent != null && p.precio_unidad_cent > 0,
@@ -93,7 +109,7 @@ export function loQueDiceLaCurva(puntos: PuntoDeLaCurva[]): LoQueDiceLaCurva {
     const mas = Math.round((100 * (ultimo - minimo)) / minimo)
     return {
       frase:
-        `Es el precio más alto ${plazo}: un ${numero(mas)} % por encima del más bajo.`,
+        `Es el precio más alto ${plazo}: un ${formato.numero(mas)} % por encima del más bajo.`,
       motivo: null,
     }
   }
@@ -105,7 +121,7 @@ export function loQueDiceLaCurva(puntos: PuntoDeLaCurva[]): LoQueDiceLaCurva {
 
   const mas = Math.round((100 * (ultimo - minimo)) / minimo)
   if (mas >= 1) {
-    return { frase: `Está un ${numero(mas)} % por encima del más bajo ${plazo}.`, motivo: null }
+    return { frase: `Está un ${formato.numero(mas)} % por encima del más bajo ${plazo}.`, motivo: null }
   }
   return NADA
 }
