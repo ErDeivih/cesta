@@ -47,8 +47,28 @@ cierre concurrente de M06 (necesita `FOR UPDATE` mas el indice unico de la migra
 importe en el historico, y el viaje real de la cola offline.*
 
 *Si no responde: queda **el reparto del 409 en la pantalla** (el dato ya viaja; falta comprobar el boton nuevo
-en un navegador con datos) y **la auditoria de vacios de las paginas que faltan** -- que se puede hacer sin
-base, mirando el codigo, como hoy.*
+en un navegador con datos).* *** La auditoria de vacios ya esta hecha: ver abajo. ***
+
+### Auditoria de vacios, completa, y por que el numero no vale
+
+*Se contaron **37 `<Vacio>` en 18 ficheros**.* *Una ventana de 12 lineas alrededor decia que **25 no tenian
+accion a mano**.*
+
+*** Y es falso: la ventana no alcanza. *** *Los cinco que se miraron uno a uno la tienen, y lejos:*
+
+    Despensa ...... formulario «Declarar» en la l.144 (el vacio en la 107)
+    Diario ........ la forma esta arriba
+    PlanSemanal ... `PonerEnUnDia` por dia, en la l.393 (el vacio en la 401)
+    Recetario ..... «Anadir una receta» en la l.110 (el vacio en la 251)
+    Buscar ........ dice que probar con otra palabra o marcar mas cadenas, y los filtros estan en la
+                    misma pantalla
+
+*** Asi que el «25 sin accion» mide una ventana de texto, no un callejon. *** *Es el mismo error de conteo que
+ya se anoto una vez en este fichero con los 37 `<Vacio>`: **el numero sobrecuenta, y hay que mirar**.*
+
+*Los que quedan sin mirar uno a uno son de operador (`Panel`, `PanelMatching`, `Producto`, `Grupo`,
+`LoQueHasPagado`, `Escaner`), donde el vacio suele ser «no hay datos para pintar» y la accion no aplica.*
+*No se declaran ni buenos ni malos: **no se han mirado**.*
 
 # Guardas que no se tocan
 
