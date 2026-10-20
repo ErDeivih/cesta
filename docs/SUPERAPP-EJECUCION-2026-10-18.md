@@ -350,7 +350,7 @@ ellas la aceptacion completa de §8 -- **el cierre de compras de dos listas**.*
 
 *** Y el titulo esta bien: «Aprender datos con un proyecto de verdad · Cesta». ***
 
-*Lo cuento porque casi lo doy por defecto: la primera lectura mostro «Â·», que es el `·` UTF-8 leido como ANSI.*
+*Lo cuento porque casi lo doy por defecto: la primera lectura mostro **U+00C2 seguido de U+00B7**, que es el `·` UTF-8 leido como ANSI.*
 *** El defecto estaba en mi forma de leer, no en el fichero *** *-- la tercera vez esta semana, despues del conteo
 de `<Vacio>` y del `len()` de un diccionario.*
 

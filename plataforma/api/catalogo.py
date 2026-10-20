@@ -19,6 +19,7 @@ from pathlib import Path
 import duckdb
 
 from core import comparacion, version_vigente
+from core.serie_con_huecos import rellena_huecos
 
 from .ajustes import AJUSTES
 
@@ -1131,9 +1132,16 @@ def grupo(grupo_id: int) -> dict | None:
         # producto en esa unidad. Es lo que la frase necesita para no contar cadenas
         # que estan midiendo otra cosa.
         "cadenas_comparables": len({p["fuente"] for p in del_mismo}),
-        "serie": [{"producto_id": s[0], "fuente": s[1], "fecha": s[2],
-                   "precio_unidad_cent": s[3], "unidad_canon": s[4]}
-                  for s in serie],
+        # *** UN DIA SIN CAPTURA ES UN HUECO, NO UN DIA QUE NO EXISTIO. ***
+        # *Carrefour pierde uno de cada cinco dias (7 de 44 medidos), y sin esto el 17 y el 19
+        # llegaban al cliente **como si fueran consecutivos**: la chispa unia los dos puntos y un
+        # salto de dos dias se leia como un salto de uno.*
+        # *El cliente ya sabe pintar el hueco (`chispa.ts`: «un dia sin valor se coloca como HUECO,
+        # no se salta»); lo que faltaba era mandarselo.*
+        "serie": rellena_huecos([
+            {"producto_id": s[0], "fuente": s[1], "fecha": s[2],
+             "precio_unidad_cent": s[3], "unidad_canon": s[4]}
+            for s in serie]),
     }
 
 
