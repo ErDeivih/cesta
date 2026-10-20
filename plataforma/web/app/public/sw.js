@@ -32,6 +32,19 @@ const CACHE = 'cesta-' + VERSION;
  */
 const ARMAZON = ['/', '/site.webmanifest', '/icono.svg', '/icono-192.png'];
 
+/** *** LOS TROZOS DE LA ENTRADA, ESCRITOS AQUI AL CONSTRUIR. ***
+ *
+ *  *Esto lo rellena `scripts/sella-sw.mjs` leyendo el `index.html` del build: son el `<script>` y los
+ *  `<link rel="modulepreload">` -- **exactamente lo que hace falta para que la primera pantalla se
+ *  pinte**.*
+ *
+ *  *** Por que no basta con cachearlos «cuando se piden». *** *Se probo asi y no se sostiene: un trozo
+ *  solo acaba en la cache si paso por ahi **despues** de que el service worker estuviera controlando.*
+ *  *Medido: 3 trozos una vez, 1 otra, 0 otra -- y con 1 la app abria con el marco y sin contenido
+ *  (`53` caracteres).* *Una cache que acierta a veces no es offline.*
+ */
+const PRECACHE = __PRECACHE__;
+
 self.addEventListener('install', (evento) => {
   // *** UNA A UNA, Y NO `addAll`. ***
   // *`addAll` es **atomico**: si una sola de las URLs falla -- un 404, un cambio de nombre, un
@@ -42,8 +55,23 @@ self.addEventListener('install', (evento) => {
   // carga.*
   evento.waitUntil(
     caches.open(CACHE).then((c) => Promise.all(
-      ARMAZON.map((url) => c.add(url).catch(() => undefined)),
-    )),
+      // *Una a una: `addAll` es atomico y una sola URL caida dejaba la cache vacia.*
+      // *Y **los trozos de la entrada no se tragan el fallo**: sin ellos no hay primera pantalla, y
+      // un service worker que dice estar instalado sin poder pintar es peor que no tenerlo.*
+      [
+        ...ARMAZON.map((url) => c.add(url)),
+        ...PRECACHE.map((url) => c.add(url)),
+      ].map((p) => p.catch(() => undefined)),
+    )).then(() => caches.open(CACHE)).then(async (c) => {
+      // *Y se comprueba: si los trozos de la entrada no han entrado, esta instalacion no vale.*
+      const faltan = [];
+      for (const url of PRECACHE) {
+        if (!(await c.match(url))) faltan.push(url);
+      }
+      if (faltan.length) {
+        throw new Error('precache incompleto: faltan ' + faltan.join(', '));
+      }
+    }),
   );
 });
 

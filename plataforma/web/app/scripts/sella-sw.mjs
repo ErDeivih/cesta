@@ -18,11 +18,34 @@ if (!existsSync(ruta)) {
   process.exit(1)
 }
 
+// *** Y la lista de trozos de la entrada, sacada del HTML construido. ***
+// *Lo que hay que tener cacheado para que la primera pantalla se pinte: el `<script>` del modulo y los
+// `<link rel="modulepreload">`. Se leen del `index.html` del build, asi que son los que existen de
+// verdad y con su hash.*
+const html = readFileSync(join(ruta, '..', 'index.html'), 'utf8')
+const urls = new Set()
+for (const m of html.matchAll(/<(?:script|link)\b[^>]*?(?:src|href)="([^"]+)"/g)) {
+  const u = m[1]
+  if (u.startsWith('/assets/') && (u.endsWith('.js') || u.endsWith('.css'))) urls.add(u)
+}
+const precache = [...urls].sort()
+if (!precache.length) {
+  console.error('sella-sw: el index.html del build no trae trozos en /assets; no hay precache')
+  process.exit(1)
+}
+
 const version = new Date().toISOString().slice(0, 13).replace(/[-:T]/g, '')
 const texto = readFileSync(ruta, 'utf8')
 if (!texto.includes("'__VERSION__'")) {
   console.error('sella-sw: sw.js no trae __VERSION__; no se sella nada')
   process.exit(1)
 }
-writeFileSync(ruta, texto.replace("'__VERSION__'", `'${version}'`), 'utf8')
-console.log(`sella-sw: ${ruta} -> version ${version}`)
+const sellado = texto
+  .replace("'__VERSION__'", `'${version}'`)
+  .replace('__PRECACHE__', JSON.stringify(precache))
+if (sellado.includes('__PRECACHE__')) {
+  console.error('sella-sw: sw.js no trae __PRECACHE__; no se sella nada')
+  process.exit(1)
+}
+writeFileSync(ruta, sellado, 'utf8')
+console.log(`sella-sw: version ${version}, ${precache.length} trozos precacheados`)
