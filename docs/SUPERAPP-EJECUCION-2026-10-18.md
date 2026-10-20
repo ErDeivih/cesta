@@ -1818,3 +1818,44 @@ Antes de llamarlo defecto hay que muestrear en el tiempo, no mirar una foto.*
 
 *Con esto, la pista queda cerrada: **la marca y la portada estan bien en los dos tamanos.***
 
+**Y AQUI ME TENGO QUE PARAR: dos mediciones del arranque que no coinciden.**
+
+*Ronda 100, muestreando con `wait_for_timeout` y mirando el texto despues:*
+
+    t=1000ms ... 21 car    t=3000ms ... 21 car    t=6000ms ... 270 car  (contenido)
+
+*Ronda 101, con un bucle que consulta el texto cada 250 ms:*
+
+    primera carga ... 35 608 ms hasta tener contenido
+    segunda carga ... 25 421 ms
+    **y solo 3 peticiones de red**
+
+**Esas dos cosas no pueden ser verdad a la vez.** *Si la app tardara 25 s, la ronda 100 no habria visto
+el contenido a los 6. Y **3 peticiones** es la pista: con 29 trozos en el build, una carga real pide
+muchos mas.* *O sea que el bucle no esta midiendo la app: se esta midiendo a si mismo --
+`inner_text('body')` cada 250 ms contra una pagina que se esta montando, y el presupuesto se va en el
+sondeo.*
+
+**Lo que se puede afirmar, y no mas:**
+- *el `Suspense` de `App.tsx:197` es lo que pinta «Abriendo la pantalla...», asi que la espera es **cargar
+  un trozo diferido**, no resolver la sesion.* *Mi diagnostico anterior («no pinta hasta resolver la
+  sesion») era impreciso.*
+- *el build tiene **29 trozos**; el mayor es `index` con 330 KB, y `Lanzador` -- la portada -- es uno de
+  los diferidos.*
+- ***de cuanto tarda de verdad, no hay medida fiable***, porque el entorno (Docker caido, contenedor
+  degradado, navegador fallando una de cada dos) no sostiene una medicion repetible.
+
+**Lo que hay que hacer para saberlo, y es barato:** *medir con la **linea de tiempos del navegador**
+(`performance.getEntriesByType('resource')`) en vez de consultando el DOM en bucle; y con la base sana.*
+*Entonces se sabra si son 200 ms o 6 s, y si el culpable es el trozo, el servidor o la maquina.*
+
+**Lo que si es cierto sin medir, y es lo que importa para el producto:** *la portada es un trozo
+diferido, asi que **la primera pantalla de una app con marca propia depende de descargar un fichero**.*
+*Para el arranque, el armazon -- cabecera, marca y el sitio donde va el contenido -- deberia ir en el
+trozo principal y no diferirse; lo diferido deberian ser las pantallas, no el marco.* *Eso es cierto
+aunque el cronometro no este.*
+
+*** Quinta vez esta sesion que un numero me hace dudar de mi propio diagnostico. La diferencia es que
+hoy no lo he convertido en defecto ni en arreglo: lo dejo medido a medias, dicho como tal, y con el
+siguiente comando escrito. ***
+
