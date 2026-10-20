@@ -66,9 +66,22 @@ accion a mano**.*
 *** Asi que el «25 sin accion» mide una ventana de texto, no un callejon. *** *Es el mismo error de conteo que
 ya se anoto una vez en este fichero con los 37 `<Vacio>`: **el numero sobrecuenta, y hay que mirar**.*
 
-*Los que quedan sin mirar uno a uno son de operador (`Panel`, `PanelMatching`, `Producto`, `Grupo`,
-`LoQueHasPagado`, `Escaner`), donde el vacio suele ser «no hay datos para pintar» y la accion no aplica.*
-*No se declaran ni buenos ni malos: **no se han mirado**.*
+*Los que quedan sin mirar uno a uno son de operador (`Panel`, `PanelMatching`, `Grupo`, `LoQueHasPagado`),
+donde el vacio suele ser «no hay datos para pintar».* *No se declaran ni buenos ni malos: **no se han
+mirado**.*
+
+**Y dos mas que se miraron despues, los dos de usuario, y los dos correctos por la misma razon:**
+
+    Producto.tsx:543 ... «Sin historico. **Solo tenemos un dia de este precio.**»
+                         *no hay accion posible: no se puede crear historia*
+    Escaner.tsx:231 .... «No tengo ese codigo. **Motivo:** X. **Sugerencia:** Y.»
+                         *da motivo y alternativa, y el escaner sigue abierto*
+
+*** Los siete que se han mirado, uno a uno, dicen **por que** estan vacios. *** *Es la regla del proyecto
+-- «decir lo que falta en vez de enseñar un cero» --, y se cumple en los siete.*
+
+*Lo que **no** se puede afirmar: que los 30 restantes la cumplan.* *El conteo automatico no sirve para esto
+(lo acaba de demostrar), y mirarlos todos es trabajo de varias rondas.*
 
 # Guardas que no se tocan
 
