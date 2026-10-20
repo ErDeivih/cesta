@@ -81,7 +81,21 @@ necesidades **corren y pasan**; **el cierre de compras de dos listas es lo que n
 *** No es «§8 no se puede hacer»: es «§8 tiene una parte verificada y una parte bloqueada», y la verificada es
 la que el documento llama el criterio integral. ***
 
+**Y los otros cinco ficheros que usan SQLite, que tambien estaban tras el salto: 61 de 61 pasan.**
+
+    test_aislamiento · test_b04_los_dos_puentes · test_b07_la_ocurrencia_del_plan_tiene_identidad
+    test_escenario_cinco_recetas · test_fase2_f02_concurrencia · test_g12_previa
+
+    **61 passed in 4.41 s**
+
+*** `test_fase2_f02_concurrencia` entra ahi, y es concurrencia. *** *No es el cierre concurrente de M06 --ese
+necesita PostgreSQL-- pero si prueba que el patron de concurrencia del proyecto esta bien montado, y lleva veinte
+rondas detras de mi salto.*
+
+*En total, los seis ficheros de SQLite: **6 de 6 corren, 61 pruebas, cero fallos**.*
+
 ## Próximo comando
+
 
 ```powershell
 docker ps
