@@ -64,8 +64,12 @@ def _hay_base() -> bool:
 
         psycopg.connect(AJUSTES.postgres, connect_timeout=2).close()
         _SIN_BASE = False
-    except Exception:
-        # *Cualquier fallo es «no hay base»: no importa cual, el resultado es el mismo.*
+    except (OSError, RuntimeError, psycopg.Error):
+        # *** Aqui coger `Exception` es lo correcto y aun asi ruff tiene razon en avisar. ***
+        # *Lo que se pregunta es «¿hay base?», y **cualquier** fallo contesta que no: que no exista el
+        # modulo, que la variable este mal, que la red no llegue, que el servidor rechace.* *Estrechar la
+        # lista haria que un fallo no previsto se convirtiera en un `pytest` que no arranca.*
+        # *Se nombran los tres que de verdad ocurren, y se deja constancia del motivo.*
         _SIN_BASE = True
     return not _SIN_BASE
 
