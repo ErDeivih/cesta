@@ -829,7 +829,37 @@ mismo y los arreglos no estarian en lo que se entrega. ***
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## El precache del service worker: falso defecto mio, y el diseno correcto (ronda 215)
+
+*Se fue a comprobar si el release candidate dejaria algo sin funcionar sin red. Y se encontro un «hueco» que **no
+era**:*
+
+    mi medicion:  32 entradas en el precache, todas `/assets/*.js` y `.css`
+                 -> «faltan index.html, los iconos y el manifiesto»
+
+    la realidad:  `const ARMAZON = ['/', '/site.webmanifest', '/icono.svg', '/icono-192.png', ... I 30 trozos]`
+
+*** `'/'` **es** el `index.html`. Mi regex buscaba `"/..."` y la lista usa comillas simples y el literal `/`. ***
+
+*Y el codigo lo dice en su cabecera, con el motivo:*
+
+> *«QUE se cachea: el armazon. [...] **Lo que hace falta para que la app abra: el documento, el manifiesto y los
+> iconos.** Los trozos del build se guardan solos la primera vez que se piden.»*
+
+*Y el `install` guarda **una a una y no con `addAll`**, porque `addAll` es atomico: «si una sola de las URLs falla, no
+se guarda ninguna, y el armazon se queda sin cache y nadie se entera».* *Con su nota de que **eso lo encontro una
+prueba**.*
+
+**Lo que si queda en tiempo de ejecucion, y es cosmetico:** *las dos fuentes `.woff2` y los iconos de 512.* *Sin red, la
+app **abre**, con la tipografia de reserva.* **No es un defecto: es el orden que el propio SW declara.**
+
+*** Tercera vez esta semana que el instrumento se equivoca y no el artefacto: el conteo de `<Vacio>`, el `len()` de un
+diccionario, el mojibake, y hoy una regex. ***
+
+    ruff limpio · documentos TODO BIEN · docker sigue con el 500
+
 ## Próximo comando
+
 
 
 
