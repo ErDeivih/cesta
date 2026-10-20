@@ -320,9 +320,16 @@ def marcas():
         return {
             "fecha_datos": fecha_de_gold(),
             "grupos_con_ambas": precio[0],
-            "media_propia_cent": round(precio[1] or 0),
-            "media_marca_cent": round(precio[2] or 0),
-            "ahorro_pct": round(100 * (1 - (precio[1] or 0) / (precio[2] or 1)), 1),
+            # *** UN PRECIO QUE NO SE SABE NO ES 0,00 EUR. ***
+            # *Antes: `round(precio[1] or 0)`. Con el precio propio nulo, el panel decia
+            # «0,00 EUR» de media y un ahorro del **100 %** -- que es la mentira mas grande
+            # que puede decir una cifra de ahorro.*
+            # *Ahora se pasa `None` y `ahorro_pct` solo se calcula si estan los DOS:*
+            # *`euros(null)` ya dice «no lo se», asi que la pantalla lo pinta bien sin cambios.*
+            "media_propia_cent": round(precio[1]) if precio[1] is not None else None,
+            "media_marca_cent": round(precio[2]) if precio[2] is not None else None,
+            "ahorro_pct": (round(100 * (1 - precio[1] / precio[2]), 1)
+                            if precio[1] is not None and precio[2] else None),
             "calidad_origen": [{"origen": o[0], "productos": o[1]} for o in origen],
             "aviso": (f"{round(100 * del_precio / total_origen)} % de las letras de "
                       "calidad salen de ordenar por precio, no de leer una etiqueta. "

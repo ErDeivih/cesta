@@ -444,7 +444,7 @@ export interface PanelCadenas {
 export interface PanelMarcas {
   fecha_datos: string
   grupos_con_ambas: number
-  media_propia_cent: number
+  media_propia_cent: number | null
   media_marca_cent: number
   ahorro_pct: number
   calidad_origen: { origen: string; productos: number }[]
