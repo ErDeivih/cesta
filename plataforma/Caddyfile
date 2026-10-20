@@ -50,6 +50,18 @@
 		Content-Security-Policy "default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 		# no-referrer haria que algunos CDN rechazasen la imagen.
 		Referrer-Policy strict-origin-when-cross-origin
+		# *** LO QUE EL NAVEGADOR TARDA EN ENTERARSE DE QUE HAY VERSION NUEVA. ***
+		# *Los trozos llevan hash en el nombre, asi que un trozo es inmutable: el mismo nombre es el
+		# mismo contenido, para siempre.* *Pero `sw.js` y `index.html` **no** llevan hash.*
+		#
+		# *Sin esto, el navegador puede cachear **el propio service worker** y no ver la version nueva
+		# **nunca**: la app se queda clavada en el armazon viejo. Es el fallo clasico de una PWA, y no
+		# se nota en desarrollo porque ahi no hay cache de por medio.*
+		#
+		# *`immutable` en `/assets/*` es lo que hace que 30 trozos no se vuelvan a pedir nunca.*
+		header /sw.js Cache-Control "no-cache, must-revalidate"
+		header /index.html Cache-Control "no-cache"
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
 		-Server
 	}
 
