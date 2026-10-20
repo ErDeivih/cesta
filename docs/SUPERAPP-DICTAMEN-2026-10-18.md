@@ -524,3 +524,59 @@ cuanto: 50 pruebas, y de ellas un caso de uso con nombre. ***
 *Y una cosa que si conviene decir: **siete de los trece defectos corregidos hoy eran mios**, no del proyecto. Los
 otros seis eran de configuracion. Ninguno era de calculo.*
 
+---
+
+# Revisión del 21/10/2026 (sexta) — **lo que se midió después, y con qué**
+
+*Las revisiones anteriores contaban pruebas y defectos.* *Esta añade tres cosas que **se midieron con datos reales**
+despues, y son las que sostienen lo que el dictamen puede afirmar hoy.*
+
+## 1. El motor de identidad, medido por los dos lados
+
+*En la ronda 113 se afirmo **leyendo el codigo** que solo hay una puerta al estado `exacto`: dos GTIN validos e iguales.*
+*Era una lectura, no una medicion.* *Ahora hay dos:*
+
+    GTIN DISTINTO ... 62 pares reales -> **0 exactos** (62 alternativas)
+    MISMO GTIN ..... 195 pares reales -> 43 exactos, y **los 152 restantes en cuarentena por contradiccion
+                     del dato**: 17 presentacion incompatible, 11 unidad no comparable, 10 marcas distintas...
+
+*** O sea: el motor no acierta por ser listo, sino por no tener otra puerta. Y cuando el EAN contradice al nombre, a
+la marca o a la unidad, se para. ***
+
+*Y una mejora que se probo y **se descarto con numeros**: «una marca que contiene a otra es la misma marca» habria
+fusionado **3.344 pares**; la version fina, **345**, y las palabras que se anaden son «baby», «zero», «bio», «men» --
+variantes de producto, no la marca.* *** El motor se queda como esta, cauto, y no por falta de ideas. ***
+
+## 2. Los dos calculadores del plan, barridos con 200 productos reales
+
+    costeDeReceta .......... 200 productos del gold -> **0 valores imposibles**
+    previa_de_compra ....... 200 productos del gold -> **0 valores imposibles**
+
+*«Imposible» = coste negativo, `NaN`, o coste cero con cantidad pedida.* *No dice que acierten -- eso lo dira §8 con
+base --, pero si que **no se rompen ni mienten con lo que hay**.*
+
+## 3. Un defecto real que los datos reales destaparon
+
+*Un envase de **131 g** por 924 cent, y una receta que pide **200 g**:*
+
+    «usar» costaba ......... 1.410,69 cent
+    «comprar» decia ........   924 cent   <- UN envase, cuando hacen falta DOS
+    lo que sale del bolsillo  1.848 cent
+
+*La pantalla decia que comprar costaba la mitad de lo que cuesta.* *Arreglado: `envasesQueHacenFalta` y `envasesCent`,
+16 pruebas, y el artefacto reconstruido con el hash nuevo.*
+
+## Lo que **no** ha cambiado
+
+**Las cuatro audiencias.** *Domestico **APTO con reservas menores**; movil **APTO en lo medido**; piloto **NO APTO por
+un motivo** (§8, cerrar compras de dos listas); publico **NO APTO**.*
+
+*** Y no cambia porque lo de hoy no toca §8. Lo que cambia es que tres de las afirmaciones del dictamen dejan de ser
+lecturas del codigo y pasan a ser mediciones con datos: el invariante del motor, la solidez de los dos calculadores, y
+un defecto de precio encontrado por mirar numeros de verdad. ***
+
+## Lo que falta, en una linea
+
+***43 pruebas que necesitan PostgreSQL, y de ellas el cierre de dos listas. Docker lleva veinte rondas con el motor
+atascado -- no caido: contestando 500 -- y su reinicio apaga tambien facylf, que no se toca.***
+
