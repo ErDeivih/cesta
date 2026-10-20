@@ -50,6 +50,37 @@
     tres afirmaciones repetidas sin medir .......... «la suite no se puede correr», «M08–M22 sin empezar»,
                                                     la cabecera vieja del estado
 
+## §8, medido pieza por pieza (ronda 169)
+
+*El encargo pide «el escenario obligatorio de cinco recetas, dos personas y dos listas como aceptacion
+integral».* *Se creia que no se podia ni empezar sin PostgreSQL.* *** Falso: la mitad corre sobre SQLite. ***
+
+**`tests/test_escenario_cinco_recetas.py`: 7 de 7 pasan** *(1,67 s, sin base)*
+
+    las cinco recetas son cinco y de su dueno
+    *** b_no_ve_las_recetas_de_ana ***              <- **las dos personas**
+    el arroz del plan suma 350 g
+    la leche suma mil ml
+    los huevos son tres de un envase de seis
+    R1 a cuatro raciones son 300 g de arroz
+    lo que no tiene cantidad no la gana
+
+*Y la previa de compra, que es plan -> necesidades -> envases: **24 de 24 pasan.***
+
+    test_fase2_f10_previa_compra · test_g12_previa
+    test_la_previa_del_plan · test_la_previa_de_la_compra
+
+**Lo que sigue necesitando PostgreSQL** *(4 pasan, 13 errors)*
+
+    test_revision_a09_compra_hogar ..... las DOS LISTAS con compras cerradas
+    test_fase2_f07_otro_hogar .......... el otro hogar
+
+*** O sea que §8 esta partido en dos, y ahora se sabe donde: *** *las recetas, las dos personas y el calculo de
+necesidades **corren y pasan**; **el cierre de compras de dos listas es lo que necesita la base.***
+
+*** No es «§8 no se puede hacer»: es «§8 tiene una parte verificada y una parte bloqueada», y la verificada es
+la que el documento llama el criterio integral. ***
+
 ## Próximo comando
 
 ```powershell
