@@ -451,7 +451,11 @@ arranque Docker y para que.***
 
 ---
 
-# Revisión del 21/10/2026 (quinta y última del día) — **las cifras, cuadradas**
+# Revisión del 21/10/2026 (quinta) — **las cifras, cuadradas**
+
+> *** Las cifras de esta seccion son las de ESE MOMENTO, y ya no son las de hoy. ***
+> *Se dejan escritas porque cuentan **por que** las anteriores estaban mal, que sigue siendo cierto.*
+> *La cuenta vigente esta al final del documento.*
 
 *Las revisiones anteriores de hoy dieron 1.345, luego 2.077, luego «2.077 y 32 errors».* *** Ninguna de las tres era
 la cuenta final, porque cada una medía con una configuración distinta que yo mismo había puesto antes. ***
@@ -632,4 +636,40 @@ nota en desarrollo porque ahi no hay cache de por medio.*
 *** 43 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas. ***
 *Docker lleva veinte rondas con el motor atascado -- no caido: contestando 500 en `/version` -- y su reinicio apaga
 tambien facylf, que no se toca.*
+
+---
+
+# **La cuenta vigente** — la que hay que leer
+
+*Todo lo que sigue esta medido con el arbol tal como esta, no con una corrida anterior.*
+
+```
+pytest --collect-only -q tests/ ......  2.142 pruebas recogidas, 246 ficheros
+de ellas, pasan .....................  **2.099**
+no pueden correr ....................  **43**  (todas necesitan PostgreSQL)
+
+npm test ............................  **360**
+componentes .........................   22
+`test_aprende` ......................   20
+
+TOTAL que pasa ......................  **2.099 + 360 + 22 + 20 = 2.501**
+```
+
+*Y la comprobacion de que la cuenta cierra:* ***2.142 = 2.099 + 43.***
+
+*Las cifras de las revisiones anteriores (1.345, 2.077, 2.092, 335...) eran ciertas cuando se escribieron y **estan
+superadas**.* *Se quedan porque cuentan **por que** estaban mal, que es la parte que se aprende; pero la que vale es
+esta.*
+
+## Y las puertas, con la cuenta de arriba
+
+```
+ruff ................. limpio
+comprueba_documentos . TODO BIEN
+tsc --noEmit ......... limpio
+npm run lint ......... cero avisos
+build desde cero ..... 43 ficheros, 0,82 MB, 32 trozos precacheados, 0 rotos
+nada sin commitear
+docker ............... **motor atascado**: 500 en /version, y su proxy ocupa los puertos 5432 y 5433
+```
 
