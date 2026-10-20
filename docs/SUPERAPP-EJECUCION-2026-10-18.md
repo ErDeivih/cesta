@@ -2110,3 +2110,25 @@ arbol, la garantia no depende de que el banco salga bien: **depende de que no ha
                         arbol sin parametros) -- **y eso hay que decirlo asi, no fingir una particion**
                         el **49,7 % sin EAN**: cobertura no medida, necesita etiquetas humanas
 
+**CI / LOS SEIS PASOS DEL TRABAJO WEB, EJECUTADOS AQUI Y EN ORDEN.**
+
+*El YAML valido no dice que los comandos funcionen.* *Se ejecutaron los seis, tal como los lanzaria la
+CI:*
+
+    npm ci (seco) ..... OK      <- el package-lock.json esta en sincronia
+    tsc --noEmit ...... OK
+    lint .............. OK
+    npm test .......... OK      (113 pruebas de node)
+    componentes ....... OK      (15 pruebas)
+    build ............. OK
+
+*** El trabajo `web` del CI esta verificado por completo, salvo que lo ejecute GitHub. ***
+
+*Y un dato que conviene tener: **`npm ci` no estaba roto en esta copia.*** *El informe de la otra copia
+decia «reparado npm ci»; aqui el lockfile ya cuadraba y sale en 0.* *No se toca lo que funciona.*
+
+**Lo unico que queda sin verificar de la CI:** *que GitHub Actions lo ejecute.* *Necesita un push al
+remoto, y este repo se trabaja en local.* *Los dos trabajos de Python necesitan PostgreSQL, y Docker
+lleva doce rondas sin responder -- asi que la suite y `comprueba_documentos` **no se han podido correr
+aqui**, solo comprobar que `uv sync --extra plataforma` instala lo que necesitan.*
+
