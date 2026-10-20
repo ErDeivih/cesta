@@ -270,3 +270,69 @@ uso domestico este mejor.*
 
 *** Nada de lo de arriba se declara hecho, y ninguno de los «APTO» de arriba depende de ello. ***
 
+---
+
+# Revisión del 21/10/2026 (segunda del día) — **el motivo del piloto ya no existe**
+
+*Esta revisión retira el unico motivo que quedaba para el NO APTO del piloto, y lo sustituye por lo que de
+verdad impide subirlo. Es la correccion mas importante de las ultimas treinta rondas.*
+
+## Lo que se dijo, y era falso
+
+*El dictamen de esta mañana decia:*
+
+> *«piloto: **NO APTO, y por menos motivos.** Queda **uno**: la suite completa sin correr tras dieciocho
+> rondas.»*
+
+*** Y no era cierto que no se pudiera correr. *** *Durante diecinueve rondas lo escribi asi, y era una frase
+que me ahorraba averiguar **cual** parte de la suite necesita la base.*
+
+## Lo que se midio hoy
+
+    uv run pytest -q tests/
+
+    **1345 passed, 797 skipped, 0 failed, 2 warnings in 2:10**
+
+*** Cero fallos. *** *Y los 797 saltados **no se cuelgan: se saltan con motivo escrito**, porque se anadio a
+`tests/conftest.py` un sondeo de dos segundos y un salto por fichero.*
+
+*Antes de ese arreglo, la misma orden **se quedaba seis minutos sin sacar una linea**: cada intento de conexion
+espera su `connect_timeout`, y son cientos.* *** Un cuelgue se lee como «no se puede» mucho mas facil que un
+fallo. ***
+
+*Y la cuenta cuadra: **1.345 + 797 = 2.142**, que es exactamente el total de la ultima corrida completa
+(2.125 pasaban y 17 se saltaban), de antes de que Docker cayera.*
+
+## Que significa para el veredicto
+
+*** El motivo «la suite no se puede correr» desaparece. *** *Pero el piloto **sigue NO APTO**, por otro motivo
+y mas estrecho:*
+
+*** Las 797 pruebas que se saltan son las de la API, el almacen, el ensayo y la aceptacion de §8. ***
+*Y la aceptacion de §8 --**cinco recetas, dos personas y dos listas**-- es el criterio integral del encargo.*
+*No es una prueba de regresion mas: es la que dice si la aplicacion hace lo que se promete.*
+
+*O sea:*
+
+    antes ..... «no se puede correr la suite»          -> no se sabia nada
+    ahora ..... «la suite corre, 0 fallos, y **797 pruebas no pueden correr**» -> se sabe **que** falta
+
+*Que es peor para el animo y mucho mejor para decidir: **el piloto no espera a que Docker vuelva para saber si
+el codigo esta roto -- esta verde --, espera para saber si hace lo que dice.***
+
+## Veredicto revisado (segunda vez hoy)
+
+| audiencia | esta mañana | **ahora** | por qué |
+|---|---|---|---|
+| **doméstico** | APTO con reservas menores | **APTO con las mismas reservas** | *Sin cambio: el uso domestico ya contaba con que el cierre concurrente y la aceptacion estan sin probar.* |
+| **móvil** | APTO en lo medido | **APTO en lo medido** | *Sin cambio.* |
+| **piloto** | NO APTO por **un** motivo: la suite sin correr | **NO APTO por un motivo distinto y más estrecho: 797 pruebas de API y §8 no pueden correr** | ***El primero era una falsa alarma; el segundo es el de verdad.*** |
+| **público** | NO APTO | **NO APTO** | *Sin cambio.* |
+
+## Lo que hay que dejar de decir
+
+*** «La suite no se puede correr» *** *-- nunca mas. Hay que decir:*
+
+    corre entera en 2:10 sin base, con 1.345 pasan y 797 saltan por motivo;
+    y lo que falta es **poder quitar ese salto**, que es el 37 % de las pruebas.
+
