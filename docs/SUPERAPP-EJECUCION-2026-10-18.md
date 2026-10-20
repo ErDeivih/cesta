@@ -492,23 +492,50 @@ el proyecto ya tenia la segunda en el indice, y le faltaba la primera en la fich
 sin resolver en otro, a dos ficheros de distancia.* *** Buscar la regla en el resto del codigo -- lo que ha dado
 resultado cuatro veces esta semana -- es lo que lo encuentra. ***
 
+## Ronda 200 — el estado, en una pantalla
+
+**Lo que pasa, medido hoy:**
+
+    ruff .................... limpio
+    comprueba_documentos .... TODO BIEN
+    tsc --noEmit ............ limpio
+    npm run lint ............ **cero avisos**
+    npm test ................ **335 pasan**
+    componentes ............. **22 pasan**
+    build ................... ok, verificado desde cero
+    pytest sin base ......... **2.099 pasan · 1 falla · 32 errors · 17 saltan** (5:06)
+    pytest --collect-only ... **2.142 pruebas**, y `2.142 = 2.099 + 43 que no corren`
+    nada sin commitear
+    docker .................. **caido, 21 rondas**
+
+**Lo que se cerro en estas 200 rondas del tramo final, y no es funcionalidad nueva:**
+
+    «la suite no se puede correr» ..... era falso: 1.345 pasaban, y el cuelgue era un `_pool.wait` de 65 s
+    el salto que puse para evitarlo ..... tapaba 731 pruebas y tres defectos reales
+    los dos extras que faltaban ........ `plataforma` y `docs`; 20 pruebas de `aprende` en silencio
+    la CI ............................. podia salir **verde sin correr nada**; ahora no
+    `almacen._pool` ................... global de modulo: un test daba dos respuestas
+    la regla de «que lista» ........... 6 sitios caian a «la primera que haya»; uno **escribia** en la lista
+                                        de otra persona. Ahora es una sola regla con 10 pruebas
+    `null` convertido en `0` .......... 8 casos, uno afirmaba un ahorro del 100 %, otro era un `TypeError`
+    escrituras que devuelven la intencion ... 3 sitios
+    los huecos de la serie ............ `catalogo.py` no los mandaba; el cliente llevaba meses esperandolos
+
+**Lo que NO esta hecho, y es lo unico que queda:**
+
+    **50 pruebas que necesitan PostgreSQL.** De ellas, **la aceptacion completa de §8: cerrar compras de dos
+    listas.** *Es el unico motivo del NO APTO del piloto, y no se puede sustituir con nada de lo anterior.*
+
 ## Próximo comando
 
+```powershell
+docker ps
+```
 
+*Si responde:* `uv run pytest -q tests/` -- *las 2.142 enteras, no 2.099.*
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+*Despues:* *el cierre concurrente de M06 (`FOR UPDATE` + el indice unico de la 021), y el viaje real de la cola
+offline.*
 
 
 
