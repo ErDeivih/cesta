@@ -12,7 +12,7 @@
                       *Reiniciar el motor apaga tambien facylf (5433), y eso no se toca.*
 
     PRUEBAS QUE CORREN Y PASAN
-    pytest (sin base) ... **2.099**  · de **2.142** recogidas, **43 no pueden** (todas de base)
+    pytest (sin base) ... **2.099**  · de **2.149** recogidas, **50 no pueden** (todas de base)
     npm test ............ **360**
     componentes ......... **22**
     test_aprende ........ **20**
@@ -25,9 +25,9 @@
     nada sin commitear
 
     PRUEBAS QUE NO PUEDEN CORRER
-    **43** necesitan PostgreSQL: 32 `errors`, 17 `skipped`, 1 `failed`, todas con el motivo
+    **50** necesitan PostgreSQL: 32 `errors`, 17 `skipped`, 1 `failed`, todas con el motivo
     escrito (`sin almacen en CESTA_POSTGRES al importar`).
-    *** Y la cuenta cierra: 2.142 = 2.099 + 43. ***
+    *** Y la cuenta cierra: 2.149 = 2.099 + 50. ***
 
     LOS PAQUETES
     M00–M05 ..... cerrados y verificados
@@ -56,7 +56,7 @@
     que comprar costaba **la mitad** de lo que cuesta. Arreglado, 16 pruebas.
 
     LO QUE FALTA, EN UNA LINEA
-    *** 43 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas:
+    *** 50 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas:
     es el unico motivo del NO APTO del piloto. ***
 
 ## §8, medido pieza por pieza (ronda 169)
@@ -513,7 +513,7 @@ resultado cuatro veces esta semana -- es lo que lo encuentra. ***
     componentes ............. **22 pasan**
     build ................... ok, verificado desde cero
     pytest sin base ......... **2.099 pasan · 1 falla · 32 errors · 17 saltan** (5:06)
-    pytest --collect-only ... **2.142 pruebas**, y `2.142 = 2.099 + 43 que no corren`
+    pytest --collect-only ... **2.149 pruebas**, y `2.149 = 2.099 + 50 que no corren`
     nada sin commitear
     docker .................. **caido, 21 rondas**
 
@@ -563,7 +563,7 @@ el 5433, que es **facylf**, y esa es una guarda que no se toca.*
 cd F:\aprendizaje\scrap
 docker ps                                   # 1. el motor contesta?
 
-# 2. las 2.142 pruebas enteras, sin saltarse nada
+# 2. las 2.149 pruebas enteras, sin saltarse nada
 $env:CESTA_SALTAR_SIN_BASE = "0"
 $env:CESTA_ESPERA_BASE = "1"
 uv run pytest -q tests/
@@ -1015,7 +1015,7 @@ la convierte en una afirmacion sin prueba. ***
 docker ps
 ```
 
-*Si responde:* `uv run pytest -q tests/` -- *las 2.142 enteras, no 2.099.*
+*Si responde:* `uv run pytest -q tests/` -- *las 2.149 enteras, no 2.099.*
 
 *Despues:* *el cierre concurrente de M06 (`FOR UPDATE` + el indice unico de la 021), y el viaje real de la cola
 offline.*

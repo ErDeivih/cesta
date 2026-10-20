@@ -581,7 +581,7 @@ un defecto de precio encontrado por mirar numeros de verdad. ***
 
 ## Lo que falta, en una linea
 
-***43 pruebas que necesitan PostgreSQL, y de ellas el cierre de dos listas. Docker lleva veinte rondas con el motor
+***50 pruebas que necesitan PostgreSQL, y de ellas el cierre de dos listas. Docker lleva veinte rondas con el motor
 atascado -- no caido: contestando 500 -- y su reinicio apaga tambien facylf, que no se toca.***
 
 ---
@@ -633,7 +633,7 @@ nota en desarrollo porque ahi no hay cache de por medio.*
 
 ## Sin cambios, y hay que repetirlo
 
-*** 43 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas. ***
+*** 50 pruebas que necesitan PostgreSQL, y de ellas el cierre de compras de dos listas. ***
 *Docker lleva veinte rondas con el motor atascado -- no caido: contestando 500 en `/version` -- y su reinicio apaga
 tambien facylf, que no se toca.*
 
@@ -644,9 +644,9 @@ tambien facylf, que no se toca.*
 *Todo lo que sigue esta medido con el arbol tal como esta, no con una corrida anterior.*
 
 ```
-pytest --collect-only -q tests/ ......  2.142 pruebas recogidas, 246 ficheros
+pytest --collect-only -q tests/ ......  **2.149** pruebas recogidas, 246 ficheros
 de ellas, pasan .....................  **2.099**
-no pueden correr ....................  **43**  (todas necesitan PostgreSQL)
+no pueden correr ....................  **50**  (todas necesitan PostgreSQL)
 
 npm test ............................  **360**
 componentes .........................   22
@@ -655,7 +655,7 @@ componentes .........................   22
 TOTAL que pasa ......................  **2.099 + 360 + 22 + 20 = 2.501**
 ```
 
-*Y la comprobacion de que la cuenta cierra:* ***2.142 = 2.099 + 43.***
+*Y la comprobacion de que la cuenta cierra:* ***2.149 = 2.099 + 50.***
 
 *Las cifras de las revisiones anteriores (1.345, 2.077, 2.092, 335...) eran ciertas cuando se escribieron y **estan
 superadas**.* *Se quedan porque cuentan **por que** estaban mal, que es la parte que se aprende; pero la que vale es
