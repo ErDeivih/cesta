@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable
+from pathlib import Path
 
 from core import identidad
 
@@ -203,3 +204,80 @@ def _sirve(c: dict) -> dict:
                 "motivo": f"se abstiene en el {100 * (1 - cobertura):.0f} % de los pares: "
                           "no clasificarlo todo como desconocido"}
     return {"vale": True, "motivo": "hay decisiones y cobertura suficiente para leer la precision"}
+
+
+def carga(ruta) -> list[dict]:
+    """*** Lee el banco de pares y lo convierte en lo que `mide()` espera. ***
+
+    *El fichero lo escribe `scripts/construye_banco_identidad.py`: **una linea JSON por par**, con los
+    datos de las dos fichas, la relacion anotada, la evidencia, el autor y la fecha.*
+
+    *Se valida al leer, y **se rechaza lo ambiguo**: `cierto` tiene que ser `True`, `False` o `None`, y
+    nada mas.* *Un banco que se lee a ciegas convierte un `"False"` en un acierto sin que nadie lo vea.*
+    """
+    import json
+
+    pares: list[dict] = []
+    for numero, linea in enumerate(Path(ruta).read_text(encoding="utf-8").splitlines(), start=1):
+        if not linea.strip():
+            continue
+        datos = json.loads(linea)
+        for lado in ("a", "b"):
+            ficha = datos.get(lado) or {}
+            if not ficha.get("fuente") or not ficha.get("id_fuente"):
+                raise ValueError(f"par {numero}: al lado {lado} le falta fuente o id_fuente")
+        cierto = datos.get("cierto")
+        if cierto is not None and not isinstance(cierto, bool):
+            raise ValueError(f"par {numero}: `cierto` no es booleano ni None: {cierto!r}")
+        pares.append({
+            "id": f"{datos['a']['fuente']}:{datos['a']['id_fuente']}"
+                  f"|{datos['b']['fuente']}:{datos['b']['id_fuente']}",
+            "a": identidad.Producto(
+                fuente=datos["a"]["fuente"], id_fuente=datos["a"]["id_fuente"],
+                nombre=datos["a"].get("nombre"), marca=datos["a"].get("marca"),
+                gtin=datos["a"].get("ean")),
+            "b": identidad.Producto(
+                fuente=datos["b"]["fuente"], id_fuente=datos["b"]["id_fuente"],
+                nombre=datos["b"].get("nombre"), marca=datos["b"].get("marca"),
+                gtin=datos["b"].get("ean")),
+            "cierto": cierto,
+            "estrato": datos.get("estrato"),
+            "quien": datos.get("autor"),
+        })
+    return pares
+
+
+def informe(medida: dict) -> str:
+    """*La medida en palabras, con lo que la spec pide publicado y nada mas.*
+
+    *Se publican **cuatro** cosas juntas, y nunca la precision sola: predicciones, evaluables,
+    sin etiqueta y abstencion del motor.* *Una precision sin cobertura no dice nada.*
+    """
+    g = medida["global"]
+    def pct(valor, dec=1):
+        return "-" if valor is None else str(round(100 * valor, dec)) + " %"
+
+    lineas = [
+        "pares: " + str(g["total"])
+        + "  (evaluables " + str(g["evaluables"])
+        + ", sin etiqueta " + str(g["exactos_sin_etiqueta"]) + " de las predicciones"
+        + ", desconocidos en el banco " + str(g["desconocidos"]) + ")",
+        "precision: " + pct(g["precision"]) + "   recall: " + pct(g["recall"]),
+        "exactos: " + str(g["exactos"]) + "   bien " + str(g["exactos_bien"])
+        + "   MAL " + str(g["exactos_mal"]) + "   abstiene: " + str(g["abstiene"]),
+        "cobertura del motor: " + pct(g["cobertura"])
+        + "   cobertura de anotacion: " + pct(g["cobertura_anotacion"]),
+        "sirve: " + str(medida["sirve"]["vale"]) + " -- " + medida["sirve"]["motivo"],
+        "",
+        "  por estrato (solo los que tienen pares):",
+    ]
+    for nombre, e in medida["por_estrato"].items():
+        prec = pct(e["precision"], 0)
+        lineas.append(
+            "    " + nombre.ljust(26) + str(e["total"]).rjust(3) + " pares"
+            + "  precision " + prec.rjust(5)
+            + "  exactos " + str(e["exactos"]).rjust(3)
+            + "  mal " + str(e["exactos_mal"]).rjust(2)
+            + "  abstiene " + str(e["abstiene"]).rjust(3)
+        )
+    return "\n".join(lineas)
