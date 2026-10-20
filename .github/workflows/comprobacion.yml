@@ -67,7 +67,7 @@ jobs:
       # suite no puede importar `plataforma.api`.*
       # *Sin esto, el trabajo fallaria o -- peor -- se saltaria en silencio por los `importorskip`.*
       - name: dependencias
-        run: uv sync --extra plataforma
+        run: uv sync --extra plataforma --extra docs
       - name: ruff
         run: uv run ruff check .
       - name: la suite
@@ -117,6 +117,6 @@ jobs:
       # citadas existan y que los planes no prometan lo que el codigo no tiene.*
       # *Y aqui lo mismo: `comprueba_documentos` vive en `plataforma`, que necesita el extra.*
       - name: dependencias
-        run: uv sync --extra plataforma
+        run: uv sync --extra plataforma --extra docs
       - name: documentos
         run: uv run python -m plataforma.comprueba_documentos
