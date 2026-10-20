@@ -19,12 +19,23 @@ import { estaAtascada } from '../logica/espera.ts'
 export class ErrorApi extends Error {
   readonly estado: number
   readonly detalle: string | null
+  /** *** El cuerpo entero de la respuesta, cuando lo hubo. ***
+   *
+   * *No es un adorno: **un 409 del cierre trae `cotizacion_nueva` y `sello_visto`**, y hasta hoy se tiraban
+   * a la basura.* *La pantalla decia «no cuadra» y se acababa, cuando lo correcto es enseñar la cotizacion
+   * nueva y pedir que se confirme otra vez.*
+   *
+   * *Se guarda **el cuerpo tal cual** y no campos sueltos: quien lo mire sabe que es lo que mando el
+   * servidor, y el siguiente 409 que traiga otro dato no necesita tocar esta clase.*
+   */
+  readonly cuerpo: unknown
 
-  constructor(estado: number, detalle: string | null) {
+  constructor(estado: number, detalle: string | null, cuerpo: unknown = null) {
     super(detalle ?? `La API ha contestado ${estado}.`)
     this.name = 'ErrorApi'
     this.estado = estado
     this.detalle = detalle
+    this.cuerpo = cuerpo
   }
 }
 
@@ -117,7 +128,7 @@ export async function pide<T>(
     // `await respuesta.json()` tira un SyntaxError que no dice nada util.
   }
 
-  if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalleDe(cuerpo))
+  if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalleDe(cuerpo), cuerpo)
   return cuerpo as T
 }
 

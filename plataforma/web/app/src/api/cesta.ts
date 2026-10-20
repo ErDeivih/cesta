@@ -417,7 +417,7 @@ export async function escribe<T>(ruta: string, metodo: 'POST' | 'PUT' | 'PATCH' 
     // Un 502 de Caddy delante de una API caida no es JSON: el detalle se queda
     // en null y el codigo de estado ya cuenta lo que hay que contar.
   }
-  if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalle)
+  if (!respuesta.ok) throw new ErrorApi(respuesta.status, detalle, dato)
   return dato as T
 }
 

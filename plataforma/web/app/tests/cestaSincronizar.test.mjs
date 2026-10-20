@@ -105,3 +105,50 @@ test('y manda JSON, no un formulario', async () => {
   assert.match(llamadas[0].opciones.headers['Content-Type'], /application\/json/)
   assert.equal(llamadas[0].opciones.method, 'POST')
 })
+
+// ------------------------------------------------- el 409 del cierre, con su cuerpo ---
+
+test('*** un 409 del cierre trae `cotizacion_nueva`, y ahora SE PUEDE LEER ***', async () => {
+  // *Antes `ErrorApi` solo guardaba el `detalle`: el cuerpo del 409 se tiraba a la basura, y con el la
+  // cotizacion nueva que el servidor manda justo para poder reconfirmar.*
+  // *O sea que la pantalla decia «no cuadra» y se acababa, cuando lo correcto es enseñar la cotizacion
+  // nueva y pedir que se confirme otra vez.*
+  const nueva = { sello: 'nuevo-sello', total_cent: 4500 }
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 409,
+    json: async () => ({
+      detail: 'El precio ha cambiado desde que miraste la lista.',
+      sello_visto: 'viejo-sello',
+      cotizacion_nueva: nueva,
+    }),
+  })
+  await assert.rejects(
+    () => sincronizar('lista-1', []),
+    (e) => {
+      assert.equal(e.estado, 409)
+      assert.match(e.detalle, /ha cambiado/)
+      // *Y el cuerpo entero, que es lo que permite ofrecer reconfirmar.*
+      assert.deepEqual(e.cuerpo.cotizacion_nueva, nueva)
+      assert.equal(e.cuerpo.sello_visto, 'viejo-sello')
+      return true
+    },
+  )
+})
+
+test('*** y un error sin cuerpo deja `cuerpo` en null, no en undefined ***', async () => {
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 500,
+    json: async () => {
+      throw new SyntaxError('no es json')
+    },
+  })
+  await assert.rejects(
+    () => sincronizar('lista-1', []),
+    (e) => {
+      assert.equal(e.cuerpo, null, 'null: se sabe que no hay, no que falte')
+      return true
+    },
+  )
+})
