@@ -1333,7 +1333,6 @@ export function Cesta() {
   useEffect(() => {
     setCola(listaId ? leerCola(listaId) : [])
     setSubidos(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listaId])
 
   // Y se sube solo **al volver la cobertura** -- y al abrir la lista, por si la pestaña

@@ -91,7 +91,6 @@ export function Buscar() {
     if (q.length < MINIMO || !resultados.data) return
     const t = window.setTimeout(() => setRecientes(apuntaBusqueda(q)), 1000)
     return () => window.clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros.q, resultados.data])
 
   // El texto que se teclea y el que se busca no son el mismo: este se retrasa.
@@ -106,7 +105,6 @@ export function Buscar() {
   // cuadro de texto se pone al dia. Sin esto quedaria escrito lo de antes.
   useEffect(() => {
     setTexto(filtros.q)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros.q])
 
   const puestos = cuantosFiltros(filtros)
