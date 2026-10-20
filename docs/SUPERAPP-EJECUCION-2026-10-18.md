@@ -31,7 +31,32 @@ API en 8080.* *Lo que **sí** se puede comprobar y se ha comprobado en ese tiemp
                   la API.
     CI .......... tres trabajos (python/web/documentos), dependencias verificadas. **Sin ejecutar en
                   remoto**: necesita un push, y este repo se trabaja en local.
-    M08–M14, M16–M22 ..... sin empezar.
+    *M08–M14, M16–M22 ..... **«sin empezar» era FALSO, y se corrige aqui.***
+
+*Comprobado hoy: **hay pagina y cliente de API para cada uno de esos espacios.***
+
+    espacio .............. pagina (lineas) ......... cliente
+    Despensa ............. Despensa (·) ........... api/despensa
+    Favoritos/alertas .... Favoritos (416), Avisos  api/favoritos, api/alertas
+    Recetario ............ Recetario (286), RecetaDetalle, ImportarReceta, Cocina (·)
+                                                 ... api/recetas, api/cocina, api/importar
+    Plan semanal ......... PlanSemanal (377) ...... (dentro de api/cesta)
+    Diario ............... Diario (551) ........... api/diario
+    Tendencias/graficas .. Tendencias (·) ......... api/consultas
+    Operacion ............ Panel (1302), PanelMatching (384), Ajustes, Escaner, Unirse
+
+*Y las rutas estan registradas en `App.tsx`: `/compra/despensa`, `/compra/favoritos`,
+`/compra/analisis`, `/recetas`, `/recetas/plan`, `/calorias`, `/calorias/alimentos`,
+`/calorias/tendencias`, `/panel/matching`.*
+
+*** 9.254 lineas de pagina en 21 ficheros. *** *Llamar a eso «sin empezar» era el mismo error que la
+cabecera vieja: dar por cierto lo que se dijo hace cien rondas sin volver a mirarlo.*
+
+**Lo que sigue siendo cierto, y hay que decirlo con la misma claridad:** *que **exista** la pagina no es que
+**funcione**.* *No estan verificados con datos: ni el diario con ingestas, ni el plan con recetas, ni la
+despensa con stock, ni las graficas con series.* *** Eso necesita la base, y lleva dieciocho rondas caida. ***
+*Lo que si esta verificado de estos espacios es la **logica pura** que usan: `logica/` 15 de 15 y `estado/`
+6 de 6 con prueba, incluidas las del recetario, el coste de receta, la nutricion y las graficas.*
 
 **Codigo puro del cliente.** *`logica/` 15 de 15 con prueba y sin una sola dependencia de `api/`;
 `estado/` 6 de 6; `api/formato` y `api/cliente` y las dos rutas de `api/cesta` que importan
