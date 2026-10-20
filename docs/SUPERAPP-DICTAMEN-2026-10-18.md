@@ -393,3 +393,59 @@ cambia el dictamen; cambia **lo que se sabe**.*
 *** Y la frase del dictamen anterior, «corre entera en 2:10 con 1.345 pasan», queda sustituida por esta: corre
 entera en 4:47 con **2.077 pasan**, y lo que falta son **33 pruebas que necesitan una base que no hay**.***
 
+---
+
+# Revisión del 21/10/2026 (cuarta) — **§8 no estaba entero bloqueado: la mitad corre y pasa**
+
+*El encargo pide «el escenario obligatorio de **cinco recetas, dos personas y dos listas** como aceptacion
+integral».* *Este dictamen llevaba diciendo, en cada revision, que eso **no se podia hacer** sin base.*
+
+*** Y no es cierto: se puede hacer la mitad, y esa mitad lleva meses escrita. ***
+
+## Lo medido
+
+    tests/test_escenario_cinco_recetas.py ....... **7 de 7 pasan**  (1,67 s, sin base)
+    la previa de compra (plan -> necesidades -> envases) ... **24 de 24 pasan**
+
+*Los siete, con nombre y apellido:*
+
+    las cinco recetas son cinco y de su dueno
+    *** b_no_ve_las_recetas_de_ana ***            <- **las dos personas**, y B no ve lo de Ana
+    el arroz del plan suma 350 g
+    la leche suma mil ml
+    los huevos son tres de un envase de seis
+    R1 a cuatro raciones son 300 g de arroz
+    lo que no tiene cantidad no la gana
+
+*Corren sobre **SQLite**, no sobre PostgreSQL: el escenario de recetas no necesita la base de la aplicacion.*
+
+## Lo que si sigue bloqueado
+
+    test_revision_a09_compra_hogar ....... las **dos listas con compras cerradas**  (13 errors)
+    test_fase2_f07_otro_hogar ............ el **otro hogar**                          (errors)
+
+*** O sea: el bloqueo de §8 no es «§8», es **el cierre de compras de dos listas**. *** *Las recetas, las dos
+personas y el calculo de necesidades estan verdes desde hace meses y nadie lo habia mirado.*
+
+## Lo que esto cambia del veredicto
+
+*** Por primera vez desde que empezo este dictamen, el piloto tiene un motivo que **no** es «no se puede
+comprobar».***
+
+| audiencia | antes | **ahora** | por qué |
+|---|---|---|---|
+| **doméstico** | APTO con reservas | **APTO con las mismas reservas** | *Sin cambio: lo nuevo refuerza, no abre.* |
+| **móvil** | APTO en lo medido | **APTO en lo medido** | *Sin cambio.* |
+| **piloto** | NO APTO: la aceptacion integral sin poder correr | **NO APTO, y por un motivo mucho mas estrecho: el cierre de compras de dos listas** | ***Ya no es «no se puede comprobar §8»: es «§8 tiene una parte comprobada y una que necesita base».*** |
+| **público** | NO APTO | **NO APTO** | *Sin cambio: sin auditoria externa ni datos de otras casas.* |
+
+## Y la frase que hay que dejar de decir
+
+*** «§8 necesita la base» *** *-- nunca mas. Hay que decir:*
+
+    §8 tiene dos piezas. Las recetas con dos personas y el calculo de necesidades **pasan**
+    (7 + 24 pruebas, sobre SQLite). Lo que necesita PostgreSQL es **cerrar compras de dos listas**.
+
+*** Que es una diferencia grande: la primera frase paraliza, la segunda dice a quien hay que pedirle que
+arranque Docker y para que.***
+
