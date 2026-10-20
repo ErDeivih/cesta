@@ -3,86 +3,40 @@
 > *** ESTADO CORTO. Lo de abajo es historia y contexto: sirve para no repetir trabajo, no como prueba de
 > que algo esté hecho. ***
 
-## Dónde está esto (ronda 143)
+## Dónde está esto (ronda 148)
 
-**El pendiente del 409, cerrado con evidencia y sin refactor.** *Estaba anotado como «falta la prueba de
-componente de que el 409 del cierre se muestra».* *Comprobado hoy, la cadena entera existe y esta mirada
-por las dos puntas:*
+**Los 3 avisos de lint, diagnosticados y NO arreglados, con el motivo.**
 
-    servidor ...... 409 con `{detalle, sello_visto, cotizacion_nueva}`, y **sin escribir compra**
-                   (aceptacion HTTP, `scripts/aceptacion_m06_cierre.py`, 9 de 9)
-    cliente ....... `ErrorApi(409, detalle)` ............... probado en `cliente.test.mjs`
-    texto ......... `textoDeError` devuelve el `detalle` ... probado en `cliente.test.mjs`
-    pantalla ...... `Cesta.tsx:830` `{cerrar.isError && <Etiqueta tono="mal">{textoDeError(cerrar.error)}</Etiqueta>}`
+*Son tres `eslint-disable-next-line react-hooks/exhaustive-deps` que el linter marca como **sobrantes**:*
 
-*** Y el ultimo tramo es una expresion sin ramas: no hay un caso en el que el error exista y no se pinte. ***
+    Buscar.tsx:94, Buscar.tsx:109, Cesta.tsx:1336
 
-*Sacar `CerrarCompra` a su propio fichero para probar esa linea es un refactor de 120 lineas dentro de un
-fichero de 1.782; **no se hace para probar una linea que no decide nada**.* *Queda escrito donde esta, para
-que la proxima vez no se busque.*
+*Ayer quite uno y aparecieron **dos avisos reales** que estaban tapados:*
 
-**Lo que si sigue abierto y no es lo mismo:** *el 409 se **enseña**, pero no se ha comprobado que la pantalla
-**ofrezca volver a confirmar con la cotizacion nueva**.* *El servidor devuelve `cotizacion_nueva` y hoy el
-cliente no lo usa para pintar la previa actualizada -- solo muestra el mensaje.* *** Eso es una capacidad que
-falta, no una prueba que falte. ***
+    Buscar.tsx:101  missing dependencies: 'filtros' y 'ponFiltros'
+    Cesta.tsx:1352  missing dependency: 'sube'
 
-API en 8080.* *Lo que **sí** se puede comprobar y se ha comprobado en ese tiempo:*
+*** O sea que no son cosmeticos: detras hay dos `useEffect` que pueden estar leyendo valores viejos. ***
 
-    ruff .................... limpio
-    comprueba_documentos .... TODO BIEN
-    tsc --noEmit ............ limpio
-    npm test ................ **311 pasan**
-    npm run test:componentes  15 pasan
-    npm run lint ............ 0 errores
-    npm run build ........... ok (sella 31 trozos)
-    PyYAML sobre la CI ...... válido
+**El diagnostico, que hoy no se cierra.** *Las directivas estan colocadas **antes del `return`** de cada
+efecto, y el aviso se reporta en la linea de la lista de dependencias.* *Por eso el linter las llama
+sobrantes: cubren la linea equivocada.* *Con la directiva fuera, el aviso aparece en la linea de deps -- que es
+lo que paso ayer.*
 
-**Paquetes.**
+**Se intento moverlas a la linea correcta y salio peor:** *un reemplazo a ciegas de `}, [...])` toco una linea
+que no era un efecto y **subieron a 4 avisos**, uno de ellos en `Buscar.tsx:56`.*
 
-    M00–M05 ..... cerrados y verificados
-    M06 ......... la cadena cotizacion->confirmacion->persistencia esta probada por HTTP (9 de 9).
-                  **Abierto: el cierre concurrente puede crear dos compras.** La idempotencia del
-                  cliente esta probada; la del servidor (migracion 021) esta escrita y **sin usar**.
-    M07 ......... cerrado: banco de **210 pares** (objetivo 200), con evidencia, autor y fecha;
-                  precision 100 % sobre 52, especificidad 100 % sobre 70, los cuatro estados suman 210;
-                  umbral documentado como diez reglas. Abierto: cobertura del 49,7 % sin EAN.
-    M15 ......... instalable, armazon de marca, offline desde la 2.a visita. La cola offline esta probada
-                  **por los dos lados del cable** (guardar 10 pruebas, mandar 8). El viaje real necesita
-                  la API.
-    CI .......... tres trabajos (python/web/documentos), dependencias verificadas. **Sin ejecutar en
-                  remoto**: necesita un push, y este repo se trabaja en local.
-    *M08–M14, M16–M22 ..... **«sin empezar» era FALSO, y se corrige aqui.***
+*** Se revirtio, y se comprobo despues de revertir: *** *lint 3 avisos (los de siempre), `tsc` limpio, 320
+pruebas, build ok.*
 
-*Comprobado hoy: **hay pagina y cliente de API para cada uno de esos espacios.***
+*Lo que haria falta, para quien lo retome: **mover cada directiva a mano, mirando las cuatro lineas del
+efecto**, no con un reemplazo por patron.* *Y despues **mirar** los dos avisos que aparecen, que son los que
+importan -- `useEffect` que lee `filtros` o `sube` sin tenerlos en la lista.*
 
-    espacio .............. pagina (lineas) ......... cliente
-    Despensa ............. Despensa (·) ........... api/despensa
-    Favoritos/alertas .... Favoritos (416), Avisos  api/favoritos, api/alertas
-    Recetario ............ Recetario (286), RecetaDetalle, ImportarReceta, Cocina (·)
-                                                 ... api/recetas, api/cocina, api/importar
-    Plan semanal ......... PlanSemanal (377) ...... (dentro de api/cesta)
-    Diario ............... Diario (551) ........... api/diario
-    Tendencias/graficas .. Tendencias (·) ......... api/consultas
-    Operacion ............ Panel (1302), PanelMatching (384), Ajustes, Escaner, Unirse
+**Lo demas sigue igual.** *\(Ver el bloque de la ronda 143 y anteriores para el detalle de paquetes; lo unico
+nuevo es este diagnostico.\)*
 
-*Y las rutas estan registradas en `App.tsx`: `/compra/despensa`, `/compra/favoritos`,
-`/compra/analisis`, `/recetas`, `/recetas/plan`, `/calorias`, `/calorias/alimentos`,
-`/calorias/tendencias`, `/panel/matching`.*
-
-*** 9.254 lineas de pagina en 21 ficheros. *** *Llamar a eso «sin empezar» era el mismo error que la
-cabecera vieja: dar por cierto lo que se dijo hace cien rondas sin volver a mirarlo.*
-
-**Lo que sigue siendo cierto, y hay que decirlo con la misma claridad:** *que **exista** la pagina no es que
-**funcione**.* *No estan verificados con datos: ni el diario con ingestas, ni el plan con recetas, ni la
-despensa con stock, ni las graficas con series.* *** Eso necesita la base, y lleva dieciocho rondas caida. ***
-*Lo que si esta verificado de estos espacios es la **logica pura** que usan: `logica/` 15 de 15 y `estado/`
-6 de 6 con prueba, incluidas las del recetario, el coste de receta, la nutricion y las graficas.*
-
-**Codigo puro del cliente.** *`logica/` 15 de 15 con prueba y sin una sola dependencia de `api/`;
-`estado/` 6 de 6; `api/formato` y `api/cliente` y las dos rutas de `api/cesta` que importan
-(`cerrarCompra` con sello, `sincronizar`) tambien.* *Total: 311 pruebas.*
-
-## Próximo comando
+# Próximo comando
 
 ```powershell
 cd F:\aprendizaje\scrap
