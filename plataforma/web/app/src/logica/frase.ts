@@ -15,9 +15,31 @@
  *  Esta funcion no pinta nada: solo decide que se dice. Se separa para poder
  *  probarla y para que la regla no acabe enterrada en medio del JSX de una ficha.
  */
-import { euros, nombreCadena } from '../api/formato'
 
 /** Lo que hace falta para decidir la frase. Todos los datos vienen de `/api/grupo`. */
+/** *** LO QUE LA FRASE NECESITA DEL FORMATO, Y QUE LE DA QUIEN LA LLAMA. ***
+ *
+ * *Antes esto importaba `euros` y `nombreCadena` de `../api/formato`.* *Y `api/formato` arrastra cosas
+ * que la aplicacion usa en el navegador, asi que **`node --test` no podia ni cargar este modulo**: la
+ * prueba se quedaba en `ERR_MODULE_NOT_FOUND`.*
+ *
+ * *No es un problema de la aplicacion -- funciona en el navegador -- sino de **testabilidad**, y es el
+ * mismo que `gasto.ts` documenta haber tenido y resuelto.*
+ *
+ * *Se podria haber copiado aqui un `euros` de tres lineas. No se ha hecho: **duplicar el formato es
+ * garantizar que algun dia digan cosas distintas**.* *En su lugar, el modulo **pide** las dos funciones y
+ * cada llamador pasa las suyas -- las de `api/formato`, que siguen siendo las unicas.*
+ *
+ * *Y eso ademas deja probarlo: en la prueba se pasan dos dobles triviales y se comprueba la tabla de
+ * decision sin arrastrar el navegador.*
+ */
+export interface FormatoDeLaFrase {
+  /** *Centimos a texto: `€` con coma decimal.* */
+  euros: (centimos: number) => string
+  /** *El nombre de la cadena como se escribe: `Mercadona`, no `mercadona`.* */
+  nombreCadena: (cadena: string) => string
+}
+
 export interface DatosParaLaFrase {
   /** Cuantas cadenas distintas tienen este producto. */
   cadenas: number
@@ -57,7 +79,7 @@ export interface DatosParaLaFrase {
  *  Un `null` no es un fallo de la funcion: es la respuesta correcta cuando no hay
  *  comparacion que hacer o cuando no nos la creemos.
  */
-export function fraseDePrecio(d: DatosParaLaFrase): string | null {
+export function fraseDePrecio(d: DatosParaLaFrase, formato: FormatoDeLaFrase): string | null {
   if (!d.fiable) return null
   if (d.cadenas < 2) return null
 
@@ -69,7 +91,7 @@ export function fraseDePrecio(d: DatosParaLaFrase): string | null {
   // decirlo a ojo con el `ahorro_pct` del grupo seria hablar del grupo entero
   // como si fuera de este producto. Mejor la frase sin numero que un numero falso.
   if (este == null || minimo == null) {
-    return barata ? `La más barata está en ${nombreCadena(barata)}.` : null
+    return barata ? `La más barata está en ${formato.nombreCadena(barata)}.` : null
   }
 
   // Empate: no hay ahorro que anunciar, y decir "un 0 % mas barato" es ruido.
@@ -77,12 +99,12 @@ export function fraseDePrecio(d: DatosParaLaFrase): string | null {
     const cuantas = d.cadenas === 2 ? 'las dos cadenas' : `las ${d.cadenas} cadenas`
     return este === minimo && d.ahorro_cent === 0
       ? `Está al mismo precio en ${cuantas}.`
-      : `Es la más barata de ${cuantas}: te ahorras ${euros(d.ahorro_cent)} ` +
+      : `Es la más barata de ${cuantas}: te ahorras ${formato.euros(d.ahorro_cent)} ` +
         `frente a la más cara.`
   }
 
   const mas = Math.round((100 * (este - minimo)) / minimo)
   return barata
-    ? `Cuesta un ${mas} % más que en ${nombreCadena(barata)}.`
+    ? `Cuesta un ${mas} % más que en ${formato.nombreCadena(barata)}.`
     : `Cuesta un ${mas} % más que la más barata.`
 }

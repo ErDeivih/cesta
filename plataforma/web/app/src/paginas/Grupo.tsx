@@ -325,7 +325,7 @@ export function Grupo() {
               // nunca «cuesta un X % mas que en ...», que habla de un producto.
               precio_unidad_este: ganadora?.producto.precio_unidad_cent ?? null,
               precio_unidad_minimo: ganadora?.producto.precio_unidad_cent ?? null,
-            })
+            }, { euros, nombreCadena })
             if (!frase) return null
             // *** Y SE DICE DE QUE ES LA DIFERENCIA. ***
             // *`fraseDePrecio` recibe `grupo.ahorro_cent`, la horquilla **del grupo de equivalencias**:

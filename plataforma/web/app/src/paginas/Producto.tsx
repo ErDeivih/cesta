@@ -351,7 +351,7 @@ export function Producto() {
               cadena_de_este: miembro.fuente,
               precio_unidad_este: miembro.precio_unidad_cent,
               precio_unidad_minimo: comp.minimo,
-            })
+            }, { euros, nombreCadena })
             if (!frase) return null
             return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
           })()}
