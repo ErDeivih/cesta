@@ -157,7 +157,27 @@ esperan.*
 **Y lo que sigue sin verificarse de la CI: que GitHub la ejecute.** *Necesita un push al remoto, y este repo se
 trabaja en local. Todo lo demas esta leido del fichero.*
 
+## M03: la eleccion de lista en Calorias (ronda 176)
+
+*El encargo nombra este criterio con palabras: **«eleccion explicita de lista en Calorias»**.* *Comprobado:
+**esta implementado**, y con el defecto que lo motivo escrito al lado.*
+
+    `Diario.tsx:65`  «**Solo la lista de casa, y sin elegir otra en silencio.** Antes esto era
+                     `find(es_de_casa)?.id ?? listas.data?.[0]?.id`: si no habia lista de casa, ...
+                     que hubiera, **que puede ser la de otra persona del hogar o una lista de ideas**.»
+    `Diario.tsx:69`  «*** LA LISTA SE ELIGE, *y solo si hace falta*. ***»
+    `Diario.tsx:82`  `sesion.data?.preferencias?.lista_del_diario`  <- la eleccion **se recuerda**
+    `Diario.tsx:89`  `elegida ?? casa?.id ?? null`                  <- **y no se cae a otra lista**
+
+*** El fallo que M03 queria evitar -- que la pantalla coja la primera lista que haya y anote una compra en la
+lista de otra persona -- esta cerrado, y el comentario dice exactamente cual era. ***
+
+**Lo que falta de este criterio: la prueba de componente.** *No hay ninguna que compruebe que el selector
+guarda la preferencia y que sin lista de casa no elige otra en silencio.* *Es la misma situacion que el 409: la
+logica esta, la prueba no.* *Y esta si se puede escribir sin base, porque el selector vive en el cliente.*
+
 ## Próximo comando
+
 
 
 
