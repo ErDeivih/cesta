@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { estaAtascada } from '../logica/espera'
+import { estaAtascada } from '../logica/espera.ts'
 
 /** El unico sitio del frontend que habla con el servidor.
  *
