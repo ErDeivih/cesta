@@ -151,18 +151,33 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(autouse=True)
 def _el_pool_no_sobrevive_a_la_prueba():
-    """*Cada prueba empieza sin pool heredado de la anterior.*"""
+    """*El pool se cierra **solo si es de otra base**, no en cada prueba.*
+
+    *** Por que no se cierra siempre, medido el 21/10/2026. *** *La version anterior cerraba
+    `almacen._pool` despues de **cada** prueba.* *Eso arreglaba `test_g01_recibo_del_puente` (que
+    heredaba un pool de otro fichero), y **rompia tres pruebas de `test_g03_revocacion`**:
+    con el pool cerrado entre medias, dos de ellas fallaban en compania y pasaban solas.*
+
+    *Lo que hace falta no es «sin pool», es **«sin pool de otra base»**: si la conexion es la
+    misma, el pool sirve y cerrarlo solo cuesta tiempo y estado; si es otra, hay que soltarlo.*
+    """
     yield
     try:
-        from plataforma.api import almacen
+        from plataforma.api import ajustes, almacen
 
         pool = getattr(almacen, "_pool", None)
-        if pool is not None:
-            # *Cerrar un pool a medio abrir puede lanzar; **no puede tumbar el final de la prueba**.*
-            with contextlib.suppress(Exception):
-                pool.close()
+        if pool is None:
+            return
+        # *`conninfo` es el DSN con el que se abrio el pool; si coincide con el de ahora, vale.*
+        suya = str(getattr(pool, "conninfo", "") or "")
+        ahora = str(getattr(ajustes, "postgres", "") or "")
+        if suya and ahora and suya == ahora:
+            return
+        if suya and not ahora:
+            return  # *sin base configurada no hay a que comparar: se respeta lo que haya.*
+        # *Cerrar un pool a medio abrir puede lanzar; **no puede tumbar el final de la prueba**.*
+        with contextlib.suppress(Exception):
+            pool.close()
         almacen._pool = None
     except ImportError:
-        # *Si `plataforma` no esta, esta prueba no va de esto.*
         pass
-
