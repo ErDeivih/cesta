@@ -993,7 +993,53 @@ la convierte en una afirmacion sin prueba. ***
 
     ruff limpio · documentos TODO BIEN · docker sigue con el 500
 
+## *** DOCKER VOLVIO, Y CON EL LAS PRUEBAS DE BASE (ronda 230) ***
+
+*David reinicio Docker Desktop.* *El motor responde (`27.4.0`) y hay cuatro contenedores arriba:*
+
+    cesta-api-1 ......... Up (healthy)
+    cesta-web-1 ......... Up
+    cesta-db-1 .......... Up (healthy)   127.0.0.1:5432->5432
+    facylf-postgres ..... Up (healthy)   127.0.0.1:5433->5432   <- no se toca
+
+**Y el 5434, que es lo que las pruebas esperan, NO esta:** `commerce-postgres` esta `Exited (255)` desde hace dos
+meses.* *Ese contenedor **no es de este proyecto**; la guarda dice no tocarlo.*
+
+## La base de la casa NO se toca -- tiene datos de verdad
+
+    cesta (5432) ...... **365 listas y 118 compras**  <- es «casa», y ahi no se corre nada
+    cesta_ci (5432) ... **creada hoy**, 15 tablas, sin datos   <- aqui si
+
+*Sin tocar ninguna base existente: `CREATE DATABASE cesta_ci` en el mismo servidor, y el esquema se aplica solo al
+arrancar `almacen.arranca()`.*
+
+**La contrasena no es `cesta`.** *Esta en la variable del contenedor, no en el repositorio*:*
+
+```powershell
+$pw = docker inspect cesta-db-1 --format '{{range .Config.Env}}{{println .}}{{end}}' |
+      Select-String -Pattern '^POSTGRES_PASSWORD=' | ForEach-Object { $_.Line -replace '^POSTGRES_PASSWORD=', '' }
+$env:CESTA_POSTGRES = "postgresql://cesta:$pw@localhost:5432/cesta_ci"
+$env:CESTA_SALTAR_SIN_BASE = "0"
+uv run pytest -q tests/
+```
+
+## Y las pruebas de base YA CORREN
+
+    antes (sin base) .... 32 errors + 17 skipped
+    ahora ............... **9 pasan · 3 fallan · 4 saltan**  (6:30)
+
+*Con `test_g03_cierre`, `test_g03_revocacion`, `test_g02_texto_libre`, `test_lista_de_casa_unica` y
+`test_g01_recibo_del_puente`.*
+
+*** Las 3 que fallan no se han diagnosticado: `--tb=line` no da la asercion y el contexto se acaba. *** *Es lo primero
+de la proxima ronda.*
+
+**Y lo que cambio el juego fue dejar de decir «docker caido»:** *el motor estaba atascado, no caido; los puertos los
+tenia su proxy; y la base de la casa estaba ahi todo el tiempo, sana, detras de una contrasena que no era la del
+codigo.*
+
 ## Próximo comando
+
 
 
 
