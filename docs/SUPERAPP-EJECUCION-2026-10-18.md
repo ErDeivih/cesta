@@ -1038,7 +1038,33 @@ de la proxima ronda.*
 tenia su proxy; y la base de la casa estaba ahi todo el tiempo, sana, detras de una contrasena que no era la del
 codigo.*
 
+## Las pruebas de base: 2 fallos con orden, y una hipotesis sin probar (ronda 231)
+
+*Con `cesta_ci` recien creada y vacia, `tests/test_g03_revocacion.py` da **2 fallan · 1 pasa**.* *Y una de las dos
+--`test_revocar_una_linea_que_no_es_no_toca_ninguna` -- **pasa cuando se corre sola**.*
+
+*** Asi que no es dato sobrante: es dependencia de orden dentro del fichero. ***
+
+**La hipotesis, y no esta probada:** *la prueba que abre el fichero deja algo en el almacen, y la que viene detras lo
+hereda.* *El sospechoso mas concreto es **mi propio `autouse`** de `conftest.py:152`
+(`_el_pool_no_sobrevive_a_la_prueba`), que **cierra `almacen._pool` despues de cada prueba** -- *lo puse en la ronda
+160 para arreglar `test_g01_recibo_del_puente`, y puede estar rompiendo estas dos.*
+
+*Se intento desactivarlo y **el `replace` no encontro la linea**, asi que la prueba corrio con el `autouse` puesto y el
+resultado fue el mismo (2 fallan).* *** O sea: la hipotesis sigue sin probar. *** *`tests/conftest.py` esta intacto
+(`git status` vacio) y el respaldo se borro.*
+
+**Lo que si queda claro, y es el avance de la ronda:**
+
+    las pruebas de base **corren** (era 32 errors + 17 skipped; ahora hay resultados de verdad)
+    cesta_ci se recrea en un comando y el esquema se aplica solo
+    y **la base de la casa no se ha tocado** en ningun momento
+
+**Proximo paso, concreto:** *desactivar el `autouse` de verdad (cambiando el decorador a mano, no con `replace`) y
+repetir el fichero.* *Si pasa, el defecto es mio y esta localizado.*
+
 ## Próximo comando
+
 
 
 
