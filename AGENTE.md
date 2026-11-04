@@ -29,6 +29,11 @@ El proyecto **ya tiene especificación maestra y encargo vigente**. Esta ficha n
 
 ## Estado real el 2026-11-04, 14:30 (medido, no supuesto)
 
+> **Es una foto fechada, no el estado de ahora.** Las cifras de esta tabla son de las 14:30, y su
+> histórico (**2.527.902 filas**) es **anterior** a que se añadieran las 23.405 filas recuperadas de
+> Alcampo ese mismo día: la foto de ahora (52.982 productos, 2.551.307 filas, 8.875 grupos) la
+> reescribe `projects/cesta/cifras.py` en `docs/CIFRAS.md` al final de cada pasada.
+
 > **Corrección del 4/11/2026.** La versión anterior de esta tabla decía «cobertura diaria:
 > **solo Lidl**, 21 días». **Era falso**, y el motivo importa: salía de leer
 > `cobertura_declarada` en el manifiesto, donde solo escribe Lidl. La cobertura diaria se

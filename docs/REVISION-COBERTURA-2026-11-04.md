@@ -27,6 +27,11 @@ no se sostienen** y una tercera es frágil: la cifra publicada como «variación
 anterior» es falsa en las cinco cadenas (una con el signo cambiado), y la automatización que
 debía producir la declaración mañana apunta a una ruta que ya no existe. Condiciones en §7.
 
+> **Actualización (2026-11-04, 18:15).** Las cinco objeciones se corrigieron y se commitearon
+> (`62407cc`, `628180b`). Re-verificadas en §8: **el veredicto final de esta revisión es APTO**,
+> con la automatización diaria (tarea 12 del BACKLOG, requiere administrador) como condición
+> externa que sigue abierta y que este código no puede cerrar.
+
 ---
 
 ## 1. Qué he medido y con qué
@@ -413,3 +418,110 @@ medidos (las declaraciones se regeneran a partir del mismo bronce).
   comparando sha256 con el disco (mismo resultado que reescribir, sin escribir).
 - Herramientas de calidad del harness: `data_report` confirma que existen los informes `profile` y
   `verify` citados por el documento de auditoría.
+
+---
+
+## 8. Addendum — re-verificación tras las correcciones
+
+**Cuándo y sobre qué**: 2026-11-04, **18:12–18:18**, sobre los commits **`62407cc`** (núcleo y
+evidencia) y **`628180b`** (pantalla y estado), con HEAD en `628180b`. El árbol estaba limpio
+salvo una aclaración **solo documental** en `AGENTE.md` (18:14: la tabla de las 14:30 se marca
+como foto fechada). No he tocado código ni datos: todo lo de abajo está medido con comandos
+propios y sin escribir nada.
+
+### O1 — cerrada (variación contra la captura anterior y referencia en empate)
+
+`veredicto` ya recorre `calendario` en orden (la primera captura con datos es la penúltima). Mis
+tres cálculos coinciden entre sí, con los JSON regenerados y con la API en vivo:
+
+| Cadena | Código (`veredicto`) | Mi recálculo independiente | JSON en disco | Manifiesto | API `:8080` |
+|---|---:|---:|---:|---:|---:|
+| Alcampo | **+2,8** | +2,8 (23.416/22.776) | +2,8 | +2,8 | +2,8 |
+| Aldi | **−4,4** | −4,4 (2.709/2.834) | −4,4 | −4,4 | −4,4 |
+| Carrefour | **−0,1** | −0,1 | −0,1 | −0,1 | −0,1 |
+| DIA | **0,0** | 0,0 | 0,0 | 0,0 | 0,0 |
+| Mercadona | **−0,1** | −0,1 | −0,1 | −0,1 | −0,1 |
+
+- **Referencia en empate**: Aldi tenía el máximo (2.951) el 30/10 **y** el 31/10; ahora declara
+  `referencia_fecha = 2026-10-31` (el más reciente), como pedí.
+- **Regeneración**: los 5 JSON del 4/11 (18:09) y el manifiesto (18:09:18) llevan los valores
+  corregidos. El manifiesto tiene **26 declaradas** (21 Lidl + 5) y **5 medidas**, y sus 5
+  entradas de catálogo son **idénticas** a los ficheros. Las huellas de los 6 parquet siguen
+  coincidiendo con `actual.json`, que **no se ha movido** (`20261104-144138`, 14:41:38).
+- **Idempotencia**: recomputado el contenido con `declaracion()` y comparado byte a byte con el
+  disco, los 5 son idénticos; la `novedad` sigue siendo 943/4/303, 5/62/130, 75/5/85, 20/425/20 y
+  4/71/9.
+- Pruebas nuevas: dos capturas anteriores (10,0 % vs el 340 % del código viejo), hueco de un día
+  sin captura y empate de referencia; verdes en la suite de abajo.
+
+### O2 — cerrada la parte documental; la operativa sigue abierta (externa)
+
+- La frase «la pasada diaria ya lo hace sola» **ya no está** en `DECISIONES.md` (solo aparece
+  citada en `COBERTURA…` §12 como la objeción que era). §5 dice ahora que la declaración se hace
+  antes del manifiesto y aunque el emparejador falle, y que **no puede lanzarse sola** por la
+  tarea del Programador.
+- **La automatización sigue rota** (medido ahora, no depende del código): acción
+  `F:\aprendizaje\scrap\ejecutar.bat`, `LastTaskResult 2147942667` (`0x80070003`),
+  `NextRunTime 05/11/2026 05:00`, ruta inexistente. Está en `BACKLOG.md` tarea 12 y
+  `COBERTURA…` §11; re-registrarla exige administrador. El histórico es real; **el mañana
+  depende de ese arreglo**, y mientras tanto el ciclo se lanza a mano (`ejecutar.bat`).
+
+### O3 — cerrada (declaración antes del emparejador y conjunto atómico)
+
+- `run.py`: la declaración vive en **su propio `try`** (líneas 337-343), **antes** del bloque del
+  emparejador (348) y, por tanto, antes del manifiesto. Se ejecuta también con `--sin-emparejar` y
+  si el emparejador lanza. Solo se salta con `--sin-pipeline`, coherente: en ese modo tampoco hay
+  manifiesto ni publicación.
+- `declara()`: prepara los **5 temporales** y solo después hace los `os.replace`; si una
+  declaración falla a mitad, borra los temporales y **no sustituye ninguno**. Verificado en el
+  código y con la prueba que fuerza el fallo en el tercero; en disco **0 `.tmp`**.
+- Prueba de orden: exige `.declara()` antes de `core.manifiesto` **y antes de `emparejar`**.
+
+### O4 — cerrada (bronce vs gold etiquetado; día local del run)
+
+- Pantalla: la frase dice «**filas capturadas**» (`cobertura.ts:53`) y el comentario explica que
+  son del bronce; `tipos.ts:283-284` documenta la diferencia (Aldi 2.709 en bronce vs 2.499 en
+  gold). El build servido en `:8080` contiene «filas capturadas».
+- `DECISIONES.md` explica **Aldi 210 = 202 sin precio + 8 de alcance**; comprobado: bronce 2.709,
+  202 sin `precio_cent`, gold 2.499.
+- `run_del_dia` convierte el `ts` a **Europe/Madrid** antes de comparar (antes usaba el prefijo
+  UTC): prueba con una pasada a las 23:30Z que pertenece al día local siguiente.
+
+### O5 — cerrada (contrato de `/api/estado` y orden)
+
+- `tests/test_contrato_estado_cobertura_20261104.py` monta la API **sin PostgreSQL** (duckdb en
+  memoria y `AJUSTES` de prueba), pide `/api/estado` y comprueba que la cobertura declarada viaja
+  con filas y novedad, y que una cadena sin fichero sale **sin** `cobertura`. Verde.
+- La prueba del enganche ya no es un `grep`: exige el orden `.declara()` < `manifiesto` <
+  independencia del `emparejador`. Verde.
+
+### Puertas sobre el estado commiteado
+
+| Puerta | Resultado |
+|---|---|
+| `pytest` del subconjunto relevante (+ contrato y cobertura declarada) | ✅ **83 passed, 10 skipped** |
+| Suite completa | ✅ **1395 passed, 782 skipped, 1 deselected** (el lento preexistente de la ficha real de Carrefour), exit 0, 132,75 s |
+| `ruff check` (ficheros tocados) | ✅ limpio |
+| Web `npm run tipos` | ✅ 0 errores |
+| Web `npm test` / `npm run test:componentes` | ✅ 376/376 · 24/24 |
+| Build servido en `:8080` | ✅ dist 18:10:25; `index` 200 y chunk de Ajustes con la frase nueva |
+| `docs/CIFRAS.md` reescrito por la pasada | ✅ 52.982 productos · 8.875 grupos · 2.551.307 filas / 59 días |
+
+### Lo que sigue abierto
+
+1. **La automatización diaria** (O2 operativa): la tarea `Cesta diaria` apunta a la ruta vieja y
+   exige administrador para re-registrarla (`BACKLOG.md` tarea 12, `COBERTURA…` §11,
+   `DECISIONES.md` §5). No es un defecto del código entregado y no se puede cerrar desde esta
+   sesión; sí es condición para que la cobertura se produzca sola mañana.
+2. Nada más de O1–O5. La foto del `AGENTE.md` de las 14:30 queda aclarada como foto fechada
+   (cambio documental pendiente del commit del Lead).
+
+### Veredicto final
+
+**APTO.** Las cinco objeciones están cerradas y las he re-verificado por mi cuenta (cifras de
+variación y referencia, JSON, manifiesto, huellas, API en vivo, suite completa y puertas del
+frontend). La única condición abierta es **externa al código**: re-registrar la tarea del
+Programador (administrador) para que el ciclo diario se lance solo; hasta entonces, lanzar
+`F:\Proyectos\cesta\ejecutar.bat` a mano. No he commiteado: este addendum queda para que lo
+incluya el Lead en su commit/push.
+
