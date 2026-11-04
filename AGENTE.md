@@ -84,6 +84,14 @@ anterior). Antes ese directorio solo lo escribía Lidl, y de ahí salía la fras
   (`F:\aprendizaje\scrap`), que ya no existe; **hace falta administrador** para re-registrarla
   (`BACKLOG.md` tarea 12). El histórico diario sí es real y está medido.
 
+## Panel: `metricas-cesta.json` (2026-11-04)
+
+En la raíz del proyecto, reescrito por `projects/cesta/metricas.py` al cerrar cada pasada:
+por cadena si trae datos hoy y cuántos días lleva, la última ejecución en hora local, los
+comparables con precio del día (**39.115**), cuántos tienen precio en **2+ cadenas**
+(**8.829**, la cifra que dice si de verdad se puede comparar) y los días de historial (59).
+Las definiciones exactas, en `DECISIONES.md` §6.
+
 ## Cómo trabajas
 
 Lee y sigue `F:\EspacioCodigo\_flujo-dsh\PROTOCOLO-AUTONOMIA.md`.

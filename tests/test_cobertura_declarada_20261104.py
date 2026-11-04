@@ -290,7 +290,51 @@ def test_si_el_historico_no_se_puede_leer_la_captura_no_es_sin_datos(base, monke
     assert datos["filas"] == 2
     assert datos["veredicto"] == "sin referencia"
     assert datos["pct"] is None and datos["referencia"] is None
-    assert "no se pudo leer el historico" in datos["aviso"]
+    assert datos["huecos"] is None and datos["dias_sin_datos"] is None, (
+        "si no se pudo leer el historico, los huecos tampoco se saben: null, no un cero")
+    assert "no se pudo leer con fiabilidad" in datos["aviso"]
+
+
+def test_una_particion_ilegible_tampoco_es_sin_datos(base, monkeypatch):
+    """Una particion que existe pero cuyo parquet no se puede leer no es una ausencia de captura:
+    se declara «sin referencia», no «sin datos» con un fichero ahi al lado."""
+    carpeta = base / "bronze" / "fuente=mercadona" / f"fecha={HOY}"
+    carpeta.mkdir(parents=True)
+    (carpeta / "part.parquet").write_bytes(b"esto no es un parquet")
+    monkeypatch.setattr(cobertura_diaria, "filas_por_dia", lambda: {})
+
+    datos = cobertura_diaria.declaracion("mercadona", HOY)
+
+    assert datos["captura"] is not None and datos["captura"]["ficheros"] == 1
+    assert datos["captura"]["filas"] == 0
+    assert datos["veredicto"] == "sin referencia"
+    assert datos["filas"] == 0
+    assert datos["huecos"] is None
+    assert "no hubo captura" not in datos["aviso"]
+
+
+def test_si_falla_la_lectura_de_lo_anterior_no_quedan_temporales(base, monkeypatch):
+    """El escenario que cita el codigo (fichero bloqueado) tambien puede fallar al LEER lo
+    anterior. Eso no puede dejar los cinco `.tmp` en data/cobertura/."""
+    destino = base / "cobertura"
+    destino.mkdir(parents=True)
+    for fuente in cobertura_diaria.FUENTES:
+        (destino / f"{fuente}-{HOY}.json").write_text('{"de": "antes"}', encoding="utf-8")
+        _escribe(base, fuente, HOY, {"a": 100})
+
+    original = type(base).read_bytes
+
+    def read_bytes_que_falla(self):
+        if "cobertura" in str(self):
+            raise OSError("el antivirus tiene el fichero abierto")
+        return original(self)
+
+    monkeypatch.setattr(type(base), "read_bytes", read_bytes_que_falla)
+    with pytest.raises(OSError):
+        cobertura_diaria.declara(HOY)
+    monkeypatch.undo()
+
+    assert not list((base / "cobertura").glob("*.tmp")), "no pueden quedar temporales"
 
 
 # --- 7. el enganche en la cadena diaria, en el orden correcto ---------------
@@ -304,10 +348,16 @@ def test_la_declaracion_va_antes_del_manifiesto_en_la_cadena_diaria():
     from projects.cesta import run
 
     fuente = inspect.getsource(run)
-    posicion_declaracion = fuente.index(".declara()")
+    posicion_declaracion = fuente.index(".declara(")
     posicion_manifiesto = fuente.index('importlib.import_module("core.manifiesto")')
     assert posicion_declaracion < posicion_manifiesto, (
         "la declaracion tiene que escribirse antes de que se genere el manifiesto")
     emparejar = fuente.index('importlib.import_module("projects.cesta.emparejar")')
     assert posicion_declaracion < emparejar, (
         "la declaracion no puede depender de que el emparejador haya ido bien")
+    # **El dia se fija al empezar la pasada**: una captura que cruza la medianoche no puede
+    # escribir la declaracion (vacia) del dia siguiente.
+    assert "fecha_de_la_pasada = str(config.hoy_local())" in fuente, (
+        "la cadena diaria tiene que fijar el dia de la pasada al empezar")
+    assert ".declara(fecha_de_la_pasada)" in fuente, (
+        "la declaracion tiene que ser la del dia de la pasada, no la del reloj al final")

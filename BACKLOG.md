@@ -14,8 +14,9 @@ sesión — se marca y se sigue con la siguiente.
 
 El catálogo son **52.982 productos** (medido hoy) y la comparación **existe**. Dos fotos, con su
 denominador, porque no son lo mismo: en la de las 14:30, **8.864 grupos** con precio en 2+ cadenas
-(22,9 % de 38.682 comparables); medido sobre el día con `precio_comparable`, **8.851 de 39.837
-grupos** del 4/11 tenían 2+ cadenas (22,2 %). La cobertura dejó de ser un
+(22,9 % de 38.682 comparables); medido sobre el día con `precio_comparable` e **importe no nulo**,
+**8.829 de 39.115 grupos** del 4/11 tenían 2+ cadenas (22,6 %; contando también las 760 filas del
+día sin importe salen 8.851 de 39.837, que es la cifra que se citó antes). La cobertura dejó de ser un
 rumor de un solo sitio: desde el 4/11 **las cinco cadenas de catálogo declaran su día, medido
 sobre su bronce** (`data/cobertura/`), y `GET /api/estado` enseña las seis. Lo que se cae es
 **la automatización**: la tarea `Cesta diaria` apunta a `F:\aprendizaje\scrap`, que ya no
@@ -221,17 +222,31 @@ existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administra
 
 ---
 
+### 16. Métricas de Cesta para el panel de David — **hecho (04/11)**
+
+- **Por qué**: David necesita más datos de Cesta en su panel, y la métrica que dice si el
+  producto sirve no es «cuántos productos hay» sino **cuántos se pueden comparar hoy**.
+- **Qué se ha hecho**: `projects/cesta/metricas.py` escribe `metricas-cesta.json` en la raíz
+  (por cadena `hoy` y `dias`, `ultima_ejecucion` en hora local, `comparables_con_precio`,
+  `en_varias_cadenas` y `dias_historial`), y `run.py` lo reescribe al cerrar cada pasada.
+  Hoy: **8.829 de 39.115** comparables con precio están en 2+ cadenas (22,6 %), 59 días de
+  historial. Definiciones en `DECISIONES.md` §6 (incluye por qué no se cuentan las 760 filas
+  del día sin importe).
+- **Cómo se sabe que está bien**: `pytest tests/test_metricas_panel.py` (4 pruebas: misma
+  fecha para las dos cifras, sin datos no inventa, JSON atómico y enganche en `run.py`).
+
 ## Lo que está verde de verdad (medido el 04/11/2026, 17:39)
 
 | Qué | Cómo se ha medido |
 |---|---|
 | Catálogo 52.982 · 8.875 grupos · 2.551.307 filas de histórico | `data/gold/*` + `docs/CIFRAS.md` reescrito por la pasada |
-| Comparación real: 8.864 grupos en 2+ cadenas; **8.851 el mismo día 4/11** (22,2 % de 39.837) | consulta a `gold/grupos.parquet` + `precio_diario.parquet` |
+| Comparación real: 8.864 grupos en 2+ cadenas; **8.829 el mismo día 4/11** (22,6 % de 39.115 con importe; 8.851/39.837 contando filas sin importe) | consulta a `gold/grupos.parquet` + `precio_diario.parquet` |
 | Cobertura diaria de 5 cadenas, con novedad medida: 128 días-cadena con captura en 30 días, 124 con novedad ≠ 0, 128/128 escritos el mismo día | `scripts/auditar_cobertura_diaria.py` + `docs/COBERTURA-DIARIA-2026-11-04.md` |
 | Las 5 cadenas declaran su cobertura medida; el manifiesto pasa de 21 a 26 entradas declaradas | `data/cobertura/*.json` + `core/manifiesto.py` |
 | La API sirve cobertura para 6 cadenas | `GET /api/estado` → bloque `cobertura` en las 6 |
 | Publicación coherente | `GET /api/estado` → `vigencia_precio.coherente: true` |
 | Stack arriba (db/api/web sanos) | `docker ps` |
+| Métricas del panel publicadas y reescritas por la pasada | `metricas-cesta.json` + `pytest tests/test_metricas_panel.py` |
 | Guarda de cobertura con pruebas | `pytest tests/test_cobertura.py tests/test_cobertura_honesta_20261104.py tests/test_cobertura_declarada_20261104.py` |
 
 **Lo que solo lo dice un documento**: que la CI pasa; que M08–M22 están verificados con

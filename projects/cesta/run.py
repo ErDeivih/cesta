@@ -252,6 +252,10 @@ def _main() -> int:
     avisa_si_la_anterior_no_termino()
     marca_en_curso()
     t0 = time.monotonic()
+    # **El dia de la pasada se fija al empezar, no se vuelve a mirar el reloj al final.** Una
+    # captura que empieza a las 23:25 y termina pasada la medianoche declararia el dia nuevo
+    # (vacio, «sin datos») en vez del que de verdad capturo. `runs.csv` tiene pasadas a esa hora.
+    fecha_de_la_pasada = str(config.hoy_local())
     fallos = []
 
     original = sys.stdout
@@ -264,7 +268,7 @@ def _main() -> int:
     finally:
         sys.stdout = original
 
-    resultados = descarta_sin_bronze(resultados, str(config.hoy_local()))
+    resultados = descarta_sin_bronze(resultados, fecha_de_la_pasada)
 
     for nombre, bien, _ in resultados:
         if not bien:
@@ -337,7 +341,7 @@ def _main() -> int:
     if not args.sin_pipeline:
         try:
             escritas = importlib.import_module(
-                "projects.cesta.cobertura_diaria").declara()
+                "projects.cesta.cobertura_diaria").declara(fecha_de_la_pasada)
             print(f"[cobertura] declarada para {len(escritas)} cadenas de catalogo")
         except Exception as exc:  # noqa: BLE001
             print(f"[cobertura] no se pudo declarar la cobertura: {type(exc).__name__}: {exc}")
@@ -430,6 +434,16 @@ def _main() -> int:
             importlib.import_module("projects.cesta.cifras").main()
         except Exception as exc:  # noqa: BLE001
             print(f"[cifras] no se pudo reescribir CIFRAS.md: {exc}")
+
+        # **Las metricas que lee el panel de David.** `metricas-cesta.json` en la raiz: por
+        # cadena si trae datos hoy y cuantos dias lleva, la ultima pasada, los comparables con
+        # precio y —la cifra que de verdad dice si se puede comparar— cuantos tienen precio en
+        # 2+ cadenas. Escrito a mano envejeceria; aqui se reescribe cada dia con la pasada.
+        try:
+            ruta = importlib.import_module("projects.cesta.metricas").escribe()
+            print(f"[metricas] panel actualizado: {ruta.name}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"[metricas] no se pudieron escribir las metricas del panel: {exc}")
 
         # Los documentos de este proyecto estan llenos de cifras medidas, y esa
         # es su virtud. Pero una cifra que fue cierta en septiembre y ya no lo

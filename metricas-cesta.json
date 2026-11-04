@@ -1,0 +1,39 @@
+{
+ "fecha_datos": "2026-11-04",
+ "cadenas": [
+  {
+   "nombre": "alcampo",
+   "hoy": true,
+   "dias": 43
+  },
+  {
+   "nombre": "aldi",
+   "hoy": true,
+   "dias": 57
+  },
+  {
+   "nombre": "carrefour",
+   "hoy": true,
+   "dias": 51
+  },
+  {
+   "nombre": "dia",
+   "hoy": true,
+   "dias": 53
+  },
+  {
+   "nombre": "lidl",
+   "hoy": true,
+   "dias": 21
+  },
+  {
+   "nombre": "mercadona",
+   "hoy": true,
+   "dias": 57
+  }
+ ],
+ "ultima_ejecucion": "2026-11-04T13:58:00+01:00",
+ "comparables_con_precio": 39115,
+ "en_varias_cadenas": 8829,
+ "dias_historial": 59
+}

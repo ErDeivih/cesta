@@ -146,9 +146,9 @@ devuelve bloque `cobertura` para **las seis cadenas**; antes, solo Lidl lo traí
 UNA sola cadena (Lidl, 21 días)». Medido: **cinco** cadenas de catálogo con **43–57 días** de
 histórico en gold (Alcampo 43, Aldi 57, Carrefour 51, DIA 53, Mercadona 57) y una pasada diaria
 registrada en `data/runs.csv` **56–58 días** contando el día local (Alcampo 56, Aldi 58,
-Carrefour 56, DIA 57, Mercadona 58; en UTC Alcampo sale 57), y ese mismo día
-**8.851 de los 39.837 grupos con
-precio tenían 2+ cadenas** (22,2 %). No faltaba una cadena: faltaba que las que hay
+Carrefour 56, DIA 57, Mercadona 58; en UTC Alcampo sale 57), y ese mismo día **8.829 de los
+39.115 grupos comparables con precio** tenían 2+ cadenas (22,6 %; sin exigir importe no nulo,
+8.851 de 39.837). No faltaba una cadena: faltaba que las que hay
 **declararan** lo suyo, porque el único sitio de declaración era `data/cobertura/` y ahí solo
 escribía Lidl. Añadir un colector nuevo habría sido trabajo inventado —y `docs/COLECTORES.md`
 §4.5 lo prohíbe—. Lo añadido es la declaración: dato medido, no una autodeclaración de la
@@ -181,6 +181,39 @@ re-registrarla exige administrador (`BACKLOG.md` tarea 12 y `docs/COBERTURA-DIAR
 `data/cobertura/<cadena>-*.json`; el manifiesto y la API vuelven a lo anterior en la siguiente
 pasada. Sin migración ni pérdida de datos.
 
+## 6. Las métricas del panel: qué significa cada número de `metricas-cesta.json`
+
+**Qué se ha hecho.** `projects/cesta/metricas.py` escribe `metricas-cesta.json` en la raíz del
+proyecto, con la forma que pidió David, y `run.py` lo reescribe al cerrar cada pasada (como
+`CIFRAS.md`): un número escrito a mano envejecería y el panel enseñaría una foto vieja sin
+avisar. También se puede lanzar a mano: `python -m projects.cesta.metricas` (o `--ver`).
+
+**Definiciones, para que el panel no lea de más:**
+
+- `fecha_datos`: el día de los precios (la fecha máxima de `data/gold/precio_diario.parquet`).
+- `cadenas[]`: por cadena, `hoy` = tiene alguna fila de precio con **importe no nulo** ese día;
+  `dias` = días distintos con precio guardados en todo el histórico (hoy: Alcampo 43, Aldi 57,
+  Carrefour 51, DIA 53, Lidl 21, Mercadona 57).
+- `ultima_ejecucion`: la última pasada de `data/runs.csv`, **en hora de Madrid** (el `ts` está en
+  UTC; a las 23:30Z ya es el día siguiente aquí). Hoy: `2026-11-04T13:58:00+01:00`.
+- `comparables_con_precio`: grupos con `precio_comparable` **y una fila de precio con importe ese
+  día**. Hoy: **39.115**.
+- `en_varias_cadenas`: de esos, los que tienen precio en **2 o más cadenas** el mismo día. Hoy:
+  **8.829** (22,6 %). **Es la cifra que dice si de verdad se puede comparar**, y va sobre el mismo
+  día que la anterior a propósito: mezclar «cuántos comparables hay en el catálogo» con «cuántos
+  tienen 2+ cadenas hoy» daría una razón que no significa nada.
+- `dias_historial`: días distintos con precios guardados. Hoy: **59**.
+- `fecha_datos` es un campo **añadido** a la forma pedida: sin él, «hoy» no se puede interpretar
+  dentro de una semana. El resto de claves es exactamente el contrato.
+
+**Un matiz de dato, medido.** `precio_diario` del 4/11 tiene **760 filas con `precio_cent` nulo**
+(52.701 en total). Por eso «con precio» da 39.115/8.829 y no 39.837/8.851: esas 760 filas son
+presencia sin importe, y contarlas como precio sería vender más comparación de la que hay. Si el
+panel quiere la cifra laxa, se puede añadir; hoy no se publica.
+
+**Cómo se revierte.** Borrar `metricas-cesta.json` y el bloque de `run.py` que llama a
+`metricas.escribe()`; no toca datos ni publicación.
+
 ## Decisión de coordinación (2026-11-04)
 
 **¿Las pruebas de PostgreSQL necesitan un sandbox desechable?**
@@ -189,3 +222,12 @@ pasada. Sin migración ni pérdida de datos.
 - La base de casa **no se toca nunca** desde las pruebas, ni para leer.
 - Si el contenedor no arranca, la prueba se marca «no ejecutada», nunca verde.
 
+## Decision de coordinacion (2026-11-04, tarde) — arreglar la automatización y datos del panel
+
+- **La automatización diaria apunta a `F:\aprendizaje\scrap`, que ya no existe.** El proyecto vive en
+  `F:\Proyectos\cesta`. Hay que re-registrar la tarea programada con la ruta nueva (requiere
+  administrador). Mientras no se haga, la ingesta diaria **puede no estar corriendo**: comprobarlo primero.
+- **Datos que el panel necesita de Cesta** y hoy no tiene: cadena con datos de hoy, días de cobertura
+  por cadena, última ejecución, productos comparables con precio, y cuántos productos tienen precio de
+  más de una cadena (la métrica que dice si de verdad se puede comparar). Se publican en
+  `F:\Proyectos\cesta\metricas-cesta.json`.
