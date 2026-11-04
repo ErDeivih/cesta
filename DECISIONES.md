@@ -114,3 +114,12 @@ producto: queda en `BACKLOG.md` tarea 2 con los números medidos.
 
 **Mientras tanto** el informe dice contra qué mide, que es la mitad del arreglo y no debilita
 nada.
+
+## Decisión de coordinación (2026-11-04)
+
+**¿Las pruebas de PostgreSQL necesitan un sandbox desechable?**
+
+- **Sí, autorizado.** Las pruebas de base levantan su propio contenedor desechable (base efímera, volumen temporal, puerto libre).
+- La base de casa **no se toca nunca** desde las pruebas, ni para leer.
+- Si el contenedor no arranca, la prueba se marca «no ejecutada», nunca verde.
+
