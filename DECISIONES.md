@@ -115,6 +115,70 @@ producto: queda en `BACKLOG.md` tarea 2 con los números medidos.
 **Mientras tanto** el informe dice contra qué mide, que es la mitad del arreglo y no debilita
 nada.
 
+## 5. La cobertura de cada cadena se declara **medida**, y dice qué produjo el día
+
+**Qué se ha hecho.** `projects/cesta/cobertura_diaria.py` gana `declara(fecha)`: escribe
+`data/cobertura/<fuente>-<fecha>.json` para las **cinco cadenas de catálogo**, con lo medido
+sobre su bronce — filas, referencia y de qué día es, %, huecos y veredicto (la misma regla de
+`veredicto`, no una copia) y, además, **la novedad del día**: ids nuevos, precios cambiados e
+ids que desaparecen frente a la captura anterior. Se llama al cerrar la cadena diaria
+(`run.py`), **antes** de que se escriba el manifiesto —que lee esa carpeta—, y a mano se puede
+repetir con `--escribir` (idempotente: dos pasadas dejan los cinco ficheros con el mismo
+sha256; comprobado).
+
+**La evidencia, escrita y comprobada el 4/11/2026.** Medido sobre el bronce del día contra la
+captura anterior (3/11), que es lo que se declara:
+
+| cadena | filas | referencia (fecha) | % | novedad vs 3/11 |
+|---|---:|---|---:|---|
+| mercadona | 4.272 | 4.321 (05/10) | 98,9 | +4 nuevos, 71 cambiados, 9 menos |
+| dia | 5.712 | 5.855 (05/10) | 97,6 | +20 nuevos, 425 cambiados, 20 menos |
+| carrefour | 16.782 | 16.794 (31/10) | 99,9 | +75 nuevos, 5 cambiados, 85 menos |
+| aldi | 2.709 | 2.951 (31/10) | 91,8 | +5 nuevos, 62 cambiados, 130 menos |
+| alcampo | 23.416 | 28.022 (17/10) | 83,6 | +943 nuevos, 4 cambiados, 303 menos |
+
+Efecto en lo publicado: `data/gold/manifiesto.json` pasa de 21 declaraciones (todas de Lidl) a
+**26** —las cinco cadenas de catálogo incluidas— y `GET http://127.0.0.1:8080/api/estado`
+devuelve bloque `cobertura` para **las seis cadenas**; antes, solo Lidl lo traía. La
+`cobertura_medida` del manifiesto sigue intacta.
+
+**Por qué así, y no añadiendo una cadena.** La tarea llegaba con «la cobertura de precios es de
+UNA sola cadena (Lidl, 21 días)». Medido: **cinco** cadenas de catálogo con 57 días de
+histórico en gold y una pasada diaria registrada en `data/runs.csv` (Mercadona 58 días, Aldi
+58, Carrefour 56, DIA 57, Alcampo 57), y ese mismo día **8.851 de los 39.837 grupos con
+precio tenían 2+ cadenas** (22,2 %). No faltaba una cadena: faltaba que las que hay
+**declararan** lo suyo, porque el único sitio de declaración era `data/cobertura/` y ahí solo
+escribía Lidl. Añadir un colector nuevo habría sido trabajo inventado —y `docs/COLECTORES.md`
+§4.5 lo prohíbe—. Lo añadido es la declaración: dato medido, no una autodeclaración de la
+cadena.
+
+**Riesgo aceptado.** `data/cobertura/` crece ~5 ficheros/día (~1 KB cada uno) y el manifiesto
+los lista todos (~1,8 MB al año). Se acepta sin retención mientras sea texto pequeño; si
+molesta, queda como tarea en `BACKLOG.md`. Las filas declaradas son **bronce**; `productos` de
+la API es **gold publicado** (Alcampo 23.416 → 23.405; Aldi 2.709 → 2.499, de las que 202 venían
+sin precio en el bronce y 8 descarta el alcance): la diferencia es el filtro, y la doc de
+evidencia la explica, no la disfraza.
+
+**Una variación que estaba mal, encontrada por la revisión adversarial.** El
+`vs_anterior_pct` que ya existía recorría el calendario al revés y comparaba con **la captura
+más antigua de la ventana**, no con la anterior: publicaba «Alcampo +1,7 % sobre la captura
+anterior» contra el 5/10 cuando lo real era **+2,8 % contra el 3/11**, y en Aldi hasta
+cambiaba el signo (+6,8 % frente a −4,4 % real). Corregido en `cobertura_diaria.veredicto` con
+su prueba (dos capturas anteriores, y salto de un día sin captura) y regeneradas las cinco
+declaraciones y el manifiesto.
+
+**Manifiesto del 4/11.** Se regeneró a mano con `core.manifiesto` después de declarar, **sin
+mover la versión publicada** (`20261104-144138` en `data/gold/actual.json`), para que lo que se
+lee hoy no siga diciendo «solo Lidl». La pasada diaria hace la declaración **antes** del
+manifiesto y aunque el emparejador falle; lo que **no** puede hacer todavía es lanzarse sola:
+la tarea del Programador apunta a `F:\aprendizaje\scrap` desde el movimiento de las 14:20 y
+re-registrarla exige administrador (`BACKLOG.md` tarea 12 y `docs/COBERTURA-DIARIA-2026-11-04.md`
+§11). Que conste: el histórico diario es real; **el mañana depende de ese arreglo**.
+
+**Cómo se revierte.** Quitar el bloque de `declara()` de `run.py` y apartar
+`data/cobertura/<cadena>-*.json`; el manifiesto y la API vuelven a lo anterior en la siguiente
+pasada. Sin migración ni pérdida de datos.
+
 ## Decisión de coordinación (2026-11-04)
 
 **¿Las pruebas de PostgreSQL necesitan un sandbox desechable?**

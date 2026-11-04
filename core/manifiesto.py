@@ -136,7 +136,16 @@ def _precios() -> dict[str, str]:
 
 
 def _cobertura() -> dict[str, dict]:
-    """Lo que cada colector declara sobre su propia cobertura (Lidl: ofertas conocidas)."""
+    """Lo que cada cadena declara de su propia cobertura.
+
+    **Desde el 4/11/2026 no es solo Lidl.** Lidl declara su alcance parcial (ofertas
+    semanales, no catalogo); las cinco cadenas de catalogo declaran su **cobertura medida**
+    --filas, referencia y su fecha, %, huecos, veredicto y novedad del dia--, escrita por
+    `projects.cesta.cobertura_diaria.declara()` al cerrar la pasada. Antes de eso este
+    directorio solo tenia ficheros de Lidl y de ahi salio el «solo Lidl, 21 dias» de la ficha
+    del agente. La `cobertura_medida` de abajo se sigue calculando aparte: son dos vistas del
+    mismo dia y ninguna sustituye a la otra.
+    """
     salida: dict[str, dict] = {}
     if not COBERTURA.exists():
         return salida

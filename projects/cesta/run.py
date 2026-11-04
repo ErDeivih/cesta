@@ -321,6 +321,27 @@ def _main() -> int:
         except Exception as exc:  # noqa: BLE001
             print(f"[inventario] no se pudo reconciliar la cola: {type(exc).__name__}: {exc}")
 
+    # **La cobertura declarada, en cuanto hay bronce del dia.** Cada cadena de catalogo deja
+    # escrito en `data/cobertura/` lo que se ha medido de su dia -- filas, referencia, veredicto
+    # y novedad --. Va aqui, y no despues del emparejador, por dos razones:
+    #
+    #   - **antes del manifiesto**, que es quien lee esa carpeta y se escribe dentro del bloque
+    #     del emparejador: si se declarara despues, lo publicado iria un dia por detras y
+    #     volveria a decir «solo Lidl»;
+    #   - **aunque se empareje o no con `--sin-emparejar`, y aunque el emparejador falle**: la
+    #     cobertura es lo que trajo la captura, no lo que se pudo reconstruir despues. Antes
+    #     vivia dentro del `try` del emparejador, asi que un fallo ahi se llevaba la
+    #     declaracion por delante sin que nadie lo dijera.
+    #
+    # Es idempotente y no puede tumbar el dia.
+    if not args.sin_pipeline:
+        try:
+            escritas = importlib.import_module(
+                "projects.cesta.cobertura_diaria").declara()
+            print(f"[cobertura] declarada para {len(escritas)} cadenas de catalogo")
+        except Exception as exc:  # noqa: BLE001
+            print(f"[cobertura] no se pudo declarar la cobertura: {type(exc).__name__}: {exc}")
+
     # Los grupos se reconstruyen enteros cada dia, no se acumulan: son producto
     # del catalogo de hoy, y un catalogo distinto da grupos distintos. Cuesta
     # segundos y no toca la red, asi que no hay razon para conservar los de ayer.

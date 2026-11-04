@@ -34,13 +34,38 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
+import os
 import sys
+from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import duckdb
+import polars as pl
 
 from core import config
 
 FUENTES = ("alcampo", "aldi", "carrefour", "dia", "mercadona")
+
+# --- la cobertura que se declara, no la que se supone ------------------------
+#
+# **Por que existe esto.** `data/cobertura/` lo leen el manifiesto de publicacion y
+# `GET /api/estado`, y hasta el 4 de noviembre de 2026 **solo escribia ahi Lidl** -- porque
+# solo Lidl tiene un alcance parcial que declarar. Las cinco cadenas de catalogo capturaban
+# todos los dias y no declaraban nada, asi que el dato publicado decia «cobertura: una sola
+# cadena, Lidl, 21 dias» y el panel no podia saber que Mercadona llevaba 57 dias.
+#
+# Ahora cada cadena de catalogo declara su dia **con lo medido sobre su bronce**: filas,
+# referencia y de que dia es, huecos y veredicto (la misma `veredicto` que el aviso, no una
+# copia) y, ademas, **que produjo el dia**: ids nuevos, precios cambiados y desaparecidos
+# frente a su captura anterior. Eso es lo que convierte «trajo filas» en «produjo datos
+# nuevos», que es lo que hay que demostrar.
+COBERTURA = "catalogo_diario"
+ETIQUETA = "catalogo diario medido"
+METODO = "medido sobre data/bronze y data/gold; no autodeclarado por el colector"
+# Con un hueco (un domingo sin captura, p. ej.) no se compara contra un dia de hace un mes:
+# la novedad se mide contra la ultima captura de la semana anterior, y el fichero dice cual.
+DIAS_PARA_NOVEDAD = 7
 
 # Por debajo de esto, la captura se considera corta. Alcampo paso de 37.019 a 24.120 filas (el
 # 65 %) sin que saltara nada, asi que el umbral tiene que estar muy por encima de ese 65 %: una
@@ -98,7 +123,9 @@ def veredicto(serie: dict[str, int], hoy: str, dias: int = DIAS_DE_VENTANA,
     # ahora se puede leer contra que mide.
     dia_referencia = None
     if referencia:
-        for f in reversed(calendario):
+        # En orden (ayer -> atras): si el maximo se repite varios dias, la referencia es el
+        # **mas reciente** de ellos, que es el que se puede leer como «su mejor dia ultimo».
+        for f in calendario:
             if serie.get(f, 0) == referencia:
                 dia_referencia = f
                 break
@@ -111,9 +138,15 @@ def veredicto(serie: dict[str, int], hoy: str, dias: int = DIAS_DE_VENTANA,
         estado = "corta"
     else:
         estado = "ok"
-    # **Y cuanto cambio respecto a la ultima captura**, que es la otra mitad de la frase:
+    # **Y cuanto cambio respecto a la ULTIMA captura**, que es la otra mitad de la frase:
     # «corta contra el maximo» y «+2,8 % sobre ayer» pueden ser las dos verdad a la vez.
-    anterior = next((serie[f] for f in reversed(calendario) if serie.get(f)), None)
+    #
+    # **El orden importa y estaba mal.** `calendario` va de ayer hacia atras (indice 0 = ayer),
+    # asi que recorrerlo con `reversed` empieza por **el dia mas antiguo de la ventana**: el
+    # 4/11/2026 el informe decia «alcampo +1,7 % sobre la captura anterior» comparando con el
+    # 5/10; contra el 3/11 era **+2,8 %**. Y en Aldi hasta cambiaba el signo (+6,8 % publicado
+    # frente a -4,4 % real). Se recorre en orden: la primera captura que hay es la penultima.
+    anterior = next((serie[f] for f in calendario if serie.get(f)), None)
     vs_anterior = (round(100.0 * (filas_hoy / anterior - 1), 1)
                    if anterior and filas_hoy else None)
     return {"hoy": hoy, "filas": filas_hoy, "referencia": referencia,
@@ -138,6 +171,223 @@ def veredictos(hoy: str | None = None, dias: int = DIAS_DE_VENTANA,
             for fuente in FUENTES}
 
 
+def _particiones(fuente: str) -> dict[str, Path]:
+    """{fecha: carpeta} de las particiones de bronce que tienen algun parquet.
+
+    Se listan los directorios y no se abre ningun fichero: el nombre es el dato. Una
+    particion vacia (captura que se nego a escribir) no cuenta como dia.
+    """
+    carpeta = config.DATA / "bronze" / f"fuente={fuente}"
+    if not carpeta.is_dir():
+        return {}
+    salida: dict[str, Path] = {}
+    for sub in carpeta.iterdir():
+        if not sub.is_dir() or not sub.name.startswith("fecha="):
+            continue
+        if any(sub.glob("*.parquet")):
+            salida[sub.name.split("=", 1)[1]] = sub
+    return salida
+
+
+def _precios(carpeta: Path) -> pl.DataFrame:
+    """(id_fuente, precio_cent) de una particion. Si falta una columna, devuelve vacio.
+
+    No se inventa el precio que no esta: una particion sin `precio_cent` no puede decir
+    cuantos precios cambiaron, y se declara desconocido en vez de cero.
+    """
+    marcos = []
+    for fichero in sorted(carpeta.glob("*.parquet")):
+        try:
+            marcos.append(pl.read_parquet(fichero, columns=["id_fuente", "precio_cent"]))
+        except Exception:  # noqa: BLE001  (una particion ilegible no invalida el dia)
+            return pl.DataFrame()
+    if not marcos:
+        return pl.DataFrame()
+    return (
+        pl.concat(marcos)
+        .with_columns(pl.col("id_fuente").cast(pl.Utf8))
+        .unique(subset=["id_fuente"], keep="first")
+    )
+
+
+def novedad(fuente: str, fecha: str, dias: int = DIAS_PARA_NOVEDAD) -> dict:
+    """Que produjo el dia frente a la ultima captura: nuevos, cambiados y desaparecidos.
+
+    `vs` es la fecha con la que se compara. **Si no hay captura del dia no se devuelve un
+    cero**: `nuevos`/`cambiados`/`desaparecen` van a `None` y `motivo` dice por que. Un cero
+    es «no cambio nada»; `None` es «no lo se», y no son lo mismo.
+    """
+    desconocido = {"vs": None, "nuevos": None, "cambiados": None, "desaparecen": None}
+    partes = _particiones(fuente)
+    if fecha not in partes:
+        return {**desconocido, "motivo": "no hay captura de ese dia"}
+    fin = dt.date.fromisoformat(fecha)
+    candidatas = [
+        f for f in partes
+        if f < fecha and 0 <= (fin - dt.date.fromisoformat(f)).days <= dias
+    ]
+    if not candidatas:
+        return {**desconocido, "motivo": "no hay captura anterior con la que comparar"}
+    vs = max(candidatas)
+    hoy, anterior = _precios(partes[fecha]), _precios(partes[vs])
+    if hoy.is_empty() or anterior.is_empty():
+        return {**desconocido, "vs": vs, "motivo": "captura sin id/precio legible"}
+    ids_hoy = set(hoy["id_fuente"].to_list())
+    ids_anterior = set(anterior["id_fuente"].to_list())
+    comun = hoy.join(anterior, on="id_fuente", how="inner", suffix="_anterior")
+    cambiados = (
+        comun.filter(
+            pl.col("precio_cent").is_not_null()
+            & pl.col("precio_cent_anterior").is_not_null()
+            & (pl.col("precio_cent") != pl.col("precio_cent_anterior"))
+        ).height
+        if "precio_cent_anterior" in comun.columns
+        else None
+    )
+    return {
+        "vs": vs,
+        "nuevos": len(ids_hoy - ids_anterior),
+        "cambiados": cambiados,
+        "desaparecen": len(ids_anterior - ids_hoy),
+    }
+
+
+def captura_del_dia(fuente: str, fecha: str) -> dict | None:
+    """La particion de bronce del dia, con cuantas filas tiene y cuando se escribio.
+
+    `escrita` es el mtime del fichero: es la prueba de que el dia se capturo **ese dia** y
+    no se relleno despues desde otro crudo. Sin particion, `None`: no se inventa la captura.
+    """
+    carpeta = _particiones(fuente).get(fecha)
+    if carpeta is None:
+        return None
+    filas = 0
+    escrituras = []
+    for fichero in sorted(carpeta.glob("*.parquet")):
+        try:
+            import pyarrow.parquet as pq
+
+            filas += pq.ParquetFile(fichero).metadata.num_rows
+        except Exception:  # noqa: BLE001
+            filas += 0
+        escrituras.append(fichero.stat().st_mtime)
+    if not escrituras:
+        return None
+    return {
+        "fecha": fecha,
+        "escrita": dt.datetime.fromtimestamp(max(escrituras)).isoformat(timespec="seconds"),
+        "filas": filas,
+        "ficheros": len(escrituras),
+    }
+
+
+def run_del_dia(fuente: str, fecha: str) -> dict | None:
+    """La fila de `data/runs.csv` de esa cadena y ese dia, si la hay.
+
+    Es la otra mitad de la prueba: la particion dice que hay datos; el registro dice que la
+    pasada se ejecuto y como termino. Sin fila, `None` -- no se supone que fue bien.
+    """
+    ruta = config.DATA / "runs.csv"
+    if not ruta.is_file():
+        return None
+    try:
+        # **La fecha del `ts` es UTC; el dia de la captura es local.** Una pasada a las 00:30 de
+        # Madrid es el dia anterior en UTC, y comparar el prefijo UTC la daria por «sin run».
+        # Se convierte a Europe/Madrid antes de comparar.
+        local = ZoneInfo("Europe/Madrid")
+        marco = pl.read_csv(ruta, infer_schema_length=0)
+        marco = marco.filter(pl.col("fuente") == fuente)
+        del_dia = marco.filter(
+            pl.col("ts").map_elements(
+                lambda ts: dt.datetime.fromisoformat(ts).astimezone(local).date().isoformat()
+                if ts else None,
+                return_dtype=pl.Utf8,
+            ) == fecha
+        )
+        if del_dia.is_empty():
+            return None
+        fila = del_dia.row(-1, named=True)
+        return {"ts": fila["ts"], "filas": int(fila["filas"]),
+                "errores": int(fila["errores"]),
+                "ok": str(fila["ok"]).strip().lower() in {"true", "1"}}
+    except Exception:  # noqa: BLE001  (un CSV ilegible no invalida la declaracion)
+        return None
+
+
+def declaracion(fuente: str, fecha: str, serie: dict[str, int] | None = None) -> dict:
+    """La cobertura declarada de una cadena y un dia: medida, con su novedad y su prueba.
+
+    `serie` es {fecha: filas} de esa cadena; se pasa desde `declara` para no releer el bronce
+    cinco veces. El veredicto es el de `veredicto`: no se recalcula aqui.
+    """
+    serie = filas_por_dia().get(fuente, {}) if serie is None else serie
+    v = veredicto(serie, fecha)
+    datos = {
+        "fuente": fuente,
+        "cobertura": COBERTURA,
+        "etiqueta": ETIQUETA,
+        "fecha": fecha,
+        "filas": v["filas"],
+        "referencia": v["referencia"],
+        "referencia_fecha": v["referencia_fecha"],
+        "pct": v["pct"],
+        "dias_en_la_ventana": v["dias_en_la_ventana"],
+        "dias_sin_datos": v["dias_sin_datos"],
+        "vs_anterior_pct": v["vs_anterior_pct"],
+        "veredicto": v["veredicto"],
+        "novedad": novedad(fuente, fecha),
+        "captura": captura_del_dia(fuente, fecha),
+        "run": run_del_dia(fuente, fecha),
+        "metodo": METODO,
+    }
+    if v["veredicto"] == "sin datos":
+        datos["aviso"] = "no hubo captura este dia: la cobertura no se puede acreditar"
+    elif v["dias_sin_datos"]:
+        datos["aviso"] = (f"captura del dia contra una referencia del "
+                          f"{v['referencia_fecha']}; en la ventana faltan "
+                          f"{v['dias_sin_datos']} de {v['dias_en_la_ventana']} dias")
+    return datos
+
+
+def declara(fecha: str | None = None) -> list[Path]:
+    """Escribe `data/cobertura/<fuente>-<fecha>.json` para las cinco cadenas de catalogo.
+
+    Se escribe **lo medido**, no lo que la cadena dice de si misma: filas del bronce del dia,
+    referencia de la ventana de 30 dias, veredicto y novedad frente a la captura anterior.
+    Asi el manifiesto de publicacion y `GET /api/estado` dejan de tener una sola cadena con
+    cobertura declarada.
+
+    Idempotente: el mismo dia se reescribe igual, con temporal y renombrado atomico. Un
+    fichero a medias se leeria como una publicacion valida.
+    """
+    fecha = fecha or dt.date.today().isoformat()
+    series = filas_por_dia()
+    destino = config.DATA / "cobertura"
+    destino.mkdir(parents=True, exist_ok=True)
+    # **Primero se preparan los cinco, despues se sustituyen.** Escribir de uno en uno y
+    # sustituir sobre la marcha deja, si falla a mitad, un conjunto mezclado (dos del dia y tres
+    # de ayer) que el manifiesto publicaria como si fuera de hoy. Aqui, o estan los cinco
+    # temporales escritos, o no se sustituye ninguno.
+    preparados: list[tuple[Path, Path]] = []
+    try:
+        for fuente in FUENTES:
+            datos = declaracion(fuente, fecha, serie=series.get(fuente, {}))
+            ruta = destino / f"{fuente}-{fecha}.json"
+            temporal = ruta.with_suffix(".json.tmp")
+            temporal.write_text(json.dumps(datos, ensure_ascii=False, indent=1),
+                                encoding="utf-8")
+            preparados.append((temporal, ruta))
+    except Exception:
+        for temporal, _ in preparados:
+            temporal.unlink(missing_ok=True)
+        raise
+    escritos: list[Path] = []
+    for temporal, ruta in preparados:
+        os.replace(temporal, ruta)
+        escritos.append(ruta)
+    return escritos
+
+
 def main(argv: list[str] | None = None) -> int:
     """`argv` explicito para poder llamarlo desde la cadena diaria sin leer sus argumentos.
 
@@ -152,6 +402,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--dias", type=int, default=DIAS_DE_VENTANA,
                     help="tamano de la ventana con la que se compara")
     ap.add_argument("--minimo-pct", type=float, default=MINIMO_PCT)
+    ap.add_argument("--escribir", action="store_true",
+                    help="dejar la cobertura medida de cada cadena en data/cobertura/")
     a = ap.parse_args(argv)
 
     hoy = a.fecha or dt.date.today().isoformat()
@@ -170,6 +422,20 @@ def main(argv: list[str] | None = None) -> int:
               f"{huecos:>7}   {v['veredicto']}".replace(",", "."))
         if v["veredicto"] != "ok":
             malas.append((fuente, v))
+
+    # **Y la declaracion, si se pide.** Va antes del veredicto a proposito: el dia puede ir
+    # mal --una cadena corta o sin datos-- y la declaracion sigue siendo cierta y necesaria,
+    # porque «no trajo nada» tambien hay que declararlo, no callarlo.
+    if a.escribir:
+        escritas = declara(hoy)
+        print(f"\ncobertura declarada en {len(escritas)} ficheros de data/cobertura/:")
+        for ruta in escritas:
+            datos = json.loads(ruta.read_text(encoding="utf-8"))
+            nov = datos.get("novedad") or {}
+            print(f"  {ruta.name}: {datos['filas']} filas, {datos['veredicto']}, "
+                  f"novedad vs {nov.get('vs')}: {nov.get('nuevos')} nuevos, "
+                  f"{nov.get('cambiados')} cambiados")
+        print()
 
     print()
     if not malas:

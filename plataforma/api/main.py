@@ -413,8 +413,12 @@ def estado():
     """).fetchall()
     hoy = catalogo.fecha_de_gold()
 
-    # **Y la cobertura, cuando una cadena la declara.** *Y hoy solo la declara Lidl, y no es casualidad: es
-    # la unica cuyo catalogo es **parcial**.*
+    # **Y la cobertura, cuando la cadena la declara.** *Hasta el 4/11/2026 solo la declaraba
+    # Lidl -- y no era casualidad: era la unica cuyo catalogo es **parcial**.* **Desde ese dia
+    # las cinco cadenas de catalogo tambien declaran** su cobertura **medida** en el mismo
+    # fichero (`projects.cesta.cobertura_diaria.declara`), asi que el dato viaja con su
+    # referencia y su novedad. Si una cadena no tiene fichero, sale sin `cobertura`: no se
+    # inventa.
     #
     # *El problema que esto resuelve, medido el 13 de octubre de 2026*: **`/api/estado` daba, por cadena,
     # `productos` y nada mas** --
@@ -441,8 +445,9 @@ def estado():
     # *Lo que si se puede citar de un fichero ajeno es **lo que no cambia de sitio**: un nombre de funcion,
     # una constante, o la RUTA del fichero que produce. *Una linea, no.**
     #
-    # **Y si el fichero no esta, no se inventa nada**: la cadena sale sin `cobertura`, *que es lo correcto
-    # para las cinco que si catalogan entero.*
+    # **Y si el fichero no esta, no se inventa nada**: la cadena sale sin `cobertura`. Antes eso
+    # era lo normal para las cinco que catalogan entero; desde el 4/11/2026 tambien declaran, asi
+    # que un hueco aqui significa que una pasada se salto el paso -- dato, no adorno.
     def _cobertura(fuente: str, dia: str | None) -> dict | None:
         if not dia:
             return None
