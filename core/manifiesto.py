@@ -59,6 +59,32 @@ def huella(ruta: Path, trozos: int = 12) -> str | None:
     return h.hexdigest()[:trozos]
 
 
+def filas_de_parquet(ruta: Path) -> int | None:
+    """Cuantas filas tiene un parquet, **leido del indice, sin traer los datos**.
+
+    **Esto es la correccion de un contrato que mentia.** Hasta el 4 de noviembre de 2026
+    el manifiesto declaraba `"filas": 0` para todos los ficheros y para todas las cadenas,
+    porque contaba asi:
+
+        pl.read_parquet(ruta, columns=[]).height
+
+    y en polars pedir **cero columnas** devuelve un marco de **cero filas**: sin columnas no
+    hay nada que contar. El manifiesto del 4/11 decia que `precio_diario.parquet` tenia 0
+    filas y ese fichero tenia 2.527.902. Un manifiesto que miente en el recuento es peor
+    que no tenerlo, porque parece una publicacion valida.
+
+    `num_rows` de pyarrow sale del pie del fichero: no descomprime ni una columna.
+    """
+    if not ruta.exists():
+        return None
+    try:
+        import pyarrow.parquet as pq
+
+        return pq.ParquetFile(ruta).metadata.num_rows
+    except Exception:  # noqa: BLE001  (un fichero ilegible no invalida el manifiesto)
+        return None
+
+
 def _fuentes(hoy: date | None = None) -> dict[str, dict]:
     """Por cadena: la fecha de su ultima captura, cuantas filas y si es del dia del manifiesto.
 
@@ -81,10 +107,7 @@ def _fuentes(hoy: date | None = None) -> dict[str, dict]:
         captura = ultimo.name.split("=", 1)[1]
         filas = 0
         for fichero in sorted(ultimo.glob("*.parquet")):
-            try:
-                filas += pl.read_parquet(fichero, columns=[]).height
-            except Exception:  # noqa: BLE001  (una captura ilegible no invalida el manifiesto)
-                filas += 0
+            filas += filas_de_parquet(fichero) or 0
         salida[fuente] = {"captura": captura, "filas": filas,
                           "de_hoy": captura == dia}
     return salida
@@ -125,6 +148,29 @@ def _cobertura() -> dict[str, dict]:
     return salida
 
 
+def _cobertura_medida(dia: date) -> dict[str, dict]:
+    """La cobertura **medida** de cada cadena de catalogo: filas de hoy contra su vara.
+
+    **Por que esto existe.** El 4 de noviembre de 2026 la ficha del agente decia «cobertura
+    diaria: solo Lidl, 21 dias». Era falso -- Mercadona 32 dias, Aldi 32, Carrefour 31,
+    DIA 29, Alcampo 20 -- y salia de leer `cobertura_declarada`, que solo lleva lo que
+    escriben los colectores en `data/cobertura/`, y ahi solo escribe Lidl. **El documento
+    no mentia: leia el unico sitio donde habia cobertura declarada.**
+
+    La cobertura medida ya existia en `projects.cesta.cobertura_diaria`, en la cadena
+    diaria y en su aviso; lo que faltaba era que viajara **con lo publicado**. Una regla,
+    un sitio: aqui no se recalcula nada.
+
+    Nunca lanza: si no se puede medir, el manifiesto sale sin esta seccion.
+    """
+    try:
+        from projects.cesta import cobertura_diaria
+
+        return cobertura_diaria.veredictos(dia.isoformat())
+    except Exception:  # noqa: BLE001  (el manifiesto no puede tumbar el dia)
+        return {}
+
+
 def construye(fecha: date | None = None) -> dict:
     dia = fecha or date.today()
     fuentes = _fuentes(dia)
@@ -137,13 +183,7 @@ def construye(fecha: date | None = None) -> dict:
     ficheros = {}
     for nombre in PUBLICADOS:
         ruta = GOLD / nombre
-        filas = None
-        if ruta.exists():
-            try:
-                filas = pl.read_parquet(ruta, columns=[]).height
-            except Exception:  # noqa: BLE001
-                filas = None
-        ficheros[nombre] = {"sha256": huella(ruta), "filas": filas,
+        ficheros[nombre] = {"sha256": huella(ruta), "filas": filas_de_parquet(ruta),
                             "bytes": ruta.stat().st_size if ruta.exists() else None}
     avisos = []
     if not fuentes:
@@ -166,6 +206,7 @@ def construye(fecha: date | None = None) -> dict:
         "fuentes": fuentes,
         "ficheros": ficheros,
         "cobertura_declarada": _cobertura(),
+        "cobertura_medida": _cobertura_medida(dia),
         "avisos": avisos,
     }
 

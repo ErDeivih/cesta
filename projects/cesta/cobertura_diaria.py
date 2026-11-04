@@ -91,6 +91,17 @@ def veredicto(serie: dict[str, int], hoy: str, dias: int = DIAS_DE_VENTANA,
     fin = dt.date.fromisoformat(hoy)
     calendario = [(fin - dt.timedelta(days=i)).isoformat() for i in range(1, dias + 1)]
     referencia = max((serie.get(f, 0) for f in calendario), default=0)
+    # **De que dia es la vara.** Sin esto, «corta» no se puede interpretar: el 17 de
+    # octubre de 2026 Alcampo trajo 28.022 cuando lo normal era 22.800-24.300, y desde
+    # entonces una captura de 23.416 -- normal, y mejor que la de ayer -- sale «corta»
+    # todos los dias. El veredicto se queda como esta (la vara no se baja sola), pero
+    # ahora se puede leer contra que mide.
+    dia_referencia = None
+    if referencia:
+        for f in reversed(calendario):
+            if serie.get(f, 0) == referencia:
+                dia_referencia = f
+                break
     filas_hoy = serie.get(hoy, 0)
     pct = (100.0 * filas_hoy / referencia) if referencia else 0.0
     dias_sin_datos = sum(1 for f in calendario if not serie.get(f))
@@ -100,9 +111,31 @@ def veredicto(serie: dict[str, int], hoy: str, dias: int = DIAS_DE_VENTANA,
         estado = "corta"
     else:
         estado = "ok"
+    # **Y cuanto cambio respecto a la ultima captura**, que es la otra mitad de la frase:
+    # «corta contra el maximo» y «+2,8 % sobre ayer» pueden ser las dos verdad a la vez.
+    anterior = next((serie[f] for f in reversed(calendario) if serie.get(f)), None)
+    vs_anterior = (round(100.0 * (filas_hoy / anterior - 1), 1)
+                   if anterior and filas_hoy else None)
     return {"hoy": hoy, "filas": filas_hoy, "referencia": referencia,
+            "referencia_fecha": dia_referencia,
             "pct": round(pct, 1), "dias_en_la_ventana": len(calendario),
-            "dias_sin_datos": dias_sin_datos, "veredicto": estado}
+            "dias_sin_datos": dias_sin_datos, "vs_anterior_pct": vs_anterior,
+            "veredicto": estado}
+
+
+def veredictos(hoy: str | None = None, dias: int = DIAS_DE_VENTANA,
+               minimo_pct: float = MINIMO_PCT) -> dict[str, dict]:
+    """`{fuente: veredicto}` de las cadenas de catalogo, en una sola llamada.
+
+    Lo usa el manifiesto de publicacion: la cobertura **medida** tiene que viajar con lo
+    publicado, y hasta hoy el manifiesto solo llevaba lo que cada colector declaraba de su
+    propio alcance -- que era solo Lidl, y de ahi salio el «solo Lidl tiene cobertura».
+    Una regla, un sitio: esto no recalcula nada, llama a `veredicto`.
+    """
+    hoy = hoy or dt.date.today().isoformat()
+    series = filas_por_dia()
+    return {fuente: veredicto(series.get(fuente, {}), hoy, dias=dias, minimo_pct=minimo_pct)
+            for fuente in FUENTES}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -148,8 +181,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {fuente}: **no trajo nada** el {v['hoy']}. En la ventana faltan "
                   f"{v['dias_sin_datos']} de {v['dias_en_la_ventana']} dias.")
         else:
+            # **Contra que se mide, y como va la tendencia.** Las dos cosas, porque
+            # «corta» a secas se lee como «esta roto» y no siempre es eso.
+            cuando = f" (la vara es del {v['referencia_fecha']})" if v.get("referencia_fecha") else ""
+            cambio = (f"; {v['vs_anterior_pct']:+.1f}% sobre la captura anterior"
+                      if v.get("vs_anterior_pct") is not None else "")
             print(f"  {fuente}: {v['filas']:,} filas contra {v['referencia']:,} de referencia "
-                  f"({v['pct']}%).".replace(",", "."))
+                  f"({v['pct']}%){cuando}{cambio}.".replace(",", "."))
     print("\n**Ojo con la diferencia, que no es lo mismo:** sin bronze puede querer decir dos cosas"
           "\n  - que la cadena no trajo nada, o"
           "\n  - que **si trajo y el propio colector no lo guardo**, porque el control de cobertura"

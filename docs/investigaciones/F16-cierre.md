@@ -52,7 +52,7 @@ recuperacion.** *Y de las cinco hay algo medido:*
 
 | de que depende | **lo medido** |
 |---|---|
-| **privacidad** | `_acceso` (403/404), el aislamiento de recetas (9 pruebas), y `diario.py:821` -- *«quien tiene permiso de solo mirar no puede sacar de aqui lo que hay dentro»* |
+| **privacidad** | `_acceso` (403/404), el aislamiento de recetas (9 pruebas), y `core/diario.py` -- *«quien tiene permiso de solo mirar no puede sacar de aqui lo que hay dentro»* |
 | **identidad/costes** | `core/identidad.py` (GTIN validado, cuarentena), y **el pack resuelto** (`parse_formato`) |
 | **registro** | la clave de operacion, la version obligatoria, y `fuente_dato` con `raise` |
 | **publicacion** | `prueba_f03_publicacion.py` **PASA**: 19,81 -> 20,81 EUR con el alta en el diario |

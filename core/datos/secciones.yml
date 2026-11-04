@@ -281,6 +281,10 @@ mapa:
     "Juguetes > Juguetes de imitación": hogar                          # nueva 2026-10-01
     "Campañas > Productos de Aragón": promociones                      # nueva 2026-10-06
     "Campañas > Campaña Madrid 2026": promociones                      # nueva 2026-10-08
+    "Campañas > Producto Local Andalucía": promociones                 # nueva 2026-10-17
+    "Bebidas > Vinos divertidos": bebidas                              # nueva 2026-10-17
+    "Campañas > Producto Local Málaga": promociones                    # nueva 2026-10-17
+    "Juguetes > Muñecas": hogar                                        # nueva 2026-11-03
   aldi:
     "cuidado-facial-y-corporal": higiene-belleza                          # 106
     "yogures-y-postres-lacteos": lacteos-huevos                           # 97
@@ -734,6 +738,78 @@ mapa:
     "congelados/patatas": congelados                                   # nueva 2026-10-07
     "parafarmacia/complementos-alimenticios": parafarmacia             # nueva 2026-10-07
     "bebidas/vinos/estuches-de-vino": bebidas                          # nueva 2026-10-07
+    "mascotas/gatos/arena": mascotas                                   # nueva 2026-10-10
+    "la-despensa/yogures-y-postres/otros-postres": lacteos-huevos      # nueva 2026-10-13
+    "frescos/carne/aves-y-pollo": carniceria                           # nueva 2026-10-15
+    "la-despensa/dulce/mermeladas-membrillos-y-compotas": desayuno-dulces # nueva 2026-10-16
+    "la-despensa/dulce/siropes-aromas-y-decoracion": desayuno-dulces   # nueva 2026-10-16
+    "la-despensa/panaderia-bolleria-y-pasteleria/pan-de-molde": panaderia # nueva 2026-10-16
+    "la-despensa/yogures-y-postres/yogures-liquidos": lacteos-huevos   # nueva 2026-10-16
+    "bebidas/vinos/vinos-tintos": bebidas                              # nueva 2026-10-16
+    "congelados/helados": congelados                                   # nueva 2026-10-16
+    "frescos/pescado-y-marisco/ahumados-y-huevas": pescaderia          # nueva 2026-10-16
+    "mascotas/perros/pienso-para-perros": mascotas                     # nueva 2026-10-16
+    "la-despensa/yogures-y-postres/kefir": lacteos-huevos              # nueva 2026-10-16
+    "la-despensa/aperitivos/aceitunas-y-encurtidos": aperitivos        # nueva 2026-10-16
+    "frescos/frutas/naranjas-y-otros-citricos": frutas-verduras        # nueva 2026-10-16
+    "frescos/comida-preparada/formatos-familiares": preparados         # nueva 2026-10-16
+    "drogueria-y-limpieza/cuidado-de-la-ropa/detergentes": droguería-limpieza # nueva 2026-10-16
+    "la-despensa/yogures-y-postres/bifidus": lacteos-huevos            # nueva 2026-10-16
+    "la-despensa/panaderia-bolleria-y-pasteleria/pan-tostado-biscottes-y-barritas": panaderia # nueva 2026-10-16
+    "frescos/pan-y-bolleria-del-dia/panaderia-tradicional": panaderia  # nueva 2026-10-19
+    "mascotas/gatos/pienso-para-gatos": mascotas                       # nueva 2026-10-19
+    "frescos/charcuteria-y-quesos-al-corte/curados-ibericos": carniceria # nueva 2026-10-20
+    "frescos/charcuteria/jamon-serrano-e-iberico-envasado": carniceria # nueva 2026-10-21
+    "cuidado-personal-e-higiene/cuidado-del-cabello/fijadores": higiene-belleza # nueva 2026-10-22
+    "parafarmacia/cuidado-e-higiene-facial/cremas-faciales": parafarmacia # nueva 2026-10-23
+    "congelados/rebozados-y-platos-preparados": congelados             # nueva 2026-10-24
+    "bebe/alimentacion-infantil/tarritos-y-platos-preparados": despensa # nueva 2026-10-24
+    "frescos/charcuteria/foie-pates-y-sobrasadas": carniceria          # nueva 2026-10-24
+    "congelados/pizzas-congeladas/masa-fina": panaderia                # nueva 2026-10-24
+    "bebidas/refrescos/colas": bebidas                                 # nueva 2026-10-24
+    "bebe/alimentacion-infantil/leches-infantiles": despensa           # nueva 2026-10-24
+    "la-despensa/lacteos/bebida-vegetal": lacteos-huevos               # nueva 2026-10-24
+    "drogueria-y-limpieza/limpieza-bano-y-wc/wc": droguería-limpieza   # nueva 2026-10-24
+    "frescos/charcuteria/salchichon-salami-y-fuet": carniceria         # nueva 2026-10-24
+    "bebidas/alcoholes/ginebra": bebidas                               # nueva 2026-10-24
+    "parafarmacia/higiene-bucal/cepillos-de-dientes": higiene-belleza  # nueva 2026-10-24
+    "frescos/charcuteria/mortadela-y-chopped": carniceria              # nueva 2026-10-24
+    "bebidas/vinos/vinos-rosados": bebidas                             # nueva 2026-10-24
+    "drogueria-y-limpieza/ambientadores/decorativos-y-velas": droguería-limpieza # nueva 2026-10-24
+    "congelados/comidas-del-mundo": congelados                         # nueva 2026-10-24
+    "bebidas/refrescos/tonica": bebidas                                # nueva 2026-10-24
+    "bebidas/refrescos/isotonicas": bebidas                            # nueva 2026-10-24
+    "cuidado-personal-e-higiene/higiene-intima/protege-slip": higiene-belleza # nueva 2026-10-24
+    "bebe/cuidado-e-higiene-infantil/bano-y-ducha": bebe               # nueva 2026-10-24
+    "cuidado-personal-e-higiene/higiene-intima/tampones": higiene-belleza # nueva 2026-10-24
+    "bebidas/vinos/vinos-de-mesa": bebidas                             # nueva 2026-10-24
+    "drogueria-y-limpieza/limpieza-bano-y-wc/limpiadores-bano": droguería-limpieza # nueva 2026-10-24
+    "drogueria-y-limpieza/ambientadores/absorbeolores-y-antihumedad": droguería-limpieza # nueva 2026-10-24
+    "congelados/aves-y-carne-congelada": carniceria                    # nueva 2026-10-24, espejo: la hoja dice carne
+    "la-despensa/yogures-y-postres/yogures-infantiles": lacteos-huevos # nueva 2026-10-24
+    "cuidado-personal-e-higiene/cuidado-y-proteccion-corporal/protectores-solares-y-after-sun": higiene-belleza # nueva 2026-10-24
+    "bebidas/refrescos/bitter-y-ginger-ale": bebidas                   # nueva 2026-10-24
+    "bebidas/licores-y-cremas/anis-y-chinchon": bebidas                # nueva 2026-10-24
+    "drogueria-y-limpieza/conservacion-de-alimentos/papel-aluminio": droguería-limpieza # nueva 2026-10-24
+    "bebe/cuidado-e-higiene-infantil/bastoncillos-algodon-y-sueros": bebe # nueva 2026-10-24
+    "la-despensa/huevos/huevos-frescos": lacteos-huevos                # nueva 2026-10-24
+    "bebidas/licores-y-cremas/pacharan": bebidas                       # nueva 2026-10-24
+    "bebidas/sidra/sin-alcohol": bebidas                               # nueva 2026-10-24
+    "bebe/embarazo-y-lactancia": bebe                                  # nueva 2026-10-24
+    "bebe/cuidado-e-higiene-infantil/canastillas": bebe                # nueva 2026-10-24
+    "cuidado-personal-e-higiene/higiene-intima/toallitas-y-geles-intimos": higiene-belleza # nueva 2026-10-24
+    "frescos/pescado-y-marisco/bacalao-y-salazones": pescaderia        # nueva 2026-10-24
+    "la-despensa/lacteos/bechamel": lacteos-huevos                     # nueva 2026-10-24
+    "bebe/cuidado-e-higiene-infantil/agua-de-colonia": bebe            # nueva 2026-10-24
+    "bebidas/cerveza/sin-alcohol": bebidas                             # nueva 2026-10-24
+    "drogueria-y-limpieza/conservacion-de-alimentos/accesorios-airfryer": droguería-limpieza # nueva 2026-10-24
+    "frescos/quesos/rallados": lacteos-huevos                          # nueva 2026-10-24
+    "frescos/ofertas-en-productos-frescos": frutas-verduras            # nueva 2026-10-24
+    "congelados/mariscos-congelados/preparado-de-paella": congelados   # nueva 2026-10-24, la hoja no dice pescado: manda su rama
+    "cuidado-personal-e-higiene/cosmetica/labios": higiene-belleza     # nueva 2026-10-26
+    "congelados/rebozados-y-platos-preparados/lasanas-y-canelones": congelados # nueva 2026-10-26
+    "frescos/pan-y-bolleria-del-dia/roscones-de-reyes": panaderia      # nueva 2026-10-28
+    "la-despensa/cestas-y-lotes/perfumeria-para-regalar": desayuno-dulces # nueva 2026-10-28
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77
@@ -993,6 +1069,11 @@ mapa:
     "frutas/frutas-congeladas": frutas-verduras                        # nueva, 21 sep
     "chocolates-y-golosinas/turrones-y-dulces-de-navidad": desayuno-dulces # nueva 2026-10-01
     "pescados-y-mariscos/rebozado": pescaderia                         # nueva 2026-10-01
+    "yogures-y-postres/griegos-y-mousse": lacteos-huevos               # nueva 2026-10-09
+    "frutas/melon-y-sandia": frutas-verduras                           # nueva 2026-10-20
+    "verduras/verduras-congeladas": frutas-verduras                    # nueva 2026-10-20
+    "carnes/pavo-y-conejo": carniceria                                 # nueva 2026-10-23
+    "infantil/pouches-y-snacks": bebe                                  # nueva 2026-10-27
   mercadona:
     "Cuidado facial y corporal": higiene-belleza                          # 458
     "Limpieza y hogar": droguería-limpieza                                # 345
@@ -1020,3 +1101,35 @@ mapa:
     "Bebé": bebe                                                          # 63
     "Zumos": bebidas                                                      # 58
     "Fitoterapia y parafarmacia": desayuno-dulces                         # 53
+
+# Anadidas a mano el 9 de octubre de 2026, midiendo primero las claves sin seccion.
+# El lector asigna por diccionario: repetir una clave la sobrescribe, asi que no se toca nada
+# de arriba. Las que no tienen regla clara se quedan sin mapear a proposito.
+# Pendientes de decidir: navidad/mesa-y-hogar, novedades-y-recomendados/oktoberfest,
+# novedades-y-recomendados/especial-otono, y 'Electrodomesticos > Belleza' de Alcampo.
+  alcampo:
+    "Folletos y Promociones > Feria del Vino y la Cerveza": promociones
+    "Folletos y Promociones > Halloween": promociones
+    "Folletos y Promociones > Renueva la decoración de tu hogar": promociones
+  aldi:
+    "ahumados-y-salazones": pescaderia
+    "aperitivos-y-entrantes": aperitivos
+    "chocolates-galletas-y-otros": desayuno-dulces
+    "embutidos": carniceria
+    "panettones": desayuno-dulces
+    "platos-preparados-navidad": preparados
+    "polvorones-y-mantecados": desayuno-dulces
+    "postres": desayuno-dulces
+    "quesos-navidad": lacteos-huevos
+    "turrones": desayuno-dulces
+  dia:
+    "navidad/bombones-chocolates-y-trufas": desayuno-dulces
+    "navidad/caldos-y-cremas": preparados
+    "navidad/carnes-pescados-y-mariscos": pescaderia
+    "navidad/chocolatinas-galletas-y-barquillos": desayuno-dulces
+    "navidad/entrantes-y-aperitivos": aperitivos
+    "navidad/panettones-tartas-y-postres": desayuno-dulces
+    "navidad/platos-especiales": preparados
+    "navidad/polvorones-y-mantecados": desayuno-dulces
+    "navidad/vinos-cavas-y-licores": bebidas
+    "yogures-y-postres/griegos-y-mousse": lacteos-huevos

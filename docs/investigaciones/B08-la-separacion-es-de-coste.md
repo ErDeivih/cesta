@@ -1,4 +1,4 @@
-# B08 · **Encontrado**: la separacion es de **coste**, esta en `api/recetas.py:147` -- y con **la doctrina, decimoquinta vez**
+# B08 · **Encontrado**: la separacion es de **coste**, esta en `plataforma/api/recetas.py:294` -- y con **la doctrina, decimoquinta vez**
 
 *(13 de octubre de 2026. **Octava ronda de B08. Y la busqueda se cierra -- con la respuesta, y con una distincion.**)*
 
@@ -13,7 +13,7 @@ plataforma/api/recetas.py -- 439 lineas
   l107: @rutas.get("/plan")                def plan(desde, hasta, ...)
   l118: @rutas.post("/plan", 201)          def planificar(datos, usuario)
   l131: @rutas.get("/{receta_id}")          def leer(receta_id, version=None, ...)
-  l147: *** def _con_precios(hallada) -> None ***
+  l294: *** def _con_precios(hallada) -> None ***
   l199: @rutas.get("/{receta_id}/a-la-lista")   def previa(...)
   l235: @rutas.post("/{receta_id}/a-la-lista")  def a_la_lista(...)
   l355: @rutas.delete("/plan")              def quitar_plan(...)

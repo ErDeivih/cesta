@@ -27,21 +27,38 @@ El proyecto **ya tiene especificación maestra y encargo vigente**. Esta ficha n
 
 **Regla**: los documentos guardan sus cifras con la fecha en que se midieron. **No se actualizan a mano, se registran**; las de hoy viven solo en `CIFRAS.md`.
 
-## Estado real el 2026-11-04 (medido, no supuesto)
+## Estado real el 2026-11-04, 14:30 (medido, no supuesto)
+
+> **Corrección del 4/11/2026.** La versión anterior de esta tabla decía «cobertura diaria:
+> **solo Lidl**, 21 días». **Era falso**, y el motivo importa: salía de leer
+> `cobertura_declarada` en el manifiesto, donde solo escribe Lidl. La cobertura diaria se
+> mide con `uv run python -m projects.cesta.cobertura_diaria` y con `data/gold/precio_diario.parquet`.
 
 | Dato | Valor |
 |---|---|
 | Productos en catálogo | **52.342** |
 | Grupos comparables | **8.897** |
+| **Grupos con precio en 2+ cadenas** | **8.864** (22,9 % de 38.682 comparables) |
 | Comparables por kg/l/m | **42.862** |
 | Con código de barras | **25.649** |
 | Con sello | **11.619** · con certificado **995** |
 | Con Nutri-Score | **8.545** · con tabla nutricional **3.907** |
-| Cobertura diaria | **solo Lidl**, 21 días (13 oct – 4 nov) |
-| Alcampo | a medias (`data/alcampo_por_donde_iba.txt`) |
-| Carrefour | falló el 18; el encargo pide investigarlo **sin duplicar una ingesta activa** |
+| Histórico | **2.527.902 filas**, 59 días |
 
-Traducido: hay **catálogo y datos de producto**, pero la **cobertura de precios por cadena es de una sola cadena**. Un comparador con una cadena no compara.
+Cobertura diaria **por cadena** (días con precio en gold desde el 01/10, y filas de hoy):
+
+| Cadena | Días | Filas hoy | Cobertura hoy |
+|---|---:|---:|---|
+| Mercadona | 32 | 4.226 | 98,9 % de su referencia |
+| Aldi | 32 | 2.499 | 91,8 % |
+| Carrefour | 31 | 16.782 | 99,9 % (1 error de catálogo crónico) |
+| DIA | 29 | 5.698 | 97,6 % |
+| Alcampo | 21 | 23.405 | recuperado hoy desde el crudo; su vara es un día atípico |
+| Lidl | 21 | 91 | **ofertas semanales parciales**, no catálogo |
+
+Traducido: **la comparación existe y es de cinco cadenas**, no de una. Lo que se cae es una
+cadena un día suelto — y hasta hoy el sistema lo contaba mal. El trabajo vivo está en
+`BACKLOG.md`; el estado corto, en `ESTADO-AGENTE.md`.
 
 ## Cómo trabajas
 

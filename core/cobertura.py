@@ -205,6 +205,41 @@ def revisa(df: pl.DataFrame, fuente: str, *,
 
     Devuelve una lista de frases listas para imprimir, vacia si todo bien. No
     decide nada: quien llama es el que sabe si eso justifica no guardar.
+    Para decidir, `que_vetan`.
+    """
+    return [frase for _, frase in caidas(df, fuente, minimo=minimo, caida=caida)]
+
+
+# --- ramas que no son estanteria -------------------------------------------
+#
+# **El 4 de noviembre de 2026 el control de cobertura tiro el dia entero de Alcampo.**
+# Trajo 23.416 productos con cero errores y no se guardo ni uno: la rama "Folletos y
+# Promociones" habia pasado de 1472 a 727 (-51 %). Pero esa rama **no es una estanteria**,
+# es el folleto de la campana de la semana: su contenido lo pone la campana, y cuando una
+# termina, se queda a la mitad. Ese dia las otras quince ramas de comida **subieron**
+# (Frescos +6 %, Perfumeria +10 %, Drogueria +15 %, Bebe +38 %) y el total fue mayor que
+# el de ayer. Se conservo la captura anterior y el dia se perdio: el que hace once de
+# treinta que le faltan a Alcampo en la ventana.
+#
+# **La excepcion es de la rama y de la cadena, y esta escrita**, no deducida: un hundimiento
+# de verdad -- Frescos, que es el caso del 18 de septiembre de 2026 -- sigue vetando la
+# captura entera. Lo que cambia es que un folleto que rota ya no cuesta los precios del dia.
+RAMAS_DE_CAMPANA: dict[str, frozenset[str]] = {
+    "alcampo": frozenset({"Folletos y Promociones"}),
+}
+
+
+def es_de_campana(rama: str, fuente: str) -> bool:
+    """¿Esta rama es un folleto de campana y no una estanteria del catalogo?"""
+    return rama in RAMAS_DE_CAMPANA.get(fuente, frozenset())
+
+
+def caidas(df: pl.DataFrame, fuente: str, *,
+           minimo: int | None = None,
+           caida: float = CAIDA_MAXIMA) -> list[tuple[str, str]]:
+    """`[(rama, frase)]` de las ramas hundidas, con la rama aparte para poder decidir.
+
+    La frase es la misma que devolvia `revisa`, para que los registros no cambien.
     """
     anterior = _ultimo_bronze(fuente)
     if anterior is None or anterior.is_empty():
@@ -215,12 +250,25 @@ def revisa(df: pl.DataFrame, fuente: str, *,
         return []
     if minimo is None:
         minimo = minimo_para_vigilar(len(anterior))
-    caidas = []
+    salida = []
     for rama, n_antes in sorted(antes.items(), key=lambda x: -x[1]):
         if n_antes < minimo:
             continue
         n_ahora = ahora.get(rama, 0)
         if n_ahora < n_antes * (1 - caida):
             perdido = 100 * (1 - n_ahora / n_antes)
-            caidas.append(f"{rama}: {n_antes} -> {n_ahora} ({perdido:.0f}% menos)")
-    return caidas
+            salida.append((rama, f"{rama}: {n_antes} -> {n_ahora} ({perdido:.0f}% menos)"))
+    return salida
+
+
+def que_vetan(df: pl.DataFrame, fuente: str, *,
+              minimo: int | None = None,
+              caida: float = CAIDA_MAXIMA) -> list[str]:
+    """Las frases de las ramas que **si** justifican no guardar la captura.
+
+    Es `caidas` menos las ramas de campana (`RAMAS_DE_CAMPANA`). Lo que veta es una
+    estanteria hundida; un folleto que rota se cuenta pero no veta.
+    """
+    return [frase for rama, frase in caidas(df, fuente, minimo=minimo, caida=caida)
+            if not es_de_campana(rama, fuente)]
+

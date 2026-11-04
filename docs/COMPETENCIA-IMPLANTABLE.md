@@ -158,15 +158,15 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Orden por los pasillos del supermercado | QueFalta ("ordenada por las categorías del supermercado"), Bring! ("based on the aisles"), Listonic, AnyList ("reorganizar para que se adapten al diseño de tu tienda") | la lista se reordena sola al recorrer la tienda | **si**: `seccion` está en gold y **la lista se agrupa por pasillos desde el 27 de septiembre de 2026** (`porPasillo` en `Cesta.tsx`, con el encabezado pegado arriba) | hecho | — |
 | Mosaico de lo habitual, a un toque | Bring! ("tiles"), Listonic ("suggestions from shopping history"), Soysuper ("Minisúper") | cuadrícula con lo que compras siempre, sin escribir | **si**: `Mosaico.tsx` y `GET /api/habituales`, con `origen` en cada tarjeta, desde el 23 de septiembre de 2026 | hecho | — |
 | Añadir por voz | Listonic ("Voice input"), Soysuper ("Dicta tu lista"), EROSKI, OkLista | dictas y se rellena la lista | **en el buscador**: `componentes/Microfono.tsx` desde el 30 de septiembre de 2026 (rellena el campo, y **sin soporte del navegador no se dibuja**). Dictar y que se llene **la lista** no está | si, el resto es encadenar el micro con el alta de la línea | XS |
-| Sugerencias del historial de compra | Listonic ("based on shopping history"), Soysuper | propone lo que compras cada cierto tiempo | no (**tarea 3.3**, `BACKLOG.md:563-566`) | si, pero **necesita 30 días de listas hechas** (`BACKLOG.md:573`) | S |
+| Sugerencias del historial de compra | Listonic ("based on shopping history"), Soysuper | propone lo que compras cada cierto tiempo | no (**tarea 3.3**, `docs/BACKLOG.md:563-566`) | si, pero **necesita 30 días de listas hechas** (`docs/BACKLOG.md:573`) | S |
 | Total estimado en vivo / presupuesto | QueFalta ("Total estimado en vivo"), Listonic ("Budget control"), AnyList (precios con total acumulado) | el total sube mientras añades | **si** (`API.md:211` `estimacion`) | si | — |
 | Presupuesto con límites por categoría | FamilyWall (Premium) | topes de gasto por tipo de producto | no | si, con las secciones ya en gold y el cierre de compra | S |
 | Notas por línea | Bring!, Listonic, AnyList ("marca, cantidad o una foto") | "la de cristal", "si hay del grande" | **si**: se apuntan, se leen y se quitan debajo de la línea desde el 30 de septiembre de 2026 (`UnaLinea` en `Cesta.tsx`) | hecho | — |
 | Foto en la línea | Bring!, Listonic, AnyList | una foto del producto exacto | **a medias**: `imagen` está en **52.567 de 52.567** (medido) | si, es pintar `imagen` en la línea | XS |
 | Etiquetas de urgencia | Bring!, OurGroceries ("a star might indicate... urgently needed") | marca de prioridad en el artículo | no | si: una columna y un color | XS |
-| Categorías automáticas al escribir | Listonic | clasifica sola lo que tecleas | **a medias**: `seccion` ya está en gold y es heredable por grupo (`BACKLOG.md:479-480`) | si | S |
+| Categorías automáticas al escribir | Listonic | clasifica sola lo que tecleas | **a medias**: `seccion` ya está en gold y es heredable por grupo (`docs/BACKLOG.md:479-480`) | si | S |
 | Cantidad por línea | todas | "leche x6" | **si** (`cantidad` con `CHECK` en `plataforma/sql/001_esquema.sql:91`) | si | — |
-| Tachar y subir lo hecho sin cobertura | QueFalta, Cozi ("saves your lists locally... sync automatically once you reconnect"), Go2Market | se tacha sin red y se sube al recuperarla | **a medias**: la API sí (`API.md:242`), la cola local del front nuevo no (`BACKLOG.md:120-124`) | si: `momento` con la hora del móvil ya está en el contrato | M |
+| Tachar y subir lo hecho sin cobertura | QueFalta, Cozi ("saves your lists locally... sync automatically once you reconnect"), Go2Market | se tacha sin red y se sube al recuperarla | **a medias**: la API sí (`API.md:242`), la cola local del front nuevo no (`docs/BACKLOG.md:120-124`) | si: `momento` con la hora del móvil ya está en el contrato | M |
 | Lista ya hecha, curada y ordenada por supermercado | GoCoCo (*"listas de la compra elaboradas por expertos, con productos saludables verificados y organizadas por los supermercados más populares"*; en el plan de pago, para tus súpers favoritos) | no montas la lista: eliges una hecha | no | **no**, y a propósito: una lista elegida por otros no sabe qué tienes en casa ni qué te gusta. Lo que sí tenemos es el orden por pasillos de **sección** (`seccion` en 52.446 de 52.567 productos, medido) | — |
 | Reusar una lista anterior | OurGroceries, AnyList | repetir la compra del mes pasado | no | si: `lista.archivada_en` ya existe (`plataforma/sql/001_esquema.sql:64`) | XS |
 | Widget en la pantalla de inicio | Listonic, AnyList, Bring! | acceso desde el escritorio del móvil | no | **no por ahora**: pide app nativa (`FUNCIONALIDADES.md:224`) | XL |
@@ -195,7 +195,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | La curva dentro de la web de la cadena (extensión de navegador) | supermarket-tracker (**abandonada**: su extensión solo se inyecta en Mercadona, es la 0.1.0 del 4 feb 2023), **PrecioReal** (extensión de Chrome **y addon de Firefox**, sobre tiendas online) | dibuja el histórico encima de la web del supermercado | **si** (`extension/`), y la nuestra cubre **las cinco cadenas** | si | — |
 | "Bajadas de esta semana" | Precios del Super (`/bajadas` y `/subidas`), Comparaloo ("Bajadas de precio"), RadarSuper ("qué ha bajado y subido esta semana") | compara con la captura anterior | **si**: `GET /api/bajadas` (`plataforma/api/main.py:205`) y pestana en el panel | si | — |
 | Verificador de ofertas: ¿el descuento es real? | PrecioReal ("evita falsas rebajas"), Comparaloo ("detector de falsas rebajas": *"un −50 % sobre un precio inventado es el precio de siempre"*, con la curva diaria y un ejemplo de tres pasos: precio habitual 30 días / subido hace 3 días / "rebajado" hoy), RadarSuper ("qué ofertas del folleto son de verdad"), **Ahorramercado** (por la vía de separar oferta puntual de bajada estructural) | guarda el precio día a día y enseña la curva antes de comprar | **hecho el 24 sep 2026**: `GET /api/ofertas-dudosas` y la pestaña **Ofertas dudosas**, con la frase del servidor (`por_que`) antes que el precio y la regla de 90 días. Y con un filtro que ninguno de ellos tiene: **solo se acusa a las ofertas que son un descuento sobre el precio de esa unidad** (un 3x2 no baja el precio de una: eran 3.658 de 5.488), y lo que no se puede juzgar se cuenta y se dice | **si, hoy**: es una pantalla sobre un endpoint que ya responde | S |
-| Alerta cuando un producto baja de precio | idealo ("**Precio Ideal**: activa una alarma de precios"), Comparaloo (aviso por correo **sin registro**, confirmado con un código de seis dígitos), PrecioReal ("alertas con precio objetivo"), **CestIA** ("alertas de bajada en favoritos"), **SuperPrecios** | te avisa al alcanzar el precio que buscas | **a medias**: tabla `alerta` con tres tipos (`plataforma/sql/001_esquema.sql:126-133`) y `/api/alertas` (`plataforma/api/main.py:549`); **el front nuevo no las usa** (`BACKLOG.md:128-132`) | **si, hoy**: la API funciona y el `app.js` viejo la usaba (`app.js:742, 1066`) | S |
+| Alerta cuando un producto baja de precio | idealo ("**Precio Ideal**: activa una alarma de precios"), Comparaloo (aviso por correo **sin registro**, confirmado con un código de seis dígitos), PrecioReal ("alertas con precio objetivo"), **CestIA** ("alertas de bajada en favoritos"), **SuperPrecios** | te avisa al alcanzar el precio que buscas | **a medias**: tabla `alerta` con tres tipos (`plataforma/sql/001_esquema.sql:126-133`) y `/api/alertas` (`plataforma/api/main.py:549`); **el front nuevo no las usa** (`docs/BACKLOG.md:128-132`) | **si, hoy**: la API funciona y el `app.js` viejo la usaba (`app.js:742, 1066`) | S |
 | Enseñar **de cuándo es el dato** | **CestIA** (*"muestra la antigüedad del dato"*); Precios del Super publica la hora de cada cambio; RadarSuper se niega a puntuar una cadena sin **3 productos con precio de menos de 7 días** | el número va con su fecha o no se enseña | **si, y es una ley del proyecto**: cada precio lleva su fecha pegado al número y uno de más de tres días **no decide** en qué tienda comprar (`APP.md:147-163`) | si | — |
 | Alerta de que un producto **de tu lista** está en oferta | Bring! ("Passende Angebote"), Tiendeo ("alertas sobre las promos de tus productos favoritos") | cruza tu lista con las ofertas del folleto | no | si: `core/promos.py` ya está hecho y probado (10 pruebas), y `promo` está en **7.207** productos (medido) | S |
 | Cupones verificados contra el feed de la tienda | Comparaloo ("el mejor código de cada tienda, comprobado contra el feed de su programa y retirado en cuanto caduca"), Flipp (cupones cargados a la tarjeta de fidelidad) | lista de códigos vivos | no | **no**: hay que ser la cadena o tener su acuerdo de afiliación | — |
@@ -207,7 +207,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Índice de precios: cuánto ha subido la cesta | RadarSuper ("cesta básica nacional" de 12 productos, con marca más vendida por cadena), Precios del Super ("IPC") | una cifra de evolución | **hecho el 24 sep 2026**: `GET /api/indice` y la pestaña **Índice** del panel | si | XS |
 | Precios abiertos de contraste | Open Prices (Open Food Facts) | base colaborativa con API y búsqueda por EAN | no | **a medias**: se puede leer para contrastar, no mezclar — licencia ODbL (`COMPETENCIA.md:418-429`) | — |
 | API pública de precios para terceros | Comparaloo (**API pública y gratis**: 1,2 M de productos, 60 peticiones/minuto). **Ojo con el detalle**: esa API **excluye justo el supermercado** — *"no incluye los productos de supermercado y mascotas... no se pueden servir aquí"*. RadarSuper la anuncia en su plan Pro de 9,99 €/mes | otros programas consumen sus datos | **a medias**: la API existe pero es de casa, por Tailscale (`APP.md:343`) | si, el día que se decida abrir | S |
-| Presupuesto y **gasto por tienda** | SuperPrecios (lista con total estimado **y gasto por tienda**), FamilyWall (límites por categoría), OkLista (presupuesto) | cuánto llevas y cuánto en cada sitio | **a medias**: `estimacion` da los tres totales de la lista (`API.md:211`) y **no hay acumulado en el tiempo**, porque falta el cierre de compra | si, con la **tarea 10** (`BACKLOG.md:802-823`) | S |
+| Presupuesto y **gasto por tienda** | SuperPrecios (lista con total estimado **y gasto por tienda**), FamilyWall (límites por categoría), OkLista (presupuesto) | cuánto llevas y cuánto en cada sitio | **a medias**: `estimacion` da los tres totales de la lista (`API.md:211`) y **no hay acumulado en el tiempo**, porque falta el cierre de compra | si, con la **tarea 10** (`docs/BACKLOG.md:802-823`) | S |
 
 ### 1.3 Escáner de código de barras y nutrición
 
@@ -216,7 +216,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Escanear y ver el precio en varias tiendas a la vez | **nadie lo hace bien junto**: Soysuper ("escanea el código de barras para ver el precio y la oferta de cada supermercado"), Findit, OCU Market (precio medio por cadena), **CestIA** (comparación *"emparejada por su código de barras"*). **idealo tiene lector de código de barras pero compara comercio online, no supermercados**: su categoría "Alimentación" es en la práctica bebidas, whisky y vinos. **Yuka no puede hacerlo y lo dice**: *"por razones de independencia no podemos indicar dónde comprar los artículos"* | escaneas y sale el precio en cada cadena | **si** (`src/paginas/Escaner.tsx`, `GET /api/ean/{codigo}`, `plataforma/api/main.py:270`) | si, y es nuestra función diferencial: **25.517 productos traen código de barras**, de los que salen **23.759 códigos distintos**, y **11.613** llegan a 2 o más cadenas (medido; las tres consultas están en el punto 0). La app de referencia del sector **renuncia explícitamente** a esto | — |
 | Nota del producto de 0 a 100, **absoluta** | Yuka: **60 %** calidad nutricional (metodología Nutri-Score, "suavizado... según la tabla de correspondencia"), **30 %** aditivos, **10 %** ecológico | una cifra por producto, igual en cualquier tienda | **a medias**: la letra A/B/C de hoy es una posición **dentro del grupo** y el 76,9 % de las letras son el precio disfrazado (`FUNCIONALIDADES.md:138-140`) | **si**: hay **11.944** productos con Nutri-Score o ingredientes (medido). El contrato `nota` ya está escrito en `API.md:390-405` | M |
 | Tope de la nota si hay un aditivo de riesgo | Yuka: *"al contener un aditivo que consideramos de riesgo (pastilla roja), la puntuación máxima del producto se ha fijado en 49/100"* | un solo aditivo malo hunde la nota | no | si: `calidad_nota` ya guarda las señales y `core/calidad.py` ya cuenta los aditivos | S |
-| Aditivos con color de riesgo | Yuka (4 pastillas: verde, amarillo, naranja, rojo), OCU Market (**código de cuatro colores** + si el aditivo es alergénico + **ingesta diaria admisible** + si se puede usar en ecológico), **AddiCheck** (más de **400 aditivos**, con perfil de salud propio), CodeCheck (semáforo propio, **pero solo en Alemania, Suiza, Austria y Países Bajos**) | cada aditivo con su nivel y su explicación | **a medias**: `core/calidad.py` los cuenta exigiendo "E" + tres o cuatro dígitos — **2 falsos positivos en 400 productos** (`BACKLOG.md:785-788`) — pero el color no existe | si: falta la tabla de riesgo por aditivo, que es un fichero escrito a mano | S |
+| Aditivos con color de riesgo | Yuka (4 pastillas: verde, amarillo, naranja, rojo), OCU Market (**código de cuatro colores** + si el aditivo es alergénico + **ingesta diaria admisible** + si se puede usar en ecológico), **AddiCheck** (más de **400 aditivos**, con perfil de salud propio), CodeCheck (semáforo propio, **pero solo en Alemania, Suiza, Austria y Países Bajos**) | cada aditivo con su nivel y su explicación | **a medias**: `core/calidad.py` los cuenta exigiendo "E" + tres o cuatro dígitos — **2 falsos positivos en 400 productos** (`docs/BACKLOG.md:785-788`) — pero el color no existe | si: falta la tabla de riesgo por aditivo, que es un fichero escrito a mano | S |
 | Nutri-Score visible | Yuka, GoCoCo (aunque **rechaza el Nutri-Score** y usa su propia escala), OCU Market, Open Food Facts app (que es de donde sale el dato). **CodeCheck no lo usa** | letra A–E | **si**: **8.450** productos con Nutri-Score (medido) | si | — |
 | NOVA / ultraprocesados | GoCoCo, OCU Market, Open Food Facts app. **Yuka no lo usa en su fórmula publicada** y **CodeCheck tampoco** | grupo 1–4 | **si**: **7.797** productos con NOVA (medido) | si | — |
 | Puntuación propia 0–10 con fórmula publicada | GoCoCo: OMS (modelo de perfil de nutrientes, 17 categorías) **+** NOVA **+** sistema de alerta chileno (calorías, azúcares añadidos, grasas saturadas, sal); regla 4/5/6/10 puntos y **−1 punto por cada sello de advertencia**, hasta −4. **CodeCheck** publica también sus pesos: *"50 % de la evaluación de los nutrientes y 50 % de la evaluación de los ingredientes"* | burbuja roja, amarilla o verde | no | **a medias**: sin `categories_tags` de OFF no hay las 17 categorías de la OMS; con ellas, sí | M |
@@ -226,7 +226,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Avisos según tu dieta | Yuka Premium: vegetariana/vegana, sin aceite de palma, sin gluten, sin lactosa, sin cerdo, sin soja, sin sulfitos; **y las recomendaciones también los tienen en cuenta** | marca los productos que no encajan contigo | **a medias**: `GET /api/buscar?sellos=` con 8 sellos (`API.md:449-452`) | si: los sellos ya están y el escáner solo tiene que mirarlos | XS |
 | Alertas de alérgenos | Open Food Facts app (**14 alérgenos**, con el aviso *"compruébelo usted mismo siempre con el embalaje"*), **AlerScan** (avalada por **ADILAC** el 9 jul 2026: *"APTO / NO APTO / A REVISAR"*, y cubre alimento, bebida, cosmético, higiene **y fármaco**; *"sin registro, sin correo, sin pagos"*), **IntOut** (65.000 productos, **18 alergias**, foto al plato o a la etiqueta; 14,99 €/año), **Escáner Alergia Alimentaria** (sobre Open Food Facts, avisos de trazas, gratis sin anuncios), **AlergiGuard** (cartas de restaurante por foto + tarjeta médica SOS en 7 idiomas), **Qcomo?** (fructosa y polioles), **ALLiCANEAT** (FODMAP, histamina), OCU Market (si el aditivo es alergénico). **Ojo a lo que NO existe**: ni AESAN ni la SEAIC tienen app de consumo para escanear alérgenos — la de la SEAIC es para alergólogos socios | avisa antes de comprar | **a medias**: `alergenos` en **3.885** productos (medido) y `sellos` sin gluten / sin lactosa filtrables | si, **con la cobertura dicha en pantalla**: `CADENAS.md:33` da alérgenos 0 % en Alcampo, Aldi y Carrefour. **Y hay una limitación que no se puede tapar**: en una alergia, un falso negativo hace daño, así que el aviso va siempre con la frase de "compruébalo en el envase" | S |
 | Producto verificado por una asociación de pacientes | **CELIGUIA** (la app de **FACE**, antes FACEMÓVIL; renombrada el 24 abr 2026 *"por motivos legales, derechos de registro de marca"*): lector de código de barras sobre *"los 16.000 productos incluidos en la Lista digital de alimentos sin gluten de FACE"*, y **5.000 establecimientos asesorados**. **sinGLU10** (ACySG Madrid, circuito **independiente** de FACE): +23.000 productos contrastados *"tras consultar al fabricante y revisar los certificados"*, clasifica en *"contiene, no contiene o **puede contener**"*, y **avisa si un producto de tus favoritos cambia** | el aval no es un algoritmo: es una asociación | no | **no**: eso no lo da ninguna cadena; es otro trabajo de datos y no lo vamos a hacer. **Y su propio límite es la prueba de por qué**: FACE reconoce que *"la inclusión en la Lista digital de alimentos es **voluntaria para las empresas**, por lo que no disponemos de la información de todos los productos sin gluten"*, y las reseñas lo confirman (*"2 de cada 3 productos no los tiene"*). CELIGUIA además es **exclusiva para socios** y tiene **1,9★ en Play** | — |
-| Tabla nutricional completa (kcal, grasas, azúcares, sal) | Yuka, CodeCheck, OCU Market (con sistema de colores), Open Food Facts app | los números por 100 g o 100 ml | **a medias**: `nutricion` en **3.841** productos y **los 3.841 son de DIA** (medido) | **si**: OFF trae **11.723** (`BACKLOG.md:625`). `nutriments` está pedido en `core/off.py:44`, pero **no comprobado** que llegue a gold | S |
+| Tabla nutricional completa (kcal, grasas, azúcares, sal) | Yuka, CodeCheck, OCU Market (con sistema de colores), Open Food Facts app | los números por 100 g o 100 ml | **a medias**: `nutricion` en **3.841** productos y **los 3.841 son de DIA** (medido) | **si**: OFF trae **11.723** (`docs/BACKLOG.md:625`). `nutriments` está pedido en `core/off.py:44`, pero **no comprobado** que llegue a gold | S |
 | Historial de escaneos | Yuka ("historial de lo escaneado con código de color"), OCU Market (lo piden sus reseñas), Open Food Facts app ("puede exportar su historial de escaneo") | lo escaneado queda guardado | no | si: es una tabla y una pantalla | XS |
 | Buscar sin escanear | Yuka Premium ("barra de búsqueda avanzada"), Open Food Facts app | buscar por nombre en vez de escanear | **si** (`GET /api/buscar`) | si | — |
 | Escanear sin conexión | Yuka Premium ("modo sin conexión"), GoCoCo Plus (*"escanea incluso sin señal, por ejemplo dentro de supermercados grandes, y tus resultados se guardan solos en el historial al volver la conexión"*; en el plan gratis, **5 escaneos por semana**), Open Food Facts app ("puede agregar nuevos productos, incluso con mala o nula conexión") | la base viaja en el móvil y lo escaneado se sube luego | no | **no**: descartado llevar el catálogo al móvil (`APP.md:56-76`) | — |
@@ -237,14 +237,14 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 
 | Funcionalidad | De quién es (app) | Cómo lo hace ella | La tenemos? | Se puede hacer aquí? | Coste |
 |---|---|---|---|---|---|
-| Ver la oferta mientras añades a la lista | Tiendeo, Bring! (desde el 17 jun 2026: *"añadir ofertas desde folletos digitales directamente a la lista con un solo toque"*), Flipp ("recorta la oferta a tu lista") | la promo aparece al añadir el producto | **a medias**: `core/promos.py` está hecho y con 10 pruebas en verde (`BACKLOG.md:584`); el texto de la mecánica no se enseña (**tarea 4**) | **si, hoy**: falta traducir la mecánica y pintarla | S |
-| La mecánica dicha, no la etiqueta | Tiendeo (peor: solo dice "hay promo") | "llevando dos, 1,50 EUR menos por unidad" | no | **si**: `unidades_optimas` y `Mecanica.util` ya existen (`BACKLOG.md:591-593`) | S |
+| Ver la oferta mientras añades a la lista | Tiendeo, Bring! (desde el 17 jun 2026: *"añadir ofertas desde folletos digitales directamente a la lista con un solo toque"*), Flipp ("recorta la oferta a tu lista") | la promo aparece al añadir el producto | **a medias**: `core/promos.py` está hecho y con 10 pruebas en verde (`docs/BACKLOG.md:584`); el texto de la mecánica no se enseña (**tarea 4**) | **si, hoy**: falta traducir la mecánica y pintarla | S |
+| La mecánica dicha, no la etiqueta | Tiendeo (peor: solo dice "hay promo") | "llevando dos, 1,50 EUR menos por unidad" | no | **si**: `unidades_optimas` y `Mecanica.util` ya existen (`docs/BACKLOG.md:591-593`) | S |
 | Avisar de que el descuento es de tarjeta y **no baja el ticket** | (propio, y es una ventaja) | | **si**: `promo_club` en **1.899** productos y `promo_solo_online` en **398** (medido); `MOVIMIENTOS.md:87-120` | si | — |
 | Historial de cambios de precio, con fecha | Precios del Super ("últimos cambios de precio", con hora), Comparaloo | una lista cronológica de qué se movió | **si**: `/api/panel/movidos` y `GET /api/pulso` (`plataforma/api/main.py:193`) | si | — |
 | "Novedades desde tu última visita" | (propio) | | **si** (`API.md:206`) | si | — |
 | Productos retirados del catálogo | Precios del Super (sección **"Retirados"**) | dice qué ha dejado de venderse | **a medias**: `disponible` está en el 100 % de las cinco cadenas (`CADENAS.md:22`), pero no hay pantalla de retirados | si: es un `WHERE disponible = false` comparado con el día anterior | S |
 | Evaluación avalada por expertos independientes **nombrados** | CodeCheck (Producto Check GmbH, Berlín; 4,2★, 5 M+ descargas): sus valoraciones salen de *"expertos independientes, entre ellos la Asociación Alemana de Alergia y Asma (DAAB), el Centro del Consumidor de Hamburgo (VZHH), Greenpeace (Suiza) y WWF"*, con datos de la **Comisión Europea**, el **California Department of Public Health**, el **BUND** (microplásticos) y **GS1** para saber qué organización emitió el código de barras. **sinGLU10** hace lo mismo con el aval de la **ACySG** | la nota no la firma un algoritmo anónimo | **a medias, y por el camino bueno**: `calidad_origen` y `sellos_origen` ya dicen de dónde sale cada dato (`API.md:491-494`), y el prefijo del código se enseña con su nombre — **"marca registrada en España"**, no "producto español" (`APP.md:271-283`) | S |
-| Aviso de retirada de producto por seguridad | **ninguna app de la competencia avisa dentro de tu lista**; lo más cerca que está alguien es la sección **"Alertas"** de la OCU, que publica las retiradas como noticia (por ejemplo, *"retirada de adelgazantes con sibutramina"*), no enganchadas a lo que compras. La fuente buena es **AESAN** | avisa si algo de tu lista está retirado | no (**N10**, `BACKLOG.md:1160-1189`) | **si**: una página HTML al día, sin RSS ni API (`COMPETENCIA.md:433-449`). `es_recall` existe en gold y está a **0** (medido) | M |
+| Aviso de retirada de producto por seguridad | **ninguna app de la competencia avisa dentro de tu lista**; lo más cerca que está alguien es la sección **"Alertas"** de la OCU, que publica las retiradas como noticia (por ejemplo, *"retirada de adelgazantes con sibutramina"*), no enganchadas a lo que compras. La fuente buena es **AESAN** | avisa si algo de tu lista está retirado | no (**N10**, `docs/BACKLOG.md:1160-1189`) | **si**: una página HTML al día, sin RSS ni API (`COMPETENCIA.md:433-449`). `es_recall` existe en gold y está a **0** (medido) | M |
 | Folletos de las tiendas de tu ciudad | Tiendeo (folletos de Mercadona, Lidl, Carrefour, Alcampo, Aldi, DIA, Eroski + 40 países), Ofertia, Flipp, RadarSuper (boletín por WhatsApp) | los catálogos de la semana | no | **no**: no bajamos folletos y son imágenes; para leer un folleto hay que hacer reconocimiento sobre un PDF | — |
 | Folletos consultables sin conexión | Tiendeo ("consulta los catálogos disponibles incluso sin conexión") | | no | no: sin folletos, no hay nada que guardar | — |
 | Aviso semanal de folletos nuevos | Tiendeo ("una notificación cada semana con los nuevos folletos") | push semanal | no | **no**: push pide servidor siempre accesible (`FUNCIONALIDADES.md:253`) | — |
@@ -253,7 +253,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 | Puntos y recompensas personalizadas | Lidl Plus (**"Puntos Lidl"** desde el 1 jul 2026: *"un punto por cada euro gastado en tiendas físicas"*, más de **400 recompensas**, validez 24 meses, **10 millones de usuarios en España**), Club Alcampo (saldo en € + puntos), Mi Carrefour (**ChequeAhorro** cada dos meses y Tarjeta PASS al **1 %**), BM ("Ahorrando mes a mes"), EROSKI club, Club Dia, BonpreuEsclat (1 %) | acumulas y canjeas | no | **no**: hay que ser la cadena y tener su programa. **Y las dos cadenas más grandes no lo tienen**: Mercadona no tiene tarjeta ni puntos (lo confirma la empresa) y **ALDI lo rechaza por política**. No es un hueco que nosotros podamos llenar | — |
 | Cupones y descuentos personalizados | Mi Carrefour (cupones personalizados), Lidl Plus, DIA, Tiendeo ("cupones y descuentos exclusivos") | la cadena te calcula el descuento sobre tu historial | no | **no**: la cadena los calcula sobre tu ticket y no los publica en ningún sitio | — |
 | ChequeAhorro: en qué has ahorrado | Mi Carrefour | suma lo ahorrado con cupones | no | **no**: requiere el ticket | — |
-| Control de gasto en el tiempo | Your Food ("guarda lo que pagaste y mira cómo se acumulan tus gastos"), BM ("Ahorrando mes a mes"), FamilyWall (presupuesto Premium) | gráfica de lo gastado | no | **si**, con el cierre de compra de la **tarea 10** (`BACKLOG.md:802-823`) | S |
+| Control de gasto en el tiempo | Your Food ("guarda lo que pagaste y mira cómo se acumulan tus gastos"), BM ("Ahorrando mes a mes"), FamilyWall (presupuesto Premium) | gráfica de lo gastado | no | **si**, con el cierre de compra de la **tarea 10** (`docs/BACKLOG.md:802-823`) | S |
 | Estadísticas de la casa | QueFalta Plus ("estadísticas") | números de tu compra | no | si, con el cierre de compra | S |
 
 ### 1.5 Despensa, caducidades y desperdicio
@@ -304,7 +304,7 @@ Una fila por funcionalidad de la competencia. **"La tenemos?"** vale `si`,
 |---|---|---|---|---|---|
 | Escala saludable con valoración **propia** de aditivos | OCU Market (**0 a 100**, con nutrientes, Nutri-Score, NOVA, **aromas** y valoración de aditivos por la OCU) | nota con aval de una organización de consumidores | no | si: es la nota de la ficha 9 con una tabla de aditivos escrita a mano | M |
 | Comparar tu cesta con el IPC oficial | RadarSuper (contrasta su cifra con el IPC alimentación del INE y **señala cuándo divergen**), Precios del Super (sección "IPC") | inflación oficial al lado de la real | no | **no**: descartado a propósito (`APP.md:404`, "es otro proyecto") | — |
-| Filtro de "producto nacional" | lo pediste tú, no lo tiene ninguna app | | no | **no**: techo realista de **1.900 de 51.781, el 3,7 %** (`CADENAS.md:95`, `BACKLOG.md:639-642`) | — |
+| Filtro de "producto nacional" | lo pediste tú, no lo tiene ninguna app | | no | **no**: techo realista de **1.900 de 51.781, el 3,7 %** (`CADENAS.md:95`, `docs/BACKLOG.md:639-642`) | — |
 | Nota con la procedencia del dato a la vista | Open Food Facts app, RadarSuper ("te la enseñamos producto a producto para que la compruebes tú") | dice de dónde sale cada número | **si**: `sellos_origen` vale `certificado`, `etiqueta`, `nombre` o `mixto` y la interfaz lo dice (`API.md:491-494`); reparto medido: etiqueta **10.178**, nombre **795**, mixto **508**, certificado **342** | si | — |
 | Publicidad y patrocinio | Bring!, Listonic (gratis con anuncios), Flipp ("contiene anuncios"), Phenix ("contiene anuncios"), Out of Milk ("contains ads") | financiación por publicidad | no | **no, y nunca**: `PANTALLAS.md:323-324` | — |
 | Pantalla de actividad familiar | Cozi, FamilyWall, Dommuss | quién hizo qué y cuándo | no | **no**: descartado (`PANTALLAS.md:318-319`) | — |
@@ -333,7 +333,7 @@ las líneas aparecen ya en el orden del recorrido, sin que nadie las ordene.
 
 **El dato que hace falta.** `seccion`, que **ya está en gold**: 52.446 de 52.567
 productos (medido). El orden de recorrido ya existe en `core/secciones.ORDEN`
-(`BACKLOG.md:470-483`). El fichero de equivalencias es `core/datos/secciones.yml`,
+(`docs/BACKLOG.md:470-483`). El fichero de equivalencias es `core/datos/secciones.yml`,
 849 claves, con el 97 % propuesto automáticamente (`COMPETENCIA.md:329-331`).
 **No hace falta nada nuevo.**
 
@@ -346,10 +346,10 @@ productos (medido). El orden de recorrido ya existe en `core/secciones.ORDEN`
 - Front: `plataforma/web/app/src/paginas/Cesta.tsx`. Las líneas se agrupan por
   `seccion` bajo encabezados, usando `RespuestaSecciones` (`src/tipos.ts:173`).
 - Lo que no tenga sección va al final, bajo **"otros"**, y no desaparece
-  (`BACKLOG.md:484-485`).
+  (`docs/BACKLOG.md:484-485`).
 
 **La regla que la gobierna.** *"Lo que no tenga sección va al final, bajo 'otros':
-no se inventa una sección para que no quede feo"* (`BACKLOG.md:484`). Y la ley 6
+no se inventa una sección para que no quede feo"* (`docs/BACKLOG.md:484`). Y la ley 6
 del `README.md:57` — ningún campo vacío: o tiene sección, o va a "otros" dicho.
 
 **Como se sabe que esta bien.**
@@ -366,7 +366,7 @@ del `README.md:57` — ningún campo vacío: o tiene sección, o va a "otros" di
 
 **Lo que se descarta.** Un clasificador de texto para los restos sin sección. Si
 al final quedan claves sueltas, se miran y se añaden al fichero
-(`BACKLOG.md:494-496`).
+(`docs/BACKLOG.md:494-496`).
 
 ---
 
@@ -438,12 +438,12 @@ asistente: dices "dos litros de leche entera" y aparece escrito en el campo.
 - Sin ruta nueva. Front: `plataforma/web/app/src/paginas/Buscar.tsx` y
   `src/componentes/FiltrosBusqueda.tsx`.
 - **Si el navegador no lo soporta, el botón no se dibuja** (`FUNCIONALIDADES.md:49`).
-  En iOS solo va en Safari y pide permiso (`BACKLOG.md:560-561`).
+  En iOS solo va en Safari y pide permiso (`docs/BACKLOG.md:560-561`).
 - Si el texto trae cantidad ("dos litros"), se propone como `cantidad` de la
   línea, pero **no se añade sola**.
 
 **La regla que la gobierna.** Un botón que se dibuja y falla es peor que no tener
-botón (`BACKLOG.md:561`, y la misma regla ya aplicada en `Escaner.tsx:57-60` con
+botón (`docs/BACKLOG.md:561`, y la misma regla ya aplicada en `Escaner.tsx:57-60` con
 `BarcodeDetector`). Y no es un asistente: no se le pide nada más.
 
 **Como se sabe que esta bien.**
@@ -473,7 +473,7 @@ Un toque largo sobre la línea y un campo de texto.
 **El dato que hace falta.** **Ya existe**: `lista_linea.nota`
 (`plataforma/sql/001_esquema.sql:92`). La API lo acepta desde el principio
 (`POST /api/listas/{id}/lineas`, `API.md:218`, con `"nota": "la de cristal"`), y
-**la interfaz no lo usa** (`BACKLOG.md:609`).
+**la interfaz no lo usa** (`docs/BACKLOG.md:609`).
 
 **Diseno aqui.**
 
@@ -481,7 +481,7 @@ Un toque largo sobre la línea y un campo de texto.
   `PATCH /listas/{id}/lineas/{linea_id}` (`plataforma/api/main.py:402` y `:419`).
 - Front: `plataforma/web/app/src/paginas/Cesta.tsx`, en la línea de la lista.
 - Ojo: `src/tipos.ts:414` tiene `nombre_visto` y **hoy no se pinta ningún fichero
-  de `app/src`** (`BACKLOG.md:97-100`). Al pintar la línea, esto se arregla de
+  de `app/src`** (`docs/BACKLOG.md:97-100`). Al pintar la línea, esto se arregla de
   paso.
 
 **La regla que la gobierna.** El campo ya está en el contrato: no se añade una
@@ -509,10 +509,10 @@ foto propia del usuario sería almacenamiento que hay que respaldar.
 **Quien lo hace y como.** Tiendeo solo dice que hay promoción
 (`COMPETENCIA.md:96-98`); Bring! desde el 17 de junio de 2026 añade la oferta del
 folleto a la lista con un toque. Nosotros podemos hacerlo mejor porque sabemos
-el precio **y la mecánica** (`BACKLOG.md:577-585`).
+el precio **y la mecánica** (`docs/BACKLOG.md:577-585`).
 
 **El dato que hace falta.** **Ya está hecho**: `core/promos.py`, con 10 pruebas en
-verde, y `unidades_optimas` calculado (`BACKLOG.md:584, 591-593`). El texto de la
+verde, y `unidades_optimas` calculado (`docs/BACKLOG.md:584, 591-593`). El texto de la
 oferta está en `promo_txt` y el sí/no en `promo` — **7.207 productos con `promo`**
 (medido). `CADENAS.md:41-44` avisa de que Carrefour y Mercadona no publican texto
 de promoción.
@@ -526,7 +526,7 @@ de promoción.
 - En la lista: *"llevando 3 en vez de 2, la tercera sale gratis"*.
 
 **La regla que la gobierna.** *"Una oferta es una regla, no un precio"*
-(`BACKLOG.md:435-437`): "2ª unidad −50 %" no abarata el producto, abarata el par.
+(`docs/BACKLOG.md:435-437`): "2ª unidad −50 %" no abarata el producto, abarata el par.
 Y **los descuentos de tarjeta no bajan el total**: no se descuentan en caja. Por
 eso `Mecanica.util` los excluye, y `promo_club` está puesto en **1.899**
 productos (medido).
@@ -537,7 +537,7 @@ productos (medido).
 
 - Un producto con "3x2" enseña la sugerencia cuando llevas 2.
 - Un producto con "Club Alcampo … acum en tu tarjeta" **no la enseña**
-  (`BACKLOG.md:598-600`).
+  (`docs/BACKLOG.md:598-600`).
 - El total de la lista baja al subir de 2 a 3 unidades en un 3x2.
 - Un producto de Mercadona (que no publica `promo_txt`) no enseña una mecánica
   inventada.
@@ -569,7 +569,7 @@ con `precio_base_cent` y `posicion_90d` de `precio_derivado.parquet`
 
 Aviso importante y medido: `oferta_sospechosa`, que es la regla más exigente
 (subir el precio justo antes de anunciar la oferta), compara con `shift(45)` y
-**hoy sale `False` en las 763.042 filas** (medido; `BACKLOG.md:835-837` dice
+**hoy sale `False` en las 763.042 filas** (medido; `docs/BACKLOG.md:835-837` dice
 "necesita 45 días → 20 de octubre"). **No está roto: está esperando.**
 
 **Diseno aqui.**
@@ -578,7 +578,7 @@ Aviso importante y medido: `oferta_sospechosa`, que es la regla más exigente
 
 - Front: nueva pestaña en `plataforma/web/app/src/paginas/Panel.tsx`, en la lista
   de pestañas de la línea 30-35. El `app.js` viejo la tenía (`app.js:1110-1156`)
-  y se perdió en la migración (`BACKLOG.md:133-137`).
+  y se perdió en la migración (`docs/BACKLOG.md:133-137`).
 - Cada fila enseña `por_que`, que ya lo devuelve la API
   (`movimientos.py:206`).
 
@@ -619,7 +619,7 @@ por correo **sin registro**, confirmado con un código de seis dígitos), Precio
 (`plataforma/sql/001_esquema.sql:126-133`), y cuatro rutas vivas
 (`plataforma/api/main.py:549, 563, 573, 579`). El `app.js` viejo las usaba
 (`app.js:742, 1066, 1493, 1505`) y **el front nuevo tiene cero coincidencias de
-`alertas` en `app/src`** (`BACKLOG.md:128-132`).
+`alertas` en `app/src`** (`docs/BACKLOG.md:128-132`).
 
 **Diseno aqui.**
 
@@ -670,10 +670,10 @@ y `precio_diario` tiene **763.042 filas en 17 fechas** (medido).
 **Diseno aqui.**
 
 - Front: dos pestañas nuevas en `src/paginas/Panel.tsx`. El `app.js` viejo las
-  tenía (`app.js:796-920` y `:925-996`) y se perdieron (`BACKLOG.md:133-135`).
+  tenía (`app.js:796-920` y `:925-996`) y se perdieron (`docs/BACKLOG.md:133-135`).
 - De paso, el **filtro del panel por cadenas cercanas**: `Panel.tsx:488` llama
   `useBajadas(dias, subidas, [])` con la lista vacía y ninguna pestaña lee
-  `cadenas_cerca` (`BACKLOG.md:135-137`).
+  `cadenas_cerca` (`docs/BACKLOG.md:135-137`).
 
 **La regla que la gobierna.** Cada número dice sobre cuántos productos está
 calculado, o no se enseña (`panel.py`, citado en `Panel.tsx:3`). Un ranking con
@@ -769,7 +769,7 @@ depender de ellos, hay que hacer antes la ficha 10.
 4. **Nuestro contador de aditivos exige "E" + tres o cuatro dígitos**, así que
    **no cuenta los aromas como aditivos** — que es justo el error que la OCU
    documenta en Yuka y MyRealFood. Comprobado: 2 falsos positivos en 400
-   productos (`BACKLOG.md:785-789`). **Si se toca `core/calidad.py`, hay que
+   productos (`docs/BACKLOG.md:785-789`). **Si se toca `core/calidad.py`, hay que
    volver a comprobarlo.**
 
 **Como se sabe que esta bien.**
@@ -807,7 +807,7 @@ colores con grasas saturadas, azúcares y sal por 100 g), CodeCheck.
     pedido en el codigo   core/off.py:44 y ss. pide "nutriments"
     no comprobado         si "nutriments" llega a gold
 
-Lo que OFF tiene para dar, según `BACKLOG.md:625-630`: **11.723** con nutrientes
+Lo que OFF tiene para dar, según `docs/BACKLOG.md:625-630`: **11.723** con nutrientes
 completos, **10.209** con categorías y **8.055** con sellos, de nuestros 12.835
 productos que cruzan por código de barras.
 
@@ -947,7 +947,7 @@ fichero que hay que mantener y nadie lo va a abrir.
 
 **Que es.** Un botón "he terminado la compra" que guarda lo que iba en el carro.
 
-**Ya está en el BACKLOG como tarea 10** (`BACKLOG.md:802-823`). La ficha no la
+**Ya está en el BACKLOG como tarea 10** (`docs/BACKLOG.md:802-823`). La ficha no la
 repite: añade por qué va **antes** de lo que parece, y de qué depende.
 
 **Quien lo hace y como.** No lo hace ninguna app de lista; lo que sí existe es el
@@ -959,7 +959,7 @@ sí podemos hacer: no leer el ticket, sino **acordarse de lo que se cogió**.
 (`plataforma/sql/002_invitaciones.sql:35`) y `tachado_en`. Nada nuevo que bajar.
 Lo que sale de aquí **alimenta cuatro fichas de este documento**: la despensa
 deducida, el aviso de caducidad, el control de gasto y las estadísticas de la
-casa. Sin ella, en diciembre no habrá historial que mirar (`BACKLOG.md:804-807`).
+casa. Sin ella, en diciembre no habrá historial que mirar (`docs/BACKLOG.md:804-807`).
 
 **Diseno aqui.**
 
@@ -1096,7 +1096,7 @@ cupones).
 
 **El dato que hace falta.** La **ficha 13**. La tabla `compra` que hay que crear
 lleva `total_estimado_cent` y `compra_linea` lleva `precio_cent`
-(`BACKLOG.md:809-813`).
+(`docs/BACKLOG.md:809-813`).
 
 **Diseno aqui.**
 
@@ -1177,7 +1177,7 @@ patrón que `MOVIMIENTOS.md:8-12` describe para las bajadas.
   (la serie de la ficha), que ya pinta la chispa del histórico.
 
 **La regla que la gobierna.** **Una oferta es una regla, no un precio**
-(`BACKLOG.md:435-437`), y **los descuentos de tarjeta no bajan el ticket**: por eso
+(`docs/BACKLOG.md:435-437`), y **los descuentos de tarjeta no bajan el ticket**: por eso
 `promo_club` (**1.899** productos, medido) tiene que excluir la fila de
 "puntual", no contarla. Y una bajada **solo lo es** si la unidad es la misma, la
 cantidad es la misma y el precio de venta se movió en el mismo sentido — las tres
@@ -1262,7 +1262,7 @@ descartado a propósito: *"interesante, pero es otro proyecto"* (`APP.md:404`).
 **Filtro de "producto nacional"** (lo pediste tú; no lo tiene ninguna app).
 *Motivo*: el techo realista es **1.900 de 51.781, el 3,7 %** (`CADENAS.md:95`).
 BEDCA no lo arregla: describe alimentos genéricos, no productos con código de
-barras (`BACKLOG.md:639-642`).
+barras (`docs/BACKLOG.md:639-642`).
 
 **Escáner de la marca propia de Alcampo y Aldi** (ninguna app puede). *Motivo*:
 **no publican código de barras**. *Medida*: `CADENAS.md:31` da EAN **0 % en
@@ -1282,7 +1282,7 @@ cumplen **168 grupos** (`comparacion_fiable`), y mirando el grupo **92** —
 céntimos por litro** — se ve que la cifra mide la anchura del grupo y no el
 ahorro. Hay **259 grupos con dispersión mayor de 3×** entre su miembro más barato
 y el más caro (medido). Es el bloqueo número uno y sigue siéndolo
-(`BACKLOG.md:409-411`).
+(`docs/BACKLOG.md:409-411`).
 
 ### 3.2 No se puede porque hay que ser la cadena
 
@@ -1409,7 +1409,7 @@ Esto no es "no se puede hacer": es **lo que ya no es verdad** en el documento de
 Ordenado por **valor partido por coste**, y diciendo qué desbloquea cada paso.
 
 **Nada de esta lista arregla el bloqueo número uno.** Los grupos demasiado anchos
-(`BACKLOG.md:409-411`) siguen siendo lo primero, y bloquean tres cosas de aquí:
+(`docs/BACKLOG.md:409-411`) siguen siendo lo primero, y bloquean tres cosas de aquí:
 la pantalla de secciones del panel, el análisis por sección y el "hay uno mejor y
 más barato". Eso no lo arregla ninguna funcionalidad de la competencia.
 
@@ -1434,7 +1434,7 @@ porque sabemos la mecánica y no solo que "hay promo".
 *Qué desbloquea*: el verificador de ofertas, los avisos de precio, el índice y la
 posición por sección son **cuatro pantallas sobre endpoints que ya responden**.
 **Y hay que hacerlo antes de servir `web/dist`**: hoy cambiar de interfaz **quita
-funciones** (`BACKLOG.md:55-60`), y estas cuatro son exactamente las que se
+funciones** (`docs/BACKLOG.md:55-60`), y estas cuatro son exactamente las que se
 quedaron en el `app.js`.
 
 **5. `S` · Una bajada estructural no es una oferta (ficha 17).**
@@ -1466,7 +1466,7 @@ como `secciones.yml`.
 *Qué desbloquea*: **cuatro cosas de este documento** — la despensa deducida, el
 aviso de caducidad, el control de gasto y las estadísticas. Va aquí y no más
 abajo porque **es barato ahora e imposible de recuperar después**: sin ella, en
-diciembre no habrá historial que mirar (`BACKLOG.md:804-807`).
+diciembre no habrá historial que mirar (`docs/BACKLOG.md:804-807`).
 
 **10. `M` · La despensa deducida (ficha 14).**
 *Qué desbloquea*: el 80 % del valor de una app de despensa sin el trabajo que
@@ -1544,11 +1544,11 @@ tanda; lo mide `prueba_navegador`). Es la mejora que más se nota andando por el
 
 **Por que.** Cuatro cosas que **ya tienen endpoint y ya tenian pantalla en la
 interfaz vieja**, y que la nueva no tenia: **avisos de precio**
-(`BACKLOG.md:128-132`), **índice de precios** (`app.js:796-920`), **posición por
+(`docs/BACKLOG.md:128-132`), **índice de precios** (`app.js:796-920`), **posición por
 sección** (`app.js:925-996`) y **ofertas dudosas** (`app.js:1110-1156`). Las
 cuatro salen de la competencia (`COMPETENCIA.md:599-606`). **Era el bloqueo para
 servir `web/dist`**: entonces, cambiar de interfaz quitaba funciones
-(`BACKLOG.md:55-60`).
+(`docs/BACKLOG.md:55-60`).
 
 **Que hay que hacer.**
 
@@ -1587,7 +1587,7 @@ servir `web/dist`**: entonces, cambiar de interfaz quitaba funciones
 ## N31. Añadir sin escribir: el mosaico y la voz
 
 **Por que.** Las tareas 3.1 y 3.2 del BACKLOG están escritas **para el `app.js`
-viejo** (`BACKLOG.md:551-552` apuntan a `plataforma/web/app.js`). Hay que
+viejo** (`docs/BACKLOG.md:551-552` apuntan a `plataforma/web/app.js`). Hay que
 apuntarlas al front nuevo. El dato ya está: `lista_linea.anadido_por` y
 `anadido_en` (`plataforma/sql/001_esquema.sql:93-94`) e `imagen` en los **52.567**
 productos (medido).
@@ -1644,7 +1644,7 @@ difícil ya está hecha** (`core/promos.py`, 10 pruebas en verde). Sabemos el pr
 
 - Un producto con "3x2" enseña la sugerencia cuando llevas 2.
 - Un producto con "Club Alcampo … acum en tu tarjeta" **no la enseña**, porque
-  ese dinero no se descuenta en caja (`BACKLOG.md:598-600`).
+  ese dinero no se descuenta en caja (`docs/BACKLOG.md:598-600`).
 - El total de la lista **baja** al subir de 2 a 3 unidades en un 3x2.
 - Un producto de Mercadona, que **no publica `promo_txt`** (`CADENAS.md:42`), no
   enseña una mecánica inventada.
@@ -1656,14 +1656,14 @@ difícil ya está hecha** (`core/promos.py`, 10 pruebas en verde). Sabemos el pr
 
 **Por que.** Las dos cosas más baratas de toda la lista. `nota` existe en
 `plataforma/sql/001_esquema.sql:92` y **la interfaz no lo usa**
-(`BACKLOG.md:609`); el aviso legal de QueFalta está redactado desde el 17 de
+(`docs/BACKLOG.md:609`); el aviso legal de QueFalta está redactado desde el 17 de
 septiembre y **hay que tenerlo antes de que esto lo use alguien más**
 (`FUNCIONALIDADES.md:82-88`).
 
 **Que hay que hacer.**
 
 1. `src/paginas/Cesta.tsx`: campo de nota en la línea. Ojo: las líneas **hoy no
-   se pintan** — `Cesta.tsx:213-217` solo usa `lineas.length` (`BACKLOG.md:97-100`).
+   se pintan** — `Cesta.tsx:213-217` solo usa `lineas.length` (`docs/BACKLOG.md:97-100`).
    Al pintarlas, usar `nombre_visto` (`src/tipos.ts:414`), que ya viaja y no
    renderiza ningún fichero de `app/src`.
 2. El aviso legal en `src/paginas/Ajustes.tsx` y bajo el total de la lista. El
@@ -1705,7 +1705,7 @@ riesgo rojo), y no se puede confundir con el precio. Eso es todo el arreglo.
 2. `core/calidad.py`: calcular la nota. **No tocar el contador de aditivos**: hoy
    exige "E" + tres o cuatro dígitos y **no cuenta los aromas**, que es justo el
    error que la OCU documenta en Yuka y MyRealFood (2 falsos positivos en 400
-   productos, `BACKLOG.md:785-789`).
+   productos, `docs/BACKLOG.md:785-789`).
 3. Añadir `nota` a cada producto de `GET /api/grupo` y `GET /api/ean`. **El
    contrato ya está escrito en `API.md:390-405`.**
 4. `src/paginas/Grupo.tsx` y `src/paginas/Escaner.tsx`: el hueco ya está pintado
@@ -1915,7 +1915,7 @@ Va escrito para que nadie lo dé por bueno sin mirarlo.
 - **Si el precio de Ahorramas viene en el HTML.** `COMPETENCIA.md:572` lo dejó
   como "falta comprobar" y sigue sin comprobarse.
 - **El botón de cámara del escáner no está probado en un móvil real**
-  (`BACKLOG.md:192-193`). Lo verificado es que se esconde solo cuando no hay
+  (`docs/BACKLOG.md:192-193`). Lo verificado es que se esconde solo cuando no hay
   `BarcodeDetector`.
 
 **De la competencia.**

@@ -960,9 +960,15 @@ def main() -> int:
     # razones normales; una rama que se queda en el 3 % de lo que tenia mientras
     # las demas siguen igual, no.
     caidas = []
+    vetan = []
     if filas:
-        caidas = cobertura.revisa(
-            pl.DataFrame(filas, schema_overrides=ESQUEMA_BRONZE), FUENTE)
+        marco = pl.DataFrame(filas, schema_overrides=ESQUEMA_BRONZE)
+        # Una sola lectura del bronze anterior: `caidas` es lo que se cuenta y `vetan` lo
+        # que decide. Un folleto de campana que rota se cuenta y NO veta
+        # (`cobertura.RAMAS_DE_CAMPANA`); una estanteria hundida, si.
+        detalle = cobertura.caidas(marco, FUENTE)
+        caidas = [frase for _, frase in detalle]
+        vetan = [frase for rama, frase in detalle if not cobertura.es_de_campana(rama, FUENTE)]
 
     # Una captura cortada no es automaticamente peor que la anterior. El 7 sep el
     # WAF corto tras 21.199 productos y se descartaron todos para conservar un
@@ -981,13 +987,24 @@ def main() -> int:
     # no lo estimamos. Si Frescos hubiera tenido mil productos en vez de 2.646, el
     # total se habria quedado por encima del 90 % y la regla de la merma habria
     # dado el visto bueno a un catalogo sin pescaderia.
-    if df is not None and caidas:
+    if df is not None and vetan:
         print("  faltan ramas enteras respecto a la ultima captura buena:")
-        for linea in caidas:
+        for linea in vetan:
             print(f"      {linea}")
         print("  eso no es un catalogo mas pequeno, es un catalogo con agujeros. "
               "Se conserva el anterior y manana se vuelve a intentar.")
         guardar = False
+    elif df is not None and caidas:
+        # **Una rama que rota no es una rama que falta.** El 4/11/2026 esta captura se
+        # tiro entera -- 23.416 productos, cero errores -- porque "Folletos y Promociones"
+        # habia pasado de 1472 a 727: el folleto de la campana de la semana, no una
+        # estanteria. Mientras, las otras quince ramas de comida subian y el total era
+        # mayor que el de ayer. `caidas` lo cuenta; `vetan` es lo que decide, y un
+        # folleto que rota no veta (`cobertura.RAMAS_DE_CAMPANA`).
+        print("  ramas de campana que han rotado (no vetan la captura):")
+        for linea in caidas:
+            print(f"      {linea}")
+        print("  se guarda igual: lo que cambia es el folleto, no la estanteria.")
     elif df is not None and not completa and not _mismo_alcance():
         guardar = True
         print(f"  ejecucion parcial con {df.height} productos, pero las ramas que "

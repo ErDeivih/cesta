@@ -265,13 +265,20 @@ def main() -> int:
     completa = bool(filas) and errores == 0
     # Una rama entera que desaparece no se ve en el total. Ver core/cobertura.py.
     if filas and completa:
-        caidas = cobertura.revisa(
-            pl.DataFrame(filas, schema_overrides=ESQUEMA_BRONZE), FUENTE)
+        marco = pl.DataFrame(filas, schema_overrides=ESQUEMA_BRONZE)
+        # Una sola lectura del bronze anterior: `caidas` es lo que se cuenta y `vetan`
+        # lo que decide. Un folleto de campana que rota se cuenta y NO veta
+        # (`cobertura.RAMAS_DE_CAMPANA`); una estanteria hundida, si. Una regla, un sitio.
+        detalle = cobertura.caidas(marco, FUENTE)
+        caidas = [frase for _, frase in detalle]
+        vetan = [frase for rama, frase in detalle if not cobertura.es_de_campana(rama, FUENTE)]
         if caidas:
-            completa = False
-            print("  faltan ramas enteras respecto a la ultima captura buena:")
+            print("  ramas hundidas respecto a la ultima captura buena:")
             for linea in caidas:
                 print(f"      {linea}")
+        if vetan:
+            completa = False
+            print("  y alguna es una estanteria, no un folleto: la captura no esta completa")
     if completa:
         df = pl.DataFrame(filas, schema_overrides=ESQUEMA_BRONZE)
         df = df.unique(subset=["fuente", "id_fuente"], keep="last")

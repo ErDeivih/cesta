@@ -243,7 +243,11 @@ def _corre(monkeypatch, cuantas, umbral, fallos_seguidos):
     monkeypatch.setattr(carrefour, "Fetcher", _FetcherDePrueba)
     monkeypatch.setattr(carrefour, "log_run", lambda *a, **k: None)
     monkeypatch.setattr(carrefour, "write_parquet", lambda *a, **k: None)
-    monkeypatch.setattr(carrefour.cobertura, "revisa", lambda *a, **k: [])
+    # El control de ramas caidas tiene su propia prueba y aqui solo hace ruido:
+    # compara contra el bronze de verdad que haya en el disco de quien ejecute.
+    # Se dobla `caidas`, que es de donde salen lo que se cuenta (`caidas`) y lo
+    # que veta (`vetan`): doblar solo `revisa` dejaba el veto leyendo el disco.
+    monkeypatch.setattr(carrefour.cobertura, "caidas", lambda *a, **k: [])
     return llamadas
 
 
@@ -315,7 +319,11 @@ def _corre_rescate(monkeypatch, estado, veces=999, cuantas=3):
     monkeypatch.setattr(carrefour.time, "sleep", esperas.append)
     # El control de ramas caidas tiene su propia prueba y aqui solo hace ruido:
     # compara contra el bronze de verdad que haya en el disco de quien ejecute.
-    monkeypatch.setattr(carrefour.cobertura, "revisa", lambda *a, **k: [])
+    # El control de ramas caidas tiene su propia prueba y aqui solo hace ruido:
+    # compara contra el bronze de verdad que haya en el disco de quien ejecute.
+    # Se dobla `caidas`, que es de donde salen lo que se cuenta (`caidas`) y lo
+    # que veta (`vetan`): doblar solo `revisa` dejaba el veto leyendo el disco.
+    monkeypatch.setattr(carrefour.cobertura, "caidas", lambda *a, **k: [])
     # Y sobre todo: **no se escribe nada**. Estas pruebas llaman a `main()`, y
     # `main()` guarda bronze cuando da el dia por bueno. El 21 de septiembre de
     # 2026 eso reemplazo los 16.560 productos de Carrefour por 199 de mentira
