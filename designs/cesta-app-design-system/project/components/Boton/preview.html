@@ -1,0 +1,45 @@
+<!-- @dsCard group="Acciones" height=196 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Boton</title>
+<style>
+  body { margin: 0; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans); }
+  .lienzo { padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 420px; }
+  .boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--toque-minimo); padding: 0 16px; border: 0; border-radius: var(--radio-campo); font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; cursor: pointer; transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1), box-shadow 120ms cubic-bezier(0.2, 0, 0, 1); }
+  .boton:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+  .primario { background: var(--verde); color: var(--sobre-verde); box-shadow: var(--sombra-apoyado); }
+  .primario:hover { background: var(--verde-fuerte); }
+  .secundario { background: var(--papel); color: var(--tinta); border: 1px solid var(--borde-fuerte); }
+  .secundario:hover { background: var(--lavado-terracota); }
+  .fantasma { background: transparent; color: var(--verde); padding: 0 8px; }
+  .fantasma:hover { background: var(--lavado-verde); }
+  .no-puede { background: var(--lavado-aviso); color: var(--aviso); cursor: not-allowed; }
+  .fila { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .porque { margin: 0; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+</style>
+</head>
+<body>
+<div class="lienzo">
+
+  <div class="fila">
+    <button class="boton primario" type="button">Añadir a la lista</button>
+    <button class="boton secundario" type="button">Compartir</button>
+  </div>
+
+  <div class="fila">
+    <button class="boton fantasma" type="button">
+      Ver las 6 cadenas
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+
+  <div class="fila">
+    <button class="boton no-puede" type="button" disabled aria-describedby="motivo">Escanear el código</button>
+    <p class="porque" id="motivo">Sin permiso de cámara: ábrelo en los ajustes del navegador.</p>
+  </div>
+
+</div>
+</body>
+</html>

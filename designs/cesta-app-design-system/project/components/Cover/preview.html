@@ -1,0 +1,64 @@
+<!-- @dsCard height=300 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cesta App</title>
+<style>
+  html, body { margin: 0; background: var(--marfil); }
+  .lienzo { position: relative; width: 960px; height: 300px; overflow: hidden; font-family: var(--font-display); }
+  svg { position: absolute; inset: 0; width: 960px; height: 300px; display: block; }
+  .b-bosque { fill: var(--bosque); }
+  .b-verde { fill: var(--verde); }
+  .b-terracota { fill: var(--terracota); }
+  .b-lima { fill: var(--lima); }
+  .p-lienzo { fill: var(--marfil); }
+  .p-verde { fill: var(--verde); }
+  .p-lima { fill: var(--lima); }
+  .lleno { rx: 0px; }
+  .tarjeta { rx: 16px; }
+  .campo { rx: 10px; }
+  .pastilla { rx: 26px; }
+  .nombre { position: absolute; left: 48px; bottom: 40px; width: 440px; margin: 0; color: var(--tinta); font-weight: 600; font-size: 92px; line-height: 0.95; letter-spacing: -0.01em; }
+  .lema { position: absolute; left: 48px; bottom: 16px; margin: 0; color: var(--tinta-suave); font-family: var(--font-sans); font-size: 14px; line-height: 20px; }
+</style>
+</head>
+<body>
+<div class="lienzo">
+  <!--
+    DERIVACIÓN
+    Bloques: bosque 464×148 (sangra arriba y a la derecha) · verde 188×120 rx=tarjeta ·
+             terracota 140×120 rx=tarjeta · lima 104×52 rx=pastilla (26) · bosque 104×52 rx=tarjeta.
+    Composición: un bloque grande arriba y tres piezas desiguales abajo; ninguna fila de cuadrados
+             iguales, que es una tabla de muestras y no una marca.
+    Trama: filas de la compra — baldosas cortadas del propio lienzo dentro del bloque bosque, a paso
+             space-24, rx=radio-campo; una en verde y una en lima, como las filas de la lista con su
+             precio y su ahorro. Es la pantalla que esta app es.
+    Pasos y radios: pitch 24 (space-24), rx 16 (radio-tarjeta), 10 (radio-campo), 26 la píldora.
+  -->
+  <svg viewBox="0 0 960 300" aria-hidden="true" focusable="false">
+    <!-- bloque grande -->
+    <rect class="b-bosque lleno" x="496" y="0" width="464" height="148"/>
+    <!-- la trama: filas cortadas del lienzo -->
+    <rect class="p-lienzo campo" x="520" y="24" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="627" y="24" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="734" y="24" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="841" y="24" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="520" y="56" width="202" height="16"/>
+    <rect class="p-lienzo campo" x="734" y="56" width="95" height="16"/>
+    <rect class="p-lima campo" x="841" y="56" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="520" y="88" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="627" y="88" width="95" height="16"/>
+    <rect class="p-lienzo campo" x="734" y="88" width="95" height="16"/>
+    <rect class="p-verde campo" x="841" y="88" width="95" height="16"/>
+    <!-- tres piezas desiguales abajo -->
+    <rect class="b-verde tarjeta" x="496" y="164" width="188" height="120"/>
+    <rect class="b-terracota tarjeta" x="700" y="164" width="140" height="120"/>
+    <rect class="b-lima pastilla" x="856" y="164" width="104" height="52"/>
+    <rect class="b-bosque tarjeta" x="856" y="232" width="104" height="52"/>
+  </svg>
+  <p class="nombre">Cesta<br>App</p>
+  <p class="lema">El precio justo, en el pasillo.</p>
+</div>
+</body>
+</html>

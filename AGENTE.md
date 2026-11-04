@@ -91,7 +91,23 @@ En la raíz del proyecto, reescrito por `projects/cesta/metricas.py` al cerrar c
 por cadena si trae datos hoy y cuántos días lleva, la última ejecución en hora local, los
 comparables con precio del día (**39.115**), cuántos tienen precio en **2+ cadenas**
 (**8.829**, la cifra que dice si de verdad se puede comparar) y los días de historial (59).
-Las definiciones exactas, en `DECISIONES.md` §6.
+Las definiciones exactas, en `DECISIONES.md` §6. Matiz medido: 8.829 es «precio en 2+ cadenas
+con importe»; **comparables de verdad** (unidad dominante + comparación fiable) son **8.066
+(20,1 %)** — la app dirá siempre cuál enseña.
+
+## App de consumo (2026-11-04, tarde)
+
+David cambió el foco a la app para el consumidor; el alcance manda en `ALCANCE-APP.md`. Antes
+de escribir la primera pantalla hay tres piezas, ya hechas y pendientes de su aprobación:
+
+- `INVESTIGACION-APP.md`: qué hacen Soysuper, Idealo, CamelCamelCamel, Lidl Plus, Mercadona y
+  Yuka (con enlace y fecha), qué copiamos con criterio y qué no.
+- `docs/DATOS-APP-2026-11-04.md`: viabilidad medida de cada función. Hacer: comparar cesta,
+  €/kg, historial (59 días, no «90»), alternativas y avisos. Limitadas: etiquetado (sin
+  aditivos), calorías (23 %) y despensa. No: recetas con coste (0/242 recetas costeables).
+- `designs/`: sistema de diseño «Cesta App» (tokens claro/oscuro, 92 parejas AA medidas) y
+  canvas con artboards móviles de Portada y Producto sobre datos reales, para que David los
+  abra y apruebe. `plataforma/web` **no se ha tocado** todavía.
 
 ## Cómo trabajas
 

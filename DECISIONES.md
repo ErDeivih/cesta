@@ -202,6 +202,10 @@ avisar. También se puede lanzar a mano: `python -m projects.cesta.metricas` (o 
   **8.829** (22,6 %). **Es la cifra que dice si de verdad se puede comparar**, y va sobre el mismo
   día que la anterior a propósito: mezclar «cuántos comparables hay en el catálogo» con «cuántos
   tienen 2+ cadenas hoy» daría una razón que no significa nada.
+- **Matiz medido después (4/11, tarde):** ese 8.829 exige importe no nulo, pero no la regla de
+  producto. Con **unidad dominante y comparación fiable** —lo que la app puede prometer sin
+  mentir— son **8.066 grupos (20,1 %)**; sin exigir importe, 8.851. La app y su documentación
+  dirán siempre cuál de las tres están enseñando (`docs/DATOS-APP-2026-11-04.md` §4 y §14).
 - `dias_historial`: días distintos con precios guardados. Hoy: **59**.
 - `fecha_datos` es un campo **añadido** a la forma pedida: sin él, «hoy» no se puede interpretar
   dentro de una semana. El resto de claves es exactamente el contrato.

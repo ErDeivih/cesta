@@ -1,0 +1,52 @@
+<!-- @dsCard group="Etiquetado" height=184 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ChipEtiqueta</title>
+<style>
+  body { margin: 0; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans); }
+  .lienzo { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .fila { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rotulo { margin: 0; min-width: 132px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-tenue); }
+  .letra { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: var(--radio-nota); font-size: 13px; line-height: 18px; font-weight: 600; }
+  .a { background: var(--nutri-a); color: var(--nutri-texto-a); }
+  .b { background: var(--nutri-b); color: var(--nutri-texto-b-e); }
+  .c { background: var(--nutri-c); color: var(--nutri-texto-b-e); }
+  .d { background: var(--nutri-d); color: var(--nutri-texto-b-e); }
+  .e { background: var(--nutri-e); color: var(--nutri-texto-e); }
+  .sello { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--sello-fondo); color: var(--sello-tinta); font-size: 13px; line-height: 18px; font-weight: 600; }
+  .sin { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-pastilla); color: var(--tinta-suave); font-size: 13px; line-height: 18px; }
+  .nota { margin: 0; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+</style>
+</head>
+<body>
+<div class="lienzo">
+
+  <div class="fila">
+    <p class="rotulo">Nutri-Score</p>
+    <span class="letra a">A</span>
+    <span class="letra b">B</span>
+    <span class="letra c">C</span>
+    <span class="letra d">D</span>
+    <span class="letra e">E</span>
+  </div>
+
+  <div class="fila">
+    <p class="rotulo">Sellos</p>
+    <span class="sello">vegano</span>
+    <span class="sello">sin gluten</span>
+    <span class="sello">sin lactosa</span>
+    <span class="sello">ecológico</span>
+  </div>
+
+  <div class="fila">
+    <p class="rotulo">Sin dato</p>
+    <span class="sin">sin Nutri-Score</span>
+  </div>
+
+  <p class="nota">Un dato que falta se dice. El hueco no se pinta de gris ni se rellena con una E: una E es una afirmación, y no lo sabemos.</p>
+
+</div>
+</body>
+</html>

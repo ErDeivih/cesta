@@ -1,0 +1,63 @@
+<!-- @dsCard group="Precios" height=208 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Precio</title>
+<style>
+  body { margin: 0; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans); }
+  .lienzo { padding: 24px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .caja { background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado); }
+  .rotulo { margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-tenue); }
+  .linea { display: flex; align-items: baseline; gap: 8px; }
+  .cifra { font-variant-numeric: tabular-nums; }
+  .unidad { margin: 4px 0 0; font-size: 13px; line-height: 18px; color: var(--tinta-tenue); font-variant-numeric: tabular-nums; }
+  .mov { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .baja { color: var(--precio-baja); }
+  .sube { color: var(--precio-sube); }
+  .antes { color: var(--precio-antes); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .vacio { color: var(--tinta-tenue); }
+</style>
+</head>
+<body>
+<div class="lienzo">
+
+  <!-- Con bajada: el precio actual, el €/kg y el anterior tachado -->
+  <div class="caja">
+    <p class="rotulo">Con bajada</p>
+    <div class="linea">
+      <span class="precio-grande cifra">1,99&nbsp;€</span>
+      <span class="mov baja">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        −0,40&nbsp;€
+      </span>
+    </div>
+    <p class="unidad">1,99&nbsp;€/kg</p>
+    <p class="unidad">antes <span class="antes cifra">2,39&nbsp;€</span></p>
+  </div>
+
+  <!-- Con subida: el signo y la flecha dicen lo mismo que el color -->
+  <div class="caja">
+    <p class="rotulo">Con subida</p>
+    <div class="linea">
+      <span class="precio-grande cifra">3,35&nbsp;€</span>
+      <span class="mov sube">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+        +0,20&nbsp;€
+      </span>
+    </div>
+    <p class="unidad">3,35&nbsp;€/kg</p>
+    <p class="unidad">antes <span class="antes cifra">3,15&nbsp;€</span></p>
+  </div>
+
+  <!-- Sin dato: una raya, nunca un cero ni el precio de ayer -->
+  <div class="caja">
+    <p class="rotulo">Sin precio hoy</p>
+    <div class="linea"><span class="precio-grande cifra vacio">—</span></div>
+    <p class="unidad">—&nbsp;€/kg</p>
+    <p class="unidad">sin captura de esta cadena</p>
+  </div>
+
+</div>
+</body>
+</html>

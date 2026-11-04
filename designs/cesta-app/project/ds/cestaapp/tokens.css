@@ -1,0 +1,211 @@
+/* Cesta App — generated from tokens.json */
+:root, [data-theme="claro"] {
+  --marfil: #fbf7ec;
+  --papel: #fffcf5;
+  --papel-alto: #ffffff;
+  --lavado-verde: #e7f4ea;
+  --lavado-terracota: #fceae3;
+  --lavado-aviso: #fff3cc;
+  --lavado-error: #fde9e7;
+  --borde: #e3dccb;
+  --borde-fuerte: #7a8478;
+  --tinta: #16231b;
+  --tinta-suave: #47574e;
+  --tinta-tenue: #5f6f64;
+  --verde: #0b7a46;
+  --verde-fuerte: #075e36;
+  --bosque: #123a2c;
+  --terracota: #b83d22;
+  --lima: #ffd145;
+  --sobre-lima: #16231b;
+  --sobre-verde: #ffffff;
+  --sobre-bosque: #ffffff;
+  --sobre-terracota: #ffffff;
+  --bien: #0b6b5e;
+  --aviso: #8a5a00;
+  --error: #b3261e;
+  --precio-antes: var(--tinta-suave);
+  --precio-unidad: var(--tinta-tenue);
+  --precio-baja: var(--bien);
+  --precio-sube: var(--error);
+  --nutri-a: #038141;
+  --nutri-b: #85bb2f;
+  --nutri-c: #fecb02;
+  --nutri-d: #ef8200;
+  --nutri-e: #cf3a0f;
+  --nutri-texto-a: #ffffff;
+  --nutri-texto-b-e: #16231b;
+  --nutri-texto-e: #ffffff;
+  --sello-fondo: var(--lavado-verde);
+  --sello-tinta: var(--verde-fuerte);
+  --sombra-apoyado: 0 1px 2px rgba(74, 58, 44, 0.07), 0 1px 3px rgba(74, 58, 44, 0.09);
+  --sombra-alzado: 0 2px 4px rgba(74, 58, 44, 0.07), 0 4px 12px rgba(74, 58, 44, 0.11);
+  --sombra-flotante: 0 8px 24px rgba(74, 58, 44, 0.13), 0 24px 48px rgba(74, 58, 44, 0.17);
+}
+
+[data-theme="oscuro"] {
+  --marfil: #101714;
+  --papel: #18211d;
+  --papel-alto: #212c27;
+  --lavado-verde: #1a3327;
+  --lavado-terracota: #3a241d;
+  --lavado-aviso: #3b2c0c;
+  --lavado-error: #3d1f1c;
+  --borde: #33413a;
+  --borde-fuerte: #8b998f;
+  --tinta: #f2f6ef;
+  --tinta-suave: #b6c3ba;
+  --tinta-tenue: #9aa9a0;
+  --verde: #4ad08a;
+  --verde-fuerte: #8ae6b4;
+  --bosque: #cfe3d8;
+  --terracota: #f08a6b;
+  --lima: #ffd145;
+  --sobre-lima: #16231b;
+  --sobre-verde: #0a1712;
+  --sobre-bosque: #101714;
+  --sobre-terracota: #2a0f08;
+  --bien: #3ecfa9;
+  --aviso: #f5c451;
+  --error: #ff8a7a;
+  --precio-antes: var(--tinta-suave);
+  --precio-unidad: var(--tinta-tenue);
+  --precio-baja: var(--bien);
+  --precio-sube: var(--error);
+  --sello-fondo: var(--lavado-verde);
+  --sello-tinta: var(--verde-fuerte);
+  --sombra-apoyado: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --sombra-alzado: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.45);
+  --sombra-flotante: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.55);
+}
+
+:root {
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --toque-minimo: 44px;
+  --radio-nota: 4px;
+  --radio-campo: 10px;
+  --radio-tarjeta: 16px;
+  --radio-hoja: 24px;
+  --radio-pastilla: 999px;
+  --movimiento-duracion-rapida: 120ms;
+  --movimiento-duracion-normal: 220ms;
+  --movimiento-curva-suave: cubic-bezier(0.2, 0, 0, 1);
+  --movimiento-quieto-por-ajuste: 0.01ms;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.portada {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 38px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.titulo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 29px;
+  font-weight: 600;
+}
+.subtitulo {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 25px;
+  font-weight: 600;
+}
+.entrada {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 400;
+}
+.cuerpo {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 25px;
+  font-weight: 400;
+}
+.cuerpo-fuerte {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.etiqueta {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+.etiqueta-fuerte {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.micro {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.precio-grande {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 600;
+}
+.precio {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.precio-fila {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/Fraunces-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-400-600.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Los precios se leen en columna: cifras de ancho fijo o cada fila baila. */
+.cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quien pide menos movimiento ve el movimiento apagado, y no acortado: el ajuste
+   existe porque el movimiento marea, así que el error caro es dejar algo moviéndose. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

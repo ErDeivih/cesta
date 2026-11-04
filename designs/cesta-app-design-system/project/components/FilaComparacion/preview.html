@@ -1,0 +1,92 @@
+<!-- @dsCard group="Comparación" height=312 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>FilaComparacion</title>
+<style>
+  body { margin: 0; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans); }
+  .lienzo { padding: 24px; }
+  .bloque { background: var(--papel); border-radius: var(--radio-tarjeta); box-shadow: var(--sombra-apoyado); overflow: hidden; max-width: 520px; }
+  .cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--borde); }
+  .cabecera h3 { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 25px; font-weight: 600; }
+  .cabecera span { font-size: 13px; line-height: 18px; color: var(--tinta-tenue); }
+  .fila { display: flex; align-items: center; gap: 12px; min-height: var(--toque-minimo); padding: 8px 16px; border-bottom: 1px solid var(--borde); text-decoration: none; color: inherit; }
+  .fila:last-child { border-bottom: 0; }
+  .fila:hover { background: var(--lavado-terracota); }
+  .fila:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
+  .mejor { background: var(--lavado-verde); }
+  .mejor:hover { background: var(--lavado-verde); }
+  .quien { flex: 1 1 auto; min-width: 0; }
+  .cadena { display: block; font-size: 16px; line-height: 20px; font-weight: 600; }
+  .producto { display: block; font-size: 13px; line-height: 18px; color: var(--tinta-suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cifras { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .precio { font-size: 17px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pq { font-size: 13px; line-height: 18px; color: var(--tinta-tenue); font-variant-numeric: tabular-nums; }
+  .marca { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--verde); font-variant-numeric: tabular-nums; }
+  .marca svg { flex: none; }
+  .desde { font-size: 13px; line-height: 18px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="lienzo">
+  <div class="bloque">
+    <div class="cabecera">
+      <h3>Alubia blanca · 1 kg</h3>
+      <span>6 cadenas</span>
+    </div>
+
+    <a class="fila mejor" href="#">
+      <span class="quien">
+        <span class="cadena">Lidl</span>
+        <span class="producto">Campo Largo Alubia blanca</span>
+      </span>
+      <span class="cifras">
+        <span class="precio">1,99&nbsp;€</span>
+        <span class="pq">1,99&nbsp;€/kg</span>
+      </span>
+      <span class="marca">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+        la más barata
+      </span>
+    </a>
+
+    <a class="fila" href="#">
+      <span class="quien">
+        <span class="cadena">Aldi</span>
+        <span class="producto">Alubias blancas extra · El Cultivador</span>
+      </span>
+      <span class="cifras">
+        <span class="precio">2,39&nbsp;€</span>
+        <span class="pq">2,39&nbsp;€/kg</span>
+      </span>
+      <span class="desde">+0,40&nbsp;€</span>
+    </a>
+
+    <a class="fila" href="#">
+      <span class="quien">
+        <span class="cadena">DIA</span>
+        <span class="producto">Alubias blancas DIA Vegecampo · 1 kg</span>
+      </span>
+      <span class="cifras">
+        <span class="precio">2,45&nbsp;€</span>
+        <span class="pq">2,45&nbsp;€/kg</span>
+      </span>
+      <span class="desde">+0,46&nbsp;€</span>
+    </a>
+
+    <a class="fila" href="#">
+      <span class="quien">
+        <span class="cadena">Carrefour</span>
+        <span class="producto">Alubia blanca premium Don Pedro · 1 kg</span>
+      </span>
+      <span class="cifras">
+        <span class="precio">3,35&nbsp;€</span>
+        <span class="pq">3,35&nbsp;€/kg</span>
+      </span>
+      <span class="desde">+1,36&nbsp;€</span>
+    </a>
+  </div>
+</div>
+</body>
+</html>

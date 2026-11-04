@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": { "v": 1, "at": "2026-11-04T18:40:00Z" },
+  "title": "Cesta App",
+  "namespace": "CestaApp",
+  "libraries": [],
+  "sections": {},
+  "groups": ["Licencias"],
+  "assetGroups": {
+    "Licencias": { "name": "Licencias", "tile": "xs", "order": [], "files": {} }
+  },
+  "blobs": {},
+  "docs": { "readme": "project/README.md", "sections": [] },
+  "lastChange": {
+    "by": "David",
+    "via": "DeepSeek Harness",
+    "at": "2026-11-04T18:40:00Z",
+    "note": "Sistema de diseño Cesta App: paleta viva con temas claro y oscuro, contrastes AA medidos, tipografía y cinco componentes."
+  }
+}

@@ -1,0 +1,49 @@
+<!-- @dsCard group="Superficies" height=264 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tarjeta</title>
+<style>
+  body { margin: 0; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans); }
+  .lienzo { padding: 24px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .tarjeta { width: 232px; box-sizing: border-box; background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado); }
+  .destacada { width: 232px; box-sizing: border-box; background: var(--bosque); color: var(--sobre-bosque); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-alzado); }
+  .rotulo { margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .tarjeta .rotulo { color: var(--tinta-tenue); }
+  .destacada .rotulo { color: var(--sobre-bosque); opacity: 0.82; }
+  .nombre { margin: 0 0 4px; font-family: var(--font-display); font-size: 19px; line-height: 25px; font-weight: 600; }
+  .meta { margin: 0; font-size: 13px; line-height: 18px; color: var(--tinta-tenue); }
+  .destacada .meta { color: var(--sobre-bosque); opacity: 0.82; }
+  .linea { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 12px; }
+  .cifra { font-variant-numeric: tabular-nums; }
+  .pq { font-size: 13px; line-height: 18px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+  .insignia { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lima); color: var(--sobre-lima); font-size: 13px; line-height: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="lienzo">
+
+  <div class="tarjeta">
+    <p class="rotulo">Producto</p>
+    <p class="nombre">Alubia blanca Hacendado</p>
+    <p class="meta">1 kg · Mercadona</p>
+    <div class="linea">
+      <span class="precio cifra">2,45&nbsp;€</span>
+      <span class="pq">2,45&nbsp;€/kg</span>
+    </div>
+  </div>
+
+  <div class="destacada">
+    <p class="rotulo">Mi cesta · lo que hay que ver</p>
+    <div class="linea" style="margin-top: 0">
+      <span class="precio-grande cifra">4,08&nbsp;€</span>
+      <span class="insignia">−48,6&nbsp;%</span>
+    </div>
+    <p class="meta" style="margin-top: 8px">en Lidl, la más barata de 6 cadenas</p>
+    <p class="meta">en Carrefour, 7,94&nbsp;€</p>
+  </div>
+
+</div>
+</body>
+</html>

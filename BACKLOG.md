@@ -247,6 +247,7 @@ existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administra
 | Stack arriba (db/api/web sanos) | `docker ps` |
 | Métricas del panel publicadas y reescritas por la pasada | `metricas-cesta.json` + `pytest tests/test_metricas_panel.py` |
 | Guarda de cobertura con pruebas | `pytest tests/test_cobertura.py tests/test_cobertura_honesta_20261104.py tests/test_cobertura_declarada_20261104.py` |
+| App de consumo lista para aprobar: sistema de diseño + 2 artboards móviles con datos reales | `check`=0 en `designs/cesta-app-design-system` y `designs/cesta-app`; 92 parejas AA sin fallos; investigación y viabilidad en `INVESTIGACION-APP.md` y `docs/DATOS-APP-2026-11-04.md` |
 
 **Lo que solo lo dice un documento**: que la CI pasa; que M08–M22 están verificados con
 datos (hay página, cliente y ruta, pero la aceptación con datos necesita la tarea 4); y el
@@ -263,3 +264,37 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   «faltan 11 de 30 días»), sin códigos crudos y sin inventar cifras si faltan campos.
 - **Cómo se sabe que está bien**: prueba de `textoCobertura` con veredicto y sin él, y la
   tarjeta de Ajustes mostrando «corta» para Alcampo.
+
+### 18. App de consumo: aprobar sistema de diseño y artboards — **pendiente de aprobación (David)**
+
+- **Por qué**: `ALCANCE-APP.md` pide que el aspecto se apruebe antes de la primera pantalla.
+- **Qué hay**: sistema «Cesta App» (tokens claro/oscuro, Fraunces/IBM Plex reales, escalas de
+  espaciado/radio/movimiento, 92 parejas de contraste AA medidas) y canvas «Cesta App —
+  artboards» con Portada y Producto móviles 390×844 sobre datos reales. Investigación en
+  `INVESTIGACION-APP.md` y viabilidad medida en `docs/DATOS-APP-2026-11-04.md`.
+  `check`=0 en los dos artefactos y `ds-sync` al día.
+- **Qué falta**: que David abra las dos páginas y diga sí o qué cambia (paleta, densidad,
+  navegación de tres destinos frente a los seis actuales). Sin ese sí no se escribe la pantalla.
+- **Cómo se sabe que está bien**: aprobación explícita en el chat con los cambios pedidos.
+
+### 19. App: portada y ficha de producto sobre los tokens — **pendiente, depende de 18**
+
+- **Por qué**: es el primer corte de valor («que se vea bien»). Los artboards ya fijan la
+  dirección; ahora va código real con datos reales y sus cuatro estados.
+- **Qué hay que hacer**: implementar en `plataforma/web/app` la portada y la ficha de producto
+  con los tokens aprobados, comparación por cadena/€/kg, historial con la ventana real de 59
+  días (nunca «90 días») y las cifras honestas de cobertura (8.066 comparables de verdad).
+- **Cómo se sabe que está bien**: pruebas de flujo (portada → producto → comparación), sin scroll
+  horizontal a 390 px, contraste del sistema y estados vacío/cargando/error.
+
+### 20. Datos que faltan para las funciones limitadas — **pendiente, decisión de producto**
+
+- **Por qué**: no hay **aditivos** (ninguna columna; solo E-xxx en texto en el 31 % de las
+  listas) ni **recetario real** (242 recetas de prueba, 0/242 con coste, 4/473 ingredientes con
+  producto inexistente). Sin eso, «Yuka» y «recetas con coste real» no se pueden hacer sin
+  inventar.
+- **Qué falta decidir**: si se ingesta un recetario con licencia y se mapea ingrediente→producto,
+  y si se busca una fuente de aditivos (nueva ingesta, no derivada). Mientras, la app enseña
+  Nutri-Score/sellos/certificados y deja recetas-coste fuera.
+- **Cómo se sabe que está bien**: decisión escrita y, si se ingesta, cobertura medida con
+  `data_profile`/`data_verify` antes de publicar la función.
