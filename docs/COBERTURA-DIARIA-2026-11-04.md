@@ -1,6 +1,7 @@
 # Cobertura diaria medida — 2026-11-04
 
-**Medido el 2026-11-04, 17:39 (hora de Madrid), sobre ficheros locales.** Ventana auditada:
+**Medido el 2026-11-04 entre las 17:39 y las 18:10 (hora de Madrid), sobre ficheros locales.**
+Ventana auditada:
 **2026-10-06 → 2026-11-04** (30 días de calendario que acaban en el día de referencia).
 Instrumento: `scripts/auditar_cobertura_diaria.py`. Evidencia:
 `data/debug/auditoria-cobertura/cobertura_diaria.csv` (150 filas = 5 cadenas × 30 días).
@@ -288,7 +289,8 @@ presencia, volumen y novedad.
 8. **Sin red y sin base de datos.** No se ha consultado `GET /api/estado` ni Postgres: la
    verificación de que la API sirve `cobertura` para las 6 cadenas la hizo el Lead el 2026-11-04
    sobre `http://127.0.0.1:8080/api/estado`; no es una medición de esta auditoría.
-9. **`data/` está fuera de git.** El CSV, la muestra y el log no se commitean; sí el script y este
+9. **`data/` está fuera de git** (salvo tres scripts heredados de `data/debug/` que vienen de
+   commits antiguos). El CSV, la muestra y el log no se commitean; sí el script y este
    documento. La reproducibilidad está en los comandos de la sección 8.
 
 ---
@@ -296,9 +298,11 @@ presencia, volumen y novedad.
 ## 10. Estado de las declaraciones y verificación
 
 - En `data/cobertura/` hay, comprobado en disco el 2026-11-04: **21 ficheros `lidl-*.json`**
-  históricos (13/10–04/11) y **6 declaraciones del 4/11**: las cinco cadenas de catálogo (escritas
-  por el Lead a las 17:35) más Lidl (12:19). Esta auditoría **no las escribe**; las lee para
-  contrastar.
+  históricos (13/10–04/11) y **6 declaraciones con fecha del 4/11**: las cinco cadenas de catálogo
+  (escritas y luego regeneradas por el Lead a las **18:09**; el manifiesto quedó con
+  `generado_en` 18:09:18) más Lidl (12:19, la escribe su colector). Esta auditoría **no las
+  escribe**; las lee para contrastar. La auditoría se reejecutó a las 18:04 (CSV y muestra), por
+  eso su `mtime` es posterior al encabezado de medición.
 - `verificar_evidencia.py` comprobó, en verde: el CSV tiene 150 filas, `(fuente,fecha)` único,
   estados dentro del enum, y la **novedad sobre bronce del 4/11 coincide exactamente** con la
   `novedad` declarada en los 5 JSON (nuevos/cambiados/desaparecen), además de las filas de bronce y
@@ -376,6 +380,9 @@ después; el cronómetro de cada mutación está en la sesión, no aquí).
 | **O4** (media) | La misma respuesta mezclaba `productos` (gold) y `cobertura.filas` (bronce) sin decirlo; `tipos.ts` lo documentaba al revés; `DECISIONES` simplificaba la diferencia de Aldi | La pantalla dice «**filas capturadas**»; comentario de `tipos.ts` corregido; Aldi explicado con sus 202 sin precio + 8 de alcance (aquí §4 y `DECISIONES` §5) |
 | **O5** (media-baja) | La prueba del enganche era un `grep` (`.declara(` en el fuente) y no había contrato de `/api/estado` | Prueba de **orden** y de no depender del emparejador; prueba de **contrato del endpoint** montada sin PostgreSQL (duckdb en memoria y `AJUSTES` de prueba), rojo al quitar el merge de cobertura de `/api/estado` |
 | **O4b** (menor) | `run_del_dia` comparaba el prefijo **UTC** de `runs.csv` con el día local: una pasada a las 00:30 de Madrid se perdería | Se convierte el `ts` a Europe/Madrid y se compara el día local; prueba con `23:30Z` = 5/11 en Madrid |
+| **O6** (alta, encontrada en la verificación por dimensiones) | La sustitución de los 5 ficheros tampoco era atómica **en el renombrado**: si el tercer `os.replace` falla, los dos primeros ya son de hoy y quedan tres de ayer; el manifiesto publica una mezcla. La prueba de O3b solo cubría el fallo al preparar | Antes de sustituir se guarda el contenido anterior; si falla un renombrado se restaura lo ya sustituido y se borran los temporales. Prueba nueva forzando el fallo en el `os.replace` número 3: rojo (quedaban dos ficheros del día) → verde (los cinco vuelven a su contenido anterior, sin `.tmp`) |
+| **O7** (media, criterio literal) | El contrato pedía una clave `huecos` y el JSON solo traía `dias_sin_datos` + `dias_en_la_ventana` | Se añade `huecos` (= `dias_sin_datos`) además de los dos números; prueba que exige la clave y su igualdad |
+| **O8** (media) | Si `filas_por_dia()` no podía leer el bronce devolvía `{}` y las cinco declaraciones decían «sin datos» aunque la partición del día existiera: un fallo de medición se publicaba como ausencia de captura | Si la captura del día existe y tiene filas, el veredicto es `sin referencia` (con filas, y `pct`/`referencia` a `null`) y el aviso dice que no se pudo leer el histórico. Prueba con `filas_por_dia` vacío: rojo (decía «sin datos» con 2 filas en la captura) → verde |
 
 Las cifras del documento no cambian con O1 (solo la «variación», que ahora se publica bien) y
 siguen cuadrando con la revisión independiente.

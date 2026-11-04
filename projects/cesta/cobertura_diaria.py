@@ -322,11 +322,27 @@ def declaracion(fuente: str, fecha: str, serie: dict[str, int] | None = None) ->
     """
     serie = filas_por_dia().get(fuente, {}) if serie is None else serie
     v = veredicto(serie, fecha)
+    captura = captura_del_dia(fuente, fecha)
+    # **Un fallo al leer el historico no es «no hubo captura».** `filas_por_dia()` devuelve {}
+    # cuando no puede leer el bronce (un parquet ilegible, un bloqueo), y entonces el veredicto
+    # diria «sin datos» aunque la particion del dia este ahi y con filas: el fichero se
+    # contradiria consigo mismo y el manifiesto publicaria una ausencia falsa. Si la captura
+    # existe, se declara lo que se sabe (filas) y lo que no (referencia/%): `sin referencia`.
+    if v["filas"] == 0 and captura and captura["filas"] > 0:
+        v = {**v, "filas": captura["filas"], "referencia": None, "referencia_fecha": None,
+             "pct": None, "veredicto": "sin referencia"}
+        aviso_medida = True
+    else:
+        aviso_medida = False
     datos = {
         "fuente": fuente,
         "cobertura": COBERTURA,
         "etiqueta": ETIQUETA,
         "fecha": fecha,
+        # **Los huecos, con el nombre que pide el contrato** (`huecos`) y ademas los dos
+        # numeros de los que sale (dias sin datos / dias de la ventana), que es lo que se lee
+        # en el aviso. Los tres son el mismo dato.
+        "huecos": v["dias_sin_datos"],
         "filas": v["filas"],
         "referencia": v["referencia"],
         "referencia_fecha": v["referencia_fecha"],
@@ -336,11 +352,14 @@ def declaracion(fuente: str, fecha: str, serie: dict[str, int] | None = None) ->
         "vs_anterior_pct": v["vs_anterior_pct"],
         "veredicto": v["veredicto"],
         "novedad": novedad(fuente, fecha),
-        "captura": captura_del_dia(fuente, fecha),
+        "captura": captura,
         "run": run_del_dia(fuente, fecha),
         "metodo": METODO,
     }
-    if v["veredicto"] == "sin datos":
+    if aviso_medida:
+        datos["aviso"] = ("la captura del dia existe, pero no se pudo leer el historico de "
+                          "filas: hay filas y no hay referencia contra la que juzgarlas")
+    elif v["veredicto"] == "sin datos":
         datos["aviso"] = "no hubo captura este dia: la cobertura no se puede acreditar"
     elif v["dias_sin_datos"]:
         datos["aviso"] = (f"captura del dia contra una referencia del "
@@ -382,9 +401,28 @@ def declara(fecha: str | None = None) -> list[Path]:
             temporal.unlink(missing_ok=True)
         raise
     escritos: list[Path] = []
-    for temporal, ruta in preparados:
-        os.replace(temporal, ruta)
-        escritos.append(ruta)
+    # **Y si falla la sustitucion a mitad, se deshace.** El renombrado de cada fichero es
+    # atomico, pero el conjunto no: si el tercero falla (antivirus, bloqueo, disco), los dos
+    # primeros ya son de hoy. Antes de sustituir se guarda lo que habia; si algo falla se
+    # restaura y se borran los temporales, para que el manifiesto no publique una mezcla.
+    anteriores = {ruta: (ruta.read_bytes() if ruta.exists() else None) for _, ruta in preparados}
+    try:
+        for temporal, ruta in preparados:
+            os.replace(temporal, ruta)
+            escritos.append(ruta)
+    except Exception:
+        for ruta in escritos:
+            previo = anteriores[ruta]
+            try:
+                if previo is None:
+                    ruta.unlink(missing_ok=True)
+                else:
+                    ruta.write_bytes(previo)
+            except OSError:
+                pass
+        for temporal, _ in preparados:
+            temporal.unlink(missing_ok=True)
+        raise
     return escritos
 
 

@@ -23,6 +23,7 @@ Lo que se fija aqui:
 from __future__ import annotations
 
 import json
+import os
 from datetime import date
 
 import polars as pl
@@ -237,6 +238,59 @@ def test_si_una_declaracion_falla_no_deja_el_conjunto_a_medias(base, monkeypatch
     assert not list(destino.glob(f"*-{HOY}.json")), (
         "un fallo a mitad no puede dejar publicada media declaracion del dia")
     assert not list(destino.glob("*.tmp")), "no puede quedar un temporal a medias"
+
+
+def test_si_falla_la_sustitucion_a_mitad_se_restaura_lo_anterior(base, monkeypatch):
+    """El renombrado de cada fichero es atomico, pero el conjunto no: si el tercero falla, los
+    dos primeros ya estan del dia. Se guarda lo anterior y se restaura, para que el manifiesto no
+    publique una mezcla de dos dias."""
+    destino = base / "cobertura"
+    destino.mkdir(parents=True)
+    for fuente in cobertura_diaria.FUENTES:
+        (destino / f"{fuente}-{HOY}.json").write_text('{"de": "antes"}', encoding="utf-8")
+        _escribe(base, fuente, HOY, {"a": 100, "b": 200})
+
+    real = os.replace
+    llamadas = {"n": 0}
+
+    def replace_que_falla(*args, **kwargs):
+        llamadas["n"] += 1
+        if llamadas["n"] == 3:
+            raise OSError("el antivirus bloqueo el tercer renombrado")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(cobertura_diaria.os, "replace", replace_que_falla)
+    with pytest.raises(OSError):
+        cobertura_diaria.declara(HOY)
+
+    assert not list(destino.glob("*.tmp")), "no pueden quedar temporales"
+    for fuente in cobertura_diaria.FUENTES:
+        contenido = (destino / f"{fuente}-{HOY}.json").read_text(encoding="utf-8")
+        assert contenido == '{"de": "antes"}', (
+            f"{fuente} quedo escrito del dia: el conjunto no se deshizo")
+
+
+def test_la_declaracion_lleva_la_clave_huecos_del_contrato(base):
+    """El contrato nombra `huecos`; ademas de los dos numeros de los que sale."""
+    _escribe(base, "mercadona", HOY, {"a": 100})
+    datos = cobertura_diaria.declaracion("mercadona", HOY)
+    assert datos["huecos"] == datos["dias_sin_datos"]
+    assert isinstance(datos["huecos"], int)
+
+
+def test_si_el_historico_no_se_puede_leer_la_captura_no_es_sin_datos(base, monkeypatch):
+    """`filas_por_dia()` devuelve {} si no puede leer el bronce. Eso no convierte el dia en
+    «no hubo captura»: la particion esta y tiene filas; se declara lo que se sabe y lo que no."""
+    _escribe(base, "mercadona", HOY, {"a": 100, "b": 200})
+    monkeypatch.setattr(cobertura_diaria, "filas_por_dia", lambda: {})
+
+    datos = cobertura_diaria.declaracion("mercadona", HOY)
+
+    assert datos["captura"]["filas"] == 2
+    assert datos["filas"] == 2
+    assert datos["veredicto"] == "sin referencia"
+    assert datos["pct"] is None and datos["referencia"] is None
+    assert "no se pudo leer el historico" in datos["aviso"]
 
 
 # --- 7. el enganche en la cadena diaria, en el orden correcto ---------------

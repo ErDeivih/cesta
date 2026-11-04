@@ -143,9 +143,11 @@ devuelve bloque `cobertura` para **las seis cadenas**; antes, solo Lidl lo traí
 `cobertura_medida` del manifiesto sigue intacta.
 
 **Por qué así, y no añadiendo una cadena.** La tarea llegaba con «la cobertura de precios es de
-UNA sola cadena (Lidl, 21 días)». Medido: **cinco** cadenas de catálogo con 57 días de
-histórico en gold y una pasada diaria registrada en `data/runs.csv` (Mercadona 58 días, Aldi
-58, Carrefour 56, DIA 57, Alcampo 57), y ese mismo día **8.851 de los 39.837 grupos con
+UNA sola cadena (Lidl, 21 días)». Medido: **cinco** cadenas de catálogo con **43–57 días** de
+histórico en gold (Alcampo 43, Aldi 57, Carrefour 51, DIA 53, Mercadona 57) y una pasada diaria
+registrada en `data/runs.csv` **56–58 días** contando el día local (Alcampo 56, Aldi 58,
+Carrefour 56, DIA 57, Mercadona 58; en UTC Alcampo sale 57), y ese mismo día
+**8.851 de los 39.837 grupos con
 precio tenían 2+ cadenas** (22,2 %). No faltaba una cadena: faltaba que las que hay
 **declararan** lo suyo, porque el único sitio de declaración era `data/cobertura/` y ahí solo
 escribía Lidl. Añadir un colector nuevo habría sido trabajo inventado —y `docs/COLECTORES.md`
