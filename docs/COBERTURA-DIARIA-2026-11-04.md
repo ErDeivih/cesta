@@ -322,16 +322,16 @@ presencia, volumen y novedad.
 
 ---
 
-## 11. El ciclo que debe producir esto **todos los días**: hoy está roto
+## 11. El ciclo que debe producir esto **todos los días**: estuvo roto y ya está arreglado
 
 Todo lo anterior mide **el dato**; esto mide **el reloj que lo produce**, porque la petición era
 «demuestra que produce datos nuevos todos los días» y un histórico diario no garantiza el mañana.
 
 Medido el 2026-11-04 a las 17:47 con `Get-ScheduledTask` / `Get-ScheduledTaskInfo`, y
-re-verificado sin cambios a las 19:05 (sigue en la ruta vieja, mismo código de error y misma
+re-verificado sin cambios a las 19:05 (seguía en la ruta vieja, mismo código de error y misma
 próxima ejecución):
 
-| Qué | Valor medido |
+| Qué | Valor medido (estado roto) |
 |---|---|
 | Tarea registrada | `Cesta diaria`, estado **Ready** |
 | Disparadores | 3: diario 06:00, al arrancar (+3 min), al iniciar sesión (+2 min) |
@@ -345,32 +345,28 @@ próxima ejecución):
 del Programador guarda la ruta absoluta** de cuando se registró. Las capturas de hoy
 (11:19–12:58, en `runs.csv`) se hicieron **antes** del movimiento; el disparo de las 15:31 ya
 encontró la ruta vacía. Es decir: **el histórico diario es real, y la automatización que lo
-mantiene lleva rota desde el movimiento de hoy**. Los huecos del §9 no se explican solo por
-esto (son de días anteriores al movimiento), pero el mañana sí: si no se corrige, el 5/11
-fallará igual.
+mantiene llevaba rota desde el movimiento de hoy**. Los huecos del §9 no se explican solo por
+esto (son de días anteriores al movimiento).
 
-**El arreglo, exacto, y por qué no lo ha hecho el agente.** Re-registrar la tarea desde la ruta
-nueva exige **elevación** (la tarea corre con `RunLevel Highest`); en esta sesión `Set-ScheduledTask`
-devolvió **«Acceso denegado»**, y no hay aprobación de permisos en la sesión. Son dos comandos, en
-PowerShell **como administrador**:
+**El arreglo lo hizo David, y está verificado.** Re-registrar la tarea desde la ruta nueva exige
+**elevación** (la tarea corre con `RunLevel Highest`); el agente no podía (`Set-ScheduledTask`
+devolvía «Acceso denegado»). David lo ejecutó en PowerShell como administrador:
 
 ```powershell
-# Opción A (la del propio proyecto; re-registra con la ruta actual):
 powershell -ExecutionPolicy Bypass -File F:\Proyectos\cesta\registrar-tarea.ps1
-
-# Opción B (solo cambiar la acción, sin tocar disparadores):
-Set-ScheduledTask -TaskName 'Cesta diaria' `
-  -Action (New-ScheduledTaskAction -Execute 'F:\Proyectos\cesta\ejecutar.bat' `
-                                   -WorkingDirectory 'F:\Proyectos\cesta')
+# -> Tarea 'Cesta diaria' registrada.
 ```
 
-Comprobación después: `Get-ScheduledTask -TaskName 'Cesta diaria' | Get-ScheduledTaskInfo` con
-`LastTaskResult` 0 tras el siguiente disparo. Mientras tanto, la cadena se lanza a mano con
-`F:\Proyectos\cesta\ejecutar.bat` (una vez al día; sale al instante si ya está hecha).
+Medido después, el 2026-11-04 a las 19:18: acción `F:\Proyectos\cesta\ejecutar.bat`, directorio
+`F:\Proyectos\cesta`, **3 disparadores** (diario 06:00, al arrancar, al iniciar sesión),
+`State Ready`, `NextRunTime 2026-11-05 06:00`. Y se probó de punta a punta con un disparo manual
+(`Start-ScheduledTask`): **`LastRunTime 19:18:35`, `LastTaskResult 0`** — el día ya estaba hecho,
+así que `ejecutar.bat` salió al instante sin tocar la red, que es justo lo que tiene que hacer.
 
-**Alcance de lo que esto invalida.** No invalida las cifras de este documento: son las capturas
-reales. Invalida cualquier promesa de que **mañana** habrá datos nuevos sin que alguien lance el
-ciclo o arregle la tarea. Queda como tarea bloqueada en `BACKLOG.md` y en `ESTADO-AGENTE.md`.
+**Lo que esto significa para «todos los días».** Desde ahora el ciclo se lanza solo (06:00, o al
+encender/iniciar sesión, con `StartWhenAvailable`); el histórico de que produce datos nuevos está
+medido arriba (128/128 capturas escritas el mismo día, 124/128 con novedad). Ya no hay una
+promesa que dependa de que alguien se acuerde de lanzarlo.
 
 ---
 
@@ -385,7 +381,7 @@ después; el cronómetro de cada mutación está en la sesión, no aquí).
 |---|---|---|
 | **O1** (alta) | `vs_anterior_pct` comparaba con la **captura más antigua** de la ventana: Alcampo publicaba +1,7 % cuando era +2,8 %; Aldi +6,8 % con el signo cambiado (−4,4 % real) | `veredicto` recorre el calendario en orden (la primera captura es la penúltima). Prueba con **dos capturas anteriores** (rojo: 340,0 % vs 10,0 %) y con un día sin captura. Regenerados los 5 JSON y el manifiesto: ahora +2,8 / −4,4 / −0,1 / 0,0 / −0,1 |
 | **O1b** (menor) | `referencia_fecha` elegía el día **más viejo** entre los empatados al máximo (Aldi 30/10 y 31/10) | Se elige el **más reciente** (31/10). Prueba con el empate |
-| **O2** (alta, operativa) | `DECISIONES.md` afirmaba «la pasada diaria ya lo hace sola» y la tarea del Programador está rota desde el movimiento (apunta a `F:\aprendizaje\scrap`) | Frase corregida en `DECISIONES.md` §5; el bloqueo y el arreglo (administrador) están en §11 y en `BACKLOG.md` tarea 12 |
+| **O2** (alta, operativa) | `DECISIONES.md` afirmaba «la pasada diaria ya lo hace sola» y la tarea del Programador estaba rota desde el movimiento (apuntaba a `F:\aprendizaje\scrap`) | Frase corregida en `DECISIONES.md` §5; **resuelto el 4/11 a las 19:18**: David re-registró la tarea como administrador y se verificó (acción nueva, 3 disparadores, disparo manual con `LastTaskResult 0`, próxima 5/11 06:00). Detalle en §11 |
 | **O3a** (media) | `declara()` vivía dentro del `try` del emparejador: con `--sin-emparejar`, o si el emparejador fallaba, no se declaraba nada | Movida a su **propio `try`, antes del emparejador** (solo depende del bronce). Prueba de orden en el fuente: rojo si se mueve detrás del manifiesto (17761 < 16406 en la mutación) |
 | **O3b** (media) | Los 5 ficheros se sustituían de uno en uno: un fallo a mitad dejaba 2 del día y 3 de ayer, y el manifiesto lo publicaba | Se escriben los 5 temporales y solo después se sustituyen; si falla uno, se borran los temporales y no se sustituye ninguno. Prueba forzando el fallo en el tercero: antes dejaba `aldi-2026-11-04.json` publicado, ahora no deja ninguno ni `.tmp` |
 | **O4** (media) | La misma respuesta mezclaba `productos` (gold) y `cobertura.filas` (bronce) sin decirlo; `tipos.ts` lo documentaba al revés; `DECISIONES` simplificaba la diferencia de Aldi | La pantalla dice «**filas capturadas**»; comentario de `tipos.ts` corregido; Aldi explicado con sus 202 sin precio + 8 de alcance (aquí §4 y `DECISIONES` §5) |

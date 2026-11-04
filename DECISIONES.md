@@ -172,10 +172,10 @@ declaraciones y el manifiesto.
 **Manifiesto del 4/11.** Se regeneró a mano con `core.manifiesto` después de declarar, **sin
 mover la versión publicada** (`20261104-144138` en `data/gold/actual.json`), para que lo que se
 lee hoy no siga diciendo «solo Lidl». La pasada diaria hace la declaración **antes** del
-manifiesto y aunque el emparejador falle; lo que **no** puede hacer todavía es lanzarse sola:
-la tarea del Programador apunta a `F:\aprendizaje\scrap` desde el movimiento de las 14:20 y
-re-registrarla exige administrador (`BACKLOG.md` tarea 12 y `docs/COBERTURA-DIARIA-2026-11-04.md`
-§11). Que conste: el histórico diario es real; **el mañana depende de ese arreglo**.
+manifiesto y aunque el emparejador falle, y **ya se lanza sola**: David re-registró la tarea
+`Cesta diaria` el 4/11 a las 19:18 (acción `F:\Proyectos\cesta\ejecutar.bat`, 3 disparadores) y
+se verificó con un disparo manual (`LastTaskResult 0`, próxima 5/11 06:00). Detalle en
+`docs/COBERTURA-DIARIA-2026-11-04.md` §11.
 
 **Cómo se revierte.** Quitar el bloque de `declara()` de `run.py` y apartar
 `data/cobertura/<cadena>-*.json`; el manifiesto y la API vuelven a lo anterior en la siguiente

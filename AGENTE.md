@@ -79,10 +79,11 @@ anterior). Antes ese directorio solo lo escribía Lidl, y de ahí salía la fras
 - La demostración con números (30 días, novedad por día, frescura de la partición):
   `docs/COBERTURA-DIARIA-2026-11-04.md`; el instrumento es
   `scripts/auditar_cobertura_diaria.py`.
-- **Lo que no se puede prometer todavía**: que mañana haya datos nuevos sin que alguien lance
-  el ciclo. La tarea del Programador `Cesta diaria` apunta a la ruta anterior al movimiento
-  (`F:\aprendizaje\scrap`), que ya no existe; **hace falta administrador** para re-registrarla
-  (`BACKLOG.md` tarea 12). El histórico diario sí es real y está medido.
+- **El reloj que lo produce ya está arreglado (4/11, 19:18).** La tarea del Programador `Cesta
+  diaria` apuntaba a la ruta anterior al movimiento (`F:\aprendizaje\scrap`, inexistente);
+  David la re-registró como administrador y se verificó: acción `F:\Proyectos\cesta\ejecutar.bat`,
+  3 disparadores (06:00, al arrancar, al iniciar sesión), disparo manual con `LastTaskResult 0` y
+  próxima ejecución **5/11 06:00**. Queda documentado en `docs/COBERTURA-DIARIA-2026-11-04.md` §11.
 
 ## Panel: `metricas-cesta.json` (2026-11-04)
 

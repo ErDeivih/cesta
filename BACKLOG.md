@@ -169,23 +169,22 @@ existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administra
   128/128 escritos el mismo día**; los 4 días idénticos son de Aldi.
 - **Límite**: la auditoría mide el dato, no la causa de cada hueco (tarea 13).
 
-### 12. La automatización diaria apunta a la ruta vieja — **bloqueada (nivel 3: hace falta administrador)**
+### 12. La automatización diaria apuntaba a la ruta vieja — **hecho (04/11, 19:18)**
 
 - **Por qué**: el proyecto se movió de `F:\aprendizaje\scrap` a `F:\Proyectos\cesta` el 4/11
-  (commit `b8425ae`, 14:20). La tarea del Programador `Cesta diaria` sigue apuntando a
+  (commit `b8425ae`, 14:20). La tarea del Programador `Cesta diaria` seguía apuntando a
   `F:\aprendizaje\scrap\ejecutar.bat`, que **ya no existe**: última ejecución 4/11 15:31 con
-  `0x80070003` (`ERROR_PATH_NOT_FOUND`), próxima 5/11 05:00. `ejecutar.bat` es portable
-  (`cd /d "%~dp0"`); lo que está mal es solo el registro de la tarea.
-- **Qué hay que hacer** (PowerShell **como administrador**; el agente no puede:
-  `Set-ScheduledTask` devolvió «Acceso denegado»):
-  `powershell -ExecutionPolicy Bypass -File F:\Proyectos\cesta\registrar-tarea.ps1`
-  o, sin tocar disparadores, `Set-ScheduledTask -TaskName 'Cesta diaria' -Action
-  (New-ScheduledTaskAction -Execute 'F:\Proyectos\cesta\ejecutar.bat' -WorkingDirectory
-  'F:\Proyectos\cesta')`.
-- **Cómo se sabe que está bien**: tras el siguiente disparo,
-  `Get-ScheduledTask -TaskName 'Cesta diaria' | Get-ScheduledTaskInfo` con `LastTaskResult` 0
-  y una partición nueva en `data/bronze/`. Mientras tanto, lanzar a mano
-  `F:\Proyectos\cesta\ejecutar.bat` (una vez al día; sale al instante si ya está hecha).
+  `0x80070003` (`ERROR_PATH_NOT_FOUND`). `ejecutar.bat` es portable (`cd /d "%~dp0"`); lo que
+  estaba mal era solo el registro de la tarea.
+- **Qué se ha hecho**: David la re-registró como administrador
+  (`powershell -ExecutionPolicy Bypass -File F:\Proyectos\cesta\registrar-tarea.ps1`), que el
+  agente no podía (`Set-ScheduledTask` → «Acceso denegado»).
+- **Cómo se sabe que está bien (medido 4/11, 19:18)**: acción `F:\Proyectos\cesta\ejecutar.bat`
+  con directorio `F:\Proyectos\cesta`, 3 disparadores (diario 06:00, al arrancar, al iniciar
+  sesión), `State Ready`, `NextRunTime 2026-11-05 06:00`; y un disparo manual
+  (`Start-ScheduledTask`) terminó con **`LastTaskResult 0`** en 8 s (el día ya estaba hecho, así
+  que `ejecutar.bat` salió al instante sin red). La próxima pasada real es la del 5/11 por la
+  mañana.
 
 ### 13. Alcampo: 14 de los 35 días desde el 1/10 sin precio — **pendiente, diagnóstico**
 
@@ -251,5 +250,16 @@ existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administra
 
 **Lo que solo lo dice un documento**: que la CI pasa; que M08–M22 están verificados con
 datos (hay página, cliente y ruta, pero la aceptación con datos necesita la tarea 4); y el
-**futuro** de la cobertura diaria —el dato de hoy es real, pero el reloj que lo produce está
-roto desde el movimiento de las 14:20 (tarea 12, hace falta administrador)—.
+**futuro** de la cobertura diaria —el dato de hoy es real y el reloj que lo produce ya está
+re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a las 06:00—.
+
+### 17. Los avisos de cobertura no llegan a la pantalla — **pendiente, XS**
+
+- **Por qué**: `Ajustes` pinta «catálogo diario · filas capturadas · % de su referencia ·
+  precios cambiados», pero **no** el veredicto (`corta`) ni los huecos (`11 de 30`). La regla de
+  `logica/cobertura.ts` es no pintar códigos, y es correcta; el efecto es que Alcampo se lee
+  «83,6 % de su referencia del 17 oct» sin decir que su captura es corta.
+- **Qué hay que hacer**: añadir el veredicto y los huecos en palabras (p. ej. «captura corta»,
+  «faltan 11 de 30 días»), sin códigos crudos y sin inventar cifras si faltan campos.
+- **Cómo se sabe que está bien**: prueba de `textoCobertura` con veredicto y sin él, y la
+  tarjeta de Ajustes mostrando «corta» para Alcampo.
