@@ -240,7 +240,7 @@ existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administra
 | Qué | Cómo se ha medido |
 |---|---|
 | Catálogo 52.982 · 8.875 grupos · 2.551.307 filas de histórico | `data/gold/*` + `docs/CIFRAS.md` reescrito por la pasada |
-| Comparación real: 8.864 grupos en 2+ cadenas; **8.829 el mismo día 4/11** (22,6 % de 39.115 con importe; 8.851/39.837 contando filas sin importe) | consulta a `gold/grupos.parquet` + `precio_diario.parquet` |
+| Comparación real: **8.829 el mismo día 4/11** (22,6 % de 39.115 comparables con importe; 8.851/39.837 contando filas sin importe). La foto de las 14:30 de `AGENTE.md` decía 8.864, que es otra medida y otro momento | consulta a `gold/grupos.parquet` + `precio_diario.parquet` |
 | Cobertura diaria de 5 cadenas, con novedad medida: 128 días-cadena con captura en 30 días, 124 con novedad ≠ 0, 128/128 escritos el mismo día | `scripts/auditar_cobertura_diaria.py` + `docs/COBERTURA-DIARIA-2026-11-04.md` |
 | Las 5 cadenas declaran su cobertura medida; el manifiesto pasa de 21 a 26 entradas declaradas | `data/cobertura/*.json` + `core/manifiesto.py` |
 | La API sirve cobertura para 6 cadenas | `GET /api/estado` → bloque `cobertura` en las 6 |

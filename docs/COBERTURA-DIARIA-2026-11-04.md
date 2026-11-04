@@ -1,6 +1,6 @@
 # Cobertura diaria medida — 2026-11-04
 
-**Medido el 2026-11-04 entre las 17:39 y las 18:10 (hora de Madrid), sobre ficheros locales.**
+**Medido el 2026-11-04 entre las 17:39 y las 18:55 (hora de Madrid), sobre ficheros locales.**
 Ventana auditada:
 **2026-10-06 → 2026-11-04** (30 días de calendario que acaban en el día de referencia).
 Instrumento: `scripts/auditar_cobertura_diaria.py`. Evidencia:
@@ -233,6 +233,14 @@ uv run python data/debug/auditoria-cobertura/verificar_evidencia.py --fecha 2026
 #    y 21 ficheros lidl-* históricos).
 Get-ChildItem data\cobertura\*-2026-11-04.json
 Get-ChildItem data\cobertura\lidl-*.json
+
+# 4) La puerta de tests completa, EXACTAMENTE como se ejecutó. El `--deselect` es un test
+#    preexistente que depende del disco: recorre los 58.760 .json.gz de data/raw de Carrefour
+#    y en esta máquina tarda >10 min. Los 782 `skipped` son los ficheros que tocan PostgreSQL:
+#    tests/conftest.py los salta cuando no hay base (marcador ancho de 111 ficheros por
+#    plataforma.api / plataforma.almacen / almacen / psycopg). Cuadra: 2.187 recogidos =
+#    1.404 passed + 782 skipped + 1 deseleccionado.
+.\.venv\Scripts\python.exe -m pytest -q --deselect "tests/test_fase2_f05_ficha_carrefour.py::test_contra_la_ficha_real"
 ```
 
 Y las comprobaciones de datos, con las herramientas del harness sobre rutas relativas al proyecto:
@@ -299,10 +307,11 @@ presencia, volumen y novedad.
 
 - En `data/cobertura/` hay, comprobado en disco el 2026-11-04: **21 ficheros `lidl-*.json`**
   históricos (13/10–04/11) y **6 declaraciones con fecha del 4/11**: las cinco cadenas de catálogo
-  (escritas y luego regeneradas por el Lead a las **18:09**; el manifiesto quedó con
-  `generado_en` 18:09:18) más Lidl (12:19, la escribe su colector). Esta auditoría **no las
-  escribe**; las lee para contrastar. La auditoría se reejecutó a las 18:04 (CSV y muestra), por
-  eso su `mtime` es posterior al encabezado de medición.
+  (su `mtime` final es **18:54:57**, tras la última regeneración de la sesión; el manifiesto quedó
+  con `mtime` 18:54:59 / `generado_en` 17:54:59Z) más Lidl (12:19, la escribe su colector). Esta
+  auditoría **no las escribe**; las lee para contrastar. La auditoría se reejecutó a las 18:46
+  (CSV y muestra); los tiempos cambian si se repite la pasada o se regeneran las declaraciones,
+  y eso es normal: el dato es el contenido, que se verifica por recomputo y sha256.
 - `verificar_evidencia.py` comprobó, en verde: el CSV tiene 150 filas, `(fuente,fecha)` único,
   estados dentro del enum, y la **novedad sobre bronce del 4/11 coincide exactamente** con la
   `novedad` declarada en los 5 JSON (nuevos/cambiados/desaparecen), además de las filas de bronce y
@@ -318,7 +327,9 @@ presencia, volumen y novedad.
 Todo lo anterior mide **el dato**; esto mide **el reloj que lo produce**, porque la petición era
 «demuestra que produce datos nuevos todos los días» y un histórico diario no garantiza el mañana.
 
-Medido el 2026-11-04 a las 17:47 con `Get-ScheduledTask` / `Get-ScheduledTaskInfo`:
+Medido el 2026-11-04 a las 17:47 con `Get-ScheduledTask` / `Get-ScheduledTaskInfo`, y
+re-verificado sin cambios a las 19:05 (sigue en la ruta vieja, mismo código de error y misma
+próxima ejecución):
 
 | Qué | Valor medido |
 |---|---|
