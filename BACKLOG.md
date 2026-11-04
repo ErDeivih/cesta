@@ -298,3 +298,17 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   Nutri-Score/sellos/certificados y deja recetas-coste fuera.
 - **Cómo se sabe que está bien**: decisión escrita y, si se ingesta, cobertura medida con
   `data_profile`/`data_verify` antes de publicar la función.
+
+### 21. La suite completa tarda 16 min y la doctrina pide 5 — **pendiente, S**
+
+- **Por qué**: medido el 4/11 con la suite completa sobre este árbol: **958 s (16 min)**,
+  1.405 passed / 782 skipped. Dos causas: el test preexistente `test_contra_la_ficha_real`
+  (recorre 58.760 `.gz` de `data/raw`) y las 782 pruebas de PostgreSQL que se saltan por el
+  marcador ancho del `conftest`. `DOCTRINA-CALIDAD.md` §1.7 pide que la suite que se ejecuta en
+  cada cambio tarde menos de 5 min.
+- **Qué hay que hacer**: separar un **gate rápido** (ficheros del área tocada, <1 min) del **gate
+  de entrega** (todo, con el test lento aceptado y documentado), y decidir si las 782 de
+  PostgreSQL deben **saltar** o **fallar** cuando no hay sandbox (hoy saltan y un fallo de base
+  no se ve; la decisión está atada a la tarea 4).
+- **Cómo se sabe que está bien**: un comando documentado que corre en <5 min en cada cambio y
+  uno de entrega con su log; sin `--deselect` oculto.
