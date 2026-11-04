@@ -17,7 +17,8 @@ import { cadenasCerca, guardarPreferencia } from '../api/ajustes'
 import { textoDeError } from '../api/cliente'
 import { borrarme, salir, yo } from '../api/cesta'
 import { useEstado } from '../api/consultas'
-import { nombreCadena } from '../api/formato'
+import { fecha, nombreCadena } from '../api/formato'
+import { textoCobertura } from '../logica/cobertura'
 import { Boton, CampoTexto, Cargando, Etiqueta, Fallo, Tarjeta, Vacio } from '../componentes/ui'
 
 export function Ajustes() {
@@ -138,6 +139,54 @@ export function Ajustes() {
         {guardado && <p className="mt-2 text-cuerpo"><Etiqueta tono="bien">{guardado}</Etiqueta></p>}
         {guarda.isError && (
           <Fallo error={guarda.error} titulo="No he podido guardar" />
+        )}
+      </Tarjeta>
+
+      {/* **La frescura y la cobertura, cadena a cadena.** Es el M18 del BACKLOG («cobertura medida en
+          Ajustes -> Fuentes»), y va aqui y no en una pantalla nueva porque **Ajustes ya esta viva, ya
+          pide `useEstado` y ya lista las cadenas**: crear otra pantalla para cinco lineas seria otra
+          puerta que mantener.
+
+          *Y es lo que faltaba para poder juzgar lo que se ve en el resto de la app:* un `mercadona
+          4226` sin su cobertura al lado se lee como «Mercadona tiene 4 226 productos» y como si eso
+          fuera su catalogo entero. Aqui se dice **contra que se mide** (filas de hoy contra la
+          referencia de su mejor dia), **de que dia es esa referencia** y **cuanto se ha movido** --
+          y para Lidl, que no cataloga entero, se dice que son sus ofertas semanales.
+
+          **Ninguna cifra se escribe a mano ni se rellena un hueco con un cero**: la frase sale de
+          `logica/cobertura.ts`, que solo pinta lo que la API manda y calla lo que falta. */}
+      <Tarjeta titulo="Frescura y cobertura de los precios">
+        <p className="mb-3 text-cuerpo text-tinta-suave">
+          De qué día es el precio que decide y cuánto catálogo se ha medido hoy en cada cadena.
+        </p>
+        {estado.isPending && (
+          <p className="text-cuerpo text-tinta-suave">Mirando de qué día son los precios…</p>
+        )}
+        {estado.error && (
+          <p className="text-cuerpo text-aviso">No he podido leer el estado de las cadenas.</p>
+        )}
+        {estado.data && (
+          <ul className="grid gap-2">
+            {estado.data.cadenas.map((c) => {
+              const cobertura = textoCobertura(c.cobertura)
+              return (
+                <li
+                  key={c.cadena}
+                  className="flex flex-col gap-0.5 border-b border-borde pb-2 last:border-0 last:pb-0"
+                >
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{nombreCadena(c.cadena)}</span>
+                    <span className={c.al_dia ? 'text-bien' : 'text-aviso'}>
+                      {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
+                    </span>
+                  </span>
+                  {/* *La frase de la medicion, en el tono de etiqueta que ya usa la app para los
+                      datos de apoyo. Sin cobertura no hay linea: no se inventa.* */}
+                  {cobertura && <span className="text-etiqueta text-secundaria">{cobertura}</span>}
+                </li>
+              )
+            })}
+          </ul>
         )}
       </Tarjeta>
 

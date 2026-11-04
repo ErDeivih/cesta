@@ -60,6 +60,25 @@ Traducido: **la comparación existe y es de cinco cadenas**, no de una. Lo que s
 cadena un día suelto — y hasta hoy el sistema lo contaba mal. El trabajo vivo está en
 `BACKLOG.md`; el estado corto, en `ESTADO-AGENTE.md`.
 
+## Cobertura declarada, medida (2026-11-04, 17:39)
+
+Desde hoy cada cadena de catálogo **declara su día con lo medido sobre su bronce**:
+`data/cobertura/<fuente>-<fecha>.json` lleva filas, referencia y su fecha, %, huecos, veredicto
+y **la novedad del día** (ids nuevos, precios cambiados, desaparecidos frente a la captura
+anterior). Antes ese directorio solo lo escribía Lidl, y de ahí salía la frase «solo Lidl,
+21 días».
+
+- Efecto: `data/gold/manifiesto.json` pasa de **21 a 26** entradas declaradas y
+  `GET /api/estado` enseña `cobertura` para **las seis cadenas**; la pantalla viva
+  (`Ajustes → Frescura y cobertura de los precios`) lo pinta por cadena.
+- La demostración con números (30 días, novedad por día, frescura de la partición):
+  `docs/COBERTURA-DIARIA-2026-11-04.md`; el instrumento es
+  `scripts/auditar_cobertura_diaria.py`.
+- **Lo que no se puede prometer todavía**: que mañana haya datos nuevos sin que alguien lance
+  el ciclo. La tarea del Programador `Cesta diaria` apunta a la ruta anterior al movimiento
+  (`F:\aprendizaje\scrap`), que ya no existe; **hace falta administrador** para re-registrarla
+  (`BACKLOG.md` tarea 12). El histórico diario sí es real y está medido.
+
 ## Cómo trabajas
 
 Lee y sigue `F:\EspacioCodigo\_flujo-dsh\PROTOCOLO-AUTONOMIA.md`.

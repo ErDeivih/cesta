@@ -12,10 +12,15 @@ sesión — se marca y se sigue con la siguiente.
 
 ## El estado, en una línea
 
-El catálogo son **52.342 productos** y la comparación **existe**: **8.864 grupos** tienen
-precio en **2 o más cadenas** (22,9 % de los 38.682 comparables). Lo que se cae es la
-**cobertura diaria de una cadena**, y la ficha del agente lo contaba al revés («solo Lidl,
-21 días»).
+El catálogo son **52.982 productos** (medido hoy) y la comparación **existe**. Dos fotos, con su
+denominador, porque no son lo mismo: en la de las 14:30, **8.864 grupos** con precio en 2+ cadenas
+(22,9 % de 38.682 comparables); medido sobre el día con `precio_comparable`, **8.851 de 39.837
+grupos** del 4/11 tenían 2+ cadenas (22,2 %). La cobertura dejó de ser un
+rumor de un solo sitio: desde el 4/11 **las cinco cadenas de catálogo declaran su día, medido
+sobre su bronce** (`data/cobertura/`), y `GET /api/estado` enseña las seis. Lo que se cae es
+**la automatización**: la tarea `Cesta diaria` apunta a `F:\aprendizaje\scrap`, que ya no
+existe tras el movimiento de hoy. El detalle y el arreglo (hace falta administrador), en
+`docs/COBERTURA-DIARIA-2026-11-04.md` §11 y en la tarea 12 de aquí.
 
 ---
 
@@ -76,24 +81,32 @@ precio en **2 o más cadenas** (22,9 % de los 38.682 comparables). Lo que se cae
 - **Cómo se sabe que está bien**: `CESTA_POSTGRES=<sandbox> pytest -q` → 2.149 recogidas,
   0 saltos por base, y el escenario §8 de dos listas en verde.
 
-### 5. Que la cobertura medida llegue a la API y a la pantalla — **pendiente (M18), barato**
+### 5. Que la cobertura medida llegue a la API y a la pantalla — **hecho (04/11)**
 
-- **Por qué**: ya viaja en el manifiesto (`cobertura_medida`), pero `/api/estado` solo dice
-  `al_dia: true/false` por cadena. La persona que mira la app no puede ver que Alcampo trajo
+- **Por qué**: ya viajaba en el manifiesto (`cobertura_medida`), pero `/api/estado` solo decía
+  `al_dia: true/false` por cadena. La persona que mira la app no podía ver que Alcampo trajo
   23.416 de 23.416 productos y que Carrefour dejó 3 días de 30.
-- **Qué hay que hacer**: exponer `cobertura_medida` en `/api/estado` y enseñarlo en
-  **Ajustes → Fuentes** (frescura por cadena), sin mezclarlo con diagnóstico técnico.
-- **Cómo se sabe que está bien**: prueba de contrato de la respuesta y del componente; la
-  pantalla dice la fecha de la referencia, no solo «al día».
+- **Qué se ha hecho**: (a) cada cadena de catálogo **declara su cobertura medida** en
+  `data/cobertura/<fuente>-<fecha>.json` —filas, referencia y su fecha, %, huecos, veredicto y
+  novedad del día—, y la API ya servía esa carpeta: no hizo falta tocar el endpoint;
+  (b) pantalla viva `Ajustes.tsx` con la tarjeta «Frescura y cobertura de los precios», una
+  fila por cadena («catálogo diario · 4272 filas · 98,9 % de su referencia del 5 oct · 71
+  precios cambiados»); (c) `Cabecera.tsx` resultó **código muerto** (lo sustituyó `Suite.tsx`)
+  y no se tocó: la pieza que se entregó es la de la pantalla viva.
+- **Cómo se sabe que está bien**: `GET http://127.0.0.1:8080/api/estado` devuelve `cobertura`
+  para las 6 cadenas (medido el 4/11); `npm run tipos` limpio, `npm test` 376/376,
+  `npm run test:componentes` 24/24 (incluye `Ajustes.test.tsx`), build servido en `:8080`.
 
-### 6. Corregir la ficha del agente, que daba el estado al revés — **pendiente, 10 minutos**
+### 6. Corregir la ficha del agente, que daba el estado al revés — **hecho (04/11)**
 
-- **Por qué**: `AGENTE.md` dice «cobertura diaria: **solo Lidl**, 21 días». Medido: Mercadona
-  32 días, Aldi 32, Carrefour 31, DIA 29, Alcampo 20 (hoy 21), Lidl 21. El error venía de
-  leer `cobertura_declarada`, donde solo escribe Lidl.
-- **Qué hay que hacer**: sustituir la tabla por las cifras medidas y enlazar este backlog.
-- **Cómo se sabe que está bien**: ninguna cifra de `AGENTE.md` sin fecha de medición ni
-  fuente.
+- **Por qué**: `AGENTE.md` decía «cobertura diaria: **solo Lidl**, 21 días». Medido: Mercadona
+  32 días, Aldi 32, Carrefour 31, DIA 29, Alcampo 21, Lidl 21 (ventana desde el 1/10). El error
+  venía de leer `cobertura_declarada`, donde solo escribía Lidl.
+- **Qué se ha hecho**: la tabla está corregida con fecha de medición; y desde hoy la raíz del
+  problema está cerrada: **las 5 cadenas de catálogo escriben su declaración**, así que
+  `cobertura_declarada` ya no puede leerse como «solo Lidl».
+- **Cómo se sabe que está bien**: `docs/COBERTURA-DIARIA-2026-11-04.md` §1 reconcilia las
+  cifras con `AGENTE.md` y `CIFRAS.md`, y la medida se repite con el script de la tarea 11.
 
 ### 7. Carrefour: 3 días de 30 sin captura y un error de catálogo crónico — **pendiente, diagnóstico barato**
 
@@ -134,18 +147,94 @@ precio en **2 o más cadenas** (22,9 % de los 38.682 comparables). Lo que se cae
 - **Cómo se sabe que está bien**: la prueba falla con el código de antes y pasa con el de
   después, y la fila se escribe una sola vez.
 
+### 11. Demostrar que el ciclo produce datos nuevos, con auditoría reproducible — **hecho (04/11)**
+
+- **Por qué**: la petición era «demuestra que produce datos nuevos todos los días», y hasta
+  hoy eso se afirmaba de memoria: no había un instrumento que midiera presencia, novedad y
+  frescura por cadena y día, ni una comprobación de que las declaraciones dicen lo mismo que
+  el bronce.
+- **Qué se ha hecho**: `scripts/auditar_cobertura_diaria.py` (ventana configurable; por
+  cadena y día: partición de bronce, filas bronce/gold, mtime, pasada en `runs.csv` y novedad
+  sobre bronce —nuevos/cambiados/desaparecen— con la misma cuenta sobre gold al lado);
+  `--exigir-dias N` para usarlo como puerta estricta (sin la bandera mide y sale 0: un hueco
+  ya conocido no puede gritar todos los días). Evidencia en
+  `docs/COBERTURA-DIARIA-2026-11-04.md` (tablas de 30 días y novedad de los últimos 7) y CSV
+  en `data/debug/auditoria-cobertura/` (fuera de git), perfilado y verificado con
+  `data_profile`/`data_verify` (unicidad `(fuente,fecha)`, sin nulos en claves; reportKeys en
+  la doc).
+- **Cómo se sabe que está bien**: el script corre de punta a punta; `verificar_evidencia.py`
+  comprueba que la novedad sobre bronce del 4/11 coincide con las 5 declaraciones; `pytest` y
+  `ruff` en verde. El resultado honesto: **128 días-cadena con captura, 124 con novedad ≠ 0,
+  128/128 escritos el mismo día**; los 4 días idénticos son de Aldi.
+- **Límite**: la auditoría mide el dato, no la causa de cada hueco (tarea 13).
+
+### 12. La automatización diaria apunta a la ruta vieja — **bloqueada (nivel 3: hace falta administrador)**
+
+- **Por qué**: el proyecto se movió de `F:\aprendizaje\scrap` a `F:\Proyectos\cesta` el 4/11
+  (commit `b8425ae`, 14:20). La tarea del Programador `Cesta diaria` sigue apuntando a
+  `F:\aprendizaje\scrap\ejecutar.bat`, que **ya no existe**: última ejecución 4/11 15:31 con
+  `0x80070003` (`ERROR_PATH_NOT_FOUND`), próxima 5/11 05:00. `ejecutar.bat` es portable
+  (`cd /d "%~dp0"`); lo que está mal es solo el registro de la tarea.
+- **Qué hay que hacer** (PowerShell **como administrador**; el agente no puede:
+  `Set-ScheduledTask` devolvió «Acceso denegado»):
+  `powershell -ExecutionPolicy Bypass -File F:\Proyectos\cesta\registrar-tarea.ps1`
+  o, sin tocar disparadores, `Set-ScheduledTask -TaskName 'Cesta diaria' -Action
+  (New-ScheduledTaskAction -Execute 'F:\Proyectos\cesta\ejecutar.bat' -WorkingDirectory
+  'F:\Proyectos\cesta')`.
+- **Cómo se sabe que está bien**: tras el siguiente disparo,
+  `Get-ScheduledTask -TaskName 'Cesta diaria' | Get-ScheduledTaskInfo` con `LastTaskResult` 0
+  y una partición nueva en `data/bronze/`. Mientras tanto, lanzar a mano
+  `F:\Proyectos\cesta\ejecutar.bat` (una vez al día; sale al instante si ya está hecha).
+
+### 13. Alcampo: 14 de los 35 días desde el 1/10 sin precio — **pendiente, diagnóstico**
+
+- **Por qué**: en la ventana de 30 días Alcampo tiene **20/30** capturas (la peor de las
+  cinco); en todo el histórico hay **3 días con pasada buena y sin partición** (Alcampo
+  18/09, 02/10 y 05/10: «trajo y no escribió») y **8 de los 15 días con pasada fallida** en la
+  ventana son suyos. El 4/11 se recuperó del crudo (tarea 1), pero los días 27–29/10 no.
+- **Qué hay que hacer**: separar por día «no capturó» (red/WAF) de «capturó y la guarda vetó»
+  (bronce existe, no se escribió) leyendo `data/ejecuciones.log`; si el crudo de esos días
+  sigue en `data/raw/`, recuperarlos con `reprocesar` como se hizo el 4/11.
+- **Cómo se sabe que está bien**: el veredicto de la cadena dice el motivo del día que falta,
+  no solo que falta, y los días recuperables están en gold.
+
+### 14. Retención de las declaraciones de cobertura — **pendiente, XS**
+
+- **Por qué**: `data/cobertura/` crece ~5 ficheros/día (~1 KB cada uno) y el manifiesto los
+  lista todos (~1,8 MB al año). Hoy es aceptable y no se borra nada sin decisión escrita
+  (`DECISIONES.md` §5), pero conviene decidirlo antes de que crezca.
+- **Qué hay que hacer**: decidir si se conservan (histórico de declaraciones) o se poda a N
+  días, y si el manifiesto lleva solo las del día + un resumen. Es decisión de producto.
+- **Cómo se sabe que está bien**: el tamaño del manifiesto queda acotado y la declaración del
+  día sigue estando.
+
+### 15. Que falte una declaración se note — **pendiente, S**
+
+- **Por qué**: la API y el manifiesto leen `data/cobertura/`; si una cadena no declara (por
+  ejemplo, porque la pasada se saltó el paso), la cadena sale sin `cobertura` y **nadie
+  avisa**: volvería a parecer «solo Lidl».
+- **Qué hay que hacer**: en el cierre del día, comprobar que hay declaración para las 6
+  cadenas y avisar si falta; y/o que `scripts/auditar_cobertura_diaria.py --exigir-declaracion`
+  lo compruebe.
+- **Cómo se sabe que está bien**: una prueba con el directorio sin el fichero de una cadena
+  falla con el nombre de la cadena.
+
 ---
 
-## Lo que está verde de verdad (medido el 04/11/2026, 14:30)
+## Lo que está verde de verdad (medido el 04/11/2026, 17:39)
 
 | Qué | Cómo se ha medido |
 |---|---|
-| Catálogo 52.342 · 8.897 grupos · 2.527.902 filas de histórico, 59 días | `data/gold/*` + `docs/CIFRAS.md` reescrito por la pasada |
-| Comparación real: 8.864 grupos en 2+ cadenas | consulta a `gold/grupos.parquet` |
+| Catálogo 52.982 · 8.875 grupos · 2.551.307 filas de histórico | `data/gold/*` + `docs/CIFRAS.md` reescrito por la pasada |
+| Comparación real: 8.864 grupos en 2+ cadenas; **8.851 el mismo día 4/11** (22,2 % de 39.837) | consulta a `gold/grupos.parquet` + `precio_diario.parquet` |
+| Cobertura diaria de 5 cadenas, con novedad medida: 128 días-cadena con captura en 30 días, 124 con novedad ≠ 0, 128/128 escritos el mismo día | `scripts/auditar_cobertura_diaria.py` + `docs/COBERTURA-DIARIA-2026-11-04.md` |
+| Las 5 cadenas declaran su cobertura medida; el manifiesto pasa de 21 a 26 entradas declaradas | `data/cobertura/*.json` + `core/manifiesto.py` |
+| La API sirve cobertura para 6 cadenas | `GET /api/estado` → bloque `cobertura` en las 6 |
 | Publicación coherente | `GET /api/estado` → `vigencia_precio.coherente: true` |
 | Stack arriba (db/api/web sanos) | `docker ps` |
-| Guarda de cobertura con pruebas | `pytest tests/test_cobertura.py tests/test_cobertura_honesta_20261104.py` |
+| Guarda de cobertura con pruebas | `pytest tests/test_cobertura.py tests/test_cobertura_honesta_20261104.py tests/test_cobertura_declarada_20261104.py` |
 
 **Lo que solo lo dice un documento**: que la CI pasa; que M08–M22 están verificados con
-datos (hay página, cliente y ruta, pero la aceptación con datos necesita la tarea 4); y
-—hasta hoy— la cobertura de las cinco cadenas, que no viajaba con lo publicado.
+datos (hay página, cliente y ruta, pero la aceptación con datos necesita la tarea 4); y el
+**futuro** de la cobertura diaria —el dato de hoy es real, pero el reloj que lo produce está
+roto desde el movimiento de las 14:20 (tarea 12, hace falta administrador)—.

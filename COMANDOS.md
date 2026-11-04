@@ -1,6 +1,6 @@
 # Comandos para ejecutar en tu PC
 
-Desde `F:\aprendizaje\scrap` en PowerShell. **En PowerShell la línea no se parte
+Desde `F:\Proyectos\cesta` en PowerShell. **En PowerShell la línea no se parte
 con `\`** — el continuador es el acento grave.
 
 ---

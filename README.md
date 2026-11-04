@@ -18,7 +18,7 @@ pendientes», y era un estado de hacia meses: DIA, Carrefour y Lidl **se ejecuta
 
 Tarea diaria en Windows (una vez, PowerShell como administrador):
 
-    schtasks /create /tn "Cesta diaria" /tr "F:\aprendizaje\scrap\ejecutar.bat" ^
+    schtasks /create /tn "Cesta diaria" /tr "F:\Proyectos\cesta\ejecutar.bat" ^
              /sc daily /st 06:00 /rl highest
 
 Consultar el resultado:

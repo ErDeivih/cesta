@@ -1,6 +1,6 @@
 # Da de alta la recoleccion diaria en el Programador de tareas de Windows.
 # Ejecutar UNA VEZ, en PowerShell como ADMINISTRADOR:
-#     powershell -ExecutionPolicy Bypass -File F:\aprendizaje\scrap\registrar-tarea.ps1
+#     powershell -ExecutionPolicy Bypass -File F:\Proyectos\cesta\registrar-tarea.ps1
 #
 # Como queda configurada, y por que:
 #

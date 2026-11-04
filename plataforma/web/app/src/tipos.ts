@@ -248,6 +248,74 @@ export interface RespuestaSecciones {
   secciones: Seccion[]
 }
 
+/** Lo que una cadena dice -- o lo que se ha medido -- sobre su propia cobertura.
+ *
+ *  **Dos clases de cobertura y no una.** Hasta el 4 de noviembre de 2026 solo Lidl mandaba este
+ *  bloque, porque solo Lidl tiene un catalogo parcial: sus 91 fichas son *ofertas de una campana
+ *  semanal*, no un catalogo. Las otras cinco catalogan entero, y ahora tambien mandan su cobertura
+ *  **medida** (`catalogo_diario`): filas de hoy contra la referencia de su mejor dia, mas lo que se
+ *  ha movido respecto a la captura anterior. *Antes esa medicion vivia solo en un documento; un numero que solo
+ *  esta en `CIFRAS.md` no lo puede leer quien esta comprando.*
+ *
+ *  **`cobertura` es un codigo, no texto para la pantalla** (`ofertas_semanales_parcial`,
+ *  `catalogo_diario`). La interfaz lo traduce; un codigo crudo en pantalla es una fuga de la base
+ *  de datos, no informacion.
+ *
+ *  Todo lo de la medicion es **opcional a proposito**: un fichero de cobertura antiguo, o una API
+ *  mas vieja, no lo manda -- y entonces la pantalla dice lo que sabe **sin cifras**, en vez de
+ *  rellenar los huecos con ceros. La regla de siempre: un dato que no tenemos no se inventa.
+ */
+export interface CoberturaCadena {
+  /** `ofertas_semanales_parcial` (Lidl) o `catalogo_diario` (las cinco que catalogan entero). */
+  cobertura?: string
+  /** Lo que declara Lidl, en su fichero de cobertura. */
+  con_precio?: number
+  fichas_leidas?: number
+  guardados?: number
+  productos_padre?: number
+  region?: string | number
+  fecha?: string
+  /** El aviso de Lidl: lo que su cobertura **no** certifica. */
+  aviso?: string
+  // ------------------------------------- la medicion de `catalogo_diario` ---
+  /** La etiqueta legible que manda el fichero, por si el codigo no lo conocemos. */
+  etiqueta?: string
+  /** Filas de la **captura del dia**, medidas sobre el bronce. No es `productos` de la API: ese
+   *  sale del gold publicado y puede ser menor (el 4/11/2026, Aldi 2.709 en bronce y 2.499 en gold). */
+  filas?: number | null
+  /** Las filas del dia que se toma como referencia (su mejor dia medido). */
+  referencia?: number | null
+  /** De que dia es esa referencia. */
+  referencia_fecha?: string | null
+  /** `filas / referencia`, en porcentaje. */
+  pct?: number | null
+  /** Cuantos dias de la ventana no tienen datos. */
+  dias_sin_datos?: number | null
+  dias_en_la_ventana?: number | null
+  /** Lo que sube o baja respecto a la captura anterior, en puntos porcentuales. */
+  vs_anterior_pct?: number | null
+  /** `ok` | `parcial` | ... Lo decide la medicion, no la interfaz. */
+  veredicto?: string | null
+  /** Lo que se ha movido respecto al dia anterior, si se midio. */
+  novedad?: {
+    vs?: string | null
+    nuevos?: number | null
+    cambiados?: number | null
+    desaparecen?: number | null
+  } | null
+  /** La captura que respalda la medicion. */
+  captura?: {
+    fecha?: string | null
+    escrita?: string | null
+    filas?: number | null
+  } | null
+  /** Como se ha medido, en una frase. */
+  metodo?: string | null
+  /** La pasada que lo genero: opaca, la interfaz no la pinta. */
+  run?: Record<string, unknown> | null
+  [k: string]: unknown
+}
+
 export interface CadenaEstado {
   cadena: string
   productos: number
@@ -256,7 +324,7 @@ export interface CadenaEstado {
   /**
    * **Lo que la cadena declara sobre su propia cobertura, cuando no cataloga entero.**
    *
-   * *Y solo lo declara Lidl, y no es casualidad: es la unica cuyo catalogo es **parcial**.* El
+   * *Y solo lo declaraba Lidl, y no es casualidad: es la unica cuyo catalogo es **parcial**.* El
    * problema que esto resuelve, medido el 13 de octubre de 2026: `/api/estado` daba, por cadena,
    * **`productos` y nada mas** --
    *
@@ -270,17 +338,7 @@ export interface CadenaEstado {
    *
    * Va **aparte y no dentro de `productos`**, porque `productos` sigue queriendo decir lo que decia.
    */
-  cobertura?: {
-    cobertura?: string
-    con_precio?: number
-    fichas_leidas?: number
-    guardados?: number
-    productos_padre?: number
-    region?: string | number
-    fecha?: string
-    aviso?: string
-    [k: string]: unknown
-  }
+  cobertura?: CoberturaCadena
 }
 
 export interface RespuestaEstado {
