@@ -428,3 +428,13 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   en N cadenas» sacado de los datos, y el resto de pantallas hablan de cadenas sin prometer seis.
   El panel y los documentos pueden seguir diciendo «6 capturadas» y «5 valoradas», que son cosas
   distintas. Cambiar el motor para valorar Lidl es otra tarea, no un texto.
+
+### 35. Artboards de las 8 pantallas que faltan — **pendientes de validación (05/11)**
+- **Qué hay**: canvas `designs/cesta-app` con 10 tableros (Portada y Producto aprobados + 8 nuevos:
+  Lista, Favoritos, Comparar, Recetas, Receta y coste, Calorías, Ofertas, Perfil). `check`=0.
+- **Datos reales**: cesta 10,70 € (4 productos de Mercadona); comparación Alcampo 7,19 / DIA 10,16 /
+  Carrefour 10,97 con Mercadona 2 de 3; historiales 60/59 días; tortilla 5,32 € con ingredientes;
+  menú 1.075 de 2.200 kcal; ofertas de Lidl Plus, Club Alcampo, tarjeta DIA, Aldi y solo online.
+- **Regla**: no se implementa ninguna pantalla hasta que David valide su artboard (una a una).
+- **Cómo se sabe que está bien**: David da el sí de cada tablero en el canvas; después, la
+  implementación usa los tokens y el §8 como la Portada y la ficha.

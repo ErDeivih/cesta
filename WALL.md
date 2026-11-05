@@ -28,6 +28,21 @@ hasta agotar el bloque.
 - [x] Ingesta del 5/11 cerrada sola y vigilada: 6 cadenas, gold `20261105-123941`, y
       `scripts/vigilar_ingesta.py` enganchado a `ejecutar.bat` (avisa solo si hay fallo).
 
+## Artboards pendientes de validación (2026-11-05)
+
+Añadidos al canvas `designs/cesta-app` (10 tableros en total). David los valida **antes** de
+implementar cada pantalla:
+
+- [ ] Lista de la compra (`Lista.dc.html`): productos con cantidad, precio estimado 10,70 €.
+- [ ] Favoritos (`Favoritos.dc.html`): 3 guardados, rango de su historial de 60/59 días.
+- [ ] Comparar mi cesta (`Comparar.dc.html`): Alcampo 7,19 € gana con 3 de 3; DIA 10,16 y
+      Carrefour 10,97; Mercadona/Aldi/Lidl incompletos.
+- [ ] Recetas, listado (`Recetas.dc.html`): recetario y «mis recetas».
+- [ ] Receta y coste (`Receta.dc.html`): tortilla, 5,32 € (1,33 €/ración) con ingredientes.
+- [ ] Calorías (`Calorias.dc.html`): 1.075 de 2.200 kcal y las tres comidas del día.
+- [ ] Ofertas (`Ofertas.dc.html`): tipo y condición de club en 5 ofertas reales.
+- [ ] Tu perfil (`Perfil.dc.html`): cadena habitual, dieta, alérgenos, objetivo y avisos.
+
 ## Notas de trabajo
 
 - Orden acordado por David (2026-11-05): ficha de producto → comparar mi cesta → favoritos y

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cesta · ofertas</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./ds/cestaapp/tokens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; background: var(--marfil); }
+  .app, .app * { box-sizing: border-box; }
+  .app a { color: inherit; }
+  .app a:hover { color: var(--verde-fuerte); }
+  .app button { font-family: var(--font-sans); }
+  .app :focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+</style>
+</helmet>
+
+<div class="app" style="width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans);">
+
+  <header style="flex: none; padding: 8px 16px 0;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="Portada.dc.html" aria-label="Volver a la portada" style="width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radio-pastilla); color: var(--tinta); text-decoration: none;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+      </a>
+      <div style="flex: 1 1 auto; min-width: 0;">
+        <p class="micro" style="margin: 0; color: var(--tinta-tenue);">OFERTAS</p>
+        <h1 class="titulo" style="margin: 0; color: var(--tinta);">Lo que hay esta semana</h1>
+      </div>
+    </div>
+    <div role="tablist" aria-label="Tipo de oferta" style="display: flex; gap: 8px; margin-top: 8px; padding-bottom: 8px; overflow-x: auto;">
+      <button type="button" role="tab" aria-selected="true" style="flex: none; min-height: 44px; padding: 0 14px; border: 0; border-radius: var(--radio-pastilla); background: var(--bosque); color: var(--sobre-bosque); font-size: 14px; font-weight: 600; cursor: pointer;">Todas</button>
+      <button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-pastilla); background: var(--papel); color: var(--tinta); font-size: 14px; cursor: pointer;">Descuento</button>
+      <button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-pastilla); background: var(--papel); color: var(--tinta); font-size: 14px; cursor: pointer;">2ª unidad</button>
+      <button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-pastilla); background: var(--papel); color: var(--tinta); font-size: 14px; cursor: pointer;">Club</button>
+      <button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-pastilla); background: var(--papel); color: var(--tinta); font-size: 14px; cursor: pointer;">Solo online</button>
+    </div>
+  </header>
+
+  <main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+
+    <article style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">LIDL</p>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px;">
+        <h2 class="cuerpo-fuerte" style="margin: 0; color: var(--tinta);">Yogur griego de fresa</h2>
+        <span class="precio-fila" style="flex: none; color: var(--tinta); font-variant-numeric: tabular-nums;">1,35&nbsp;€</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lavado-aviso); color: var(--aviso); font-size: 12px; line-height: 16px; font-weight: 600;">Precio club</span>
+        <span class="etiqueta" style="color: var(--tinta-suave);">Con Lidl Plus</span>
+      </div>
+    </article>
+
+    <article style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">ALCAMPO</p>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px;">
+        <h2 class="cuerpo-fuerte" style="margin: 0; color: var(--tinta);">Anchoa y boquerón al vinagre</h2>
+        <span class="precio-fila" style="flex: none; color: var(--tinta); font-variant-numeric: tabular-nums;">4,06&nbsp;€</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lavado-terracota); color: var(--terracota); font-size: 12px; line-height: 16px; font-weight: 600;">2ª unidad −50&nbsp;%</span>
+        <span class="etiqueta" style="color: var(--tinta-suave);">Con Club Alcampo, en tu tarjeta</span>
+      </div>
+    </article>
+
+    <article style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">DIA</p>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px;">
+        <h2 class="cuerpo-fuerte" style="margin: 0; color: var(--tinta);">Pizza 4 quesos 400 g</h2>
+        <span class="precio-fila" style="flex: none; color: var(--tinta); font-variant-numeric: tabular-nums;">2,07&nbsp;€</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lavado-verde); color: var(--verde-fuerte); font-size: 12px; line-height: 16px; font-weight: 600;">Descuento 20&nbsp;%</span>
+        <span class="etiqueta" style="color: var(--tinta-suave);">Con tarjeta DIA</span>
+      </div>
+    </article>
+
+    <article style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">ALDI</p>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px;">
+        <h2 class="cuerpo-fuerte" style="margin: 0; color: var(--tinta);">Cápsulas de café con leche</h2>
+        <span class="precio-fila" style="flex: none; color: var(--tinta); font-variant-numeric: tabular-nums;">2,47&nbsp;€</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lavado-terracota); color: var(--terracota); font-size: 12px; line-height: 16px; font-weight: 600;">2ª unidad −50&nbsp;%</span>
+        <span class="etiqueta" style="color: var(--tinta-suave);">Sin club</span>
+      </div>
+    </article>
+
+    <article style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">ALCAMPO</p>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px;">
+        <h2 class="cuerpo-fuerte" style="margin: 0; color: var(--tinta);">Coca-Cola Zero, 4 packs</h2>
+        <span class="precio-fila" style="flex: none; color: var(--tinta); font-variant-numeric: tabular-nums;">3,72&nbsp;€</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--radio-pastilla); background: var(--lavado-aviso); color: var(--aviso); font-size: 12px; line-height: 16px; font-weight: 600;">Solo online</span>
+        <span class="etiqueta" style="color: var(--tinta-suave);">4 packs · 12,49&nbsp;€ · hasta el 18 nov</span>
+      </div>
+    </article>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cesta · receta</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./ds/cestaapp/tokens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; background: var(--marfil); }
+  .app, .app * { box-sizing: border-box; }
+  .app a { color: inherit; }
+  .app a:hover { color: var(--verde-fuerte); }
+  .app :focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+</style>
+</helmet>
+
+<div class="app" style="width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; background: var(--marfil); color: var(--tinta); font-family: var(--font-sans);">
+
+  <header style="flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--borde);">
+    <a href="Recetas.dc.html" aria-label="Volver a las recetas" style="width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radio-pastilla); color: var(--tinta); text-decoration: none;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+    </a>
+    <div style="flex: 1 1 auto; min-width: 0;">
+      <p class="micro" style="margin: 0; color: var(--tinta-tenue);">RECETA · 4 RACIONES</p>
+      <h1 class="titulo" style="margin: 0; color: var(--tinta);">Tortilla de patatas</h1>
+    </div>
+    <button type="button" aria-label="Guardar la receta" aria-pressed="false" style="width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: var(--radio-pastilla); color: var(--tinta-suave); cursor: pointer;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.5-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5C19 15.5 12 20 12 20Z"></path></svg>
+    </button>
+  </header>
+
+  <main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+
+    <section aria-labelledby="coste" style="background: var(--bosque); color: var(--sobre-bosque); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-alzado);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+        <h2 class="micro" id="coste" style="margin: 0;">COSTE DE INGREDIENTES</h2>
+        <span class="etiqueta" style="color: var(--sobre-bosque); opacity: .85;">30 min</span>
+      </div>
+      <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px;">
+        <span style="font-size: 40px; line-height: 44px; font-weight: 600; font-variant-numeric: tabular-nums;">5,32&nbsp;€</span>
+        <span class="etiqueta" style="font-variant-numeric: tabular-nums;">1,33&nbsp;€/ración</span>
+      </div>
+      <p class="etiqueta" style="margin: 4px 0 0;">Precios de Mercadona</p>
+    </section>
+
+    <section aria-labelledby="ingredientes" style="background: var(--papel); border-radius: var(--radio-tarjeta); padding: 16px; box-shadow: var(--sombra-apoyado);">
+      <h2 class="cuerpo-fuerte" id="ingredientes" style="margin: 0 0 4px; color: var(--tinta);">Ingredientes</h2>
+      <ul style="margin: 0; padding: 0; list-style: none;">
+        <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid var(--borde); padding: 8px 0;">
+          <span class="cuerpo">Huevos <span class="etiqueta" style="color: var(--tinta-tenue);">6 ud</span></span>
+          <span class="cuerpo cifra" style="flex: none;">0,90&nbsp;€</span>
+        </li>
+        <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid var(--borde); padding: 8px 0;">
+          <span class="cuerpo">Patatas <span class="etiqueta" style="color: var(--tinta-tenue);">700 g</span></span>
+          <span class="cuerpo cifra" style="flex: none;">0,70&nbsp;€</span>
+        </li>
+        <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid var(--borde); padding: 8px 0;">
+          <span class="cuerpo">Cebolla <span class="etiqueta" style="color: var(--tinta-tenue);">1 ud</span></span>
+          <span class="cuerpo cifra" style="flex: none;">1,29&nbsp;€</span>
+        </li>
+        <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid var(--borde); padding: 8px 0;">
+          <span class="cuerpo">Aceite de oliva <span class="etiqueta" style="color: var(--tinta-tenue);">200 ml</span></span>
+          <span class="cuerpo cifra" style="flex: none;">2,43&nbsp;€</span>
+        </li>
+        <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid var(--borde-fuerte); padding: 8px 0;">
+          <span class="cuerpo-fuerte">Total</span>
+          <span class="cuerpo-fuerte cifra" style="flex: none;">5,32&nbsp;€</span>
+        </li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="preparacion">
+      <h2 class="cuerpo-fuerte" id="preparacion" style="margin: 0 0 8px; color: var(--tinta);">Preparación</h2>
+      <ol style="margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 8px; color: var(--tinta-suave); font-size: 16px; line-height: 24px;">
+        <li>Pela y corta las patatas y la cebolla en láminas finas.</li>
+        <li>Pocha las patatas y la cebolla en el aceite a fuego medio.</li>
+        <li>Bate los huevos, mezcla y cuaja la tortilla por los dos lados.</li>
+      </ol>
+    </section>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+      <a href="Lista.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: var(--radio-campo); background: var(--verde); color: var(--sobre-verde); text-decoration: none; font-size: 16px; font-weight: 600;">Añadir a la lista</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-campo); color: var(--tinta); text-decoration: none; font-size: 16px;">Empezar a cocinar</a>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

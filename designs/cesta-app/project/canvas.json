@@ -17,6 +17,70 @@
       "w": 390,
       "x": 470,
       "y": 0
+    },
+    "Lista.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Lista de la compra",
+      "w": 390,
+      "x": 0,
+      "y": 1000
+    },
+    "Favoritos.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Favoritos",
+      "w": 390,
+      "x": 470,
+      "y": 1000
+    },
+    "Comparar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Comparar mi cesta",
+      "w": 390,
+      "x": 940,
+      "y": 1000
+    },
+    "Recetas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Recetas",
+      "w": 390,
+      "x": 1410,
+      "y": 1000
+    },
+    "Receta.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Receta y coste",
+      "w": 390,
+      "x": 1880,
+      "y": 1000
+    },
+    "Calorias.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Calorías",
+      "w": 390,
+      "x": 2350,
+      "y": 1000
+    },
+    "Ofertas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Ofertas",
+      "w": 390,
+      "x": 2820,
+      "y": 1000
+    },
+    "Perfil.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Tu perfil",
+      "w": 390,
+      "x": 3290,
+      "y": 1000
     }
   },
   "createdOnFiles": {
@@ -38,16 +102,30 @@
   "notes": {
     "intro": {
       "kind": "title1",
-      "maxW": 860,
-      "text": "Cesta App · dos pantallas para aprobar",
-      "w": 240,
+      "maxW": 1840,
+      "text": "Cesta App · diez pantallas para aprobar",
       "x": 0,
       "y": -300
+    },
+    "resto": {
+      "kind": "title1",
+      "maxW": 3200,
+      "text": "El resto de la app · para validar antes de implementar",
+      "x": 0,
+      "y": 700
     }
   },
   "order": [
     "Portada.dc.html",
-    "Producto.dc.html"
+    "Producto.dc.html",
+    "Lista.dc.html",
+    "Favoritos.dc.html",
+    "Comparar.dc.html",
+    "Recetas.dc.html",
+    "Receta.dc.html",
+    "Calorias.dc.html",
+    "Ofertas.dc.html",
+    "Perfil.dc.html"
   ],
   "pages": [],
   "title": "Cesta App — artboards"
