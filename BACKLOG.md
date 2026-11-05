@@ -369,7 +369,7 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Cómo se sabe que está bien**: por función, flujo completo con datos reales y estados; nada de
   datos inventados ni promesas de salud/precio.
 
-### 28. Ingesta: enganchar el vigilante y enseñar su estado — **pendiente, script hecho**
+### 28. Ingesta: enganchar el vigilante y enseñar su estado — **hecho (05/11)**
 - **Por qué**: scripts/vigilar_ingesta.py ya avisa (informe + data/avisos_ingesta.json + exit
   code) y entiende «en curso»; falta que se ejecute solo al cerrar la pasada y que el estado se
   vea sin abrir una consola.
@@ -377,4 +377,46 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   en marcha) y reflejar estado+visos en metricas-cesta.json para el panel.
 - **Cómo se sabe que está bien**: una pasada correcta deja estado ok; una cadena sin captura deja
   aviso con nombre y motivo; prueba del enganche.
+
+### 29. Portada con los tokens aprobados — **hecha (05/11)**
+- **Qué hay**: `src/paginas/Portada.tsx` en `/` (sustituye al Lanzador): fecha local, «Cesta»,
+  buscador a `/compra?q=…`, «Mi cesta» con reparto real (solo corona una cadena si tiene todos
+  los productos), «Se han movido» con `useBajadas` (fecha y diferencia reales), pasillos reales,
+  barra inferior Compra/Recetas/Calorías. Estados cargando/vacío/error/sin sesión sin cifras
+  inventadas. Tokens del sistema aprobado en `tailwind.config.js` y `estilos.css` (38 colores en
+  dos temas, tipos, espaciado, radios, sombras, movimiento 120/220 y reduced-motion).
+- **Pruebas**: 55 de componentes (16 de Portada); `npm test` 377; `test_interfaz`+`test_contraste`
+  18 verdes con `CESTA_SALTAR_SIN_BASE=0`; bundle `index-DKbWh7vH.js` servido en :8080.
+
+### 30. Ficha de producto con los tokens aprobados — **en curso, siguiente**
+- **Por qué**: es el segundo corte aprobado: precio, precio por kg/litro, historial de precio y
+  alternativas del mismo grupo, con la dirección visual nueva.
+- **Qué hay que hacer**: rehacer la capa visual de `Producto.tsx` (hoy 40 KB con la lógica útil)
+  con los tokens, jerarquía del artboard aprobado, historial real (60 días, nunca «90») y
+  alternativas comparables; §8 en todos los textos; cuatro estados.
+- **Cómo se sabe que está bien**: flujo buscar → producto → comparar sin errores, sin scroll
+  horizontal a 390 px, contraste AA y pruebas de componentes.
+
+### 31. Comparar mi cesta — **pendiente, tercer corte aprobado**
+- **Por qué**: la función que engancha: el total de la lista en cada cadena y dónde conviene.
+- **Qué hay que hacer**: pantalla de comparación de la lista completa (reparto real por cadena,
+  €/kg cuando la unidad lo permite, ofertas con su condición y aviso de lo que no se puede
+  comparar), con las cifras honestas de cobertura y sin prometer precios de club.
+- **Cómo se sabe que está bien**: con una lista real, el total por cadena cuadra con sus líneas;
+  los productos no comparables se dicen; flujo completo y estados.
+
+### 32. Resto del encargo de David — **pendiente, por orden de valor**
+- **Favoritos y lista**: existen; revisar estados, §8 y «rellenar sola» revisable (investigación
+  §9 y §12). **Calculadora de calorías**: referencias EFSA/WHO/AESAN sin prescribir y objetivo
+  opcional (tarea 24). **Recetas**: establecidas (sembrar con contenido propio/licencia) y de
+  usuario. **Ofertas con detalle**: tipo, condición y club (`docs/OFERTAS-2026-11-05.md`), nunca
+  precio final inventado. **Cuentas de supers**: solo exportación RGPD e importación manual.
+  **Aprender de las listas**: sugerir la siguiente y rellenar lo repetido, siempre a favor del
+  usuario y con su consentimiento.
+
+### 33. Deudas de la ronda de portada — **pendiente, XS**
+- `plataforma/prueba_navegador.py` sigue midiendo el lanzador viejo en `/` (líneas ~699 y ~1907);
+  adaptarlo a la Portada nueva o retirarlo si ya no mide producto. `docs/ui/DIRECCION.md` queda
+  como historia (su cabecera ya apunta a los valores vigentes). Quedan 40-44 textos §8 en
+  `ExplicacionEmparejamiento.tsx`, que ya no se monta: borrar con el código muerto.
 

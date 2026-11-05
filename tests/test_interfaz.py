@@ -186,6 +186,13 @@ NO_ES_COLOR = {
     # *Y se comprueban donde toca: *los tamanos en
     # `test_las_escalas_que_se_escriben_existen`, *y los de sombra en la misma.*
     "antetitulo", "etiqueta", "cuerpo", "entrada", "titulo", "portada",
+    # *** Y los pasos que anadio el sistema aprobado el 5/11/2026. *** *
+    # *Son tamanos de letra, no colores: `text-micro` es 12 px en versalitas y
+    # `text-precio-grande` es la cifra de 30 px.* *La lista tiene que crecer con
+    # el tema, o el test de colores los leeria como colores y fallaria sin decir
+    # por que -- que es justo lo que esta comprobacion vigila.* *
+    "micro", "etiqueta-fuerte", "cuerpo-fuerte", "subtitulo",
+    "precio-grande", "precio", "precio-fila",
     "apoyado", "alzado", "flotante",
 }
 
@@ -330,7 +337,13 @@ def test_los_colores_del_tema_tienen_valor_en_los_dos_temas():
     """
     config = (APP / "tailwind.config.js").read_text(encoding="utf-8")
     css = (APP / "src" / "estilos.css").read_text(encoding="utf-8")
-    variables = re.findall(r"['\"]?[\w-]+['\"]?\s*:\s*'var\((--[\w-]+)\)'", config)
+    # *** SOLO LOS COLORES. *** *Las escalas que no cambian con el tema -- radios,
+    # espaciado y movimiento -- tambien usan variables desde el 5/11/2026, y esta
+    # prueba las leia como si fueran colores: `--radio-nota` tiene un valor, no dos,
+    # y el aviso hablaba de un tema que no le toca.* *La regla que se mide es la de
+    # los colores, asi que se limita al bloque `colors:`.*
+    variables = re.findall(
+        r"['\"]?[\w-]+['\"]?\s*:\s*'var\((--[\w-]+)\)'", _bloque_de_colores(config))
     assert variables, "el tema no usa variables: revisa esta prueba"
     for variable in variables:
         definiciones = len(re.findall(rf"{variable}\s*:", css))

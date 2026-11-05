@@ -1,5 +1,12 @@
 # La dirección visual · **qué es cada token y por qué** -- 15/10/2026
 
+> **Actualizado el 2026-11-05:** David aprobó el sistema «Cesta App» y sus artboards; los
+> **valores vigentes** (38 colores en claro/oscuro, tipos, espaciado, radios, sombras y
+> movimiento) son los de `designs/cesta-app-design-system/project/tokens.json`, copiados a
+> `plataforma/web/app/tailwind.config.js` y `estilos.css`. Este documento se conserva por **el
+> porqué** de los tokens (qué significa cada uno y cómo se usa), no por sus valores antiguos:
+> donde un hex de aquí no coincida con el sistema aprobado, manda el sistema aprobado.
+
 *Este documento **no es un adorno**: *es **el contrato** entre lo que se decide y lo que se escribe.* *
 *Existe porque el 15/10/2026 se midio que la app tenia **paleta y una sola medida**, *y con eso
 **cada pantalla se inventaba sus numeros**: *996 lineas de clases en linea, *y dos tarjetas del mismo

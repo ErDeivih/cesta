@@ -391,7 +391,7 @@ vacío de entrada (`Buscar.tsx:145-152`). No se toca.
     /favoritos      dice QUÉ son, no CÓMO añadir uno (Favoritos.tsx:63-72)  ver 3.4
     /grupo          «Este grupo no tiene ningún producto con precio»
                     (Grupo.tsx:283) ✓                               —
-    /escaner        «Escribe o pega un código» + para qué (Escaner.tsx:344) ✓  —
+    /escaner        «Escribe o pega un código» + para qué (Escaner.tsx) ✓  —
     /panel          «Hoy no se ha movido nada» (Panel.tsx:430) ✓     —
     /panel/matching «No hay ninguna pasada guardada» + cómo se llena
                     (PanelMatching.tsx:67-76) ✓                      —

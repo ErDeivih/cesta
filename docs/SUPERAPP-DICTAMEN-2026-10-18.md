@@ -359,8 +359,8 @@ con `ConnectionTimeout`.* *Ninguno es un defecto del codigo de la aplicacion.*
 ## Y entre esas 731 aparecio un defecto real, mio
 
     test_interfaz.py::test_colores_conocidos
-    App.tsx:367: `borde/70` pide opacidad sobre `borde`, que es una variable de CSS
-    App.tsx:369: `borde/60`  idem
+    App.tsx: `borde/70` pide opacidad sobre `borde`, que es una variable de CSS
+    App.tsx: `borde/60`  idem
 
 *Eran del **armazon de marca que escribi yo**.* *`borde` es `var(--borde)`, y Tailwind **no puede ponerle
 opacidad a una variable CSS**: omite la clase **en silencio** y el estilo no se aplica.*

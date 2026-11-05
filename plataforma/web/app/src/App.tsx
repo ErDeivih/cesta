@@ -1,8 +1,10 @@
-/** Las rutas de la suite: lanzador, tres aplicaciones y las pantallas de siempre.
+/** Las rutas de la suite: portada, tres aplicaciones y las pantallas de siempre.
  *
- *  **`/` es un lanzador sobrio desde el 7 de octubre de 2026.** Antes era "Inicio", que contestaba
- *  cuatro preguntas del dia; esas respuestas viven ahora en **Compra**, que es la aplicacion a la que
- *  pertenecen. El lanzador no mezcla graficas ni datos privados: tres accesos y donde te quedaste.
+ *  **`/` es la Portada desde el 5 de noviembre de 2026.** Sustituye al lanzador del 7 de
+ *  octubre, que repartia tres accesos y «por donde ibas»; la portada contesta lo que se
+ *  viene a mirar al abrir la app: que cuesta la cesta, en que cadena esta mas barata, que
+ *  se ha movido y por donde se empieza a buscar. El artboard esta aprobado en
+ *  `designs/cesta-app/project/Portada.dc.html`.
  *
  *  **Las direcciones antiguas siguen funcionando, con su query.** Hay enlaces fuera del proyecto
  *  -- lectores de codigos pegados en el movil, invitaciones que manda la API -- y romperlos para
@@ -16,9 +18,9 @@
  */
 import { Suspense, lazy, useEffect } from 'react'
 import { ErrorBoundary } from './componentes/ErrorBoundary'
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import { APLICACIONES, LayoutSuite, aplicacionDe, tituloDeSeccion } from './componentes/Suite'
+import { LayoutSuite, tituloDeSeccion } from './componentes/Suite'
 import { SUFIJO } from './componentes/Titulo'
 import { Vacio } from './componentes/ui'
 const Ajustes = lazy(() => import('./paginas/Ajustes').then((m) => ({ default: m.Ajustes })))
@@ -44,106 +46,7 @@ const Recetario = lazy(() => import('./paginas/Recetario').then((m) => ({ defaul
 const RecetaDetalle = lazy(() => import('./paginas/RecetaDetalle').then((m) => ({ default: m.RecetaDetalle })))
 const PlanSemanal = lazy(() => import('./paginas/PlanSemanal').then((m) => ({ default: m.PlanSemanal })))
 const Unirse = lazy(() => import('./paginas/Unirse').then((m) => ({ default: m.Unirse })))
-
-const CLAVE_ULTIMO = 'cesta.ultimo'
-
-/** El lanzador: tres accesos y por donde ibas. Sin graficas ni datos de nadie. */
-function Lanzador() {
-  const navegar = useNavigate()
-  const { search } = useLocation()
-  const ultimo = typeof localStorage !== 'undefined' ? localStorage.getItem(CLAVE_ULTIMO) : null
-  const aplicacion = ultimo ? aplicacionDe(ultimo) : null
-
-  return (
-    // *** El lanzador, compuesto para que LLENE. *** *
-    //
-    // *Y esto arregla el «60 % vacio» de `docs/ui/capturas/01-inicio.png`, *que no
-    // era un fallo de contenido: *la pantalla **no tiene mas que decir** *-- tres
-    // accesos y por donde ibas --, *y el problema era que **el contenido se
-    // apinaba arriba y no se repartia.** *
-    //
-    // *La solucion **no es inventar datos** *(-- *ni cifras, *ni atajos que nadie
-    // ha pedido --)*: *es **composicion.** *El `my-auto` de la rejilla **la lleva
-    // al centro vertical** del hueco que queda entre la cabecera y el pie, *y asi
-    // **el vacio no sobra: *rodea.*** *
-    <div className="mx-auto flex min-h-screen max-w-app flex-col px-5 py-pagina">
-      <header className="border-b border-borde pb-bloque">
-        {/* *Los tamanos, a la escala: **`portada`** y **`cuerpo`**, *no
-            `[32px]` y `[15px]` a ojo.* *
-            **Y este `h1` se queda en `h1`.** El 76 se convirtieron a `h2` los de las
-            paginas, *porque en las demas el `h1` lo pone `Suite.tsx`. *Y `/` es *** el
-            Lanzador: *NO monta `LayoutSuite`***, *asi que quitandole el suyo ***la
-            portada se quedo con cero*** -- *lo dijo la puerta: *«en / la pantalla se
-            puede recorrer sin verla ({'encabezados': ['0 h1']})».** *Es *** la unica
-            pantalla sin armazon***, *y por eso *** la unica que tiene que ponerlo ella.*** */}
-        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
-        {/* *** Y AQUÍ NO VA UNA DESCRIPCIÓN DEL PRODUCTO. *** *
-            *Decía «La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa»:
-            *un pie de página de producto (§8) encima de tres tarjetas que ya dicen lo mismo con su
-            *nombre y su icono.* *Si el producto es bueno, se entiende solo.* */}
-      </header>
-
-      {aplicacion && (
-        <button
-          type="button"
-          onClick={() => navegar(ultimo ?? aplicacion.raiz)}
-          className="mt-bloque min-h-[44px] self-start rounded-campo border border-borde-fuerte px-4 text-cuerpo text-tinta-fuerte transition-colors duration-rapida ease-suave hover:bg-papel"
-        >
-          Continuar donde estaba: <strong>{aplicacion.nombre}</strong>
-        </button>
-      )}
-
-      {/* *`my-auto`: *esto es lo que reparte el alto.* */}
-      <nav aria-label="Aplicaciones" className="my-auto grid gap-4 sm:grid-cols-3">
-        {APLICACIONES.map((app) => (
-          <Link
-            key={app.clave}
-            to={`${app.raiz}${search}`}
-            // *** Y cada tarjeta lleva SU icono, *que es lo que la hace
-            // reconocible **antes de leerla.** *** *
-            //
-            // *El dato ya estaba desde la FASE 3: *`APLICACIONES` tiene `Icono`, *y
-            // **aqui no se usaba.*** *Y el movimiento es el de la direccion: *`normal`
-            // porque **cambia de estado**, *no `rapida`* *-- *que es para lo que
-            // responde al dedo.* *
-            className="group flex min-h-[150px] flex-col justify-between gap-bloque rounded-tarjeta border border-borde bg-papel p-5 shadow-apoyado transition duration-normal ease-suave hover:border-bosque hover:shadow-alzado"
-          >
-            <span
-              aria-hidden="true"
-              className="text-bosque transition-transform duration-normal ease-suave group-hover:-translate-y-0.5"
-            >
-              <app.Icono width={26} height={26} />
-            </span>
-            <span className="flex flex-col gap-1">
-              <span className="font-serif text-titulo font-semibold text-tinta-fuerte">
-                {app.nombre}
-              </span>
-              <span className="text-etiqueta text-secundaria">
-                {app.clave === 'compra' && 'Buscar, la lista, favoritos y lo que gastas.'}
-                {app.clave === 'recetas' && 'Tu recetario, el modo cocina y el plan de la semana.'}
-                {app.clave === 'calorias' && 'Tu diario, tus alimentos y las tendencias.'}
-              </span>
-            </span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* **Y este enlace tenia 17 px de alto, y la regla de la casa son 44.**
-          Lo destapo la puerta al desbloquearse (ronda 64): medía **127x17** y salia
-          como *«no hay nada que pulsar por debajo de 44 px»*. Es el mismo minimo que
-          cumplen a rajatabla los del lateral (`Suite.tsx:206`, `min-h-[44px]`) y los
-          de la barra de abajo (`56 px`), y el unico que se habia quedado sin el.
-          `inline-flex` y no `block`: asi **el blanco es el texto y no la linea entera**,
-          que en una pantalla ancha serian 1200 px de ancho pulsable sin querer. */}
-      <footer className="mt-bloque border-t border-borde pt-4 text-etiqueta text-secundaria">
-        <Link to="/ajustes"
-          className="inline-flex min-h-[44px] items-center underline">
-          Cuenta y preferencias
-        </Link>
-      </footer>
-    </div>
-  )
-}
+const Portada = lazy(() => import('./paginas/Portada').then((m) => ({ default: m.Portada })))
 
 /** El titulo de la pestana por ruta. Lo de dentro lo mejora si sabe mas. */
 export function tituloDe(ruta: string): string {
@@ -180,12 +83,7 @@ export function App() {
   useEffect(() => {
     const nombre = tituloDe(pathname)
     document.title = nombre === 'Cesta' ? 'Cesta' : `${nombre} ${SUFIJO}`
-    // **Donde estabas**, para el lanzador. Se guarda la ruta de la aplicacion, no la busqueda de
-    // ayer: lo que se ofrece al volver es la aplicacion, no una consulta que ya no vale.
-    if (typeof localStorage !== 'undefined' && aplicacionDe(pathname)) {
-      localStorage.setItem(CLAVE_ULTIMO, pathname)
-    }
-  }, [pathname, search])
+  }, [pathname])
 
   return (
     // **Y un solo `Suspense` por fuera, que es lo que hace falta.** *`CocinaProvider` tambien es
@@ -208,7 +106,7 @@ export function App() {
         <Suspense fallback={<ArmazonDeLaMarca />}>
     <CocinaProvider>
       <ErrorBoundary que="esta pantalla"><Routes>
-        <Route path="/" element={<Lanzador />} />
+        <Route path="/" element={<Portada />} />
 
         {/* Compra: la lista, el buscador, la ficha y el gasto. */}
         <Route path="/compra" element={<LayoutSuite app="compra"><Buscar /></LayoutSuite>} />

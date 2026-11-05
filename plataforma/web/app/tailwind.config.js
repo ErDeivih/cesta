@@ -3,9 +3,10 @@
  *  - `darkMode: 'media'`: el tema sale del sistema y no hay interruptor, igual
  *    que en la web vieja. Un boton de tema es una cosa mas que mantener y que
  *    nadie pulsa dos veces.
- *  - La paleta es corta a proposito. Los colores que significan algo (aviso,
- *    error, bien) se usan siempre con el mismo tono, para que un rojo en esta
- *    app siempre quiera decir lo mismo.
+ *  - La paleta es la del sistema **Cesta App** aprobado por David
+ *    (`designs/cesta-app-design-system/project/tokens.json` y `tokens.css`).
+ *    Los valores se copiaron de alli, no se eligieron aqui. Los colores que
+ *    significan algo (aviso, error, bien) se usan siempre con el mismo tono.
  *
  *  ============================ LAS ESCALAS ============================
  *
@@ -22,6 +23,22 @@
  *  eso son **extensiones con nombre** y no numeros sueltos por los ficheros.*
  *
  *  El porque de cada valor esta en `docs/ui/DIRECCION.md`.
+ *
+ *  ========================= LOS 38 COLORES ============================
+ *
+ *  **Los 38 del sistema, con sus dos temas.** Los valores viven en
+ *  `src/estilos.css` (variables), porque las clases se escriben sin `dark:` y
+ *  tienen que cambiar solas: `text-tinta-suave` sirve de dia y de noche. Si se
+ *  anade un color aqui, hay que anadirlo alli en los dos temas:
+ *  `test_interfaz.py::test_los_colores_del_tema_tienen_valor_en_los_dos_temas`
+ *  lo comprueba.
+ *
+ *  **Y se conservan los alias de la direccion anterior** (`tinta-fuerte`,
+ *  `secundaria`, `fondo`, `terracota-suave`, `bien-suave`, `aviso-suave`), que
+ *  es lo que usan las pantallas que ya existen. No son colores nuevos: apuntan
+ *  al token aprobado que les corresponde, para que la app entera cambie de
+ *  valores sin tocar cien ficheros y sin que ninguna clase se quede sin definir
+ *  (Tailwind la omitiria en silencio).
  */
 export default {
   darkMode: 'media',
@@ -35,57 +52,70 @@ export default {
                'Helvetica', 'Arial', 'sans-serif'],
         // Fraunces 600 para titulos cortos; Georgia mientras no se sirva el WOFF2 local.
         serif: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
+        // *El mismo nombre que el token del sistema (`--font-display`), para que
+        //  una pantalla pueda pedir `font-display` sin inventarse otra escala.*
+        display: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
 
       /* ---------------------------------------------------- la tipografia ---
        *
-       * **Seis pasos y ni uno mas.** *Antes cada pantalla elegia su `text-lg`,
-       * `text-xl` o `text-2xl` a ojo, *y por eso dos titulos del mismo rango
-       * salian de distinto tamano en dos pantallas.*
+       * **Los pasos del sistema, y ni uno mas.** *Antes cada pantalla elegia su
+       * `text-lg`, `text-xl` o `text-2xl` a ojo, *y por eso dos titulos del
+       * mismo rango salian de distinto tamano en dos pantallas.*
        *
-       * *El `lineHeight` va **pegado al tamano**, no suelto: un titulo de 36 px
+       * *El `lineHeight` va **pegado al tamano**, no suelto: un titulo de 34 px
        * con el interlineado del cuerpo son dos lineas que se tocan.*
+       *
+       * *`antetitulo` se queda como **alias** de `micro`: lo usan las pantallas
+       * de antes y significa lo mismo (versalitas de 12 px con 0,08 em).*
        */
       fontSize: {
-        // El antetitulo: *versalitas pequeñas que dicen en que seccion estas.*
-        // *Ya existia en las capturas y **es lo unico con caracter que habia**: se conserva.
-        antetitulo: ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
+        // *Antetitulo en versalitas: «MI CESTA», «SE HAN MOVIDO».*
+        micro: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
+        antetitulo: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
         // Etiquetas, metas y notas al pie.
-        etiqueta: ['0.8125rem', { lineHeight: '1.15rem' }],
-        // El cuerpo. *15 px y no 16: en una tabla de precios, 16 obliga a menos columnas.*
-        cuerpo: ['0.9375rem', { lineHeight: '1.45rem' }],
+        etiqueta: ['0.8125rem', { lineHeight: '1.125rem' }],
+        'etiqueta-fuerte': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '600' }],
+        // El cuerpo. *16 px y no 15: en el movil se lee de pie y a un brazo.*
+        cuerpo: ['1rem', { lineHeight: '1.5625rem' }],
+        'cuerpo-fuerte': ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }],
         // El parrafo de entrada, el que explica de que va la pantalla.
-        entrada: ['1.0625rem', { lineHeight: '1.6rem' }],
-        // Titulo de seccion. *Serif.*
-        titulo: ['1.5rem', { lineHeight: '1.9rem' }],
-        // El titulo de la pantalla. *Serif.*
-        portada: ['2.25rem', { lineHeight: '2.6rem' }],
+        entrada: ['1.0625rem', { lineHeight: '1.625rem' }],
+        // Titulo de seccion y de producto dentro de una tarjeta grande. *Serif.*
+        titulo: ['1.5rem', { lineHeight: '1.8125rem' }],
+        subtitulo: ['1.1875rem', { lineHeight: '1.5625rem' }],
+        // El titulo de la pantalla. *Serif, uno por pantalla.*
+        portada: ['2.125rem', { lineHeight: '2.375rem', letterSpacing: '-0.01em' }],
+        // Las cifras. *Nunca en Fraunces: comparar precios pide cifras alineadas.*
+        'precio-grande': ['1.875rem', { lineHeight: '2.125rem' }],
+        precio: ['1.25rem', { lineHeight: '1.5rem' }],
+        'precio-fila': ['1.0625rem', { lineHeight: '1.375rem' }],
       },
 
       /* --------------------------------------------------------- los radios ---
        *
-       * *Tres niveles y una pastilla.* *Antes habia `rounded`, `rounded-md`,
-       * `rounded-lg` y `rounded-full` mezclados sin criterio, *y una tarjeta con
-       * el mismo radio que un boton no se lee como tarjeta.*
+       * *Cinco, y cada uno dice que es la superficie.* *Antes habia `rounded`,
+       * `rounded-md`, `rounded-lg` y `rounded-full` mezclados sin criterio, *y
+       * una tarjeta con el mismo radio que un boton no se lee como tarjeta.*
        */
       borderRadius: {
-        nota: '4px',      // *lo mas pequeño: una etiqueta dentro de una linea*
-        campo: '8px',     // *lo que se pulsa o se escribe: botones y campos*
-        tarjeta: '14px',  // *una superficie con contenido dentro*
-        hoja: '20px',     // *lo que flota por encima: dialogos y menus*
+        nota: 'var(--radio-nota)',          // 4 px: una letra, una insignia
+        campo: 'var(--radio-campo)',        // 10 px: lo que se pulsa o se escribe
+        tarjeta: 'var(--radio-tarjeta)',    // 16 px: una superficie con contenido
+        hoja: 'var(--radio-hoja)',          // 24 px: lo que flota por encima
+        pastilla: 'var(--radio-pastilla)',  // 999 px: solo una pildora de verdad
       },
 
       /* ---------------------------------------------------- la profundidad ---
        *
-       * **Es lo que hoy no existe, y es la mitad de por que la app parece un
-       * wireframe.** *Tres niveles, y en claro son sombras **calidas** (nunca
-       * gris puro, que sobre marfil se ve sucio); en oscuro **una sombra casi no
-       * se ve**, asi que alli la profundidad la da **el color de la superficie**
-       * (`--papel-alto`) y la sombra solo la remata.*
+       * **Tres niveles.** *En claro son sombras **calidas** (nunca gris puro, que
+       * sobre marfil se ve sucio); en oscuro **una sombra casi no se ve**, asi que
+       * alli la profundidad la da **el color de la superficie** (`papel-alto`) y la
+       * sombra solo la remata.*
        */
       boxShadow: {
-        // *Nivel 0 no es una clase: es **no poner nada**. Se deja escrito en la direccion.*
+        // *Nivel 0 no es una clase: es **no poner nada**.*
         apoyado: 'var(--sombra-apoyado)',
         alzado: 'var(--sombra-alzado)',
         flotante: 'var(--sombra-flotante)',
@@ -100,66 +130,94 @@ export default {
        * `estilos.css`: no hay que repetirlo en cada sitio.*
        */
       transitionDuration: {
-        rapida: '120ms',  // *lo que responde al dedo: hover, foco, un boton*
-        normal: '220ms',  // *lo que cambia de estado o entra en pantalla*
+        rapida: 'var(--movimiento-duracion-rapida)',  // 120 ms
+        normal: 'var(--movimiento-duracion-normal)',  // 220 ms
       },
       transitionTimingFunction: {
         // *Sale rapido y frena largo. Es la curva de «esto ya ha llegado».*
-        suave: 'cubic-bezier(0.2, 0, 0, 1)',
+        suave: 'var(--movimiento-curva-suave)',
       },
 
       /* ----------------------------------------------------------- el ritmo ---
        *
-       * *El hueco **vertical** entre bloques, que es el que no existia: *por eso
-       * el contenido flotaba arriba y el 60 % de la pantalla quedaba vacio.*
+       * *El sistema aprueba la rejilla de **4, 8, 12, 16, 24, 32 y 48 px**, y
+       * **esa es exactamente la escala numerica de Tailwind**: `1` son 4 px,
+       * `2` son 8, `3` son 12, `4` son 16, `6` son 24, `8` son 32 y `12` son 48.
+       * Por eso **no se redefinen los numeros** -- hacerlo convertiria cada
+       * `p-4` de la app en 4 px -- y el ritmo con nombre apunta a los pasos
+       * aprobados. `toque` es el minimo de 44 px para lo que se pulsa.*
        */
       spacing: {
-        bloque: '1.5rem',   // *entre dos cosas de la misma seccion*
-        seccion: '2.5rem',  // *entre dos secciones*
-        pagina: '3.5rem',   // *el aire de arriba y de abajo de una pantalla*
+        bloque: 'var(--space-24)',   // 24 px: entre dos cosas de la misma seccion
+        seccion: 'var(--space-32)',  // 32 px: entre dos secciones
+        pagina: 'var(--space-48)',   // 48 px: el aire de arriba y de abajo
+        toque: 'var(--toque-minimo)',// 44 px: el alto minimo de lo que se pulsa
       },
 
       colors: {
-        tinta: { claro: '#141618', oscuro: '#f1f2f3' },
-        // Los nombres con significado. Los valores viven en estilos.css, porque
-        // tienen que cambiar con el tema y estas clases se escriben sin `dark:`.
-        // Si se anade uno aqui, hay que anadirlo tambien alli en los dos temas:
-        // el test `test_interfaz.py::test_colores_conocidos` lo comprueba.
-        'tinta-suave': 'var(--tinta-suave)',
-        fondo: 'var(--fondo)',
-        borde: 'var(--borde)',
-        // Direccion visual de SUPERAPP-01 (valores en estilos.css, en los dos temas).
+        // ------- las superficies -------
         marfil: 'var(--marfil)',
         papel: 'var(--papel)',
-        // *** Y LA TERCERA SUPERFICIE ***: *lo que flota por encima del papel.*
-        // *Sin ella, en modo oscuro un dialogo y una tarjeta son **el mismo
-        // color**, y la profundidad no se puede ver por mucho que se sombree.*
         'papel-alto': 'var(--papel-alto)',
-        bosque: 'var(--bosque)',
-        'tinta-fuerte': 'var(--tinta-fuerte)',
-        secundaria: 'var(--secundaria)',
-        terracota: 'var(--terracota)',
-        // *El acento cuando es **fondo** y no linea: *un lavado del mismo tono,
-        // para la seccion activa y los avisos suaves.*
-        'terracota-suave': 'var(--terracota-suave)',
+        // ------- los lavados: un fondo, y encima va tinta -------
+        'lavado-verde': 'var(--lavado-verde)',
+        'lavado-terracota': 'var(--lavado-terracota)',
+        'lavado-aviso': 'var(--lavado-aviso)',
+        'lavado-error': 'var(--lavado-error)',
+        // ------- los limites -------
+        borde: 'var(--borde)',
         'borde-fuerte': 'var(--borde-fuerte)',
-        // *** Los dos que SI admiten opacidad. *** *
-        //
-        // *`<alpha-value>` es lo que hace que `bg-papel-translucido/95` funcione: *
-        // *Tailwind sustituye el marca-posicion por el alfa **dentro del `rgb()`**, *
-        // *y eso **si** es un color valido.* *
-        //
-        // *Y **solo estos dos**, *porque son los unicos sitios que necesitan
-        // translucidez de verdad* *(-- el velo de un dialogo y una cabecera pegada --).*
-        // *Todo lo demas va con el token opaco, *que **ya cambia con el tema.*** *
-        'papel-translucido': 'rgb(var(--papel-rgb) / <alpha-value>)',
-        'tinta-translucida': 'rgb(var(--tinta-fuerte-rgb) / <alpha-value>)',
-        // *Y el lavado de aviso, *opaco: *lo que necesita es su tono en cada tema.* *
-        'aviso-suave': 'var(--aviso-suave)',
-        error: 'var(--error)',
-        aviso: 'var(--aviso)',
+        // ------- la tinta -------
+        tinta: 'var(--tinta)',
+        'tinta-suave': 'var(--tinta-suave)',
+        'tinta-tenue': 'var(--tinta-tenue)',
+        // ------- la marca -------
+        verde: 'var(--verde)',
+        'verde-fuerte': 'var(--verde-fuerte)',
+        bosque: 'var(--bosque)',
+        terracota: 'var(--terracota)',
+        lima: 'var(--lima)',
+        'sobre-lima': 'var(--sobre-lima)',
+        'sobre-verde': 'var(--sobre-verde)',
+        'sobre-bosque': 'var(--sobre-bosque)',
+        'sobre-terracota': 'var(--sobre-terracota)',
+        // ------- lo que significa algo -------
         bien: 'var(--bien)',
-        'bien-suave': 'var(--bien-suave)',
+        aviso: 'var(--aviso)',
+        error: 'var(--error)',
+        // ------- los precios -------
+        'precio-antes': 'var(--precio-antes)',
+        'precio-unidad': 'var(--precio-unidad)',
+        'precio-baja': 'var(--precio-baja)',
+        'precio-sube': 'var(--precio-sube)',
+        // ------- el Nutri-Score, con sus textos -------
+        'nutri-a': 'var(--nutri-a)',
+        'nutri-b': 'var(--nutri-b)',
+        'nutri-c': 'var(--nutri-c)',
+        'nutri-d': 'var(--nutri-d)',
+        'nutri-e': 'var(--nutri-e)',
+        'nutri-texto-a': 'var(--nutri-texto-a)',
+        'nutri-texto-b-e': 'var(--nutri-texto-b-e)',
+        'nutri-texto-e': 'var(--nutri-texto-e)',
+        // ------- los sellos -------
+        'sello-fondo': 'var(--sello-fondo)',
+        'sello-tinta': 'var(--sello-tinta)',
+
+        // ================= ALIAS DE LA DIRECCION ANTERIOR =================
+        // *No son colores nuevos: son los nombres que ya escriben las pantallas,
+        // apuntando al token aprobado que les toca. Asi el cambio de valores llega
+        // a toda la app sin tocar cien ficheros y sin una clase huerfana.*
+        'tinta-fuerte': 'var(--tinta)',
+        secundaria: 'var(--tinta-suave)',
+        fondo: 'var(--fondo)',
+        'terracota-suave': 'var(--lavado-terracota)',
+        'bien-suave': 'var(--lavado-verde)',
+        'aviso-suave': 'var(--lavado-aviso)',
+        // *Los dos unicos que admiten opacidad de verdad* (-- el velo de un dialogo
+        //  y una cabecera pegada --). *`<alpha-value>` la pone **dentro del `rgb()`**;
+        //  una variable con `#rrggbb` dentro no vale ahi y el navegador la ignora.*
+        'papel-translucido': 'rgb(var(--papel-rgb) / <alpha-value>)',
+        'tinta-translucida': 'rgb(var(--tinta-rgb) / <alpha-value>)',
       },
       maxWidth: {
         // El ancho de la app: mas alla de esto, una fila de tabla obliga a
@@ -168,6 +226,9 @@ export default {
         // *Y el ancho de **lectura**: un parrafo de 78 rem son 150 caracteres,
         // y a partir de 80 la vista se pierde de linea.*
         lectura: '42rem',
+        // *La portada se compone a 390 px; en escritorio se queda en esa columna
+        // centrada para no convertir el movil en una fila de 1400 px.*
+        portada: '30rem',
       },
     },
   },

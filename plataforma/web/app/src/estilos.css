@@ -5,117 +5,207 @@
 /* Lo poco que no se resuelve con utilidades de Tailwind, y por que. */
 
 @layer base {
-  /* Los colores con significado, en un solo sitio.
+  /* ================================================================
+   * LOS TOKENS DEL SISTEMA «CESTA APP»
    *
-   * Son variables y no valores fijos porque estas clases se usan sin el prefijo
-   * `dark:`, y en modo oscuro un gris de texto claro sobre fondo oscuro no se
-   * lee. Con la variable, el mismo `text-tinta-suave` vale en los dos temas y
-   * nadie tiene que acordarse de escribir el par. */
+   * Copiados de `designs/cesta-app-design-system/project/tokens.css`
+   * (y de `tokens.json`, que es la fuente). No se eligen aqui: los
+   * aprobo David. Son variables y no valores fijos porque estas clases
+   * se usan sin el prefijo `dark:`; con la variable, el mismo
+   * `text-tinta-suave` vale de dia y de noche y nadie tiene que
+   * acordarse del par.
+   *
+   * Los alias de la direccion anterior viven en `tailwind.config.js` y
+   * apuntan a estos tokens: `tinta-fuerte` -> `tinta`,
+   * `secundaria` -> `tinta-suave`, `fondo` -> `marfil`,
+   * `terracota-suave` -> `lavado-terracota`, etc. Asi las pantallas que
+   * ya existen cambian de valores sin tocar cien ficheros.
+   * ================================================================ */
   :root {
-    --tinta-suave: #525252; /* texto secundario */
-    --fondo: #fafafa; /* superficie dentro de una tarjeta */
-    --borde: #e5e5e5;
-    --aviso: #b45309; /* texto de aviso, legible sobre blanco */
-    /* EL VERDE NO SE LEIA. Medido por la puerta: sobre marfil daba 3.58 («la mejor contigo», /grupo/526) y 3.32 («ahorras un 3...», /buscar), y el minimo es 4.5. Y sobre blanco daba 3.77, asi que el texto claro encima de bg-bien tampoco. Con #047857 da 5.21 sobre marfil y 5.48 sobre blanco, y de paso arregla bg-bien + text-papel, que estaba en 3.77. El tono sigue siendo verde: no cambia la identidad, cambia que se lea. */
---bien: #047857;
-    --bien-suave: #ecfdf5; /* fondo de lo que ha salido bien */
-    /* Direccion visual de SUPERAPP-01: archivo domestico, no panel generico. */
-    --marfil: #f4f0e8;      /* lienzo calido */
-    --papel: #fbf9f4;       /* formularios y superficies */
-    --bosque: #183a32;      /* navegacion y accion principal */
-    --tinta-fuerte: #202724;       /* texto principal (13,42:1 sobre marfil) */
-    --secundaria: #536158;  /* texto auxiliar (5,74:1 sobre marfil) */
-    --terracota: #a94d36;   /* acento de marca y seccion activa (4,86:1) */
-    --borde-fuerte: #8a8578; /* si delimita un control: el suave da 1,43:1 */
-    --error: #a12626;       /* lo que hay que mirar: 7,02:1 sobre marfil */
+    /* ------- las superficies ------- */
+    --marfil: #fbf7ec;          /* el lienzo */
+    --papel: #fffcf5;           /* tarjeta, campo, hoja */
+    --papel-alto: #ffffff;      /* lo que flota por encima */
+    /* *Y el alias `fondo`, que usan las pantallas de antes: en el sistema
+     * aprobado el fondo de pagina es `marfil`, no un gris aparte.* */
+    --fondo: #fbf7ec;
 
-    /* *** LA TERCERA SUPERFICIE, *y el lavado del acento. *** *
-     *
-     * *`papel` es una superficie **dentro** del lienzo. *Y hace falta una mas
-     * para **lo que flota por encima** *(-- dialogos, menus --): *sin ella, en
-     * modo oscuro **una tarjeta y un dialogo son el mismo color**, *y la
-     * profundidad no se ve por mucho que se sombree.* *
-     *
-     * *En claro, «mas alto» es **mas claro** *-- *y sobre marfil, lo mas claro
-     * que hay es el blanco.* *
-     *
-     * *Y `terracota-suave` es el acento **como fondo**, *no como linea: *para la
-     * seccion activa y los avisos suaves, *donde el terracota puro seria un
-     * grito.* *
-     */
-    --papel-alto: #ffffff;
-    --terracota-suave: #f7e8e3;
+    /* ------- los lavados: un fondo, y encima va tinta ------- */
+    --lavado-verde: #e7f4ea;      /* lo que baja de precio, el ahorro, el sello */
+    --lavado-terracota: #fceae3;  /* el aviso de marca y el destino activo suave */
+    --lavado-aviso: #fff3cc;      /* dato incompleto u oferta condicionada */
+    --lavado-error: #fde9e7;      /* error de una accion concreta */
 
-    /* *** LAS SOMBRAS, *y por que son CALIDAS. *** *
-     *
-     * *Una sombra gris pura sobre marfil **se ve sucia**: *el marfil es calido y
-     * el gris es frio, *y el ojo lo nota aunque no sepa decir por que.* *
-     * *Asi que llevan el **marron del papel** dentro, *no negro.* *
-     */
+    /* ------- los limites ------- */
+    --borde: #e3dccb;        /* separacion entre bloques; NO delimita controles */
+    --borde-fuerte: #7a8478; /* borde de control: 3,63:1 sobre marfil */
+
+    /* ------- la tinta ------- */
+    --tinta: #16231b;        /* texto principal y cifra actual (15,20:1) */
+    --tinta-suave: #47574e;  /* secundario: €/kg, cadena, fecha (7,16:1) */
+    --tinta-tenue: #5f6f64;  /* 13 px o menos (4,97:1) */
+
+    /* ------- la marca ------- */
+    --verde: #0b7a46;        /* cifra de la cesta, enlace y anillo de foco */
+    --verde-fuerte: #075e36; /* verde prensado y texto de sello */
+    --bosque: #123a2c;       /* superficie oscura: barra de abajo y tarjeta de la cesta */
+    --terracota: #b83d22;    /* segundo acento: destino activo y marca de la casa */
+    --lima: #ffd145;         /* insignia de ahorro: relleno, nunca texto */
+
+    /* ------- lo que va encima de un relleno ------- */
+    --sobre-lima: #16231b;
+    --sobre-verde: #ffffff;
+    --sobre-bosque: #ffffff;
+    --sobre-terracota: #ffffff;
+
+    /* ------- lo que significa algo ------- */
+    --bien: #0b6b5e;  /* bajada y ahorro confirmado (verde azulado a proposito) */
+    --aviso: #8a5a00; /* dato condicionado o incompleto */
+    --error: #b3261e; /* subida de precio y error de una accion */
+
+    /* ------- los precios ------- */
+    --precio-antes: var(--tinta-suave);  /* tachado, nunca se lee como el actual */
+    --precio-unidad: var(--tinta-tenue); /* €/kg, €/l, €/ud */
+    --precio-baja: var(--bien);
+    --precio-sube: var(--error);
+
+    /* ------- el Nutri-Score, con sus textos ------- */
+    --nutri-a: #038141;
+    --nutri-b: #85bb2f;
+    --nutri-c: #fecb02;
+    --nutri-d: #ef8200;
+    --nutri-e: #cf3a0f; /* oscurecido para que el blanco llegue a 4,9:1 */
+    --nutri-texto-a: #ffffff;
+    --nutri-texto-b-e: #16231b;
+    --nutri-texto-e: #ffffff;
+
+    /* ------- los sellos ------- */
+    --sello-fondo: var(--lavado-verde);
+    --sello-tinta: var(--verde-fuerte);
+
     /* *** Y LOS CANALES, *para lo que SI necesita translucidez. *** *
      *
-     * *Una variable con `#rrggbb` dentro **no admite opacidad**: *Tailwind escribiria
-     * `rgb(var(--papel) / .4)` *y ahi dentro hay un `#rrggbb`, *o sea **un color
-     * invalido que el navegador ignora en silencio.*** *
+     * *Una variable con `#rrggbb` dentro **no admite opacidad**: *Tailwind
+     * escribiria `rgb(var(--papel) / .4)` *y ahi dentro hay un `#rrggbb`, *o sea
+     * **un color invalido que el navegador ignora en silencio.*** *
      *
-     * *Asi que los dos sitios que **si** necesitan translucidez *(-- el **velo** de un
-     * dialogo y una **cabecera pegada** --)* tienen su version en **canales**: *tres
-     * numeros, *y Tailwind pone el alfa.* *
-     *
-     * *Y son **solo dos**, *no un sistema: *si manana hace falta un tercero, *se anade
-     * aqui **y en los dos temas**, *y se dice por que.* *
+     * *Asi que los dos sitios que **si** necesitan translucidez *(-- el **velo**
+     * de un dialogo y una **cabecera pegada** --)* tienen su version en **canales**:
+     * *tres numeros, *y Tailwind pone el alfa.* *
      */
-    --papel-rgb: 251 249 244;
-    --tinta-fuerte-rgb: 32 39 36;
+    --papel-rgb: 255 252 245;
+    --tinta-rgb: 22 35 27;
 
-    /* *Y el lavado de aviso, *que **no** necesita opacidad: *lo que necesita es **su
-     * propio tono en cada tema.*** */
-    --aviso-suave: #fdf3d7;
-
+    /* ------- la profundidad, calida en claro ------- */
     --sombra-apoyado: 0 1px 2px rgba(74, 58, 44, 0.07), 0 1px 3px rgba(74, 58, 44, 0.09);
     --sombra-alzado: 0 2px 4px rgba(74, 58, 44, 0.07), 0 4px 12px rgba(74, 58, 44, 0.11);
     --sombra-flotante: 0 8px 24px rgba(74, 58, 44, 0.13), 0 24px 48px rgba(74, 58, 44, 0.17);
+
+    /* ------- la rejilla de 4 px, los radios y el movimiento -------
+     *
+     * *La rejilla aprobada es **4, 8, 12, 16, 24, 32 y 48 px**, y es la escala
+     * numerica de Tailwind (`1` = 4 px ... `12` = 48 px). Por eso las utilidades
+     * `p-4`, `gap-6` o `space-y-3` ya valen sin redefinir nada; aqui quedan los
+     * nombres del sistema para el CSS que no pasa por Tailwind.*
+     */
+    --space-4: 4px;
+    --space-8: 8px;
+    --space-12: 12px;
+    --space-16: 16px;
+    --space-24: 24px;
+    --space-32: 32px;
+    --space-48: 48px;
+    --toque-minimo: 44px;
+
+    --radio-nota: 4px;
+    --radio-campo: 10px;
+    --radio-tarjeta: 16px;
+    --radio-hoja: 24px;
+    --radio-pastilla: 999px;
+
+    --movimiento-duracion-rapida: 120ms;
+    --movimiento-duracion-normal: 220ms;
+    --movimiento-curva-suave: cubic-bezier(0.2, 0, 0, 1);
+    --movimiento-quieto-por-ajuste: 0.01ms;
+
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+      Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+
+    /* *Los controles nativos (un `select`, una barra de scroll) siguen el tema
+     * del sistema, que es el unico que hay: no hay interruptor.* */
+    color-scheme: light dark;
   }
 
+  /* ================================================================
+   * EL TEMA OSCURO
+   *
+   * En oscuro la profundidad **no la da la sombra** -- sobre negro no hay
+   * luz que oscurecer -- sino la superficie: `papel-alto` es mas claro
+   * que `papel`, y la sombra solo la remata.
+   * ================================================================ */
   @media (prefers-color-scheme: dark) {
     :root {
-      --tinta-suave: #a3a3a3;
-      --fondo: #262626;
-      --borde: #404040;
-      --aviso: #fcd34d;
-      --bien: #10b981;
-      --bien-suave: #022c22;
-    --marfil: #14181a;
-    --papel: #1c2224;
-    --bosque: #cfe3d8;
-    --tinta-fuerte: #eef1ee;
-    --secundaria: #adb8ae;
-    --terracota: #e08a6f;
-    --borde-fuerte: #6f7a73;
-    --error: #f08a7a;
+      --marfil: #101714;
+      --papel: #18211d;
+      --papel-alto: #212c27;
+      --fondo: #101714;
 
-    /* *** Y EN OSCURO LA PROFUNDIDAD NO LA DA LA SOMBRA. *** *
-     *
-     * *Una sombra sobre un fondo casi negro **no se ve**: *no hay luz que
-     * oscurecer.* *Asi que aqui la profundidad la da **el color de la
-     * superficie** *-- lo que flota es **mas claro**, *que es como se comporta
-     * la luz de verdad --* *y la sombra solo **la remata**.* *
-     *
-     * *Y por eso `papel-alto` sube de `#1c2224` a `#252d30`: *la diferencia se
-     * tiene que **ver**, *y el salto de un pelo no basta.* *
-     */
-    --papel-alto: #252d30;
-    --terracota-suave: #3a2721;
+      --lavado-verde: #1a3327;
+      --lavado-terracota: #3a241d;
+      --lavado-aviso: #3b2c0c;
+      --lavado-error: #3d1f1c;
 
-    /* *Y las sombras, mas hondas, *porque sobre negro hay que separar mas.* */
-    /* *Y en oscuro, los mismos canales, con **el papel y la tinta del tema oscuro.*** */
-    --papel-rgb: 28 34 36;
-    --tinta-fuerte-rgb: 238 241 238;
-    --aviso-suave: #402d0c;
+      --borde: #33413a;
+      --borde-fuerte: #8b998f;
 
-    --sombra-apoyado: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
-    --sombra-alzado: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.45);
-    --sombra-flotante: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.55);
+      --tinta: #f2f6ef;
+      --tinta-suave: #b6c3ba;
+      --tinta-tenue: #9aa9a0;
+
+      --verde: #4ad08a;
+      --verde-fuerte: #8ae6b4;
+      --bosque: #cfe3d8;
+      --terracota: #f08a6b;
+      --lima: #ffd145;
+
+      --sobre-lima: #16231b;
+      --sobre-verde: #0a1712;
+      --sobre-bosque: #101714;
+      --sobre-terracota: #2a0f08;
+
+      --bien: #3ecfa9;
+      --aviso: #f5c451;
+      --error: #ff8a7a;
+
+      --precio-antes: var(--tinta-suave);
+      --precio-unidad: var(--tinta-tenue);
+      --precio-baja: var(--bien);
+      --precio-sube: var(--error);
+
+      /* *Las letras del Nutri-Score no cambian: son la escala oficial y su
+       * contraste esta medido con su propio texto, no con el tema.* */
+      --nutri-a: #038141;
+      --nutri-b: #85bb2f;
+      --nutri-c: #fecb02;
+      --nutri-d: #ef8200;
+      --nutri-e: #cf3a0f;
+      --nutri-texto-a: #ffffff;
+      --nutri-texto-b-e: #16231b;
+      --nutri-texto-e: #ffffff;
+
+      --sello-fondo: var(--lavado-verde);
+      --sello-tinta: var(--verde-fuerte);
+
+      --papel-rgb: 24 33 29;
+      --tinta-rgb: 242 246 239;
+
+      /* *En oscuro las sombras son casi negras: sobre negro, una sombra
+       * calida se veria como un halo.* */
+      --sombra-apoyado: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+      --sombra-alzado: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.45);
+      --sombra-flotante: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.55);
     }
   }
 
@@ -129,7 +219,7 @@
   body {
     /* Un dedo, un carro en la otra mano: la barra de abajo tapa el final de la
        pagina si no se reserva su alto. */
-    @apply antialiased;
+    @apply bg-marfil text-tinta antialiased;
   }
 
   /* Los numeros de una tabla de precios se leen en columna. Con ancho variable,
@@ -139,18 +229,17 @@
   }
 
   :focus-visible {
-    /* *** El anillo de foco, *con el acento de la casa. *** *
+    /* *** El anillo de foco, *con el verde de la marca. *** *
      *
-     * *Estaba en *** azul de Tailwind *** *(-- `ring-sky-600` --)* *y el fondo de
-     * separacion en `neutral`.* *Y el foco **no es un adorno**: *es la unica señal de
-     * **donde estas** cuando se navega con el teclado, *asi que tiene que ser **del color
-     * de la app** *y **verse**.* *`terracota` da **4,86:1 sobre marfil**, *que es de sobra
-     * para un anillo de 2 px.* *Y el `ring-offset` va en `marfil`, *que es el lienzo,
-     * en vez de un gris de fabrica.* *
+     * *El foco **no es un adorno**: *es la unica señal de **donde estas**
+     * cuando se navega con el teclado, *asi que tiene que ser **del color de
+     * la app** *y **verse**.* *`verde` da **5,05:1 sobre marfil**, *de sobra
+     * para un anillo de 2 px, y el `ring-offset` va en `marfil`, que es el
+     * lienzo, en vez de un gris de fabrica.*
      *
-     * *Y **sin `dark:`**: *los tokens **ya cambian solos** con el tema, *que es justo
-     * para lo que son variables.* */
-    @apply outline-none ring-2 ring-offset-2 ring-terracota ring-offset-marfil;
+     * *Y **sin `dark:`**: *los tokens **ya cambian solos** con el tema.*
+     */
+    @apply outline-none ring-2 ring-offset-2 ring-verde ring-offset-marfil;
   }
 
   /* El marcador de un campo, legible.
@@ -160,7 +249,7 @@
    * `<label>` existe, pero es `sr-only`, para lectores de pantalla --, asi que un
    * marcador ilegible deja el campo sin decir que se escribe en el.
    *
-   * Se le pone el mismo gris que la letra secundaria, que da 7,17:1. `opacity: 1`
+   * Se le pone la tinta secundaria, que da 7,16:1 sobre marfil. `opacity: 1`
    * no sobra: Firefox aplica su propia opacidad al marcador, y sin esto el color
    * saldria aclarado y el arreglo no serviria de nada alli. */
   ::placeholder {
@@ -183,9 +272,7 @@
  * **Por debajo de 640 px una tabla ancha se apila, no se desliza.** El scroll horizontal
  * resolvia el problema de que la tabla no cupiera, y creaba otro: en un movil de 390 px la
  * columna del precio se queda **fuera de la pantalla**, y el aviso «Desliza la tabla para ver
- * todas las columnas →» es una instruccion, no una respuesta. Medido el 27 de septiembre de
- * 2026 en el buscador (52rem de ancho minimo) y en el panel: en las dos, lo que no se veia era
- * el numero.
+ * todas las columnas →» es una instruccion, no una respuesta.
  *
  * Aqui cada fila pasa a ser una linea propia, con las celdas fluyendo en varias lineas (el
  * nombre primero, a linea completa; los numeros detras). La cabecera de la tabla se esconde
@@ -247,8 +334,7 @@
   /* **Un enlace de la primera celda mide 44 px de alto, también apilado.** En la tabla ancha
      el nombre de la primera columna es un enlace de texto y su alto lo pone la fila; apilado,
      la fila ya no lo envuelve y el enlace medía **39 px** (y **19** cuando el nombre cabía en
-     una línea). Medido con la puerta el 27 de septiembre de 2026 en la tabla de bajadas: eran
-     objetivos de 19 px en una pantalla que se usa de pie. */
+     una línea). */
   .tabla-scroll td:first-child a {
     display: inline-flex;
     min-height: 44px;
@@ -260,14 +346,10 @@
 
    Va aqui y no en una clase de Tailwind porque depende del estado del padre: el `open` lo lleva
    el `<details>`, y una clase no puede mirar hacia arriba. Es lo unico que hace falta para que
-   la flecha diga en que estado esta -- ver `Resumen` en `ui.tsx`, y el por que: el marcador
-   nativo del `<summary>` desaparece cuando se le pone `display: flex`, asi que **los diez
-   desplegables de la aplicacion parecian texto suelto** (medido el 27 de septiembre de 2026 en
-   las capturas: «Estado de las cadenas» y la caja de filtros del buscador, que se leia como un
-   segundo campo de texto). */
+   la flecha diga en que estado esta -- ver `Resumen` en `ui.tsx`. */
 .flecha {
   display: inline-block;
-  transition: transform 150ms ease;
+  transition: transform var(--movimiento-duracion-rapida) var(--movimiento-curva-suave);
 }
 
 details[open] > summary .flecha {
@@ -277,26 +359,9 @@ details[open] > summary .flecha {
 /* ------------------------------------------------ la entrada de una pantalla ---
 
    *** Una sola animacion, y la tienen TODAS las pantallas. *** *
-
-   *`LayoutSuite` envuelve todas las rutas, *asi que ponerla aqui la pone en las
-   doce* *-- *y **no hay que acordarse de repetirla en cada una**, *que es como se
-   acaba con doce transiciones distintas.*
-
-   *Y es **fina a proposito**: *6 px de subida y el opaco, *220 ms.* *Una entrada
-   que se nota **es un peaje**, *no una bienvenida: *lo que tiene que hacer es que
-   la pantalla **no aparezca de golpe** *mientras el ojo viene de la anterior.*
-
-   *Y **no se anima la `height` ni el `width`**: *los dos obligan al navegador a
-   **recalcular la composicion en cada fotograma**, *y en un movil de gama baja eso
-   se ve como un tiron. *`opacity` y `transform` los hace la tarjeta grafica.* *
- */
-/* *** La barra del armazon: lo que se ve mientras llega la pantalla. ***
- *
- *  *Se mueve despacio y poco, y **no hace falta que se mueva**: `ArmazonDeLaMarca` lleva
- *  `motion-reduce:animate-none`, asi que quien pida menos movimiento ve la barra quieta a media
- *  anchura, que sigue diciendo «esto esta en marcha».*
- *
- *  *Solo `transform`: es lo que hace la tarjeta grafica y no obliga a repintar.*
+   *220 ms -- la duracion de **lo que entra en pantalla** -- y la curva `suave`,
+   *que son los tokens. *`prefers-reduced-motion` **ya la apaga** con la regla
+   *global: no hay que repetirlo aqui.*
  */
 @keyframes cargando {
   from {
@@ -322,21 +387,14 @@ details[open] > summary .flecha {
 }
 
 .entra-pantalla {
-  animation: entra-pantalla 220ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation: entra-pantalla var(--movimiento-duracion-normal) var(--movimiento-curva-suave) both;
 }
 
 /* --------------------------------------- el cajon del menu, que se abre desde el lado ---
 
-   *** Y son DOS animaciones, *no una, *porque son dos cosas. *** *
-
-   *El **velo** se funde, *y el **cajon** entra desde la izquierda.* *Si se animara solo
-   el cajon, *el velo **apareceria de golpe** *y eso **se ve**: *la pantalla de detras
-   pasa de clara a oscura **de un fotograma al siguiente**, *que es justo lo que hace
-   que una apertura parezca **un fallo de pintado** en vez de una transicion.* *
-
-   *Y las dos con `220 ms` *(-- la duracion de **lo que entra en pantalla** --)* *y con
-   la curva `suave`, *que son los tokens.* *Y `prefers-reduced-motion` **ya las apaga**
-   con la regla global: *no hay que repetirlo aqui.* *
+   *El **velo** se funde, *y el **cajon** entra desde la izquierda.* *Y las dos con
+   *`220 ms` *(-- la duracion de **lo que entra en pantalla** --)* *y con la curva
+   *`suave`.* *`prefers-reduced-motion` **ya las apaga** con la regla global.*
  */
 @keyframes entra-velo {
   from {
@@ -348,7 +406,7 @@ details[open] > summary .flecha {
 }
 
 .entra-velo {
-  animation: entra-velo 220ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation: entra-velo var(--movimiento-duracion-normal) var(--movimiento-curva-suave) both;
 }
 
 @keyframes entra-cajon {
@@ -361,25 +419,18 @@ details[open] > summary .flecha {
 }
 
 .entra-cajon {
-  animation: entra-cajon 220ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation: entra-cajon var(--movimiento-duracion-normal) var(--movimiento-curva-suave) both;
 }
 
 /* ------------------------------------------- lo que se mueve, para quien no lo quiere ---
 
-   **Esto estaba en la aplicacion vieja y se perdio al reescribirla.** `plataforma/web/estilo.css:180`
-   tenia la regla -- *y dos mas, por componente* --, y la aplicacion nueva no tenia ninguna: tres
-   animaciones (`animate-pulse` en `ui.tsx`, y la `transition` de arriba) que se movian **tambien**
-   para quien habia pedido que no se moviera nada. *Un `animate-pulse` parpadeando es justo lo que el
-   ajuste existe para evitar.*
+   **Esto estaba en la aplicacion vieja y se perdio al reescribirla.** Se elige la
+   regla global, no las de componente: quien activa el ajuste lo hace porque el
+   movimiento **le hace dano o le marea**, asi que **el error caro es dejar algo
+   moviendose, no apagar de mas**.
 
-   **Y se elige la regla global, no las de componente.** La vieja tenia las dos; con la global **basta**,
-   y la decision esta en el motivo del ajuste: quien lo activa lo hace porque el movimiento **le hace
-   dano o le marea**, asi que **el error caro es dejar algo moviendose, no apagar de mas**. Las reglas
-   por componente se anaden si algun dia hay que conservar una animacion concreta, *y entonces se
-   justificara una por una.*
-
-   `!important` porque Tailwind aplica `animate-*` como utilidad, y **una utilidad gana a una regla de
-   elemento** sin el. */
+   `!important` porque Tailwind aplica `animate-*` como utilidad, y **una utilidad
+   gana a una regla de elemento** sin el. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -390,4 +441,3 @@ details[open] > summary .flecha {
     scroll-behavior: auto !important;
   }
 }
-

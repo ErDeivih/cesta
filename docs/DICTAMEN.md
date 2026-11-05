@@ -1432,7 +1432,7 @@ que pide comprobar si se repite.*** *
 ```
 *** DE LAS ~16 RUTAS DEL ROUTER, *TODAS TIENEN AL MENOS UN ENLACE VIVO *** *
    *** excepto `/avisos` *** ✓✓✓
-*** -> `/` *(-- App.tsx:285, Grupo:207, Producto:148, Suite:307 --)* ✓
+*** -> `/` *(-- App.tsx, Grupo:207, Producto:148, Suite:307 --)* ✓
 *** -> `/ajustes` *(-- App.tsx:124, Cesta:1411 --)* ✓
 *** -> `/cesta` y `/compra/listas` *(-- Ajustes, Favoritos x4, Unirse, Avisos, Cesta --)* ✓
 *** -> `/favoritos` *(-- Cesta:1408 --)* ✓ · `/compra/analisis` *(-- el nav --)* ✓
@@ -2650,7 +2650,7 @@ diagnostico de la 78 *y comprobado contra `ui.tsx:438`*, *y *** falta la ejecuci
 *** -> `:1766` ***: *** `comprueba("/cesta" in otra.url and "unirme" not in otra.url, ***
    *** "al aplicarse lleva a la cesta, y no deja el enlace a mano")` *** ✓
 *** -> *y el fallo dice *** `http://localhost:5173/compra/listas` *** ✓
-*** -> *** y `/cesta` REDIRIGE *** *-- *`App.tsx:274`: *
+*** -> *** y `/cesta` REDIRIGE *** *-- *`App.tsx`: *
    *** `<Route path="/cesta" element={<Navigate to={/compra/listas${search}} replace />} />` *** ✓
 *** -> *** la URL SI es la cesta, *pero *** no dice «/cesta» *** ✓
 *** -> *** falla el `"/cesta" in otra.url` *** ✓
@@ -2695,7 +2695,7 @@ sitio, *o la invitacion *** no lo pinta***. *Y *** eso*** si puede ser un defect
 *** -> *y *** `comprueba("/cesta" in otra.url …)` *** → *** `"/compra/listas" in otra.url` *** ✓
 *** -> *y el motivo escrito al lado: *
    *-- *`/cesta` es *** una redireccion *** desde el 27 de septiembre de 2026 ✓
-   *-- *`App.tsx:274`: *** `<Navigate to={/compra/listas${search}} replace />` *** ✓
+   *-- *`App.tsx`: *** `<Navigate to={/compra/listas${search}} replace />` *** ✓
    *-- *** la URL nunca «esta» en `/cesta`: *pasa por ahi y sale *** ✓
    *-- *y *** el `:1387` ya lo avisaba***: *«el nav **no** puede llevar `href='/cesta'`» ✓
 *** -> *y se anadio el detalle que hacia falta: *el `wait_for_url` vive dentro de *
