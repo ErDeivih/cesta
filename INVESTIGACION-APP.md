@@ -251,3 +251,172 @@ Fuente: `docs/DATOS-APP-2026-11-04.md` (medición propia sobre el gold publicado
 - MyRealFood, ficha: https://apps.apple.com/es/app/myrealfood-recetas-y-plan/id1458031749
 - BOE, RD 3423/2000: https://www.boe.es/diario_boe/txt.php?id=BOE-A-2000-24118
 - OCU, comparador (muro de pago): https://www.ocu.org/consumo-familia/supermercados/calculadora/comparar-precios-supermercados
+
+---
+
+# Parte II — Ampliación del 2026-11-05 (`ALCANCE-APP.md` §5, puntos 3–7)
+
+**Fecha de consulta de todas las fuentes de esta parte: 2026-11-05.** Autor: `investigador-app2`. Método: `web_search`/`web_fetch` reales; se distingue **leído** de **no accesible** y no se rellena ningún hueco con memoria. Nada de esta parte pide credenciales de supermercados ni documenta cómo saltarse un login.
+
+## 7. Cuentas de las apps de los supermercados
+
+### 7.1 Qué se ha leído (y qué no)
+
+| Cadena | Leído el 2026-11-05 | ¿Legible? | Qué permite de verdad |
+|---|---|---|---|
+| Carrefour | [El Club Carrefour](https://www.carrefour.es/clubcarrefour/) · [App Mi Carrefour](https://www.carrefour.es/clubcarrefour/app-mi-carrefour/) | Sí | Mis listas, cupones personalizados, ChequeAhorro, ticket digital, lector de precios, pago QR. Su política de privacidad **no se ha leído** (solo localicé PDFs de otras sociedades; no se usan). |
+| Lidl | [Nota de prensa «Puntos Lidl» (01.07.2026)](https://empresa.lidl.es/sala-de-prensa/actualidad-lidl/lidl-lanza-puntos-lidl-una-nueva-funcionalidad-de-su-app-dirigida-al-ahorro-de-sus-clientes-a-traves-de-recompensas-personalizables) | Sí | Ticket digital, Lidl Pay, lista, recetas, cupones, Puntos Lidl. **Privacidad de Lidl Plus: HTTP 404**, no accesible. |
+| Mercadona | [Política de privacidad (rev. 20.07.2026)](https://tienda.mercadona.es/legal/privacy/en/) · [Ficha de app](https://apps.apple.com/es/app/mercadona/id1368037685) | Sí | Compras anteriores, «productos habituales sin necesidad de listas», nutrición vía imagen con zoom. Login con Google/Apple. |
+| DIA | [Ficha de app](https://apps.apple.com/es/app/dia-supermercado-online-y-club/id660175630) · [web](https://www.dia.es/) | Sí | Tickets físicos y online, cupones Club activados en caja, tarjeta digital, repetir compra, escáner de alérgenos. **`/politica-de-privacidad` devuelve la portada**: no accesible. |
+| Alcampo | [Política de privacidad Club Alcampo (rev. feb. 2025)](https://www.compraonline.alcampo.es/content/politica-privacidad-club-alcampo) · [App](https://www.compraonline.alcampo.es/content/app-alcampo) | Sí | Favoritos, Compra rápida, Productos recurrentes, Mis listas, editar pedidos, cupones. |
+| Aldi | [Ficha de app](https://apps.apple.com/es/app/aldi-supermercados/id669956906) | Sí | Folleto, varias listas, alertas de favoritos, recordatorios de ofertas, ingredientes y sellos. Sin programa de fidelización en app/web. |
+
+**API pública: no existe para consumidor en ninguna de las seis.** Lo único documentado que aparece es la API de *marketplace* de Carrefour (Mirakl), que un integrador documenta para **vendedores** ([Channable](https://helpcenter.channable.com/list-advertise/list-and-advertise-es/vende-en-marketplaces/marketplaces-mirakl/como-a-configurar-un-canal-de-carrefour-spain), leído): sirve para publicar catálogo, no para leer tickets ni cuentas. Hay paquetes no oficiales de terceros que dicen leer catálogos de súper (p. ej. uno en PyPI para Mercadona), pero PyPI bloqueó la lectura y, aunque existieran, no son API pública ni traen condiciones que permitan reutilizarlas. **La app no puede prometer «conecta tu cuenta».**
+
+**Exportación RGPD.** La [AEPD](https://www.aepd.es/preguntas-frecuentes/1-tus-derechos/2-tus-derechos-de-proteccion-de-datos/FAQ-0113-que-es-el-derecho-a-la-portabilidad-de-los-datos) (leído) define la portabilidad como recibir los datos en formato estructurado, de uso común y lectura mecánica, y transmitirlos a otro responsable cuando sea técnicamente posible; aplica cuando el tratamiento se basa en consentimiento o contrato y es automatizado. En las políticas que sí se han leído: **Alcampo** la reconoce y se ejerce por correo al DPO (`dpoare@alcampo.es`) o por escrito con DNI; **Mercadona** reconoce «request the transfer of your information» por correo postal o formulario con certificado digital (DPO `dpo@mercadona.es`). Ninguna documenta exportación autoservicio. Conclusión: la vía legítima realista es **que la persona pida su exportación y nos la entregue**, o que pegue su ticket/lista a mano.
+
+El login con Google/Apple de Mercadona es el login de la persona **en Mercadona**, no una puerta para nosotros: no se toca.
+
+### 7.2 Qué copiamos con criterio
+Importación manual como camino principal («trae tu historial»: pegar texto o subir el CSV/JSON de la exportación RGPD). «Repetir compra» y «compras anteriores» como fuente de lo comprado cuando la persona lo aporte. En la interfaz, cero lenguaje de conectar cuentas.
+
+### 7.3 Qué no copiamos
+Guardar credenciales, tokens o sesiones. Automatizar el login (navegador con su sesión, cookies, scraping autenticado), ni «con su permiso». Pedir DNI o certificado y tramitar la solicitud RGPD en su nombre: somos un tercero, no su representante. Prometer sincronización en tiempo real.
+
+### 7.4 Qué dato necesita
+Nada nuevo del backend para el primer corte. Para que la importación sea útil: un formato de entrada (nombre, cantidad, precio, fecha, cadena), mapeo de texto libre a `grupo_id` (el problema del emparejador) y marca de origen («importado por ti el …») que no se mezcle con la captura diaria.
+
+## 8. Ofertas con detalle y dónde conviene comprar
+
+### 8.1 Qué se ha leído
+- **Regla legal del precio anterior** — [Consumo Responde](https://www.consumoresponde.es/actualidad/noticias/rebajas-deben-realizarse-sobre-menor-precio-producto-establecimiento-30-dias) (leído): la rebaja se anuncia sobre el **menor precio de los 30 días anteriores**; cita la Directiva (UE) 2019/2161 y una sentencia del TJUE sobre falsas rebajas. Es la norma que hace honesto o deshonesto cualquier «-30 %».
+- **Club Carrefour** (leído): 1 % de la compra de alimentación acumulado, 15 % en «Mi Día de El Club», IVA de frescos y BIO con tarjetas +65/Superfamilias/Joven, **ChequeAhorro cada dos meses**, 20+ *partners*. Es ahorro **diferido**, no precio de estantería.
+- **Lidl Puntos** (leído): 1 punto por euro en tienda, canje por 400+ recompensas, validez 24 meses, 25 puntos de bienvenida, sumado a cupones y ofertas semanales.
+- **DIA** (ficha, leída): cupones personalizados que se activan en caja y tarjeta digital del Club. **Aldi**: sin fidelización; ofertas de folleto con fecha. **Mercadona**: sin club; sus bajadas son precio directo ([titular de prensa](https://www.economiadigital.es/sociedad/mercadona-descarta-tarjeta-fidelizacion-si-ofrecen-consum-lidl.html) leído; cuerpo no).
+- **Comparadores**: Idealo devolvió **HTTP 403** hoy otra vez (`idealo.es/ofertas/que-es-idealo` y `idealo.co.uk/magazine/faqs`); Soysuper sigue en «Cargando…» (aplicación JS); OCU, muro de pago (ya documentado en la parte I). **No se ha podido leer cómo tratan las ofertas condicionadas**: no se les atribuye nada.
+
+Lo que ya tenemos: `core/promos.py` reconoce cinco mecánicas (precio fijo, porcentaje, umbral, enésima, nxm) y marca los descuentos de tarjeta como `acumulable` **sin restarlos** (`docs/OFERTAS-Y-ML.md`). Esa decisión es la correcta; esta sección la respalda con fuentes.
+
+### 8.2 Taxonomía y qué exige cada tipo para recomendar sin mentir
+
+| Tipo | Ejemplo real | Qué dato exige | Error típico |
+|---|---|---|---|
+| Descuento % | «-30 % Días Locos» | Precio base + mínimo de 30 días + fecha fin | Calcular el % sobre un precio inflado |
+| Precio fijo | «Todo a 1 €» | Que el producto entre en el saco; comparar €/kg después | Venderlo como rebaja del producto |
+| Enésima (2ª unidad -50 %) | Club Alcampo / Carrefour | Cuántas unidades pide la lista | Restarlo al precio de **una** unidad |
+| NxM (3x2, 2x1) | «3x2» | Unidades y que la persona pueda usar la extra | Aplicarlo con 1 unidad |
+| Precio club inmediato | Cupón en caja | Pertenencia + activación | Enseñarlo como precio de todos |
+| Precio club diferido | ChequeAhorro, Puntos, «acum en tu tarjeta» | Modelarlo como monedero aparte | Restarlo del total |
+| Umbral | «5 € dto. comprando 20 €» | Cesta mínima de la marca | Darlo por hecho sin llegar al umbral |
+| Pack | Pack 6 | Cantidad total y €/kg del pack | No comparar con 6 sueltos |
+
+**Regla de oro:** si falta el dato de la condición, la oferta no se recomienda; se enseña el precio base y «hay promoción, sin detalle». Mejor no recomendar que recomendar mal.
+
+### 8.3 Qué copiamos
+La mecánica traducida y la fecha de fin (no una etiqueta roja). Tres cifras separadas: precio de hoy, ahorro inmediato aplicable a **mi cantidad**, y ahorro acumulable con su condición. Chip «solo socios» cuando exige club. El reparto entre tiendas con la mecánica aplicada y el número de paradas.
+
+### 8.4 Qué no copiamos
+Restar ChequeAhorro o Puntos del total. Etiquetar como oferta una subida previa (para eso está `oferta_sospechosa`, a partir de 45 días). Ordenar por «% de descuento» sin €/kg.
+
+### 8.5 Qué dato necesita
+`tipo_mecanica` normalizado (ya), más `exige_club` (booleano), `es_diferido` (booleano), `condicion` (unidades o importe mínimo), `fecha_fin` y **el nombre del club** (Carrefour, DIA, Alcampo, Lidl) para no meterlos en el mismo saco. Hoy vive en texto libre: hay que estructurarlo antes de que la app lo pinte.
+
+## 9. Aprender de las listas
+
+### 9.1 Qué se ha leído
+- **Instacart**, centro de ayuda (leído): dos objetos, «Shopping list» (personal, semanal) y «Saved lists» (reutilizables, privadas o públicas; las privadas no son buscables y admiten una sola tienda). Alta por **foto** (lista manuscrita, receta impresa, captura), **pegando texto** (hasta 200 ítems) o buscando; cuenta familiar con iniciales de quién añadió; «Suggested», «Buy it again», favoritos; «añadir todo al carrito».
+- **Bring!** (leído): listas compartidas con cambios en tiempo real, orden por pasillos, etiquetas de urgencia, **guardar recetas de internet** y pasar ingredientes a la lista, tarjetas de fidelización y folletos con ofertas a la lista.
+- **Mercadona** (leído): revisar compras anteriores y comprar «productos habituales sin necesidad de listas».
+- **DIA** (leído): repetir un pedido con un clic y **repetir online una compra hecha en tienda**; sección «Pedidos y listas».
+- **Alcampo** (leído): «Productos recurrentes», «Compra rápida», Favoritos, Mis listas. **Carrefour**: Mis listas, Mis compras. **Aldi**: varias listas y alertas de favoritos.
+- **Amazon Fresh** (`Repeat Items`): **muro de login**, no leído.
+
+### 9.2 Qué copiamos
+Separar **favorito** (producto), **lista** (intención) y **compra** (hecho): mezclarlos es el error de casi todas. «Rellenar sola» como **sugerencia revisable** en la lista de casa (los N que más se repiten en compras e importaciones, con «añadir todos» y «quitar»), nunca añadiendo a escondidas. Aprender cantidades solo cuando son estables; si varían mucho, no sugerir cantidad. «Sugerir otra tienda» con la lógica de `docs/LISTAS.md` §6bis (total, desglose y coste de la segunda parada). Quién añadió qué, ya en el modelo.
+
+### 9.3 Qué no copiamos
+Listas públicas y descubribles (exponen hábitos y no aportan). Convertir la sugerencia en suscripción o reposición automática. Marketing dentro de la lista. Y el «rellenar sola» fingido: sin historial importado no hay aprendizaje, y se dice.
+
+### 9.4 Privacidad y consentimiento
+Base de contrato/consentimiento y minimización: solo lo necesario para rellenar y comparar, sin perfil comercial ni cesión. **Opt-in explícito** para «aprender de mis compras», apagable, con borrado real del historial importado. Explicación corta y visible: «para rellenar tu lista usamos tus últimas compras; puedes borrarlas». Nada de datos de terceros.
+
+### 9.5 Qué dato necesita
+Historial de líneas con fecha, `grupo_id`, cantidad y cadena; marca «importado vs capturado»; y las tablas de lista que ya existen. **Nota de coherencia:** `docs/LISTAS.md` §7 descartaba «plantillas y listas recurrentes». La ampliación las pide como **sugerencia**, no como plantilla: se implementa «rellenar sola» sobre la lista de casa sin crear un sistema de plantillas.
+
+## 10. Calculadora de calorías diarias con pautas de salud
+
+### 10.1 Qué se ha leído
+- **WHO, «Healthy diet»** ([26.01.2026](https://www.who.int/news-room/fact-sheets/detail/healthy-diet), leído): principios de adecuación, **equilibrio entre ingesta y gasto**, moderación y diversidad; rangos de referencia (45–75 % hidratos, 15–30 % grasas, 10–15 % proteína) y el ejemplo de que con 2000 kcal los azúcares libres bajo el 10 % son unos 50 g.
+- **EFSA** ([nota de prensa 10.01.2013](https://www.efsa.europa.eu/es/press/news/130110), leída; [opinión científica](https://efsa.onlinelibrary.wiley.com/doi/10.2903/j.efsa.2013.3005) enlazada, no leída): ingestas medias de referencia con estilo moderadamente activo (PAL 1,60) y BMI asumido 22, ajustables si el BMI es distinto. Mujeres/hombres 30–39: 2.000–2.600 kcal; 50–59: 2.000–2.500; 70–79: 1.800–2.300. Embarazo: +70/+260/+500 kcal por trimestre; lactancia: +500 kcal.
+- **FAO/WHO/UNU**, [Informe 2004](https://www.fao.org/4/y5686e/y5686e00.htm) (leído el índice y la estructura): requisitos de energía, ecuaciones de gasto basal (Anexo 3) y niveles de actividad.
+- **AESAN**, [«Recomendaciones dietéticas saludables y sostenibles…» (2022, NIPO 069220082)](https://cpage.mpr.gob.es/publicacion/recomendaciones-dieteticas-saludables-y-sostenibles-complementadas-con-recomendaciones-de-actividad-fisica-para-la-poblacion-espanola-2022-069220082-0001/) (ficha leída). **El PDF no se ha leído.**
+- **Mifflin-St Jeor (1990)** — [resumen indexado](https://europepmc.org/article/MED/2305711) (leído): REE = 10·peso(kg) + 6,25·altura(cm) − 5·edad + 5 (hombres) / −161 (mujeres); el mismo trabajo señala que Harris-Benedict (1919) sobreestimaba el gasto ~5 %. **Harris-Benedict no se ha leído en su fuente original**, solo a través de este resumen.
+
+### 10.2 Qué copiamos
+Dos capas separadas: **lo que registras** (kcal de lo comprado y de las recetas, con «N de M productos con dato») y **la referencia** (tabla EFSA por edad, sexo y actividad; Mifflin como estimación individual declarada). Rango, no número: la estimación tiene error y se dice. Sin prescribir: ni objetivo automático, ni déficit, ni «deberías». La fuente y la fecha en el «por qué», en llano y sin fórmulas en pantalla.
+
+### 10.3 Qué no copiamos
+Fijar un objetivo calórico al abrir la app o al registrar el peso. Diagnósticos, IMC como juicio, «quema esto», planes de adelgazamiento. Rellenar kcal que no tenemos (23,08 % de grupos; **0 en Alcampo, Aldi y Lidl**): el hueco se dice. Presentar Mifflin como «tu gasto real».
+
+### 10.4 El límite, por escrito
+La app no es un dispositivo médico ni sustituye a un profesional. No hay recomendación individualizada de salud; si el registro sugiere algo clínico, se remite a un profesional. Texto breve en pantalla, sin letra pequeña.
+
+### 10.5 Qué dato necesita
+Tabla nutricional estructurada (kcal/100 g y por ración) —medida: 23,08 %, 0 en Alcampo/Aldi/Lidl—, ración por producto y un registro **opcional y local** del usuario (peso, altura, edad, actividad) para Mifflin. Sin nutrición estructurada, la calculadora solo puede enseñar la referencia, no el registro.
+
+## 11. Recetas establecidas y creadas por el usuario
+
+### 11.1 Qué se ha leído
+- **Cookpad**, [condiciones](https://cookpad.com/es/terminos) (leído): el contenido es de quien lo publica, pero al subirlo concede licencia mundial, gratuita, transferible a terceros y sin compensación; Cookpad no revisa las recetas ni responde de su seguridad; hay cláusulas específicas para España. **No se copian recetas de Cookpad.**
+- **MyRealFood** ([web](https://www.myrealfood.app/es), leída): recetas con tiempo y **kcal por receta**, ordenadas por popularidad, con plan de pago. El recetario es suyo.
+- **Alcampo**, [«La cocina de Alcampo»](https://www.compraonline.alcampo.es/recipes) (leída): recetario **editorial de marca** (Chicote, verdura, carne, pescado, postres, Rik&Rok) integrado en la tienda; no es contenido de usuarios. **DIA** tiene sección de recetas propia.
+- **Bring!** (leído): «guardar recetas de internet» y pasar ingredientes a la lista. **Instacart** (leído): añadir a la lista fotografiando una receta impresa o una captura.
+- **Recetas Gratis: no se ha podido leer** sus condiciones; no se le atribuye nada.
+
+### 11.2 Qué copiamos
+**Recetas propias primero**: recetario editorial de Cesta con licencia nuestra más recetas del usuario (suyas, con permiso de uso dentro de la app). Importación **manual** desde texto pegado (un ingrediente por línea) y, más adelante, desde URL **con revisión**: se guarda enlace, ingredientes normalizados y cantidades que confirme la persona, no el texto de la receta. Porciones que escalan cantidades y coste. Alérgenos como campo de la receta propia y como **aviso**, no como garantía: la obligación de declarar los 14 alérgenos es del etiquetado del producto (Reglamento UE 1169/2011); la ficha de AESAN sobre sustancias alergénicas **no se ha podido leer completa** en esta sesión y se cita como pendiente.
+
+### 11.3 Qué no copiamos
+Copiar recetarios de terceros (Cookpad, MyRealFood, webs de recetas): licencia y riesgo. Scrapear recetas ajenas y republicarlas. Prometer «sin alérgenos»: solo «según los ingredientes que has puesto».
+
+### 11.4 Qué dato necesita
+Recetario propio o con licencia; ingredientes mapeados a `grupo_id` (hoy 4/473 y ninguno válido); cantidades y unidades; nº de raciones; kcal por ración cuando exista; campo de alérgenos en recetas propias. Sin recetario licenciado, **solo recetas propias y del usuario** en el primer corte.
+
+## 12. Favoritos, lista y continuidad de producto
+
+### 12.1 Lo que tratan bien y copiamos
+**Sin sesión:** Bring! exige cuenta para compartir e Instacart la pide al final, pero la lista se puede empezar; copiamos lista utilizable sin cuenta y sincronización opcional al entrar. **Vacío:** sugerir «compra otra vez» o favoritos en vez de una pantalla en blanco (Instacart «Suggested», Alcampo «Productos recurrentes», DIA «repetir»). **Offline:** `docs/LISTAS.md` §4 ya lo resuelve mejor que las apps leídas (uuid en el móvil, hora del móvil, lista entera en caché, aviso «sin conexión con casa»). **Continuidad:** cuando el producto desaparece o cambia de nombre entre capturas, la línea conserva su `grupo_id`, muestra «no lo encuentro hoy» y ofrece alternativa del mismo grupo. DIA y Carrefour lo resuelven dentro de su catálogo; nosotros, **entre cadenas**.
+
+### 12.2 Lo que tratan mal y no copiamos
+Listas públicas y «descubre listas» (Instacart). Perder la lista al cerrar sesión o cambiar de dispositivo. Pedir cuenta antes de dejar usar la lista.
+
+### 12.3 Qué dato necesita
+Favoritos por `grupo_id` (no por `producto_id`, para sobrevivir al cambio de catálogo); el estado de línea (sin decidir/decidida/comprada) que ya define `LISTAS.md`; y una regla de «producto desaparecido» con fecha de última vez visto.
+
+## 13. Decisiones propuestas para el 5/11
+
+**Entra primero, en este orden:**
+1. **Favoritos + lista de casa, con «rellenar sola» revisable.** Es lo que ya tiene modelo y offline resuelto; sin historial importado se queda en «compra otra vez» con lo que haya.
+2. **Ofertas con tipo y club, en la lista y en el reparto.** Ya existe `promos.py`; falta estructurar `exige_club`, `es_diferido`, `condicion` y `fecha_fin` para que la pantalla no adivine.
+3. **Calculadora con referencias y sin prescribir.** Referencia (EFSA/WHO/AESAN) + estimación declarada (Mifflin) + registro de lo comprado donde hay kcal. Sin objetivos.
+4. **Recetas propias y del usuario**, con importación manual de texto; coste por ración solo cuando haya mapeo y precio.
+
+**Se limita:**
+- **Cuentas de supers: solo exportación RGPD que pide la persona e importación manual.** Sin credenciales, sin login automatizado, sin pedir DNI. La app nunca dice «conecta tu cuenta».
+- **Ofertas de club: se enseñan, no se restan.** ChequeAhorro, Puntos Lidl y cupones personalizados van a un apartado «acumulas» con su condición.
+- **Calorías:** se enseña el dato donde existe (23,08 % de grupos; 0 en Alcampo/Aldi/Lidl) y se dice el hueco; nunca se estima.
+- **Recetas de terceros:** no se copian; si se importan, se guardan enlace e ingredientes, no el texto.
+
+**Se descarta:**
+- API de supermercados (no hay pública de consumidor; la documentada es de *marketplace* para vendedores).
+- Scraping con sesión, cookies o credenciales; cualquier automatización de cuentas de terceros.
+- Listas públicas, compartidas con desconocidos y «descubrir listas».
+- OCR de tickets en el primer corte: primero pegar texto o CSV.
+- Objetivos de salud, déficit calórico, IMC como juicio y planes de adelgazamiento.
+- Predicción de precios y recomendador de productos (ya descartado en la parte I; sigue vigente).
+
+## 14. Fuentes de la ampliación (todas consultadas el 2026-11-05)
+
+Todas las fuentes **leídas** están enlazadas en su sección (§7–§12); aquí solo se consolidan las no accesibles.
+
+**No accesibles (se dice, no se rellena):** Idealo (`idealo.es/ofertas/que-es-idealo`, `idealo.co.uk/magazine/faqs` → HTTP 403) · Soysuper (`soysuper.com` → «Cargando…», JS) · OCU (muro de pago, ya en la parte I) · Lidl Plus, privacidad (`lidl.es/es/asset/…Lidl-Plus-1.pdf` → HTTP 404) · DIA, privacidad (`dia.es/politica-de-privacidad` → portada) · Carrefour, privacidad (no leída) · Amazon Fresh «Repeat Items» (muro de login) · opinión EFSA 2013 en Wiley (referenciada, no leída) · PDF de AESAN 2022 (no leído) · Reglamento UE 1169/2011 (ficha europea con error 404; obligación citada, texto no leído) · Recetas Gratis (condiciones no leídas) · paquete PyPI de Mercadona (bloqueado).

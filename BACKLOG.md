@@ -312,3 +312,69 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   no se ve; la decisión está atada a la tarea 4).
 - **Cómo se sabe que está bien**: un comando documentado que corre en <5 min en cada cambio y
   uno de entrega con su log; sin `--deselect` oculto.
+
+### 22. P0 app: seis pantallas sin puerta de sesión — **pendiente, debe ser el primer arreglo**
+- **Por qué**: docs/AUDITORIA-APP-2026-11-05.md P0-1: Despensa, Recetario, RecetaDetalle,
+  PlanSemanal, Diario y Tendencias enseñan un error técnico («La API ha contestado 401») a quien
+  no ha entrado. Favoritos, Avisos, Cesta y Ajustes sí tienen puerta: es copiar la pieza.
+- **Qué hay que hacer**: usar el estado «sin sesión» del resto de pantallas («Entra para ver
+  esto» + enlace de entrada) y reescribir pi/cliente.ts:71 para no nombrar la API ni el código.
+- **Cómo se sabe que está bien**: abrir las seis rutas sin sesión no enseña errores técnicos; prueba
+  de fuente/componente y build.
+
+### 23. P0 app: sacar del producto el panel interno, el matching y «Aprender» — **pendiente**
+- **Por qué**: P0-2/P0-4/P0-5 de la auditoría: «Gasto y ahorro» abre el panel de analítica
+  (/compra/analisis), desde el producto se llega a /panel/matching (JSON crudo, rutas
+  data/gold/matching, docker compose) y /aprender es un marcador de desarrollador.
+- **Qué hay que hacer**: quitar esos destinos del menú y de los enlaces de consumo; dejar el
+  panel solo como herramienta local protegida o fuera del build; «Gasto y ahorro» real en su
+  sitio. Sin romper pruebas de interfaz.
+- **Cómo se sabe que está bien**: un recorrido de menú no ofrece nada interno; grep de textos
+  técnicos en la UI da cero; build y pruebas de interfaz verdes.
+
+### 24. P0 app: calculadora de calorías y «Mis alimentos» persistentes — **pendiente**
+- **Por qué**: P0-3: /calorias/alimentos es memoria del prototipo (se pierde al recargar) y la
+  calculadora/objetivo que la gráfica espera nunca se escriben (puntosDeLasTres.ts:73).
+- **Qué hay que hacer**: calculadora con referencias EFSA/WHO/AESAN y estimación declarada (sin
+  prescribir), persistir alimentos propios por API, y que el objetivo sea opcional y lo ponga la
+  persona. Ver INVESTIGACION-APP.md §10.
+- **Cómo se sabe que está bien**: recargar conserva lo anotado; el objetivo aparece solo si se
+  declara; prueba de flujo y estados.
+
+### 25. P1 rendimiento: fichas y panel tardan 1,5–18 s — **pendiente, caché por versión de gold**
+- **Por qué**: P1-1/P1-2 de la auditoría: /api/producto/... 1,5–5,9 s, /api/grupo/...
+  1,5–6,0 s, /api/ofertas-dudosas 13 s, pestañas del panel 15–18 s porque reconstruyen un
+  eredicto completo por petición.
+- **Qué hay que hacer**: cachear por ersion de data/gold/actual.json (se invalida al publicar),
+  sin cambiar los contratos ni la corrección; medir antes/después.
+- **Cómo se sabe que está bien**: misma respuesta y <300 ms en caliente; prueba que la caché se
+  invalida al cambiar la versión.
+
+### 26. §8: quitar 108 textos de desarrollador de la interfaz — **pendiente, inventario hecho**
+- **Por qué**: DOCTRINA-CALIDAD.md §8 y el inventario completo de la auditoría (§3): nombres de
+  API, códigos HTTP, rutas del repo, explicaciones de cálculos, «Jevons encadenado», «gold», etc.
+- **Qué hay que hacer**: aplicar la tabla de la auditoría (borrar o reescribir en lenguaje de
+  usuario), empezando por los 10 más cantosos y por las pantallas de consumo; no sustituir por
+  otro texto si no aporta (se borra).
+- **Cómo se sabe que está bien**: recorrer cada pantalla con la pregunta «¿esto le sirve para
+  decidir o actuar?» y un grep de términos técnicos en textos visibles.
+
+### 27. Funciones nuevas de la ampliación — **pendiente, por orden de valor**
+- **Por qué**: David amplió el alcance (ALCANCE-APP.md §5): favoritos, lista, calculadora,
+  recetas propias, ofertas con tipo/club, aprender de las listas.
+- **Qué hay ya y qué falta**: favoritos y lista existen (revisar estados y §8); recetario existe
+  pero sin recetas establecidas sembradas; ofertas: tipo/condición se pueden enseñar, «precio
+  final con oferta» no (docs/OFERTAS-2026-11-05.md: 6,2 % cuantificables); aprender de listas
+  tiene backend (habituales, desde-*) pero falta la sugerencia honesta y su consentimiento.
+- **Cómo se sabe que está bien**: por función, flujo completo con datos reales y estados; nada de
+  datos inventados ni promesas de salud/precio.
+
+### 28. Ingesta: enganchar el vigilante y enseñar su estado — **pendiente, script hecho**
+- **Por qué**: scripts/vigilar_ingesta.py ya avisa (informe + data/avisos_ingesta.json + exit
+  code) y entiende «en curso»; falta que se ejecute solo al cerrar la pasada y que el estado se
+  vea sin abrir una consola.
+- **Qué hay que hacer**: llamarlo al final de ejecutar.bat/cadena diaria (cuando no haya captura
+  en marcha) y reflejar estado+visos en metricas-cesta.json para el panel.
+- **Cómo se sabe que está bien**: una pasada correcta deja estado ok; una cadena sin captura deja
+  aviso con nombre y motivo; prueba del enganche.
+
