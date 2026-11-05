@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Ficha de producto, comparar mi cesta, lista de la compra y favoritos ya implementados con los tokens aprobados; toca Recetas (listado y detalle con coste).
+resumen: Ficha, comparar, lista, favoritos y recetas ya implementadas con los artboards aprobados; toca Calorías, después Ofertas y Perfil.
 estado: en-curso
-tarea: implementar pantalla a pantalla los artboards aprobados, en el orden de David; hechas ficha, comparar, lista y favoritos
+tarea: implementar pantalla a pantalla los artboards aprobados; hechas ficha, comparar, lista, favoritos y recetas (listado y detalle)
 nivel: 2
-siguiente: Recetas (listado y detalle con coste de ingredientes) y después Calorías, Ofertas y Perfil
-bloqueado: nada duro; ofertas y cuentas de supers mantienen sus límites de datos (tipo/condición sí, precio de socio no)
+siguiente: Calorías (objetivo diario y comidas) y después Ofertas y Perfil
+bloqueado: nada duro; las recetas establecidas no existen todavía en la API y el coste solo se enseña cuando hay precios reales
 fecha: 2026-11-05

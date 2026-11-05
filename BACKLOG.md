@@ -449,3 +449,15 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Puertas**: tipos, npm 385, componentes 119/119 (Cesta 16 nuevas, Favoritos 22), pytest UI 26
   verdes / 13 saltadas; build servido. Pendiente: `prueba_navegador.py` mide textos viejos
   («Por coger», «Lo que cuesta») y la puerta del navegador, tarea 33.
+
+### 37. Recetas: listado y detalle con coste — **hecho (05/11)**
+- **Listado** (`Recetario.tsx`): cabecera, Recetario/Archivadas (no «Mis recetas»: todas son del
+  usuario y no hay semilla de recetas establecidas), buscador por nombre y etiqueta, tarjetas con
+  raciones y minutos, alta completa, importar, archivar y estados con reintento.
+- **Detalle** (`RecetaDetalle.tsx`): coste sobre bosque, ingredientes con cantidad y coste cuando
+  hay precio, conversión kg/g y l/ml, total «Parcial» si falta alguno, pasos, añadir a la lista,
+  cocinar, editar y selector de versión. Sin precios: «Coste no disponible», nunca 0,00 €.
+- **Límite**: la API no da ingredientes con precio en el listado ni hay recetas establecidas
+  sembradas; el listado dice «Faltan precios» y el coste real se ve al abrir la receta.
+- **Puertas**: tipos, npm 385, componentes 163/163 (44 nuevas), pytest recetas/UI 19 verdes, build
+  servido. `test_detalle_receta.py` adaptado a la tilde del texto nuevo.

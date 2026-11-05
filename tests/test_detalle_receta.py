@@ -44,5 +44,9 @@ def test_el_404_se_distingue_de_un_fallo():
 def test_se_puede_llegar_a_una_version_concreta():
     detalle = _leer("paginas/RecetaDetalle.tsx")
     assert "setVersion(Number(e.target.value))" in detalle
-    assert "Estas viendo una version anterior" in detalle, \
+    # **Se corrige la tilde del texto visible, y el contrato se mantiene.** *La prueba medía
+    # «Estas viendo una version anterior», que era el texto sin tildes de la pantalla vieja;
+    # el rótulo de David (§8) pide escribir bien lo que se lee. Lo que se mide -- que mirar una
+    # versión vieja no parezca la última -- sigue estando, ahora con las tildes puestas.*
+    assert "Estás viendo una versión anterior" in detalle, \
         "mirar una version vieja tiene que decirse, no parecer la ultima"

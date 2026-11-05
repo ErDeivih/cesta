@@ -14,7 +14,7 @@ hasta agotar el bloque.
 - [x] Comparar mi cesta. **Hecho 5/11** (`/compra/listas/:listaId/comparar`; corona solo la cadena que cuenta todas las líneas y no resta ofertas condicionadas).
 - [x] Favoritos, lista de la compra. **Hecho 5/11** (vista de lista con precio estimado y precio por línea; favoritos con rango real de historial).
 - [ ] Calculadora de calorías con pautas de salud.
-- [ ] Recetas (establecidas y de usuario).
+- [x] Recetas (establecidas y de usuario). **Hecho 5/11** (listado con recetario/archivadas y detalle con coste por ingrediente cuando hay precios; no hay semilla de recetas «establecidas» en la API).
 - [ ] Ofertas con su tipo y si exigen club del súper.
 - [ ] Integración con las apps de los supermercados.
 - [ ] Aprender de las listas: rellenar sola, recomendar, sugerir otro sitio.
