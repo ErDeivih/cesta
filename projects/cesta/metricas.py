@@ -68,6 +68,28 @@ def _ultima_ejecucion() -> str | None:
         return None
 
 
+def _ingesta() -> dict | None:
+    """El estado que dejo el vigilante de la ingesta, para que el panel no tenga que mirarlo.
+
+    Se lee `data/avisos_ingesta.json` (lo escribe `scripts.vigilar_ingesta` al cerrar la
+    pasada). Sin fichero, `None`: no se inventa un «todo bien» que nadie ha comprobado.
+    """
+    ruta = config.DATA / "avisos_ingesta.json"
+    if not ruta.is_file():
+        return None
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+        avisos = datos.get("avisos") or []
+        return {
+            "fecha": datos.get("fecha"),
+            "estado": datos.get("estado"),
+            "avisos": len(avisos),
+            "codigos": sorted({str(a.get("codigo")) for a in avisos if a.get("codigo")}),
+        }
+    except (OSError, ValueError):
+        return {"fecha": None, "estado": "ilegible", "avisos": 0, "codigos": []}
+
+
 def construye() -> dict:
     """La foto de hoy: cadenas, comparables y dias de historial. Sin datos, ceros."""
     grupos = _lee(config.DATA / "gold" / "grupos.parquet")
@@ -119,6 +141,7 @@ def construye() -> dict:
         "comparables_con_precio": int(comparables),
         "en_varias_cadenas": int(en_varias),
         "dias_historial": int(dias),
+        "ingesta": _ingesta(),
     }
 
 

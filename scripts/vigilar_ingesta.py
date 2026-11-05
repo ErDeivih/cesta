@@ -593,6 +593,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--datos", help="carpeta de datos a mirar (por defecto, data/)")
     ap.add_argument("--fecha", help="dia a mirar, AAAA-MM-DD (por defecto, hoy en Madrid)")
     ap.add_argument("--json", action="store_true", help="sacar el informe en JSON por stdout")
+    ap.add_argument("--solo-fallos", action="store_true",
+                    help="salir 0 si solo hay avisos (el dia esta hecho); 1 solo si hay fallo. "
+                         "Para colgarlo de la cadena diaria: un aviso conocido no debe hacer "
+                         "fallar el dia.")
     a = ap.parse_args(argv)
 
     try:
@@ -623,6 +627,8 @@ def main(argv: list[str] | None = None) -> int:
         if ruta is not None:
             _di("")
             _di(f"  informe dejado en {ruta}")
+    if a.solo_fallos:
+        return 0 if informe["estado"] != "fallo" else 1
     return 0 if informe["estado"] == "ok" else 1
 
 

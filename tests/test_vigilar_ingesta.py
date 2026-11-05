@@ -223,6 +223,9 @@ def test_una_captura_corta_es_aviso_con_la_referencia_de_la_regla(datos):
     assert carrefour["referencia"]["referencia"] == 1000
     assert carrefour["referencia"]["pct"] == 60.0
     assert vigilar_ingesta.main(["--datos", str(datos), "--fecha", HOY]) == 1
+    # **Y con --solo-fallos un aviso NO hace fallar la cadena diaria.** El dia esta hecho
+    # (trajo datos, solo que menos); lo que no puede es salir 0 cuando de verdad hay un fallo.
+    assert vigilar_ingesta.main(["--datos", str(datos), "--fecha", HOY, "--solo-fallos"]) == 0
 
 
 def test_lidl_no_se_compara_contra_el_maximo(datos):
@@ -257,6 +260,9 @@ def test_gold_atrasado_con_la_pasada_cerrada_es_fallo(datos):
     assert informe["gold"]["fecha_max"] == AYER
     assert _vigila(datos)["avisos"], "un gold de ayer no puede pasar por bueno"
     assert vigilar_ingesta.main(["--datos", str(datos), "--fecha", HOY]) == 1
+    # Un fallo de verdad sigue saliendo 1 aunque se pida --solo-fallos.
+    assert vigilar_ingesta.main(
+        ["--datos", str(datos), "--fecha", HOY, "--solo-fallos"]) == 1
 
 
 def test_gold_de_una_cadena_que_se_quedo_atras_se_nombra(datos):

@@ -91,6 +91,23 @@ def test_sin_datos_no_inventa_cifras(tmp_path, monkeypatch):
     assert datos["en_varias_cadenas"] == 0
     assert datos["dias_historial"] == 0
     assert datos["ultima_ejecucion"] is None
+    assert datos["ingesta"] is None, "sin informe del vigilante no se inventa un «todo bien»"
+
+
+def test_el_estado_de_la_ingesta_del_vigilante_llega_al_panel(tmp_path, monkeypatch):
+    """El vigilante deja `avisos_ingesta.json`; el panel enseña estado, nº y códigos."""
+    _prepara(tmp_path, monkeypatch)
+    (tmp_path / "data" / "avisos_ingesta.json").write_text(
+        '{"fecha": "2026-11-04", "estado": "aviso", "avisos": ['
+        '{"codigo": "captura_corta", "cadena": "alcampo", "gravedad": "aviso"}]}',
+        encoding="utf-8")
+
+    datos = metricas.construye()
+
+    assert datos["ingesta"]["estado"] == "aviso"
+    assert datos["ingesta"]["fecha"] == "2026-11-04"
+    assert datos["ingesta"]["avisos"] == 1
+    assert datos["ingesta"]["codigos"] == ["captura_corta"]
 
 
 def test_escribe_json_valido_y_atomico(tmp_path, monkeypatch):

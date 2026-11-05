@@ -75,4 +75,18 @@ if !CODIGO!==0 (
 )
 
 powershell -NoProfile -Command "Get-Content 'data\ejecuciones.log' -Tail 24"
+
+REM **El vigilante de la ingesta.** Deja el informe del dia (data\avisos_ingesta.json) y avisa
+REM si hay un FALLO. Con `--solo-fallos` un aviso conocido --por ejemplo Alcampo corto porque
+REM la referencia es el 17/10-- no hace fallar el dia: el dia esta hecho, solo trajo menos.
+REM Su codigo NO cambia el del dia: se avisa y se sigue, como el control de cobertura.
+uv run python -m scripts.vigilar_ingesta --solo-fallos >> "data\ejecuciones.log" 2>&1
+if !errorlevel! neq 0 (
+  echo Cesta: el vigilante ha visto un FALLO de ingesta. Mira data\avisos_ingesta.json
+  echo %date% %time% FALLO de ingesta: mira data\avisos_ingesta.json >> "data\avisos_ingesta.log"
+)
+
+REM Y las metricas del panel se refrescan con el estado de la ingesta dentro.
+uv run python -m projects.cesta.metricas >nul 2>&1
+
 exit /b !CODIGO!

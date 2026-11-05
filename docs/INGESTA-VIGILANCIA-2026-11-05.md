@@ -111,10 +111,16 @@ Sale **0** si todo está bien y **1** si hay algún aviso o algún fallo. **Un f
 también sale 1**: si no hay `runs.csv`, ni bronce, ni gold, el informe es un fallo, no un
 silencio. Un vigilante que no puede mirar y contesta que sí es peor que no tenerlo.
 
+**En la cadena diaria se llama con `--solo-fallos`**: sale 0 si solo hay avisos y 1 si hay un
+fallo de verdad. Es lo que evita que el aviso «Alcampo corto» (la referencia es el 17/10) salte
+todos los días y convierta un día bueno en fallido; los avisos se siguen viendo en el informe y
+en `metricas-cesta.json`.
+
 Opciones:
 
 ```
 .\.venv\Scripts\python.exe -m scripts.vigilar_ingesta --json          # el informe en JSON por stdout
+.\.venv\Scripts\python.exe -m scripts.vigilar_ingesta --solo-fallos   # 0 si solo hay avisos
 .\.venv\Scripts\python.exe -m scripts.vigilar_ingesta --fecha 2026-11-04   # reconstruir ese día
 .\.venv\Scripts\python.exe -m scripts.vigilar_ingesta --datos <carpeta>    # otra carpeta de datos
 ```
@@ -227,26 +233,31 @@ vacío, el día está limpio). `referencia` es **literalmente** lo que devolvió
 
 ---
 
-## 6. El enganche a la cadena diaria — **propuesto, no aplicado hoy**
+## 6. El enganche a la cadena diaria — **aplicado el 2026-11-05**
 
-Hoy **no se ha enganchado nada**, y es a propósito: hay una ingesta corriendo y tocar
-`ejecutar.bat` o `run.py` en este momento es exactamente lo que no hay que hacer. Lo que sigue es
-el cambio, con la línea exacta, para aplicarlo cuando la pasada haya cerrado.
-
-### La opción recomendada: dos líneas en `ejecutar.bat`
-
-Al final de `ejecutar.bat`, **después** del `powershell ... -Tail 24` y **antes** de
-`exit /b !CODIGO!`:
+La pasada del 5/11 ya había cerrado (`todo correcto`, publicación `20261105-123941`) cuando se
+aplicó el enganche, así que no se interrumpió ninguna captura. Lo que está en `ejecutar.bat`, al
+final, **después** del `powershell ... -Tail 24` y **antes** de `exit /b !CODIGO!`:
 
 ```bat
-REM El vigilante de la ingesta: informe, data\avisos_ingesta.json y codigo 0/1.
-REM Su codigo NO cambia el del dia: un aviso no puede convertir un dia bueno en fallido.
-uv run python -m scripts.vigilar_ingesta >> "data\ejecuciones.log" 2>&1
-if !errorlevel! neq 0 echo Cesta: el vigilante ha visto algo; mira data\avisos_ingesta.json
+REM **El vigilante de la ingesta.** Deja el informe del dia (data\avisos_ingesta.json) y avisa
+REM si hay un FALLO. Con `--solo-fallos` un aviso conocido --por ejemplo Alcampo corto porque
+REM la referencia es el 17/10-- no hace fallar el dia: el dia esta hecho, solo trajo menos.
+REM Su codigo NO cambia el del dia: se avisa y se sigue, como el control de cobertura.
+uv run python -m scripts.vigilar_ingesta --solo-fallos >> "data\ejecuciones.log" 2>&1
+if !errorlevel! neq 0 (
+  echo Cesta: el vigilante ha visto un FALLO de ingesta. Mira data\avisos_ingesta.json
+  echo %date% %time% FALLO de ingesta: mira data\avisos_ingesta.json >> "data\avisos_ingesta.log"
+)
+
+REM Y las metricas del panel se refrescan con el estado de la ingesta dentro.
+uv run python -m projects.cesta.metricas >nul 2>&1
 ```
 
-(El intérprete es el mismo que usa la línea de arriba, `uv run python`, que es el del `.venv`;
-`.\.venv\Scripts\python.exe -m scripts.vigilar_ingesta` es la misma cosa sin pasar por `uv`.)
+**`--solo-fallos` es la pieza que evita el ruido diario.** Sin él, el aviso «Alcampo corto»
+(referencia del 17/10, 28.022) saltaría todos los días y el exit 1 convertiría un día bueno en
+fallido; con él, el día sale 0 si solo hay avisos y 1 si hay un fallo de verdad. El informe y el
+JSON siguen diciendo los avisos, y `metricas-cesta.json` los lleva al panel en `ingesta`.
 
 **Por qué ahí y no en `run.py`:** `ejecutar.bat` es el único sitio que sigue vivo cuando `run.py`
 **se muere**. Si el proceso se cae a mitad —lo que ya pasó el 21 de septiembre de 2026, con
@@ -291,7 +302,7 @@ de disparar `ejecutar.bat`, ese día no escribe nada y sólo lo caza el chequeo 
 .\.venv\Scripts\python.exe -m pytest tests/test_vigilar_ingesta.py -q
 ```
 
-**17 pruebas, todas con datos sintéticos en `tmp_path`** — `bronze/fuente=*/fecha=*/`, `runs.csv`,
+**19 pruebas, todas con datos sintéticos en `tmp_path`** — `bronze/fuente=*/fecha=*/`, `runs.csv`,
 `precio_diario.parquet`, `actual.json`, `cobertura/`, la marca y la nota de avisos, montados
 fichero a fichero. Ni el `data/` de verdad, ni PostgreSQL: una prueba que mira el disco real mide
 el calendario, no el código.
@@ -365,6 +376,13 @@ A las 11:38 Carrefour iba por la categoría 550 de 596 y Alcampo por la 340 con 
 la cadena cierre, esos cinco avisos desaparecen por su orden: cobertura y avisos en el cierre, gold
 al publicar, y las dos cadenas al dejar su pasada.
 
+**Y cerró así (medido a las 12:45, con la pasada terminada):** las seis cadenas dejaron su pasada
+—Alcampo la última, 22.811 filas tras pelear con el WAF y rescatar por buscador—, gold publicó la
+versión **20261105-123941** con el día 5/11, y la cobertura quedó declarada. El vigilante, ya
+enganchado al `.bat`, dice: **1 aviso, 0 fallos** — Alcampo, 22.811 contra 28.022 (81,4 %, la vara
+del 17/10) — y con `--solo-fallos` sale **0**: el día está hecho, solo que Alcampo trajo menos.
+Es exactamente el comportamiento buscado: el aviso se ve, el día no se finge roto.
+
 **Lo que diría del día de ayer**, reconstruido con `--fecha 2026-11-04` (un día que todo el mundo
 dio por bueno): **1 aviso, 0 fallos** — Alcampo, 23.416 filas contra 28.022 (83,6 %, la vara del
 17/10). Ni una cosa más en seis cadenas. Eso es lo que se quiere de un vigilante: que el día normal
@@ -375,7 +393,7 @@ haga ruido sólo por lo que de verdad no cuadra.
 ## 10. Lo que se ha tocado
 
 - `scripts/vigilar_ingesta.py` — nuevo. Sólo lectura local; escribe `data/avisos_ingesta.json`.
-- `tests/test_vigilar_ingesta.py` — nuevo. 17 pruebas, datos sintéticos, sin PostgreSQL.
+- `tests/test_vigilar_ingesta.py` — nuevo. 19 pruebas (incluye el caso de `--solo-fallos`), datos sintéticos, sin PostgreSQL.
 - `docs/INGESTA-VIGILANCIA-2026-11-05.md` — este documento.
 
 Nada más: **ni `ejecutar.bat`, ni `run.py`, ni el Programador de tareas, ni una línea de `data/`

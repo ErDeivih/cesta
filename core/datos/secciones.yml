@@ -810,6 +810,7 @@ mapa:
     "congelados/rebozados-y-platos-preparados/lasanas-y-canelones": congelados # nueva 2026-10-26
     "frescos/pan-y-bolleria-del-dia/roscones-de-reyes": panaderia      # nueva 2026-10-28
     "la-despensa/cestas-y-lotes/perfumeria-para-regalar": desayuno-dulces # nueva 2026-10-28
+    "congelados/verduras-congeladas": congelados                       # nueva 2026-11-05
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77
