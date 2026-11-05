@@ -8,11 +8,20 @@ con `\`** — el continuador es el acento grave.
 ## 1. Comprobar que todo está sano
 
 ```powershell
-uv run pytest -q
-uv run ruff check .
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m ruff check .
 ```
 
-Esperado: **342 en verde**.
+> **`uv run pytest` no funciona en este PC** (falla con «uv trampoline failed to
+> canonicalize script path»): se llama al Python del `.venv`, que es el que usa
+> el proyecto. Y **la suite completa no cabe en el presupuesto de 5 minutos de
+> `DOCTRINA-CALIDAD.md` §1.7**: son unas 2.200 pruebas (≈1.419 verdes + 782
+> skipped de PostgreSQL, que se saltan sin base) y tarda entre 16 y 29 minutos
+> según la máquina. Para el cambio de cada día, corre el subconjunto del área
+> tocada; la suite completa es la puerta de entrega. El test preexistente que
+> recorre 58.760 `.gz` de `data/raw` es el que se come el tiempo (documentado en
+> `docs/COBERTURA-DIARIA-2026-11-04.md` §8). Tarea 21 del `BACKLOG.md`: partir
+> el gate rápido del gate de entrega.
 
 > Hasta el 21 de septiembre este comando era **destructivo**: una prueba del
 > colector de Carrefour llamaba a `main()`, `main()` daba el día por bueno y
