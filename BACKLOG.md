@@ -438,3 +438,14 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Regla**: no se implementa ninguna pantalla hasta que David valide su artboard (una a una).
 - **Cómo se sabe que está bien**: David da el sí de cada tablero en el canvas; después, la
   implementación usa los tokens y el §8 como la Portada y la ficha.
+
+### 36. Lista de la compra y Favoritos con los artboards aprobados — **hecho (05/11)**
+- **Lista** (`Cesta.tsx`): precio estimado sobre bosque, filas con casilla de 22 px dentro de 44,
+  precio por línea cuando el reparto lo trae, «Añadir producto» y CTA «Comparar mi cesta».
+  Conserva sesión/alta, compartir, cola offline, novedades, pasillos, cierre y reparto.
+- **Favoritos** (`Favoritos.tsx`): tarjetas con cadena, precio, estado y rango mín–máx sacado de la
+  serie real de `/api/grupo/:id` (solo con ≥2 precios y una unidad); sin serie, precio y cambio
+  reales, sin inventar. Conserva ventana 7/30/90, orden, añadir/quitar y estados.
+- **Puertas**: tipos, npm 385, componentes 119/119 (Cesta 16 nuevas, Favoritos 22), pytest UI 26
+  verdes / 13 saltadas; build servido. Pendiente: `prueba_navegador.py` mide textos viejos
+  («Por coger», «Lo que cuesta») y la puerta del navegador, tarea 33.

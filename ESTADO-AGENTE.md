@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Diez artboards en el canvas (Portada y Producto ya aprobados + 8 nuevos: lista, favoritos, comparar, recetas, receta con coste, calorías, ofertas y perfil) esperando la validación de David. Ficha de producto y comparar mi cesta ya están implementadas; del resto no se implementa nada hasta que su artboard esté aprobado.
+resumen: Ficha de producto, comparar mi cesta, lista de la compra y favoritos ya implementados con los tokens aprobados; toca Recetas (listado y detalle con coste).
 estado: en-curso
-tarea: validar los 8 artboards nuevos y, por cada sí, implementar esa pantalla; después seguir con las casillas de WALL
+tarea: implementar pantalla a pantalla los artboards aprobados, en el orden de David; hechas ficha, comparar, lista y favoritos
 nivel: 2
-siguiente: que David valide pantalla a pantalla en el canvas; luego implementar lista, favoritos, calorías, recetas, ofertas y perfil con los tokens aprobados
-bloqueado: nada duro; las pantallas nuevas esperan validación del artboard (regla de David) y las ofertas/cuentas mantienen sus límites de datos
+siguiente: Recetas (listado y detalle con coste de ingredientes) y después Calorías, Ofertas y Perfil
+bloqueado: nada duro; ofertas y cuentas de supers mantienen sus límites de datos (tipo/condición sí, precio de socio no)
 fecha: 2026-11-05

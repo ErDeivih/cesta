@@ -1,50 +1,239 @@
 /** Los favoritos: lo que se compra siempre, **por lo que se ha movido**.
  *
- *  Esta pantalla es de vigilancia, no un catalogo, y lo que se viene a saber es
+ *  Esta pantalla es de vigilancia, no un catálogo, y lo que se viene a saber es
  *  «¿se ha movido algo de lo que compro siempre?». Por eso el orden y la cifra que
- *  se enseña son el cambio: lo que ha bajado arriba (y lo que mas, primero),
- *  despues lo que ha subido, y al final lo que no se ha movido.
+ *  se enseña son el cambio: lo que ha bajado arriba (y lo que más, primero),
+ *  después lo que ha subido, y al final lo que no se ha movido.
  *
- *  **Eso se decia aqui desde el primer dia y no se hacia.** El 30 de septiembre de
- *  2026, leyendo el codigo contra su propia documentacion: la API prometia ese orden
- *  y devolvia los favoritos en el orden en que se anadieron, y la pantalla enseñaba
- *  el precio de hoy sin decir si habia cambiado. Ahora el cambio lo mide
- *  `movimientos.cambios_de_grupos` (contra la captura anterior dentro de la
- *  ventana) y viene con lo que **no se puede comparar** dicho: `sin historico`,
- *  `cambio de formato` o `ya no esta en el catalogo`.
+ *  **La composición es la del artboard aprobado** (`designs/cesta-app/project/Favoritos.dc.html`):
+ *  una tarjeta por producto, con su nombre, su cadena, el precio de hoy y el estado; debajo, el
+ *  rango del histórico (mínimo–máximo) con la marca de dónde cae hoy. El rango **no se inventa**:
+ *  sale de la serie real que ya sirve `/api/grupo` para la ficha, filtrada por el `producto_id` de
+ *  ese favorito y solo si la unidad no cambió por el camino. Si no hay serie para él, la tarjeta
+ *  enseña su precio y su cambio real, y ninguna barra.
  *
- *  El diseño de la composicion es de Stitch (`.stitch/prompts/06-favoritos.txt`,
- *  pantalla «Cesta · Favoritos (Movil)», 30 de septiembre de 2026). Aqui se copia la
- *  composicion; los numeros, los tokens y las areas de 44 px los pone el codigo.
+ *  Lo que no se pierde de la versión anterior: la ventana de 7/30/90 días, el orden que decide la
+ *  API, el pasar favoritos a una lista (de uno en uno y todos de golpe), el quitar, la puerta de
+ *  sesión, los estados de carga/vacío/error con reintento y el motivo de los que no se pueden
+ *  comparar (`sin historico`, `cambio de formato`, `ya no esta en el catalogo`).
  *
- *  Necesita sesion, como la cesta: los favoritos son de cada uno.
+ *  §8 manda en los textos: nada de API, de IDs, de «gold» ni de cómo se calcula nada. «Historial
+ *  de 5 días» o «ha bajado un 8,7 % en 7 días» son la medida dicha, no la receta.
  */
-import { useState } from 'react'
-import { listaDelDiario } from '../logica/listaDelDiario'
+import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { verFavoritos, quitarFavorito } from '../api/favoritos'
-import { anadirDesdeFavoritos, misListas } from '../api/cesta'
+import { anadirDesdeFavoritos, misListas, yo } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
-import { yo } from '../api/cesta'
+import { quitarFavorito, verFavoritos } from '../api/favoritos'
+import { useGrupo } from '../api/consultas'
 import {
-  eurosUnidad, fecha, nombreCadena, porcentaje, porcentajeConSigno,
+  eurosUnidad, fecha, ms, nombreCadena, porcentaje,
 } from '../api/formato'
-import { Aviso, Boton, Cargando, Etiqueta, Fallo, Tarjeta, Vacio, cx } from '../componentes/ui'
-import type { Favorito } from '../tipos'
+import { IconoCorazonLleno } from '../componentes/iconos'
+import { Aviso, Boton, Fallo, Vacio, cx } from '../componentes/ui'
+import { listaDelDiario } from '../logica/listaDelDiario'
+import type { Favorito, PuntoSerie } from '../tipos'
 
-/** Las ventanas que se pueden pedir. Siete dias es la que contesta «¿esta mas caro
- *  que la semana pasada?», que es la pregunta de la compra; treinta y noventa son
- *  para mirar una tendencia, y noventa solo tiene sentido porque el historico ya
- *  llega (24 capturas el 30 de septiembre de 2026). */
+/** Las ventanas que se pueden pedir. Siete días es la que contesta «¿está más caro que la
+ *  semana pasada?», que es la pregunta de la compra; treinta y noventa son para mirar una
+ *  tendencia. */
 const VENTANAS = [7, 30, 90]
 
-/** El desplegable de listas, con la ultima usada ya elegida.
+/** El día en milisegundos, para contar la ventana real de una serie. */
+const UN_DIA = 24 * 60 * 60 * 1000
+
+/** *** EL RANGO DEL HISTÓRICO, CON LOS DATOS QUE HAY. *** *
  *
- *  Se guarda en el movil cual fue la ultima: quien pasa veinte favoritos a la lista
- *  de la semana no quiere elegir la misma lista veinte veces. */
+ *  *La regla es la de siempre: un mínimo que mezcla dos productos o dos unidades no es el mínimo
+ *  de nada, y no se enseña.* *Por eso se filtra por el `producto_id` del favorito y se exige que
+ *  no haya más de una unidad en la serie. Y se necesitan **dos precios**: con uno solo no hay
+ *  rango, hay un precio.*
+ *
+ *  El precio de hoy entra en la cuenta aunque la última captura de la serie no lo traiga: es un
+ *  dato real de hoy, y sin él la marca de la barra podría caer fuera del mínimo y del máximo.
+ */
+export interface RangoDeFavorito {
+  minimo: number
+  maximo: number
+  actual: number
+  /** Días de calendario entre la primera y la última fecha de la serie, contando las dos. */
+  dias: number
+  desde: string
+  hasta: string
+  unidad: string | null
+  /** Dónde cae el precio de hoy dentro del rango, de 0 a 100. */
+  posicion: number
+}
+
+export function rangoDeLaSerie(
+  puntos: PuntoSerie[],
+  productoId: string | null | undefined,
+  precioActual: number | null | undefined,
+  unidad: string | null | undefined,
+): RangoDeFavorito | null {
+  if (!productoId) return null
+  if (precioActual == null || !Number.isFinite(precioActual) || precioActual <= 0) return null
+
+  const delProducto = puntos
+    .filter((p) => p.producto_id === productoId)
+    .map((p) => ({ ...p, momento: ms(p.fecha) }))
+    .filter((p): p is PuntoSerie & { momento: number } => Number.isFinite(p.momento))
+    .sort((a, b) => a.momento - b.momento)
+
+  if (delProducto.length === 0) return null
+
+  const conPrecio = delProducto.filter(
+    (p) => p.precio_unidad_cent != null && Number.isFinite(p.precio_unidad_cent)
+      && p.precio_unidad_cent > 0,
+  )
+  if (conPrecio.length < 2) return null
+
+  const unidades = [...new Set(
+    conPrecio.map((p) => (p.unidad_canon ?? '').trim().toLowerCase()).filter(Boolean),
+  )]
+  if (unidades.length > 1) return null
+
+  const unidadDelFavorito = (unidad ?? '').trim().toLowerCase()
+  if (unidades.length === 1 && unidadDelFavorito && unidades[0] !== unidadDelFavorito) return null
+
+  const primera = delProducto[0]
+  const ultima = delProducto[delProducto.length - 1]
+  const dias = Math.floor((ultima.momento - primera.momento) / UN_DIA) + 1
+  // *Un solo día con dos precios no es una serie: es un dato repetido.*
+  if (dias < 2) return null
+
+  const precios = [...conPrecio.map((p) => p.precio_unidad_cent as number), precioActual]
+  const minimo = Math.min(...precios)
+  const maximo = Math.max(...precios)
+  const posicion = maximo === minimo
+    ? 50
+    : Math.min(100, Math.max(0, ((precioActual - minimo) / (maximo - minimo)) * 100))
+
+  return {
+    minimo,
+    maximo,
+    actual: precioActual,
+    dias,
+    desde: primera.fecha,
+    hasta: ultima.fecha,
+    unidad: unidades[0] ?? (unidadDelFavorito || null),
+    posicion,
+  }
+}
+
+/** *** LO QUE DICE EL RANGO, CON PALABRAS. *** *
+ *
+ *  *Los dos cortes de «cerca» (10 %) son de composición, no de dato: sirven para que la etiqueta
+ *  diga lo mismo que se ve en la barra. El dato es el mínimo, el máximo y dónde cae hoy.*
+ */
+export type TonoDelRango = 'bien' | 'aviso' | 'neutro'
+
+const CERCA = 10
+
+export function estadoDelRango(r: RangoDeFavorito): { texto: string; tono: TonoDelRango } {
+  if (r.maximo === r.minimo) return { texto: 'sin cambios', tono: 'neutro' }
+  if (r.actual <= r.minimo) return { texto: 'en el mínimo', tono: 'bien' }
+  if (r.actual >= r.maximo) return { texto: 'en el máximo', tono: 'aviso' }
+  if (r.posicion <= CERCA) return { texto: 'cerca del mínimo', tono: 'bien' }
+  if (r.posicion >= 100 - CERCA) return { texto: 'cerca del máximo', tono: 'aviso' }
+  return { texto: 'ni mínimo ni máximo', tono: 'neutro' }
+}
+
+const COLOR_DEL_TONO: Record<TonoDelRango, string> = {
+  bien: 'text-bien',
+  aviso: 'text-aviso',
+  neutro: 'text-tinta-suave',
+}
+
+/** El sentido del cambio, que es lo que ordena la lista. `null` si no se pudo medir. */
+function sentidoDe(f: Favorito): 'baja' | 'sube' | 'igual' | null {
+  if (!f.comparable) return null
+  const pct = f.variacion_pct
+  if (pct == null || !Number.isFinite(pct)) return null
+  return pct < 0 ? 'baja' : pct > 0 ? 'sube' : 'igual'
+}
+
+/** El cambio dicho como se lee: «ha bajado un 8,7 % en 7 días».
+ *
+ *  Los días son los que hay **de verdad** (`dias_medidos`): un producto que lleva tres días en el
+ *  catálogo dice tres. Si la API vieja no los manda, se dice la ventana que se pidió.
+ */
+export function textoDelCambio(f: Favorito, ventana: number): string | null {
+  if (!f.comparable) return null
+  const pct = f.variacion_pct
+  if (pct == null || !Number.isFinite(pct)) return null
+  const medidos = f.dias_medidos != null && f.dias_medidos > 0 ? f.dias_medidos : null
+  const pedidos = f.dias != null && f.dias > 0 ? f.dias : ventana
+  const dias = medidos ?? pedidos
+  const cuando = `en ${dias} ${dias === 1 ? 'día' : 'días'}`
+  if (pct === 0) return `sin cambios ${cuando}`
+  const cuanto = porcentaje(Math.abs(pct), 1)
+  return pct < 0 ? `ha bajado un ${cuanto} ${cuando}` : `ha subido un ${cuanto} ${cuando}`
+}
+
+function colorDelCambio(sentido: 'baja' | 'sube' | 'igual'): string {
+  return sentido === 'baja' ? 'text-bien' : sentido === 'sube' ? 'text-error' : 'text-tinta-suave'
+}
+
+/** La clave estable de un favorito, para el `key` de React y para saber cuál se está quitando. */
+function claveDeFavorito(f: { grupo_id?: number | null; producto_id?: string | null }): string {
+  if (f.producto_id) return f.producto_id
+  if (f.grupo_id != null) return `grupo-${f.grupo_id}`
+  return 'sin-id'
+}
+
+/** A dónde lleva el nombre: a la comparación del grupo o a la ficha del producto suelto.
+ *
+ *  *La ruta nueva, no la redirección de antes: `/compra/comparar/:id` y
+ *  `/compra/productos/:fuente/:id`.* *Un favorito que apunta a algo que ya no está no lleva a
+ *  ninguna parte.*
+ */
+function rutaDeLaFicha(f: Favorito): string | null {
+  if (f.desconocido) return null
+  if (f.grupo_id != null) return `/compra/comparar/${f.grupo_id}`
+  const pid = f.producto_id
+  if (!pid || !pid.includes(':')) return null
+  const [fuente, ...resto] = pid.split(':')
+  const idFuente = resto.join(':')
+  if (!fuente || !idFuente) return null
+  return `/compra/productos/${encodeURIComponent(fuente)}/${encodeURIComponent(idFuente)}`
+}
+
+/** La cadena y la marca, sin repetir la marca si ya está en el nombre. */
+function metaDe(f: Favorito): string {
+  const cadena = f.cadena ?? f.fuente ?? null
+  const marca = f.marca?.trim() ?? ''
+  const nombre = f.nombre ?? ''
+  const marcaRepetida = marca.length > 0 && nombre.toLowerCase().includes(marca.toLowerCase())
+  return [cadena ? nombreCadena(cadena) : null, marcaRepetida ? null : marca]
+    .filter((x): x is string => Boolean(x))
+    .join(' · ')
+}
+
+/** Por qué no se puede decir cuánto ha cambiado. */
+function motivoDe(f: Favorito): string {
+  if (f.desconocido) {
+    return f.que === 'grupo'
+      ? 'Este producto ya no está en el catálogo.'
+      : 'Este producto ya no está en el catálogo de su cadena.'
+  }
+  if (f.motivo === 'cambio de formato') {
+    return 'Cambió el formato, así que el precio de hoy y el de antes no se pueden comparar.'
+  }
+  return 'Todavía no hay dos precios que comparar: se añadió hace poco.'
+}
+
+/* ================================================================== la lista === */
+
+/** El desplegable de listas, con la última usada ya elegida.
+ *
+ *  Sin listas no hay desplegable: se dice que hace falta crear una, que es lo único que se puede
+ *  hacer. El `select` **no lleva tamaño de letra propio**: por debajo de 16 px, Safari del móvil
+ *  hace zoom al enfocar y la página se descuadra. Lo vigila `test_ui_movil.py`.
+ */
 function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
   listas: { id: string; nombre: string }[]
   valor: string
@@ -53,19 +242,23 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
 }) {
   if (!listas.length) {
     return (
-      <Link to="/cesta" className="text-cuerpo underline">
+      <Link
+        to="/compra/listas"
+        className="inline-flex min-h-[44px] items-center text-etiqueta text-terracota underline underline-offset-2"
+      >
         Crea una lista para poder añadir
       </Link>
     )
   }
   return (
-    <label className="flex items-center gap-2 text-cuerpo">
-      <span className="text-tinta-suave">{etiqueta}</span>
+    <label className="flex min-h-[44px] items-center gap-2">
+      <span className="text-etiqueta text-tinta-tenue">{etiqueta}</span>
       <select
         value={valor}
         onChange={(e) => alCambiar(e.target.value)}
-        className="min-h-[44px] rounded-campo border border-borde bg-papel px-2 "
+        className="min-h-[44px] max-w-[9rem] rounded-campo border border-borde-fuerte bg-papel px-2 py-2"
       >
+        {!valor && <option value="">Elige una lista</option>}
         {listas.map((l) => (
           <option key={l.id} value={l.id}>{l.nombre}</option>
         ))}
@@ -74,89 +267,270 @@ function ElegirLista({ listas, valor, alCambiar, etiqueta }: {
   )
 }
 
-/** El cambio, dicho con palabras y con la cifra.
- *
- *  **La palabra va con el color, no en lugar del color**: quien no distingue el verde del
- *  rojo tiene que poder leer «ha bajado». Y el porcentaje lleva siempre su ventana
- *  («en 7 dias»), porque un −8,7 % sin decir sobre cuanto no es un dato, es un adorno.
- *  Los dias que se dicen son los que hay **de verdad** (`dias_medidos`): un producto que
- *  lleva tres dias en el catalogo dice tres. */
-function ElCambio({ f }: { f: Favorito }) {
-  if (!f.comparable) return null
-  // *** Y si no hay variacion, tampoco: `SinMedida` es quien lo explica. ***
-  // *`?? 0` convertiria «no hay con que compararlo» en «no ha cambiado» -- y el propio
-  // `SinMedida` dice, tres lineas mas abajo, que un «0 %» ahi es MENTIRA.*
-  if (f.variacion_pct === null || f.variacion_pct === undefined) return null
-  const pct = f.variacion_pct
-  const dias = f.dias_medidos ?? f.dias ?? 7
-  const sentido = pct < 0 ? 'baja' : pct > 0 ? 'sube' : 'igual'
+/** El corazón de quitar. 44 px, `aria-pressed` y el nombre en el `aria-label`: el icono solo no
+ *  es un botón. */
+function BotonQuitar({ quitando, alQuitar }: { quitando: boolean; alQuitar: () => void }) {
   return (
-    /* `data-cambio` es el gancho que usa la puerta para comprobar **el orden** sin depender de
-       que hoy haya bajado algo: el sentido esta en el DOM como dato, no solo como color (que
-       es justo lo que no puede distinguir quien no lo distingue). */
-    <span data-cambio={sentido}>
-      <Etiqueta tono={pct < 0 ? 'bien' : pct > 0 ? 'mal' : 'dato'}>
-        {sentido === 'igual' ? 'igual' : `ha ${sentido === 'baja' ? 'bajado' : 'subido'}`}{' '}
-        {pct === 0 ? '(0,0 %' : porcentajeConSigno(pct, 1)}
-        {` en ${dias} ${dias === 1 ? 'día' : 'días'}`}
-        {pct === 0 ? ')' : ''}
-      </Etiqueta>
-    </span>
+    <button
+      type="button"
+      aria-label="Quitar de favoritos"
+      aria-pressed="true"
+      title="Quitar de favoritos"
+      disabled={quitando}
+      onClick={alQuitar}
+      className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-pastilla text-terracota transition-colors duration-rapida ease-suave hover:bg-lavado-terracota disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <IconoCorazonLleno width={20} height={20} />
+    </button>
   )
 }
 
-/** Por que no se puede decir cuanto ha cambiado.
- *
- *  Un «0 %» aqui seria mentira: no es que no se haya movido, es que no hay con que
- *  compararlo. Cada motivo se dice con su frase, y el del catalogo lleva ademas la salida
- *  (quitarlo), que es lo unico que se puede hacer con el. */
-function SinMedida({ f, alQuitar, quitando }: {
+/** Un favorito que sí se puede medir: precio, rango real (si hay serie) y cambio. */
+function TarjetaDeFavorito({ f, ventana, elegida, quitando, alQuitar, alAnadir, anadiendo }: {
   f: Favorito
-  alQuitar: () => void
+  ventana: number
+  elegida: string
   quitando: boolean
+  alQuitar: () => void
+  alAnadir: () => void
+  anadiendo: boolean
 }) {
-  const frase = f.desconocido
-    ? f.que === 'grupo'
-      ? 'Este producto ya no está en el catálogo.'
-      : 'Este producto ya no está en el catálogo de su cadena.'
-    : f.motivo === 'cambio de formato'
-      ? 'Cambió el formato (la unidad o la cantidad), así que comparar el precio de hoy con el de antes no diría nada.'
-      : 'Todavía no hay dos capturas que comparar: se añadió hace poco.'
+  const id = useId()
+  const grupo = useGrupo(f.grupo_id)
+  const rango = rangoDeLaSerie(
+    grupo.data?.serie ?? [],
+    f.producto_id,
+    f.precio_unidad_cent,
+    f.unidad,
+  )
+  const estado = rango ? estadoDelRango(rango) : null
+  const cambio = textoDelCambio(f, ventana)
+  const sentido = sentidoDe(f)
+  const ruta = rutaDeLaFicha(f)
+  const meta = metaDe(f)
+  const nombre = f.nombre ?? 'Un producto que seguías'
+
   return (
-    <Tarjeta>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-medium">
-            {f.nombre ?? <span className="text-tinta-suave">Un producto que seguías</span>}
-          </p>
-          {f.marca && <p className="text-cuerpo text-tinta-suave">{f.marca}</p>}
+    <section
+      aria-labelledby={id}
+      className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+    >
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 id={id} className="text-cuerpo-fuerte leading-snug text-tinta">
+            {ruta ? (
+              <Link
+                to={ruta}
+                className="flex min-h-[44px] items-center rounded-nota hover:underline focus-visible:underline"
+              >
+                {nombre}
+              </Link>
+            ) : (
+              nombre
+            )}
+          </h2>
+          {meta && <p className="mt-0.5 text-etiqueta text-tinta-tenue">{meta}</p>}
         </div>
-        <Etiqueta tono={f.desconocido ? 'aviso' : 'dato'}>
-          {f.desconocido ? 'ya no está' : 'sin comparar'}
-        </Etiqueta>
+
+        <div className="shrink-0 text-right">
+          <p className="cifra text-precio-fila font-semibold text-tinta">
+            {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+          </p>
+          {estado && (
+            <p className={cx('text-etiqueta-fuerte', COLOR_DEL_TONO[estado.tono])}>
+              {estado.texto}
+            </p>
+          )}
+        </div>
+
+        <BotonQuitar quitando={quitando} alQuitar={alQuitar} />
       </div>
-      <p className="mt-2 text-cuerpo text-tinta-suave">{frase}</p>
-      {f.precio_unidad_cent != null && (
-        <p className="cifra mt-2 text-lg font-semibold">
-          {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+
+      {/* *** EL RANGO, SOLO SI HAY SERIE DE VERDAD. *** *
+          *El mínimo y el máximo son de la serie de este producto; la marca dice dónde cae hoy.*
+          *La barra es decorativa para quien no la ve: debajo va la misma frase en texto.* */}
+      {rango && (
+        <>
+          <div aria-hidden="true" className="mt-3 flex items-center gap-2">
+            <span className="cifra w-[4.5rem] shrink-0 truncate text-etiqueta text-tinta-tenue">
+              {eurosUnidad(rango.minimo, rango.unidad)}
+            </span>
+            <span className="relative h-2 min-w-0 flex-1 rounded-pastilla bg-lavado-verde">
+              <span
+                className="absolute top-1/2 h-3.5 w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-pastilla bg-verde"
+                style={{ left: `${rango.posicion}%` }}
+              />
+            </span>
+            <span className="cifra w-[4.5rem] shrink-0 truncate text-right text-etiqueta text-tinta-tenue">
+              {eurosUnidad(rango.maximo, rango.unidad)}
+            </span>
+          </div>
+          <p className="sr-only">
+            Precio de {nombre}: entre {eurosUnidad(rango.minimo, rango.unidad)} y{' '}
+            {eurosUnidad(rango.maximo, rango.unidad)}, del {fecha(rango.desde, true)} al{' '}
+            {fecha(rango.hasta, true)}. Hoy, {eurosUnidad(rango.actual, rango.unidad)}.
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-etiqueta">
+            <span className="text-tinta-tenue">Historial de {rango.dias} días</span>
+            {cambio && sentido && (
+              <span data-cambio={sentido} className={cx('font-medium', colorDelCambio(sentido))}>
+                {cambio}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+
+      {!rango && cambio && sentido && (
+        <p className="mt-2 text-etiqueta">
+          <span data-cambio={sentido} className={cx('font-medium', colorDelCambio(sentido))}>
+            {cambio}
+          </span>
         </p>
       )}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {!f.desconocido && (
-          <Link
-            to={f.grupo_id != null ? `/grupo/${f.grupo_id}` : '/buscar'}
-            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
-          >
-            {f.grupo_id != null ? 'Ver la ficha' : 'Buscar otro'}
-          </Link>
-        )}
-        <Boton variante="sutil" disabled={quitando} onClick={alQuitar}>
-          Quitar
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-4">
+        <Boton variante="sutil" disabled={!elegida || anadiendo} onClick={alAnadir}>
+          A la lista
         </Boton>
       </div>
-    </Tarjeta>
+    </section>
   )
 }
+
+/** Un favorito que no se puede comparar: se dice por qué, en vez de enseñar un cero. */
+function TarjetaSinMedida({ f, elegida, quitando, alQuitar, alAnadir, anadiendo }: {
+  f: Favorito
+  elegida: string
+  quitando: boolean
+  alQuitar: () => void
+  alAnadir: () => void
+  anadiendo: boolean
+}) {
+  const id = useId()
+  const ruta = rutaDeLaFicha(f)
+  const meta = metaDe(f)
+  const nombre = f.nombre ?? 'Un producto que seguías'
+
+  return (
+    <section
+      aria-labelledby={id}
+      className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+    >
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 id={id} className="text-cuerpo-fuerte leading-snug text-tinta">
+            {ruta ? (
+              <Link
+                to={ruta}
+                className="flex min-h-[44px] items-center rounded-nota hover:underline focus-visible:underline"
+              >
+                {nombre}
+              </Link>
+            ) : (
+              nombre
+            )}
+          </h3>
+          {meta && <p className="mt-0.5 text-etiqueta text-tinta-tenue">{meta}</p>}
+        </div>
+
+        <div className="shrink-0 text-right">
+          {f.precio_unidad_cent != null && (
+            <p className="cifra text-precio-fila font-semibold text-tinta">
+              {eurosUnidad(f.precio_unidad_cent, f.unidad)}
+            </p>
+          )}
+          <p className={cx(
+            'text-etiqueta-fuerte',
+            f.desconocido ? 'text-aviso' : 'text-tinta-suave',
+          )}>
+            {f.desconocido ? 'ya no está' : 'sin comparar'}
+          </p>
+        </div>
+
+        <BotonQuitar quitando={quitando} alQuitar={alQuitar} />
+      </div>
+
+      <p className="mt-2 text-cuerpo text-tinta-suave">{motivoDe(f)}</p>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-4">
+        <Boton variante="sutil" disabled={!elegida || anadiendo} onClick={alAnadir}>
+          A la lista
+        </Boton>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================ los estados === */
+
+/** Volver a la portada, y el contador de productos cuando ya se sabe cuántos hay. */
+function FilaDeVuelta({ cuantos, orden }: { cuantos?: number; orden?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <Link
+        to="/"
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-campo pr-2 text-cuerpo text-tinta-suave transition-colors duration-rapida ease-suave hover:text-tinta"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+          className="shrink-0"
+        >
+          <path d="M19 12H5M11 18l-6-6 6-6" />
+        </svg>
+        Volver
+      </Link>
+
+      {cuantos != null && (
+        <div className="text-right">
+          <p className="text-etiqueta text-tinta-tenue">
+            {cuantos} {cuantos === 1 ? 'producto' : 'productos'}
+          </p>
+          {orden && (
+            <p className="text-etiqueta text-tinta-tenue">Primero lo que ha bajado</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** La forma de lo que viene: tres tarjetas, no una línea de texto. */
+function CargandoFavoritos() {
+  return (
+    <div role="status" aria-live="polite" className="grid gap-3">
+      <span className="sr-only">Cargando tus favoritos…</span>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+        >
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="h-4 w-2/3 animate-pulse rounded-nota bg-marfil motion-reduce:animate-none" />
+              <div className="mt-2 h-3 w-1/3 animate-pulse rounded-nota bg-marfil motion-reduce:animate-none" />
+            </div>
+            <div className="h-8 w-20 animate-pulse rounded-campo bg-marfil motion-reduce:animate-none" />
+            <div className="h-11 w-11 animate-pulse rounded-pastilla bg-marfil motion-reduce:animate-none" />
+          </div>
+          <div className="mt-4 h-2 w-full animate-pulse rounded-pastilla bg-marfil motion-reduce:animate-none" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ================================================================== la página === */
 
 export function Favoritos() {
   const cliente = useQueryClient()
@@ -172,16 +546,19 @@ export function Favoritos() {
     queryFn: () => verFavoritos(ventana),
     enabled: sesion.data?.usuario != null,
   })
-  // La lista a la que se pasan. Empieza por la primera que haya y se queda con lo
-  // que elija la persona, sin volver a preguntarlo en cada tarjeta.
   const [destino, setDestino] = useState<string>('')
   const [dicho, setDicho] = useState<string | null>(null)
   const elegida = listaDelDiario(listas.data, destino) ?? ''
+  const idSinCambio = useId()
 
   const quitar = useMutation({
     mutationFn: (f: { grupo_id: number | null; producto_id?: string | null }) =>
       quitarFavorito(f.grupo_id, f.producto_id ?? null),
-    onSuccess: () => cliente.invalidateQueries({ queryKey: ['favoritos'] }),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: ['favoritos'] })
+      setDicho('Quitado de favoritos')
+      setTimeout(() => setDicho(null), 4000)
+    },
   })
 
   const pasar = useMutation({
@@ -204,239 +581,229 @@ export function Favoritos() {
       cliente.invalidateQueries({ queryKey: ['listas'] })
       cliente.invalidateQueries({ queryKey: ['lista', elegida] })
       cliente.invalidateQueries({ queryKey: ['reparto', elegida] })
-      setDicho(cuantos === 1 ? 'Añadido a la lista' : `Añadidos ${cuantos} a la lista`)
+      setDicho(
+        cuantos === 0
+          ? 'Ya estaban en la lista'
+          : cuantos === 1
+            ? 'Añadido a la lista'
+            : `Añadidos ${cuantos} a la lista`,
+      )
       setTimeout(() => setDicho(null), 4000)
     },
   })
 
-  if (sesion.isLoading || favoritos.isLoading) return <Cargando que="tus favoritos" />
+  if (sesion.isLoading || favoritos.isLoading) {
+    return (
+      <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+        <FilaDeVuelta />
+        <CargandoFavoritos />
+      </div>
+    )
+  }
 
   if (!sesion.data?.usuario) {
-    // **El titulo de `Vacio` es el `h1`** (`comoPagina`): sin sesion esta pantalla **es** la
-    // puerta, asi que el titulo es el titulo de la pagina. Antes llevaba un `h1` oculto al lado
-    // para que la pagina no se quedara sin encabezado de nivel 1.
+    // **La puerta es la de siempre**, pero **sin un segundo `h1`**: el título de la página ya lo
+    // pone la cabecera de la suite («Favoritos»), y dos `h1` en el mismo documento dejan el
+    // encabezado sin dueño. El título de la puerta se lee igual; lo que cambia es la etiqueta.
     return (
-      <Vacio titulo="Entra para ver tus favoritos" comoPagina className="grow">
+      <Vacio titulo="Entra para ver tus favoritos" className="grow">
         <p>
-          Los favoritos son tuyos, así que hacen falta tus listas. Se entra desde{' '}
-          <Link to="/cesta" className="underline">la lista</Link>.
+          Los favoritos se guardan en tu cuenta. Se entra desde{' '}
+          <Link to="/compra/listas" className="inline-flex min-h-[44px] items-center underline">
+            la lista
+          </Link>
+          .
         </p>
       </Vacio>
     )
   }
 
   if (favoritos.isError) {
-    // **`Fallo` y no un `Vacio` escrito aquí**, que es el mismo fallo que tenía la cesta y que
-    // se arregló allí el 23 de septiembre de 2026: un cartel que dice «No he podido traerlos» y
-    // **no deja volver a intentarlo** obliga a recargar la página a mano, que en el móvil no es
-    // evidente. Además `Fallo` es quien decide el tono: sin cobertura no es rojo. Medido con la
-    // puerta el 27 de septiembre de 2026, al ampliar la prueba de errores de cuatro pantallas a
-    // doce: era la única sin botón.
-    return <Fallo error={favoritos.error} reintentar={() => void favoritos.refetch()} />
+    // **`Fallo` y no un cartel escrito aquí**: es el que decide el tono (sin cobertura no es rojo)
+    // y el que deja volver a intentarlo sin recargar la página a mano.
+    return (
+      <div className="mx-auto flex w-full max-w-lectura grow flex-col gap-4">
+        <FilaDeVuelta />
+        <Fallo error={favoritos.error} reintentar={() => void favoritos.refetch()} />
+      </div>
+    )
   }
 
   const lista = favoritos.data?.favoritos ?? []
   const fechaDatos = favoritos.data?.fecha_datos
   const nombreDeDestino = listas.data?.find((l) => l.id === elegida)?.nombre
-  // Los que se pueden ordenar por su cambio y los que no. La API ya los manda en el orden
-  // bueno; aqui solo se parten para poder decir **por que** los de abajo no tienen cifra.
+  // La API ya manda los comparables en el orden bueno: bajadas, subidas y quietos. Aquí solo se
+  // parten para poder decir **por qué** los de abajo no tienen cifra.
   const conCambio = lista.filter((f) => f.comparable)
   const sinCambio = lista.filter((f) => !f.comparable)
 
   if (!lista.length) {
     return (
-      /* **El caso vacío da por dónde empezar, y esto es lo mismo que se arregló en los avisos.**
-         Antes decía dónde se añaden («desde la ficha de un producto, con el corazón») y no daba
-         forma de llegar: en la pantalla que está a un toque de la barra de abajo, un callejón
-         sin salida. Medido en una captura de un móvil el 27 de septiembre de 2026. */
-      <Tarjeta>
-        {/* `h1` y no `p`: en el caso vacio esta tarjeta **es** la pantalla, y sin encabezado la
-            pagina se quedaba sin titulo (lo midio `data/debug/accesibilidad.py`). El estilo es
-            el mismo: lo que cambia es lo que oye quien navega por encabezados. */}
-        <h2 className="text-entrada font-semibold">No sigues ningún producto</h2>
-        <p className="mt-2 text-cuerpo text-tinta-suave">
-          Aquí van los pocos que compras siempre, para ver si se mueven sin tener que
-          buscarlos. Se añaden desde la ficha de un producto, con el corazón.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link
-            to="/buscar"
-            className="inline-flex min-h-[44px] items-center rounded-campo bg-terracota px-3 text-cuerpo font-semibold text-papel "
-          >
-            Buscar un producto
-          </Link>
-          <Link
-            to="/cesta"
-            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
-          >
-            Ver mi lista
-          </Link>
-        </div>
-      </Tarjeta>
+      <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+        <FilaDeVuelta />
+        <section
+          aria-labelledby="favoritos-vacio"
+          className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+        >
+          <h2 id="favoritos-vacio" className="font-display text-titulo font-semibold text-tinta">
+            No sigues ningún producto
+          </h2>
+          <p className="mt-2 text-cuerpo text-tinta-suave">
+            Aquí van los productos que compras siempre, para ver si se mueven sin tener que
+            buscarlos. Se añaden desde la ficha de un producto, con el corazón.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              to="/compra"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-campo border border-transparent bg-bosque px-4 text-cuerpo font-medium text-marfil shadow-apoyado transition-colors duration-rapida ease-suave hover:brightness-110"
+            >
+              Buscar un producto
+            </Link>
+            <Link
+              to="/compra/listas"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-campo border border-borde-fuerte bg-papel px-4 text-cuerpo font-medium text-tinta transition-colors duration-rapida ease-suave hover:bg-marfil"
+            >
+              Ver mi lista
+            </Link>
+          </div>
+        </section>
+      </div>
     )
   }
 
   return (
-    <div className="grid gap-4">
-      <header className="grid gap-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-xl font-semibold">Favoritos</h2>
-          {fechaDatos && <Etiqueta tono="dato">datos del {fecha(fechaDatos)}</Etiqueta>}
-        </div>
-        <p className="text-cuerpo text-tinta-suave">
-          Ordenados por lo que se han movido: primero lo que ha bajado, después lo que ha
-          subido, y al final lo que no se ha movido. Los precios son por unidad, que es lo
-          único comparable entre formatos.
-        </p>
+    <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+      <FilaDeVuelta cuantos={lista.length} orden={conCambio.length > 0} />
 
-        {/* La ventana, dicha con palabras y no con una flecha: «7 días» puesto y «Ventana
-            activa: 7 días» debajo, porque un botón pulsado se distingue por el color y el
-            color no puede ser la única señal. */}
-        <div
-          role="group"
-          aria-label="Periodo"
-          className="flex flex-wrap gap-2"
-        >
-          {VENTANAS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              aria-pressed={ventana === d}
-              onClick={() => setVentana(d)}
-              className={cx(
-                'min-h-[44px] rounded-campo border px-3 text-cuerpo font-medium tabular-nums',
-                ventana === d
-                  ? 'border-terracota bg-terracota text-papel '
-                  : 'border-borde ',
-              )}
-            >
-              {d} días
-            </button>
-          ))}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div
+            role="group"
+            aria-label="Ventana del cambio"
+            className="flex flex-wrap items-center gap-1.5"
+          >
+            <span className="text-etiqueta text-tinta-tenue">Cambio en</span>
+            {VENTANAS.map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={ventana === d}
+                onClick={() => setVentana(d)}
+                className={cx(
+                  'cifra min-h-[44px] rounded-pastilla border px-3 text-etiqueta font-semibold transition-colors duration-rapida ease-suave',
+                  ventana === d
+                    ? 'border-terracota bg-terracota text-sobre-terracota'
+                    : 'border-borde-fuerte bg-papel text-tinta-suave hover:bg-marfil',
+                )}
+              >
+                {d} días
+              </button>
+            ))}
+          </div>
+          {/* *La ventana, dicha con palabras y no solo con el color del botón pulsado.* */}
+          <p className="text-etiqueta text-tinta-tenue" aria-live="polite">
+            Ventana activa: {ventana} días
+          </p>
         </div>
-        <p className="text-etiqueta text-tinta-suave" aria-live="polite">
-          Ventana activa: {ventana} días
-        </p>
 
-        {/* Lo que hace util tener favoritos: pasarlos a la lista de la compra. */}
-        <div className="flex flex-wrap items-center gap-3">
-          <ElegirLista listas={listas.data ?? []} valor={elegida}
-                       alCambiar={setDestino} etiqueta="Añadir a" />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <ElegirLista
+            listas={listas.data ?? []}
+            valor={elegida}
+            alCambiar={setDestino}
+            etiqueta="Añadir a"
+          />
           <Boton
-            variante="principal"
+            variante="normal"
             disabled={!elegida || pasar.isPending}
             onClick={() => pasar.mutate({ todos: lista })}
           >
             {pasar.isPending ? 'Añadiendo…' : `Añadir los ${lista.length} a la lista`}
           </Boton>
-          <Link to="/cesta" className="text-cuerpo underline">
+          <Link
+            to={elegida ? `/compra/listas/${encodeURIComponent(elegida)}` : '/compra/listas'}
+            className="inline-flex min-h-[44px] items-center text-etiqueta text-terracota underline underline-offset-2"
+          >
             {nombreDeDestino ? `Ver «${nombreDeDestino}»` : 'Ver la lista'}
           </Link>
         </div>
-        {dicho && <Aviso tono="bien" titulo={dicho}>Se puede cambiar de tienda dentro de la lista.</Aviso>}
+
+        {dicho && <Aviso tono="bien" titulo={dicho} />}
         {pasar.isError && (
           <Aviso tono="mal" titulo="No he podido añadirlos">
             {textoDeError(pasar.error)}
           </Aviso>
         )}
-      </header>
+        {quitar.isError && (
+          <Aviso tono="mal" titulo="No he podido quitarlo">
+            {textoDeError(quitar.error)}
+          </Aviso>
+        )}
+      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {conCambio.map((f, n) => {
-          const clave = f.producto_id ?? `g${f.grupo_id ?? n}`
-          const cadena = f.cadena ?? f.fuente ?? null
+      <div className="grid gap-3">
+        {conCambio.map((f) => {
+          const clave = claveDeFavorito(f)
           return (
-            <Tarjeta key={clave}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  {f.grupo_id != null ? (
-                    <Link to={`/grupo/${f.grupo_id}`} className="font-medium underline">
-                      {f.nombre}
-                    </Link>
-                  ) : (
-                    <span className="font-medium">{f.nombre}</span>
-                  )}
-                  {f.marca && (
-                    <p className="text-cuerpo text-tinta-suave">{f.marca}</p>
-                  )}
-                </div>
-                <ElCambio f={f} />
-              </div>
-
-              <p className="cifra mt-2 text-lg font-semibold">
-                {eurosUnidad(f.precio_unidad_cent, f.unidad)}
-                {/* El de antes, tachado: es lo que hace legible la cifra del cambio -- de un
-                    −8,7 % no se sabe si es mucho o poco hasta que se ve de cuanto a cuanto. */}
-                {f.precio_unidad_antes_cent != null
-                  && f.precio_unidad_antes_cent !== f.precio_unidad_cent && (
-                  <span className="ml-2 text-cuerpo font-normal text-tinta-suave line-through">
-                    antes {eurosUnidad(f.precio_unidad_antes_cent, f.unidad)}
-                  </span>
-                )}
-              </p>
-              <p className="text-cuerpo text-tinta-suave">
-                {cadena && <>en {nombreCadena(cadena)}</>}
-                {f.ahorro_pct != null && f.ahorro_pct > 0 && (
-                  // *La diferencia es **del grupo**, no de este articulo: puede ser otra marca con su
-                  // propio EAN. Se dice «del grupo» para que no se lea como el ahorro de este.*
-
-                  <> · −{porcentaje(f.ahorro_pct, 0)} frente a la más cara del grupo</>
-                )}
-                {f.n_cadenas != null && f.n_cadenas > 1 && (
-                  <> · {f.n_cadenas} cadenas</>
-                )}
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Boton
-                  variante="principal"
-                  disabled={!elegida || pasar.isPending}
-                  onClick={() => pasar.mutate({
-                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
-                  })}
-                >
-                  A la lista
-                </Boton>
-                <Boton
-                  variante="sutil"
-                  disabled={quitar.isPending}
-                  onClick={() => quitar.mutate({
-                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
-                  })}
-                >
-                  Quitar
-                </Boton>
-              </div>
-            </Tarjeta>
+            <TarjetaDeFavorito
+              key={clave}
+              f={f}
+              ventana={ventana}
+              elegida={elegida}
+              quitando={quitar.isPending}
+              anadiendo={pasar.isPending}
+              alQuitar={() => quitar.mutate({
+                grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+              })}
+              alAnadir={() => pasar.mutate({
+                grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+              })}
+            />
           )
         })}
       </div>
 
-      {/* **El grupo de los que no se pueden comparar, al final y con su motivo.** Antes esto
-          no existia: un favorito sin historico se pintaba igual que los demas, con su precio y
-          sin decir nada del cambio, y eso se lee como «no se ha movido». */}
+      {/* **El grupo de los que no se pueden comparar, al final y con su motivo.** Un favorito sin
+          histórico se pintaba igual que los demás, con su precio y sin decir nada del cambio, y
+          eso se lee como «no se ha movido». */}
       {sinCambio.length > 0 && (
-        <section className="grid gap-3" aria-label="Sin cambio que medir todavía">
+        <section className="grid gap-3" aria-labelledby={idSinCambio}>
           <div>
-            <h2 className="text-entrada font-semibold">Sin cambio que medir todavía</h2>
-            <p className="text-cuerpo text-tinta-suave">
-              Estos no se pueden comparar en los últimos {ventana} días, y se dice por qué
-              en vez de enseñar un cero.
+            <h2
+              id={idSinCambio}
+              className="font-display text-subtitulo font-semibold text-tinta"
+            >
+              Sin cambio que medir todavía
+            </h2>
+            <p className="mt-1 text-etiqueta text-tinta-suave">
+              No se pueden comparar en los últimos {ventana} días. Se dice por qué.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sinCambio.map((f, n) => (
-              <SinMedida
-                key={f.producto_id ?? `g${f.grupo_id ?? n}`}
-                f={f}
-                quitando={quitar.isPending}
-                alQuitar={() => quitar.mutate({
-                  grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
-                })}
-              />
-            ))}
+          <div className="grid gap-3">
+            {sinCambio.map((f) => {
+              const clave = claveDeFavorito(f)
+              return (
+                <TarjetaSinMedida
+                  key={clave}
+                  f={f}
+                  elegida={elegida}
+                  quitando={quitar.isPending}
+                  anadiendo={pasar.isPending}
+                  alQuitar={() => quitar.mutate({
+                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+                  })}
+                  alAnadir={() => pasar.mutate({
+                    grupo_id: f.grupo_id, producto_id: f.producto_id ?? null,
+                  })}
+                />
+              )
+            })}
           </div>
         </section>
+      )}
+
+      {fechaDatos && (
+        <p className="text-etiqueta text-tinta-tenue">Precios del {fecha(fechaDatos)}.</p>
       )}
     </div>
   )

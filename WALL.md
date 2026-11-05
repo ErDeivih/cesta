@@ -12,7 +12,7 @@ hasta agotar el bloque.
 
 - [x] Ficha de producto (precio, €/kg, historial, alternativas). **Hecho 5/11** (ruta `/compra/productos/:fuente/:idFuente`; `logica/juicio.ts` con la ventana real y pruebas rojo→verde).
 - [x] Comparar mi cesta. **Hecho 5/11** (`/compra/listas/:listaId/comparar`; corona solo la cadena que cuenta todas las líneas y no resta ofertas condicionadas).
-- [ ] Favoritos, lista de la compra.
+- [x] Favoritos, lista de la compra. **Hecho 5/11** (vista de lista con precio estimado y precio por línea; favoritos con rango real de historial).
 - [ ] Calculadora de calorías con pautas de salud.
 - [ ] Recetas (establecidas y de usuario).
 - [ ] Ofertas con su tipo y si exigen club del súper.
@@ -28,26 +28,25 @@ hasta agotar el bloque.
 - [x] Ingesta del 5/11 cerrada sola y vigilada: 6 cadenas, gold `20261105-123941`, y
       `scripts/vigilar_ingesta.py` enganchado a `ejecutar.bat` (avisa solo si hay fallo).
 
-## Artboards pendientes de validación (2026-11-05)
+## Artboards **aprobados** por David (2026-11-05, 20:16)
 
 Añadidos al canvas `designs/cesta-app` (10 tableros en total). David los valida **antes** de
 implementar cada pantalla:
 
-- [ ] Lista de la compra (`Lista.dc.html`): productos con cantidad, precio estimado 10,70 €.
-- [ ] Favoritos (`Favoritos.dc.html`): 3 guardados, rango de su historial de 60/59 días.
-- [ ] Comparar mi cesta (`Comparar.dc.html`): Alcampo 7,19 € gana con 3 de 3; DIA 10,16 y
+- [x] Lista de la compra (`Lista.dc.html`): productos con cantidad, precio estimado 10,70 €.
+- [x] Favoritos (`Favoritos.dc.html`): 3 guardados, rango de su historial de 60/59 días.
+- [x] Comparar mi cesta (`Comparar.dc.html`): Alcampo 7,19 € gana con 3 de 3; DIA 10,16 y
       Carrefour 10,97; Mercadona/Aldi/Lidl incompletos.
-- [ ] Recetas, listado (`Recetas.dc.html`): recetario y «mis recetas».
-- [ ] Receta y coste (`Receta.dc.html`): tortilla, 5,32 € (1,33 €/ración) con ingredientes.
-- [ ] Calorías (`Calorias.dc.html`): 1.075 de 2.200 kcal y las tres comidas del día.
-- [ ] Ofertas (`Ofertas.dc.html`): tipo y condición de club en 5 ofertas reales.
-- [ ] Tu perfil (`Perfil.dc.html`): cadena habitual, dieta, alérgenos, objetivo y avisos.
+- [x] Recetas, listado (`Recetas.dc.html`): recetario y «mis recetas».
+- [x] Receta y coste (`Receta.dc.html`): tortilla, 5,32 € (1,33 €/ración) con ingredientes.
+- [x] Calorías (`Calorias.dc.html`): 1.075 de 2.200 kcal y las tres comidas del día.
+- [x] Ofertas (`Ofertas.dc.html`): tipo y condición de club en 5 ofertas reales.
+- [x] Tu perfil (`Perfil.dc.html`): cadena habitual, dieta, alérgenos, objetivo y avisos.
 
 ## Notas de trabajo
 
-- Orden acordado por David (2026-11-05): ficha de producto → comparar mi cesta → favoritos y
-  lista → calculadora de calorías → recetas → ofertas con tipo/club → apps de supers →
-  aprender de las listas.
+- Orden acordado por David (2026-11-05): ficha → comparar mi cesta → lista → favoritos →
+  recetas → calorías → ofertas → perfil → apps de supers → aprender de las listas.
 - Lo que se puede enseñar ya: portada en `http://127.0.0.1:8080/`.
 - Reglas: `DOCTRINA-CALIDAD.md` §8 en todas las pantallas, sin GitHub Actions, push selectivo,
   `data/` fuera de git y `resumen:` en `ESTADO-AGENTE.md`.

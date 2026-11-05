@@ -33,8 +33,8 @@ import { Link, useLocation } from 'react-router-dom'
 
 import {
   anadirLinea, borrarLista, cambiarLinea, cerrarCompra, compartirCon, crearInvitacion,
-  crearLista, entrar, misListas, registrarse, renombrarLista, revocarInvitaciones, salir,
-  sincronizar, verLista, donde, yo,
+  crearLista, entrar, misListas, registrarse, renombrarLista, reparto as pedirReparto,
+  revocarInvitaciones, salir, sincronizar, verLista, donde, yo,
 } from '../api/cesta'
 import type {
   CambioDeCola, CambioLinea, CierreDeCompra, Invitacion, Novedad, Persona,
@@ -52,11 +52,11 @@ import type { CambioPendiente } from '../estado/cola'
 import { Mosaico } from '../componentes/Mosaico'
 import { RepartoEnTiendas } from '../componentes/RepartoEnTiendas'
 import {
-  Aviso, Boton, CampoTexto, Cargando, Casilla, Esqueleto, Etiqueta, Fallo, Selector,
+  Aviso, Boton, CampoTexto, Cargando, Esqueleto, Etiqueta, Fallo, Selector,
   Tarjeta, Vacio, cx,
 } from '../componentes/ui'
 import { PegarEnLaLista } from '../componentes/PegarEnLaLista'
-import type { Linea, Reparto } from '../tipos'
+import type { Linea, Reparto, RepartoTiendas } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
  *
@@ -371,8 +371,79 @@ function porPasillo(lineas: Linea[]): [string, Linea[]][] {
   return tandas
 }
 
-function UnaLinea({ linea, guardando, cambiar }: {
+/** El precio de una linea, cuando la API lo sabe. */
+interface PrecioDeLaLinea {
+  coste_cent: number
+  /** La cadena de la que es ese precio. `null` si el reparto no la dice. */
+  cadena: string | null
+}
+
+/** Lo que cuesta cada linea, por su id, sacado del reparto (`GET /listas/{id}/reparto`).
+ *
+ *  **La lista no trae precio por linea, y esto no lo inventa.** `GET /listas/{id}` manda la
+ *  estimacion entera (`estimacion`) y las lineas, pero no el coste de cada una; el unico sitio
+ *  de la API de donde sale **el coste de UNA linea** es el reparto, que ya se pide para la
+ *  tarjeta de «Donde compro cada cosa» -- misma `queryKey`, asi que esta pantalla **no anade
+ *  una peticion**, solo lee lo que ya viene.
+ *
+ *  Y **cubre lo que cubre**: el reparto deja fuera las lineas que ya estan en el carro y las que
+ *  apuntan a otro producto. Esas filas se quedan **sin cifra**, que es la verdad; el total de
+ *  arriba sigue siendo el de toda la lista.
+ */
+function preciosPorLinea(reparto: RepartoTiendas | undefined): Map<string, PrecioDeLaLinea> {
+  const precios = new Map<string, PrecioDeLaLinea>()
+  if (!reparto) return precios
+  for (const sublista of reparto.sublistas ?? []) {
+    for (const deLaTienda of sublista.lineas ?? []) {
+      if (!deLaTienda.linea_id) continue
+      precios.set(deLaTienda.linea_id, {
+        coste_cent: deLaTienda.coste_cent,
+        cadena: sublista.cadena,
+      })
+    }
+  }
+  for (const sinDecidir of reparto.sin_asignar ?? []) {
+    if (!sinDecidir.linea_id || sinDecidir.coste_cent == null) continue
+    precios.set(sinDecidir.linea_id, {
+      coste_cent: sinDecidir.coste_cent,
+      cadena: sinDecidir.mas_barata,
+    })
+  }
+  return precios
+}
+
+/** La cadena del total, **solo cuando se sabe**: cuando toda la lista esta decidida en una.
+ *
+ *  *No se corona la cadena «mas barata» de cada linea: eso no es una cadena, es un reparto, y
+ *  decir «en Mercadona» cuando se compra en tres sitios es el tipo de mentira que hace
+ *  desconfiar de la cifra. Cuando no hay una sola tienda, la tarjeta no lleva cadena.*
+ */
+function cadenaDelTotal(reparto: RepartoTiendas | undefined): string | null {
+  if (!reparto) return null
+  if ((reparto.sublistas ?? []).length !== 1) return null
+  if ((reparto.sin_asignar ?? []).length > 0) return null
+  if ((reparto.sin_encontrar ?? []).length > 0) return null
+  return reparto.sublistas[0]?.cadena ?? null
+}
+
+/** Una linea, con la casilla de verdad delante y su precio al lado, como el artboard.
+ *
+ *  Lo que se ve, y por que:
+ *
+ *  - **La casilla es una casilla** (`input type=checkbox`, 22 px) dentro de un `label` que lleva
+ *    el nombre: el gesto del pasillo es tocar la linea, no apuntar a un cuadrado pequeño, y
+ *    quien no ve la pantalla oye el nombre del producto al llegar al control.
+ *  - **El precio de la linea solo se pinta si la API lo sabe** (`preciosPorLinea`). Un precio
+ *    repartido a ojo del total seria una cifra que nadie puede comprobar.
+ *  - **La cadena va con el precio**, porque un precio sin decir de que tienda es no se puede
+ *    comprobar. El **€/kg no se pinta**: la API no lo manda por linea, y esta pantalla no
+ *    inventa una unidad que no tiene.
+ *  - **Las tres acciones siguen donde estaban** -- cantidad, quitar y nota --, con los mismos
+ *    `aria-label`: el diseno cambia, la funcion no.
+ */
+function UnaLinea({ linea, precio, guardando, cambiar }: {
   linea: Linea
+  precio?: PrecioDeLaLinea
   guardando: boolean
   cambiar: (lineaId: string, cambio: CambioLinea) => void
 }) {
@@ -383,39 +454,83 @@ function UnaLinea({ linea, guardando, cambiar }: {
   // nota que quiza no se termina.
   const [escribiendo, setEscribiendo] = useState(false)
   const [borrador, setBorrador] = useState(linea.nota ?? '')
+  const idCasilla = `linea-${linea.id}`
+  // **Una linea sin destino es legitima** desde la migracion 014 (paquete G02): se apunta lo
+  // que no esta en el catalogo en vez de obligar a buscarlo. Pero **no es un producto**, y la
+  // pantalla no puede hacer que lo parezca: no tiene precio y no entra en ninguna comparacion.
+  const sinCatalogo = !linea.grupo_id && !linea.producto_id
 
   return (
-    <li className="grid gap-1 rounded-campo border border-borde p-2">
-      <div className="flex flex-wrap items-center gap-2">
-      <Casilla
-        etiqueta={
-          <span className={cx(tachada && 'text-tinta-suave line-through')}>
-            {linea.nombre_visto}
-            {/* **Sin destino, se dice en la pantalla.** Una linea asi es legitima desde la
-                migracion 014 (paquete G02): se apunta lo que no esta en el catalogo, en vez de
-                obligar a buscarlo o a apuntarlo en otro sitio. Pero **no es un producto**, y la
-                pantalla no puede hacer que lo parezca: **no tiene precio, no entra en ninguna
-                comparacion**, y lo unico que se puede hacer con ella es **identificarla** -- que es
-                el enlace a la busqueda que tiene al lado. */}
-            {!linea.grupo_id && !linea.producto_id && (
-              <span className="ml-2 rounded border border-borde px-1.5 py-0.5 text-[12px] text-secundaria">
-                Sin producto del catálogo
+    <li className="border-t border-borde first:border-t-0">
+      <div className="flex items-start gap-3 px-4 pt-3">
+        <label
+          htmlFor={idCasilla}
+          className="flex min-h-[44px] min-w-0 flex-1 cursor-pointer items-start gap-3"
+        >
+          <input
+            id={idCasilla}
+            type="checkbox"
+            checked={tachada}
+            disabled={guardando}
+            // El estado lo pone el servidor y `tachado` basta: la API mete en el carro y
+            // tacha a la vez (`almacen.py:324`), asi que no son dos cosas que puedan
+            // separarse.
+            onChange={(e) => cambiar(linea.id, { tachado: e.target.checked })}
+            className="mt-0.5 h-[22px] w-[22px] shrink-0 accent-verde"
+          />
+          <span className="min-w-0 flex-1">
+            <span
+              className={cx(
+                'block break-words text-cuerpo-fuerte',
+                tachada ? 'text-tinta-suave line-through' : 'text-tinta',
+              )}
+            >
+              {linea.nombre_visto}
+            </span>
+            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-tenue">
+              {linea.cantidad > 1 && <span className="cifra">{linea.cantidad} ×</span>}
+              {precio?.cadena && <span>en {nombreCadena(precio.cadena)}</span>}
+              {!precio && !tachada && !linea.producto_movido && <span>sin precio</span>}
+              {sinCatalogo && (
+                <span className="rounded-nota border border-borde px-1.5">
+                  Sin producto del catálogo
+                </span>
+              )}
+            </span>
+            {linea.nota && !escribiendo && (
+              <span className="mt-0.5 block break-words text-etiqueta text-tinta-suave">
+                <span className="sr-only">Nota: </span>
+                {linea.nota}
               </span>
             )}
           </span>
-        }
-        checked={tachada}
-        disabled={guardando}
-        // El estado lo pone el servidor y `tachado` basta: la API mete en el
-        // carro y tacha a la vez (`almacen.py:324`), asi que no son dos cosas
-        // que puedan separarse.
-        onChange={(e) => cambiar(linea.id, { tachado: e.target.checked })}
-        className={cx('min-w-[12rem] flex-1', tachada && 'bg-bien-suave')}
-      />
+        </label>
+        {precio && (
+          <span className="cifra mt-0.5 shrink-0 text-precio-fila font-semibold text-tinta">
+            {euros(precio.coste_cent)}
+          </span>
+        )}
+      </div>
 
-      <div className="flex items-center gap-1">
-        {/* La cantidad que acepta la API es 1..99: fuera de ahi contesta 422, y
-            un 422 por pulsar de mas no es una forma de enterarse. */}
+      {/* **La linea que apunta a otro producto, dicha.** El `grupo_id` es un numero que el
+          emparejador renumera en cada pasada, asi que esta linea puede estar apuntando a un
+          pintalabios cuando dice «leche entera»: medido el 28 de septiembre de 2026, la lista
+          ponia esa linea en el pasillo de higiene y belleza y le ponia el precio del pintalabios.
+          La API ya no la cuenta ni la reparte (`catalogo.lineas_movidas`), y aqui se dice por que
+          y se da la salida: buscarla y volver a anadirla. */}
+      {linea.producto_movido && (
+        <p className="mt-1 px-4 text-etiqueta text-aviso">
+          Este producto ha cambiado en el catálogo.{' '}
+          <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
+            Búscalo y vuelve a añadirlo
+          </Link>
+          .
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-1 pb-3 pl-[50px] pr-4 pt-1">
+        {/* La cantidad que acepta la API es 1..99: fuera de ahi contesta 422, y un 422 por
+            pulsar de mas no es una forma de enterarse. */}
         <Boton
           compacto
           disabled={guardando || linea.cantidad <= 1}
@@ -442,75 +557,44 @@ function UnaLinea({ linea, guardando, cambiar }: {
         >
           Quitar
         </Boton>
+        <Boton compacto variante="sutil" disabled={guardando} onClick={() => setEscribiendo(true)}>
+          {linea.nota ? 'Cambiar la nota' : 'Añadir una nota'}
+        </Boton>
       </div>
-      </div>
-      {/* **La linea que apunta a otro producto, dicha.** El `grupo_id` es un numero que
-          el emparejador renumera en cada pasada, asi que esta linea puede estar
-          apuntando a un pintalabios cuando dice «leche entera»: medido el 28 de
-          septiembre de 2026, la lista ponia esa linea en el pasillo de higiene y
-          belleza y le ponia el precio del pintalabios. La API ya no la cuenta ni la
-          reparte (`catalogo.lineas_movidas`), y aqui se dice por que y se da la salida:
-          buscarla y volver a anadirla. */}
-      {linea.producto_movido && (
-        <p className="text-etiqueta text-aviso">
-          Este producto ha cambiado en el catálogo.{' '}
-          <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
-            Búscalo y vuelve a añadirlo
-          </Link>
-          .
-        </p>
-      )}
 
-      {/* **La nota de la linea** (tarea 5): «2 bricks de los grandes», «el del paquete azul».
-          Es lo que se apunta en el pasillo cuando el nombre no basta, y hasta hoy no habia
-          donde apuntarlo: el campo existe en la base desde el primer dia
-          (`lista_linea.nota`) y **no lo pintaba ninguna pantalla** -- el mismo tipo de hueco
-          que `novedades` y que el orden de los favoritos. */}
-      <div className="flex flex-wrap items-center gap-2">
-        {linea.nota && !escribiendo && (
-          <p className="min-w-[8rem] flex-1 text-etiqueta text-tinta-suave">
-            <span className="sr-only">Nota: </span>
-            {linea.nota}
-          </p>
-        )}
-        {escribiendo ? (
-          <>
-            <CampoTexto
-              etiqueta={`Nota para ${linea.nombre_visto}`}
-              value={borrador}
-              onChange={(e) => setBorrador(e.target.value)}
-              maxLength={200}
-              autoComplete="off"
-              className="min-w-[12rem] flex-1"
-            />
-            <Boton
-              compacto
-              disabled={guardando}
-              onClick={() => {
-                cambiar(linea.id, { nota: borrador.trim() || null })
-                setEscribiendo(false)
-              }}
-            >
-              Guardar
-            </Boton>
-            <Boton
-              compacto
-              variante="sutil"
-              onClick={() => {
-                setBorrador(linea.nota ?? '')
-                setEscribiendo(false)
-              }}
-            >
-              Cancelar
-            </Boton>
-          </>
-        ) : (
-          <Boton compacto variante="sutil" disabled={guardando}
-                 onClick={() => setEscribiendo(true)}>
-            {linea.nota ? 'Cambiar la nota' : 'Añadir una nota'}
+      {escribiendo && (
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
+          <CampoTexto
+            etiqueta={`Nota para ${linea.nombre_visto}`}
+            value={borrador}
+            autoFocus
+            onChange={(e) => setBorrador(e.target.value)}
+            maxLength={200}
+            autoComplete="off"
+            className="min-w-[12rem] flex-1"
+          />
+          <Boton
+            compacto
+            disabled={guardando}
+            onClick={() => {
+              cambiar(linea.id, { nota: borrador.trim() || null })
+              setEscribiendo(false)
+            }}
+          >
+            Guardar
           </Boton>
-        )}
-      </div>
+          <Boton
+            compacto
+            variante="sutil"
+            onClick={() => {
+              setBorrador(linea.nota ?? '')
+              setEscribiendo(false)
+            }}
+          >
+            Cancelar
+          </Boton>
+        </div>
+      )}
     </li>
   )
 }
@@ -603,8 +687,168 @@ function NuevaLista({ alCrear }: { alCrear: (id: string) => void }) {
  *  aviso lo dice en vez de dar a entender que se ha destruido: borrar de verdad una
  *  lista compartida le quita la compra a otra persona de un toque.
  */
-function NombreDeLaLista({ lista, alHecho }: {
-  lista: { id: string; nombre: string; papel?: string; es_de_casa?: boolean }
+/* --------------------------------------------------- la cabecera y el total ---
+ *
+ *  **La composicion la manda el artboard aprobado** (`designs/cesta-app/project/Lista.dc.html`,
+ *  390 x 844): cabecera con volver y opciones, el precio estimado sobre bosque, las filas con su
+ *  casilla y su precio, «Añadir producto» y «Comparar mi cesta». Los valores -- colores, tipos,
+ *  radios, sombras y movimiento -- son los del sistema «Cesta App», no se eligen aqui.
+ *
+ *  Y una decision que se ve en el codigo: **el `h1` de esta pantalla lo pone el armazon**
+ *  (`Suite.tsx`, con el titulo de la seccion). El artboard lo pinta porque es una pantalla
+ *  suelta; en la aplicacion, un segundo `h1` es un fallo de accesibilidad que la puerta del
+ *  navegador mide (`if (h1 !== 1)`). Asi que el titulo de aqui es `h2` y lleva **el nombre de
+ *  la lista**, que es lo unico que distingue esta pantalla de otra lista: repetir «La lista»
+ *  debajo de «Lista» no informa de nada.
+ */
+
+/** La cabecera: volver, donde estas y el nombre de la lista, con las opciones a la derecha. */
+function CabeceraDeLaLista({ nombre, deCasa, opciones, alAlternar }: {
+  nombre: string
+  deCasa: boolean
+  opciones: boolean
+  alAlternar: () => void
+}) {
+  return (
+    <header className="flex items-center gap-2">
+      <Link
+        to="/"
+        aria-label="Volver a la portada"
+        className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-pastilla text-tinta-suave transition-colors duration-rapida ease-suave hover:bg-papel hover:text-tinta"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M19 12H5M11 18l-6-6 6-6" />
+        </svg>
+      </Link>
+      <div className="min-w-0 flex-1">
+        <p className="text-micro uppercase text-tinta-tenue">
+          Compra{deCasa ? ' · de casa' : ''}
+        </p>
+        <h2 className="truncate font-serif text-titulo font-semibold text-tinta">{nombre}</h2>
+      </div>
+      <button
+        type="button"
+        aria-label="Tu cuenta"
+        aria-expanded={opciones}
+        aria-controls="opciones-de-la-cuenta"
+        onClick={alAlternar}
+        className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-pastilla text-tinta-suave transition-colors duration-rapida ease-suave hover:bg-papel hover:text-tinta"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+          <circle cx="5" cy="12" r="1.6" />
+          <circle cx="12" cy="12" r="1.6" />
+          <circle cx="19" cy="12" r="1.6" />
+        </svg>
+      </button>
+    </header>
+  )
+}
+
+/** Lo de la cuenta: a donde ir y como salir, detras del boton de opciones.
+ *
+ *  *No se pinta nada que se use en el pasillo: son tres puertas que se buscan una vez. Y el
+ *  armazon ya las tiene en su menu, asi que aqui van recogidas para no competir con la lista.*
+ */
+function OpcionesDeLaCuenta({ alSalir }: { alSalir: () => void }) {
+  return (
+    <div
+      id="opciones-de-la-cuenta"
+      className="flex flex-wrap items-center gap-x-4 rounded-tarjeta border border-borde bg-papel px-4 py-1 shadow-apoyado"
+    >
+      <Link
+        to="/compra/favoritos"
+        className="inline-flex min-h-[44px] items-center text-cuerpo text-tinta-suave underline underline-offset-2"
+      >
+        Favoritos
+      </Link>
+      <Link
+        to="/ajustes"
+        className="inline-flex min-h-[44px] items-center text-cuerpo text-tinta-suave underline underline-offset-2"
+      >
+        Ajustes
+      </Link>
+      <button
+        type="button"
+        onClick={alSalir}
+        className="inline-flex min-h-[44px] items-center text-cuerpo text-tinta-suave underline underline-offset-2"
+      >
+        Salir
+      </button>
+    </div>
+  )
+}
+
+/** El precio estimado de la lista, sobre bosque: lo primero que se mira.
+ *
+ *  Tres cosas que se ven y estan decididas:
+ *
+ *  - **La cifra es la de la API** (`estimacion.total_cent`): no se suma aqui nada.
+ *  - **La cadena solo se dice cuando se sabe** (`cadenaDelTotal`): cuando toda la lista esta
+ *    decidida en una tienda. Si se compra en tres, no hay «una» cadena que poner.
+ *  - **Si no hay precio de nada, no se pinta un cero.** «0,00 €» se lee como gratis, y lo que
+ *    pasa es que no hay precios: la tarjeta lo dice con palabras y cuenta cuantas lineas se
+ *    quedan fuera.
+ */
+function PrecioEstimado({ totalCent, productos, sinPrecio, cadena, fechaDatos }: {
+  totalCent: number | null
+  productos: number
+  sinPrecio: number
+  cadena: string | null
+  fechaDatos: string
+}) {
+  const conPrecio = Math.max(0, productos - sinPrecio)
+  const cuantos = `${productos} ${productos === 1 ? 'producto' : 'productos'}`
+  // *La condicion de las ofertas se dice porque cambia lo que se paga: una oferta de club o de
+  // cupon no esta en esta cifra. Y cuando falta el precio de alguna linea, eso manda: es lo que
+  // explica por que el total no incluye todo.*
+  const detalle = sinPrecio === 0
+    ? `${cuantos} · no incluye ofertas condicionadas`
+    : conPrecio === 0
+      ? `${cuantos} · no tengo precio de ninguno`
+      : `${cuantos} · no tengo precio de ${sinPrecio}`
+
+  return (
+    <section
+      aria-labelledby="precio-estimado"
+      className="rounded-tarjeta bg-bosque p-4 text-sobre-bosque shadow-alzado"
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="precio-estimado" className="text-micro uppercase">Precio estimado</h2>
+        {cadena && <span className="text-etiqueta opacity-80">en {nombreCadena(cadena)}</span>}
+      </div>
+      <p className="cifra mt-2 text-precio-grande font-semibold">
+        {conPrecio > 0 && totalCent != null ? euros(totalCent) : 'Todavía sin precio'}
+      </p>
+      <p className="mt-1 text-etiqueta opacity-80">{detalle}</p>
+      <p className="mt-0.5 text-etiqueta opacity-80">Precios del {fechaTexto(fechaDatos)}</p>
+    </section>
+  )
+}
+
+/** El nombre de la lista: cambiarlo o quitarla, sin repetir el titulo de la cabecera.
+ *
+ *  Borrar la lista entera lo pidio el dueno con estas palabras: *"poder borrar sublista
+ *  o lista del tiron"*. Se **archiva** (desaparece y se puede recuperar), y por eso el aviso lo
+ *  dice en vez de dar a entender que se ha destruido: borrar de verdad una lista compartida le
+ *  quita la compra a otra persona de un toque.
+ *
+ *  *Vive en la barra de las listas, no detras del boton de opciones, y no es un descuido: la
+ *  puerta de funciones pulsa «Cambiar el nombre» y «Quitar la lista» sin abrir nada. Lo que se
+ *  guarda detras del boton son los enlaces de la cuenta.*
+ */
+function AccionesDelNombre({ lista, alHecho }: {
+  lista: { id: string; nombre: string }
   alHecho: (id: string | null) => void
 }) {
   const [renombrando, setRenombrando] = useState(false)
@@ -618,62 +862,70 @@ function NombreDeLaLista({ lista, alHecho }: {
     mutationFn: () => borrarLista(lista.id),
     onSuccess: () => alHecho(null),
   })
-  const puede = lista.papel !== 'mira'
+
+  if (renombrando) {
+    return (
+      <span className="flex flex-1 flex-wrap items-center gap-2">
+        <CampoTexto
+          etiqueta="Nombre"
+          value={nombre}
+          autoFocus
+          onChange={(e) => setNombre(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') renombrar.mutate() }}
+          className="min-h-[44px] min-w-[10rem] flex-1"
+        />
+        <Boton compacto variante="principal" disabled={renombrar.isPending}
+               onClick={() => renombrar.mutate()}>
+          Guardar
+        </Boton>
+        <Boton compacto variante="sutil" onClick={() => setRenombrando(false)}>
+          Cancelar
+        </Boton>
+      </span>
+    )
+  }
 
   return (
-    <div className="mb-1">
-      {renombrando ? (
-        <span className="flex flex-wrap items-center gap-2">
-          <CampoTexto
-            etiqueta="Nombre"
-            value={nombre}
-            autoFocus
-            onChange={(e) => setNombre(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') renombrar.mutate() }}
-            className="min-h-[44px] min-w-[44px]"
-          />
-          <Boton variante="principal" disabled={renombrar.isPending}
-                 onClick={() => renombrar.mutate()}>Guardar</Boton>
-          <button type="button" onClick={() => setRenombrando(false)}
-                  className="min-h-[44px] px-2 text-cuerpo underline">Cancelar</button>
-        </span>
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <button
+        type="button"
+        onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}
+        className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
+      >
+        Cambiar el nombre
+      </button>
+      {confirmando ? (
+        <>
+          <button
+            type="button"
+            disabled={borrar.isPending}
+            onClick={() => borrar.mutate()}
+            className="inline-flex min-h-[44px] items-center text-etiqueta text-error underline underline-offset-2"
+          >
+            Sí, quitar esta lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmando(false)}
+            className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
+          >
+            No
+          </button>
+          <p className="w-full text-etiqueta text-tinta-suave">
+            Desaparece de tu pantalla y de la de quien la comparta. No se borra de
+            verdad: se puede recuperar.
+          </p>
+        </>
       ) : (
-        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 className="text-entrada font-semibold">{lista.nombre}</h2>
-          {lista.es_de_casa && <Etiqueta tono="dato">de casa</Etiqueta>}
-          {puede && (
-            <span className="flex flex-wrap gap-2 text-etiqueta">
-              <button type="button" className="min-h-[44px] min-w-[44px] underline"
-                      onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}>
-                Cambiar el nombre
-              </button>
-              {confirmando ? (
-                <>
-                  <button type="button" className="min-h-[44px] min-w-[44px] underline"
-                          disabled={borrar.isPending}
-                          onClick={() => borrar.mutate()}>
-                    Sí, quitar esta lista
-                  </button>
-                  <button type="button" className="min-h-[44px] min-w-[44px] underline"
-                          onClick={() => setConfirmando(false)}>No</button>
-                </>
-              ) : (
-                <button type="button" className="min-h-[44px] min-w-[44px] underline"
-                        onClick={() => setConfirmando(true)}>
-                  Quitar la lista
-                </button>
-              )}
-            </span>
-          )}
-        </span>
+        <button
+          type="button"
+          onClick={() => setConfirmando(true)}
+          className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
+        >
+          Quitar la lista
+        </button>
       )}
-      {confirmando && (
-        <p className="mt-1 text-etiqueta text-tinta-suave">
-          Desaparece de tu pantalla y de la de quien la comparta. No se borra de
-          verdad: se puede recuperar.
-        </p>
-      )}
-    </div>
+    </span>
   )
 }
 
@@ -1189,6 +1441,8 @@ export function Cesta() {
   // guardar (modo privado del navegador). La segunda es un aviso de verdad.
   const [subidos, setSubidos] = useState<string | null>(null)
   const [sinGuardar, setSinGuardar] = useState(false)
+  // Lo de la cuenta, detras del boton de opciones de la cabecera.
+  const [opciones, setOpciones] = useState(false)
 
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
   const listas = useQuery({
@@ -1208,6 +1462,19 @@ export function Cesta() {
     queryFn: () => donde(listaId as string),
     enabled: listaId != null,
   })
+  /** **El reparto, para el precio de cada linea y para la cadena del total.**
+   *
+   *  `GET /listas/{id}` no manda el coste de cada linea; el reparto si (`coste_cent`). La
+   *  misma `queryKey` que usa `RepartoEnTiendas` -- que se pinta mas abajo --, asi que React
+   *  Query comparte la respuesta y **esto no anade una peticion**: solo lee lo que ya viene.
+   *  Si falla, no se pinta un aviso mas: las filas se quedan sin precio y la tarjeta del
+   *  reparto es la que cuenta lo que pasa.
+   */
+  const repartoDeLaLista = useQuery({
+    queryKey: ['reparto', listaId],
+    queryFn: () => pedirReparto(listaId as string),
+    enabled: listaId != null,
+  })
 
   /** La lista partida en dos, que es como se usa de pie en la tienda.
    *
@@ -1224,6 +1491,7 @@ export function Cesta() {
   const lineas = conPendientes(detalle.data?.lineas ?? [], cola)
   const porCoger = lineas.filter((l) => l.tachado_en === null)
   const enElCarro = lineas.filter((l) => l.tachado_en !== null)
+  const precios = preciosPorLinea(repartoDeLaLista.data)
   const cambia = useMutation({
     // **`networkMode: 'always'` es la pieza que hace que la cola sirva.** Por defecto,
     // React Query *pausa* una mutacion cuando `navigator.onLine` es falso: no la manda,
@@ -1250,6 +1518,7 @@ export function Cesta() {
       // y eso solo se ve recargando.
       cliente.invalidateQueries({ queryKey: ['lista', listaId] })
       cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+      cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
     },
     onError: (error, variables) => {
       // **Sin cobertura no es un error: es un cambio que espera.** Se guarda en el
@@ -1289,6 +1558,7 @@ export function Cesta() {
       if (r.fallidos.length) setSinGuardar(true)
       cliente.invalidateQueries({ queryKey: ['lista', listaId] })
       cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+      cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
       void pendientes
     },
   })
@@ -1325,12 +1595,12 @@ export function Cesta() {
       // *Era `grid gap-4`: *un grid **sin `min-h-full`**, *y por eso la tarjeta de entrar
       // se quedaba **a un tercio de la pantalla** con cientos de pixeles vacios debajo.* *
       //
-      // * *Y se probaron las dos salidas faciles antes de tocar esto: *`grow` en la
+      // *Las dos salidas faciles se probaron antes de tocar esto: *`grow` en la
       // `Tarjeta` **no hizo nada** *(-- *el padre no era columna flexible --)*, *y
       // `min-h-full` en un envoltorio **tampoco**, *porque no resuelve contra un padre de
       // altura `auto`.* *Las dos medidas estan en `COMO-SE-MIDE.md`, *secciones 12 y 15.* *
       //
-      // * *Lo que si funciona es esto, *que es **el mismo patron de `Buscar`**: *raiz
+      // *Lo que si funciona es esto, *que es **el mismo patron de `Buscar`**: *raiz
       // `flex min-h-full flex-col`, *y el bloque que debe llenar con `grow`.* *
       <div className="flex min-h-full flex-col gap-4">
         {/* **El título de la página, sin sesión.** `Introducir` lleva su `h2` («Entra para ver
@@ -1386,10 +1656,35 @@ export function Cesta() {
     )
   }
 
+  const nombreDeLaLista = listas.data.find((l) => l.id === listaId)?.nombre ?? 'La lista'
+  const esDeCasa = listas.data.find((l) => l.id === listaId)?.es_de_casa === true
+  const puedeCambiarla = detalle.data != null && detalle.data.papel !== 'mira'
+
   return (
-    <div className="flex min-h-full flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-semibold">La lista de la compra</h2>
+    <div className="flex min-h-full flex-col gap-bloque">
+      <CabeceraDeLaLista
+        nombre={nombreDeLaLista}
+        deCasa={esDeCasa}
+        opciones={opciones}
+        alAlternar={() => setOpciones(!opciones)}
+      />
+
+      {/* **Lo de la cuenta, detras del boton de opciones.** Son tres puertas que se buscan una
+          vez y no se usan en el pasillo; el armazon ya las tiene en su menu. Cerrado por
+          defecto, porque lo primero que se lee tiene que ser la lista. */}
+      {opciones && (
+        <OpcionesDeLaCuenta
+          alSalir={async () => {
+            await salir()
+            cliente.invalidateQueries()
+          }}
+        />
+      )}
+
+      {/* **La barra de las listas**: cual, crear otra, cambiarle el nombre y quitarla.
+          *Sigue a la vista y no detras del boton de opciones a proposito: es la unica forma de
+          cambiar de lista, y la puerta de funciones la pulsa sin abrir nada.* */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {/* **El selector de listas, siempre.** Antes solo aparecia cuando habia mas de
             una, y eso hace que no se pueda **crear la segunda**: el boton de «nueva
             lista» vivia detras de un desplegable que no existia hasta que ya tuvieras
@@ -1398,7 +1693,7 @@ export function Cesta() {
           value={listaId ?? ''}
           onChange={(e) => setElegida(e.target.value)}
           aria-label="Lista"
-          className="min-h-[44px] rounded-campo border border-borde bg-fondo px-2 py-1"
+          className="min-h-[44px] max-w-[11rem] rounded-campo border border-borde-fuerte bg-papel px-2 py-1"
         >
           {listas.data.map((l) => (
             <option key={l.id} value={l.id}>
@@ -1410,36 +1705,37 @@ export function Cesta() {
           cliente.invalidateQueries({ queryKey: ['listas'] })
           setElegida(id)
         }} />
-        {/* Los dos sitios de "lo tuyo" van aqui, con la sesion, porque es donde
-            uno los busca: los favoritos y los ajustes. Hasta hoy **no habia ni un
-            enlace a ninguno de los dos en toda la aplicacion** -- dos pantallas
-            terminadas a las que solo se llegaba escribiendo la direccion, y una de
-            ellas es donde va el boton de darse de baja. Se midio en el navegador:
-            cero coincidencias de `to="/favoritos"` y `to="/ajustes"`.
-
-            Van como enlaces y no como botones porque no hacen nada: llevan a otra
-            pantalla, y en el navegador eso se abre en una pestana nueva si se
-            quiere. */}
-        <Link to="/favoritos" className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-tinta-suave underline">
-          Favoritos
-        </Link>
-        <Link to="/ajustes" className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-tinta-suave underline">
-          Ajustes
-        </Link>
-        <button
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-cuerpo text-tinta-suave underline"
-          onClick={async () => {
-            await salir()
-            cliente.invalidateQueries()
-          }}
-        >
-          Salir
-        </button>
-      </header>
+        {puedeCambiarla && (
+          <AccionesDelNombre
+            lista={{ id: listaId as string, nombre: nombreDeLaLista }}
+            alHecho={(id) => {
+              cliente.invalidateQueries({ queryKey: ['listas'] })
+              if (id === null) {
+                setElegida('')
+                cliente.invalidateQueries()
+              }
+            }}
+          />
+        )}
+      </div>
 
       {/* De donde viene esta pantalla. Se dice una vez, al llegar del enlace:
           aterrizar en una lista que no has abierto tu, sin explicacion, parece
           un error de la aplicacion y no una invitacion aceptada. */}
+      {/* **Con listas pero sin ninguna elegida, se dice.** `listaDelDiario` devuelve `null`
+          cuando no hay lista de casa ni eleccion, y a proposito: elegir por quien no ha
+          elegido es como una compra acaba anotada en la lista de otra persona. Antes esa
+          cara era un desplegable en blanco y nada debajo; ahora se pide elegir, que es lo
+          unico que se puede hacer. */}
+      {listaId == null && !detalle.isLoading && !detalle.isError && (
+        <Vacio titulo="Elige una lista">
+          <p>
+            Elige en el desplegable de arriba la lista que quieras ver, y aquí saldrá lo
+            que te falta comprar.
+          </p>
+        </Vacio>
+      )}
+
       {venida?.aviso && (
         <Aviso tono="bien">
           <p>{venida.aviso}</p>
@@ -1508,257 +1804,281 @@ export function Cesta() {
           <Fallo error={detalle.error} reintentar={() => void detalle.refetch()} />
         )
       )}
+
       {detalle.data && (
         <>
-          <Tarjeta>
-            <NombreDeLaLista
-              lista={{
-                id: listaId as string,
-                nombre: listas.data.find((l) => l.id === listaId)?.nombre ?? 'Lista',
-                papel: detalle.data.papel,
-                es_de_casa: listas.data.find((l) => l.id === listaId)?.es_de_casa,
-              }}
-              alHecho={(id) => {
-                cliente.invalidateQueries({ queryKey: ['listas'] })
-                if (id === null) {
-                  setElegida('')
-                  cliente.invalidateQueries()
-                }
-              }}
+          {/* **El precio estimado, sobre bosque y lo primero.** Es la cifra que se mira
+              mientras se anade, y el artboard la pone por delante de la lista. */}
+          {lineas.length > 0 && (
+            <PrecioEstimado
+              totalCent={detalle.data.estimacion?.total_cent
+                ?? detalle.data.cotizacion_lista_cent ?? null}
+              productos={lineas.length}
+              sinPrecio={detalle.data.estimacion?.sin_precio ?? 0}
+              cadena={cadenaDelTotal(repartoDeLaLista.data)}
+              fechaDatos={detalle.data.fecha_datos}
             />
-            <p className="cifra text-2xl font-semibold">
-              {euros(detalle.data.estimacion.total_cent)}
-            </p>
-            <p className="mt-1 text-cuerpo text-tinta-suave">
-              Lo que cuesta ahora mismo, comprando cada cosa donde está más barata.
-              {detalle.data.estimacion.sin_precio > 0 && (
-                <> De {detalle.data.estimacion.sin_precio} no tengo precio: no los
-                  cuento.</>
+          )}
+
+          {/* **Las novedades: lo que ha tocado la otra persona desde tu ultima visita.**
+              La API las manda desde el primer dia (`GET /listas/{id}` → `novedades`) y
+              `docs/PANTALLAS.md` decia que estaban hechas, pero **ninguna pantalla las
+              pintaba**. Va antes de las dos secciones porque es una noticia: se lee al
+              abrir y desaparece sola al recargar (la visita se marca al leer, en la misma
+              peticion). */}
+          <Novedades novedades={detalle.data.novedades ?? []}
+                     yo={sesion.data?.usuario?.nombre
+                         ?? sesion.data?.usuario?.usuario ?? null} />
+
+          {lineas.length === 0 && (
+            <>
+              <Vacio titulo="La lista está vacía" className="grow">
+                <p>
+                  Busca un producto o toca uno de abajo: se apunta en un toque, y la
+                  cantidad se cambia aquí.
+                </p>
+              </Vacio>
+              {/* La misma cuadricula que en el otro estado vacio: la pregunta que se
+                  trae a esta pantalla es "¿que me falta?", y con la lista vacia la
+                  respuesta es "todo". Datos reales y un toque, no un cartel que
+                  manda a buscar. */}
+              <Mosaico limite={6} vacia />
+            </>
+          )}
+
+          {/* **Dos trozos, no una lista.** Es la unica pantalla que se usa de pie, en
+              movimiento y con una mano, y con nueve lineas y cuatro ya cogidas hay que leer
+              **nueve nombres** para saber cuales quedan. Con el encabezado se lee uno. Lo
+              piden `docs/PANTALLAS.md` y `docs/UX-MOVIL.md`.
+
+              El orden dentro de cada trozo es el de la API (`ORDER BY en_carrito,
+              anadido_en`, almacen.py), y **dentro de un pasillo ese orden se respeta tal
+              cual**: `porPasillo` solo reparte en tandas y las coloca en el orden del
+              recorrido de la tienda. Los encabezados solo salen si su trozo tiene algo:
+              un «0» es ruido, y el rato en que esta todo cogido es justo el que se mira. */}
+          {porCoger.length > 0 && (
+            <section
+              aria-labelledby="lo-que-falta"
+              className="rounded-tarjeta bg-papel shadow-apoyado"
+            >
+              <h2
+                id="lo-que-falta"
+                className="flex items-baseline gap-2 px-4 pt-3 text-micro uppercase text-tinta-tenue"
+              >
+                Lo que falta
+                <span className="cifra text-tinta-suave">{porCoger.length}</span>
+              </h2>
+              {detalle.data.papel === 'mira' && (
+                <div className="px-4 pt-2">
+                  <Aviso tono="aviso">
+                    <p>
+                      Esta lista te la compartieron para mirar, así que no puedes
+                      cambiarla: los botones están apagados por eso. Quien la creó
+                      puede darte el papel de escribir cuando quiera.
+                    </p>
+                  </Aviso>
+                </div>
               )}
-            </p>
-            <p className="mt-2 text-cuerpo">
-              {/* **Y en singular cuando es una.** *En la lista de una linea ponia
-                  «1 lineas», y al lado «1 ya cogidas». *Con la captura delante.* */}
-              {lineas.length} {lineas.length === 1 ? 'línea' : 'líneas'}
-              {lineas.some((l) => l.tachado_en) && (
-                <> · {lineas.filter((l) => l.tachado_en).length}{' '}
-                  {lineas.filter((l) => l.tachado_en).length === 1
-                    ? 'ya cogida' : 'ya cogidas'}</>
-              )}
-            </p>
-            <p className="mt-1 text-etiqueta text-tinta-suave">
-              Datos del {fechaTexto(detalle.data.fecha_datos)}
-            </p>
-          </Tarjeta>
+              <ul className="mt-1">
+                {porPasillo(porCoger).map(([pasillo, delPasillo]) => (
+                  <li key={pasillo || 'sin-pasillo'}>
+                    {/* **El pasillo, pegado arriba.** La lista se mira de pie, en
+                        movimiento y con una mano, y lo que se necesita saber es en que
+                        pasillo se esta. `top` sale de la altura real de la cabecera
+                        (`--alto-cabecera`), no de un numero escrito: si la cabecera
+                        envuelve en movil, un `top-14` acertaria hoy y fallaria mañana.
+                        Las lineas sin pasillo van **las ultimas y sin encabezado**
+                        (`porPasillo`), porque un dato que no tenemos no se coloca donde
+                        tocaria: se deja al final, que es donde no estorba. */}
+                    {pasillo && (
+                      <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 bg-papel px-4 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave">
+                        {pasillo}
+                      </h3>
+                    )}
+                    <ul>
+                      {delPasillo.map((l) => (
+                        <UnaLinea
+                          key={l.id}
+                          linea={l}
+                          precio={precios.get(l.id)}
+                          guardando={cambia.isPending || detalle.data.papel === 'mira'}
+                          cambiar={(lineaId, cambio) =>
+                            cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
+                        />
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {enElCarro.length > 0 && (
+            <section
+              aria-labelledby="en-el-carro"
+              className="rounded-tarjeta bg-papel shadow-apoyado"
+            >
+              <h2
+                id="en-el-carro"
+                className="flex items-baseline gap-2 px-4 pt-3 text-micro uppercase text-tinta-tenue"
+              >
+                En el carro
+                <span className="cifra text-tinta-suave">{enElCarro.length}</span>
+              </h2>
+              <ul className="mt-1">
+                {porPasillo(enElCarro).map(([pasillo, delPasillo]) => (
+                  <li key={pasillo || 'sin-pasillo'}>
+                    {pasillo && (
+                      <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 bg-papel px-4 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave">
+                        {pasillo}
+                      </h3>
+                    )}
+                    <ul>
+                      {delPasillo.map((l) => (
+                        <UnaLinea
+                          key={l.id}
+                          linea={l}
+                          precio={precios.get(l.id)}
+                          guardando={cambia.isPending || detalle.data.papel === 'mira'}
+                          cambiar={(lineaId, cambio) =>
+                            cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
+                        />
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Deshacer en vez de confirmar: quitar una linea es la accion
+              destructiva de esta pantalla. **El id es la llave**: la API hace
+              ON CONFLICT (id) DO UPDATE con borrado_en = NULL (almacen.py:288),
+              asi que reanadir con **el mismo id** resucita la linea en vez de
+              crear otra. Por eso se manda l.id y no se deja que se genere uno.
+
+              La linea quitada se lee de cambia.variables, que es la mutacion
+              la que la guarda: asi no hace falta un useState aparte que se
+              pueda quedar desincronizado con lo que se ve. Y desaparece sola en
+              cuanto se hace cualquier otro cambio, porque las variables son las
+              del ultimo.
+
+              **Va fuera del trozo de las lineas** a proposito: al quitar la
+              ultima, ese trozo no se pinta y el «Deshacer» desaparecia justo
+              cuando mas falta hace. Lo encontro el navegador el 23 de septiembre
+              de 2026 (`plataforma/prueba_navegador.py`). */}
+          {cambia.variables?.linea && (
+            <Aviso tono="info">
+              <span className="flex flex-wrap items-center gap-3">
+                Has quitado <strong>{cambia.variables.linea.nombre_visto}</strong>.
+                <Boton
+                  variante="sutil"
+                  onClick={async () => {
+                    const quitada = cambia.variables?.linea
+                    if (!quitada || !listaId) return
+                    await anadirLinea(
+                      listaId,
+                      {
+                        nombre: quitada.nombre_visto,
+                        grupo_id: quitada.grupo_id,
+                        producto_id: quitada.producto_id,
+                        cantidad: quitada.cantidad,
+                      },
+                      quitada.id,
+                    )
+                    cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+                    cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+                  }}
+                >
+                  Deshacer
+                </Boton>
+              </span>
+            </Aviso>
+          )}
+
+          {lineas.length > 0 && (
+            <>
+              {/* El numero que se mira mientras se coge: al tachar algo, esto
+                  es lo unico que confirma que el cambio ha llegado. */}
+              <p className="px-1 text-etiqueta text-tinta-suave">
+                <span className="cifra font-medium">
+                  {euros(detalle.data.estimacion.por_recoger_cent)}
+                </span>{' '}
+                por coger ·{' '}
+                <span className="cifra font-medium">
+                  {euros(detalle.data.estimacion.en_carrito_cent)}
+                </span>{' '}
+                en el carro
+              </p>
+
+              {/* Y cuando ya esta todo cogido, cerrar: lo del carro se guarda y sale de
+                  la lista. Va despues del numero que se mira al tachar, que es el orden
+                  en que se hace. */}
+              <CerrarCompra
+                listaId={listaId as string}
+                enElCarro={enElCarro.length}
+                papel={detalle.data.papel}
+                sello={detalle.data.cotizacion?.sello ?? null}
+              />
+
+              {/* *** AÑADIR Y COMPARAR. *** *Las dos puertas del artboard, y la de comparar
+                  es la unica que lleva a esa pantalla: dos enlaces con la misma promesa se
+                  contradicen el dia que una cambie.* */}
+              <Link
+                to="/compra"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-campo border border-dashed border-borde-fuerte px-4 text-cuerpo text-tinta-suave transition-colors duration-rapida ease-suave hover:text-tinta"
+              >
+                <span aria-hidden="true" className="text-entrada leading-none">+</span>
+                Añadir producto
+              </Link>
+
+              <section aria-labelledby="comparar" className="flex flex-col gap-2">
+                <h2
+                  id="comparar"
+                  className="font-serif text-titulo font-semibold text-tinta"
+                >
+                  Dónde sale mejor tu cesta
+                </h2>
+                <p className="text-etiqueta text-tinta-suave">
+                  El total en cada cadena y lo que le falta a cada una.
+                </p>
+                <Link
+                  to={`/compra/listas/${listaId}/comparar`}
+                  className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-campo bg-verde px-4 text-cuerpo font-semibold text-sobre-verde shadow-apoyado transition-colors duration-rapida ease-suave hover:brightness-110"
+                >
+                  Comparar mi cesta
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+              </section>
+            </>
+          )}
 
           {/* *** PEGAR UNA LISTA ENTERA, *viendola antes de guardar*. ***
-              *M05: «pegar varias lineas con previa».* *La regla de que «2 kg» no son dos envases
-              vive en `logica/pegar.ts`, y aqui solo se monta: el componente no tiene campo de
-              envases, asi que no puede inventarlo.*
-              *La nota lleva lo que la persona escribio; la cantidad de envases la pone ella en la
-              lista, que es donde se ve.* */}
+              *M05: «pegar varias lineas con previa».* *La regla de que «2 kg» no son dos
+              envases vive en `logica/pegar.ts`, y aqui solo se monta: el componente no
+              tiene campo de envases, asi que no puede inventarlo.*
+              *La nota lleva lo que la persona escribio; la cantidad de envases la pone
+              ella en la lista, que es donde se ve.* */}
           <PegarEnLaLista
             alAnadir={async ({ nombre, nota }) => {
               await anadirLinea(listaId as string, { nombre, nota, grupo_id: null, producto_id: null })
+              cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+              cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
             }}
           />
-
-          <Tarjeta
-            titulo="Lo que hay que coger"
-            sub="Marca lo que ya llevas en el carro. Lo tachado sigue contando en el total, pero sale de la cuenta de dónde comprarla."
-          >
-            {/* Con una invitacion de "solo mirar" los controles se apagan: la
-                API contesta 403 a cualquier cambio (`main.py:369`), y dejar los
-                botones puestos para que fallen uno a uno es peor que decir de
-                entrada por que no se pueden pulsar. */}
-            {detalle.data.papel === 'mira' && (
-              <div className="mb-3">
-                <Aviso tono="aviso">
-                  <p>
-                    Esta lista te la compartieron para mirar, así que no puedes
-                    cambiarla: los botones están apagados por eso. Quien la creó
-                    puede darte el papel de escribir cuando quiera.
-                  </p>
-                </Aviso>
-              </div>
-            )}
-            {/* Las dos secciones, la linea de totales y el «Deshacer» se pintan
-                **siempre**, y el «la lista esta vacia» es una pieza mas. Antes esto era
-                un ternario, y el «Deshacer» vivia en el lado de "si hay lineas": al
-                quitar **la ultima** linea la lista se queda vacia, ese lado no se pinta,
-                y el «Deshacer» desaparecia justo cuando mas falta hace. Lo encontro el
-                navegador el 23 de septiembre de 2026 (`plataforma/prueba_navegador.py`). */}
-            <>
-              {/* **Las novedades: lo que ha tocado la otra persona desde tu ultima visita.**
-                  La API las manda desde el primer dia (`GET /listas/{id}` → `novedades`) y
-                  `docs/PANTALLAS.md` decia que estaban hechas, pero **ninguna pantalla las
-                  pintaba**: `novedades` no aparecia en `app/src`. Sin esto, una lista compartida
-                  es un sitio donde las cosas aparecen y desaparecen solas -- palabras del propio
-                  documento --, y quien llega a la tienda no sabe si lo que falta lo cogio su
-                  madre o lo quito alguien.
-
-                  Va **arriba del todo**, antes de las dos secciones, porque es una noticia: se
-                  lee al abrir y desaparece sola al recargar (la visita se marca al leer, en la
-                  misma peticion). Si hay muchas, se enseñan cuatro y se dice cuantas mas hay:
-                  una lista de doce novedades tapa justo lo que se viene a mirar. */}
-              <Novedades novedades={detalle.data.novedades ?? []}
-                         yo={sesion.data?.usuario?.nombre
-                             ?? sesion.data?.usuario?.usuario ?? null} />
-              {lineas.length === 0 && (
-                <>
-                  <Vacio titulo="La lista está vacía" className="grow">
-                    <p>
-                      Busca un producto o toca uno de abajo: se apunta en un toque, y la
-                      cantidad se cambia aquí.
-                    </p>
-                  </Vacio>
-                  {/* La misma cuadricula que en el otro estado vacio: la pregunta que se
-                      trae a esta pantalla es "¿que me falta?", y con la lista vacia la
-                      respuesta es "todo". Datos reales y un toque, no un cartel que
-                      manda a buscar. */}
-                  <Mosaico limite={6} vacia />
-                </>
-              )}
-                {/* **Dos secciones, no una lista.** Es la unica pantalla que se usa
-                    de pie, en movimiento y con una mano, y con nueve lineas y
-                    cuatro ya cogidas hay que leer **nueve nombres** para saber
-                    cuales quedan. Con el encabezado se lee uno: «Por coger 5».
-                    Lo piden `docs/PANTALLAS.md` y `docs/UX-MOVIL.md`, y era lo
-                    mejor que tenia la aplicacion de la que se copio la idea.
-
-                    El orden dentro de cada seccion es el de la API
-                    (`ORDER BY en_carrito, anadido_en`, almacen.py): lo ya cogido
-                    se va al final y lo ultimo anadido va arriba. **Y dentro de un
-                    pasillo ese orden se respeta tal cual** -- `porPasillo` solo
-                    reparte en tandas y las coloca en el orden del recorrido de la
-                    tienda, sin tocar el orden de dentro. Antes esto decia que aqui
-                    no se ordenaba nunca; ahora se ordena **por pasillo**, y eso es
-                    una decision nueva con su motivo: la lista se recorre andando,
-                    no por orden de llegada.
-
-                    Los encabezados solo salen **si hay algo en los dos lados**: un
-                    «En el carro 0» o un «Por coger 0» es ruido, y el segundo es
-                    ademas el rato en que estas a punto de salir de la tienda. */}
-                {[
-                  ['Por coger', porCoger],
-                  ['En el carro', enElCarro],
-                ].map(([titulo, lineas_]) =>
-                  (lineas_ as Linea[]).length === 0 ? null : (
-                    <section key={titulo as string} className="mb-4">
-                      {porCoger.length > 0 && enElCarro.length > 0 && (
-                        <h3 className="mb-2 flex items-baseline gap-2 text-cuerpo font-semibold">
-                          {titulo as string}
-                          <span className="cifra text-tinta-suave">
-                            {(lineas_ as Linea[]).length}
-                          </span>
-                        </h3>
-                      )}
-                      {/* Y dentro, por pasillos, con el pasillo **pegado arriba**.
-                          Es lo que pidio Claude para esta pantalla, y el motivo es
-                          de tienda, no de diseno: la lista se mira de pie, en
-                          movimiento y con una mano, y lo que se necesita saber es
-                          en que pasillo se esta, no el indice de la fila. El
-                          encabezado se queda pegado mientras dura su tanda, asi que
-                          la pregunta "¿que me falta aqui?" se contesta sin subir a
-                          mirar el titulo.
-
-                          Las lineas sin pasillo van **las ultimas y sin encabezado**
-                          (el orden de `porPasillo`), porque un dato que no tenemos
-                          no se coloca donde tocaria: se deja al final, que es donde
-                          no estorba. */}
-                      {porPasillo(lineas_ as Linea[]).map(([pasillo, delPasillo]) => (
-                        <div key={pasillo || 'sin-pasillo'} className="mb-3 last:mb-0">
-                          {pasillo && (
-                            /* **`h3` y no `h4`.** La tarjeta que lo contiene ya lleva un `h2`
-                               («Lo que hay que coger»), así que saltar a `h4` deja la
-                               jerarquía con un hueco: quien navega por encabezados oye «Lo que
-                               hay que coger» y después un nivel que no existe. Medido con
-                               `data/debug/accesibilidad.py` el 27 de septiembre de 2026: era el
-                               único salto de encabezados de toda la aplicación. */
-                            <h3 className="sticky top-[var(--alto-cabecera,0px)] z-10 mb-2 bg-papel-translucido/95 py-1 text-etiqueta font-semibold uppercase tracking-wide text-tinta-suave backdrop-blur dark:bg-papel-translucido/95">
-                              {pasillo}
-                            </h3>
-                          )}
-                          <ul className="grid gap-2">
-                            {delPasillo.map((l) => (
-                              <UnaLinea
-                                key={l.id}
-                                linea={l}
-                                guardando={cambia.isPending || detalle.data.papel === 'mira'}
-                                cambiar={(lineaId, cambio) =>
-                                cambia.mutate({ lineaId, cambio, linea: cambio.borrado ? l : null })}
-                              />
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </section>
-                  ))}
-                {/* Deshacer en vez de confirmar: quitar una linea es la accion
-                    destructiva de esta pantalla. **El id es la llave**: la API hace
-                    ON CONFLICT (id) DO UPDATE con orrado_en = NULL (almacen.py:288),
-                    asi que reanadir con **el mismo id** resucita la linea en vez de
-                    crear otra. Por eso se manda l.id y no se deja que se genere uno.
-
-                    La linea quitada se lee de cambia.variables, que es la mutacion
-                    la que la guarda: asi no hace falta un useState aparte que se
-                    pueda quedar desincronizado con lo que se ve. Y desaparece sola en
-                    cuanto se hace cualquier otro cambio, porque las variables son las
-                    del ultimo. */}
-                {cambia.variables?.linea && (
-                  <Aviso tono="info">
-                    <span className="flex flex-wrap items-center gap-3">
-                      Has quitado <strong>{cambia.variables.linea.nombre_visto}</strong>.
-                      <Boton
-                        variante="sutil"
-                        onClick={async () => {
-                          const quitada = cambia.variables?.linea
-                          if (!quitada || !listaId) return
-                          await anadirLinea(
-                            listaId,
-                            {
-                              nombre: quitada.nombre_visto,
-                              grupo_id: quitada.grupo_id,
-                              producto_id: quitada.producto_id,
-                              cantidad: quitada.cantidad,
-                            },
-                            quitada.id,
-                          )
-                          cliente.invalidateQueries({ queryKey: ['lista', listaId] })
-                          cliente.invalidateQueries({ queryKey: ['donde', listaId] })
-                        }}
-                      >
-                        Deshacer
-                      </Boton>
-                    </span>
-                  </Aviso>
-                )}
-                {/* El numero que se mira mientras se coge: al tachar algo, esto
-                    es lo unico que confirma que el cambio ha llegado. */}
-                <p className="mt-3 text-cuerpo text-tinta-suave">
-                  <span className="cifra font-medium">
-                    {euros(detalle.data.estimacion.por_recoger_cent)}
-                  </span>{' '}
-                  por coger ·{' '}
-                  <span className="cifra font-medium">
-                    {euros(detalle.data.estimacion.en_carrito_cent)}
-                  </span>{' '}
-                  en el carro
-                </p>
-
-                {/* Y cuando ya esta todo cogido, cerrar: lo del carro se guarda y sale de
-                    la lista. Va al final del todo, despues del numero que se mira al
-                    tachar, que es el orden en que se hace. */}
-                <div className="mt-3">
-                  <CerrarCompra
-                    listaId={listaId as string}
-                    enElCarro={enElCarro.length}
-                    papel={detalle.data.papel}
-                    sello={detalle.data.cotizacion?.sello ?? null}
-                  />
-                </div>
-            </>
-          </Tarjeta>
         </>
       )}
 
@@ -1775,30 +2095,6 @@ export function Cesta() {
           que se mira veinte veces en el pasillo. `docs/PANTALLAS.md` ya lo decía así. */}
       {detalle.data && (
         <RepartoEnTiendas listaId={listaId as string} papel={detalle.data.papel} />
-      )}
-
-      {/* *** COMPARAR LA CESTA ENTERA, CON SU PUERTA. *** *
-          *Aquí había seis tarjetas -- «la lista entera en una tienda» -- con un total cada una y
-          la etiqueta «la más barata» en la de menor número, **sin mirar si a esa cadena le
-          faltaban productos**, que es justo lo que hace que un total salga más bajo.* *La
-          comparación se ha mudado a su pantalla (`CompararCesta`), donde cada total dice con
-          cuántos productos está hecho y solo se corona a la que los tiene todos; aquí queda a
-          dónde ir a mirarlo.* *No se duplican los seis totales: se enseñarían dos veces y con dos
-          reglas distintas, que es como dos pantallas acaban contradiciéndose.*
-          *Y no depende de la consulta de precios: la comparación se pide en su pantalla, así que
-          la puerta no se queda sin pintar porque `donde` tarde o falle.* */}
-      {detalle.data && (
-        <Tarjeta
-          titulo="Dónde sale mejor tu cesta"
-          sub="Cuánto cuesta en cada cadena, qué le falta a cada una y de qué producto sale la diferencia."
-        >
-          <Link
-            to={`/compra/listas/${listaId}/comparar`}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-campo border border-transparent bg-bosque px-4 py-2 font-medium text-marfil"
-          >
-            Comparar mi cesta
-          </Link>
-        </Tarjeta>
       )}
 
       {/* Compartir va antes de los precios a proposito: la comparacion entre
