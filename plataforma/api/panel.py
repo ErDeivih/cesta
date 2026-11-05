@@ -13,21 +13,21 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from .cache import recuerda
 from .catalogo import conexion, fecha_de_gold
 
 rutas = APIRouter(prefix="/api/panel")
-_cache: dict[str, tuple[str, object]] = {}
 
 
 def _al_dia(clave: str, calcula):
-    """Se guarda hasta que gold cambie de fecha, que es una vez al dia."""
-    hoy = fecha_de_gold()
-    guardado = _cache.get(clave)
-    if guardado and guardado[0] == hoy:
-        return guardado[1]
-    valor = calcula()
-    _cache[clave] = (hoy, valor)
-    return valor
+    """Se guarda hasta que se publique otro gold, que es una vez al dia.
+
+    *Por **version de gold**, y no por la fecha de los datos*: dos publicaciones del
+    mismo dia pueden traer numeros distintos, y la cache de antes se quedaba con los
+    de la primera hasta el dia siguiente. Lo lleva `api/cache.py`, que ademas la hace
+    segura entre hilos, la ata a lo que se lee y le pone tope de entradas.
+    """
+    return recuerda(f"panel:{clave}", (), calcula)
 
 
 @rutas.get("/hoy")
@@ -148,7 +148,7 @@ def donde(limite_pasillos: int = 40):
                           for c, n in sorted(victorias.items(), key=lambda x: -x[1])],
             "oportunidades": _oportunidades(),
         }
-    return _al_dia("donde", calcula)
+    return _al_dia(f"donde-{limite_pasillos}", calcula)
 
 
 def _oportunidades(limite: int = 120) -> dict:

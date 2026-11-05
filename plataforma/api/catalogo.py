@@ -21,6 +21,7 @@ import duckdb
 from core import comparacion, version_vigente
 from core.serie_con_huecos import rellena_huecos
 
+from . import cache
 from .ajustes import AJUSTES
 
 # La carpeta de las pasadas versionadas del matching.
@@ -154,13 +155,18 @@ def _p(ruta: Path) -> str:
 
 
 def reiniciar() -> None:
-    """Olvida la conexion de este hilo. Para las pruebas y para forzar recarga."""
+    """Olvida la conexion de este hilo. Para las pruebas y para forzar recarga.
+
+    *Y la cache con ella*: si se olvida la conexion pero no lo calculado, una prueba
+    (o quien fuerce la recarga) seguiria viendo la respuesta de antes.
+    """
     con = getattr(_local, "con", None)
     if con is not None:
         con.close()
     _local.con = None
     _local.sello = None
     _local.fecha = None
+    cache.olvida()
 
 
 def fecha_de_gold() -> str:
@@ -857,6 +863,7 @@ def _por_escurrido(f: dict) -> bool:
     return bool(esc and cantidad and 0 < esc < cantidad * 1000 * 0.98)
 
 
+@cache.cacheada
 def grupo(grupo_id: int) -> dict | None:
     """Todo lo que la ficha necesita: los miembros, los equivalentes y la curva.
 
@@ -1145,6 +1152,7 @@ def grupo(grupo_id: int) -> dict | None:
     }
 
 
+@cache.cacheada
 def explicacion(grupo_id: int) -> dict | None:
     """Por que los productos de este grupo acabaron juntos, o None si no se sabe.
 

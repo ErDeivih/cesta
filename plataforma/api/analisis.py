@@ -48,6 +48,7 @@ Tres decisiones que cambian el número, y por qué son éstas
 """
 from __future__ import annotations
 
+from . import cache
 from .catalogo import conexion, fecha_de_gold
 
 # Fuera de esta horquilla, un cambio de precio de un dia para otro es casi
@@ -113,6 +114,7 @@ def _enlaces_sql(desde: str | None, tabla: str = "diario") -> str:
     """
 
 
+@cache.cacheada
 def indice(desde: str | None = None) -> dict:
     """Índice de precios por cadena, base 100 en la primera captura comparable.
 
@@ -157,6 +159,7 @@ def indice(desde: str | None = None) -> dict:
     }
 
 
+@cache.cacheada
 def pulso(desde: str | None = None) -> dict:
     """Cuántos precios se mueven en cada captura, hacia dónde y cuánto.
 
@@ -192,6 +195,7 @@ def pulso(desde: str | None = None) -> dict:
     }
 
 
+@cache.cacheada
 def posicion() -> dict:
     """Dónde está cada cadena dentro de cada sección, comparando lo comparable.
 

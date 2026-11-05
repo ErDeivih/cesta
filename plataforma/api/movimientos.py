@@ -23,7 +23,7 @@ anuncia que el azafran ha bajado de 6.875 a 6,67 EUR/kg.
 from __future__ import annotations
 
 from core import comparacion
-from plataforma.api import catalogo
+from plataforma.api import cache, catalogo
 
 # Una variacion mayor que esto no es una bajada: es un error de lectura. Es el
 # mismo numero que usa el buscador y el resumen diario, y vive en un solo sitio a
@@ -357,6 +357,7 @@ _DUDOSAS_SQL = """
 """
 
 
+@cache.cacheada
 def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[dict]:
     """Ofertas anunciadas que el historico no sostiene.
 
@@ -422,6 +423,7 @@ def ofertas_dudosas(limite: int = 60, cadenas: list[str] | None = None) -> list[
     } for f in filas]
 
 
+@cache.cacheada
 def ofertas_sin_poder_juzgar(cadenas: list[str] | None = None) -> dict:
     """Cuantas ofertas anunciadas **no se pueden juzgar**, y por que.
 
