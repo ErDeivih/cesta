@@ -1,30 +1,54 @@
 {
   "v": 3,
-  "createdOnFiles": { "v": 1, "at": "2026-11-04T18:42:00Z" },
-  "title": "Cesta App — artboards",
-  "launch": { "view": "canvas" },
-  "pages": [],
+  "attachments": {},
   "boards": {
-    "Portada.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "Portada", "is_interactive": true },
-    "Producto.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "Producto", "is_interactive": true }
-  },
-  "order": ["Portada.dc.html", "Producto.dc.html"],
-  "notes": {
-    "intro": {
+    "Portada.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Portada",
+      "w": 390,
       "x": 0,
-      "y": -300,
-      "text": "Cesta App · dos pantallas para aprobar",
-      "kind": "title1",
-      "maxW": 860
+      "y": 0
+    },
+    "Producto.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Producto",
+      "w": 390,
+      "x": 470,
+      "y": 0
     }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-04T18:42:00Z",
+    "v": 1
   },
   "designSystems": [
     {
-      "title": "Cesta App",
-      "namespace": "cestaapp",
       "artifact": "designs/cesta-app-design-system",
-      "version": null,
-      "copiedAt": "2026-11-04T18:42:00Z"
+      "copiedAt": "2026-11-04T18:42:00Z",
+      "namespace": "cestaapp",
+      "title": "Cesta App",
+      "version": null
     }
-  ]
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "intro": {
+      "kind": "title1",
+      "maxW": 860,
+      "text": "Cesta App · dos pantallas para aprobar",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Portada.dc.html",
+    "Producto.dc.html"
+  ],
+  "pages": [],
+  "title": "Cesta App — artboards"
 }

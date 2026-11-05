@@ -62,3 +62,24 @@ Funciones candidatas (ordenar por valor, no hacer todas):
 - `data/` fuera de git.
 - Cada pantalla con sus cuatro estados y con prueba de flujo.
 - Añadir `resumen:` en lenguaje llano a `ESTADO-AGENTE.md`.
+
+---
+
+## 5. Ampliación del 2026-11-05 (David)
+
+La app tiene buena pinta; se amplía el alcance. **Manda `DOCTRINA-CALIDAD.md` §8: la interfaz no habla de cómo está hecha** (fuera detalles técnicos, explicaciones de cálculos, pies de producto, métricas de relleno, avisos internos y textos de relleno). Antes de dar una pantalla por buena, cada texto se juzga con «¿esto le sirve al cliente para decidir o actuar?».
+
+**Orden de trabajo:**
+
+1. **Que funcione todo lo que ya hay, sin errores.** Primero auditar la app actual (rutas, API, flujos, estados) y arreglar lo roto; y quitar de la interfaz los textos de desarrollador.
+2. **Funciones nuevas** (pensadas como conjunto, no pantallas sueltas):
+   - **Favoritos** de productos.
+   - **Lista de la compra**.
+   - **Calculadora de calorías diarias** con pautas de salud según menús (sin prescribir: se enseña lo que la persona registra y se explican las referencias, nunca objetivos de salud impuestos).
+   - **Recetas**: establecidas y **creadas por el usuario**.
+   - Seguir haciendo pantallas y pensando el producto entero.
+3. **Ingesta sin vigilancia**: el scrapeo sigue solo y sin errores; **avisos si falla** (no depender de que alguien mire).
+4. **Ofertas con detalle**: tipo de oferta (descuento, 2x1, precio club…), si exige ser **miembro del club** del supermercado, y todo lo que influya en **dónde conviene comprar**. Eso cambia la recomendación.
+5. **Cuentas de las apps de los supers**: investigar qué permiten de verdad (API, exportación, importación manual) para mejorar la experiencia con compras y preferencias. Documentar límites; **nunca pedir credenciales**.
+6. **Aprender de las listas**: leer las listas para aprender qué compra la persona, sugerir la siguiente, **rellenar sola** con lo que más se repite y **sugerir comprar en otro sitio** cuando convenga. Siempre a favor del usuario.
+7. **Investigación** de competencia para todo esto, en `INVESTIGACION-APP.md` con fuentes y fecha.
