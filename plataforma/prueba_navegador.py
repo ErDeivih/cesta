@@ -706,7 +706,10 @@ def _cuerpo() -> int:
         t0 = time.monotonic()
         carga("/")
         portada = pagina.inner_text("body")
-        comprueba("Tres aplicaciones" in portada, "la portada dice que hay tres aplicaciones")
+        # **La portada ya no lleva una frase que diga «Tres aplicaciones».** *La quitó la auditoría
+        # del 5/11/2026 (§8, fila 4): era una descripción de producto encima de tres tarjetas que
+        # ya lo dicen con su nombre y su icono.* *Lo que sí se sigue midiendo es lo que importaba:
+        # que las tres estén y lleven a su sitio (las tres líneas de abajo).*
         for nombre, destino in (("Compra", "/compra"), ("Recet", "/recetas"), ("Calor", "/calorias")):
             enlace = pagina.locator(f"a[href='{destino}']")
             comprueba(enlace.count() >= 1, f"la portada ofrece {nombre} y lleva a {destino}")
@@ -1768,11 +1771,13 @@ def _cuerpo() -> int:
         # las de `App.tsx` -- la cesta en `/compra/listas` y el buscador en `/compra` --, y
         # `Avisos`, `Panel` y `Escáner` no se han movido.
         BARRA = {"Cesta": "/compra/listas", "Avisos": "/avisos", "Panel": "/panel",
-                 "Buscar": "/compra", "Escáner": "/escaner",
-                 # **`/panel` no esta en el menu**, y por eso el camino del panel empieza
-                 # por «Gasto y ahorro»: `/compra/analisis` monta **el mismo `Panel`**
-                 # (`App.tsx:206`), y esa ruta **si** esta en el nav. Medido en la ronda 63.
-                 "Gasto y ahorro": "/compra/analisis"}
+                 "Buscar": "/compra", "Escáner": "/escaner"}
+        # *** Y EL PANEL YA NO SE ALCANZA DESDE EL PRODUCTO (5/11/2026). *** *
+        # *Aquí estaba «Gasto y ahorro» -> `/compra/analisis`, que era el camino del panel desde el
+        # menú.* *La auditoría (P0-2/P0-4) lo quitó: esa entrada prometía el gasto y abría el cuadro
+        # de mando del catálogo, y desde él se llegaba al volcado del emparejador.* *`/panel` sigue
+        # existiendo para diagnóstico, pero **ya no hay un camino de producto hasta él**, así que la
+        # pregunta 4 se mide por los avisos, que es donde el producto la contesta.*
         # **Y LAS RAICES, que son lo que el Lanzador SI ofrece.** La quinta cosa que
         # faltaba, y la midio la captura de la ronda 59: `/` **no lleva armazon** -- ni
         # lateral, ni cajon, ni ☰--, y lo que tiene es un `<nav aria-label="Aplicaciones">`
@@ -1841,8 +1846,9 @@ def _cuerpo() -> int:
                                                        # cuenta bien.
                                                        "ya cogidas"),
                  ("Compra", "Cesta")),
-                ("4: lo mio que ha bajado", ("Lo tuyo que ha",),
-                 ("Compra", "Gasto y ahorro", "Bajadas", "Solo lo mío")),
+                # *La pregunta 4 por el panel se cayó con la auditoría del 5/11/2026: el panel dejó
+                # de estar en el menú de consumo (P0-2/P0-4).* *Se queda la que el producto sí
+                # contesta desde la primera pantalla: los avisos.*
                 ("4: los avisos", ("que sigues",),
                  ("Compra", "Avisos")),
         ):

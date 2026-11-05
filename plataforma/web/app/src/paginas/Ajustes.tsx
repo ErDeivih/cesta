@@ -100,9 +100,9 @@ export function Ajustes() {
       <Tarjeta>
         <h2 className="mb-1 text-entrada font-semibold">Las cadenas que tienes cerca</h2>
         <p className="mb-3 text-cuerpo text-tinta-suave">
-          Marca las que te pillan a mano. Con eso puesto, la búsqueda y el panel
-          dejan de ofrecerte cosas de una cadena a la que no vas. Sin ninguna
-          marcada se miran las cinco, que es lo que hace por defecto.
+          Marca las que te pillan a mano. Con eso puesto, la búsqueda deja de ofrecerte
+          cosas de una cadena a la que no vas. Sin ninguna marcada se miran las cinco, que es
+          lo que hace por defecto.
         </p>
         <div className="flex flex-wrap gap-2">
           {cadenas.map((c) => {

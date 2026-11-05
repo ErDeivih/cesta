@@ -15,25 +15,26 @@ const CAMPOS: { clave: keyof Pesos; texto: string; ayuda: string }[] = [
   {
     clave: 'precio',
     texto: 'Precio por unidad',
-    ayuda: 'Cuánto pesa que sea barato. El más barato del grupo se lleva el 100 % de esta parte.',
+    ayuda: 'Cuánto te importa el precio.',
   },
   {
     clave: 'letra',
     texto: 'Letra (calidad o gama)',
-    ayuda:
-      'Cuánto pesa la letra A/B/C. Si sale de leer ingredientes es calidad; si sale de ordenar por precio es gama, y en ese caso la A es el MÁS CARO del grupo. Cada alternativa usa la que traiga y lo dice. Las dos no se suman nunca.',
+    // *** AQUÍ HABÍA UNA EXPLICACIÓN DE CÓMO SE CALCULA LA LETRA. *** *
+    // *Ocupaba cinco líneas y contaba que si sale de los ingredientes es calidad y si sale de
+    // ordenar por precio es gama, y que las dos no se suman.* *Eso se lee en el sello de cada
+    // producto, que ya dice cuál es la suya; aquí no cabía y no cambia qué se pulsa.*
+    ayuda: '',
   },
   {
     clave: 'cercania',
     texto: 'Cercanía al mejor precio',
-    ayuda:
-      'Cuánto pesa no alejarse del mejor. Vale 1 hasta un 5 % por encima del más barato y baja a 0 cuando llega al 50 % más caro.',
+    ayuda: 'Cuánto te importa no alejarte del más barato.',
   },
   {
     clave: 'promo',
     texto: 'Promoción',
-    ayuda:
-      'Cuánto pesa que haya oferta que baje lo que pagas hoy en caja. Las de tarjeta cuentan la mitad: no bajan el precio, llenan un monedero.',
+    ayuda: 'Cuánto te importan las ofertas que bajan lo que pagas hoy.',
   },
 ]
 
@@ -92,9 +93,11 @@ export function ControlPesos({ pesos, onCambio, explicacion }: Props) {
               // sin acertarle a la bolita.
               className="h-11 w-full accent-terracota "
             />
-            <p id={`ayuda-${c.clave}`} className="text-etiqueta text-secundaria ">
-              {c.ayuda}
-            </p>
+            {c.ayuda && (
+              <p id={`ayuda-${c.clave}`} className="text-etiqueta text-secundaria ">
+                {c.ayuda}
+              </p>
+            )}
           </div>
         ))}
       </div>

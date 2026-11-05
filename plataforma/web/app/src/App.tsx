@@ -77,9 +77,10 @@ function Lanzador() {
             puede recorrer sin verla ({'encabezados': ['0 h1']})».** *Es *** la unica
             pantalla sin armazon***, *y por eso *** la unica que tiene que ponerlo ella.*** */}
         <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
-        <p className="mt-1 text-cuerpo text-secundaria">
-          La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa.
-        </p>
+        {/* *** Y AQUÍ NO VA UNA DESCRIPCIÓN DEL PRODUCTO. *** *
+            *Decía «La compra de casa, las recetas y lo que comes. Tres aplicaciones, una casa»:
+            *un pie de página de producto (§8) encima de tres tarjetas que ya dicen lo mismo con su
+            *nombre y su icono.* *Si el producto es bueno, se entiende solo.* */}
       </header>
 
       {aplicacion && (
@@ -165,7 +166,6 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/escaner')) return 'Escáner'
   if (ruta.startsWith('/avisos')) return 'Avisos'
   if (ruta.startsWith('/ajustes')) return 'Ajustes'
-  if (ruta.startsWith('/aprender')) return 'Aprender'
   return tituloDeSeccion(ruta)
 }
 
@@ -232,10 +232,11 @@ export function App() {
           path="/compra/comparar/:grupoId"
           element={<LayoutSuite app="compra"><Grupo /></LayoutSuite>}
         />
-        <Route
-          path="/compra/analisis"
-          element={<LayoutSuite app="compra"><Panel /></LayoutSuite>}
-        />
+        {/* *** `/compra/analisis` YA NO EXISTE, *y es P0-2.* *** *
+            *Esa ruta montaba `Panel` -- el cuadro de mando del catálogo -- y el menú la ofrecía
+            como «Gasto y ahorro».* *Quien la abría esperaba lo que había pagado y encontraba diez
+            pestañas de ingesta.* *El panel sigue vivo para diagnóstico en `/panel`, **sin enlace
+            desde ninguna pantalla de consumo**; lo que se quita es la puerta que lo disfrazaba.* */}
 
         {/* Recetas y Calorias: armazon, menu y rutas. Sus secciones internas, en S08 y S09. */}
         <Route
@@ -272,19 +273,11 @@ export function App() {
         />
         <Route path="/panel" element={<LayoutSuite app={null}><Panel /></LayoutSuite>} />
         <Route path="/ajustes" element={<LayoutSuite app={null}><Ajustes /></LayoutSuite>} />
-        <Route
-          path="/aprender"
-          element={
-            <LayoutSuite app={null}>
-              <Vacio titulo="Aprender">
-                <p>
-                  El material didactico vive en <code>docs/aprende/</code>. Aqui llegara el indice
-                  navegable; mientras tanto se lee en el repositorio.
-                </p>
-              </Vacio>
-            </LayoutSuite>
-          }
-        />
+        {/* *** `/aprender` SE VA, *y es P0-5.* *** *
+            *En el menú había un destino llamado «Aprender» que llevaba a un párrafo: «el material
+            didáctico vive en `docs/aprende/`… mientras tanto se lee en el repositorio».* *Una
+            ruta del repositorio contada a quien compra.* *Cuando exista el índice navegable de
+            verdad, se pone su pantalla y su entrada; mientras tanto, no hay nada que ofrecer.* */}
         {/* *** Y esta pantalla SE SALTABA EL ARMAZON. *** *
               *
               * *El 15/10/2026, *con la captura de `/unirme/CODIGO-MALO` delante, *se vio
@@ -353,9 +346,6 @@ function ArmazonDeLaMarca() {
     >
       <header className="border-b border-borde pb-bloque">
         <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
-        <p className="mt-1 text-cuerpo text-secundaria">
-          La compra de casa, las recetas y lo que comes.
-        </p>
       </header>
 
       {/* *Tres formas del alto de una tarjeta, con la misma separacion que la portada de verdad.*

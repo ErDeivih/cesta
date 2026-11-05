@@ -108,7 +108,12 @@ def test_sin_cobertura_no_hay_aviso_rojo_y_se_ve_lo_tocado():
     # El rojo, solo para lo que la API contesta que no.
     assert re.search(r"cambia\.isError && !esSinRed\(cambia\.error\)", cesta), \
         "sin cobertura sigue pintandose como un error"
-    assert "se subirá al volver la cobertura" in cesta or "se subirán al volver la cobertura" in cesta, \
+    # *La frase cambió el 5/11/2026 con la auditoría (§8, fila 11): «se subirá al volver la
+    # cobertura» hablaba de «subir» cambios, que es vocabulario de sincronización.* *Lo que esta
+    # prueba protege sigue siendo lo mismo: hay una línea discreta que dice cuántos cambios
+    # esperan y cuándo se guardarán.*
+    assert "Se guardará cuando vuelva la conexión" in cesta \
+        or "Se guardarán cuando vuelva la conexión" in cesta, \
         "falta la linea discreta que dice cuantos cambios esperan"
 
 

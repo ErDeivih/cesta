@@ -213,12 +213,11 @@ export function Avisos() {
             >
               Buscar un producto
             </Link>
-            <Link
-              to="/panel?pestana=bajadas"
-              className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
-            >
-              Ver lo que ha bajado esta semana
-            </Link>
+            {/* *** Y AQUÍ ESTABA «Ver lo que ha bajado esta semana» → `/panel?pestana=bajadas`. *** *
+                *Era un enlace de una pantalla de consumo al panel interno del catálogo: el único
+                *camino que quedaba desde el producto hasta la analítica (P0-2/P0-4).* *Se quita:
+                *las bajadas de lo tuyo se ven en Favoritos y en esta misma pantalla, que es para lo
+                *que existe.* */}
           </div>
           <p className="mt-3 text-cuerpo text-tinta-suave">
             En la ficha de un producto, el botón se llama «Avisarme si baja».

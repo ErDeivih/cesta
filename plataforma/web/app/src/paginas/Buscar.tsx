@@ -147,12 +147,6 @@ export function Buscar() {
           mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
           `data/debug/accesibilidad.py` el 27 de septiembre de 2026. */}
       <h2 className="sr-only">Buscar</h2>
-      {estado.data?.vigencia_precio?.coherente === false && (
-        <Aviso tono="aviso" titulo="Catálogo pendiente de verificar">
-          La versión publicada no coincide con las fechas de sus precios. Estos resultados
-          no deben usarse para decidir dónde comprar hasta verificar la publicación.
-        </Aviso>
-      )}
       <section aria-label="Buscar" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="q" className="sr-only">
@@ -217,7 +211,7 @@ export function Buscar() {
         <Vacio titulo="Escribe al menos dos letras, o elige un pasillo" className="grow">
           <p>
             {filtros.q.trim().length === 1
-              ? 'Con una sola letra no busco: casaría con media tienda y la lista no diría nada.'
+              ? 'Escribe al menos dos letras.'
               : 'También puedes explorar un pasillo entero sin escribir nada.'}
           </p>
           {/* Los ejemplos van dentro del estado vacio y no en un sitio aparte:
@@ -369,11 +363,9 @@ export function Buscar() {
                se puede hablar de "la palabra buscada". */
             filtrosPuestos > 0 ? (
               <Vacio titulo={`Nada en ${loBuscado} con los filtros puestos`}>
-                <p>
-                  Los filtros de dieta y de oferta se aplican a cada producto que se enseña, no
-                  al grupo entero: si el grupo solo cumple por uno de sus miembros, no sale. Un
-                  sello exigente deja la lista en nada en cuanto la palabra es amplia.
-                </p>
+                {/* *Aquí había tres frases explicando cómo se aplican los filtros al producto y
+                    no al grupo.* *No cambian ninguna decisión: lo que hace falta es el botón, y
+                    está justo debajo.* */}
                 {/* El boton, aqui mismo: decir cual es el problema y no dar la
                     forma de arreglarlo obliga a subir a buscar el de arriba. */}
                 <div className="mt-3">
@@ -400,11 +392,9 @@ export function Buscar() {
           ) : (
             <>
               <TablaResultados filas={resultados.data.resultados} />
-              <Aviso tono="info">
-                El orden se aplica a estos {resultados.data.resultados.length} resultados, no a todo
-                el catálogo. Las filas sin precio por unidad se van al final cuando ordenas por
-                precio: un dato que no tenemos no se coloca arriba como si fuera el más barato.
-              </Aviso>
+              {/* *Y aquí había un aviso explicando la paginación y por qué las filas sin precio
+                  por unidad van al final.* *Es la regla con la que está ordenada la tabla, no algo
+                  que la persona tenga que decidir: se borra.* */}
             </>
           )}
         </>

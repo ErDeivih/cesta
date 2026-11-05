@@ -100,6 +100,17 @@ describe('Producto, montado con la respuesta real de la API', () => {
     expect(screen.queryByText(/Cuesta un \d+ % m.s que en/)).not.toBeInTheDocument()
   })
 
+  it('no enseña la auditoría del emparejador ni habla de EAN', () => {
+    // **§8 y P0-4.** *La ficha tenía una tarjeta «Por qué está emparejado con esos» que pintaba
+    // los campos y el JSON del emparejador; y la frase de la horquilla hablaba de «otro EAN».*
+    // *Ni lo uno ni lo otro le sirve a quien está decidiendo una compra, y el panel del
+    // emparejador es una herramienta de ingeniería de `PanelMatching`.*
+    estado.modo = 'dato'
+    monta()
+    expect(screen.queryByText(/Por qué está emparejado/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/EAN/)).not.toBeInTheDocument()
+  })
+
   it('si la API falla, se dice, no se queda en blanco', () => {
     estado.modo = 'error'
     monta()

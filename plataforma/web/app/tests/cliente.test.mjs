@@ -75,18 +75,32 @@ test('*** y si el servidor explica el fallo, manda su explicacion ***', () => {
   assert.equal(textoDeError(new ErrorApi(409, 'La lista cambió mientras mirabas.')), 'La lista cambió mientras mirabas.')
 })
 
-test('un 5xx manda a mirar los registros', () => {
-  assert.match(textoDeError(new ErrorApi(502, null)), /registros/i)
+test('*** un 401 no es un fallo: es que no ha entrado nadie ***', () => {
+  // *Era «La API ha contestado 401» y es lo que leían seis pantallas al abrirlas sin sesión.*
+  // *`DOCTRINA-CALIDAD.md` §8: la interfaz no habla de cómo está hecha.*
+  assert.equal(textoDeError(new ErrorApi(401, null)), 'Entra para ver esto.')
 })
 
-test('y cualquier otro estado se dice con su numero', () => {
-  assert.match(textoDeError(new ErrorApi(418, null)), /418/)
+test('*** un 5xx no manda a nadie a mirar registros ***', () => {
+  // *Antes decía «El servidor ha fallado. Mira los registros de la API»: le pedía al cliente que
+  // depurara la aplicación.*
+  const texto = textoDeError(new ErrorApi(502, null))
+  assert.doesNotMatch(texto, /registros|API|servidor|Caddy/i)
+  assert.match(texto, /Vuelve a intentarlo/i)
+})
+
+test('*** y ningún estado se cuenta con su número de HTTP ***', () => {
+  // *«La API ha contestado 418» no le sirve a nadie para decidir ni para actuar.*
+  const texto = textoDeError(new ErrorApi(418, null))
+  assert.doesNotMatch(texto, /418|API|servidor/i)
+  assert.equal(texto, 'No he podido cargar esto.')
 })
 
 test('*** un `TypeError` es «sin red», y se dice sin alarma ***', () => {
-  // *«En el pasillo esto pasa.»*
+  // *«En el pasillo esto pasa.» El texto dejó de hablar de «lo que hay en pantalla» (jerga de
+  // implementación) y dice lo mismo en una frase.*
   assert.equal(esSinRed(new TypeError('fetch failed')), true)
-  assert.match(textoDeError(new TypeError('fetch failed')), /sin conexion/i)
+  assert.match(textoDeError(new TypeError('fetch failed')), /sin conexión/i)
   // *Y no es un error de la API: es otra cosa.*
   assert.equal(esSinRed(new ErrorApi(500, null)), false)
 })

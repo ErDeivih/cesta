@@ -190,14 +190,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             )
           }
           return (
-            <span
-              className="cifra font-semibold text-bien "
-              title={
-                'Del mas barato al mas caro del grupo de equivalencias. ' +
-                'No son necesariamente el mismo articulo: mismo envase y marca si, pero cada uno ' +
-                'con su EAN. No es el ahorro de uno solo.'
-              }
-            >
+            <span className="cifra font-semibold text-bien ">
               {porcentaje(f.ahorro_pct)}
             </span>
           )
@@ -402,7 +395,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
             <div className="mt-1 flex flex-wrap items-center gap-1">
               <SelloAhorro pct={fila.ahorro_pct} comparable={fila.comparable} dudoso={fila.dudoso} />
               <SelloOferta
-                texto={fila.con_oferta ? 'Hay promoción que baja lo que pagas hoy en caja' : null}
+                texto={fila.con_oferta ? 'Oferta que baja lo que pagas hoy en caja' : null}
                 club={fila.con_oferta_club}
                 unidades={fila.oferta_unidades ?? null}
               />

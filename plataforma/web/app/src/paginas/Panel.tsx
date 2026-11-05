@@ -98,12 +98,13 @@ export function Panel() {
     <div className="flex min-h-full flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-xl font-bold">Panel</h2>
-        <Link
-          to="/panel/matching"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo underline"
-        >
-          Panel de matching →
-        </Link>
+        {/* *** EL ENLACE AL PANEL DE MATCHING YA NO ESTÁ (P0-4). *** *
+            *Desde aquí se llegaba a `/panel/matching`, que es una herramienta de ingeniería: el
+            *JSON crudo del emparejador, rutas de `data/gold/matching` y un `docker compose` para
+            *reconstruir la API.* *Esta pantalla es interna y no está enlazada desde el producto;
+            *el matching tampoco se enlaza desde aquí, para que no haya un camino de dos pasos
+            *desde una pantalla de consumo hasta el volcado.* *Si hace falta mirarlo, se escribe la
+            *dirección.* */}
       </div>
 
       <div role="tablist" aria-label="Secciones del panel" className="flex flex-wrap gap-1">

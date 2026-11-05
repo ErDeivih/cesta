@@ -128,7 +128,6 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
   }
 
   const filas = filasDeChispa(puntos)
-  const huecos = filas.filter((f) => f.valor === null).length
 
   return (
     <div className="w-full">
@@ -141,8 +140,10 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
         ref={contenedor}
         className="w-full"
         role="img"
-        aria-label={`${etiqueta}: ${puntos.length} días de histórico` +
-          (huecos > 0 ? `, ${huecos} sin dato` : '')}
+        // *** SIN EL RECUENTO DE DÍAS NI DE HUECOS. *** *Era «N días de histórico, M sin dato»:
+        // una métrica de relleno en el nombre accesible de una gráfica.* *Lo que hay que oír es de
+        // qué es el precio.*
+        aria-label={`${etiqueta}: precio por día`}
       />
       <details className="mt-1">
         {/* **`Resumen` y no un `<summary>` a mano**: con `display: flex` -- que hace falta para
@@ -150,8 +151,7 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
             flecha parece un encabezado suelto. Lo vigila `test_ui_movil.py`, y con razon: *lo
             encontraron mirando una captura, no leyendo el codigo.* */}
         <Resumen className="text-xs text-tinta-suave">
-          {`Ver los ${puntos.length} días como tabla` +
-            (huecos > 0 ? ` (${huecos} sin dato)` : '')}
+          Ver la tabla de precios
         </Resumen>
         <table className="mt-1 w-full text-xs tabular-nums">
           <caption className="sr-only">{`${etiqueta}: precio por día`}</caption>

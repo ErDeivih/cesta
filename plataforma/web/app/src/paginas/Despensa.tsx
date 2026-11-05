@@ -10,11 +10,14 @@
  *  **gastar**.
  */
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import { declara, consume, useDespensa } from '../api/despensa'
 import { textoDeError, useSeAtasca } from '../api/cliente'
+import { yo } from '../api/cesta'
 import { Fallo, Cargando } from '../componentes/ui'
 import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 /** **Como se lee una cantidad.** *Y `null` **no** es `0`: es «no se sabe».* */
 function cuanto(e: { cantidad: number | null; unidad: string }): string {
@@ -23,6 +26,19 @@ function cuanto(e: { cantidad: number | null; unidad: string }): string {
 }
 
 export function Despensa() {
+  // **Primero, si hay alguien.** *Sin esto, `/api/despensa` contesta 401 y la pantalla enseñaba
+  // el error de la petición a quien no había entrado: la primera impresión de la app recién
+  // instalada.* *La consulta de datos vive en el componente de dentro, así que **sin sesión ni se
+  // lanza**.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="tu despensa" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="La despensa se guarda con tu cuenta." />
+  }
+  return <DespensaConSesion />
+}
+
+function DespensaConSesion() {
   const { data, isLoading, error } = useDespensa()
   const atascada = useSeAtasca(isLoading)
   const [texto, setTexto] = useState('')
@@ -64,7 +80,7 @@ export function Despensa() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">La despensa</h2>
         <p className="text-aviso">
-          No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la despensa este vacia.
+          No he podido mirar la despensa. No quiere decir que esté vacía.
         </p>
       </div>
     )
@@ -104,7 +120,7 @@ export function Despensa() {
       {gastado && <p className="text-cuerpo text-tinta-suave">{gastado}</p>}
 
       {existencias.length === 0 ? (
-        <Vacio titulo="La despensa esta vacia" className="grow">
+        <Vacio titulo="La despensa está vacía" className="grow">
           Declara lo que tengas en casa, y ve descontandolo.
         </Vacio>
       ) : (

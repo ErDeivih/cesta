@@ -82,7 +82,13 @@ export const APLICACIONES: Aplicacion[] = [
       { a: '/compra', texto: 'Buscar', Icono: IconoLupa },
       { a: '/compra/listas', texto: 'Listas', Icono: IconoCarro },
       { a: '/compra/favoritos', texto: 'Favoritos', Icono: IconoCorazon },
-      { a: '/compra/analisis', texto: 'Gasto y ahorro', Icono: IconoGrafica },
+      // *** «Gasto y ahorro» YA NO ESTÁ, *y es una decisión.* *** *
+      //
+      // *Llevaba a `/compra/analisis`, que monta `Panel`: el cuadro de mando del catálogo, con
+      // diez pestañas de ingesta, marcas, índice y emparejador.* *Quien pulsaba «Gasto y ahorro»
+      // esperaba lo que ha pagado, y encontraba «lo que entró hoy en el catálogo».* *No hay una
+      // página real de gasto todavía, así que **no se promete**: cuando la haya, entra aquí.* *
+      // *El panel sigue existiendo para diagnóstico, en `/panel`, **sin enlace desde el producto**.*
     ],
   },
   {
@@ -159,7 +165,9 @@ function ContadorDeLaLista() {
   if (estado.tipo === 'sin-lista') {
     return (
       <>
-        <span className="text-[13px] text-secundaria" aria-hidden="true">Sin lista de casa</span>
+        {/* *La chapa dice «Sin lista», no «Sin lista de casa»: cabe en el lateral y se entiende
+            igual. Lo de «de casa» se dice entero para quien no ve la chapa.* */}
+        <span className="text-[13px] text-secundaria" aria-hidden="true">Sin lista</span>
         <span className="sr-only">No hay lista de casa, asi que no hay nada que contar</span>
       </>
     )
@@ -292,8 +300,10 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
           onNavegar={onNavegar} />
         <EnlaceLateral a="/ajustes" texto="Cuenta y preferencias" Icono={IconoPersona}
           onNavegar={onNavegar} />
-        <EnlaceLateral a="/aprender" texto="Aprender" Icono={IconoLibro}
-          onNavegar={onNavegar} />
+        {/* *** «Aprender» ya no está.*** *
+            *Era un marcador de desarrollo —«el material didáctico vive en `docs/aprende/`»— a dos
+            toques de la portada.* *Cuando haya un índice navegable de verdad, se pone; mientras
+            tanto, no se enseña una puerta que lleva a un párrafo sobre el repositorio.* */}
         {idBotonCerrar && (
           <button
             type="button"

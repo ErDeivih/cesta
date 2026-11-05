@@ -343,8 +343,7 @@ export function Grupo() {
           })()}
 
           <p className="mt-2 text-xs text-tinta-suave">
-            La diferencia es entre los articulos del grupo, que no tienen por que ser el mismo:
-            mismo envase y misma marca si, pero cada uno con su EAN. No es el ahorro de uno solo.
+            La diferencia es entre productos parecidos, no entre el mismo producto.
           </p>
 
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -367,37 +366,31 @@ export function Grupo() {
                 ? `${porcentaje(grupo.ahorro_pct)} · ${euros(grupo.ahorro_cent)} por unidad`
                 : 'sin comparación: está en una sola cadena'}
             </Dato>
-            <Dato etiqueta="Precios que deciden">
+            <Dato etiqueta="Precios de hoy">
               {decidientes.length} de {alternativas.length}
-              <span className="block text-etiqueta font-normal text-tinta-suave">
-                los de más de {diasValidos} días no cuentan
-              </span>
             </Dato>
             <Dato etiqueta="Datos del">{grupo.fecha_datos ? fechaTexto(grupo.fecha_datos) : 'no lo sé'}</Dato>
           </dl>
         </div>
       </header>
 
-      {estado.data?.vigencia_precio?.coherente === false && (
-        <Aviso tono="aviso" titulo="Catálogo pendiente de verificar">
-          La versión publicada no coincide con las fechas de sus precios. Se muestran los datos,
-          pero no se recomienda una tienda hasta verificar la publicación.
-        </Aviso>
-      )}
+      {/* *** EL AVISO DE PUBLICACIÓN NO VA AQUÍ. *** *
+          *Decía «Catálogo pendiente de verificar — La versión publicada no coincide con las fechas
+          de sus precios…».* *Es un aviso de administración del catálogo (§8): a quien está mirando
+          dónde comprar no le cambia nada que puede hacer, y le quita sitio a lo que sí decide.*
+          *El estado de publicación sigue visible en `/panel`, que es interno.* */}
 
       {otrasUnidades.length > 0 && (
         <Aviso tono="aviso" titulo="Este grupo mezcla unidades">
-          {otrasUnidades.length} de sus productos se miden en otra unidad (
-          {[...new Set(otrasUnidades.map((p) => p.unidad))].join(', ')}) y no entran en la
-          comparación de precio: restar euros por kilo de euros por unidad da números enormes y
-          falsos. Se ven abajo, con su unidad.
+          Algunos productos se miden en otra unidad ({[...new Set(otrasUnidades.map((p) => p.unidad))].join(', ')})
+          y no entran en la comparación. Se ven abajo, con su unidad.
         </Aviso>
       )}
 
       {sinFecha.length > 0 && (
-        <Aviso tono="aviso" titulo="Hay precios que no sé de cuándo son">
-          {[...new Set(sinFecha.map((a) => a.producto.fuente))].join(', ')}: sin fecha no se puede
-          decir que el precio sea viejo, así que cuenta, pero no lo puedo fechar.
+        <Aviso tono="aviso" titulo="Hay precios sin fecha">
+          {[...new Set(sinFecha.map((a) => a.producto.fuente))].join(', ')}: cuentan igual, pero no
+          sé de cuándo son.
         </Aviso>
       )}
 
@@ -573,17 +566,14 @@ function FichaAlternativa({
   // componente lleva SU peso al lado: el numero de la nota tiene que poder
   // reconstruirse a mano con lo que se ve.
   const componentes: { clave: keyof Pesos; nombre: string; valor: number | null }[] = [
-    { clave: 'precio', nombre: 'precio por unidad', valor: alternativa.componentes.precio },
+    { clave: 'precio', nombre: 'precio', valor: alternativa.componentes.precio },
     {
       clave: 'letra',
-      nombre:
-        alternativa.componentes.letraDe === 'gama'
-          ? 'gama (por precio, no es calidad)'
-          : 'calidad (leída de ingredientes)',
+      nombre: 'calidad',
       valor: alternativa.componentes.letra,
     },
-    { clave: 'cercania', nombre: 'cercanía al mejor', valor: alternativa.componentes.cercania },
-    { clave: 'promo', nombre: 'promoción', valor: alternativa.componentes.promo },
+    { clave: 'cercania', nombre: 'cercanía', valor: alternativa.componentes.cercania },
+    { clave: 'promo', nombre: 'oferta', valor: alternativa.componentes.promo },
   ]
 
   return (
@@ -660,7 +650,7 @@ function FichaAlternativa({
         {p.comparable === false && (
           <Etiqueta
             tono="aviso"
-            titulo="Su precio por unidad y su precio de venta se contradicen: no puede decidir la comparación"
+            titulo="Precio poco fiable: no entra en la comparación"
           >
             precio en disputa
           </Etiqueta>

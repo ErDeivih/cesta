@@ -117,7 +117,7 @@ function SinMedida({ f, alQuitar, quitando }: {
 }) {
   const frase = f.desconocido
     ? f.que === 'grupo'
-      ? 'Este grupo ya no está en el catálogo: puede que sus productos hayan desaparecido o que el emparejador los haya separado.'
+      ? 'Este producto ya no está en el catálogo.'
       : 'Este producto ya no está en el catálogo de su cadena.'
     : f.motivo === 'cambio de formato'
       ? 'Cambió el formato (la unidad o la cantidad), así que comparar el precio de hoy con el de antes no diría nada.'
@@ -294,7 +294,7 @@ export function Favoritos() {
             color no puede ser la única señal. */}
         <div
           role="group"
-          aria-label="Ventana para medir el cambio"
+          aria-label="Periodo"
           className="flex flex-wrap gap-2"
         >
           {VENTANAS.map((d) => (
@@ -420,7 +420,7 @@ export function Favoritos() {
           <div>
             <h2 className="text-entrada font-semibold">Sin cambio que medir todavía</h2>
             <p className="text-cuerpo text-tinta-suave">
-              Estos no se pueden comparar en la ventana de {ventana} días, y se dice por qué
+              Estos no se pueden comparar en los últimos {ventana} días, y se dice por qué
               en vez de enseñar un cero.
             </p>
           </div>

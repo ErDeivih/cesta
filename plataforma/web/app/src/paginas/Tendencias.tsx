@@ -10,11 +10,14 @@
  *  **La medida se declara:** es lo anotado y lo que se sabe, no "lo que comiste".
  */
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import { textoDeError } from '../api/cliente'
+import { yo } from '../api/cesta'
 import { useRango } from '../api/diario'
 import { GraficaDeLasTres } from '../componentes/GraficaDeLasTres'
 import { Cargando, Fallo, Tarjeta, Vacio } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 function hoy(): string {
   const ahora = new Date()
@@ -32,6 +35,18 @@ function haceDias(cuantos: number): string {
 }
 
 export function Tendencias() {
+  // **La puerta.** *`/api/diario/rango` es del diario de cada uno.* *Sin sesión, la pantalla
+  // decía el 401 de la petición; ahora dice que hay que entrar, y la gráfica —que pide el rango y
+  // la previsión— ni se monta.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="tus tendencias" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="Las tendencias salen de tu diario." />
+  }
+  return <TendenciasDelRango />
+}
+
+function TendenciasDelRango() {
   const [dias, setDias] = useState(14)
   const { data, isPending, error } = useRango(haceDias(dias - 1), hoy())
 
@@ -84,11 +99,14 @@ export function Tendencias() {
             <p className="font-serif text-[24px] leading-8 font-semibold text-tinta-fuerte tabular-nums">
               {media === null ? 'sin dato' : `${media} kcal`}
             </p>
-            <p className="text-[13px] text-secundaria">
-              {media === null
-                ? 'Ningun dia de los que se anotaron trae energia: no hay media que dar.'
-                : `media de los ${conDato.length} dias que traen dato, de ${filas.length} con algo anotado`}
-            </p>
+            {/* *** SIN EL RECUENTO DE DÍAS. *** *
+                *Decía «media de los N días que traen dato, de M con algo anotado»: la explicación
+                del cálculo, con la jerga de la consulta.* *La media ya está arriba y lo que mide
+                se dice en la cabecera de la pantalla.* *Lo único que hay que decir es cuando no
+                hay media, y por qué.* */}
+            {media === null && (
+              <p className="text-[13px] text-secundaria">Sin dato de calorías en estos días.</p>
+            )}
           </Tarjeta>
 
           {/* ***Las tres series: registrado, previsto y objetivo.*** *Y la prevision **cruza a Recetas** por
@@ -112,8 +130,7 @@ export function Tendencias() {
                       y lo que pasa es que no se sabe. */}
                   {d.kcal_conocida === null ? (
                     <p className="mt-1 text-[13px] text-aviso">
-                      Sin dato de energia en este dia: no se dibuja, porque un cero no es lo mismo que no
-                      saber.
+                      Sin dato de energía en este día.
                     </p>
                   ) : (
                     <div className="mt-1 h-2 w-full rounded-md bg-marfil">

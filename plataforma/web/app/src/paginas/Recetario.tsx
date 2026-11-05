@@ -9,6 +9,7 @@
  *  sabe pintar el caso bueno no esta terminada.
  */
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   useArchivarReceta,
@@ -18,7 +19,9 @@ import {
 } from '../api/recetas'
 import type { Ingrediente } from '../api/recetas'
 import { textoDeError } from '../api/cliente'
+import { yo } from '../api/cesta'
 import { Boton, Cargando, Fallo, Tarjeta, Vacio, Etiqueta } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 import { etiquetasDe, filtraRecetas, textoDelVacio } from '../logica/recetario'
 
 function ListaDeIngredientes({ ingredientes }: { ingredientes: Ingrediente[] }) {
@@ -196,6 +199,15 @@ function Alta() {
 }
 
 export function Recetario() {
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="tu recetario" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="El recetario se guarda con tu cuenta." />
+  }
+  return <RecetarioConSesion />
+}
+
+function RecetarioConSesion() {
   const [abierta, setAbierta] = useState<number | null>(null)
   const [verArchivadas, setVerArchivadas] = useState(false)
   // **G12, punto 218: el buscador que faltaba.** *Se filtra en el cliente a proposito: la lista ya
@@ -248,8 +260,8 @@ export function Recetario() {
       {error && <Fallo error={error} />}
 
       {data && todas.length === 0 && (
-        <Vacio titulo="Todavia no hay recetas" className="grow">
-          <p>Anade la primera y aparecera aqui, con sus ingredientes y sus raciones.</p>
+        <Vacio titulo="Todavía no hay recetas" className="grow">
+          <p>Añade la primera y aparecerá aquí, con sus ingredientes y sus raciones.</p>
         </Vacio>
       )}
 

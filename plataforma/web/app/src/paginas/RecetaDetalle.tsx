@@ -14,10 +14,11 @@ import { Link, useParams } from 'react-router-dom'
 import { textoDeError, esErrorApi } from '../api/cliente'
 import { Fallo, Etiqueta } from '../componentes/ui'
 import { usePasarALista, usePreviaDeCompra, useReceta } from '../api/recetas'
-import { misListas } from '../api/cesta'
+import { misListas, yo } from '../api/cesta'
 import { costeDeReceta, type IngredienteConPrecio } from '../logica/costeReceta'
 import { FormularioReceta } from '../componentes/FormularioReceta'
-import { Boton, Tarjeta, Vacio } from '../componentes/ui'
+import { Boton, Cargando, Tarjeta, Vacio } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 /**
  * **G12, punto 221: pasar la receta a la lista, enseñando antes lo que se va a comprar.**
@@ -114,6 +115,18 @@ function PasarALista({ recetaId }: { recetaId: number }) {
 }
 
 export function RecetaDetalle() {
+  // **Sin sesión no se pide la receta.** *`/api/recetas/{id}` contesta 401, y eso no es «esa
+  // receta no existe» ni un fallo: es que no ha entrado nadie. La pantalla lo dice con la salida
+  // puesta y la consulta ni se lanza.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="la receta" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="Las recetas se guardan con tu cuenta." />
+  }
+  return <DetalleDeLaReceta />
+}
+
+function DetalleDeLaReceta() {
   const { recetaId } = useParams()
   const id = recetaId ? Number(recetaId) : null
   const [version, setVersion] = useState<number | null>(null)
@@ -276,10 +289,9 @@ export function RecetaDetalle() {
                   {c.sinDatos.length === 1
                     ? 'Un ingrediente no tiene precio: '
                     : `${c.sinDatos.length} ingredientes no tienen precio: `}
-                  <strong className="font-medium">{c.sinDatos.join(', ')}</strong>. Los precios salen
-                  del catálogo, y para eso cada ingrediente tiene que estar enlazado con su producto;
-                  emparejarlos por el nombre no vale, porque un nombre parecido no demuestra que sea el
-                  mismo producto.
+                  <strong className="font-medium">{c.sinDatos.join(', ')}</strong>. Los precios
+                  salen del catálogo, y un ingrediente que no está enlazado con su producto no
+                  tiene precio.
                 </p>
               )}
             </>

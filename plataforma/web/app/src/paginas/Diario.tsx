@@ -17,7 +17,8 @@ import { textoDeError } from '../api/cliente'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import { resolver, type Pendiente } from '../logica/operacionPendiente'
 import type { NuevaEntrada } from '../api/diario'
-import { Boton, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
+import { Boton, Cargando, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 const NOMBRE_NUTRIENTE: Record<string, string> = {
   kcal: 'energia',
@@ -240,8 +241,8 @@ function DeLaCompra({ fecha }: { fecha: string }) {
               {previa.sin_dato.length > 0 && (
                 <p className="text-[14px] text-secundaria">
                   {previa.sin_dato.length === 1
-                    ? 'Uno no trae nutricion en el catalogo, asi que se anotaria como ?sin dato?: '
-                    : `${previa.sin_dato.length} no traen nutricion en el catalogo, asi que se anotarian como ?sin dato?: `}
+                    ? 'Uno no trae nutrición en el catálogo, así que se anotaría como «sin dato»: '
+                    : `${previa.sin_dato.length} no traen nutrición en el catálogo, así que se anotarían como «sin dato»: `}
                   {previa.sin_dato.join(', ')}.
                 </p>
               )}
@@ -344,8 +345,8 @@ function Alta({ fecha }: { fecha: string }) {
       >
         <p className="text-[13px] leading-5 text-secundaria">
           <strong className="text-tinta-fuerte">Lo que apuntes es lo que has comido</strong>, no los
-          valores de 100 g. Si tienes la ficha del producto, anotalo desde ahí y la cuenta la hace
-          el servidor. Deja en blanco lo que no sepas: <strong className="text-tinta-fuerte">no es
+          valores de 100 g. Si tienes la ficha del producto, anótalo desde ahí y la cuenta se hace
+          sola. Deja en blanco lo que no sepas: <strong className="text-tinta-fuerte">no es
           cero</strong>, es que no se sabe.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -456,6 +457,18 @@ function Alta({ fecha }: { fecha: string }) {
 }
 
 export function Diario() {
+  // **La puerta.** *El diario es de cada uno: `/api/diario/{fecha}` contesta 401 sin sesión, y
+  // antes eso se enseñaba como «La API ha contestado 401». Todo lo que pide datos —el día, la
+  // compra— vive en el componente de dentro, así que sin sesión no se lanza ni una petición.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="tu diario" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="El diario se guarda con tu cuenta." />
+  }
+  return <DiarioDelDia />
+}
+
+function DiarioDelDia() {
   const [fecha, setFecha] = useState(hoy())
   const { data, isPending, error } = useDia(fecha)
   const borrar = useBorrarEntrada(fecha)
@@ -503,8 +516,9 @@ export function Diario() {
           {/* La frase que impide leer el numero de arriba como "lo que comi hoy". */}
           {!data.completo && total > 0 && (
             <p className="mt-1 text-[14px] leading-[22px] text-aviso">
-              Este dia <strong>no esta completo</strong>: falta el dato de {faltan}{' '}
-              {faltan === 1 ? 'entrada' : 'entradas'}. Lo de arriba es lo que se sabe, no lo que comiste.
+              Este día <strong>no está completo</strong>: falta el dato de {faltan}{' '}
+              {faltan === 1 ? 'entrada' : 'entradas'}. Lo de arriba es lo que se sabe, no lo que
+              comiste.
             </p>
           )}
 
@@ -528,19 +542,16 @@ export function Diario() {
               ))}
             </ul>
           )}
-          {data.completo && total > 0 && (
-            <p className="mt-1 text-[14px] text-secundaria">
-              Todas las entradas anotadas tienen calorías. El subtotal solo incluye lo registrado;
-              comprueba que hayas anotado todas tus comidas.
-            </p>
-          )}
+          {/* *** LA COLETA DE «TODAS LAS ENTRADAS TIENEN CALORÍAS…» YA NO ESTÁ. *** *
+              *Era una instrucción redundante —«comprueba que hayas anotado todas tus comidas»— que
+              no cambiaba ninguna decisión: lo que falta ya se dice arriba, entrada a entrada.* */}
         </Tarjeta>
       )}
 
       <Alta fecha={fecha} />
 
       {data && total === 0 && (
-        <Vacio titulo="Nada anotado este dia" className="grow">
+        <Vacio titulo="Nada anotado este día" className="grow">
           <p>Anota lo primero arriba y aparecera aqui, agrupado por comidas.</p>
         </Vacio>
       )}
@@ -554,11 +565,14 @@ export function Diario() {
                 <li key={e.id}>
                   <Tarjeta>
                     <div className="flex flex-wrap items-center justify-between gap-2">
+                      {/* *** EL NOMBRE, NO «Receta 7 (v2)». *** *
+                          *`referencia` es lo que la persona escribió; la versión y el número son
+                          del registro interno y no le dicen nada.* */}
                       <span className="text-[16px] text-tinta-fuerte">
-                        {e.tipo === 'receta' ? `Receta ${e.referencia} (v${e.version})` : e.referencia || 'sin nombre'}
+                        {e.referencia || 'sin nombre'}
                       </span>
                       <span className="text-[13px] tabular-nums text-secundaria">
-                        {e.kcal === null ? 'sin dato' : `${e.kcal} kcal`} · {e.fuente_dato}
+                        {e.kcal === null ? 'sin dato' : `${e.kcal} kcal`}
                       </span>
                     </div>
                     <button

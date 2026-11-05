@@ -12,11 +12,12 @@ import { listaDelDiario } from '../logica/listaDelDiario'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { textoDeError } from '../api/cliente'
-import { misListas, previaDelPlan, traerDelPlan } from '../api/cesta'
+import { misListas, previaDelPlan, traerDelPlan, yo } from '../api/cesta'
 import type { PreviaDelPlan } from '../api/cesta'
 import { useDuplicarSemana, usePlan, usePlanificar, useRecetas } from '../api/recetas'
 import type { ReciboDeSemana } from '../api/recetas'
-import { Boton, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
+import { Boton, Cargando, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
@@ -179,8 +180,8 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
           {traido === 1 ? 'Ha entrado 1 ingrediente.' : `Han entrado ${traido} ingredientes.`}
           {fuera.length > 0 && (traido > 0 ? ' ' : '') +
             (fuera.length === 1
-              ? 'Uno se ha quedado fuera: no esta en el catalogo.'
-              : `${fuera.length} se han quedado fuera: no estan en el catalogo.`)}
+              ? 'Uno se ha quedado fuera: no está en el catálogo.'
+              : `${fuera.length} se han quedado fuera: no están en el catálogo.`)}
         </p>
       )}
 
@@ -204,7 +205,10 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
                         {' '}{x.cantidad} {x.unidad ?? ''}
                       </span>
                     )}
-                    <span className="text-[13px] text-secundaria"> ? de {x.receta}</span>
+                    {/* *Aquí había un `? de {receta}` que salía en pantalla como «? de 3»: un
+                        glifo roto del que no se sabía qué quería decir.* *Lo que hace falta es de
+                        qué receta viene el ingrediente, y eso es su nombre.* */}
+                    <span className="text-[13px] text-secundaria"> · de {x.receta}</span>
                   </li>
                 ))}
               </ul>
@@ -223,8 +227,8 @@ function TraerALaLista({ desde, hasta }: { desde: string; hasta: string }) {
           {previa.sin_catalogo.length > 0 && (
             <p className="text-[14px] text-secundaria">
               {previa.sin_catalogo.length === 1
-                ? 'Uno no se puede anadir, porque no esta enlazado con el catalogo: '
-                : `${previa.sin_catalogo.length} no se pueden anadir, porque no estan enlazados con el catalogo: `}
+                ? 'Uno no se puede añadir, porque no está enlazado con el catálogo: '
+                : `${previa.sin_catalogo.length} no se pueden añadir, porque no están enlazados con el catálogo: `}
               {previa.sin_catalogo.join(', ')}.
             </p>
           )}
@@ -294,6 +298,18 @@ function DuplicarLaSemana({ desde, hasta }: { desde: string; hasta: string }) {
 }
 
 export function PlanSemanal() {
+  // **La puerta, antes que el plan.** *`/api/recetas/plan` exige sesión y contestaba 401; sin la
+  // puerta eso se pintaba como un fallo. Y no solo el plan: `TraerALaLista` y `DuplicarLaSemana`
+  // piden listas, así que se montan **detrás** de la puerta, no antes.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  if (sesion.isLoading) return <Cargando que="tu plan" />
+  if (!sesion.data?.usuario) {
+    return <EntraParaVer texto="El plan de la semana se guarda con tu cuenta." />
+  }
+  return <PlanDeLaSemana />
+}
+
+function PlanDeLaSemana() {
   const dias = laSemana()
   const [abierto, setAbierto] = useState<string | null>(null)
   const { data, isPending, error } = usePlan(dias[0], dias[dias.length - 1])
@@ -402,8 +418,8 @@ export function PlanSemanal() {
       </ul>
 
       {data && data.plan.length === 0 && (
-        <Vacio titulo="La semana esta vacia" className="grow">
-          <p>Pon una receta en un dia y aparecera aqui con su version y sus comensales.</p>
+        <Vacio titulo="La semana está vacía" className="grow">
+          <p>Pon una receta en un día y aparecerá aquí con su versión y sus comensales.</p>
         </Vacio>
       )}
     </div>

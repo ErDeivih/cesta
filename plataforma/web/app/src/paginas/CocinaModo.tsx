@@ -90,7 +90,7 @@ export function CocinaModo() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Cocina</h2>
         <p className="text-aviso">
-          No se ha podido preguntar al servidor. Esto <strong>no</strong> quiere decir que la receta no este
+          No he podido mirar la receta. Esto <strong>no</strong> quiere decir que no esté
           empezada.
         </p>
         {error ? <Etiqueta tono="mal">{textoDeError(error)}</Etiqueta> : null}
@@ -104,7 +104,7 @@ export function CocinaModo() {
     return (
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Cocina</h2>
-        <p className="text-cuerpo text-tinta-suave">Esta receta no esta empezada.</p>
+        <p className="text-cuerpo text-tinta-suave">Esta receta no está empezada.</p>
         <Boton onClick={() => empieza.mutate()} disabled={empieza.isPending}>Empezar a cocinar</Boton>
         {empieza.error ? <Etiqueta tono="mal">{textoDeError(empieza.error)}</Etiqueta> : null}
       </div>

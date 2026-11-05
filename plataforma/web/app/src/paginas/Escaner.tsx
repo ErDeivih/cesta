@@ -19,7 +19,7 @@ import { esErrorApi, textoDeError } from '../api/cliente'
 import { euros, eurosUnidad, fecha, nombreCadena, porcentajeConSigno } from '../api/formato'
 import { SelloNutriscore } from '../componentes/Etiquetas'
 import { IconoCamara } from '../componentes/iconos'
-import { Aviso, Boton, Cargando, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
+import { Aviso, Boton, Cargando, Etiqueta, Fallo, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 /** `BarcodeDetector` no esta en los tipos del DOM: es una API de navegador que
  *  solo tienen algunos (Chrome y derivados; Firefox y Safari no). Se declara lo
@@ -117,7 +117,7 @@ export function Escaner() {
       setCamara(true)
     } catch {
       setAvisoCamara(
-        'No he podido abrir la cámara. Puede que el navegador no dé permiso, o que la página no vaya por HTTPS: sin HTTPS no hay cámara.',
+        'No he podido abrir la cámara. Puede que el navegador no dé permiso: escribe el número.',
       )
     }
   }
@@ -187,13 +187,11 @@ export function Escaner() {
       </form>
 
       <p className="text-etiqueta text-tinta-suave">
-        Se acepta el código como lo lea el lector: con espacios, con guiones y con ceros de más
-        (EAN-13 y UPC-12 son el mismo número escrito distinto).
+        Se acepta el código como lo lea el lector: con espacios, con guiones y con ceros de más.
         {!hayDetector && (
           <>
             {' '}
-            Este navegador no tiene <code>BarcodeDetector</code>, así que no hay botón de cámara:
-            teclea o pega el número.
+            Este navegador no puede leer códigos con la cámara: escribe el número.
           </>
         )}
       </p>
@@ -216,10 +214,6 @@ export function Escaner() {
       {error !== null && es400 && (
         <Aviso tono="mal" titulo="Eso no es un código de barras">
           <p>{textoDeError(error)}</p>
-          <p className="mt-1">
-            Un código bueno que no conozcamos contesta otra cosa: «no lo tengo». Aquí el servidor
-            dice que lo que ha llegado no es un código.
-          </p>
         </Aviso>
       )}
 
@@ -229,15 +223,16 @@ export function Escaner() {
 
       {perdido && (
         <Vacio titulo="No tengo ese código" className="grow">
-          <p>
-            <strong>Motivo:</strong> {perdido.motivo}
-          </p>
+          {perdido.motivo && perdido.motivo !== 'desconocido' && (
+            <p>
+              <strong>Motivo:</strong>{' '}
+              {perdido.motivo === 'sin_ean_en_esa_cadena'
+                ? 'Ese producto no está en esta cadena.'
+                : 'No lo sé.'}
+            </p>
+          )}
           {perdido.sugerencia && <p className="mt-1">{perdido.sugerencia}</p>}
-          <p className="mt-2 text-etiqueta">
-            Datos del {fecha(perdido.fecha_datos)}.{' '}
-            {perdido.motivo === 'desconocido' &&
-              'El motivo «sin_ean_en_esa_cadena» todavía no se da nunca: necesitaría un parámetro `cadena` que no está implementado.'}
-          </p>
+          <p className="mt-2 text-etiqueta">Datos del {fecha(perdido.fecha_datos)}.</p>
         </Vacio>
       )}
 
@@ -322,21 +317,14 @@ export function Escaner() {
               </TablaScroll>
             )}
             <p className="mt-1 text-etiqueta text-tinta-suave">
-              La diferencia se mide contra el precio por unidad más bajo de la comparación, no
-              contra el precio del envase.
+              Diferencia con el más barato por unidad
             </p>
           </div>
 
-          {hallado.nota != null && (
-            <details className="mt-3">
-              <Resumen className="text-etiqueta text-terracota ">
-                La nota del producto (dato en crudo)
-              </Resumen>
-              <pre className="mt-1 overflow-x-auto rounded-campo bg-marfil p-2 text-etiqueta ">
-                {JSON.stringify(hallado.nota, null, 2)}
-              </pre>
-            </details>
-          )}
+          {/* *** EL VOLCADO DE `nota` YA NO ESTÁ. *** *
+              *Era «La nota del producto (dato en crudo)» con un `<pre>` del JSON: datos internos
+              del catálogo puestos delante de quien está en el pasillo.* *Si algún día hace falta
+              enseñar esa nota, se traduce a una frase; el JSON, no.* */}
         </Tarjeta>
       )}
 

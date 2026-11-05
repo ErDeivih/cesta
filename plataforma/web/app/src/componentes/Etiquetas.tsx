@@ -117,7 +117,7 @@ export function SelloOferta({ texto, club, unidades }: {
     return (
       <Etiqueta
         tono="aviso"
-        titulo="Se acumula en un monedero: no baja lo que pagas en caja"
+        titulo="Solo con tarjeta del supermercado"
       >
         oferta solo con tarjeta
       </Etiqueta>
@@ -161,16 +161,11 @@ export function SelloAhorro({ pct, comparable, dudoso }: {
 }) {
   if (!comparable || dudoso || pct <= 0) {
     return (
-      <Etiqueta tono="dato" titulo="Sin comparación fiable no hay ahorro que dar">
-        no lo sé
-      </Etiqueta>
+      <Etiqueta tono="dato">no lo sé</Etiqueta>
     )
   }
   return (
-    <span
-      className="cifra text-etiqueta font-semibold text-bien "
-      title="Del mas barato al mas caro del grupo de equivalencias. No son necesariamente el mismo articulo: cada uno con su EAN. No es el ahorro de este."
-    >
+    <span className="cifra text-etiqueta font-semibold text-bien ">
       hasta un {porcentaje(pct)} en el grupo
     </span>
   )
@@ -190,7 +185,7 @@ export function SelloDudoso({ dudoso }: { dudoso: boolean }) {
   return (
     <Etiqueta
       tono="aviso"
-      titulo="Dentro del grupo hay precios que se contradicen por más del doble en la misma unidad. Sigue saliendo, pero no doy un ahorro que no se sostiene."
+      titulo="Comparación poco fiable"
     >
       comparación dudosa
     </Etiqueta>
@@ -227,8 +222,8 @@ export function SelloLetra({
         tono={esDeducida ? 'aviso' : 'info'}
         titulo={
           esDeducida
-            ? 'Deducida por Open Food Facts: la tienda NO publica los ingredientes de este producto. Es una estimación de un tercero, no un dato del supermercado.'
-            : 'Leída de la lista de ingredientes que publica la tienda: aditivos, aceite de palma, porcentaje del primero y longitud de la lista'
+            ? 'Estimación de Open Food Facts: la tienda no publica los ingredientes de este producto.'
+            : 'Leída de la lista de ingredientes que publica la tienda.'
         }
       >
         {esDeducida
@@ -239,10 +234,7 @@ export function SelloLetra({
   }
   if (gama) {
     return (
-      <Etiqueta
-        tono="aviso"
-        titulo="Sale de ordenar por precio dentro del grupo, no de leer la etiqueta. Es gama, no calidad. En esta letra la A es el más caro del grupo."
-      >
+      <Etiqueta tono="aviso">
         Gama {gama} · por precio, no es calidad
       </Etiqueta>
     )
@@ -265,7 +257,7 @@ export function LetraSuelta({ letra, tipo }: { letra: Letra | null; tipo: 'calid
     )
   }
   return (
-    <Etiqueta tono="aviso" titulo="Por precio dentro del grupo: A es el más caro. No es calidad.">
+    <Etiqueta tono="aviso">
       {letra} (gama)
     </Etiqueta>
   )

@@ -50,21 +50,19 @@ export function LeyendaDeSeries({ registrado, previsto, objetivo, nota }: PropsD
     ['previsto', previsto],
     ['objetivo', objetivo],
   ]
-  const dibujables = series.filter(([, s]) => s.dibujable).length
 
   return (
     <div>
-      <p>
-        {nota === 'sin_nada'
-          ? 'No hay ninguna serie que dibujar: no hay datos en estas fechas.'
-          : nota === 'sin_objetivo'
-            ? `Dos series: ${dibujables} de 3. No hay objetivo puesto para estas fechas.`
-            : `Tres series: ${dibujables} de 3.`}
-      </p>
+      {/* *** LOS RECUENTOS DE SERIES, FUERA. *** *
+          *Decía «Dos series: 2 de 3. No hay objetivo puesto…» y «Tres series: 3 de 3»: métricas de
+          relleno sobre la propia gráfica.* *Lo único que hace falta saber es cuando **no hay nada
+          que dibujar**, y eso se dice; la tabla de abajo ya cuenta, serie a serie, lo que se dibuja
+          y lo que no.* */}
+      {nota === 'sin_nada' && <p>No hay datos en estas fechas.</p>}
 
       {/* *La tabla, con los mismos datos que la grafica -- y con lo que NO hay.* */}
       <table>
-        <caption>Lo que se dibuja en cada serie, y lo que se queda fuera</caption>
+        <caption>Datos de la gráfica</caption>
         <thead>
           <tr>
             <th scope="col">Serie</th>

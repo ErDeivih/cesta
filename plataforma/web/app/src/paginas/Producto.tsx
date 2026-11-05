@@ -38,7 +38,6 @@ import { useTitulo } from '../componentes/Titulo'
 import { fraseDePrecio } from '../logica/frase'
 import { construyeComparacion, identidad, precioComparable } from '../logica/grupo'
 import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
-import { ExplicacionEmparejamiento } from '../componentes/ExplicacionEmparejamiento'
 import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
 
 const NUMERO = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 })
@@ -400,8 +399,8 @@ export function Producto() {
                   <>
                     <h3 className="mt-2 text-xs font-semibold">Mismo articulo, precio no comparable</h3>
                     <p className="text-xs text-tinta-suave">
-                      Es el mismo producto (mismo EAN), pero su precio va en otra base (por unidad de
-                      venta en vez de por kilo, o al reves). No se resta.
+                      Es el mismo producto, pero su precio va en otra base (por unidad de venta en
+                      vez de por kilo, o al revés). No se resta.
                     </p>
                     <ul className="mt-1 grid gap-1 text-xs">
                       {mismaBase.map((p) => fila(p, 'mismo articulo, otra base'))}
@@ -422,13 +421,13 @@ export function Producto() {
                 )}
                 {sinVerificar.length > 0 && (
                   <>
-                    <h3 className="mt-3 text-xs font-semibold">Sin identidad verificada</h3>
+                    <h3 className="mt-3 text-xs font-semibold">No sé si es exactamente este producto</h3>
                     <p className="text-xs text-tinta-suave">
-                      No hay EAN con el que confirmar si es el mismo articulo. No se afirma ni que si
-                      ni que no, y no se resta.
+                      No hay con qué confirmar si es el mismo artículo, así que va aparte y no se
+                      resta.
                     </p>
                     <ul className="mt-1 grid gap-1 text-xs">
-                      {sinVerificar.map((p) => fila(p, 'identidad no verificada'))}
+                      {sinVerificar.map((p) => fila(p, 'no sé si es el mismo producto'))}
                     </ul>
                   </>
                 )}
@@ -506,7 +505,7 @@ export function Producto() {
             {/* Y esto lo dice la cadena, no nosotros. Ponerlo como si fuera
                 nuestro seria vender su marketing como dato. */}
             {miembro?.distintivo && (
-              <Etiqueta tono="neutro" titulo="Es lo que dice la cadena, no lo que decimos nosotros">
+              <Etiqueta tono="neutro">
                 la cadena dice: {selloLegible(miembro.distintivo)}
               </Etiqueta>
             )}
@@ -515,11 +514,10 @@ export function Producto() {
       </header>
 
       {!grupo && (
-        <Aviso tono="aviso" titulo="Este producto no tiene grupo">
+        <Aviso tono="aviso" titulo="Este producto no tiene comparación">
           <p>
-            Es uno de los que el emparejador deja sueltos: no hay con qué compararlo, así que no
-            hay alternativas ni histórico de grupo que enseñar. Sigue saliendo en el buscador,
-            marcado, porque esconderlo sería esconder casi dos tercios del catálogo.
+            No hay otros productos parecidos con los que compararlo, así que no hay alternativas
+            ni histórico que enseñar. Sigue saliendo en el buscador, marcado.
           </p>
         </Aviso>
       )}
@@ -531,12 +529,10 @@ export function Producto() {
             sub={`Precio por unidad de ${nombreCadena(fuente)}${grupo.unidad ? ` · €/${grupo.unidad}` : ''}`}
           >
             {historico.bloqueado ? (
-              <Aviso tono="aviso" titulo="No pinto la línea, y lo explico">
+              <Aviso tono="aviso" titulo="Sin histórico de este precio">
                 <p>
-                  Esta cadena tiene {historico.filas} productos dentro del mismo grupo, y la serie
-                  que devuelve <code>/api/grupo</code> va por cadena y fecha sin decir de cuál es
-                  cada punto. Dibujarla mezclaría dos productos y parecería un histórico que no
-                  existe.
+                  Esta cadena tiene varios productos parecidos en el grupo y no puedo separar cuál
+                  es cuál, así que no dibujo una línea que mezclaría dos productos.
                 </p>
               </Aviso>
             ) : historico.puntos.length === 0 ? (
@@ -684,24 +680,17 @@ export function Producto() {
                     *Decia «2000,00 EUR» cuando la diferencia es **2000 EUR/kg**.* *Sin la unidad,
                     el numero se lee como un ahorro de dinero en la compra, y no lo es: es la
                     horquilla de precios **por unidad** entre articulos distintos del grupo.* */}
-                De la mas barata a la mas cara <strong>de este mismo articulo</strong> hay{" "}
+                Entre el más barato y el más caro del grupo hay{' '}
                 {porcentaje(comp.diferenciaPct)} de diferencia por {comp.unidad ?? 'unidad'} (
-                {euros(comp.diferenciaCent)} por {comp.unidad ?? 'unidad'}).{" "}
+                {euros(comp.diferenciaCent)} por {comp.unidad ?? 'unidad'}).{' '}
                 {comp.ahorroEnvaseCent != null && (
                   <>
-                    Lo que te ahorras en el envase son{" "}
-                    <strong>{euros(comp.ahorroEnvaseCent)}</strong>.{" "}
+                    En el envase te ahorras{' '}
+                    <strong>{euros(comp.ahorroEnvaseCent)}</strong>.{' '}
                   </>
                 )}
-                <span className="text-tinta-suave">
-                  Las alternativas -- otro EAN -- no entran en esta cuenta.
-                </span>
               </p>
             )}
-          </Tarjeta>
-
-          <Tarjeta titulo="Por qué está emparejado con esos">
-            <ExplicacionEmparejamiento grupo={grupo} />
           </Tarjeta>
         </>
       )}

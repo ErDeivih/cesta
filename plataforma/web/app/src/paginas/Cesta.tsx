@@ -228,8 +228,8 @@ export function Introducir({ alEntrar }: { alEntrar: () => void }) {
       </h2>
       <p className="mb-4 text-cuerpo text-tinta-suave">
         {creando
-          ? 'La cuenta es lo que hace que la lista tenga dueño: sin ella no se guarda ni se puede compartir. Se queda en casa, en esta Cesta, y al crearla ya entras.'
-          : 'La lista de la compra es tuya y de quien la compartas. Por eso hay que entrar: una lista sin dueño no se puede compartir ni recuperar.'}
+          ? 'La cuenta hace que la lista tenga dueño: sin ella no se guarda ni se comparte.'
+          : 'La lista es tuya y de quien la compartas; por eso hay que entrar.'}
       </p>
       {creando
         ? <FormularioAlta alEntrar={alEntrar} />
@@ -432,7 +432,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
                 el enlace a la busqueda que tiene al lado. */}
             {!linea.grupo_id && !linea.producto_id && (
               <span className="ml-2 rounded border border-borde px-1.5 py-0.5 text-[12px] text-secundaria">
-                Pendiente de identificar
+                Sin producto del catálogo
               </span>
             )}
           </span>
@@ -486,8 +486,7 @@ function UnaLinea({ linea, guardando, cambiar }: {
           buscarla y volver a anadirla. */}
       {linea.producto_movido && (
         <p className="text-etiqueta text-aviso">
-          Este producto ya no es el mismo en el catálogo: no lo cuento ni te digo dónde
-          comprarlo, porque el número al que apunta esta línea es hoy otra cosa.{' '}
+          Este producto ha cambiado en el catálogo.{' '}
           <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
             Búscalo y vuelve a añadirlo
           </Link>
@@ -1077,8 +1076,8 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
       <h3 className="mt-4 text-cuerpo font-semibold">Compartir con quien ya tiene cuenta</h3>
       <p className="mt-1 text-cuerpo text-tinta-suave">
         Si ya usa esta Cesta, con su usuario entra sin enlace. Un nombre de
-        usuario se escribe mal con una facilidad pasmosa, así que si no existe
-        nadie con ese, la API lo dice y aquí se enseña.
+        usuario se escribe mal con una facilidad pasmosa: si no existe nadie con
+        ese, se avisa aquí mismo.
       </p>
       <form
         className="mt-2 flex flex-wrap items-end gap-2"
@@ -1318,9 +1317,7 @@ export function Cesta() {
       vaciaCola(listaId as string)
       setCola(leerCola(listaId as string))
       if (r.aplicados) {
-        setSubidos(r.aplicados === 1
-          ? 'Se ha subido 1 cambio que hiciste sin cobertura.'
-          : `Se han subido ${r.aplicados} cambios que hiciste sin cobertura.`)
+        setSubidos('Ya se han guardado los cambios que hiciste sin conexión.')
       }
       if (r.fallidos.length) setSinGuardar(true)
       cliente.invalidateQueries({ queryKey: ['lista', listaId] })
@@ -1353,7 +1350,7 @@ export function Cesta() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listaId, cola.length])
 
-  if (sesion.isLoading) return <Cargando que="tu sesión" />
+  if (sesion.isLoading) return <Cargando que="tu lista" />
   if (!sesion.data?.usuario) {
     return (
       // *** Y la raiz de ESTA rama tambien lleva el patron, *y no es un detalle. *** *
@@ -1498,8 +1495,8 @@ export function Cesta() {
         <Aviso tono="info">
           <p>
             {cola.length === 1
-              ? '1 cambio hecho sin cobertura se subirá al volver la cobertura.'
-              : `${cola.length} cambios hechos sin cobertura se subirán al volver la cobertura.`}
+              ? '1 cambio sin guardar. Se guardará cuando vuelva la conexión.'
+              : `${cola.length} cambios sin guardar. Se guardarán cuando vuelva la conexión.`}
           </p>
         </Aviso>
       )}
@@ -1515,11 +1512,8 @@ export function Cesta() {
           modo privado deja leer y lanza al escribir). Un cambio que se pierde al cerrar
           la pestaña hay que decirlo. */}
       {sinGuardar && (
-        <Aviso tono="aviso" titulo="No he podido guardar los cambios sin cobertura">
-          <p>
-            El navegador no me deja escribir en este aparato, así que un cambio hecho sin
-            red se perdería. Vuelve a intentarlo cuando tengas cobertura.
-          </p>
+        <Aviso tono="aviso" titulo="No puedo guardar aquí">
+          <p>Este cambio se perderá si cierras.</p>
         </Aviso>
       )}
 
@@ -1530,8 +1524,7 @@ export function Cesta() {
         <Aviso tono="mal" titulo="No he podido guardar el cambio">
           <Etiqueta tono="mal">{textoDeError(cambia.error)}</Etiqueta>
           <p className="mt-1">
-            La lista sigue como estaba. Aquí no se pinta un cambio que el
-            servidor no ha aceptado.
+            La lista sigue como estaba.
           </p>
         </Aviso>
       )}

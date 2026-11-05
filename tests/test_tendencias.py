@@ -28,16 +28,21 @@ def test_la_ruta_de_tendencias_tiene_su_pantalla():
 def test_un_dia_sin_dato_se_dice_y_no_se_dibuja_como_cero():
     pantalla = _leer("paginas/Tendencias.tsx")
     assert "d.kcal_conocida === null" in pantalla
-    assert "no es lo mismo que no" in pantalla, "el hueco se explica con palabras"
-    # Y en ese caso NO se pinta la barra: el ternario tiene que tener las dos ramas.
-    assert "Sin dato de energia en este dia" in pantalla
+    # *Cambió el 5/11/2026 con la auditoría (§8): la frase que explicaba la decisión de diseño
+    # —«no se dibuja, porque un cero no es lo mismo que no saber»— se borró; el hueco se sigue
+    # diciendo con la palabra, que es lo que esta prueba tiene que proteger.*
+    assert "Sin dato de energía en este día" in pantalla, "el hueco se dice con palabras"
+    # Y el otro lado del ternario sigue dibujando la barra y su cifra: el hueco no la recibe.
+    assert "bg-bosque" in pantalla and "kcal conocidas" in pantalla
 
 
 def test_la_media_solo_cuenta_los_dias_que_traen_dato():
     """Meter los huecos como ceros hundiria la media, y no seria la media de nada."""
     pantalla = _leer("paginas/Tendencias.tsx")
     assert "filas.filter((d) => d.kcal_conocida !== null)" in pantalla
-    assert "no hay media que dar" in pantalla
+    # *La frase vieja («no hay media que dar») se sustituyó por la que dice el §8:
+    # «Sin dato de calorías en estos días.»*
+    assert "Sin dato de calorías en estos días" in pantalla
 
 
 def test_la_pantalla_declara_que_mide():

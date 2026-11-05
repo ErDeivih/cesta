@@ -50,7 +50,11 @@ def test_la_barra_dice_cuantas_quedan_por_coger():
     for caso in ("'cargando'", "'error'", "'sin-lista'"):
         assert caso in suite or caso in CONSULTAS.read_text(encoding="utf-8"), (
             f"el contador no distingue {caso} de un cero real")
-    assert "Sin lista de casa" in suite, (
+    # *La chapa decía «Sin lista de casa» y se acortó a «Sin lista» el 5/11/2026 (auditoría §8,
+    # fila 76): en el lateral, con el icono delante, «de casa» sobraba. Lo que no puede perderse es
+    # que **sin lista se dice**, en vez de contar otra lista en silencio — y el `sr-only` sigue
+    # diciendo cuál es la lista.*
+    assert "Sin lista" in suite, (
         "sin lista de casa hay que decirlo, no contar otra lista en silencio")
 
 

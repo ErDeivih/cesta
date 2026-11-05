@@ -31,7 +31,9 @@ export class ErrorApi extends Error {
   readonly cuerpo: unknown
 
   constructor(estado: number, detalle: string | null, cuerpo: unknown = null) {
-    super(detalle ?? `La API ha contestado ${estado}.`)
+    // **El mensaje no nombra la API ni el código HTTP**: lo lee una persona, no quien programa.
+    // El texto que se enseña de verdad lo elige `textoDeError`, que es el único sitio que traduce.
+    super(detalle ?? 'No he podido cargar esto.')
     this.name = 'ErrorApi'
     this.estado = estado
     this.detalle = detalle
@@ -65,14 +67,21 @@ type Valor = string | number | boolean | null | undefined
 /** Un texto legible para cualquier fallo, nunca "undefined". */
 export function textoDeError(e: unknown): string {
   if (esErrorApi(e)) {
+    // *** NI LA API NI EL CÓDIGO HTTP SE NOMBRAN AQUÍ. *** *
+    //
+    // *Esto lo lee quien compra, no quien programa, y era el texto que veían seis pantallas al
+    // abrirlas sin sesión: «La API ha contestado 401».* *Un 401 no es un fallo: es que no ha
+    // entrado nadie, y se dice con la salida puesta.* *Los demás estados se cuentan sin número:
+    // el número no cambia lo que la persona puede hacer.*
+    if (e.estado === 401) return 'Entra para ver esto.'
     if (e.detalle) return e.detalle
     if (e.estado === 404) return 'No existe.'
-    if (e.estado >= 500) return 'El servidor ha fallado. Mira los registros de la API.'
-    return `La API ha contestado ${e.estado}.`
+    if (e.estado >= 500) return 'No he podido completarlo. Vuelve a intentarlo.'
+    return 'No he podido cargar esto.'
   }
   if (e instanceof TypeError) {
     // fetch lanza TypeError cuando no hay red. En el pasillo esto pasa.
-    return 'Sin conexion con casa. Esto es lo ultimo que hay en pantalla.'
+    return 'Sin conexión. Esto es lo último que tengo.'
   }
   if (e instanceof Error) return e.message
   return 'Fallo desconocido.'
