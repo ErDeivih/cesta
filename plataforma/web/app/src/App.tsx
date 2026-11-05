@@ -27,6 +27,8 @@ const Ajustes = lazy(() => import('./paginas/Ajustes').then((m) => ({ default: m
 const Avisos = lazy(() => import('./paginas/Avisos').then((m) => ({ default: m.Avisos })))
 const Buscar = lazy(() => import('./paginas/Buscar').then((m) => ({ default: m.Buscar })))
 const Cesta = lazy(() => import('./paginas/Cesta').then((m) => ({ default: m.Cesta })))
+const CompararCesta = lazy(() =>
+  import('./paginas/CompararCesta').then((m) => ({ default: m.CompararCesta })))
 const [Cocina, CocinaProvider] = [
   lazy(() => import('./paginas/Cocina').then((m) => ({ default: m.Cocina }))),
   lazy(() => import('./paginas/Cocina').then((m) => ({ default: m.CocinaProvider }))),
@@ -56,6 +58,10 @@ export function tituloDe(ruta: string): string {
   // contrato de `tests/test_titulos.py` lo vigila leyendo este fichero: con diez pestanas abiertas,
   // un titulo que falta no da error de compilacion, se nota cuando ya no sabes cual es cual.
   if (ruta === '/buscar' || ruta === '/compra') return 'Buscar'
+  // **Antes que `/compra/listas`, que se lleva por delante todo lo que cuelgue de ella.**
+  // *Comparar la cesta es otra pantalla que la lista, y la pestana tiene que poder decirlo:
+  // con «La cesta» en las dos, dos pestanas abiertas se llaman igual.*
+  if (ruta.startsWith('/compra/listas/') && ruta.endsWith('/comparar')) return 'Comparar la cesta'
   if (ruta.startsWith('/cesta') || ruta.startsWith('/compra/listas')) return 'La cesta'
   if (ruta.startsWith('/compra/despensa')) return 'Despensa'
   if (ruta.startsWith('/compra/cocina')) return 'Cocina'
@@ -117,6 +123,15 @@ export function App() {
         <Route
           path="/compra/listas/:listaId"
           element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>}
+        />
+        {/* *** COMPARAR MI CESTA. *** *
+            *La pantalla que contesta «donde me sale mejor esta lista»: el total de cada cadena
+            con cuantos productos lo forman, y el desglose por producto.* *Va debajo de la lista
+            porque se llega desde ella, y su ruta cuelga de la lista concreta: comparar es comparar
+            **esta** lista, no una cualquiera.* */}
+        <Route
+          path="/compra/listas/:listaId/comparar"
+          element={<LayoutSuite app="compra"><CompararCesta /></LayoutSuite>}
         />
         <Route
           path="/compra/favoritos"

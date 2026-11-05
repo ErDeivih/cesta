@@ -126,6 +126,9 @@ export function tituloDeSeccion(ruta: string): string {
   const exacta = app.subsecciones.find((s) => s.a === ruta)
   if (exacta) return exacta.texto
   if (ruta.includes('/productos/')) return 'Producto'
+  // **Comparar la cesta no es la lista.** Su ruta cuelga de `/listas/`, y sin esta línea el
+  // armazón decía «Lista» en una pantalla que no es la lista. Va antes que `/listas/`.
+  if (ruta.includes('/listas/') && ruta.endsWith('/comparar')) return 'Comparar la cesta'
   if (ruta.includes('/comparar/')) return 'Comparar'
   if (ruta.includes('/listas/')) return 'Lista'
   if (app.clave === 'recetas' && ruta !== '/recetas/plan') return 'Receta'

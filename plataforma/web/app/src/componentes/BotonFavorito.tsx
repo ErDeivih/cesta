@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import { textoDeError } from '../api/cliente'
 import { yo } from '../api/cesta'
 import { useFavorito, verFavoritos } from '../api/favoritos'
+import { IconoCorazon, IconoCorazonLleno } from './iconos'
 import { Boton, Etiqueta } from './ui'
 
 export function BotonFavorito({ grupoId }: { grupoId: number }) {
@@ -35,9 +36,18 @@ export function BotonFavorito({ grupoId }: { grupoId: number }) {
     <div className="flex items-center gap-2">
       <Boton
         variante={dentro ? 'sutil' : 'normal'}
+        aria-pressed={dentro}
         disabled={cambio.isPending}
         onClick={() => cambio.mutate({ grupoId, productoId: null, dentro })}
       >
+        {/* *El corazon dice **en que estado esta** sin depender solo del texto: lleno cuando esta
+            dentro, de trazo cuando no.* *Va `aria-hidden` (lo pone `Base`), porque el nombre del
+            boton es su texto y un icono suelto no se anuncia.* */}
+        {dentro ? (
+          <IconoCorazonLleno width={18} height={18} className="text-terracota" />
+        ) : (
+          <IconoCorazon width={18} height={18} />
+        )}
         {dentro ? 'Guardado' : 'Guardar'}
       </Boton>
       {cambio.isError && (

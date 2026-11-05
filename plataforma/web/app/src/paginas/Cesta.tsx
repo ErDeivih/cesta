@@ -244,39 +244,6 @@ export function Introducir({ alEntrar }: { alEntrar: () => void }) {
   )
 }
 
-function UnaTienda({ opcion, mejor }: {
-  opcion: {
-    cadena: string; total_cent: number; total_sin_ofertas_cent: number
-    encontrados: number; faltan: string[]
-  }
-  mejor: number
-}) {
-  const ahorro = opcion.total_sin_ofertas_cent - opcion.total_cent
-  return (
-    <Tarjeta>
-      <header className="mb-2 flex flex-wrap items-center gap-2">
-        <h3 className="text-entrada font-semibold">{opcion.cadena}</h3>
-        {opcion.total_cent === mejor && <Etiqueta tono="bien">la más barata</Etiqueta>}
-        {ahorro > 0 && (
-          <Etiqueta tono="dato">
-            {euros(ahorro)} en ofertas
-          </Etiqueta>
-        )}
-      </header>
-      <p className="cifra text-2xl font-semibold">{euros(opcion.total_cent)}</p>
-      <p className="mt-1 text-cuerpo text-tinta-suave">
-        {opcion.encontrados} de {opcion.encontrados + opcion.faltan.length} productos
-      </p>
-      {opcion.faltan.length > 0 && (
-        <div className="mt-2">
-          <p className="text-cuerpo font-medium">No lo tiene:</p>
-          <p className="text-cuerpo text-tinta-suave">{opcion.faltan.join(' · ')}</p>
-        </div>
-      )}
-    </Tarjeta>
-  )
-}
-
 /** El reparto entre varias tiendas, con **cuantas cosas se compran en cada una**.
  *
  *  El desglose ("7 en alcampo, 3 en dia") es lo que hace planificable el
@@ -1419,10 +1386,6 @@ export function Cesta() {
     )
   }
 
-  const mejorTotal = compra.data?.una_tienda?.length
-    ? Math.min(...compra.data.una_tienda.map((t) => t.total_cent))
-    : null
-
   return (
     <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-center gap-3">
@@ -1814,6 +1777,30 @@ export function Cesta() {
         <RepartoEnTiendas listaId={listaId as string} papel={detalle.data.papel} />
       )}
 
+      {/* *** COMPARAR LA CESTA ENTERA, CON SU PUERTA. *** *
+          *Aquí había seis tarjetas -- «la lista entera en una tienda» -- con un total cada una y
+          la etiqueta «la más barata» en la de menor número, **sin mirar si a esa cadena le
+          faltaban productos**, que es justo lo que hace que un total salga más bajo.* *La
+          comparación se ha mudado a su pantalla (`CompararCesta`), donde cada total dice con
+          cuántos productos está hecho y solo se corona a la que los tiene todos; aquí queda a
+          dónde ir a mirarlo.* *No se duplican los seis totales: se enseñarían dos veces y con dos
+          reglas distintas, que es como dos pantallas acaban contradiciéndose.*
+          *Y no depende de la consulta de precios: la comparación se pide en su pantalla, así que
+          la puerta no se queda sin pintar porque `donde` tarde o falle.* */}
+      {detalle.data && (
+        <Tarjeta
+          titulo="Dónde sale mejor tu cesta"
+          sub="Cuánto cuesta en cada cadena, qué le falta a cada una y de qué producto sale la diferencia."
+        >
+          <Link
+            to={`/compra/listas/${listaId}/comparar`}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-campo border border-transparent bg-bosque px-4 py-2 font-medium text-marfil"
+          >
+            Comparar mi cesta
+          </Link>
+        </Tarjeta>
+      )}
+
       {/* Compartir va antes de los precios a proposito: la comparacion entre
           cadenas son seis tarjetas largas, y lo que se hace una vez (mandar el
           enlace) no puede quedar debajo de lo que se mira cien veces. */}
@@ -1834,22 +1821,11 @@ export function Cesta() {
         <Vacio titulo="No puedo decir dónde">
           <p>
             De esta lista no tengo ningún producto que se pueda comparar. Puede que
-            sean cosas que ninguna de las cinco cadenas venda, o que ya no estén.
+            sean cosas que ninguna cadena venda, o que ya no estén.
           </p>
         </Vacio>
       )}
-      {compra.data && compra.data.una_tienda.length > 0 && (
-        <>
-          <h2 className="text-entrada font-semibold">La lista entera en una tienda</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {compra.data.una_tienda.slice(0, 6).map((t) => (
-              <UnaTienda key={t.cadena} opcion={t} mejor={mejorTotal ?? t.total_cent} />
-            ))}
-          </div>
-
-          {compra.data.repartido && <Repartido reparto={compra.data.repartido} />}
-        </>
-      )}
+      {compra.data && compra.data.repartido && <Repartido reparto={compra.data.repartido} />}
     </div>
   )
 }

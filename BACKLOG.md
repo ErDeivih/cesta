@@ -388,7 +388,7 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Pruebas**: 55 de componentes (16 de Portada); `npm test` 377; `test_interfaz`+`test_contraste`
   18 verdes con `CESTA_SALTAR_SIN_BASE=0`; bundle `index-DKbWh7vH.js` servido en :8080.
 
-### 30. Ficha de producto con los tokens aprobados — **en curso, siguiente**
+### 30. Ficha de producto con los tokens aprobados — **hecha (05/11)**
 - **Por qué**: es el segundo corte aprobado: precio, precio por kg/litro, historial de precio y
   alternativas del mismo grupo, con la dirección visual nueva.
 - **Qué hay que hacer**: rehacer la capa visual de `Producto.tsx` (hoy 40 KB con la lógica útil)
@@ -397,7 +397,7 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Cómo se sabe que está bien**: flujo buscar → producto → comparar sin errores, sin scroll
   horizontal a 390 px, contraste AA y pruebas de componentes.
 
-### 31. Comparar mi cesta — **pendiente, tercer corte aprobado**
+### 31. Comparar mi cesta — **hecha (05/11)**
 - **Por qué**: la función que engancha: el total de la lista en cada cadena y dónde conviene.
 - **Qué hay que hacer**: pantalla de comparación de la lista completa (reparto real por cadena,
   €/kg cuando la unidad lo permite, ofertas con su condición y aviso de lo que no se puede
@@ -420,3 +420,11 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   como historia (su cabecera ya apunta a los valores vigentes). Quedan 40-44 textos §8 en
   `ExplicacionEmparejamiento.tsx`, que ya no se monta: borrar con el código muerto.
 
+### 34. Decisión: «6 cadenas» vs las 5 que se valoran — **decidido (05/11)**
+- **El dato**: se capturan 6 cadenas, pero el motor de la cesta (`api/cesta.py: CADENAS`) valora 5
+  (Alcampo, Aldi, Carrefour, DIA, Mercadona). Lidl se captura pero no se compara: publica ofertas
+  semanales parciales, no un catálogo comparable.
+- **Decisión**: la app **no dice «6 cadenas»**: la pantalla de comparar dice «lo he podido valorar
+  en N cadenas» sacado de los datos, y el resto de pantallas hablan de cadenas sin prometer seis.
+  El panel y los documentos pueden seguir diciendo «6 capturadas» y «5 valoradas», que son cosas
+  distintas. Cambiar el motor para valorar Lidl es otra tarea, no un texto.

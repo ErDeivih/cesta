@@ -55,16 +55,21 @@ export function Campana({ grupoId }: { grupoId: number }) {
       <Boton
         variante={dentro ? 'sutil' : 'normal'}
         disabled={pendiente || alertas.isPending}
-        title={dentro ? 'Te aviso cuando este en su precio mas bajo de 90 dias.' : undefined}
+        title={dentro ? 'Te aviso cuando esté en su precio más bajo.' : undefined}
         onClick={() => (dentro && mia ? quita.mutate(mia.id) : pone.mutate())}
       >
         {pendiente ? 'Un momento…' : dentro ? 'Te aviso' : 'Avisarme si baja'}
       </Boton>
       {/* Cuando ya esta, se dice **que** se ha prometido: "te aviso" a secas no dice de
-          que, y esto es una promesa que la aplicacion tiene que cumplir sola. */}
+          que, y esto es una promesa que la aplicacion tiene que cumplir sola.
+
+          *** Y NO DICE «90 DIAS», y es a proposito. *** *La serie que la ficha enseña son los dias
+          que hay (60 hoy), y prometer un plazo que no se ve al lado era la misma mentira tranquila
+          que `logica/curva.ts` tiene prohibida: suena mejor y no es verdad.* *Lo que se promete es
+          el minimo del historico que tenemos, que es lo que la alerta mide de verdad.* */}
       {dentro && !pendiente && (
-        <span className="text-sm text-tinta-suave">
-          cuando esté en su precio más bajo de 90 días
+        <span className="text-etiqueta text-tinta-suave">
+          cuando esté en su precio más bajo del que tenemos
         </span>
       )}
       {fallo && (

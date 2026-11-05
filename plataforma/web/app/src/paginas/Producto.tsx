@@ -1,47 +1,77 @@
-/** La ficha de un producto: su historico, su grupo de equivalencias y por que
- *  esta emparejado con esos.
+/** **La ficha de un producto: qué es, cuánto cuesta, si está caro y dónde sale mejor.**
  *
- *  Un producto se identifica por **su id en la cadena** (`dia:12345`), no por el
- *  nuestro: eso es lo unico que se puede sacar de la URL de un supermercado, y
- *  es lo que usa la extension de navegador. Por eso la ruta es
- *  `/producto/{cadena}/{id_fuente}`.
+ *  Un producto se identifica por **su id en la cadena** (`mercadona:5124`), no por el nuestro: eso
+ *  es lo único que se puede sacar de la URL de un supermercado, y es lo que usa la extensión de
+ *  navegador. Por eso la ruta es `/producto/{cadena}/{id_fuente}`.
  *
- *  El historico sale de `grupo.serie`, que es la unica serie que da la API. Ojo
- *  con eso: la serie va por **cadena y fecha**, sin decir de que producto es
- *  cada punto. Si la cadena tiene mas de un producto en el grupo, esa linea
- *  mezcla dos productos y no se pinta: se dice.
+ *  ======================== LA JERARQUÍA, Y POR QUÉ ========================
+ *
+ *  *Se rehízo el 5/11/2026 contra el artboard aprobado (`designs/cesta-app/project/Producto.dc.html`),
+ *  y lo que cambió es **el orden en que se contesta**, no los cálculos:* *la lógica que ya medía bien
+ *  -- `construyeComparacion`, `loQueDiceLaCurva`, `Chispa`, `fraseDePrecio` -- se queda donde estaba.*
+ *
+ *  1. **Qué es y cuánto cuesta.** Nombre, marca, precio de hoy grande y el **€/kg al lado**, porque
+ *     es la única cifra que permite comparar dos formatos. Si no hay €/kg se dice -- «no hay precio
+ *     por kilo» -- y no se rellena.
+ *  2. **¿Está caro?** Un chip con flecha y palabra, calculado contra la serie de verdad
+ *     (`logica/juicio.ts`) y con su motivo: *«el máximo de los últimos 60 días»*. **Nunca «90 días»**:
+ *     la ventana es la que tiene la serie.
+ *  3. **El historial**, con el mínimo y el máximo reales al lado del trazo y las fechas de la
+ *     ventana. *Un producto nuevo no dibuja una línea falsa: se dice que no hay historial.*
+ *  4. **Dónde sale mejor**: primero el **mismo artículo en otras cadenas** (ahí sí hay ahorro, porque
+ *     es el mismo producto), y después las otras marcas y formatos. *Un ahorro solo se escribe
+ *     cuando los dos precios se pueden restar de verdad; cuando no, se dice por qué.*
+ *  5. **El etiquetado** (Nutri-Score, sellos, certificados) y, al final, los datos de la etiqueta.
+ *
+ *  **Y §8 manda en los textos**: nada de API, de EAN, de «gold», de cómo se calcula nada. Una
+ *  explicación que ayuda a leer una medida se queda («3,15 € el kilo», «el máximo de los últimos 60
+ *  días»); lo que habla de cómo está hecha la app, no.
+ *
+ *  ================================ LOS DATOS ================================
+ *
+ *  *`/api/producto` devuelve **13 claves** y ninguna es `ean`; `/api/grupo` trae la ficha completa de
+ *  cada miembro.* *La identidad se lee de `miembro`, no de `producto`: leer `producto.ean` rechazaba
+ *  **todo**, incluidas las coincidencias exactas, y el defecto se disfrazaba de arreglo.*
  */
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 
+import { yo } from '../api/cesta'
+import { esErrorApi } from '../api/cliente'
 import { useProducto } from '../api/consultas'
 import {
   cantidad as textoCantidad,
+  diasDesde,
   euros,
   eurosUnidad,
   fecha as fechaTexto,
   filasNutricion,
   ms,
-  NO_LO_SE,
   nombreCadena,
   numero,
-  porcentaje,
-  porcentajeConSigno,
+  NO_LO_SE,
   selloLegible,
   textoOrigenSello,
 } from '../api/formato'
 import { BotonAnadirACesta } from '../componentes/BotonAnadirACesta'
+import { BotonFavorito } from '../componentes/BotonFavorito'
 import { Campana } from '../componentes/Campana'
 import { Chispa, type PuntoChispa } from '../componentes/Chispa'
-import { loQueDiceLaCurva } from '../logica/curva'
+import { SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
 import { useTitulo } from '../componentes/Titulo'
-import { fraseDePrecio } from '../logica/frase'
-import { construyeComparacion, identidad, precioComparable } from '../logica/grupo'
-import { SelloLetra, SelloNutriscore, SelloOferta, SelloRetirada } from '../componentes/Etiquetas'
-import { Aviso, Boton, Cargando, Dato, Etiqueta, Fallo, Resumen, TablaScroll, Tarjeta, Td, Th, Vacio } from '../componentes/ui'
-
-const NUMERO = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 })
-
+import {
+  IconoCheck,
+  IconoPrecioAbajo,
+  IconoPrecioArriba,
+  IconoPrecioIgual,
+} from '../componentes/iconos'
+import { Aviso, Boton, Fallo, Resumen, Vacio, cx } from '../componentes/ui'
+import { serieDeChispa } from '../logica/chispa'
+import { loQueDiceLaCurva } from '../logica/curva'
+import { construyeComparacion, precioComparable } from '../logica/grupo'
+import { veredictoDelPrecio, type Veredicto } from '../logica/juicio'
+import type { Producto as MiembroDeGrupo, PuntoSerie } from '../tipos'
 
 export function Producto() {
   const { fuente = '', idFuente = '' } = useParams<{ fuente: string; idFuente: string }>()
@@ -52,152 +82,209 @@ export function Producto() {
   const producto = consulta.data?.producto
   const grupo = consulta.data?.grupo ?? null
 
-  // El titulo de la pestana con el nombre del producto, que es lo que distingue esta
-  // pestana de las otras nueve. Mientras el dato viaja se queda "Producto", que lo
-  // pone `App` por ruta: aqui solo se mejora cuando se sabe mas.
+  // El título de la pestaña con el nombre del producto, que es lo que distingue esta pestaña de las
+  // otras nueve. Mientras el dato viaja se queda «Producto», que lo pone `App` por ruta.
   useTitulo(producto?.nombre ?? grupo?.nombre)
 
-  /** El miembro del grupo que corresponde a este producto, con la ficha
-   *  completa. `/api/producto` devuelve menos campos (no trae imágenes, ni
-   *  promoción, ni ingredientes); `/api/grupo` los tiene ya. Se usa lo que hay,
-   *  sin pedir nada de más. */
+  // **La sesión, para no pintar acciones que no se pueden cumplir.** *«Guardar» y «Añadir» piden
+  // sesión; sin ella los dos botones no se pintan (lo decide cada componente), así que la sección
+  // entera se salta y no deja un hueco de 24 px en medio de la ficha.*
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  const conSesion = sesion.data?.usuario != null
+
+  /** El miembro del grupo que corresponde a este producto, con la ficha completa.
+   *
+   *  `/api/producto` devuelve menos campos (no trae imágenes, ni promoción, ni ingredientes); la
+   *  entrada del grupo los tiene ya. Se usa lo que hay, sin pedir nada de más.
+   */
   const miembro = useMemo(
     () =>
       producto && grupo
-        ? // `/api/producto` no devuelve `id_fuente`, así que se empareja con el
-          // identificador de la propia ruta, que es el mismo dato.
-          (grupo.productos.find(
+        ? (grupo.productos.find(
             (p) => p.fuente === producto.fuente && p.id_fuente === idFuente,
           ) ?? null)
         : null,
     [producto, grupo, idFuente],
   )
 
-  /** De donde salen los sellos, en palabras. `null` si este producto no tiene.
-   *
-   *  Se calcula aqui y no dentro del `map` a proposito: es un dato por ficha,
-   *  no uno por sello, y dentro del `map` se repetiria en cada etiqueta. */
+  /** De dónde salen los sellos, en palabras. `null` si este producto no tiene. */
   const origenDeSellos = textoOrigenSello(miembro?.sellos_origen)
 
-  /** Cuanto puede bailar el peso, si el producto se vende al peso. `null` si no. */
+  /** Cuánto puede bailar el peso, si el producto se vende al peso. `null` si no. */
   const pesoVariable = miembro?.peso_variacion_pct ?? null
 
-  const historico = useMemo(() => {
-    if (!grupo) {
-      return { puntos: [] as PuntoChispa[], bloqueado: false, filas: 0, serie: [] }
-    }
-    const deLaCadena = grupo.serie.filter((s) => s.fuente === fuente)
-    // Cuantos productos de ESTA cadena hay en el grupo: la serie no los separa.
-    const cuantos = grupo.productos.filter((p) => p.fuente === fuente).length
-    const puntos = deLaCadena
-      .map<PuntoChispa>((s) => ({ fecha: s.fecha, valor: s.precio_unidad_cent,
-        unidad: s.unidad_canon ?? null }))
-      .sort((a, b) => ms(a.fecha) - ms(b.fecha))
-    // La serie **con su unidad**, ordenada, que es lo que necesita la frase de debajo
-    // de la curva: sin la unidad no se puede decir "el mas bajo de los N dias" sin
-    // arriesgarse a comparar kg con ud (`logica/curva.ts`).
-    const serie = [...deLaCadena].sort((a, b) => ms(a.fecha) - ms(b.fecha))
-    return { puntos, bloqueado: cuantos > 1, filas: cuantos, serie }
-  }, [grupo, fuente])
-
-  /** Lo que dice la curva: la frase, o el motivo por el que no la hay.
+  /** **La serie de ESTE producto, con sus días y sus huecos.**
    *
-   *  Se calcula desde la serie **con la unidad** y no desde los puntos de la chispa:
-   *  `Chispa` solo necesita fecha y valor, y la unidad es lo que impide comparar dos
-   *  series pegadas (`logica/curva.ts`). */
+   *  *La serie de la API trae `producto_id` desde el 22 de septiembre de 2026, así que se filtra por
+   *  producto y no solo por cadena.* *Antes se filtraba por cadena y, si esa cadena tenía dos
+   *  productos en el grupo, **no se dibujaba nada** porque la línea mezclaría dos precios.*
+   *  *Con el producto en cada punto eso ya no hace falta: se puede dibujar el suyo.* *Y si la API
+   *  es vieja y no manda el campo, se cae a la cadena y se mantiene la guarda de siempre: mejor no
+   *  dibujar que dibujar dos productos juntos.*
+   */
+  const historico = useMemo<{
+    puntos: PuntoChispa[]
+    bloqueado: boolean
+    serie: PuntoSerie[]
+  }>(() => {
+    if (!grupo) return { puntos: [], bloqueado: false, serie: [] }
+    const delProducto = grupo.serie.filter((s) => s.producto_id === productoIdExacto)
+    const deLaCadena = grupo.serie.filter((s) => s.fuente === fuente)
+    const otrosEnLaCadena = grupo.productos.filter(
+      (p) => p.fuente === fuente && p.id_fuente !== idFuente,
+    ).length
+    const propios = delProducto.length > 0 ? delProducto : deLaCadena
+    const bloqueado = delProducto.length === 0 && otrosEnLaCadena > 0
+    const serie = [...propios].sort((a, b) => ms(a.fecha) - ms(b.fecha))
+    const puntos = serie.map<PuntoChispa>((s) => ({
+      fecha: s.fecha,
+      valor: s.precio_unidad_cent,
+      unidad: s.unidad_canon ?? null,
+    }))
+    return { puntos, bloqueado, serie }
+  }, [grupo, fuente, idFuente, productoIdExacto])
+
+  /** Lo que dice la curva: la frase, o el motivo por el que no la hay. */
   const curva = useMemo(
     () => loQueDiceLaCurva(historico.bloqueado ? [] : historico.serie, { numero }),
-    [historico.bloqueado, historico.serie],
+    [historico],
   )
 
-  const resumen = useMemo(() => {
-    const valores = historico.puntos
-      .map((p) => p.valor)
-      .filter((v): v is number => v !== null && Number.isFinite(v))
-    if (valores.length === 0) {
-      return { n: 0, min: null, max: null, media: null, primero: null, ultimo: null }
-    }
-    const min = Math.min(...valores)
-    const max = Math.max(...valores)
-    const media = valores.reduce((a, b) => a + b, 0) / valores.length
-    return {
-      n: valores.length,
-      min,
-      max,
-      media,
-      primero: valores[0] ?? null,
-      ultimo: valores[valores.length - 1] ?? null,
-    }
-  }, [historico.puntos])
+  /** **El veredicto del chip**, con su ventana real. `null` si no hay serie que juzgar. */
+  const veredicto = useMemo(
+    () => (historico.bloqueado ? null : veredictoDelPrecio(historico.serie)),
+    [historico],
+  )
 
-  if (consulta.isPending) return <Cargando que="la ficha" />
+  // ------------------------------------------------------------------ estados
+
+  if (consulta.isPending) return <EsqueletoDeFicha />
+
   if (consulta.isError) {
+    // *** UN 404 NO ES UN FALLO: ES QUE ESE PRODUCTO NO ESTÁ. ***
+    // *Antes caía en el error rojo «No he podido traer esto» con un «No existe.» debajo, que se lee
+    // como que la aplicación está rota. Y el producto puede haber desaparecido del catálogo de la
+    // cadena, que es una respuesta, no una avería.*
+    const noEsta = esErrorApi(consulta.error) && consulta.error.estado === 404
     return (
-      <div className="grid grid-cols-1 gap-3">
-        <Boton variante="sutil" onClick={() => navega(-1)} className="justify-self-start">
+      <div className="flex flex-col gap-4">
+        <Boton variante="sutil" onClick={() => navega(-1)} className="self-start pl-0">
           ← Volver
         </Boton>
-        <Fallo error={consulta.error} reintentar={() => void consulta.refetch()} />
+        {noEsta ? (
+          <NoTengoEseProducto />
+        ) : (
+          <Fallo error={consulta.error} reintentar={() => void consulta.refetch()} />
+        )}
       </div>
     )
   }
+
   if (!producto) {
     return (
-      <Vacio titulo="No tengo ese producto">
-        <p>
-          <Link to="/" className="underline">
-            Volver al buscador
-          </Link>
-        </p>
-      </Vacio>
+      <div className="flex flex-col gap-4">
+        <Boton variante="sutil" onClick={() => navega(-1)} className="self-start pl-0">
+          ← Volver
+        </Boton>
+        <NoTengoEseProducto />
+      </div>
     )
   }
 
-  const evolucion =
-    resumen.primero !== null && resumen.ultimo !== null && resumen.primero > 0
-      ? (100 * (resumen.ultimo - resumen.primero)) / resumen.primero
+  // ------------------------------------------------------- lo que se va a pintar
+
+  const cantidadDeEste = textoCantidad(producto.cantidad, producto.unidad)
+  const marca = producto.marca?.trim() ?? ''
+  const laMarcaYaEsta = marca.length > 0 && producto.nombre.toLowerCase().includes(marca.toLowerCase())
+  const unidadDeEste = producto.unidad?.trim() || null
+  const nombreDeLaUnidad = nombreUnidad(unidadDeEste)
+  const hayPrecioPorUnidad =
+    producto.precio_unidad_cent != null &&
+    Number.isFinite(producto.precio_unidad_cent) &&
+    producto.precio_unidad_cent > 0
+
+  // *** LA IDENTIDAD SALE DE `miembro`, NO DE `producto`. *** *`producto` no trae `ean`.*
+  const conIdentidad = miembro ?? producto
+  // *Un único resultado de comparación, y todo sale de aquí* (`logica/grupo.ts`).
+  const comp = construyeComparacion(conIdentidad, grupo?.productos ?? [])
+
+  const esEste = (p: { fuente: string; id_fuente: string }) =>
+    p.fuente === producto.fuente && p.id_fuente === idFuente
+
+  /** **El mismo artículo, cadena a cadena.** *Aquí sí se puede restar: es el mismo producto medido
+   *  igual. Y es donde vive el «te ahorras», porque es dinero del artículo que se lleva.*
+   *
+   *  *Se quita el elegido de `comparables` al pintar y se vuelve a meter por `producto_id`, para que
+   *  su fila esté siempre en la lista aunque la API no lo devuelva entre los candidatos.*
+   */
+  const filasDelMismo = (() => {
+    const porId = new Map<string, MiembroDeGrupo>()
+    if (miembro) porId.set(miembro.producto_id, miembro)
+    for (const p of comp.comparables) porId.set(p.producto_id, p)
+    return [...porId.values()]
+      .filter((p) => p.precio_unidad_cent != null && p.precio_unidad_cent > 0)
+      .sort((a, b) => (a.precio_unidad_cent as number) - (b.precio_unidad_cent as number))
+  })()
+  const otrasCadenas = filasDelMismo.filter((p) => !esEste(p))
+  const precioMinimoDelMismo = filasDelMismo.length > 0
+    ? (filasDelMismo[0].precio_unidad_cent as number)
+    : null
+  const cadenaMasBarata = filasDelMismo.find((p) => !esEste(p) && p.precio_unidad_cent === precioMinimoDelMismo)
+  const ahorroPorUnidad =
+    hayPrecioPorUnidad && comp.minimo != null && (producto.precio_unidad_cent as number) > comp.minimo
+      ? (producto.precio_unidad_cent as number) - comp.minimo
       : null
 
-  /** **Dónde está más barato y cuánto se ahorra, en euros por unidad de uso.**
-   *
-   *  Apartado 2 del punto 3 del encargo, y es la mitad que faltaba en esta ficha: la
-   *  frase de arriba ya dice *"cuesta un 18 % más que en DIA"*, pero un porcentaje
-   *  abstracto no es lo que se compara en la tienda. Aquí va el producto más barato
-   *  del grupo con su €/unidad, y lo que te ahorras comprándolo ahí.
-   *
-   *  **Solo cuenta lo que se puede comparar de verdad**: misma unidad y precio fiable.
-   *  Lo primero no es un detalle: la primera versión de este dato salió en pantalla
-   *  diciendo *«te ahorras 6872,01 €/kg»* en la ficha de un azafrán de 0,4 g, porque
-   *  comparaba su precio por kilo con el de un bote medido en unidades. Restar €/kg de
-   *  €/ud es el disparate que el proyecto ya tiene escrito en tres sitios, y me lo
-   *  encontró la puerta del navegador, no una prueba de código.
-   *
-   *  `null` cuando no hay nada que ahorrar -- este es el más barato de los comparables,
-   *  o el grupo no tiene con qué compararlo --: un *"te ahorras 0,00 €"* es ruido. */
-  // Los nutrientes de Open Food Facts, en el orden en que se lee una etiqueta de verdad. Null es
-  // "no lo sabemos", nunca cero: la guarda de la extraccion ya dejo fuera lo imposible.
-  // **NO ES UN `useMemo`, *y ese era el fallo*.**
-  //
-  // *Estaba escrito con `useMemo` **despues de los tres retornos condicionales** de
-  // arriba (`:133` cargando, `:134` error, `:144` producto ausente).*
-  // **Una regla de React: los hooks se llaman en el mismo orden en todos los renders.**
-  // *Durante la carga ese `useMemo` no se ejecutaba; al llegar el producto, si.*
-  // *Un hook mas que en el render anterior => React lanza **#310** y desmonta la raiz:*
-  // *por eso se veia el esqueleto y luego la pantalla vacia, y por eso no habia
-  // mensaje en el build (-- *en produccion el #310 va minificado* --).*
-  //
-  // *Se calcula como una expresion normal, que **no es un hook** y por tanto puede ir
-  // detras de los retornos sin romper el orden.* *Los siete campos y su guarda son los
-  // mismos: lo que no es numero sigue siendo `null` y se descarta, **no se convierte en
-  // cero**.*
+  /** **Las otras marcas y formatos**: se enseñan, no se restan como si fueran este artículo. */
+  const otras = comp.distintas
+    .filter((p) => !esEste(p))
+    .sort(porPrecioUnidad)
+  const mismoOtraBase = comp.mismoSinComparar.filter((p) => !esEste(p))
+  const sinVerificar = comp.sinVerificar.filter((p) => !esEste(p))
+  const masBarataDeLasOtras = (() => {
+    if (otras.length < 2 || !hayPrecioPorUnidad) return null
+    const comparables = otras.filter(
+      (p) => precioComparable(conIdentidad, p) && p.comparable !== false && p.precio_unidad_cent != null,
+    )
+    if (comparables.length === 0) return null
+    const minimo = Math.min(...comparables.map((p) => p.precio_unidad_cent as number))
+    // *** SOLO SE MARCA SI DE VERDAD ES MÁS BARATA QUE LA QUE SE ESTÁ MIRANDO. ***
+    // *«La más barata» al lado de una cifra más cara que la de arriba se lee como una oferta, y no
+    // lo es: es la menos cara de las otras.* *Cuando todas son más caras, la respuesta ya la da el
+    // «+X €/kg» de cada fila, y la más barata es la que se está mirando.*
+    return minimo < (producto.precio_unidad_cent as number) ? minimo : null
+  })()
+
+  /** Lo que se dice de las otras opciones antes de enseñarlas. *Cuatro casos, y los cuatro son
+   *  distintos: hay otras cadenas con el mismo artículo; lo hay pero en otra unidad; no lo sé porque
+   *  no hay con qué confirmarlo; o de verdad no hay ninguna.* *Decir «ninguna otra cadena vende este
+   *  mismo artículo» cuando Carrefour lo tiene en otra unidad es falso, y la pantalla lo enseñaría
+   *  dos bloques más abajo.* */
+  const parrafoDeLasOtras =
+    otrasCadenas.length > 0
+      ? hayPrecioPorUnidad
+        ? 'Otra marca o formato. La diferencia va por kilo, frente a esta.'
+        : 'Otra marca o formato.'
+      : mismoOtraBase.length > 0
+        ? 'Ninguna otra cadena lo vende en la misma unidad. Estas son otras marcas o formatos.'
+        : sinVerificar.length > 0
+          ? 'No sé si otra cadena vende este mismo artículo; estas son otras marcas o formatos.'
+          : 'Ninguna otra cadena vende este mismo artículo: estas son otras marcas o formatos.'
+
+  const serie = serieDeChispa(historico.puntos)
+  const diasConPrecio = historico.puntos.filter((p) => p.valor != null && p.valor > 0).length
+  const unidadDeLaSerie = veredicto?.unidad ?? unidadDeEste ?? grupo?.unidad ?? null
+
+  // Los nutrientes de Open Food Facts, en el orden en que se lee una etiqueta de verdad. `null` es
+  // «no lo sabemos», nunca cero.
   const filasOff = (() => {
     const campos: [keyof typeof producto, string, string][] = [
-      ['kcal_100g', 'Energia', 'kcal'],
+      ['kcal_100g', 'Energía', 'kcal'],
       ['grasas_100g', 'Grasas', 'g'],
       ['grasas_sat_100g', 'de las cuales saturadas', 'g'],
       ['hidratos_100g', 'Hidratos de carbono', 'g'],
-      ['azucares_100g', 'de los cuales azucares', 'g'],
-      ['proteinas_100g', 'Proteinas', 'g'],
+      ['azucares_100g', 'de los cuales azúcares', 'g'],
+      ['proteinas_100g', 'Proteínas', 'g'],
       ['sal_100g', 'Sal', 'g'],
     ]
     return campos
@@ -210,571 +297,520 @@ export function Producto() {
       .filter((f) => f.valor !== null)
   })()
 
-  // **La identidad sale de `miembro`, NO de `producto`.**
-  //
-  // *El objeto `producto` que devuelve `/api/producto` tiene 13 claves y **ninguna es `ean`**
-  // (medido el 18/10/2026).* *Filtrar con `producto.ean` rechazaba **todo**, tambien las
-  // coincidencias exactas, y el defecto se disfrazaba de arreglo: la frase incorrecta desaparecia
-  // porque desaparecia todo.*
-  //
-  // *`miembro` es la entrada del grupo que corresponde a este producto -- se busca por `fuente` e
-  // `id_fuente` mas arriba --, y **esa si trae `ean`**.* *Si no lo trae, `identidad()` devuelve
-  // `'no-verificada'`: no se afirma ni que si ni que no.*
-  const conIdentidad = miembro ?? producto
+  const datosDeLaEtiqueta = [
+    ['Origen', miembro?.origen],
+    ['Conservación', miembro?.conservacion],
+    ['Envase', miembro?.envase],
+    ['Caducidad', miembro?.dias_caducidad != null ? `${numero(miembro.dias_caducidad, 0)} días` : null],
+    ['Peso neto', miembro?.peso_neto_g != null ? `${numero(miembro.peso_neto_g, 0)} g` : null],
+    ['Graduación', miembro?.grado_alcohol != null ? `${numero(miembro.grado_alcohol)} %` : null],
+  ].filter(([, valor]) => Boolean(valor)) as [string, string][]
 
-  // *** UN UNICO RESULTADO, Y TODO SALE DE AQUI. ***
-  // *La frase y las tarjetas recibian `grupo.cadenas` y `grupo.ahorro_cent`, que son del **grupo
-  // entero** -- alternativas incluidas --, aunque los candidatos estuvieran filtrados.* *Si el
-  // elegido era el mas barato, se podia anunciar un ahorro y un numero de cadenas que no eran de
-  // ese articulo.*
-  //
-  // *`construyeComparacion` solo cuenta candidatos **exactos** (`'mismo'`) y con **base declarada y
-  // coincidente**.* *Las alternativas no entran ni en las cadenas, ni en el minimo, ni en el
-  // ahorro.*
-  const comp = construyeComparacion(conIdentidad, grupo?.productos ?? [])
-
-  const masBarato = (() => {
-    if (!grupo || producto.precio_unidad_cent === null) return null
-    const mio = producto.precio_unidad_cent
-    if (!Number.isFinite(mio) || mio <= 0) return null
-    // *De `comp`, no del grupo: solo exactos y con base declarada.*
-    const otros = comp.comparables.filter(
-      (p) =>
-        p.fuente !== producto.fuente &&
-        p.comparable &&
-        p.precio_unidad_cent !== null &&
-        p.precio_unidad_cent > 0,
-    )
-    if (!otros.length) return null
-    const minimo = Math.min(...otros.map((p) => p.precio_unidad_cent as number))
-    if (mio <= minimo) return null
-    const otro = otros.find((p) => p.precio_unidad_cent === minimo)
-    return { fuente: otro?.fuente ?? '', precio_unidad_cent: minimo, ahorro: mio - minimo }
-  })()
+  const hayEtiquetado = Boolean(
+    producto.nutriscore ||
+      producto.kcal_100g != null ||
+      producto.ecoscore ||
+      miembro?.sellos.length ||
+      miembro?.certificados.length ||
+      miembro?.promo ||
+      miembro?.promo_club ||
+      miembro?.es_recall,
+  )
 
   return (
-    <div className="flex min-h-full flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Boton variante="sutil" onClick={() => navega(-1)}>
+    <div className="flex min-h-full flex-col gap-6">
+      {/* ------------------------------------------------ volver, sin perder el sitio */}
+      <div className="flex items-center justify-between gap-2">
+        <Boton variante="sutil" onClick={() => navega(-1)} className="pl-0">
           ← Volver
         </Boton>
-        {grupo && (
-          <Link
-            to={`/grupo/${grupo.grupo_id}`}
-            className="inline-flex min-h-[44px] items-center rounded-campo border border-borde px-3 text-cuerpo "
-          >
-            Ver las {grupo.cadenas} cadenas en columnas
-          </Link>
-        )}
+        {grupo && conSesion && <BotonFavorito grupoId={grupo.grupo_id} />}
       </div>
 
-      <header className="flex flex-wrap items-start gap-4">
-        {miembro?.imagen && (
-          <img
-            src={miembro.imagen}
-            alt=""
-            loading="lazy"
-            width={112}
-            height={112}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-            className="h-28 w-28 rounded-campo border border-borde bg-papel object-contain "
-          />
-        )}
-        <div className="min-w-[16rem] flex-1">
-          <h2 className="text-xl font-bold leading-tight">{producto.nombre}</h2>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-cuerpo text-secundaria ">
-            <Etiqueta tono="info">{nombreCadena(producto.fuente)}</Etiqueta>
-            {producto.marca && <span>{producto.marca}</span>}
-            <span>{textoCantidad(producto.cantidad, producto.unidad)}</span>
-            {consulta.data?.fecha_datos && (
-              <Etiqueta tono="dato">datos del {fechaTexto(consulta.data.fecha_datos)}</Etiqueta>
-            )}
-          </p>
+      {/* ---------------------------------------------- qué es y cuánto cuesta */}
+      <section aria-labelledby="ficha-titulo">
+        <p className="text-micro uppercase text-tinta-tenue">
+          {(grupo?.cadenas ?? 1) > 1
+            ? `${grupo?.cadenas} cadenas lo venden`
+            : `solo en ${nombreCadena(producto.fuente)}`}
+        </p>
+        {/* *** EL NOMBRE ES UN `h2`, NO UN `h1`. *** *El `h1` de la pantalla lo pone el armazón
+            (la miga de pan de la suite), y dos `h1` en la misma pantalla dejan el documento sin
+            título único: los lectores de pantalla anuncian dos. La jerarquía visual no cambia.* */}
+        <h2
+          id="ficha-titulo"
+          className="mt-1 font-display text-titulo font-semibold text-tinta"
+        >
+          {producto.nombre}
+        </h2>
+        <p className="mt-1 text-etiqueta text-tinta-suave">
+          {cantidadDeEste}
+          {' · '}
+          {nombreCadena(producto.fuente)}
+          {marca && !laMarcaYaEsta ? ` · ${marca}` : ''}
+        </p>
 
-          {/* **Apuntarlo y seguirlo, desde aquí.** A esta pantalla se llega escaneando el
-              código de barras, y hasta el 27 de septiembre de 2026 no había forma de apuntar
-              nada: había que abrir el grupo («Ver las N cadenas en columnas»), buscarlo y
-              añadirlo allí, con el paquete en la mano. El flujo documentado en
-              `docs/PANTALLAS.md` §6 dice «+ ficha + añadir» para el caso de «lo conozco y puedo
-              comparar», y la pantalla no tenía ese añadir. Se usa el mismo botón que la ficha
-              del grupo (`componentes/BotonAnadirACesta.tsx`): dos copias habrían acabado en dos
-              comportamientos. */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-          <BotonAnadirACesta key={productoIdExacto} productoId={productoIdExacto} nombre={producto.nombre} />
-            <p className="text-cuerpo text-tinta-suave">Añade este artículo de esta cadena, sin sustituirlo por otra marca.</p>
+        {/* *** EL PRECIO, Y AL LADO LA CIFRA QUE PERMITE COMPARAR. *** *
+            *Si no hay €/kg no se rellena con el precio del envase: se dice que no hay, que es la
+            misma regla que el resto de la aplicación.* */}
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="cifra text-precio-grande font-semibold text-tinta">
+            {euros(producto.precio_cent)}
+          </span>
+          {hayPrecioPorUnidad ? (
+            <span className="cifra text-etiqueta text-precio-unidad">
+              {eurosUnidad(
+                producto.precio_unidad_cent,
+                unidadDeEste,
+                producto.precio_por_escurrido,
+              )}
+            </span>
+          ) : (
+            <span className="text-etiqueta text-precio-unidad">
+              no hay precio por {nombreDeLaUnidad}
+            </span>
+          )}
+        </div>
+
+        {/* *El €/kg sobre el escurrido hay que decirlo donde está la cifra: «4,23 €/kg» y «4,23 €/kg
+            escurrido» son dos afirmaciones distintas.* */}
+        {producto.precio_por_escurrido && (
+          <p className="mt-1 text-etiqueta text-tinta-suave">
+            sobre {textoCantidad((producto.peso_escurrido_g ?? 0) / 1000, 'kg')} escurridos
+          </p>
+        )}
+
+        {veredicto && <ChipDelPrecio v={veredicto} />}
+
+        {/* Al peso, el precio es una estimación y hay que decirlo antes de enterarse en la caja. */}
+        {pesoVariable !== null && (
+          <p className="mt-2 text-etiqueta text-tinta-suave">
+            Al peso: ronda los {cantidadDeEste} y puede variar un {numero(pesoVariable)} %.
+          </p>
+        )}
+      </section>
+
+      {/* ------------------------------------------------ la acción de esta pantalla */}
+      {conSesion && (
+        <section aria-label="Acciones" className="flex flex-wrap items-center gap-2">
+          <BotonAnadirACesta
+            key={productoIdExacto}
+            productoId={productoIdExacto}
+            nombre={producto.nombre}
+          />
+          {grupo && <Campana grupoId={grupo.grupo_id} />}
+        </section>
+      )}
+
+      {/* ---------------------------------------------- el historial, con sus días reales */}
+      {grupo ? (
+        <section
+          aria-labelledby="historial"
+          className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 id="historial" className="text-cuerpo-fuerte text-tinta">
+              Precio en {nombreCadena(fuente)}
+            </h2>
+            {diasConPrecio > 0 && (
+              <span className="cifra text-etiqueta text-tinta-tenue">
+                {diasConPrecio} {diasConPrecio === 1 ? 'día' : 'días'} · €/{unidadDeLaSerie ?? 'ud'}
+              </span>
+            )}
           </div>
-          {grupo && (
-            <div className="mt-2">
-              <Campana grupoId={grupo.grupo_id} />
+
+          {historico.bloqueado ? (
+            <Aviso tono="aviso" titulo="Sin histórico de este precio">
+              <p>
+                Esta cadena tiene más de un producto parecido y no puedo separar cuál es cuál. No
+                dibujo una línea que mezclaría dos precios.
+              </p>
+            </Aviso>
+          ) : historico.puntos.length === 0 ? (
+            // *** UN PRODUCTO NUEVO NO DIBUJA UNA LÍNEA. *** *No hay serie, y eso se dice: una línea
+            // plana «porque no ha cambiado» sería inventarse un histórico que nadie ha medido.* *Y
+            // no se dice «es la primera vez que vemos este precio»: de una serie vacía no se infiere
+            // un solo día -- es la regla de `chispa.ts` --, se dice que no hay historial.*
+            <p className="mt-3 text-cuerpo text-tinta-suave">
+              Todavía no hay historial de este precio.
+            </p>
+          ) : (
+            <>
+              {/* *La ventana, en fechas: es el eje que la línea no puede poner sin mentir.* */}
+              <p className="mt-1 text-etiqueta text-tinta-suave">
+                Del {fechaTexto(historico.puntos[0]?.fecha, true)} a{' '}
+                {diasDesde(historico.puntos[historico.puntos.length - 1]?.fecha) === 0
+                  ? 'hoy'
+                  : fechaTexto(historico.puntos[historico.puntos.length - 1]?.fecha, true)}
+              </p>
+
+              {serie.dibujable ? (
+                <div
+                  className={
+                    veredicto
+                      ? 'mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2'
+                      : 'mt-3'
+                  }
+                >
+                  {/* *El mínimo y el máximo reales, al lado del trazo: es el eje de verdad.*
+                      *Con el precio plano (mínimo = máximo) hay una sola cifra, y va centrada
+                      porque la línea va centrada: uPlot abre el eje alrededor del valor.* */}
+                  {veredicto && (
+                    <div
+                      aria-hidden="true"
+                      className={cx(
+                        'cifra flex h-[120px] flex-col whitespace-nowrap text-right text-etiqueta text-tinta-tenue',
+                        veredicto.maximo === veredicto.minimo
+                          ? 'justify-center'
+                          : 'justify-between',
+                      )}
+                    >
+                      <span>{euros(veredicto.maximo)}</span>
+                      {veredicto.maximo !== veredicto.minimo && (
+                        <span>{euros(veredicto.minimo)}</span>
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <Chispa
+                      puntos={historico.puntos}
+                      alto={120}
+                      etiqueta={`Precio de ${producto.nombre} en ${nombreCadena(fuente)}`}
+                      rango={
+                        veredicto && veredicto.maximo > veredicto.minimo
+                          ? [veredicto.minimo, veredicto.maximo]
+                          : null
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-3 text-cuerpo text-tinta-suave">{serie.motivoUnidad}</p>
+              )}
+
+              {/* **La frase debajo de la curva**: una línea que sube y baja sin decir nada es un
+                  adorno. Las reglas -- y sobre todo cuándo NO hay frase -- están en `curva.ts`.
+                  *Con el precio plano no se repite el chip*: `curva.ts` diría «es el precio más
+                  bajo de los N días», que con todos los días al mismo precio es cierto y no informa
+                  de nada.* */}
+              {curva.frase && !(veredicto && veredicto.maximo === veredicto.minimo) && (
+                <p className="mt-3 text-cuerpo font-semibold text-tinta">{curva.frase}</p>
+              )}
+              {/* *Con un solo día no se puede decir si está caro: se dice eso, y no se calla.* */}
+              {diasConPrecio === 1 && !curva.frase && (
+                <p className="mt-3 text-cuerpo text-tinta-suave">
+                  Solo tenemos un día de este precio, así que no hay con qué compararlo.
+                </p>
+              )}
+              {curva.motivo && <p className="mt-1 text-etiqueta text-tinta-suave">{curva.motivo}</p>}
+              {veredicto && veredicto.huecos > 0 && (
+                <p className="mt-1 text-etiqueta text-tinta-suave">
+                  {veredicto.huecos} {veredicto.huecos === 1 ? 'día' : 'días'} del histórico{' '}
+                  {veredicto.huecos === 1 ? 'no tiene' : 'no tienen'} precio: en la línea se ven
+                  como huecos.
+                </p>
+              )}
+            </>
+          )}
+        </section>
+      ) : (
+        // *Sin grupo no hay serie ni alternativas, y se dice en una línea en vez de enseñar dos
+        // secciones vacías.*
+        <section className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
+          <h2 className="text-cuerpo-fuerte text-tinta">Sin historial todavía</h2>
+          <p className="mt-1 text-cuerpo text-tinta-suave">
+            No hay otros productos parecidos con los que compararlo, así que de momento no hay
+            precios anteriores ni alternativas que enseñar.
+          </p>
+        </section>
+      )}
+
+      {/* ---------------------------------------------- el mismo artículo, en otras cadenas */}
+      {otrasCadenas.length > 0 && (
+        <section aria-labelledby="cadenas">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 id="cadenas" className="font-display text-titulo font-semibold text-tinta">
+              En otras cadenas
+            </h2>
+            <span className="text-etiqueta text-tinta-tenue">mismo artículo</span>
+          </div>
+
+          {/* *** EL AHORRO, CON SU CADENA Y SU UNIDAD. *** *Es lo que se viene a saber: cuánto
+              cuesta el mismo producto en otro sitio.* *Y se dice «más barato en» y no «cuesta un 18 %
+              más que en»: la segunda forma habla de la diferencia contra una cadena concreta y deja
+              fuera a las demás.* */}
+          {ahorroPorUnidad != null && cadenaMasBarata && (
+            <p className="mt-2 text-cuerpo font-semibold text-tinta">
+              Está más barato en {nombreCadena(cadenaMasBarata.fuente)}: te ahorras{' '}
+              <span className="cifra text-precio-baja">
+                {eurosUnidad(ahorroPorUnidad, unidadDeEste)}
+              </span>
+              .
+            </p>
+          )}
+
+          <div className="mt-3 overflow-hidden rounded-tarjeta bg-papel shadow-apoyado">
+            {filasDelMismo.map((p) => {
+              const propio = esEste(p)
+              const barata = !propio && p.precio_unidad_cent === precioMinimoDelMismo
+              return (
+                <FilaDePrecio
+                  key={p.producto_id}
+                  p={p}
+                  protagonista="cadena"
+                  esEste={propio}
+                  remate={
+                    propio ? (
+                      <span className="text-etiqueta-fuerte text-terracota">donde estás</span>
+                    ) : barata ? (
+                      <RemateMasBarata />
+                    ) : p.precio_unidad_cent != null && precioMinimoDelMismo != null ? (
+                      <span className="cifra text-etiqueta text-tinta-suave">
+                        +{eurosUnidad(p.precio_unidad_cent - precioMinimoDelMismo, unidadDeEste)}
+                      </span>
+                    ) : null
+                  }
+                />
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------------------------------------- las otras marcas y formatos */}
+      {(otras.length > 0 || mismoOtraBase.length > 0 || sinVerificar.length > 0) && (
+        <section aria-labelledby={otras.length > 0 ? 'opciones' : undefined}>
+          {/* *El título solo cuando hay lista debajo: un «Otras opciones» con la lista vacía es una
+              promesa que la pantalla no cumple.* */}
+          {otras.length > 0 && (
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 id="opciones" className="font-display text-titulo font-semibold text-tinta">
+                Otras opciones
+              </h2>
+              <span className="text-etiqueta text-tinta-tenue">{otras.length}</span>
             </div>
           )}
 
-          {/* **La frase, antes que la tabla.** Punto 3 del encargo: «una tabla no
-              es una respuesta». Va aqui arriba, antes del precio y de la tabla de
-              cadenas, porque es lo primero que se mira con el paquete en la mano.
+          {otras.length > 0 && (
+            <>
+              {/* *Se dice de qué es la diferencia antes de enseñarla: de artículos distintos, por
+                  kilo. Sin esto, «1,36 €/kg menos» parece el ahorro del que se lleva.* */}
+              <p className="mt-1 text-etiqueta text-tinta-suave">{parrafoDeLasOtras}</p>
 
-              Se calcula aqui mismo y no en un `useMemo` de mas arriba **para que la
-              frase y los datos que la forman esten en el mismo sitio**: el dia que
-              alguien cambie que es «fiable», tiene que cambiar la frase al lado, no
-              a treinta lineas de distancia. Las reglas de la frase estan en
-              `logica/frase.ts`, que es donde se deciden.
+              <div className="mt-3 overflow-hidden rounded-tarjeta bg-papel shadow-apoyado">
+                {otras.map((p) => {
+                  const sePuedeRestar =
+                    p.comparable !== false &&
+                    p.precio_unidad_cent != null &&
+                    hayPrecioPorUnidad &&
+                    precioComparable(conIdentidad, p)
+                  const diferencia =
+                    sePuedeRestar && p.precio_unidad_cent != null
+                      ? p.precio_unidad_cent - (producto.precio_unidad_cent as number)
+                      : null
+                  const barata = masBarataDeLasOtras != null && p.precio_unidad_cent === masBarataDeLasOtras
+                  return (
+                    <FilaDePrecio
+                      key={p.producto_id}
+                      p={p}
+                      protagonista="producto"
+                      resaltada={barata}
+                      nota={sePuedeRestar ? null : porqueNoSeResta(p, unidadDeEste)}
+                      remate={
+                        barata ? (
+                          <RemateMasBarata />
+                        ) : diferencia != null ? (
+                          <span
+                            className={cx(
+                              'cifra text-etiqueta',
+                              diferencia < 0 ? 'font-semibold text-precio-baja' : 'text-tinta-suave',
+                            )}
+                          >
+                            {textoDeLaDiferencia(diferencia, unidadDeEste)}
+                          </span>
+                        ) : null
+                      }
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
 
-              Y si no hay frase **no se pinta nada**: la tabla de abajo ya deja
-              comparar con desconfianza, y una frase inventada se cree. */}
-          {(() => {
-            if (!grupo || !miembro) return null
-            // Solo cuentan los productos con precio y marcados como comparables
-            // por la API: es su señal, no una regla reinventada aqui.
-            // **Solo el mismo articulo.** *La frase dice «cuesta un X % mas que en ...», y eso
-            // solo es cierto si es **el mismo producto**.* *Con el grupo entero, el azafran Pote
-            // de DIA salia «un 41 % mas que en Mercadona» comparado con el **Hacendado**.*
-            // *** LAS CIFRAS SALEN DE `comp`, NO DEL GRUPO. ***
-            // *Esto recibia `grupo.ahorro_cent` y `grupo.cadenas`, que cuentan las alternativas.*
-            // *Ahora solo cuenta lo exacto y comparable: `comp.cadenas`, `comp.diferenciaCent` y
-            // `comp.diferenciaPct`.*
-            const conPrecio = comp.comparables.filter(
-              (p) => p.comparable && p.precio_unidad_cent != null,
-            )
-            if (conPrecio.length < 2) return null
-            // *Sin cifras no hay frase: no se inventa un cero.*
-            if (comp.diferenciaPct == null || comp.diferenciaCent == null) return null
-            const barato = conPrecio.find((p) => p.precio_unidad_cent === comp.minimo)
-            const frase = fraseDePrecio({
-              cadenas: comp.cadenas,
-              ahorro_pct: comp.diferenciaPct,
-              ahorro_cent: comp.diferenciaCent,
-              fiable: comp.unidad !== null && comp.cadenas >= 2 && conPrecio.length >= 2,
-              cadena_mas_barata: barato?.fuente ?? null,
-              cadena_de_este: miembro.fuente,
-              precio_unidad_este: miembro.precio_unidad_cent,
-              precio_unidad_minimo: comp.minimo,
-            }, { euros, nombreCadena })
-            if (!frase) return null
-            return <p className="mt-3 text-entrada font-semibold leading-snug">{frase}</p>
-          })()}
+          {mismoOtraBase.length > 0 && (
+            <div className="mt-4">
+              <h2 className="font-display text-subtitulo font-semibold text-tinta">
+                Mismo artículo, otra forma de medirlo
+              </h2>
+              <p className="mt-1 text-etiqueta text-tinta-suave">
+                Es el mismo producto, pero se mide de otra forma
+                {unidadesDe(mismoOtraBase)
+                  ? ` (por ${unidadesDe(mismoOtraBase)}${unidadDeEste ? ` y no por ${nombreUnidad(unidadDeEste)}` : ''})`
+                  : ''}{' '}
+                y los precios no se restan.
+              </p>
+              <div className="mt-2 overflow-hidden rounded-tarjeta bg-papel shadow-apoyado">
+                {mismoOtraBase.map((p) => (
+                  <FilaDePrecio
+                    key={p.producto_id}
+                    p={p}
+                    protagonista="producto"
+                    nota={porqueNoSeResta(p, unidadDeEste)}
+                    remate={null}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* *** LO QUE NO ES ESTE ARTICULO VA APARTE, Y NO SE RESTA. ***
-              *Medido el 18/10/2026 con el azafran `dia/147509`: el grupo traia el **Hacendado** de
-              Mercadona (otro EAN, otra marca) y el **mismo Pote** de Carrefour pero **medido por
-              unidad** en vez de por kilo.* *Con eso, la ficha decia «Cuesta un 41 % mas que en
-              Mercadona», que es comparar Pote con Hacendado.*
+          {sinVerificar.length > 0 && (
+            <div className="mt-4">
+              <h2 className="font-display text-subtitulo font-semibold text-tinta">
+                No sé si es el mismo producto
+              </h2>
+              <p className="mt-1 text-etiqueta text-tinta-suave">
+                No hay con qué confirmarlo, así que no lo comparo ni lo resto.
+              </p>
+              <div className="mt-2 overflow-hidden rounded-tarjeta bg-papel shadow-apoyado">
+                {sinVerificar.map((p) => (
+                  <FilaDePrecio
+                    key={p.producto_id}
+                    p={p}
+                    protagonista="producto"
+                    nota={porqueNoSeResta(p, unidadDeEste)}
+                    remate={null}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-              **Aqui no se resta nada y no se sustituye nada**: se enseña que existe, con su nombre
-              y su marca, para que quien mire decida. *Un ahorro que no es del articulo elegido es
-              una afirmacion falsa, y la pantalla no la hace.* */}
-          {(() => {
-            if (!grupo) return null
-            // *** CUATRO CAJONES, NO DOS. ***
-            // *Mismo articulo comparable, mismo articulo con otra base de precio, otro articulo, e
-            // identidad sin verificar.* *Antes solo habia «este» y «no este», y ahi se perdian dos
-            // cosas: el mismo articulo con otra unidad se llamaba «no es este articulo» (falso), y
-            // una identidad desconocida se presentaba como alternativa (afirmar sin dato).*
-            const c = comp
-            const sinEl = <T extends { fuente?: string }>(xs: T[]) =>
-              xs.filter((p) => p.fuente !== producto.fuente)
-            const mismaBase = sinEl(c.mismoSinComparar)
-            const otras = sinEl(c.distintas)
-            const sinVerificar = sinEl(c.sinVerificar)
-            if (!mismaBase.length && !otras.length && !sinVerificar.length) return null
-            const fila = (p: { fuente: string; nombre: string; marca?: string | null; unidad?: string | null; precio_unidad_cent?: number | null; precio_por_escurrido?: boolean | null }, nota: string) => (
-              <li key={`${p.fuente}:${p.nombre}`} className="flex flex-wrap justify-between gap-2">
-                <span>
-                  {p.nombre}
-                  {p.marca ? ` \u00b7 ${p.marca}` : ''}
-                  {nota && <span className="text-tinta-suave"> -- {nota}</span>}
-                </span>
-                <span className="tabular-nums">
-                  {p.precio_unidad_cent == null
-                    ? 'sin precio'
-                    : eurosUnidad(p.precio_unidad_cent, p.unidad ?? null, p.precio_por_escurrido ?? false)}
-                </span>
-              </li>
-            )
-            return (
-              <section className="mt-4 rounded-lg border border-tinta-suave p-3">
-                <h2 className="text-entrada font-semibold">El mismo articulo y otras opciones</h2>
-                {mismaBase.length > 0 && (
-                  <>
-                    <h3 className="mt-2 text-xs font-semibold">Mismo articulo, precio no comparable</h3>
-                    <p className="text-xs text-tinta-suave">
-                      Es el mismo producto, pero su precio va en otra base (por unidad de venta en
-                      vez de por kilo, o al revés). No se resta.
-                    </p>
-                    <ul className="mt-1 grid gap-1 text-xs">
-                      {mismaBase.map((p) => fila(p, 'mismo articulo, otra base'))}
-                    </ul>
-                  </>
-                )}
-                {otras.length > 0 && (
-                  <>
-                    <h3 className="mt-3 text-xs font-semibold">Otras opciones del grupo</h3>
-                    <p className="text-xs text-tinta-suave">
-                      No son este articulo: cambian de marca o de formato. Van aparte y no se restan
-                      de su precio.
-                    </p>
-                    <ul className="mt-1 grid gap-1 text-xs">
-                      {otras.map((p) => fila(p, ''))}
-                    </ul>
-                  </>
-                )}
-                {sinVerificar.length > 0 && (
-                  <>
-                    <h3 className="mt-3 text-xs font-semibold">No sé si es exactamente este producto</h3>
-                    <p className="text-xs text-tinta-suave">
-                      No hay con qué confirmar si es el mismo artículo, así que va aparte y no se
-                      resta.
-                    </p>
-                    <ul className="mt-1 grid gap-1 text-xs">
-                      {sinVerificar.map((p) => fila(p, 'no sé si es el mismo producto'))}
-                    </ul>
-                  </>
-                )}
-              </section>
-            )
-          })()}
+          {/* **Enlace a la comparación del grupo**: la ficha responde «¿dónde sale mejor?» con una
+              lista; la pantalla de columnas la responde entera, con las curvas de cada cadena. */}
+          {grupo && grupo.productos.length > 1 && (
+            <p className="mt-4">
+              <Link
+                to={`/grupo/${grupo.grupo_id}`}
+                className="inline-flex min-h-[44px] items-center gap-1 text-cuerpo font-semibold text-verde underline underline-offset-2 transition-colors duration-rapida ease-suave hover:text-verde-fuerte"
+              >
+                Ver la comparación de las {grupo.cadenas} cadenas
+              </Link>
+            </p>
+          )}
+        </section>
+      )}
 
-          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Dato etiqueta="Precio">{euros(producto.precio_cent)}</Dato>
-            <Dato etiqueta="Precio por unidad">
-              {eurosUnidad(producto.precio_unidad_cent, producto.unidad,
-                           producto.precio_por_escurrido)}
-              {producto.precio_por_escurrido && (
-                <span className="block text-etiqueta font-normal text-tinta-suave">
-                  sobre {textoCantidad((producto.peso_escurrido_g ?? 0) / 1000, 'kg')} escurridos
-                </span>
-              )}
-            </Dato>
-            {/* Dónde está más barato y cuánto, en euros por unidad. Va pegado al
-                precio por unidad porque es lo que se compara con él. Solo sale cuando
-                hay algo que ahorrar (ver `masBarato`). */}
-            {masBarato && (
-              <Dato etiqueta="Más barato en">
-                {nombreCadena(masBarato.fuente)}
-                <span className="block text-etiqueta font-normal text-tinta-suave">
-                  {eurosUnidad(masBarato.precio_unidad_cent, producto.unidad)} · te ahorras{' '}
-                  {eurosUnidad(masBarato.ahorro, producto.unidad)}
-                </span>
-              </Dato>
-            )}
-            {/* Al peso, el precio es una estimacion y hay que decirlo antes de
-                que se entere en la caja. Son los 711 productos del catalogo que
-                traen `peso_variacion_pct` (todos al 25 %), y sin esta linea el
-                €/kg parece una promesa cuando es un calculo. */}
-            {pesoVariable !== null && (
-              <Dato etiqueta="Al peso">
-                ronda los {textoCantidad(producto.cantidad, producto.unidad)} y puede variar
-                un {numero(pesoVariable)} %
-              </Dato>
-            )}
-            <Dato etiqueta="Nutri-Score">
-              <SelloNutriscore valor={producto.nutriscore} />
-            </Dato>
-            <Dato etiqueta="Código de barras">{miembro?.ean ?? 'no lo sé'}</Dato>
-          </dl>
-
-          <div className="mt-2 flex flex-wrap items-center gap-1">
-            {miembro && <SelloLetra producto={miembro} />}
-            <SelloOferta texto={miembro?.promo ?? null} club={miembro?.promo_club ?? null}
-                         unidades={miembro?.promo_unidades ?? null} />
-            <SelloRetirada retirado={miembro?.es_recall ?? null} />
-            {/* Los sellos con su nombre legible: `sin-gluten` en crudo se lee
-                regular, y el dato viene de la API en codigo. */}
-            {miembro?.sellos.map((s) => (
-              <Etiqueta key={s} tono="dato">
-                {selloLegible(s)}
-              </Etiqueta>
-            ))}
-            {/* Y detras, **de donde salen**, que es lo que no se puede
-                disimular: un certificado auditado no vale lo mismo que una
-                palabra en el nombre del producto, y decir "sin gluten" igual en
-                los dos casos seria mentir sin decir ninguna mentira. */}
-            {origenDeSellos && (
-              <span className="text-etiqueta text-tinta-suave">
-                ({origenDeSellos})
+      {/* ---------------------------------------------- el etiquetado, legible */}
+      {hayEtiquetado && (
+        <section aria-labelledby="etiquetado">
+          <h2 id="etiquetado" className="font-display text-titulo font-semibold text-tinta">
+            Etiquetado
+          </h2>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <LetraNutri valor={producto.nutriscore} />
+            {producto.kcal_100g != null && (
+              <span className="cifra text-etiqueta text-tinta-suave">
+                {numero(producto.kcal_100g, 0)} kcal/100 g
               </span>
             )}
-            {/* Los certificados van aparte y en verde, porque son la prueba
-                fuerte: no los dice el nombre, los audita un tercero. */}
-            {miembro?.certificados.map((c) => (
-              <Etiqueta key={c} tono="bien" titulo="Certificado: lo audita un tercero, no lo dice el nombre">
-                {selloLegible(c)}
-              </Etiqueta>
+            <LetraEco valor={producto.ecoscore} />
+            {miembro?.sellos.map((s) => (
+              <span
+                key={s}
+                className="inline-flex min-h-6 items-center rounded-pastilla bg-sello-fondo px-2 text-etiqueta-fuerte text-sello-tinta"
+              >
+                {selloLegible(s)}
+              </span>
             ))}
-            {/* Y esto lo dice la cadena, no nosotros. Ponerlo como si fuera
-                nuestro seria vender su marketing como dato. */}
-            {miembro?.distintivo && (
-              <Etiqueta tono="neutro">
-                la cadena dice: {selloLegible(miembro.distintivo)}
-              </Etiqueta>
-            )}
+            {/* *Los certificados van aparte porque son la prueba fuerte: no los dice el nombre, los
+                audita un tercero.* */}
+            {miembro?.certificados.map((c) => (
+              <span
+                key={c}
+                className="inline-flex min-h-6 items-center rounded-pastilla bg-lavado-verde px-2 text-etiqueta-fuerte text-tinta"
+                title="Lo audita un tercero, no lo dice el nombre"
+              >
+                {selloLegible(c)}
+              </span>
+            ))}
+            <SelloOferta
+              texto={miembro?.promo ?? null}
+              club={miembro?.promo_club ?? null}
+              unidades={miembro?.promo_unidades ?? null}
+            />
+            <SelloRetirada retirado={miembro?.es_recall ?? null} />
           </div>
-        </div>
-      </header>
-
-      {!grupo && (
-        <Aviso tono="aviso" titulo="Este producto no tiene comparación">
-          <p>
-            No hay otros productos parecidos con los que compararlo, así que no hay alternativas
-            ni histórico que enseñar. Sigue saliendo en el buscador, marcado.
-          </p>
-        </Aviso>
+          {origenDeSellos && (
+            // *Entre paréntesis y sin frase alrededor: el dato es una aclaración de los sellos de
+            // arriba, no una línea propia.* *Y así vale para los cuatro valores sin inventar
+            // concordancia («sellos leído» no se puede escribir).*
+            <p className="mt-2 text-etiqueta text-tinta-suave">({origenDeSellos})</p>
+          )}
+        </section>
       )}
 
-      {grupo && (
-        <>
-          <Tarjeta
-            titulo="El histórico de este precio"
-            sub={`Precio por unidad de ${nombreCadena(fuente)}${grupo.unidad ? ` · €/${grupo.unidad}` : ''}`}
-          >
-            {historico.bloqueado ? (
-              <Aviso tono="aviso" titulo="Sin histórico de este precio">
-                <p>
-                  Esta cadena tiene varios productos parecidos en el grupo y no puedo separar cuál
-                  es cuál, así que no dibujo una línea que mezclaría dos productos.
-                </p>
-              </Aviso>
-            ) : historico.puntos.length === 0 ? (
-              <Vacio titulo="Sin histórico" className="grow">
-                <p>Solo tenemos un día de este precio.</p>
-              </Vacio>
-            ) : (
-              <>
-                <Chispa puntos={historico.puntos} alto={120} etiqueta={`Histórico de ${producto.nombre}`} />
-                {/* **La frase debajo de la curva.** Punto 3 del encargo, apartado 3:
-                    *"la curva, que ya existe, con una frase debajo"*. Una linea que
-                    sube y baja sin decir nada es un adorno del dato -- lo dice el
-                    propio `Chispa.tsx` --, y lo que se viene a saber es si **hoy** esta
-                    caro o barato. Las reglas (y sobre todo cuando NO hay frase) estan
-                    en `logica/curva.ts`. */}
-                {curva.frase && (
-                  <p className="mt-2 text-entrada font-semibold leading-snug">{curva.frase}</p>
-                )}
-                {curva.motivo && (
-                  <p className="mt-2 text-cuerpo text-tinta-suave">{curva.motivo}</p>
-                )}
-                <dl className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                  <Dato etiqueta="Mínimo">{eurosUnidad(resumen.min, grupo.unidad)}</Dato>
-                  <Dato etiqueta="Máximo">{eurosUnidad(resumen.max, grupo.unidad)}</Dato>
-                  <Dato etiqueta="Media">{eurosUnidad(resumen.media, grupo.unidad)}</Dato>
-                  <Dato etiqueta="Primer dato">{eurosUnidad(resumen.primero, grupo.unidad)}</Dato>
-                  <Dato etiqueta="Último dato">{eurosUnidad(resumen.ultimo, grupo.unidad)}</Dato>
-                  <Dato etiqueta="Evolución">{porcentajeConSigno(evolucion)}</Dato>
-                </dl>
-                <p className="mt-2 text-etiqueta text-tinta-suave">
-                  {resumen.n} {resumen.n === 1 ? 'día' : 'días'} de histórico, del{' '}
-                  {fechaTexto(historico.puntos[0]?.fecha ?? null)} al{' '}
-                  {fechaTexto(historico.puntos[historico.puntos.length - 1]?.fecha ?? null)}. La
-                  media es la de los días que tenemos, no la de todo el año.
-                </p>
-              </>
-            )}
-          </Tarjeta>
-
-          <Tarjeta
-            titulo="Su grupo de equivalencias"
-            sub={`${grupo.productos.length} productos en ${grupo.cadenas} ${grupo.cadenas === 1 ? 'cadena' : 'cadenas'} · datos del ${fechaTexto(grupo.fecha_datos ?? consulta.data?.fecha_datos ?? null)}`}
-          >
-            <TablaScroll etiqueta="Productos equivalentes" minAncho="44rem">
-              <table className="w-full border-collapse text-cuerpo">
-                <thead>
-                  <tr>
-                    <Th>Producto</Th>
-                    <Th>Cadena</Th>
-                    <Th>Precio</Th>
-                    <Th>Por unidad</Th>
-                    <Th>Diferencia</Th>
-                    <Th>Letra</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {grupo.productos.map((p) => {
-                    // La referencia de la diferencia es **el mas barato de SU unidad**,
-                    // no el minimo del grupo. El minimo del grupo puede estar medido en
-                    // otra unidad, y entonces «+162.943,5 %» es un numero que no
-                    // significa nada: medido en un navegador el 23 de septiembre de 2026
-                    // en la ficha de un azafran de 0,4 g, comparando 4.875,00 EUR/kg con
-                    // 2,99 EUR/ud. La API ya calcula su `ahorro_pct` asi (`catalogo.py`),
-                    // y la nota de abajo dice exactamente eso: que los productos de otra
-                    // unidad no entran en la cuenta. Ahora la columna lo cumple.
-                    // *** LA DIFERENCIA SOLO SE CALCULA DONDE HAY IDENTIDAD Y BASE. ***
-                    //
-                    // *Esto filtraba por `comparable` y por **misma unidad**, pero **no por
-                    // EAN**.* *Asi que en la ficha del azafran la fila de DIA (kg) se comparaba
-                    // con el **Hacendado** (kg, otro articulo) y salia «diferencia +41 %»: el
-                    // mismo defecto que ya se habia corregido en la frase y en el apartado,
-                    // vivo en la tercera superficie.*
-                    //
-                    // *Ahora: **mismo articulo** (`identidad`) **y** precio comparable (`misma
-                    // unidad` y misma convencion de peso).* *Si no, la celda lo dice en vez de
-                    // inventar un porcentaje.*
-                    const esEste = identidad(conIdentidad, p) === 'mismo'
-                    const comparableConEste = esEste && precioComparable(conIdentidad, p)
-                    const referencia = comparableConEste ? comp.minimo : null
-                    const dif =
-                      referencia !== null &&
-                      referencia > 0 &&
-                      p.precio_unidad_cent !== null &&
-                      Number.isFinite(p.precio_unidad_cent) &&
-                      p.precio_unidad_cent > 0
-                        ? Math.round(
-                            ((100 * (p.precio_unidad_cent - referencia)) / referencia) * 10,
-                          ) / 10
-                        : null
-                    return (
-                      <tr key={p.producto_id} className="hover:bg-marfil">
-                        <Td>
-                          {/* **44 px de alto, medido.** El 23 de septiembre de 2026 este
-                              enlace medía 161 x **19**: es la forma de saltar a la ficha de
-                              otro producto del grupo, que es justo lo que se hace con el
-                              paquete en la mano, y de pie no se acierta. La marca va dentro
-                              del mismo enlace para que el objetivo sea el nombre entero. */}
-                          <Link to={`/producto/${p.fuente}/${p.id_fuente}`}
-                                className="inline-flex min-h-[44px] min-w-[44px] items-center underline">
-                            {p.nombre}
-                          </Link>
-                          {p.marca && (
-                            <span className="block text-etiqueta text-tinta-suave">
-                              {p.marca}
-                            </span>
-                          )}
-                        </Td>
-                        <Td etiqueta="cadena">{nombreCadena(p.fuente)}</Td>
-                        <Td className="cifra" etiqueta="precio">{euros(p.precio_cent)}</Td>
-                        <Td className="cifra" etiqueta="por unidad">
-                          {eurosUnidad(p.precio_unidad_cent, p.unidad)}
-                        </Td>
-                        <Td className="cifra" etiqueta="diferencia">
-                          {esEste && !comparableConEste
-                                ? 'mismo articulo, otra base'
-                                : !esEste
-                                  ? 'otro articulo'
-                                  : dif === null
-                                    ? 'no lo sé'
-                                    : dif <= 0
-                                      ? 'el más barato'
-                                      : `+${porcentaje(dif)}`}
-                        </Td>
-                        <Td etiqueta="letra">
-                          <SelloLetra producto={p} />
-                        </Td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </TablaScroll>
-            {comp.cadenas >= 2 && comp.unidad !== null && (
-              <p className="mt-2 text-cuerpo text-secundaria ">
-                {/* *** SON ARTICULOS DISTINTOS, Y HAY QUE DECIRLO. ***
-                    *Esta frase decia solo «de la mas barata a la mas cara hay 41 % por unidad
-                    (2000,00 EUR)», y hablaba de la **unidad** pero no del **articulo**.* *En el
-                    azafran `dia/147509` compara el Pote de DIA con el **Hacendado** de Mercadona:
-                    **otro artículo**.* *Leido de corrido parece el ahorro del que tienes en la
-                    mano, y no lo es.*
-
-                    **El dato se queda** -- *la horquilla del grupo existe y es verdad* --, *pero se
-                    dice de que es: de articulos distintos.* */}
-                {/* *** LA MAGNITUD TAMBIEN LLEVA UNIDAD. ***
-                    *Decia «2000,00 EUR» cuando la diferencia es **2000 EUR/kg**.* *Sin la unidad,
-                    el numero se lee como un ahorro de dinero en la compra, y no lo es: es la
-                    horquilla de precios **por unidad** entre articulos distintos del grupo.* */}
-                Entre el más barato y el más caro del grupo hay{' '}
-                {porcentaje(comp.diferenciaPct)} de diferencia por {comp.unidad ?? 'unidad'} (
-                {euros(comp.diferenciaCent)} por {comp.unidad ?? 'unidad'}).{' '}
-                {comp.ahorroEnvaseCent != null && (
-                  <>
-                    En el envase te ahorras{' '}
-                    <strong>{euros(comp.ahorroEnvaseCent)}</strong>.{' '}
-                  </>
-                )}
-              </p>
-            )}
-          </Tarjeta>
-        </>
-      )}
-
+      {/* ---------------------------------------------- lo que dice la etiqueta */}
       {miembro && (
-        <Tarjeta titulo="Ficha del producto en la cadena">
-          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Dato etiqueta="Tipo">{miembro.tipo_producto ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="Envase">{miembro.envase ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="Conservación">{miembro.conservacion ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="Origen">{miembro.origen ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="NOVA">{miembro.nova ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="Días de caducidad">{miembro.dias_caducidad ?? 'no lo sé'}</Dato>
-            <Dato etiqueta="Peso neto">
-              {miembro.peso_neto_g === null ? 'no lo sé' : `${miembro.peso_neto_g} g`}
-            </Dato>
-            <Dato etiqueta="Graduación">
-              {miembro.grado_alcohol === null ? 'sin alcohol' : `${miembro.grado_alcohol} %`}
-            </Dato>
-            <Dato etiqueta="Marca propia">{miembro.es_marca_propia ? 'sí' : 'no'}</Dato>
-          </dl>
+        <section aria-labelledby="mas-datos">
+          <h2 id="mas-datos" className="font-display text-titulo font-semibold text-tinta">
+            Más datos
+          </h2>
 
+          {/* *Los alérgenos van primero y en rojo: es lo único de esta pantalla que puede hacer
+              daño a alguien.* */}
           {miembro.alergenos && (
-            // Los alérgenos van en rojo y los primeros: es lo único de esta
-            // pantalla que puede hacer daño a alguien.
-            <p className="mt-3 rounded-campo border border-error bg-marfil px-3 py-2 text-cuerpo text-error ">
+            <p className="mt-3 rounded-campo bg-lavado-error px-3 py-2 text-cuerpo text-error">
               <strong>Alérgenos:</strong> {miembro.alergenos}
             </p>
           )}
 
           {miembro.ingredientes && (
             <details className="mt-3">
-              {/* **44 px, aunque sea una palabra.** Medido en un móvil de 390 x 844 el 23 de
-                  septiembre de 2026: este `<summary>` medía 324 x **20**. Es un objetivo de
-                  verdad (abre los ingredientes, que es donde se mira si algo lleva lo que no
-                  se puede comer) y a 20 px no se acierta de pie con el carro en la otra mano.
-                  Es la misma regla que la puerta comprueba ya pintada en las demás
-                  pantallas. */}
-              <Resumen className="text-cuerpo font-medium">
+              {/* *44 px, aunque sea una palabra*: es donde se mira si algo lleva lo que no se puede
+                  comer. Lo vigila `test_ui_movil.py`.* */}
+              <Resumen className="text-cuerpo-fuerte text-tinta">
                 Ingredientes
               </Resumen>
               <p className="mt-1 text-cuerpo">{miembro.ingredientes}</p>
             </details>
           )}
 
-          {miembro.descripcion && (
-            <p className="mt-3 text-cuerpo text-secundaria ">
-              {miembro.descripcion}
-            </p>
-          )}
-
-          {/* **Cuando la cadena no publica nutricion, la de Open Food Facts.** Cuatro de las
-              cinco cadenas no publican ninguna: solo DIA. Y 10.778 productos si tienen los valores
-              por 100 g de OFF, asi que sin esto la ficha de un producto de Carrefour, Mercadona,
-              Alcampo o Aldi no ensena nada nutricional. Misma forma que el bloque de al lado, misma
-              base dicha, mismo NO_LO_SE: es la misma informacion de otra fuente, no otra cosa. */}
+          {/* *Cuando la cadena no publica nutrición, la de Open Food Facts, con la misma forma y la
+              base dicha. Es la misma información de otra fuente, no otra cosa.* */}
           {!miembro.nutricion && filasOff.length > 0 && (
             <div className="mt-3">
-              <h3 className="text-cuerpo font-semibold">Nutrición (por 100 g)</h3>
-              <ul className="mt-1 grid gap-1 text-cuerpo sm:grid-cols-2">
+              <h3 className="text-cuerpo-fuerte text-tinta">Nutrición (por 100 g)</h3>
+              <ul className="mt-1 grid gap-1 text-cuerpo">
                 {filasOff.map((f) => (
-                  <li key={f.clave} className="flex justify-between gap-2 border-b border-borde py-0.5 ">
-                    <span className="text-secundaria ">{f.texto}</span>
+                  <li
+                    key={f.clave}
+                    className="flex justify-between gap-2 border-b border-borde py-1"
+                  >
+                    <span className="text-tinta-suave">{f.texto}</span>
                     <span className="cifra font-medium">
-                      {f.valor === null ? NO_LO_SE : `${NUMERO.format(f.valor)} ${f.unidad}`}
+                      {f.valor === null ? NO_LO_SE : `${numero(f.valor)} ${f.unidad}`}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-[11px] text-secundaria ">
-                Datos de Open Food Facts. Pueden faltar o ser aproximados.
+              <p className="mt-1 text-etiqueta text-tinta-tenue">
+                De Open Food Facts: pueden faltar o ser aproximados.
               </p>
             </div>
           )}
 
           {miembro.nutricion && (
             <div className="mt-3">
-              <h3 className="text-cuerpo font-semibold">
+              <h3 className="text-cuerpo-fuerte text-tinta">
                 Nutrición {miembro.nutricion_por ? `(por ${miembro.nutricion_por})` : ''}
               </h3>
-              <ul className="mt-1 grid gap-1 text-cuerpo sm:grid-cols-2">
+              <ul className="mt-1 grid gap-1 text-cuerpo">
                 {filasNutricion(miembro.nutricion).map((f) => (
-                  <li key={f.clave} className="flex justify-between gap-2 border-b border-borde py-0.5 ">
-                    <span className="text-secundaria ">{f.texto}</span>
+                  <li
+                    key={f.clave}
+                    className="flex justify-between gap-2 border-b border-borde py-1"
+                  >
+                    <span className="text-tinta-suave">{f.texto}</span>
                     <span className="cifra font-medium">
                       {f.valor === null
                         ? NO_LO_SE
@@ -786,20 +822,276 @@ export function Producto() {
             </div>
           )}
 
+          {datosDeLaEtiqueta.length > 0 && (
+            <dl className="mt-3 grid gap-2">
+              {datosDeLaEtiqueta.map(([etiqueta, valor]) => (
+                <div key={etiqueta} className="flex justify-between gap-3 border-b border-borde py-1">
+                  <dt className="text-cuerpo text-tinta-suave">{etiqueta}</dt>
+                  <dd className="text-cuerpo text-right">{valor}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {miembro.descripcion && (
+            <p className="mt-3 text-cuerpo text-tinta-suave">{miembro.descripcion}</p>
+          )}
+
           {miembro.url && (
             <p className="mt-3">
               <a
                 href={miembro.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cuerpo underline"
+                className="inline-flex min-h-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
               >
                 Ver en {nombreCadena(miembro.fuente)}
               </a>
             </p>
           )}
-        </Tarjeta>
+        </section>
       )}
+    </div>
+  )
+}
+
+/** «No tengo ese producto», que es una respuesta y no un fallo.
+ *
+ *  *El enlace mide 44 px de alto como todo lo que se pulsa: medido el 5/11/2026 en la página de un
+ *  404, «Volver al buscador» medía **132 x 20**.*
+ */
+function NoTengoEseProducto() {
+  return (
+    <Vacio titulo="No tengo ese producto">
+      <p>Puede que ya no lo vendan o que el enlace esté mal.</p>
+      <p className="mt-2">
+        <Link to="/" className="inline-flex min-h-[44px] items-center underline">
+          Volver al buscador
+        </Link>
+      </p>
+    </Vacio>
+  )
+}
+
+// ---------------------------------------------------------------- las piezas ---
+
+/** **La respuesta a «¿esto está caro?», con flecha y palabra.**
+ *
+ *  *El color no basta: el par sube/baja no se distingue de un vistazo para todo el mundo, y menos a
+ *  pleno sol en la puerta de un supermercado.* *Por eso el chip lleva su flecha (`aria-hidden`,
+ *  porque la palabra ya lo dice) y su motivo escrito.*
+ *
+ *  *Y el color de cada estado es el del sistema:* `lavado-aviso` con `aviso` para lo caro,
+ *  `lavado-verde` con tinta para lo bueno — *sobre `lavado-verde` va tinta, nunca verde, que es la
+ *  regla del token* — y papel con `borde-fuerte` para el que no es ni una cosa ni la otra.
+ */
+function ChipDelPrecio({ v }: { v: Veredicto }) {
+  const Flecha =
+    v.juicio === 'caro' ? IconoPrecioArriba : v.juicio === 'barato' ? IconoPrecioAbajo : IconoPrecioIgual
+  return (
+    <p
+      className={cx(
+        'mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-pastilla px-2.5 text-etiqueta-fuerte',
+        v.juicio === 'caro'
+          ? 'bg-lavado-aviso text-aviso'
+          : v.juicio === 'barato'
+            ? 'bg-lavado-verde text-tinta'
+            : 'border border-borde-fuerte bg-papel text-tinta-suave',
+      )}
+    >
+      <Flecha
+        width={14}
+        height={14}
+        className={v.juicio === 'barato' ? 'shrink-0 text-bien' : 'shrink-0'}
+      />
+      {v.texto}
+    </p>
+  )
+}
+
+/** Una fila de precio que lleva a la ficha de ese producto en esa cadena.
+ *
+ *  **`min-h-[44px]` y no un alto de texto**: se pulsa de pie, con el carro en la otra mano. *El
+ *  enlace es la fila entera, así que el objetivo es toda la línea y no una palabra.*
+ *
+ *  `protagonista` decide qué se lee primero: en el mismo artículo manda la cadena (es lo que se
+ *  busca), y en las otras opciones manda el producto (es lo que hay que reconocer en la estantería).
+ */
+function FilaDePrecio({
+  p,
+  protagonista,
+  esEste = false,
+  resaltada = false,
+  nota = null,
+  remate,
+}: {
+  p: MiembroDeGrupo
+  protagonista: 'cadena' | 'producto'
+  esEste?: boolean
+  resaltada?: boolean
+  nota?: string | null
+  remate: ReactNode
+}) {
+  const marca = p.marca?.trim() ?? ''
+  const laMarcaYaEsta = marca.length > 0 && p.nombre.toLowerCase().includes(marca.toLowerCase())
+  const piezas = [nombreCadena(p.fuente), laMarcaYaEsta ? null : marca, textoCantidad(p.cantidad, p.unidad)]
+    .filter((x): x is string => Boolean(x))
+  return (
+    <Link to={`/producto/${p.fuente}/${p.id_fuente}`}
+      aria-current={esEste ? 'true' : undefined}
+      className={cx(
+        // *44 px y la fila entera pulsable*: se usa de pie, con el carro en la otra mano. Lo mide
+        // `tests/test_ui_movil.py`, que es lo que impide que vuelva a medir 19 px.
+        'flex min-h-[44px] items-center gap-3 border-b border-borde px-4 py-3',
+        'transition-colors duration-rapida ease-suave last:border-b-0',
+        esEste ? 'bg-lavado-terracota' : resaltada ? 'bg-lavado-verde' : 'bg-papel hover:bg-marfil',
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-cuerpo-fuerte text-tinta">
+          {protagonista === 'cadena' ? nombreCadena(p.fuente) : p.nombre}
+        </span>
+        <span className="block truncate text-etiqueta text-tinta-suave">
+          {protagonista === 'cadena' ? p.nombre : piezas.join(' · ')}
+        </span>
+        {nota && <span className="block text-etiqueta text-tinta-tenue">{nota}</span>}
+      </span>
+      {/* *** EL PRECIO, SU €/UNIDAD Y EL REMATE, EN UNA SOLA COLUMNA. *** *
+          *Antes el remate era una tercera columna, y con un nombre largo (`Alubia blanca categoría
+          extra Luengo 1 kg.`) la columna del nombre se quedaba en 120 px y el nombre salía en tres
+          líneas.* *En un móvil de 390 px caben dos columnas; la tercera se lleva el ancho de la que
+          importa.* *Y el remate debajo del €/kg se lee mejor: «1,95 € / 4875,00 €/kg / 2000,00 €/kg
+          menos» es una cuenta, no tres datos sueltos.* */}
+      <span className="shrink-0 text-right">
+        <span className="cifra block text-precio-fila font-semibold text-tinta">
+          {euros(p.precio_cent)}
+        </span>
+        {p.precio_unidad_cent != null && (
+          <span className="cifra block text-etiqueta text-precio-unidad">
+            {eurosUnidad(p.precio_unidad_cent, p.unidad, p.precio_por_escurrido)}
+          </span>
+        )}
+        {remate && <span className="mt-0.5 block">{remate}</span>}
+      </span>
+    </Link>
+  )
+}
+
+/** «la más barata», con su marca y su palabra (el color no basta). */
+function RemateMasBarata() {
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-etiqueta-fuerte text-tinta">
+      <IconoCheck width={16} height={16} className="shrink-0 text-verde" />
+      la más barata
+    </span>
+  )
+}
+
+/** La diferencia de precio por unidad, dicha como se lee: «1,36 €/kg menos» o «+0,46 €/kg».
+ *
+ *  *Con su unidad y no en euros pelados*: «1,36 €» al lado de un precio de envase se lee como el
+ *  ahorro de la compra, y lo que se ha restado son precios **por kilo**.
+ */
+function textoDeLaDiferencia(centimos: number, unidad: string | null): string {
+  if (centimos < 0) return `${eurosUnidad(-centimos, unidad)} menos`
+  return `+${eurosUnidad(centimos, unidad)}`
+}
+
+/** Por qué dos precios no se restan, en lenguaje de usuario. `null` si sí se pueden restar. */
+function porqueNoSeResta(p: MiembroDeGrupo, unidadDeEste: string | null): string | null {  const suya = p.unidad?.trim() || null
+  if (!suya) return 'no sé en qué se mide'
+  if (unidadDeEste && suya !== unidadDeEste) {
+    return `va por ${nombreUnidad(suya)} y no por ${nombreUnidad(unidadDeEste)}`
+  }
+  if (p.precio_por_escurrido) return 'va sobre el peso escurrido'
+  if (p.comparable === false) return 'el precio no es de fiar'
+  return null
+}
+
+/** Las unidades de un grupo de filas, para decirlas en una frase. */
+function unidadesDe(filas: MiembroDeGrupo[]): string {
+  const unidades = [...new Set(filas.map((p) => nombreUnidad(p.unidad)))]
+  return unidades.join(' y ')
+}
+
+/** El nombre de una unidad en castellano: `kg` no se lee, «kilo» sí. */
+function nombreUnidad(unidad: string | null | undefined): string {
+  const u = (unidad ?? '').trim().toLowerCase()
+  if (u === 'kg') return 'kilo'
+  if (u === 'g') return 'gramo'
+  if (u === 'l') return 'litro'
+  if (u === 'ml') return 'mililitro'
+  if (u === 'ud') return 'unidad'
+  if (u === 'm') return 'metro'
+  return 'unidad'
+}
+
+/** De mayor a menor precio por unidad; los que no tienen precio, al final. */
+function porPrecioUnidad(a: MiembroDeGrupo, b: MiembroDeGrupo): number {
+  const uno = a.precio_unidad_cent
+  const otro = b.precio_unidad_cent
+  if (uno == null) return otro == null ? 0 : 1
+  if (otro == null) return -1
+  return uno - otro
+}
+
+/** El Nutri-Score con los tokens del sistema (`nutri-*`), y su letra dicha en palabras. */
+const COLOR_NUTRI: Record<string, string> = {
+  a: 'bg-nutri-a text-nutri-texto-a',
+  b: 'bg-nutri-b text-nutri-texto-b-e',
+  c: 'bg-nutri-c text-nutri-texto-b-e',
+  d: 'bg-nutri-d text-nutri-texto-b-e',
+  e: 'bg-nutri-e text-nutri-texto-e',
+}
+
+function LetraNutri({ valor }: { valor: string | null }) {
+  const letra = (valor ?? '').trim().toLowerCase()
+  const color = COLOR_NUTRI[letra]
+  if (!color) return null
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        className={cx(
+          'inline-flex h-6 w-6 items-center justify-center rounded-nota text-etiqueta-fuerte',
+          color,
+        )}
+      >
+        {letra.toUpperCase()}
+      </span>
+      <span className="text-etiqueta text-tinta-suave">Nutri-Score {letra.toUpperCase()}</span>
+    </span>
+  )
+}
+
+/** El Eco-Score, cuando la cadena o Open Food Facts lo traen. *«No aplica» no es una nota.* */
+function LetraEco({ valor }: { valor: string | null }) {
+  if (!valor || valor === 'not-applicable') return null
+  const grado = valor.toLowerCase() === 'a-plus' ? 'A+' : valor.toUpperCase()
+  return <span className="text-etiqueta text-tinta-suave">Eco-Score {grado}</span>
+}
+
+/** El esqueleto de la ficha: la forma de lo que viene, sin una sola cifra inventada. */
+function EsqueletoDeFicha() {
+  return (
+    <div className="flex min-h-full flex-col gap-6" role="status" aria-live="polite">
+      <span className="sr-only">Cargando la ficha…</span>
+      <div aria-hidden="true" className="flex flex-col gap-6">
+        <div className="h-11 w-24 animate-pulse rounded-campo bg-borde" />
+        <div className="flex flex-col gap-2">
+          <div className="h-3 w-24 animate-pulse rounded-campo bg-borde" />
+          <div className="h-7 w-3/4 animate-pulse rounded-campo bg-borde" />
+          <div className="h-4 w-1/2 animate-pulse rounded-campo bg-borde" />
+          <div className="h-8 w-32 animate-pulse rounded-campo bg-borde" />
+          <div className="h-8 w-56 animate-pulse rounded-pastilla bg-borde" />
+        </div>
+        <div className="h-56 animate-pulse rounded-tarjeta bg-papel" />
+        <div className="grid gap-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-tarjeta bg-papel" />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

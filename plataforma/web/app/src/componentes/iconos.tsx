@@ -204,3 +204,54 @@ export function IconoPersona(props: SVGProps<SVGSVGElement>) {
     </Base>
   )
 }
+
+/* ==================== las tres flechas del precio ====================
+ *
+ * *Las pide la ficha del producto: el chip de «está caro / está bien» lleva **flecha y palabra**,
+ * **no solo color**, y esa es una regla de accesibilidad de la casa -- *el par sube/baja no se
+ * distingue de un vistazo para todo el mundo, y menos a pleno sol en la puerta de un supermercado.*
+ *
+ * *Tres y no una con `rotate`: el trazo de «igual» no es una flecha girada, es un trazo corto.*
+ * *Y van con `strokeWidth` de 2, más grueso que el resto: se leen a 14 px, dentro de una píldora.*
+ */
+
+export function IconoPrecioArriba(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base strokeWidth="2" {...props}>
+      <path d="M12 19V5M6 11l6-6 6 6" />
+    </Base>
+  )
+}
+
+export function IconoPrecioAbajo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base strokeWidth="2" {...props}>
+      <path d="M12 5v14M6 13l6 6 6-6" />
+    </Base>
+  )
+}
+
+export function IconoPrecioIgual(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base strokeWidth="2" {...props}>
+      <path d="M5 12h14" />
+    </Base>
+  )
+}
+
+/** **La marca de «esto es lo más barato».** *Un trazo, como el resto.* */
+export function IconoCheck(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base strokeWidth="2" {...props}>
+      <path d="m5 13 4 4L19 7" />
+    </Base>
+  )
+}
+
+export function IconoCorazonLleno(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Base fill="currentColor" {...props}>
+      <path d="M12 20s-7-4.4-7-9.2A4 4 0 0 1 12 8a4 4 0 0 1 7 2.8C19 15.6 12 20 12 20z" />
+    </Base>
+  )
+}

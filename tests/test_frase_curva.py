@@ -197,13 +197,22 @@ def test_la_frase_de_la_curva_existe_y_dice_el_plazo_de_verdad():
 
 
 def test_la_frase_se_pinta_debajo_de_la_curva_y_antes_que_la_tabla():
-    """El orden que pide el §4: curva, su frase, y la tabla al final."""
+    """El orden que pide el §4: curva, su frase, y la tabla al final.
+
+    *** EL ANCLA CAMBIO EL 5/11/2026, Y EL ORDEN QUE SE MIDE ES EL MISMO. *** *Era «Su grupo de
+    equivalencias», el titulo de la tarjeta vieja de la ficha.* *Esa tarjeta se partio en dos al
+    rehacer la pantalla contra el artboard aprobado -- «En otras cadenas» (el mismo articulo) y
+    «Otras opciones» (otras marcas y formatos) --, porque **«grupo de equivalencias» es como se llama
+    la estructura por dentro**, y §8 pide que la interfaz no hable de como esta hecha.*
+    *Lo que la prueba vigila sigue siendo lo mismo: la frase de la curva va **debajo de la curva** y
+    **antes** de la lista de donde sale mejor, que es el orden en que se lee la respuesta.*
+    """
     ficha = _fuente("paginas", "Producto.tsx")
     assert "loQueDiceLaCurva(" in ficha, "la ficha no usa la frase de la curva"
     assert ficha.index("<Chispa") < ficha.index("curva.frase"), (
         "la frase sale antes que la curva")
-    assert ficha.index("curva.frase") < ficha.index("Su grupo de equivalencias"), (
-        "la frase sale despues que la tabla de equivalencias")
+    assert ficha.index("curva.frase") < ficha.index("Otras opciones"), (
+        "la frase sale despues que la lista de alternativas")
 
 
 def test_el_ahorro_en_euros_no_cruza_unidades():

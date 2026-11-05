@@ -235,3 +235,20 @@ panel quiere la cifra laxa, se puede añadir; hoy no se publica.
   por cadena, última ejecución, productos comparables con precio, y cuántos productos tienen precio de
   más de una cadena (la métrica que dice si de verdad se puede comparar). Se publican en
   `F:\Proyectos\cesta\metricas-cesta.json`.
+
+## Decisión de producto (2026-11-05) — comparar la cesta valora 5 cadenas, no 6
+
+El motor de la cesta (`plataforma/api/cesta.py`, `CADENAS`) valora **cinco**: Alcampo, Aldi,
+Carrefour, DIA y Mercadona. Lidl se **captura** (sus ofertas semanales), pero no se compara: no
+publica un catálogo con precios de referencia como las otras, así que meterlo en un total de la
+cesta sería comparar cosas distintas.
+
+**La app no dice «6 cadenas».** La pantalla de comparar dice «lo he podido valorar en N cadenas»,
+con la N sacada de los datos, y corona a una cadena solo si su total cuenta **todas** las líneas
+de la lista (si le falta un producto, no gana y se dice cuál falta). Fuera de esa pantalla se
+habla de cadenas sin prometer seis. En el panel y en los documentos se puede seguir distinguiendo
+«6 capturadas» de «5 valoradas»: son dos cosas.
+
+**Cambiar esto es una tarea de datos**, no de texto: si algún día Lidl publica catálogo comparable,
+entra en el motor y la N sube sola.
+

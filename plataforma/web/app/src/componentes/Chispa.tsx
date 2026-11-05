@@ -12,7 +12,7 @@
  *  nota al deslizar. La chispa es un adorno del dato, no el dato: los numeros
  *  (minimo, maximo, media) van siempre escritos al lado.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { filasDeChispa, serieDeChispa, type PuntoChispa } from '../logica/chispa'
 import { Resumen } from './ui'
 import uPlot from 'uplot'
@@ -23,16 +23,41 @@ export type { PuntoChispa } from '../logica/chispa'
 interface Props {
   puntos: PuntoChispa[]
   alto?: number
+  /** El color del trazo. Por defecto, `--bien`, que es el del precio en el sistema. */
   color?: string
   /** Que se esta mirando, para el texto alternativo. */
   etiqueta: string
+  /** *** El techo y el suelo del eje, cuando quien pinta los pone. *** *
+   *
+   *  *Por defecto la grafica abre un 20 % de aire alrededor del minimo y el maximo, que es lo que
+   *  hace legible un adorno de 40 px sin ejes.* *Pero la ficha del producto **escribe el minimo y el
+   *  maximo reales al lado**, y con el aire de mas las dos cifras quedan flotando donde no toca.* *
+   *  *Con `rango`, el trazo toca el techo y el suelo y las etiquetas dicen la verdad.*
+   */
+  rango?: [number, number] | null
 }
 
+/** **El color del tema, resuelto a un color de verdad.**
+ *
+ *  *uPlot pinta sobre un `canvas`, y un `canvas` **no entiende `var(--bien)`**: hay que darle el
+ *  valor. Asi que se lee la variable del tema al montar -- *en claro sale el verde azulado aprobado
+ *  y en oscuro el suyo, el mismo par que usan los textos* -- y no una tabla de colores escrita a
+ *  mano en el componente, que es lo que hacia que la linea fuera **azul** en una casa sin azul.
+ */
+function colorDelTema(nombre: string, porDefecto: string): string {
+  if (typeof window === 'undefined') return porDefecto
+  const valor = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim()
+  return valor || porDefecto
+}
 
-export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props) {
+export function Chispa({ puntos, alto = 40, color, etiqueta, rango = null }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafica = useRef<uPlot | null>(null)
   const [ancho, setAncho] = useState(0)
+  const trazo = useMemo(() => color ?? colorDelTema('--bien', '#0b6b5e'), [color])
+  // *Una clave de texto para las dependencias: un array nuevo en cada pintada recrearia la grafica
+  // cuarenta veces por segundo.*
+  const rangoClave = rango ? `${rango[0]}:${rango[1]}` : ''
 
   // El ancho se mide, no se supone: en el movil la columna de una cadena mide
   // 260 px y en el escritorio 380. Un canvas de ancho fijo se sale o deja un
@@ -73,9 +98,11 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
         // `time: false` porque el eje no se pinta: solo se necesita el orden.
         x: { time: false },
         y: {
-          // Un solo punto (o todos iguales) da un rango de cero y uPlot divide
-          // por el. Se abre a mano alrededor del valor.
+          // *Con `rango`, el techo y el suelo los pone quien pinta, porque al lado escribe las dos
+          // cifras. Sin el, un solo punto (o todos iguales) da un rango de cero y uPlot divide por
+          // el: se abre a mano alrededor del valor.*
           range: (_u, min, max) => {
+            if (rango) return [rango[0], rango[1]]
             if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 1]
             if (max - min < 1e-9) return [min - 1, max + 1]
             const margen = (max - min) * 0.2
@@ -87,13 +114,13 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
       series: [
         {},
         {
-          stroke: color,
+          stroke: trazo,
           width: 2,
           // **Un hueco se ve como hueco**: ver la cabecera del fichero.
           spanGaps: false,
           // Un unico punto sin `points` no dibuja nada y parece que no hay
           // historico, que es justo lo contrario de lo que pasa.
-          points: { show: puntos.length <= 1, size: 5, width: 0, fill: color },
+          points: { show: puntos.length <= 1, size: 5, width: 0, fill: trazo },
         },
       ],
     }
@@ -105,7 +132,7 @@ export function Chispa({ puntos, alto = 40, color = '#0369a1', etiqueta }: Props
       grafica.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave, ancho, alto, color])
+  }, [clave, ancho, alto, trazo, rangoClave])
 
   // **Si la serie mezcla unidades, no se dibuja una linea que las junte.** Mismo criterio y las
   // mismas palabras que `logica/curva.ts`: un minimo sobre `kg` y `ud` juntos no es el minimo de
