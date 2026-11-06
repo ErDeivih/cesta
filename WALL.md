@@ -50,3 +50,9 @@ implementar cada pantalla:
 - Lo que se puede enseñar ya: portada en `http://127.0.0.1:8080/`.
 - Reglas: `DOCTRINA-CALIDAD.md` §8 en todas las pantallas, sin GitHub Actions, push selectivo,
   `data/` fuera de git y `resumen:` en `ESTADO-AGENTE.md`.
+
+## Verificación de ingesta del 06/11/2026
+
+- [x] La tarea de Windows «Cesta diaria» está habilitada y su último resultado fue 0. Publicación de la pasada: `20261106-123403` (commit `d885a7f`).
+- [x] La verificación y el vigilante pasaron 31 pruebas con datos sintéticos. Ante fallo, el vigilante genera el parte local y devuelve un código distinto de cero.
+- [ ] Queda una comprobación independiente para detectar que el Programador de tareas nunca llegó a lanzar la ingesta. El vigilante actual corre al final de la propia tarea.

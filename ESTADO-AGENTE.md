@@ -1,5 +1,5 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Las ocho pantallas del orden aprobado están implementadas (ficha, comparar, lista, favoritos, recetas, calorías, ofertas y perfil); siguiente: referencias y pautas de salud en Calorías.
+resumen: Las ocho pantallas del orden aprobado están implementadas. La ingesta programada publicó la pasada del día y el vigilante detecta fallos cuando se ejecuta. Queda detectar el caso en que no arranque la tarea.
 estado: en-curso
 tarea: pantallas de los artboards aprobados implementadas; queda pulir textos de puertas viejas y las tres casillas de WALL que no son pantalla
 nivel: 2
