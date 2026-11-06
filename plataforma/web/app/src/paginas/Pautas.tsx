@@ -1,11 +1,12 @@
-/** Pautas de salud: referencias generales y una estimacion declarada.
+/** Pautas de salud: las referencias con su fuente y una estimación declarada.
  *
- *  **Dos capas separadas.** Arriba, pautas generales con su fuente. Abajo, una estimacion
- *  opcional que solo aparece si la persona rellena sus datos. La app **no propone un objetivo**:
- *  el boton lo guarda solo si se pulsa, y la clave es la misma que lee Calorias (`objetivo:<fecha>`).
+ *  **Dos capas separadas.** Arriba, las cifras de referencia con su enlace y su fecha. Abajo, una
+ *  estimación opcional que solo aparece si la persona rellena sus datos, y un objetivo que **solo
+ *  existe cuando se elige qué hacer**: la app no propone una cifra al abrir ni al registrar nada.
+ *  Lo que se guarda va a la misma clave que lee Calorías (`objetivo:<fecha>`), y solo al pulsar.
  *
- *  **Sin formulas en pantalla.** La cuenta se hace y se calla; lo que se lee es un rango, su
- *  margen y la advertencia de que no es consejo medico. El formulario empieza vacio: sin datos
+ *  **La cuenta vive en `logica/salud.ts`.** Aquí no se hace ni una: esta pantalla enseña la
+ *  cifra, su rango, el «por qué» en llano y de dónde sale. El formulario empieza vacío: sin datos
  *  no hay cifra, y no se rellena con valores de ejemplo.
  */
 import { useState } from 'react'
@@ -14,92 +15,27 @@ import { Link } from 'react-router-dom'
 
 import { guardaPreferencia } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
-import { Boton } from '../componentes/ui'
-
-export type Sexo = 'mujer' | 'hombre'
-export type Actividad = 'poco' | 'ligero' | 'moderado' | 'alto' | 'mucho'
-
-/** El factor de actividad de cada opcion. **No se enseña**: solo entra en la estimacion. */
-const FACTOR: Record<Actividad, number> = {
-  poco: 1.2,
-  ligero: 1.375,
-  moderado: 1.55,
-  alto: 1.725,
-  mucho: 1.9,
-}
-
-const NOMBRE_ACTIVIDAD: Record<Actividad, string> = {
-  poco: 'Poco movimiento',
-  ligero: 'Algo de movimiento',
-  moderado: 'Movimiento moderado',
-  alto: 'Mucho movimiento',
-  mucho: 'Movimiento intenso',
-}
-
-/** Las fuentes, con su nombre y su enlace. **Sin resumen**: quien quiera el detalle lo abre. */
-const FUENTES = [
-  {
-    nombre: 'WHO · Alimentación saludable',
-    url: 'https://www.who.int/news-room/fact-sheets/detail/healthy-diet',
-  },
-  {
-    nombre: 'EFSA · Valores de referencia de energía (2013)',
-    url: 'https://www.efsa.europa.eu/es/press/news/130110',
-  },
-  {
-    nombre: 'EFSA · Opinión científica sobre energía (2013)',
-    url: 'https://efsa.onlinelibrary.wiley.com/doi/10.2903/j.efsa.2013.3005',
-  },
-  {
-    nombre: 'FAO/WHO/UNU · Necesidades de energía (2004)',
-    url: 'https://www.fao.org/4/y5686e/y5686e00.htm',
-  },
-  {
-    nombre: 'AESAN · Recomendaciones dietéticas saludables y sostenibles (2022)',
-    url: 'https://cpage.mpr.gob.es/publicacion/recomendaciones-dieteticas-saludables-y-sostenibles-complementadas-con-recomendaciones-de-actividad-fisica-para-la-poblacion-espanola-2022-069220082-0001/',
-  },
-  {
-    nombre: 'Mifflin-St Jeor · Gasto en reposo (1990)',
-    url: 'https://europepmc.org/article/MED/2305711',
-  },
-] as const
-
-/** Los datos que necesita la estimacion. */
-export interface DatosParaEstimar {
-  sexo: Sexo
-  edad: number
-  peso: number
-  altura: number
-  actividad: Actividad
-}
-
-/** **El gasto diario estimado**, o `null` si los datos no dan una cifra con sentido.
- *
- *  Mifflin-St Jeor para el reposo y el factor de actividad para el dia. **La formula no se
- *  pinta**: la pantalla enseña el resultado y su margen.
- */
-export function gastoEstimado({
-  sexo,
-  edad,
-  peso,
-  altura,
-  actividad,
-}: DatosParaEstimar): number | null {
-  if (![edad, peso, altura].every((n) => Number.isFinite(n) && n > 0)) return null
-  const reposo = 10 * peso + 6.25 * altura - 5 * edad + (sexo === 'hombre' ? 5 : -161)
-  const total = reposo * FACTOR[actividad]
-  return Number.isFinite(total) && total > 0 ? total : null
-}
-
-/** **El rango que se enseña**, redondeado a decenas para no fingir precision.
- *
- *  Se abre un 10 % a cada lado: la estimacion tiene error y decirlo es parte del dato. El centro
- *  es lo que se guarda si la persona decide usarlo como objetivo.
- */
-export function rangoEstimado(centro: number): { bajo: number; alto: number; centro: number } {
-  const decena = (n: number) => Math.round(n / 10) * 10
-  return { bajo: decena(centro * 0.9), alto: decena(centro * 1.1), centro: decena(centro) }
-}
+import { Boton, cx } from '../componentes/ui'
+import {
+  ACTIVIDAD,
+  ACTIVIDADES,
+  AJUSTES,
+  AVISO_MEDICO,
+  FUENTES,
+  OBJETIVOS,
+  PAUTAS_SALUD,
+  SUELO_OBJETIVO,
+  TEXTO_ESTIMACION,
+  calcularEstimacion,
+  gastoConRango,
+  gramosDeMacros,
+  porQueDelObjetivo,
+  type Actividad,
+  type DatosParaEstimar,
+  type Fuente,
+  type Objetivo,
+  type Sexo,
+} from '../logica/salud'
 
 function aNumero(texto: string): number | null {
   const limpio = texto.trim().replace(',', '.')
@@ -125,6 +61,22 @@ function cifra(n: number): string {
   return CIFRA.format(n)
 }
 
+/** **Una fuente, con su fecha, tal y como se lee.** El documento va en el `title`: quien quiera
+ *  saber qué abre lo tiene a mano, y quien no, no carga con un párrafo. */
+function EnlaceFuente({ fuente }: { fuente: Fuente }) {
+  return (
+    <a
+      href={fuente.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={fuente.documento}
+      className="inline-flex min-h-[44px] items-center text-etiqueta text-verde underline underline-offset-2"
+    >
+      {fuente.nombre} · {fuente.fecha}
+    </a>
+  )
+}
+
 export function Pautas() {
   const cliente = useQueryClient()
   const [sexo, setSexo] = useState<Sexo | ''>('')
@@ -132,6 +84,7 @@ export function Pautas() {
   const [peso, setPeso] = useState('')
   const [altura, setAltura] = useState('')
   const [actividad, setActividad] = useState<Actividad | ''>('')
+  const [objetivo, setObjetivo] = useState<Objetivo | ''>('')
   const [guardando, setGuardando] = useState(false)
   const [guardado, setGuardado] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -143,22 +96,33 @@ export function Pautas() {
     sexo !== '' && actividad !== '' && edadN !== null && pesoN !== null && alturaN !== null
       ? { sexo, edad: edadN, peso: pesoN, altura: alturaN, actividad }
       : null
-  const dentroDeRango = datos !== null
-    && datos.edad >= 18 && datos.edad <= 120
-    && datos.peso >= 25 && datos.peso <= 300
-    && datos.altura >= 100 && datos.altura <= 250
-  const estimacion = datos !== null && dentroDeRango ? gastoEstimado(datos) : null
-  const rango = estimacion === null ? null : rangoEstimado(estimacion)
+
+  // **Sin los cinco datos no hay gasto, y sin objetivo elegido no hay objetivo.** Las dos cosas
+  // son `null` a propósito: la pantalla no rellena el hueco con una cifra de ejemplo.
+  const gasto = datos === null ? null : gastoConRango(datos)
+  const estimacion = datos === null || objetivo === '' ? null : calcularEstimacion(datos, objetivo)
+  const porQue = estimacion === null ? null : porQueDelObjetivo(estimacion, cifra)
+  const yaGuardado = estimacion !== null && guardado !== null && guardado === estimacion.centro
+
+  function cambia() {
+    setError(null)
+    setGuardado(null)
+  }
 
   async function guardarObjetivo() {
-    if (rango === null) return
+    if (estimacion === null) return
     setGuardando(true)
     setError(null)
     try {
-      await guardaPreferencia(`objetivo:${hoy()}`, { kcal: rango.centro })
-      // La misma clave que leen Diario y Tendencias: al volver, el objetivo ya esta.
+      await guardaPreferencia(`objetivo:${hoy()}`, {
+        kcal: estimacion.centro,
+        motivo: estimacion.objetivo,
+        ajuste: estimacion.ajuste,
+        macros: gramosDeMacros(estimacion.centro),
+      })
+      // La misma clave que leen Diario y Tendencias: al volver, el objetivo ya está.
       await cliente.invalidateQueries({ queryKey: ['yo'] })
-      setGuardado(rango.centro)
+      setGuardado(estimacion.centro)
     } catch (e) {
       setError(textoDeError(e))
     } finally {
@@ -197,44 +161,45 @@ export function Pautas() {
         </div>
       </header>
 
-      {/* **La linea que no es relleno.** Va arriba porque vale para todo lo de abajo, incluidas
-          las pautas generales y la estimacion. */}
+      {/* **El límite, arriba y corto.** Vale para las pautas y para la estimación. */}
       <p className="rounded-campo border border-borde bg-marfil px-3 py-2 text-cuerpo text-secundaria">
-        No es consejo médico. Son pautas generales para orientarte.
+        {AVISO_MEDICO}
       </p>
 
       <section aria-labelledby="pautas" className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
         <h3 id="pautas" className="text-cuerpo-fuerte text-tinta">En el día a día</h3>
-        <ul className="mt-2 flex flex-col gap-2">
-          <li className="text-cuerpo text-tinta-suave">
-            <strong className="text-tinta">Varía.</strong> Verduras y frutas a diario; cereales
-            integrales, legumbres, frutos secos, huevo, pescado y lácteos a menudo.
-          </li>
-          <li className="text-cuerpo text-tinta-suave">
-            <strong className="text-tinta">Equilibra.</strong> Lo que comes y lo que te mueves van
-            juntos: busca el equilibrio, no una cifra.
-          </li>
-          <li className="text-cuerpo text-tinta-suave">
-            <strong className="text-tinta">Modera.</strong> Ultraprocesados, bebidas azucaradas,
-            sal y alcohol: poca cantidad y de forma ocasional.
-          </li>
-          <li className="text-cuerpo text-tinta-suave">
-            <strong className="text-tinta">Muévete.</strong> Caminar, subir escaleras o jugar ya
-            cuenta. Elige algo que puedas mantener.
-          </li>
-          <li className="text-cuerpo text-tinta-suave">
-            <strong className="text-tinta">Bebe agua.</strong> Tenla a mano; los refrescos
-            azucarados, para ocasiones.
-          </li>
+        <ul className="mt-2 flex flex-col">
+          {PAUTAS_SALUD.map((pauta) => (
+            <li
+              key={pauta.clave}
+              className="border-b border-borde py-2 first:pt-0 last:border-b-0 last:pb-0"
+            >
+              <p className="text-cuerpo text-tinta-suave">
+                <strong className="text-tinta">{pauta.titulo}.</strong> {pauta.cifra}
+              </p>
+              {pauta.detalle && (
+                <p className="text-etiqueta text-tinta-suave">{pauta.detalle}</p>
+              )}
+              <div className="mt-1 flex flex-wrap gap-x-3">
+                {pauta.fuentes.map((fuente) => (
+                  <EnlaceFuente key={fuente.url} fuente={fuente} />
+                ))}
+              </div>
+            </li>
+          ))}
         </ul>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-suave">
+          <span>En España,</span>
+          <EnlaceFuente fuente={FUENTES.aesan} />
+        </div>
       </section>
 
       <section aria-labelledby="estimacion" className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
         <h3 id="estimacion" className="text-cuerpo-fuerte text-tinta">
-          Estimación de gasto diario
+          Tu gasto estimado
         </h3>
         <p className="mt-1 text-etiqueta text-tinta-suave">
-          Opcional. Para personas adultas. Rellena los cinco datos para ver el rango.
+          Opcional. A partir de 14 años. Rellena los cinco datos y elige qué quieres hacer.
         </p>
 
         <form className="mt-3 flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -245,7 +210,7 @@ export function Pautas() {
                 value={sexo}
                 onChange={(e) => {
                   setSexo(e.target.value as Sexo | '')
-                  setError(null)
+                  cambia()
                 }}
                 className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
               >
@@ -261,10 +226,12 @@ export function Pautas() {
                 value={edad}
                 onChange={(e) => {
                   setEdad(e.target.value)
-                  setError(null)
+                  cambia()
                 }}
                 inputMode="numeric"
                 autoComplete="off"
+                aria-invalid={datos !== null && gasto === null}
+                aria-describedby={datos !== null && gasto === null ? 'aviso-datos' : undefined}
                 className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
               />
             </label>
@@ -275,10 +242,12 @@ export function Pautas() {
                 value={peso}
                 onChange={(e) => {
                   setPeso(e.target.value)
-                  setError(null)
+                  cambia()
                 }}
                 inputMode="decimal"
                 autoComplete="off"
+                aria-invalid={datos !== null && gasto === null}
+                aria-describedby={datos !== null && gasto === null ? 'aviso-datos' : undefined}
                 className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
               />
             </label>
@@ -289,10 +258,12 @@ export function Pautas() {
                 value={altura}
                 onChange={(e) => {
                   setAltura(e.target.value)
-                  setError(null)
+                  cambia()
                 }}
                 inputMode="decimal"
                 autoComplete="off"
+                aria-invalid={datos !== null && gasto === null}
+                aria-describedby={datos !== null && gasto === null ? 'aviso-datos' : undefined}
                 className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
               />
             </label>
@@ -303,24 +274,27 @@ export function Pautas() {
                 value={actividad}
                 onChange={(e) => {
                   setActividad(e.target.value as Actividad | '')
-                  setError(null)
+                  cambia()
                 }}
                 className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
               >
                 <option value="">Elige</option>
-                {(Object.keys(NOMBRE_ACTIVIDAD) as Actividad[]).map((clave) => (
-                  <option key={clave} value={clave}>{NOMBRE_ACTIVIDAD[clave]}</option>
+                {ACTIVIDADES.map((clave) => (
+                  <option key={clave} value={clave}>{ACTIVIDAD[clave].nombre}</option>
                 ))}
               </select>
             </label>
           </div>
         </form>
 
-        {datos !== null && !dentroDeRango && (
-          <p className="mt-2 text-etiqueta text-aviso">Revisa la edad, el peso y la altura.</p>
+        {datos !== null && gasto === null && (
+          <p id="aviso-datos" role="status" className="mt-2 text-etiqueta text-aviso">
+            Revisa los datos: la edad va de 14 a 100 años, el peso de 30 a 250 kg y la altura de
+            120 a 230 cm.
+          </p>
         )}
 
-        {rango !== null && (
+        {gasto !== null && objetivo === '' && (
           <div
             role="status"
             aria-live="polite"
@@ -328,50 +302,150 @@ export function Pautas() {
           >
             <p className="text-etiqueta text-secundaria">Gasto diario estimado</p>
             <p className="font-display text-titulo font-semibold text-tinta tabular-nums">
-              Entre {cifra(rango.bajo)} y {cifra(rango.alto)} kcal
+              Entre {cifra(gasto.bajo)} y {cifra(gasto.alto)} kcal
             </p>
-            <p className="text-etiqueta text-secundaria">
-              Es una orientación, no una medida exacta.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Boton onClick={() => void guardarObjetivo()} disabled={guardando}>
-                {guardando ? 'Guardando…' : 'Usar como objetivo'}
-              </Boton>
-              <span className="text-etiqueta text-tinta-suave">
-                Si lo usas: {cifra(rango.centro)} kcal para hoy.
-              </span>
-            </div>
-
-            {guardado !== null && (
-              <p className="text-etiqueta text-verde-fuerte">
-                Guardado: {cifra(guardado)} kcal para hoy.
-              </p>
-            )}
-            {error && (
-              <p role="alert" className="text-etiqueta text-error">{error}</p>
-            )}
+            <p className="text-etiqueta text-secundaria">{TEXTO_ESTIMACION}</p>
           </div>
         )}
       </section>
 
-      <section aria-labelledby="fuentes" className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
-        <h3 id="fuentes" className="text-cuerpo-fuerte text-tinta">Fuentes</h3>
-        <ul className="mt-2 flex flex-col gap-1">
-          {FUENTES.map((fuente) => (
-            <li key={fuente.url}>
-              <a
-                href={fuente.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
+      {gasto !== null && (
+        <section aria-labelledby="objetivo" className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
+          <h3 id="objetivo" className="text-cuerpo-fuerte text-tinta">
+            ¿Qué quieres hacer?
+          </h3>
+
+          <fieldset className="mt-2 min-w-0">
+            <legend className="sr-only">Objetivo</legend>
+            <div className="flex flex-wrap gap-2">
+              {OBJETIVOS.map((clave) => (
+                <label
+                  key={clave}
+                  className={cx(
+                    'inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-campo border px-3 text-cuerpo',
+                    objetivo === clave
+                      ? 'border-verde bg-lavado-verde text-verde-fuerte'
+                      : 'border-borde-fuerte bg-papel text-tinta hover:bg-marfil',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="objetivo"
+                    value={clave}
+                    checked={objetivo === clave}
+                    onChange={() => {
+                      setObjetivo(clave)
+                      cambia()
+                    }}
+                    className="h-4 w-4 shrink-0 accent-bosque"
+                  />
+                  {AJUSTES[clave].nombre}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {objetivo === '' && (
+            <p className="mt-2 text-etiqueta text-tinta-suave">
+              Elige una opción y verás la cifra.
+            </p>
+          )}
+
+          {estimacion !== null && estimacion.bajoSuelo && datos !== null && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mt-4 rounded-campo bg-lavado-aviso p-3 text-cuerpo text-tinta"
+            >
+              Con estos datos, un objetivo para perder quedaría por debajo de{' '}
+              {cifra(SUELO_OBJETIVO[datos.sexo])} kcal al día. No te damos esa cifra:{' '}
+              habla con un profesional.
+            </div>
+          )}
+
+          {estimacion !== null && !estimacion.bajoSuelo && (
+            <div className="mt-4 flex flex-col gap-2 rounded-campo bg-marfil p-3">
+              {/* **Se anuncia la cifra y su por qué, no la ficha entera.** La región de estado
+                  envuelve solo lo que cambia al elegir; las fuentes y los macros se leen cuando
+                  se quieren, no cada vez que se toca una opción. */}
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label="Tu objetivo"
+                className="flex flex-col gap-2"
               >
-                {fuente.nombre}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+                <h4 className="text-etiqueta uppercase tracking-wide text-tinta-suave">
+                  Tu objetivo
+                </h4>
+                <p className="font-display text-titulo font-semibold text-tinta tabular-nums">
+                  {cifra(estimacion.centro)} kcal al día
+                </p>
+                <p className="text-etiqueta text-tinta-suave">
+                  Entre {cifra(estimacion.bajo)} y {cifra(estimacion.alto)} kcal al día.
+                </p>
+                {porQue !== null && <p className="text-cuerpo text-tinta-suave">{porQue}</p>}
+              </div>
+
+              {estimacion.ajuste !== 0 && (
+                <div className="flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-suave">
+                  <span>Un cambio moderado: 300–500 kcal al día.</span>
+                  <EnlaceFuente fuente={FUENTES.cdc} />
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-suave">
+                <span>De dónde sale:</span>
+                <EnlaceFuente fuente={FUENTES.mifflin} />
+                <EnlaceFuente fuente={FUENTES.fao} />
+              </div>
+
+              <div>
+                <h4 className="text-etiqueta uppercase tracking-wide text-tinta-suave">
+                  Reparto orientativo
+                </h4>
+                <dl className="mt-1 grid gap-2 sm:grid-cols-3">
+                  {estimacion.macros.map((macro) => (
+                    <div key={macro.clave}>
+                      <dt className="text-etiqueta text-tinta-suave">{macro.nombre}</dt>
+                      <dd className="text-cuerpo font-semibold text-tinta tabular-nums">
+                        {cifra(macro.gramos)} g
+                      </dd>
+                      <dd className="text-etiqueta text-tinta-suave">
+                        Entre {cifra(macro.gramosMin)} y {cifra(macro.gramosMax)} g ·{' '}
+                        {macro.pctMin}–{macro.pctMax} % de la energía
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-suave">
+                  <span>Proteína y grasas:</span>
+                  <EnlaceFuente fuente={FUENTES.who} />
+                  <span>Hidratos:</span>
+                  <EnlaceFuente fuente={FUENTES.efsa} />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Boton onClick={() => void guardarObjetivo()} disabled={guardando}>
+                  {guardando ? 'Guardando…' : 'Usar como objetivo'}
+                </Boton>
+                <span className="text-etiqueta text-tinta-suave">
+                  Si lo usas: {cifra(estimacion.centro)} kcal para hoy.
+                </span>
+              </div>
+
+              {yaGuardado && (
+                <p className="text-etiqueta text-verde-fuerte">
+                  Guardado: {cifra(estimacion.centro)} kcal para hoy.
+                </p>
+              )}
+              {error && (
+                <p role="alert" className="text-etiqueta text-error">{error}</p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }

@@ -718,17 +718,28 @@ function ControlDeObjetivo({
 
   if (!editando && objetivo !== null) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          setTexto(String(objetivo))
-          setError(null)
-          setEditando(true)
-        }}
-        className="mt-2 inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2 hover:text-tinta"
-      >
-        Cambiar objetivo
-      </button>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4">
+        <button
+          type="button"
+          onClick={() => {
+            setTexto(String(objetivo))
+            setError(null)
+            setEditando(true)
+          }}
+          className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2 hover:text-tinta"
+        >
+          Cambiar objetivo
+        </button>
+        {/* **De dónde sale la cifra, a un toque.** Corto a propósito: es un enlace de apoyo,
+            no una acción de la pantalla, y el detalle está en Pautas. */}
+        <Link
+          to="/calorias/pautas"
+          aria-label="Por qué este objetivo"
+          className="inline-flex min-h-[44px] items-center text-etiqueta text-verde underline underline-offset-2 hover:text-verde-fuerte"
+        >
+          Por qué
+        </Link>
+      </div>
     )
   }
 
