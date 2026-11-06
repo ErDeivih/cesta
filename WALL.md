@@ -13,9 +13,9 @@ hasta agotar el bloque.
 - [x] Ficha de producto (precio, €/kg, historial, alternativas). **Hecho 5/11** (ruta `/compra/productos/:fuente/:idFuente`; `logica/juicio.ts` con la ventana real y pruebas rojo→verde).
 - [x] Comparar mi cesta. **Hecho 5/11** (`/compra/listas/:listaId/comparar`; corona solo la cadena que cuenta todas las líneas y no resta ofertas condicionadas).
 - [x] Favoritos, lista de la compra. **Hecho 5/11** (vista de lista con precio estimado y precio por línea; favoritos con rango real de historial).
-- [ ] Calculadora de calorías con pautas de salud.
+- [ ] Calculadora de calorías con pautas de salud. **Pantalla hecha 6/11** (objetivo y comidas con kcal reales); faltan las referencias y pautas de salud.
 - [x] Recetas (establecidas y de usuario). **Hecho 5/11** (listado con recetario/archivadas y detalle con coste por ingrediente cuando hay precios; no hay semilla de recetas «establecidas» en la API).
-- [ ] Ofertas con su tipo y si exigen club del súper.
+- [x] Ofertas con su tipo y si exigen club del súper. **Hecho 6/11** (`/compra/ofertas` + `GET /api/ofertas`: tipo, condición y club; sin precio final inventado).
 - [ ] Integración con las apps de los supermercados.
 - [ ] Aprender de las listas: rellenar sola, recomendar, sugerir otro sitio.
 

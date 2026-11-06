@@ -316,6 +316,32 @@ def ofertas_dudosas(limite: int = 60, cadenas: str | None = None,
             "sin_poder_juzgar": movimientos.ofertas_sin_poder_juzgar(lista)}
 
 
+@app.get("/api/ofertas")
+def ofertas(limite: int = 60, cadenas: str | None = None,
+            tipos: str | None = None, club: bool = False,
+            solo_online: bool = False):
+    """Las ofertas que anuncian hoy las cadenas, con el precio de hoy.
+
+    **Es informacion, no una caja:** el precio que viaja es el que se cobra hoy por
+    ese producto (`precio_cent`, de `precio_diario`), y al lado va el texto de la
+    oferta y **que hace falta para tenerla** (`condicion`). No hay precio final ni
+    ahorro calculado: un 3x2 no baja el precio de una unidad y un 25 % acumulado en
+    la tarjeta no se descuenta en el ticket, asi que inventar una resta seria
+    mentir con numeros.
+
+    **Sin sesion.** Son ofertas publicas: quien no ha entrado tambien puede mirarlas,
+    y por eso no se piden preferencias ni cadenas cercanas. `cadenas` filtra a mano.
+
+    `tipos` y las dos banderas existen para los chips de la pantalla: `tipos` es una
+    lista de `descuento`, `segunda_unidad`, `3x2`, `club`, `solo_online` u `otro`;
+    `club` filtra por condicion (`exige_club`) y `solo_online` por donde se compra.
+    """
+    lista = [c.strip() for c in cadenas.split(",")] if cadenas else None
+    cuales = [t.strip() for t in tipos.split(",")] if tipos else None
+    return {"fecha_datos": catalogo.fecha_de_gold(),
+            "resultados": movimientos.ofertas(limite, lista, cuales, club, solo_online)}
+
+
 @app.get("/api/grupo/{grupo_id}")
 def ficha(grupo_id: int):
     """El grupo entero, y el por que de que esos productos esten juntos.

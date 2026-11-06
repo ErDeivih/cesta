@@ -22,6 +22,9 @@ anuncia que el azafran ha bajado de 6.875 a 6,67 EUR/kg.
 """
 from __future__ import annotations
 
+import re
+import unicodedata
+
 from core import comparacion
 from plataforma.api import cache, catalogo
 
@@ -467,3 +470,290 @@ def _por_que(hoy, base, posicion) -> str:
     if posicion is not None and posicion >= 0.8:
         return "anuncia oferta y esta entre los precios mas altos de los ultimos 90 dias"
     return "anuncia oferta y el historico no ve ninguna bajada"
+
+
+# ------------------------------------------------------------- las ofertas ---
+#
+# *** LO QUE ANUNCIA LA CADENA, NO LO QUE VAMOS A PAGAR. *** *
+#
+# *El gold trae seis mil ofertas anunciadas con su texto (`promo_txt`), y ademas dos
+# columnas que el pipeline lee de ese texto: `promo_club` (el descuento va a la
+# tarjeta, no al ticket) y `promo_solo_online` (solo existe comprando por internet).*
+# *Lo que no trae -- y no puede traer -- es **cuanto baja el precio**, porque muchas
+# no lo bajan: un 3x2 abarata la tercera unidad, un "25 % acumulado" va al monedero y
+# un "2ª ud solo online" no existe en la tienda.*
+#
+# *Por eso esto es una lista **informativa**: el precio que se enseña es el de hoy
+# (el de `precio_diario`, el mismo que paga cualquiera en caja) y al lado va el
+# texto de la cadena y **que hace falta para tener la oferta**. No hay precio final,
+# ni ahorro, ni descuento calculado: eso seria inventarse una caja que no conocemos.*
+#
+# *El tipo sale de reglas simples sobre el texto, y lo que no encaja se queda en
+# `otro` en vez de forzarlo. Es la diferencia entre una lista honesta y una que
+# llama «descuento» a un "5 EUR dto." o a un "Envio Gratis".*
+
+# El texto se compara sin tildes, sin el ordinal volado (`2ª`) y en minusculas: las
+# cadenas escriben el mismo mecanismo de cinco formas ("2ª ud", "2a UD", "2 UDS") y
+# buscar cada forma por separado es como se escapan la mitad de las ofertas.
+_PORCENTAJE = re.compile(r"(\d{1,3})\s*%")
+# "3x2" y "3 x 2". El 4x3 y el 3x1 **no entran**: no son la misma regla y decir
+# "3x2" de un 4x3 seria mentir en el chip de la tarjeta. Se quedan en `otro`.
+_NX2 = re.compile(r"\b3\s*[x*]\s*2\b")
+# "2ª unidad", "2 ud", "2x1", "2*1", "llevate 2", "comprando 2", "segunda unidad".
+_SEGUNDA = re.compile(
+    r"\b(?:2\s*[x*]\s*1|2\s*a?\s*(?:uds?|unidad(?:es)?)\b|segunda\s+unidad|"
+    r"llevate\s+2|comprando\s+2)\b")
+_SOLO_ONLINE = re.compile(
+    r"solo\s+online|solo\s+en\s+(?:la\s+)?(?:web|internet)|solamente\s+online|"
+    r"exclusiv\w*\s+online")
+_CLUB = re.compile(r"\bclub\b|tarjeta|monedero|acumul|cupon|lidl plus")
+
+
+def _plano(texto: str) -> str:
+    """El texto comparable: minusculas, sin tildes y con el ordinal como letra."""
+    texto = texto.replace("\u00aa", "a").replace("\u00ba", "o")
+    sin = "".join(c for c in unicodedata.normalize("NFD", texto)
+                  if unicodedata.category(c) != "Mn")
+    return re.sub(r"\s+", " ", sin).strip().lower()
+
+
+def porcentaje_de(promo_txt: str | None) -> int | None:
+    """El porcentaje que anuncia el texto, si anuncia uno. `None` no es un cero."""
+    if not promo_txt:
+        return None
+    m = _PORCENTAJE.search(promo_txt)
+    if not m:
+        return None
+    valor = int(m.group(1))
+    return valor if 0 < valor < 100 else None
+
+
+def tipo_oferta(promo_txt: str | None, exige_club: bool = False,
+                solo_online: bool = False) -> str:
+    """Que clase de oferta es, mirando **solo lo que dice el texto y las banderas**.
+
+    Se prueba en este orden y la primera que encaja manda:
+
+        `3x2`             "3x2", "3 x 2"
+        `segunda_unidad`  "2ª unidad", "2 ud", "2x1", "2*1", "segunda unidad"
+        `descuento`       cualquier tanto por ciento ("20% DTO.", "-14%")
+        `solo_online`     lo dice el texto o la bandera
+        `club`            lo dice el texto o la bandera
+        `otro`            lo que no encaja: "5€ dto.", "Envío Gratis", "Stock Fuera"
+
+    *El mecanismo va antes que la condicion a proposito:* una "2ª unidad -50 % con
+    el Club Alcampo" es una oferta de segunda unidad (`promo_club` lo dice aparte),
+    y el chip de la tarjeta tiene que decir eso, no "club".
+
+    *Y el porcentaje exige el simbolo:* "5€ dto." es un descuento en euros sobre el
+    precio de una unidad, y llamarlo `descuento` haria que la pantalla enseñara un
+    "Descuento 5" que no significa nada. Un tipo que no se sabe es `otro`.
+    """
+    if not promo_txt:
+        return "otro"
+    texto = _plano(promo_txt)
+    if _NX2.search(texto):
+        return "3x2"
+    if _SEGUNDA.search(texto):
+        return "segunda_unidad"
+    if _PORCENTAJE.search(texto):
+        return "descuento"
+    if solo_online or _SOLO_ONLINE.search(texto):
+        return "solo_online"
+    if exige_club or _CLUB.search(texto):
+        return "club"
+    return "otro"
+
+
+def _club_de(cadena: str, promo_txt: str | None = None) -> str:
+    """Lo que hay que tener para la oferta, **sin el «Con» delante**.
+
+    *Se separa el nombre del club del «Con» para poder encadenarlo:* una oferta que
+    es online **y** pide tarjeta tiene que decir las dos cosas ("Solo online · con
+    tarjeta DIA"), y no quedarse con la primera y callar la segunda.
+    """
+    if cadena == "lidl":
+        return "Lidl Plus"
+    if cadena == "alcampo":
+        return "Club Alcampo, en tu tarjeta"
+    if cadena == "dia":
+        return "tarjeta DIA"
+    if cadena == "carrefour":
+        if "cupon" in _plano(promo_txt or ""):
+            return "cupón Carrefour"
+        return "tarjeta Carrefour"
+    return f"tarjeta {cadena.capitalize()}"
+
+
+def condicion_oferta(cadena: str, exige_club: bool, solo_online: bool,
+                     promo_txt: str | None = None) -> str:
+    """Lo que hace falta para tener la oferta, dicho como se dice en la calle.
+
+    *Nombra el club de cada cadena, que es el dato util:* "Con Lidl Plus" le dice a
+    alguien si la oferta es para el o no; `promo_club=true` no le dice nada.
+
+    *Carrefour distingue cupon y acumulacion en el texto, y se distinguen:* un cupon
+    no es la tarjeta, y mandar a alguien a buscar la tarjeta cuando lo que necesita
+    es el cupon es una perdida de tiempo en la puerta de la tienda.
+
+    *Y si la oferta es online y ademas pide tarjeta, se dicen las dos cosas.*
+    *Callar la segunda porque la primera ya ocupa la linea es mentir por omision:*
+    quien no tenga la tarjeta se entera al llegar a la caja, no en la pantalla.
+    """
+    if solo_online:
+        if not exige_club:
+            return "Solo online"
+        return f"Solo online · con {_club_de(cadena, promo_txt)}"
+    if not exige_club:
+        return "Sin club"
+    return f"Con {_club_de(cadena, promo_txt)}"
+
+
+# El precio es **el de hoy**, de `precio_diario` y no de `grupos`: la oferta se
+# anuncia sobre el precio que se cobra hoy, y las dos columnas podrian no coincidir
+# el dia que una cadena no se capture. `hoy` es el ultimo dia del historico, que es
+# la misma referencia que usan las bajadas.
+#
+# El `hasta` va en UTC y no en la hora local: `promo_hasta` se guarda a las 23:59
+# UTC del ultimo dia, y en Madrid eso ya es el dia siguiente a las 00:59. Leerlo en
+# local correria todas las fechas de fin un dia.
+#
+# *Y se lee de `grupos`, no de `buscable`:* la tabla de busqueda no lleva
+# `promo_hasta` porque el buscador no la usa, y una columna que falta no se puede
+# pedir (Binder Error). El LEFT JOIN no quita filas si el producto no estuviera.
+_SQL_OFERTAS = """
+    WITH hoy AS (
+        SELECT fuente, id_fuente, precio_cent
+          FROM diario
+         WHERE fecha = (SELECT max(fecha) FROM diario))
+    SELECT b.grupo_id, b.nombre, b.marca, b.fuente, b.id_fuente, b.imagen,
+           h.precio_cent, b.unidad_canon, b.promo_txt,
+           coalesce(b.promo_club, false) AS es_club,
+           coalesce(b.promo_solo_online, false) AS es_online,
+           strftime(timezone('UTC', g.promo_hasta), '%Y-%m-%d') AS hasta
+      FROM buscable b
+      JOIN hoy h USING (fuente, id_fuente)
+      LEFT JOIN grupos g USING (fuente, id_fuente)
+     WHERE b.promo_txt IS NOT NULL
+       -- **Una oferta sin nombre de producto no se puede enseñar.** Hoy es una
+       -- sola fila de Carrefour (`prod395339`, "50% que vuelve"), y una tarjeta
+       -- con el título vacío es peor que no tenerla.
+       AND b.nombre IS NOT NULL
+       AND h.precio_cent > 0{filtro}
+     ORDER BY b.fuente, b.nombre, h.precio_cent
+"""
+
+# El orden en que se enseñan. *Primero lo que de verdad baja el precio de lo que se
+# compra (`descuento`, `segunda_unidad`, `3x2`), despues el precio de club y al final
+# las etiquetas.* *Y dentro de cada grupo, lo de club antes que lo abierto y lo mas
+# barato antes:* es lo que hace que la primera pantalla sirva para algo.
+#
+# *`solo_online` va como segundo criterio y no como primero:* una "2ª unidad -50 %
+# solo online" sigue siendo una oferta de segunda unidad, y esconderla al final por
+# donde se compra seria ordenar por lo que menos importa.
+_ORDEN_TIPO = {"descuento": 0, "segunda_unidad": 1, "3x2": 2, "club": 3, "otro": 4,
+               "solo_online": 5}
+
+
+def _relevancia(oferta: dict) -> tuple:
+    """La clave de orden: tipo, donde se compra, si pide club y el precio."""
+    return (_ORDEN_TIPO.get(oferta["tipo"], 9), oferta["solo_online"],
+            not oferta["exige_club"],
+            oferta["precio_cent"] if oferta["precio_cent"] is not None else 10 ** 9,
+            oferta["nombre"] or "", oferta["cadena"] or "")
+
+
+def _intercala(ordenadas: list[dict]) -> list[dict]:
+    """**Un tipo detras de otro, no sesenta descuentos seguidos.**
+
+    *El 6 de noviembre de 2026, con los datos de verdad, ordenar solo por tipo
+    dejaba la pantalla «Todas» con **las 60 primeras ofertas de descuento** y
+    ninguna de las 2.293 de 3x2:* *el tipo con mas ofertas se come el limite, y
+    los demas desaparecen, que es justo lo contrario de lo que promete un chip
+    llamado «Todas».*
+
+    *Asi que se recorren los tipos a la vez, uno de cada, en el orden de
+    `_ORDEN_TIPO`: descuento, 2ª unidad, 3x2, club, otro, solo online. Dentro de
+    cada tipo se respeta el orden de `_relevancia` (club antes, lo mas barato
+    antes). La lista sigue diciendo lo mismo -- lo que mas baja el precio primero
+    -- pero cabe de todo en la primera pantalla.*
+    """
+    grupos: dict[str, list[dict]] = {}
+    for oferta in ordenadas:
+        grupos.setdefault(oferta["tipo"], []).append(oferta)
+    orden = sorted(grupos, key=lambda t: (_ORDEN_TIPO.get(t, 9), t))
+    salida: list[dict] = []
+    vuelta = 0
+    while len(salida) < len(ordenadas):
+        for tipo in orden:
+            if vuelta < len(grupos[tipo]):
+                salida.append(grupos[tipo][vuelta])
+        vuelta += 1
+    return salida
+
+
+@cache.cacheada
+def ofertas(limite: int = 60, cadenas: list[str] | None = None,
+            tipos: list[str] | None = None, club: bool = False,
+            solo_online: bool = False) -> list[dict]:
+    """Las ofertas anunciadas **hoy**, con su precio de hoy y su condicion.
+
+    *No hay precio final ni descuento calculado:* la oferta es informativa. Lo que
+    se devuelve es lo que la cadena anuncia (`promo_txt`), el tipo que le toca
+    (`tipo_oferta`), el precio que se cobra hoy (`precio_cent`), la unidad de ese
+    precio (`unidad`, la canonica: kg, l o ud) y la condicion en lenguaje de usuario
+    (`condicion`). Con `hasta` cuando la oferta declara fecha de fin.
+
+    *Filtros:* `cadenas` y `tipos` (una lista, como `cadenas` en los demas
+    endpoints), y `club` / `solo_online` para las dos condiciones que la pantalla
+    ofrece como chip. `club` filtra por **condicion** (`exige_club`), no por tipo:
+    quien pulsa "Club" busca las ofertas de su tarjeta, tengan el mecanismo que
+    tengan.
+
+    *Sin duplicados absurdos:* el mismo producto con dos `id_fuente` de la misma
+    cadena, al mismo precio, es una fila. Pasa hoy con siete productos de Carrefour
+    y Alcampo que el catalogo trae dos veces (dos regionalizaciones del mismo
+    articulo); enseñarlos dos veces en la misma lista no informa de nada.
+
+    *Se cachea por version de gold*, como el verificador: la consulta recorre un dia
+    entero de `diario` y clasifica seis mil textos, y gold cambia una vez al dia.
+    """
+    con = catalogo.conexion()
+    filtro, args = "", []
+    if cadenas:
+        filtro = " AND b.fuente IN (" + ",".join("?" * len(cadenas)) + ")"
+        args = list(cadenas)
+    filas = con.execute(_SQL_OFERTAS.format(filtro=filtro), args).fetchall()
+
+    vistos: set[tuple] = set()
+    salida: list[dict] = []
+    for f in filas:
+        tipo = tipo_oferta(f[8], bool(f[9]), bool(f[10]))
+        if tipos and tipo not in tipos:
+            continue
+        if club and not f[9]:
+            continue
+        if solo_online and not f[10]:
+            continue
+        # *Se de-duplica despues de filtrar:* dos filas del mismo producto pueden
+        # traer distinto texto de promocion, y quedarse con la que no encaja en el
+        # chip dejaria el chip vacio teniendo la oferta.
+        clave = (f[3], f[1], f[6])
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        salida.append({
+            "grupo_id": f[0], "nombre": f[1], "marca": f[2], "cadena": f[3],
+            "id_fuente": f[4], "imagen": f[5],
+            "precio_cent": f[6], "unidad": f[7], "promo_txt": f[8],
+            "tipo": tipo, "exige_club": bool(f[9]), "solo_online": bool(f[10]),
+            "condicion": condicion_oferta(f[3], bool(f[9]), bool(f[10]), f[8]),
+            "hasta": f[11],
+        })
+
+    salida.sort(key=_relevancia)
+    # Un tope duro: la pantalla pide 60 y nadie necesita seis mil de golpe. Se acota
+    # aqui y no en la ruta para que el limite signifique lo mismo desde cualquier
+    # sitio que llame a esta funcion. **Se recorta despues de intercalar**, para que
+    # el tope no se lo coma un solo tipo.
+    return _intercala(salida)[:max(1, min(int(limite), 200))]

@@ -41,6 +41,7 @@ const CocinaModo = lazy(() => import('./paginas/CocinaModo').then((m) => ({ defa
 const Despensa = lazy(() => import('./paginas/Despensa').then((m) => ({ default: m.Despensa })))
 const Favoritos = lazy(() => import('./paginas/Favoritos').then((m) => ({ default: m.Favoritos })))
 const Grupo = lazy(() => import('./paginas/Grupo').then((m) => ({ default: m.Grupo })))
+const Ofertas = lazy(() => import('./paginas/Ofertas').then((m) => ({ default: m.Ofertas })))
 const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Panel })))
 const PanelMatching = lazy(() => import('./paginas/PanelMatching').then((m) => ({ default: m.PanelMatching })))
 const Producto = lazy(() => import('./paginas/Producto').then((m) => ({ default: m.Producto })))
@@ -64,6 +65,9 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/compra/listas/') && ruta.endsWith('/comparar')) return 'Comparar la cesta'
   if (ruta.startsWith('/cesta') || ruta.startsWith('/compra/listas')) return 'La cesta'
   if (ruta.startsWith('/compra/despensa')) return 'Despensa'
+  // *Ofertas tiene su propia pestaña: con «Compra» a secas, dos pestañas abiertas se
+  // llamarían igual y no se sabría cuál es cuál.*
+  if (ruta.startsWith('/compra/ofertas')) return 'Ofertas'
   if (ruta.startsWith('/compra/cocina')) return 'Cocina'
   if (ruta.startsWith('/compra/importar')) return 'Importar una receta'
   if (ruta.startsWith('/grupo/') || ruta.startsWith('/compra/comparar/')) return 'Comparar'
@@ -116,6 +120,14 @@ export function App() {
 
         {/* Compra: la lista, el buscador, la ficha y el gasto. */}
         <Route path="/compra" element={<LayoutSuite app="compra"><Buscar /></LayoutSuite>} />
+        {/* *** LAS OFERTAS DE HOY. *** *
+            *Lo que anuncian las cadenas, con el precio de hoy y la condición.* *Cuelga de
+            Compra porque se mira antes de decidir qué comprar, y es la pantalla que el
+            artboard `designs/cesta-app/project/Ofertas.dc.html` tiene aprobada.* */}
+        <Route
+          path="/compra/ofertas"
+          element={<LayoutSuite app="compra"><Ofertas /></LayoutSuite>}
+        />
         <Route path="/compra/listas" element={<LayoutSuite app="compra"><Cesta /></LayoutSuite>} />
         <Route path="/compra/despensa" element={<LayoutSuite app="compra"><Despensa /></LayoutSuite>} />
         <Route path="/compra/cocina/:recetaId/:version" element={<LayoutSuite app="compra"><CocinaModo /></LayoutSuite>} />

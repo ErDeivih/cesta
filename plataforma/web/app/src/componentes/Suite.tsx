@@ -36,6 +36,7 @@ import {
   IconoPanel,
   IconoPersona,
   IconoPlato,
+  IconoPrecioAbajo,
 } from './iconos'
 import { cx } from './ui'
 
@@ -80,6 +81,12 @@ export const APLICACIONES: Aplicacion[] = [
     raiz: '/compra',
     subsecciones: [
       { a: '/compra', texto: 'Buscar', Icono: IconoLupa },
+      // *** «Ofertas» entra el 6 de noviembre de 2026, con su artboard aprobado. ***
+      //
+      // *Va después de Buscar porque es lo mismo: mirar qué hay antes de decidir qué
+      // comprar.* *Y su icono es la flecha del precio abajo -- lo que baja --, que es
+      // lo único que distingue este destino de una lupa repetida.*
+      { a: '/compra/ofertas', texto: 'Ofertas', Icono: IconoPrecioAbajo },
       { a: '/compra/listas', texto: 'Listas', Icono: IconoCarro },
       { a: '/compra/favoritos', texto: 'Favoritos', Icono: IconoCorazon },
       // *** «Gasto y ahorro» YA NO ESTÁ, *y es una decisión.* *** *

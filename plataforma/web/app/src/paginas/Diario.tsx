@@ -9,20 +9,21 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 
 import { anotarDeLaCompra, guardaPreferencia, misListas, previaDeLaCompra, yo } from '../api/cesta'
-import { listaDelDiario } from '../logica/listaDelDiario'
 import type { PreviaDeLaCompra, ReciboDeLaCompra } from '../api/cesta'
 import { textoDeError } from '../api/cliente'
+import { numero } from '../api/formato'
 import { useApuntar, useBorrarEntrada, useDia } from '../api/diario'
 import { resolver, type Pendiente } from '../logica/operacionPendiente'
-import type { NuevaEntrada } from '../api/diario'
+import type { Dia, Entrada, NuevaEntrada } from '../api/diario'
 import { Boton, Cargando, Tarjeta, Vacio, Fallo, Etiqueta } from '../componentes/ui'
 import { EntraParaVer } from '../componentes/PuertaDeSesion'
 
 const NOMBRE_NUTRIENTE: Record<string, string> = {
-  kcal: 'energia',
-  proteinas_g: 'proteinas',
+  kcal: 'energía',
+  proteinas_g: 'proteínas',
   grasas_g: 'grasas',
   hidratos_g: 'hidratos',
 }
@@ -30,6 +31,24 @@ const NOMBRE_NUTRIENTE: Record<string, string> = {
 
 const COMIDAS = ['desayuno', 'media manana', 'comida', 'merienda', 'cena', 'otras']
 const FUENTES = ['etiqueta', 'ficha', 'estimado', 'desconocido']
+
+/** **Las comidas, como se leen.** *La clave es la del servidor; el nombre, el de la mesa.* */
+const NOMBRE_COMIDA: Record<string, string> = {
+  desayuno: 'Desayuno',
+  'media manana': 'Media mañana',
+  comida: 'Comida',
+  merienda: 'Merienda',
+  cena: 'Cena',
+  otras: 'Otras',
+}
+
+/** **De dónde sale un dato, dicho sin jerga.** *La clave viaja a la API; la etiqueta se lee.* */
+const NOMBRE_FUENTE: Record<string, string> = {
+  etiqueta: 'Etiqueta',
+  ficha: 'Ficha del producto',
+  estimado: 'Estimación',
+  desconocido: 'No lo sé',
+}
 
 /** Un campo de texto a numero, o **`null` si esta vacio**. Dos cosas que importan:
  *
@@ -147,10 +166,10 @@ function DeLaCompra({ fecha }: { fecha: string }) {
             No tienes una lista marcada como de casa. Elige con cual quieres anotar: la eleccion
             es tuya, y no cambia lo que hayan anotado los demas.
           </p>
-          <label className="flex flex-wrap items-center gap-2 text-[15px]">
-            <span className="text-tinta-fuerte">Lista</span>
+          <label className="flex flex-wrap items-center gap-2 text-etiqueta text-tinta-suave">
+            <span className="text-tinta">Lista</span>
             <select
-              className="rounded-campo border border-borde bg-papel px-2 py-1"
+              className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
               defaultValue=""
               onChange={(e) => {
                 const id = e.target.value || null
@@ -233,7 +252,7 @@ function DeLaCompra({ fecha }: { fecha: string }) {
                   <li key={x.linea_id} className="text-[15px] text-tinta-fuerte">
                     {x.nombre}
                     {x.kcal !== null && (
-                      <span className="text-[13px] text-secundaria tabular-nums"> {x.kcal} kcal</span>
+                      <span className="text-etiqueta text-tinta-suave tabular-nums"> {x.kcal} kcal</span>
                     )}
                   </li>
                 ))}
@@ -248,18 +267,20 @@ function DeLaCompra({ fecha }: { fecha: string }) {
               )}
               {previa.anotarian.length > 0 && (
                 <>
-                  <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+                  <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
                     Comida
                     <select
                       value={comida}
                       onChange={(e) => setComida(e.target.value)}
-                      className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
+                      className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
                     >
-                      {COMIDAS.map((c) => <option key={c} value={c}>{c}</option>)}
+                      {COMIDAS.map((c) => (
+                        <option key={c} value={c}>{NOMBRE_COMIDA[c] ?? c}</option>
+                      ))}
                     </select>
                   </label>
                   <Boton onClick={() => anotar.mutate()} disabled={anotar.isPending}>
-                    Si, anotarlo
+                    Sí, anotarlo
                   </Boton>
                 </>
               )}
@@ -291,7 +312,16 @@ function Alta({ fecha }: { fecha: string }) {
   const pendiente = useRef<Pendiente<NuevaEntrada> | null>(null)
 
   return (
-    <Tarjeta>
+    <section
+      id="alta"
+      aria-labelledby="alta-titulo"
+      className="rounded-tarjeta border border-borde bg-papel p-4 shadow-apoyado"
+    >
+      <h2 id="alta-titulo" className="text-cuerpo-fuerte text-tinta">Añadir</h2>
+      <p className="mt-1 text-etiqueta text-tinta-suave">
+        Apunta lo que has comido, no los valores de 100 g. Deja en blanco lo que no sepas:{' '}
+        <strong className="text-tinta">en blanco no es cero</strong>.
+      </p>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -343,85 +373,83 @@ function Alta({ fecha }: { fecha: string }) {
         }}
         className="flex flex-col gap-3"
       >
-        <p className="text-[13px] leading-5 text-secundaria">
-          <strong className="text-tinta-fuerte">Lo que apuntes es lo que has comido</strong>, no los
-          valores de 100 g. Si tienes la ficha del producto, anótalo desde ahí y la cuenta se hace
-          sola. Deja en blanco lo que no sepas: <strong className="text-tinta-fuerte">no es
-          cero</strong>, es que no se sabe.
-        </p>
         <div className="flex flex-wrap gap-3">
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
             Comida
             <select
               value={comida}
               onChange={(e) => setComida(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
             >
-              {COMIDAS.map((c) => <option key={c} value={c}>{c}</option>)}
+              {COMIDAS.map((c) => (
+                <option key={c} value={c}>{NOMBRE_COMIDA[c] ?? c}</option>
+              ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
-            {esReceta ? 'Receta (nombre o numero)' : 'Que has comido'}
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
+            {esReceta ? 'Receta (nombre o número)' : 'Qué has comido'}
             <input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
-            Energia (kcal)
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
+            Energía (kcal)
             <input
               value={kcal}
               onChange={(e) => setKcal(e.target.value)}
               inputMode="decimal"
-              className="min-h-[44px] w-28 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-28 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
             Cantidad (g)
             <input
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               inputMode="decimal"
               placeholder="150"
-              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-24 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
-            Proteinas (g)
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
+            Proteínas (g)
             <input
               value={proteinas}
               onChange={(e) => setProteinas(e.target.value)}
               inputMode="decimal"
-              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-24 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
             Grasas (g)
             <input
               value={grasas}
               onChange={(e) => setGrasas(e.target.value)}
               inputMode="decimal"
-              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-24 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
             Hidratos (g)
             <input
               value={hidratos}
               onChange={(e) => setHidratos(e.target.value)}
               inputMode="decimal"
-              className="min-h-[44px] w-24 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+              className="min-h-[44px] w-24 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] text-secundaria">
-            De donde sale el dato
+          <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
+            De dónde sale el dato
             <select
               value={fuente}
               onChange={(e) => setFuente(e.target.value)}
-              className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte"
+              className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta"
             >
-              {FUENTES.map((f) => <option key={f} value={f}>{f}</option>)}
+              {FUENTES.map((f) => (
+                <option key={f} value={f}>{NOMBRE_FUENTE[f] ?? f}</option>
+              ))}
             </select>
           </label>
         </div>
@@ -431,12 +459,12 @@ function Alta({ fecha }: { fecha: string }) {
             Es una receta
           </label>
           {esReceta && (
-            <label className="flex items-center gap-2 text-[13px] text-secundaria">
-              Version
+            <label className="flex items-center gap-2 text-etiqueta text-tinta-suave">
+              Versión
               <input
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
-                className="min-h-[44px] w-20 rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+                className="min-h-[44px] w-20 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
               />
             </label>
           )}
@@ -444,15 +472,9 @@ function Alta({ fecha }: { fecha: string }) {
             {apuntar.isPending ? 'Anotando...' : 'Anotar'}
           </Boton>
         </div>
-        {esReceta && (
-          <p className="text-[13px] text-secundaria">
-            La version no es un detalle: es lo que permitira releer este dia dentro de un mes tal y como
-            estaba, aunque la receta haya cambiado.
-          </p>
-        )}
         {apuntar.error && <Etiqueta tono="mal">{textoDeError(apuntar.error)}</Etiqueta>}
       </form>
-    </Tarjeta>
+    </section>
   )
 }
 
@@ -468,126 +490,505 @@ export function Diario() {
   return <DiarioDelDia />
 }
 
-function DiarioDelDia() {
-  const [fecha, setFecha] = useState(hoy())
-  const { data, isPending, error } = useDia(fecha)
-  const borrar = useBorrarEntrada(fecha)
+/** La fecha de la cabecera, en castellano y en local. Se lee, no se depura. */
+const DIA_LARGO = new Intl.DateTimeFormat('es-ES', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+})
 
-  const conDato = data?.conocido.entradas ?? 0
-  const total = data?.entradas.length ?? 0
-  const faltan = data?.sin_dato.length ?? 0
+/** «jueves, 5 nov» para el día que se está mirando. */
+export function diaDeLaCabecera(iso: string): string {
+  const fecha = new Date(`${iso}T00:00:00`)
+  return Number.isNaN(fecha.getTime()) ? iso : DIA_LARGO.format(fecha)
+}
+
+/** **Las kcal, con el separador de miles del artboard y la coma decimal de aquí.**
+ *
+ *  *El formateador de la casa (`numero`) deja «2200»: en castellano la agrupacion empieza a
+ *  partir de cinco cifras. El artboard aprobado escribe «2.200», y una cifra de cuatro digitos
+ *  sin separador se lee peor al lado de la barra. Se agrupa **siempre**, con `Intl`, que sigue
+ *  decidiendo la coma decimal.*
+ */
+const CIFRA = new Intl.NumberFormat('es-ES', {
+  maximumFractionDigits: 1,
+  minimumFractionDigits: 0,
+  useGrouping: true,
+})
+
+function cifra(n: number): string {
+  return CIFRA.format(n)
+}
+
+/** **El objetivo de ESE día, si alguien lo puso.**
+ *
+ *  La preferencia es `objetivo:<fecha>` y su valor es `{kcal}`: la misma que leen las tendencias.
+ *  **Un día sin objetivo no es un día de cero.** Devuelve `null`, y la pantalla no inventa una
+ *  cifra que nadie ha declarado.
+ */
+export function objetivoDe(
+  preferencias: Record<string, unknown> | null | undefined,
+  fecha: string,
+): number | null {
+  const guardado = preferencias?.[`objetivo:${fecha}`]
+  const valor = guardado && typeof guardado === 'object' && 'kcal' in guardado
+    ? (guardado as { kcal: unknown }).kcal
+    : guardado
+  return typeof valor === 'number' && Number.isFinite(valor) && valor > 0 ? valor : null
+}
+
+function CabeceraDelDia({ fecha, objetivo }: { fecha: string; objetivo: number | null }) {
+  return (
+    <header className="flex items-center gap-2">
+      <Link
+        to="/"
+        aria-label="Volver a la portada"
+        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-pastilla text-tinta-suave transition-colors duration-rapida ease-suave hover:bg-papel hover:text-tinta"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M19 12H5M11 18l-6-6 6-6" />
+        </svg>
+      </Link>
+      <div className="min-w-0 flex-1">
+        <p className="text-micro uppercase text-tinta-tenue">{diaDeLaCabecera(fecha)}</p>
+        <h2 className="mt-0.5 font-display text-titulo font-semibold text-tinta">Calorías</h2>
+      </div>
+      {objetivo !== null && (
+        <span className="inline-flex min-h-[32px] shrink-0 items-center rounded-pastilla bg-lavado-verde px-2.5 text-etiqueta-fuerte text-verde-fuerte">
+          {cifra(objetivo)} kcal
+        </span>
+      )}
+    </header>
+  )
+}
+
+/** *** La tarjeta HOY: lo consumido, el objetivo y lo que queda. *** *
+ *
+ *  **Sin objetivo no hay barra ni «te quedan 1.125»**: los dos serian una cifra inventada. Se dice
+ *  «Sin objetivo» y se deja ponerlo. Y **sin dato de energia no hay cero**: la cifra grande dice
+ *  «sin dato», que es lo mismo que dice cada alimento que no lo trae.
+ */
+function TarjetaDeHoy({
+  data,
+  objetivo,
+  onGuardarObjetivo,
+  guardandoObjetivo,
+  errorObjetivo,
+}: {
+  data: Dia
+  objetivo: number | null
+  onGuardarObjetivo: (kcal: number | null) => void
+  guardandoObjetivo: boolean
+  errorObjetivo: string | null
+}) {
+  const consumido = data.conocido.kcal
+  const conDato = data.conocido.entradas
+  const total = data.entradas.length
+  const faltan = data.sin_dato.length
+  const restante = objetivo !== null && consumido !== null
+    ? Math.round((objetivo - consumido) * 10) / 10
+    : null
+  const proporcion = objetivo !== null && consumido !== null && objetivo > 0
+    ? Math.round(Math.min(100, Math.max(0, (consumido / objetivo) * 100)) * 10) / 10
+    : null
 
   return (
-    <div className="flex flex-col gap-4">
+    <section aria-labelledby="hoy" className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
+      <h2 id="hoy" className="text-micro uppercase text-tinta-tenue">Hoy</h2>
+
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="cifra text-portada font-semibold text-tinta">
+          {consumido === null ? 'sin dato' : cifra(consumido)}
+        </span>
+        {objetivo !== null ? (
+          <span className="text-cuerpo text-tinta-suave">de {cifra(objetivo)} kcal</span>
+        ) : consumido !== null ? (
+          <span className="text-cuerpo text-tinta-suave">kcal</span>
+        ) : null}
+      </div>
+
+      {/* **De cuantas entradas sale la cifra.** *Un subtotal sin decir sobre cuantas entradas
+          esta hecho se lee como el dia entero, y no lo es.* */}
+      {total > 0 && (
+        <p className="mt-1 text-etiqueta text-tinta-suave">
+          {conDato} de {total} {total === 1 ? 'entrada' : 'entradas'} con energía
+        </p>
+      )}
+
+      {proporcion !== null && consumido !== null && objetivo !== null && (
+        <>
+          <div
+            role="progressbar"
+            aria-label="Consumido hoy"
+            aria-valuemin={0}
+            aria-valuemax={objetivo}
+            aria-valuenow={Math.min(consumido, objetivo)}
+            aria-valuetext={`${cifra(consumido)} de ${cifra(objetivo)} kcal`}
+            className="mt-3 h-3 rounded-pastilla bg-lavado-verde"
+          >
+            <span
+              className="block h-3 rounded-pastilla bg-verde"
+              style={{ width: `${proporcion}%` }}
+            />
+          </div>
+          {restante !== null && (
+            <p className="mt-2 text-etiqueta text-tinta-suave">
+              {restante > 0
+                ? `Te quedan ${cifra(restante)} kcal`
+                : restante === 0
+                  ? 'Objetivo alcanzado'
+                  : `${cifra(-restante)} kcal por encima del objetivo`}
+            </p>
+          )}
+        </>
+      )}
+
+      {!data.completo && faltan > 0 && (
+        <p className="mt-2 text-etiqueta leading-[1.125rem] text-aviso">
+          Este día <strong>no está completo</strong>: falta el dato de {faltan}{' '}
+          {faltan === 1 ? 'entrada' : 'entradas'}. Lo de arriba es lo que se sabe, no todo lo que
+          comiste.
+        </p>
+      )}
+
+      {/* **La cobertura, nutriente a nutriente.** El total de energia puede estar completo y faltar
+          las proteinas: decir "3 de 4 entradas" es lo que impide leer el numero de arriba como si
+          fuera el dia entero. Y un nutriente que no trae nadie se dice con la palabra, no con un 0. */}
+      {data.cobertura && (
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {Object.entries(data.cobertura).map(([nutriente, c]) => (
+            <li key={nutriente} className="text-etiqueta text-tinta-suave tabular-nums">
+              {NOMBRE_NUTRIENTE[nutriente] ?? nutriente}:{' '}
+              {c.con_dato === 0 ? (
+                <span className="text-aviso">sin dato</span>
+              ) : (
+                <>
+                  {c.con_dato} de {c.total}
+                  {c.completa ? '' : ' entradas'}
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <ControlDeObjetivo
+        key={data.fecha}
+        objetivo={objetivo}
+        onGuardar={onGuardarObjetivo}
+        guardando={guardandoObjetivo}
+      />
+
+      {errorObjetivo && (
+        <p role="alert" className="mt-1 text-etiqueta text-error">{errorObjetivo}</p>
+      )}
+    </section>
+  )
+}
+
+/** El objetivo del día: se dice el que hay, y se deja poner, cambiar o quitar.
+ *
+ *  **No prescribe nada.** El texto es «Tu objetivo diario» y el número lo pone la persona; la app
+ *  no propone una cantidad ni da consejos. Si no hay objetivo, se dice «Sin objetivo» en vez de
+ *  inventar 2.200.
+ */
+function ControlDeObjetivo({
+  objetivo,
+  onGuardar,
+  guardando,
+}: {
+  objetivo: number | null
+  onGuardar: (kcal: number | null) => void
+  guardando: boolean
+}) {
+  const [editando, setEditando] = useState(objetivo === null)
+  const [texto, setTexto] = useState(objetivo === null ? '' : String(objetivo))
+  const [error, setError] = useState<string | null>(null)
+
+  if (!editando && objetivo !== null) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setTexto(String(objetivo))
+          setError(null)
+          setEditando(true)
+        }}
+        className="mt-2 inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2 hover:text-tinta"
+      >
+        Cambiar objetivo
+      </button>
+    )
+  }
+
+  return (
+    <form
+      className="mt-2 flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const kcal = aNumero(texto)
+        if (kcal === null || kcal <= 0) {
+          setError('Escribe un número de kcal mayor que cero.')
+          return
+        }
+        setError(null)
+        onGuardar(kcal)
+        setEditando(false)
+      }}
+    >
+      {objetivo === null && <p className="text-etiqueta text-tinta-suave">Sin objetivo</p>}
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-etiqueta text-tinta-suave">
+          Tu objetivo diario
+          <input
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            inputMode="numeric"
+            className="min-h-[44px] w-28 rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
+          />
+        </label>
+        <Boton type="submit" disabled={guardando}>
+          {guardando ? 'Guardando…' : 'Guardar'}
+        </Boton>
+        {objetivo !== null && (
+          <>
+            <Boton
+              variante="sutil"
+              onClick={() => {
+                setEditando(false)
+                setError(null)
+              }}
+            >
+              Cancelar
+            </Boton>
+            <Boton
+              variante="sutil"
+              onClick={() => {
+                onGuardar(null)
+                setTexto('')
+                setError(null)
+                setEditando(true)
+              }}
+            >
+              Quitar
+            </Boton>
+          </>
+        )}
+      </div>
+      {error && <p role="alert" className="text-etiqueta text-error">{error}</p>}
+    </form>
+  )
+}
+
+/** *** Una comida, con sus alimentos. *** *
+ *
+ *  Cada linea enseña **el nombre, la cantidad y las kcal reales de esa entrada**. Las kcal de la
+ *  cabecera son el subtotal de las que traen dato; si alguna no lo trae, se dice aparte en vez de
+ *  contarla como cero.
+ */
+function TarjetaComida({
+  comida,
+  entradas,
+  onQuitar,
+  quitandoId,
+}: {
+  comida: string
+  entradas: Entrada[]
+  onQuitar: (id: number) => void
+  quitandoId: number | null
+}) {
+  const conDato = entradas.filter((e) => e.kcal !== null)
+  const total = conDato.length
+    ? Math.round(conDato.reduce((suma, e) => suma + (e.kcal ?? 0), 0) * 10) / 10
+    : null
+  const faltan = entradas.length - conDato.length
+
+  return (
+    <section className="rounded-tarjeta bg-papel p-4 shadow-apoyado">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-cuerpo-fuerte text-tinta">{NOMBRE_COMIDA[comida] ?? comida}</h3>
+        <span className="cifra text-cuerpo text-tinta">
+          {total === null ? 'sin dato' : `${cifra(total)} kcal`}
+        </span>
+      </div>
+
+      <ul className="mt-1 flex flex-col">
+        {entradas.map((e) => (
+          <li
+            key={e.id}
+            className="flex min-h-[44px] items-center gap-2 border-b border-borde last:border-0"
+          >
+            <span className="min-w-0 flex-1 break-words py-2 text-cuerpo text-tinta-suave">
+              <span>{e.referencia || 'sin nombre'}</span>
+              {e.cantidad_g !== null && <> · {numero(e.cantidad_g)} g</>}
+            </span>
+            <span className="cifra shrink-0 text-etiqueta text-tinta-suave">
+              {e.kcal === null ? 'sin dato' : `${cifra(e.kcal)} kcal`}
+            </span>
+            <button
+              type="button"
+              onClick={() => onQuitar(e.id)}
+              disabled={quitandoId === e.id}
+              aria-label={`Quitar ${e.referencia || 'esta entrada'}`}
+              title="Quitar"
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-pastilla text-tinta-tenue transition-colors duration-rapida ease-suave hover:bg-lavado-error hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {faltan > 0 && (
+        <p className="mt-1 text-etiqueta text-aviso">
+          {faltan === 1
+            ? 'Una entrada sin dato de energía.'
+            : `${faltan} entradas sin dato de energía.`}
+        </p>
+      )}
+    </section>
+  )
+}
+
+function DiarioDelDia() {
+  const [fecha, setFecha] = useState(hoy())
+  const { data, isPending, error, refetch } = useDia(fecha)
+  const borrar = useBorrarEntrada(fecha)
+  const cliente = useQueryClient()
+  const sesion = useQuery({ queryKey: ['yo'], queryFn: yo, staleTime: 60_000 })
+  const objetivo = objetivoDe(sesion.data?.preferencias, fecha)
+
+  const guardaObjetivo = useMutation({
+    mutationFn: (kcal: number | null) =>
+      guardaPreferencia(`objetivo:${fecha}`, kcal === null ? null : { kcal }),
+    onSuccess: () => {
+      // La misma clave que leen la cabecera y las tendencias: se repinta con el objetivo nuevo.
+      void cliente.invalidateQueries({ queryKey: ['yo'] })
+    },
+  })
+
+  const total = data?.entradas.length ?? 0
+
+  return (
+    <div className="flex min-h-full flex-col gap-4">
+      <CabeceraDelDia fecha={fecha} objetivo={objetivo} />
+
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-[13px] text-secundaria">
-          Dia
+        <label className="flex items-center gap-2 text-etiqueta text-tinta-suave">
+          Día
           <input
             type="date"
             value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="min-h-[44px] rounded-md border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta-fuerte tabular-nums"
+            onChange={(e) => {
+              // Un campo vacio no es un dia: no se pide el diario de la nada.
+              if (e.target.value) setFecha(e.target.value)
+            }}
+            className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 text-[16px] text-tinta tabular-nums"
           />
         </label>
         <button
           type="button"
           onClick={() => setFecha(hoy())}
-          className="min-h-[44px] min-w-[44px] text-[14px] text-secundaria underline"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
         >
           Hoy
         </button>
       </div>
 
-      {isPending && <p className="text-[16px] text-secundaria">Leyendo el diario...</p>}
-      {error && <Fallo error={error} />}
-
-      <DeLaCompra fecha={fecha} />
+      {isPending && <Cargando que="tu diario" filas={3} />}
+      {error && (
+        <Fallo
+          error={error}
+          reintentar={() => void refetch()}
+          titulo="No he podido leer tu diario"
+        />
+      )}
 
       {data && (
-        <Tarjeta>
-          <div className="flex flex-wrap items-baseline gap-4">
-            <p className="font-serif text-[28px] leading-[34px] font-semibold text-tinta-fuerte tabular-nums">
-              {data.conocido.kcal === null ? 'sin dato' : `${data.conocido.kcal} kcal`}
-            </p>
-            <p className="text-[13px] text-secundaria tabular-nums">
-              de {conDato} de {total} {total === 1 ? 'entrada' : 'entradas'}
-            </p>
-          </div>
-          {/* La frase que impide leer el numero de arriba como "lo que comi hoy". */}
-          {!data.completo && total > 0 && (
-            <p className="mt-1 text-[14px] leading-[22px] text-aviso">
-              Este día <strong>no está completo</strong>: falta el dato de {faltan}{' '}
-              {faltan === 1 ? 'entrada' : 'entradas'}. Lo de arriba es lo que se sabe, no lo que
-              comiste.
-            </p>
-          )}
+        <>
+          <TarjetaDeHoy
+            data={data}
+            objetivo={objetivo}
+            onGuardarObjetivo={(kcal) => guardaObjetivo.mutate(kcal)}
+            guardandoObjetivo={guardaObjetivo.isPending}
+            errorObjetivo={guardaObjetivo.error ? textoDeError(guardaObjetivo.error) : null}
+          />
 
-          {/* **La cobertura, nutriente a nutriente.** El total de energia puede estar completo y faltar
-              las proteinas: decir "3 de 4 entradas" es lo que impide leer el numero de arriba como si
-              fuera el dia entero. Y un nutriente que no trae nadie se dice con la palabra, no con un 0. */}
-          {data.cobertura && (
-            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              {Object.entries(data.cobertura).map(([nutriente, c]) => (
-                <li key={nutriente} className="text-[13px] text-secundaria tabular-nums">
-                  {NOMBRE_NUTRIENTE[nutriente] ?? nutriente}:{' '}
-                  {c.con_dato === 0 ? (
-                    <span className="text-aviso">sin dato</span>
-                  ) : (
-                    <>
-                      {c.con_dato} de {c.total}
-                      {c.completa ? '' : ' entradas'}
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          {/* *** LA COLETA DE «TODAS LAS ENTRADAS TIENEN CALORÍAS…» YA NO ESTÁ. *** *
-              *Era una instrucción redundante —«comprueba que hayas anotado todas tus comidas»— que
-              no cambiaba ninguna decisión: lo que falta ya se dice arriba, entrada a entrada.* */}
-        </Tarjeta>
+          <section aria-labelledby="comidas" className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 id="comidas" className="text-cuerpo-fuerte text-tinta">
+                Comidas
+              </h2>
+              <a
+                href="#alta"
+                className="inline-flex min-h-[44px] items-center text-cuerpo-fuerte font-semibold text-verde underline-offset-2 hover:underline"
+              >
+                Añadir
+              </a>
+            </div>
+
+            {total === 0 ? (
+              <Vacio titulo="Nada anotado este día">
+                <p>Usa «Añadir» para apuntar lo primero; aparecerá aquí por comidas.</p>
+              </Vacio>
+            ) : (
+              Object.entries(data.comidas).map(([comida, entradas]) => (
+                <TarjetaComida
+                  key={comida}
+                  comida={comida}
+                  entradas={entradas}
+                  onQuitar={(id) => borrar.mutate(id)}
+                  quitandoId={borrar.isPending ? borrar.variables ?? null : null}
+                />
+              ))
+            )}
+          </section>
+
+          {borrar.error && <Etiqueta tono="mal">{textoDeError(borrar.error)}</Etiqueta>}
+        </>
       )}
 
       <Alta fecha={fecha} />
 
-      {data && total === 0 && (
-        <Vacio titulo="Nada anotado este día" className="grow">
-          <p>Anota lo primero arriba y aparecera aqui, agrupado por comidas.</p>
-        </Vacio>
-      )}
+      <DeLaCompra fecha={fecha} />
 
-      {data &&
-        Object.entries(data.comidas).map(([comida, entradas]) => (
-          <section key={comida} className="flex flex-col gap-2">
-            <h2 className="font-serif text-[19px] leading-7 text-tinta-fuerte">{comida}</h2>
-            <ul className="flex flex-col gap-2">
-              {entradas.map((e) => (
-                <li key={e.id}>
-                  <Tarjeta>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      {/* *** EL NOMBRE, NO «Receta 7 (v2)». *** *
-                          *`referencia` es lo que la persona escribió; la versión y el número son
-                          del registro interno y no le dicen nada.* */}
-                      <span className="text-[16px] text-tinta-fuerte">
-                        {e.referencia || 'sin nombre'}
-                      </span>
-                      <span className="text-[13px] tabular-nums text-secundaria">
-                        {e.kcal === null ? 'sin dato' : `${e.kcal} kcal`}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => borrar.mutate(e.id)}
-                      className="mt-1 min-h-[44px] min-w-[44px] text-[13px] text-secundaria underline"
-                    >
-                      Quitar
-                    </button>
-                  </Tarjeta>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+      <nav aria-label="Más de calorías" className="flex flex-wrap gap-x-4">
+        <Link
+          to="/calorias/tendencias"
+          className="inline-flex min-h-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
+        >
+          Tendencias
+        </Link>
+        <Link
+          to="/calorias/alimentos"
+          className="inline-flex min-h-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
+        >
+          Mis alimentos
+        </Link>
+      </nav>
     </div>
   )
 }

@@ -70,13 +70,23 @@ def test_la_baja_se_confirma_escribiendo_el_usuario():
 
 
 def test_los_ajustes_sin_sesion_dicen_por_donde_se_entra():
-    """Un cartel sin puerta es un callejon sin salida (`docs/DISENO.md` §3.4)."""
+    """Un cartel sin puerta es un callejon sin salida (`docs/DISENO.md` §3.4).
+
+    **Adaptada el 6 de noviembre de 2026, con motivo.** La puerta de Ajustes ya no es una
+    copia con su frase y su `to="/cesta"` escritos dentro de la pantalla: es la pieza
+    compartida `EntraParaVer`, la misma que usan el diario y las tendencias. La prueba
+    anterior medía esa copia (`"Entra para cambiar tus ajustes"`, el enlace a mano y una
+    línea `const cadenas` que ya no existe), o sea que medía el producto viejo. Ahora
+    comprueba lo que de verdad pinta la salida: que el perfil usa la puerta y que la puerta
+    lleva a la cesta.
+    """
     ajustes = (APP / "paginas" / "Ajustes.tsx").read_text(encoding="utf-8")
-    sin_sesion = ajustes[ajustes.index("Entra para cambiar tus ajustes"):]
-    sin_sesion = sin_sesion[:sin_sesion.index("const cadenas")]
-    assert "to=\"/cesta\"" in sin_sesion, \
-        "la pantalla de ajustes sin sesion no dice por donde se entra"
-    assert "Se entra desde" in sin_sesion, "y no lo dice con palabras"
+    assert "EntraParaVer" in ajustes, \
+        "el perfil sin sesion no usa la puerta compartida"
+    puerta = (APP / "componentes" / "PuertaDeSesion.tsx").read_text(encoding="utf-8")
+    assert "to=\"/cesta\"" in puerta, \
+        "la puerta de sesion no dice por donde se entra"
+    assert "Se entra desde" in puerta, "y no lo dice con palabras"
 
 
 def test_la_prueba_de_punta_a_punta_elige_los_grupos_con_desempate():

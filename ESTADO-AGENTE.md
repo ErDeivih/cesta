@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Ficha, comparar, lista, favoritos y recetas ya implementadas con los artboards aprobados; toca Calorías, después Ofertas y Perfil.
+resumen: Calorías, Ofertas y Perfil implementados con los artboards aprobados (con `/api/ofertas` y su tipo/club); quedan las pautas de salud, la integración con apps de supers y aprender de las listas.
 estado: en-curso
-tarea: implementar pantalla a pantalla los artboards aprobados; hechas ficha, comparar, lista, favoritos y recetas (listado y detalle)
+tarea: implementar pantalla a pantalla los artboards aprobados; hechas ficha, comparar, lista, favoritos, recetas, calorías (pantalla), ofertas y perfil
 nivel: 2
-siguiente: Calorías (objetivo diario y comidas) y después Ofertas y Perfil
-bloqueado: nada duro; las recetas establecidas no existen todavía en la API y el coste solo se enseña cuando hay precios reales
-fecha: 2026-11-05
+siguiente: referencias/pautas de salud en Calorías, luego integración con apps de supers y aprender de las listas
+bloqueado: nada duro; las pautas de salud exigen fuentes citables y sin prescribir, y las cuentas de supers solo exportación/importación manual
+fecha: 2026-11-06

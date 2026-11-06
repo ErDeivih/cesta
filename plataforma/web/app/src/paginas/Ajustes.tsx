@@ -1,213 +1,448 @@
-/** Ajustes: lo poco que hay que configurar, y por que.
+/** **Tu perfil**: la cuenta, lo que la app tiene que recordar de ti y con qué
+ *  avisos cuentas.
  *
- *  Una sola cosa cambia de verdad lo que se ve: **las cadenas que tienes a
- *  mano**. Con eso puesto, el buscador y el panel dejan de ofrecerte cosas de una
- *  cadena a la que no vas.
+ *  La composición es la del artboard aprobado (`designs/cesta-app/project/Perfil.dc.html`):
+ *  la cuenta con su nombre, las preferencias, los avisos y «Cerrar sesión» al final. Los
+ *  valores —marfil, papel, bosque, tipos, radios y sombra— son los del sistema «Cesta App»,
+ *  no se eligen aquí.
  *
- *  La fecha de los datos y el aviso de las cadenas con retraso **no** van aqui:
- *  estan en la cabecera, siempre a la vista. Esconderlos en una pantalla de
- *  ajustes seria justo lo contrario de lo que pide el proyecto.
+ *  **Lo que se pinta es lo que se puede guardar.** El artboard enseñaba también «Dieta» y
+ *  «Alérgenos», y las dos se quedan fuera a propósito: no hay ninguna preferencia donde
+ *  apuntarlas y ningún sitio de la app que las lea, así que un control ahí sería un adorno
+ *  que promete algo que no pasa. Es la regla del encargo: mejor no pintarlo que fingirlo.
+ *
+ *  **El objetivo de calorías no se edita aquí.** La fila enseña el de hoy y lleva a
+ *  Calorías, que es donde se pone y donde se ve con el resto del día. Duplicar el editor en
+ *  dos pantallas sería dos sitios que pueden acabar diciendo cosas distintas; y el artboard
+ *  ya lo pinta como una fila que lleva a otra pantalla. Si no hay objetivo se dice «Sin
+ *  objetivo», nunca un 2.200 de adorno.
+ *
+ *  **Nada de diagnóstico.** Hasta el 6 de noviembre de 2026 esta pantalla enseñaba la
+ *  frescura y la cobertura del catálogo, cadena a cadena. Eso es una herramienta de
+ *  administración (§8) y no lo que alguien viene a hacer aquí: vive en `/panel`, que sigue
+ *  existiendo para eso. En el perfil solo va lo que cambia una decisión de quien compra.
+ *
+ *  **La cuenta sale de la sesión, y solo de la sesión.** El nombre es `nombre` si la API lo
+ *  trae; si no, el usuario con el que se entra. El correo no se inventa: la API no lo manda,
+ *  así que no hay línea de correo. Y sin sesión no hay perfil: se enseña la puerta de
+ *  entrada compartida, con su enlace, en vez de una frase sin salida.
  */
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 
 import { cadenasCerca, guardarPreferencia } from '../api/ajustes'
 import { textoDeError } from '../api/cliente'
 import { borrarme, salir, yo } from '../api/cesta'
-import { useEstado } from '../api/consultas'
-import { fecha, nombreCadena } from '../api/formato'
-import { textoCobertura } from '../logica/cobertura'
-import { Boton, CampoTexto, Cargando, Etiqueta, Fallo, Tarjeta, Vacio } from '../componentes/ui'
+import { nombreCadena, numero } from '../api/formato'
+import { EntraParaVer } from '../componentes/PuertaDeSesion'
+import {
+  Aviso,
+  Boton,
+  CampoTexto,
+  Casilla,
+  Etiqueta,
+  Fallo,
+  Resumen,
+} from '../componentes/ui'
+
+/** Las cadenas que existen en el catálogo. Es la misma lista que usa el colector; aquí
+ *  solo hace falta para poder marcar una. No se pide a `/estado` porque esa respuesta es
+ *  el estado de la ingesta —diagnóstico— y el perfil no tiene por qué depender de él. */
+const CADENAS = ['mercadona', 'carrefour', 'dia', 'aldi', 'alcampo', 'lidl'] as const
+
+/** Los tres avisos del artboard. Se guardan como preferencias de la cuenta (el servidor
+ *  las guarda por `usuario_id`, no por navegador): dos personas en el mismo aparato no se
+ *  pisan. Los valores de partida son los del artboard aprobado; en cuanto se toca uno,
+ *  queda guardado. */
+const AVISOS: { clave: string; texto: string; porDefecto: boolean }[] = [
+  { clave: 'avisos_bajadas_favoritos', texto: 'Bajadas de tus favoritos', porDefecto: true },
+  { clave: 'avisos_ofertas_club', texto: 'Ofertas de tu club', porDefecto: true },
+  { clave: 'avisos_lista_compartida', texto: 'Lista compartida', porDefecto: false },
+]
+
+/** La fecha de hoy en local, que es la misma que usa el diario para el objetivo. */
+function hoy(): string {
+  const ahora = new Date()
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0')
+  const dia = String(ahora.getDate()).padStart(2, '0')
+  return `${ahora.getFullYear()}-${mes}-${dia}`
+}
+
+/** El objetivo de calorías de hoy, tal y como lo lee Calorías/Tendencias
+ *  (`preferencias["objetivo:<fecha>"]`, con `{kcal}` dentro). `null` si no hay. */
+function objetivoDe(preferencias: Record<string, unknown>): number | null {
+  const guardado = preferencias[`objetivo:${hoy()}`]
+  // *El formato que se guarda es `{kcal}`, pero se acepta también un número suelto: es lo
+  // que ya hace `Diario.objetivoDe`, y las dos pantallas tienen que leer lo mismo.*
+  const valor = guardado && typeof guardado === 'object' && 'kcal' in guardado
+    ? (guardado as { kcal?: unknown }).kcal
+    : guardado
+  return typeof valor === 'number' && Number.isFinite(valor) && valor > 0
+    ? Math.round(valor)
+    : null
+}
+
+/** Un booleano guardado, o el valor de partida si todavía no hay nada guardado. */
+function booleano(valor: unknown, porDefecto: boolean): boolean {
+  return typeof valor === 'boolean' ? valor : porDefecto
+}
+
+/** «Todas», «Mercadona» o «Mercadona, DIA y Aldi», sin una coma colgando. */
+function textoDeCadenas(cadenas: string[]): string {
+  if (cadenas.length === 0) return 'Todas'
+  const nombres = cadenas.map((c) => nombreCadena(c))
+  if (nombres.length === 1) return nombres[0]
+  return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`
+}
+
+/** La flecha de una fila que lleva a otra pantalla. */
+function FlechaDerecha() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      className="shrink-0"
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+/* ================================================================ la cabecera === */
+
+function CabeceraDelPerfil() {
+  return (
+    <header className="flex items-start gap-2">
+      <Link
+        to="/"
+        aria-label="Volver a la portada"
+        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-pastilla text-tinta-suave transition-colors duration-rapida ease-suave hover:bg-papel hover:text-tinta"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M19 12H5M11 18l-6-6 6-6" />
+        </svg>
+      </Link>
+      <div className="min-w-0 flex-1">
+        <p className="text-micro uppercase text-tinta-tenue">Tu cuenta</p>
+        <h2 className="mt-1 break-words font-display text-titulo font-semibold text-tinta">
+          Tu perfil
+        </h2>
+      </div>
+    </header>
+  )
+}
+
+/* ================================================================ los avisos === */
+
+/** Una fila de aviso: el texto a la izquierda y la casilla a la derecha, en toda la fila.
+ *  Mide 52 px de alto para que se pueda pulsar con el pulgar, no solo el cuadradito. */
+function FilaDeAviso({ texto, activo, deshabilitado, alCambiar }: {
+  texto: string
+  activo: boolean
+  deshabilitado: boolean
+  alCambiar: (valor: boolean) => void
+}) {
+  const id = useId()
+  return (
+    <label
+      htmlFor={id}
+      className="flex min-h-[52px] cursor-pointer items-center justify-between gap-3 border-t border-borde"
+    >
+      <span className="text-cuerpo text-tinta">{texto}</span>
+      <input
+        id={id}
+        type="checkbox"
+        checked={activo}
+        disabled={deshabilitado}
+        onChange={(e) => alCambiar(e.target.checked)}
+        className="h-[22px] w-[22px] shrink-0 accent-verde disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </label>
+  )
+}
+
+/* ================================================================= los estados === */
+
+function CargandoPerfil() {
+  return (
+    <div role="status" aria-live="polite" className="flex flex-col gap-4">
+      <span className="sr-only">Cargando tu perfil…</span>
+      <div aria-hidden="true" className="flex items-center gap-3">
+        <div className="h-14 w-14 animate-pulse rounded-pastilla bg-marfil motion-reduce:animate-none" />
+        <div className="min-w-0 flex-1">
+          <div className="h-4 w-1/2 animate-pulse rounded-nota bg-marfil motion-reduce:animate-none" />
+          <div className="mt-2 h-3 w-1/3 animate-pulse rounded-nota bg-marfil motion-reduce:animate-none" />
+        </div>
+      </div>
+      {[0, 1].map((i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+        >
+          <div className="h-3 w-1/4 animate-pulse rounded-nota bg-marfil motion-reduce:animate-none" />
+          <div className="mt-4 h-11 w-full animate-pulse rounded-campo bg-marfil motion-reduce:animate-none" />
+          <div className="mt-2 h-11 w-full animate-pulse rounded-campo bg-marfil motion-reduce:animate-none" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* =================================================================== la página === */
 
 export function Ajustes() {
   const cliente = useQueryClient()
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
-  const estado = useEstado()
-  const [guardado, setGuardado] = useState<string | null>(null)
-  // Los dos estados de "darme de baja": si se ha pedido, y lo que se ha escrito. La
-  // confirmacion es escribir **tu propio usuario**, no un "si": ver la tarjeta de abajo.
+
+  // **Lo que se acaba de tocar, por delante de lo que trajo la sesión.** El guardado es una
+  // llamada de red; sin esto, la casilla no se movería hasta que volviera la respuesta y
+  // parecería que no ha hecho nada. Si el guardado falla, se quita el adelanto y vuelve a
+  // verse lo que hay de verdad en la cuenta.
+  const [locales, setLocales] = useState<Record<string, unknown>>({})
   const [baja, setBaja] = useState(false)
   const [texto, setTexto] = useState('')
-  const quien = sesion.data?.usuario?.usuario ?? ''
-
-  const borra = useMutation({
-    mutationFn: borrarme,
-    // Al darse de baja no queda sesion ni nada que mirar: se tira todo lo que hay en
-    // pantalla y la aplicacion vuelve a su estado de "sin entrar" (`yo` contesta null).
-    onSuccess: () => cliente.invalidateQueries(),
-  })
-
-  const prefs = sesion.data?.preferencias
-  const puestas = cadenasCerca(prefs)
 
   const guarda = useMutation({
-    mutationFn: (cadenas: string[]) => guardarPreferencia('cadenas_cerca', cadenas),
-    onSuccess: (_r, cadenas) => {
-      setGuardado(cadenas.length
-        ? `Guardado: ${cadenas.join(', ')}`
-        : 'Guardado: ninguna, se miran todas')
-      cliente.invalidateQueries({ queryKey: ['yo'] })
+    mutationFn: (cambio: { clave: string; valor: unknown }) =>
+      guardarPreferencia(cambio.clave, cambio.valor),
+    onSuccess: () => {
+      // La misma clave `['yo']` que leen el buscador (cadenas de cerca) y la gráfica
+      // (objetivo). Al refrescarla, lo guardado vale para el resto de la aplicación.
+      void cliente.invalidateQueries({ queryKey: ['yo'] })
+    },
+    onError: (_error, cambio) => {
+      setLocales((antes) => {
+        const copia = { ...antes }
+        delete copia[cambio.clave]
+        return copia
+      })
     },
   })
 
-  if (sesion.isLoading) return <Cargando que="tus ajustes" />
+  const salirSesion = useMutation({
+    mutationFn: salir,
+    // Se recarga todo, no solo `['yo']`: al salir no queda nada de esta cuenta que enseñar.
+    // **Solo si de verdad se ha salido**: si la llamada falla, la sesión sigue pudiendo ser
+    // válida y enseñar la puerta de entrada sería mentir sobre lo que ha pasado.
+    onSuccess: () => {
+      void cliente.invalidateQueries()
+    },
+  })
 
-  if (!sesion.data?.usuario) {
-    // **Con la puerta, no solo con el cartel.** Medido en un navegador el 24 de septiembre
-    // de 2026: esta pantalla decia «Entra para cambiar tus ajustes» y **no habia ni un
-    // enlace ni un boton** -- quien llegara aqui sin sesion (un marcador, un enlace de otro
-    // sitio) se quedaba mirando una frase sin salida. La de favoritos ya lo hacia bien
-    // (`Favoritos.tsx`): se entra desde la cesta, y se dice.
+  const borra = useMutation({
+    mutationFn: borrarme,
+    onSuccess: () => {
+      void cliente.invalidateQueries()
+    },
+  })
+
+  const preferencias: Record<string, unknown> = {
+    ...(sesion.data?.preferencias ?? {}),
+    ...locales,
+  }
+  const puestas = cadenasCerca(preferencias)
+  const objetivo = objetivoDe(preferencias)
+  const quien = sesion.data?.usuario?.usuario ?? ''
+
+  function guardaClave(clave: string, valor: unknown) {
+    setLocales((antes) => ({ ...antes, [clave]: valor }))
+    guarda.mutate({ clave, valor })
+  }
+
+  function alternaCadena(cadena: string) {
+    const nuevas = puestas.includes(cadena)
+      ? puestas.filter((c) => c !== cadena)
+      : [...puestas, cadena]
+    guardaClave('cadenas_cerca', nuevas)
+  }
+
+  if (sesion.isPending) {
     return (
-      <Vacio titulo="Entra para cambiar tus ajustes" comoPagina className="grow">
-        <p>
-          Los ajustes son de cada uno, así que hacen falta tus listas. Se entra desde{' '}
-          <Link to="/cesta" className="underline">la cesta</Link>.
-        </p>
-      </Vacio>
+      <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+        <CabeceraDelPerfil />
+        <CargandoPerfil />
+      </div>
     )
   }
 
-  const cadenas = estado.data?.cadenas.map((c) => c.cadena) ?? []
-
-  function alterna(cadena: string) {
-    const nueva = puestas.includes(cadena)
-      ? puestas.filter((c) => c !== cadena)
-      : [...puestas, cadena]
-    guarda.mutate(nueva)
+  if (sesion.isError) {
+    return (
+      <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+        <CabeceraDelPerfil />
+        <Fallo
+          error={sesion.error}
+          reintentar={() => void sesion.refetch()}
+          titulo="No he podido traer tu perfil"
+        />
+      </div>
+    )
   }
 
+  if (!sesion.data?.usuario) {
+    // **La puerta de siempre, la misma que usan el diario y las tendencias.** El perfil es
+    // de cada uno, así que sin sesión no hay nada que enseñar ni que guardar.
+    return <EntraParaVer texto="Tus preferencias se guardan con tu cuenta." />
+  }
+
+  const usuario = sesion.data.usuario
+  const nombre = usuario.nombre?.trim() || usuario.usuario
+  const inicial = (Array.from(nombre)[0] ?? '·').toUpperCase()
+  const opciones = [
+    ...CADENAS,
+    ...puestas.filter((c) => !(CADENAS as readonly string[]).includes(c)),
+  ]
+  const resumenCadenas = textoDeCadenas(puestas)
+
   return (
-    <div className="flex min-h-full flex-col gap-4">
-      <header>
-        <h2 className="text-xl font-semibold">Ajustes</h2>
-        <p className="text-cuerpo text-tinta-suave">
-          Has entrado como <strong>{sesion.data.usuario.usuario}</strong>.
-          <button
-            className="ml-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline"
-            onClick={async () => {
-              await salir()
-              cliente.invalidateQueries()
-            }}
-          >
-            Salir
-          </button>
-        </p>
-      </header>
+    <div className="mx-auto flex w-full max-w-lectura flex-col gap-4">
+      <CabeceraDelPerfil />
 
-      <Tarjeta>
-        <h2 className="mb-1 text-entrada font-semibold">Las cadenas que tienes cerca</h2>
-        <p className="mb-3 text-cuerpo text-tinta-suave">
-          Marca las que te pillan a mano. Con eso puesto, la búsqueda deja de ofrecerte
-          cosas de una cadena a la que no vas. Sin ninguna marcada se miran las cinco, que es
-          lo que hace por defecto.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {cadenas.map((c) => {
-            const dentro = puestas.includes(c)
-            return (
-              <button
-                key={c}
-                onClick={() => alterna(c)}
-                disabled={guarda.isPending}
-                aria-pressed={dentro}
-                className={
-                  'inline-flex min-h-[44px] items-center rounded-full border px-3 py-1 text-cuerpo ' +
-                  (dentro
-                    ? 'border-bien bg-bien-suave font-medium'
-                    : 'border-borde')
-                }
-              >
-                {nombreCadena(c)}
-              </button>
-            )
-          })}
-          {estado.isPending && <span className="text-cuerpo text-tinta-suave">…</span>}
+      {/* ---------------------------------------------------------------- la cuenta */}
+      <section aria-label="Cuenta" className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-pastilla bg-bosque font-display text-titulo font-semibold text-sobre-bosque"
+        >
+          {inicial}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-cuerpo-fuerte text-tinta">{nombre}</p>
+          <p className="truncate text-etiqueta text-tinta-tenue">@{usuario.usuario}</p>
         </div>
-        {puestas.length > 0 && (
-          <Boton
-            variante="sutil"
-            className="mt-3"
-            disabled={guarda.isPending}
-            onClick={() => guarda.mutate([])}
-          >
-            Quitar todas
-          </Boton>
-        )}
-        {guardado && <p className="mt-2 text-cuerpo"><Etiqueta tono="bien">{guardado}</Etiqueta></p>}
-        {guarda.isError && (
-          <Fallo error={guarda.error} titulo="No he podido guardar" />
-        )}
-      </Tarjeta>
+      </section>
 
-      {/* **La frescura y la cobertura, cadena a cadena.** Es el M18 del BACKLOG («cobertura medida en
-          Ajustes -> Fuentes»), y va aqui y no en una pantalla nueva porque **Ajustes ya esta viva, ya
-          pide `useEstado` y ya lista las cadenas**: crear otra pantalla para cinco lineas seria otra
-          puerta que mantener.
+      {/* ------------------------------------------------------------ preferencias */}
+      <section
+        aria-labelledby="preferencias"
+        className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+      >
+        <h2 id="preferencias" className="text-micro uppercase text-tinta-tenue">
+          Preferencias
+        </h2>
 
-          *Y es lo que faltaba para poder juzgar lo que se ve en el resto de la app:* un `mercadona
-          4226` sin su cobertura al lado se lee como «Mercadona tiene 4 226 productos» y como si eso
-          fuera su catalogo entero. Aqui se dice **contra que se mide** (filas de hoy contra la
-          referencia de su mejor dia), **de que dia es esa referencia** y **cuanto se ha movido** --
-          y para Lidl, que no cataloga entero, se dice que son sus ofertas semanales.
+        <details className="mt-1 border-t border-borde">
+          <Resumen className="min-h-[52px] text-cuerpo">
+            <span className="shrink-0 text-tinta">Cadena habitual</span>
+            <span
+              className="ml-auto min-w-0 truncate text-right text-tinta-suave"
+              title={resumenCadenas}
+            >
+              {resumenCadenas}
+            </span>
+          </Resumen>
+          <div className="pb-3 pt-1">
+            <p className="mb-2 text-etiqueta text-tinta-suave">
+              La búsqueda solo enseña productos de las cadenas que marques. Sin ninguna, se
+              miran todas.
+            </p>
+            <fieldset>
+              <legend className="sr-only">Cadenas que tienes cerca</legend>
+              <div className="flex flex-wrap gap-2">
+                {opciones.map((c) => (
+                  <Casilla
+                    key={c}
+                    etiqueta={nombreCadena(c)}
+                    checked={puestas.includes(c)}
+                    disabled={guarda.isPending}
+                    onChange={() => alternaCadena(c)}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            {puestas.length > 0 && (
+              <Boton
+                variante="sutil"
+                className="mt-2"
+                disabled={guarda.isPending}
+                onClick={() => guardaClave('cadenas_cerca', [])}
+              >
+                Quitar todas
+              </Boton>
+            )}
+          </div>
+        </details>
 
-          **Ninguna cifra se escribe a mano ni se rellena un hueco con un cero**: la frase sale de
-          `logica/cobertura.ts`, que solo pinta lo que la API manda y calla lo que falta. */}
-      <Tarjeta titulo="Frescura y cobertura de los precios">
-        <p className="mb-3 text-cuerpo text-tinta-suave">
-          De qué día es el precio que decide y cuánto catálogo se ha medido hoy en cada cadena.
-        </p>
-        {estado.isPending && (
-          <p className="text-cuerpo text-tinta-suave">Mirando de qué día son los precios…</p>
-        )}
-        {estado.error && (
-          <p className="text-cuerpo text-aviso">No he podido leer el estado de las cadenas.</p>
-        )}
-        {estado.data && (
-          <ul className="grid gap-2">
-            {estado.data.cadenas.map((c) => {
-              const cobertura = textoCobertura(c.cobertura)
-              return (
-                <li
-                  key={c.cadena}
-                  className="flex flex-col gap-0.5 border-b border-borde pb-2 last:border-0 last:pb-0"
-                >
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{nombreCadena(c.cadena)}</span>
-                    <span className={c.al_dia ? 'text-bien' : 'text-aviso'}>
-                      {c.al_dia ? 'al día' : `del ${fecha(c.ultimo_dia)}`}
-                    </span>
-                  </span>
-                  {/* *La frase de la medicion, en el tono de etiqueta que ya usa la app para los
-                      datos de apoyo. Sin cobertura no hay linea: no se inventa.* */}
-                  {cobertura && <span className="text-etiqueta text-secundaria">{cobertura}</span>}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Tarjeta>
+        {/* *El objetivo se cambia donde se ve el día entero*, que es Calorías. Aquí solo se
+            enseña el de hoy: dos editores para el mismo dato acabarían diciendo cosas
+            distintas, y el artboard ya lo dibuja como una fila que lleva a otra pantalla. */}
+        <Link
+          to="/calorias"
+          className="flex min-h-[52px] items-center justify-between gap-3 border-t border-borde text-cuerpo text-tinta transition-colors duration-rapida ease-suave hover:text-terracota"
+        >
+          <span className="shrink-0">Objetivo de calorías</span>
+          <span className="ml-auto flex min-w-0 items-center gap-1.5 text-tinta-suave">
+            <span className="truncate">
+              {objetivo === null ? 'Sin objetivo' : `${numero(objetivo, 0)} kcal`}
+            </span>
+            <FlechaDerecha />
+          </span>
+        </Link>
+      </section>
 
-      {/* **Darme de baja.** Quien presta su ordenador para que otros guarden su lista de la
-          compra tiene que darles la puerta de salida, y esta es la unica operacion de toda
-          la aplicacion que **no se puede deshacer**: por eso no basta con un boton, hay que
-          escribir el propio usuario. Un "¿seguro?" se pulsa sin leer -- lo hacia asi la
-          interfaz vieja (`app.js:1571-1603`) y la razon sigue siendo la misma. */}
-      <Tarjeta titulo="Darme de baja">
-        <p className="text-cuerpo text-tinta-suave">
-          Se borran <strong>tus listas, tus favoritos y tu cuenta</strong>. Lo que añadiste
-          a listas de otras personas se queda ahí, sin tu nombre, para no vaciarles la
-          compra. Esto no se puede deshacer.
+      {/* ------------------------------------------------------------------ avisos */}
+      <section
+        aria-labelledby="avisos"
+        className="rounded-tarjeta bg-papel p-4 shadow-apoyado"
+      >
+        <h2 id="avisos" className="text-micro uppercase text-tinta-tenue">
+          Avisos
+        </h2>
+        <div className="mt-1">
+          {AVISOS.map((aviso) => (
+            <FilaDeAviso
+              key={aviso.clave}
+              texto={aviso.texto}
+              activo={booleano(preferencias[aviso.clave], aviso.porDefecto)}
+              deshabilitado={guarda.isPending}
+              alCambiar={(valor) => guardaClave(aviso.clave, valor)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {guarda.isError && (
+        <Aviso tono="mal" titulo="No he podido guardar tus preferencias">
+          {textoDeError(guarda.error)}
+        </Aviso>
+      )}
+
+      {/* ---------------------------------------------------------------- la baja */}
+      <details className="rounded-tarjeta border border-borde bg-papel p-4">
+        <Resumen className="text-cuerpo text-tinta-suave">Dar de baja la cuenta</Resumen>
+        <p className="mt-2 text-etiqueta text-tinta-suave">
+          Se borran <strong className="text-tinta">tus listas, tus favoritos y tu cuenta</strong>.
+          Lo que añadiste a listas de otras personas se queda, sin tu nombre. Esto no se puede
+          deshacer.
         </p>
         {!baja && (
-          <Boton variante="sutil" className="mt-3" onClick={() => setBaja(true)}>
+          <Boton variante="sutil" className="mt-2" onClick={() => setBaja(true)}>
             Quiero darme de baja
           </Boton>
         )}
         {baja && (
-          <div className="mt-3 grid gap-2">
+          <div className="mt-2 grid gap-2">
             <CampoTexto
               etiqueta={`Escribe ${quien} para confirmarlo`}
               value={texto}
@@ -239,24 +474,34 @@ export function Ajustes() {
             )}
           </div>
         )}
-      </Tarjeta>
+      </details>
 
-      {/* **El aviso legal (tarea 5), y va aqui y no escondido en un pie.** Tres cosas que
-          quien usa esto tiene derecho a saber antes de fiarse de un numero:
+      {/* -------------------------------------------------------------- la sesión */}
+      <div className="flex flex-col gap-2">
+        <Boton
+          variante="normal"
+          className="w-full justify-center"
+          disabled={salirSesion.isPending}
+          onClick={() => salirSesion.mutate()}
+        >
+          {/* *El color va en el texto y no en el botón*: la variante `normal` trae
+              `text-tinta-fuerte`, y una clase de color añadida al botón no gana a la del
+              componente —las dos son utilidades del mismo tipo y el orden lo decide el CSS
+              generado—. El `<span>` sí pinta su propio color. */}
+          <span className="text-terracota">
+            {salirSesion.isPending ? 'Saliendo…' : 'Cerrar sesión'}
+          </span>
+        </Boton>
+        {salirSesion.isError && (
+          <Etiqueta tono="mal">{textoDeError(salirSesion.error)}</Etiqueta>
+        )}
+      </div>
 
-            · los precios son de las cadenas y pueden estar mal o cambiar -- la aplicacion
-              lee lo que ellas publican, y eso se dice;
-            · **no hay ninguna relacion con los supermercados**: ni patrocinio ni asociacion.
-              Sin esta frase, una aplicacion que nombra cinco cadenas y las compara parece
-              un producto de ellas;
-            · la nutricion viene de Open Food Facts y su licencia es ODbL, que **obliga a
-              citarla**;
-            · y los datos viven en el ordenador de casa, que es la mitad del proyecto.
-
-          Sin encabezado de seccion a proposito: es un pie de pagina, no una pantalla que
-          nadie viene a mirar. `text-etiqueta` en vez de `text-cuerpo` porque no se lee entero, se
-          consulta; y sigue por encima del minimo de contraste (lo mide la puerta). */}
-      <footer className="mt-2 border-t border-borde pt-4 text-etiqueta text-tinta-suave ">
+      {/* **El aviso legal sigue aquí y no es un texto de desarrollador.** Quien compra
+          tiene derecho a saber que los precios los publican las cadenas, que Cesta no
+          está afiliada a ninguna y de dónde sale la nutrición. No explica cómo está hecha
+          la app; dice qué se está mirando. */}
+      <footer className="mt-2 border-t border-borde pt-4 text-etiqueta text-tinta-tenue">
         <p>
           Los precios son orientativos y pueden variar: los publica cada cadena y Cesta se
           limita a leerlos. Cesta <strong>no está afiliada, asociada ni patrocinada</strong>{' '}
@@ -264,8 +509,16 @@ export function Ajustes() {
         </p>
         <p className="mt-2">
           Los datos viven en el ordenador de casa y no salen de ahí. Información nutricional
-          de <a className="underline" href="https://openfoodfacts.org" rel="noreferrer noopener"
-                target="_blank">Open Food Facts</a>, bajo licencia ODbL.
+          de{' '}
+          <a
+            className="inline-flex min-h-[44px] items-center underline"
+            href="https://openfoodfacts.org"
+            rel="noreferrer noopener"
+            target="_blank"
+          >
+            Open Food Facts
+          </a>
+          , bajo licencia ODbL.
         </p>
       </footer>
     </div>

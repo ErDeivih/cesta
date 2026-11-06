@@ -30,6 +30,12 @@ describe('Mis alimentos, con el cuaderno del aparato', () => {
   })
 
   it('lo guardado vuelve a la pantalla al abrirla (recarga)', () => {
+    // **La fecha del apunte tiene que ser HOY, no una escrita a mano.** *La pantalla filtra
+    // por su día local (`hoyLocal`, la misma regla que el resto del cuaderno); con un
+    // `2026-11-05` fijo, el test pasaba el 5 de noviembre y fallaba al día siguiente sin que
+    // nadie hubiera tocado la pantalla. Se construye igual que en `Cocina.tsx`.*
+    const d = new Date()
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     localStorage.setItem('cesta.cocina', JSON.stringify({
       receta: {
         version: 1,
@@ -41,7 +47,7 @@ describe('Mis alimentos, con el cuaderno del aparato', () => {
         }],
       },
       diario: [{
-        id: 'a1', fecha: '2026-11-05', nombre: 'Arroz con verduras',
+        id: 'a1', fecha: hoy, nombre: 'Arroz con verduras',
         raciones: 1, kcal: 320, incompleto: false,
       }],
     }))

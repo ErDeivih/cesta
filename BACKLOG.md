@@ -461,3 +461,20 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   sembradas; el listado dice «Faltan precios» y el coste real se ve al abrir la receta.
 - **Puertas**: tipos, npm 385, componentes 163/163 (44 nuevas), pytest recetas/UI 19 verdes, build
   servido. `test_detalle_receta.py` adaptado a la tilde del texto nuevo.
+
+### 38. Calorías, Ofertas y Perfil con los artboards — **hecho (06/11)**
+- **Calorías** (`Diario.tsx`): tarjeta Hoy con consumido real de `/api/diario`, objetivo de la
+  preferencia `objetivo:<fecha>` y control para ponerlo/cambiarlo/quitar; comidas con kcal reales,
+  «sin dato» cuando falta; conserva alta manual, borrado, navegación de día, puente de la compra,
+  cobertura por nutriente y enlaces. **Pendiente**: las referencias/pautas de salud.
+- **Ofertas** (nuevo `GET /api/ofertas` + `Ofertas.tsx`): 6.311 ofertas del 6/11, clasificadas en
+  3x2 (2.293), descuento (1.322), 2ª unidad (698), club (116), solo online (5) y otro (1.877);
+  condición por cadena y filtros. Precio de hoy, sin precio final ni ahorro inventado; cacheada
+  por versión de gold. Ruta `/compra/ofertas`, con entrada en el menú.
+- **Perfil** (`Ajustes.tsx`): cuenta, cadena habitual (`cadenas_cerca`), objetivo enlazado a
+  Calorías, tres avisos guardados en la cuenta y baja/cierre. Fuera la tarjeta de cobertura (§8;
+  el diagnóstico queda en `/panel`). Dieta y alérgenos no se pintan: no hay dónde guardarlos.
+- **Puertas**: tipos, npm 385, componentes 200/200, pytest (ofertas, perfil, diario, UI) 90 verdes;
+  `/api/ofertas` responde en :8080 tras reconstruir la API; build servido (`index-CMTljz9M.js`).
+- **Arreglos de paso**: `Cocina.test.tsx` usaba una fecha fija (5/11) y la pantalla filtra por hoy;
+  ahora construye el día local. `test_darme_de_baja.py` adaptado al texto nuevo del perfil.
