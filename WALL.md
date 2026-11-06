@@ -27,6 +27,9 @@ hasta agotar el bloque.
       barra Compra/Recetas/Calorías), con sus cuatro estados y sin textos de desarrollador (§8).
 - [x] Ingesta del 5/11 cerrada sola y vigilada: 6 cadenas, gold `20261105-123941`, y
       `scripts/vigilar_ingesta.py` enganchado a `ejecutar.bat` (avisa solo si hay fallo).
+- [x] **Vigilante con programación propia** (7/11): tarea «Cesta vigilante» diaria a las 14:00 y al
+      iniciar sesión, porque si el Programador no lanza la recolección el vigilante del `.bat`
+      tampoco corría. Deja `INGESTA-DETENIDA.txt`, log y JSON, y refresca el panel.
 
 ## Artboards **aprobados** por David (2026-11-05, 20:16)
 

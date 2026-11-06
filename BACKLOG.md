@@ -502,3 +502,15 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   pautas/mosaico/primera_vez/UI 45 verdes; build servido (`index-enO-8sjK.js`).
 - **Integración con apps de supers**: cerrada como importación manual + límites escritos
   (`docs/INTEGRACION-APPS-SUPERS-2026-11-06.md`).
+
+### 41. El vigilante tiene su propia programación — **hecho (07/11)**
+- **Problema**: el vigilante vivía al final de `ejecutar.bat`; si el Programador no lanzaba la
+  recolección, el vigilante tampoco corría y el fallo más grave (el día no empieza) quedaba callado.
+- **Hecho**: `ejecutar-vigilante.bat` (propio, `--solo-fallos`, segunda mirada a los 5 min, aviso
+  visible en `data/INGESTA-DETENIDA.txt`, log, JSON y refresco de `metricas-cesta.json`) y tarea
+  **«Cesta vigilante»** registrada: diaria a las **14:00** y al iniciar sesión con 25 min de
+  margen, `StartWhenAvailable`. Próxima ejecución comprobada: 07/11/2026 14:00.
+- **Pruebas**: `tests/test_vigilante_propio.py` (cableado del .bat y del registrador) + las 19 del
+  vigilante; el caso `sin_pasada` ya estaba cubierto en `tests/test_vigilar_ingesta.py`.
+- **Límite**: corre con la sesión iniciada (igual que la recolección); no puede avisar de que la
+  propia tarea no se ejecutó. Ver `docs/INGESTA-VIGILANCIA-PROPIA-2026-11-07.md`.
