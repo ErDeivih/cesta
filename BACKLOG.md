@@ -478,3 +478,27 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   `/api/ofertas` responde en :8080 tras reconstruir la API; build servido (`index-CMTljz9M.js`).
 - **Arreglos de paso**: `Cocina.test.tsx` usaba una fecha fija (5/11) y la pantalla filtra por hoy;
   ahora construye el día local. `test_darme_de_baja.py` adaptado al texto nuevo del perfil.
+
+### 39. Integración con apps de supers: manual y con límites — **hecho (06/11)**
+- **Decisión**: no hay API pública de consumidor en ninguna de las seis cadenas. La integración
+  lícita es **importación manual** (texto pegado con `PegarEnLaLista`, ya en la lista) y, si la
+  persona quiere, entregar su exportación RGPD (la solicita ella a la cadena; no somos su
+  representante). Cero credenciales, cero login automatizado, cero scraping con sesión.
+- **Documento**: `docs/INTEGRACION-APPS-SUPERS-2026-11-06.md` (qué permite cada cadena, fuentes,
+  límites y lo que faltaría para importar CSV/JSON).
+- **UI**: no se pinta «conectar cuenta» porque no funcionaría; las ofertas de club se enseñan
+  como condición y no se restan del total.
+
+### 40. Pautas de salud y aprender de las listas — **hecho (06/11)**
+- **Calorías / Pautas** (`/calorias/pautas`): cinco pautas neutrales, estimación declarada
+  Mifflin-St Jeor × actividad mostrada como rango ±10 %, botón «Usar como objetivo» que guarda
+  `objetivo:<fecha>`, y seis fuentes externas con enlace (WHO, EFSA ×2, FAO/WHO/UNU, AESAN,
+  Mifflin-St Jeor). «No es consejo médico.»; sin déficit, dietas, IMC ni «deberías».
+- **Aprender de las listas** (`Mosaico.tsx` + montaje en `Cesta.tsx`): «Rellenar de una vez (N)»
+  con previa de nombres y confirmación, una llamada por producto, parada en el primer fallo y
+  resultado «K de N»; descuenta `puestos` y los grupos ya en la lista; «La siguiente sería X» por
+  el orden de `GET /api/habituales`; solo en la lista de casa; el enlace a comparar queda al lado.
+- **Puertas**: tipos, npm 385, componentes 217 (7 de Mosaico y 2 de Cesta nuevas), pytest
+  pautas/mosaico/primera_vez/UI 45 verdes; build servido (`index-enO-8sjK.js`).
+- **Integración con apps de supers**: cerrada como importación manual + límites escritos
+  (`docs/INTEGRACION-APPS-SUPERS-2026-11-06.md`).

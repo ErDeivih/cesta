@@ -1491,6 +1491,15 @@ export function Cesta() {
   const lineas = conPendientes(detalle.data?.lineas ?? [], cola)
   const porCoger = lineas.filter((l) => l.tachado_en === null)
   const enElCarro = lineas.filter((l) => l.tachado_en !== null)
+  /** **Los grupos que ya están en esta lista**, para que el mosaico no los vuelva a ofrecer.
+   *
+   *  *Es el dato que convierte «rellenar sola» en una sugerencia y no en un duplicado: se pasa a
+   *  `Mosaico` y se resta antes de contar y de enseñar la previa. Sin él, el botón ofrecería
+   *  añadir otra vez la leche que ya está apuntada. Se quitan los nulos (las líneas de texto
+   *  libre no apuntan a ningún grupo) y los repetidos (dos líneas del mismo grupo son una).* */
+  const gruposEnLaLista = [...new Set(
+    lineas.map((l) => l.grupo_id).filter((g): g is number => g !== null),
+  )]
   const precios = preciosPorLinea(repartoDeLaLista.data)
   const cambia = useMutation({
     // **`networkMode: 'always'` es la pieza que hace que la cola sirva.** Por defecto,
@@ -1651,7 +1660,7 @@ export function Cesta() {
             apunta en la lista de casa, que se crea sola, y la cantidad se cambia aquí.
           </p>
         </Vacio>
-        <Mosaico limite={6} vacia />
+        <Mosaico limite={6} enUnaLista />
       </div>
     )
   }
@@ -1831,19 +1840,12 @@ export function Cesta() {
                          ?? sesion.data?.usuario?.usuario ?? null} />
 
           {lineas.length === 0 && (
-            <>
-              <Vacio titulo="La lista está vacía" className="grow">
-                <p>
-                  Busca un producto o toca uno de abajo: se apunta en un toque, y la
-                  cantidad se cambia aquí.
-                </p>
-              </Vacio>
-              {/* La misma cuadricula que en el otro estado vacio: la pregunta que se
-                  trae a esta pantalla es "¿que me falta?", y con la lista vacia la
-                  respuesta es "todo". Datos reales y un toque, no un cartel que
-                  manda a buscar. */}
-              <Mosaico limite={6} vacia />
-            </>
+            <Vacio titulo="La lista está vacía" className="grow">
+              <p>
+                Busca un producto o toca uno de abajo: se apunta en un toque, y la
+                cantidad se cambia aquí.
+              </p>
+            </Vacio>
           )}
 
           {/* **Dos trozos, no una lista.** Es la unica pantalla que se usa de pie, en
@@ -2021,9 +2023,8 @@ export function Cesta() {
                 sello={detalle.data.cotizacion?.sello ?? null}
               />
 
-              {/* *** AÑADIR Y COMPARAR. *** *Las dos puertas del artboard, y la de comparar
-                  es la unica que lleva a esa pantalla: dos enlaces con la misma promesa se
-                  contradicen el dia que una cambie.* */}
+              {/* *** AÑADIR PRODUCTO. *** *La puerta del artboard para buscar lo que no
+                  esta en la cuadricula de abajo.* */}
               <Link
                 to="/compra"
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-campo border border-dashed border-borde-fuerte px-4 text-cuerpo text-tinta-suave transition-colors duration-rapida ease-suave hover:text-tinta"
@@ -2031,7 +2032,32 @@ export function Cesta() {
                 <span aria-hidden="true" className="text-entrada leading-none">+</span>
                 Añadir producto
               </Link>
+            </>
+          )}
 
+          {/* *** RELLENAR LO DE SIEMPRE, *con previa y sin añadir a escondidas*. *** *
+              *WALL, «aprender de las listas»: la sugerencia se revisa antes de entrar
+              (`INVESTIGACION-APP.md` §9.2-9.3). El componente `Mosaico` es quien la construye —
+              «Se van a añadir N productos» con sus nombres— y aquí solo se monta donde tiene
+              sentido:*
+              *
+              *  - **Solo en la lista de casa** (`useAnadeALaCesta` apunta ahí). Ofrecerlo mirando
+              *    otra lista añadiría a escondidas a una lista que no es la que se tiene delante.
+              *  - **También con la lista vacía**, que es donde la cuadricula de la compra básica
+              *    contesta «¿qué me falta?» (regla 1 de `Mosaico.tsx`).
+              *  - **Y con `enLaLista`**, para que no vuelva a ofrecer lo que ya está apuntado.
+              *
+              * *Va justo antes de «Dónde sale mejor tu cesta» a propósito: rellenar y comparar
+              * son el mismo gesto, y la puerta a la comparación queda **al lado del relleno**,
+              * sin una segunda pantalla ni un segundo enlace con la misma promesa.* */}
+          {(esDeCasa || lineas.length === 0) && (
+            <Mosaico limite={6} enUnaLista enLaLista={gruposEnLaLista} />
+          )}
+
+          {lineas.length > 0 && (
+            <>
+              {/* *** COMPARAR. *** *La unica puerta a esa pantalla: dos enlaces con la misma
+                  promesa se contradicen el dia que una cambie.* */}
               <section aria-labelledby="comparar" className="flex flex-col gap-2">
                 <h2
                   id="comparar"

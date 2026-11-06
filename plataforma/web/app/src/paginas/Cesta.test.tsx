@@ -58,9 +58,16 @@ vi.mock('../api/cesta', async (importOriginal) => {
 })
 
 // *La cuadricula de lo usual tiene su propia pantalla y sus propias pruebas: aqui solo
-// estorba (pinta seis tarjetas que no son de esta medida).*
+// estorba (pinta seis tarjetas que no son de esta medida). Lo que si se mide aqui es **lo que
+// la pantalla le manda**: que grupos ya estan en la lista y si es una lista donde se rellena.*
 vi.mock('../componentes/Mosaico', () => ({
-  Mosaico: () => <div data-testid="mosaico" />,
+  Mosaico: (props: { enUnaLista?: boolean; enLaLista?: number[] }) => (
+    <div
+      data-testid="mosaico"
+      data-enunalista={String(props.enUnaLista ?? false)}
+      data-enlalista={JSON.stringify(props.enLaLista ?? [])}
+    />
+  ),
 }))
 
 import { Cesta } from './Cesta'
@@ -389,6 +396,39 @@ describe('añadir y comparar', () => {
     expect(comparar).toHaveLength(1)
     expect(comparar[0]).toHaveAttribute('href', '/compra/listas/L1/comparar')
     expect(screen.getByText('Dónde sale mejor tu cesta')).toBeInTheDocument()
+  })
+})
+
+/* ========================================================= rellenar sola === */
+
+describe('rellenar lo de siempre', () => {
+  it('con la lista de casa, deja rellenar y comparar en el mismo sitio', async () => {
+    monta()
+    const mosaico = await screen.findByTestId('mosaico')
+    // *La cuadricula de la lista se pinta como tal: la compra básica tiene su título de
+    // verdad, no el de «lo de siempre».*
+    expect(mosaico).toHaveAttribute('data-enunalista', 'true')
+    // *Y se le dicen los grupos que ya están dentro: no se ofrece lo que ya está apuntado.*
+    expect(JSON.parse(mosaico.getAttribute('data-enlalista') ?? '[]')).toEqual([10])
+
+    // *** LA PUERTA A COMPARAR, JUNTO AL RELLENO. ***
+    // *«Sugerir otro sitio» es la comparación que ya existe; aquí se comprueba que está
+    // **después** del bloque de relleno, en el mismo flujo y sin abrir otra pantalla.*
+    const comparar = screen.getByRole('link', { name: 'Comparar mi cesta' })
+    expect(
+      mosaico.compareDocumentPosition(comparar) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('en una lista que no es la de casa no ofrece rellenar', async () => {
+    // *`useAnadeALaCesta` apunta a la lista de casa: ofrecer «rellenar» mirando otra lista
+    // añadiría a escondidas a una lista que no es la que se tiene delante.*
+    dobles.listas = [{ id: 'L1', nombre: 'La del pueblo', es_de_casa: false, lineas: 3 }]
+    monta()
+    const selector = await screen.findByRole('combobox', { name: 'Lista' })
+    fireEvent.change(selector, { target: { value: 'L1' } })
+    await screen.findByRole('heading', { name: 'La del pueblo' })
+    expect(screen.queryByTestId('mosaico')).not.toBeInTheDocument()
   })
 })
 

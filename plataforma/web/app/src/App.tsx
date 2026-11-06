@@ -35,6 +35,7 @@ const [Cocina, CocinaProvider] = [
 ]
 const Escaner = lazy(() => import('./paginas/Escaner').then((m) => ({ default: m.Escaner })))
 const Diario = lazy(() => import('./paginas/Diario').then((m) => ({ default: m.Diario })))
+const Pautas = lazy(() => import('./paginas/Pautas').then((m) => ({ default: m.Pautas })))
 const Tendencias = lazy(() => import('./paginas/Tendencias').then((m) => ({ default: m.Tendencias })))
 const ImportarReceta = lazy(() => import('./paginas/ImportarReceta').then((m) => ({ default: m.ImportarReceta })))
 const CocinaModo = lazy(() => import('./paginas/CocinaModo').then((m) => ({ default: m.CocinaModo })))
@@ -79,6 +80,10 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/escaner')) return 'Escáner'
   if (ruta.startsWith('/avisos')) return 'Avisos'
   if (ruta.startsWith('/ajustes')) return 'Tu perfil'
+  // **Pautas no es el diario.** *El armazon decide el titulo con `tituloDeSeccion`, que hoy
+  // devuelve «Diario» para todo lo que cuelga de `/calorias`; esta linea es la que la pestaña
+  // necesita para no llamarse como la pantalla de la que sale.*
+  if (ruta.startsWith('/calorias/pautas')) return 'Pautas de salud'
   return tituloDeSeccion(ruta)
 }
 
@@ -179,6 +184,14 @@ export function App() {
         <Route
           path="/calorias"
           element={<LayoutSuite app="calorias"><Diario /></LayoutSuite>}
+        />
+        {/* *** PAUTAS DE SALUD. *** *
+            *La referencia y la estimacion declarada, con sus fuentes oficiales.* *Cuelga de
+            Calorias porque nace de la misma pregunta -- cuanto como y cuanto gasto -- y se llega
+            desde el diario, que es donde esta el dato que se quiere entender.* */}
+        <Route
+          path="/calorias/pautas"
+          element={<LayoutSuite app="calorias"><Pautas /></LayoutSuite>}
         />
         <Route
           path="/calorias/alimentos"

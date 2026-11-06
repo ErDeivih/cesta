@@ -35,6 +35,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 SRC = RAIZ / "plataforma" / "web" / "app" / "src"
 MOSAICO = SRC / "componentes" / "Mosaico.tsx"
 BUSCAR = SRC / "paginas" / "Buscar.tsx"
+CESTA = SRC / "paginas" / "Cesta.tsx"
 CONSULTAS = SRC / "api" / "consultas.ts"
 
 
@@ -119,3 +120,76 @@ def test_la_consulta_pide_lo_habitual_con_su_limite():
     assert "useAnadeALaCesta" in consultas, \
         "anadir a la lista tiene que estar en un solo sitio: la lista de casa, y " \
         "creandola si no hay ninguna"
+
+
+# --------------------------------------------------------- rellenar sola ---
+#
+# La casilla de `WALL.md` «aprender de las listas: rellenar sola, recomendar,
+# sugerir otro sitio». Lo que se vigila aqui no es el dibujo: es que la
+# sugerencia **se vea antes de entrar** (`INVESTIGACION-APP.md` §9.2-9.3: nunca
+# anadiendo a escondidas), que lo que ya esta no se ofrezca, y que un fallo a
+# medias diga cuantos entraron -- callarlo dejaria productos sin anadir y un
+# reintento a ciegas.
+
+
+def test_rellenar_ensena_lo_que_va_a_entrar_antes_de_guardar():
+    """*«Se van a añadir N productos» + sus nombres, y solo entonces se confirma.*
+
+    *Sin la previa, el boton seria un «anadir todo» a ciegas: lo contrario de la
+    sugerencia revisable que pide el §9.2.*
+    """
+    mosaico = _leer(MOSAICO)
+    assert "Se van a añadir" in mosaico, \
+        "el relleno tiene que decir cuantos productos van a entrar antes de entrar"
+    assert "Sí, añadir" in mosaico and "No, déjalo" in mosaico, \
+        "la previa necesita su confirmacion y su salida, no solo un boton"
+    # *Una peticion por producto: `useAnadeALaCesta` no tiene lote y aqui no se inventa.*
+    assert "anade.mutateAsync(" in mosaico, \
+        "el relleno se hace con la misma mutacion de un producto, no con un endpoint nuevo"
+
+
+def test_el_relleno_no_repite_lo_que_ya_esta():
+    """*Dos restas, y las dos hacen falta: lo anadido aqui y lo que ya trae la lista.*
+
+    *Sin la segunda, mirando una lista de casa con leche, el boton ofreceria anadir
+    leche otra vez.*
+    """
+    mosaico = _leer(MOSAICO)
+    assert "enLaLista" in mosaico and "puestos" in mosaico, \
+        "la cuadricula no sabe que hay dentro de la lista: volveria a ofrecer lo mismo"
+    assert "pendientes" in mosaico, \
+        "la previa y el contador tienen que salir de lo que de verdad falta"
+
+
+def test_el_relleno_cuenta_lo_que_entro_y_lo_que_no():
+    """*«Se han añadido 1 de 3» es la unica forma de reintentar sin repetir.*
+
+    *Un fallo a medias tiene que decir cuantos entraron y que el resto no; el
+    `Aviso` de error se pinta con las cuentas, no con un «algo ha fallado».*
+    """
+    mosaico = _leer(MOSAICO)
+    assert "Se han añadido" in mosaico and "de ${resultado.total}" in mosaico, \
+        "el resultado del relleno tiene que dar las cuentas, no solo un aviso"
+    assert "El resto no ha entrado" in mosaico, \
+        "cuando falla a medias hay que decir que NO entro todo"
+    assert "No se ha añadido ninguno" in mosaico, \
+        "y cuando no entra ninguno, decirlo sin inventar un exito"
+
+
+def test_el_relleno_va_en_la_lista_y_junto_a_la_comparacion():
+    """*La puerta a la comparacion es la que ya existe: no se duplica.*
+
+    *«Sugerir otro sitio» se contesta con `/compra/listas/:id/comparar`, y el
+    bloque de relleno se monta justo antes para que rellenar y comparar sean el
+    mismo gesto. Dos enlaces con la misma promesa se contradicen el dia que una
+    cambie (`Cesta.tsx:2024`).*
+    """
+    cesta = _leer(CESTA)
+    assert "<Mosaico limite={6} enUnaLista enLaLista={gruposEnLaLista} />" in cesta, \
+        "la lista no monta el relleno, o lo monta sin decirle que ya tiene dentro"
+    assert cesta.index("<Mosaico limite={6} enUnaLista") < cesta.index(
+        'aria-labelledby="comparar"'), \
+        "el bloque de relleno tiene que quedar antes del enlace a la comparacion"
+    assert "(esDeCasa || lineas.length === 0)" in cesta, \
+        ("rellenar apunta a la lista de casa (`useAnadeALaCesta`): ofrecerlo mirando otra "
+         "lista anadiria a escondidas a una lista que no es la que se tiene delante")

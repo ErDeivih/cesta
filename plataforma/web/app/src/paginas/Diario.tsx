@@ -988,6 +988,12 @@ function DiarioDelDia() {
         >
           Mis alimentos
         </Link>
+        <Link
+          to="/calorias/pautas"
+          className="inline-flex min-h-[44px] items-center text-cuerpo text-verde underline underline-offset-2"
+        >
+          Pautas de salud
+        </Link>
       </nav>
     </div>
   )

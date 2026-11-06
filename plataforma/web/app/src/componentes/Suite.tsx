@@ -117,6 +117,7 @@ export const APLICACIONES: Aplicacion[] = [
       { a: '/calorias', texto: 'Mi diario', Icono: IconoLibro },
       { a: '/calorias/alimentos', texto: 'Mis alimentos', Icono: IconoPlato },
       { a: '/calorias/tendencias', texto: 'Tendencias', Icono: IconoGrafica },
+      { a: '/calorias/pautas', texto: 'Pautas', Icono: IconoLibro },
     ],
   },
 ]
@@ -139,6 +140,7 @@ export function tituloDeSeccion(ruta: string): string {
   if (ruta.includes('/comparar/')) return 'Comparar'
   if (ruta.includes('/listas/')) return 'Lista'
   if (app.clave === 'recetas' && ruta !== '/recetas/plan') return 'Receta'
+  if (ruta.startsWith('/calorias/pautas')) return 'Pautas de salud'
   if (app.clave === 'calorias' && ruta !== '/calorias/alimentos'
       && ruta !== '/calorias/tendencias') return 'Diario'
   return app.nombre

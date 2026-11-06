@@ -13,11 +13,11 @@ hasta agotar el bloque.
 - [x] Ficha de producto (precio, €/kg, historial, alternativas). **Hecho 5/11** (ruta `/compra/productos/:fuente/:idFuente`; `logica/juicio.ts` con la ventana real y pruebas rojo→verde).
 - [x] Comparar mi cesta. **Hecho 5/11** (`/compra/listas/:listaId/comparar`; corona solo la cadena que cuenta todas las líneas y no resta ofertas condicionadas).
 - [x] Favoritos, lista de la compra. **Hecho 5/11** (vista de lista con precio estimado y precio por línea; favoritos con rango real de historial).
-- [ ] Calculadora de calorías con pautas de salud. **Pantalla hecha 6/11** (objetivo y comidas con kcal reales); faltan las referencias y pautas de salud.
+- [x] Calculadora de calorías con pautas de salud. **Hecho 6/11** (pantalla de objetivo/comidas + `/calorias/pautas`: estimación declarada con Mifflin y referencias WHO/EFSA/FAO/AESAN con enlace, sin prescribir).
 - [x] Recetas (establecidas y de usuario). **Hecho 5/11** (listado con recetario/archivadas y detalle con coste por ingrediente cuando hay precios; no hay semilla de recetas «establecidas» en la API).
 - [x] Ofertas con su tipo y si exigen club del súper. **Hecho 6/11** (`/compra/ofertas` + `GET /api/ofertas`: tipo, condición y club; sin precio final inventado).
-- [ ] Integración con las apps de los supermercados.
-- [ ] Aprender de las listas: rellenar sola, recomendar, sugerir otro sitio.
+- [x] Integración con las apps de los supermercados. **Hecho 6/11, con límites**: no hay API de consumidor en las seis cadenas; la vía lícita es la importación manual (pegar lista/ticket) que ya existe, y la exportación RGPD la pide la persona. Sin credenciales ni login automatizado (`docs/INTEGRACION-APPS-SUPERS-2026-11-06.md`).
+- [x] Aprender de las listas: rellenar sola, recomendar, sugerir otro sitio. **Hecho 6/11** («Rellenar de una vez» con previa y confirmación, «la siguiente» por el orden de la API, y comparar al lado; sin inventar frecuencias).
 
 ## Hecho antes de esta lista (no estaba en el bloque, pero sostiene las casillas)
 

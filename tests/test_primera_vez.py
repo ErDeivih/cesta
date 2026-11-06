@@ -107,12 +107,20 @@ def test_la_cesta_vacia_no_es_un_cartel_que_manda_a_buscar():
 
     assert re.search(r"import\s*\{[^}]*\bMosaico\b[^}]*\}\s*from", cesta), \
         "la cesta no importa la cuadricula"
-    # En **los dos** estados vacios: sin ninguna lista, y con la lista sin lineas. Son dos
-    # ramas distintas del mismo fichero (una sale antes de pintar la lista) y las dos se
-    # ven: la primera, al registrarse; la segunda, al quitar la ultima linea.
-    assert cesta.count("<Mosaico limite={6} vacia />") == 2, (
-        "la cuadricula no esta en los dos estados vacios de la cesta: "
-        f"{cesta.count('<Mosaico limite={6} vacia />')}")
+    # En **los dos** estados vacios: sin ninguna lista, y con la lista sin lineas.
+    #
+    # *** Y desde el 6/11/2026 el segundo ya no es un bloque aparte. *** *El relleno de
+    # «lo de siempre» tiene que estar tambien con la lista llena (es lo que pide la casilla
+    # de aprender de las listas: rellenar la lista de casa), y montarlo en las dos ramas lo
+    # desmontaria al anadir el primer producto -- justo cuando hay que decir cuantos
+    # entraron y si fallo alguno. Asi que hay **un** bloque para la lista, vacia o no
+    # (`esDeCasa || lineas.length === 0`), y **otro** en la pantalla de quien no tiene
+    # ninguna lista todavia.*
+    assert cesta.count("<Mosaico limite={6}") == 2, (
+        "la cuadricula no esta en la pantalla sin listas y en la lista: "
+        f"{cesta.count('<Mosaico limite={6}')}")
+    assert "(esDeCasa || lineas.length === 0)" in cesta, \
+        "el bloque de la lista no cubre la lista vacia (ni la de casa)"
     # Y la frase deja de mandar a otra pantalla a hacer el trabajo.
     assert "abre su ficha y pulsa" not in cesta, \
         "la cesta vacia vuelve a mandar a la ficha a dar tres pasos"
@@ -122,16 +130,20 @@ def test_con_la_cesta_vacia_la_compra_basica_si_se_ensena():
     """La excepcion a la regla del mosaico, escrita y con su razon.
 
     En el buscador, sin historial **no se pinta la cuadricula de basicos**: son 24
-    recuadros que no explican nada (`Mosaico.tsx`, regla 1). En la cesta vacia si, porque
+    recuadros que no explican nada (`Mosaico.tsx`, regla 1). En la cesta si, porque
     la pregunta que se trae a esa pantalla es *"¿que me falta?"* y con la lista vacia la
     respuesta es "todo". Lo que no puede pasar es que se ensene **sin decir de donde
     sale**: titulada "Lo de siempre", una cuadricula de la compra basica seria una mentira
     dicha en un titulo.
+
+    *`vacia` paso a llamarse `enUnaLista` el 6/11/2026, al entrar el relleno: la misma
+    excepcion vale para la lista **con** productos (ahi la cuadricula es la sugerencia de
+    «rellenar de una vez»), y el nombre viejo describia solo la mitad del caso.*
     """
     mosaico = MOSAICO.read_text(encoding="utf-8")
-    assert "vacia = false" in mosaico, "no hay forma de pedir la cuadricula en la cesta"
-    assert re.search(r"soloBasico\s*&&\s*!vacia", mosaico), \
-        "`vacia` no quita el respaldo de la tarjeta de la primera vez"
+    assert "enUnaLista = false" in mosaico, "no hay forma de pedir la cuadricula en la cesta"
+    assert re.search(r"soloBasico\s*&&\s*!enUnaLista", mosaico), \
+        "`enUnaLista` no quita el respaldo de la tarjeta de la primera vez"
     assert "TITULO[tarjetas[0]?.origen]" in mosaico, \
         "el titulo no dice de donde sale lo que se esta viendo"
 
