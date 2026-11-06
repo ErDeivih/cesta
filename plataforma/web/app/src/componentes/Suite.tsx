@@ -308,7 +308,7 @@ function Menu({ app, onNavegar, idBotonCerrar }: {
             solo falta decidir donde se ve. */}
         <EnlaceLateral a="/avisos" texto="Avisos" Icono={IconoPanel}
           onNavegar={onNavegar} />
-        <EnlaceLateral a="/ajustes" texto="Cuenta y preferencias" Icono={IconoPersona}
+        <EnlaceLateral a="/ajustes" texto="Tu perfil" Icono={IconoPersona}
           onNavegar={onNavegar} />
         {/* *** «Aprender» ya no está.*** *
             *Era un marcador de desarrollo —«el material didáctico vive en `docs/aprende/`»— a dos

@@ -78,7 +78,7 @@ export function tituloDe(ruta: string): string {
   if (ruta.startsWith('/panel')) return 'Panel'
   if (ruta.startsWith('/escaner')) return 'Escáner'
   if (ruta.startsWith('/avisos')) return 'Avisos'
-  if (ruta.startsWith('/ajustes')) return 'Ajustes'
+  if (ruta.startsWith('/ajustes')) return 'Tu perfil'
   return tituloDeSeccion(ruta)
 }
 
