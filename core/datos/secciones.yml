@@ -1075,6 +1075,7 @@ mapa:
     "verduras/verduras-congeladas": frutas-verduras                    # nueva 2026-10-20
     "carnes/pavo-y-conejo": carniceria                                 # nueva 2026-10-23
     "infantil/pouches-y-snacks": bebe                                  # nueva 2026-10-27
+    "platos-preparados-y-pizzas/pizzas-congeladas": preparados         # nueva 2026-11-06
   mercadona:
     "Cuidado facial y corporal": higiene-belleza                          # 458
     "Limpieza y hogar": droguería-limpieza                                # 345

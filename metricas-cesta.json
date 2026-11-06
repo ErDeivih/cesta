@@ -1,43 +1,43 @@
 {
- "fecha_datos": "2026-11-05",
+ "fecha_datos": "2026-11-06",
  "cadenas": [
   {
    "nombre": "alcampo",
    "hoy": true,
-   "dias": 44
+   "dias": 45
   },
   {
    "nombre": "aldi",
    "hoy": true,
-   "dias": 58
+   "dias": 59
   },
   {
    "nombre": "carrefour",
    "hoy": true,
-   "dias": 52
+   "dias": 53
   },
   {
    "nombre": "dia",
    "hoy": true,
-   "dias": 54
+   "dias": 55
   },
   {
    "nombre": "lidl",
    "hoy": true,
-   "dias": 22
+   "dias": 23
   },
   {
    "nombre": "mercadona",
    "hoy": true,
-   "dias": 58
+   "dias": 59
   }
  ],
- "ultima_ejecucion": "2026-11-05T12:27:50+01:00",
- "comparables_con_precio": 38517,
- "en_varias_cadenas": 8797,
- "dias_historial": 60,
+ "ultima_ejecucion": "2026-11-06T12:27:09+01:00",
+ "comparables_con_precio": 38691,
+ "en_varias_cadenas": 8811,
+ "dias_historial": 61,
  "ingesta": {
-  "fecha": "2026-11-05",
+  "fecha": "2026-11-06",
   "estado": "aviso",
   "avisos": 1,
   "codigos": [
