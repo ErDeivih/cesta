@@ -42,11 +42,13 @@ powershell -NoProfile -Command "Start-Sleep -Seconds 300" >nul 2>&1
 call :vigila
 if !errorlevel! equ 0 goto :bien
 
-echo %date% %time% FALLO: la ingesta de hoy no arranco o no publico el dato.>> "data\avisos_ingesta.log"
-> "data\INGESTA-DETENIDA.txt" echo La ingesta de hoy no ha arrancado o no ha publicado el dato (%date% %time%).
->> "data\INGESTA-DETENIDA.txt" echo Mira data\avisos_ingesta.json y data\avisos_ingesta.log.
->> "data\INGESTA-DETENIDA.txt" echo Para relanzarla: ejecutar.bat
-echo Cesta: la ingesta de hoy no arranco o no publico el dato. Mira data\avisos_ingesta.json
+echo %date% %time% FALLO: la ingesta de hoy no arranco o no termino bien.>> "data\avisos_ingesta.log"
+(
+  echo La ingesta de hoy no ha arrancado o no ha terminado bien. Fecha: %date% %time%.
+  echo Mira data\avisos_ingesta.json y data\avisos_ingesta.log.
+  echo Para relanzarla: ejecutar.bat
+) > "data\INGESTA-DETENIDA.txt"
+echo Cesta: la ingesta de hoy no arranco o no termino bien. Mira data\avisos_ingesta.json
 "%PY%" -m projects.cesta.metricas >nul 2>&1
 exit /b 1
 

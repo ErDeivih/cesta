@@ -1,6 +1,6 @@
 # Las cifras de la ultima ejecucion
 
-**Ejecucion del 6 de noviembre de 2026.** Este documento tiene un solo trabajo:
+**Ejecucion del 7 de noviembre de 2026.** Este documento tiene un solo trabajo:
 llevar los numeros de **hoy**. Lo reescribe entero
 `projects/cesta/cifras.py` al final de cada pasada.
 
@@ -35,18 +35,18 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 ## Historico
 
-    2.655.616 filas, 61 dias acumulados
+    2.685.077 filas, 62 dias acumulados
 
 ## Por cadena, la ultima captura de cada una
 
 | cadena | productos | errores | tiempo | fecha |
 |---|---:|---:|---:|---|
-| alcampo | 22.865 | 0 | 5.899 s | 2026-11-06 |
-| carrefour | 16.773 | 1 | 2.793 s | 2026-11-06 |
-| dia | 5.708 | 0 | 690 s | 2026-11-06 |
-| mercadona | 4.270 | 0 | 107 s | 2026-11-06 |
-| aldi | 2.823 | 0 | 96 s | 2026-11-06 |
-| lidl | 91 | 0 | 4 s | 2026-11-06 |
+| alcampo | 22.897 | 1 | 6.327 s | 2026-11-07 |
+| carrefour | 16.811 | 1 | 2.830 s | 2026-11-07 |
+| dia | 5.704 | 0 | 713 s | 2026-11-07 |
+| mercadona | 4.280 | 0 | 115 s | 2026-11-07 |
+| aldi | 2.826 | 0 | 100 s | 2026-11-07 |
+| lidl | 91 | 0 | 5 s | 2026-11-07 |
 
 ## Promociones
 

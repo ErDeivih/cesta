@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: El vigilante de la ingesta tiene tarea propia («Cesta vigilante», 08:00, 14:00, 20:00 e inicio de sesión) con margen de arranque hasta las 08:00, para no avisar antes de tiempo; primera ejecución real verificada (11:48:59, resultado 0). Integración manual y aprender de las listas siguen cerrados. Siguiente: verificación final del bloque.
+resumen: Vigilante con margen de arranque hasta las 08:00 y ejecución programada verificada; la ingesta de hoy falló (Alcampo ok=False, sin bronce, gold sin publicar) y el aviso es correcto. Integración manual y aprender de las listas siguen cerradas. Siguiente: revisar la ingesta de hoy y la verificación final.
 estado: en-curso
-tarea: bloque 7 completo; vigilante independiente registrado y probado; queda la verificación final
+tarea: bloque 7 completo; vigilante verificado con margen; la pasada del 7/11 quedó en fallo por Alcampo
 nivel: 2
-siguiente: verificación final del bloque (puerta de navegador y suite completa)
-bloqueado: nada duro; la tarea del vigilante corre con sesión iniciada, como la recolección
+siguiente: revisar el fallo de la ingesta de hoy (Alcampo sin bronce) sin relanzar a ciegas; después, verificación final
+bloqueado: la recolección de hoy ya terminó con Alcampo ok=False; no se relanza hasta decidir
 fecha: 2026-11-07

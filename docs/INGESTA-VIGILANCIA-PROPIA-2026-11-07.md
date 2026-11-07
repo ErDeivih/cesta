@@ -60,22 +60,24 @@ Get-ScheduledTask -TaskName 'Cesta vigilante' | Select-Object -ExpandProperty Tr
 schtasks /Query /TN "Cesta vigilante" /V /FO LIST   # acción, usuario y disparadores
 ```
 
-**Primera ejecución real de la tarea, verificada el 07/11/2026:**
+**Ejecuciones verificadas el 07/11/2026:**
 
-- lanzada a las **11:48:59** (Windows recuperó la tarea al iniciar sesión), con la recolección de
-  hoy en curso;
-- resultado: **0**, como corresponde a un día «en curso»;
-- escribió `data/vigilante.log` (1.628 bytes) y actualizó `data/avisos_ingesta.json` a
-  `fecha: 2026-11-07`, `estado: "aviso"`, `en_curso: true`;
-- en la primera pasada automática (11:03) el `.bat` **no pudo escribir** porque `ejecuciones.log`
-  estaba abierto por la recolección; por eso el vigilante tiene ahora su propio
-  `data/vigilante.log`. Ese fallo quedó detectado y corregido en esta misma ronda.
+- **11:48:59** (Windows recuperó la tarea al iniciar sesión), con la recolección en curso:
+  resultado **0**, escribió `data/vigilante.log` y actualizó `data/avisos_ingesta.json` a
+  `fecha: 2026-11-07`, `estado: "aviso"`, `en_curso: true`.
+- **13:20** (disparador temporal, retirado después): la tarea se lanzó desde el Programador,
+  terminó con **resultado 1** y dejó `data/INGESTA-DETENIDA.txt` a las **13:25:02**, además del
+  JSON y el log. **No era un falso positivo**: ese día la ingesta terminó con Alcampo `ok=False`
+  y sin partición de bronce, y no se publicó el gold; el aviso es correcto. El texto del aviso se
+  corrigió para decir «no ha arrancado o no ha terminado bien», no solo «no arrancó».
+- En la primera pasada automática (11:03) el `.bat` no pudo escribir porque `ejecuciones.log`
+  estaba abierto por la recolección; por eso el vigilante tiene su propio `data/vigilante.log`.
+  Ese fallo quedó detectado y corregido.
 
-La próxima ejecución programada es **07/11/2026 14:00**. La primera con margen completo será la
-del **08/11 a las 08:00** (si la ingesta no ha arrancado, avisará entonces, no antes).
-
-Si se lanza a mano antes de las 08:00, el resultado será un aviso `en_margen_arranque`, no un
-fallo.
+La próxima ejecución programada es **07/11/2026 14:00**. La primera con margen completo (sin
+avisar antes de las 08:00) será la del **08/11 a las 08:00**. El margen se prueba en
+`test_antes_del_margen_de_arranque_no_se_avisa_de_que_falte`: a las 05:00 el estado es «aviso» y
+a las 09:00 es «fallo».
 
 ## 5. Qué pasa cuando avisa
 

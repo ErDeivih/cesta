@@ -61,3 +61,10 @@ implementar cada pantalla:
 - [x] La tarea de Windows «Cesta diaria» está habilitada y su último resultado fue 0. Publicación de la pasada: `20261106-123403` (commit `d885a7f`).
 - [x] La verificación y el vigilante pasaron 31 pruebas con datos sintéticos. Ante fallo, el vigilante genera el parte local y devuelve un código distinto de cero.
 - [x] Comprobación independiente: tarea «Cesta vigilante» (08:00, 14:00, 20:00 y al iniciar sesión) que ejecuta `ejecutar-vigilante.bat` aunque la recolección no haya arrancado; deja `data/INGESTA-DETENIDA.txt`, log y JSON, y refresca el panel.
+
+## Verificación de ingesta del 07/11/2026
+
+- [x] El vigilante arrancó **antes de las 08:00 sin avisar** de que faltara: margen de arranque en el código y prueba 05:00 (aviso) / 09:00 (fallo).
+- [x] Su primera ejecución programada se verificó con un disparador temporal a las **13:20**: la tarea se lanzó, terminó con resultado **1** y dejó `data/INGESTA-DETENIDA.txt` a las 13:25:02.
+- [x] **El aviso era correcto**: la pasada del 7/11 terminó con Alcampo `ok=False` y sin partición de bronce, y no se publicó el gold. No fue un fallo del vigilante.
+- [ ] Revisar/relanzar la ingesta del 7/11: no se hace a ciegas mientras no se decida; `Cesta diaria` terminó (resultado 267014) y su próxima pasada es el 8/11 a las 6:00.
