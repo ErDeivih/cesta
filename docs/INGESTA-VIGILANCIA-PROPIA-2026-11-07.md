@@ -11,9 +11,9 @@ tampoco se ejecutaba. Nadie avisaba del fallo más grave posible: que el día no
   `data/INGESTA-DETENIDA.txt` (visible en la raíz de `data/`) y refresca `metricas-cesta.json`
   para que el panel también lo vea.
 - **`registrar-vigilante.ps1`** (nuevo): da de alta la tarea **«Cesta vigilante»**.
-- **Tarea registrada** el 07/11/2026: diaria a las **14:00**, más un disparador **al iniciar
-  sesión con 25 minutos de margen**, `StartWhenAvailable`, `MultipleInstances IgnoreNew`, límite
-  de 30 minutos. Próxima ejecución comprobada: **07/11/2026 14:00**.
+- **Tarea registrada** el 07/11/2026: diaria a las **08:00, 14:00 y 20:00**, más un disparador
+  **al iniciar sesión con 25 minutos de margen**, `StartWhenAvailable`, `MultipleInstances
+  IgnoreNew`, límite de 30 minutos. Próxima ejecución comprobada: **07/11/2026 08:00**.
 - **Segunda mirada:** el `.bat` no falla a la primera. Si el ordenador acaba de arrancar y la
   recolección está empezando, espera 5 minutos y vuelve a mirar. Solo entonces avisa. Así no
   convierte el arranque del PC en un falso «no ha arrancado».
@@ -32,7 +32,8 @@ El vigilante ya sabía distinguir (y sigue haciéndolo):
 
 La diferencia con antes: ahora **la comprobación no depende de que la recolección haya
 arrancado**. Si el Programador no lanza `ejecutar.bat`, la tarea «Cesta vigilante» se lanza igual
-a las 14:00 (o al iniciar sesión) y encuentra `sin_pasada`.
+a las 08:00, 14:00 o 20:00 (o al iniciar sesión) y encuentra `sin_pasada`. La de las 08:00 es la
+que hace que un día sin arranque se note por la mañana, no al final.
 
 ## 3. Cómo se comprueba
 
@@ -46,7 +47,7 @@ Lo que se vio al registrar:
 
 - acción: `F:\Proyectos\cesta\ejecutar-vigilante.bat`;
 - ejecutar como: `David`, solo cuando la sesión está iniciada;
-- próxima ejecución: `07/11/2026 14:00`;
+- próxima ejecución: `07/11/2026 08:00`;
 - estado: listo (habilitado).
 
 Lanzarla a mano para probar sin esperar:
@@ -79,10 +80,11 @@ un canal externo, se añade sin cambiar la detección.
 - El vigilante **no puede avisar de que él mismo no se ha ejecutado**. Para eso está el
   Programador (historial de la tarea) y el hecho de que el panel dejaría de actualizar
   `metricas-cesta.json`; se puede añadir un chequeo externo el día que haya servidor.
-- La hora (14:00) se eligió después de la ventana normal de la pasada (el 6/11 publicó a las
-  12:34). Si un día la recolección se alarga, el estado será «en curso» y no fallo.
+- La hora: 08:00, 14:00 y 20:00. La de las 08:00 detecta el día que no arrancó; la de las 14:00
+  mira la ventana normal de publicación (el 6/11 publicó a las 12:34); la de las 20:00 recoge un
+  arranque tardío que se quedó a medias. Si la recolección sigue en curso, el estado es «en curso»
+  y no fallo.
 - Registro: `Register-ScheduledTask` pidió administrador en esta sesión; se dio de alta con
-  `schtasks /Create` (misma tarea, usuario actual) y luego se le añadió el disparador de inicio de
-  sesión con `Set-ScheduledTask`. La tarea actual tiene **diaria a las 14:00 + inicio de sesión**;
-  el script `registrar-vigilante.ps1` incluye además el disparador de inicio del sistema para
-  cuando se registre con permisos de administrador.
+  `schtasks /Create` (misma tarea, usuario actual) y luego se le añadieron los disparadores con
+  `Set-ScheduledTask`. La tarea actual tiene **08:00, 14:00, 20:00 e inicio de sesión**; el script
+  `registrar-vigilante.ps1` deja exactamente esos cuatro disparadores.

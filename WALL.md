@@ -27,9 +27,10 @@ hasta agotar el bloque.
       barra Compra/Recetas/Calorías), con sus cuatro estados y sin textos de desarrollador (§8).
 - [x] Ingesta del 5/11 cerrada sola y vigilada: 6 cadenas, gold `20261105-123941`, y
       `scripts/vigilar_ingesta.py` enganchado a `ejecutar.bat` (avisa solo si hay fallo).
-- [x] **Vigilante con programación propia** (7/11): tarea «Cesta vigilante» diaria a las 14:00 y al
-      iniciar sesión, porque si el Programador no lanza la recolección el vigilante del `.bat`
-      tampoco corría. Deja `INGESTA-DETENIDA.txt`, log y JSON, y refresca el panel.
+- [x] **Vigilante con programación propia** (7/11): tarea «Cesta vigilante» diaria a las 08:00,
+      14:00 y 20:00 y al iniciar sesión, porque si el Programador no lanza la recolección el
+      vigilante del `.bat` tampoco corría. Deja `INGESTA-DETENIDA.txt`, log y JSON, y refresca el
+      panel. Próxima ejecución comprobada: 07/11/2026 08:00.
 
 ## Artboards **aprobados** por David (2026-11-05, 20:16)
 
@@ -58,4 +59,4 @@ implementar cada pantalla:
 
 - [x] La tarea de Windows «Cesta diaria» está habilitada y su último resultado fue 0. Publicación de la pasada: `20261106-123403` (commit `d885a7f`).
 - [x] La verificación y el vigilante pasaron 31 pruebas con datos sintéticos. Ante fallo, el vigilante genera el parte local y devuelve un código distinto de cero.
-- [ ] Queda una comprobación independiente para detectar que el Programador de tareas nunca llegó a lanzar la ingesta. El vigilante actual corre al final de la propia tarea.
+- [x] Comprobación independiente: tarea «Cesta vigilante» (08:00, 14:00, 20:00 y al iniciar sesión) que ejecuta `ejecutar-vigilante.bat` aunque la recolección no haya arrancado; deja `data/INGESTA-DETENIDA.txt`, log y JSON, y refresca el panel.

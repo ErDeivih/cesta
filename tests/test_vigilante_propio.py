@@ -43,8 +43,10 @@ def test_el_registrador_declara_la_tarea_con_su_hora_y_su_accion():
     assert "Cesta vigilante" in ps
     assert "ejecutar-vigilante.bat" in ps
     assert "New-ScheduledTaskAction" in ps
+    assert "New-ScheduledTaskTrigger -Daily -At 8:00am" in ps
     assert "New-ScheduledTaskTrigger -Daily -At 2:00pm" in ps
-    assert "AtLogOn" in ps, "un dia con el PC apagado a las 14:00 tambien se mira"
+    assert "New-ScheduledTaskTrigger -Daily -At 8:00pm" in ps
+    assert "AtLogOn" in ps, "un dia con el PC apagado tambien se mira"
     assert "StartWhenAvailable" in ps
 
 

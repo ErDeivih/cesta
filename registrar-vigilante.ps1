@@ -5,12 +5,13 @@
 # Por que esta tarea es aparte de «Cesta diaria»:
 #   El vigilante vivia al final de ejecutar.bat. Si el Programador no lanzaba
 #   ese .bat, el vigilante tampoco corria y el fallo se quedaba callado. Esta
-#   tarea comprueba a las 14:00 que la ingesta del dia arranco y publico.
+#   tarea comprueba a las 08:00, 14:00 y 20:00 que la ingesta del dia arranco y
+#   publico: si no arranca, se sabe por la mañana, no solo al final del dia.
 #
 # Disparadores:
-#   - Diario a las 14:00 (despues de la ventana normal de la pasada).
-#   - Al iniciar el ordenador, con 20 minutos de margen, y al iniciar sesion,
-#     con 25: asi un dia que el PC estaba apagado a las 14:00 tambien se mira.
+#   - Diario a las 08:00, 14:00 y 20:00.
+#   - Al iniciar sesion, con 25 minutos de margen: si el PC estaba apagado a
+#     las 08:00, se mira al entrar.
 #   - StartWhenAvailable: si el PC estaba apagado, Windows recupera la tarea.
 #   - MultipleInstances IgnoreNew: dos comprobaciones a la vez no duplican avisos.
 #
@@ -28,12 +29,12 @@ if (-not (Test-Path $bat)) { throw "no encuentro $bat" }
 $accion = New-ScheduledTaskAction -Execute $bat -WorkingDirectory $carpeta
 
 $disparadores = @(
+    (New-ScheduledTaskTrigger -Daily -At 8:00am),
     (New-ScheduledTaskTrigger -Daily -At 2:00pm),
-    (New-ScheduledTaskTrigger -AtStartup),
+    (New-ScheduledTaskTrigger -Daily -At 8:00pm),
     (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME)
 )
-$disparadores[1].Delay = "PT20M"
-$disparadores[2].Delay = "PT25M"
+$disparadores[3].Delay = "PT25M"
 
 $ajustes = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `

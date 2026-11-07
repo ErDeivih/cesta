@@ -508,8 +508,8 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   recolección, el vigilante tampoco corría y el fallo más grave (el día no empieza) quedaba callado.
 - **Hecho**: `ejecutar-vigilante.bat` (propio, `--solo-fallos`, segunda mirada a los 5 min, aviso
   visible en `data/INGESTA-DETENIDA.txt`, log, JSON y refresco de `metricas-cesta.json`) y tarea
-  **«Cesta vigilante»** registrada: diaria a las **14:00** y al iniciar sesión con 25 min de
-  margen, `StartWhenAvailable`. Próxima ejecución comprobada: 07/11/2026 14:00.
+  **«Cesta vigilante»** registrada: diaria a las **08:00, 14:00 y 20:00** y al iniciar sesión con 25 min
+  de margen, `StartWhenAvailable`. Próxima ejecución comprobada: 07/11/2026 08:00.
 - **Pruebas**: `tests/test_vigilante_propio.py` (cableado del .bat y del registrador) + las 19 del
   vigilante; el caso `sin_pasada` ya estaba cubierto en `tests/test_vigilar_ingesta.py`.
 - **Límite**: corre con la sesión iniciada (igual que la recolección); no puede avisar de que la
