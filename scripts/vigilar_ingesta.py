@@ -242,11 +242,17 @@ def marca_de_pasada(datos: Path, dia: dt.date, ahora: dt.datetime) -> dict | Non
 
 
 def vigila(datos: Path | str | None = None, fecha: str | dt.date | None = None,
-           ahora: dt.datetime | None = None) -> dict:
+           ahora: dt.datetime | None = None,
+           margen_hasta: dt.datetime | None = None) -> dict:
     """El informe entero, como diccionario. Es lo que se imprime y lo que se deja en disco.
 
     `datos` y `fecha` se pueden pasar para probar el vigilante con datos sinteticos y un dia
     fijo; sin ellos mira `config.DATA` y el dia de hoy en Madrid.
+
+    `margen_hasta` es la hora local antes de la cual **no se puede decir que falte la ingesta**:
+    si la pasada programada empieza a las 06:00 y el margen es de dos horas, un informe de las
+    05:00 no puede llamar «fallo» a que no haya corrido. Las ausencias se cuentan como aviso
+    `en_margen_arranque`, que no pinta rojo ni sale con codigo 1 con `--solo-fallos`.
     """
     datos = Path(datos) if datos is not None else config.DATA
     zona = config.ZONA_HORARIA
@@ -264,6 +270,13 @@ def vigila(datos: Path | str | None = None, fecha: str | dt.date | None = None,
     en_curso = bool(marca and marca["en_curso"])
 
     lista = pasadas(datos)
+    hay_pasada = any(p["cuando"].astimezone(zona).date() == dia for p in lista)
+    en_margen = (
+        margen_hasta is not None
+        and ahora < margen_hasta
+        and not en_curso
+        and not hay_pasada
+    )
     capturas = bronce(datos)
     series = {fuente: {f: cap["filas"] for f, cap in serie.items()}
               for fuente, serie in capturas.items()}
@@ -300,6 +313,11 @@ def vigila(datos: Path | str | None = None, fecha: str | dt.date | None = None,
                 mal("en_curso", AVISO,
                     f"la pasada del {iso} empezo el {marca['texto']} y aun no ha llegado a esta "
                     f"cadena")
+            elif en_margen:
+                mal("en_margen_arranque", AVISO,
+                    f"aun dentro del margen de arranque (hasta "
+                    f"{margen_hasta.astimezone(zona):%H:%M}): la pasada del {iso} todavia puede "
+                    f"empezar")
             else:
                 mal("sin_pasada", FALLO,
                     f"no hay pasada del {iso} en data/runs.csv: esta cadena no corrio")
@@ -376,6 +394,10 @@ def vigila(datos: Path | str | None = None, fecha: str | dt.date | None = None,
         if en_curso:
             apunta("gold_pendiente", AVISO,
                    f"gold sigue en el {gold_max}: la pasada del {iso} aun no ha publicado")
+        elif en_margen:
+            apunta("gold_pendiente_margen", AVISO,
+                   f"gold sigue en el {gold_max}: aun dentro del margen de arranque, la pasada "
+                   f"del {iso} todavia puede publicar")
         else:
             apunta("gold_atrasado", FALLO,
                    f"gold sigue en el {gold_max} y la pasada de hoy ya cerro: no se ha publicado "
@@ -593,6 +615,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--datos", help="carpeta de datos a mirar (por defecto, data/)")
     ap.add_argument("--fecha", help="dia a mirar, AAAA-MM-DD (por defecto, hoy en Madrid)")
     ap.add_argument("--json", action="store_true", help="sacar el informe en JSON por stdout")
+    ap.add_argument("--margen-hasta",
+                    help="HH:MM; antes de esa hora local no se avisa de que falte la pasada "
+                         "(margen de arranque; no se aplica con --fecha historica)")
     ap.add_argument("--solo-fallos", action="store_true",
                     help="salir 0 si solo hay avisos (el dia esta hecho); 1 solo si hay fallo. "
                          "Para colgarlo de la cadena diaria: un aviso conocido no debe hacer "
@@ -604,9 +629,20 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError:
         ap.error(f"--fecha no es una fecha: {a.fecha!r}")
 
+    margen_hasta = None
+    if a.margen_hasta:
+        try:
+            hora = dt.datetime.strptime(a.margen_hasta, "%H:%M").time()
+        except ValueError:
+            ap.error(f"--margen-hasta no es una hora HH:MM: {a.margen_hasta!r}")
+        if not a.fecha:
+            zona = config.ZONA_HORARIA
+            dia_local = dia or dt.datetime.now(zona).date()
+            margen_hasta = dt.datetime.combine(dia_local, hora, tzinfo=zona)
+
     datos = Path(a.datos) if a.datos else config.DATA
     _utf8()
-    informe = vigila(datos=datos, fecha=dia)
+    informe = vigila(datos=datos, fecha=dia, margen_hasta=margen_hasta)
 
     # El fichero se escribe **antes** de decidir el codigo: si no se puede dejar, eso es un
     # aviso mas y el dia no puede salir 0 con el informe sin escribir.

@@ -29,13 +29,12 @@ if (-not (Test-Path $bat)) { throw "no encuentro $bat" }
 $accion = New-ScheduledTaskAction -Execute $bat -WorkingDirectory $carpeta
 
 $disparadores = @(
-    (New-ScheduledTaskTrigger -Daily -At 6:30am),
     (New-ScheduledTaskTrigger -Daily -At 8:00am),
     (New-ScheduledTaskTrigger -Daily -At 2:00pm),
     (New-ScheduledTaskTrigger -Daily -At 8:00pm),
     (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME)
 )
-$disparadores[4].Delay = "PT25M"
+$disparadores[3].Delay = "PT25M"
 
 $ajustes = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `

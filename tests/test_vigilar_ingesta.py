@@ -188,6 +188,37 @@ def test_una_cadena_sin_captura_es_fallo_y_la_nombra(datos, capsys):
     assert any("✓" in linea and "dia" in linea for linea in salida.splitlines()), salida
 
 
+def test_antes_del_margen_de_arranque_no_se_avisa_de_que_falte(datos):
+    """**Un aviso a las 05:00 seria prematuro.** La pasada se programa a las 06:00 y el margen
+    de arranque llega hasta las 08:00: dentro de el, que no haya pasada es un aviso
+    `en_margen_arranque`, no un fallo. Pasado el margen, si sigue sin pasada, sí es fallo."""
+    # Sin pasada de hoy y sin gold de hoy: el escenario de «todavia no ha empezado».
+    (datos / "runs.csv").unlink()
+    _gold(datos, {fuente: AYER for fuente in CADENAS})
+    _actual(datos, fecha=AYER)
+    zona = ZoneInfo("Europe/Madrid")
+    margen = dt.datetime(2026, 11, 5, 8, 0, tzinfo=zona)
+
+    temprano = vigilar_ingesta.vigila(
+        datos=datos,
+        ahora=dt.datetime(2026, 11, 5, 5, 0, tzinfo=zona),
+        margen_hasta=margen,
+    )
+    assert temprano["estado"] == "aviso", temprano["estado"]
+    assert "sin_pasada" not in _codigos(temprano)
+    assert "en_margen_arranque" in _codigos(temprano)
+    assert all(a["gravedad"] == "aviso" for a in temprano["avisos"]), temprano["avisos"]
+
+    # A las 09:00 el margen ya pasó: el mismo árbol sí es un fallo.
+    tarde = vigilar_ingesta.vigila(
+        datos=datos,
+        ahora=dt.datetime(2026, 11, 5, 9, 0, tzinfo=zona),
+        margen_hasta=margen,
+    )
+    assert tarde["estado"] == "fallo", tarde["estado"]
+    assert "sin_pasada" in _codigos(tarde)
+
+
 def test_una_pasada_que_no_acabo_bien_es_fallo(datos):
     _runs(datos, {f: FILAS for f in CADENAS}, ok=False, errores=3)
 
