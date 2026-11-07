@@ -32,16 +32,19 @@
    "dias": 59
   }
  ],
- "ultima_ejecucion": "2026-11-06T12:27:09+01:00",
+ "ultima_ejecucion": "2026-11-07T11:15:31+01:00",
  "comparables_con_precio": 38691,
  "en_varias_cadenas": 8811,
  "dias_historial": 61,
  "ingesta": {
-  "fecha": "2026-11-06",
+  "fecha": "2026-11-07",
   "estado": "aviso",
-  "avisos": 1,
+  "avisos": 5,
   "codigos": [
-   "captura_corta"
+   "avisos_de_ayer",
+   "cobertura_sin_declarar",
+   "en_curso",
+   "gold_pendiente"
   ]
  }
 }
