@@ -3,8 +3,8 @@
  "cadenas": [
   {
    "nombre": "alcampo",
-   "hoy": false,
-   "dias": 45
+   "hoy": true,
+   "dias": 46
   },
   {
    "nombre": "aldi",
@@ -32,19 +32,16 @@
    "dias": 60
   }
  ],
- "ultima_ejecucion": "2026-11-07T12:49:04+01:00",
- "comparables_con_precio": 23666,
- "en_varias_cadenas": 4318,
+ "ultima_ejecucion": "2026-11-07T14:29:24+01:00",
+ "comparables_con_precio": 38678,
+ "en_varias_cadenas": 8812,
  "dias_historial": 62,
  "ingesta": {
   "fecha": "2026-11-07",
-  "estado": "fallo",
-  "avisos": 4,
+  "estado": "aviso",
+  "avisos": 1,
   "codigos": [
-   "avisos_de_ayer",
-   "cadena_gold_atrasada",
-   "pasada_no_ok",
-   "sin_bronce"
+   "captura_corta"
   ]
  }
 }

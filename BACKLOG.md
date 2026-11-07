@@ -516,3 +516,19 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   vigilante; el caso `sin_pasada` ya estaba cubierto en `tests/test_vigilar_ingesta.py`.
 - **Límite**: corre con la sesión iniciada (igual que la recolección); no puede avisar de que la
   propia tarea no se ejecutó. Ver `docs/INGESTA-VIGILANCIA-PROPIA-2026-11-07.md`.
+
+### 42. Recolección del 7/11 relanzada y Alcampo diagnosticado — **hecho (07/11)**
+- **Relanzamiento** (`ejecutar.bat --forzar`, 14:22): Carrefour 16.811/1 error, DIA 5.704/0,
+  Mercadona 4.280/0, Aldi 2.826/0, **Alcampo 22.834/0**, Lidl 91/0; seis bronces y gold
+  **20261107-143704** publicado (2.707.900 filas, 62 días).
+- **Diagnóstico**: el fallo de la mañana fue **AWS WAF** (reto no superado tras 11 intentos en
+  60 s / 20 renovaciones), no un selector. El parcial de 22.897 con 1 error se rechazó por
+  incompleto; el crudo quedó en `data/raw` y el relanzamiento lo reutilizó (272 s frente a
+  6.327 s), terminando con 0 errores.
+- **Decisión**: no tocar selectores; subir la espera del WAF (60 → 120–180 s configurable) y
+  conservar siempre el crudo de una captura fallida. El parcial no se acepta como canónico; si se
+  quiere conservar, en un `parcial.parquet` aparte. Documento:
+  `docs/DIAGNOSTICO-ALCAMPO-2026-11-07.md`.
+- **Vigilante**: 1 aviso (captura corta de Alcampo, 81,5 %) y 0 fallos; `avisos_ingesta.json` del
+  7/11. Se retiró el `INGESTA-DETENIDA.txt` viejo y `ejecutar.bat` lo borra cuando el vigilante
+  termina en 0.

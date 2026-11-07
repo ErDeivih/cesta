@@ -80,11 +80,14 @@ REM **El vigilante de la ingesta.** Deja el informe del dia (data\avisos_ingesta
 REM si hay un FALLO. Con `--solo-fallos` un aviso conocido --por ejemplo Alcampo corto porque
 REM la referencia es el 17/10-- no hace fallar el dia: el dia esta hecho, solo trajo menos.
 REM Su codigo NO cambia el del dia: se avisa y se sigue, como el control de cobertura.
-uv run python -m scripts.vigilar_ingesta --solo-fallos >> "data\ejecuciones.log" 2>&1
+uv run python -m scripts.vigilar_ingesta --solo-fallos --margen-hasta 08:00 >> "data\ejecuciones.log" 2>&1
 if !errorlevel! neq 0 (
   echo Cesta: el vigilante ha visto un FALLO de ingesta. Mira data\avisos_ingesta.json
   echo %date% %time% FALLO de ingesta: mira data\avisos_ingesta.json >> "data\avisos_ingesta.log"
 )
+
+REM Si la pasada de hoy acabo bien, el aviso viejo de una pasada anterior ya no vale.
+if !errorlevel! equ 0 if exist "data\INGESTA-DETENIDA.txt" del "data\INGESTA-DETENIDA.txt" >nul 2>&1
 
 REM Y las metricas del panel se refrescan con el estado de la ingesta dentro.
 uv run python -m projects.cesta.metricas >nul 2>&1

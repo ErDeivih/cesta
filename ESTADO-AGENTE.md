@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Vigilante con margen de arranque hasta las 08:00 y ejecución programada verificada; la ingesta de hoy falló (Alcampo ok=False, sin bronce, gold sin publicar) y el aviso es correcto. Integración manual y aprender de las listas siguen cerradas. Siguiente: revisar la ingesta de hoy y la verificación final.
+resumen: Recolección del 7/11 relanzada y publicada (20261107-143704): Carrefour 16.811/1 error, DIA 5.704/0, Mercadona 4.280/0, Aldi 2.826/0, Alcampo 22.834/0 (captura corta 81,5 % de la referencia, aviso), Lidl 91/0. Seis bronces y gold publicados; vigilante 1 aviso y 0 fallos.
 estado: en-curso
-tarea: bloque 7 completo; vigilante verificado con margen; la pasada del 7/11 quedó en fallo por Alcampo
+tarea: bloque 7 completo; ingesta del 7/11 recuperada y Alcampo diagnosticado (WAF, no selector)
 nivel: 2
-siguiente: revisar el fallo de la ingesta de hoy (Alcampo sin bronce) sin relanzar a ciegas; después, verificación final
-bloqueado: la recolección de hoy ya terminó con Alcampo ok=False; no se relanza hasta decidir
+siguiente: subir la espera configurable del WAF y decidir si se conserva un parcial aparte; después, verificación final del bloque
+bloqueado: nada duro; WAF de Alcampo puede volver a cortar aunque el crudo permite recuperar
 fecha: 2026-11-07
