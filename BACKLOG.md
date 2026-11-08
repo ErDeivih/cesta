@@ -532,3 +532,12 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
 - **Vigilante**: 1 aviso (captura corta de Alcampo, 81,5 %) y 0 fallos; `avisos_ingesta.json` del
   7/11. Se retiró el `INGESTA-DETENIDA.txt` viejo y `ejecutar.bat` lo borra cuando el vigilante
   termina en 0.
+
+### 43. Recuperación automática de Alcampo desde el crudo — **hecho (08/11)**
+- **Hecho**: `scripts/recuperar_alcampo.py` (detecta sin bronce, última pasada no de hoy, crudo
+  presente, sin ejecución en curso; lanza `run.py --solo alcampo`; marca diaria; códigos 0/1/2/3/4)
+  y llamada desde `ejecutar-vigilante.bat` tras el primer fallo.
+- **Probado en real**: Alcampo cayó el 8/11 por `TargetClosedError`; recuperado con 23.313
+  productos/0 errores y gold **20261108-175843** publicado. Tardó 6.676 s porque el crudo era
+  incompleto; el WAF sigue siendo el punto débil (espera 60 s; propuesta 120–180 s).
+- **Pruebas**: `tests/test_recuperar_alcampo.py` (6 verdes). No se lanza `run.py` en pruebas.

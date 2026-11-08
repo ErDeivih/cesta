@@ -36,6 +36,15 @@ if not exist "%PY%" (
 call :vigila
 if !errorlevel! equ 0 goto :bien
 
+REM Si el fallo es de Alcampo y su crudo esta en disco, se reintenta SOLO Alcampo
+REM (run.py reutiliza data/raw) y se vuelve a mirar. Si ya hay bronce o no hay
+REM crudo, el script no lanza nada. El aviso viejo se borra si la recuperacion va bien.
+"%PY%" -m scripts.recuperar_alcampo >> "data\vigilante.log" 2>&1
+if !errorlevel! equ 0 (
+  call :vigila
+  if !errorlevel! equ 0 goto :bien
+)
+
 REM Segunda oportunidad: si el ordenador acaba de arrancar, la recoleccion
 REM puede estar empezando ahora mismo. Se espera y se vuelve a mirar.
 powershell -NoProfile -Command "Start-Sleep -Seconds 300" >nul 2>&1

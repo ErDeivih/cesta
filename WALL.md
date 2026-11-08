@@ -68,3 +68,11 @@ implementar cada pantalla:
 - [x] Su primera ejecución programada se verificó con un disparador temporal a las **13:20**: la tarea se lanzó, terminó con resultado **1** y dejó `data/INGESTA-DETENIDA.txt` a las 13:25:02.
 - [x] **El aviso era correcto**: la pasada del 7/11 terminó con Alcampo `ok=False` y sin partición de bronce, y no se publicó el gold. No fue un fallo del vigilante.
 - [x] **Recolección relanzada el 7/11 a las 14:22** (`ejecutar.bat --forzar`): seis bronces escritos y gold **20261107-143704** publicado. Por cadena: Carrefour 16.811/1 error · DIA 5.704/0 · Mercadona 4.280/0 · Aldi 2.826/0 · **Alcampo 22.834/0** (captura corta, 81,5 % de la referencia del 17/10, aviso) · Lidl 91/0. Diagnóstico en `docs/DIAGNOSTICO-ALCAMPO-2026-11-07.md`: fue AWS WAF, no selector; el crudo cacheado permitió recuperar el día.
+
+## Verificación de ingesta del 08/11/2026
+
+- [x] Recolección completa lanzada a las 15:12 (`--forzar`): Carrefour 16.816/1, DIA 5.686/0, Mercadona 4.286/0, Aldi 2.824/0, Lidl 91/0.
+- [x] Alcampo cayó otra vez (navegador cerrado durante el WAF, `TargetClosedError`). El crudo parcial quedó en `data/raw`.
+- [x] **Recuperado desde el crudo** con `scripts/recuperar_alcampo.py`: 23.313 productos, 0 errores, bronce 1,46 MB; gold **20261108-175843** publicado (2.760.653 filas, 63 días).
+- [x] Vigilante: 1 aviso (captura corta de Alcampo, 83,2 %), 0 fallos; `INGESTA-DETENIDA.txt` retirado.
+- [x] Automatizado: el vigilante llama al recuperador tras el primer fallo, con marca diaria para no repetir; 6 pruebas.

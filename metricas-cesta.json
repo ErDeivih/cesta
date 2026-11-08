@@ -1,47 +1,48 @@
 {
- "fecha_datos": "2026-11-07",
+ "fecha_datos": "2026-11-08",
  "cadenas": [
   {
    "nombre": "alcampo",
    "hoy": true,
-   "dias": 46
+   "dias": 47
   },
   {
    "nombre": "aldi",
    "hoy": true,
-   "dias": 60
+   "dias": 61
   },
   {
    "nombre": "carrefour",
    "hoy": true,
-   "dias": 54
+   "dias": 55
   },
   {
    "nombre": "dia",
    "hoy": true,
-   "dias": 56
+   "dias": 57
   },
   {
    "nombre": "lidl",
    "hoy": true,
-   "dias": 24
+   "dias": 25
   },
   {
    "nombre": "mercadona",
    "hoy": true,
-   "dias": 60
+   "dias": 61
   }
  ],
- "ultima_ejecucion": "2026-11-07T14:29:24+01:00",
- "comparables_con_precio": 38678,
- "en_varias_cadenas": 8812,
- "dias_historial": 62,
+ "ultima_ejecucion": "2026-11-08T17:50:59+01:00",
+ "comparables_con_precio": 39109,
+ "en_varias_cadenas": 8845,
+ "dias_historial": 63,
  "ingesta": {
-  "fecha": "2026-11-07",
-  "estado": "aviso",
-  "avisos": 1,
+  "fecha": "2026-11-08",
+  "estado": "fallo",
+  "avisos": 2,
   "codigos": [
-   "captura_corta"
+   "cadena_gold_atrasada",
+   "sin_pasada"
   ]
  }
 }
