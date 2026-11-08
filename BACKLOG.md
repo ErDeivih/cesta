@@ -494,6 +494,9 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   todas» llena los candidatos de una vez; `ExportarLista` copia el texto o descarga un CSV con esas
   tres columnas. La cantidad sigue yendo a la nota, no a envases. 31 pruebas de
   importación/exportación/relleno verdes.
+- **En espera de David (08/11)**: decidir si el mapeo de nombres a grupos es automático y con qué
+  umbral, y aportar un ejemplo real de exportación RGPD (CSV/JSON) para adaptar columnas. Sin esas
+  dos cosas no se adivina; hoy el vínculo es asistido y el formato aceptado es el simple.
 
 ### 40. Pautas de salud y aprender de las listas — **hecho (06/11, verificado 08/11)**
 - **Calorías / Pautas** (`/calorias/pautas`): seis pautas neutrales, estimación declarada

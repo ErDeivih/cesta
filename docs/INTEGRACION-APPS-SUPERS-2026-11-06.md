@@ -121,3 +121,19 @@ cuando haya un ejemplo real.
   nadie; no se exportan precios ni datos de cuenta; el CSV/JSON acepta el formato simple de esta
   ficha y no promete adaptar cualquier exportación RGPD. Las ofertas de club no se restan del
   total.
+
+## 8. Pendiente de David (08/11/2026)
+
+Lo que queda no se puede cerrar sin una decisión o un dato suyo:
+
+1. **Mapeo automático de nombres a grupos.** Hoy el vínculo es asistido: se enseñan hasta tres
+   candidatos y la persona elige. Automatizarlo exige decidir el umbral de confianza y qué hacer
+   cuando dos productos se parecen; un mal vínculo pone un precio que no es.
+2. **Una exportación RGPD real.** El formato aceptado es el simple `nombre,cantidad,nota`; para
+   adaptar las columnas de Mercadona/Alcampo/Carrefour hace falta un ejemplo real (CSV o JSON) de
+   lo que entrega la cadena. Sin ese ejemplo no se adivinan columnas.
+3. **Precios en la exportación.** Hoy no se exportan precios ni datos de cuenta; si los quiere, es
+   una decisión de producto y hay que decir de qué fecha y de qué cadena.
+
+No hay nada de esto prometido en la interfaz. La integración lícita sigue siendo manual: sin
+cuentas, sin credenciales y sin login automatizado.
