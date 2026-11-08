@@ -490,9 +490,10 @@ re-registrado y probado (tarea 12), con la próxima pasada automática el 5/11 a
   como condición y no se restan del total.
 - **08/11**: `PegarEnLaLista` lee CSV (`nombre,cantidad,nota`) y JSON (array de objetos o envuelto
   en `productos`/`items`), además de texto libre; cada línea puede buscar hasta tres candidatos y
-  la persona elige uno o la deja como texto (nunca se vincula sola); `ExportarLista` copia el texto
-  o descarga un CSV con esas tres columnas. La cantidad sigue yendo a la nota, no a envases. 30
-  pruebas de importación/exportación/relleno verdes.
+  la persona elige uno o la deja como texto (nunca se vincula sola); «buscar coincidencias en
+  todas» llena los candidatos de una vez; `ExportarLista` copia el texto o descarga un CSV con esas
+  tres columnas. La cantidad sigue yendo a la nota, no a envases. 31 pruebas de
+  importación/exportación/relleno verdes.
 
 ### 40. Pautas de salud y aprender de las listas — **hecho (06/11, verificado 08/11)**
 - **Calorías / Pautas** (`/calorias/pautas`): seis pautas neutrales, estimación declarada

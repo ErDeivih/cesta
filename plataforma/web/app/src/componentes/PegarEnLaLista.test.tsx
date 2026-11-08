@@ -10,8 +10,8 @@
  *  numero de envases y el fallo volveria por la puerta de atras.*
  */
 
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type { ResultadoBusqueda } from '../tipos'
@@ -19,6 +19,10 @@ import { PegarEnLaLista } from './PegarEnLaLista'
 
 vi.mock('../api/buscar', () => ({ buscarProductos: vi.fn() }))
 import { buscarProductos } from '../api/buscar'
+
+beforeEach(() => {
+  vi.mocked(buscarProductos).mockReset()
+})
 
 describe('PegarEnLaLista', () => {
   it('enseña la previa antes de guardar nada, y no llama a alAnadir', async () => {
@@ -110,6 +114,29 @@ describe('PegarEnLaLista', () => {
       nota: null,
       grupoId: 42,
     })
+  })
+
+  it('*** buscar coincidencias en todas las enseña, sin elegir ninguna ***', async () => {
+    const candidato = {
+      grupo_id: 42,
+      nombre: 'Leche entera',
+      precio_cent: 99,
+      cadena_mas_barata: 'mercadona',
+      unidad: 'l',
+    } as unknown as ResultadoBusqueda
+    vi.mocked(buscarProductos).mockResolvedValue([candidato])
+    const alAnadir = vi.fn().mockResolvedValue(undefined)
+    render(<PegarEnLaLista alAnadir={alAnadir} />)
+
+    await userEvent.type(
+      screen.getByLabelText(/lo que quieres pegar/i),
+      'leche{enter}pan',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar coincidencias en todas' }))
+
+    await waitFor(() => expect(buscarProductos).toHaveBeenCalledTimes(2))
+    expect(await screen.findAllByText(/Leche entera/)).toHaveLength(2)
+    expect(alAnadir).not.toHaveBeenCalled()
   })
 
   it('*** al anadir, la cantidad va en la NOTA y no como numero de envases ***', async () => {

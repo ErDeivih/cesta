@@ -45,6 +45,7 @@ export function PegarEnLaLista({
   const [buscando, setBuscando] = useState<Record<number, boolean>>({})
   const [elegidos, setElegidos] = useState<Record<number, ResultadoBusqueda | null>>({})
   const [errores, setErrores] = useState<Record<number, string>>({})
+  const [buscandoTodas, setBuscandoTodas] = useState(false)
 
   const lectura = useMemo(() => leerPegado(texto), [texto])
   const pegadas: Pegada[] = lectura.pegadas
@@ -95,6 +96,21 @@ export function PegarEnLaLista({
       }))
     } finally {
       setBuscando((x) => ({ ...x, [indice]: false }))
+    }
+  }
+
+  /** Busca las líneas que aún no tienen candidatos ni vínculo. **Sigue siendo una sugerencia**:
+   *  llena las mismas tarjetas de candidatos, no elige ninguna. */
+  async function buscaTodas() {
+    if (buscandoTodas || guardando) return
+    setBuscandoTodas(true)
+    try {
+      for (const [i, una] of pegadas.entries()) {
+        if (elegidos[i] || candidatos[i] || buscando[i]) continue
+        await buscaCandidatos(i, una.nombre)
+      }
+    } finally {
+      setBuscandoTodas(false)
     }
   }
 
@@ -169,6 +185,19 @@ export function PegarEnLaLista({
           {aviso}
         </p>
       ))}
+
+      {pegadas.length > 1 && (
+        <div className="mt-2">
+          <Boton
+            variante="sutil"
+            compacto
+            onClick={() => void buscaTodas()}
+            disabled={buscandoTodas || guardando}
+          >
+            {buscandoTodas ? 'Buscando coincidencias…' : 'Buscar coincidencias en todas'}
+          </Boton>
+        </div>
+      )}
 
       {/* *** LA PREVIA. *** *Se ven las lineas tal como se van a guardar, con su nota al lado.* */}
       {pegadas.length > 0 && (
