@@ -40,6 +40,9 @@ representantes) ni pide DNI: la persona la pide y, si quiere, nos pasa el ficher
   por producto; se entra desde `Cesta.tsx`. También se puede subir el fichero. La cantidad va a la
   nota: **no se convierte en número de envases**. Es el camino real de «traer tu lista de otra app
   o tu ticket».
+- **Vincular al catálogo, a mano**: cada línea de la previa puede buscar hasta tres candidatos
+  con su precio y su cadena. La persona elige uno o la deja como texto; **nunca se vincula sola**.
+  Una línea vinculada gana precio y comparación; una que no, se guarda como texto libre, como antes.
 - **Exportación manual**: `ExportarLista` copia la lista como texto o descarga un CSV con
   `nombre,cantidad,nota`, para llevarla a otra app. Sin precios, sin cuenta y sin salir del
   aparato.
@@ -70,12 +73,16 @@ Hecho el 8/11/2026:
    cuenta; no se inventa.
 2. **Exportar** la lista como texto o como CSV con esas tres columnas. La exportación no incluye
    precios ni datos de la cuenta.
-3. Las cantidades de la importación **siguen yendo a la nota**: el formato no cambia la regla de
+3. **Vincular al catálogo**: cada línea importada puede pedir candidatos a `/api/buscar` (hasta
+   tres), ver su nombre, precio y cadena, y elegir uno. Si no elige, se guarda como texto. No hay
+   vínculo automático.
+4. Las cantidades de la importación **siguen yendo a la nota**: el formato no cambia la regla de
    «2 kg no son dos envases».
 
-Sigue fuera, y no se promete en la interfaz: el mapeo automático de texto libre a `grupo_id` y una
-marca de origen separada de la captura diaria. El formato aceptado es el simple de arriba; una
-exportación RGPD con columnas distintas se adapta cuando haya un ejemplo real.
+Sigue fuera, y no se promete en la interfaz: el mapeo **automático** de texto libre a `grupo_id`
+(lo que hay es asistido y revisable) y una marca de origen separada de la captura diaria. El
+formato aceptado es el simple de arriba; una exportación RGPD con columnas distintas se adapta
+cuando haya un ejemplo real.
 
 ## 6. Fuentes
 
@@ -93,10 +100,10 @@ exportación RGPD con columnas distintas se adapta cuando haya un ejemplo real.
 
 ## 7. Verificación (08/11/2026)
 
-- **`PegarEnLaLista`**: 9 pruebas verdes. La previa se enseña antes de guardar nada; al añadir,
+- **`PegarEnLaLista`**: 10 pruebas verdes. La previa se enseña antes de guardar nada; al añadir,
   cada línea llama a `alAnadir` una vez; «2 kg» va a la nota, no a un número de envases; el CSV y
-  el JSON se leen con la misma regla; subir un `.csv` lo deja en la previa; si falla a medias, se
-  dice en vez de callarlo.
+  el JSON se leen con la misma regla; subir un `.csv` lo deja en la previa; los candidatos no se
+  buscan solos y el vínculo lo elige la persona; si falla a medias, se dice en vez de callarlo.
 - **`pegar.ts`**: 7 pruebas del lector (texto, CSV con comillas, filas sin nombre, JSON de
   objetos y envuelto en `productos`, JSON roto y CSV sin cabecera).
 - **`ExportarLista` / `exportarLista.ts`**: 3 pruebas de la vista y 3 del contenido: CSV con

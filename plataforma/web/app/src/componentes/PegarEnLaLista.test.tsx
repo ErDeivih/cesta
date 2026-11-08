@@ -14,7 +14,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import type { ResultadoBusqueda } from '../tipos'
 import { PegarEnLaLista } from './PegarEnLaLista'
+
+vi.mock('../api/buscar', () => ({ buscarProductos: vi.fn() }))
+import { buscarProductos } from '../api/buscar'
 
 describe('PegarEnLaLista', () => {
   it('enseña la previa antes de guardar nada, y no llama a alAnadir', async () => {
@@ -77,6 +81,35 @@ describe('PegarEnLaLista', () => {
     expect(await screen.findByText('pan')).toBeInTheDocument()
     expect(screen.getByText(/Leido de compra.csv/)).toBeInTheDocument()
     expect(alAnadir).not.toHaveBeenCalled()
+  })
+
+  it('*** los candidatos se enseñan y el vínculo lo elige la persona ***', async () => {
+    const candidato = {
+      grupo_id: 42,
+      nombre: 'Leche entera',
+      precio_cent: 99,
+      cadena_mas_barata: 'mercadona',
+      unidad: 'l',
+    } as unknown as ResultadoBusqueda
+    vi.mocked(buscarProductos).mockResolvedValue([candidato])
+    const alAnadir = vi.fn().mockResolvedValue(undefined)
+    render(<PegarEnLaLista alAnadir={alAnadir} />)
+
+    await userEvent.type(screen.getByLabelText(/lo que quieres pegar/i), 'leche')
+    // *No se busca sola: hay que pedirlo.*
+    expect(buscarProductos).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
+
+    expect(await screen.findByText(/Leche entera/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Leche entera/ }))
+    expect(screen.getByText('Vinculado al catálogo.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /anadir 1 linea/i }))
+    expect(alAnadir).toHaveBeenCalledWith({
+      nombre: 'Leche entera',
+      nota: null,
+      grupoId: 42,
+    })
   })
 
   it('*** al anadir, la cantidad va en la NOTA y no como numero de envases ***', async () => {

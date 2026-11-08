@@ -2100,8 +2100,10 @@ export function Cesta() {
               *La nota lleva lo que la persona escribio; la cantidad de envases la pone
               ella en la lista, que es donde se ve.* */}
           <PegarEnLaLista
-            alAnadir={async ({ nombre, nota }) => {
-              await anadirLinea(listaId as string, { nombre, nota, grupo_id: null, producto_id: null })
+            alAnadir={async ({ nombre, nota, grupoId }) => {
+              await anadirLinea(listaId as string, {
+                nombre, nota, grupo_id: grupoId ?? null, producto_id: null,
+              })
               cliente.invalidateQueries({ queryKey: ['lista', listaId] })
               cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
             }}
