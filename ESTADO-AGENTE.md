@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Pautas de salud de Calorías verificadas con las ocho fuentes oficiales (WHO healthy diet 26/01/2026, sodium 11/05/2026, alcohol 28/06/2024, EFSA 26/03/2010, FAO/WHO/UNU 2004, CDC 17/01/2025, AESAN y Mifflin vía Europe PMC): HTTP 200 y fechas coincidentes; 17 pruebas verdes. Alcampo sigue con recuperación automática desde el crudo.
+resumen: Integración con apps de supers y aprender de las listas verificados (08/11): importación manual de texto con previa y nota, «Rellenar de una vez» sin duplicar y «La siguiente sería» por orden de la API; 13 pruebas verdes y tsc sin errores. Sin cuentas, credenciales, CSV/JSON ni exportación nuevos. Siguiente: verificación final del bloque.
 estado: en-curso
-tarea: bloque 7 completo; pautas de salud auditadas y fuentes re-verificadas el 8/11
+tarea: bloque 7 completo; integración y listas auditadas
 nivel: 2
-siguiente: integración con apps de supers (exportación/importación) y aprender de las listas ya cerradas; queda la verificación final del bloque
-bloqueado: nada duro; el WAF de Alcampo puede volver a cortar
+siguiente: verificación final del bloque; sin abrir formatos nuevos
+bloqueado: nada duro; CSV/JSON y exportación quedan fuera por decisión
 fecha: 2026-11-08

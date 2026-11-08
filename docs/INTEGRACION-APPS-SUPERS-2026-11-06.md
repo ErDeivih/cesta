@@ -77,3 +77,17 @@ Nada de esto se ha construido todavía, y no se promete en la interfaz:
 - AEPD, [derecho a la portabilidad](https://www.aepd.es/preguntas-frecuentes/1-tus-derechos/2-tus-derechos-de-proteccion-de-datos/FAQ-0113-que-es-el-derecho-a-la-portabilidad-de-los-datos).
 - Channable, [canal de Carrefour en Mirakl](https://helpcenter.channable.com/list-advertise/list-and-advertise-es/vende-en-marketplaces/marketplaces-mirakl/como-a-configurar-un-canal-de-carrefour-spain)
   (leído: es para vendedores, no para tickets).
+
+## 7. Verificación (08/11/2026)
+
+- **`PegarEnLaLista`**: 6 pruebas verdes. La previa se enseña antes de guardar nada; al añadir,
+  cada línea llama a `alAnadir` una vez; «2 kg» va a la nota, no a un número de envases; si falla a
+  medias, se dice en vez de callarlo.
+- **`Mosaico`**: 7 pruebas verdes. «Rellenar de una vez (N)» enseña los nombres y cuántos son; no
+  ofrece ni repite lo que ya está en la lista; «La siguiente sería…» sale del orden de la API; si
+  falla a medias, cuenta cuántos entraron y cuántos no.
+- **`tsc --noEmit`** sin errores. No se ha cambiado la UI ni el modelo.
+- **Límites que siguen escritos**: ninguna cadena tiene API de consumidor; no se guardan
+  credenciales ni sesiones; no hay login automatizado ni OAuth; no se pide DNI ni se tramita la
+  portabilidad en nombre de nadie; el CSV/JSON de una exportación RGPD queda para otra tanda y no
+  se promete en la interfaz. Las ofertas de club no se restan del total.
