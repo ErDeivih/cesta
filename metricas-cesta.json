@@ -38,11 +38,10 @@
  "dias_historial": 63,
  "ingesta": {
   "fecha": "2026-11-08",
-  "estado": "fallo",
-  "avisos": 2,
+  "estado": "aviso",
+  "avisos": 1,
   "codigos": [
-   "cadena_gold_atrasada",
-   "sin_pasada"
+   "captura_corta"
   ]
  }
 }

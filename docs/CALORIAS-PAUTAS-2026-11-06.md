@@ -100,3 +100,25 @@ concreta que no se haya leído en su informe; las cifras de la tabla salen de la
 - Déficit automático, planes de adelgazamiento, dietas, «quema esto», IMC como juicio.
 - Presentar Mifflin como «tu gasto real» o dar una cifra única sin rango.
 - Inventar kcal de alimentos que no las tienen (la app ya dice «sin dato»).
+
+
+## 7. Verificación de las fuentes (08/11/2026)
+
+Se han vuelto a abrir las páginas oficiales y se ha comprobado que responden (HTTP 200) y que la
+fecha que enseña la pantalla es la del documento:
+
+| Fuente | URL comprobada | Fecha que se muestra |
+|---|---|---|
+| WHO, *Healthy diet* | https://www.who.int/news-room/fact-sheets/detail/healthy-diet | 26/01/2026 |
+| WHO, *Sodium reduction* | https://www.who.int/news-room/fact-sheets/detail/sodium-reduction | 11/05/2026 |
+| WHO, *Alcohol* | https://www.who.int/news-room/fact-sheets/detail/alcohol | 28/06/2024 |
+| EFSA, valores dietéticos de referencia | https://www.efsa.europa.eu/en/press/news/nda100326 | 26/03/2010 |
+| FAO/WHO/UNU, *Human energy requirements* | https://www.fao.org/4/y5686e/y5686e00.htm | 2004 |
+| CDC, *Steps for Losing Weight* | https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html | 17/01/2025 |
+| AESAN, recomendaciones dietéticas | https://www.aesan.gob.es/nutricion/recomendaciones-dieteticas | 2022 |
+| Mifflin-St Jeor (Europe PMC) | https://europepmc.org/article/MED/2305711 | 1990 |
+
+No hay cambios de cifras ni de enlaces: la pantalla ya citaba estas fuentes. La verificación se deja
+aquí para que la próxima persona no tenga que repetirla. Las 17 pruebas de `Pautas.test.tsx` siguen
+verdes: seis pautas con su cifra y su fuente enlazada, ocho fuentes externas, el «por qué» del
+objetivo, el suelo de seguridad y los 44 px de todo lo que se pulsa.

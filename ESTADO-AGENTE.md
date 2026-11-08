@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Ingesta del 8/11 recuperada desde el crudo: Alcampo 23.313/0 (bronce 1,46 MB) y gold 20261108-175843 con las seis cadenas (Carrefour 16.816/1, DIA 5.686/0, Mercadona 4.286/0, Aldi 2.824/0, Lidl 91/0). Recuperación automática desde el vigilante con tests; pautas de salud, integración de supers y aprender de las listas siguen cerradas.
+resumen: Pautas de salud de Calorías verificadas con las ocho fuentes oficiales (WHO healthy diet 26/01/2026, sodium 11/05/2026, alcohol 28/06/2024, EFSA 26/03/2010, FAO/WHO/UNU 2004, CDC 17/01/2025, AESAN y Mifflin vía Europe PMC): HTTP 200 y fechas coincidentes; 17 pruebas verdes. Alcampo sigue con recuperación automática desde el crudo.
 estado: en-curso
-tarea: bloque 7 completo; recuperación de Alcampo automatizada y probada en real
+tarea: bloque 7 completo; pautas de salud auditadas y fuentes re-verificadas el 8/11
 nivel: 2
-siguiente: subir la espera configurable del WAF (60 -> 120-180 s) y revisar la pasada del 9/11; después, verificación final del bloque
-bloqueado: nada duro; el WAF de Alcampo puede volver a cortar y la recuperación puede tardar si el crudo es incompleto
+siguiente: integración con apps de supers (exportación/importación) y aprender de las listas ya cerradas; queda la verificación final del bloque
+bloqueado: nada duro; el WAF de Alcampo puede volver a cortar
 fecha: 2026-11-08
