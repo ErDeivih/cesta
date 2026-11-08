@@ -41,6 +41,44 @@ describe('PegarEnLaLista', () => {
     expect(screen.getByText(/no se convierte en envases/)).toBeInTheDocument()
   })
 
+  it('*** un CSV con cabecera se enseña antes de guardar y no inventa envases ***', async () => {
+    const alAnadir = vi.fn().mockResolvedValue(undefined)
+    render(<PegarEnLaLista alAnadir={alAnadir} />)
+
+    await userEvent.click(screen.getByLabelText(/lo que quieres pegar/i))
+    await userEvent.paste('nombre,cantidad,nota\narroz,2 kg,el de siempre\nleche,1 l,')
+
+    expect(screen.getByText('arroz')).toBeInTheDocument()
+    expect(screen.getByText(/queda anotado: 2 kg · el de siempre/)).toBeInTheDocument()
+    expect(screen.getByText(/Leido de un CSV/)).toBeInTheDocument()
+    expect(alAnadir).not.toHaveBeenCalled()
+  })
+
+  it('*** un JSON con nombre, cantidad y nota se lee igual ***', async () => {
+    const alAnadir = vi.fn().mockResolvedValue(undefined)
+    render(<PegarEnLaLista alAnadir={alAnadir} />)
+
+    await userEvent.click(screen.getByLabelText(/lo que quieres pegar/i))
+    await userEvent.paste('[{"nombre":"pan","cantidad":"2","nota":"de barra"}]')
+
+    expect(screen.getByText('pan')).toBeInTheDocument()
+    expect(screen.getByText(/queda anotado: 2 · de barra/)).toBeInTheDocument()
+    expect(screen.getByText(/Leido de un JSON/)).toBeInTheDocument()
+    expect(alAnadir).not.toHaveBeenCalled()
+  })
+
+  it('*** subir un CSV lo deja en la previa, sin guardar todavia ***', async () => {
+    const alAnadir = vi.fn().mockResolvedValue(undefined)
+    render(<PegarEnLaLista alAnadir={alAnadir} />)
+
+    const archivo = new File(['nombre,nota\npan,de barra'], 'compra.csv', { type: 'text/csv' })
+    await userEvent.upload(screen.getByLabelText('Subir CSV o JSON'), archivo)
+
+    expect(await screen.findByText('pan')).toBeInTheDocument()
+    expect(screen.getByText(/Leido de compra.csv/)).toBeInTheDocument()
+    expect(alAnadir).not.toHaveBeenCalled()
+  })
+
   it('*** al anadir, la cantidad va en la NOTA y no como numero de envases ***', async () => {
     const alAnadir = vi.fn().mockResolvedValue(undefined)
     render(<PegarEnLaLista alAnadir={alAnadir} />)

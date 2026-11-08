@@ -1,8 +1,8 @@
 titulo: Cesta — superapp de compra, recetas y calorias
-resumen: Integración con apps de supers y aprender de las listas verificados (08/11): importación manual de texto con previa y nota, «Rellenar de una vez» sin duplicar y «La siguiente sería» por orden de la API; 13 pruebas verdes y tsc sin errores. Sin cuentas, credenciales, CSV/JSON ni exportación nuevos. Siguiente: verificación final del bloque.
+resumen: Integración con supers ampliada (08/11): importar texto, CSV (nombre,cantidad,nota) o JSON pegado o subido, con previa y sin convertir cantidades en envases; exportar la lista a texto o CSV. 29 pruebas verdes, tsc y build sin errores. Sin cuentas, credenciales ni precios exportados. Siguiente: verificación final del bloque.
 estado: en-curso
-tarea: bloque 7 completo; integración y listas auditadas
+tarea: bloque 7 completo; integración manual con CSV/JSON y exportación; listas verificadas
 nivel: 2
-siguiente: verificación final del bloque; sin abrir formatos nuevos
-bloqueado: nada duro; CSV/JSON y exportación quedan fuera por decisión
+siguiente: verificación final del bloque
+bloqueado: nada duro; el mapeo automático a grupos y las exportaciones RGPD con otras columnas quedan fuera
 fecha: 2026-11-08

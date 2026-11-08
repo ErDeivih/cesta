@@ -13,8 +13,9 @@
  */
 
 import { useMemo, useState } from 'react'
+import type { ChangeEvent } from 'react'
 
-import { parteLoPegado, resumenDeLaPrevia } from '../logica/pegar'
+import { leerPegado, resumenDeLaLectura } from '../logica/pegar'
 import type { Pegada } from '../logica/pegar'
 import { Boton, Tarjeta } from './ui'
 
@@ -25,12 +26,29 @@ export function PegarEnLaLista({
   alAnadir: (linea: { nombre: string; nota: string | null }) => Promise<void>
 }) {
   const [texto, setTexto] = useState('')
+  const [nombreArchivo, setNombreArchivo] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [hecho, setHecho] = useState<string | null>(null)
   const [fallo, setFallo] = useState<string | null>(null)
 
-  const pegadas: Pegada[] = useMemo(() => parteLoPegado(texto), [texto])
-  const resumen = useMemo(() => resumenDeLaPrevia(pegadas), [pegadas])
+  const lectura = useMemo(() => leerPegado(texto), [texto])
+  const pegadas: Pegada[] = lectura.pegadas
+  const resumen = useMemo(() => resumenDeLaLectura(lectura), [lectura])
+
+  function cargaArchivo(evento: ChangeEvent<HTMLInputElement>) {
+    const archivo = evento.target.files?.[0]
+    if (!archivo) return
+    setFallo(null)
+    setHecho(null)
+    const lector = new FileReader()
+    lector.onload = () => {
+      setTexto(String(lector.result ?? ''))
+      setNombreArchivo(archivo.name)
+    }
+    lector.onerror = () => setFallo('No se ha podido leer el archivo.')
+    lector.readAsText(archivo)
+    evento.target.value = ''
+  }
 
   const anade = async () => {
     if (pegadas.length === 0) return
@@ -46,6 +64,7 @@ export function PegarEnLaLista({
         pegadas.length === 1 ? 'Anadida 1 linea.' : `Anadidas ${pegadas.length} lineas.`,
       )
       setTexto('')
+      setNombreArchivo(null)
     } catch (exc) {
       // *Y si falla a medias, se dice: callarlo dejaria lineas sin anadir sin que se sepa.*
       setFallo(
@@ -61,7 +80,7 @@ export function PegarEnLaLista({
   return (
     <Tarjeta
       titulo="Pegar una lista"
-      sub="Una linea por renglon. Se enseña antes de guardar nada."
+      sub="Una linea por renglon, o un CSV/JSON. Se enseña antes de guardar nada."
     >
       <label className="block text-[15px]" htmlFor="pegar-lista">
         <span className="sr-only">Lo que quieres pegar</span>
@@ -69,12 +88,36 @@ export function PegarEnLaLista({
           id="pegar-lista"
           className="min-h-[7rem] w-full rounded-campo border border-borde bg-papel p-2"
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          onChange={(e) => {
+            setTexto(e.target.value)
+            setNombreArchivo(null)
+          }}
           placeholder={'2 kg de arroz\nleche\n1 l de leche'}
         />
       </label>
 
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <label className="inline-flex min-h-[44px] cursor-pointer items-center text-etiqueta text-verde underline underline-offset-2">
+          Subir CSV o JSON
+          <input
+            type="file"
+            accept=".csv,.json,.txt,text/csv,application/json,text/plain"
+            aria-label="Subir CSV o JSON"
+            className="sr-only"
+            onChange={cargaArchivo}
+          />
+        </label>
+        {nombreArchivo && (
+          <span className="text-etiqueta text-tinta-suave">Leido de {nombreArchivo}</span>
+        )}
+      </div>
+
       <p className="mt-2 text-cuerpo text-tinta-suave">{resumen}</p>
+      {lectura.avisos.map((aviso) => (
+        <p key={aviso} role="status" className="mt-1 text-etiqueta text-aviso">
+          {aviso}
+        </p>
+      ))}
 
       {/* *** LA PREVIA. *** *Se ven las lineas tal como se van a guardar, con su nota al lado.* */}
       {pegadas.length > 0 && (
@@ -100,7 +143,14 @@ export function PegarEnLaLista({
               ? 'Anadir 1 linea'
               : `Anadir ${pegadas.length} lineas`}
         </Boton>
-        <Boton variante="sutil" onClick={() => setTexto('')} disabled={!texto || guardando}>
+        <Boton
+          variante="sutil"
+          onClick={() => {
+            setTexto('')
+            setNombreArchivo(null)
+          }}
+          disabled={!texto || guardando}
+        >
           Vaciar
         </Boton>
       </div>

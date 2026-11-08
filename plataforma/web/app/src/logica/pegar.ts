@@ -80,12 +80,7 @@ export function partirCantidad(texto: string): Pegada {
  *  quien decide si sobra.*
  */
 export function parteLoPegado(texto: string): Pegada[] {
-  if (!texto.trim()) return []
-  return texto
-    .split(/\r?\n/)
-    .map((l) => sinAdorno(l))
-    .filter((l) => l.length > 0)
-    .map((l) => partirCantidad(l))
+  return leerPegado(texto).pegadas
 }
 
 /** *Lo que la previa tiene que decir, en una frase.*
@@ -105,4 +100,199 @@ export function resumenDeLaPrevia(pegadas: Pegada[]): string {
     `${lineas}, ${conCantidad} con cantidad. ` +
     'La cantidad va a la nota tal como la escribiste: no se convierte en envases.'
   )
+}
+
+// ---------------------------------------------------------- CSV y JSON ------
+
+/** De donde salio lo pegado. **No se adivina por el nombre del fichero**: se mira el texto. */
+export type FormatoPegado = 'texto' | 'csv' | 'json'
+
+export interface LecturaPegado {
+  pegadas: Pegada[]
+  formato: FormatoPegado
+  /** Lo que no se pudo leer y por que. No se rellena con ceros ni con productos inventados. */
+  avisos: string[]
+}
+
+const CLAVES_NOMBRE = ['nombre', 'name', 'producto', 'product', 'articulo', 'descripcion']
+const CLAVES_CANTIDAD = ['cantidad', 'quantity', 'qty', 'peso', 'weight']
+const CLAVES_NOTA = ['nota', 'note', 'notes', 'observaciones', 'comentario']
+
+function normalizaClave(texto: string): string {
+  return texto
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function primerValor(objeto: Record<string, unknown>, claves: string[]): string | null {
+  for (const clave of Object.keys(objeto)) {
+    if (!claves.includes(normalizaClave(clave))) continue
+    const valor = objeto[clave]
+    if (typeof valor === 'string' && valor.trim()) return valor.trim()
+    if (typeof valor === 'number' && Number.isFinite(valor)) return String(valor)
+  }
+  return null
+}
+
+/** Parte una linea CSV respetando las comillas dobles. No es un parser RFC completo: es el
+ *  subconjunto que usan las exportaciones de una lista (nombre, cantidad, nota). */
+function camposCSV(linea: string, delimitador: string): string[] {
+  const campos: string[] = []
+  let actual = ''
+  let entreComillas = false
+  for (let i = 0; i < linea.length; i += 1) {
+    const c = linea[i]
+    if (c === '"') {
+      if (entreComillas && linea[i + 1] === '"') {
+        actual += '"'
+        i += 1
+      } else {
+        entreComillas = !entreComillas
+      }
+    } else if (c === delimitador && !entreComillas) {
+      campos.push(actual)
+      actual = ''
+    } else {
+      actual += c
+    }
+  }
+  campos.push(actual)
+  return campos.map((c) => c.trim())
+}
+
+function delimitadorCSV(linea: string): string {
+  const candidatos = [',', ';', '\t']
+  let mejor = ','
+  let maximo = -1
+  for (const candidato of candidatos) {
+    // Se cuentan solo los que caen fuera de comillas; para el caso normal basta.
+    const cuenta = camposCSV(linea, candidato).length
+    if (cuenta > maximo) {
+      maximo = cuenta
+      mejor = candidato
+    }
+  }
+  return mejor
+}
+
+function desdeColumnas(nombre: string, cantidad: string, nota: string): Pegada | null {
+  const limpio = nombre.trim()
+  if (!limpio) return null
+  const partes = [cantidad.trim(), nota.trim()].filter(Boolean)
+  return {
+    nombre: limpio,
+    cantidad: cantidad.trim() || null,
+    unidad: null,
+    nota: partes.join(' · '),
+  }
+}
+
+function leeCSV(texto: string): LecturaPegado | null {
+  const lineas = texto.replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim())
+  if (lineas.length < 1) return null
+  const delimitador = delimitadorCSV(lineas[0])
+  const cabecera = camposCSV(lineas[0], delimitador).map(normalizaClave)
+  const iNombre = cabecera.findIndex((c) => CLAVES_NOMBRE.includes(c))
+  if (iNombre < 0) return null
+  const iCantidad = cabecera.findIndex((c) => CLAVES_CANTIDAD.includes(c))
+  const iNota = cabecera.findIndex((c) => CLAVES_NOTA.includes(c))
+  const pegadas: Pegada[] = []
+  let sinNombre = 0
+  for (const linea of lineas.slice(1)) {
+    const campos = camposCSV(linea, delimitador)
+    const una = desdeColumnas(
+      campos[iNombre] ?? '',
+      iCantidad >= 0 ? (campos[iCantidad] ?? '') : '',
+      iNota >= 0 ? (campos[iNota] ?? '') : '',
+    )
+    if (una) pegadas.push(una)
+    else sinNombre += 1
+  }
+  const avisos = sinNombre
+    ? [`${sinNombre} fila(s) sin nombre: no se han anadido.`]
+    : []
+  return { pegadas, formato: 'csv', avisos }
+}
+
+function leeJSON(texto: string): LecturaPegado | null {
+  let datos: unknown
+  try {
+    datos = JSON.parse(texto)
+  } catch {
+    return null
+  }
+  const lista = Array.isArray(datos)
+    ? datos
+    : (datos && typeof datos === 'object'
+      ? ((datos as Record<string, unknown>).productos
+        ?? (datos as Record<string, unknown>).items
+        ?? null)
+      : null)
+  if (!Array.isArray(lista)) return null
+
+  const pegadas: Pegada[] = []
+  let malas = 0
+  for (const item of lista) {
+    if (typeof item === 'string') {
+      if (item.trim()) pegadas.push(partirCantidad(item))
+      continue
+    }
+    if (!item || typeof item !== 'object') {
+      malas += 1
+      continue
+    }
+    const objeto = item as Record<string, unknown>
+    const nombre = primerValor(objeto, CLAVES_NOMBRE)
+    if (!nombre) {
+      malas += 1
+      continue
+    }
+    const cantidad = primerValor(objeto, CLAVES_CANTIDAD) ?? ''
+    const nota = primerValor(objeto, CLAVES_NOTA) ?? ''
+    const una = desdeColumnas(nombre, cantidad, nota)
+    if (una) pegadas.push(una)
+    else malas += 1
+  }
+  const avisos = malas ? [`${malas} elemento(s) sin nombre: no se han anadido.`] : []
+  return { pegadas, formato: 'json', avisos }
+}
+
+/** Lee texto libre, CSV o JSON. **La cantidad siempre acaba en la nota**, nunca en un numero de
+ *  envases: el formato de entrada no cambia esa regla. */
+export function leerPegado(texto: string): LecturaPegado {
+  const limpio = texto.trim()
+  if (!limpio) return { pegadas: [], formato: 'texto', avisos: [] }
+
+  if (limpio.startsWith('{') || limpio.startsWith('[')) {
+    const json = leeJSON(limpio)
+    if (json) return json
+    return {
+      pegadas: parteLoPegadoTexto(limpio),
+      formato: 'texto',
+      avisos: ['No se ha podido leer como JSON: se trata como texto libre.'],
+    }
+  }
+
+  const csv = leeCSV(limpio)
+  if (csv) return csv
+
+  return { pegadas: parteLoPegadoTexto(limpio), formato: 'texto', avisos: [] }
+}
+
+/** La parte de siempre, sin volver a mirar el texto como CSV/JSON. */
+function parteLoPegadoTexto(texto: string): Pegada[] {
+  return texto
+    .split(/\r?\n/)
+    .map((l) => sinAdorno(l))
+    .filter((l) => l.length > 0)
+    .map((l) => partirCantidad(l))
+}
+
+export function resumenDeLaLectura(lectura: LecturaPegado): string {
+  const base = resumenDeLaPrevia(lectura.pegadas)
+  if (lectura.formato === 'texto') return base
+  return `${base} Leido de un ${lectura.formato.toUpperCase()}.`
 }

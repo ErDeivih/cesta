@@ -56,6 +56,7 @@ import {
   Tarjeta, Vacio, cx,
 } from '../componentes/ui'
 import { PegarEnLaLista } from '../componentes/PegarEnLaLista'
+import { ExportarLista } from '../componentes/ExportarLista'
 import type { Linea, Reparto, RepartoTiendas } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
@@ -2104,6 +2105,11 @@ export function Cesta() {
               cliente.invalidateQueries({ queryKey: ['lista', listaId] })
               cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
             }}
+          />
+
+          <ExportarLista
+            lineas={lineas}
+            nombreLista={listas.data?.find((l) => l.id === listaId)?.nombre ?? 'cesta'}
           />
         </>
       )}

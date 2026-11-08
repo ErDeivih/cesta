@@ -34,9 +34,15 @@ representantes) ni pide DNI: la persona la pide y, si quiere, nos pasa el ficher
 
 ## 3. Lo que la app hace hoy
 
-- **Importación manual desde texto pegado**: `PegarEnLaLista` (`componentes/PegarEnLaLista.tsx`)
-  parte el texto, enseña la previa y añade una línea por producto; se entra desde `Cesta.tsx`.
-  Es el camino real de «traer tu lista de otra app o tu ticket».
+- **Importación manual desde texto pegado, CSV o JSON**: `PegarEnLaLista`
+  (`componentes/PegarEnLaLista.tsx`) parte el texto, lee un CSV con cabecera
+  `nombre,cantidad,nota` o un JSON de objetos con esas claves, enseña la previa y añade una línea
+  por producto; se entra desde `Cesta.tsx`. También se puede subir el fichero. La cantidad va a la
+  nota: **no se convierte en número de envases**. Es el camino real de «traer tu lista de otra app
+  o tu ticket».
+- **Exportación manual**: `ExportarLista` copia la lista como texto o descarga un CSV con
+  `nombre,cantidad,nota`, para llevarla a otra app. Sin precios, sin cuenta y sin salir del
+  aparato.
 - **Copiar el ticket/lista a mano** y pegarlo: no se pide nada más.
 - **Nada de cuentas**: no hay botón «conectar cuenta», ni campos de usuario/contraseña, ni
   OAuth a cadenas, ni sincronización en tiempo real. Si algún día una cadena publica API oficial
@@ -54,15 +60,22 @@ representantes) ni pide DNI: la persona la pide y, si quiere, nos pasa el ficher
 - Prometer sincronización en tiempo real.
 - Restar precios de socio o cupones del total como si fueran precio de estantería.
 
-## 5. Lo que faltaría para que la importación sea más útil
+## 5. Lo que ya se puede hacer, y lo que sigue fuera
 
-Nada de esto se ha construido todavía, y no se promete en la interfaz:
+Hecho el 8/11/2026:
 
-1. Formato de entrada acordado para una exportación RGPD (nombre, cantidad, precio, fecha,
-   cadena) y su previsualización.
-2. Mapeo de texto libre a `grupo_id` (el mismo problema del emparejador) y una marca de origen
-   («importado por ti el …») que no se mezcle con la captura diaria.
-3. Pegar desde CSV/JSON además de texto.
+1. **Importar** texto libre, CSV (`nombre,cantidad,nota`) o JSON (array de objetos con `nombre`,
+   `cantidad`, `nota`; también `productos`/`items`) pegándolo o subiendo el fichero. La previa
+   enseña cada línea y su nota antes de guardar nada. Si una fila no trae nombre, se descarta y se
+   cuenta; no se inventa.
+2. **Exportar** la lista como texto o como CSV con esas tres columnas. La exportación no incluye
+   precios ni datos de la cuenta.
+3. Las cantidades de la importación **siguen yendo a la nota**: el formato no cambia la regla de
+   «2 kg no son dos envases».
+
+Sigue fuera, y no se promete en la interfaz: el mapeo automático de texto libre a `grupo_id` y una
+marca de origen separada de la captura diaria. El formato aceptado es el simple de arriba; una
+exportación RGPD con columnas distintas se adapta cuando haya un ejemplo real.
 
 ## 6. Fuentes
 
@@ -80,14 +93,20 @@ Nada de esto se ha construido todavía, y no se promete en la interfaz:
 
 ## 7. Verificación (08/11/2026)
 
-- **`PegarEnLaLista`**: 6 pruebas verdes. La previa se enseña antes de guardar nada; al añadir,
-  cada línea llama a `alAnadir` una vez; «2 kg» va a la nota, no a un número de envases; si falla a
-  medias, se dice en vez de callarlo.
+- **`PegarEnLaLista`**: 9 pruebas verdes. La previa se enseña antes de guardar nada; al añadir,
+  cada línea llama a `alAnadir` una vez; «2 kg» va a la nota, no a un número de envases; el CSV y
+  el JSON se leen con la misma regla; subir un `.csv` lo deja en la previa; si falla a medias, se
+  dice en vez de callarlo.
+- **`pegar.ts`**: 7 pruebas del lector (texto, CSV con comillas, filas sin nombre, JSON de
+  objetos y envuelto en `productos`, JSON roto y CSV sin cabecera).
+- **`ExportarLista` / `exportarLista.ts`**: 3 pruebas de la vista y 3 del contenido: CSV con
+  cabecera `nombre,cantidad,nota` y comillas escapadas, texto legible y nombre de fichero seguro.
 - **`Mosaico`**: 7 pruebas verdes. «Rellenar de una vez (N)» enseña los nombres y cuántos son; no
   ofrece ni repite lo que ya está en la lista; «La siguiente sería…» sale del orden de la API; si
   falla a medias, cuenta cuántos entraron y cuántos no.
-- **`tsc --noEmit`** sin errores. No se ha cambiado la UI ni el modelo.
-- **Límites que siguen escritos**: ninguna cadena tiene API de consumidor; no se guardan
-  credenciales ni sesiones; no hay login automatizado ni OAuth; no se pide DNI ni se tramita la
-  portabilidad en nombre de nadie; el CSV/JSON de una exportación RGPD queda para otra tanda y no
-  se promete en la interfaz. Las ofertas de club no se restan del total.
+- **`tsc --noEmit` y `vite build`** sin errores. El servicio de la app se ha vuelto a sellar.
+- **Límites**: ninguna cadena tiene API de consumidor; no se guardan credenciales ni sesiones; no
+  hay login automatizado ni OAuth; no se pide DNI ni se tramita la portabilidad en nombre de
+  nadie; no se exportan precios ni datos de cuenta; el CSV/JSON acepta el formato simple de esta
+  ficha y no promete adaptar cualquier exportación RGPD. Las ofertas de club no se restan del
+  total.
