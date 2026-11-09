@@ -185,6 +185,11 @@ de más a menos grave), es el orden en que yo las haría:
 `ExportarLista.tsx` tenía `text-[15px]` y en móvil Safari hacía zoom al enfocarlo; ahora
 hereda los 16 px del `html` y `test_ui_movil` lo vigila.
 
+> **Actualización de la noche del 9/11.** Ya están aplicados §4.1, §4.2, §4.4, §4.5, §4.7
+> (versión con contador), §4.8, §4.9 y §4.10: el antes/después de cada uno, con capturas, está en
+> [cambios-interfaz-2026-11-09.md](cambios-interfaz-2026-11-09.md). Quedan §4.3 y §4.6, que
+> necesitan una decisión de David ([decisiones-interfaz-2026-11-09.md](decisiones-interfaz-2026-11-09.md)).
+
 ---
 
 ## 4. Los diez problemas, de más a menos claro
