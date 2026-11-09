@@ -10,11 +10,18 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 from projects.cesta import ficha_mercadona as fm
+
+#: Declaraciones que la fuente publica **en el campo de ingredientes** en vez de una lista.
+#: Medido el 8/11/2026: la ficha `18473` («Tinto de verano limón Don Simón», lata, 4º) trae
+#: `ingredients: "Contiene sulfitos"` -- la declaración obligatoria de sulfitos de un producto
+#: con alcohol, no una captura a medias.
+DECLARACION = re.compile(r"^(contiene|puede contener|no contiene|sin)\b", re.IGNORECASE)
 
 # **La forma real, copiada de un fichero de `data/raw/fuente=mercadona/`.** *No es inventada: los dos
 # campos, el marcado `<strong>` dentro y el `ingredients` de nivel 1 a `null`.*
@@ -135,13 +142,27 @@ def test_contra_el_crudo_real():
     # ingrediente **lo rompia.** *Que es **justo lo que un ensayo contra el crudo real sirve para
     # encontrar.** *
     #
-    # *Asi que el umbral se mantiene, *y **se perdona UN caso**: *cuando el ingrediente **es el
-    # producto** -- *que es **la unica razon legitima** para una ficha de una palabra.* *
+    # *Asi que el umbral se mantiene, *y **se perdonan dos casos**: *cuando el ingrediente **es
+    # el producto** y *cuando la fuente **publica una declaracion**.* *Lo primero es **la unica
+    # razon legitima** para una ficha de una palabra del producto; lo segundo, una declaracion
+    # obligatoria que ocupa el campo de ingredientes.*
     # *Y no se perdona nada mas: *una ficha corta **que no sea su propio nombre** sigue fallando.* *
+    # *** SALVO QUE LA FUENTE PUBLIQUE UNA DECLARACION, que es la tercera razon legitima. *** *
+    #
+    # *Medido el 8/11/2026 contra el crudo real*: la ficha `18473` («Tinto de verano limón
+    # Don Simón», lata, 4º de alcohol) trae en `nutrition_information.ingredients`
+    # *** `"Contiene sulfitos"` ***. *No es una lista de ingredientes: es la declaración
+    # obligatoria de sulfitos de un producto con alcohol, y viene así en la fuente.* *El lector
+    # hace lo correcto -- copia lo que publica --; lo que estaba de más era la prueba.*
+    # *Una ficha corta que empieza por «Contiene…», «Puede contener…», «No contiene…» o «Sin…»
+    # es una ficha completa; la que no empieza así y no es el producto sigue fallando.*
     if "ingredientes" in leido:
         nombre = str(leido.get("nombre") or "").strip().lower()
-        corta = len(leido["ingredientes"]) <= 40
-        suyo = bool(nombre) and nombre.rstrip("s") in str(leido["ingredientes"]).strip().lower()
-        assert not corta or suyo, (
+        ingredientes = str(leido["ingredientes"]).strip()
+        corta = len(ingredientes) <= 40
+        suyo = bool(nombre) and nombre.rstrip("s") in ingredientes.lower()
+        declaracion = bool(DECLARACION.match(ingredientes))
+        assert not corta or suyo or declaracion, (
             f"{fichero.name}: ingredientes sospechosamente cortos "
-            f"({leido['ingredientes']!r}) y no es el nombre del producto ({nombre!r})")
+            f"({leido['ingredientes']!r}); no es el nombre del producto ({nombre!r}) "
+            f"ni una declaracion (Contiene / Puede contener / Sin)")

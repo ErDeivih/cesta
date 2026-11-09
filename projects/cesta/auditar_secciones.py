@@ -328,7 +328,14 @@ def sin_mapear(dia: str | None = None) -> list[tuple[str, str, int, str | None]]
         # hereda su seccion. `frescos/charcuteria` va a carniceria, asi que
         # `frescos/charcuteria/bacon-y-panceta` tambien. No hace falta preguntar
         # a los hermanos cuando el padre ya ha contestado.
-        propuesta = mapa.get((fuente, _padre_de(clave) or ""))
+        # **El convenio del congelado manda sobre la herencia.** Una hoja nueva bajo
+        # `congelados/` va al pasillo de su producto fresco (la verdura congelada con la
+        # verdura), no a `congelados`. El 5/11/2026 `congelados/verduras-congeladas` entro
+        # heredando la seccion de su padre y desde entonces sus precios no se encuentran
+        # con los de las demas cadenas: lo caza
+        # `test_el_convenio_del_congelado_se_aplica_igual_en_todas_las_cadenas`.
+        espejo = _espejo_de(clave) if CONGELADO.search(_raiz(clave)) else None
+        propuesta = espejo or mapa.get((fuente, _padre_de(clave) or ""))
         if propuesta is None:
             cuenta = None
             for nivel in (_padre_de(clave), _rama_de(clave)):
@@ -384,6 +391,41 @@ def _cuantos_por_clave(dia: str | None) -> collections.Counter:
     return cuenta
 
 
+def corrige_convenio(rotas: list[tuple[str, str, str, str]]) -> int:
+    """Pone el pasillo del espejo a los congelados que se salen del convenio.
+
+    No se escribe el mapa a mano: lo reescribe la auditoria, igual que cuando anade una
+    clave nueva. Solo toca las que ya vienen clasificadas como rotas (las mixtas no
+    llegan aqui) y conserva el comentario que hubiera a la derecha.
+    """
+    if not rotas:
+        return 0
+    objetivo = {(fuente, clave): espejo for fuente, clave, _dice, espejo in rotas}
+    lineas = FICHERO.read_text(encoding="utf-8").splitlines()
+    salida: list[str] = []
+    fuente_actual, cambiadas = None, 0
+    for linea in lineas:
+        cabecera = re.fullmatch(r"  (\w+):", linea.split("#")[0].rstrip())
+        if cabecera:
+            fuente_actual = cabecera.group(1)
+            salida.append(linea)
+            continue
+        entrada = re.fullmatch(r'(\s{4}"([^"]+)":\s*)([^\s#]+)(.*)', linea)
+        if entrada and (fuente_actual, entrada.group(2)) in objetivo:
+            correcta = objetivo[(fuente_actual, entrada.group(2))]
+            if entrada.group(3) != correcta:
+                comentario = entrada.group(4).strip()
+                base = f'    "{entrada.group(2)}": {correcta}'
+                salida.append(base.ljust(70) + (f" {comentario}" if comentario else ""))
+                cambiadas += 1
+                continue
+        salida.append(linea)
+    if cambiadas:
+        FICHERO.write_text("\n".join(salida) + "\n", encoding="utf-8")
+        _mapa.cache_clear()
+    return cambiadas
+
+
 def aplica(nuevas: list[tuple[str, str, int, str | None]]) -> int:
     """Escribe las propuestas claras en `secciones.yml`, en su cadena.
 
@@ -421,6 +463,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--dia", help="fecha del bronze a mirar (por defecto, el ultimo)")
     ap.add_argument("--aplicar", action="store_true",
                     help="escribe en secciones.yml las propuestas claras")
+    ap.add_argument("--corregir-convenio", action="store_true",
+                    help="escribe en secciones.yml el pasillo del espejo de los congelados "
+                         "que se salen del convenio")
     args = ap.parse_args(argv)
 
     mapa = _mapa()
@@ -445,6 +490,12 @@ def main(argv: list[str] | None = None) -> int:
         for fuente, clave, dice, espejo in rotas:
             n = cuenta.get((fuente, clave), 0)
             print(f"  {n:>5}  {fuente:<10} {clave[:52]:<52} {dice:>18} -> {espejo}")
+        if args.corregir_convenio:
+            cambiadas = corrige_convenio(rotas)
+            print(f"  {cambiadas} claves corregidas en {FICHERO.name} "
+                  f"(el pasillo del espejo); las mixtas no se tocan")
+            mapa = _mapa()
+            rotas = [c for c in convenio_del_congelado(mapa) if c[2] != c[3]]
 
     disidentes = disidentes_de_su_rama(mapa)
     print(f"\n=== hojas que se salen de lo que hace su rama: {len(disidentes)}")

@@ -134,6 +134,28 @@ def test_una_hoja_nueva_hereda_la_seccion_de_su_padre(tmp_path, monkeypatch):
     assert propuesta == "carniceria"
 
 
+def test_una_hoja_nueva_de_congelado_va_al_pasillo_de_su_fresco(tmp_path, monkeypatch):
+    """El convenio no se hereda del padre: una verdura congelada va con la verdura.
+
+    El 5/11/2026 `congelados/verduras-congeladas` entró heredando `congelados` de su
+    padre, y desde entonces sus precios no se encontraban con los de las demás cadenas.
+    `sin_mapear` proponía lo que dijera el padre; ahora, para un congelado, manda el
+    espejo (la misma regla que audita los que ya están).
+    """
+    import polars as pl
+    monkeypatch.setattr(aud.config, "DATA", tmp_path)
+    carpeta = tmp_path / "bronze" / "fuente=carrefour" / "fecha=2026-11-09"
+    carpeta.mkdir(parents=True)
+    pl.DataFrame({"categoria": ["congelados/verduras-congeladas-de-prueba"] * 2},
+                 ).write_parquet(carpeta / "part.parquet")
+
+    nuevas = aud.sin_mapear()
+    assert nuevas, "la categoría nueva tiene que salir"
+    _fuente, clave, n, propuesta = nuevas[0]
+    assert (clave, n) == ("congelados/verduras-congeladas-de-prueba", 2)
+    assert propuesta == "frutas-verduras"
+
+
 def test_una_hoja_sin_padre_claro_no_se_propone_a_ojo(tmp_path, monkeypatch):
     """Una sección puesta a ojo es lo que mandó los pañales a la panadería."""
     import polars as pl

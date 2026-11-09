@@ -72,7 +72,7 @@ export function ExportarLista({ lineas, nombreLista }: {
           <textarea
             readOnly
             value={listaATexto(lineas)}
-            className="mt-1 min-h-[7rem] w-full rounded-campo border border-borde bg-papel p-2 text-[15px] text-tinta"
+            className="mt-1 min-h-[7rem] w-full rounded-campo border border-borde bg-papel p-2 text-tinta"
           />
         </label>
       )}
