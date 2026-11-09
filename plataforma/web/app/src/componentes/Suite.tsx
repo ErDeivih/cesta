@@ -110,7 +110,7 @@ export const APLICACIONES: Aplicacion[] = [
   },
   {
     clave: 'calorias',
-    nombre: 'Calorias',
+    nombre: 'Calorías',
     Icono: IconoPlato,
     raiz: '/calorias',
     subsecciones: [
@@ -130,9 +130,25 @@ export function aplicacionDe(ruta: string): Aplicacion | null {
 /** El titulo de la pantalla actual, con el nombre largo de cada subseccion. */
 export function tituloDeSeccion(ruta: string): string {
   const app = aplicacionDe(ruta)
-  if (!app) return 'Cesta'
+  if (!app) {
+    // *** Las pantallas sueltas tambien tienen nombre, y no es «Cesta». *** *Antes el rotulo y
+    // el titulo de la cabecera decian los dos «Cesta» y debajo la pantalla ponia el suyo: tres
+    // titulos para una pantalla y ninguno decia donde estabas.*
+    if (ruta.startsWith('/ajustes')) return 'Tu perfil'
+    if (ruta.startsWith('/avisos')) return 'Avisos'
+    if (ruta.startsWith('/escaner')) return 'Escáner'
+    if (ruta.startsWith('/panel/matching')) return 'Matching'
+    if (ruta.startsWith('/panel')) return 'Panel'
+    if (ruta.startsWith('/unirme/')) return 'Invitación'
+    return 'Cesta'
+  }
   const exacta = app.subsecciones.find((s) => s.a === ruta)
   if (exacta) return exacta.texto
+  // **Importar una receta es de Recetas aunque cuelgue de `/compra/`.** Sin esta linea caia en
+  // `return app.nombre` y la pantalla se titulaba «Compra», que es de donde se venia. El titulo
+  // es corto a proposito: en 390 px, «Importar una receta» no cabe al lado del boton del menu.
+  if (ruta.startsWith('/compra/importar')) return 'Importar receta'
+  if (ruta.startsWith('/compra/despensa')) return 'Despensa'
   if (ruta.includes('/productos/')) return 'Producto'
   // **Comparar la cesta no es la lista.** Su ruta cuelga de `/listas/`, y sin esta línea el
   // armazón decía «Lista» en una pantalla que no es la lista. Va antes que `/listas/`.
@@ -440,9 +456,9 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
           <span className="font-medium">{app?.nombre ?? 'Cesta'}</span>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] uppercase tracking-wide text-secundaria">
-            {app?.nombre ?? 'Cesta'}
-          </p>
+          {/* *** Un solo titulo por pantalla. *** *Aqui habia un rotulo con el nombre de la app
+              encima del `h1`; en el movil el boton de menu ya dice la app y en las pantallas
+              sueltas el rotulo repetia «Cesta» sobre un titulo que tambien decia «Cesta».* */}
           <h1 className="truncate font-serif text-[28px] leading-[34px] font-semibold text-tinta-fuerte lg:text-[32px] lg:leading-[38px]">
             {titulo}
           </h1>

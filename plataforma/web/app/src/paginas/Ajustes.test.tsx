@@ -142,7 +142,7 @@ describe('Perfil · la cuenta', () => {
 })
 
 describe('Perfil · las preferencias', () => {
-  it('*** la cadena habitual se guarda en `cadenas_cerca`, la preferencia que ya existe ***', async () => {
+  it('*** las cadenas cercanas se guardan en `cadenas_cerca`, la preferencia que ya existe ***', async () => {
     vi.mocked(yo).mockResolvedValue({
       ...CON_SESION,
       preferencias: { cadenas_cerca: ['mercadona'] },
@@ -151,10 +151,10 @@ describe('Perfil · las preferencias', () => {
     monta()
     await screen.findByText('David')
 
-    const resumen = screen.getByText('Cadena habitual').closest('summary') as HTMLElement
+    const resumen = screen.getByText('Cadenas que tienes cerca', { selector: 'summary span' }).closest('summary') as HTMLElement
     expect(within(resumen).getByText('Mercadona')).toBeInTheDocument()
 
-    await usuario.click(screen.getByText('Cadena habitual'))
+    await usuario.click(screen.getByText('Cadenas que tienes cerca', { selector: 'summary span' }))
     const casilla = screen.getByRole('checkbox', { name: 'Mercadona' })
     expect(casilla).toBeChecked()
 

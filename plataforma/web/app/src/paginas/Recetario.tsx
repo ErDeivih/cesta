@@ -383,7 +383,7 @@ function RecetarioConSesion() {
         {!recetas.isPending && !recetas.error && cuantas > 0 && (
           <>
             {/* --------------------------------------------- buscar y filtrar */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <label htmlFor="buscar-receta" className="sr-only">
                 Buscar recetas por nombre
               </label>
@@ -393,7 +393,7 @@ function RecetarioConSesion() {
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Buscar por nombre…"
-                className="min-h-[44px] min-w-0 flex-1 rounded-campo border border-borde-fuerte bg-papel px-3 py-2 text-[16px] text-tinta placeholder:text-tinta-tenue"
+                className="min-h-[44px] w-full min-w-0 rounded-campo border border-borde-fuerte bg-papel px-3 py-2 text-[16px] text-tinta placeholder:text-tinta-tenue sm:flex-1"
               />
               {etiquetas.length > 0 && (
                 <>

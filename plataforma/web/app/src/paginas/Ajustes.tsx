@@ -344,11 +344,8 @@ export function Ajustes() {
 
         <details className="mt-1 border-t border-borde">
           <Resumen className="min-h-[52px] text-cuerpo">
-            <span className="shrink-0 text-tinta">Cadena habitual</span>
-            <span
-              className="ml-auto min-w-0 truncate text-right text-tinta-suave"
-              title={resumenCadenas}
-            >
+            <span className="shrink-0 text-tinta">Cadenas que tienes cerca</span>
+            <span className="ml-auto min-w-0 text-right text-tinta-suave">
               {resumenCadenas}
             </span>
           </Resumen>

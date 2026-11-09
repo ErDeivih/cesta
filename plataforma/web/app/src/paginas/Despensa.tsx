@@ -111,8 +111,8 @@ function DespensaConSesion() {
       {data && data.sin_saber_cuanto > 0 && (
         <p className="text-cuerpo text-aviso">
           {data.sin_saber_cuanto === 1
-            ? 'Hay 1 cosa de la que no se sabe cuanto queda.'
-            : `Hay ${data.sin_saber_cuanto} cosas de las que no se sabe cuanto queda.`}
+            ? 'Hay 1 cosa de la que no se sabe cuánto queda.'
+            : `Hay ${data.sin_saber_cuanto} cosas de las que no se sabe cuánto queda.`}
         </p>
       )}
 
@@ -143,12 +143,12 @@ function DespensaConSesion() {
         <h2 className="text-cuerpo font-semibold">Declarar lo que hay</h2>
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <label className="flex flex-col text-cuerpo">
-            Que
+            Qué
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={texto}
                    onChange={(ev) => setTexto(ev.target.value)} placeholder="harina" />
           </label>
           <label className="flex flex-col text-cuerpo">
-            Cuanto <span className="text-etiqueta text-tinta-suave">(vacio = no se sabe)</span>
+            Cuánto <span className="text-etiqueta text-tinta-suave">(vacío = no se sabe)</span>
             <input className="min-h-11 rounded border border-borde px-2 py-1" value={cantidad}
                    onChange={(ev) => setCantidad(ev.target.value)} placeholder="1" />
           </label>

@@ -225,17 +225,36 @@ function MiCesta({ conSesion, cargandoSesion }: {
   // *** Solo se compara lo que es comparable. *** *Una cadena a la que le faltan
   // nueve productos de veinte sale «mas barata» sin serlo; coronarla seria el mismo
   // fallo que rellenar un dato que falta con un cero.*
-  const completas = (r.una_tienda ?? [])
-    .filter((o) => (o.faltan?.length ?? 0) === 0 && o.encontrados >= r.lineas)
-    .sort((a, b) => a.total_cent - b.total_cent)
-
-  if (completas.length === 0) {
+  const comparables = r.lineas ?? 0
+  if (comparables === 0) {
+    // *** CERO NO ES UN PRECIO. *** *Sin ninguna linea comparable el filtro de abajo dejaria
+    // pasar a todas las cadenas con total 0 y la tarjeta coronaria «0,00 €» como la mas
+    // barata.* *Se dice lo que pasa: no hay ningun precio confirmado que sumar.*
     return (
       <section aria-labelledby="mi-cesta" className={MARCO}>
         <TituloCesta />
         <p className="mt-2 text-cuerpo text-tinta-suave">
-          Todavía no puedo comparar la lista entera: hay productos que no están en todas
-          las cadenas.
+          Todavía no hay ninguna línea con precio confirmado. Confirma los productos de la
+          lista y aquí saldrá cuánto cuesta en cada cadena.
+        </p>
+        <EnlaceCesta a={`/compra/listas/${listaId}`}>Ver mi lista</EnlaceCesta>
+      </section>
+    )
+  }
+
+  const completas = (r.una_tienda ?? [])
+    .filter((o) => (o.faltan?.length ?? 0) === 0 && o.encontrados >= comparables)
+    .sort((a, b) => a.total_cent - b.total_cent)
+
+  // *Y aunque haya lineas comparables, un total a cero no es un precio: si todas las
+  // cadenas suman cero es que no hay nada que coronar.*
+  if (completas.length === 0 || !completas.some((o) => o.total_cent > 0)) {
+    return (
+      <section aria-labelledby="mi-cesta" className={MARCO}>
+        <TituloCesta />
+        <p className="mt-2 text-cuerpo text-tinta-suave">
+          Todavía no puedo comparar la lista entera: hay líneas sin precio confirmado o
+          productos que no están en todas las cadenas.
         </p>
         <EnlaceCesta a={`/compra/listas/${listaId}`}>Ver mi lista</EnlaceCesta>
       </section>

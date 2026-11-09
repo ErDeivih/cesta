@@ -52,7 +52,11 @@ from patchright.sync_api import sync_playwright
 RAIZ = Path(__file__).resolve().parents[1]
 #: Las capturas viven en `data/`, que está fuera de git: son un artefacto que se
 #: regenera, no producto. El inventario que las explica sí va en `docs/`.
-SALIDA = RAIZ / "data" / "revision-ui-2026-11-09"
+#: Con `CESTA_CAPTURA_SALIDA` se puede sacar una segunda tanda (antes/después).
+SALIDA = Path(os.environ.get("CESTA_CAPTURA_SALIDA",
+                             str(RAIZ / "data" / "revision-ui-2026-11-09")))
+if not SALIDA.is_absolute():
+    SALIDA = RAIZ / SALIDA
 API = os.environ.get("CESTA_CAPTURA_API", "http://127.0.0.1:8099")
 UI = os.environ.get("CESTA_CAPTURA_UI", "http://127.0.0.1:5173")
 USUARIO = "revision-ui"
@@ -154,7 +158,9 @@ def siembra(c: httpx.Client) -> dict:
         casa = r.json()
 
     detalle = c.get(f"/api/listas/{casa['id']}").json()
-    ya = {linea.get("nombre") for linea in detalle.get("lineas", [])}
+    # *La API llama `nombre_visto` a lo que se escribio en la linea; con `nombre` el conjunto
+    # salia vacio y cada pasada volvia a anadir las diez lineas (30 lineas en tres pasadas).*
+    ya = {linea.get("nombre_visto") for linea in detalle.get("lineas", [])}
 
     grupos: list[int] = []
     anadidas = 0

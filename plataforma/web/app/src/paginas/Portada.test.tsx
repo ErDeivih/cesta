@@ -282,6 +282,27 @@ describe('Portada · «Mi cesta»', () => {
     expect(screen.queryByText(/0,00\s*€/)).not.toBeInTheDocument()
   })
 
+  it('*** con lineas pero sin ningun precio confirmado, no corona un 0,00 ***', async () => {
+    // *El caso que se colo: `una_tienda` traia las cadenas con 0 encontrados, `lineas` era 0 y
+    // el filtro las daba por «completas». La tarjeta coronaba «0,00 €» como la mas barata.*
+    vi.mocked(reparto).mockResolvedValue({
+      ...REPARTO,
+      lineas: 0,
+      una_tienda: [
+        { cadena: 'lidl', total_cent: 0, total_sin_ofertas_cent: 0, encontrados: 0, faltan: [] },
+        { cadena: 'carrefour', total_cent: 0, total_sin_ofertas_cent: 0, encontrados: 0, faltan: [] },
+      ],
+    })
+    monta()
+
+    expect(await screen.findByText(/ninguna línea con precio confirmado/i)).toBeInTheDocument()
+    expect(screen.queryByText(/0,00\s*€/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/la más barata de/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /ver mi lista/i })).toHaveAttribute(
+      'href', '/compra/listas/l1',
+    )
+  })
+
   it('*** si la comparacion falla, lo dice con palabras y deja seguir a la lista ***', async () => {
     vi.mocked(misListas).mockRejectedValue(new Error('sin red'))
     monta()

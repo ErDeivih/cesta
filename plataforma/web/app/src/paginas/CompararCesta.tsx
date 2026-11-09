@@ -449,7 +449,13 @@ function CadenaEnLaLista({ cadena, total, contadas, esLaMasBarata, diferenciaCon
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h4 className="text-entrada font-semibold text-tinta-fuerte">{nombreCadena(cadena.cadena)}</h4>
-        <p className="cifra text-precio font-semibold text-tinta-fuerte">{euros(cadena.total_cent)}</p>
+        {/* *** Un cero no es un precio. *** *Una cadena que no tiene ningun producto de la
+            lista sumaba 0,00 € y se leia como «gratis»; se dice que no hay precio.* */}
+        {contadas === 0 ? (
+          <p className="text-etiqueta text-tinta-suave">sin precio</p>
+        ) : (
+          <p className="cifra text-precio font-semibold text-tinta-fuerte">{euros(cadena.total_cent)}</p>
+        )}
       </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-2">

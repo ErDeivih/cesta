@@ -65,7 +65,7 @@ function TendenciasDelRango() {
     <div className="flex min-h-full flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-[13px] text-secundaria" htmlFor="dias">
-          Ultimos
+          Últimos
         </label>
         <select
           id="dias"
@@ -75,7 +75,7 @@ function TendenciasDelRango() {
         >
           {[7, 14, 30].map((n) => (
             <option key={n} value={n}>
-              {n} dias
+              {n} días
             </option>
           ))}
         </select>
@@ -88,8 +88,8 @@ function TendenciasDelRango() {
       {error && <Fallo error={error} />}
 
       {data && filas.length === 0 && (
-        <Vacio titulo="No hay nada anotado en estos dias" className="grow">
-          <p>Anota algo en el diario y aparecera aqui.</p>
+        <Vacio titulo="No hay nada anotado en estos días" className="grow">
+          <p>Anota algo en el diario y aparecerá aquí.</p>
         </Vacio>
       )}
 

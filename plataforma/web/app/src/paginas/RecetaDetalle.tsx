@@ -208,10 +208,15 @@ export function enEspanol(items: string[]): string {
 export function avisosDeCobertura(c: CosteVisible): string[] {
   const avisos: string[] = []
   if (c.sinPrecio.length > 0) {
+    // *** Con muchos nombres, un contador y una pista; no un muro de seis productos. *** *
+    // *Medido en una receta real: seis nombres seguidos en una frase dentro de la tarjeta de
+    // coste. Los nombres ya estan abajo, cada uno con su «sin coste».*
     avisos.push(
       c.sinPrecio.length === 1
         ? `Falta el precio de ${c.sinPrecio[0]}.`
-        : `Faltan precios de ${enEspanol(c.sinPrecio)}.`,
+        : c.sinPrecio.length <= 3
+          ? `Faltan precios de ${enEspanol(c.sinPrecio)}.`
+          : `Faltan precios de ${c.sinPrecio.length} ingredientes: los marcados como «sin coste» aquí abajo.`,
     )
   }
   if (c.sinCantidad.length > 0) {
@@ -242,10 +247,9 @@ export function pasosDePreparacion(preparacion: string): string[] {
 
 /* ================================================================== el coste === */
 
-function CosteDeLaReceta({ ingredientes, raciones, minutos }: {
+function CosteDeLaReceta({ ingredientes, raciones }: {
   ingredientes: IngredienteDeLaApi[]
   raciones: number
-  minutos: number | null
 }) {
   const c = costeDeLaReceta(ingredientes)
   const porRacion = c.usadoCent !== null && raciones > 0
@@ -262,9 +266,8 @@ function CosteDeLaReceta({ ingredientes, raciones, minutos }: {
         <h2 id="coste-ingredientes" className="text-micro uppercase">
           Coste de ingredientes
         </h2>
-        {minutos != null && minutos > 0 && (
-          <span className="shrink-0 text-etiqueta tabular-nums">{minutos} min</span>
-        )}
+        {/* *El tiempo no es coste: ya esta en la cabecera («RECETA · 4 RACIONES · 40 MIN») y aqui
+            ponia «40 min» al lado de un precio, que se lee como si fuera parte de la cuenta.* */}
       </div>
 
       {c.usadoCent !== null ? (
@@ -732,7 +735,6 @@ function DetalleDeLaReceta() {
       <CosteDeLaReceta
         ingredientes={ingredientes}
         raciones={data.raciones}
-        minutos={data.minutos}
       />
 
       <Ingredientes ingredientes={ingredientes} coste={coste} />
