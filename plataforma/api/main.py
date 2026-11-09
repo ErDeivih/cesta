@@ -35,6 +35,7 @@ from . import (
     despensa,
     diario,
     habituales,
+    minimos,
     movimientos,
     panel,
     recetas,
@@ -858,6 +859,14 @@ def ver_lista(lista_id: str, usuario: dict = Depends(usuario_actual)):
     # encabezado, que es la cara que ya existe para una linea sin seccion.
     movidas = catalogo.lineas_movidas(lineas)
     lineas = [_linea_movida(ln) if str(ln.get("id")) in movidas else ln for ln in lineas]
+    # **Y si el precio vuelve a su minimo, se marca.** Es una marca visual, no un
+    # aviso: el artefacto lo deja la cadena (`projects/cesta/minimos.py`) y aqui solo
+    # se cuelga de la linea que lo tiene. Si el artefacto no esta o es de otro dia,
+    # `con_minimos` devuelve las lineas tal cual -- mejor no marcar que mentir.
+    #
+    # Va **despues** de lo de las lineas movidas a proposito: una linea movida no
+    # puede caer al «mas barato de su grupo», porque su grupo ya es otro producto.
+    lineas = minimos.con_minimos(lineas)
     nuevo = almacen.novedades(lista_id, usuario["id"])
     almacen.marca_visita(lista_id, usuario["id"])
     return {

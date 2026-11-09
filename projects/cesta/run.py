@@ -402,6 +402,20 @@ def _main() -> int:
         except Exception as exc:  # noqa: BLE001
             print(f"[avisos] no se pudieron mirar: {exc}")
 
+    # **El minimo de cada producto y si el precio de hoy vuelve a el.** Deja
+    # `data/minimos.parquet` y `data/minimos-resumen.json`, que es lo que la API lee
+    # para marcar las lineas de la lista. Va despues de publicar (el artefacto tiene
+    # que ser del dia que se sirve, o la API no marcara nada, que es lo correcto) y
+    # antes del resumen, que es quien cuenta la pasada.
+    #
+    # *No puede tumbar el dia*: si falta gold o el calculo falla, se registra y se
+    # sigue -- el mismo trato que los avisos, y por la misma razon.
+    if not args.sin_pipeline:
+        try:
+            importlib.import_module("projects.cesta.minimos").main([])
+        except Exception as exc:  # noqa: BLE001
+            print(f"[minimos] no se pudieron calcular: {type(exc).__name__}: {exc}")
+
     # El resumen se imprime siempre, tambien cuando algo ha fallado: saber que
     # quedo en disco importa mas cuando el dia ha ido mal que cuando ha ido bien.
     if not args.sin_pipeline:
