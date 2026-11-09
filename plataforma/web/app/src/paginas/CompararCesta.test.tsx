@@ -78,7 +78,7 @@ import { tituloDe } from '../App'
 /* ------------------------------------------------------------ los datos --- */
 
 /** Una linea de la lista, como la manda `GET /listas/{id}`. */
-function linea(id: string, nombre: string, cantidad = 1) {
+function linea(id: string, nombre: string, cantidad = 1, extra: { minimo?: unknown } = {}) {
   return {
     id,
     nombre_visto: nombre,
@@ -86,6 +86,25 @@ function linea(id: string, nombre: string, cantidad = 1) {
     grupo_id: null,
     producto_id: null,
     tachado_en: null,
+    // *El minimo **solo cuando se pide**: si la clave no viene, la linea se pinta como
+    // siempre, que es el caso que hay que probar.*
+    ...(extra.minimo ? { minimo: extra.minimo } : {}),
+  }
+}
+
+/** El minimo historico de una linea, en la forma que manda la API (`tipos.ts`). */
+function minimoDe(cambios: Record<string, unknown> = {}) {
+  return {
+    producto_id: 'mercadona:1',
+    cadena: 'mercadona',
+    precio_cent: 83,
+    precio_unidad_cent: 83,
+    unidad: 'kg',
+    minimo_cent: 83,
+    minimo_fecha: '2026-10-12',
+    vuelve_al_minimo: false,
+    nuevo_minimo: false,
+    ...cambios,
   }
 }
 
@@ -94,6 +113,9 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
   promo?: string | null
   sinOferta?: number
   autorizada?: boolean
+  /** El contrato nuevo del reparto: precio por unidad de medida y su unidad. */
+  precioUnidad?: number | null
+  unidad?: string | null
 } = {}) {
   return {
     producto_id: `${cadena}:${idLinea}`,
@@ -108,6 +130,8 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
     autorizada: extra.autorizada !== false,
     identidad: 'exacto',
     motivo: null,
+    precio_unidad_cent: extra.precioUnidad ?? null,
+    unidad: extra.unidad ?? null,
   }
 }
 
@@ -307,6 +331,352 @@ describe('comparar mi cesta con datos', () => {
       .getByRole('heading', { name: 'Mercadona', level: 4 })
       .closest('li') as HTMLElement
     expect(filaMercadona.textContent).not.toMatch('más que la más barata')
+  })
+
+  it('la cifra grande de ahorro dice el importe, el porcentaje y entre que cadenas', async () => {
+    monta()
+
+    // *La tarjeta va arriba de los totales de las completas: 9,99 contra 10,70 son 0,71 €,
+    // que sobre los 10,70 de la mas cara es un 7 %.*
+    const titulo = await screen.findByRole('heading', { name: 'Lo que te ahorras' })
+    const tarjeta = titulo.closest('section') as HTMLElement
+    expect(within(tarjeta).getByText('0,71 €')).toBeInTheDocument()
+    expect(within(tarjeta).getByText('−7 %')).toBeInTheDocument()
+    expect(tarjeta).toHaveTextContent('Comprando en Aldi en vez de en DIA')
+
+    // *Y va **antes** de «Total en cada cadena», que es lo que pide el encargo: primero la
+    // respuesta y detras el desglose que la sostiene.*
+    const totales = screen.getByRole('heading', { name: 'Total en cada cadena' })
+    expect(
+      titulo.compareDocumentPosition(totales) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+
+    // *La letra pequeña de este caso **no** habla de equivalentes: la resta entre totales solo
+    // usa lo autorizado, y decir que los incluye seria mentir en la propia nota.*
+    expect(tarjeta).toHaveTextContent(
+      'Con los precios de hoy. Las ofertas que piden tarjeta, cupón o comprar por internet no están restadas.',
+    )
+    expect(tarjeta).not.toHaveTextContent('equivalentes que aún no has confirmado')
+  })
+
+  it('un empate entre las cadenas completas no es un ahorro y no pinta la cifra', async () => {
+    // *Dos completas con el mismo total: la resta es cero, y «ahorras 0,00 €» no se anuncia.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 129,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'aldi', 129)],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 129,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'dia', 129)],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera')],
+    }
+    monta()
+
+    expect(await screen.findByText(/lo más barato es/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Lo que te ahorras' })).not.toBeInTheDocument()
+  })
+
+  it('con un ahorro que redondea al 0 % no se enseña el porcentaje', async () => {
+    // *Un centimo sobre una cesta grande es un ahorro de verdad, pero «−0 %» diria que no hay
+    // ahorro: se calla el porcentaje y se queda el importe, que es el dato que no miente.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 5000,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'aldi', 5000)],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 5001,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'dia', 5001)],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera')],
+    }
+    monta()
+
+    const titulo = await screen.findByRole('heading', { name: 'Lo que te ahorras' })
+    const tarjeta = titulo.closest('section') as HTMLElement
+    expect(within(tarjeta).getByText('0,01 €')).toBeInTheDocument()
+    expect(tarjeta).not.toHaveTextContent('−0 %')
+  })
+
+  it('sin dos cadenas completas, suma el ahorro de comprar cada cosa donde esta mas barata', async () => {
+    // *El caso real: la autorizacion de equivalentes es **una por linea**, asi que casi nunca
+    // hay dos cadenas completas a la vez. Aqui solo aldi esta completa; la tarjeta suma, linea a
+    // linea, lo que separa al precio mas caro del mas barato de las lineas con dos precios.*
+    dobles.comparacion = comparacion({
+      lineas: 4,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 1000,
+          contadas: 4,
+          productos: [
+            precio('l1', 'Leche entera', 'aldi', 100),
+            precio('l2', 'Pan de molde', 'aldi', 200),
+            precio('l3', 'Yogur natural', 'aldi', 300),
+            precio('l4', 'Queso curado', 'aldi', 400),
+          ],
+        }),
+        // *Tres de las cuatro: no es completa, pero sus tres lineas si valen para el ahorro.*
+        cadena({
+          cadena: 'dia',
+          total: 590,
+          contadas: 3,
+          faltan: ['Queso curado'],
+          productos: [
+            precio('l1', 'Leche entera', 'dia', 120),
+            precio('l2', 'Pan de molde', 'dia', 220),
+            precio('l3', 'Yogur natural', 'dia', 250),
+          ],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        linea('l1', 'Leche entera'),
+        linea('l2', 'Pan de molde'),
+        linea('l3', 'Yogur natural'),
+        linea('l4', 'Queso curado'),
+      ],
+    }
+    monta()
+
+    // *De las tres lineas con dos precios: 20 + 20 + 50 = 0,90 €, sobre la suma de los maximos
+    // 120 + 220 + 300 = 6,40 €, un 14 %.* *La cuarta linea (solo en aldi) **no suma**: si su
+    // maximo entrara en el divisor, el porcentaje seria otro -- por eso se comprueba el 14 %.*
+    const titulo = await screen.findByRole('heading', { name: 'Lo que te ahorras' })
+    const tarjeta = titulo.closest('section') as HTMLElement
+    expect(within(tarjeta).getByText('0,90 €')).toBeInTheDocument()
+    expect(within(tarjeta).getByText('−14 %')).toBeInTheDocument()
+    expect(tarjeta).toHaveTextContent(
+      'Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más cara.',
+    )
+    // *Y el aviso de con que precios se ha hecho la cuenta, sin popups: los de hoy, incluidos
+    // los equivalentes sin confirmar, y con las ofertas condicionadas sin restar.*
+    expect(tarjeta).toHaveTextContent(
+      'Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos no suman en los totales de abajo). Las ofertas que piden tarjeta, cupón o comprar por internet no están restadas.',
+    )
+  })
+
+  it('un precio por confirmar cuenta para el ahorro posible, pero no para los totales', async () => {
+    // *La autorizacion de un equivalente es **una por linea**, asi que en uso real una linea
+    // nunca tiene dos celdas autorizadas.* *El ahorro posible si cuenta ese precio -- es lo que
+    // costaria hoy el equivalente --, pero los totales de abajo siguen sin sumarlo: son dos cosas
+    // distintas, y la nota de la tarjeta lo dice.*
+    dobles.comparacion = comparacion({
+      lineas: 2,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 300,
+          contadas: 2,
+          productos: [
+            precio('l1', 'Leche entera', 'aldi', 100),
+            precio('l2', 'Pan de molde', 'aldi', 200),
+          ],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 0,
+          contadas: 0,
+          faltan: ['Leche entera', 'Pan de molde'],
+          productos: [],
+          pendientes: [{ linea_id: 'l1', nombre: 'Leche entera', coste_cent: 120 }],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera'), linea('l2', 'Pan de molde')],
+    }
+    monta()
+
+    // *Leche entera: 100 en aldi y 120 en DIA (por confirmar) -> 0,20 €; el maximo es 120, un 17 %.*
+    const titulo = await screen.findByRole('heading', { name: 'Lo que te ahorras' })
+    const tarjeta = titulo.closest('section') as HTMLElement
+    expect(within(tarjeta).getByText('0,20 €')).toBeInTheDocument()
+    expect(within(tarjeta).getByText('−17 %')).toBeInTheDocument()
+    expect(tarjeta).toHaveTextContent(
+      'incluidos los equivalentes que aún no has confirmado (esos no suman en los totales de abajo)',
+    )
+
+    // *Y el total de DIA sigue sin contar ese precio: la fila dice «sin precio» y 0 de 2.*
+    const filaDia = screen.getByRole('heading', { name: 'DIA', level: 4 }).closest('li') as HTMLElement
+    expect(within(filaDia).getByText('sin precio')).toBeInTheDocument()
+    expect(filaDia).toHaveTextContent('con 0 de 2 productos')
+  })
+
+  it('sin ninguna linea con precio en dos cadenas no pinta tarjeta de ahorro', async () => {
+    // *Una sola cadena con todo: ni dos completas ni una linea con dos precios, asi que no hay
+    // ahorro que anunciar y no se pinta ni un hueco.*
+    dobles.comparacion = comparacion({
+      lineas: 2,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 300,
+          contadas: 2,
+          productos: [precio('l1', 'Leche entera', 'aldi', 129), precio('l2', 'Pan de molde', 'aldi', 171)],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera'), linea('l2', 'Pan de molde')],
+    }
+    monta()
+
+    expect(await screen.findByText(/lo más barato es/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Lo que te ahorras' })).not.toBeInTheDocument()
+  })
+
+  it('cada cadena lleva una barra proporcional al total mas caro', async () => {
+    monta()
+
+    // *La barra se mide contra el total mas caro (DIA, 10,70 €): DIA llega al 100 % y Aldi,
+    // con 9,99 €, al 93 %. La longitud dice de un vistazo cuanto se separan.*
+    const filaDia = (await screen.findByRole('heading', { name: 'DIA', level: 4 })).closest('li') as HTMLElement
+    expect(filaDia.querySelector('[aria-hidden="true"] > div')).toHaveStyle({ width: '100%' })
+
+    const filaAldi = screen.getByRole('heading', { name: 'Aldi', level: 4 }).closest('li') as HTMLElement
+    expect(filaAldi.querySelector('[aria-hidden="true"] > div')).toHaveStyle({ width: '93%' })
+  })
+
+  it('al abrir la linea, cada cadena enseña su precio por unidad de medida', async () => {
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 125,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'aldi', 125, { precioUnidad: 125, unidad: 'l' })],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 131,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'dia', 131, { precioUnidad: 66, unidad: 'ud' })],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera')],
+    }
+    monta()
+
+    const resumen = await screen.findByText('Leche entera')
+    fireEvent.click(resumen)
+    const detalles = resumen.closest('details') as HTMLElement
+    // *Coste y, al lado, lo que cuesta la unidad de medida de **ese** formato en **esa**
+    // cadena: el litro de leche de Aldi y la unidad de DIA, cada uno con su dato.*
+    const filaAldi = within(detalles).getByText('Aldi').closest('li') as HTMLElement
+    expect(filaAldi).toHaveTextContent('1,25 € · 1,25 €/l')
+    const filaDia = within(detalles).getByText('DIA').closest('li') as HTMLElement
+    expect(filaDia).toHaveTextContent('1,31 € · 0,66 €/ud')
+  })
+
+  it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
+    // *Dos formas de que el dato no se pueda enseñar: que no venga ninguno de los dos campos
+    // (una API vieja) o que llegue el precio sin la unidad. En las dos, el coste de siempre.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 600,
+          contadas: 1,
+          productos: [precio('l1', 'Queso curado', 'aldi', 600, { precioUnidad: 600, unidad: null })],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 640,
+          contadas: 1,
+          productos: [precio('l1', 'Queso curado', 'dia', 640)],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Queso curado')],
+    }
+    monta()
+
+    const resumen = await screen.findByText('Queso curado')
+    const detalles = resumen.closest('details') as HTMLElement
+    // *Si el contrato nuevo no llega, no se inventa un €/unidad: queda el coste de siempre.*
+    expect(within(detalles).queryByText(/€\/l|€\/kg|€\/ud/)).not.toBeInTheDocument()
+    expect(within(detalles).getByText('6,00 €')).toBeInTheDocument()
+    expect(within(detalles).getByText('6,40 €')).toBeInTheDocument()
+  })
+
+  it('una linea con minimo nuevo lleva su pastilla en el resumen', async () => {
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        // *Las dos banderas a la vez: un minimo nuevo tambien esta «en su minimo», y se enseña
+        // solo la fuerte para no repetir la misma noticia con dos pastillas.*
+        linea('l1', 'Leche entera', 2, {
+          minimo: minimoDe({ nuevo_minimo: true, vuelve_al_minimo: true, minimo_cent: 79 }),
+        }),
+        linea('l2', 'Pan de molde'),
+        linea('l3', 'Yogur natural'),
+        linea('l4', 'Queso curado'),
+      ],
+    }
+    monta()
+
+    const fila = (await screen.findByText('Leche entera')).closest('li') as HTMLElement
+    expect(within(fila).getByText('Mínimo nuevo · 0,79 €')).toBeInTheDocument()
+    // *La fuerte manda: no se dicen las dos, que seria la misma noticia dos veces.*
+    expect(within(fila).queryByText(/En su mínimo/)).not.toBeInTheDocument()
+  })
+
+  it('una linea que vuelve a su minimo lleva la otra pastilla', async () => {
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        linea('l1', 'Leche entera', 2, { minimo: minimoDe({ vuelve_al_minimo: true, minimo_cent: 83 }) }),
+        linea('l2', 'Pan de molde'),
+        linea('l3', 'Yogur natural'),
+        linea('l4', 'Queso curado'),
+      ],
+    }
+    monta()
+
+    const fila = (await screen.findByText('Leche entera')).closest('li') as HTMLElement
+    expect(within(fila).getByText('En su mínimo · 0,83 €')).toBeInTheDocument()
+    expect(within(fila).queryByText(/Mínimo nuevo/)).not.toBeInTheDocument()
+  })
+
+  it('sin minimo en la linea no pinta ninguna pastilla', async () => {
+    monta()
+
+    const fila = (await screen.findByText('Pan de molde')).closest('li') as HTMLElement
+    expect(within(fila).queryByText(/Mínimo nuevo|En su mínimo/)).not.toBeInTheDocument()
   })
 
   it('una linea que solo esta en una cadena no se presenta como comparacion', async () => {

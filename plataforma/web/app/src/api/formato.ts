@@ -106,6 +106,8 @@ export function hace(iso: string | null | undefined): string {
   if (d === null) return NO_LO_SE
   if (d === 0) return 'hoy'
   if (d === 1) return 'ayer'
+  // *Y el futuro tiene singular: «dentro de 1 días» no se dice.*
+  if (d === -1) return 'dentro de 1 día'
   if (d < 0) return `dentro de ${-d} días`
   return `hace ${d} días`
 }

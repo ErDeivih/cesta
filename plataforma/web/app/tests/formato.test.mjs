@@ -108,21 +108,28 @@ test('*** `diasDesde` de algo ilegible es `null`, no 0 ***', () => {
 })
 
 test('*** `hace` habla en palabras: hoy, ayer, hace N dias ***', () => {
-  const hoy = new Date('2026-10-18T12:00:00')
-  // *Se prueba con la fecha de hoy inyectada... pero `hace` no la acepta, asi que se comprueban las
-  // palabras con fechas relativas a ahora.*
+  // *La fecha de «ahora» se toma en LOCAL, no con `toISOString()`: en Madrid, a partir
+  // de medianoche, el ISO en UTC todavía es el día anterior y la prueba decía «ayer»
+  // donde tenía que decir «hoy» (falló pasada la medianoche del 9 al 10/11/2026).*
+  const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    + `-${String(d.getDate()).padStart(2, '0')}`
   const ahora = new Date()
   const unDia = 24 * 60 * 60 * 1000
-  const ayer = new Date(ahora.getTime() - unDia).toISOString().slice(0, 10)
-  const haceTres = new Date(ahora.getTime() - 3 * unDia).toISOString().slice(0, 10)
-  assert.equal(hace(ahora.toISOString().slice(0, 10)), 'hoy')
+  const ayer = isoLocal(new Date(ahora.getTime() - unDia))
+  const haceTres = isoLocal(new Date(ahora.getTime() - 3 * unDia))
+  assert.equal(hace(isoLocal(ahora)), 'hoy')
   assert.equal(hace(ayer), 'ayer')
   assert.equal(hace(haceTres), 'hace 3 días')
 })
 
 test('y `hace` de una fecha futura lo dice sin signos raros', () => {
-  const futuro = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    + `-${String(d.getDate()).padStart(2, '0')}`
+  const futuro = isoLocal(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000))
   assert.match(hace(futuro), /dentro de 2 días/)
+  // *Y el singular, que salía como «dentro de 1 días».*
+  const manana = isoLocal(new Date(Date.now() + 24 * 60 * 60 * 1000))
+  assert.equal(hace(manana), 'dentro de 1 día')
 })
 
 // ------------------------------------------------------ unidades y cadenas ---

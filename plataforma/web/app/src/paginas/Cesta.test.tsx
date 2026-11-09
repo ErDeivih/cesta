@@ -23,6 +23,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
+import { ErrorApi } from '../api/cliente'
+
 /* ------------------------------------------------------------- los dobles --- */
 
 const dobles = vi.hoisted(() => ({
@@ -30,8 +32,14 @@ const dobles = vi.hoisted(() => ({
   listas: [] as unknown[],
   detalle: null as unknown,
   reparto: null as unknown,
+  /** Lo que contesta `GET /listas/{id}/repetir-compra`. */
+  previaRepetir: null as unknown,
+  /** Lo que contesta `POST /listas/{id}/repetir-compra`. */
+  reciboRepetir: null as unknown,
+  /** Y lo que puede fallar el POST, cuando la prueba lo pide. */
+  falloRepetir: null as unknown,
   fallo: null as unknown,
-  llamadas: { detalle: 0, reparto: 0 },
+  llamadas: { detalle: 0, reparto: 0, previa: 0, repetir: 0 },
 }))
 
 vi.mock('../api/cesta', async (importOriginal) => {
@@ -49,6 +57,16 @@ vi.mock('../api/cesta', async (importOriginal) => {
       dobles.llamadas.reparto += 1
       if (dobles.fallo) throw dobles.fallo
       return dobles.reparto
+    },
+    previaDeRepetirCompra: async () => {
+      dobles.llamadas.previa += 1
+      if (dobles.fallo) throw dobles.fallo
+      return dobles.previaRepetir
+    },
+    repetirCompra: async () => {
+      dobles.llamadas.repetir += 1
+      if (dobles.falloRepetir) throw dobles.falloRepetir
+      return dobles.reciboRepetir
     },
     // *Nada de red en una prueba: los cambios no se pulsan, pero la mutacion se construye.*
     cambiarLinea: async () => ({}),
@@ -205,7 +223,12 @@ beforeEach(() => {
     ],
   })
   dobles.fallo = null
-  dobles.llamadas = { detalle: 0, reparto: 0 }
+  // *Sin compra anterior: la tarjeta de repetir no se pinta, que es lo que se mide en las
+  // demas pruebas de este fichero. Cada prueba que la necesita la rellena.*
+  dobles.previaRepetir = previaDeCompra({ compra_id: null, fecha: null, lineas: [] })
+  dobles.reciboRepetir = { anadidos: 0, ya_estaban: 0, sin_catalogo: 0, faltan: 0 }
+  dobles.falloRepetir = null
+  dobles.llamadas = { detalle: 0, reparto: 0, previa: 0, repetir: 0 }
 })
 
 /* ============================================================== la cabecera === */
@@ -485,6 +508,175 @@ describe('el mínimo de un producto', () => {
     const fila2 = (await dentro.findByText('Leche entera 1,5 l')).closest('li') as HTMLElement
     expect(within(fila2).getByText('2 ×')).toBeInTheDocument()
     expect(within(fila2).queryByText(/En su mínimo|Mínimo nuevo/)).not.toBeInTheDocument()
+  })
+})
+
+/* ==================================== repetir la compra de la semana pasada === */
+
+/** Una línea de la última compra cerrada, tal como la manda la previa de repetir.
+ *
+ *  `estado` es lo que la tarjeta tiene que saber decir en voz alta: `falta` (se va a
+ *  añadir), `ya_estaba` (ya está en la lista) o `sin_catalogo` (no se puede repetir). */
+function deLaCompraAnterior(
+  nombre: string,
+  estado: 'falta' | 'ya_estaba' | 'sin_catalogo',
+  cantidad = 1,
+) {
+  return {
+    nombre,
+    producto_id: estado === 'sin_catalogo' ? null : `mercadona:${nombre}`,
+    grupo_id: estado === 'sin_catalogo' ? null : 10,
+    cantidad,
+    estado,
+  }
+}
+
+/** Lo que contesta `GET /listas/{id}/repetir-compra`: la última compra cerrada de la lista. */
+function previaDeCompra(datos: Record<string, unknown> = {}) {
+  return {
+    compra_id: 'c1',
+    fecha: '2026-11-05',
+    lineas: [],
+    faltan: 0,
+    ya_estaban: 0,
+    sin_catalogo: 0,
+    ...datos,
+  }
+}
+
+/** La tarjeta de repetir, esperando a que la previa haya llegado. */
+async function laTarjetaDeRepetir(): Promise<HTMLElement> {
+  const titulo = await screen.findByRole(
+    'heading', { name: 'Repetir la compra de la semana pasada' })
+  const tarjeta = titulo.closest('section')
+  expect(tarjeta).not.toBeNull()
+  return tarjeta as HTMLElement
+}
+
+describe('repetir la compra de la semana pasada', () => {
+  it('con compra anterior enseña la fecha, el resumen, los estados y el botón', async () => {
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [
+        deLaCompraAnterior('Alubia blanca 1 kg', 'ya_estaba'),
+        deLaCompraAnterior('Leche entera 1,5 l', 'ya_estaba', 2),
+        deLaCompraAnterior('Patatas malla 5 kg', 'falta'),
+        deLaCompraAnterior('Pan del pueblo', 'sin_catalogo'),
+      ],
+      faltan: 1,
+      ya_estaban: 2,
+      sin_catalogo: 1,
+    })
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    // *La fecha de la compra, en castellano: nunca el ISO crudo.*
+    expect(dentro.getByText(/Del 5 nov 2026/)).toBeInTheDocument()
+    // *El resumen, con las tres cuentas de la previa.*
+    expect(dentro.getByText(/4 productos · 2 ya están en la lista · 1 sin catálogo/))
+      .toBeInTheDocument()
+    // *Cada línea con su estado, en texto visible: lo lee también el lector de pantalla.*
+    expect(dentro.getByText('Alubia blanca 1 kg')).toBeInTheDocument()
+    expect(dentro.getAllByText('ya está en la lista')).toHaveLength(2)
+    expect(dentro.getByText('falta')).toBeInTheDocument()
+    expect(dentro.getByText('sin catálogo')).toBeInTheDocument()
+    // *Y el botón dice cuántos se van a añadir, que es el número que decide pulsarlo.*
+    expect(dentro.getByRole('button', { name: 'Añadir los que faltan (1)' }))
+      .toBeInTheDocument()
+  })
+
+  it('sin compra anterior no pinta la tarjeta ni deja un hueco', async () => {
+    monta()
+    await loQueFalta()
+    // *La previa se pide siempre (es la única forma de saber si hay compra anterior)...*
+    await waitFor(() => expect(dobles.llamadas.previa).toBeGreaterThan(0))
+    // *...y como no la hay, la pantalla se queda como estaba: ni tarjeta ni hueco.*
+    expect(screen.queryByRole('heading', { name: 'Repetir la compra de la semana pasada' }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Añadir los que faltan/ }))
+      .not.toBeInTheDocument()
+  })
+
+  it('al pulsar añade de verdad y lo cuenta en la propia tarjeta', async () => {
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [
+        deLaCompraAnterior('Patatas malla 5 kg', 'falta'),
+        deLaCompraAnterior('Alubia blanca 1 kg', 'ya_estaba'),
+      ],
+      faltan: 1,
+      ya_estaban: 1,
+    })
+    dobles.reciboRepetir = { anadidos: 1, ya_estaban: 1, sin_catalogo: 0, faltan: 1 }
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    fireEvent.click(dentro.getByRole('button', { name: 'Añadir los que faltan (1)' }))
+    // *El aviso va dentro de la tarjeta: sin popup ni notificación del navegador.*
+    expect(await screen.findByText(/Añadidas 1 · 1 ya estaban · 0 sin catálogo/))
+      .toBeInTheDocument()
+    expect(dobles.llamadas.repetir).toBe(1)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('con una fecha ilegible no escribe «Del no lo sé»: enseña el resumen y ya', async () => {
+    // *Una fecha rota no se convierte en «no lo sé» dentro de una frase: se calla la frase
+    // y el resumen sigue, que es el dato que importa aquí.*
+    dobles.previaRepetir = previaDeCompra({
+      fecha: 'no-es-una-fecha',
+      lineas: [deLaCompraAnterior('Patatas malla 5 kg', 'falta')],
+      faltan: 1,
+    })
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    expect(dentro.queryByText(/Del no lo sé/)).not.toBeInTheDocument()
+    expect(dentro.getByText(/1 producto · 0 ya están en la lista · 0 sin catálogo/))
+      .toBeInTheDocument()
+    expect(dentro.getByRole('button', { name: 'Añadir los que faltan (1)' }))
+      .toBeInTheDocument()
+  })
+
+  it('en una lista de solo mirar, el botón está apagado y los estados se ven igual', async () => {
+    // *Un botón que la API va a contestar 403 no se ofrece como si funcionara; la pantalla ya
+    // dice arriba que quien la creó puede dar el papel de escribir.*
+    dobles.detalle = { ...(dobles.detalle as Record<string, unknown>), papel: 'mira' }
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [
+        deLaCompraAnterior('Patatas malla 5 kg', 'falta'),
+        deLaCompraAnterior('Alubia blanca 1 kg', 'ya_estaba'),
+      ],
+      faltan: 1,
+      ya_estaban: 1,
+    })
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    expect(dentro.getByRole('button', { name: 'Añadir los que faltan (1)' })).toBeDisabled()
+    // *Y lo que se puede hacer mirando -- saber qué falta -- se sigue viendo.*
+    expect(dentro.getByText('falta')).toBeInTheDocument()
+    expect(dentro.getByText('ya está en la lista')).toBeInTheDocument()
+  })
+
+  it('si no falta ninguna, lo dice y no hay botón', async () => {
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [deLaCompraAnterior('Alubia blanca 1 kg', 'ya_estaba')],
+      faltan: 0,
+      ya_estaban: 1,
+    })
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    expect(dentro.getByText('Ya tienes todo lo de esa compra.')).toBeInTheDocument()
+    expect(dentro.queryByRole('button', { name: /Añadir los que faltan/ }))
+      .not.toBeInTheDocument()
+  })
+
+  it('si el servidor dice que no, se cuenta en un aviso y la tarjeta sigue en pie', async () => {
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [deLaCompraAnterior('Patatas malla 5 kg', 'falta')],
+      faltan: 1,
+    })
+    dobles.falloRepetir = new ErrorApi(403, 'Esta lista es de solo mirar.')
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    fireEvent.click(dentro.getByRole('button', { name: 'Añadir los que faltan (1)' }))
+    expect(await screen.findByText('Esta lista es de solo mirar.')).toBeInTheDocument()
+    // *El texto de la API, sin números ni nombres de endpoint (§8 de la doctrina).*
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
 

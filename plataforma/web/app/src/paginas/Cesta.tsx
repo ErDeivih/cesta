@@ -33,8 +33,9 @@ import { Link, useLocation } from 'react-router-dom'
 
 import {
   anadirLinea, borrarLista, cambiarLinea, cerrarCompra, compartirCon, crearInvitacion,
-  crearLista, entrar, misListas, registrarse, renombrarLista, reparto as pedirReparto,
-  revocarInvitaciones, salir, sincronizar, verLista, donde, yo,
+  crearLista, entrar, misListas, previaDeRepetirCompra, registrarse, renombrarLista,
+  reparto as pedirReparto, repetirCompra, revocarInvitaciones, salir, sincronizar, verLista,
+  donde, yo,
 } from '../api/cesta'
 import type {
   CambioDeCola, CambioLinea, CierreDeCompra, Invitacion, Novedad, Persona,
@@ -1090,6 +1091,139 @@ function CerrarCompra({ listaId, enElCarro, papel, sello }: {
   )
 }
 
+/** El estado de una línea de la compra anterior, dicho en palabras y con su tono. */
+const TEXTO_DEL_ESTADO = {
+  falta: 'falta',
+  ya_estaba: 'ya está en la lista',
+  sin_catalogo: 'sin catálogo',
+} as const
+
+const TONO_DEL_ESTADO = {
+  // *Falta*: se va a añadir, así que es una acción pendiente y no una alarma.
+  falta: 'info',
+  // *Ya está*: no hay nada que hacer con ella; se dice, no se destaca.
+  ya_estaba: 'dato',
+  // *Sin catálogo*: es la única que no se puede repetir, y eso hay que verlo.
+  sin_catalogo: 'aviso',
+} as const
+
+/** *** REPETIR LA COMPRA DE LA SEMANA PASADA. *** *
+ *
+ *  *El cierre de compra guarda lo que se compró; esto lo devuelve a la lista la semana
+ *  siguiente, que es la mitad que faltaba del uso semanal: la compra de la casa se repite
+ *  casi entera, y volver a apuntarla a mano es el trabajo que hace que la lista deje de
+ *  usarse.*
+ *
+ *  Tres decisiones que se ven en la pantalla:
+ *
+ *  - **La previa manda**: qué se añadiría, qué ya está y qué no se puede repetir se enseña
+ *    **antes** de tocar nada. Un botón que añade a ciegas es justo lo que no puede hacer la
+ *    lista de la compra.
+ *  - **Lo que ya está no se duplica**, y lo que no tiene catálogo se dice por su nombre:
+ *    repetir una compra no es copiar nombres, es volver a apuntar productos.
+ *  - **Sin compra anterior no hay tarjeta** (ni un hueco): una lista recién creada no tiene
+ *    nada que repetir, y una tarjeta vacía sería ruido.
+ *
+ *  *Nada de `alert` ni de notificaciones: el resultado se cuenta dentro de la tarjeta, en un
+ *  `Aviso` con `role="status"`, que es lo que lo hace llegar también a quien no ve la
+ *  pantalla.*
+ */
+function RepetirCompra({ listaId, puedeEscribir }: {
+  listaId: string
+  /** *Quien solo mira puede ver qué falta, pero no añadirlo: la API contesta 403 y un botón
+   *  que no puede funcionar es una promesa que no se puede cumplir (`Compartir`, aquí abajo).* */
+  puedeEscribir: boolean
+}) {
+  const cliente = useQueryClient()
+  const previa = useQuery({
+    queryKey: ['repetir-compra', listaId],
+    queryFn: () => previaDeRepetirCompra(listaId),
+  })
+  const repetir = useMutation({
+    mutationFn: () => repetirCompra(listaId),
+    onSuccess: () => {
+      // *Lo que cambia al añadir líneas*: la lista, su cuenta, el reparto por tiendas y el
+      // mosaico de «lo de siempre» (una compra cerrada cuenta como historial).
+      cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+      cliente.invalidateQueries({ queryKey: ['donde', listaId] })
+      cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
+      cliente.invalidateQueries({ queryKey: ['habituales'] })
+      // *Y la propia previa*: las que eran «falta» acaban de entrar y ahora son «ya está».
+      cliente.invalidateQueries({ queryKey: ['repetir-compra', listaId] })
+    },
+  })
+
+  const datos = previa.data
+  // Sin compra anterior —o sin poder saberlo todavía— no se pinta nada: ni un hueco.
+  if (!datos?.compra_id) return null
+
+  const total = datos.lineas.length
+  const resumen = `${total} ${total === 1 ? 'producto' : 'productos'} · `
+    + `${datos.ya_estaban} ${datos.ya_estaban === 1 ? 'ya está' : 'ya están'} en la lista · `
+    + `${datos.sin_catalogo} sin catálogo`
+  // *La fecha, en castellano; y solo si se puede escribir una fecha de verdad.*
+  const fechaCompra = datos.fecha ? fechaTexto(datos.fecha) : NO_LO_SE
+  const hayFechaCompra = fechaCompra !== NO_LO_SE
+
+  return (
+    <Tarjeta titulo="Repetir la compra de la semana pasada">
+      <p className="text-cuerpo text-tinta-suave">
+        {hayFechaCompra ? `Del ${fechaCompra} · ` : ''}
+        {resumen}
+      </p>
+      <ul className="mt-2 grid gap-1">
+        {datos.lineas.map((l, i) => (
+          <li
+            key={`${l.producto_id ?? l.nombre}-${i}`}
+            className="flex flex-wrap items-center justify-between gap-x-2 text-cuerpo"
+          >
+            <span className="min-w-0 break-words">
+              {l.cantidad > 1 && <span className="cifra">{l.cantidad} × </span>}
+              {l.nombre}
+            </span>
+            {/* *El estado, en texto visible: lo lee también el lector de pantalla.* */}
+            <Etiqueta tono={TONO_DEL_ESTADO[l.estado]}>{TEXTO_DEL_ESTADO[l.estado]}</Etiqueta>
+          </li>
+        ))}
+      </ul>
+      {/* El recibo, dentro de la tarjeta: sin popup y sin notificación del navegador. */}
+      {repetir.data && (
+        <div className="mt-3">
+          <Aviso tono="bien">
+            <p>
+              Añadidas {repetir.data.anadidos} · {repetir.data.ya_estaban} ya estaban ·{' '}
+              {repetir.data.sin_catalogo} sin catálogo
+            </p>
+          </Aviso>
+        </div>
+      )}
+      {repetir.isError && (
+        <div className="mt-3">
+          <Aviso tono="mal" titulo="No he podido añadir los que faltan">
+            <Etiqueta tono="mal">{textoDeError(repetir.error)}</Etiqueta>
+          </Aviso>
+        </div>
+      )}
+      <div className="mt-3">
+        {datos.faltan > 0 ? (
+          <Boton
+            variante="principal"
+            disabled={repetir.isPending || !puedeEscribir}
+            onClick={() => repetir.mutate()}
+          >
+            {repetir.isPending ? 'Añadiendo…' : `Añadir los que faltan (${datos.faltan})`}
+          </Boton>
+        ) : (
+          // *Cuando no falta ninguna no hay botón: uno que solo puede contestar «no había
+          // nada» hace perder el tiempo justo donde no lo hay.*
+          <p className="text-cuerpo">Ya tienes todo lo de esa compra.</p>
+        )}
+      </div>
+    </Tarjeta>
+  )
+}
+
 /** `dueno` | `escribe` | `mira`, dichos en castellano. */
 function nombreDelPapel(papel: string): string {
   if (papel === 'dueno') return 'creó la lista'
@@ -2088,6 +2222,14 @@ export function Cesta() {
               * sin una segunda pantalla ni un segundo enlace con la misma promesa.* */}
           {(esDeCasa || lineas.length === 0) && (
             <Mosaico limite={6} enUnaLista enLaLista={gruposEnLaLista} />
+          )}
+
+          {/* *** REPETIR LA COMPRA DE LA SEMANA PASADA. *** *Cierra el bucle semanal: el
+              cierre guarda lo comprado y esto lo devuelve a la lista. Va aquí, junto al
+              relleno de «lo de siempre», porque es el mismo gesto -- recuperar la compra en
+              vez de volver a buscarla -- y no una pantalla aparte.* */}
+          {listaId && (
+            <RepetirCompra listaId={listaId} puedeEscribir={detalle.data.papel !== 'mira'} />
           )}
 
           {lineas.length > 0 && (

@@ -34,21 +34,41 @@
  *  productos **no gana**: su total se lee «con N de M» y la frase que corona dice que no se puede
  *  comparar con las completas.* *Y el €/kg solo se enseña cuando se puede: se pide al abrir la
  *  linea (`GET /producto/{fuente}/{id}`), y si el formato no es comparable (`comparable` en la
- *  ficha) se dice, en vez de enseñar un numero que no significa nada.*
+ *  ficha) se dice, en vez de enseñar un numero que no significa nada.* *El **precio por unidad de
+ *  cada cadena**, en cambio, llega ya en el reparto (`precio_unidad_cent` y `unidad`): cuando
+ *  viene se enseña junto al coste de la fila, y cuando no viene se calla y la fila se queda como
+ *  estaba -- un €/unidad que no ha llegado no se calcula aqui.*
+ *
+ *  *** Y LA RESPUESTA, EN UNA CIFRA. *** *Arriba de los totales va el ahorro, en el unico caso
+ *  en que se puede afirmar:*
+ *
+ *   - **si dos cadenas tienen la lista entera**, el de comprarla toda en la mas barata en vez de
+ *     en la mas cara -- el importe, el porcentaje sobre el total caro y los dos nombres;
+ *   - **si no** (que es lo normal: la autorizacion de equivalentes es **una por linea**, asi que
+ *     una linea solo puede confirmarse para una cadena y rara vez hay dos completas), el de
+ *     comprar **cada cosa donde esta mas barata**: la suma, linea a linea, de lo que separa al
+ *     precio mas caro del mas barato, con el porcentaje sobre la suma de los maximos.* *Ahi
+ *     cuentan **todos los precios de hoy**, tambien los de los equivalentes que aun no se han
+ *     confirmado -- que no suman en los totales, y la nota de la tarjeta lo dice.*
+ *
+ *  *Sin dos completas ni una linea con dos precios, la tarjeta **no se pinta**: se sigue
+ *  contestando con la frase de «Total en cada cadena», que es lo unico que se puede afirmar.* *Y
+ *  cada total lleva una barra fina de longitud relativa al total mas caro, para ver de un vistazo
+ *  cuanto se separan sin tener que restar.*
  *
  *  **Los cuatro estados, y la puerta antes que el error**: cargando (esqueleto), con datos, sin
  *  sesion (`EntraParaVer`, que es un estado y no un fallo), lista sin lineas, y error con
  *  reintento. *Un 401 que llegue tarde tambien es puerta: si la sesion se ha caido, no se enseña
  *  «No he podido traer esto».*
  */
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { misListas, reparto as pedirReparto, verLista, yo } from '../api/cesta'
 import { esErrorApi } from '../api/cliente'
 import { useProducto } from '../api/consultas'
-import { euros, eurosUnidad, nombreCadena } from '../api/formato'
+import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import { EntraParaVer } from '../componentes/PuertaDeSesion'
 import { Aviso, Cargando, Etiqueta, Fallo, Resumen, Tarjeta, Vacio, cx } from '../componentes/ui'
 import type { Linea, OpcionTienda, RepartoTiendas } from '../tipos'
@@ -72,6 +92,15 @@ interface PrecioEnCadena {
   autorizada?: boolean
   identidad?: string | null
   motivo?: string | null
+  /** *** El precio por unidad de medida del formato, si la API lo manda. *** *
+   *
+   *  *`precio_unidad_cent` y `unidad` son el contrato nuevo del reparto (`129` y `l` para
+   *  «1,29 €/l»).* *Se declaran **opcionales** porque esta pantalla no puede dar por hecho
+   *  que la API que le contesta los traiga: si faltan, la fila se enseña como antes -- solo
+   *  el coste --, que es lo honesto; un €/unidad inventado seria peor que su ausencia.*
+   */
+  precio_unidad_cent?: number | null
+  unidad?: string | null
 }
 
 /** Lo que la linea costaria en una cadena si se aceptara el equivalente que propone el motor. */
@@ -242,6 +271,20 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
   const diferencia = ganadora && masCara ? masCara.total_cent - ganadora.total_cent : null
 
   const ordenadas = ordenarCadenas(cadenas, total)
+  /** *** El total contra el que se mide la barra de cada cadena. *** *
+   *
+   *  *Es el **total mas caro** de los que se enseñan: la barra mas larga es la de ese, y las
+   *  demas dicen su proporcion.* *Se mide sobre lo que se pinta -- las cadenas de esta lista --, no
+   *  sobre un maximo inventado, y por eso la comparacion es entre las de aqui.*
+   */
+  const totalMasCaro = ordenadas.reduce((maximo, c) => Math.max(maximo, c.total_cent), 0)
+  /** *** El segundo caso de la tarjeta: sin dos completas, cada cosa donde esta mas barata. *** *
+   *
+   *  *Se calcula aqui y no en el componente porque necesita `matriz` y `filas`, que es la tabla
+   *  que esta pantalla ya tiene montada.* *Devuelve `null` si no hay ninguna linea con dos
+   *  precios (o si no hay diferencia), y entonces la tarjeta no se pinta.*
+   */
+  const ahorroPosible = ahorroDeCadaCosa(filas, matriz)
   const cadenasConOfertaCondicionada = ordenadas.filter((c) =>
     (c.productos ?? []).some((p) => p.promo && /club|tarjeta|cupon|cupón|acum|online|internet|web/i.test(p.promo)),
   ).length
@@ -303,6 +346,32 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
         <EnlaceALaLista listaId={listaId} texto="Volver a la lista" />
       </header>
 
+      {/* -------------------------------------------------- lo que te ahorras --- */}
+      {/* *** La cifra grande, y solo cuando es una cuenta que significa algo. *** *
+          *Primero el caso fuerte: **dos cadenas con la lista entera** (`masCara` solo existe
+          entonces) y una diferencia positiva; con una sola completa no hay contra que restar, y
+          un empate no es un ahorro.* *Si ese caso no se da, se usa el de **cada cosa donde esta
+          mas barata**, que es el que se puede afirmar en datos reales (la autorizacion es una por
+          linea); si tampoco hay lineas con dos precios, no se pinta nada.* */}
+      {ganadora && masCara && diferencia !== null && diferencia > 0 ? (
+        <AhorroDeLaCesta
+          ahorro_cent={diferencia}
+          base_cent={masCara.total_cent}
+          nota={NOTA_PRECIOS_DE_HOY}
+        >
+          Comprando en {nombreCadena(ganadora.cadena)} en vez de en {nombreCadena(masCara.cadena)}.
+        </AhorroDeLaCesta>
+      ) : ahorroPosible ? (
+        <AhorroDeLaCesta
+          ahorro_cent={ahorroPosible.ahorro_cent}
+          base_cent={ahorroPosible.base_cent}
+          nota={NOTA_PRECIOS_DE_HOY_CON_EQUIVALENTES}
+        >
+          Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más
+          cara.
+        </AhorroDeLaCesta>
+      ) : null}
+
       {/* ------------------------------------------------- dónde sale mejor --- */}
       <section aria-labelledby="totales-de-la-cesta" className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
@@ -321,6 +390,7 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
               cadena={c}
               total={total}
               contadas={contadasDe(c)}
+              totalMasCaro={totalMasCaro}
               esLaMasBarata={ganadora?.cadena === c.cadena}
               // *La diferencia se enseña **por cadena y contra la mas barata**, y solo entre
               // las que tienen la lista entera: restar un total incompleto da un numero que no
@@ -367,7 +437,8 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
               Producto a producto
             </h3>
             <p className="text-etiqueta text-tinta-suave">
-              Abre un producto para ver lo que cuesta en cada cadena y su precio por kilo.
+              Abre un producto para ver lo que cuesta en cada cadena, su precio por unidad y su
+              precio por kilo.
             </p>
           </div>
 
@@ -430,16 +501,110 @@ function QuienGana({ ganadora, masCara, diferencia, total }: {
   )
 }
 
+/** *** La letra pequeña de la cifra, en sus dos versiones. *** *
+ *
+ *  *No dicen lo mismo, y por eso son dos:*
+ *
+ *   - *en el caso de **dos completas**, la resta sale de los totales, que **solo cuentan lo
+ *     autorizado**: los equivalentes sin confirmar no entran, y la nota no puede decir que si;*
+ *   - *en el caso de **cada cosa**, el calculo usa **todos** los precios de hoy, tambien los de
+ *     esos equivalentes -- que siguen sin sumar en los totales de abajo --, y la nota lo dice.*
+ *
+ *  *En las dos, la condicion de las ofertas: una oferta de tarjeta, cupón o internet no baja lo que
+ *  se paga y no esta restada.*
+ */
+const NOTA_PRECIOS_DE_HOY =
+  'Con los precios de hoy. Las ofertas que piden tarjeta, cupón o comprar por internet no están restadas.'
+
+const NOTA_PRECIOS_DE_HOY_CON_EQUIVALENTES =
+  'Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos no suman en los totales de abajo). Las ofertas que piden tarjeta, cupón o comprar por internet no están restadas.'
+
+/** *** LA CIFRA GRANDE: LO QUE TE AHORRAS, SEGUN LO QUE SE PUEDA AFIRMAR. *** *
+ *
+ *  *Es la respuesta de la pantalla en un solo golpe de vista, y por eso va **arriba de los
+ *  totales** y con el color de la marca.* *Se usa en los dos casos de la tarjeta, que solo cambian
+ *  en dos cosas: el importe y **sobre que** se mide el porcentaje.*
+ *
+ *   - *dos cadenas completas: la resta de la cara a la barata, y el porcentaje sobre el total de
+ *     la **cara**, que es la que se dejaria de pagar;*
+ *   - *si no las hay: la suma de lo que se ahorra comprando cada cosa donde esta mas barata, y el
+ *     porcentaje sobre **la suma de los maximos**, que es lo que costaria comprarlo todo en la
+ *     cadena mas cara de cada linea.*
+ *
+ *  *Debajo del importe, la frase dice **que** se esta comparando: un ahorro sin sujeto no se puede
+ *  comprobar.* *Y en pequeño, con que precios se ha hecho la cuenta: los de hoy, y con las ofertas
+ *  condicionadas sin restar.*
+ *
+ *  *El porcentaje se redondea al entero porque es una cifra de portada, no una medida: los
+ *  centimos ya estan en el importe.*
+ *
+ *  *Accesible sin depender del color: el importe, el porcentaje y la frase son **texto**; el color
+ *  de la tarjeta solo refuerza.*
+ */
+function AhorroDeLaCesta({ ahorro_cent, base_cent, nota, children }: {
+  ahorro_cent: number
+  /** El total contra el que se mide el porcentaje: la cadena cara o la suma de los maximos. */
+  base_cent: number
+  /** La letra pequeña de **este** calculo (`NOTA_PRECIOS_DE_HOY...`), porque no dicen lo mismo. */
+  nota: string
+  /** La frase que dice **que** se compara; el importe y el porcentaje van encima. */
+  children: ReactNode
+}) {
+  // *`base_cent > 0` esta garantizado por quien llama, pero se comprueba igual: una division por
+  // cero no se deja al azar de los datos.*
+  const porcentajeDelAhorro = base_cent > 0 ? (ahorro_cent / base_cent) * 100 : null
+  // *** Un ahorro positivo puede redondear al 0 %. *** *
+  // *Un centimo sobre una cesta grande es un ahorro real, pero un «−0 %» en grande diria que no
+  // hay ahorro -- que es falso --, y el importe ya esta justo al lado.* *Asi que por debajo del
+  // 0,5 % **se calla el porcentaje**: callar una cifra que no informa es distinto de inventarla.*
+  const porcentajeEntero =
+    porcentajeDelAhorro === null ? null : Math.round(porcentajeDelAhorro)
+  return (
+    <section
+      aria-labelledby="ahorro-de-la-cesta"
+      className="rounded-tarjeta bg-bosque p-4 text-sobre-bosque shadow-alzado"
+    >
+      <h3 id="ahorro-de-la-cesta" className="text-micro uppercase">
+        Lo que te ahorras
+      </h3>
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
+        <p className="cifra text-precio-grande font-semibold">{euros(ahorro_cent)}</p>
+        {porcentajeEntero !== null && porcentajeEntero >= 1 && (
+          <span className="cifra inline-flex min-h-6 items-center rounded-pastilla bg-lima px-2 text-etiqueta-fuerte text-sobre-lima">
+            −{porcentaje(porcentajeEntero, 0)}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-etiqueta">{children}</p>
+      {/* *El aviso pequeño, para que la cifra no se lea como una promesa: con que precios se ha
+          calculado y que ofertas no estan restadas. El texto lo elige quien llama, porque el caso
+          de las completas no usa precios sin confirmar y el de cada cosa si.* */}
+      <p className="mt-1 text-etiqueta opacity-80">{nota}</p>
+    </section>
+  )
+}
+
 /** Una cadena con su total y, si le falta algo, dicho. */
-function CadenaEnLaLista({ cadena, total, contadas, esLaMasBarata, diferenciaConLaMasBarata }: {
+function CadenaEnLaLista({ cadena, total, contadas, totalMasCaro, esLaMasBarata, diferenciaConLaMasBarata }: {
   cadena: CadenaComparada
   total: number
   contadas: number
+  /** El total mas caro que se enseña: contra el se mide la barra de esta cadena. */
+  totalMasCaro: number
   esLaMasBarata: boolean
   /** Lo que esta cadena cuesta de mas que la mas barata, o `null` si no se puede restar. */
   diferenciaConLaMasBarata: number | null
 }) {
   const faltan = cadena.faltan.length
+  // *** La barra: solo CSS, y solo si hay un total contra el que medir. *** *
+  // *Una cadena sin precio no lleva barra vacia, porque una barra a cero se lee «la mas barata»
+  // y es justo lo contrario: no tiene precio. La longitud es la parte que le toca del total mas
+  // caro -- la mas cara llega al 100 % -- y el color no dice nada por si solo: el total esta
+  // escrito al lado.*
+  const proporcion =
+    contadas > 0 && totalMasCaro > 0
+      ? Math.min(100, Math.round((cadena.total_cent / totalMasCaro) * 100))
+      : null
   return (
     <li
       className={cx(
@@ -457,6 +622,18 @@ function CadenaEnLaLista({ cadena, total, contadas, esLaMasBarata, diferenciaCon
           <p className="cifra text-precio font-semibold text-tinta-fuerte">{euros(cadena.total_cent)}</p>
         )}
       </div>
+
+      {proporcion !== null && (
+        <div
+          aria-hidden="true"
+          className="mt-2 h-1.5 w-full overflow-hidden rounded-pastilla bg-marfil"
+        >
+          <div
+            className={cx('h-full rounded-pastilla', esLaMasBarata ? 'bg-bien' : 'bg-bosque')}
+            style={{ width: `${proporcion}%` }}
+          />
+        </div>
+      )}
 
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <span className="text-etiqueta text-tinta-suave">
@@ -509,6 +686,14 @@ function LineaComparada({ linea, celdas, cadenas }: {
       : soloEn
         ? `${euros(desde)} · solo en ${nombreCadena(soloEn)}`
         : `desde ${euros(desde)}`
+  // *** La marca del minimo, la misma pastilla que en la lista. *** *
+  // *`minimo` viene solo si la API lo manda y sus datos son frescos (`tipos.ts`); si la clave no
+  // esta, la linea se pinta como siempre.* *Y si vinieran las dos banderas se enseña la fuerte
+  // (`nuevo_minimo`): un minimo nuevo tambien esta «en su minimo», y dos pastillas serian la misma
+  // noticia repetida.*
+  const minimo = linea.minimo ?? null
+  const minimoNuevo = minimo?.nuevo_minimo === true
+  const enSuMinimo = minimo?.vuelve_al_minimo === true
 
   return (
     <li className="rounded-campo border border-borde bg-papel">
@@ -518,11 +703,22 @@ function LineaComparada({ linea, celdas, cadenas }: {
         onToggle={(e) => setAbierta(e.currentTarget.open)}
       >
         <Resumen className="px-3">
-          <span className="min-w-0 flex-1 break-words text-cuerpo font-medium text-tinta-fuerte">
-            {linea.nombre_visto}
-            {linea.cantidad > 1 && (
-              <span className="ml-2 text-etiqueta font-normal text-tinta-suave">
-                {linea.cantidad} unidades
+          <span className="min-w-0 flex-1">
+            <span className="block break-words text-cuerpo font-medium text-tinta-fuerte">
+              {linea.nombre_visto}
+              {linea.cantidad > 1 && (
+                <span className="ml-2 text-etiqueta font-normal text-tinta-suave">
+                  {linea.cantidad} unidades
+                </span>
+              )}
+            </span>
+            {minimo && (minimoNuevo || enSuMinimo) && (
+              <span className="mt-0.5 flex flex-wrap items-center gap-2">
+                {minimoNuevo ? (
+                  <Etiqueta tono="bien">Mínimo nuevo · {euros(minimo.minimo_cent)}</Etiqueta>
+                ) : (
+                  <Etiqueta tono="dato">En su mínimo · {euros(minimo.minimo_cent)}</Etiqueta>
+                )}
               </span>
             )}
           </span>
@@ -562,6 +758,16 @@ function LineaComparada({ linea, celdas, cadenas }: {
                     <span className="text-etiqueta text-tinta-suave">{nombreCadena(cadena.cadena)}</span>
                     <span className="cifra text-precio-fila font-medium text-tinta-fuerte">
                       {euros(celda.coste_cent)}
+                      {/* *** El €/unidad, cuando el reparto lo trae. *** *
+                          *Se enseña junto al coste y **no se calcula aqui**: si falta el dato, la
+                          fila se queda como estaba en vez de inventarse un precio por kilo que
+                          nadie ha medido.* */}
+                      {celda.precio_unidad_cent != null && celda.unidad && (
+                        <span className="text-etiqueta font-normal text-tinta-suave">
+                          {' · '}
+                          {eurosUnidad(celda.precio_unidad_cent, celda.unidad)}
+                        </span>
+                      )}
                       {!celda.autorizada && (
                         <span className="ml-1 text-etiqueta font-normal text-aviso">por confirmar</span>
                       )}
@@ -708,6 +914,10 @@ interface CeldaDeLaLinea {
   /** `false` cuando el precio es de un equivalente que la persona aun no ha confirmado. */
   autorizada: boolean
   producto_id: string
+  /** El precio por unidad de medida del formato en esta cadena, o `null` si no llego. */
+  precio_unidad_cent: number | null
+  /** La unidad de ese precio (`kg`, `l`, `ud`), o `null` si no llego. */
+  unidad: string | null
 }
 
 /** *** DE CADA CADENA A CADA LINEA. *** *
@@ -736,6 +946,10 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         ahorro_cent: Math.max(0, p.coste_sin_oferta_cent - p.coste_cent),
         autorizada: p.autorizada !== false,
         producto_id: p.producto_id,
+        // *El contrato nuevo del reparto; si una API vieja no lo manda, `null` y la fila se
+        // pinta sin €/unidad en vez de con uno inventado.*
+        precio_unidad_cent: p.precio_unidad_cent ?? null,
+        unidad: p.unidad ?? null,
       })
     }
     for (const p of cadena.pendientes ?? []) {
@@ -747,10 +961,53 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         ahorro_cent: 0,
         autorizada: false,
         producto_id: '',
+        // *Un equivalente sin confirmar tampoco trae formato medido: nada que enseñar.*
+        precio_unidad_cent: null,
+        unidad: null,
       })
     }
   }
   return porLinea
+}
+
+/** *** LO QUE SE AHORRA COMPRANDO CADA COSA DONDE ESTA MAS BARATA. *** *
+ *
+ *  *Cuando no hay dos cadenas completas -- que es lo normal: la autorizacion de equivalentes es
+ *  **una por linea**, asi que una linea solo se confirma para una cadena y nunca hay dos celdas
+ *  autorizadas en la misma linea -- la resta entre totales completos no se puede hacer.* *Lo que
+ *  si se puede afirmar es, linea a linea, lo que separa al precio mas caro del mas barato de
+ *  **esa** linea: es exactamente lo que se ahorra comprando cada cosa donde esta mas barata.*
+ *
+ *  *** Cuenta TODA celda con precio, tambien las de equivalencias sin confirmar. *** *Es una
+ *  decision medida, no un descuido: si solo contaran las autorizadas, la tarjeta no saldria nunca
+ *  en uso real (una linea no puede tener dos autorizadas).* *El precio por confirmar es lo que
+ *  costaria hoy el equivalente, y para **este** calculo es un precio valido; lo que no hace es
+ *  sumar en los totales de abajo, que siguen contando solo lo autorizado (`contarLineas`).* *Esa
+ *  diferencia se dice en la nota de la tarjeta, para que nadie lea el ahorro como si ya estuviera
+ *  en los totales.*
+ *
+ *  *Una linea con un solo precio **no aporta nada**: ni diferencia (no hay eleccion) ni divisor.*
+ *  *El porcentaje se mide sobre **la suma de los maximos**, que es lo que costaria comprarlo todo
+ *  en la cadena mas cara de cada linea.* *Sin ninguna linea con dos precios -- o sin diferencia --
+ *  no hay tarjeta: un cero no es un ahorro.*
+ */
+function ahorroDeCadaCosa(
+  lineas: Linea[],
+  matriz: Map<string, CeldaDeLaLinea[]>,
+): { ahorro_cent: number; base_cent: number } | null {
+  let ahorro_cent = 0
+  let base_cent = 0
+  let conDosPrecios = 0
+  for (const linea of lineas) {
+    // *Todas las celdas, autorizadas o no: ver el docstring.*
+    const costes = (matriz.get(linea.id) ?? []).map((c) => c.coste_cent)
+    if (costes.length < 2) continue
+    ahorro_cent += Math.max(...costes) - Math.min(...costes)
+    base_cent += Math.max(...costes)
+    conDosPrecios += 1
+  }
+  if (conDosPrecios === 0 || base_cent <= 0 || ahorro_cent <= 0) return null
+  return { ahorro_cent, base_cent }
 }
 
 /** Cuantos productos de la lista se pueden comparar, y cuantos no, con el motivo. */

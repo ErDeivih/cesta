@@ -322,6 +322,66 @@ export async function anadirDesdeFavoritos(listaId: string,
   return r.anadidos
 }
 
+/* ---------------------------------------- repetir la compra de la semana --- */
+
+/** Una línea de la última compra cerrada, con lo que pasaría si se repitiera.
+ *
+ *  **`estado` no es un adorno**: dice qué se va a hacer con esa línea, y son tres cosas
+ *  distintas -- `falta` (se añadirá), `ya_estaba` (ya está en la lista, no se duplica) y
+ *  `sin_catalogo` (no se puede repetir: no hay producto del catálogo detrás).
+ */
+export interface LineaDeLaCompraAnterior {
+  nombre: string
+  producto_id: string | null
+  grupo_id: number | null
+  cantidad: number
+  estado: 'falta' | 'ya_estaba' | 'sin_catalogo'
+}
+
+/** **Lo que pasaría al repetir la última compra**, sin tocar la lista.
+ *
+ *  Es la previa que se enseña antes de pulsar: la calcula el servidor con la misma regla
+ *  que la acción, porque una previa que miente es peor que no tener previa (la misma
+ *  decisión que `previaDelPlan`).
+ */
+export interface PreviaDeRepetirCompra {
+  /** `null` cuando esa lista no tiene ninguna compra cerrada: no hay nada que repetir. */
+  compra_id: string | null
+  /** El día de esa compra, ISO. */
+  fecha: string | null
+  lineas: LineaDeLaCompraAnterior[]
+  /** Las que se añadirían. Es el número del botón: sin él, «repetir» no dice cuánto. */
+  faltan: number
+  ya_estaban: number
+  sin_catalogo: number
+}
+
+export async function previaDeRepetirCompra(listaId: string): Promise<PreviaDeRepetirCompra> {
+  return await pide<PreviaDeRepetirCompra>(
+    `/listas/${encodeURIComponent(listaId)}/repetir-compra`)
+}
+
+/** El recibo de haber repetido la compra: lo que entró y lo que no. */
+export interface ReciboDeRepetirCompra {
+  anadidos: number
+  ya_estaban: number
+  sin_catalogo: number
+  /** El recuento que la previa llama `faltan`, para cuadrar el mensaje sin otra consulta. */
+  faltan: number
+}
+
+/** **Repite la última compra cerrada**: añade a la lista las líneas que faltan.
+ *
+ *  No duplica las que ya están (`ya_estaban`) ni inventa líneas para lo que no tiene
+ *  producto del catálogo (`sin_catalogo`). El recibo cuenta las tres cosas: un «añadidas 9»
+ *  sin decir que había 3 más que no se han podido poner se lee como si la compra estuviera
+ *  repetida entera, y no lo está.
+ */
+export async function repetirCompra(listaId: string): Promise<ReciboDeRepetirCompra> {
+  return await escribe<ReciboDeRepetirCompra>(
+    `/listas/${encodeURIComponent(listaId)}/repetir-compra`, 'POST')
+}
+
 /** Ponerle nombre a una lista: con varias, «Lista» y «Lista (2)» no se distinguen. */
 export async function renombrarLista(listaId: string, nombre: string): Promise<{ nombre: string }> {
   return await escribe(`/listas/${encodeURIComponent(listaId)}`, 'PATCH', { nombre })
