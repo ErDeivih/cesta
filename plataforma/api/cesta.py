@@ -122,6 +122,13 @@ class Eleccion:
     # no son exactas, con su motivo. `None` si no hay ninguna. Ofrecerla es lo que evita el callejon sin
     # salida: se dice que no cuenta, y se dice que se puede pedir en su lugar.
     alternativa: dict | None = None
+    # **El precio por unidad y la unidad del producto ELEGIDO para esta linea.** Son la base de la
+    # comparativa: sin ellos la pantalla no puede decir «sale a 0,95 EUR/l» ni comparar dos formatos.
+    # Van aqui, y no en la peticion, porque los pone el catalogo al resolver; y viajan con valor por
+    # defecto `None` -- **que es «no se sabe», no cero** -- porque hay productos que no declaran precio
+    # por unidad, y una linea sin dato no puede afirmar que sea gratis.
+    precio_unidad_cent: float | None = None
+    unidad: str | None = None
 
 
 def _coste_para(cantidad: int, precio_cent: int, promo_txt: str | None) -> int:
@@ -167,11 +174,12 @@ def _llave_candidato(dueno, pedida, fuente) -> tuple:
     return ((dueno, pedida), fuente)
 
 
-def _tiene_region(con) -> bool:
-    """**Si `grupos` trae la zona.** *Y hasta que no la traiga, no se pide.*
+def _columnas_de_grupos(con) -> set[str]:
+    """**Que columnas trae `grupos` hoy**, para pedir solo las que existen.
 
     *Esto no es una precaucion de mas: es la forma de que el cambio de B03 **no rompa nada hoy y funcione solo
-    el dia que toque**.*
+    el dia que toque**.* Y ahora vale para dos columnas: la zona (`region`, de B03) y la unidad
+    (`unidad_canon`, la mitad que le faltaba al precio por unidad).
 
     **El 13 de octubre de 2026 se intento anadir `region` a estas consultas directamente, y rompio seis pruebas
     de tres ficheros** -- *con este error, que lo dijo todo:*
@@ -182,19 +190,17 @@ def _tiene_region(con) -> bool:
     ```
 
     *Porque `grupos` **no sale de la serie de precios**: sale de `gold/grupos.parquet`, que lo escribe el
-    **emparejador** (`projects/cesta/emparejar.py`).* **Y ese fichero no la tiene todavia.**
+    **emparejador** (`projects/cesta/emparejar.py`).* **Y ese fichero puede ser de una version anterior a la
+    plataforma**: la API y la cadena se actualizan por separado. Asi que la columna se pide **si esta**, y el
+    dia que no, el dato sale `NULL` -- *que es «no se sabe», no un cero ni una unidad inventada.*
 
-    *Asi que la columna se pide **si esta**, y el dia que el emparejador la escriba, **llega sola** -- sin tocar
-    esta funcion otra vez.*
-
-    *Y `origen` no vale como sustituta*: **es el pais de fabricacion, no la zona del precio.** *Confundirlas
-    seria el mismo error que «IAN no es EAN».*
+    *Y `origen` no vale como sustituta de `region`*: **es el pais de fabricacion, no la zona del precio.**
+    *Confundirlas seria el mismo error que «IAN no es EAN».*
     """
     # *Y con `[]` de parametros, no sin ellos*: `_Conexion.execute` **los pide**, y las conexiones de prueba
     # tambien -- *`TypeError: execute() missing 1 required positional argument: 'params'`, que es lo que salto
     # al poner esta linea sin ellos.*
-    columnas = {r[0] for r in con.execute("DESCRIBE SELECT * FROM grupos", []).fetchall()}
-    return "region" in columnas
+    return {r[0] for r in con.execute("DESCRIBE SELECT * FROM grupos", []).fetchall()}
 
 
 def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
@@ -202,17 +208,23 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
     con = conexion()
     grupos = [p.grupo_id for p in peticiones if p.grupo_id is not None]
     sueltos = [p.producto_id for p in peticiones if p.producto_id]
-    # **La zona, AL FINAL del `SELECT` -- y solo si existe.**
+    # **La zona y la unidad, AL FINAL del `SELECT` -- y solo si existen.**
     #
     # *Al final a proposito*: los diez campos de antes **no se mueven**, asi que **ningun indice de los que ya
     # se leen cambia de sitio**. *Y se comprobo que esa era la forma correcta: **el error del 13 de octubre no
     # fue de indices**, fue de una columna que no existia.*
-    col = ", region" if _tiene_region(con) else ""
+    #
+    # **La unidad** (`unidad_canon`) es la mitad que le faltaba al precio por unidad: *`0,95 EUR/l` y
+    # `0,95 EUR/kg` no son lo mismo*, y un numero sin unidad no se puede enseñar. Se pide **si esta** en el
+    # catalogo, igual que la zona; sin ella, `unidad` sale `NULL` -- «no se sabe», que es la verdad.
+    columnas = _columnas_de_grupos(con)
+    col_unidad = ", unidad_canon" if "unidad_canon" in columnas else ", NULL AS unidad_canon"
+    col_region = ", region" if "region" in columnas else ""
     filas = []
     if grupos:
         filas += con.execute(f"""
             SELECT grupo_id, NULL, fuente, fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col}
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col_unidad}{col_region}
               FROM grupos
              WHERE grupo_id IN ({','.join('?' * len(grupos))}) AND precio_cent > 0
         """, grupos).fetchall()
@@ -220,11 +232,16 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         filas += con.execute(f"""
             SELECT NULL, fuente || ':' || id_fuente, fuente,
                    fuente || ':' || id_fuente, nombre,
-                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col}
+                   precio_cent, precio_unidad_cent, comparacion_fiable, ean, marca{col_unidad}{col_region}
               FROM grupos
              WHERE fuente || ':' || id_fuente IN ({','.join('?' * len(sueltos))})
                AND precio_cent > 0
         """, sueltos).fetchall()
+
+    # **El ancho, fijo a once aunque el catalogo no traiga la unidad.** *El indice 10 es `unidad_canon` -- o
+    # `None` cuando la consulta la pone a NULL, o cuando una conexion de prueba no devuelve la columna --:
+    # asi esa posicion no depende de si la tabla tiene `region` ni de lo que haga el doble de una prueba.*
+    filas = [(*fila, *((None,) * (11 - len(fila)))) for fila in filas]
 
     # La promocion vigente de cada producto, del ultimo silver.
     promos = _promos_vigentes({f[3] for f in filas}, fecha_tope)
@@ -280,6 +297,10 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
         # la ultima deja las once que este bucle espera, con `region` o sin ella.
         (gid, pid_suelto, fuente, pid, nombre, precio, _punit, _fiable, ean, marca,
          pedida) = (*fila[:10], fila[-1])
+        # **La unidad del candidato, del indice 10.** La fila se dejo a once de ancho arriba, asi que
+        # esta siempre ahi -- el valor, o `None` si el catalogo no la trae. Se lee ANTES de reusar
+        # `fila` para la tupla de `mejor`, que es otro contrato.
+        unidad = fila[10] if len(fila) > 10 else None
         dueno = gid if gid is not None else pid_suelto
         clave = _llave_candidato(dueno, pedida, fuente)
         coste = _coste_para(cantidades.get(dueno, 1), precio, promos.get(pid))
@@ -306,14 +327,15 @@ def _candidatos(peticiones: list[Peticion], fecha_tope: str) -> dict:
                 or (es_la_pedida == actual_es_la_pedida
                     and _prefiere(exacta, coste, actual[8], actual[7]))):
             # Campos: identificador, precio, nombre, oferta, GTIN de esta fila, canonico del grupo,
-            # marca, coste final y si es exacta.
-            mejor[clave] = (*fila, exacta)
+            # marca, coste final, si es exacta, **su precio por unidad y su unidad**.
+            mejor[clave] = (*fila, exacta, _punit, unidad)
         # **La alternativa no se tira.** Si la que se queda no es exacta, o si esta lo es y otra no, se
-        # guarda la mas barata de las que no lo son para poder ofrecerla aparte.
+        # guarda la mas barata de las que no lo son para poder ofrecerla aparte. *Y con su precio por
+        # unidad y su unidad*, que es lo que hace falta para enseñarla y cobrarla como la efectiva.
         if not exacta:
             alternativa = mejor.get((*clave, "alternativa"))
             if alternativa is None or coste < alternativa[7]:
-                mejor[(*clave, "alternativa")] = (*fila, False)
+                mejor[(*clave, "alternativa")] = (*fila, False, _punit, unidad)
     return mejor
 
 
@@ -487,6 +509,11 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
     if hallado is None:
         return None
     pid, precio, nombre, promo_txt, ean, referencia, marca, _coste_elegido = [*hallado, None, None, None, None][:8]
+    # **El precio por unidad y la unidad del candidato que se va a devolver.** Van en la tupla de
+    # `_candidatos` detras de `exacta`; se leen con `len` porque las pruebas que montan `mejor` a mano
+    # -- y una llamada antigua -- pueden no traerlos, y entonces son `None`, no un cero.
+    precio_unidad = hallado[9] if len(hallado) > 9 else None
+    unidad = hallado[10] if len(hallado) > 10 else None
     # **El veredicto, antes de proponer nada.** Si no es el mismo producto, el coste que sigue es el
     # de una alternativa, y eso tiene que viajar en la respuesta para que nadie lo sustituya callando.
     veredicto = None
@@ -514,6 +541,10 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
         nombre = alternativa["nombre"]
         precio = alternativa["precio_cent"]
         promo_txt = alternativa.get("promo")
+        # **Y sus datos por unidad, que son los de la alternativa y no los del canonico.** Es lo que se
+        # compra: enseñar el `EUR/l` del producto que se descarto seria mentir en la comparativa.
+        precio_unidad = guardada[9] if guardada is not None and len(guardada) > 9 else None
+        unidad = guardada[10] if guardada is not None and len(guardada) > 10 else None
 
     mecanica = lee_promo(promo_txt)
     sin_oferta = peticion.cantidad * precio
@@ -547,7 +578,8 @@ def _resolver(peticion: Peticion, fuente: str, mejor: dict) -> Eleccion | None:
                     linea_id=peticion.id,
                     identidad=estado,
                     motivo="; ".join(veredicto["motivos"]) if veredicto else None,
-                    autorizada=autorizada, alternativa=alternativa)
+                    autorizada=autorizada, alternativa=alternativa,
+                    precio_unidad_cent=precio_unidad, unidad=unidad)
 
 
 def donde_comprar(peticiones: list[Peticion],
@@ -605,7 +637,8 @@ def donde_comprar(peticiones: list[Peticion],
 # 8 lineas son 1,7 millones --, asi que la exploracion exhaustiva de verdad no cabe para una lista de
 # la compra de verdad. *Por debajo del limite se enumera y el resultado es el optimo; por encima se usa
 # la heuristica, y la respuesta lo dice.*
-_LIMITE_EXHAUSTIVO = 200_000
+_LIMITE_EXHAUSTIVO = 200_000
+
 # *** Lo que se estima que cuesta ir a una segunda tienda, en centimos. ***
 # *No es un gasto medido: es una estimacion de tiempo y viaje, y se llama asi para que quien la
 # lea sepa que no es una cuenta.* *Estaba escrita dentro de una comparacion (`>= 150`), sin
@@ -961,6 +994,11 @@ def _serializa(e: Eleccion) -> dict:
             "coste_sin_oferta_cent": e.coste_sin_oferta_cent,
             "promo": e.promo_txt, "sugerencia": e.sugerencia,
             "linea_id": e.linea_id,
+            # **El precio por unidad y su unidad**, para que la comparativa pueda explicar el precio
+            # normalizado (EUR/kg, EUR/l) y comparar formatos. `None` cuando el catalogo no lo declara:
+            # **nulo no es cero**, y un cero ahi afirmaria que el producto es gratis.
+            "precio_unidad_cent": e.precio_unidad_cent,
+            "unidad": e.unidad,
             # **El veredicto y lo que se ofrece.** Sin esto, todo el trabajo de identidad y de
             # autorizacion se quedaba dentro del servidor y la pantalla no podia decir nada.
             "identidad": e.identidad,

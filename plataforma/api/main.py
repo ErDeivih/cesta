@@ -40,6 +40,7 @@ from . import (
     panel,
     recetas,
     registro,
+    repetir,
     vigilante,
 )
 from .ajustes import AJUSTES
@@ -1055,6 +1056,85 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
                             p.get("nombre") or producto_id, None, producto_id, 1, None)
         puestos += 1
     return {"anadidos": puestos, "ya_estaban": ya_estaban}
+
+
+# ------------------------------------- repetir la compra de la semana anterior ---
+
+def _repetir_la_compra(lista_id: str) -> dict:
+    """La previa de repetir la ultima compra cerrada de la lista, sin escribir.
+
+    **Un solo sitio para el calculo.** El GET que la enseña y el POST que la
+    ejecuta tienen que decir lo mismo, y la unica forma de garantizarlo es que la
+    decision salga del mismo codigo (`repetir.estado_de`): una previa que miente
+    es peor que no tener previa.
+    """
+    compras = almacen.compras_de(lista_id, limite=1)
+    if not compras:
+        return repetir.previa(None, [], [])
+    la_compra = compras[0]
+    return repetir.previa(la_compra,
+                          almacen.lineas_de_compra(str(la_compra["compra_id"])),
+                          almacen.lineas_de(lista_id))
+
+
+@app.get("/api/listas/{lista_id}/repetir-compra")
+def previa_repetir_compra(lista_id: str, usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La vista previa de repetir la compra de la semana anterior, sin escribir.**
+
+    Devuelve la ultima compra cerrada de **esta** lista con sus lineas, y para
+    cada una que pasaria al repetirla: `falta` (se añadiria), `ya_estaba` (la
+    lista ya la tiene y no se duplica) o `sin_catalogo` (la compra no guarda
+    producto ni grupo detras: no hay nada que volver a comprar tal cual).
+
+    **No escribe nada**, y la decision no se toma aqui: sale de
+    `repetir.estado_de`, que es la misma funcion que usa el POST. Es la misma
+    regla que ya se siguio con la previa del plan: una previa que no coincide
+    con lo que hace el boton es una previa que miente.
+
+    Sin compras cerradas devuelve la forma entera con `compra_id: null`, la lista
+    vacia y los contadores a cero: la pantalla necesita saber que no hay nada que
+    repetir sin distinguirlo de un error.
+    """
+    _acceso(lista_id, usuario)
+    return _repetir_la_compra(lista_id)
+
+
+@app.post("/api/listas/{lista_id}/repetir-compra", status_code=201)
+def repetir_compra(lista_id: str, usuario: dict = Depends(usuario_actual)) -> dict:
+    """**La accion**: añade a la lista las lineas de la ultima compra que faltan.
+
+    Se añaden solo las que estan `falta` (misma regla que la previa), con su
+    `cantidad` y la `nota` de la linea comprada si se conserva. Las que ya estan
+    no se duplican y las que no tienen producto ni grupo no se inventan.
+
+    **El id de cada linea es determinista por operacion**
+    (`repetir.id_de_linea`: lista + compra + linea comprada), asi que la misma
+    compra repetida da los mismos ids y `almacen.anade_linea` -- que ya es un
+    upsert -- actualiza en vez de duplicar si dos pulsaciones se cruzan. La
+    comprobacion de la previa es la primera red; esta es la segunda.
+
+    Devuelve `{anadidos, ya_estaban, sin_catalogo, faltan}`, donde `faltan` es el
+    recuento de la previa (las que habia que añadir), para que el recibo cuadre
+    sin pedir la previa otra vez. Y si no hay compra anterior no escribe nada y
+    lo dice con ceros: no hay nada que repetir, que es distinto de un fallo.
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    compras = almacen.compras_de(lista_id, limite=1)
+    if not compras:
+        return {"anadidos": 0, "ya_estaban": 0, "sin_catalogo": 0, "faltan": 0}
+    la_compra = compras[0]
+    compra_id = str(la_compra["compra_id"])
+    lineas_compra = almacen.lineas_de_compra(compra_id)
+    lineas_lista = almacen.lineas_de(lista_id)
+    vista = repetir.previa(la_compra, lineas_compra, lineas_lista)
+    anadidos = 0
+    for uno in repetir.anadibles(lista_id, compra_id, lineas_compra, lineas_lista):
+        almacen.anade_linea(lista_id, usuario["id"], uno["id"], uno["nombre"],
+                            uno["grupo_id"], uno["producto_id"], uno["cantidad"],
+                            uno["nota"])
+        anadidos += 1
+    return {"anadidos": anadidos, "ya_estaban": vista["ya_estaban"],
+            "sin_catalogo": vista["sin_catalogo"], "faltan": vista["faltan"]}
 
 
 @app.get("/api/listas/{lista_id}/reparto")

@@ -1226,14 +1226,22 @@ def lineas_de_compra(compra_id: str) -> list[dict]:
 
     **No se guarda nutricion en una compra**, y no es un olvido: una compra es de precios. Los datos de
     nutricion viven en el catalogo, y quien los junte es el puente, no esto.
+
+    **Y la nota se recupera de la linea de la lista, no de la compra.** `compra_linea` guarda lo que
+    costo la linea, no lo que decia su nota; el texto sigue en `lista_linea`, que no se borra de verdad
+    -- se marca `borrado_en` y `limpiar_lineas_borradas` se la lleva a los 30 dias --. Asi «repetir la
+    compra» puede devolver a la lista la nota que tenia («2 bricks de los grandes») mientras la linea
+    siga existiendo, y **sin nota cuando ya no**, que es la verdad y no una invencion. El `LEFT JOIN`
+    es a proposito: una compra antigua, o una linea ya podada, no puede hacer desaparecer la compra.
     """
     with cursor() as cur:
         cur.execute("""
-            SELECT linea_id, grupo_id, producto_id, producto_pedido_id, nombre, cantidad,
-                   precio_cent, cadena, importe_cent
-              FROM compra_linea
-             WHERE compra_id = %s
-             ORDER BY nombre
+            SELECT cl.linea_id, cl.grupo_id, cl.producto_id, cl.producto_pedido_id, cl.nombre,
+                   cl.cantidad, cl.precio_cent, cl.cadena, cl.importe_cent, li.nota
+              FROM compra_linea cl
+              LEFT JOIN lista_linea li ON li.id = cl.linea_id
+             WHERE cl.compra_id = %s
+             ORDER BY cl.nombre
         """, (compra_id,))
         # **Las columnas que existen, todas.** Medido el 13 de octubre de 2026: pedia un `id` que la
         # tabla no tiene --su clave es `(compra_id, linea_id)`-- y se dejaba `cantidad`, que hace falta

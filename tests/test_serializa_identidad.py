@@ -56,3 +56,18 @@ def test_una_linea_sin_veredicto_tambien_viaja_y_cuenta():
     assert serializada["identidad"] is None
     assert serializada["motivo"] is None
     assert serializada["autorizada"] is True
+
+
+def test_el_precio_por_unidad_del_elegido_viaja_y_sin_dato_es_null():
+    """La comparativa necesita el precio por unidad y su unidad, y `null` no es `0`.
+
+    Se anadio al contrato del reparto (`una_tienda[].productos[]`) para poder explicar
+    el precio normalizado -- `0,95 EUR/l` -- y comparar formatos. Sin dato, los dos
+    campos van a `null`: un cero afirmaria que el producto es gratis por unidad.
+    """
+    con_dato = cesta._serializa(eleccion(precio_unidad_cent=95.0, unidad="l"))
+    assert con_dato["precio_unidad_cent"] == 95.0
+    assert con_dato["unidad"] == "l"
+    sin_dato = cesta._serializa(eleccion())
+    assert sin_dato["precio_unidad_cent"] is None
+    assert sin_dato["unidad"] is None
