@@ -376,7 +376,14 @@ MEDIDA_JS = """
 def captura(solo: set[str] | None = None) -> dict:
     SALIDA.mkdir(parents=True, exist_ok=True)
     c = sesion()
-    datos = siembra(c)
+    # Con `CESTA_CAPTURA_SIN_SIEMBRA=1` se respeta el escenario que ya haya en la
+    # base (útil para capturar una compra cerrada o una lista preparada a mano).
+    if os.environ.get("CESTA_CAPTURA_SIN_SIEMBRA") == "1":
+        datos = {"lista_id": os.environ.get("CESTA_CAPTURA_LISTA", ""),
+                 "lineas": 0, "favoritos": [], "receta_id": None,
+                 "grupo_id": None, "grupo": None}
+    else:
+        datos = siembra(c)
     print(f"lista {datos['lista_id']} · {datos['lineas']} líneas · "
           f"{len(datos['favoritos'])} favoritos · receta {datos['receta_id']}")
 
@@ -436,6 +443,14 @@ def captura(solo: set[str] | None = None) -> dict:
             with contextlib.suppress(ErrorNavegador):
                 # Hay pantallas que no llegan a quedarse quietas: no es un fallo, se sigue.
                 pagina.wait_for_load_state("networkidle", timeout=20000)
+            # El precio por unidad de la comparativa vive dentro del desplegable: para
+            # capturarlo hay que abrir el primero. Solo cuando se pide a proposito.
+            if os.environ.get("CESTA_CAPTURA_ABRIR_DETALLE") == "1" and "comparar" in ruta:
+                try:
+                    pagina.evaluate(
+                        "() => { const d = document.querySelector('details'); if (d) d.open = true; }")
+                except ErrorNavegador:
+                    pass
             # El esqueleto de carga no es la pantalla: se espera a que desaparezca.
             limite = time.time() + 30
             while time.time() < limite:
