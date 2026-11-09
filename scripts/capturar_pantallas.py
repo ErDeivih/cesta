@@ -30,7 +30,7 @@ Necesita la API y la interfaz levantadas y **con el catálogo real**, no el de e
 Escribe en `data/revision-ui-2026-11-09/` (fuera de git: se regenera): una imagen por
 pantalla -- página completa y primera pantalla, en móvil y en escritorio -- y
 `manifiesto.json` con la medida de cada una. El inventario que las explica está en
-`docs/REVISION-INTERFAZ-2026-11-09.md`. La cuenta y la lista de la compra son de usar y
+`docs/revision-interfaz.md`. La cuenta y la lista de la compra son de usar y
 tirar (`revision-ui`, en la base desechable), así que se puede repetir las veces que
 haga falta.
 """
