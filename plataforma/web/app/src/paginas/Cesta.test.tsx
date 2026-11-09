@@ -383,6 +383,111 @@ describe('las filas de producto', () => {
   })
 })
 
+/* ================================================== el mínimo de un producto === */
+
+/** El bloque `minimo` que la API añade a cada línea, tal y como está contratado.
+ *
+ *  *La API todavía no lo manda -- otro compañero lo está implementando en paralelo --, así que
+ *  aquí se dobla a mano. Si no viene el campo, la línea se pinta como hoy: por eso las demás
+ *  pruebas de este fichero (que no lo llevan) no cambian.* */
+function minimoDe(extra: Record<string, unknown> = {}) {
+  return {
+    producto_id: 'mercadona:l1',
+    cadena: 'mercadona',
+    precio_cent: 83,
+    precio_unidad_cent: 138,
+    unidad: 'kg',
+    minimo_cent: 83,
+    minimo_fecha: '2026-10-12',
+    vuelve_al_minimo: false,
+    nuevo_minimo: false,
+    ...extra,
+  }
+}
+
+describe('el mínimo de un producto', () => {
+  it('una línea que vuelve a su mínimo lo dice en una pastilla, con la fecha y sin diálogo', async () => {
+    const alerta = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        linea('l1', 'Alubia blanca 1 kg', 1, { minimo: minimoDe({ vuelve_al_minimo: true }) }),
+        linea('l2', 'Leche entera 1,5 l', 2),
+      ],
+    }
+    dobles.reparto = repartoDe({
+      sin_asignar: [pendiente('l1', 'Alubia blanca 1 kg', 245)],
+    })
+    monta()
+    const dentro = within(await loQueFalta())
+    const fila1 = (await dentro.findByText('Alubia blanca 1 kg')).closest('li') as HTMLElement
+    // *La cifra es la del mínimo de la API (`minimo_cent`), no el precio de hoy de la línea.*
+    expect(within(fila1).getByText(/En su mínimo · 0,83 €/)).toBeInTheDocument()
+    // *Y la fecha se lee como texto: no un `title`, que solo lo ve quien pasa el ratón.*
+    expect(within(fila1).getByText(/visto por primera vez el 12 oct/)).toBeInTheDocument()
+    // *La marca es una pastilla dentro de la línea: ni modal, ni aviso del navegador.*
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(alerta).not.toHaveBeenCalled()
+    alerta.mockRestore()
+  })
+
+  it('un mínimo nuevo usa la otra pastilla, no la de «En su mínimo»', async () => {
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        linea('l1', 'Alubia blanca 1 kg', 1, {
+          minimo: minimoDe({ nuevo_minimo: true, minimo_cent: 79, precio_cent: 79 }),
+        }),
+      ],
+    }
+    dobles.reparto = repartoDe({
+      sin_asignar: [pendiente('l1', 'Alubia blanca 1 kg', 245)],
+    })
+    monta()
+    const dentro = within(await loQueFalta())
+    const fila1 = (await dentro.findByText('Alubia blanca 1 kg')).closest('li') as HTMLElement
+    expect(within(fila1).getByText(/Mínimo nuevo · 0,79 €/)).toBeInTheDocument()
+    expect(within(fila1).queryByText(/En su mínimo/)).not.toBeInTheDocument()
+  })
+
+  it('sin una fecha legible, la pastilla se queda sola y no escribe «no lo sé» dentro de la frase', async () => {
+    // *La fecha es opcional en el sentido de que un ISO roto no se puede escribir. Un «visto
+    // por primera vez el no lo sé» no se lee: la frase se calla y la pastilla se queda.*
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [
+        linea('l1', 'Alubia blanca 1 kg', 1, {
+          minimo: minimoDe({ vuelve_al_minimo: true, minimo_fecha: '' }),
+        }),
+      ],
+    }
+    dobles.reparto = repartoDe({
+      sin_asignar: [pendiente('l1', 'Alubia blanca 1 kg', 245)],
+    })
+    monta()
+    const dentro = within(await loQueFalta())
+    const fila1 = (await dentro.findByText('Alubia blanca 1 kg')).closest('li') as HTMLElement
+    expect(within(fila1).getByText(/En su mínimo · 0,83 €/)).toBeInTheDocument()
+    expect(within(fila1).queryByText(/visto por primera vez/)).not.toBeInTheDocument()
+    expect(within(fila1).queryByText(/no lo sé/)).not.toBeInTheDocument()
+  })
+
+  it('una línea sin mínimo se pinta como siempre, con su nombre, su cantidad y su precio', async () => {
+    monta()
+    const dentro = within(await loQueFalta())
+    // *La alubia no lleva `minimo`: ni pastilla ni nada nuevo. Y lo de siempre sigue ahí.*
+    const fila1 = (await dentro.findByText('Alubia blanca 1 kg')).closest('li') as HTMLElement
+    expect(within(fila1).queryByText(/En su mínimo|Mínimo nuevo/)).not.toBeInTheDocument()
+    expect(within(fila1).getByRole('checkbox', { name: /Alubia blanca 1 kg/ })).toBeInTheDocument()
+    // *2,45 € es el precio de la línea en el reparto, y se queda donde estaba.*
+    expect(within(fila1).getByText('2,45 €')).toBeInTheDocument()
+    // *Y la cantidad de dos unidades se sigue diciendo, aunque la línea no tenga mínimo.*
+    const fila2 = (await dentro.findByText('Leche entera 1,5 l')).closest('li') as HTMLElement
+    expect(within(fila2).getByText('2 ×')).toBeInTheDocument()
+    expect(within(fila2).queryByText(/En su mínimo|Mínimo nuevo/)).not.toBeInTheDocument()
+  })
+})
+
 /* ========================================================= añadir y comparar === */
 
 describe('añadir y comparar', () => {

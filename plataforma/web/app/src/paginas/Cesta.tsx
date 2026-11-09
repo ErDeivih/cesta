@@ -44,7 +44,7 @@ import { cotizacionDelConflicto } from '../logica/conflicto'
 // **`fecha`, que es la que escribe las fechas en castellano.** *Sin ella esta pantalla
 // ponia el ISO crudo -- «Datos del 2026-10-16» -- mientras el diario ponia «17/10/2026».
 // *Medido en la revision visual del 17/10/2026.*
-import { euros, fecha as fechaTexto, hace, nombreCadena } from '../api/formato'
+import { euros, fecha as fechaTexto, hace, nombreCadena, NO_LO_SE } from '../api/formato'
 import {
   apuntaCambio, leerCola, vaciaCola,
 } from '../estado/cola'
@@ -460,6 +460,25 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   // que no esta en el catalogo en vez de obligar a buscarlo. Pero **no es un producto**, y la
   // pantalla no puede hacer que lo parezca: no tiene precio y no entra en ninguna comparacion.
   const sinCatalogo = !linea.grupo_id && !linea.producto_id
+  // *** EL MINIMO DEL PRODUCTO: UNA PASTILLA EN LA LINEA, NO UN AVISO. ***
+  //
+  // *La API manda `minimo` (contrato en `tipos.ts`) solo si el historico es fresco. Si la
+  // clave no viene, esto no pinta nada y la linea se queda exactamente como estaba.*
+  //
+  // *Dos banderas que no dicen lo mismo: `vuelve_al_minimo` es que hoy esta **otra vez** en el
+  // precio mas bajo visto, y `nuevo_minimo` es que hoy esta **por debajo** -- un record nuevo.
+  // Si vinieran las dos, se enseña la fuerte (`nuevo_minimo`): un minimo nuevo tambien esta
+  // «en su minimo», y decir las dos seria repetir la misma noticia con dos pastillas.*
+  const minimo = linea.minimo ?? null
+  const minimoNuevo = minimo?.nuevo_minimo === true
+  const enSuMinimo = minimo?.vuelve_al_minimo === true
+  // *La fecha, cuando de verdad se puede escribir.* `fechaTexto` devuelve «no lo sé» si el ISO
+  // viene roto: dentro de la frase «visto por primera vez el no lo sé» eso no se lee, así que
+  // la frase se calla y la pastilla se queda sola. Un dato que no está no se rellena.
+  const fechaDelMinimo = minimo?.minimo_fecha
+    ? fechaTexto(minimo.minimo_fecha, true)
+    : NO_LO_SE
+  const hayFechaDelMinimo = fechaDelMinimo !== NO_LO_SE
 
   return (
     <li className="border-t border-borde first:border-t-0">
@@ -496,6 +515,22 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
                 <span className="rounded-nota border border-borde px-1.5">
                   Sin producto del catálogo
                 </span>
+              )}
+              {/* *** La marca del mínimo, en la fila de metadatos de siempre. *** *
+                  *Texto visible (no un `title` que solo ve el ratón): la pastilla la lee un
+                  *lector de pantalla, y la fecha también. El precio de la derecha y la casilla
+                  *no se tocan -- la marca va en medio, no empuja nada de sitio.* */}
+              {minimo && (minimoNuevo || enSuMinimo) && (
+                <>
+                  {minimoNuevo ? (
+                    <Etiqueta tono="bien">Mínimo nuevo · {euros(minimo.minimo_cent)}</Etiqueta>
+                  ) : (
+                    <Etiqueta tono="dato">En su mínimo · {euros(minimo.minimo_cent)}</Etiqueta>
+                  )}
+                  {enSuMinimo && !minimoNuevo && hayFechaDelMinimo && (
+                    <span>visto por primera vez el {fechaDelMinimo}</span>
+                  )}
+                </>
               )}
             </span>
             {linea.nota && !escribiendo && (

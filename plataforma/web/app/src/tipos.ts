@@ -700,6 +700,36 @@ export interface Lista {
   actualizada?: string
 }
 
+/** El **mínimo histórico** de un producto de la lista, tal y como lo manda la API.
+ *
+ *  *La API lo añade a cada línea de `GET /listas/{id}` **solo si hay datos frescos**: un
+ *  mínimo medido sobre precios viejos no decide nada, y enseñarlo sería afirmar un récord
+ *  con datos que ya no valen.*
+ *
+ *  **Dos banderas y no una**, porque no dicen lo mismo: `vuelve_al_minimo` es que hoy está
+ *  **otra vez** en el precio más bajo que se le ha visto, y `nuevo_minimo` es que hoy está
+ *  **por debajo** de ese mínimo -- un récord nuevo. La pantalla las lee aparte.
+ *
+ *  Si la clave **no viene**, la línea se pinta como siempre: aquí no se rellena un mínimo
+ *  que no se ha medido (la regla de la casa: un dato que no tenemos no se inventa).
+ */
+export interface MinimoDeLinea {
+  producto_id: string
+  /** La cadena del mínimo, que puede no ser la del precio de hoy. */
+  cadena: string
+  precio_cent: number | null
+  precio_unidad_cent: number | null
+  unidad: string
+  /** El precio mínimo visto, en céntimos: es la cifra que se enseña en la pastilla. */
+  minimo_cent: number
+  /** El día en que se vio ese mínimo por primera vez, ISO (`2026-10-12`). */
+  minimo_fecha: string
+  /** Hoy está otra vez en su mínimo (o en uno más bajo). */
+  vuelve_al_minimo: boolean
+  /** Hoy está **por debajo** de su mínimo: un récord nuevo. */
+  nuevo_minimo: boolean
+}
+
 /** Una linea de la lista: lo que se quiere comprar. */
 export interface Linea {  id: string
   nombre_visto: string
@@ -733,6 +763,12 @@ export interface Linea {  id: string
   seccion?: string
   pasillo?: string
   pasillo_orden?: number
+  /** El mínimo del producto, **solo si la API lo manda y sus datos son frescos**.
+   *
+   *  Es una marca de la lista, no un aviso: la pantalla la pinta como una pastilla dentro de
+   *  la línea (`Cesta.tsx`, `UnaLinea`). Sin este campo -- una API más vieja, o un producto
+   *  sin historial -- la línea se pinta como siempre. */
+  minimo?: MinimoDeLinea | null
 }
 
 /** Una tarjeta del mosaico de lo habitual.
