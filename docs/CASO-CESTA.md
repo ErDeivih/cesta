@@ -83,6 +83,21 @@ Antes de comparar hay que dejar los datos en el mismo idioma:
 - **Datos que faltan**: un producto sin precio en una cadena no cuenta en esa cadena; no se
   convierte en 0. Un producto sin formato medido no entra en la comparación por unidad.
 
+
+### Las tres etiquetas de cada precio
+
+En el desglose, cada cadena lleva su precio y una etiqueta que dice **qué** es ese precio:
+
+- **Mismo producto**: mismo GTIN válido y presentación compatible. Es el único caso en que se
+  puede decir «el mismo artículo»; cuenta en el total sin preguntar.
+- **Alternativa**: un equivalente (misma categoría y formato, marca distinta, o nombre parecido
+  sin GTIN). Se puede elegir, pero no es el mismo producto; **no suma en el total** hasta que se
+  confirma, y el €/kg permite compararlo con el original.
+- **Sin precio**: esa cadena no tiene hoy el producto. No es un cero: no entra en su total.
+
+El **€/kg o €/L** va pegado al precio de cada fila; si el formato no trae medida, se dice «sin
+medida» en vez de inventar una unidad. Así, dos precios solo se comparan cuando hablan de lo mismo.
+
 ## 4. Cómo se calcula el ahorro
 
 La pantalla usa dos fórmulas, y **dice cuál está usando**:
@@ -137,8 +152,7 @@ Base de la suma de máximos: **23,80 €** → **28,5 %** de ahorro posible; la 
 
 - **La cifra grande existe y es explicable**: 6,78 € de ahorro posible (−28 %) en una cesta de
   8 productos, con el desglose que la produce y las fórmulas a un toque («¿Cómo se calcula?»).
-- **Los totales por cadena** dicen lo que cada una tiene hoy: Carrefour, 18,73 € con 7 de 8
-  productos; las demás, sin precio para esta lista. Una cadena incompleta no se presenta como
+- **Los totales por cadena** dicen lo que cada una tiene hoy: Carrefour, 18,73 € con **Encontrados 7/8**; las demás, sin precio para esta lista. Una cadena incompleta no se presenta como
   ganadora.
 - **El gráfico de barras** enseña la diferencia de cada producto en el mismo orden que el desglose: la barra más larga es donde más hay que decidir.
 - **El €/kg y el €/l** hacen la comparación honesta: el mismo producto, no dos formatos distintos.

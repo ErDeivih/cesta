@@ -62,6 +62,9 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 **Gráfico del ahorro** — la diferencia de cada producto, en barras y ordenada:
 [390 px](docs/portfolio/390-comparativa-grafico.png) · [1280 px](docs/portfolio/1280-comparativa-grafico.png).
 
+**Detalle de un producto** — €/kg junto al precio y etiquetas «Mismo producto / Alternativa / Sin precio»:
+[390 px](docs/portfolio/390-comparativa-detalle.png) · [1280 px](docs/portfolio/1280-comparativa-detalle.png).
+
 **Más detalle:** [producto a producto con €/kg](docs/portfolio/02b-productos.png) ·
 [explicación del cálculo abierta](docs/portfolio/1280-comparativa-calculo.png) ·
 [exportar a CSV](docs/portfolio/04-exportar.png) · [portada](docs/portfolio/00-portada.png) ·
