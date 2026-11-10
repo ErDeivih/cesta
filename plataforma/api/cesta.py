@@ -497,7 +497,11 @@ def _total_autorizado(elecciones: list[Eleccion]) -> dict:
         "total_cent": sum(e.coste_cent for e in cuenta),
         "lineas_contadas": len(cuenta),
         "pendientes": [{"linea_id": e.linea_id, "fuente": e.fuente, "nombre": e.nombre,
-                        "coste_cent": e.coste_cent, "identidad": e.identidad, "motivo": e.motivo}
+                        "coste_cent": e.coste_cent, "identidad": e.identidad, "motivo": e.motivo,
+                        # **El €/unidad tambien para la alternativa.** *Sin esto, la pantalla no
+                        # podia comparar el formato de un equivalente y decia «sin medida» aunque
+                        # el catalogo si la tuviera: el dato existia y se quedaba en el servidor.*
+                        "precio_unidad_cent": e.precio_unidad_cent, "unidad": e.unidad}
                        for e in pendientes],
         "completo": not pendientes,
     }
