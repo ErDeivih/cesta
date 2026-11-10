@@ -110,6 +110,9 @@ interface PorConfirmar {
   coste_cent: number
   identidad?: string | null
   motivo?: string | null
+  /** El formato medido del equivalente, si el catálogo lo trae. */
+  precio_unidad_cent?: number | null
+  unidad?: string | null
 }
 
 /** *** Los campos que `OpcionTienda` no declara, y que la API manda. *** *
@@ -773,7 +776,7 @@ function CadenaEnLaLista({ cadena, total, contadas, totalMasCaro, esLaMasBarata,
 
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <span className="text-etiqueta text-tinta-suave">
-          con {contadas} de {total} {total === 1 ? 'producto' : 'productos'}
+          Encontrados {contadas}/{total}
         </span>
         {esLaMasBarata && <Etiqueta tono="bien">la más barata</Etiqueta>}
         {diferenciaConLaMasBarata !== null && diferenciaConLaMasBarata > 0 && (
@@ -902,7 +905,7 @@ function LineaComparada({ linea, celdas, cadenas }: {
                     <span className="text-etiqueta text-tinta-suave">
                       {nombreCadena(cadena.cadena)}
                     </span>
-                    <span className="text-etiqueta text-tinta-suave">no está</span>
+                    <Etiqueta tono="dato">Sin precio</Etiqueta>
                   </li>
                 )
               }
@@ -919,16 +922,27 @@ function LineaComparada({ linea, celdas, cadenas }: {
                           *Se enseña junto al coste y **no se calcula aqui**: si falta el dato, la
                           fila se queda como estaba en vez de inventarse un precio por kilo que
                           nadie ha medido.* */}
-                      {celda.precio_unidad_cent != null && celda.unidad && (
+                      {celda.precio_unidad_cent != null && celda.unidad ? (
                         <span className="text-etiqueta font-normal text-tinta-suave">
                           {' · '}
                           {eurosUnidad(celda.precio_unidad_cent, celda.unidad)}
+                        </span>
+                      ) : (
+                        <span className="text-etiqueta font-normal text-tinta-suave">
+                          {' · sin medida'}
                         </span>
                       )}
                       {!celda.autorizada && (
                         <span className="ml-1 text-etiqueta font-normal text-aviso">por confirmar</span>
                       )}
                     </span>
+                    {/* *** Mismo producto / Alternativa / Sin precio. *** *
+                        *La identidad se dice junto al numero: el mismo articulo (mismo GTIN), un
+                        *equivalente que se puede elegir pero no es el mismo, o una cadena que hoy
+                        *no lo tiene. No se esconde en otra pantalla.* */}
+                    <Etiqueta tono={celda.identidad === 'exacto' ? 'dato' : 'aviso'}>
+                      {celda.identidad === 'exacto' ? 'Mismo producto' : 'Alternativa'}
+                    </Etiqueta>
                   </div>
                   {celda.promo && <Oferta promo={celda.promo} ahorro_cent={celda.ahorro_cent} />}
                   {celda.sugerencia && (
@@ -1075,6 +1089,8 @@ interface CeldaDeLaLinea {
   precio_unidad_cent: number | null
   /** La unidad de ese precio (`kg`, `l`, `ud`), o `null` si no llego. */
   unidad: string | null
+  /** El veredicto de identidad: `exacto`, `alternativa`, ... o `null` si no llego. */
+  identidad: string | null
 }
 
 /** *** DE CADA CADENA A CADA LINEA. *** *
@@ -1107,6 +1123,7 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         // pinta sin €/unidad en vez de con uno inventado.*
         precio_unidad_cent: p.precio_unidad_cent ?? null,
         unidad: p.unidad ?? null,
+        identidad: p.identidad ?? null,
       })
     }
     for (const p of cadena.pendientes ?? []) {
@@ -1118,9 +1135,11 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         ahorro_cent: 0,
         autorizada: false,
         producto_id: '',
-        // *Un equivalente sin confirmar tampoco trae formato medido: nada que enseñar.*
-        precio_unidad_cent: null,
-        unidad: null,
+        // *La alternativa tambien puede traer su formato medido: desde que la API lo manda en
+        // `pendientes`, se enseña junto al coste en vez de decir «sin medida».*
+        precio_unidad_cent: p.precio_unidad_cent ?? null,
+        unidad: p.unidad ?? null,
+        identidad: p.identidad ?? 'alternativa',
       })
     }
   }

@@ -130,6 +130,8 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
   /** El contrato nuevo del reparto: precio por unidad de medida y su unidad. */
   precioUnidad?: number | null
   unidad?: string | null
+  /** exacto o lternativa, como lo manda la API. */
+  identidad?: string
 } = {}) {
   return {
     producto_id: `${cadena}:${idLinea}`,
@@ -142,7 +144,7 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
     sugerencia: null,
     linea_id: idLinea,
     autorizada: extra.autorizada !== false,
-    identidad: 'exacto',
+    identidad: extra.identidad ?? 'exacto',
     motivo: null,
     precio_unidad_cent: extra.precioUnidad ?? null,
     unidad: extra.unidad ?? null,
@@ -326,7 +328,7 @@ describe('comparar mi cesta con datos', () => {
 
     // *Y lo que le falta se dice con el nombre del producto, no con un numero.*
     expect(screen.getByText('No lo tiene: Queso curado')).toBeInTheDocument()
-    expect(screen.getByText('con 3 de 4 productos')).toBeInTheDocument()
+    expect(screen.getByText('Encontrados 3/4')).toBeInTheDocument()
     expect(screen.getByText('la más barata')).toBeInTheDocument()
   })
 
@@ -539,7 +541,7 @@ describe('comparar mi cesta con datos', () => {
     // *Y el total de DIA sigue sin contar ese precio: la fila dice «sin precio» y 0 de 2.*
     const filaDia = screen.getByRole('heading', { name: 'DIA', level: 4 }).closest('li') as HTMLElement
     expect(within(filaDia).getByText('sin precio')).toBeInTheDocument()
-    expect(filaDia).toHaveTextContent('con 0 de 2 productos')
+    expect(filaDia).toHaveTextContent('Encontrados 0/2')
   })
 
   it('sin ninguna linea con precio en dos cadenas no pinta tarjeta de ahorro', async () => {
@@ -725,6 +727,39 @@ describe('comparar mi cesta con datos', () => {
     expect(screen.getByRole('link', { name: /volver a la lista/i })).toBeInTheDocument()
   })
 
+  it('etiqueta cada precio como Mismo producto o Alternativa, y la cadena sin precio', async () => {
+    // *Las tres palabras que pidió David: mismo producto (GTIN), alternativa (equivalente que se
+    // puede elegir) y sin precio (la cadena no lo tiene hoy). Van junto al número.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({ cadena: 'aldi', total: 100, contadas: 1, productos: [
+          precio('l1', 'Leche entera', 'aldi', 100, { precioUnidad: 100, unidad: 'l' }),
+        ] }),
+        cadena({ cadena: 'dia', total: 0, contadas: 0, faltan: ['Leche entera'], productos: [
+          precio('l1', 'Leche entera', 'dia', 110, { identidad: 'alternativa' }),
+        ] }),
+        cadena({ cadena: 'mercadona', total: 0, contadas: 0, faltan: ['Leche entera'], productos: [] }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera')],
+    }
+    monta()
+
+    const resumen = await lineaDelDesglose('Leche entera')
+    fireEvent.click(resumen)
+    const detalles = resumen.closest('details') as HTMLElement
+    const filaAldi = within(detalles).getByText('Aldi').closest('li') as HTMLElement
+    expect(within(filaAldi).getByText('Mismo producto')).toBeInTheDocument()
+    expect(filaAldi).toHaveTextContent('1,00 € · 1,00 €/l')
+    const filaDia = within(detalles).getByText('DIA').closest('li') as HTMLElement
+    expect(within(filaDia).getByText('Alternativa')).toBeInTheDocument()
+    const filaMercadona = within(detalles).getByText('Mercadona').closest('li') as HTMLElement
+    expect(within(filaMercadona).getByText('Sin precio')).toBeInTheDocument()
+  })
+
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
     // *Dos formas de que el dato no se pueda enseñar: que no venga ninguno de los dos campos
     // (una API vieja) o que llegue el precio sin la unidad. En las dos, el coste de siempre.*
@@ -826,7 +861,7 @@ describe('comparar mi cesta con datos', () => {
     expect(await screen.findByText('1,29 € · solo en Aldi')).toBeInTheDocument()
   })
 
-  it('enseña el precio de cada cadena y «no está» donde falta', async () => {
+  it('enseña el precio de cada cadena y «Sin precio» donde falta', async () => {
     monta()
 
     // *El desglose por linea: se abre el queso, que es al que le falta una cadena.*
@@ -837,7 +872,7 @@ describe('comparar mi cesta con datos', () => {
 
     const dentro = within(detalles as HTMLElement)
     expect(await dentro.findByText('Mercadona')).toBeInTheDocument()
-    expect(dentro.getAllByText('no está').length).toBeGreaterThan(0)
+    expect(dentro.getAllByText('Sin precio').length).toBeGreaterThan(0)
   })
 
   it('enseña la oferta como condicion y no como precio final', async () => {
