@@ -38,18 +38,34 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 
 ## 3. Capturas (datos reales del 10/11/2026)
 
-| | |
-|---|---|
-| ![Portada](docs/portfolio/00-portada.png) | ![Lista](docs/portfolio/01-lista.png) |
-| **Portada.** Qué cuesta la cesta, en qué cadena y qué se ha movido. | **La lista.** Precio estimado, productos por pasillo y sugerencias. |
-| ![Comparativa](docs/portfolio/02-comparativa.png) | ![Producto a producto](docs/portfolio/02b-productos.png) |
-| **Comparativa.** Ahorro grande, desglose y barra por cadena; productos ordenados por ahorro. | **Producto a producto.** €/unidad en cada cadena, «hasta X € de diferencia» y marca de mínimo. |
-| ![Sugerencias](docs/portfolio/03-sugerencias.png) | ![Exportar](docs/portfolio/04-exportar.png) |
-| **Sugerencias.** «Lo de siempre» y repetir la compra anterior: lo que falta, y lo que ya está en casa. | **Exportar.** La lista a CSV (también copiar como texto). |
+**Lista**
 
-El CSV de ejemplo está en [`docs/portfolio/ejemplo-lista.csv`](docs/portfolio/ejemplo-lista.csv).
-El recorrido que las produce, con sus comprobaciones, en
-[`docs/portfolio/recorrido.txt`](docs/portfolio/recorrido.txt).
+| 390 px | 1280 px |
+|---|---|
+| ![Lista en móvil](docs/portfolio/390-lista.png) | ![Lista en escritorio](docs/portfolio/1280-lista.png) |
+| Precio estimado, productos por pasillo y lo que falta. | La misma lista en escritorio, con la navegación lateral. |
+
+**Comparativa**
+
+| 390 px | 1280 px |
+|---|---|
+| ![Comparativa en móvil](docs/portfolio/390-comparativa.png) | ![Comparativa en escritorio](docs/portfolio/1280-comparativa.png) |
+| Ahorro grande, explicación y totales por cadena. | Ahorro, «¿Cómo se calcula?» y desglose, con sitio para todo. |
+
+**Sugerencias**
+
+| 390 px | 1280 px |
+|---|---|
+| ![Sugerencias en móvil](docs/portfolio/390-sugerencias.png) | ![Sugerencias en escritorio](docs/portfolio/1280-sugerencias.png) |
+| «Lo de siempre» y repetir la compra: lo que falta y lo que ya está en casa. | Las mismas sugerencias en escritorio. |
+
+**Más detalle:** [producto a producto con €/kg](docs/portfolio/02b-productos.png) ·
+[explicación del cálculo abierta](docs/portfolio/1280-comparativa-calculo.png) ·
+[exportar a CSV](docs/portfolio/04-exportar.png) · [portada](docs/portfolio/00-portada.png) ·
+[CSV de ejemplo](docs/portfolio/ejemplo-lista.csv).
+
+El **informe del cálculo** —problema, datos, normalización, fórmulas y resultado— está en
+[docs/CASO-CESTA.md](docs/CASO-CESTA.md).
 
 ## 4. Demo y enlace
 
