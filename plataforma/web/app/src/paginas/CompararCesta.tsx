@@ -408,6 +408,9 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
         </AhorroDeLaCesta>
       ) : null}
 
+      {/* *La letra pequeña con las fórmulas, para quien quiera comprobar la cifra.* */}
+      <ComoSeCalcula hayDosCompletas={masCara !== null} />
+
       {/* ------------------------------------------------- dónde sale mejor --- */}
       <section aria-labelledby="totales-de-la-cesta" className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
@@ -629,6 +632,44 @@ function AhorroDeLaCesta({ ahorro_cent, base_cent, nota, children }: {
           de las completas no usa precios sin confirmar y el de cada cosa si.* */}
       <p className="mt-1 text-etiqueta opacity-80">{nota}</p>
     </section>
+  )
+}
+
+/** *** LA EXPLICACION, A UN TOQUE Y SIN TECNICISMOS. *** *
+ *
+ *  *La cifra grande no se sostiene sola: quien la lee tiene derecho a saber que suma, que no, y
+ *  por que el porcentaje se mide sobre una base y no sobre otra.* *Va en un desplegable para no
+ *  tapar la comparacion con cuatro parrafos, y usa los dos casos reales de la tarjeta: con dos
+ *  cadenas completas el ahorro es una resta; sin ellas, la suma de lo que separa cada producto.*
+ */
+function ComoSeCalcula({ hayDosCompletas }: { hayDosCompletas: boolean }) {
+  return (
+    <details className="rounded-campo border border-borde bg-papel">
+      <Resumen className="px-3 text-cuerpo">¿Cómo se calcula?</Resumen>
+      <div className="flex flex-col gap-2 px-3 pb-3 text-etiqueta text-tinta-suave">
+        <p>
+          <strong className="text-tinta">Los totales por cadena</strong> suman solo los productos
+          que esa cadena tiene hoy, con su oferta aplicada. Si le falta alguno, se dice cuántos
+          entran: una cadena incompleta no se compara con las que tienen la lista entera.
+        </p>
+        <p>
+          <strong className="text-tinta">El ahorro.</strong>{' '}
+          {hayDosCompletas
+            ? 'Con dos cadenas completas, es la diferencia entre sus totales; el porcentaje va sobre el total de la más cara.'
+            : 'Es la suma, producto a producto, de lo que separa el precio más caro del más barato de hoy; el porcentaje va sobre la suma de esos precios máximos.'}
+        </p>
+        <p>
+          <strong className="text-tinta">El €/kg y el €/l</strong> son los del formato de cada
+          producto: comparan el mismo producto entre cadenas, no dos formatos distintos. Si el
+          formato no está medido, no se enseña una unidad inventada.
+        </p>
+        <p>
+          <strong className="text-tinta">Lo que no se resta:</strong> las ofertas que piden tarjeta,
+          cupón o comprar por internet. Los equivalentes sin confirmar cuentan en el ahorro posible,
+          pero no en los totales de cada cadena.
+        </p>
+      </div>
+    </details>
   )
 }
 

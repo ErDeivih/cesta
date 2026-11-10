@@ -552,6 +552,17 @@ describe('comparar mi cesta con datos', () => {
     expect(screen.queryByRole('heading', { name: 'Lo que te ahorras' })).not.toBeInTheDocument()
   })
 
+  it('explica de dónde sale la cifra de ahorro, sin tecnicismos', async () => {
+    // *La cifra grande no se sostiene sola: el desplegable dice qué suma cada total, cómo se
+    // calcula el ahorro y qué ofertas no se restan. Es lo que la hace explicable.*
+    monta()
+    const resumen = await screen.findByText('¿Cómo se calcula?')
+    fireEvent.click(resumen)
+    expect(screen.getByText(/diferencia entre sus totales/)).toBeInTheDocument()
+    expect(screen.getByText(/no se resta/)).toBeInTheDocument()
+    expect(screen.getByText(/€\/kg y el €\/l/)).toBeInTheDocument()
+  })
+
   it('cada cadena lleva una barra proporcional al total mas caro', async () => {
     monta()
 
