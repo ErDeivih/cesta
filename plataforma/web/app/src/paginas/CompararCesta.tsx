@@ -695,8 +695,8 @@ function LineaComparada({ linea, celdas, cadenas }: {
         ? 'no comparable'
         : 'por confirmar'
       : soloEn
-        ? `${euros(desde)} · solo en ${nombreCadena(soloEn)}${unidadDelResumen ? ` · ${unidadDelResumen}` : ''}`
-        : `desde ${euros(desde)}${unidadDelResumen ? ` · ${unidadDelResumen}` : ''}`
+        ? `${euros(desde)} · solo en ${nombreCadena(soloEn)}`
+        : `desde ${euros(desde)}`
   // *** La marca del minimo, la misma pastilla que en la lista. *** *
   // *`minimo` viene solo si la API lo manda y sus datos son frescos (`tipos.ts`); si la clave no
   // esta, la linea se pinta como siempre.* *Y si vinieran las dos banderas se enseña la fuerte
@@ -723,6 +723,11 @@ function LineaComparada({ linea, celdas, cadenas }: {
                 </span>
               )}
             </span>
+            {unidadDelResumen && (
+              <span className="mt-0.5 block text-etiqueta text-tinta-suave">
+                {unidadDelResumen}
+              </span>
+            )}
             {minimo && (minimoNuevo || enSuMinimo) && (
               <span className="mt-0.5 flex flex-wrap items-center gap-2">
                 {minimoNuevo ? (

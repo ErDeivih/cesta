@@ -627,7 +627,10 @@ describe('comparar mi cesta con datos', () => {
 
     const resumen = await screen.findByText('Leche entera')
     const summary = resumen.closest('details')?.querySelector('summary') as HTMLElement
-    expect(summary).toHaveTextContent('desde 1,25 € · 1,25 €/l')
+    // *El importe y el €/unidad van juntos en el resumen, pero en dos lineas: el nombre
+    // largo de un producto no puede dejar el precio en una columna de una letra.*
+    expect(within(summary).getByText('desde 1,25 €')).toBeInTheDocument()
+    expect(within(summary).getByText('1,25 €/l')).toBeInTheDocument()
   })
 
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
