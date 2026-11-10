@@ -521,6 +521,7 @@ function deLaCompraAnterior(
   nombre: string,
   estado: 'falta' | 'ya_estaba' | 'sin_catalogo',
   cantidad = 1,
+  enCasa: boolean | null = null,
 ) {
   return {
     nombre,
@@ -528,6 +529,7 @@ function deLaCompraAnterior(
     grupo_id: estado === 'sin_catalogo' ? null : 10,
     cantidad,
     estado,
+    en_casa: enCasa,
   }
 }
 
@@ -593,6 +595,30 @@ describe('repetir la compra de la semana pasada', () => {
       .not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Añadir los que faltan/ }))
       .not.toBeInTheDocument()
+  })
+
+  it('marca lo que ya está en casa y lo que falta en casa', async () => {
+    // *Repetir reproduce la compra, pero la despensa dice qué no hace falta comprar. Se marca
+    // solo en las que se van a añadir: en una que ya está en la lista no hay nada que decidir.*
+    dobles.previaRepetir = previaDeCompra({
+      lineas: [
+        deLaCompraAnterior('Leche entera 1,5 l', 'falta', 1, true),
+        deLaCompraAnterior('Patatas malla 5 kg', 'falta', 1, false),
+        deLaCompraAnterior('Alubia blanca 1 kg', 'ya_estaba', 1, true),
+      ],
+      faltan: 2,
+      ya_estaban: 1,
+      sin_catalogo: 0,
+      en_casa: 2,
+      faltan_en_casa: 1,
+    })
+    monta()
+    const dentro = within(await laTarjetaDeRepetir())
+    expect(dentro.getByText(/En casa: 2 · Falta en casa: 1/)).toBeInTheDocument()
+    expect(dentro.getByText('en casa')).toBeInTheDocument()
+    expect(dentro.getByText('falta en casa')).toBeInTheDocument()
+    const alubia = dentro.getByText('Alubia blanca 1 kg').closest('li') as HTMLElement
+    expect(within(alubia).queryByText('en casa')).not.toBeInTheDocument()
   })
 
   it('al pulsar añade de verdad y lo cuenta en la propia tarjeta', async () => {

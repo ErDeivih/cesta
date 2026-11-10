@@ -1165,6 +1165,13 @@ function RepetirCompra({ listaId, puedeEscribir }: {
   // *La fecha, en castellano; y solo si se puede escribir una fecha de verdad.*
   const fechaCompra = datos.fecha ? fechaTexto(datos.fecha) : NO_LO_SE
   const hayFechaCompra = fechaCompra !== NO_LO_SE
+  // *** LO QUE FALTA EN CASA, no solo en la lista. *** *
+  // *La despensa es texto declarado, y si no se pudo leer el campo llega `null`: entonces no se
+  // dice nada. Un «no la tienes» sin haber mirado seria el mismo cero inventado de siempre.*
+  const hayDespensa = datos.lineas.some((l) => l.en_casa === true || l.en_casa === false)
+  const enCasa = datos.lineas.filter((l) => l.en_casa === true).length
+  const faltanEnCasa = datos.lineas.filter(
+    (l) => l.estado === 'falta' && l.en_casa === false).length
 
   return (
     <Tarjeta titulo="Repetir la compra de la semana pasada">
@@ -1172,6 +1179,11 @@ function RepetirCompra({ listaId, puedeEscribir }: {
         {hayFechaCompra ? `Del ${fechaCompra} · ` : ''}
         {resumen}
       </p>
+      {hayDespensa && (
+        <p className="mt-1 text-etiqueta text-tinta-suave">
+          En casa: {enCasa} · Falta en casa: {faltanEnCasa}
+        </p>
+      )}
       <ul className="mt-2 grid gap-1">
         {datos.lineas.map((l, i) => (
           <li
@@ -1183,7 +1195,15 @@ function RepetirCompra({ listaId, puedeEscribir }: {
               {l.nombre}
             </span>
             {/* *El estado, en texto visible: lo lee también el lector de pantalla.* */}
-            <Etiqueta tono={TONO_DEL_ESTADO[l.estado]}>{TEXTO_DEL_ESTADO[l.estado]}</Etiqueta>
+            <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+              <Etiqueta tono={TONO_DEL_ESTADO[l.estado]}>{TEXTO_DEL_ESTADO[l.estado]}</Etiqueta>
+              {l.estado === 'falta' && l.en_casa === true && (
+                <Etiqueta tono="dato">en casa</Etiqueta>
+              )}
+              {l.estado === 'falta' && l.en_casa === false && (
+                <Etiqueta tono="aviso">falta en casa</Etiqueta>
+              )}
+            </span>
           </li>
         ))}
       </ul>

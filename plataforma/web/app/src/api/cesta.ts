@@ -336,6 +336,10 @@ export interface LineaDeLaCompraAnterior {
   grupo_id: number | null
   cantidad: number
   estado: 'falta' | 'ya_estaba' | 'sin_catalogo'
+  /** **¿Está declarada en casa?** `true`/`false` si se pudo mirar la despensa;
+   *  `null` si no se pudo, que **no es «no la tienes»**. Se compara por nombre, como
+   *  la despensa guarda las cosas. */
+  en_casa: boolean | null
 }
 
 /** **Lo que pasaría al repetir la última compra**, sin tocar la lista.
@@ -354,6 +358,10 @@ export interface PreviaDeRepetirCompra {
   faltan: number
   ya_estaban: number
   sin_catalogo: number
+  /** Líneas de la compra que están declaradas en casa. */
+  en_casa?: number
+  /** De las que faltan por añadir, cuántas **no** están en casa: lo que hay que comprar. */
+  faltan_en_casa?: number
 }
 
 export async function previaDeRepetirCompra(listaId: string): Promise<PreviaDeRepetirCompra> {
