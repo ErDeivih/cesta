@@ -1,0 +1,11 @@
+Hecho: la puerta de sesión se ve
+Hecho: entra y aparece la lista
+Hecho: la comparativa enseña la cifra de ahorro
+Hecho: se ve el precio por unidad de medida
+Hecho: se ve la marca de mínimo visto
+Hecho: está la tarjeta de repetir la compra
+Hecho: está el bloque de sugerencias «Lo de siempre»
+Hecho: la previa dice qué falta por añadir
+Hecho: el CSV se descarga con las líneas
+Hecho: el CSV lleva cabecera y productos
+Hecho: sin errores de consola (0)
