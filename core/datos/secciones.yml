@@ -814,6 +814,9 @@ mapa:
     "drogueria-y-limpieza/conservacion-de-alimentos/film-transparente": droguería-limpieza # nueva 2026-11-09
     "drogueria-y-limpieza/conservacion-de-alimentos/papel-y-moldes-horno": droguería-limpieza # nueva 2026-11-09
     "la-despensa/cestas-y-lotes/cestas-de-navidad": desayuno-dulces    # nueva 2026-11-09
+    "congelados/rebozados-y-platos-preparados/nuggets-y-empanados": carniceria # nueva 2026-11-10
+    "bebe/toallitas": bebe                                             # nueva 2026-11-10
+    "la-despensa/yogures-y-postres/yogures-desnatados": lacteos-huevos # nueva 2026-11-10
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77
@@ -1080,6 +1083,7 @@ mapa:
     "infantil/pouches-y-snacks": bebe                                  # nueva 2026-10-27
     "platos-preparados-y-pizzas/pizzas-congeladas": preparados         # nueva 2026-11-06
     "arroz-pastas-y-legumbres/salsas-para-pasta": despensa             # nueva 2026-11-08
+    "congelados-y-helados/roscones-tartas-y-churros": panaderia        # nueva 2026-11-10
   mercadona:
     "Cuidado facial y corporal": higiene-belleza                          # 458
     "Limpieza y hogar": droguería-limpieza                                # 345
