@@ -6,6 +6,15 @@
 **Repositorio**: https://github.com/ErDeivih/cesta (privado, respaldado el 2026-11-04)
 **Compose**: `plataforma/docker-compose.yml`, proyecto `cesta`
 
+## Protocolo de bloqueo (orden permanente de David)
+
+Si no sé seguir, me atasco o repito trabajo, **no me quedo parado en silencio**:
+
+1. Escribo en `ESTADO-AGENTE.md` una sección **`## Bloqueo`** con: (a) dónde me quedé,
+   (b) qué falta revisar, (c) qué necesito de David u otro chat, (d) siguiente paso concreto.
+2. Respondo en **dos líneas** con el bloqueo y lo que necesito.
+3. Y sigo con la tanda actual: el bloqueo es de una parte, no de todo el encargo.
+
 ## Misión
 
 Una **superapp para el consumidor**: compra comparada entre supermercados, recetas y calorías, en una sola aplicación web responsive y PWA móvil.
