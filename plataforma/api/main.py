@@ -1060,7 +1060,23 @@ def desde_favoritos(lista_id: str, datos: DesdeFavoritos,
 
 # ------------------------------------- repetir la compra de la semana anterior ---
 
-def _repetir_la_compra(lista_id: str) -> dict:
+def _lo_que_hay_en_casa(usuario: dict) -> set[str] | None:
+    """**Los textos de la despensa de quien pregunta, en minúsculas** -- o `None` si no se pudo mirar.
+
+    *La despensa se compara por texto, como en la previa de un plan: no hay identidad de producto
+    ahí, y decirlo es parte de la respuesta. Y si la lectura falla, **`None` y no un conjunto
+    vacío**: «no lo sé» no es «no tengo nada», y tratarlo como vacío marcaría todo como «falta en
+    casa» sin haberlo mirado.*
+    """
+    try:
+        with almacen.cursor() as cur:
+            cur.execute("SELECT texto FROM despensa WHERE usuario_id = %s", (usuario["id"],))
+            return {str(f["texto"]).strip().lower() for f in cur.fetchall() if f["texto"]}
+    except Exception:  # noqa: BLE001  <- a proposito: *sin base no se puede saber, y se dice.*
+        return None
+
+
+def _repetir_la_compra(lista_id: str, usuario: dict) -> dict:
     """La previa de repetir la ultima compra cerrada de la lista, sin escribir.
 
     **Un solo sitio para el calculo.** El GET que la enseña y el POST que la
@@ -1070,11 +1086,12 @@ def _repetir_la_compra(lista_id: str) -> dict:
     """
     compras = almacen.compras_de(lista_id, limite=1)
     if not compras:
-        return repetir.previa(None, [], [])
+        return repetir.previa(None, [], [], en_casa=_lo_que_hay_en_casa(usuario))
     la_compra = compras[0]
     return repetir.previa(la_compra,
                           almacen.lineas_de_compra(str(la_compra["compra_id"])),
-                          almacen.lineas_de(lista_id))
+                          almacen.lineas_de(lista_id),
+                          en_casa=_lo_que_hay_en_casa(usuario))
 
 
 @app.get("/api/listas/{lista_id}/repetir-compra")
@@ -1096,7 +1113,7 @@ def previa_repetir_compra(lista_id: str, usuario: dict = Depends(usuario_actual)
     repetir sin distinguirlo de un error.
     """
     _acceso(lista_id, usuario)
-    return _repetir_la_compra(lista_id)
+    return _repetir_la_compra(lista_id, usuario)
 
 
 @app.post("/api/listas/{lista_id}/repetir-compra", status_code=201)
@@ -1126,7 +1143,8 @@ def repetir_compra(lista_id: str, usuario: dict = Depends(usuario_actual)) -> di
     compra_id = str(la_compra["compra_id"])
     lineas_compra = almacen.lineas_de_compra(compra_id)
     lineas_lista = almacen.lineas_de(lista_id)
-    vista = repetir.previa(la_compra, lineas_compra, lineas_lista)
+    vista = repetir.previa(la_compra, lineas_compra, lineas_lista,
+                           en_casa=_lo_que_hay_en_casa(usuario))
     anadidos = 0
     for uno in repetir.anadibles(lista_id, compra_id, lineas_compra, lineas_lista):
         almacen.anade_linea(lista_id, usuario["id"], uno["id"], uno["nombre"],

@@ -10,8 +10,9 @@ Lo que estas pruebas vigilan, por orden de importancia:
   3. **Que lo que no se puede repetir se diga.** Una linea de la compra sin
      producto ni grupo se queda en ``sin_catalogo``; no se inventa una linea a
      medias.
-  4. **Y que el contrato sea el del movil**, con sus cinco campos por linea y sus
-     cuatro contadores, sin ``0`` donde va ``null``.
+  4. **Y que el contrato sea el del movil**, con sus seis campos por linea (incluida la
+     marca de despensa) y sus contadores de estados y de lo que hay en casa, sin ``0``
+     donde va ``null``.
 
 Este fichero no necesita base de datos: la regla es pura (``repetir``) y las dos
 rutas se llaman como funciones, con la puerta de datos sustituida. Los modulos se
@@ -69,6 +70,7 @@ def test_sin_compra_anterior_la_previa_dice_null_y_cero_en_todo():
     assert repetir.previa(None, [], []) == {
         "compra_id": None, "fecha": None, "lineas": [],
         "faltan": 0, "ya_estaban": 0, "sin_catalogo": 0,
+        "en_casa": 0, "faltan_en_casa": 0,
     }
 
 
@@ -89,10 +91,11 @@ def test_la_previa_lleva_la_fecha_de_la_compra_y_los_tres_estados():
     assert (vista["faltan"], vista["ya_estaban"], vista["sin_catalogo"]) == (1, 2, 1)
 
 
-def test_la_linea_de_la_previa_tiene_exactamente_los_cinco_campos_del_contrato():
+def test_la_linea_de_la_previa_tiene_exactamente_los_seis_campos_del_contrato():
+    """Los cinco de identidad y estado, mas la marca de despensa (`None` si no se miró)."""
     vista = repetir.previa(COMPRA, [comprada("Pan", "dia:2", 2, 3)], [])
     assert vista["lineas"] == [{"nombre": "Pan", "producto_id": "dia:2", "grupo_id": 2,
-                                "cantidad": 3, "estado": "falta"}]
+                                "cantidad": 3, "estado": "falta", "en_casa": None}]
 
 
 def test_por_grupo_cuando_la_compra_no_guarda_producto():
@@ -193,6 +196,9 @@ def _prepara(monkeypatch, *, compras=None, lineas_compra=None, lineas_lista=None
     monkeypatch.setattr(DATOS, "compras_de", lambda lista_id, limite=12: list(compras or []))
     monkeypatch.setattr(DATOS, "lineas_de_compra", lambda compra_id: list(lineas_compra or []))
     monkeypatch.setattr(DATOS, "lineas_de", lambda lista_id: list(lista))
+    # *La despensa no se consulta de verdad en estas pruebas: sin base, `None` («no se pudo
+    # mirar»). Las que prueban la marca la sustituyen por un conjunto explicito.*
+    monkeypatch.setattr(main, "_lo_que_hay_en_casa", lambda usuario: None)
     return lista
 
 
@@ -221,11 +227,12 @@ def test_el_get_devuelve_el_contrato_de_la_previa(monkeypatch):
         "compra_id": "compra-1", "fecha": "2026-11-02",
         "lineas": [
             {"nombre": "Leche", "producto_id": "dia:1", "grupo_id": 10,
-             "cantidad": 2, "estado": "ya_estaba"},
+             "cantidad": 2, "estado": "ya_estaba", "en_casa": None},
             {"nombre": "Pepino", "producto_id": None, "grupo_id": None,
-             "cantidad": 1, "estado": "sin_catalogo"},
+             "cantidad": 1, "estado": "sin_catalogo", "en_casa": None},
         ],
         "faltan": 0, "ya_estaban": 1, "sin_catalogo": 1,
+        "en_casa": 0, "faltan_en_casa": 0,
     }
 
 
@@ -234,7 +241,49 @@ def test_el_get_sin_compra_anterior_devuelve_la_forma_vacia(monkeypatch):
     assert main.previa_repetir_compra(LISTA, usuario={"id": "u1"}) == {
         "compra_id": None, "fecha": None, "lineas": [],
         "faltan": 0, "ya_estaban": 0, "sin_catalogo": 0,
+        "en_casa": 0, "faltan_en_casa": 0,
     }
+
+
+def test_la_previa_marca_lo_que_hay_en_casa_y_lo_que_falta_en_casa():
+    """La despensa se compara por texto, y no cambia lo que se va a añadir.
+
+    *Tres lineas, una en casa: la que ya esta en casa se marca `True`; las que no,
+    `False`. `faltan_en_casa` cuenta **solo las que se añadirian y no estan** -- una
+    linea sin catalogo no es «compra pendiente», es una linea que no se puede repetir.*
+    """
+    lineas_compra = [
+        comprada("Leche entera 1 l", "dia:1", 10),
+        comprada("Pan del pueblo", None, 20),
+        comprada("Pepino", None, None),
+    ]
+    vista = repetir.previa(COMPRA, lineas_compra, [], en_casa={"leche entera 1 l"})
+    assert {x["nombre"]: x["en_casa"] for x in vista["lineas"]} == {
+        "Leche entera 1 l": True, "Pan del pueblo": False, "Pepino": False}
+    assert vista["en_casa"] == 1
+    assert vista["faltan_en_casa"] == 1, "solo Pan: falta y no está en casa"
+    # *Los estados no cambian: saber que lo tienes no borra la linea de la previa.*
+    assert [x["estado"] for x in vista["lineas"]] == ["falta", "falta", "sin_catalogo"]
+
+
+def test_sin_poder_leer_la_despensa_no_se_marca_ni_se_cuenta_nada():
+    """«No se pudo mirar» no es «no lo tienes»: `null` en cada linea y contadores a cero."""
+    vista = repetir.previa(COMPRA, [comprada("Pan", "dia:2", 20)], [], en_casa=None)
+    assert vista["lineas"][0]["en_casa"] is None
+    assert vista["en_casa"] == 0
+    assert vista["faltan_en_casa"] == 0
+
+
+def test_el_get_marca_la_despensa_leida(monkeypatch):
+    """La ruta pasa a la previa lo que hay en casa, ya normalizado por el helper."""
+    _prepara(monkeypatch, compras=[COMPRA],
+             lineas_compra=[comprada("Leche", "dia:1", 10)],
+             lineas_lista=[])
+    monkeypatch.setattr(main, "_lo_que_hay_en_casa", lambda usuario: {"leche"})
+    vista = main.previa_repetir_compra(LISTA, usuario={"id": "u1"})
+    assert vista["lineas"][0]["en_casa"] is True
+    assert vista["en_casa"] == 1
+    assert vista["faltan_en_casa"] == 0
 
 
 def test_el_get_se_puede_pedir_con_papel_de_solo_mirar(monkeypatch):

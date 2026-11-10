@@ -117,16 +117,27 @@ def fecha_de(compra: dict | None) -> str | None:
 
 
 def previa(compra: dict | None, lineas_compra: list[dict],
-           lineas_lista: list[dict]) -> dict:
+           lineas_lista: list[dict],
+           en_casa: set[str] | None = None) -> dict:
     """**El contrato del GET**: que pasaria, sin tocar la lista.
 
     Con `compra=None` devuelve la forma entera con los contadores a cero: la
     pantalla necesita siempre los mismos campos, y `null` no es una lista vacia
     de otra forma -- la previa de una lista sin compras es exactamente esto.
+
+    `en_casa` son los textos de la despensa declarada, ya normalizados. Se marca
+    cada linea con `en_casa: true/false`, y **`None` cuando no se pudo leer la
+    despensa** -- que no es lo mismo que «no hay nada»: un `false` afirmaria que
+    no lo tienes sin haber mirado. La comparacion es **por nombre en minusculas**,
+    como en la previa de un plan: la despensa guarda texto, no identidad de
+    producto. Y la marca **no cambia lo que se añade**: repetir reproduce la
+    compra; saber que ya lo tienes es informacion para decidir, no una regla que
+    borre lineas por su cuenta.
     """
     if compra is None:
         return {"compra_id": None, "fecha": None, "lineas": [],
-                "faltan": 0, "ya_estaban": 0, "sin_catalogo": 0}
+                "faltan": 0, "ya_estaban": 0, "sin_catalogo": 0,
+                "en_casa": 0, "faltan_en_casa": 0}
     claves = claves_de_la_lista(lineas_lista)
     lineas = []
     cuenta = dict.fromkeys(ESTADOS, 0)
@@ -139,10 +150,15 @@ def previa(compra: dict | None, lineas_compra: list[dict],
             "grupo_id": comprada.get("grupo_id"),
             "cantidad": int(comprada.get("cantidad") or 1),
             "estado": estado,
+            "en_casa": (None if en_casa is None
+                        else normaliza(comprada.get("nombre")) in en_casa),
         })
     return {"compra_id": str(compra["compra_id"]), "fecha": fecha_de(compra),
             "lineas": lineas, "faltan": cuenta[FALTA],
-            "ya_estaban": cuenta[YA_ESTABA], "sin_catalogo": cuenta[SIN_CATALOGO]}
+            "ya_estaban": cuenta[YA_ESTABA], "sin_catalogo": cuenta[SIN_CATALOGO],
+            "en_casa": sum(1 for l in lineas if l["en_casa"] is True),
+            "faltan_en_casa": sum(1 for l in lineas
+                                  if l["estado"] == FALTA and l["en_casa"] is False)}
 
 
 def nota_de(comprada: dict) -> str | None:
