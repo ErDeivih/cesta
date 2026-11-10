@@ -47,6 +47,23 @@ Cobertura de la última captura, por cadena:
 La ingesta del día terminó en **aviso** por una captura corta de Alcampo (WAF): el dato que falta
 no se rellena con ceros; se declara. La publicación de referencia es `20261110-111521`.
 
+### Fuentes de precios
+
+No hay API de consumidor en ninguna de las seis cadenas, así que el dato sale de su **catálogo
+público**, no de una integración privilegiada:
+
+- **Captura diaria programada** a las 06:00 (Programador de tareas de Windows). Cada pasada
+  descarga el catálogo de cada cadena con `httpx`/`curl-cffi`; **Alcampo** se captura con
+  **Patchright + Chrome real** porque su WAF rechaza clientes HTTP simples.
+- **Lidl** publica sobre todo folletos de ofertas: entran 82 filas de promo, no el catálogo entero;
+  por eso no se usa como cadena completa en las comparaciones.
+- Cada precio guarda **fecha de captura, cadena, producto, precio, unidad y promoción**, y se
+  publica como un `gold` inmutable con huellas (`data/gold/actual.json`). Nada se sobrescribe: la
+  foto de un día queda para el histórico.
+- **Garantías de la pasada**: recuento de filas por cadena, referencia contra la captura anterior,
+  presupuesto de tiempo y avisos si una captura sale corta. Un hueco se dice, no se rellena.
+
+
 ## 3. Normalización
 
 Antes de comparar hay que dejar los datos en el mismo idioma:
@@ -123,6 +140,7 @@ Base de la suma de máximos: **23,80 €** → **28,5 %** de ahorro posible; la 
 - **Los totales por cadena** dicen lo que cada una tiene hoy: Carrefour, 18,73 € con 7 de 8
   productos; las demás, sin precio para esta lista. Una cadena incompleta no se presenta como
   ganadora.
+- **El gráfico de barras** enseña la diferencia de cada producto en el mismo orden que el desglose: la barra más larga es donde más hay que decidir.
 - **El €/kg y el €/l** hacen la comparación honesta: el mismo producto, no dos formatos distintos.
 - **La app se puede usar de punta a punta** con estos datos: lista → comparativa → sugerencias
   (repetir la compra semanal, con lo que falta en casa) → exportar CSV.

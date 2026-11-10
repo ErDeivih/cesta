@@ -59,6 +59,9 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 | ![Sugerencias en móvil](docs/portfolio/390-sugerencias.png) | ![Sugerencias en escritorio](docs/portfolio/1280-sugerencias.png) |
 | «Lo de siempre» y repetir la compra: lo que falta y lo que ya está en casa. | Las mismas sugerencias en escritorio. |
 
+**Gráfico del ahorro** — la diferencia de cada producto, en barras y ordenada:
+[390 px](docs/portfolio/390-comparativa-grafico.png) · [1280 px](docs/portfolio/1280-comparativa-grafico.png).
+
 **Más detalle:** [producto a producto con €/kg](docs/portfolio/02b-productos.png) ·
 [explicación del cálculo abierta](docs/portfolio/1280-comparativa-calculo.png) ·
 [exportar a CSV](docs/portfolio/04-exportar.png) · [portada](docs/portfolio/00-portada.png) ·
