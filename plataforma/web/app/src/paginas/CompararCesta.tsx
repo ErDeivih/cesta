@@ -209,6 +209,19 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
 
   const matriz = matrizPorLinea(cadenas)
   const resumen = contarLineas(filas, matriz)
+  /** *** ORDEN POR AHORRO. *** *
+   *
+   *  *La pantalla se lee de arriba abajo y lo primero que interesa es donde hay diferencia: se
+   *  ordenan los productos por lo que separa su precio mas barato del mas caro (con los precios de
+   *  hoy, ronde o no el equivalente). Empate: se deja el orden de la lista. Antes se pintaban en el
+   *  orden en que se anadieron, asi que el producto con 3,00 EUR de diferencia podia quedar el
+   *  ultimo, detras de diez que costaban lo mismo en todas las cadenas.*
+   */
+  const filasOrdenadas = [...filas]
+    .map((linea) => ({ linea, diferencia: diferenciaDeLinea(matriz.get(linea.id) ?? []) }))
+    .sort((a, b) => (b.diferencia ?? -1) - (a.diferencia ?? -1))
+    .map(({ linea }) => linea)
+  const todasSinConfirmar = cadenas.length > 0 && cadenas.every((c) => contadasDe(c) === 0)
   /** *** Si el reparto NO vino con el detalle por linea. *** *
    *
    *  *`una_tienda[].productos` lo manda la API de hoy, pero el tipo del front no lo declara y un
@@ -253,6 +266,29 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
           <p>
             Ninguna de las cadenas tiene hoy los productos de esta lista. Puede que sean cosas que
             no vendan, o que hayan cambiado de formato.
+          </p>
+          <p className="mt-3">
+            <EnlaceALaLista listaId={listaId} texto="Volver a la lista" />
+          </p>
+        </Vacio>
+      </div>
+    )
+  }
+
+  // *** ESTADO VACIO PROPIO: NI DETALLE NI UN SOLO TOTAL. *** *
+  // *Cuando la API no manda el detalle por producto y **todos** los totales son cero, no es que
+  // se pueda comparar: es que no hay precio de nada. Se dice distinto de «hoy no puedo comparar»
+  // (no hay cadenas que la resuelvan) y del estado normal (hay precios pero faltan equivalentes),
+  // con la misma salida: volver a la lista. Si algún total no es cero, se enseñan los totales,
+  // que es lo que sí llegó.*
+  const sinNingunPrecio = cadenas.length > 0 && cadenas.every((c) => c.total_cent === 0)
+  if (filas.length > 0 && !hayDetalle && sinNingunPrecio) {
+    return (
+      <div className="flex min-h-full flex-col gap-bloque">
+        <Vacio titulo="Todavía no hay precios de esta lista" comoPagina className="grow">
+          <p>
+            Ninguna cadena tiene hoy precio de los productos de esta lista. Puede que falte la
+            captura del día o que hayan cambiado de formato.
           </p>
           <p className="mt-3">
             <EnlaceALaLista listaId={listaId} texto="Volver a la lista" />
@@ -412,12 +448,24 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
 
         {resumen.conEquivalenteSinConfirmar > 0 && (
           <Aviso tono="aviso">
-            {resumen.conEquivalenteSinConfirmar === 1
-              ? '1 producto solo tiene precio como equivalente de otro. Mientras no lo confirmes, no suma en ningún total.'
-              : `${resumen.conEquivalenteSinConfirmar} productos solo tienen precio como equivalente de otro. Mientras no los confirmes, no suman en ningún total.`}{' '}
-            <Link to={`/compra/listas/${listaId}`} className="underline">
-              Confirmarlos en la lista
-            </Link>
+            {todasSinConfirmar ? (
+              <>
+                Todavía no hay ningún producto con el precio confirmado: los totales de abajo salen
+                a cero y no se pueden comparar entre sí.{' '}
+                <Link to={`/compra/listas/${listaId}`} className="underline">
+                  Confirmarlos en la lista
+                </Link>
+              </>
+            ) : (
+              <>
+                {resumen.conEquivalenteSinConfirmar === 1
+                  ? '1 producto solo tiene precio como equivalente de otro. Mientras no lo confirmes, no suma en ningún total.'
+                  : `${resumen.conEquivalenteSinConfirmar} productos solo tienen precio como equivalente de otro. Mientras no los confirmes, no suman en ningún total.`}{' '}
+                <Link to={`/compra/listas/${listaId}`} className="underline">
+                  Confirmarlos en la lista
+                </Link>
+              </>
+            )}
           </Aviso>
         )}
 
@@ -437,13 +485,13 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
               Producto a producto
             </h3>
             <p className="text-etiqueta text-tinta-suave">
-              Abre un producto para ver lo que cuesta en cada cadena, su precio por unidad y su
-              precio por kilo.
+              Ordenados por lo que se ahorra. Abre un producto para ver lo que cuesta en cada
+              cadena, su precio por unidad y su precio por kilo.
             </p>
           </div>
 
           <ul className="grid gap-2">
-            {filas.map((linea) => (
+            {filasOrdenadas.map((linea) => (
               <LineaComparada
                 key={linea.id}
                 linea={linea}
@@ -726,6 +774,11 @@ function LineaComparada({ linea, celdas, cadenas }: {
             {unidadDelResumen && (
               <span className="mt-0.5 block text-etiqueta text-tinta-suave">
                 {unidadDelResumen}
+              </span>
+            )}
+            {diferenciaDeLinea(celdas) !== null && (
+              <span className="mt-0.5 block text-etiqueta text-tinta-suave">
+                hasta {euros(diferenciaDeLinea(celdas) as number)} de diferencia
               </span>
             )}
             {minimo && (minimoNuevo || enSuMinimo) && (
@@ -1024,6 +1077,19 @@ function ahorroDeCadaCosa(
   }
   if (conDosPrecios === 0 || base_cent <= 0 || ahorro_cent <= 0) return null
   return { ahorro_cent, base_cent }
+}
+
+/** La diferencia entre el precio mas barato y el mas caro de una linea, o `null`.
+ *
+ *  *Es el criterio del orden por ahorro y lo que se dice bajo el nombre: si los diez productos
+ *  cuestan lo mismo en todas las cadenas, no hay nada que ordenar. Se calcula con las celdas que
+ *  llegaron, como la tarjeta de ahorro.*
+ */
+function diferenciaDeLinea(celdas: CeldaDeLaLinea[]): number | null {
+  const costes = celdas.map((c) => c.coste_cent)
+  if (costes.length < 2) return null
+  const diferencia = Math.max(...costes) - Math.min(...costes)
+  return diferencia > 0 ? diferencia : null
 }
 
 /** Cuantos productos de la lista se pueden comparar, y cuantos no, con el motivo. */

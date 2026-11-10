@@ -633,6 +633,60 @@ describe('comparar mi cesta con datos', () => {
     expect(within(summary).getByText('1,25 €/l')).toBeInTheDocument()
   })
 
+  it('ordena los productos por lo que se ahorra y lo dice bajo el nombre', async () => {
+    // *Antes se pintaban en el orden en que se añadieron; el producto con 0,50 € de diferencia
+    // podía quedar detrás de diez que cuestan lo mismo en todas las cadenas.*
+    dobles.comparacion = comparacion({
+      lineas: 3,
+      una_tienda: [
+        cadena({ cadena: 'aldi', total: 800, contadas: 3, productos: [
+          precio('l1', 'Leche entera', 'aldi', 100),
+          precio('l2', 'Pan de molde', 'aldi', 500),
+          precio('l3', 'Yogur natural', 'aldi', 200),
+        ] }),
+        cadena({ cadena: 'dia', total: 860, contadas: 3, productos: [
+          precio('l1', 'Leche entera', 'dia', 110),
+          precio('l2', 'Pan de molde', 'dia', 500),
+          precio('l3', 'Yogur natural', 'dia', 250),
+        ] }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera'), linea('l2', 'Pan de molde'), linea('l3', 'Yogur natural')],
+    }
+    monta()
+    await screen.findByText('Yogur natural')
+
+    const resumenes = [...document.querySelectorAll('details')]
+      .map((d) => d.querySelector('summary')?.textContent ?? '')
+      .filter((t) => /Leche entera|Pan de molde|Yogur natural/.test(t))
+    expect(resumenes.map((t) => t.includes('Yogur') ? 'yogur' : t.includes('Leche') ? 'leche' : 'pan'))
+      .toEqual(['yogur', 'leche', 'pan'])
+    // *Y el motivo del orden, en la línea: 0,50 € de diferencia en el yogur y 0,10 € en la leche.*
+    expect(resumenes[0]).toMatch(/hasta 0,50\s*€ de diferencia/)
+    expect(resumenes[1]).toMatch(/hasta 0,10\s*€ de diferencia/)
+    expect(resumenes[2]).not.toContain('de diferencia')
+  })
+
+  it('sin detalle y con todos los totales a cero, lo dice como estado vacío', async () => {
+    dobles.comparacion = comparacion({
+      lineas: 2,
+      una_tienda: [
+        cadena({ cadena: 'aldi', total: 0, contadas: 0, productos: [] }),
+        cadena({ cadena: 'dia', total: 0, contadas: 0, productos: [] }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera'), linea('l2', 'Pan de molde')],
+    }
+    monta()
+
+    expect(await screen.findByText(/todavía no hay precios de esta lista/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /volver a la lista/i })).toBeInTheDocument()
+  })
+
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
     // *Dos formas de que el dato no se pueda enseñar: que no venga ninguno de los dos campos
     // (una API vieja) o que llegue el precio sin la unidad. En las dos, el coste de siempre.*
