@@ -27,7 +27,7 @@ sin inventar precios, sin contar ofertas condicionadas como descuento real y sin
 | **Calidad de datos** | Identidad por EAN, reglas de unidad, guardas de cobertura y avisos | Precisión del emparejamiento **91,1 %** medida sobre **4.804 pares** con verdad de código de barras; EAN en el **48,5 %** del catálogo; cada cadena declara filas, referencia, huecos y veredicto |
 | **Análisis de competencia** | Qué hacen Soysuper, Idealo, CamelCamelCamel, Lidl Plus, Mercadona y Yuka; qué se copia y qué no | `INVESTIGACION-APP.md`, `docs/COMPETENCIA.md` |
 | **Requisitos y decisiones** | Alcance, especificación maestra, backlog y decisiones escritas con su porqué | `ALCANCE-APP.md`, `docs/SUPERAPP-ESPECIFICACION-MAESTRA-2026-10-18.md`, `DECISIONES.md`, `docs/decisiones-interfaz-2026-11-09.md` |
-| **Del dato a la decisión** | Comparativa de cesta con ahorro, €/unidad y mínimo visto | En la compra de ejemplo (8 productos): **6,78 € de ahorro posible (−28 %)** frente a la cadena más cara; €/l y €/kg en cada línea; «En su mínimo · 3,87 €» |
+| **Del dato a la decisión** | Comparativa de cesta con ahorro, €/unidad y mínimo visto | En la compra de ejemplo (8 productos): **6,78 € de ahorro posible (−28 %)** frente a la cadena más cara; productos **ordenados por lo que se ahorra** (hasta **3,79 € de diferencia** en un mismo producto); €/l y €/kg en cada línea; «En su mínimo · 3,87 €» |
 | **Verificación, no confianza** | Pruebas automáticas, puertas de navegador y arranque reproducible | **1.502 pruebas** Python en verde, **269** de componentes web, **404** de lógica JS; recorrido de punta a punta **11/11** sin errores de consola |
 
 **Cómo se ve la comparación honesta.** El ahorro grande es la suma, línea a línea, de lo que
@@ -43,7 +43,7 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 | ![Portada](docs/portfolio/00-portada.png) | ![Lista](docs/portfolio/01-lista.png) |
 | **Portada.** Qué cuesta la cesta, en qué cadena y qué se ha movido. | **La lista.** Precio estimado, productos por pasillo y sugerencias. |
 | ![Comparativa](docs/portfolio/02-comparativa.png) | ![Producto a producto](docs/portfolio/02b-productos.png) |
-| **Comparativa.** Ahorro grande, desglose y barra por cadena. | **Producto a producto.** €/unidad en cada cadena y marca de mínimo. |
+| **Comparativa.** Ahorro grande, desglose y barra por cadena; productos ordenados por ahorro. | **Producto a producto.** €/unidad en cada cadena, «hasta X € de diferencia» y marca de mínimo. |
 | ![Sugerencias](docs/portfolio/03-sugerencias.png) | ![Exportar](docs/portfolio/04-exportar.png) |
 | **Sugerencias.** «Lo de siempre» y repetir la compra anterior con lo que falta. | **Exportar.** La lista a CSV (también copiar como texto). |
 
