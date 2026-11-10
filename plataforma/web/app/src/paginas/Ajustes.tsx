@@ -344,9 +344,12 @@ export function Ajustes() {
 
         <details className="mt-1 border-t border-borde">
           <Resumen className="min-h-[52px] text-cuerpo">
-            <span className="shrink-0 text-tinta">Cadenas que tienes cerca</span>
-            <span className="ml-auto min-w-0 text-right text-tinta-suave">
-              {resumenCadenas}
+            {/* *** En dos lineas, no en una con elipsis. *** *El valor del ajuste que decide
+                que cadenas ves no cabia al lado del nombre y se cortaba; debajo se lee entero
+                y la flecha del desplegable queda a la derecha.* */}
+            <span className="flex min-w-0 flex-col gap-0.5 py-1">
+              <span className="text-tinta">Cadenas que tienes cerca</span>
+              <span className="text-tinta-suave">{resumenCadenas}</span>
             </span>
           </Resumen>
           <div className="pb-3 pt-1">

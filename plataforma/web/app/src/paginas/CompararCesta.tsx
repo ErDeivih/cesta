@@ -649,7 +649,8 @@ function CadenaEnLaLista({ cadena, total, contadas, totalMasCaro, esLaMasBarata,
 
       {faltan > 0 && (
         <p className="mt-1 text-etiqueta text-tinta-suave">
-          No lo tiene: {cadena.faltan.join(' · ')}
+          No lo tiene: {cadena.faltan.slice(0, 3).join(' · ')}
+          {faltan > 3 && ` y ${faltan - 3} más`}
         </p>
       )}
     </li>
@@ -678,14 +679,24 @@ function LineaComparada({ linea, celdas, cadenas }: {
   // distintas aunque el numero sea el mismo.* *Y una linea que solo tiene precio de un
   // equivalente sin confirmar no se puede llamar comparable.*
   const soloEn = desde !== null && autorizadas.length === 1 ? autorizadas[0].cadena : null
+  // *** El precio por unidad, en el resumen, sin tener que abrir la linea. *** *
+  // *La comparacion es entre formatos: «desde 3,15 €» y «desde 0,79 €/l» no son lo mismo.
+  // Se enseña el €/unidad de la celda mas barata que lo trae; si la API no lo manda (o el
+  // formato no es medible), no se inventa y el resumen se queda como estaba.*
+  const conUnidad = autorizadas
+    .filter((c) => c.precio_unidad_cent !== null && c.unidad)
+    .sort((a, b) => a.coste_cent - b.coste_cent)
+  const unidadDelResumen = conUnidad.length > 0
+    ? eurosUnidad(conUnidad[0].precio_unidad_cent as number, conUnidad[0].unidad as string)
+    : null
   const estado =
     desde === null
       ? celdas.length === 0
         ? 'no comparable'
         : 'por confirmar'
       : soloEn
-        ? `${euros(desde)} · solo en ${nombreCadena(soloEn)}`
-        : `desde ${euros(desde)}`
+        ? `${euros(desde)} · solo en ${nombreCadena(soloEn)}${unidadDelResumen ? ` · ${unidadDelResumen}` : ''}`
+        : `desde ${euros(desde)}${unidadDelResumen ? ` · ${unidadDelResumen}` : ''}`
   // *** La marca del minimo, la misma pastilla que en la lista. *** *
   // *`minimo` viene solo si la API lo manda y sus datos son frescos (`tipos.ts`); si la clave no
   // esta, la linea se pinta como siempre.* *Y si vinieran las dos banderas se enseña la fuerte

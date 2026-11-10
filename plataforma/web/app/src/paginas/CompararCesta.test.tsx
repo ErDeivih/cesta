@@ -599,6 +599,37 @@ describe('comparar mi cesta con datos', () => {
     expect(filaDia).toHaveTextContent('1,31 € · 0,66 €/ud')
   })
 
+  it('el resumen de la linea ya dice el precio por unidad, sin abrirla', async () => {
+    // *«Desde 1,25 €» a secas compara importes de formatos distintos; el €/l o €/kg del
+    // formato más barato va en el resumen para que la comparación sea honesta de un vistazo.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({
+          cadena: 'aldi',
+          total: 125,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'aldi', 125, { precioUnidad: 125, unidad: 'l' })],
+        }),
+        cadena({
+          cadena: 'dia',
+          total: 131,
+          contadas: 1,
+          productos: [precio('l1', 'Leche entera', 'dia', 131, { precioUnidad: 66, unidad: 'ud' })],
+        }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Leche entera')],
+    }
+    monta()
+
+    const resumen = await screen.findByText('Leche entera')
+    const summary = resumen.closest('details')?.querySelector('summary') as HTMLElement
+    expect(summary).toHaveTextContent('desde 1,25 € · 1,25 €/l')
+  })
+
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
     // *Dos formas de que el dato no se pueda enseñar: que no venga ninguno de los dos campos
     // (una API vieja) o que llegue el precio sin la unidad. En las dos, el coste de siempre.*

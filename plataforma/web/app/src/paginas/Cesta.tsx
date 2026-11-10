@@ -923,7 +923,7 @@ function AccionesDelNombre({ lista, alHecho }: {
   }
 
   return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+    <span className="mt-1 flex w-full flex-wrap items-center gap-x-3 gap-y-1 sm:mt-0 sm:w-auto">
       <button
         type="button"
         onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}
