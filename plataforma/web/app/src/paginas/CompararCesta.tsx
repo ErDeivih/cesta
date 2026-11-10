@@ -222,6 +222,14 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
     .sort((a, b) => (b.diferencia ?? -1) - (a.diferencia ?? -1))
     .map(({ linea }) => linea)
   const todasSinConfirmar = cadenas.length > 0 && cadenas.every((c) => contadasDe(c) === 0)
+  // *** El grafico del ahorro, con las mismas lineas y el mismo orden. *** *
+  // *No es una segunda verdad: se calcula con `diferenciaDeLinea`, igual que el orden y la
+  // pastilla bajo el nombre. Solo se pinta si hay al menos una linea con dos precios distintos;
+  // la escala es la mayor diferencia, para que la barra mas larga sea la que mas ahorra.*
+  const diferencias = filasOrdenadas
+    .map((linea) => ({ linea, diferencia: diferenciaDeLinea(matriz.get(linea.id) ?? []) }))
+    .filter((x): x is { linea: Linea; diferencia: number } => x.diferencia !== null)
+  const mayorDiferencia = diferencias.reduce((maximo, x) => Math.max(maximo, x.diferencia), 0)
   /** *** Si el reparto NO vino con el detalle por linea. *** *
    *
    *  *`una_tienda[].productos` lo manda la API de hoy, pero el tipo del front no lo declara y un
@@ -479,6 +487,45 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
           </p>
         )}
       </section>
+
+      {/* ------------------------------------------------ el grafico del ahorro --- */}
+      {/* *Barras de lo que se ahorra en cada producto, en el mismo orden que el desglose. La
+          escala es la mayor diferencia: la barra mas larga es donde mas hay que decidir.* */}
+      {diferencias.length > 0 && (
+        <section aria-labelledby="grafico-del-ahorro" className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <h3 id="grafico-del-ahorro" className="text-entrada font-semibold text-tinta-fuerte">
+              El ahorro, producto a producto
+            </h3>
+            <p className="text-etiqueta text-tinta-suave">
+              Lo que separa el precio más alto del más bajo de cada producto, con los precios de
+              hoy. Ordenado por diferencia.
+            </p>
+          </div>
+          <ul className="grid gap-3">
+            {diferencias.map(({ linea, diferencia }, indice) => (
+              <li key={linea.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1">
+                <span className="min-w-0 truncate text-etiqueta text-tinta">
+                  <span className="cifra mr-1 text-tinta-suave">{indice + 1}.</span>
+                  {linea.nombre_visto}
+                </span>
+                <span className="cifra text-etiqueta font-medium text-tinta-fuerte">
+                  {euros(diferencia)}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="col-span-2 h-2 overflow-hidden rounded-pastilla bg-marfil"
+                >
+                  <span
+                    className="block h-full rounded-pastilla bg-lima"
+                    style={{ width: `${Math.max(2, Math.round((diferencia / mayorDiferencia) * 100))}%` }}
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ------------------------------------------------ producto a producto --- */}
       {hayDetalle && (

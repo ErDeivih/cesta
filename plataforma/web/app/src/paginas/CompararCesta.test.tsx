@@ -75,6 +75,20 @@ import { CompararCesta } from './CompararCesta'
 import { Cesta } from './Cesta'
 import { tituloDe } from '../App'
 
+
+/** La linea del desglose de productos, no la etiqueta del grafico del ahorro.
+ *
+ *  El grafico repite el nombre de cada producto (con su numero de orden delante) para que se
+ *  pueda leer la barra; cuando una prueba busca «el producto» quiere el desplegable, que es el
+ *  que tiene el detalle por cadena.
+ */
+async function lineaDelDesglose(nombre: string): Promise<HTMLElement> {
+  const todos = await screen.findAllByText(nombre)
+  const delDesglose = todos.find((el) => el.closest('details'))
+  if (!delDesglose) throw new Error('No está «' + nombre + '» en el desglose de productos')
+  return delDesglose
+}
+
 /* ------------------------------------------------------------ los datos --- */
 
 /** Una linea de la lista, como la manda `GET /listas/{id}`. */
@@ -563,6 +577,19 @@ describe('comparar mi cesta con datos', () => {
     expect(screen.getByText(/€\/kg y el €\/l/)).toBeInTheDocument()
   })
 
+  it('pinta el gráfico del ahorro por producto, en el orden del desglose', async () => {
+    // *La barra mas larga es la que mas ahorra. Se comprueba el titulo, que hay una fila por
+    // producto con diferencia y que la primera es el queso (0,40 € en el juego de prueba).*
+    monta()
+    const titulo = await screen.findByRole('heading', { name: 'El ahorro, producto a producto' })
+    const seccion = titulo.closest('section') as HTMLElement
+    const filas = within(seccion).getAllByRole('listitem')
+    expect(filas.length).toBe(4)
+    expect(filas[0]).toHaveTextContent('1.')
+    expect(filas[0]).toHaveTextContent('Queso curado')
+    expect(filas[0]).toHaveTextContent('0,40 €')
+  })
+
   it('cada cadena lleva una barra proporcional al total mas caro', async () => {
     monta()
 
@@ -599,7 +626,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    const resumen = await screen.findByText('Leche entera')
+    const resumen = await lineaDelDesglose('Leche entera')
     fireEvent.click(resumen)
     const detalles = resumen.closest('details') as HTMLElement
     // *Coste y, al lado, lo que cuesta la unidad de medida de **ese** formato en **esa**
@@ -636,7 +663,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    const resumen = await screen.findByText('Leche entera')
+    const resumen = await lineaDelDesglose('Leche entera')
     const summary = resumen.closest('details')?.querySelector('summary') as HTMLElement
     // *El importe y el €/unidad van juntos en el resumen, pero en dos lineas: el nombre
     // largo de un producto no puede dejar el precio en una columna de una letra.*
@@ -667,7 +694,7 @@ describe('comparar mi cesta con datos', () => {
       lineas: [linea('l1', 'Leche entera'), linea('l2', 'Pan de molde'), linea('l3', 'Yogur natural')],
     }
     monta()
-    await screen.findByText('Yogur natural')
+    await lineaDelDesglose('Yogur natural')
 
     const resumenes = [...document.querySelectorAll('details')]
       .map((d) => d.querySelector('summary')?.textContent ?? '')
@@ -724,7 +751,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    const resumen = await screen.findByText('Queso curado')
+    const resumen = await lineaDelDesglose('Queso curado')
     const detalles = resumen.closest('details') as HTMLElement
     // *Si el contrato nuevo no llega, no se inventa un €/unidad: queda el coste de siempre.*
     expect(within(detalles).queryByText(/€\/l|€\/kg|€\/ud/)).not.toBeInTheDocument()
@@ -748,7 +775,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    const fila = (await screen.findByText('Leche entera')).closest('li') as HTMLElement
+    const fila = (await lineaDelDesglose('Leche entera')).closest('li') as HTMLElement
     expect(within(fila).getByText('Mínimo nuevo · 0,79 €')).toBeInTheDocument()
     // *La fuerte manda: no se dicen las dos, que seria la misma noticia dos veces.*
     expect(within(fila).queryByText(/En su mínimo/)).not.toBeInTheDocument()
@@ -766,7 +793,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    const fila = (await screen.findByText('Leche entera')).closest('li') as HTMLElement
+    const fila = (await lineaDelDesglose('Leche entera')).closest('li') as HTMLElement
     expect(within(fila).getByText('En su mínimo · 0,83 €')).toBeInTheDocument()
     expect(within(fila).queryByText(/Mínimo nuevo/)).not.toBeInTheDocument()
   })
@@ -774,7 +801,7 @@ describe('comparar mi cesta con datos', () => {
   it('sin minimo en la linea no pinta ninguna pastilla', async () => {
     monta()
 
-    const fila = (await screen.findByText('Pan de molde')).closest('li') as HTMLElement
+    const fila = (await lineaDelDesglose('Pan de molde')).closest('li') as HTMLElement
     expect(within(fila).queryByText(/Mínimo nuevo|En su mínimo/)).not.toBeInTheDocument()
   })
 
@@ -803,7 +830,7 @@ describe('comparar mi cesta con datos', () => {
     monta()
 
     // *El desglose por linea: se abre el queso, que es al que le falta una cadena.*
-    const resumen = await screen.findByText('Queso curado')
+    const resumen = await lineaDelDesglose('Queso curado')
     const detalles = resumen.closest('details')
     expect(detalles).not.toBeNull()
     fireEvent.click(resumen)
@@ -816,7 +843,7 @@ describe('comparar mi cesta con datos', () => {
   it('enseña la oferta como condicion y no como precio final', async () => {
     monta()
 
-    const resumen = await screen.findByText('Leche entera')
+    const resumen = await lineaDelDesglose('Leche entera')
     fireEvent.click(resumen)
 
     // *La del 2x1 con dos unidades: el numero dice que ya esta aplicada, y se dice cuanto baja.*
@@ -848,7 +875,7 @@ describe('comparar mi cesta con datos', () => {
     }
     monta()
 
-    fireEvent.click(await screen.findByText('Leche entera'))
+    fireEvent.click(await lineaDelDesglose('Leche entera'))
     expect(
       await screen.findByText('Solo con tarjeta o cupón del club: no baja lo que pagas en caja.'),
     ).toBeInTheDocument()
@@ -857,7 +884,7 @@ describe('comparar mi cesta con datos', () => {
   it('pide el precio por kilo al abrir la linea, no antes', async () => {
     monta()
 
-    const resumen = await screen.findByText('Leche entera')
+    const resumen = await lineaDelDesglose('Leche entera')
     expect(porKilo.llamadas).toBe(0)
     fireEvent.click(resumen)
     // *Y cuando llega, se enseña con su unidad: «1,29 €/l».*
