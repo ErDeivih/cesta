@@ -184,6 +184,10 @@ condicionadas no se restan en ninguno de los dos casos.
 | Picos sin gluten | 1,39 € (DIA/Aldi) | 1,40 € (Carrefour) | 0,01 € |
 | **Total** | | | **9,15 €** |
 
+**Comprobación del total, a mano:** `5,81 + 1,86 + 0,78 + 0,41 + 0,16 + 0,07 + 0,05 + 0,01 = 9,15 €`.
+La base (suma de los precios máximos) es `8,19 + 2,80 + 4,65 + 1,50 + 1,45 + 2,36 + 1,80 + 1,40 = 24,15 €`,
+y `9,15 / 24,15 = 37,9 %` → la tarjeta lo redondea a **−38 %**.
+
 Base de la suma de máximos: **24,15 €** → **37,9 %** de ahorro posible; la tarjeta redondea a
 **9,15 € / −38 %**. El €/unidad enseña la misma diferencia en la unidad correcta: el café está a
 **16,38 €/kg** en Carrefour y **8,80 €/kg** en Mercadona; el detergente a **0,58 €/l** frente a
