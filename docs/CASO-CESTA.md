@@ -298,6 +298,9 @@ la propia pantalla.
 - Datos: `data/gold/actual.json` apunta a la publicación del día.
 - **Publicado en el portfolio:** [cesta-caso.html](https://erdeivih.github.io/cesta-caso.html),
   enlazado desde la sección Cesta de [casos.html](https://erdeivih.github.io/casos.html#cesta).
+- **Prototipo HTML** (datos ficticios marcados) para la galería:
+  [cesta-prototipo.html](https://erdeivih.github.io/cesta-prototipo.html) — comprobado a 390 y
+  1280 px sin desbordamiento horizontal.
 - **Catálogo de repositorios consultado:** Firecrawl y Scout resuelven extracción web; ninguno
   aporta normalización de unidades ni emparejamiento por EAN. No se incorporan: el pipeline ya
   tiene su capa de captura y el valor está en la normalización, no en cambiar el extractor.
