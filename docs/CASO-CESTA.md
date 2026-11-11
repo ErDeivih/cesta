@@ -93,7 +93,7 @@ En el desglose, cada cadena lleva su precio y una etiqueta que dice **qué** es 
 - **Alternativa**: un equivalente (misma categoría y formato, marca distinta, o nombre parecido
   sin GTIN). Se puede elegir, pero no es el mismo producto; **no suma en el total** hasta que se
   confirma, y el €/kg permite compararlo con el original.
-- **Sin precio**: esa cadena no tiene hoy el producto. No es un cero: no entra en su total.
+- **Sin equivalente**: esa cadena no tiene hoy un producto que cubra lo pedido. No es un cero: no entra en su total, y no se pinta 0 €.
 
 El **€/kg o €/L** va pegado al precio de cada fila; si el formato no trae medida, se dice «sin
 medida» en vez de inventar una unidad. Así, dos precios solo se comparan cuando hablan de lo mismo.
@@ -148,6 +148,33 @@ Base de la suma de máximos: **23,80 €** → **28,5 %** de ahorro posible; la 
 **16,38 €/kg** en Carrefour y **8,80 €/kg** en Mercadona; el detergente a **0,58 €/l** frente a
 **0,55 €/l**. Y el producto que vuelve a su mínimo lleva su marca: «En su mínimo · 3,87 €».
 
+
+## 4 bis. Multipack y envases enteros
+
+Un pack de **6 × 125 g** no se vende por kilos. El paquete trae **750 g** y cuesta **2,40 €**, así
+que su precio normalizado es:
+
+`
+2,40 € / 0,750 kg = 3,20 €/kg
+`
+
+Y si se necesitan **1 kg**, no se compra «1,33 packs»: los envases se compran enteros.
+
+`
+envases = techo(1 kg / 0,750 kg) = 2
+coste   = 2 × 2,40 € = 4,80 €
+sobra   = 2 × 0,750 kg − 1 kg = 0,50 kg
+`
+
+La comparativa enseña el €/kg o €/L **al lado del precio** y, al abrir un producto, una
+**calculadora de envases**: se escribe la cantidad que se necesita y cada cadena dice cuántos
+envases enteros hacen falta, lo que se paga y lo que sobra. Si la cantidad y el envase no son de
+la misma magnitud (kg contra l) o falta el tamaño, **no se calcula**: se dice, en vez de inventar
+una compra fraccionaria.
+
+Y una cadena que no tiene el producto **no se pinta como 0 €**: su fila dice «Sin equivalente» y
+no entra en ningún total. El cero se reserva para lo que de verdad cuesta cero, que no es el caso.
+
 ## 5. Resultado
 
 - **La cifra grande existe y es explicable**: 6,78 € de ahorro posible (−28 %) en una cesta de
@@ -155,7 +182,7 @@ Base de la suma de máximos: **23,80 €** → **28,5 %** de ahorro posible; la 
 - **Los totales por cadena** dicen lo que cada una tiene hoy: Carrefour, 18,73 € con **Encontrados 7/8**; las demás, sin precio para esta lista. Una cadena incompleta no se presenta como
   ganadora.
 - **El gráfico de barras** enseña la diferencia de cada producto en el mismo orden que el desglose: la barra más larga es donde más hay que decidir.
-- **El €/kg y el €/l** hacen la comparación honesta: el mismo producto, no dos formatos distintos.
+- **El €/kg y el €/l** hacen la comparación honesta: el mismo producto, no dos formatos distintos; y la calculadora de envases dice cuántos packs hay que comprar para una cantidad (6 × 125 g a 2,40 € son 3,20 €/kg; para 1 kg, 2 packs y 4,80 €).
 - **La app se puede usar de punta a punta** con estos datos: lista → comparativa → sugerencias
   (repetir la compra semanal, con lo que falta en casa) → exportar CSV.
 

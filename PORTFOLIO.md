@@ -62,8 +62,11 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 **Gráfico del ahorro** — la diferencia de cada producto, en barras y ordenada:
 [390 px](docs/portfolio/390-comparativa-grafico.png) · [1280 px](docs/portfolio/1280-comparativa-grafico.png).
 
-**Detalle de un producto** — €/kg junto al precio y etiquetas «Mismo producto / Alternativa / Sin precio»:
+**Detalle de un producto** — €/kg junto al precio y etiquetas «Mismo producto / Alternativa / Sin equivalente»:
 [390 px](docs/portfolio/390-comparativa-detalle.png) · [1280 px](docs/portfolio/1280-comparativa-detalle.png).
+
+**Calculadora de envases** — 1 kg con packs de 0,5 kg: dos envases y lo que cuestan:
+[390 px](docs/portfolio/390-comparativa-envases.png) · [1280 px](docs/portfolio/1280-comparativa-envases.png).
 
 **Más detalle:** [producto a producto con €/kg](docs/portfolio/02b-productos.png) ·
 [explicación del cálculo abierta](docs/portfolio/1280-comparativa-calculo.png) ·
