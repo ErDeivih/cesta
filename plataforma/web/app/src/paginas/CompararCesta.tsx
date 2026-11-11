@@ -70,6 +70,7 @@ import { esErrorApi } from '../api/cliente'
 import { useProducto } from '../api/consultas'
 import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import { envasesPara } from '../logica/envases'
+import { mejorCompra, type MejorCompra } from '../logica/optimizar'
 import { EntraParaVer } from '../componentes/PuertaDeSesion'
 import { Aviso, Cargando, Etiqueta, Fallo, Resumen, Tarjeta, Vacio, cx } from '../componentes/ui'
 import type { Linea, OpcionTienda, RepartoTiendas } from '../tipos'
@@ -226,6 +227,11 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
     .sort((a, b) => (b.diferencia ?? -1) - (a.diferencia ?? -1))
     .map(({ linea }) => linea)
   const todasSinConfirmar = cadenas.length > 0 && cadenas.every((c) => contadasDe(c) === 0)
+  /** La mejor compra en 1 o 2 tiendas, con los precios que hay para cada línea. */
+  const mejor = mejorCompra(filas.map((l) => l.id), new Map(filas.map((l) => [
+    l.id,
+    (matriz.get(l.id) ?? []).map((c) => ({ cadena: c.cadena, coste_cent: c.coste_cent })),
+  ])))
   // *** El grafico del ahorro, con las mismas lineas y el mismo orden. *** *
   // *No es una segunda verdad: se calcula con `diferenciaDeLinea`, igual que el orden y la
   // pastilla bajo el nombre. Solo se pinta si hay al menos una linea con dos precios distintos;
@@ -419,6 +425,8 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
           cara.
         </AhorroDeLaCesta>
       ) : null}
+
+      <LaMejorCompra mejor={mejor} total={filas.length} />
 
       {/* *La letra pequeña con las fórmulas, para quien quiera comprobar la cifra.* */}
       <ComoSeCalcula hayDosCompletas={masCara !== null} />
@@ -683,6 +691,56 @@ function AhorroDeLaCesta({ ahorro_cent, base_cent, nota, children }: {
           de las completas no usa precios sin confirmar y el de cada cosa si.* */}
       <p className="mt-1 text-etiqueta opacity-80">{nota}</p>
     </section>
+  )
+}
+
+/** *** LA RESPUESTA PRACTICA: UNA TIENDA O DOS, Y CUANTO SE AHORRA. *** *
+ *
+ *  *El algoritmo está en `logica/optimizar.ts`: prueba todas las tiendas y todas las parejas, exige
+ *  que cubran todos los productos y se queda la más barata.* *Aquí solo se cuenta en una frase.*
+ *
+ *  *Si repartir no ahorra, **no se anuncia un ahorro**: se dice que no compensa partir la compra.*
+ */
+function LaMejorCompra({ mejor, total }: { mejor: MejorCompra; total: number }) {
+  if (!mejor.una && !mejor.dos) return null
+  const dos = mejor.dos
+  const una = mejor.una
+  const ahorro = mejor.ahorro_cent
+  let frase: string
+  if (dos && (!una || ahorro !== null)) {
+    frase = una
+      ? `Comprando todo en ${nombreCadena(una.cadena)}: ${euros(una.total_cent)}. `
+        + `Repartiendo entre ${nombreCadena(dos.a)} y ${nombreCadena(dos.b)}: ${euros(dos.total_cent)}. `
+        + `Te ahorras ${euros(ahorro as number)}.`
+      : `Ninguna tienda tiene todo; repartiendo entre ${nombreCadena(dos.a)} y ${nombreCadena(dos.b)}: `
+        + `${euros(dos.total_cent)}.`
+  } else if (una) {
+    frase = `No compensa partir la compra: todo en ${nombreCadena(una.cadena)} sale a `
+      + `${euros(una.total_cent)}.`
+  } else {
+    return null
+  }
+  const partes = dos ? dos.partes.filter((p) => p.lineas > 0) : []
+  return (
+    <Tarjeta titulo="La cesta más barata en 1 o 2 tiendas">
+      <p className="text-cuerpo text-tinta">{frase}</p>
+      {partes.length > 0 && (
+        <ul className="mt-2 grid gap-1">
+          {partes.map((p) => (
+            <li key={p.cadena} className="flex flex-wrap justify-between gap-2 text-etiqueta">
+              <span className="text-tinta-suave">{nombreCadena(p.cadena)}</span>
+              <span className="text-tinta">
+                {p.lineas} de {total} productos · {euros(p.total_cent)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-etiqueta text-tinta-suave">
+        Con los precios de hoy, incluidas alternativas sin confirmar. Las ofertas que piden
+        tarjeta, cupón o comprar por internet no están restadas.
+      </p>
+    </Tarjeta>
   )
 }
 
