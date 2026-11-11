@@ -132,6 +132,8 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
   unidad?: string | null
   /** exacto o lternativa, como lo manda la API. */
   identidad?: string
+  /** Por qué se decidió esa identidad. */
+  motivo?: string | null
 } = {}) {
   return {
     producto_id: `${cadena}:${idLinea}`,
@@ -145,7 +147,7 @@ function precio(idLinea: string, nombre: string, cadena: string, coste: number, 
     linea_id: idLinea,
     autorizada: extra.autorizada !== false,
     identidad: extra.identidad ?? 'exacto',
-    motivo: null,
+    motivo: extra.motivo ?? null,
     precio_unidad_cent: extra.precioUnidad ?? null,
     unidad: extra.unidad ?? null,
   }
@@ -328,7 +330,7 @@ describe('comparar mi cesta con datos', () => {
 
     // *Y lo que le falta se dice con el nombre del producto, no con un numero.*
     expect(screen.getByText('No lo tiene: Queso curado')).toBeInTheDocument()
-    expect(screen.getByText('Encontrados 3/4')).toBeInTheDocument()
+    expect(screen.getByText('Subtotal · faltan 1')).toBeInTheDocument()
     expect(screen.getByText('la más barata')).toBeInTheDocument()
   })
 
@@ -541,7 +543,7 @@ describe('comparar mi cesta con datos', () => {
     // *Y el total de DIA sigue sin contar ese precio: la fila dice «sin precio» y 0 de 2.*
     const filaDia = screen.getByRole('heading', { name: 'DIA', level: 4 }).closest('li') as HTMLElement
     expect(within(filaDia).getByText('sin precio')).toBeInTheDocument()
-    expect(filaDia).toHaveTextContent('Encontrados 0/2')
+    expect(filaDia).toHaveTextContent('Subtotal · faltan 2')
   })
 
   it('sin ninguna linea con precio en dos cadenas no pinta tarjeta de ahorro', async () => {
@@ -634,9 +636,11 @@ describe('comparar mi cesta con datos', () => {
     // *Coste y, al lado, lo que cuesta la unidad de medida de **ese** formato en **esa**
     // cadena: el litro de leche de Aldi y la unidad de DIA, cada uno con su dato.*
     const filaAldi = within(detalles).getByText('Aldi').closest('li') as HTMLElement
-    expect(filaAldi).toHaveTextContent('1,25 € · 1,25 €/l')
+    expect(filaAldi).toHaveTextContent('1,25 €')
+    expect(within(filaAldi).getByText(/1,25 €\/l/)).toBeInTheDocument()
     const filaDia = within(detalles).getByText('DIA').closest('li') as HTMLElement
-    expect(filaDia).toHaveTextContent('1,31 € · 0,66 €/ud')
+    expect(filaDia).toHaveTextContent('1,31 €')
+    expect(within(filaDia).getByText(/0,66 €\/ud/)).toBeInTheDocument()
   })
 
   it('el resumen de la linea ya dice el precio por unidad, sin abrirla', async () => {
@@ -753,7 +757,8 @@ describe('comparar mi cesta con datos', () => {
     const detalles = resumen.closest('details') as HTMLElement
     const filaAldi = within(detalles).getByText('Aldi').closest('li') as HTMLElement
     expect(within(filaAldi).getByText('Mismo producto')).toBeInTheDocument()
-    expect(filaAldi).toHaveTextContent('1,00 € · 1,00 €/l')
+    expect(filaAldi).toHaveTextContent('1,00 €')
+    expect(within(filaAldi).getByText(/1,00 €\/l/)).toBeInTheDocument()
     const filaDia = within(detalles).getByText('DIA').closest('li') as HTMLElement
     expect(within(filaDia).getByText('Alternativa')).toBeInTheDocument()
     const filaMercadona = within(detalles).getByText('Mercadona').closest('li') as HTMLElement
@@ -784,6 +789,37 @@ describe('comparar mi cesta con datos', () => {
     fireEvent.change(within(detalles).getByLabelText('Cantidad'), { target: { value: '1' } })
     expect(await within(detalles).findByText(/2 envases.*4,80.*sobran 0,5 kg/))
       .toBeInTheDocument()
+  })
+
+  it('cada fila enseña el formato del pack, cómo se decidió y el €/kg', async () => {
+    // *Pedido de Claude/GPT: coste de compra primero, €/kg debajo y el formato del pack delante;
+    // y el motivo de la identidad, para que la fila se pueda explicar.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({ cadena: 'aldi', total: 240, contadas: 1, productos: [
+          precio('l1', 'Galletas 6 x 125 g', 'aldi', 240, {
+            precioUnidad: 320, unidad: 'kg', identidad: 'alternativa',
+            motivo: 'GTIN distinto: no se fusiona por parecido de nombre',
+          }),
+        ] }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Galletas 6 x 125 g')],
+    }
+    monta()
+
+    const resumen = await lineaDelDesglose('Galletas 6 x 125 g')
+    fireEvent.click(resumen)
+    const detalles = resumen.closest('details') as HTMLElement
+    const fila = within(detalles).getByText('Aldi').closest('li') as HTMLElement
+    expect(fila).toHaveTextContent('2,40 €')
+    expect(fila).toHaveTextContent('6 × 125 g')
+    expect(fila).toHaveTextContent('3,20 €/kg')
+    expect(within(fila).getByText('Alternativa')).toBeInTheDocument()
+    expect(within(fila).getByText(/GTIN distinto/)).toBeInTheDocument()
   })
 
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {

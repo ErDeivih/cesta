@@ -587,8 +587,9 @@ function QuienGana({ ganadora, masCara, diferencia, total }: {
   if (!ganadora) {
     return (
       <>
-        Ninguna cadena tiene los {plural(total, 'producto', 'productos')} de la lista. Los totales de
-        abajo son de lo que hay en cada una, y por eso no se pueden comparar entre sí.
+        Ninguna cadena tiene los {plural(total, 'producto', 'productos')} confirmados. Los
+        totales de abajo son de lo que está confirmado en cada una, y por eso no se pueden
+        comparar entre sí.
       </>
     )
   }
@@ -834,9 +835,13 @@ function CadenaEnLaLista({ cadena, total, contadas, totalMasCaro, esLaMasBarata,
       )}
 
       <div className="mt-1 flex flex-wrap items-center gap-2">
-        <span className="text-etiqueta text-tinta-suave">
-          Encontrados {contadas}/{total}
-        </span>
+        {contadas < total ? (
+          <span className="text-etiqueta text-tinta-suave">
+            Subtotal · faltan {total - contadas}
+          </span>
+        ) : (
+          <span className="text-etiqueta text-tinta-suave">Cesta completa</span>
+        )}
         {esLaMasBarata && <Etiqueta tono="bien">la más barata</Etiqueta>}
         {diferenciaConLaMasBarata !== null && diferenciaConLaMasBarata > 0 && (
           <span className="text-etiqueta text-tinta-suave">
@@ -853,6 +858,28 @@ function CadenaEnLaLista({ cadena, total, contadas, totalMasCaro, esLaMasBarata,
       )}
     </li>
   )
+}
+
+/** El formato del pack, cuando se puede decir: «6 × 125 g» o «500 g».
+ *
+ *  *Primero se busca en el nombre porque es el dato publicado; si no está, se deduce del coste
+ *  del envase y su €/kg o €/l. Si no hay ninguna de las dos cosas, `null`: no se inventa.*
+ */
+function formatoDelPack(nombre: string, celda: CeldaDeLaLinea, cantidad: number): string | null {
+  const pack = nombre.match(/(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|cl|ud)\b/i)
+  if (pack) return `${pack[1]} × ${pack[2].replace('.', ',')} ${pack[3]}`
+  if (celda.precio_unidad_cent == null || celda.precio_unidad_cent <= 0 || !celda.unidad) {
+    return null
+  }
+  const neto = (celda.coste_cent / Math.max(1, cantidad)) / celda.precio_unidad_cent
+  if (!Number.isFinite(neto) || neto <= 0) return null
+  if (celda.unidad === 'kg') {
+    return neto < 1 ? `${Math.round(neto * 1000)} g` : `${Number(neto.toFixed(2))} kg`
+  }
+  if (celda.unidad === 'l') {
+    return neto < 1 ? `${Math.round(neto * 1000)} ml` : `${Number(neto.toFixed(2))} l`
+  }
+  return `${Number(neto.toFixed(2))} ${celda.unidad}`
 }
 
 /** Una linea de la lista, con lo que cuesta en cada cadena. */
@@ -973,35 +1000,38 @@ function LineaComparada({ linea, celdas, cadenas }: {
                   key={cadena.cadena}
                   className="border-t border-borde pt-1 first:border-0 first:pt-0"
                 >
+                  {/* *** Primero lo que se paga, despues el formato y el €/kg. *** *
+                      *El coste de compra es el numero que se mira en la estanteria; el €/kg y
+                      * el formato del pack van debajo, en la misma fila, para comparar sin
+                      * confundir el precio del envase con el precio normalizado.* */}
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2">
                     <span className="text-etiqueta text-tinta-suave">{nombreCadena(cadena.cadena)}</span>
                     <span className="cifra text-precio-fila font-medium text-tinta-fuerte">
                       {euros(celda.coste_cent)}
-                      {/* *** El €/unidad, cuando el reparto lo trae. *** *
-                          *Se enseña junto al coste y **no se calcula aqui**: si falta el dato, la
-                          fila se queda como estaba en vez de inventarse un precio por kilo que
-                          nadie ha medido.* */}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <span className="text-etiqueta text-tinta-suave">
+                      {formatoDelPack(linea.nombre_visto, celda, linea.cantidad) ?? 'formato sin medir'}
                       {celda.precio_unidad_cent != null && celda.unidad ? (
-                        <span className="text-etiqueta font-normal text-tinta-suave">
-                          {' · '}
-                          {eurosUnidad(celda.precio_unidad_cent, celda.unidad)}
-                        </span>
+                        <> · {eurosUnidad(celda.precio_unidad_cent, celda.unidad)}</>
                       ) : (
-                        <span className="text-etiqueta font-normal text-tinta-suave">
-                          {' · sin medida'}
+                        <> · sin medida</>
+                      )}
+                    </span>
+                    <span className="flex flex-wrap items-center justify-end gap-1">
+                      <Etiqueta tono={celda.identidad === 'exacto' ? 'dato' : 'aviso'}>
+                        {celda.identidad === 'exacto' ? 'Mismo producto' : 'Alternativa'}
+                      </Etiqueta>
+                      {celda.motivo && (
+                        <span className="max-w-[16rem] text-etiqueta text-tinta-suave" title={celda.motivo}>
+                          {celda.motivo}
                         </span>
                       )}
                       {!celda.autorizada && (
-                        <span className="ml-1 text-etiqueta font-normal text-aviso">por confirmar</span>
+                        <span className="text-etiqueta font-normal text-aviso">por confirmar</span>
                       )}
                     </span>
-                    {/* *** Mismo producto / Alternativa / Sin precio. *** *
-                        *La identidad se dice junto al numero: el mismo articulo (mismo GTIN), un
-                        *equivalente que se puede elegir pero no es el mismo, o una cadena que hoy
-                        *no lo tiene. No se esconde en otra pantalla.* */}
-                    <Etiqueta tono={celda.identidad === 'exacto' ? 'dato' : 'aviso'}>
-                      {celda.identidad === 'exacto' ? 'Mismo producto' : 'Alternativa'}
-                    </Etiqueta>
                   </div>
                   {celda.promo && <Oferta promo={celda.promo} ahorro_cent={celda.ahorro_cent} />}
                   {celda.sugerencia && (
@@ -1243,6 +1273,8 @@ interface CeldaDeLaLinea {
   unidad: string | null
   /** El veredicto de identidad: `exacto`, `alternativa`, ... o `null` si no llego. */
   identidad: string | null
+  /** Por qué se decidió esa identidad, para poder explicar cada fila. */
+  motivo: string | null
 }
 
 /** *** DE CADA CADENA A CADA LINEA. *** *
@@ -1276,6 +1308,7 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         precio_unidad_cent: p.precio_unidad_cent ?? null,
         unidad: p.unidad ?? null,
         identidad: p.identidad ?? null,
+        motivo: p.motivo ?? null,
       })
     }
     for (const p of cadena.pendientes ?? []) {
@@ -1292,6 +1325,7 @@ function matrizPorLinea(cadenas: CadenaComparada[]): Map<string, CeldaDeLaLinea[
         precio_unidad_cent: p.precio_unidad_cent ?? null,
         unidad: p.unidad ?? null,
         identidad: p.identidad ?? 'alternativa',
+        motivo: p.motivo ?? null,
       })
     }
   }
