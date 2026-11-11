@@ -21,28 +21,28 @@ que se pueda explicar y comprobar, y un desglose que permita ver de dónde sale.
 
 ## Portada: el caso en una tabla (recalculable a mano)
 
-**Producto:** café molido Hacendado. **Pack:** 500 g a **8,19 €** → 16,38 €/kg.
+**Producto:** café molido Hacendado. **Pack:** 500 g (8,19 € en Carrefour → 16,38 €/kg).
 **Cantidad pedida:** **1 kg**.
 
 1. El pack trae 0,5 kg: `1 kg / 0,5 kg = 2 packs`.
 2. Se paga el envase entero: `2 × 8,19 € = 16,38 €` donde el pack cuesta 8,19 €; en Mercadona,
    `2 × 4,40 € = 8,80 €`.
-3. La variación por el mismo kilo: `16,38 € − 8,80 € = 7,58 €`.
+3. La variación por el mismo kilo: `16,38 € − 4,76 € = 11,62 €`.
 
 | Cadena | Pack | 2 packs para 1 kg | €/kg | Variación |
 |---|---:|---:|---:|---:|
-| Mercadona | 4,40 € | **8,80 €** | 8,80 | — |
-| Alcampo | 7,28 € | 14,56 € | 14,56 | +5,76 € |
-| Carrefour | 8,19 € | 16,38 € | 16,38 | +7,58 € |
-| DIA | 8,19 € | 16,38 € | 16,38 | +7,58 € |
+| Alcampo | 2,38 € | **4,76 €** | 4,76 | — |
+| Mercadona | 4,40 € | 8,80 € | 8,80 | +4,04 € |
+| Carrefour | 8,19 € | 16,38 € | 16,38 | +11,62 € |
+| DIA | 8,19 € | 16,38 € | 16,38 | +11,62 € |
 | Aldi | — | sin equivalente | — | no se pinta 0 € |
 
 **La misma cuenta con un multipack:** 6 × 125 g = 750 g a 2,40 € → 3,20 €/kg; para 1 kg,
 `techo(1 / 0,75) = 2` packs, **4,80 €** y **0,50 kg de sobrante**.
 
-Con la lista de demo (8 productos), la comparativa resume **6,78 € de ahorro posible (−28 %)**;
-y la **cesta óptima** muestra el ahorro frente a una sola tienda: todo en Alcampo **21,12 €** o
-repartido entre Alcampo y Mercadona **17,27 €**, **3,85 € menos**. Capturas de la portada en
+Con la lista de demo (8 productos), la comparativa resume **9,15 € de ahorro posible (−38 %)**;
+y la **cesta óptima** muestra el ahorro frente a una sola tienda: todo en Alcampo **17,46 €** o
+repartido entre Alcampo y Aldi **15,00 €**, **2,46 € menos**. Capturas de la portada en
 `docs/portfolio/`: `390/1280-comparativa.png`, `...-optima.png` y `...-totales.png`.
 
 ## 2. Datos
@@ -171,18 +171,18 @@ condicionadas no se restan en ninguno de los dos casos.
 
 | Producto | Más barato | Más caro | Diferencia |
 |---|---:|---:|---:|
-| Café molido Hacendado | 4,40 € (Mercadona) | 8,19 € (Carrefour) | **3,79 €** |
-| Tomate triturado All Seasons | 0,94 € (Aldi) | 2,45 € (Carrefour) | **1,51 €** |
+| Café molido Hacendado | 2,38 € (Alcampo) | 8,19 € (Carrefour) | **5,81 €** |
+| Tomate triturado All Seasons | 0,94 € (Aldi) | 2,80 € (Alcampo) | **1,86 €** |
 | Perlitas VAHINÉ 100 g | 3,87 € (Alcampo) | 4,65 € (Carrefour) | **0,78 €** |
 | Detergente Esselt | 1,09 € (Aldi) | 1,50 € (Alcampo) | 0,41 € |
 | Yogur natural Milsani | 1,29 € (Aldi) | 1,45 € (Carrefour) | 0,16 € |
 | Caldo casero Gallina Blanca | 2,29 € (Carrefour/Aldi) | 2,36 € (Alcampo) | 0,07 € |
 | Tarrito HERO | 1,75 € (Alcampo) | 1,80 € (Carrefour) | 0,05 € |
 | Picos sin gluten | 1,39 € (DIA/Aldi) | 1,40 € (Carrefour) | 0,01 € |
-| **Total** | | | **6,78 €** |
+| **Total** | | | **9,15 €** |
 
-Base de la suma de máximos: **23,80 €** → **28,5 %** de ahorro posible; la tarjeta redondea a
-**6,78 € / −28 %**. El €/unidad enseña la misma diferencia en la unidad correcta: el café está a
+Base de la suma de máximos: **24,15 €** → **37,9 %** de ahorro posible; la tarjeta redondea a
+**9,15 € / −38 %**. El €/unidad enseña la misma diferencia en la unidad correcta: el café está a
 **16,38 €/kg** en Carrefour y **8,80 €/kg** en Mercadona; el detergente a **0,58 €/l** frente a
 **0,55 €/l**. Y el producto que vuelve a su mínimo lleva su marca: «En su mínimo · 3,87 €».
 
@@ -223,12 +223,11 @@ anuncia un ahorro: se dice que no compensa partir la compra.
 
 Con la cesta de demo (8 productos, precios del 10/11, incluidas alternativas sin confirmar):
 
-- **Una tienda:** Alcampo, **21,12 €** (la única completa junto con Carrefour, 23,38 €).
-- **Dos tiendas:** Alcampo + Mercadona, **17,27 €** (4 productos en cada una).
-- **Ahorro:** **3,85 €** frente a comprarlo todo en una.
+- **Una tienda:** Alcampo, **17,46 €** (la única completa junto con Carrefour).
+- **Dos tiendas:** Alcampo + Aldi, **15,00 €** (3 productos en Alcampo y 5 en Aldi).
+- **Ahorro:** **2,46 €** frente a comprarlo todo en una.
 
-La frase que sale en pantalla: «Comprando todo en Alcampo: 21,12 €. Repartiendo entre Alcampo y
-Mercadona: 17,27 €. Te ahorras 3,85 €.»
+La frase que sale en pantalla: «Comprando todo en Alcampo: 17,46 €. Repartiendo entre Alcampo y Aldi: 15,00 €. Te ahorras 2,46 €.»
 
 ### Ejemplo numerado: producto, pack, cantidad pedida, coste por cadena
 
@@ -237,19 +236,19 @@ pedida: **1 kg**. Como el pack trae 0,5 kg, hacen falta **2 packs**:
 
 | Cadena | Precio del pack | 2 packs para 1 kg | €/kg | Variación frente a la más barata |
 |---|---:|---:|---:|---:|
-| Mercadona | 4,40 € | **8,80 €** | 8,80 €/kg | — |
-| Alcampo | 7,28 € | 14,56 € | 14,56 €/kg | +5,76 € |
-| Carrefour | 8,19 € | 16,38 € | 16,38 €/kg | +7,58 € |
-| DIA | 8,19 € | 16,38 € | 16,38 €/kg | +7,58 € |
+| Alcampo | 2,38 € | **4,76 €** | 4,76 €/kg | — |
+| Mercadona | 4,40 € | 8,80 € | 8,80 €/kg | +4,04 € |
+| Carrefour | 8,19 € | 16,38 € | 16,38 €/kg | +11,62 € |
+| DIA | 8,19 € | 16,38 € | 16,38 €/kg | +11,62 € |
 | Aldi | — | **sin equivalente** | — | no se pinta 0 € |
 
-La **variación** entre la cadena más barata y la más cara es **7,58 € por el mismo kilo de café**.
+La **variación** entre la cadena más barata y la más cara es **11,62 € por el mismo kilo de café**.
 Ese es el tipo de diferencia que la comparativa pone en unidades comparables y que la cesta óptima
 convierte en una decisión: llevarlo en Mercadona o repartir la compra.
 
 ## 5. Resultado
 
-- **La cifra grande existe y es explicable**: 6,78 € de ahorro posible (−28 %) en una cesta de
+- **La cifra grande existe y es explicable**: 9,15 € de ahorro posible (−38 %) en una cesta de
   8 productos, con el desglose que la produce y las fórmulas a un toque («¿Cómo se calcula?»).
 - **Los totales por cadena** dicen lo que cada una tiene hoy: Carrefour, 18,73 € con **Encontrados 7/8**; las demás, sin precio para esta lista. Una cadena incompleta no se presenta como
   ganadora.
