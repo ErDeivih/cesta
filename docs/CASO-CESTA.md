@@ -175,6 +175,40 @@ una compra fraccionaria.
 Y una cadena que no tiene el producto **no se pinta como 0 €**: su fila dice «Sin equivalente» y
 no entra en ningún total. El cero se reserva para lo que de verdad cuesta cero, que no es el caso.
 
+
+## 4 ter. La cesta en una o dos tiendas
+
+El algoritmo es simple y se puede explicar sin caja negra: **se prueban todas las tiendas y todas
+las parejas de tiendas, se exige que cubran toda la lista y se queda la más barata.** Una tienda
+sin un producto **no entra como 0 €**: esa opción no se propone. Y si repartir no ahorra, no se
+anuncia un ahorro: se dice que no compensa partir la compra.
+
+Con la cesta de demo (8 productos, precios del 10/11, incluidas alternativas sin confirmar):
+
+- **Una tienda:** Alcampo, **21,12 €** (la única completa junto con Carrefour, 23,38 €).
+- **Dos tiendas:** Alcampo + Mercadona, **17,27 €** (4 productos en cada una).
+- **Ahorro:** **3,85 €** frente a comprarlo todo en una.
+
+La frase que sale en pantalla: «Comprando todo en Alcampo: 21,12 €. Repartiendo entre Alcampo y
+Mercadona: 17,27 €. Te ahorras 3,85 €.»
+
+### Ejemplo numerado: producto, pack, cantidad pedida, coste por cadena
+
+Producto: **café molido Hacendado**. Pack: **500 g** (8,19 € a 16,38 €/kg en Carrefour). Cantidad
+pedida: **1 kg**. Como el pack trae 0,5 kg, hacen falta **2 packs**:
+
+| Cadena | Precio del pack | 2 packs para 1 kg | €/kg | Variación frente a la más barata |
+|---|---:|---:|---:|---:|
+| Mercadona | 4,40 € | **8,80 €** | 8,80 €/kg | — |
+| Alcampo | 7,28 € | 14,56 € | 14,56 €/kg | +5,76 € |
+| Carrefour | 8,19 € | 16,38 € | 16,38 €/kg | +7,58 € |
+| DIA | 8,19 € | 16,38 € | 16,38 €/kg | +7,58 € |
+| Aldi | — | **sin equivalente** | — | no se pinta 0 € |
+
+La **variación** entre la cadena más barata y la más cara es **7,58 € por el mismo kilo de café**.
+Ese es el tipo de diferencia que la comparativa pone en unidades comparables y que la cesta óptima
+convierte en una decisión: llevarlo en Mercadona o repartir la compra.
+
 ## 5. Resultado
 
 - **La cifra grande existe y es explicable**: 6,78 € de ahorro posible (−28 %) en una cesta de
@@ -184,7 +218,8 @@ no entra en ningún total. El cero se reserva para lo que de verdad cuesta cero,
 - **El gráfico de barras** enseña la diferencia de cada producto en el mismo orden que el desglose: la barra más larga es donde más hay que decidir.
 - **El €/kg y el €/l** hacen la comparación honesta: el mismo producto, no dos formatos distintos; y la calculadora de envases dice cuántos packs hay que comprar para una cantidad (6 × 125 g a 2,40 € son 3,20 €/kg; para 1 kg, 2 packs y 4,80 €).
 - **La app se puede usar de punta a punta** con estos datos: lista → comparativa → sugerencias
-  (repetir la compra semanal, con lo que falta en casa) → exportar CSV.
+  (repetir la compra semanal, con lo que falta en casa) → exportar CSV, y la comparativa propone
+  la **cesta en 1 o 2 tiendas** con su ahorro en una frase.
 
 **Lo que el informe no afirma**: no es una predicción de la compra real en varias tiendas (no
 descuenta desplazamiento), no incluye ofertas que no se pueden aplicar sin tarjeta o cupón, y no

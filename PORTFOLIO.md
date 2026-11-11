@@ -68,6 +68,9 @@ en su **mínimo histórico** se marca. Nada de «0,00 €» cuando falta un dato
 **Calculadora de envases** — 1 kg con packs de 0,5 kg: dos envases y lo que cuestan:
 [390 px](docs/portfolio/390-comparativa-envases.png) · [1280 px](docs/portfolio/1280-comparativa-envases.png).
 
+**Cesta en 1 o 2 tiendas** — la frase con el ahorro y el reparto:
+[390 px](docs/portfolio/390-comparativa-optima.png) · [1280 px](docs/portfolio/1280-comparativa-optima.png).
+
 **Más detalle:** [producto a producto con €/kg](docs/portfolio/02b-productos.png) ·
 [explicación del cálculo abierta](docs/portfolio/1280-comparativa-calculo.png) ·
 [exportar a CSV](docs/portfolio/04-exportar.png) · [portada](docs/portfolio/00-portada.png) ·
