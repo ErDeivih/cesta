@@ -84,6 +84,18 @@ Antes de comparar hay que dejar los datos en el mismo idioma:
   convierte en 0. Un producto sin formato medido no entra en la comparación por unidad.
 
 
+
+### Buscar una alternativa desde la fila
+
+Cuando una cadena no tiene el producto, la fila puede ofrecer **«Buscar alternativa»**. El
+criterio es explícito:
+
+- **Aceptar** cambia a qué producto apunta la línea y su grupo, para que el reparto lo encuentre
+  en esa cadena: la cobertura y el total cambian.
+- **Rechazar** no escribe nada: la fila se queda en «Sin equivalente» y el precio de la rechazada
+  no suma en ningún total.
+- Si no hay candidato, se dice, en vez de inventar uno.
+
 ### Las tres etiquetas de cada precio
 
 En el desglose, cada cadena lleva su precio y una etiqueta que dice **qué** es ese precio:
