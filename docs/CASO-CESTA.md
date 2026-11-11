@@ -290,3 +290,5 @@ la propia pantalla.
 - Código: `plataforma/web/app/src/paginas/CompararCesta.tsx` (fórmulas y estados) y
   `plataforma/api/cesta.py` (reparto, €/unidad y ofertas).
 - Datos: `data/gold/actual.json` apunta a la publicación del día.
+- **Publicado en el portfolio:** [cesta-caso.html](https://erdeivih.github.io/cesta-caso.html),
+  enlazado desde la sección Cesta de [casos.html](https://erdeivih.github.io/casos.html#cesta).
