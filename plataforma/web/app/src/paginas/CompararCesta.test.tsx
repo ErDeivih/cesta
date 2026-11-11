@@ -757,7 +757,33 @@ describe('comparar mi cesta con datos', () => {
     const filaDia = within(detalles).getByText('DIA').closest('li') as HTMLElement
     expect(within(filaDia).getByText('Alternativa')).toBeInTheDocument()
     const filaMercadona = within(detalles).getByText('Mercadona').closest('li') as HTMLElement
-    expect(within(filaMercadona).getByText('Sin precio')).toBeInTheDocument()
+    expect(within(filaMercadona).getByText('Sin equivalente')).toBeInTheDocument()
+  })
+
+  it('calcula los envases enteros para una cantidad pedida', async () => {
+    // *Un pack de 0,75 kg a 2,40 € (3,20 €/kg): para 1 kg hacen falta dos, se pagan 4,80 € y
+    // sobran 0,5 kg. Es el ejemplo del informe, aquí con el producto abierto.*
+    dobles.comparacion = comparacion({
+      lineas: 1,
+      una_tienda: [
+        cadena({ cadena: 'aldi', total: 240, contadas: 1, productos: [
+          precio('l1', 'Galletas surtidas', 'aldi', 240, { precioUnidad: 320, unidad: 'kg' }),
+        ] }),
+      ],
+    })
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Galletas surtidas')],
+    }
+    monta()
+
+    const resumen = await lineaDelDesglose('Galletas surtidas')
+    fireEvent.click(resumen)
+    const detalles = resumen.closest('details') as HTMLElement
+    fireEvent.click(within(detalles).getByText('Calcular envases para una cantidad'))
+    fireEvent.change(within(detalles).getByLabelText('Cantidad'), { target: { value: '1' } })
+    expect(await within(detalles).findByText(/2 envases.*4,80.*sobran 0,5 kg/))
+      .toBeInTheDocument()
   })
 
   it('sin precio por unidad en el reparto, la fila enseña solo el coste', async () => {
@@ -861,7 +887,7 @@ describe('comparar mi cesta con datos', () => {
     expect(await screen.findByText('1,29 € · solo en Aldi')).toBeInTheDocument()
   })
 
-  it('enseña el precio de cada cadena y «Sin precio» donde falta', async () => {
+  it('enseña el precio de cada cadena y «Sin equivalente» donde falta', async () => {
     monta()
 
     // *El desglose por linea: se abre el queso, que es al que le falta una cadena.*
@@ -872,7 +898,7 @@ describe('comparar mi cesta con datos', () => {
 
     const dentro = within(detalles as HTMLElement)
     expect(await dentro.findByText('Mercadona')).toBeInTheDocument()
-    expect(dentro.getAllByText('Sin precio').length).toBeGreaterThan(0)
+    expect(dentro.getAllByText('Sin equivalente').length).toBeGreaterThan(0)
   })
 
   it('enseña la oferta como condicion y no como precio final', async () => {

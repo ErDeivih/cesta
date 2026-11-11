@@ -69,6 +69,7 @@ import { misListas, reparto as pedirReparto, verLista, yo } from '../api/cesta'
 import { esErrorApi } from '../api/cliente'
 import { useProducto } from '../api/consultas'
 import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
+import { envasesPara } from '../logica/envases'
 import { EntraParaVer } from '../componentes/PuertaDeSesion'
 import { Aviso, Cargando, Etiqueta, Fallo, Resumen, Tarjeta, Vacio, cx } from '../componentes/ui'
 import type { Linea, OpcionTienda, RepartoTiendas } from '../tipos'
@@ -905,7 +906,7 @@ function LineaComparada({ linea, celdas, cadenas }: {
                     <span className="text-etiqueta text-tinta-suave">
                       {nombreCadena(cadena.cadena)}
                     </span>
-                    <Etiqueta tono="dato">Sin precio</Etiqueta>
+                    <Etiqueta tono="dato">Sin equivalente</Etiqueta>
                   </li>
                 )
               }
@@ -959,6 +960,10 @@ function LineaComparada({ linea, celdas, cadenas }: {
             </p>
           )}
 
+          {celdas.length > 0 && (
+            <CalculadoraDeEnvases celdas={celdas} cantidad={linea.cantidad} />
+          )}
+
           {abierta && conProducto && <PrecioPorKilo productoId={conProducto.producto_id} />}
 
           <p className="mt-2 flex flex-wrap items-center gap-3">
@@ -990,6 +995,95 @@ function LineaComparada({ linea, celdas, cadenas }: {
  *  *Y no se deduce la mecanica: el tipo normalizado no viaja a la interfaz (`AUDITORIA-APP`
  *  §4).* *Se leen las palabras del folleto y los dos numeros de la API; nada mas.*
  */
+/** *** CALCULADORA DE ENVASES. *** *
+ *
+ *  *La comparación da €/kg y €/l, pero no dice cuántos envases hay que comprar para una cantidad:
+ *  un pack de 6 × 125 g no se vende por kilos.* *Aquí se escribe lo que se necesita (1 kg) y se
+ *  ve, cadena a cadena, cuántos envases enteros hacen falta, lo que se paga y lo que sobra.*
+ *
+ *  **El tamaño del envase no se inventa**: se obtiene de lo que la API ya manda -- el coste de una
+ *  unidad y su €/kg o €/l -- dividiendo. Si falta el dato, o la cantidad no es de la misma
+ *  magnitud (kg contra l), se dice que no se puede calcular. Y una cadena sin precio **no se pinta
+ *  como 0 €**: se queda como «sin equivalente» en la fila de arriba.
+ */
+function CalculadoraDeEnvases({ celdas, cantidad }: {
+  celdas: CeldaDeLaLinea[]
+  cantidad: number
+}) {
+  const [demanda, setDemanda] = useState('')
+  const [unidad, setUnidad] = useState('kg')
+  const numero = Number(demanda.replace(',', '.'))
+  const hayDemanda = demanda.trim() !== '' && Number.isFinite(numero) && numero > 0
+
+  return (
+    <details className="mt-2 rounded-campo border border-borde bg-papel">
+      <Resumen className="px-3 text-etiqueta">Calcular envases para una cantidad</Resumen>
+      <div className="px-3 pb-3">
+        <p className="mb-2 text-etiqueta text-tinta-suave">
+          Se compran envases enteros: se redondea hacia arriba y se dice lo que sobra. El coste es
+          el de esos envases, no el de la cantidad exacta.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-0.5 text-etiqueta text-tinta-suave">
+            Cantidad
+            <input
+              inputMode="decimal"
+              value={demanda}
+              onChange={(e) => setDemanda(e.target.value)}
+              placeholder="1"
+              className="min-h-[44px] w-24 rounded-campo border border-borde-fuerte bg-papel px-2 py-1 text-cuerpo text-tinta"
+            />
+          </label>
+          <label className="flex flex-col gap-0.5 text-etiqueta text-tinta-suave">
+            Unidad
+            <select
+              value={unidad}
+              onChange={(e) => setUnidad(e.target.value)}
+              className="min-h-[44px] rounded-campo border border-borde-fuerte bg-papel px-2 py-1 text-cuerpo text-tinta"
+            >
+              {['kg', 'g', 'l', 'ml', 'ud'].map((u) => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </label>
+        </div>
+        {hayDemanda ? (
+          <ul className="mt-2 grid gap-1">
+            {celdas.map((c) => {
+              const conMedida = c.precio_unidad_cent != null && c.precio_unidad_cent > 0 && c.unidad
+              if (!conMedida) {
+                return (
+                  <li key={c.cadena} className="flex flex-wrap justify-between gap-2 text-etiqueta">
+                    <span className="text-tinta-suave">{nombreCadena(c.cadena)}</span>
+                    <span className="text-tinta-suave">no se sabe el tamaño del envase</span>
+                  </li>
+                )
+              }
+              const porEnvase = c.coste_cent / Math.max(1, cantidad)
+              // *Los dos números están en céntimos: el coste del envase y el €/kg o €/l. Al
+              // dividirlos se va el factor 100, y queda el tamaño en la unidad del precio.*
+              const tamano = porEnvase / (c.precio_unidad_cent as number)
+              const calculo = envasesPara(numero, unidad, tamano, c.unidad as string, porEnvase)
+              return (
+                <li key={c.cadena} className="flex flex-wrap justify-between gap-2 text-etiqueta">
+                  <span className="text-tinta-suave">{nombreCadena(c.cadena)}</span>
+                  <span className="text-tinta">
+                    {calculo
+                      ? `${calculo.envases} ${calculo.envases === 1 ? 'envase' : 'envases'} · ${euros(calculo.coste_cent)}${calculo.sobra > 0 ? ` · sobran ${String(calculo.sobra).replace('.', ',')} ${calculo.unidad}` : ''}`
+                      : 'no se puede comparar con esa unidad'}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="mt-2 text-etiqueta text-tinta-suave">
+            Escribe una cantidad para ver los envases y lo que cuestan.
+          </p>
+        )}
+      </div>
+    </details>
+  )
+}
+
 function Oferta({ promo, ahorro_cent }: { promo: string; ahorro_cent: number }) {
   const pideTarjeta = /club|tarjeta|cupon|cupón|acum|monedero|cheque|vale/i.test(promo)
   const soloPorInternet = /online|internet|\bweb\b/i.test(promo)
