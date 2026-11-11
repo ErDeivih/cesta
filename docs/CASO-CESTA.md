@@ -19,6 +19,32 @@ hacen que la decisión no sea una simple resta:
 El objetivo es contestar **«esta lista, ¿dónde sale mejor y cuánto me ahorro?»** con una cifra
 que se pueda explicar y comprobar, y un desglose que permita ver de dónde sale.
 
+## Portada: el caso en una tabla (recalculable a mano)
+
+**Producto:** café molido Hacendado. **Pack:** 500 g a **8,19 €** → 16,38 €/kg.
+**Cantidad pedida:** **1 kg**.
+
+1. El pack trae 0,5 kg: `1 kg / 0,5 kg = 2 packs`.
+2. Se paga el envase entero: `2 × 8,19 € = 16,38 €` donde el pack cuesta 8,19 €; en Mercadona,
+   `2 × 4,40 € = 8,80 €`.
+3. La variación por el mismo kilo: `16,38 € − 8,80 € = 7,58 €`.
+
+| Cadena | Pack | 2 packs para 1 kg | €/kg | Variación |
+|---|---:|---:|---:|---:|
+| Mercadona | 4,40 € | **8,80 €** | 8,80 | — |
+| Alcampo | 7,28 € | 14,56 € | 14,56 | +5,76 € |
+| Carrefour | 8,19 € | 16,38 € | 16,38 | +7,58 € |
+| DIA | 8,19 € | 16,38 € | 16,38 | +7,58 € |
+| Aldi | — | sin equivalente | — | no se pinta 0 € |
+
+**La misma cuenta con un multipack:** 6 × 125 g = 750 g a 2,40 € → 3,20 €/kg; para 1 kg,
+`techo(1 / 0,75) = 2` packs, **4,80 €** y **0,50 kg de sobrante**.
+
+Con la lista de demo (8 productos), la comparativa resume **6,78 € de ahorro posible (−28 %)**;
+y la **cesta óptima** muestra el ahorro frente a una sola tienda: todo en Alcampo **21,12 €** o
+repartido entre Alcampo y Mercadona **17,27 €**, **3,85 € menos**. Capturas de la portada en
+`docs/portfolio/`: `390/1280-comparativa.png`, `...-optima.png` y `...-totales.png`.
+
 ## 2. Datos
 
 | Qué | Cuánto (10/11/2026) |
