@@ -1,7 +1,10 @@
 # Caso Cesta: comparar la cesta entre seis supermercados
 
 Mini-informe del cálculo que sostiene la pantalla de comparación. Cifras del catálogo publicado
-el **10 de noviembre de 2026** (gold `20261110-111521`), no de una simulación.
+el **11 de noviembre de 2026** (gold `20261111-140508`), no de una simulación.
+
+**Las tres cifras del caso:** **6 cadenas** · **2,8 M de filas de precio** (2.866.370) ·
+**91,1 % de precisión** de emparejamiento sobre **4.804 pares** con verdad de EAN.
 
 ## 1. El problema
 
@@ -47,7 +50,7 @@ repartido entre Alcampo y Aldi **15,00 €**, **2,46 € menos**. Capturas de la
 
 ## 2. Datos
 
-| Qué | Cuánto (10/11/2026) |
+| Qué | Cuánto |
 |---|---:|
 | Cadenas con captura | **6** |
 | Días de histórico | **65** |
