@@ -341,6 +341,17 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
    *  precios (o si no hay diferencia), y entonces la tarjeta no se pinta.*
    */
   const ahorroPosible = ahorroDeCadaCosa(filas, matriz)
+  // *** El resumen de un vistazo, para que ahorro, total y cobertura se lean sin desplazar. *** *
+  // *En un móvil de 390 px la tarjeta grande queda debajo del pliegue si antes van los totales;
+  // estas tres cifras van arriba y contestan lo que se viene a preguntar.*
+  const ahorroCompacto = ganadora && masCara && diferencia !== null && diferencia > 0
+    ? diferencia
+    : (ahorroPosible?.ahorro_cent ?? null)
+  const totalCompacto = mejor.una?.total_cent ?? mejor.dos?.total_cent ?? null
+  const dondeCompacto = mejor.una ? 'en una tienda' : mejor.dos ? 'en dos tiendas' : null
+  const coberturaCompacta = mejor.una
+    ? `${mejor.una.lineas}/${total}`
+    : mejor.dos ? `${total}/${total}` : '—'
   const cadenasConOfertaCondicionada = ordenadas.filter((c) =>
     (c.productos ?? []).some((p) => p.promo && /club|tarjeta|cupon|cupón|acum|online|internet|web/i.test(p.promo)),
   ).length
@@ -401,6 +412,32 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
         )}
         <EnlaceALaLista listaId={listaId} texto="Volver a la lista" />
       </header>
+
+      {/* -------------------------------------------------- resumen de un vistazo --- */}
+      <section aria-label="Resumen de la comparación" className="grid grid-cols-3 gap-2">
+        <div className="rounded-campo border border-borde bg-papel p-2">
+          <span className="block text-etiqueta text-tinta-suave">Ahorro</span>
+          <span className="cifra block text-entrada font-semibold text-tinta-fuerte">
+            {ahorroCompacto !== null ? euros(ahorroCompacto) : '—'}
+          </span>
+        </div>
+        <div className="rounded-campo border border-borde bg-papel p-2">
+          <span className="block text-etiqueta text-tinta-suave">Total</span>
+          <span className="cifra block text-entrada font-semibold text-tinta-fuerte">
+            {totalCompacto !== null ? euros(totalCompacto) : '—'}
+          </span>
+          {dondeCompacto && (
+            <span className="block text-etiqueta text-tinta-suave">{dondeCompacto}</span>
+          )}
+        </div>
+        <div className="rounded-campo border border-borde bg-papel p-2">
+          <span className="block text-etiqueta text-tinta-suave">Cobertura</span>
+          <span className="cifra block text-entrada font-semibold text-tinta-fuerte">
+            {coberturaCompacta}
+          </span>
+          <span className="block text-etiqueta text-tinta-suave">productos</span>
+        </div>
+      </section>
 
       {/* -------------------------------------------------- lo que te ahorras --- */}
       {/* *** La cifra grande, y solo cuando es una cuenta que significa algo. *** *
@@ -1088,7 +1125,12 @@ function LineaComparada({ linea, celdas, cadenas, listaId, puedeEscribir }: {
                       {nombreCadena(cadena.cadena)}
                     </span>
                     <span className="flex flex-wrap items-center gap-2">
+                      <span className="flex flex-col gap-0.5">
                       <Etiqueta tono="dato">Sin equivalente</Etiqueta>
+                      <span className="text-etiqueta text-tinta-suave">
+                        no lo tiene en esta cadena
+                      </span>
+                    </span>
                       {linea.id && (
                         <BuscarAlternativa
                           listaId={listaId}

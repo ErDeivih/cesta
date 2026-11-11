@@ -43,6 +43,12 @@ que se pueda explicar y comprobar, y un desglose que permita ver de dónde sale.
 **La misma cuenta con un multipack:** 6 × 125 g = 750 g a 2,40 € → 3,20 €/kg; para 1 kg,
 `techo(1 / 0,75) = 2` packs, **4,80 €** y **0,50 kg de sobrante**.
 
+**Fila de ejemplo con multipack y sin equivalente:**
+
+| Producto / pack | Cantidad pedida | Coste real | €/kg | Sin equivalente |
+|---|---|---:|---:|---|
+| Galletas 6 × 125 g (750 g) a 2,40 € | 1 kg | 2 packs = **4,80 €** | 3,20 €/kg | **Aldi: sin equivalente** — no tiene ese formato de 750 g; no se pinta 0 € |
+
 Con la lista de demo (8 productos), la comparativa resume **9,15 € de ahorro posible (−38 %)**;
 y la **cesta óptima** muestra el ahorro frente a una sola tienda: todo en Alcampo **17,46 €** o
 repartido entre Alcampo y Aldi **15,00 €**, **2,46 € menos**. Capturas de la portada en
@@ -292,3 +298,6 @@ la propia pantalla.
 - Datos: `data/gold/actual.json` apunta a la publicación del día.
 - **Publicado en el portfolio:** [cesta-caso.html](https://erdeivih.github.io/cesta-caso.html),
   enlazado desde la sección Cesta de [casos.html](https://erdeivih.github.io/casos.html#cesta).
+- **Catálogo de repositorios consultado:** Firecrawl y Scout resuelven extracción web; ninguno
+  aporta normalización de unidades ni emparejamiento por EAN. No se incorporan: el pipeline ya
+  tiene su capa de captura y el valor está en la normalización, no en cambiar el extractor.
