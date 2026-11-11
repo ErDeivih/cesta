@@ -226,7 +226,18 @@ descuenta desplazamiento), no incluye ofertas que no se pueden aplicar sin tarje
 supone que un producto esté disponible si la captura no lo trae. Esas tres cosas están dichas en
 la propia pantalla.
 
-## 6. Dónde comprobarlo
+
+## 6. Criterios de la revisión (CE-*)
+
+| ID | Criterio | Dónde se cumple |
+|---|---|---|
+| **CE-U3 / CE-I1** | Separa «Subtotal · faltan N» de «Cesta completa»; «Más barata» solo entre cestas comparables. Una cadena con 7 de 8 no gana a una con 8 de 8. | CadenaEnLaLista: la etiqueta verde solo la lleva la ganadora entre las completas; las incompletas dicen «Subtotal · faltan N» y no se coronan. |
+| **CE-F1** | Coste de la cantidad pedida con envases completos, separado del precio normalizado. 1 kg de un pack de 750 g a 2,40 € → 2 packs (1,5 kg) por 4,80 €. | Calculadora de envases (logica/envases.ts) y §4 bis: 	echo(1/0,75)=2, 2×2,40=4,80, sobra 0,50 kg. |
+| **CE-F2** | Exacto / Alternativa / Sin equivalente, con motivo. Cada fila dice cómo se decidió. | Cada fila enseña la etiqueta y el motivo de la API («GTIN distinto…», «coincidencia parcial sin GTIN…»); sin producto, «Sin equivalente» y nunca 0 €. |
+| **CE-I2** | Coste de compra primero y €/kg o €/L debajo, con el formato del pack. «6×125 g · 2,40 €» muestra 3,20 €/kg. | La fila pinta primero el precio, debajo «6 × 125 g · 3,20 €/kg»; el formato sale del nombre o del coste ÷ €/kg. |
+| **CE-U1** | La cesta se conserva al cambiar de cadena: 8 artículos se mantienen al ir y volver. | POST /api/listas/{id}/tienda cambia cadena_elegida, no las líneas: comprobado con 8 líneas antes, 8 durante y 8 después (mismos ids). |
+
+## 7. Dónde comprobarlo
 
 - Capturas: [`390-comparativa.png`](portfolio/390-comparativa.png),
   [`1280-comparativa.png`](portfolio/1280-comparativa.png) y
