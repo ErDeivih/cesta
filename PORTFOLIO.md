@@ -86,7 +86,8 @@ El **informe del cálculo** —problema, datos, normalización, fórmulas y resu
   espera a que la API responda y abre el navegador, sin ventanas ni consolas abiertas.
 - **Repositorio:** `https://github.com/ErDeivih/cesta` — **privado** (contiene datos personales y
   de scraping). Acceso y cuenta de invitado para la demo **bajo petición**; esta ficha y sus
-  capturas están preparadas para revisarse sin él.
+  capturas están preparadas para revisarse sin él. El **caso completo**, con el ejemplo
+  recalculable, está publicado en `https://erdeivih.github.io/cesta-caso.html`.
 - **Reproducible:** `docker compose up -d` en `plataforma/` (o `Cesta.cmd`), y el catálogo del día
   ya está publicado. No hace falta ninguna clave de terceros: la recolección es de datos públicos.
 
