@@ -2180,3 +2180,55 @@ def anotar_de_la_compra(datos: DesdeLaCompra, lista_id: str,
         con.close()
     return {"anotadas": anotadas, "ya_estaban": ya_estaban, "ajenas": ajenas,
             "sin_nutricion": sin_nutricion}
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+# (ruta de aceptar alternativa: al final, lejos de las rutas GET)
+
+
+class AlternativaIn(BaseModel):
+    """La alternativa que se acepta: su producto y su grupo, para que la línea pase a ser ese."""
+    producto: str | None = None
+    grupo_id: int | None = None
+
+
+@app.post("/api/listas/{lista_id}/lineas/{linea_id}/alternativa")
+def aceptar_alternativa(lista_id: str, linea_id: str, datos: AlternativaIn,
+                        usuario: dict = Depends(usuario_actual)) -> dict:
+    """**Aceptar una alternativa desde la fila.** *Cambia el producto al que apunta la línea (y su
+    grupo), que es lo que hace que el reparto la encuentre en esa cadena: la cobertura cambia de
+    verdad, no solo una marca.* *Rechazarla no llama aquí: la línea sigue sin equivalente y su
+    precio no suma.*
+    """
+    _acceso(lista_id, usuario, hace_falta_escribir=True)
+    fila = almacen.cambia_producto(lista_id, linea_id, datos.grupo_id, datos.producto)
+    if fila is None:
+        raise HTTPException(404, "Esa linea ya no esta en la lista.")
+    return {"linea_id": str(fila["id"]), "grupo_id": fila["grupo_id"],
+            "producto_id": fila["producto_id"]}

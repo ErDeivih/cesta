@@ -1247,3 +1247,20 @@ def lineas_de_compra(compra_id: str) -> list[dict]:
         # tabla no tiene --su clave es `(compra_id, linea_id)`-- y se dejaba `cantidad`, que hace falta
         # para `precio x cantidad`. Nunca se habia ejecutado.
         return [dict(f, id=str(f["linea_id"])) for f in cur.fetchall()]
+
+
+def cambia_producto(lista_id: str, linea_id: str, grupo_id: int | None,
+                    producto_id: str | None) -> dict | None:
+    """**Aceptar una alternativa cambia a qué producto apunta la línea.** *No es solo una
+    autorización: la línea pasa a hablar del producto elegido, con su grupo, para que el reparto
+    lo encuentre en esa cadena y la cobertura cambie de verdad.* *Si la línea no existe o no es
+    de esa lista, no se escribe nada y se devuelve `None`.*
+    """
+    with cursor() as cur:
+        cur.execute(
+            "UPDATE lista_linea SET grupo_id = %s, producto_id = %s "
+            "WHERE id = %s AND lista_id = %s AND borrado_en IS NULL "
+            "RETURNING id, grupo_id, producto_id",
+            (grupo_id, producto_id, linea_id, lista_id))
+        fila = cur.fetchone()
+    return dict(fila) if fila else None
