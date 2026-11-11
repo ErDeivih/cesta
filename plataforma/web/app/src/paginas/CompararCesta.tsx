@@ -62,11 +62,11 @@
  *  «No he podido traer esto».*
  */
 import { useState, type ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { misListas, reparto as pedirReparto, verLista, yo } from '../api/cesta'
-import { esErrorApi } from '../api/cliente'
+import { aceptarAlternativa, buscarAlternativa, misListas, reparto as pedirReparto, verLista, yo, type AlternativaCandidata } from '../api/cesta'
+import { esErrorApi, textoDeError } from '../api/cliente'
 import { useProducto } from '../api/consultas'
 import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import { envasesPara } from '../logica/envases'
@@ -191,15 +191,17 @@ export function CompararCesta() {
       nombreDeLaLista={listas.data?.find((l) => l.id === listaId)?.nombre ?? null}
       lineas={detalle.data.lineas}
       comparacion={comparacion.data}
+      puedeEscribir={detalle.data.papel !== 'mira'}
     />
   )
 }
 
-function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
+function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEscribir }: {
   listaId: string
   nombreDeLaLista: string | null
   lineas: Linea[]
   comparacion: RepartoTiendas
+  puedeEscribir: boolean
 }) {
   const cadenas = comparacion.una_tienda as CadenaComparada[]
   const total = comparacion.lineas
@@ -559,6 +561,8 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion }: {
                 linea={linea}
                 celdas={matriz.get(linea.id) ?? []}
                 cadenas={ordenadas}
+                listaId={listaId}
+                puedeEscribir={puedeEscribir}
               />
             ))}
           </ul>
@@ -882,13 +886,105 @@ function formatoDelPack(nombre: string, celda: CeldaDeLaLinea, cantidad: number)
   return `${Number(neto.toFixed(2))} ${celda.unidad}`
 }
 
+/** *** BUSCAR UNA ALTERNATIVA EN LA CADENA QUE NO LA TIENE. *** *
+ *
+ *  *La fila dice «Sin equivalente», pero eso no es una pared: se puede buscar un producto
+ *  parecido en esa misma cadena.* *Aceptar escribe la autorización de esa línea con el producto y
+ *  la cadena -- y la cobertura cambia en el siguiente reparto.* *Rechazar **no escribe nada**: la
+ *  fila sigue «sin equivalente» y el precio no suma.*
+ */
+function BuscarAlternativa({ listaId, lineaId, cadena, nombre, puedeEscribir }: {
+  listaId: string
+  lineaId: string
+  cadena: string
+  nombre: string
+  puedeEscribir: boolean
+}) {
+  const cliente = useQueryClient()
+  const [abierta, setAbierta] = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [candidato, setCandidato] = useState<AlternativaCandidata | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [aceptada, setAceptada] = useState(false)
+  if (!puedeEscribir) return null
+
+  const buscar = async () => {
+    setAbierta(true)
+    setCargando(true)
+    setError(null)
+    try {
+      setCandidato(await buscarAlternativa(cadena, nombre))
+    } catch (e) {
+      setError(textoDeError(e))
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  const aceptar = useMutation({
+    mutationFn: () => aceptarAlternativa(listaId, lineaId, candidato?.producto_id ?? '', candidato?.grupo_id ?? 0),
+    onSuccess: () => {
+      setAceptada(true)
+      void cliente.invalidateQueries({ queryKey: ['reparto', listaId] })
+      void cliente.invalidateQueries({ queryKey: ['lista', listaId] })
+    },
+    onError: (e) => setError(textoDeError(e)),
+  })
+
+  if (aceptada) return <Etiqueta tono="bien">Alternativa aceptada</Etiqueta>
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {!abierta && (
+        <button
+          type="button"
+          onClick={() => void buscar()}
+          className="min-h-[44px] text-etiqueta text-tinta-suave underline underline-offset-2"
+        >
+          Buscar alternativa
+        </button>
+      )}
+      {abierta && cargando && <span className="text-etiqueta text-tinta-suave">Buscando…</span>}
+      {abierta && !cargando && candidato && (
+        <>
+          <span className="text-etiqueta text-tinta">
+            {candidato.nombre} · {euros(candidato.precio_cent ?? 0)}
+          </span>
+          <button
+            type="button"
+            disabled={aceptar.isPending}
+            onClick={() => aceptar.mutate()}
+            className="min-h-[44px] rounded-campo border border-bien px-2 text-etiqueta text-bien"
+          >
+            Aceptar
+          </button>
+          <button
+            type="button"
+            onClick={() => { setAbierta(false); setCandidato(null); setError(null) }}
+            className="min-h-[44px] px-2 text-etiqueta text-tinta-suave underline"
+          >
+            Rechazar
+          </button>
+        </>
+      )}
+      {abierta && !cargando && !candidato && (
+        <span className="text-etiqueta text-tinta-suave">
+          No he encontrado alternativa en {nombreCadena(cadena)}.
+        </span>
+      )}
+      {error && <span className="text-etiqueta text-error">{error}</span>}
+    </span>
+  )
+}
+
 /** Una linea de la lista, con lo que cuesta en cada cadena. */
-function LineaComparada({ linea, celdas, cadenas }: {
+function LineaComparada({ linea, celdas, cadenas, listaId, puedeEscribir }: {
   linea: Linea
   celdas: CeldaDeLaLinea[]
   /** **Todas** las cadenas, no solo las que tienen el producto: una cadena donde no esta
    *  tambien es una respuesta, y es la que explica por que su total es mas bajo. */
   cadenas: CadenaComparada[]
+  listaId: string
+  puedeEscribir: boolean
 }) {
   const [abierta, setAbierta] = useState(false)
   const autorizadas = celdas.filter((c) => c.autorizada)
@@ -991,7 +1087,18 @@ function LineaComparada({ linea, celdas, cadenas }: {
                     <span className="text-etiqueta text-tinta-suave">
                       {nombreCadena(cadena.cadena)}
                     </span>
-                    <Etiqueta tono="dato">Sin equivalente</Etiqueta>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <Etiqueta tono="dato">Sin equivalente</Etiqueta>
+                      {linea.id && (
+                        <BuscarAlternativa
+                          listaId={listaId}
+                          lineaId={linea.id}
+                          cadena={cadena.cadena}
+                          nombre={linea.nombre_visto}
+                          puedeEscribir={puedeEscribir}
+                        />
+                      )}
+                    </span>
                   </li>
                 )
               }

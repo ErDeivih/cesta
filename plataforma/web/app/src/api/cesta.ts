@@ -15,7 +15,7 @@
  *  que la pantalla pueda decir QUE ha fallado y no solo que fallo.
  */
 import { ErrorApi, pide } from './cliente.ts'
-import type { Donde, Estimacion, Linea, Lista, RepartoTiendas, Sesion } from '../tipos.ts'
+import type { Donde, Estimacion, Grupo, Linea, Lista, RepartoTiendas, RespuestaBuscar, Sesion } from '../tipos.ts'
 
 /** Entra con usuario y clave. La cookie la pone la API en la respuesta. */
 export async function entrar(usuario: string, clave: string,
@@ -678,4 +678,52 @@ export interface Compartido {
   usuario: string
   nombre: string | null
   papel: string
+}
+
+/** Una alternativa concreta de una cadena para una linea que hoy no la tiene.
+ *
+ *  *Se busca por el nombre, se lee el grupo y se elige el producto de esa cadena. El
+ *  producto_id es lo que luego acepta utorizarLinea; sin el no hay nada que aceptar.*
+ */
+export interface AlternativaCandidata {
+  producto_id: string
+  grupo_id: number
+  nombre: string
+  precio_cent: number | null
+  unidad: string | null
+}
+
+export async function buscarAlternativa(cadena: string,
+                                         texto: string): Promise<AlternativaCandidata | null> {
+  // *El nombre completo suele ser demasiado específico; si no hay grupo, se prueba con las
+  // dos primeras palabras («Café molido», «Yogur natural»).*
+  const intentos = [texto, texto.trim().split(/\s+/).slice(0, 2).join(' ')]
+  for (const consulta of [...new Set(intentos.filter((q) => q.length >= 2))]) {
+    const busqueda = await pide<RespuestaBuscar>('/buscar', {
+      q: consulta, cadenas: cadena, limite: '5',
+    })
+    const grupo = busqueda.resultados.find((r) => r.grupo_id !== null)
+    if (!grupo?.grupo_id) continue
+    const ficha = await pide<Grupo>(`/grupo/${grupo.grupo_id}`)
+    const delaCadena = (ficha.productos ?? [])
+      .filter((p) => p.fuente === cadena && (p.precio_cent ?? 0) > 0)
+      .sort((a, b) => (a.precio_cent ?? 0) - (b.precio_cent ?? 0))
+    const elegido = delaCadena[0]
+    if (elegido) {
+      return { producto_id: elegido.producto_id, grupo_id: ficha.grupo_id,
+               nombre: elegido.nombre, precio_cent: elegido.precio_cent, unidad: elegido.unidad }
+    }
+  }
+  return null
+}
+
+/** **Aceptar la alternativa desde la fila**: la línea pasa a apuntar a ese producto y su grupo.
+ *
+ *  *No basta con autorizar: si el producto no está en el grupo de la línea, el reparto no lo
+ *  encuentra y la cobertura no cambia. Este es el paso que hace que cambie de verdad.*
+ */
+export function aceptarAlternativa(listaId: string, lineaId: string,
+                                   producto: string, grupoId: number): Promise<unknown> {
+  return escribe(`/listas/${encodeURIComponent(listaId)}/lineas/${encodeURIComponent(lineaId)}/alternativa`,
+                 'POST', { producto, grupo_id: grupoId })
 }
