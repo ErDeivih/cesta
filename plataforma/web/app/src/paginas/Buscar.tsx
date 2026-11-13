@@ -13,6 +13,7 @@ import { fecha, nombreCadena } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
 import { Microfono } from '../componentes/Microfono'
 import { Mosaico } from '../componentes/Mosaico'
+import { SinConexion } from '../componentes/SinConexion'
 import { TablaResultados } from '../componentes/TablaResultados'
 import { VistasGuardadas } from '../componentes/VistasGuardadas'
 import { IconoCodigoBarras } from '../componentes/iconos'
@@ -147,6 +148,7 @@ export function Buscar() {
           mano, y un titular encima solo empuja los resultados hacia abajo. Medido con
           `data/debug/accesibilidad.py` el 27 de septiembre de 2026. */}
       <h2 className="sr-only">Buscar</h2>
+      <SinConexion que="Enseño lo último que se buscó; la búsqueda nueva espera a que vuelva la red." />
       <section aria-label="Buscar" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="q" className="sr-only">

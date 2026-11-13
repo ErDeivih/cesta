@@ -73,7 +73,15 @@ import { envasesPara } from '../logica/envases'
 import { mejorCompra, type MejorCompra } from '../logica/optimizar'
 import { EntraParaVer } from '../componentes/PuertaDeSesion'
 import { Aviso, Cargando, Etiqueta, Fallo, Resumen, Tarjeta, Vacio, cx } from '../componentes/ui'
+import { SinConexion } from '../componentes/SinConexion'
+import { Dialogo } from '../componentes/ui-sdk/Foco'
+import { ListaVirtualizada } from '../componentes/ui-sdk/ListaVirtualizada'
 import type { Linea, OpcionTienda, RepartoTiendas } from '../tipos'
+
+/** **A partir de cuántas líneas la comparativa se pinta por ventana.** Hasta 20, la lista se ve
+ *  entera y cada fila se abre donde está; a partir de ahí se pinta solo lo que cabe y el detalle
+ *  se lee en un diálogo, porque las filas expandidas dejan de medir todas distinto.* */
+const LINEAS_PARA_VIRTUALIZAR = 20
 
 /* ------------------------------------------------------- lo que manda la API --- */
 
@@ -229,6 +237,8 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
     .sort((a, b) => (b.diferencia ?? -1) - (a.diferencia ?? -1))
     .map(({ linea }) => linea)
   const todasSinConfirmar = cadenas.length > 0 && cadenas.every((c) => contadasDe(c) === 0)
+  /** La línea abierta en la vista compacta: se lee en un diálogo, no en la fila. */
+  const [lineaAbierta, setLineaAbierta] = useState<Linea | null>(null)
   /** La mejor compra en 1 o 2 tiendas, con los precios que hay para cada línea. */
   const mejor = mejorCompra(filas.map((l) => l.id), new Map(filas.map((l) => [
     l.id,
@@ -358,6 +368,7 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
 
   return (
     <div className="flex flex-col gap-seccion">
+      <SinConexion que="Enseño la última comparación que se trajo; un precio de ayer es un dato, no un error." />
       {/* ------------------------------------------------------- de que lista --- */}
       <header className="flex flex-col gap-2">
         <h2 className="font-serif text-titulo text-tinta-fuerte">Comparar mi cesta</h2>
@@ -591,18 +602,67 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
             </p>
           </div>
 
-          <ul className="grid gap-2">
-            {filasOrdenadas.map((linea) => (
-              <LineaComparada
-                key={linea.id}
-                linea={linea}
-                celdas={matriz.get(linea.id) ?? []}
-                cadenas={ordenadas}
-                listaId={listaId}
-                puedeEscribir={puedeEscribir}
-              />
-            ))}
-          </ul>
+          {filasOrdenadas.length > LINEAS_PARA_VIRTUALIZAR ? (
+            <ListaVirtualizada
+              filas={filasOrdenadas}
+              alturaFila={72}
+              alto={520}
+              overscan={4}
+              etiqueta="Productos de la comparación"
+              className="rounded-tarjeta border border-borde bg-papel"
+              render={(linea) => (
+                <li className="border-b border-borde last:border-0">
+                  <button
+                    type="button"
+                    onClick={() => setLineaAbierta(linea)}
+                    className="flex min-h-[72px] w-full items-center justify-between gap-2 px-3 text-left"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-cuerpo font-medium text-tinta-fuerte">
+                        {linea.nombre_visto}
+                      </span>
+                      <span className="block text-etiqueta text-tinta-suave">Ver el detalle</span>
+                    </span>
+                    <span className="cifra shrink-0 text-etiqueta text-tinta-fuerte">
+                      {resumenDeLaLinea(matriz.get(linea.id) ?? [])}
+                    </span>
+                  </button>
+                </li>
+              )}
+            />
+          ) : (
+            <ul className="grid gap-2">
+              {filasOrdenadas.map((linea) => (
+                <LineaComparada
+                  key={linea.id}
+                  linea={linea}
+                  celdas={matriz.get(linea.id) ?? []}
+                  cadenas={ordenadas}
+                  listaId={listaId}
+                  puedeEscribir={puedeEscribir}
+                />
+              ))}
+            </ul>
+          )}
+
+          {lineaAbierta && (
+            <Dialogo
+              abierto
+              alCerrar={() => setLineaAbierta(null)}
+              titulo={lineaAbierta.nombre_visto}
+              descripcion="Lo que cuesta en cada cadena y su precio por unidad."
+            >
+              <ul>
+                <LineaComparada
+                  linea={lineaAbierta}
+                  celdas={matriz.get(lineaAbierta.id) ?? []}
+                  cadenas={ordenadas}
+                  listaId={listaId}
+                  puedeEscribir={puedeEscribir}
+                />
+              </ul>
+            </Dialogo>
+          )}
 
           {cadenasConOfertaCondicionada > 0 && (
             <p className="text-etiqueta text-tinta-suave">
@@ -1535,6 +1595,16 @@ function diferenciaDeLinea(celdas: CeldaDeLaLinea[]): number | null {
 }
 
 /** Cuantos productos de la lista se pueden comparar, y cuantos no, con el motivo. */
+/** El resumen de una línea para la vista compacta: el precio más barato, o el hueco dicho. */
+function resumenDeLaLinea(celdas: CeldaDeLaLinea[]): string {
+  const autorizadas = celdas.filter((c) => c.autorizada)
+  if (autorizadas.length === 0) {
+    return celdas.length === 0 ? 'no comparable' : 'por confirmar'
+  }
+  const desde = Math.min(...autorizadas.map((c) => c.coste_cent))
+  return `desde ${euros(desde)}`
+}
+
 function contarLineas(filas: Linea[], matriz: Map<string, CeldaDeLaLinea[]>) {
   let comparables = 0
   let soloUnaCadena = 0

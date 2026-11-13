@@ -18,10 +18,11 @@
  *  *Los datos son de mentira; su forma es la de la API de verdad* (`api/cesta.py`: `estimacion`,
  *  `reparto_por_tienda`, `PendienteDeDecidir`, `FilaEnTienda`).
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { ErrorApi } from '../api/cliente'
 
@@ -39,6 +40,9 @@ const dobles = vi.hoisted(() => ({
   /** Y lo que puede fallar el POST, cuando la prueba lo pide. */
   falloRepetir: null as unknown,
   fallo: null as unknown,
+  /** Los argumentos de la ultima llamada a `anadirLinea`: es lo que se mide cuando se
+   *  elige una sugerencia del buscador de producto. */
+  anadida: null as unknown,
   llamadas: { detalle: 0, reparto: 0, previa: 0, repetir: 0 },
 }))
 
@@ -70,7 +74,13 @@ vi.mock('../api/cesta', async (importOriginal) => {
     },
     // *Nada de red en una prueba: los cambios no se pulsan, pero la mutacion se construye.*
     cambiarLinea: async () => ({}),
-    anadirLinea: async () => ({}),
+    anadirLinea: async (...args: unknown[]) => {
+      dobles.anadida = args
+      return {}
+    },
+    crearLista: async (nombre: string, esDeCasa = false) => ({
+      id: 'L9', nombre, es_de_casa: esDeCasa, lineas: 0,
+    }),
     salir: async () => undefined,
   }
 })
@@ -228,7 +238,16 @@ beforeEach(() => {
   dobles.previaRepetir = previaDeCompra({ compra_id: null, fecha: null, lineas: [] })
   dobles.reciboRepetir = { anadidos: 0, ya_estaban: 0, sin_catalogo: 0, faltan: 0 }
   dobles.falloRepetir = null
+  dobles.anadida = null
   dobles.llamadas = { detalle: 0, reparto: 0, previa: 0, repetir: 0 }
+  // La red vuelve a estar en pie en cada prueba: la del «sin conexión» la apaga. Y se avisa con
+  // el evento: React Query escucha `online` una vez para todo el proceso, así que cambiar solo
+  // `navigator.onLine` dejaba la siguiente prueba con las consultas pausadas.
+  Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+  // *No basta con cambiar `navigator.onLine`: React Query guarda el estado de red en un gestor
+  // global y, si una prueba anterior lo dejó en «sin conexión», las consultas se quedan
+  // **pausadas** sin decirlo (y la pantalla pinta la salida de «entra»).*
+  onlineManager.setOnline(true)
 })
 
 /* ============================================================== la cabecera === */
@@ -796,5 +815,138 @@ describe('los estados que no son «con datos»', () => {
     monta()
     await screen.findByRole('heading', { name: 'La de casa' })
     expect(document.body.textContent ?? '').not.toMatch(TECNICO)
+  })
+})
+
+/* ==================================== apuntar sin salir de la lista === */
+
+/** Una respuesta de `GET /api/buscar`, con la forma de la API de verdad.
+ *
+ *  *La pantalla no inventa el producto: lo pide. Lo que se mide aqui es que el campo de la
+ *  lista pregunta, ensena la sugerencia con su €/kg y la apunta donde toca sin salir.* */
+function respuestaBuscar(nombre = 'Leche entera 1 l') {
+  return {
+    fecha_datos: '2026-11-13',
+    resultados: [
+      {
+        grupo_id: 77,
+        nombre,
+        marca: 'Puleva',
+        cadena_mas_barata: 'dia',
+        precio_cent: 99,
+        precio_unidad_cent: 66,
+        precio_unidad_max_cent: 66,
+        unidad: 'l',
+        cadenas: 3,
+        productos: 4,
+        nutriscore: null,
+        imagen: null,
+        ecoscore: null,
+        kcal_100g: null,
+        hidratos_100g: null,
+        proteinas_100g: null,
+        grasas_100g: null,
+        grasas_sat_100g: null,
+        azucares_100g: null,
+        sal_100g: null,
+        con_oferta: false,
+        con_oferta_club: false,
+        con_retirada: false,
+        comparable: true,
+        dudoso: false,
+        ahorro_pct: 12.5,
+      },
+    ],
+  }
+}
+
+/** Sustituye `fetch` por la respuesta del buscador y devuelve las URLs pedidas.
+ *
+ *  *Solo contesta `/api/buscar`: el resto de la pantalla ya va por los dobles de `api/cesta`, y
+ *  devolverle a cualquier URL el JSON del buscador haría que una consulta real leyera un dato con
+ *  otra forma (medido: `donde` acabó sin `una_tienda` y tumbó la pantalla).* Sin red, como en el
+ *  pasillo: `TypeError`, que la app sabe contar.*
+ */
+function conRed(respuesta: unknown = respuestaBuscar()) {
+  const pedidas: string[] = []
+  const falso = vi.fn(async (url: string | URL) => {
+    pedidas.push(String(url))
+    if (!/\/api\/buscar/.test(String(url))) throw new TypeError('sin red')
+    return { ok: true, status: 200, json: async () => respuesta } as unknown as Response
+  })
+  vi.stubGlobal('fetch', falso)
+  return pedidas
+}
+
+describe('apuntar sin salir de la lista', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('el buscador de producto está en la lista y apunta al elegir sin salir de la pantalla', async () => {
+    const pedidas = conRed()
+    monta()
+    await screen.findByRole('heading', { name: 'La de casa' })
+
+    const campo = screen.getByRole('combobox', { name: 'Añadir a la lista' })
+    await userEvent.type(campo, 'leche')
+
+    const opcion = await screen.findByRole('option', { name: /Leche entera/ })
+    // *Con €/kg: es la decision de compra, y en la sugerencia tiene que estar.*
+    expect(opcion).toHaveTextContent('0,66')
+    expect(pedidas.some((u) => /\/api\/buscar/.test(u) && /q=leche/.test(u))).toBe(true)
+
+    await userEvent.click(opcion)
+    await waitFor(() => expect(dobles.anadida).not.toBeNull())
+    const [listaId, nueva] = dobles.anadida as [string, { nombre: string; grupo_id: number }]
+    expect(listaId).toBe('L1')
+    expect(nueva.grupo_id).toBe(77)
+    expect(nueva.nombre).toBe('Leche entera 1 l')
+    // El foco se queda donde estaba: apuntar es seguir apuntando, no volver a buscar el campo.
+    expect(campo).toHaveFocus()
+  })
+
+  it('sin ninguna lista, apunta en la de casa que se crea sola', async () => {
+    conRed()
+    dobles.listas = []
+    monta()
+
+    const campo = await screen.findByRole('combobox', { name: 'Añadir a la lista' })
+    await userEvent.type(campo, 'leche')
+    await userEvent.click(await screen.findByRole('option', { name: /Leche entera/ }))
+
+    await waitFor(() => expect(dobles.anadida).not.toBeNull())
+    expect((dobles.anadida as [string])[0]).toBe('L9')
+  })
+
+  it('sin conexión lo avisa, dice qué pasa con lo apuntado y deja seguir apuntando', async () => {
+    conRed()
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
+    monta()
+    fireEvent(window, new Event('offline'))
+
+    expect(await screen.findByText('Sin conexión')).toBeInTheDocument()
+    expect(screen.getByText(/se guarda en el móvil/i)).toBeInTheDocument()
+    // El aviso no tapa la pantalla: el buscador sigue en pie.
+    expect(screen.getByRole('combobox', { name: 'Añadir a la lista' })).toBeInTheDocument()
+  })
+
+  it('la confirmación de terminar la compra es un diálogo que atrapa el foco y lo devuelve', async () => {
+    dobles.detalle = {
+      ...(dobles.detalle as Record<string, unknown>),
+      lineas: [linea('l1', 'Alubia blanca 1 kg', 1, { tachado_en: '2026-11-13T10:00:00' })],
+    }
+    monta()
+    const terminar = await screen.findByRole('button', { name: 'He terminado la compra' })
+    terminar.focus()
+    fireEvent.click(terminar)
+
+    const dialogo = await screen.findByRole('dialog', { name: /Terminar la compra/ })
+    expect(dialogo.contains(document.activeElement)).toBe(true)
+
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    // Escape cierra y el foco vuelve a quien lo abrió.
+    expect(terminar).toHaveFocus()
   })
 })

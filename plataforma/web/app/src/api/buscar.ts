@@ -10,8 +10,11 @@ import type { RespuestaBuscar, ResultadoBusqueda } from '../tipos'
 export async function buscarProductos(
   texto: string,
   limite = 3,
+  /** *Se corta si el texto cambió: el buscador con sugerencias pregunta en cada pausa y una
+   *  respuesta vieja no puede pisar a la nueva.* */
+  senal?: AbortSignal,
 ): Promise<ResultadoBusqueda[]> {
-  const r = await pide<RespuestaBuscar>('/buscar', { q: texto.trim(), limite })
+  const r = await pide<RespuestaBuscar>('/buscar', { q: texto.trim(), limite }, senal)
   // Un resultado sin grupo no se puede enlazar: se queda como texto, no como un vínculo falso.
   return (r.resultados ?? []).filter((x) => x.grupo_id !== null)
 }

@@ -58,7 +58,11 @@ import {
 } from '../componentes/ui'
 import { PegarEnLaLista } from '../componentes/PegarEnLaLista'
 import { ExportarLista } from '../componentes/ExportarLista'
-import type { Linea, Reparto, RepartoTiendas } from '../tipos'
+import { SinConexion } from '../componentes/SinConexion'
+import { Dialogo } from '../componentes/ui-sdk/Foco'
+import { SeleccionMultiple } from '../componentes/ui-sdk/SeleccionMultiple'
+import { Typeahead } from '../componentes/ui-sdk/Typeahead'
+import type { Linea, Reparto, RepartoTiendas, ResultadoBusqueda } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
  *
@@ -1064,30 +1068,29 @@ function CerrarCompra({ listaId, enElCarro, papel, sello }: {
     )
   }
 
-  if (!confirmando) {
-    return (
+  return (
+    <>
       <Boton variante="normal" onClick={() => setConfirmando(true)}>
         He terminado la compra
       </Boton>
-    )
-  }
-
-  return (
-    <Aviso tono="aviso" titulo={`¿Terminada? Se quitarán ${enElCarro} ${enElCarro === 1 ? 'cosa' : 'cosas'} de la lista`}>
-      <p className="mt-1">
-        Se guardan como compra, con su precio. Lo que no hayas cogido se queda en la lista.
-      </p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <Boton variante="principal" disabled={cerrar.isPending}
-               onClick={() => cerrar.mutate()}>
+      {/* *** LA CONFIRMACIÓN ES UN DIÁLOGO, *no un aviso que se queda abierto*. *** *
+          Lo que se va a quitar de la lista no se puede descubrir después, y una acción que no se
+          deshace de un toque se pregunta antes.* */}
+      <Dialogo
+        abierto={confirmando}
+        alCerrar={() => setConfirmando(false)}
+        titulo="Terminar la compra"
+        descripcion={`Se quitarán ${enElCarro} ${enElCarro === 1 ? 'cosa' : 'cosas'} de la lista. Se guardan como compra, con su precio; lo que no hayas cogido se queda en la lista.`}
+      >
+        <Boton variante="principal" disabled={cerrar.isPending} onClick={() => cerrar.mutate()}>
           {cerrar.isPending ? 'Guardando…' : 'Sí, he terminado'}
         </Boton>
         <Boton variante="sutil" onClick={() => setConfirmando(false)}>No, déjalo</Boton>
-      </div>
-      {cerrar.isError && (
-        <Etiqueta tono="mal">{textoDeError(cerrar.error)}</Etiqueta>
-      )}
-    </Aviso>
+        {cerrar.isError && (
+          <Etiqueta tono="mal">{textoDeError(cerrar.error)}</Etiqueta>
+        )}
+      </Dialogo>
+    </>
   )
 }
 
@@ -1633,6 +1636,8 @@ export function Cesta() {
   const [sinGuardar, setSinGuardar] = useState(false)
   // Lo de la cuenta, detras del boton de opciones de la cabecera.
   const [opciones, setOpciones] = useState(false)
+  // Quitar varias lineas de una vez: la lista se vuelve un listbox de seleccion.
+  const [modoSeleccion, setModoSeleccion] = useState(false)
 
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
   const listas = useQuery({
@@ -1691,6 +1696,29 @@ export function Cesta() {
     lineas.map((l) => l.grupo_id).filter((g): g is number => g !== null),
   )]
   const precios = preciosPorLinea(repartoDeLaLista.data)
+
+  /** **Apuntar un producto desde el buscador de la propia pantalla.**
+   *
+   *  *Si la lista no existe todavía (la pantalla de «no tienes ninguna lista»), se crea la de
+   *  casa y se apunta ahí: apuntar no puede exigir crear la lista antes ni salir a buscarlo.*
+   */
+  async function apuntaProducto(producto: ResultadoBusqueda) {
+    let destino = listaId
+    if (!destino) {
+      const nueva = await crearLista('La de casa', true)
+      destino = nueva.id
+      setElegida(destino)
+      cliente.invalidateQueries({ queryKey: ['listas'] })
+    }
+    await anadirLinea(destino, {
+      nombre: producto.nombre,
+      grupo_id: producto.grupo_id,
+      producto_id: null,
+    })
+    cliente.invalidateQueries({ queryKey: ['lista', destino] })
+    cliente.invalidateQueries({ queryKey: ['reparto', destino] })
+    cliente.invalidateQueries({ queryKey: ['listas'] })
+  }
   const cambia = useMutation({
     // **`networkMode: 'always'` es la pieza que hace que la cola sirva.** Por defecto,
     // React Query *pausa* una mutacion cuando `navigator.onLine` es falso: no la manda,
@@ -1761,6 +1789,20 @@ export function Cesta() {
       void pendientes
     },
   })
+
+  /** **Quitar varias líneas de una vez.** *Cada una va por el mismo camino que quitar una
+   *  (y por eso, sin red, acaba en la cola), pero se pulsó una sola vez.* El aviso de lo que no
+   *  llegó lo da la mutación: aquí se sigue con las demás.*/
+  async function quitaVarias(ids: string[]) {
+    setModoSeleccion(false)
+    for (const id of ids) {
+      try {
+        await cambia.mutateAsync({ lineaId: id, cambio: { borrado: true } })
+      } catch {
+        // El fallo ya lo cuenta la pantalla; se sigue con las otras líneas.
+      }
+    }
+  }
 
   // La cola se lee **de lo guardado en el movil**, no se hereda del estado: si se cierra
   // la pestaña en el pasillo, los cambios siguen ahi al volver a abrirla.
@@ -1844,6 +1886,13 @@ export function Cesta() {
     // La lista de casa la crea el propio "Añadir" si no existe (`useAnadeALaCesta`).
     return (
       <div className="flex min-h-full flex-col gap-4">
+        {/* *** APUNTAR YA, *antes de tener lista*. *** *La pantalla que peor acogía a quien
+            acaba de llegar era justo esta: un cartel y a otra cosa. El buscador apunta en la
+            lista de casa, que se crea sola, y el vacío de abajo deja de ser un callejón.* */}
+        <div className="rounded-tarjeta border border-borde bg-papel px-4 py-3 shadow-apoyado">
+          <Typeahead listaId={null} alElegir={apuntaProducto} />
+        </div>
+        <SinConexion />
         <Vacio titulo="No tienes ninguna lista" className="grow">
           <p>
             Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se
@@ -1879,6 +1928,8 @@ export function Cesta() {
           }}
         />
       )}
+
+      <SinConexion />
 
       {/* **La barra de las listas**: cual, crear otra, cambiarle el nombre y quitarla.
           *Sigue a la vista y no detras del boton de opciones a proposito: es la unica forma de
@@ -1916,6 +1967,17 @@ export function Cesta() {
             }}
           />
         )}
+      </div>
+
+      {/* *** APUNTAR SIN SALIR DE LA LISTA. *** *Hasta hoy, «Añadir producto» mandaba a
+          `/compra`: buscar era otra pantalla y volver a la lista, otro viaje. Aquí se escribe,
+          se ve la sugerencia con su €/kg y se apunta sin soltar el campo.* */}
+      <div className="rounded-tarjeta border border-borde bg-papel px-4 py-3 shadow-apoyado">
+        <Typeahead
+          listaId={listaId}
+          alElegir={apuntaProducto}
+          puedeEscribir={detalle.data?.papel !== 'mira'}
+        />
       </div>
 
       {/* De donde viene esta pantalla. Se dice una vez, al llegar del enlace:
@@ -2206,6 +2268,26 @@ export function Cesta() {
               {/* Y cuando ya esta todo cogido, cerrar: lo del carro se guarda y sale de
                   la lista. Va despues del numero que se mira al tachar, que es el orden
                   en que se hace. */}
+              {/* *** QUITAR VARIAS DE UNA VEZ. *** *La selección accesible sustituye al gesto
+                  de tachar de una en una cuando hay que quitar media lista; las marcadas son
+                  exactamente las que se quitan.* */}
+              {puedeCambiarla && lineas.length > 1 && !modoSeleccion && (
+                <Boton variante="sutil" onClick={() => setModoSeleccion(true)}>
+                  Elegir varias líneas
+                </Boton>
+              )}
+              {modoSeleccion && (
+                <SeleccionMultiple
+                  filas={lineas.map((l) => ({
+                    id: l.id,
+                    nombre: l.nombre_visto,
+                    precioCent: precios.get(l.id)?.coste_cent ?? null,
+                  }))}
+                  alQuitar={(ids) => void quitaVarias(ids)}
+                  alSalir={() => setModoSeleccion(false)}
+                />
+              )}
+
               <CerrarCompra
                 listaId={listaId as string}
                 enElCarro={enElCarro.length}

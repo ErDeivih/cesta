@@ -1,0 +1,621 @@
+{
+  "fecha": "2026-11-13T13:50:48.122Z",
+  "base": "http://localhost:5173",
+  "usuario": {
+    "usuario": "medicion",
+    "clave": "medicion2026"
+  },
+  "navegador": "msedge --headless=new (CDP crudo)",
+  "viewports": [
+    {
+      "nombre": "movil",
+      "ancho": 390,
+      "alto": 844
+    },
+    {
+      "nombre": "escritorio",
+      "ancho": 1440,
+      "alto": 900
+    }
+  ],
+  "rutas": {
+    "movil": {
+      "compra": {
+        "ruta": "/compra?q=leche%20entera",
+        "nombre": "/compra (buscar, con el listado)",
+        "datosListos": true,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-antes-compra-390x844.png",
+        "capturaCompleta": "ui-antes-compra-390x844-completa.png",
+        "api": {
+          "llamadas": 12,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra?q=leche%20entera",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 8898,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ Guardar estos filtros 40 resultados · datos del 13 nov 2026 CADENA Alcampo Aldi Ca",
+          "top": 89,
+          "bottom": 8802,
+          "alto": 8713,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 40,
+          "enPantalla": 2,
+          "ejemplos": [
+            "hasta 2,09 €/l",
+            "hasta 23,16 €/kg",
+            "hasta 1,42 €/l",
+            "hasta 1,39 €/l"
+          ],
+          "columnaVisible": 1
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          },
+          {
+            "etiqueta": "span",
+            "clase": "sr-only sm:not-sr-only",
+            "texto": "Escanear",
+            "ocultoPx": 65
+          }
+        ],
+        "filas": {
+          "total": 40,
+          "visibles": 2,
+          "hay": true
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ Guardar estos filtros 40 resultados · datos del 13 nov 2026 CADENA Alcampo Aldi Carrefour DIA Lidl Mercadona ORDENAR POR Lo de siempre ▾ PRODUCTO PVP POR UNIDAD Leche entera Hacendado mercadona · Hacendado hasta un 117,7 % en el grupo comparable · 5 cadenas C sin Eco-Score 0,96 € 0,96 €/l hasta 2,09 €/l Chocolate con lec"
+      },
+      "listas": {
+        "ruta": "/compra/listas",
+        "nombre": "/compra/listas (la entrada de la cesta)",
+        "datosListos": true,
+        "titulo": "La cesta · Cesta",
+        "captura": "ui-antes-listas-390x844.png",
+        "capturaCompleta": "ui-antes-listas-390x844-completa.png",
+        "api": {
+          "llamadas": 11,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra/listas",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 844,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-bloque",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…",
+          "top": 89,
+          "bottom": 748,
+          "alto": 659,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 0,
+          "enPantalla": 0,
+          "ejemplos": [],
+          "columnaVisible": 0
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "span",
+            "clase": "sr-only",
+            "texto": "Cargando…",
+            "ocultoPx": 80
+          }
+        ],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "tarjetas": {
+          "total": 0,
+          "visibles": 0
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 1
+        },
+        "titular": "Listas",
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…"
+      },
+      "comparar": {
+        "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "nombre": "/compra/listas/:listaId/comparar (comparativa por cadena)",
+        "datosListos": true,
+        "titulo": "Comparar la cesta · Cesta",
+        "captura": "ui-antes-comparar-390x844.png",
+        "capturaCompleta": "ui-antes-comparar-390x844-completa.png",
+        "api": {
+          "llamadas": 12,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 2826,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex flex-col gap-seccion",
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en",
+          "top": 89,
+          "bottom": 2730,
+          "alto": 2641,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 25,
+          "enPantalla": 0,
+          "ejemplos": [
+            "1 l · 7,39 €/l",
+            "1 l · 7,02 €/l",
+            "1 l · 4,34 €/l",
+            "1 l · 7,95 €/l"
+          ],
+          "columnaVisible": 0
+        },
+        "textosCortados": [],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "tarjetas": {
+          "total": 6,
+          "visibles": 3
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Comparar la cesta",
+        "textoPrimeraPantalla": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en una tienda Cobertura 6/6 productos LO QUE TE AHORRAS 10,57 € −48 % Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más cara. Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos"
+      }
+    },
+    "escritorio": {
+      "compra": {
+        "ruta": "/compra?q=leche%20entera",
+        "nombre": "/compra (buscar, con el listado)",
+        "datosListos": true,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-antes-compra-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 13,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra?q=leche%20entera",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 4587,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ Guardar estos filtros 40 resultados · datos del 13 nov 2026 CADENA Alcampo Aldi Ca",
+          "top": 83,
+          "bottom": 4567,
+          "alto": 4484,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 40,
+          "enPantalla": 5,
+          "ejemplos": [
+            "hasta 2,09 €/l",
+            "hasta 23,16 €/kg",
+            "hasta 1,42 €/l",
+            "hasta 1,39 €/l"
+          ],
+          "columnaVisible": 2
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          }
+        ],
+        "filas": {
+          "total": 40,
+          "visibles": 5,
+          "hay": true
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ Guardar estos filtros 40 resultados · datos del 13 nov 2026 CADENA Alcampo Aldi Carrefour DIA Lidl Mercadona PRODUCTO ▴ Cadena Marca Precio Por unidad Dónde Diferencia del grupo Leche entera Hacendado C comparable · 5 cadenas mercadona Hacendado 0,96 € 0,96 €/l hasta 2,09 €/l 5 cadenas 6 productos 117,7 % Chocolate con l"
+      },
+      "listas": {
+        "ruta": "/compra/listas",
+        "nombre": "/compra/listas (la entrada de la cesta)",
+        "datosListos": true,
+        "titulo": "La cesta · Cesta",
+        "captura": "ui-antes-listas-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 11,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra/listas",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 974,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-bloque",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…",
+          "top": 83,
+          "bottom": 880,
+          "alto": 797,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 0,
+          "enPantalla": 0,
+          "ejemplos": [],
+          "columnaVisible": 0
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "span",
+            "clase": "sr-only",
+            "texto": "Cargando…",
+            "ocultoPx": 80
+          }
+        ],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "tarjetas": {
+          "total": 0,
+          "visibles": 0
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 1
+        },
+        "titular": "Listas",
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…"
+      },
+      "comparar": {
+        "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "nombre": "/compra/listas/:listaId/comparar (comparativa por cadena)",
+        "datosListos": true,
+        "titulo": "Comparar la cesta · Cesta",
+        "captura": "ui-antes-comparar-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 11,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "url": "http://localhost:5173/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 2307,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex flex-col gap-seccion",
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en",
+          "top": 83,
+          "bottom": 2287,
+          "alto": 2204,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 25,
+          "enPantalla": 0,
+          "ejemplos": [
+            "1 l · 7,39 €/l",
+            "1 l · 7,02 €/l",
+            "1 l · 4,34 €/l",
+            "1 l · 7,95 €/l"
+          ],
+          "columnaVisible": 0
+        },
+        "textosCortados": [],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "tarjetas": {
+          "total": 6,
+          "visibles": 4
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Comparar la cesta",
+        "textoPrimeraPantalla": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en una tienda Cobertura 6/6 productos LO QUE TE AHORRAS 10,57 € −48 % Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más cara. Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos"
+      }
+    }
+  },
+  "resumen": {
+    "movil": {
+      "scrollHorizontal": {
+        "compra": false,
+        "listas": false,
+        "comparar": false
+      },
+      "altoDeCabecera": {
+        "compra": 69,
+        "listas": 69,
+        "comparar": 69
+      },
+      "primerContenidoVisible": {
+        "compra": {
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, ",
+          "top": 89
+        },
+        "listas": {
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…",
+          "top": 89
+        },
+        "comparar": {
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar",
+          "top": 89
+        }
+      },
+      "euroPorUnidadEnPantalla": {
+        "compra": 2,
+        "listas": 0,
+        "comparar": 0
+      },
+      "filasVisibles": {
+        "compra": 2,
+        "listas": 0,
+        "comparar": 0
+      },
+      "textosCortados": {
+        "compra": 3,
+        "listas": 1,
+        "comparar": 0
+      }
+    },
+    "escritorio": {
+      "scrollHorizontal": {
+        "compra": false,
+        "listas": false,
+        "comparar": false
+      },
+      "altoDeCabecera": {
+        "compra": 63,
+        "listas": 63,
+        "comparar": 63
+      },
+      "primerContenidoVisible": {
+        "compra": {
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, ",
+          "top": 83
+        },
+        "listas": {
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cargando…",
+          "top": 83
+        },
+        "comparar": {
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar",
+          "top": 83
+        }
+      },
+      "euroPorUnidadEnPantalla": {
+        "compra": 5,
+        "listas": 0,
+        "comparar": 0
+      },
+      "filasVisibles": {
+        "compra": 5,
+        "listas": 0,
+        "comparar": 0
+      },
+      "textosCortados": {
+        "compra": 2,
+        "listas": 1,
+        "comparar": 0
+      }
+    }
+  },
+  "bloqueos": [],
+  "sesion": {
+    "estadoEntrar": 200,
+    "yo": {
+      "usuario": {
+        "id": "7e26aed4-1e4b-405d-becd-d7b68deb5cc0",
+        "usuario": "medicion",
+        "nombre": "Medicion"
+      },
+      "preferencias": {}
+    }
+  },
+  "lista": {
+    "id": "899d6629-18ec-43f1-984a-781e910ea6e0",
+    "nombre": "La casa",
+    "es_de_casa": true,
+    "lineas": 6
+  }
+}
