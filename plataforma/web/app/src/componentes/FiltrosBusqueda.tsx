@@ -10,12 +10,12 @@
  *  en silencio un sello que no conoce, asi que mandar uno inventado daria una
  *  lista sin filtrar y con pinta de filtrada.
  */
-import { useId } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 
 import { useSecciones } from '../api/consultas'
 import type { FiltrosBuscar } from '../api/consultas'
 import { nombreCadena, selloLegible } from '../api/formato'
-import { Casilla, Etiqueta, Resumen, Selector, cx } from './ui'
+import { Casilla, Etiqueta, Selector, cx } from './ui'
 
 /** Los ocho que acepta `catalogo.SELLOS_FILTRABLES` (docs/API.md). */
 export const SELLOS = [
@@ -40,11 +40,27 @@ interface Props {
   cadenasDisponibles: string[]
   onCambio: (f: FiltrosBuscar) => void
   cuantosPuestos: number
+  /** *Lo que solo se busca cuando se abre el panel*, como «Guardar estos filtros».
+   *  *Se monta aquí y no en la cabecera: en la primera pantalla cada fila de controles es una
+   *  fila de resultados que no se ve.* */
+  children?: ReactNode
 }
 
-export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantosPuestos }: Props) {
+export function FiltrosBusqueda({
+  filtros, cadenasDisponibles, onCambio, cuantosPuestos, children,
+}: Props) {
   const secciones = useSecciones(filtros.cadenas)
   const idSeccion = useId()
+  const idPanel = useId()
+  // *Plegado de verdad, con estado y render condicional.* *El `<details>` daba el panel por
+  // cerrado pero el `display` de las utilidades de Tailwind dejaba su contenido pintado y
+  // **flotando encima de los resultados** (medido: los campos del panel caían sobre las filas de
+  // producto y tapaban 20 controles).* *Con estado, cerrado es cerrado.*
+  //
+  // *Y **arranca cerrado aunque haya filtros puestos**: los filtros activos ya se ven en los
+  // chips, y abrir el panel solo porque hay uno deja los resultados a 1.300 px de la cabecera.
+  // Quien quiera cambiarlos, lo abre.*
+  const [abierto, setAbierto] = useState(false)
 
   const alternaCadena = (cadena: string) => {
     const puestas = filtros.cadenas.includes(cadena)
@@ -61,19 +77,26 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
   }
 
   return (
-    <details
-      open={cuantosPuestos > 0}
-      className="rounded-tarjeta border border-borde bg-papel p-3 "
-    >
-      <Resumen className="text-cuerpo font-medium">
+    <div className="rounded-tarjeta border border-borde bg-papel p-3 ">
+      <button
+        type="button"
+        aria-expanded={abierto}
+        aria-controls={idPanel}
+        onClick={() => setAbierto(!abierto)}
+        className="flex min-h-[44px] w-full items-center gap-2 text-left text-cuerpo font-medium"
+      >
         Filtros
         {cuantosPuestos > 0 && <Etiqueta tono="info">{cuantosPuestos}</Etiqueta>}
-        <span className="text-etiqueta font-normal text-tinta-suave">
+        <span className="ml-auto text-etiqueta font-normal text-tinta-suave">
           cadena, pasillo, dieta, ofertas…
         </span>
-      </Resumen>
+        <span aria-hidden className="text-entrada leading-none opacity-70">
+          ▾
+        </span>
+      </button>
 
-      <div className="mt-3 grid gap-4">
+      {abierto && (
+        <div id={idPanel} className="mt-3 grid gap-4">
         <fieldset>
           <legend className="mb-1 text-etiqueta font-medium text-secundaria ">
             Cadena
@@ -227,7 +250,9 @@ export function FiltrosBusqueda({ filtros, cadenasDisponibles, onCambio, cuantos
           «Solo ofertas de hoy» deja fuera las de tarjeta y las de solo internet: ninguna de las dos
           baja lo que pagas en caja.
         </p>
-      </div>
-    </details>
+        {children}
+        </div>
+      )}
+    </div>
   )
 }

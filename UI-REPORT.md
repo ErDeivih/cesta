@@ -249,3 +249,70 @@ cd ../../.. && ./.venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests
   `ai-design-check` (0 errores en lo nuevo) y la medición.
 - **Suite de Python**: 2 pruebas dependientes del disco deseleccionadas (arriba, con motivo).
 - **`/compra` typeahead y escala tipográfica** de las 30 pantallas heredadas: fuera de alcance.
+
+---
+
+## 8. Ronda 2 — revisión de la pantalla de compra/listado a 390 px
+
+Revisión externa (Codex) sobre `/compra`: los controles ocupaban más de media pantalla y a 390 px
+apenas se veían dos productos; el porcentaje del grupo no decía cuánto dinero es; y no había
+forma de ver el mismo producto cadena a cadena. Medición propia antes/después con el mismo
+instrumento: **`medicion-r2-antes.json`** (build de la entrega anterior servido por Caddy, :8080)
+y **`medicion-r2-despues.json`** (Vite con el código nuevo, :5173). Capturas `ui-r2-antes-*` y
+`ui-r2-despues-*` (12 + 12).
+
+### 8.1 Qué se cambió, por impacto
+
+| Antes | Después | Por qué |
+|---|---|---|
+| El panel «Filtros» se daba por cerrado, pero su contenido seguía pintado **flotando sobre los resultados**: los campos del panel caían encima de las filas y tapaban **20 controles** a 390 px | Panel **de verdad plegado** (estado + render condicional, no `<details>`): cerrado no deja nada en el flujo. Cadenas, pasillo, dieta, ofertas, conservación y número de resultados viven **dentro** | Un `<details>` cerrado daba `open=false` pero el `display` de las utilidades de Tailwind dejaba el contenido en su sitio. Medido: 20 controles tapados y 450 px de controles antes del primer producto |
+| Las cadenas eran una fila **siempre visible** encima de los resultados, y «Guardar estos filtros» otra | Las cadenas están **dentro de Filtros**; «Guardar estos filtros» pasa a **segundo plano** (dentro del panel); los filtros puestos se ven como **chips** que se quitan de uno en uno, con «Quitar todos» | Cada fila de controles es una fila de producto que no se ve. Los chips dicen **cuál** es el filtro, no solo cuántos |
+| Cada producto arrastraba foto, marca, Nutri-Score, eco-score, sellos, ofertas y «hasta 2,09 €/l» | Cada fila enseña **nombre, supermercado, precio de venta y precio por unidad**; el resto queda en la ficha del producto | En 390 px cada sello es una línea más y lo que se viene a mirar es el precio. **El precio de venta y el €/kg siguen juntos**, que es lo que la revisión pide no tocar |
+| «Hasta un 117,7 % en el grupo» (porcentaje del grupo de equivalencias) | **«0,66 €/l menos que el más caro»**: diferencia en euros **con la misma unidad**, solo si el grupo es comparable y no dudoso | Un porcentaje no dice cuánto dinero es y se lee como «lo que te ahorras comprando este». Con la misma unidad, la diferencia es una cantidad comparable; sin abanico no se pinta nada |
+| No había forma de ver el mismo producto en cada supermercado desde el listado | **«Ver ofertas por supermercado»** en cada fila: despliega el grupo entero (una fila por cadena) **ordenado por precio por unidad**, pidiéndolo al abrir y con la diferencia total del grupo al pie | La lista enseña el más barato de cada producto, pero no **dónde**. Ordenar por €/unidad y no por precio de venta es la comparación que la app existe para hacer (un pack más caro puede ser más barato por kilo) |
+
+### 8.2 Medición (móvil 390 × 844)
+
+| Ruta | Control tapado | Controles hasta el 1.º producto | Productos visibles | €/ud en pantalla | Chips |
+|---|---:|---:|---:|---:|---|
+| `/compra` **antes** | **20 / 35** | **450 px** | **2 de 40** | 2 | — |
+| `/compra` **después** | **0 / 12** | **282 px** | **4 de 40** | 7 | — |
+| `/compra` con filtro **antes** | 0 / 22 | 1.370 px | 0 de 35 | 0 | — |
+| `/compra` con filtro **después** | **0 / 14** | **338 px** | **4 de 35** | 4 | `DIA ×`, `Quitar todos` |
+| `/compra/listas` (sin cambios) | 0 / 14 | — | — | — | — |
+| `/compra/.../comparar` (sin cambios) | 0 / 1 | — | — | — | — |
+
+Escritorio 1440 × 900: `/compra` pasa de 14/44 controles tapados a **0/16**; con filtro, de 42 a 18
+controles y de 1 a 7 productos visibles. Sin scroll horizontal en ninguna ruta.
+
+**La acción nueva, pulsada de verdad** (el instrumento pulsa el primer «Ver ofertas por
+supermercado» y lee el panel):
+
+```text
+antes:  {"hayBoton": false, "hayPanel": false}
+después: {"hayBoton": true, "hayPanel": true,
+  "filas": ["Aldi … 0,96 € 0,96 €/l", "Carrefour … 0,96 € 0,96 €/l",
+            "Carrefour … 0,96 € 0,96 €/l", "Mercadona … 0,96 € 0,96 €/l",
+            "DIA … 1,09 € 1,09 €/l", "Alcampo … 2,09 € 2,09 €/l"]}
+```
+
+Orden no decreciente por €/unidad (0,96 → 1,09 → 2,09), que es lo que promete la acción.
+
+### 8.3 Puertas de la ronda 2
+
+```text
+npx vitest run                 →  29 ficheros / 319 tests passed      [exit 0]
+npm test                       →  tests 404 / pass 404 / fail 0    [exit 0]
+npx tsc --noEmit               →  sin salida                        [exit 0]
+npm run build                  →  ✓ built in 6.24 s · sella-sw 41 trozos   [exit 0]
+pytest tests/test_ui_movil.py -p no:cacheprovider  →  15 passed in 4.87 s  [exit 0]
+ai-design-check (ficheros de la ronda)  →  0 errores, 23 avisos heredados/explicados  [exit 0]
+```
+
+Los avisos de `ai-design-check` son los patrones que ya estaban en esos ficheros (`raw <button>`,
+`uppercase tracking-wide`, plurales a mano); la ronda no añade errores. La suite Python completa
+de la ronda 1 (1.503 verdes / 813 saltadas / 2 deseleccionadas) no se repite: no se tocó Python.
+
+Pruebas nuevas: `src/paginas/Buscar.test.tsx` (5) — cadenas y guardar dentro de Filtros, chips,
+los cuatro datos por fila, la diferencia en euros, el despliegue ordenado por €/unidad y el caso
+sin comparación fiable.

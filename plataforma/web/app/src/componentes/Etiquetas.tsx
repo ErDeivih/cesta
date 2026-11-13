@@ -13,7 +13,7 @@
  *     llevar el mismo verde que una oferta de verdad.
  */
 import type { Letra, Nutriscore, Producto } from '../tipos'
-import { porcentaje } from '../api/formato'
+import { eurosUnidad } from '../api/formato'
 import { Etiqueta } from './ui'
 
 const COLOR_NUTRI: Record<string, string> = {
@@ -144,29 +144,34 @@ export function SelloOferta({ texto, club, unidades }: {
   return null
 }
 
-/** Lo que te ahorras comprando en la cadena más barata en vez de en la más cara.
+/** *** LA DIFERENCIA CONCRETA, *en euros y con la misma unidad*. *** *
  *
- *  Existe desde el 27 de septiembre de 2026, cuando la tabla de resultados se rehizo para el
- *  móvil: el ahorro era una columna de la tabla, y en las filas de dos líneas del móvil no
- *  cabía. Y es la respuesta corta a «¿esto está caro?», así que no se puede quedar fuera de la
- *  pantalla: aquí va pegada al nombre, en una línea.
+ *  *Antes esto era «hasta un 117,7 % en el grupo»: un porcentaje que no dice cuánto dinero es y
+ *  que se lee como «lo que te ahorras comprando este» cuando en realidad es la horquilla del
+ *  grupo de equivalencias.* *Ahora se dice la diferencia en euros por unidad comparable: «0,45 €/l
+ *  menos que el más caro».*
  *
- *  **`0.0` no es un cero**: es el centinela de «no comparable» o «dudoso» (`tipos.ts`), y esas
- *  dos cosas se dicen, no se pintan como un 0 %.
+ *  *Solo se afirma cuando el grupo es comparable y no dudoso (lo dice la API) y cuando el máximo
+ *  por unidad viene en la misma unidad: comparar 2,09 €/l con 0,96 €/kg sería inventarse un
+ *  número.* *Sin abanico (todos al mismo precio), no hay nada que decir y no se pinta.*
  */
-export function SelloAhorro({ pct, comparable, dudoso }: {
-  pct: number
+export function DiferenciaDelGrupo({ precioUnidadCent, precioUnidadMaxCent, unidad, comparable, dudoso }: {
+  precioUnidadCent: number | null
+  precioUnidadMaxCent: number | null
+  unidad: string | null
   comparable: boolean
   dudoso: boolean
 }) {
-  if (!comparable || dudoso || pct <= 0) {
-    return (
-      <Etiqueta tono="dato">no lo sé</Etiqueta>
-    )
-  }
+  if (!comparable || dudoso) return null
+  if (precioUnidadCent === null || precioUnidadMaxCent === null) return null
+  const diferencia = precioUnidadMaxCent - precioUnidadCent
+  if (diferencia <= 0) return null
   return (
-    <span className="cifra text-etiqueta font-semibold text-bien ">
-      hasta un {porcentaje(pct)} en el grupo
+    <span
+      className="cifra text-etiqueta font-semibold text-bien "
+      title="Misma unidad: del miembro más barato al más caro del grupo de equivalentes"
+    >
+      {eurosUnidad(diferencia, unidad)} menos que el más caro
     </span>
   )
 }

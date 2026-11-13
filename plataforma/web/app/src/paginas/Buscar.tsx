@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { FILTROS_VACIOS, consultaUtil, useBuscar, useEstado, type FiltrosBuscar } from '../api/consultas'
-import { fecha, nombreCadena } from '../api/formato'
+import { fecha, nombreCadena, selloLegible } from '../api/formato'
 import { FiltrosBusqueda } from '../componentes/FiltrosBusqueda'
 import { Microfono } from '../componentes/Microfono'
 import { Mosaico } from '../componentes/Mosaico'
@@ -189,24 +189,26 @@ export function Buscar() {
             <IconoCodigoBarras width={18} height={18} />
             <span className="sr-only sm:not-sr-only">Escanear</span>
           </Link>
-          {puestos > 0 && (
-            <Boton variante="normal" onClick={quitarFiltros}>
-              Quitar {puestos} {puestos === 1 ? 'filtro' : 'filtros'}
-            </Boton>
-          )}
         </div>
+
+        {/* *** LOS FILTROS PUESTOS, EN CHIPS. *** *Antes había un botón «Quitar 3 filtros» que
+            no decía cuáles: para saber si el que sobraba era «DIA» o «sin gluten» había que abrir
+            el panel. El chip dice el filtro y lo quita; «Quitar todos» sigue a un toque.* */}
+        <ChipsDeFiltros filtros={filtros} onCambio={ponFiltros} onQuitarTodos={quitarFiltros} />
 
         <FiltrosBusqueda
           filtros={filtros}
           cadenasDisponibles={cadenas}
           onCambio={ponFiltros}
           cuantosPuestos={puestos}
-        />
-
-        <VistasGuardadas
-          consulta={consulta ? `?${consulta}` : ''}
-          onAplicar={(c) => setParams(new URLSearchParams(c.startsWith('?') ? c.slice(1) : c))}
-        />
+        >
+          {/* *«Guardar estos filtros» a segundo plano: se busca dentro del panel, no en la
+              primera pantalla.* */}
+          <VistasGuardadas
+            consulta={consulta ? `?${consulta}` : ''}
+            onAplicar={(c) => setParams(new URLSearchParams(c.startsWith('?') ? c.slice(1) : c))}
+          />
+        </FiltrosBusqueda>
       </section>
 
       {!busca && (
@@ -306,55 +308,6 @@ export function Buscar() {
             {resultados.isFetching && <Etiqueta tono="dato">actualizando…</Etiqueta>}
           </div>
 
-          {/* **Las cadenas, a la vista y a un toque.** Estaban solo dentro del panel de
-              filtros, que va plegado, así que para mirar «leche entera» en una sola cadena
-              había que abrir un panel y saber que ahí estaba. Comparar el mismo producto entre
-              cinco cadenas es la razón de ser de la aplicación, así que las cinco van encima de
-              los resultados, con la misma lógica del panel (`alternaCadena`), y «Todas» para
-              quitarlas. Sin cuentas por cadena: la API no las manda y el número que saldría de
-              contar estas cuarenta filas no es el del catálogo. */}
-          {cadenas.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2" role="group"
-                 aria-label="Cadena de los resultados">
-              <span className="text-etiqueta uppercase tracking-wide text-tinta-suave">Cadena</span>
-              {cadenas.map((c) => {
-                const puesta = filtros.cadenas.includes(c)
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    aria-pressed={puesta}
-                    onClick={() =>
-                      ponFiltros({
-                        ...filtros,
-                        cadenas: puesta
-                          ? filtros.cadenas.filter((o) => o !== c)
-                          : [...filtros.cadenas, c],
-                      })
-                    }
-                    className={cx(
-                      'min-h-[44px] rounded-full border px-3 text-cuerpo font-medium',
-                      puesta
-                        ? 'border-terracota bg-terracota text-papel '
-                        : 'border-borde bg-papel ',
-                    )}
-                  >
-                    {nombreCadena(c)}
-                  </button>
-                )
-              })}
-              {filtros.cadenas.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => ponFiltros({ ...filtros, cadenas: [] })}
-                  className="min-h-[44px] rounded-full border border-borde bg-papel px-3 text-cuerpo underline "
-                >
-                  Todas
-                </button>
-              )}
-            </div>
-          )}
-
           {resultados.data.resultados.length === 0 ? (
             /* Cero resultados tiene DOS causas y se arreglan de forma distinta:
                cambiar la palabra o quitar los filtros. Con un solo mensaje, quien
@@ -401,6 +354,112 @@ export function Buscar() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+/** Los filtros puestos, en chips que se quitan con un toque. */
+function ChipsDeFiltros({ filtros, onCambio, onQuitarTodos }: {
+  filtros: FiltrosBuscar
+  onCambio: (f: FiltrosBuscar) => void
+  onQuitarTodos: () => void
+}) {
+  const chips: { clave: string; etiqueta: string; quitar: () => void }[] = []
+
+  for (const c of filtros.cadenas) {
+    chips.push({
+      clave: `cadena-${c}`,
+      etiqueta: nombreCadena(c),
+      quitar: () => onCambio({ ...filtros, cadenas: filtros.cadenas.filter((x) => x !== c) }),
+    })
+  }
+  if (filtros.seccion) {
+    chips.push({
+      clave: 'pasillo',
+      etiqueta: filtros.seccion,
+      quitar: () => onCambio({ ...filtros, seccion: '' }),
+    })
+  }
+  if (filtros.conservacion) {
+    const LEGIBLE: Record<string, string> = {
+      refrigerado: 'Refrigerado',
+      congelado: 'Congelado',
+      ambiente: 'Ambiente',
+    }
+    chips.push({
+      clave: 'conservacion',
+      etiqueta: LEGIBLE[filtros.conservacion] ?? filtros.conservacion,
+      quitar: () => onCambio({ ...filtros, conservacion: '' }),
+    })
+  }
+  for (const s of filtros.sellos) {
+    chips.push({
+      clave: `sello-${s}`,
+      etiqueta: selloLegible(s),
+      quitar: () => onCambio({ ...filtros, sellos: filtros.sellos.filter((x) => x !== s) }),
+    })
+  }
+  if (filtros.comparables) {
+    chips.push({
+      clave: 'comparables',
+      etiqueta: 'Solo comparables',
+      quitar: () => onCambio({ ...filtros, comparables: false }),
+    })
+  }
+  if (filtros.conNutricion) {
+    chips.push({
+      clave: 'nutricion',
+      etiqueta: 'Con nutrición',
+      quitar: () => onCambio({ ...filtros, conNutricion: false }),
+    })
+  }
+  if (filtros.ofertas) {
+    chips.push({
+      clave: 'ofertas',
+      etiqueta: 'Solo ofertas de hoy',
+      quitar: () => onCambio({ ...filtros, ofertas: false }),
+    })
+  }
+  if (filtros.marcaPropia) {
+    chips.push({
+      clave: 'marca-propia',
+      etiqueta: 'Solo marca propia',
+      quitar: () => onCambio({ ...filtros, marcaPropia: false }),
+    })
+  }
+  if (filtros.sinAlcohol) {
+    chips.push({
+      clave: 'sin-alcohol',
+      etiqueta: 'Sin alcohol',
+      quitar: () => onCambio({ ...filtros, sinAlcohol: false }),
+    })
+  }
+
+  if (!chips.length) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filtros puestos">
+      {chips.map((chip) => (
+        <button
+          key={chip.clave}
+          type="button"
+          onClick={chip.quitar}
+          aria-label={`Quitar el filtro ${chip.etiqueta}`}
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-full border border-borde bg-marfil px-3 text-etiqueta"
+        >
+          {chip.etiqueta}
+          <span aria-hidden className="text-entrada leading-none">
+            ×
+          </span>
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={onQuitarTodos}
+        className="min-h-[44px] px-3 text-etiqueta underline underline-offset-2"
+      >
+        Quitar todos
+      </button>
     </div>
   )
 }

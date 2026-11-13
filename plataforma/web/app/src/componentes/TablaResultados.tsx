@@ -22,18 +22,18 @@ import {
   type SortingState,
 } from '@tanstack/react-table'
 
-import { euros, eurosUnidad, porcentaje } from '../api/formato'
+import { euros, eurosUnidad, nombreCadena } from '../api/formato'
 import type { ResultadoBusqueda } from '../tipos'
 import {
-  SelloAhorro,
+  DiferenciaDelGrupo,
   SelloComparable,
   SelloDudoso,
   SelloNutriscore,
-  SelloEcoscore,
   SelloOferta,
   SelloRetirada,
 } from './Etiquetas'
-import { Etiqueta, Resumen, TablaScroll, Td, Th } from './ui'
+import { OfertasDelProducto } from './OfertasDelProducto'
+import { Etiqueta, TablaScroll, Td, Th } from './ui'
 
 /** Si la pantalla es de móvil. **La tabla de resultados no cabe en 390 px.**
  *
@@ -177,22 +177,16 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
         sortingFn: porNumero,
         cell: ({ row }) => {
           const f = row.original
-          // `ahorro_pct: 0.0` es el centinela de "no comparable" o "dudoso", no
-          // un cero de verdad. Pintarlo como 0 % diría "aquí no ahorras nada".
-          if (!f.comparable || f.dudoso) {
-            return (
-              <Etiqueta
-                tono="dato"
-                titulo="Sin comparación fiable no hay ahorro que dar"
-              >
-                no lo sé
-              </Etiqueta>
-            )
-          }
+          // *La diferencia, en euros y con la misma unidad. Sin comparación fiable no se pinta
+          // nada: un 0 % o un «no lo sé» en cada fila es ruido, y el detalle lo explica.*
           return (
-            <span className="cifra font-semibold text-bien ">
-              {porcentaje(f.ahorro_pct)}
-            </span>
+            <DiferenciaDelGrupo
+              precioUnidadCent={f.precio_unidad_cent}
+              precioUnidadMaxCent={f.precio_unidad_max_cent}
+              unidad={f.unidad}
+              comparable={f.comparable}
+              dudoso={f.dudoso}
+            />
           )
         },
       },
@@ -297,18 +291,27 @@ function BarraDeOrden({ orden, onOrden }: {
     ['cadenas', 'Dónde'],
   ]
   const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
+  // *Plegado de verdad, con estado y render condicional: el `<details>` dejaba su contenido
+  // pintado fuera de la caja cerrada y se comía una fila de resultados.*
+  const [abierto, setAbierto] = useState(false)
   return (
-    <details className="mb-2">
-      <Resumen className="text-etiqueta uppercase tracking-wide text-tinta-suave">
+    <div className="mb-2">
+      <button
+        type="button"
+        aria-expanded={abierto}
+        onClick={() => setAbierto(!abierto)}
+        className="flex min-h-[44px] w-full items-center gap-1.5 text-left text-etiqueta uppercase tracking-wide text-tinta-suave"
+      >
         Ordenar por
         <span className="font-semibold normal-case tracking-normal text-tinta">
           {puesto}
-          {/* El sentido, **con palabras y no con una flecha**: la flecha de esta linea es la del
-              desplegable (`Resumen`), y dos triangulos juntos se leen como uno solo mal puesto.
-              «De mayor a menor» no se puede confundir con nada. */}
+          {/* El sentido, **con palabras y no con una flecha**: dos triangulos juntos se leen
+              como uno solo mal puesto. «De mayor a menor» no se puede confundir con nada. */}
           {cual !== 'orden_servidor' && (arriba ? ' (de menor a mayor)' : ' (de mayor a menor)')}
         </span>
-      </Resumen>
+        <span aria-hidden className="ml-auto text-entrada leading-none opacity-70">▾</span>
+      </button>
+      {abierto && (
       <div className="flex flex-wrap items-center gap-2 pb-1">
         {botones.map(([id, texto]) => {
           const esElPuesto = cual === id
@@ -342,81 +345,71 @@ function BarraDeOrden({ orden, onOrden }: {
           )
         })}
       </div>
-    </details>
+      )}
+    </div>
   )
 }
 
-/** Una fila del móvil: dos líneas, y el precio siempre visible.
+/** *** LA FILA DEL MÓVIL: CUATRO DATOS Y UNA ACCIÓN. *** *
  *
- *  El enlace se estira por toda la fila con `after:inset-0`, igual que en la tabla: se puede
- *  pulsar en cualquier parte sin anidar enlaces.
+ *  *Nombre, supermercado, precio de venta y precio por unidad. La foto, la marca, los sellos, la
+ *  oferta y el resto se van a la ficha: en 390 px cada sello es una línea más y lo que se viene a
+ *  mirar es el precio.*
+ *
+ *  Debajo, **«Ver ofertas por supermercado»** despliega el mismo producto cadena a cadena, ordenado
+ *  por precio por unidad (no por precio de venta: un pack más caro puede ser más barato por kilo).
+ *
+ *  El enlace se estira por toda la fila con `after:inset-0`, igual que en la tabla; el botón y su
+ *  panel van con `relative z-10` para quedar por encima de esa capa y poder pulsarse.
  */
 function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
-  const hayAbanico =
-    fila.precio_unidad_cent !== null &&
-    fila.precio_unidad_max_cent !== null &&
-    fila.precio_unidad_max_cent > fila.precio_unidad_cent
+  const [abierto, setAbierto] = useState(false)
+  const grupoId = fila.grupo_id
   return (
-    <li className="relative hover:bg-marfil">
+    <li className="relative border-b border-borde last:border-0">
       <div className="grid grid-cols-[1fr_auto_auto] items-start gap-x-3 py-2">
-        <div className="flex min-w-0 items-start gap-2">
-          {fila.imagen ? (
-            <img
-              src={fila.imagen}
-              alt=""
-              loading="lazy"
-              width={40}
-              height={40}
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-              }}
-              className="h-10 w-10 shrink-0 rounded border border-borde bg-papel object-contain "
+        <div className="min-w-0">
+          <p className="text-cuerpo font-medium leading-snug">
+            {grupoId === null ? (
+              fila.nombre
+            ) : (
+              <Link to={`/grupo/${grupoId}`} className="after:absolute after:inset-0">
+                {fila.nombre}
+              </Link>
+            )}
+          </p>
+          <p className="text-etiqueta text-tinta-suave">
+            {fila.cadena_mas_barata ? nombreCadena(fila.cadena_mas_barata) : 'supermercado sin dato'}
+          </p>
+          <div className="mt-1">
+            <DiferenciaDelGrupo
+              precioUnidadCent={fila.precio_unidad_cent}
+              precioUnidadMaxCent={fila.precio_unidad_max_cent}
+              unidad={fila.unidad}
+              comparable={fila.comparable}
+              dudoso={fila.dudoso}
             />
-          ) : (
-            <span
-              aria-hidden="true"
-              className="h-10 w-10 shrink-0 rounded border border-dashed border-borde "
-            />
-          )}
-          <div className="min-w-0">
-            <p className="text-cuerpo font-medium leading-snug">
-              {fila.grupo_id === null ? (
-                fila.nombre
-              ) : (
-                <Link to={`/grupo/${fila.grupo_id}`} className="after:absolute after:inset-0">
-                  {fila.nombre}
-                </Link>
-              )}
-            </p>
-            <p className="text-etiqueta text-tinta-suave">
-              {fila.cadena_mas_barata ?? 'no lo sé'}
-              {fila.marca && fila.marca !== fila.cadena_mas_barata ? ` · ${fila.marca}` : ''}
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-1">
-              <SelloAhorro pct={fila.ahorro_pct} comparable={fila.comparable} dudoso={fila.dudoso} />
-              <SelloOferta
-                texto={fila.con_oferta ? 'Oferta que baja lo que pagas hoy en caja' : null}
-                club={fila.con_oferta_club}
-                unidades={fila.oferta_unidades ?? null}
-              />
-              <SelloRetirada retirado={fila.con_retirada} />
-              <SelloDudoso dudoso={fila.dudoso} />
-              <SelloComparable cadenas={fila.cadenas} />
-              <SelloNutriscore valor={fila.nutriscore} />
-              <SelloEcoscore valor={fila.ecoscore} />
-            </div>
           </div>
         </div>
         <span className="cifra text-cuerpo font-semibold">{euros(fila.precio_cent)}</span>
         <span className="cifra text-right text-cuerpo">
           {eurosUnidad(fila.precio_unidad_cent, fila.unidad)}
-          {hayAbanico && (
-            <span className="block text-etiqueta text-tinta-suave">
-              hasta {eurosUnidad(fila.precio_unidad_max_cent, fila.unidad)}
-            </span>
-          )}
         </span>
       </div>
+
+      {grupoId !== null && (
+        <div className="relative z-10 pb-2">
+          <button
+            type="button"
+            aria-expanded={abierto}
+            onClick={() => setAbierto(!abierto)}
+            className="min-h-[44px] text-etiqueta text-tinta-suave underline underline-offset-2"
+          >
+            {abierto ? 'Ocultar ofertas por supermercado' : 'Ver ofertas por supermercado'}
+          </button>
+          {abierto && <OfertasDelProducto grupoId={grupoId} nombre={fila.nombre} />}
+        </div>
+      )}
     </li>
   )
 }

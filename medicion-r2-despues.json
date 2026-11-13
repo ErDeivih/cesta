@@ -1,0 +1,1455 @@
+{
+  "fecha": "2026-11-13T21:46:29.149Z",
+  "base": "http://localhost:5173",
+  "usuario": {
+    "usuario": "medicion",
+    "clave": "medicion2026"
+  },
+  "navegador": "msedge --headless=new (CDP crudo)",
+  "viewports": [
+    {
+      "nombre": "movil",
+      "ancho": 390,
+      "alto": 844
+    },
+    {
+      "nombre": "escritorio",
+      "ancho": 1440,
+      "alto": 900
+    }
+  ],
+  "rutas": {
+    "movil": {
+      "compra": {
+        "ruta": "/compra?q=leche%20entera",
+        "nombre": "/compra (buscar, con el listado)",
+        "datosListos": true,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-r2-despues-compra-390x844.png",
+        "capturaCompleta": "ui-r2-despues-compra-390x844-completa.png",
+        "api": {
+          "llamadas": 14,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": {
+          "hayBoton": true,
+          "hayPanel": true,
+          "filas": [
+            "AldiLeche entera · MILSANI0,96 €0,96 €/l",
+            "CarrefourLeche entera Carrefour brik 1 l. · CARREFOUR0,96 €0,96 €/l",
+            "CarrefourLeche entera Carrefour brik 1 l. · CARREFOUR0,96 €0,96 €/l",
+            "MercadonaLeche entera Hacendado · Hacendado0,96 €0,96 €/l",
+            "DIALeche entera Celta 1 L · Celta1,09 €1,09 €/l",
+            "AlcampoLA COLMENAREÑA Leche entera 1 l. · LA COLMENAREÑA2,09 €2,09 €/l"
+          ]
+        },
+        "url": "http://localhost:5173/compra?q=leche%20entera",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 6653,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ 40 resultados · datos del 13 nov 2026 ORDENAR POR Lo de siempre ▾ PRODUCTO PVP POR",
+          "top": 89,
+          "bottom": 6557,
+          "alto": 6468,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 75,
+          "enPantalla": 7,
+          "ejemplos": [
+            "1,13 €/l menos que el más caro",
+            "0,96 €/l",
+            "7,36 €/kg menos que el más caro",
+            "15,80 €/kg"
+          ],
+          "columnaVisible": 1
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          },
+          {
+            "etiqueta": "span",
+            "clase": "sr-only sm:not-sr-only",
+            "texto": "Escanear",
+            "ocultoPx": 65
+          }
+        ],
+        "filas": {
+          "total": 40,
+          "visibles": 4,
+          "hay": true
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 12,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": 351,
+          "altoHastaPrimerProducto": 282
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": []
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ 40 resultados · datos del 13 nov 2026 ORDENAR POR Lo de siempre ▾ PRODUCTO PVP POR UNIDAD Leche entera Hacendado Mercadona 1,13 €/l menos que el más caro 0,96 € 0,96 €/l Ver ofertas por supermercado Chocolate con leche Valor almendras enteras Mercadona 7,36 €/kg menos que el más caro 3,95 € 15,80 €/kg Ver ofertas por sup"
+      },
+      "compra_filtros": {
+        "ruta": "/compra?q=leche%20entera&cadenas=dia",
+        "nombre": "/compra con un filtro puesto (chips y cabecera compacta)",
+        "datosListos": true,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-r2-despues-compra_filtros-390x844.png",
+        "capturaCompleta": "ui-r2-despues-compra_filtros-390x844-completa.png",
+        "api": {
+          "llamadas": 13,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra?q=leche%20entera&cadenas=dia",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 5140,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtros 1 cadena, pasillo, dieta, ofertas… ▾ 35 resultados · datos del 13 nov 2026 ORDENAR POR Lo de siemp",
+          "top": 89,
+          "bottom": 5044,
+          "alto": 4955,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 35,
+          "enPantalla": 4,
+          "ejemplos": [
+            "0,96 €/l",
+            "0,96 €/l",
+            "1,03 €/l",
+            "1,03 €/l"
+          ],
+          "columnaVisible": 1
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          },
+          {
+            "etiqueta": "span",
+            "clase": "sr-only sm:not-sr-only",
+            "texto": "Escanear",
+            "ocultoPx": 65
+          }
+        ],
+        "filas": {
+          "total": 35,
+          "visibles": 4,
+          "hay": true
+        },
+        "controles": {
+          "chips": {
+            "total": 2,
+            "textos": [
+              "DIA×",
+              "Quitar todos"
+            ]
+          },
+          "total": 14,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": 407,
+          "altoHastaPrimerProducto": 338
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": []
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtros 1 cadena, pasillo, dieta, ofertas… ▾ 35 resultados · datos del 13 nov 2026 ORDENAR POR Lo de siempre ▾ PRODUCTO PVP POR UNIDAD Leche entera Dia Láctea pack 6 x 1 L DIA 5,76 € 0,96 €/l Ver ofertas por supermercado Leche entera Dia Láctea 1 L DIA 0,96 € 0,96 €/l Ver ofertas por supermercado Leche entera sin lactosa Dia Láctea pack 6 x 1 L"
+      },
+      "listas": {
+        "ruta": "/compra/listas",
+        "nombre": "/compra/listas (la entrada de la cesta)",
+        "datosListos": true,
+        "titulo": "La cesta · Cesta",
+        "captura": "ui-r2-despues-listas-390x844.png",
+        "capturaCompleta": "ui-r2-despues-listas-390x844-completa.png",
+        "api": {
+          "llamadas": 15,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra/listas",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 5772,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-bloque",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye oferta",
+          "top": 89,
+          "bottom": 5676,
+          "alto": 5587,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 6,
+          "enPantalla": 0,
+          "ejemplos": [
+            "11,75 €/kg",
+            "2,83 €/kg",
+            "4,10 €/l",
+            "7,96 €/kg"
+          ],
+          "columnaVisible": 0
+        },
+        "typeahead": {
+          "existe": true,
+          "etiqueta": "Añadir a la lista",
+          "top": 319,
+          "enPantalla": true,
+          "deSoloLectura": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "span",
+            "clase": "sr-only",
+            "texto": "Lo que quieres pegar",
+            "ocultoPx": 139
+          }
+        ],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 14,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": [
+            {
+              "texto": "La casa (6)",
+              "rect": {
+                "top": 158,
+                "bottom": 202,
+                "alto": 44,
+                "ancho": 116
+              },
+              "display": "block",
+              "padre": "flex flex-wrap items-center gap-x-3 gap-y-1"
+            },
+            {
+              "texto": "Escribir en la lista",
+              "rect": {
+                "top": 5094,
+                "bottom": 5138,
+                "alto": 44,
+                "ancho": 320
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-1 max-w-xs"
+            }
+          ]
+        },
+        "tarjetas": {
+          "total": 9,
+          "visibles": 2
+        },
+        "lineasDeLaLista": 10,
+        "lineas": 2,
+        "carga": {
+          "esqueletos": 0,
+          "vacios": 2,
+          "textosDeEspera": 0
+        },
+        "titular": "Listas",
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye ofertas condicionadas Precios del 13 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Aldi 0,96 € − 1 + Quitar Añadir una nota PANA"
+      },
+      "comparar": {
+        "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "nombre": "/compra/listas/:listaId/comparar (comparativa por cadena)",
+        "datosListos": true,
+        "titulo": "Comparar la cesta · Cesta",
+        "captura": "ui-r2-despues-comparar-390x844.png",
+        "capturaCompleta": "ui-r2-despues-comparar-390x844-completa.png",
+        "api": {
+          "llamadas": 11,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "viewport": {
+          "ancho": 390,
+          "alto": 844
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "documentoAlto": 2826,
+        "cabecera": {
+          "top": 0,
+          "bottom": 69,
+          "alto": 69,
+          "ancho": 390,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 787,
+          "bottom": 844,
+          "alto": 57,
+          "ancho": 390
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex flex-col gap-seccion",
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en",
+          "top": 89,
+          "bottom": 2730,
+          "alto": 2641,
+          "ancho": 358,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 25,
+          "enPantalla": 0,
+          "ejemplos": [
+            "1 l · 7,39 €/l",
+            "1 l · 7,02 €/l",
+            "1 l · 4,34 €/l",
+            "1 l · 7,95 €/l"
+          ],
+          "columnaVisible": 0
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 1,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [
+            {
+              "abierto": false,
+              "texto": "¿Cómo se calcula?▾",
+              "rect": {
+                "top": 935,
+                "bottom": 981,
+                "alto": 46,
+                "ancho": 358
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Aceite de oliva virgen extra H",
+              "rect": {
+                "top": 2359,
+                "bottom": 2429,
+                "alto": 70,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3083,
+                "bottom": 3129,
+                "alto": 46,
+                "ancho": 332
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Tomate frito estilo caserohast",
+              "rect": {
+                "top": 2439,
+                "bottom": 2484,
+                "alto": 45,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3030,
+                "bottom": 3076,
+                "alto": 46,
+                "ancho": 332
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Gofres de huevos frescoshasta ",
+              "rect": {
+                "top": 2494,
+                "bottom": 2539,
+                "alto": 45,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3039,
+                "bottom": 3085,
+                "alto": 46,
+                "ancho": 332
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Pechuga de pollo Dia Nuestra A",
+              "rect": {
+                "top": 2549,
+                "bottom": 2619,
+                "alto": 70,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3147,
+                "bottom": 3193,
+                "alto": 46,
+                "ancho": 332
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Leche entera Hacendadohasta 1,",
+              "rect": {
+                "top": 2629,
+                "bottom": 2674,
+                "alto": 45,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3310,
+                "bottom": 3356,
+                "alto": 46,
+                "ancho": 332
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Pan de molde blancohasta 1,10 ",
+              "rect": {
+                "top": 2684,
+                "bottom": 2729,
+                "alto": 45,
+                "ancho": 356
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 3257,
+                "bottom": 3303,
+                "alto": 46,
+                "ancho": 332
+              }
+            }
+          ],
+          "selects": [
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3210,
+                "bottom": 3254,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3157,
+                "bottom": 3201,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3166,
+                "bottom": 3210,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3274,
+                "bottom": 3318,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3437,
+                "bottom": 3481,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 3384,
+                "bottom": 3428,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            }
+          ]
+        },
+        "tarjetas": {
+          "total": 6,
+          "visibles": 3
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Comparar la cesta",
+        "textoPrimeraPantalla": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en una tienda Cobertura 6/6 productos LO QUE TE AHORRAS 10,57 € −48 % Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más cara. Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos"
+      }
+    },
+    "escritorio": {
+      "compra": {
+        "ruta": "/compra?q=leche%20entera",
+        "nombre": "/compra (buscar, con el listado)",
+        "datosListos": true,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-r2-despues-compra-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 13,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": {
+          "hayBoton": false,
+          "hayPanel": false
+        },
+        "url": "http://localhost:5173/compra?q=leche%20entera",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 4513,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ 40 resultados · datos del 13 nov 2026 PRODUCTO ▴ Cadena Marca Precio Por unidad Dó",
+          "top": 83,
+          "bottom": 4493,
+          "alto": 4410,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 75,
+          "enPantalla": 11,
+          "ejemplos": [
+            "hasta 2,09 €/l",
+            "1,13 €/l menos que el más caro",
+            "hasta 23,16 €/kg",
+            "7,36 €/kg menos que el más caro"
+          ],
+          "columnaVisible": 2
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          }
+        ],
+        "filas": {
+          "total": 40,
+          "visibles": 6,
+          "hay": true
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 16,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": []
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ 40 resultados · datos del 13 nov 2026 PRODUCTO ▴ Cadena Marca Precio Por unidad Dónde Diferencia del grupo Leche entera Hacendado C comparable · 5 cadenas mercadona Hacendado 0,96 € 0,96 €/l hasta 2,09 €/l 5 cadenas 6 productos 1,13 €/l menos que el más caro Chocolate con leche Valor almendras enteras E comparable · 5 ca"
+      },
+      "compra_filtros": {
+        "ruta": "/compra?q=leche%20entera&cadenas=dia",
+        "nombre": "/compra con un filtro puesto (chips y cabecera compacta)",
+        "datosListos": false,
+        "titulo": "Buscar · Cesta",
+        "captura": "ui-r2-despues-compra_filtros-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 13,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra?q=leche%20entera&cadenas=dia",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 3390,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-4",
+          "texto": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtros 1 cadena, pasillo, dieta, ofertas… ▾ 35 resultados · datos del 13 nov 2026 PRODUCTO ▴ Cadena Marca",
+          "top": 83,
+          "bottom": 3370,
+          "alto": 3287,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 35,
+          "enPantalla": 6,
+          "ejemplos": [
+            "0,96 €/l",
+            "0,96 €/l",
+            "1,03 €/l",
+            "1,03 €/l"
+          ],
+          "columnaVisible": 2
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "h2",
+            "clase": "sr-only",
+            "texto": "Buscar",
+            "ocultoPx": 49
+          },
+          {
+            "etiqueta": "label",
+            "clase": "sr-only",
+            "texto": "Buscar producto",
+            "ocultoPx": 118
+          }
+        ],
+        "filas": {
+          "total": 35,
+          "visibles": 7,
+          "hay": true
+        },
+        "controles": {
+          "chips": {
+            "total": 2,
+            "textos": [
+              "DIA×",
+              "Quitar todos"
+            ]
+          },
+          "total": 18,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": []
+        },
+        "tarjetas": {
+          "total": 1,
+          "visibles": 1
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Buscar",
+        "textoPrimeraPantalla": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtros 1 cadena, pasillo, dieta, ofertas… ▾ 35 resultados · datos del 13 nov 2026 PRODUCTO ▴ Cadena Marca Precio Por unidad Dónde Diferencia del grupo Leche entera Dia Láctea pack 6 x 1 L sin Nutri-Score sin comparar dia Dia Láctea 5,76 € 0,96 €/l 1 cadena 1 producto Leche entera Dia Láctea 1 L C sin comparar dia Dia Láctea 0,96 € 0,96 €/l 1 c"
+      },
+      "listas": {
+        "ruta": "/compra/listas",
+        "nombre": "/compra/listas (la entrada de la cesta)",
+        "datosListos": true,
+        "titulo": "La cesta · Cesta",
+        "captura": "ui-r2-despues-listas-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 15,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra/listas",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 4315,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex min-h-full flex-col gap-bloque",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye oferta",
+          "top": 83,
+          "bottom": 4295,
+          "alto": 4212,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 6,
+          "enPantalla": 0,
+          "ejemplos": [
+            "11,75 €/kg",
+            "2,83 €/kg",
+            "4,10 €/l",
+            "7,96 €/kg"
+          ],
+          "columnaVisible": 0
+        },
+        "typeahead": {
+          "existe": true,
+          "etiqueta": "Añadir a la lista",
+          "top": 261,
+          "enPantalla": true,
+          "deSoloLectura": false
+        },
+        "textosCortados": [
+          {
+            "etiqueta": "span",
+            "clase": "sr-only",
+            "texto": "Lo que quieres pegar",
+            "ocultoPx": 139
+          }
+        ],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 19,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [],
+          "selects": [
+            {
+              "texto": "La casa (6)",
+              "rect": {
+                "top": 152,
+                "bottom": 196,
+                "alto": 44,
+                "ancho": 116
+              },
+              "display": "block",
+              "padre": "flex flex-wrap items-center gap-x-3 gap-y-1"
+            },
+            {
+              "texto": "Escribir en la lista",
+              "rect": {
+                "top": 3813,
+                "bottom": 3857,
+                "alto": 44,
+                "ancho": 320
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-1 max-w-xs"
+            }
+          ]
+        },
+        "tarjetas": {
+          "total": 9,
+          "visibles": 2
+        },
+        "lineasDeLaLista": 10,
+        "lineas": 2,
+        "carga": {
+          "esqueletos": 0,
+          "vacios": 2,
+          "textosDeEspera": 0
+        },
+        "titular": "Listas",
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye ofertas condicionadas Precios del 13 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Aldi 0,96 € − 1 + Quitar Añadir una nota PANA"
+      },
+      "comparar": {
+        "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "nombre": "/compra/listas/:listaId/comparar (comparativa por cadena)",
+        "datosListos": true,
+        "titulo": "Comparar la cesta · Cesta",
+        "captura": "ui-r2-despues-comparar-1440x900.png",
+        "capturaCompleta": null,
+        "api": {
+          "llamadas": 11,
+          "noOk": []
+        },
+        "erroresConsola": [],
+        "interaccion": null,
+        "url": "http://localhost:5173/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
+        "viewport": {
+          "ancho": 1440,
+          "alto": 900
+        },
+        "scrollHorizontal": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "documentoAlto": 2307,
+        "cabecera": {
+          "top": 0,
+          "bottom": 63,
+          "alto": 63,
+          "ancho": 1192,
+          "sticky": true
+        },
+        "barraAbajo": {
+          "top": 0,
+          "bottom": 0,
+          "alto": 0,
+          "ancho": 0
+        },
+        "primerContenido": {
+          "etiqueta": "div",
+          "clase": "flex flex-col gap-seccion",
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en",
+          "top": 83,
+          "bottom": 2287,
+          "alto": 2204,
+          "ancho": 1128,
+          "visible": true,
+          "pegadoALaCabecera": 20
+        },
+        "euroKg": {
+          "enDom": 25,
+          "enPantalla": 0,
+          "ejemplos": [
+            "1 l · 7,39 €/l",
+            "1 l · 7,02 €/l",
+            "1 l · 4,34 €/l",
+            "1 l · 7,95 €/l"
+          ],
+          "columnaVisible": 0
+        },
+        "typeahead": {
+          "existe": false
+        },
+        "textosCortados": [],
+        "filas": {
+          "total": 0,
+          "visibles": 0,
+          "hay": false
+        },
+        "controles": {
+          "chips": {
+            "total": 0,
+            "textos": []
+          },
+          "total": 2,
+          "tapados": 0,
+          "tapadosDetalle": [],
+          "primerProductoTop": null,
+          "altoHastaPrimerProducto": null
+        },
+        "diagnostico": {
+          "details": [
+            {
+              "abierto": false,
+              "texto": "¿Cómo se calcula?▾",
+              "rect": {
+                "top": 789,
+                "bottom": 835,
+                "alto": 46,
+                "ancho": 1128
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Aceite de oliva virgen extra H",
+              "rect": {
+                "top": 1966,
+                "bottom": 2011,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2333,
+                "bottom": 2379,
+                "alto": 46,
+                "ancho": 1102
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Tomate frito estilo caserohast",
+              "rect": {
+                "top": 2021,
+                "bottom": 2066,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2362,
+                "bottom": 2408,
+                "alto": 46,
+                "ancho": 1102
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Gofres de huevos frescoshasta ",
+              "rect": {
+                "top": 2076,
+                "bottom": 2121,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2415,
+                "bottom": 2461,
+                "alto": 46,
+                "ancho": 1102
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Pechuga de pollo Dia Nuestra A",
+              "rect": {
+                "top": 2131,
+                "bottom": 2176,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2472,
+                "bottom": 2518,
+                "alto": 46,
+                "ancho": 1102
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Leche entera Hacendadohasta 1,",
+              "rect": {
+                "top": 2186,
+                "bottom": 2231,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2541,
+                "bottom": 2587,
+                "alto": 46,
+                "ancho": 1102
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Pan de molde blancohasta 1,10 ",
+              "rect": {
+                "top": 2241,
+                "bottom": 2286,
+                "alto": 45,
+                "ancho": 1126
+              }
+            },
+            {
+              "abierto": false,
+              "texto": "Calcular envases para una cant",
+              "rect": {
+                "top": 2582,
+                "bottom": 2628,
+                "alto": 46,
+                "ancho": 1102
+              }
+            }
+          ],
+          "selects": [
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2424,
+                "bottom": 2468,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2453,
+                "bottom": 2497,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2506,
+                "bottom": 2550,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2563,
+                "bottom": 2607,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2632,
+                "bottom": 2676,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            },
+            {
+              "texto": "kgglmlud",
+              "rect": {
+                "top": 2673,
+                "bottom": 2717,
+                "alto": 44,
+                "ancho": 57
+              },
+              "display": "block",
+              "padre": "flex flex-col gap-0.5 text-etiqueta text-tinta-suave"
+            }
+          ]
+        },
+        "tarjetas": {
+          "total": 6,
+          "visibles": 4
+        },
+        "lineasDeLaLista": 0,
+        "lineas": 0,
+        "carga": {
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 0
+        },
+        "titular": "Comparar la cesta",
+        "textoPrimeraPantalla": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar entre cadenas. Lo he podido valorar en 5 cadenas. Volver a la lista Ahorro 10,57 € Total 19,91 € en una tienda Cobertura 6/6 productos LO QUE TE AHORRAS 10,57 € −48 % Comprando cada cosa donde está más barata, frente a comprarla toda en la cadena más cara. Con los precios de hoy, incluidos los equivalentes que aún no has confirmado (esos"
+      }
+    }
+  },
+  "resumen": {
+    "movil": {
+      "scrollHorizontal": {
+        "compra": false,
+        "compra_filtros": false,
+        "listas": false,
+        "comparar": false
+      },
+      "altoDeCabecera": {
+        "compra": 69,
+        "compra_filtros": 69,
+        "listas": 69,
+        "comparar": 69
+      },
+      "primerContenidoVisible": {
+        "compra": {
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, ",
+          "top": 89
+        },
+        "compra_filtros": {
+          "texto": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtro",
+          "top": 89
+        },
+        "listas": {
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar e",
+          "top": 89
+        },
+        "comparar": {
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar",
+          "top": 89
+        }
+      },
+      "euroPorUnidadEnPantalla": {
+        "compra": 7,
+        "compra_filtros": 4,
+        "listas": 0,
+        "comparar": 0
+      },
+      "filasVisibles": {
+        "compra": 4,
+        "compra_filtros": 4,
+        "listas": 0,
+        "comparar": 0
+      },
+      "textosCortados": {
+        "compra": 3,
+        "compra_filtros": 3,
+        "listas": 1,
+        "comparar": 0
+      }
+    },
+    "escritorio": {
+      "scrollHorizontal": {
+        "compra": false,
+        "compra_filtros": false,
+        "listas": false,
+        "comparar": false
+      },
+      "altoDeCabecera": {
+        "compra": 63,
+        "compra_filtros": 63,
+        "listas": 63,
+        "comparar": 63
+      },
+      "primerContenidoVisible": {
+        "compra": {
+          "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, ",
+          "top": 83
+        },
+        "compra_filtros": {
+          "texto": "Buscar Buscar producto 🎤 Escanear DIA × Quitar todos Filtro",
+          "top": 83
+        },
+        "listas": {
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar e",
+          "top": 83
+        },
+        "comparar": {
+          "texto": "Comparar mi cesta La casa · 6 productos 6 se pueden comparar",
+          "top": 83
+        }
+      },
+      "euroPorUnidadEnPantalla": {
+        "compra": 11,
+        "compra_filtros": 6,
+        "listas": 0,
+        "comparar": 0
+      },
+      "filasVisibles": {
+        "compra": 6,
+        "compra_filtros": 7,
+        "listas": 0,
+        "comparar": 0
+      },
+      "textosCortados": {
+        "compra": 2,
+        "compra_filtros": 2,
+        "listas": 1,
+        "comparar": 0
+      }
+    }
+  },
+  "bloqueos": [],
+  "sesion": {
+    "estadoEntrar": 200,
+    "yo": {
+      "usuario": {
+        "id": "7e26aed4-1e4b-405d-becd-d7b68deb5cc0",
+        "usuario": "medicion",
+        "nombre": "Medicion"
+      },
+      "preferencias": {}
+    }
+  },
+  "lista": {
+    "id": "899d6629-18ec-43f1-984a-781e910ea6e0",
+    "nombre": "La casa",
+    "es_de_casa": true,
+    "lineas": 6
+  }
+}

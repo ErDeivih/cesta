@@ -43,6 +43,8 @@ const CAPTURAS = join(SALIDA, 'capturas')
 // Prefijo de las capturas: `ui-antes` o `ui-despues`, para no pisar las de la
 // medici.n anterior. Tambi.n sirve para el nombre de cada fichero del informe.
 const PREFIJO = process.env.CESTA_PREFIJO ?? 'ui-antes'
+// Y el fichero del informe, para no pisar la medida de la ronda anterior.
+const SALIDA_JSON = process.env.CESTA_JSON ?? 'medicion.json'
 const PUERTO = Number(process.env.CESTA_CDP ?? 9333)
 const EDGE =
   process.env.CESTA_EDGE ??
@@ -68,6 +70,12 @@ const RUTAS = [
       '.tabla-scroll table tbody tr',
       'main .vacio',
     ],
+  },
+  {
+    clave: 'compra_filtros',
+    nombre: '/compra con un filtro puesto (chips y cabecera compacta)',
+    url: '/compra?q=leche%20entera&cadenas=dia',
+    espera: ['ul[aria-label="Resultados de la búsqueda"] li', 'main .vacio'],
   },
   {
     clave: 'listas',
@@ -283,6 +291,73 @@ const MEDIR = (cfg) => {
     dentro(t.getBoundingClientRect(), innerHeight),
   ).length
 
+  // --- los controles: cuantos, cuanto ocupan antes del primer producto y si alguno queda tapado
+  //
+  // *«Tapado» no es un adorno: es un control que se ve pero no se puede pulsar porque hay otro
+  // elemento encima en el punto donde se toca. Se pregunta por el punto central con
+  // `elementFromPoint`, que es lo que recibiria el dedo. Ni el propio elemento, ni un hijo ni un
+  // padre cuentan como tapar.*
+  const interactivos = [...document.querySelectorAll(
+    'main a[href], main button, main input, main select, main textarea, main summary, main [role="button"]',
+  )].filter((el) => {
+    const r = el.getBoundingClientRect()
+    return r.width > 1 && r.height > 1 && r.top < innerHeight && r.bottom > 0
+  })
+  /** Si algo es parte del chrome fijo: cabecera pegada o barra de abajo. */
+  const esFija = (el) => {
+    let n = el
+    while (n && n !== document.body) {
+      const posicion = getComputedStyle(n).position
+      if (posicion === 'fixed' || posicion === 'sticky') return true
+      n = n.parentElement
+    }
+    return false
+  }
+  const tapados = interactivos.filter((el) => {
+    const r = el.getBoundingClientRect()
+    const x = Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2))
+    const y = Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2))
+    const encima = document.elementFromPoint(x, y)
+    if (!encima) return true
+    if (encima === el || el.contains(encima) || encima.contains(el)) return false
+    // *La cabecera y la barra de abajo tapan lo que queda por debajo del pliegue mientras se
+    // desplaza: eso no es un control tapado por un fallo de maquetación. Solo cuenta el solape
+    // dentro del contenido, que es el que deja un control visible e impulsable.*
+    return !esFija(encima)
+  })
+  const primerProducto = document.querySelector('main ul[aria-label="Resultados de la búsqueda"] > li')
+  const chips = [...document.querySelectorAll('main [role="group"][aria-label="Filtros puestos"] button')]
+    .map((b) => (b.textContent || '').trim().replace(/\s+/g, ' '))
+
+  const controles = {
+    chips: { total: chips.length, textos: chips.slice(0, 8) },
+    total: interactivos.length,
+    tapados: tapados.length,
+    tapadosDetalle: tapados.slice(0, 8).map((el) => {
+      const r = el.getBoundingClientRect()
+      const encima = document.elementFromPoint(
+        Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2)),
+        Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2)),
+      )
+      return {
+        etiqueta: el.tagName.toLowerCase(),
+        texto: (el.textContent || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '')
+          .trim().replace(/\s+/g, ' ').slice(0, 40),
+        por: encima ? `${encima.tagName.toLowerCase()}.${clase(encima).replace(/\s+/g, '.')}` : 'nada',
+        rect: { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) },
+        scrollY: Math.round(window.scrollY),
+        pila: document.elementsFromPoint(
+          Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2)),
+          Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2)),
+        ).slice(0, 3).map((e) => `${e.tagName.toLowerCase()}.${clase(e).replace(/\s+/g, '.')}`),
+      }
+    }),
+    primerProductoTop: primerProducto ? Math.round(primerProducto.getBoundingClientRect().top) : null,
+    altoHastaPrimerProducto: primerProducto && cabecera
+      ? Math.round(primerProducto.getBoundingClientRect().top - cabecera.bottom)
+      : null,
+  }
+
   // --- las lineas de la lista de la compra
   const lineasEl = document.querySelector('#lo-que-falta')
     ? [...document.querySelectorAll('#lo-que-falta ~ *, #lo-que-falta')]
@@ -308,6 +383,20 @@ const MEDIR = (cfg) => {
     typeahead: cajaTypeahead,
     textosCortados: cortados,
     filas: { total: filasTotal, visibles: filasVisibles, hay: !!filasEl },
+    controles,
+    diagnostico: {
+      details: [...document.querySelectorAll('main details')].map((d) => ({
+        abierto: d.open,
+        texto: (d.querySelector('summary')?.textContent || '').trim().slice(0, 30),
+        rect: recorte(d),
+      })),
+      selects: [...document.querySelectorAll('main select')].map((s) => ({
+        texto: (s.textContent || '').trim().slice(0, 20),
+        rect: recorte(s),
+        display: getComputedStyle(s).display,
+        padre: (s.parentElement?.className || '').slice(0, 60),
+      })),
+    },
     tarjetas: { total: tarjetas.length, visibles: tarjetasVisibles },
     lineasDeLaLista: lineas.length,
     lineas: lineasEl.length,
@@ -438,6 +527,28 @@ async function principal() {
 
         const medida = await evalJs(enviar, `(${MEDIR.toString()})(${JSON.stringify({})})`)
 
+        // *Y la acción nueva: desplegar las ofertas del primer producto.* Se pulsa de verdad y
+        // se lee el panel: es la única forma de probar que abre, que pide el grupo y que ordena.
+        let interaccion = null
+        if (ruta.clave === 'compra') {
+          interaccion = await evalJs(enviar, `(() => {
+            const boton = [...document.querySelectorAll('main button')]
+              .find((b) => /Ver ofertas por supermercado/.test(b.textContent || ''))
+            if (!boton) return { hayBoton: false }
+            boton.click()
+            return { hayBoton: true }
+          })()`)
+          await espera(1000)
+          const ofertas = await evalJs(enviar, `(() => {
+            const panel = document.querySelector('main [role="region"][aria-label^="Precios de"]')
+            if (!panel) return { hayPanel: false }
+            const filas = [...panel.querySelectorAll('li')].map((li) =>
+              (li.textContent || '').trim().replace(/\\s+/g, ' '))
+            return { hayPanel: true, filas: filas.slice(0, 8) }
+          })()`)
+          interaccion = { ...interaccion, ...ofertas }
+        }
+
         // Respuestas de API de esta ruta: las que no son 2xx se apuntan.
         const api = eventos
           .slice(antes)
@@ -479,6 +590,7 @@ async function principal() {
           capturaCompleta: ficheroCompleto,
           api: { llamadas: api.length, noOk: apiNoOk },
           erroresConsola,
+          interaccion,
           ...medida,
         }
         console.log(
@@ -521,8 +633,8 @@ async function principal() {
       }
     }
 
-    writeFileSync(join(SALIDA, 'medicion.json'), JSON.stringify(informe, null, 2) + '\n', 'utf8')
-    console.log('\nEscrito ' + join(SALIDA, 'medicion.json'))
+    writeFileSync(join(SALIDA, SALIDA_JSON), JSON.stringify(informe, null, 2) + '\n', 'utf8')
+    console.log('\nEscrito ' + join(SALIDA, SALIDA_JSON))
     console.log('Capturas en ' + CAPTURAS)
     ws.close()
   } finally {
