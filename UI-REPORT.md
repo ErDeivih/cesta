@@ -394,6 +394,29 @@ marca (`aria-selected`) y `Escape` sale.
 
 ---
 
+## 11. Estados de la lista a 390 px (demo publicada, 14/11/2026, 13:20)
+
+Medición contra la **URL publicada** (mismo instrumento; rutas en el hash y estados servidos por la
+propia demo con `?demo=`), con Edge headless a **390×844**. Artefactos:
+`medicion-estados-demo.json`, `medicion-estados-demo-entrada.json` y `capturas/ui-estados-*`.
+
+| Estado | Qué se pinta | Scroll H | Controles tapados | Typeahead |
+|---|---|---:|---:|---|
+| **Normal** (`La casa`, 6 líneas) | lista + precio estimado + buscador | no | **0 / 14** | sí, `top=319` |
+| **Vacío** (sin listas) | «No tienes ninguna lista» + buscador | no | **0 / 5** | sí, `top=130` |
+| **Carga** | «Cargando tus listas…» | no | **0 / 0** | no: no se monta hasta tener lista |
+| **Error** (500) | «No he podido traer tus listas» + «Volver a intentarlo» | no | **0 / 1** | no |
+
+**Con teclado real en la demo publicada:** al escribir «leche» → `aria-expanded=true`, **8
+sugerencias** y la primera con **€/unidad** (`0,96 €/l`); `Escape` cierra y **conserva el texto**;
+«Elegir varias líneas» abre un `role=listbox` de **6 opciones**, `Espacio` marca
+(`aria-selected=true`, barra «1 línea seleccionada») y `Escape` sale devolviendo el botón.
+
+La demo está publicada y responde **200** (comprobado a las 13:20, Pages `built`); no se republicó
+porque el build desplegado no cambió. Los tres commits de este bloque están en `git log`.
+
+---
+
 ## 10. Demo publicada en GitHub Pages (14/11/2026)
 
 **Publicada:** <https://erdeivih.github.io/cesta-demo/> → **HTTP 200** (14/11/2026).
