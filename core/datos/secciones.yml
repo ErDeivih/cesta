@@ -285,6 +285,7 @@ mapa:
     "Bebidas > Vinos divertidos": bebidas                              # nueva 2026-10-17
     "Campañas > Producto Local Málaga": promociones                    # nueva 2026-10-17
     "Juguetes > Muñecas": hogar                                        # nueva 2026-11-03
+    "Desayuno y Merienda > Recogida banco de alimentos": desayuno-dulces # nueva 2026-11-13
   aldi:
     "cuidado-facial-y-corporal": higiene-belleza                          # 106
     "yogures-y-postres-lacteos": lacteos-huevos                           # 97
@@ -817,6 +818,12 @@ mapa:
     "congelados/rebozados-y-platos-preparados/nuggets-y-empanados": carniceria # nueva 2026-11-10
     "bebe/toallitas": bebe                                             # nueva 2026-11-10
     "la-despensa/yogures-y-postres/yogures-desnatados": lacteos-huevos # nueva 2026-11-10
+    "cuidado-personal-e-higiene/cosmetica/cosmetica-coreana": higiene-belleza # nueva 2026-11-13
+    "congelados/air-fryer/carne-air-fryer": carniceria                 # nueva 2026-11-13
+    "congelados/salteados-congelados/arroces": despensa                # nueva 2026-11-13
+    "la-despensa/lacteos/batidos-y-horchatas": lacteos-huevos          # nueva 2026-11-13
+    "frescos/carne/embutidos-frescos": carniceria                      # nueva 2026-11-13
+    "la-despensa/conservas-sopas-y-precocinados/croquetas-y-rebozados": despensa # nueva 2026-11-13
   dia:
     "galletas-cereales-y-mermeladas/galletas-de-chocolate-y-rellenas": despensa # 81
     "verduras/conservas-de-verduras": frutas-verduras                     # 77
