@@ -292,11 +292,13 @@ supermercado» y lee el panel):
 antes:  {"hayBoton": false, "hayPanel": false}
 después: {"hayBoton": true, "hayPanel": true,
   "filas": ["Aldi … 0,96 € 0,96 €/l", "Carrefour … 0,96 € 0,96 €/l",
-            "Carrefour … 0,96 € 0,96 €/l", "Mercadona … 0,96 € 0,96 €/l",
-            "DIA … 1,09 € 1,09 €/l", "Alcampo … 2,09 € 2,09 €/l"]}
+            "Mercadona … 0,96 € 0,96 €/l", "DIA … 1,09 € 1,09 €/l",
+            "Alcampo … 2,09 € 2,09 €/l"]}
 ```
 
-Orden no decreciente por €/unidad (0,96 → 1,09 → 2,09), que es lo que promete la acción.
+**Una fila por supermercado** (el formato más barato por unidad de cada cadena) y orden no
+decreciente por €/unidad (0,96 → 1,09 → 2,09), que es lo que promete la acción. *La captura se
+toma con el panel plegado otra vez: la foto es de la pantalla, no del desplegable.*
 
 ### 8.3 Puertas de la ronda 2
 
@@ -304,15 +306,34 @@ Orden no decreciente por €/unidad (0,96 → 1,09 → 2,09), que es lo que prom
 npx vitest run                 →  29 ficheros / 319 tests passed      [exit 0]
 npm test                       →  tests 404 / pass 404 / fail 0    [exit 0]
 npx tsc --noEmit               →  sin salida                        [exit 0]
-npm run build                  →  ✓ built in 6.24 s · sella-sw 41 trozos   [exit 0]
-pytest tests/test_ui_movil.py -p no:cacheprovider  →  15 passed in 4.87 s  [exit 0]
+npm run build                  →  ✓ built in 7.75 s · sella-sw 41 trozos   [exit 0]
+pytest tests/test_ui_movil.py -p no:cacheprovider  →  15 passed in 3.41 s  [exit 0]
+pytest suite completa -p no:cacheprovider (2 deselect)  →  1503 passed, 813 skipped, 2 deselected, 2 warnings in 182.72 s  [exit 0]
+node --test scripts/prueba-medicion.test.mjs  →  tests 6 / pass 6 / fail 0  [exit 0]
 ai-design-check (ficheros de la ronda)  →  0 errores, 23 avisos heredados/explicados  [exit 0]
 ```
 
 Los avisos de `ai-design-check` son los patrones que ya estaban en esos ficheros (`raw <button>`,
-`uppercase tracking-wide`, plurales a mano); la ronda no añade errores. La suite Python completa
-de la ronda 1 (1.503 verdes / 813 saltadas / 2 deseleccionadas) no se repite: no se tocó Python.
+`uppercase tracking-wide`, plurales a mano); la ronda no añade errores. Las 2 pruebas Python
+deseleccionadas son las que dependen de `data/raw` (Carrefour recorre 58.760 `.json.gz` y pasa de
+10 minutos; Mercadona depende del crudo real del día), con el motivo explicado en §4.
 
 Pruebas nuevas: `src/paginas/Buscar.test.tsx` (5) — cadenas y guardar dentro de Filtros, chips,
 los cuatro datos por fila, la diferencia en euros, el despliegue ordenado por €/unidad y el caso
 sin comparación fiable.
+
+### 8.4 Codex CLI sobre la captura (14/11, 10:00)
+
+Revisión de `capturas/ui-r2-despues-compra-390x844.png` con
+`codex exec --sandbox read-only -i` (modelo `gpt-6.1-sol`), dos pasadas. La primera devuelve tres
+hallazgos; la segunda, sobre la captura ya corregida, solo uno:
+
+| Hallazgo | Qué se hizo | Por qué |
+|---|---|---|
+| «Dos filas de Carrefour con el mismo nombre y precio parecen duplicadas» | **Aplicado**: el panel despliega **una fila por supermercado**, con el formato más barato por unidad de cada cadena. Medido: el panel pasa de **6 a 5 filas** (Aldi, Carrefour, Mercadona, DIA, Alcampo), y `Buscar.test.tsx` fija el caso de dos formatos en una cadena | Era ruido real en la captura: el grupo tiene dos formatos de Carrefour y se pintaban los dos. Una fila por cadena es lo que promete la acción |
+| «La acción de ofertas es un enlace pequeño y poco visible» | **Aplicado**: «Ver ofertas por supermercado» pasa de enlace subrayado a **botón con borde y 44 px** (misma altura, más visible) | La revisión pide una acción visible; el enlace se perdía entre la fila. La medición sigue en **0 controles tapados (0/12)** |
+| «La diferencia en euros destaca en turquesa y compite con el precio» | **Aplicado a medias**: se mantiene la diferencia (la pide el punto 3 de la revisión) pero **pasa a color secundario**, sin acento verde | El dato es obligatorio; su jerarquía no. El precio de venta y el €/unidad siguen siendo lo que manda |
+| «La búsqueda de “leche entera” devuelve “Chocolate con leche Valor almendras enteras”» | **Descartado para esta pantalla**: es relevancia del buscador (matching del catálogo), no maquetación | Arreglarlo es del motor de búsqueda y sus umbrales, no de la pantalla de compra; queda anotado como siguiente paso de datos, no se toca aquí para no cambiar resultados bajo una revisión de UI |
+
+Segunda pasada, sobre la captura actualizada: solo devuelve el hallazgo de relevancia y añade
+«No veo otros problemas relevantes claramente demostrables en esta captura».

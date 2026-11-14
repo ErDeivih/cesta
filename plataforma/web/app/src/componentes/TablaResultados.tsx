@@ -403,7 +403,7 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
             type="button"
             aria-expanded={abierto}
             onClick={() => setAbierto(!abierto)}
-            className="min-h-[44px] text-etiqueta text-tinta-suave underline underline-offset-2"
+            className="inline-flex min-h-[44px] items-center gap-1 rounded-campo border border-borde bg-papel px-3 text-etiqueta text-tinta-suave"
           >
             {abierto ? 'Ocultar ofertas por supermercado' : 'Ver ofertas por supermercado'}
           </button>

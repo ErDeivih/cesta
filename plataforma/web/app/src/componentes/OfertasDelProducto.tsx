@@ -37,10 +37,21 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
     )
   }
 
-  const productos = [...(grupo.data?.productos ?? [])]
-    .filter((p): p is Producto & { precio_unidad_cent: number } =>
-      p.comparable && p.precio_unidad_cent !== null)
-    .sort((a, b) => a.precio_unidad_cent - b.precio_unidad_cent)
+  // *Una fila por supermercado: si una cadena tiene dos formatos del mismo producto, se enseña su
+  // opción más barata por unidad.* *Lo pidió la revisión sobre la captura: dos filas seguidas de
+  // Carrefour con el mismo nombre parecían un duplicado. El detalle de todos los formatos está en
+  // la ficha del grupo.*
+  const porCadena = new Map<string, Producto & { precio_unidad_cent: number }>()
+  for (const producto of grupo.data?.productos ?? []) {
+    if (!producto.comparable || producto.precio_unidad_cent === null) continue
+    const actual = porCadena.get(producto.fuente)
+    if (!actual || producto.precio_unidad_cent < actual.precio_unidad_cent) {
+      porCadena.set(producto.fuente, producto as Producto & { precio_unidad_cent: number })
+    }
+  }
+  const productos = [...porCadena.values()].sort(
+    (a, b) => a.precio_unidad_cent - b.precio_unidad_cent,
+  )
 
   if (productos.length === 0) {
     return (
@@ -57,7 +68,7 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
       className="mt-1 rounded-campo border border-borde bg-marfil p-2"
     >
       <p className="text-etiqueta text-tinta-suave">
-        Precios por supermercado, de menor a mayor precio por unidad.
+        El más barato de cada supermercado, de menor a mayor precio por unidad.
       </p>
       <ul className="mt-1 flex flex-col">
         {productos.map((producto) => (

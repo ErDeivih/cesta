@@ -168,7 +168,7 @@ export function DiferenciaDelGrupo({ precioUnidadCent, precioUnidadMaxCent, unid
   if (diferencia <= 0) return null
   return (
     <span
-      className="cifra text-etiqueta font-semibold text-bien "
+      className="cifra text-etiqueta text-tinta-suave"
       title="Misma unidad: del miembro más barato al más caro del grupo de equivalentes"
     >
       {eurosUnidad(diferencia, unidad)} menos que el más caro

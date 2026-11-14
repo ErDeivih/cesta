@@ -538,7 +538,14 @@ async function principal() {
             boton.click()
             return { hayBoton: true }
           })()`)
-          await espera(1000)
+          // *El grupo se pide al abrir: se espera a que el panel exista (la primera llamada
+          // puede tardar más de un segundo con la API recién levantada).*
+          await hasta(
+            enviar,
+            'document.querySelector(\'main [role="region"][aria-label^="Precios de"]\') !== null',
+            24,
+            250,
+          )
           const ofertas = await evalJs(enviar, `(() => {
             const panel = document.querySelector('main [role="region"][aria-label^="Precios de"]')
             if (!panel) return { hayPanel: false }
@@ -547,6 +554,15 @@ async function principal() {
             return { hayPanel: true, filas: filas.slice(0, 8) }
           })()`)
           interaccion = { ...interaccion, ...ofertas }
+          // *Y se vuelve a plegar antes de la captura: la foto es de la pantalla de compra, no
+          // del panel abierto; y de paso se comprueba que el botón también cierra.*
+          await evalJs(enviar, `(() => {
+            const boton = [...document.querySelectorAll('main button')]
+              .find((b) => /Ocultar ofertas por supermercado/.test(b.textContent || ''))
+            boton?.click()
+            return true
+          })()`)
+          await espera(200)
         }
 
         // Respuestas de API de esta ruta: las que no son 2xx se apuntan.

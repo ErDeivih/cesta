@@ -105,6 +105,23 @@ function grupo(): Grupo {
         nutriscore: 'b',
       },
       {
+        // *Segundo formato de Carrefour, más caro por unidad: no debe pintar otra fila de Carrefour.*
+        producto_id: 'carrefour:3',
+        fuente: 'carrefour',
+        id_fuente: '3',
+        nombre: 'Leche entera Carrefour 2 l',
+        marca: 'Carrefour',
+        cantidad: 2,
+        unidad: 'l',
+        precio_cent: 240,
+        precio_unidad_cent: 120,
+        comparable: true,
+        calidad: null,
+        calidad_de: null,
+        gama: null,
+        nutriscore: 'b',
+      },
+      {
         producto_id: 'aldi:2',
         fuente: 'aldi',
         id_fuente: '2',
@@ -221,11 +238,15 @@ describe('el listado a 390 px', () => {
     expect(boton).toHaveAttribute('aria-expanded', 'true')
     const region = screen.getByRole('region', { name: /Precios de .* por supermercado/ })
     const filas = within(region).getAllByRole('listitem')
-    // *3,90 €/l (Aldi) antes que 1,05 € (Carrefour): manda el precio por unidad, no el de venta.*
+    // *Una fila por supermercado: el grupo tiene dos formatos de Carrefour y se enseña el más
+    // barato por unidad, no dos filas que parecen un duplicado.*
+    expect(filas).toHaveLength(2)
+    // *0,39 €/l (Aldi) antes que 1,05 € (Carrefour): manda el precio por unidad, no el de venta.*
     expect(filas[0]).toHaveTextContent('Aldi')
     expect(filas[0]).toHaveTextContent('0,39 €/l')
     expect(filas[1]).toHaveTextContent('Carrefour')
     expect(filas[1]).toHaveTextContent('1,05 €/l')
+    expect(filas[1]).not.toHaveTextContent('1,20 €/l')
   })
 
   it('sin diferencia comparable no se pinta porcentaje ni cero', () => {

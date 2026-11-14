@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-11-13T21:46:29.149Z",
+  "fecha": "2026-11-14T10:05:41.270Z",
   "base": "http://localhost:5173",
   "usuario": {
     "usuario": "medicion",
@@ -38,7 +38,6 @@
           "filas": [
             "AldiLeche entera · MILSANI0,96 €0,96 €/l",
             "CarrefourLeche entera Carrefour brik 1 l. · CARREFOUR0,96 €0,96 €/l",
-            "CarrefourLeche entera Carrefour brik 1 l. · CARREFOUR0,96 €0,96 €/l",
             "MercadonaLeche entera Hacendado · Hacendado0,96 €0,96 €/l",
             "DIALeche entera Celta 1 L · Celta1,09 €1,09 €/l",
             "AlcampoLA COLMENAREÑA Leche entera 1 l. · LA COLMENAREÑA2,09 €2,09 €/l"
@@ -52,7 +51,7 @@
         "scrollHorizontal": false,
         "scrollWidth": 390,
         "clientWidth": 390,
-        "documentoAlto": 6653,
+        "documentoAlto": 6533,
         "cabecera": {
           "top": 0,
           "bottom": 69,
@@ -71,8 +70,8 @@
           "clase": "flex min-h-full flex-col gap-4",
           "texto": "Buscar Buscar producto 🎤 Escanear Filtros cadena, pasillo, dieta, ofertas… ▾ 40 resultados · datos del 13 nov 2026 ORDENAR POR Lo de siempre ▾ PRODUCTO PVP POR",
           "top": 89,
-          "bottom": 6557,
-          "alto": 6468,
+          "bottom": 6437,
+          "alto": 6348,
           "ancho": 358,
           "visible": true,
           "pegadoALaCabecera": 20
@@ -916,7 +915,7 @@
         "captura": "ui-r2-despues-listas-1440x900.png",
         "capturaCompleta": null,
         "api": {
-          "llamadas": 15,
+          "llamadas": 11,
           "noOk": []
         },
         "erroresConsola": [],
@@ -929,7 +928,7 @@
         "scrollHorizontal": false,
         "scrollWidth": 1440,
         "clientWidth": 1440,
-        "documentoAlto": 4315,
+        "documentoAlto": 974,
         "cabecera": {
           "top": 0,
           "bottom": 63,
@@ -946,23 +945,18 @@
         "primerContenido": {
           "etiqueta": "div",
           "clase": "flex min-h-full flex-col gap-bloque",
-          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye oferta",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a la lista ▾ Cargando…",
           "top": 83,
-          "bottom": 4295,
-          "alto": 4212,
+          "bottom": 880,
+          "alto": 797,
           "ancho": 1128,
           "visible": true,
           "pegadoALaCabecera": 20
         },
         "euroKg": {
-          "enDom": 6,
+          "enDom": 0,
           "enPantalla": 0,
-          "ejemplos": [
-            "11,75 €/kg",
-            "2,83 €/kg",
-            "4,10 €/l",
-            "7,96 €/kg"
-          ],
+          "ejemplos": [],
           "columnaVisible": 0
         },
         "typeahead": {
@@ -976,8 +970,8 @@
           {
             "etiqueta": "span",
             "clase": "sr-only",
-            "texto": "Lo que quieres pegar",
-            "ocultoPx": 139
+            "texto": "Cargando…",
+            "ocultoPx": 80
           }
         ],
         "filas": {
@@ -990,7 +984,7 @@
             "total": 0,
             "textos": []
           },
-          "total": 19,
+          "total": 6,
           "tapados": 0,
           "tapadosDetalle": [],
           "primerProductoTop": null,
@@ -1009,33 +1003,22 @@
               },
               "display": "block",
               "padre": "flex flex-wrap items-center gap-x-3 gap-y-1"
-            },
-            {
-              "texto": "Escribir en la lista",
-              "rect": {
-                "top": 3813,
-                "bottom": 3857,
-                "alto": 44,
-                "ancho": 320
-              },
-              "display": "block",
-              "padre": "flex flex-col gap-1 max-w-xs"
             }
           ]
         },
         "tarjetas": {
-          "total": 9,
-          "visibles": 2
+          "total": 0,
+          "visibles": 0
         },
-        "lineasDeLaLista": 10,
-        "lineas": 2,
+        "lineasDeLaLista": 0,
+        "lineas": 0,
         "carga": {
-          "esqueletos": 0,
-          "vacios": 2,
-          "textosDeEspera": 0
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 1
         },
         "titular": "Listas",
-        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye ofertas condicionadas Precios del 13 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Aldi 0,96 € − 1 + Quitar Añadir una nota PANA"
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a la lista ▾ Cargando…"
       },
       "comparar": {
         "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
@@ -1406,7 +1389,7 @@
           "top": 83
         },
         "listas": {
-          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar e",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a ",
           "top": 83
         },
         "comparar": {
