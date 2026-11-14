@@ -45,6 +45,13 @@ const CAPTURAS = join(SALIDA, 'capturas')
 const PREFIJO = process.env.CESTA_PREFIJO ?? 'ui-antes'
 // Y el fichero del informe, para no pisar la medida de la ronda anterior.
 const SALIDA_JSON = process.env.CESTA_JSON ?? 'medicion.json'
+// *La demo publicada usa rutas en el hash (`#/compra/listas`), para que GitHub Pages no tenga que
+// resolver rutas profundas. La app de verdad usa rutas normales.*
+const HASH = process.env.CESTA_HASH === '1'
+// *En la demo los estados se piden con `?demo=vacio|carga|error` (los sirve su propia API de
+// mentira); en la app se simulan interceptando `fetch`.*
+const ESTADOS_URL = process.env.CESTA_ESTADOS_URL === '1'
+const urlRuta = (ruta) => BASE + (HASH ? '/#' : '') + ruta
 const PUERTO = Number(process.env.CESTA_CDP ?? 9333)
 const EDGE =
   process.env.CESTA_EDGE ??
@@ -612,7 +619,7 @@ async function principal() {
 
       for (const ruta of RUTAS) {
         const antes = eventos.length
-        await enviar('Page.navigate', { url: BASE + ruta.url })
+        await enviar('Page.navigate', { url: urlRuta(ruta.url) })
         await hasta(enviar, 'document.readyState === "complete"')
         // Esperar a que la pantalla tenga datos, no el esqueleto.
         const listo = await hasta(
@@ -750,10 +757,17 @@ async function principal() {
       })()`
       const estados = ['normal', 'vacio', 'carga', 'error']
       for (const modo of estados) {
-        const parcheId = modo === 'normal'
+        const parcheId = modo === 'normal' || ESTADOS_URL
           ? null
           : (await enviar('Page.addScriptToEvaluateOnNewDocument', { source: parche(modo) })).identifier
-        await enviar('Page.navigate', { url: BASE + '/compra/listas' })
+        const destino = HASH
+          ? BASE + '/#/compra/listas' + (ESTADOS_URL && modo !== 'normal' ? `?demo=${modo}` : '')
+          : BASE + '/compra/listas'
+        // *Un cambio de hash no recarga la página, y el estado tiene que pedirse desde cero:
+        // primero se vacía la pestaña y luego se entra en la URL del estado.*
+        await enviar('Page.navigate', { url: 'about:blank' })
+        await espera(150)
+        await enviar('Page.navigate', { url: destino })
         await hasta(enviar, 'document.readyState === "complete"')
         if (modo === 'normal' || modo === 'vacio') {
           await hasta(
@@ -775,7 +789,7 @@ async function principal() {
           await espera(500)
         }
         const medida = await evalJs(enviar, `(${MEDIR.toString()})(${JSON.stringify({})})`)
-        const captura = `ui-entrada-${modo}-390x844.png`
+        const captura = `${PREFIJO}-${modo}-390x844.png`
         const shot = await enviar('Page.captureScreenshot', { format: 'png' })
         writeFileSync(join(CAPTURAS, captura), Buffer.from(shot.data, 'base64'))
         const interaccion = modo === 'normal' ? await entradaInteraccion(enviar) : null
@@ -790,7 +804,7 @@ async function principal() {
         }
       }
       writeFileSync(
-        join(SALIDA, 'medicion-entrada.json'),
+        join(SALIDA, process.env.CESTA_JSON_ENTRADA ?? 'medicion-entrada.json'),
         JSON.stringify({ fecha: informe.fecha, base: BASE, entrada: informe.entrada }, null, 2) + '\n',
         'utf8',
       )

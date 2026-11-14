@@ -378,3 +378,40 @@ pytest tests/test_ui_movil.py -p no:cacheprovider →  15 passed in 3.95 s      
 La decisión de producto que desbloquea esto (datos en el dispositivo con IndexedDB y demo con
 muestra pequeña incrustada) queda anotada en `DECISIONES.md` (2026-11-14). El almacén local es la
 siguiente pieza; esta ronda cierra la pantalla y su medición.
+
+---
+
+## 10. Demo publicada en GitHub Pages (14/11/2026)
+
+**Publicada:** <https://erdeivih.github.io/cesta-demo/> → **HTTP 200** (14/11/2026).
+Repositorio: <https://github.com/ErDeivih/cesta-demo>, público, Pages desde la rama `gh-pages`
+(`status: built`). Guía de publicación y límites: `docs/DEMO-PAGES.md`.
+
+| Qué | Cómo |
+|---|---|
+| Datos | **muestra incrustada** de 130 KB, capturada de la API el 13/11: 1 lista de 6 líneas, reparto por cadenas, 120 resultados de búsqueda y 6 grupos con sus precios |
+| Sin servidor | `src/demo/api.ts` responde a `/api/*`; la app se compila en modo `demo` (`npm run build:demo`, base `/cesta-demo/`) |
+| Rutas | en el **hash** (`#/compra/listas`), para que Pages no tenga que resolver rutas profundas |
+| Estados | `?demo=vacio`, `?demo=carga` y `?demo=error` los sirve la propia demo, sin servidor |
+| Escribir | se aplica en memoria durante la visita; **no persiste** y la demo no lo promete |
+
+Medición de la **URL publicada** con el mismo instrumento, a 390×844 y 1440×900
+(`medicion-demo-pages.json`, capturas `capturas/ui-demo-pages-*`):
+
+| Ruta / estado | Scroll H | Controles tapados | Dato a 390×844 |
+|---|---:|---:|---|
+| `/compra` | no | **0 / 14** | 4 productos visibles, 7 precios por unidad en pantalla |
+| `/compra` con filtro | no | **0 / 14** | 3 productos visibles, chips `DIA ×` / `Quitar todos` |
+| `/compra/listas` | no | **0 / 14** | typeahead «Añadir a la lista» en `top=319` |
+| comparativa | no | **0 / 1** | resumen y totales, sin scroll horizontal |
+| entrada **vacía / carga / error** | no | 0/5 · 0/0 · 0/1 | «No tienes ninguna lista» / «Cargando tus listas…» / «No he podido traer tus listas» |
+
+Typeahead y selección en la demo publicada, con teclado real: al escribir «leche» salen **8
+sugerencias** con €/unidad (`0,96 €/l`), `Escape` cierra **conservando el texto**; «Elegir varias
+líneas» abre un `role=listbox` de **6 opciones**, `Espacio` marca (`aria-selected=true`, barra «1
+línea seleccionada») y `Escape` sale devolviendo el botón.
+
+**Lo que no se publica tal cual, y se dice:** las pantallas fuera de la compra (panel, recetas,
+ajustes) no tienen muestra y se quedan en su estado vacío/error; los precios son de la captura del
+13/11 y no se actualizan; la demo no tiene persistencia ni sincronización entre dispositivos. Para
+eso hace falta la API en el servidor, que es la decisión anotada en `DECISIONES.md`.
