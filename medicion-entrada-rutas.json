@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-11-14T11:51:00.656Z",
+  "fecha": "2026-11-14T12:10:45.788Z",
   "base": "http://localhost:5173",
   "usuario": {
     "usuario": "medicion",
@@ -269,7 +269,7 @@
         "captura": "ui-entrada-listas-390x844.png",
         "capturaCompleta": "ui-entrada-listas-390x844-completa.png",
         "api": {
-          "llamadas": 15,
+          "llamadas": 12,
           "noOk": []
         },
         "erroresConsola": [],
@@ -282,7 +282,7 @@
         "scrollHorizontal": false,
         "scrollWidth": 390,
         "clientWidth": 390,
-        "documentoAlto": 5586,
+        "documentoAlto": 844,
         "cabecera": {
           "top": 0,
           "bottom": 69,
@@ -299,44 +299,33 @@
         "primerContenido": {
           "etiqueta": "div",
           "clase": "flex min-h-full flex-col gap-bloque",
-          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 7,38 € 6 productos · no tengo precio de",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a la lista ▾ Cargando…",
           "top": 89,
-          "bottom": 5490,
-          "alto": 5401,
+          "bottom": 748,
+          "alto": 659,
           "ancho": 358,
           "visible": true,
           "pegadoALaCabecera": 20
         },
         "euroKg": {
-          "enDom": 6,
+          "enDom": 0,
           "enPantalla": 0,
-          "ejemplos": [
-            "11,75 €/kg",
-            "2,83 €/kg",
-            "7,02 €/l",
-            "7,96 €/kg"
-          ],
+          "ejemplos": [],
           "columnaVisible": 0
         },
         "typeahead": {
           "existe": true,
           "etiqueta": "Añadir a la lista",
-          "top": 319,
+          "top": 267,
           "enPantalla": true,
           "deSoloLectura": false
         },
         "textosCortados": [
           {
             "etiqueta": "span",
-            "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
-            "texto": "MAESTROS DE HOJIBLANCA Aceite de oliva virgen extra botella 1 l.",
-            "ocultoPx": 14
-          },
-          {
-            "etiqueta": "span",
             "clase": "sr-only",
-            "texto": "Lo que quieres pegar",
-            "ocultoPx": 139
+            "texto": "Cargando…",
+            "ocultoPx": 80
           }
         ],
         "filas": {
@@ -349,7 +338,7 @@
             "total": 0,
             "textos": []
           },
-          "total": 14,
+          "total": 6,
           "tapados": 0,
           "tapadosDetalle": [],
           "primerProductoTop": null,
@@ -368,33 +357,22 @@
               },
               "display": "block",
               "padre": "flex flex-wrap items-center gap-x-3 gap-y-1"
-            },
-            {
-              "texto": "Escribir en la lista",
-              "rect": {
-                "top": 4908,
-                "bottom": 4952,
-                "alto": 44,
-                "ancho": 320
-              },
-              "display": "block",
-              "padre": "flex flex-col gap-1 max-w-xs"
             }
           ]
         },
         "tarjetas": {
-          "total": 9,
-          "visibles": 2
+          "total": 0,
+          "visibles": 0
         },
-        "lineasDeLaLista": 11,
-        "lineas": 2,
+        "lineasDeLaLista": 0,
+        "lineas": 0,
         "carga": {
-          "esqueletos": 0,
-          "vacios": 2,
-          "textosDeEspera": 0
+          "esqueletos": 1,
+          "vacios": 0,
+          "textosDeEspera": 1
         },
         "titular": "Listas",
-        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 7,38 € 6 productos · no tengo precio de 1 Precios del 14 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Carrefour 0,96 € − 1 + Quitar Añadir una nota PANADERÍA Pa"
+        "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a la lista ▾ Cargando…"
       },
       "comparar": {
         "ruta": "/compra/listas/899d6629-18ec-43f1-984a-781e910ea6e0/comparar",
@@ -1299,7 +1277,7 @@
           "top": 89
         },
         "listas": {
-          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar e",
+          "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Añadir a ",
           "top": 89
         },
         "comparar": {
@@ -1322,7 +1300,7 @@
       "textosCortados": {
         "compra": 3,
         "compra_filtros": 3,
-        "listas": 2,
+        "listas": 1,
         "comparar": 0
       }
     },
