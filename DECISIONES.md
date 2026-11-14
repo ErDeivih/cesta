@@ -252,3 +252,22 @@ habla de cadenas sin prometer seis. En el panel y en los documentos se puede seg
 **Cambiar esto es una tarea de datos**, no de texto: si algún día Lidl publica catálogo comparable,
 entra en el motor y la N sube sola.
 
+## Decisión de producto (2026-11-14) — datos en el dispositivo y demo con muestra incrustada
+
+Desbloquea publicar la PWA sin que GitHub Pages tenga que servir una base de datos grande:
+
+- **Los datos de la cesta viven en el dispositivo** (IndexedDB): listas, líneas y lo ya visto se leen
+  y escriben en local, y la app funciona sin red. Es la dirección de la app de consumo.
+- **La demo publicada lleva una muestra pequeña incrustada** (unas pocas listas y productos con su
+  precio por unidad). Sirve para probar el flujo, no es el catálogo ni promete precios vivos.
+- **La API va al servidor, no a Pages**, y solo hace falta cuando se quiera **sincronizar entre
+  dispositivos**: no es requisito para publicar hoy.
+
+**Qué cambia en la interfaz**: el aviso de «sin conexión» deja de ser pasivo —lo que se apunta se
+queda en el dispositivo— y la demo dice lo que es. **Qué no cambia**: el catálogo y los precios se
+siguen midiendo en el servidor; la demo no inventa precios.
+
+Queda anotado como dirección. En esta pasada se cierra la pieza de **typeahead y selección de la
+entrada** con sus estados y medición; el almacén local (IndexedDB) es la siguiente pieza del
+proyecto, no de esta pantalla.
+

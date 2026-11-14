@@ -246,6 +246,10 @@ const MEDIR = (cfg) => {
     const r = campo.getBoundingClientRect()
     const etiqueta = campo.getAttribute('aria-label')
       || document.querySelector('label[for="' + campo.id + '"]')?.textContent?.trim()
+      || (campo.getAttribute('aria-labelledby') || '').split(' ')
+        .map((id) => document.getElementById(id)?.textContent?.trim() || '')
+        .join(' ')
+        .trim()
       || ''
     return {
       existe: true,
@@ -416,6 +420,102 @@ const MEDIR = (cfg) => {
 }
 
 // ------------------------------------------------------------------- principal ---
+
+/** *La entrada /compra/listas, con las manos:* escribir en el typeahead, elegir una sugerencia
+ *  (se cierra con Escape sin perder el texto) y marcar una línea en la selección.
+ *  *Todo con eventos reales del navegador (`Input.insertText` y `Input.dispatchKeyEvent`), no
+ *  `element.click()`, para que se pruebe el teclado de verdad.* */
+async function entradaInteraccion(enviar) {
+  const r = {}
+  const foco = await evalJs(enviar, `(() => {
+    const campo = document.querySelector('main [role="combobox"]')
+    if (!campo) return { existe: false }
+    campo.focus()
+    return { existe: true, etiqueta: campo.getAttribute('aria-label') || '' }
+  })()`)
+  r.typeahead = foco
+  if (!foco.existe) return r
+
+  await enviar('Input.insertText', { text: 'leche' })
+  await espera(900)
+  const abierto = await evalJs(enviar, `(() => {
+    const campo = document.querySelector('main [role="combobox"]')
+    const opciones = [...document.querySelectorAll('[role="option"]')]
+    return {
+      abierto: campo?.getAttribute('aria-expanded') === 'true',
+      opciones: opciones.length,
+      primera: opciones[0]?.textContent?.trim().replace(/\\s+/g, ' ').slice(0, 90) || null,
+      conEuroPorUnidad: /€\\s*\\/\\s*(kg|l|ud)/i.test(opciones[0]?.textContent || ''),
+    }
+  })()`)
+  r.typeahead = { ...foco, ...abierto }
+
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27,
+  })
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27,
+  })
+  await espera(250)
+  r.typeaheadTrasEscape = await evalJs(enviar, `(() => {
+    const campo = document.querySelector('main [role="combobox"]')
+    return {
+      abierto: campo?.getAttribute('aria-expanded') === 'true',
+      texto: campo?.value || '',
+      opciones: document.querySelectorAll('[role="option"]').length,
+    }
+  })()`)
+
+  const abrir = await evalJs(enviar, `(() => {
+    const boton = [...document.querySelectorAll('main button')]
+      .find((b) => /Elegir varias líneas/.test(b.textContent || ''))
+    if (!boton) return { hayBoton: false }
+    boton.click()
+    return { hayBoton: true }
+  })()`)
+  r.seleccion = abrir
+  if (!abrir.hayBoton) return r
+
+  await espera(300)
+  const lista = await evalJs(enviar, `(() => {
+    const listbox = document.querySelector('main [role="listbox"]')
+    if (!listbox) return { hayLista: false }
+    const opcion = listbox.querySelector('[role="option"]')
+    opcion?.focus()
+    return { hayLista: true, opciones: listbox.querySelectorAll('[role="option"]').length }
+  })()`)
+  r.seleccion = { ...abrir, ...lista }
+  if (!lista.hayLista) return r
+
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ',
+  })
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32,
+  })
+  await espera(350)
+  r.seleccionMarcada = await evalJs(enviar, `(() => {
+    const opcion = document.querySelector('main [role="listbox"] [role="option"]')
+    const texto = document.querySelector('main')?.innerText || ''
+    return {
+      ariaSelected: opcion?.getAttribute('aria-selected') === 'true',
+      barra: /\\d+ líneas? seleccionada/.test(texto),
+    }
+  })()`)
+
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27,
+  })
+  await enviar('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27,
+  })
+  await espera(300)
+  r.seleccionCerrada = await evalJs(enviar, `(() => ({
+    hayLista: document.querySelector('main [role="listbox"]') !== null,
+    boton: [...document.querySelectorAll('main button')].some((b) => /Elegir varias líneas/.test(b.textContent || '')),
+  }))()`)
+  return r
+}
 
 async function principal() {
   mkdirSync(CAPTURAS, { recursive: true })
@@ -617,6 +717,83 @@ async function principal() {
             `filas=${medida.filas.visibles}/${medida.filas.total}`,
         )
       }
+    }
+
+    // ---- la entrada /compra/listas: typeahead, selección y sus estados (390 × 844)
+    if (process.env.CESTA_ENTRADA === '1') {
+      await enviar('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
+      })
+      informe.entrada = {}
+      // *Se simula el estado interceptando `fetch` antes de que arranque la app
+      // (`Page.addScriptToEvaluateOnNewDocument`): así el estado es el de verdad —vacío, error,
+      // carga—, no una pantalla inventada para la foto.*
+      const parche = (modo) => `(() => {
+        const modo = ${JSON.stringify(modo)};
+        const original = window.fetch;
+        window.fetch = async (recurso, opciones) => {
+          const url = String(recurso && recurso.url ? recurso.url : recurso);
+          if (url.split('?')[0].endsWith('/api/listas')) {
+            if (modo === 'vacio') {
+              return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            if (modo === 'error') {
+              return new Response('{"detail":"No he podido traer tus listas"}',
+                { status: 500, headers: { 'Content-Type': 'application/json' } });
+            }
+            if (modo === 'carga') {
+              await new Promise((r) => setTimeout(r, 5000));
+            }
+          }
+          return original(recurso, opciones);
+        };
+      })()`
+      const estados = ['normal', 'vacio', 'carga', 'error']
+      for (const modo of estados) {
+        const parcheId = modo === 'normal'
+          ? null
+          : (await enviar('Page.addScriptToEvaluateOnNewDocument', { source: parche(modo) })).identifier
+        await enviar('Page.navigate', { url: BASE + '/compra/listas' })
+        await hasta(enviar, 'document.readyState === "complete"')
+        if (modo === 'normal' || modo === 'vacio') {
+          await hasta(
+            enviar,
+            'document.querySelector(\'main [role="combobox"]\') !== null',
+            60,
+            250,
+          )
+          await espera(700)
+        } else if (modo === 'carga') {
+          await espera(900)
+        } else {
+          await hasta(
+            enviar,
+            'document.querySelector(\'main [role="alert"], main .vacio, main [role="alertdialog"]\') !== null',
+            40,
+            250,
+          )
+          await espera(500)
+        }
+        const medida = await evalJs(enviar, `(${MEDIR.toString()})(${JSON.stringify({})})`)
+        const captura = `ui-entrada-${modo}-390x844.png`
+        const shot = await enviar('Page.captureScreenshot', { format: 'png' })
+        writeFileSync(join(CAPTURAS, captura), Buffer.from(shot.data, 'base64'))
+        const interaccion = modo === 'normal' ? await entradaInteraccion(enviar) : null
+        informe.entrada[modo] = { modo, captura, ...medida, interaccion }
+        console.log(
+          `entrada ${modo}: scrollH=${medida.scrollHorizontal} ` +
+            `typeahead=${medida.typeahead?.existe === true} ` +
+            `tapados=${medida.controles?.tapados ?? '-'}/${medida.controles?.total ?? '-'}`,
+        )
+        if (parcheId) {
+          await enviar('Page.removeScriptToEvaluateOnNewDocument', { identifier: parcheId })
+        }
+      }
+      writeFileSync(
+        join(SALIDA, 'medicion-entrada.json'),
+        JSON.stringify({ fecha: informe.fecha, base: BASE, entrada: informe.entrada }, null, 2) + '\n',
+        'utf8',
+      )
     }
 
     // ---- el resumen que se lee de un vistazo

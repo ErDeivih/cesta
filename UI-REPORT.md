@@ -337,3 +337,44 @@ hallazgos; la segunda, sobre la captura ya corregida, solo uno:
 
 Segunda pasada, sobre la captura actualizada: solo devuelve el hallazgo de relevancia y añade
 «No veo otros problemas relevantes claramente demostrables en esta captura».
+
+---
+
+## 9. Ronda 3 — entrada `/compra/listas`: typeahead, selección y estados (390 × 844)
+
+Pieza cerrada sobre la pantalla de entrada: los dos gestos del encargo ejercitados con **teclado de
+verdad** (el instrumento escribe con `Input.insertText` y pulsa con `Input.dispatchKeyEvent`, no con
+`element.click()`), y los tres estados medidos **generándolos de verdad** (interceptando `fetch` de
+`/api/listas` antes de arrancar la app: `[]` para vacío, 500 para error, 5 s de retardo para carga).
+
+Medida: `medicion-entrada.json`, generada con
+`CESTA_ENTRADA=1 node scripts/medir-ui-cesta.mjs`. Capturas:
+`capturas/ui-entrada-{normal,vacio,carga,error}-390x844.png`.
+
+| Estado | Qué se pinta | Scroll H | Controles tapados | Typeahead |
+|---|---|---:|---:|---|
+| **Normal** (La casa, 6 líneas) | lista, precio estimado y typeahead | no | **0 / 14** | sí: `top=319`, etiqueta «Añadir a la lista» |
+| **Vacío** (sin listas) | «No tienes ninguna lista» + typeahead que apunta en la de casa | no | **0 / 5** | sí: `top=130` |
+| **Carga** (listas lentas) | «Cargando tus listas…» | no | **0 / 0** | no: no se monta hasta tener lista |
+| **Error** (listas a 500) | «No he podido traer tus listas» + «Volver a intentarlo» | no | **0 / 1** | no |
+
+**Typeahead con teclado** (estado normal): se escribe «leche» → `aria-expanded=true`, **8
+sugerencias**, la primera con su **€/unidad** (`0,79 €/l`); `Escape` cierra la lista
+(`aria-expanded=false`) y **conserva el texto** «leche» (no lo borra).
+
+**Selección accesible** (estado normal): «Elegir varias líneas» abre un `role="listbox"` con **6
+opciones**; `Espacio` marca la primera (`aria-selected=true`) y la barra dice «1 línea seleccionada»;
+`Escape` sale de la selección y devuelve el botón.
+
+Puertas de la pieza (solo cambia el instrumento y los documentos; `src/` no se toca):
+
+```text
+node --check scripts/medir-ui-cesta.mjs           →  OK
+node --test scripts/prueba-medicion.test.mjs      →  tests 6 / pass 6 / fail 0   [exit 0]
+npx vitest run                                    →  29 ficheros / 319 tests passed  [exit 0]
+pytest tests/test_ui_movil.py -p no:cacheprovider →  15 passed in 3.95 s        [exit 0]
+```
+
+La decisión de producto que desbloquea esto (datos en el dispositivo con IndexedDB y demo con
+muestra pequeña incrustada) queda anotada en `DECISIONES.md` (2026-11-14). El almacén local es la
+siguiente pieza; esta ronda cierra la pantalla y su medición.
