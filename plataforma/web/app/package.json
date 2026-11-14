@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/sella-sw.mjs",
+    "build:demo": "node scripts/build-demo.mjs",
     "vista-previa": "vite preview",
     "tipos": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.mjs\"",

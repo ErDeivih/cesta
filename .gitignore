@@ -28,6 +28,9 @@ data/master/*.parcial.json.gz
 # artefacto que envejece en cada commit y que nadie lee.
 plataforma/web/app/node_modules/
 plataforma/web/dist/
+# La demo publicada en GitHub Pages se compila aparte (`npm run build:demo`); su carpeta
+# se publica en el repo `cesta-demo`, no aquí.
+plataforma/web/demo-dist/
 
 # La web de aprendizaje: lo que se versiona es el **material** (`docs/`, y en particular
 # `docs/aprende/`), que es la fuente. El sitio es un artefacto: se regenera entero con

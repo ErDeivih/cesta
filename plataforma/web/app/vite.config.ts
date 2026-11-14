@@ -11,33 +11,47 @@ import react from '@vitejs/plugin-react'
 // En produccion nada de esto se usa: es Caddy quien manda /api al backend.
 const destinoApi = process.env.CESTA_API ?? 'http://127.0.0.1:8000'
 
-export default defineConfig({
-  plugins: [react()],
+/** *** DOS SITIOS, NO UNO. *** *
+ *
+ *  - La app de verdad (`npm run build`) se sirve en la raiz de Caddy, con su API.
+ *  - La **demo** (`npm run build:demo`, modo `demo`) se publica en GitHub Pages bajo
+ *    `/cesta-demo/`: **base con el nombre del repositorio**, `outDir` aparte (para no pisar lo que
+ *    sirve Caddy), datos de la muestra incrustados y las rutas en el hash, para que Pages no tenga
+ *    que resolver rutas profundas.
+ */
+export default defineConfig(({ mode }) => {
+  const demo = mode === 'demo'
+  return {
+    plugins: [react()],
 
-  // Dos decisiones que no son de gusto:
-  //
-  //   outDir '../dist'  Caddy sirve `plataforma/web` y el docker-compose monta
-  //                     esa carpeta. La app se construye a `web/dist`, que es lo
-  //                     que se montara en /srv. Si el outDir se quedara en
-  //                     `app/dist`, habria que cambiar el montaje en dos sitios
-  //                     a la vez.
-  //   base '/'          El index.html cuelga de la raiz del sitio, no de /app/.
-  //                     Con una base relativa, /grupo/4125 pediria los assets a
-  //                     /grupo/assets/... y la ficha saldria en blanco.
-  base: '/',
-  build: {
-    outDir: '../dist',
-    emptyOutDir: true,
-    // Sin mapas en produccion: son megabytes que nadie va a leer en el movil.
-    sourcemap: false,
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: destinoApi,
-        changeOrigin: true,
+    // Dos decisiones que no son de gusto:
+    //
+    //   outDir '../dist'  Caddy sirve `plataforma/web` y el docker-compose monta
+    //                     esa carpeta. La app se construye a `web/dist`, que es lo
+    //                     que se montara en /srv. Si el outDir se quedara en
+    //                     `app/dist`, habria que cambiar el montaje en dos sitios
+    //                     a la vez.
+    //   base '/'          El index.html cuelga de la raiz del sitio, no de /app/.
+    //                     Con una base relativa, /grupo/4125 pediria los assets a
+    //                     /grupo/assets/... y la ficha saldria en blanco.
+    //
+    // En la demo, base y salida cambian: `/cesta-demo/` es la URL del proyecto en Pages y
+    // `../demo-dist` es su carpeta, separada de la que sirve Caddy.
+    base: demo ? '/cesta-demo/' : '/',
+    build: {
+      outDir: demo ? '../demo-dist' : '../dist',
+      emptyOutDir: true,
+      // Sin mapas en produccion: son megabytes que nadie va a leer en el movil.
+      sourcemap: false,
+    },
+    server: {
+      port: 5173,
+      proxy: {
+        '/api': {
+          target: destinoApi,
+          changeOrigin: true,
+        },
       },
     },
-  },
+  }
 })

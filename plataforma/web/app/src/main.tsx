@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, HashRouter } from 'react-router-dom'
 
 import { App } from './App'
+import { instalaApiDemo } from './demo/api'
 import { VigilaCuenta } from './api/cuenta'
 import { ErrorApi } from './api/cliente'
 // *** Las fuentes van PRIMERO, y el orden importa. *** *
@@ -44,11 +45,25 @@ const cliente = new QueryClient({
 const raiz = document.getElementById('raiz')
 if (!raiz) throw new Error('Falta el <div id="raiz"> en index.html.')
 
+/** *** LA DEMO PUBLICA: DATOS EN LA PROPIA PÁGINA. *** *
+ *
+ *  *La demo de GitHub Pages no tiene servidor: se instala la API de mentira con la muestra
+ *  incrustada (`src/demo/api.ts`) y las rutas van en el hash, para que Pages no tenga que
+ *  resolver rutas profundas. Si no hay hash, se entra por la pantalla que enseña el producto.*
+ */
+const DEMO = import.meta.env.VITE_DEMO === '1'
+if (DEMO) {
+  instalaApiDemo()
+  if (!window.location.hash) window.location.replace('#/compra/listas')
+}
+
+const Enrutador = DEMO ? HashRouter : BrowserRouter
+
 // *** EL SERVICE WORKER: LA APP ABRE SIN RED. ***
 // *Se registra **solo en produccion**: en desarrollo cachearia el armazon y los cambios no se verian,
 // que es el error clasico de los service workers.*
 // *Y no se espera a que este listo: registrar tarda y no hace falta para pintar.*
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+if (!DEMO && import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js').catch(() => {
       // *No poder cachear no puede romper la app: sin SW funciona igual, solo que con red.*
@@ -60,12 +75,12 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={cliente}>
-      <BrowserRouter>
+      <Enrutador>
         {/* **Vaciar la cache cuando cambia la cuenta.** Va antes que la aplicacion
             para que no haya ni un render con datos de la sesion anterior. */}
         <VigilaCuenta />
         <App />
-      </BrowserRouter>
+      </Enrutador>
     </QueryClientProvider>
   </StrictMode>,
 )
