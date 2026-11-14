@@ -4,6 +4,8 @@
 
 **Verificación del 14/11/2026, 12:50:** raíz **200**, asset principal `assets/index-of8g-bLA.js`
 **200**, Pages en estado **`built`** sirviendo desde la rama `gh-pages`.
+
+**Re-verificación del 14/11/2026, 13:10:** raíz **200**, asset **200**, Pages **`built`**.
 **Repositorio:** <https://github.com/ErDeivih/cesta-demo> (público, Pages desde la rama `gh-pages`,
 tipo `legacy`, estado `built`).
 
