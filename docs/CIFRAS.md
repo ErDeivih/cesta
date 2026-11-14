@@ -18,31 +18,31 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 | | |
 |---|---:|
-| productos del catalogo | **58.449** |
-| grupos comparables | **9.457** |
-| productos comparables por kg/l/m | **47.236** |
-| productos con codigo de barras | **25.594** |
+| productos del catalogo | **58.261** |
+| grupos comparables | **9.431** |
+| productos comparables por kg/l/m | **47.036** |
+| productos con codigo de barras | **25.648** |
 
 ## Etiquetado y composicion
 
 | | |
 |---|---:|
-| productos con algun sello | **12.786** |
-| productos con certificado | **1.139** |
-| productos con Nutri-Score | **8.487** |
-| productos con tabla nutricional | **3.904** |
-| productos con envase | **8.977** |
+| productos con algun sello | **12.738** |
+| productos con certificado | **1.140** |
+| productos con Nutri-Score | **8.496** |
+| productos con tabla nutricional | **3.905** |
+| productos con envase | **8.970** |
 
 ## Historico
 
-    3.034.799 filas, 68 dias acumulados
+    3.092.702 filas, 69 dias acumulados
 
 ## Por cadena, la ultima captura de cada una
 
 | cadena | productos | errores | tiempo | fecha |
 |---|---:|---:|---:|---|
-| alcampo | 28.639 | 0 | 9.829 s | 2026-11-13 |
-| carrefour | 16.708 | 1 | 3.257 s | 2026-11-13 |
+| alcampo | 28.320 | 0 | 8.858 s | 2026-11-14 |
+| carrefour | 16.765 | 1 | 5.247 s | 2026-11-14 |
 | dia | 5.700 | 0 | 701 s | 2026-11-14 |
 | mercadona | 4.276 | 0 | 103 s | 2026-11-14 |
 | aldi | 3.043 | 0 | 105 s | 2026-11-14 |
@@ -52,7 +52,7 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 
 | | |
 |---|---:|
-| productos con texto de promocion | 5.676 |
-| **de tarjeta** (no bajan lo que pagas en caja) | **1.621** |
-| **solo por internet** (no bajan el ticket de la tienda) | **88** |
-| ofertas que cuentan de verdad | 3.967 |
+| productos con texto de promocion | 5.666 |
+| **de tarjeta** (no bajan lo que pagas en caja) | **1.620** |
+| **solo por internet** (no bajan el ticket de la tienda) | **87** |
+| ofertas que cuentan de verdad | 3.959 |
