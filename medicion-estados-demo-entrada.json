@@ -1,0 +1,459 @@
+{
+  "fecha": "2026-11-14T12:20:42.563Z",
+  "base": "https://erdeivih.github.io/cesta-demo",
+  "entrada": {
+    "normal": {
+      "modo": "normal",
+      "captura": "ui-estados-normal-390x844.png",
+      "url": "https://erdeivih.github.io/cesta-demo/#/compra/listas",
+      "titulo": "La cesta · Cesta",
+      "viewport": {
+        "ancho": 390,
+        "alto": 844
+      },
+      "scrollHorizontal": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "documentoAlto": 6602,
+      "cabecera": {
+        "top": 0,
+        "bottom": 69,
+        "alto": 69,
+        "ancho": 390,
+        "sticky": true
+      },
+      "barraAbajo": {
+        "top": 787,
+        "bottom": 844,
+        "alto": 57,
+        "ancho": 390
+      },
+      "primerContenido": {
+        "etiqueta": "div",
+        "clase": "flex min-h-full flex-col gap-bloque",
+        "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye oferta",
+        "top": 89,
+        "bottom": 6506,
+        "alto": 6417,
+        "ancho": 358,
+        "visible": true,
+        "pegadoALaCabecera": 20
+      },
+      "euroKg": {
+        "enDom": 12,
+        "enPantalla": 0,
+        "ejemplos": [
+          "11,75 €/kg",
+          "2,83 €/kg",
+          "4,10 €/l",
+          "7,96 €/kg"
+        ],
+        "columnaVisible": 0
+      },
+      "typeahead": {
+        "existe": true,
+        "etiqueta": "Añadir a la lista",
+        "top": 319,
+        "enPantalla": true,
+        "deSoloLectura": false
+      },
+      "textosCortados": [
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "NATURTINT Gel de coloración permanente sin amoníaco, tono 9N rubio miel NATURTIN",
+          "ocultoPx": 4
+        },
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "Habas baby Hacendado ultracongelada",
+          "ocultoPx": 25
+        },
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "PRODUCTO ALCAMPO Café molido natural descafeinado espresso 250 g.",
+          "ocultoPx": 13
+        },
+        {
+          "etiqueta": "span",
+          "clase": "sr-only",
+          "texto": "Lo que quieres pegar",
+          "ocultoPx": 139
+        }
+      ],
+      "filas": {
+        "total": 0,
+        "visibles": 0,
+        "hay": false
+      },
+      "controles": {
+        "chips": {
+          "total": 0,
+          "textos": []
+        },
+        "total": 14,
+        "tapados": 0,
+        "tapadosDetalle": [],
+        "primerProductoTop": null,
+        "altoHastaPrimerProducto": null
+      },
+      "diagnostico": {
+        "details": [],
+        "selects": [
+          {
+            "texto": "La casa (6)",
+            "rect": {
+              "top": 158,
+              "bottom": 202,
+              "alto": 44,
+              "ancho": 116
+            },
+            "display": "block",
+            "padre": "flex flex-wrap items-center gap-x-3 gap-y-1"
+          },
+          {
+            "texto": "Escribir en la lista",
+            "rect": {
+              "top": 5924,
+              "bottom": 5968,
+              "alto": 44,
+              "ancho": 320
+            },
+            "display": "block",
+            "padre": "flex flex-col gap-1 max-w-xs"
+          }
+        ]
+      },
+      "tarjetas": {
+        "total": 9,
+        "visibles": 2
+      },
+      "lineasDeLaLista": 10,
+      "lineas": 2,
+      "carga": {
+        "esqueletos": 0,
+        "vacios": 2,
+        "textosDeEspera": 0
+      },
+      "titular": "Listas",
+      "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye ofertas condicionadas Precios del 13 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Aldi 0,96 € − 1 + Quitar Añadir una nota PANA",
+      "interaccion": {
+        "typeahead": {
+          "existe": true,
+          "etiqueta": "",
+          "abierto": true,
+          "opciones": 8,
+          "primera": "Leche entera HacendadoHacendado0,96 €/l",
+          "conEuroPorUnidad": true
+        },
+        "typeaheadTrasEscape": {
+          "abierto": false,
+          "texto": "leche",
+          "opciones": 0
+        },
+        "seleccion": {
+          "hayBoton": true,
+          "hayLista": true,
+          "opciones": 6
+        },
+        "seleccionMarcada": {
+          "ariaSelected": true,
+          "barra": true
+        },
+        "seleccionCerrada": {
+          "hayLista": false,
+          "boton": true
+        }
+      }
+    },
+    "vacio": {
+      "modo": "vacio",
+      "captura": "ui-estados-vacio-390x844.png",
+      "url": "https://erdeivih.github.io/cesta-demo/#/compra/listas?demo=vacio",
+      "titulo": "La cesta · Cesta",
+      "viewport": {
+        "ancho": 390,
+        "alto": 844
+      },
+      "scrollHorizontal": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "documentoAlto": 2031,
+      "cabecera": {
+        "top": 0,
+        "bottom": 69,
+        "alto": 69,
+        "ancho": 390,
+        "sticky": true
+      },
+      "barraAbajo": {
+        "top": 787,
+        "bottom": 844,
+        "alto": 57,
+        "ancho": 390
+      },
+      "primerContenido": {
+        "etiqueta": "div",
+        "clase": "flex min-h-full flex-col gap-4",
+        "texto": "Añadir a la lista ▾ Se apunta en tu lista de casa, que se crea sola la primera vez. No tienes ninguna lista Todavía no hay listas guardadas. Busca un producto o",
+        "top": 89,
+        "bottom": 1935,
+        "alto": 1846,
+        "ancho": 358,
+        "visible": true,
+        "pegadoALaCabecera": 20
+      },
+      "euroKg": {
+        "enDom": 12,
+        "enPantalla": 3,
+        "ejemplos": [
+          "11,75 €/kg",
+          "2,83 €/kg",
+          "4,10 €/l",
+          "7,96 €/kg"
+        ],
+        "columnaVisible": 0
+      },
+      "typeahead": {
+        "existe": true,
+        "etiqueta": "Añadir a la lista",
+        "top": 130,
+        "enPantalla": true,
+        "deSoloLectura": false
+      },
+      "textosCortados": [
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "NATURTINT Gel de coloración permanente sin amoníaco, tono 9N rubio miel NATURTIN",
+          "ocultoPx": 4
+        },
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "Habas baby Hacendado ultracongelada",
+          "ocultoPx": 25
+        },
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "PRODUCTO ALCAMPO Café molido natural descafeinado espresso 250 g.",
+          "ocultoPx": 13
+        }
+      ],
+      "filas": {
+        "total": 0,
+        "visibles": 0,
+        "hay": false
+      },
+      "controles": {
+        "chips": {
+          "total": 0,
+          "textos": []
+        },
+        "total": 5,
+        "tapados": 0,
+        "tapadosDetalle": [],
+        "primerProductoTop": null,
+        "altoHastaPrimerProducto": null
+      },
+      "diagnostico": {
+        "details": [],
+        "selects": []
+      },
+      "tarjetas": {
+        "total": 1,
+        "visibles": 1
+      },
+      "lineasDeLaLista": 0,
+      "lineas": 0,
+      "carga": {
+        "esqueletos": 0,
+        "vacios": 1,
+        "textosDeEspera": 0
+      },
+      "titular": "Listas",
+      "textoPrimeraPantalla": "Añadir a la lista ▾ Se apunta en tu lista de casa, que se crea sola la primera vez. No tienes ninguna lista Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se apunta en la lista de casa, que se crea sola, y la cantidad se cambia aquí. Lo de siempre Un toque y a la lista. Lo tocado se cambia en la cesta. Pechuga de pollo Dia Nuestra Alacena 200 g 11,75 €/kg en DIA Lo de siem",
+      "interaccion": null
+    },
+    "carga": {
+      "modo": "carga",
+      "captura": "ui-estados-carga-390x844.png",
+      "url": "https://erdeivih.github.io/cesta-demo/#/compra/listas?demo=carga",
+      "titulo": "La cesta · Cesta",
+      "viewport": {
+        "ancho": 390,
+        "alto": 844
+      },
+      "scrollHorizontal": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "documentoAlto": 844,
+      "cabecera": {
+        "top": 0,
+        "bottom": 69,
+        "alto": 69,
+        "ancho": 390,
+        "sticky": true
+      },
+      "barraAbajo": {
+        "top": 787,
+        "bottom": 844,
+        "alto": 57,
+        "ancho": 390
+      },
+      "primerContenido": {
+        "etiqueta": "div",
+        "clase": "",
+        "texto": "Cargando tus listas… Cargando…",
+        "top": 89,
+        "bottom": 321,
+        "alto": 232,
+        "ancho": 358,
+        "visible": true,
+        "pegadoALaCabecera": 20
+      },
+      "euroKg": {
+        "enDom": 0,
+        "enPantalla": 0,
+        "ejemplos": [],
+        "columnaVisible": 0
+      },
+      "typeahead": {
+        "existe": false
+      },
+      "textosCortados": [
+        {
+          "etiqueta": "span",
+          "clase": "sr-only",
+          "texto": "Cargando tus listas…",
+          "ocultoPx": 148
+        },
+        {
+          "etiqueta": "span",
+          "clase": "sr-only",
+          "texto": "Cargando…",
+          "ocultoPx": 80
+        }
+      ],
+      "filas": {
+        "total": 0,
+        "visibles": 0,
+        "hay": false
+      },
+      "controles": {
+        "chips": {
+          "total": 0,
+          "textos": []
+        },
+        "total": 0,
+        "tapados": 0,
+        "tapadosDetalle": [],
+        "primerProductoTop": null,
+        "altoHastaPrimerProducto": null
+      },
+      "diagnostico": {
+        "details": [],
+        "selects": []
+      },
+      "tarjetas": {
+        "total": 0,
+        "visibles": 0
+      },
+      "lineasDeLaLista": 0,
+      "lineas": 0,
+      "carga": {
+        "esqueletos": 2,
+        "vacios": 0,
+        "textosDeEspera": 2
+      },
+      "titular": "Listas",
+      "textoPrimeraPantalla": "Cargando tus listas… Cargando…",
+      "interaccion": null
+    },
+    "error": {
+      "modo": "error",
+      "captura": "ui-estados-error-390x844.png",
+      "url": "https://erdeivih.github.io/cesta-demo/#/compra/listas?demo=error",
+      "titulo": "La cesta · Cesta",
+      "viewport": {
+        "ancho": 390,
+        "alto": 844
+      },
+      "scrollHorizontal": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "documentoAlto": 844,
+      "cabecera": {
+        "top": 0,
+        "bottom": 69,
+        "alto": 69,
+        "ancho": 390,
+        "sticky": true
+      },
+      "barraAbajo": {
+        "top": 787,
+        "bottom": 844,
+        "alto": 57,
+        "ancho": 390
+      },
+      "primerContenido": {
+        "etiqueta": "div",
+        "clase": "grid grow content-center",
+        "texto": "No he podido traer esto No he podido traer tus listas Volver a intentarlo",
+        "top": 89,
+        "bottom": 748,
+        "alto": 659,
+        "ancho": 358,
+        "visible": true,
+        "pegadoALaCabecera": 20
+      },
+      "euroKg": {
+        "enDom": 0,
+        "enPantalla": 0,
+        "ejemplos": [],
+        "columnaVisible": 0
+      },
+      "typeahead": {
+        "existe": false
+      },
+      "textosCortados": [],
+      "filas": {
+        "total": 0,
+        "visibles": 0,
+        "hay": false
+      },
+      "controles": {
+        "chips": {
+          "total": 0,
+          "textos": []
+        },
+        "total": 1,
+        "tapados": 0,
+        "tapadosDetalle": [],
+        "primerProductoTop": null,
+        "altoHastaPrimerProducto": null
+      },
+      "diagnostico": {
+        "details": [],
+        "selects": []
+      },
+      "tarjetas": {
+        "total": 0,
+        "visibles": 0
+      },
+      "lineasDeLaLista": 0,
+      "lineas": 0,
+      "carga": {
+        "esqueletos": 0,
+        "vacios": 0,
+        "textosDeEspera": 0
+      },
+      "titular": "Listas",
+      "textoPrimeraPantalla": "No he podido traer esto No he podido traer tus listas Volver a intentarlo",
+      "interaccion": null
+    }
+  }
+}
