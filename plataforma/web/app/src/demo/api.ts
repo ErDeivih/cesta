@@ -18,6 +18,7 @@
  *  la compilación de la demo (`VITE_DEMO=1`).*
  */
 import datos from './datos.json'
+import { borra, guarda, lee } from './almacen'
 
 type Cuerpo = Record<string, unknown>
 type Respuesta = { estado: number; valor: unknown }
@@ -25,6 +26,8 @@ type Respuesta = { estado: number; valor: unknown }
 const ok = (valor: unknown): Respuesta => ({ estado: 200, valor })
 
 const DEMO = datos as unknown as Record<string, any>
+/** *Sube cuando cambia la muestra: lo guardado de una versión anterior no se mezcla.* */
+const VERSION_MUESTRA = 1
 let estado: Record<string, any>
 
 const espera = (ms: number) => new Promise((listo) => setTimeout(listo, ms))
@@ -197,13 +200,26 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   return ok({})
 }
 
-/** Instala la API de la demo **antes** de que arranque React. */
-export function instalaApiDemo(): void {
+/** Instala la API de la demo **antes** de que arranque React.
+ *
+ *  *Es asíncrona porque primero mira lo que quedó guardado en el dispositivo: la primera visita
+ *  siembra la muestra y las siguientes parten de lo que la persona dejó. `?demo=reset` borra lo
+ *  guardado y siembra de nuevo.*
+ */
+export async function instalaApiDemo(): Promise<void> {
   if (typeof window === 'undefined') return
   const ventana = window as unknown as Record<string, unknown>
   if (ventana.__cestaDemoApi) return
   ventana.__cestaDemoApi = true
   estado = structuredClone(DEMO)
+
+  if (estadoForzado() === 'reset') await borra()
+  const guardado = (await lee()) as { version?: number; datos?: Record<string, any> } | null
+  if (guardado && guardado.version === VERSION_MUESTRA && guardado.datos) {
+    estado = guardado.datos
+  } else {
+    await guarda({ version: VERSION_MUESTRA, datos: estado })
+  }
 
   const original = window.fetch.bind(window)
   window.fetch = async (recurso: RequestInfo | URL, opciones?: RequestInit) => {
@@ -234,9 +250,21 @@ export function instalaApiDemo(): void {
     else await espera(180)
 
     const r = respuesta(ruta, destino.searchParams, metodo, cuerpo)
+    // *Lo que se escribe se guarda en el dispositivo: al recargar sigue ahí.*
+    if (metodo !== 'GET' && r.estado < 400) {
+      void guarda({ version: VERSION_MUESTRA, datos: estado })
+    }
     return new Response(JSON.stringify(r.valor), {
       status: r.estado,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  // *`?demo=reset` también desde la propia demo: al cambiar el hash se borra lo guardado y se
+  // recarga para volver a sembrar la muestra (sin esto, cambiar solo el hash no reinstala nada).*
+  window.addEventListener('hashchange', () => {
+    if (estadoForzado() === 'reset') {
+      void borra().then(() => window.location.reload())
+    }
+  })
 }

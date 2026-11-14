@@ -42,8 +42,10 @@ const cliente = new QueryClient({
   },
 })
 
-const raiz = document.getElementById('raiz')
-if (!raiz) throw new Error('Falta el <div id="raiz"> en index.html.')
+const encontrada = document.getElementById('raiz')
+if (!encontrada) throw new Error('Falta el <div id="raiz"> en index.html.')
+// *El estrechamiento de `null` no cruza a una función: se guarda ya sin nulo.*
+const raiz: HTMLElement = encontrada
 
 /** *** LA DEMO PUBLICA: DATOS EN LA PROPIA PÁGINA. *** *
  *
@@ -52,10 +54,6 @@ if (!raiz) throw new Error('Falta el <div id="raiz"> en index.html.')
  *  resolver rutas profundas. Si no hay hash, se entra por la pantalla que enseña el producto.*
  */
 const DEMO = import.meta.env.VITE_DEMO === '1'
-if (DEMO) {
-  instalaApiDemo()
-  if (!window.location.hash) window.location.replace('#/compra/listas')
-}
 
 const Enrutador = DEMO ? HashRouter : BrowserRouter
 
@@ -72,15 +70,27 @@ if (!DEMO && import.meta.env.PROD && 'serviceWorker' in navigator) {
 }
 
 
-createRoot(raiz).render(
-  <StrictMode>
-    <QueryClientProvider client={cliente}>
-      <Enrutador>
-        {/* **Vaciar la cache cuando cambia la cuenta.** Va antes que la aplicacion
-            para que no haya ni un render con datos de la sesion anterior. */}
-        <VigilaCuenta />
-        <App />
-      </Enrutador>
-    </QueryClientProvider>
-  </StrictMode>,
-)
+function arranca() {
+  // *En la demo se entra por la pantalla que enseña el producto si no hay ruta.*
+  if (DEMO && !window.location.hash) window.location.replace('#/compra/listas')
+  createRoot(raiz).render(
+    <StrictMode>
+      <QueryClientProvider client={cliente}>
+        <Enrutador>
+          {/* **Vaciar la cache cuando cambia la cuenta.** Va antes que la aplicacion
+              para que no haya ni un render con datos de la sesion anterior. */}
+          <VigilaCuenta />
+          <App />
+        </Enrutador>
+      </QueryClientProvider>
+    </StrictMode>,
+  )
+}
+
+if (DEMO) {
+  // *La demo espera a leer lo guardado en el dispositivo antes de pintar: son milisegundos y así
+  // no se enseña la muestra recién sembrada y luego se cambia por lo que había guardado.*
+  void instalaApiDemo().then(arranca, arranca)
+} else {
+  arranca()
+}

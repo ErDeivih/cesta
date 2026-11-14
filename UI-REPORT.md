@@ -393,7 +393,7 @@ Repositorio: <https://github.com/ErDeivih/cesta-demo>, público, Pages desde la 
 | Sin servidor | `src/demo/api.ts` responde a `/api/*`; la app se compila en modo `demo` (`npm run build:demo`, base `/cesta-demo/`) |
 | Rutas | en el **hash** (`#/compra/listas`), para que Pages no tenga que resolver rutas profundas |
 | Estados | `?demo=vacio`, `?demo=carga` y `?demo=error` los sirve la propia demo, sin servidor |
-| Escribir | se aplica en memoria durante la visita; **no persiste** y la demo no lo promete |
+| Escribir | se guarda en **IndexedDB** en el dispositivo y sobrevive a recargar; `?demo=reset` vuelve a la muestra |
 
 Medición de la **URL publicada** con el mismo instrumento, a 390×844 y 1440×900
 (`medicion-demo-pages.json`, capturas `capturas/ui-demo-pages-*`):
@@ -411,7 +411,13 @@ sugerencias** con €/unidad (`0,96 €/l`), `Escape` cierra **conservando el te
 líneas» abre un `role=listbox` de **6 opciones**, `Espacio` marca (`aria-selected=true`, barra «1
 línea seleccionada») y `Escape` sale devolviendo el botón.
 
+**Datos en el dispositivo, comprobado contra la URL publicada** (Edge headless): 6 líneas en la
+muestra → añadir una (`POST /api/listas/{id}/lineas`, **200**) → **7** → recarga completa →
+**7** con «Producto de prueba (demo)» al final → `?demo=reset` + recarga → **6**. La demo guarda
+en **IndexedDB** (`src/demo/almacen.ts`); la medición se rehízo contra el build con persistencia.
+
 **Lo que no se publica tal cual, y se dice:** las pantallas fuera de la compra (panel, recetas,
 ajustes) no tienen muestra y se quedan en su estado vacío/error; los precios son de la captura del
-13/11 y no se actualizan; la demo no tiene persistencia ni sincronización entre dispositivos. Para
-eso hace falta la API en el servidor, que es la decisión anotada en `DECISIONES.md`.
+13/11 y no se actualizan; lo escrito se guarda **en este navegador** (IndexedDB) pero no se
+sincroniza entre dispositivos. Para la sincronización hace falta la API en el servidor, que es la
+decisión anotada en `DECISIONES.md`.

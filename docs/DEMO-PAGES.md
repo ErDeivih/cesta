@@ -15,9 +15,12 @@ incrustada** y sin servidor detrás:
 - `src/demo/api.ts` responde a `/api/*` con esos datos, así que la demo funciona **sin red** una vez
   cargada la página. Las rutas van en el **hash** (`#/compra/listas`) para que Pages no tenga que
   resolver rutas profundas.
-- **Escribir se puede**: añadir, tachar, cambiar cantidad o cerrar la compra se aplica en memoria
-  durante la visita. **No hay persistencia**: al recargar vuelve la muestra. Es una demo estática y
-  lo dice; no promete precios vivos ni sincronización.
+- **Los datos viven en el dispositivo**: la primera visita siembra la muestra en **IndexedDB**
+  (`src/demo/almacen.ts`); a partir de ahí, añadir, tachar, cambiar cantidad, quitar o cerrar la
+  compra **se guarda en el navegador y sobrevive a recargar**. Si la muestra cambia de versión, se
+  vuelve a sembrar; **`?demo=reset` borra lo guardado** y deja la demo como nueva.
+  *No hay sincronización entre dispositivos*: para eso hace falta la API en el servidor.
+  La demo no promete precios vivos.
 
 ## Estados, para enseñarlos
 
@@ -29,6 +32,7 @@ En la propia demo:
 | Vacío (sin listas) | `#/compra/listas?demo=vacio` |
 | Carga (listas lentas) | `#/compra/listas?demo=carga` |
 | Error (listas a 500) | `#/compra/listas?demo=error` |
+| Reiniciar la demo (borra lo guardado) | `#/compra/listas?demo=reset` |
 
 ## Cómo se publica
 
@@ -63,5 +67,15 @@ Con el mismo instrumento del proyecto, contra la URL publicada, a **390×844** y
 - Las pantallas fuera de la compra (panel, recetas, ajustes) no tienen muestra: se quedan en su
   estado vacío o de error. La demo es de **la compra**, que es lo que se quiere enseñar.
 - Los precios son de la captura del 13/11/2026 y no se actualizan.
+- Lo que se escribe queda **en este navegador**: no viaja a otro dispositivo ni a otra persona, y
+  borrar los datos del sitio devuelve la muestra.
 - El cambio de cuenta y la sincronización entre dispositivos no existen en la demo: para eso hace
   falta la API en el servidor (decisión del 14/11 en `DECISIONES.md`).
+
+## Persistencia comprobada en la URL publicada (14/11/2026)
+
+Con Edge headless contra <https://erdeivih.github.io/cesta-demo/>: la lista de la muestra tiene
+**6 líneas** → se añade una por la API de la demo (`POST /api/listas/{id}/lineas`, **200**) →
+**7 líneas** → **recarga completa** → **7 líneas**, con «Producto de prueba (demo)» al final →
+`#/compra/listas?demo=reset` + recarga → **6 líneas**. El estado lo guarda IndexedDB en el propio
+navegador; el build desplegado fue el `3a44741` de `gh-pages`.
