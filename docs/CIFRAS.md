@@ -1,6 +1,6 @@
 # Las cifras de la ultima ejecucion
 
-**Ejecucion del 13 de noviembre de 2026.** Este documento tiene un solo trabajo:
+**Ejecucion del 14 de noviembre de 2026.** Este documento tiene un solo trabajo:
 llevar los numeros de **hoy**. Lo reescribe entero
 `projects/cesta/cifras.py` al final de cada pasada.
 
@@ -43,10 +43,10 @@ de hoy y deja de avisar sin que nadie tenga que reescribir nada.
 |---|---:|---:|---:|---|
 | alcampo | 28.639 | 0 | 9.829 s | 2026-11-13 |
 | carrefour | 16.708 | 1 | 3.257 s | 2026-11-13 |
-| dia | 5.703 | 0 | 1.021 s | 2026-11-13 |
-| mercadona | 4.278 | 0 | 434 s | 2026-11-13 |
-| aldi | 3.039 | 0 | 445 s | 2026-11-13 |
-| lidl | 82 | 0 | 5 s | 2026-11-13 |
+| dia | 5.700 | 0 | 701 s | 2026-11-14 |
+| mercadona | 4.276 | 0 | 103 s | 2026-11-14 |
+| aldi | 3.043 | 0 | 105 s | 2026-11-14 |
+| lidl | 157 | 0 | 4 s | 2026-11-14 |
 
 ## Promociones
 
