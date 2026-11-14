@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-11-14T10:28:52.671Z",
+  "fecha": "2026-11-14T11:51:00.656Z",
   "base": "http://localhost:5173",
   "entrada": {
     "normal": {
@@ -14,7 +14,7 @@
       "scrollHorizontal": false,
       "scrollWidth": 390,
       "clientWidth": 390,
-      "documentoAlto": 5772,
+      "documentoAlto": 5586,
       "cabecera": {
         "top": 0,
         "bottom": 69,
@@ -31,10 +31,10 @@
       "primerContenido": {
         "etiqueta": "div",
         "clase": "flex min-h-full flex-col gap-bloque",
-        "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye oferta",
+        "texto": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 7,38 € 6 productos · no tengo precio de",
         "top": 89,
-        "bottom": 5676,
-        "alto": 5587,
+        "bottom": 5490,
+        "alto": 5401,
         "ancho": 358,
         "visible": true,
         "pegadoALaCabecera": 20
@@ -45,7 +45,7 @@
         "ejemplos": [
           "11,75 €/kg",
           "2,83 €/kg",
-          "4,10 €/l",
+          "7,02 €/l",
           "7,96 €/kg"
         ],
         "columnaVisible": 0
@@ -58,6 +58,12 @@
         "deSoloLectura": false
       },
       "textosCortados": [
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "MAESTROS DE HOJIBLANCA Aceite de oliva virgen extra botella 1 l.",
+          "ocultoPx": 14
+        },
         {
           "etiqueta": "span",
           "clase": "sr-only",
@@ -98,8 +104,8 @@
           {
             "texto": "Escribir en la lista",
             "rect": {
-              "top": 5094,
-              "bottom": 5138,
+              "top": 4908,
+              "bottom": 4952,
               "alto": 44,
               "ancho": 320
             },
@@ -112,7 +118,7 @@
         "total": 9,
         "visibles": 2
       },
-      "lineasDeLaLista": 10,
+      "lineasDeLaLista": 11,
       "lineas": 2,
       "carga": {
         "esqueletos": 0,
@@ -120,14 +126,14 @@
         "textosDeEspera": 0
       },
       "titular": "Listas",
-      "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 11,48 € 6 productos · no incluye ofertas condicionadas Precios del 13 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Aldi 0,96 € − 1 + Quitar Añadir una nota PANA",
+      "textoPrimeraPantalla": "COMPRA · DE CASA La casa La casa (6) + Lista nueva Cambiar el nombre Quitar la lista Añadir a la lista ▾ PRECIO ESTIMADO 7,38 € 6 productos · no tengo precio de 1 Precios del 14 nov 2026 LO QUE FALTA 6 CARNICERÍA Pechuga de pollo Dia Nuestra Alacena 200 g en DIA 2,35 € − 1 + Quitar Añadir una nota LÁCTEOS Y HUEVOS Leche entera Hacendado en Carrefour 0,96 € − 1 + Quitar Añadir una nota PANADERÍA Pa",
       "interaccion": {
         "typeahead": {
           "existe": true,
           "etiqueta": "",
           "abierto": true,
           "opciones": 8,
-          "primera": "Leche semidesnatadaHacendado0,79 €/l",
+          "primera": "Leche semidesnatadaAsturiana0,79 €/l",
           "conEuroPorUnidad": true
         },
         "typeaheadTrasEscape": {
@@ -193,7 +199,7 @@
         "ejemplos": [
           "11,75 €/kg",
           "2,83 €/kg",
-          "4,10 €/l",
+          "7,02 €/l",
           "7,96 €/kg"
         ],
         "columnaVisible": 0
@@ -205,7 +211,14 @@
         "enPantalla": true,
         "deSoloLectura": false
       },
-      "textosCortados": [],
+      "textosCortados": [
+        {
+          "etiqueta": "span",
+          "clase": "line-clamp-2 text-cuerpo font-medium leading-snug",
+          "texto": "MAESTROS DE HOJIBLANCA Aceite de oliva virgen extra botella 1 l.",
+          "ocultoPx": 14
+        }
+      ],
       "filas": {
         "total": 0,
         "visibles": 0,

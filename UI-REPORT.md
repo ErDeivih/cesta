@@ -379,6 +379,13 @@ La decisión de producto que desbloquea esto (datos en el dispositivo con Indexe
 muestra pequeña incrustada) queda anotada en `DECISIONES.md` (2026-11-14). El almacén local es la
 siguiente pieza; esta ronda cierra la pantalla y su medición.
 
+**Verificación del 14/11/2026, 12:55 (app real, 390×844):** typeahead «Añadir a la lista» en
+`top=319` con **0/14 controles tapados**; «leche» → **8 sugerencias** con €/unidad (`0,79 €/l`) y
+`Escape` conserva el texto; «Elegir varias líneas» → listbox de **6 opciones**, `Espacio` marca
+(`aria-selected`) y `Escape` sale; estados vacío/carga/error con **0/5, 0/0 y 0/1** tapados y sin
+scroll horizontal en ninguno. Artefactos refrescados: `medicion-entrada.json` y
+`capturas/ui-entrada-*`.
+
 ---
 
 ## 10. Demo publicada en GitHub Pages (14/11/2026)
