@@ -6,6 +6,10 @@
 **200**, Pages en estado **`built`** sirviendo desde la rama `gh-pages`.
 
 **Re-verificación del 14/11/2026, 13:10:** raíz **200**, asset **200**, Pages **`built`**.
+
+**Comprobación del 14/11/2026, 13:20:** sigue **200** (raíz y asset) y Pages **`built`**; no se
+republica porque el build desplegado no ha cambiado. Los estados de la lista a 390 px, medidos
+contra esta URL, están en `medicion-estados-demo.json` y `capturas/ui-estados-*`.
 **Repositorio:** <https://github.com/ErDeivih/cesta-demo> (público, Pages desde la rama `gh-pages`,
 tipo `legacy`, estado `built`).
 
