@@ -79,3 +79,8 @@ Con Edge headless contra <https://erdeivih.github.io/cesta-demo/>: la lista de l
 **7 líneas** → **recarga completa** → **7 líneas**, con «Producto de prueba (demo)» al final →
 `#/compra/listas?demo=reset` + recarga → **6 líneas**. El estado lo guarda IndexedDB en el propio
 navegador; el build desplegado fue el `3a44741` de `gh-pages`.
+
+**El vacío también se alcanza de verdad**, no solo con `?demo=vacio`: en la URL publicada se borra
+«La casa» (`DELETE /api/listas/{id}` → **200**), se recarga y sale **«No tienes ninguna lista» con el
+buscador en pie**; después, `?demo=reset` + recarga devuelve la lista con sus **6 líneas**. Captura:
+`capturas/ui-demo-pages-vacio-borrando-390x844.png`.

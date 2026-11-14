@@ -416,6 +416,11 @@ muestra → añadir una (`POST /api/listas/{id}/lineas`, **200**) → **7** → 
 **7** con «Producto de prueba (demo)» al final → `?demo=reset` + recarga → **6**. La demo guarda
 en **IndexedDB** (`src/demo/almacen.ts`); la medición se rehízo contra el build con persistencia.
 
+**El vacío, alcanzado de verdad** (no solo con `?demo=vacio`): en la URL publicada se borra «La casa»
+(`DELETE /api/listas/{id}` → **200**), se recarga y sale «No tienes ninguna lista» **con el buscador
+en pie**; `?demo=reset` devuelve la lista con sus **6 líneas**. Captura:
+`capturas/ui-demo-pages-vacio-borrando-390x844.png`.
+
 **Lo que no se publica tal cual, y se dice:** las pantallas fuera de la compra (panel, recetas,
 ajustes) no tienen muestra y se quedan en su estado vacío/error; los precios son de la captura del
 13/11 y no se actualizan; lo escrito se guarda **en este navegador** (IndexedDB) pero no se
