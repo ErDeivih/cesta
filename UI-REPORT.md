@@ -386,6 +386,12 @@ siguiente pieza; esta ronda cierra la pantalla y su medición.
 scroll horizontal en ninguno. Artefactos refrescados: `medicion-entrada.json` y
 `capturas/ui-entrada-*`.
 
+**Typeahead y selección, re-verificados el 14/11/2026, 13:10:** pruebas `Typeahead.test.tsx`,
+`Cesta.test.tsx` y `Buscar.test.tsx` → **3 ficheros / 45 tests passed**; en la app real a 390×844 el
+typeahead está en `top=319` con **0/14** controles tapados, «leche» da **8 sugerencias** con €/unidad
+y `Escape` conserva el texto; «Elegir varias líneas» abre un listbox de **6 opciones**, `Espacio`
+marca (`aria-selected`) y `Escape` sale.
+
 ---
 
 ## 10. Demo publicada en GitHub Pages (14/11/2026)
