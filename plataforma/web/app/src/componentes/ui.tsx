@@ -190,7 +190,9 @@ export function Aviso({
  const borde: Record<string, string> = {
  info: 'border-borde bg-papel text-tinta-fuerte',
  aviso: 'border-aviso bg-papel text-aviso',
- mal: 'border-error bg-papel text-error',
+ // *El rojo, en el borde; el texto en tinta. Un párrafo entero en rojo cuesta de leer y
+ // parece una alarma; el borde y el `role="alert"` ya dicen que algo ha fallado.*
+ mal: 'border-error bg-papel text-tinta-fuerte',
  bien: 'border-bien bg-bien-suave text-bien',
  }
  return (

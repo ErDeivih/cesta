@@ -424,6 +424,18 @@ function LaComparacion({ listaId, nombreDeLaLista, lineas, comparacion, puedeEsc
         <EnlaceALaLista listaId={listaId} texto="Volver a la lista" />
       </header>
 
+      {/* *** SI NO HAY NINGUNA CADENA COMPLETA, SE DICE ANTES DE LOS TOTALES. *** *
+       *Un total de una cadena a la que le faltan productos no es comparable con otro que sí
+       *los tiene; sin este aviso, dos cifras seguidas parecen una comparación y no lo son.* */}
+      {ganadora === null && (
+        <Aviso tono="info" titulo="Ninguna cadena tiene la lista entera">
+          <p>
+            Los totales de abajo son subtotales: cada uno dice qué productos le faltan. La
+            comparación completa aparecerá cuando una cadena tenga todo lo de la lista.
+          </p>
+        </Aviso>
+      )}
+
       {/* -------------------------------------------------- resumen de un vistazo --- */}
       <section aria-label="Resumen de la comparación" className="grid grid-cols-3 gap-2">
         <div className="rounded-campo border border-borde bg-papel p-2">

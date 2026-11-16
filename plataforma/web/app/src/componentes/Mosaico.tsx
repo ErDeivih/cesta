@@ -169,23 +169,30 @@ export function Mosaico({ limite = 12, enUnaLista = false, enLaLista = [] }: {
           return (
             <li key={h.grupo_id}
                 className="flex flex-col gap-1 rounded-tarjeta border border-borde p-2">
-              {h.imagen ? (
-                <img
-                  src={h.imagen}
-                  alt=""
-                  width={80}
-                  height={80}
-                  loading="lazy"
-                  className="mx-auto h-20 w-20 rounded-campo border border-borde bg-papel object-contain "
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : (
-                // Sin foto no se inventa una: se deja el hueco del mismo tamano,
-                // que mantiene la cuadricula alineada sin ensenar nada falso.
-                <div className="mx-auto h-20 w-20 rounded-campo bg-marfil " />
-              )}
+              {/* *La foto, con una reserva detrás: si el producto no tiene imagen o la que
+                  tiene no carga, se ve su inicial en vez de un hueco vacío. La cuadrícula no
+                  cambia de alto y la tarjeta no parece rota.* */}
+              <div className="relative mx-auto h-20 w-20 shrink-0 overflow-hidden rounded-campo border border-borde bg-marfil">
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 flex items-center justify-center font-serif text-[26px] text-tinta-suave"
+                >
+                  {(h.nombre || '?').trim().charAt(0).toUpperCase()}
+                </span>
+                {h.imagen && (
+                  <img
+                    src={h.imagen}
+                    alt=""
+                    width={80}
+                    height={80}
+                    loading="lazy"
+                    className="relative h-20 w-20 bg-papel object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                )}
+              </div>
 
               <span className="line-clamp-2 text-cuerpo font-medium leading-snug">
                 {h.nombre}
