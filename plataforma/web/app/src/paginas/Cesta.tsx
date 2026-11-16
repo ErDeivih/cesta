@@ -465,11 +465,17 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [inicioToque, setInicioToque] = useState<number | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const botonMenuRef = useRef<HTMLButtonElement | null>(null)
   const [borrador, setBorrador] = useState(linea.nota ?? '')
   // *Un menú que se queda abierto mientras se sigue comprando tapa la lista. Se cierra al
   // tocar fuera; Escape ya lo cierra desde el botón que lo abre.*
   useEffect(() => {
     if (!menuAbierto) return
+    // *Al abrir, el foco entra en la primera acción disponible: quien navega con teclado no
+    // tiene que adivinar dónde está el menú.*
+    const primero = panelRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])')
+    primero?.focus()
     const alTocarFuera = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuAbierto(false)
@@ -600,6 +606,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
           )}
           <button
             type="button"
+            ref={botonMenuRef}
             aria-label={`Más opciones de ${linea.nombre_visto}`}
             aria-expanded={menuAbierto}
             aria-controls={`acciones-${linea.id}`}
@@ -615,9 +622,16 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
 
         {menuAbierto && (
           <div
+            ref={panelRef}
             id={`acciones-${linea.id}`}
             role="group"
             aria-label={`Acciones de ${linea.nombre_visto}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setMenuAbierto(false)
+                botonMenuRef.current?.focus()
+              }
+            }}
             className="absolute right-4 top-14 z-20 w-60 rounded-tarjeta border border-borde bg-papel p-2 shadow-hoja"
           >
             <div className="flex items-center justify-center gap-1 border-b border-borde pb-2">

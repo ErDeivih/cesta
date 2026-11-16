@@ -411,6 +411,8 @@ describe('las filas de producto', () => {
     expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' })).not.toBeInTheDocument()
     await userEvent.click(masOpciones)
     expect(screen.getByRole('button', { name: 'Menos Alubia blanca 1 kg' })).toBeInTheDocument()
+    // *El foco entra en la primera acción disponible, no se queda en el botón que abrió.*
+    expect(screen.getByRole('button', { name: 'Más Alubia blanca 1 kg' })).toHaveFocus()
     expect(screen.getByRole('button', { name: 'Más Alubia blanca 1 kg' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Quitar Alubia blanca 1 kg de la lista' }))
       .toBeInTheDocument()
@@ -428,6 +430,9 @@ describe('las filas de producto', () => {
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' }))
       .not.toBeInTheDocument()
+    // *Y el foco vuelve al botón que abrió el menú: no se pierde por la pantalla.*
+    expect(screen.getByRole('button', { name: 'Más opciones de Alubia blanca 1 kg' }))
+      .toHaveFocus()
   })
 
   it('el menú de la fila se cierra al tocar fuera', async () => {
