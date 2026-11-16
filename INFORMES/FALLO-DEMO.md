@@ -99,3 +99,11 @@ node scripts/sonda-demo.mjs \
 
 No se toca el backend (`cesta-api`, `cesta-db`) ni la app de casa servida por Caddy: esto es solo
 la compilación `build:demo` que va a GitHub Pages.
+
+## 5. Cierre (16/11/2026, 13:30)
+
+Arreglado y verificado sobre la URL publicada: la primera pantalla pinta **8 productos**, la
+búsqueda «leche» da **7 resultados** (4 en el primer viewport), el mismo producto se compara en
+**5 cadenas** y el flujo búsqueda → añadir → lista → comparación termina con **9 líneas y
+17,89 €**. `/api/*` sigue dando 404 en Pages, que es lo correcto: la demo ya no lo necesita.
+Medidas, capturas y HTTP en [`DEMO-PUBLICADA.md`](DEMO-PUBLICADA.md).

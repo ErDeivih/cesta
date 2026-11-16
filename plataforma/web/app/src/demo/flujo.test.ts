@@ -38,7 +38,7 @@ describe('búsqueda → añadir → lista → comparación', () => {
       (l) => l.grupo_id === elegido.grupo_id && l.nombre_visto === elegido.nombre,
     )
     expect(linea, 'la línea añadida no está en la lista').toBeTruthy()
-    expect(detalle.estimacion.total_cent).toBe(antes + elegido.precio_cent)
+    expect(detalle.estimacion.total_cent).toBe(antes + (elegido.precio_cent as number))
     expect(detalle.estimacion.sin_precio).toBe(0)
 
     // 4. COMPARAR: el mismo producto, cadena a cadena, con su precio por unidad.
@@ -48,9 +48,9 @@ describe('búsqueda → añadir → lista → comparación', () => {
     expect(enLaLista.opciones.length).toBeGreaterThanOrEqual(2)
     expect(enLaLista.mas_barata).toBeTruthy()
 
-    const grupo = grupoDelCatalogo(elegido.grupo_id)!
+    const grupo = grupoDelCatalogo(elegido.grupo_id as number)!
     const unidades = grupo.productos.map((p) => p.precio_unidad_cent as number)
-    expect(Math.min(...unidades)).toBe(elegido.precio_unidad_cent)
+    expect(Math.min(...unidades)).toBe(elegido.precio_unidad_cent as number)
     for (const producto of grupo.productos) {
       expect(producto.fuente).toBeTruthy()
       expect(producto.precio_cent).toBeGreaterThan(0)

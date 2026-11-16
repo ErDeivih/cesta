@@ -124,6 +124,15 @@ const MEDIR = () => {
     (el) => el.children.length === 0 && euroUnidad.test(el.textContent || ''),
   )
   const texto = (main.innerText || '').replace(/\s+/g, ' ').trim()
+  // *Las líneas de la lista: una casilla por línea. Es lo que cuenta «cuántos productos pinta
+  // la primera pantalla» cuando la pantalla es la lista y no la búsqueda.*
+  const lineasLista = [...document.querySelectorAll('main input[type="checkbox"]')]
+    .map((c) => c.closest('li'))
+    .filter(Boolean)
+  const lineasListaVisibles = lineasLista.filter((li) => {
+    const r = li.getBoundingClientRect()
+    return r.top < innerHeight && r.bottom > 0 && r.width > 0 && r.height > 0
+  })
   return {
     titulo: document.title,
     url: location.href,
@@ -131,6 +140,8 @@ const MEDIR = () => {
     textoPrimeraPantalla: texto.slice(0, 700),
     filasResultados: filas.length,
     filasVisibles: visibles.length,
+    lineasLista: lineasLista.length,
+    lineasListaVisibles: lineasListaVisibles.length,
     primerosProductos: filas.slice(0, 6).map((f) => (f.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 90)),
     conPrecioPorUnidad: conUnidad.length,
     ejemplosPrecioUnidad: conUnidad.slice(0, 4).map((el) => (el.textContent || '').trim().slice(0, 30)),
