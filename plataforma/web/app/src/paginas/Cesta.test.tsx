@@ -259,7 +259,9 @@ describe('la cabecera dice dónde estás y deja volver', () => {
     // `h1` del armazon ya dice «Lista», y repetirlo aqui no informaria de nada.*
     const titulo = await screen.findByRole('heading', { level: 2, name: 'La de casa' })
     expect(titulo).toBeInTheDocument()
-    expect(screen.getByText(/^Compra/)).toBeInTheDocument()
+    // *El antetítulo lleva la marca delante: la lista es la pantalla de entrada de la demo y
+    // el nombre tiene que verse ahí, no solo en la pestaña.*
+    expect(screen.getByText(/^Avío · Compra/)).toBeInTheDocument()
     const volver = screen.getByRole('link', { name: 'Volver a la portada' })
     expect(volver).toHaveAttribute('href', '/')
   })

@@ -10,17 +10,19 @@
  *  los efectos -- el dato llega en un render posterior al de la ruta, asi que su efecto
  *  corre despues -- sin necesidad de coordinacion entre las dos partes.
  *
- *  El sufijo `· Cesta` va siempre: una pestana que solo dice "Leche entera" no dice de
+ *  El sufijo `· Avío` va siempre: una pestana que solo dice "Leche entera" no dice de
  *  que aplicacion es, y con diez abiertas eso importa.
  */
 import { useEffect } from 'react'
 
-export const SUFIJO = '· Cesta'
+import { MARCA } from '../marca'
+
+export const SUFIJO = `· ${MARCA}`
 
 /** Pone el titulo de la pestana. Sin texto, deja solo el nombre de la aplicacion. */
 export function useTitulo(texto?: string | null) {
   useEffect(() => {
     const limpio = (texto ?? '').trim()
-    document.title = limpio ? `${limpio} ${SUFIJO}` : 'Cesta'
+    document.title = limpio ? `${limpio} ${SUFIJO}` : MARCA
   }, [texto])
 }

@@ -40,12 +40,15 @@ test('*** dos theme-color, uno para cada tema ***', () => {
 })
 
 test('*** la marca: titulo, icono, manifiesto y Apple ***', () => {
+  // *El nombre nuevo, en la pestaña y en la pantalla de inicio. «Avío» tiene que estar en
+  // el `<title>` y en el título de iOS: si solo estuviera en un documento, no se vería.*
+  assert.match(html, /<title>Avío — /, 'el titulo de la pestaña no dice Avío')
   assert.match(html, /<title>[^<]+<\/title>/, 'sin titulo')
   assert.match(html, /rel="icon"[^>]*href="\/icono\.svg"/, 'sin icono svg')
   assert.match(html, /rel="manifest"[^>]*href="\/site\.webmanifest"/, 'sin manifiesto')
   // *`apple-touch-icon`: sin el, en iOS se instala con una captura de la pantalla en vez del icono.*
   assert.match(html, /rel="apple-touch-icon"[^>]*href="\/icono-192\.png"/, 'sin apple-touch-icon')
-  assert.match(html, /name="apple-mobile-web-app-title"/, 'sin titulo para iOS')
+  assert.match(html, /name="apple-mobile-web-app-title"[^>]*content="Avío"/, 'sin titulo para iOS')
 })
 
 test('*** una descripcion, y tambien para compartir ***', () => {

@@ -23,8 +23,11 @@ const man = JSON.parse(readFileSync(new URL('site.webmanifest', LEER), 'utf8'))
 const relativa = (src) => src.replace(/^\.?\//, '')
 
 test('*** el manifiesto dice como se llama y como se abre ***', () => {
-  assert.equal(man.name, 'Cesta')
-  assert.equal(man.short_name, 'Cesta')
+  // *El nombre nuevo, aplicado de verdad: el manifiesto es lo que se instala en el movil y
+  // lo que enseña la tienda del sistema. «Avío», con tilde, es el mismo que el de la
+  // cabecera y el de la pestaña.*
+  assert.equal(man.name, 'Avío')
+  assert.equal(man.short_name, 'Avío')
   // *`.` (o `/`) y no una ruta profunda: la app arranca en la portada, también bajo `/cesta-demo/`.*
   assert.match(man.start_url, /^(\.|\/)$/, 'la app no arranca en la portada')
   // *`standalone` y no `browser`: instalada, sin barra de direcciones.*

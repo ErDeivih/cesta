@@ -22,6 +22,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { LayoutSuite, tituloDeSeccion } from './componentes/Suite'
 import { SUFIJO } from './componentes/Titulo'
+import { MARCA } from './marca'
 import { Vacio } from './componentes/ui'
 const Ajustes = lazy(() => import('./paginas/Ajustes').then((m) => ({ default: m.Ajustes })))
 const Avisos = lazy(() => import('./paginas/Avisos').then((m) => ({ default: m.Avisos })))
@@ -54,7 +55,7 @@ const Portada = lazy(() => import('./paginas/Portada').then((m) => ({ default: m
 
 /** El titulo de la pestana por ruta. Lo de dentro lo mejora si sabe mas. */
 export function tituloDe(ruta: string): string {
-  if (ruta === '/') return 'Cesta'
+  if (ruta === '/') return MARCA
   // **Las rutas de siempre siguen teniendo su titulo**, porque siguen existiendo como
   // redirecciones: durante el salto, la pestana tiene que decir lo mismo que decia antes. Y el
   // contrato de `tests/test_titulos.py` lo vigila leyendo este fichero: con diez pestanas abiertas,
@@ -97,7 +98,7 @@ export function App() {
 
   useEffect(() => {
     const nombre = tituloDe(pathname)
-    document.title = nombre === 'Cesta' ? 'Cesta' : `${nombre} ${SUFIJO}`
+    document.title = nombre === MARCA ? MARCA : `${nombre} ${SUFIJO}`
   }, [pathname])
 
   return (
@@ -280,10 +281,10 @@ function ArmazonDeLaMarca() {
     <div
       className="min-h-screen bg-papel px-5 py-pagina text-tinta"
       role="status"
-      aria-label="Abriendo Cesta"
+      aria-label={`Abriendo ${MARCA}`}
     >
       <header className="border-b border-borde pb-bloque">
-        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">Cesta</h1>
+        <h1 className="font-serif text-portada font-semibold text-tinta-fuerte">{MARCA}</h1>
       </header>
 
       {/* *Tres formas del alto de una tarjeta, con la misma separacion que la portada de verdad.*

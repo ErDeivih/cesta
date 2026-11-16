@@ -39,6 +39,7 @@ import {
   IconoPrecioAbajo,
 } from './iconos'
 import { cx } from './ui'
+import { MARCA } from '../marca'
 
 import type { ComponentType, SVGProps } from 'react'
 
@@ -140,7 +141,7 @@ export function tituloDeSeccion(ruta: string): string {
     if (ruta.startsWith('/panel/matching')) return 'Matching'
     if (ruta.startsWith('/panel')) return 'Panel'
     if (ruta.startsWith('/unirme/')) return 'Invitación'
-    return 'Cesta'
+    return MARCA
   }
   const exacta = app.subsecciones.find((s) => s.a === ruta)
   if (exacta) return exacta.texto
@@ -453,7 +454,7 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
         >
           <span aria-hidden="true">&#9776;</span>
           {/* El boton dice donde estas, no solo "Menu". */}
-          <span className="font-medium">{app?.nombre ?? 'Cesta'}</span>
+          <span className="font-medium">{app?.nombre ?? MARCA}</span>
         </button>
         <div className="min-w-0 flex-1">
           {/* *** Un solo titulo por pantalla. *** *Aqui habia un rotulo con el nombre de la app

@@ -11,6 +11,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { useEstado } from '../api/consultas'
 import { fecha, hace, nombreCadena } from '../api/formato'
+import { MARCA } from '../marca'
 import { NavEscritorio } from './Nav'
 import { Etiqueta, Resumen, cx } from './ui'
 
@@ -58,7 +59,7 @@ export function Cabecera() {
             ancho**: un pixel por debajo del minimo, que es lo que no se ve en el
             codigo. Con `min-w-[44px]` queda cuadrado. */}
         <Link to="/" className="inline-flex min-h-[44px] min-w-[44px] items-center text-lg font-bold tracking-tight">
-          Cesta
+          {MARCA}
         </Link>
         <nav aria-label="Recetas y alimentación" className="flex flex-wrap gap-2 text-cuerpo">
           <Link to="/recetas" className="inline-flex min-h-[44px] items-center rounded-campo px-3 hover:bg-marfil dark:hover:bg-neutral-800">Recetas</Link>

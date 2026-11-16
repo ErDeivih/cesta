@@ -62,6 +62,7 @@ import { SinConexion } from '../componentes/SinConexion'
 import { Dialogo } from '../componentes/ui-sdk/Foco'
 import { SeleccionMultiple } from '../componentes/ui-sdk/SeleccionMultiple'
 import { Typeahead } from '../componentes/ui-sdk/Typeahead'
+import { MARCA } from '../marca'
 import type { Linea, Reparto, RepartoTiendas, ResultadoBusqueda } from '../tipos'
 
 /* ------------------------------------------------------ entrar, o crear ---
@@ -774,7 +775,7 @@ function CabeceraDeLaLista({ nombre, deCasa, opciones, alAlternar }: {
       </Link>
       <div className="min-w-0 flex-1">
         <p className="text-micro uppercase text-tinta-tenue">
-          Compra{deCasa ? ' · de casa' : ''}
+          {MARCA} · Compra{deCasa ? ' · de casa' : ''}
         </p>
         <h2 className="truncate font-serif text-titulo font-semibold text-tinta">{nombre}</h2>
       </div>

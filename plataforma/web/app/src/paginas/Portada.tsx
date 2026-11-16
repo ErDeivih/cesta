@@ -28,6 +28,7 @@ import {
   IconoCarro, IconoLibro, IconoLupa, IconoPersona, IconoPlato,
 } from '../componentes/iconos'
 import { cx } from '../componentes/ui'
+import { MARCA } from '../marca'
 import { listaDelDiario } from '../logica/listaDelDiario'
 import type { Baja, OpcionTienda, RepartoTiendas } from '../tipos'
 
@@ -57,7 +58,7 @@ function Cabecera({ conSesion }: { conSesion: boolean }) {
     <header className="flex items-start justify-between gap-3 px-4 pb-2 pt-4">
       <div className="min-w-0">
         <p className="text-micro uppercase text-tinta-tenue">{fechaDeHoy()}</p>
-        <h1 className="mt-1 font-serif text-portada font-semibold text-tinta">Cesta</h1>
+        <h1 className="mt-1 font-serif text-portada font-semibold text-tinta">{MARCA}</h1>
       </div>
       <Link
         to={conSesion ? DESTINO_CUENTA : ENTRADA}

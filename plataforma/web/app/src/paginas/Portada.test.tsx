@@ -177,10 +177,12 @@ beforeEach(() => {
 })
 
 describe('Portada · la cabecera, el buscador y la barra de abajo', () => {
-  it('*** la cabecera dice la fecha local en espanol, «Cesta» y lleva la cuenta a ajustes ***', async () => {
+  it('*** la cabecera dice la fecha local en espanol, «Avío» y lleva la cuenta a ajustes ***', async () => {
     monta()
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Cesta' })).toBeInTheDocument()
+    // *El nombre nuevo se ve donde se mira al abrir: el `h1` de la portada. No basta con
+    // proponerlo en un documento; la interfaz tiene que decirlo.*
+    expect(screen.getByRole('heading', { level: 1, name: 'Avío' })).toBeInTheDocument()
     // *La fecha se pinta en versalitas; el texto sigue siendo el de `Intl`.*
     expect(screen.getByText(/^[a-záéíóúüñ]+,\s+\d{1,2}\s+[a-z]{3,4}$/i)).toBeInTheDocument()
     // *La sesion llega despues del primer pintado: se espera al dato.*
