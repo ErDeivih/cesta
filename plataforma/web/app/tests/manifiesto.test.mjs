@@ -41,6 +41,14 @@ test('*** los dos colores, porque son los que pintan el arranque ***', () => {
   assert.match(man.background_color, /^#[0-9a-f]{6}$/i)
   // *El lema, el mismo que la portada: una sola frase en todos los metadatos.*
   assert.match(man.description, /bien hilada/, 'el manifiesto no lleva el lema')
+  // *Lo que hace que se pueda instalar y que el sistema sepa qué es.*
+  assert.equal(man.display, 'standalone')
+  assert.ok(man.id, 'sin `id`: el sistema no tiene una identidad estable')
+  assert.ok(Array.isArray(man.categories) && man.categories.length > 0, 'sin categorías')
+  assert.ok(Array.isArray(man.shortcuts) && man.shortcuts.length >= 2, 'sin atajos de la app')
+  for (const atajo of man.shortcuts) {
+    assert.ok(atajo.name && atajo.url, 'un atajo sin nombre o sin URL')
+  }
 })
 
 test('*** los cuatro iconos, y cada uno existe ***', () => {
