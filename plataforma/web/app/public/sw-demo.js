@@ -9,7 +9,7 @@
  *
  *  *Este fichero es solo de la demo (`build:demo`); la app de casa usa `sw.js`.*
  */
-const CACHE = 'avio-demo-v1'
+const CACHE = 'avio-demo-__VERSION__'
 const BASE = new URL(self.registration.scope).pathname
 
 self.addEventListener('install', (evento) => {

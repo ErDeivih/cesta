@@ -22,6 +22,13 @@ function corre(args, opciones = {}) {
 
 corre(['tsc', '--noEmit'])
 corre(['vite', 'build', '--mode', 'demo'], { env: { ...process.env, VITE_DEMO: '1' } })
+// *El service worker lleva el hash de este build en el nombre de la caché. Sin esto, un
+// despliegue nuevo no invalida la caché vieja y la gente sigue viendo la versión anterior.*
+const sello = spawnSync(process.execPath, ['scripts/sella-sw-demo.mjs'], {
+  stdio: 'inherit',
+  cwd: app,
+})
+if (sello.status !== 0) process.exit(sello.status ?? 1)
 
 if (!existsSync(join(salida, 'index.html'))) {
   console.error('No se ha generado', join(salida, 'index.html'))

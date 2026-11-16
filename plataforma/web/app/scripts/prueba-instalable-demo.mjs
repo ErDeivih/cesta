@@ -154,6 +154,13 @@ try {
   if (!informe.pasos.serviceWorker.hay) fallo('no hay service worker listo')
   if (!informe.pasos.serviceWorker.controlador) fallo('el service worker no controla la página')
 
+  // *El sello del build tiene que estar en la caché: si sigue el marcador literal, el
+  // navegador no actualizaría nunca el service worker.*
+  const swTexto = await evalJs(enviar, `fetch('sw-demo.js').then((r) => r.text())`)
+  informe.pasos.serviceWorkerCache = swTexto.match(/avio-demo-[a-f0-9]{8}/)?.[0] ?? null
+  if (swTexto.includes('__VERSION__')) fallo('el service worker publicado conserva __VERSION__')
+  if (!informe.pasos.serviceWorkerCache) fallo('el service worker no lleva hash de build')
+
   ws.close()
 } catch (e) {
   fallo(`la prueba se rompió: ${e instanceof Error ? e.message : String(e)}`)
