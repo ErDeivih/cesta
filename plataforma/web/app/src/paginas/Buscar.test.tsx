@@ -215,7 +215,9 @@ describe('el listado a 390 px', () => {
     const lista = screen.getByRole('list', { name: 'Resultados de la búsqueda' })
     const filaPintada = within(lista).getAllByRole('listitem')[0]
     expect(within(filaPintada).getByText('Leche entera Hacendado')).toBeInTheDocument()
-    expect(within(filaPintada).getByText('Mercadona')).toBeInTheDocument()
+    // *La cadena más barata, con cuántas cadenas entran en la comparación: «Mercadona» a
+    // secas parecía la única, y el precio de la derecha es el mínimo de todas.*
+    expect(within(filaPintada).getByText(/Mercadona/)).toBeInTheDocument()
     // *Precio de venta y precio por unidad, **juntos**: no se toca esa pareja.*
     expect(within(filaPintada).getByText('0,96 €')).toBeInTheDocument()
     expect(within(filaPintada).getByText('0,96 €/l')).toBeInTheDocument()
