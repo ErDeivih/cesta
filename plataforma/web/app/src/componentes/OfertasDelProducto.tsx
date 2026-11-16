@@ -68,7 +68,8 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
       className="mt-1 rounded-campo border border-borde bg-marfil p-2"
     >
       <p className="text-etiqueta text-tinta-suave">
-        El más barato de cada supermercado, de menor a mayor precio por unidad.
+        El más barato de cada supermercado ({productos.length}{' '}
+        {productos.length === 1 ? 'cadena' : 'cadenas'}), de menor a mayor precio por unidad.
       </p>
       <ul className="mt-1 flex flex-col">
         {productos.map((producto) => (
