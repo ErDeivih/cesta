@@ -459,6 +459,19 @@ describe('las filas de producto', () => {
       .toBeInTheDocument()
   })
 
+  it('Escape cierra el menú aunque el foco se haya ido a otro sitio', async () => {
+    monta()
+    await loQueFalta()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Más opciones de Alubia blanca 1 kg' }),
+    )
+    // *El foco se va a la lista (por ejemplo, con Tab) y Escape tiene que cerrar igual.*
+    screen.getByRole('heading', { level: 2, name: 'La de casa' }).focus?.()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' }))
+      .not.toBeInTheDocument()
+  })
+
   it('lo tachado va a «En el carro» y no se cuenta como lo que falta', async () => {
     dobles.detalle = {
       ...(dobles.detalle as Record<string, unknown>),

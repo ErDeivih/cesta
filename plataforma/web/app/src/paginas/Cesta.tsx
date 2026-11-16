@@ -481,8 +481,17 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
         setMenuAbierto(false)
       }
     }
+    const alPulsarEscape = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setMenuAbierto(false)
+      botonMenuRef.current?.focus()
+    }
     document.addEventListener('click', alTocarFuera)
-    return () => document.removeEventListener('click', alTocarFuera)
+    document.addEventListener('keydown', alPulsarEscape)
+    return () => {
+      document.removeEventListener('click', alTocarFuera)
+      document.removeEventListener('keydown', alPulsarEscape)
+    }
   }, [menuAbierto])
   const idCasilla = `linea-${linea.id}`
   // **Una linea sin destino es legitima** desde la migracion 014 (paquete G02): se apunta lo
