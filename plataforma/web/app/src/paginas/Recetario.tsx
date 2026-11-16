@@ -54,14 +54,21 @@ export function ingredientesDeTexto(texto: string): Ingrediente[] {
     })
 }
 
-/** «4 raciones · 30 min» o «1 ración», sin dejar un « · » colgando. */
+/** «4 raciones · 30 min» o «1 ración», sin dejar un « · » colgando.
+ *
+ *  *Y las kcal por ración cuando la receta las trae: son el dato que permite comparar dos
+ *  comidas sin abrir la ficha.* */
 export function metaDeLaReceta(r: {
   raciones: number
   minutos: number | null
   archivada?: boolean
+  kcal_racion?: number | null
 }): string {
   const trozos = [`${r.raciones} ${r.raciones === 1 ? 'ración' : 'raciones'}`]
   if (r.minutos != null && r.minutos > 0) trozos.push(`${r.minutos} min`)
+  if (r.kcal_racion != null && Number.isFinite(r.kcal_racion)) {
+    trozos.push(`${Math.round(r.kcal_racion)} kcal/ración`)
+  }
   if (r.archivada) trozos.push('archivada')
   return trozos.join(' · ')
 }

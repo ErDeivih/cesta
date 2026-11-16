@@ -16,6 +16,9 @@ export type Ingrediente = {
   producto_id?: string | null
   grupo_id?: number | null
   fuente?: string | null
+  /** *kcal por 100 g, cuando el ingrediente viene del catálogo. La API de verdad no lo manda;
+   *  la demo lo lleva para poder calcular y comprobar la ración.* */
+  kcal_100g?: number | null
 }
 
 export type Receta = {
@@ -33,6 +36,9 @@ export type Receta = {
   minutos: number | null
   etiquetas: string
   ingredientes: Ingrediente[]
+  /** *Calculadas de los ingredientes; `null` si falta algún dato, nunca cero.* */
+  kcal_total?: number | null
+  kcal_racion?: number | null
 }
 
 export type ResumenReceta = {
@@ -44,6 +50,8 @@ export type ResumenReceta = {
   raciones: number
   minutos: number | null
   etiquetas: string
+  /** *Lo mismo que en el detalle, para poder decirlo en la tarjeta sin abrirla.* */
+  kcal_racion?: number | null
 }
 
 export type NuevaReceta = {

@@ -662,6 +662,14 @@ function DetalleDeLaReceta() {
           <h2 className="mt-1 break-words font-display text-titulo font-semibold text-tinta">
             {data.nombre}
           </h2>
+          {/* *Las kcal por ración, calculadas de los ingredientes. Si la API no las manda, no
+              se pinta nada: un cero o un «no lo sé» en cada receta sería ruido.* */}
+          {data.kcal_racion != null && (
+            <p className="mt-0.5 text-etiqueta text-tinta-tenue">
+              {Math.round(data.kcal_racion)} kcal por ración
+              {data.kcal_total != null ? ` · ${Math.round(data.kcal_total)} kcal en total` : ''}
+            </p>
+          )}
         </div>
         <Link
           to="/recetas/plan"

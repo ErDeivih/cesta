@@ -1,0 +1,449 @@
+{
+ "recetas": [
+  {
+   "id": 1,
+   "nombre": "Arroz con tomate y atún",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 25,
+   "etiquetas": "arroz, pescado, rápido",
+   "preparacion": "Cuece el arroz en agua con una pizca de sal. Aparte, calienta el tomate triturado con el aceite, añade el atún escurrido y deja que espese. Mezcla con el arroz y sirve.",
+   "ingredientes": [
+    {
+     "texto": "Arroz basmati",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 7077,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 353.0
+    },
+    {
+     "texto": "Tomate triturado extra",
+     "cantidad": 150,
+     "unidad": "g",
+     "grupo_id": 24149,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 26.0
+    },
+    {
+     "texto": "Atún en aceite de oliva",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 18112,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 204.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 10,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "nombre": "Pasta con tomate y atún",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 20,
+   "etiquetas": "pasta, pescado, rápido",
+   "preparacion": "Cuece la pasta según el paquete. Calienta el tomate frito con el atún y un chorrito de aceite, mezcla con la pasta escurrida y deja un minuto al fuego.",
+   "ingredientes": [
+    {
+     "texto": "Pasta rigatoni Armando",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 12506,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 353.0
+    },
+    {
+     "texto": "Tomate frito Carrefour lata 400 g.",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 22561,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 78.0
+    },
+    {
+     "texto": "Atún en aceite de oliva",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 18112,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 204.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 5,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "nombre": "Lentejas con verduras",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 30,
+   "etiquetas": "legumbres, cuchara",
+   "preparacion": "Pocha la cebolla con el aceite. Añade el tomate y las lentejas escurridas, cubre con un poco de agua y deja hervir diez minutos.",
+   "ingredientes": [
+    {
+     "texto": "ZARTA Lentejas con chorizo en conserva 430 g.",
+     "cantidad": 200,
+     "unidad": "g",
+     "grupo_id": 9375,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 90.0
+    },
+    {
+     "texto": "Cebolla tubo 1 kg",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 1698,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 38.6
+    },
+    {
+     "texto": "Tomate triturado extra",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 24149,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 26.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 10,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "nombre": "Pollo con arroz y verduras",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 35,
+   "etiquetas": "pollo, arroz, sartén",
+   "preparacion": "Dora el pollo en el aceite. Añade las verduras y el arroz, cubre con agua y deja cocer hasta que el arroz esté tierno.",
+   "ingredientes": [
+    {
+     "texto": "LA CARLOTEÑA Pechuguita de pollo 100g",
+     "cantidad": 200,
+     "unidad": "g",
+     "grupo_id": 21334,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 125.0
+    },
+    {
+     "texto": "Arroz basmati",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 7077,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 353.0
+    },
+    {
+     "texto": "Mix de brócoli, coliflor y zanahoria",
+     "cantidad": 150,
+     "unidad": "g",
+     "grupo_id": 13053,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 39.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 10,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "nombre": "Salmón ahumado con pan y queso",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 10,
+   "etiquetas": "pescado, frío, rápido",
+   "preparacion": "Tuesta el pan. Unta el queso, coloca el salmón ahumado encima y termina con un poco de aceite.",
+   "ingredientes": [
+    {
+     "texto": "Salmón ahumado Hacendado",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 42990,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 217.0
+    },
+    {
+     "texto": "Pan de molde integral sin corteza",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 3094,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 231.0
+    },
+    {
+     "texto": "Queso brie",
+     "cantidad": 50,
+     "unidad": "g",
+     "grupo_id": 7791,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 356.0
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "nombre": "Garbanzos con tomate",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 25,
+   "etiquetas": "legumbres, cuchara",
+   "preparacion": "Calienta el tomate con el aceite, añade los garbanzos escurridos y deja que se junten los sabores durante diez minutos.",
+   "ingredientes": [
+    {
+     "texto": "EL POTAJE Garbanzos blancos 1 kg",
+     "cantidad": 250,
+     "unidad": "g",
+     "grupo_id": 70550,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 351.0
+    },
+    {
+     "texto": "Tomate triturado extra",
+     "cantidad": 150,
+     "unidad": "g",
+     "grupo_id": 24149,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 26.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 10,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "nombre": "Sopa de pollo con fideos",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 20,
+   "etiquetas": "sopa, pollo, cuchara",
+   "preparacion": "Calienta el caldo, añade los fideos y el pollo troceado y deja cocer hasta que los fideos estén listos.",
+   "ingredientes": [
+    {
+     "texto": "Caldo casero de pollo",
+     "cantidad": 500,
+     "unidad": "g",
+     "grupo_id": 20395,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 6.0
+    },
+    {
+     "texto": "Fideuá",
+     "cantidad": 40,
+     "unidad": "g",
+     "grupo_id": 10611,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 344.0
+    },
+    {
+     "texto": "LA CARLOTEÑA Pechuguita de pollo 100g",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 21334,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 125.0
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "nombre": "Tostadas de tomate y atún",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 10,
+   "etiquetas": "pan, pescado, rápido",
+   "preparacion": "Tuesta el pan, unta el tomate triturado, reparte el atún y termina con unas gotas de aceite.",
+   "ingredientes": [
+    {
+     "texto": "Pan de molde integral sin corteza",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 3094,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 231.0
+    },
+    {
+     "texto": "Tomate triturado extra",
+     "cantidad": 100,
+     "unidad": "g",
+     "grupo_id": 24149,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 26.0
+    },
+    {
+     "texto": "Atún en aceite de oliva",
+     "cantidad": 80,
+     "unidad": "g",
+     "grupo_id": 18112,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 204.0
+    },
+    {
+     "texto": "Aceite de oliva virgen Hacendado",
+     "cantidad": 5,
+     "unidad": "g",
+     "grupo_id": 78952,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 900.0
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "nombre": "Yogur con avena y miel",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 5,
+   "etiquetas": "desayuno, lácteo, rápido",
+   "preparacion": "Reparte el yogur en dos cuencos, añade los copos de maíz y la miel y deja reposar cinco minutos.",
+   "ingredientes": [
+    {
+     "texto": "Yogur natural",
+     "cantidad": 250,
+     "unidad": "g",
+     "grupo_id": 3093,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 42.0
+    },
+    {
+     "texto": "Copos de maíz 0% azúcares añadidos",
+     "cantidad": 40,
+     "unidad": "g",
+     "grupo_id": 29647,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 373.0
+    },
+    {
+     "texto": "Miel de flores",
+     "cantidad": 20,
+     "unidad": "g",
+     "grupo_id": 3849,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 320.0
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "nombre": "Leche con maíz y miel",
+   "creada": "2026-11-15T10:00:00+00:00",
+   "archivada": false,
+   "version": 1,
+   "raciones": 2,
+   "minutos": 5,
+   "etiquetas": "desayuno, lácteo, rápido",
+   "preparacion": "Calienta la leche, añade los copos de maíz y la miel y sirve al momento.",
+   "ingredientes": [
+    {
+     "texto": "Leche entera brik 1 l.",
+     "cantidad": 300,
+     "unidad": "g",
+     "grupo_id": 11627,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 63.0
+    },
+    {
+     "texto": "Copos de maíz 0% azúcares añadidos",
+     "cantidad": 50,
+     "unidad": "g",
+     "grupo_id": 29647,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 373.0
+    },
+    {
+     "texto": "Miel de flores",
+     "cantidad": 15,
+     "unidad": "g",
+     "grupo_id": 3849,
+     "producto_id": null,
+     "fuente": null,
+     "kcal_100g": 320.0
+    }
+   ]
+  }
+ ]
+}

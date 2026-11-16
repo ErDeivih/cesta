@@ -44,6 +44,7 @@ import {
   VERSION_MUESTRA,
   type Muestra,
 } from './estadoMuestra'
+import { RECETAS, recetaDe, resumenDe } from './recetas'
 import { borra, guarda, lee } from './almacen'
 
 type Cuerpo = Record<string, unknown>
@@ -126,6 +127,24 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   }
 
   // --- listas
+  if (ruta === '/listas/importar' && metodo === 'POST') {
+    const nombre = typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Lista compartida'
+    const lineas = Array.isArray(cuerpo.lineas) ? cuerpo.lineas : []
+    const nueva = creaLista(estado, `${nombre} (compartida)`, false)
+    for (const linea of lineas) {
+      if (typeof linea !== 'object' || linea === null) continue
+      const l = linea as Record<string, unknown>
+      if (typeof l.nombre !== 'string') continue
+      anadeLinea(estado, nueva.id, {
+        nombre: l.nombre,
+        grupoId: typeof l.grupo_id === 'number' ? l.grupo_id : null,
+        productoId: typeof l.producto_id === 'string' ? l.producto_id : null,
+        cantidad: typeof l.cantidad === 'number' ? l.cantidad : 1,
+        nota: typeof l.nota === 'string' ? l.nota : null,
+      })
+    }
+    return ok({ lista: nueva })
+  }
   if (ruta === '/listas') {
     if (metodo === 'POST') {
       return ok(creaLista(
@@ -212,6 +231,60 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
       return cambiado ? ok({}) : { estado: 404, valor: { detail: 'Esa línea no existe' } }
     }
     return ok({})
+  }
+
+  // --- recetas
+  // *`usePreviaDeCompra` llama a `/api/recetas/...` y `pide` ya pone `/api`: se aceptan las dos
+  // formas para no romper la pantalla por un prefijo repetido.*
+  const rutaRecetas = ruta.startsWith('/api/') ? ruta.slice('/api'.length) : ruta
+  if (rutaRecetas === '/recetas' && metodo === 'GET') {
+    return ok({ recetas: RECETAS.map(resumenDe) })
+  }
+  const deReceta = rutaRecetas.match(/^\/recetas\/(\d+)(?:\/(.*))?$/)
+  if (deReceta) {
+    const id = Number(deReceta[1])
+    const resto = deReceta[2] ?? ''
+    if (resto === 'versiones') return ok({ versiones: [1] })
+    if (resto === 'a-la-lista') {
+      if (metodo === 'GET') {
+        const receta = recetaDe(id)
+        if (!receta) return { estado: 404, valor: { detail: 'Esa receta no existe' } }
+        return ok({
+          version: 1,
+          raciones: receta.raciones,
+          lineas: receta.ingredientes.map((i) => ({
+            texto: i.texto,
+            cantidad: i.cantidad,
+            unidad: i.unidad,
+            grupo_id: i.grupo_id,
+            producto_id: i.producto_id,
+          })),
+          sin_cantidad: [],
+          sin_consolidar: [],
+          nota: 'Se añadirán los ingredientes de la receta a la lista.',
+        })
+      }
+      const listaId = typeof cuerpo.lista_id === 'string' ? cuerpo.lista_id : ''
+      const receta = recetaDe(id)
+      if (!receta || !listaPorId(listaId)) {
+        return { estado: 404, valor: { detail: 'Esa receta o esa lista no existe' } }
+      }
+      for (const ingrediente of receta.ingredientes) {
+        anadeLinea(estado, listaId, {
+          nombre: ingrediente.texto,
+          grupoId: ingrediente.grupo_id ?? null,
+          productoId: ingrediente.producto_id ?? null,
+          cantidad: 1,
+        })
+      }
+      return ok({ anadidos: receta.ingredientes.length })
+    }
+    if (resto === '' && metodo === 'GET') {
+      const receta = recetaDe(id, Number(params.get('raciones') ?? 0) || null)
+      return receta
+        ? ok(receta)
+        : { estado: 404, valor: { detail: 'Esa receta no existe' } }
+    }
   }
 
   // --- favoritos
