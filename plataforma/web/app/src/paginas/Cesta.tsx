@@ -461,7 +461,20 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   // nota que quiza no se termina.
   const [escribiendo, setEscribiendo] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   const [borrador, setBorrador] = useState(linea.nota ?? '')
+  // *Un menú que se queda abierto mientras se sigue comprando tapa la lista. Se cierra al
+  // tocar fuera; Escape ya lo cierra desde el botón que lo abre.*
+  useEffect(() => {
+    if (!menuAbierto) return
+    const alTocarFuera = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbierto(false)
+      }
+    }
+    document.addEventListener('click', alTocarFuera)
+    return () => document.removeEventListener('click', alTocarFuera)
+  }, [menuAbierto])
   const idCasilla = `linea-${linea.id}`
   // **Una linea sin destino es legitima** desde la migracion 014 (paquete G02): se apunta lo
   // que no esta en el catalogo en vez de obligar a buscarlo. Pero **no es un producto**, y la
@@ -577,7 +590,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
        * botones que producto. Quedan **la casilla de tachar** (el gesto del pasillo) y el
        * menú; dentro viven la cantidad, quitar y la nota, que se usan menos y caben sin
        * ensanchar la tarjeta.* */}
-      <div className="relative flex items-center justify-end pb-3 pl-[50px] pr-4 pt-1">
+      <div ref={menuRef} className="relative flex items-center justify-end pb-3 pl-[50px] pr-4 pt-1">
         <button
           type="button"
           aria-label={`Más opciones de ${linea.nombre_visto}`}

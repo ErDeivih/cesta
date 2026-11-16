@@ -418,6 +418,32 @@ describe('las filas de producto', () => {
     expect(screen.getByText('2 ×')).toBeInTheDocument()
   })
 
+  it('el menú de la fila se cierra con Escape', async () => {
+    monta()
+    await loQueFalta()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Más opciones de Alubia blanca 1 kg' }),
+    )
+    expect(screen.getByRole('button', { name: 'Menos Alubia blanca 1 kg' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('el menú de la fila se cierra al tocar fuera', async () => {
+    monta()
+    await loQueFalta()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Más opciones de Alubia blanca 1 kg' }),
+    )
+    expect(screen.getByRole('button', { name: 'Menos Alubia blanca 1 kg' })).toBeInTheDocument()
+    // *Un toque en cualquier otro sitio cierra el menú; si no, se queda abierto tapando
+    // la lista mientras se sigue comprando.*
+    await userEvent.click(screen.getByRole('heading', { level: 2, name: 'La de casa' }))
+    expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' }))
+      .not.toBeInTheDocument()
+  })
+
   it('lo tachado va a «En el carro» y no se cuenta como lo que falta', async () => {
     dobles.detalle = {
       ...(dobles.detalle as Record<string, unknown>),
