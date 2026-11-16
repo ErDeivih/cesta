@@ -14,11 +14,18 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { grupoDelCatalogo } from '../demo/catalogo'
 
+/** *El grupo que devuelve cada prueba; el mock lo lee al pintar.* */
+const dobles = vi.hoisted(() => ({ grupo: null as unknown }))
+
 vi.mock('../api/consultas', async () => {
   const { grupoDelCatalogo: grupo } = await import('../demo/catalogo')
-  const datos = grupo(11627)
   return {
-    useGrupo: () => ({ isPending: false, isError: false, data: datos, refetch: vi.fn() }),
+    useGrupo: () => ({
+      isPending: false,
+      isError: false,
+      data: dobles.grupo ?? grupo(11627),
+      refetch: vi.fn(),
+    }),
   }
 })
 
@@ -26,6 +33,7 @@ import { OfertasDelProducto } from './OfertasDelProducto'
 
 describe('la comparación de un mismo producto entre cadenas', () => {
   it('enseña las cinco cadenas con su precio por unidad y la diferencia', () => {
+    dobles.grupo = grupoDelCatalogo(11627)
     render(<OfertasDelProducto grupoId={11627} nombre="Leche entera brik 1 l." />)
 
     // *El panel dice cuántas cadenas compara, no solo cuáles.*
@@ -59,5 +67,25 @@ describe('la comparación de un mismo producto entre cadenas', () => {
     const texto = (screen.getByRole('region').textContent ?? '').replace(/\u00a0/g, ' ')
     expect(texto).toContain('ahorras 1,15 €/l (55 %)')
     expect(texto).toContain('(55 %)')
+  })
+
+  it('con dos cadenas: la más barata marcada y el ahorro en euros y porcentaje', () => {
+    // *Un producto que solo está en dos cadenas: es el caso mínimo de comparación, y el
+    // que tiene que seguir funcionando cuando no hay cinco precios que mirar.*
+    dobles.grupo = grupoDelCatalogo(9375)
+    render(<OfertasDelProducto grupoId={9375} nombre="ZARTA Lentejas con chorizo en conserva 430 g." />)
+
+    expect(screen.getByText(/2 cadenas/)).toBeInTheDocument()
+    const filas = within(screen.getByRole('list')).getAllByRole('listitem')
+    expect(filas).toHaveLength(2)
+    expect(filas[0]).toHaveTextContent('Alcampo')
+    expect(filas[0]).toHaveTextContent('2,81 €/kg')
+    expect(filas[0]).toHaveTextContent('más barata')
+    expect(filas[1]).toHaveTextContent('DIA')
+    expect(filas[1]).toHaveTextContent('3,14 €/kg')
+
+    const texto = (screen.getByRole('region').textContent ?? '').replace(/\u00a0/g, ' ')
+    expect(texto).toContain('ahorras 0,33 €/kg (10,4 %)')
+    expect(texto).toContain('0,33 €/kg de diferencia (10,4 %)')
   })
 })
