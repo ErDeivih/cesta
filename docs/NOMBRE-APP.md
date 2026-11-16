@@ -47,3 +47,29 @@ nuevo hay que mirarlo; si `Cesta Clara` está tomado, la segunda opción es **Hi
 
 **Mientras no se haga ese cambio**, la app sigue llamándose «Cesta» en pantalla: un nombre a medias
 en la barra del móvil es peor que el nombre viejo.
+
+---
+
+# Segunda ronda: tres nombres originales (16/11/2026)
+
+*David descartó **Despensa**, **Lista Clara**, **Mandado** y cualquier «cesta + adjetivo». Estos
+tres no repiten ninguno de esos caminos: no son la categoría (cesta), no son un adjetivo pegado a
+ella y no son la palabra «lista». Tampoco son `Recado`, `Cabás` ni `Tanda`, que quedan como
+reserva si ninguno convence.*
+
+| Nombre | Por qué, en una línea |
+|---|---|
+| **Avío** | «Hacer el avío» es proveerse de lo necesario para la semana: cuatro letras, sin «cesta», y suena a casa y a mercado de barrio, no a comparador. |
+| **Abasto** | El abasto es el suministro de la casa; nombra la tarea (abastecer) y no el recipiente, y tiene el eco de los mercados de abastos sin ser un genérico de aplicación. |
+| **Vitualla** | De «vituallas», las provisiones que se guardan: literaria y memorable, evoca una despensa llena sin llamarse despensa y no la usa ninguna app de la competencia. |
+
+**Recomendación: `Avío`.** Es el más corto y el más fácil de decir en una conversación («he hecho el
+avío», «me falta el avío»), y el verbo del que sale —*aviar*, preparar lo necesario— describe
+exactamente lo que hace la app: dejar la compra de la semana lista, con precios y tiendas. `Abasto`
+es más reconocible pero más genérico; `Vitualla` es más bonita pero más difícil de teclear y de
+recordar para quien no la conoce.
+
+**Lo que sigue sin comprobar** (igual que con `Cesta Clara`): dominio, registro de marca y usuarios
+ocupados en las tiendas y en GitHub. Antes de publicar con el nombre nuevo hay que mirarlo. Si
+`Avío` está tomado, la reserva natural es **Recado**, la palabra que ya usa la gente para «ir a por
+la compra».
