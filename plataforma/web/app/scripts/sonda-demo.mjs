@@ -16,7 +16,7 @@
 
 import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import os from 'node:os'
 
 function arg(nombre, defecto = null) {
@@ -35,6 +35,9 @@ const ESPERA = Number(arg('espera', '1200'))
 const SELECTOR = arg('espera-selector', '')
 const CLIC = arg('clic', '')
 const PANEL = arg('panel', '')
+const TECLEAR = arg('teclear', '')
+const ELEGIR = process.argv.includes('--elegir')
+const PERFIL = arg('perfil', '')
 const SALIDA = arg('salida', '')
 const CAPTURA = arg('captura', '')
 const PUERTO = Number(arg('puerto', '9334'))
@@ -138,7 +141,8 @@ const MEDIR = () => {
   }
 }
 
-const perfil = mkdtempSync(join(os.tmpdir(), 'sonda-cesta-'))
+const perfil = PERFIL ? resolve(PERFIL) : mkdtempSync(join(os.tmpdir(), 'sonda-cesta-'))
+if (PERFIL) mkdirSync(perfil, { recursive: true })
 const nav = spawn(
   EDGE,
   [
@@ -187,6 +191,50 @@ try {
   // que abra. Es lo que convierte «la fila tiene un botón» en «el botón enseña los precios
   // de cada cadena».*
   let accion = null
+  if (TECLEAR) {
+    // *Teclear de verdad en el combobox de la lista: es la única forma de comprobar que el
+    // typeahead pregunta al catálogo y que las sugerencias llegan sin backend.*
+    accion = await evalJs(enviar, `(async () => {
+      const campo = document.querySelector('main input[role="combobox"]')
+      if (!campo) return { escribio: false }
+      campo.focus()
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter?.call(campo, ${JSON.stringify(TECLEAR)})
+      campo.dispatchEvent(new Event('input', { bubbles: true }))
+      return { escribio: true, texto: campo.value }
+    })()`)
+    await espera(1400)
+    const opciones = await evalJs(enviar, `(() => {
+      const lista = document.querySelector('[role="listbox"]')
+      const items = [...(lista ? lista.querySelectorAll('[role="option"]') : [])]
+      return {
+        hayLista: !!lista,
+        cuantas: items.length,
+        textos: items.slice(0, 8).map((li) =>
+          (li.innerText || '').replace(/\\s+/g, ' ').trim()),
+      }
+    })()`)
+    accion = { ...accion, opciones }
+    if (ELEGIR && opciones.cuantas > 0) {
+      accion.elegido = await evalJs(enviar, `(() => {
+        const item = document.querySelector('[role="listbox"] [role="option"]')
+        if (!item) return { pulsado: false }
+        item.click()
+        return { pulsado: true, texto: (item.innerText || '').replace(/\\s+/g, ' ').trim() }
+      })()`)
+      await espera(1600)
+      accion.despues = await evalJs(enviar, `(() => {
+        const cajas = [...document.querySelectorAll('main input[type="checkbox"]')]
+        const nombres = [...document.querySelectorAll('main li')]
+          .map((li) => (li.innerText || '').replace(/\\s+/g, ' ').trim())
+          .filter((t) => t && t.length < 120)
+        return {
+          casillas: cajas.length,
+          lineas: nombres.slice(0, 20),
+        }
+      })()`)
+    }
+  }
   if (CLIC) {
     accion = await evalJs(enviar, `(() => {
       const boton = [...document.querySelectorAll('main button')]
@@ -208,6 +256,18 @@ try {
         } : { existe: false }
       })()`)
       accion = { ...accion, panel }
+    } else if (accion.pulsado) {
+      // *Un respiro y se lee lo que ha cambiado: un botón que dice «Guardado» o una línea
+      // nueva. Sin esto solo se sabe que el clic llegó, no que hizo algo.*
+      await espera(1200)
+      accion = {
+        ...accion,
+        despuesTexto: await evalJs(enviar, `(() => ({
+          texto: (document.querySelector('main')?.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 600),
+          botones: [...document.querySelectorAll('main button')].map((b) =>
+            (b.innerText || '').replace(/\\s+/g, ' ').trim()).filter(Boolean).slice(0, 12),
+        }))()`),
+      }
     }
   }
 
@@ -247,10 +307,12 @@ try {
   ws.close()
 } finally {
   nav.kill()
-  try {
-    rmSync(perfil, { recursive: true, force: true })
-  } catch {
-    /* el perfil es temporal; si queda, no rompe nada */
+  if (!PERFIL) {
+    try {
+      rmSync(perfil, { recursive: true, force: true })
+    } catch {
+      /* el perfil es temporal; si queda, no rompe nada */
+    }
   }
 }
 

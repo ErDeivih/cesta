@@ -120,6 +120,21 @@ describe('buscar en el catálogo sin backend', () => {
     const ids1 = pagina1.map((r) => r.grupo_id)
     for (const r of pagina2) expect(ids1).not.toContain(r.grupo_id)
   })
+
+  it('*** lo que necesita el typeahead: ocho sugerencias con grupo al que apuntar ***', () => {
+    // *El typeahead de la lista pide `limite=8` y **descarta lo que no tiene `grupo_id`**
+    // (`api/buscar.ts`): una sugerencia sin grupo no se puede enlazar y se quedaría como
+    // texto. Si el catálogo devolviera filas sin grupo, el desplegable saldría vacío aunque
+    // la búsqueda encontrara cosas.*
+    const { resultados } = buscaCatalogo({ q: 'leche', limite: 8 })
+    expect(resultados.length).toBeGreaterThan(0)
+    expect(resultados.length).toBeLessThanOrEqual(8)
+    for (const r of resultados) {
+      expect(r.grupo_id, `${r.nombre} sin grupo`).toBeTypeOf('number')
+      expect(r.nombre).toBeTruthy()
+      expect(r.precio_unidad_cent).toBeGreaterThan(0)
+    }
+  })
 })
 
 describe('la comparación entre cadenas del mismo producto', () => {
