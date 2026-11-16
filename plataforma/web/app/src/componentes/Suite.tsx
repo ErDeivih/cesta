@@ -23,7 +23,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 
 import { usePorCogerDeCasa } from '../api/consultas'
 import {
@@ -453,9 +453,19 @@ export function ModuleHeader({ app, abierto, onAbrir, refBoton }: {
           className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-campo border border-borde-fuerte px-3 text-[15px] text-tinta-fuerte lg:hidden"
         >
           <span aria-hidden="true">&#9776;</span>
-          {/* El boton dice donde estas, no solo "Menu". */}
-          <span className="font-medium">{app?.nombre ?? MARCA}</span>
+          {/* *El botón dice la marca y el área: «Avío · Compra». Antes solo decía «Compra»,
+              y Avío no aparecía en la cabecera de las pantallas de la suite.* */}
+          <span className="font-medium">
+            {MARCA}{app ? ` · ${app.nombre}` : ''}
+          </span>
         </button>
+        {/* *La marca también en escritorio, donde el botón de menú no se pinta.* */}
+        <Link
+          to="/"
+          className="hidden min-h-[44px] items-center font-serif text-[22px] font-semibold text-tinta-fuerte lg:inline-flex"
+        >
+          {MARCA}
+        </Link>
         <div className="min-w-0 flex-1">
           {/* *** Un solo titulo por pantalla. *** *Aqui habia un rotulo con el nombre de la app
               encima del `h1`; en el movil el boton de menu ya dice la app y en las pantallas

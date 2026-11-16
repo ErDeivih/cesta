@@ -498,13 +498,13 @@ export function Ajustes() {
       </div>
 
       {/* **El aviso legal sigue aquí y no es un texto de desarrollador.** Quien compra
-          tiene derecho a saber que los precios los publican las cadenas, que Cesta no
+          tiene derecho a saber que los precios los publican las cadenas, que Avío no
           está afiliada a ninguna y de dónde sale la nutrición. No explica cómo está hecha
           la app; dice qué se está mirando. */}
       <footer className="mt-2 border-t border-borde pt-4 text-etiqueta text-tinta-tenue">
         <p>
-          Los precios son orientativos y pueden variar: los publica cada cadena y Cesta se
-          limita a leerlos. Cesta <strong>no está afiliada, asociada ni patrocinada</strong>{' '}
+          Los precios son orientativos y pueden variar: los publica cada cadena y Avío se
+          limita a leerlos. Avío <strong>no está afiliada, asociada ni patrocinada</strong>{' '}
           por ninguno de estos supermercados.
         </p>
         <p className="mt-2">

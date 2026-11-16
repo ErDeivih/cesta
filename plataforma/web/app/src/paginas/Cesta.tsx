@@ -1544,7 +1544,7 @@ function Compartir({ listaId, personas }: { listaId: string; personas: Persona[]
 
       <h3 className="mt-4 text-cuerpo font-semibold">Compartir con quien ya tiene cuenta</h3>
       <p className="mt-1 text-cuerpo text-tinta-suave">
-        Si ya usa esta Cesta, con su usuario entra sin enlace. Un nombre de
+        Si ya usa Avío, con su usuario entra sin enlace. Un nombre de
         usuario se escribe mal con una facilidad pasmosa: si no existe nadie con
         ese, se avisa aquí mismo.
       </p>

@@ -39,6 +39,8 @@ test('*** los dos colores, porque son los que pintan el arranque ***', () => {
   // destello blanco al abrir la app instalada -- medido en el movil, y es lo unico que se ve en ese momento.*
   assert.match(man.theme_color, /^#[0-9a-f]{6}$/i)
   assert.match(man.background_color, /^#[0-9a-f]{6}$/i)
+  // *El lema, el mismo que la portada: una sola frase en todos los metadatos.*
+  assert.match(man.description, /bien hilada/, 'el manifiesto no lleva el lema')
 })
 
 test('*** los cuatro iconos, y cada uno existe ***', () => {

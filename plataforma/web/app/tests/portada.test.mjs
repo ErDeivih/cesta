@@ -55,6 +55,9 @@ test('*** una descripcion, y tambien para compartir ***', () => {
   // *La descripcion es lo que se lee en un resultado de busqueda o al pegar el enlace; sin ella se coge la
   // primera frase de la pagina, que suele ser un boton.*
   assert.match(html, /name="description"[^>]*content="[^"]{20,}"/, 'sin `description` util')
+  // *Y el lema es el mismo en la portada, al compartir y en el manifiesto: «bien hilada».*
+  assert.match(html, /name="description"[^>]*content="[^"]*bien hilada[^"]*"/, 'la descripcion no lleva el lema')
+  assert.match(html, /property="og:description"[^>]*content="[^"]*bien hilada[^"]*"/, 'og:description no lleva el lema')
   assert.match(html, /property="og:title"[^>]*content="[^"]+"/, 'sin `og:title`')
   assert.match(html, /property="og:locale"[^>]*content="es_ES"/, 'sin `og:locale` es_ES')
 })
