@@ -3,8 +3,8 @@
 //
 // Recorre lo que hace una persona, a 390x844 y contra la URL que se le pase:
 //
-//   buscar «leche» → abrir las ofertas por supermercado → abrir la ficha → añadir a la
-//   cesta → volver a la lista → comprobar que la línea está y que el total ha subido.
+//   buscar «leche» → abrir las ofertas por supermercado → añadir desde el resultado →
+//   volver a la lista → comprobar que la línea está y que el total ha subido.
 //
 // No mira el código: mira la pantalla y lo que se puede tocar. Sirve para la demo local y
 // para la publicada, y termina con código 1 si algo del recorrido no está.
@@ -183,31 +183,25 @@ try {
   informe.pasos.comparar = comparacion
 
   // ------------------------------------------------------ 3. AÑADIR A LA LISTA
-  await evalJs(enviar, `(() => {
-    const enlace = document.querySelector('ul[aria-label="Resultados de la búsqueda"] li a')
-    if (!enlace) return false
-    enlace.click()
-    return true
-  })()`)
-  const ficha = await hasta(enviar, `!!document.querySelector('main button') &&
-    [...document.querySelectorAll('main button')].some((b) => (b.textContent || '').includes('Añadir a la cesta'))`)
-  informe.pasos.ficha = { abierta: ficha }
-  if (!ficha) fallo('la ficha del producto no abre con el botón de añadir')
-
+  // *Desde la fila del resultado, que es el camino nuevo: no hace falta abrir la ficha ni
+  // usar el desplegable de la lista.*
   const pulsado = await evalJs(enviar, `(() => {
     const boton = [...document.querySelectorAll('main button')]
-      .find((b) => (b.textContent || '').includes('Añadir a la cesta'))
+      .find((b) => (b.textContent || '').trim() === 'Añadir')
     if (!boton) return { pulsado: false }
     boton.click()
     return { pulsado: true }
   })()`)
-  await espera(1400)
+  await espera(1600)
+  const textoTrasAnadir = await evalJs(enviar, `(document.querySelector('main')?.innerText || '')
+    .replace(/\\s+/g, ' ').trim().slice(0, 320)`)
   informe.pasos.anadir = {
     ...pulsado,
-    textoDespues: await evalJs(enviar, `(document.querySelector('main')?.innerText || '')
-      .replace(/\\s+/g, ' ').trim().slice(0, 260)`),
+    textoDespues: textoTrasAnadir,
+    enLaCesta: /En la cesta/.test(textoTrasAnadir),
   }
-  if (!pulsado.pulsado) fallo('no se pudo pulsar «Añadir a la cesta»')
+  if (!pulsado.pulsado) fallo('no se pudo pulsar «Añadir» en el resultado')
+  if (!/En la cesta/.test(textoTrasAnadir)) fallo('el botón no pasó a «En la cesta»')
 
   // ------------------------------------------------------------ 4. LA LISTA
   await ir(enviar, '/compra/listas')
