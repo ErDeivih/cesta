@@ -21,6 +21,7 @@ import datos from './datos.json'
 import {
   buscaCatalogo,
   cadenasDelCatalogo,
+  FECHA_CATALOGO,
   grupoDelCatalogo,
   habitualesDelCatalogo,
   productoDelCatalogo,
@@ -110,7 +111,19 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   }
   if (ruta === '/avisos/sin-ver') return ok({ sin_ver: 0 })
   if (ruta === '/alertas') return ok({ alertas: [] })
-  if (ruta === '/buscar') return ok(buscaCatalogo(filtrosDe(params)))
+  if (ruta === '/buscar') {
+    // *** LOS TRES ESTADOS DEL BUSCADOR, TAMBIÉN EN LA DEMO. *** *
+    // *`?demo=vacio`, `?demo=carga` y `?demo=error` tienen que servir para enseñar la
+    // pantalla sin servidor, igual que en la lista. Antes solo la lista los entendía y el
+    // buscador se quedaba siempre en el caso normal.*
+    if (forzado === 'error') {
+      return { estado: 500, valor: { detail: 'No he podido buscar' } }
+    }
+    if (forzado === 'vacio') {
+      return ok({ fecha_datos: FECHA_CATALOGO, resultados: [] })
+    }
+    return ok(buscaCatalogo(filtrosDe(params)))
+  }
 
   // --- listas
   if (ruta === '/listas') {
@@ -285,8 +298,11 @@ export async function instalaApiDemo(): Promise<void> {
     const ruta = destino.pathname.slice('/api'.length)
     // *La carga lenta se pide con `?demo=carga`; sin eso, un respiro corto para que se vean los
     // esqueletos.*
-    if (estadoForzado() === 'carga' && ruta === '/listas') await espera(3500)
-    else await espera(180)
+    if (estadoForzado() === 'carga' && (ruta === '/listas' || ruta === '/buscar')) {
+      await espera(3500)
+    } else {
+      await espera(180)
+    }
 
     const r = respuesta(ruta, destino.searchParams, metodo, cuerpo)
     // *Lo que se escribe se guarda en el dispositivo: al recargar sigue ahí.*
