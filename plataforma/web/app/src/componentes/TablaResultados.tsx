@@ -380,6 +380,13 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
           </p>
           <p className="text-etiqueta text-tinta-suave">
             {fila.cadena_mas_barata ? nombreCadena(fila.cadena_mas_barata) : 'supermercado sin dato'}
+            {/* *** CUÁNTAS CADENAS ENTRAN EN LA COMPARACIÓN. *** *
+             *
+             * *«Carrefour» a secas parece la única cadena que tiene el producto. Con el
+             * contador, la fila dice que hay cuatro más y que el precio de la derecha es el
+             * mínimo de todas: es la comparación, en la primera pantalla y sin abrir el
+             * desplegable.* *Con una sola cadena no se dice nada: «1 cadena» no compara.* */}
+            {fila.cadenas > 1 && ` · ${fila.cadenas} cadenas`}
           </p>
           <div className="mt-1">
             <DiferenciaDelGrupo
