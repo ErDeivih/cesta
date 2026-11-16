@@ -39,6 +39,16 @@ export function CompartirLista({ nombre, lineas }: { nombre: string; lineas: Lin
     setDicho('Copia el enlace de abajo.')
   }
 
+  const copiar = async () => {
+    if (!enlace) return
+    try {
+      await navigator.clipboard.writeText(enlace)
+      setDicho('Enlace copiado.')
+    } catch {
+      setDicho('Selecciona el enlace y cópialo a mano.')
+    }
+  }
+
   return (
     <div className="px-2 pb-1">
       <Boton compacto variante="sutil" className="w-full" onClick={() => void genera()}>
@@ -56,7 +66,16 @@ export function CompartirLista({ nombre, lineas }: { nombre: string; lineas: Lin
             onFocus={(e) => e.currentTarget.select()}
             className="mt-1 min-h-[44px] w-full rounded-campo border border-borde bg-marfil px-2 text-etiqueta text-tinta"
           />
-          {dicho && <p className="mt-1 text-etiqueta text-tinta-suave">{dicho}</p>}
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Boton compacto onClick={() => void copiar()}>
+              Copiar enlace
+            </Boton>
+            {dicho && (
+              <p role="status" aria-live="polite" className="text-etiqueta text-tinta-suave">
+                {dicho}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
