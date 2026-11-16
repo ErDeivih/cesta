@@ -26,6 +26,23 @@ import {
   productoDelCatalogo,
   seccionesDelCatalogo,
 } from './catalogo'
+import {
+  anadeFavorito,
+  anadeLinea,
+  borraLista,
+  cambiaLinea,
+  cierraCompra,
+  creaLista,
+  creaMuestra,
+  detalleDe,
+  dondeDe,
+  misFavoritos,
+  quitaFavorito,
+  renombraLista,
+  repartoDe,
+  VERSION_MUESTRA,
+  type Muestra,
+} from './estadoMuestra'
 import { borra, guarda, lee } from './almacen'
 
 type Cuerpo = Record<string, unknown>
@@ -34,9 +51,7 @@ type Respuesta = { estado: number; valor: unknown }
 const ok = (valor: unknown): Respuesta => ({ estado: 200, valor })
 
 const DEMO = datos as unknown as Record<string, any>
-/** *Sube cuando cambia la muestra: lo guardado de una versión anterior no se mezcla.* */
-const VERSION_MUESTRA = 2
-let estado: Record<string, any>
+let estado: Muestra
 
 const espera = (ms: number) => new Promise((listo) => setTimeout(listo, ms))
 
@@ -70,21 +85,7 @@ function filtrosDe(params: URLSearchParams) {
 }
 
 function listaPorId(id: string) {
-  return (estado.listas.listas as Record<string, any>[]).find((l) => l.id === id) ?? null
-}
-
-/** El detalle de la lista de la muestra; una lista recién creada nace vacía. */
-function detalleDe(id: string) {
-  const original = estado.detalle as Record<string, any>
-  if (id === original.id) return original
-  return {
-    papel: 'dueno',
-    lineas: [],
-    estimacion: { total_cent: 0, en_carrito_cent: 0, por_recoger_cent: 0, lineas: 0, sin_precio: 0 },
-    personas: [],
-    novedades: [],
-    fecha_datos: original.fecha_datos,
-  }
+  return estado.listas.find((l) => l.id === id) ?? null
 }
 
 function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo: Cuerpo): Respuesta {
@@ -97,9 +98,10 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
     // *Las cadenas del catálogo mandan: si una cadena no tiene ni una oferta, no puede
     // salir en el filtro como si la tuviera.*
     const cadenas = cadenasDelCatalogo()
+    const suyas = (estado.estado.cadenas as { cadena: string }[] | undefined) ?? []
     return ok({
       ...estado.estado,
-      cadenas: (estado.estado?.cadenas ?? []).filter((c: any) => cadenas.includes(c.cadena)),
+      cadenas: suyas.filter((c) => cadenas.includes(c.cadena)),
     })
   }
   if (ruta === '/secciones') return ok(seccionesDelCatalogo())
@@ -113,20 +115,17 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   // --- listas
   if (ruta === '/listas') {
     if (metodo === 'POST') {
-      const nueva = {
-        id: crypto.randomUUID(),
-        nombre: typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Lista',
-        es_de_casa: cuerpo.es_de_casa === true,
-        lineas: 0,
-      }
-      estado.listas.listas.push(nueva)
-      return ok(nueva)
+      return ok(creaLista(
+        estado,
+        typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Lista',
+        cuerpo.es_de_casa === true,
+      ))
     }
     if (forzado === 'vacio') return ok({ listas: [] })
     if (forzado === 'error') {
       return { estado: 500, valor: { detail: 'No he podido traer tus listas' } }
     }
-    return ok(estado.listas)
+    return ok({ listas: estado.listas })
   }
 
   const deLista = ruta.match(/^\/listas\/([^/]+)(?:\/(.*))?$/)
@@ -134,77 +133,87 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
     const [, id, resto = ''] = deLista
     const lista = listaPorId(id)
     if (!lista) return { estado: 404, valor: { detail: 'Esa lista no existe' } }
-    const detalle = detalleDe(id)
 
     if (resto === '') {
-      if (metodo === 'DELETE') {
-        estado.listas.listas = estado.listas.listas.filter((l: any) => l.id !== id)
-        return ok({})
-      }
+      if (metodo === 'DELETE') return ok({ borrada: borraLista(estado, id) })
       if (metodo === 'PATCH') {
-        if (typeof cuerpo.nombre === 'string') lista.nombre = cuerpo.nombre
-        return ok({})
+        return ok({ nombre: renombraLista(estado, id, String(cuerpo.nombre ?? lista.nombre)) })
       }
-      return ok(detalle)
+      return ok(detalleDe(estado, id))
     }
-    if (resto === 'donde') return ok(estado.donde)
-    if (resto === 'reparto') return ok(estado.reparto)
-    if (resto === 'gasto') return ok(estado.gasto)
+    if (resto === 'donde') return ok(dondeDe(estado, id))
+    if (resto === 'reparto') return ok(repartoDe(estado, id))
+    if (resto === 'gasto') return ok(DEMO.gasto)
     if (resto === 'repetir-compra') {
       return metodo === 'GET'
-        ? ok(estado.repetirCompra)
+        ? ok(DEMO.repetirCompra)
         : ok({ anadidos: 0, ya_estaban: 0, sin_catalogo: 0, faltan: 0 })
     }
-    if (resto === 'cerrar') {
-      const tachadas = (detalle.lineas as any[]).filter((l) => l.tachado_en !== null)
-      detalle.lineas = (detalle.lineas as any[]).filter((l) => l.tachado_en === null)
-      lista.lineas = detalle.lineas.length
-      return ok({
-        lineas: tachadas.length,
-        total_cent: 0,
-        quedan: detalle.lineas.length,
-        sin_precio: 0,
-        diferencia_cent: null,
-      })
-    }
+    if (resto === 'cerrar') return ok(cierraCompra(estado, id))
     if (resto === 'sincronizar') return ok({ aplicados: 0, fallidos: [] })
     if (resto === 'tienda') return ok({})
 
+    if (resto === 'desde-favoritos' && metodo === 'POST') {
+      const grupos = Array.isArray(cuerpo.grupo_ids) ? cuerpo.grupo_ids : []
+      let anadidos = 0
+      for (const grupoId of grupos) {
+        if (typeof grupoId !== 'number') continue
+        const producto = grupoDelCatalogo(grupoId)
+        if (!producto) continue
+        anadeLinea(estado, id, {
+          nombre: producto.nombre,
+          grupoId,
+          productoId: null,
+        })
+        anadidos += 1
+      }
+      return ok({ anadidos })
+    }
+
     if (resto === 'lineas' && metodo === 'POST') {
-      const idLinea = typeof cuerpo.id === 'string' ? cuerpo.id : crypto.randomUUID()
-      detalle.lineas.push({
-        id: idLinea,
-        nombre_visto: typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Producto',
+      anadeLinea(estado, id, {
+        // *El id lo manda el cliente para que reintentar actualice en vez de duplicar.*
+        id: typeof cuerpo.id === 'string' ? cuerpo.id : undefined,
+        nombre: typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Producto',
+        grupoId: typeof cuerpo.grupo_id === 'number' ? cuerpo.grupo_id : null,
+        productoId: typeof cuerpo.producto_id === 'string' ? cuerpo.producto_id : null,
         cantidad: typeof cuerpo.cantidad === 'number' ? cuerpo.cantidad : 1,
         nota: typeof cuerpo.nota === 'string' ? cuerpo.nota : null,
-        grupo_id: typeof cuerpo.grupo_id === 'number' ? cuerpo.grupo_id : null,
-        producto_id: typeof cuerpo.producto_id === 'string' ? cuerpo.producto_id : null,
-        tachado_en: null,
       })
-      lista.lineas = detalle.lineas.length
       return ok({})
     }
 
     const deLinea = resto.match(/^lineas\/([^/]+)(?:\/(.*))?$/)
     if (deLinea) {
       const [, idLinea, accion = ''] = deLinea
-      const cual = (detalle.lineas as any[]).find((l) => l.id === idLinea)
-      if (!cual) return { estado: 404, valor: { detail: 'Esa línea no existe' } }
+      // *Autorizar o aceptar una alternativa no existe en la demo: se contesta sin tocar
+      // nada. Lo que sí se escribe es lo de abajo.*
       if (accion !== '') return ok({})
-      if (cuerpo.borrado === true) {
-        detalle.lineas = (detalle.lineas as any[]).filter((l) => l.id !== idLinea)
-      } else {
-        if (typeof cuerpo.cantidad === 'number') cual.cantidad = cuerpo.cantidad
-        if ('nota' in cuerpo) cual.nota = cuerpo.nota
-        if (typeof cuerpo.tachado === 'boolean' || typeof cuerpo.en_carrito === 'boolean') {
-          const dentro = cuerpo.tachado === true || cuerpo.en_carrito === true
-          cual.tachado_en = dentro ? new Date().toISOString() : null
-        }
-      }
-      lista.lineas = detalle.lineas.length
-      return ok({})
+      const cambiado = cambiaLinea(estado, id, idLinea, {
+        borrado: cuerpo.borrado === true,
+        cantidad: typeof cuerpo.cantidad === 'number' ? cuerpo.cantidad : undefined,
+        nota: 'nota' in cuerpo ? (typeof cuerpo.nota === 'string' ? cuerpo.nota : null) : undefined,
+        tachado: typeof cuerpo.tachado === 'boolean' ? cuerpo.tachado : undefined,
+        en_carrito: typeof cuerpo.en_carrito === 'boolean' ? cuerpo.en_carrito : undefined,
+      })
+      return cambiado ? ok({}) : { estado: 404, valor: { detail: 'Esa línea no existe' } }
     }
     return ok({})
+  }
+
+  // --- favoritos
+  if (ruta === '/favoritos') {
+    if (metodo === 'GET') {
+      const dias = Number(params.get('dias') ?? 7)
+      return ok(misFavoritos(estado, Number.isFinite(dias) ? dias : 7))
+    }
+    const grupoId = typeof cuerpo.grupo_id === 'number' ? cuerpo.grupo_id : null
+    if (metodo === 'POST') {
+      return ok({ hecho: grupoId !== null && anadeFavorito(estado, grupoId) })
+    }
+    if (metodo === 'DELETE') {
+      return ok({ hecho: grupoId !== null && quitaFavorito(estado, grupoId) })
+    }
   }
 
   const deGrupo = ruta.match(/^\/grupo\/(\d+)$/)
@@ -241,10 +250,10 @@ export async function instalaApiDemo(): Promise<void> {
   const ventana = window as unknown as Record<string, unknown>
   if (ventana.__cestaDemoApi) return
   ventana.__cestaDemoApi = true
-  estado = structuredClone(DEMO)
+  estado = creaMuestra()
 
   if (estadoForzado() === 'reset') await borra()
-  const guardado = (await lee()) as { version?: number; datos?: Record<string, any> } | null
+  const guardado = (await lee()) as { version?: number; datos?: Muestra } | null
   if (guardado && guardado.version === VERSION_MUESTRA && guardado.datos) {
     estado = guardado.datos
   } else {
