@@ -12,7 +12,7 @@
  *  y ser más barato por kilo, y esa es justo la comparación que la app existe para hacer.*
  */
 import { useGrupo } from '../api/consultas'
-import { euros, eurosUnidad, nombreCadena } from '../api/formato'
+import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import type { Producto } from '../tipos'
 
 /** Los precios por supermercado de un grupo, ordenados por precio por unidad. */
@@ -52,6 +52,11 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
   const productos = [...porCadena.values()].sort(
     (a, b) => a.precio_unidad_cent - b.precio_unidad_cent,
   )
+  // *El más caro de los que se comparan: la referencia del ahorro de cada fila. Se coge
+  // después de ordenar, así que es el último; con una sola cadena no hay ahorro que enseñar.*
+  const masCaro = productos.length > 1
+    ? productos[productos.length - 1].precio_unidad_cent
+    : null
 
   if (productos.length === 0) {
     return (
@@ -91,6 +96,16 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
               <span className="block font-semibold text-tinta-suave">
                 {eurosUnidad(producto.precio_unidad_cent, producto.unidad)}
               </span>
+              {/* *** LO QUE TE AHORRAS FRENTE AL MÁS CARO, EN EUROS Y EN PORCENTAJE. *** *
+               *Con solo el precio de cada cadena hay que restar a mano. La fila lo dice:
+               *«ahorras 1,15 €/l (55,0 %)». En la más cara no se pinta, porque ahorra 0.* */}
+              {masCaro !== null && producto.precio_unidad_cent < masCaro && (
+                <span className="block font-normal text-tinta-tenue">
+                  ahorras{' '}
+                  {eurosUnidad(masCaro - producto.precio_unidad_cent, producto.unidad)} (
+                  {porcentaje(((masCaro - producto.precio_unidad_cent) / masCaro) * 100)})
+                </span>
+              )}
             </span>
           </li>
         ))}
@@ -98,8 +113,8 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
       {(grupo.data?.ahorro_cent ?? 0) > 0 && (
         <p className="mt-1 text-etiqueta text-tinta-suave">
           Entre el más barato y el más caro hay{' '}
-          {eurosUnidad(grupo.data?.ahorro_cent, grupo.data?.unidad)} de diferencia, siempre con la
-          misma unidad.
+          {eurosUnidad(grupo.data?.ahorro_cent, grupo.data?.unidad)} de diferencia (
+          {porcentaje(grupo.data?.ahorro_pct)}), siempre con la misma unidad.
         </p>
       )}
     </div>

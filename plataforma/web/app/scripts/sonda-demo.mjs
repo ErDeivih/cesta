@@ -36,6 +36,7 @@ const SELECTOR = arg('espera-selector', '')
 const CLIC = arg('clic', '')
 const PANEL = arg('panel', '')
 const TECLEAR = arg('teclear', '')
+const ENTER = process.argv.includes('--enter')
 const ELEGIR = process.argv.includes('--elegir')
 const PERFIL = arg('perfil', '')
 const SALIDA = arg('salida', '')
@@ -215,6 +216,21 @@ try {
       return { escribio: true, texto: campo.value }
     })()`)
     await espera(1400)
+    if (ENTER) {
+      await enviar('Input.dispatchKeyEvent', {
+        type: 'keyDown', key: 'Enter', code: 'Enter',
+        windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13,
+      })
+      await enviar('Input.dispatchKeyEvent', {
+        type: 'keyUp', key: 'Enter', code: 'Enter',
+        windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13,
+      })
+      await espera(1600)
+      accion.despuesEnter = await evalJs(enviar, `(() => ({
+        casillas: document.querySelectorAll('main input[type="checkbox"]').length,
+        texto: (document.querySelector('main')?.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 400),
+      }))()`)
+    }
     const opciones = await evalJs(enviar, `(() => {
       const lista = document.querySelector('[role="listbox"]')
       const items = [...(lista ? lista.querySelectorAll('[role="option"]') : [])]

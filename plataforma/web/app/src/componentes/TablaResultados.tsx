@@ -24,6 +24,7 @@ import {
 
 import { euros, eurosUnidad, nombreCadena } from '../api/formato'
 import type { ResultadoBusqueda } from '../tipos'
+import { AnadirDesdeElBuscador } from './AnadirDesdeElBuscador'
 import {
   DiferenciaDelGrupo,
   SelloComparable,
@@ -405,7 +406,10 @@ function FilaCompacta({ fila }: { fila: ResultadoBusqueda }) {
       </div>
 
       {grupoId !== null && (
-        <div className="relative z-10 pb-2">
+        <div className="relative z-10 flex flex-wrap items-center gap-2 pb-2">
+          {/* *El buscador apunta sin abrir la ficha: el mismo botón que el desplegable de la
+              lista, en la fila del resultado.* */}
+          <AnadirDesdeElBuscador fila={fila} />
           <button
             type="button"
             aria-expanded={abierto}
@@ -470,6 +474,11 @@ function Producto({ fila }: { fila: ResultadoBusqueda }) {
           />
           <SelloRetirada retirado={fila.con_retirada} />
           <SelloDudoso dudoso={fila.dudoso} />
+        </div>
+        {/* *Y el añadir, también en la tabla ancha: el buscador sirve para apuntar en las
+            dos formas de la pantalla, no solo en el móvil.* */}
+        <div className="mt-1">
+          <AnadirDesdeElBuscador fila={fila} />
         </div>
       </div>
     </div>

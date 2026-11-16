@@ -21,6 +21,7 @@ import type { Grupo, ResultadoBusqueda } from '../tipos'
 const dobles = vi.hoisted(() => ({
   resultados: [] as unknown[],
   grupo: null as unknown,
+  anade: vi.fn(),
 }))
 
 vi.mock('../api/consultas', async (importOriginal) => {
@@ -38,6 +39,27 @@ vi.mock('../api/consultas', async (importOriginal) => {
     }),
     useSecciones: () => ({ data: { secciones: [] } }),
     useGrupo: () => ({ data: dobles.grupo, isPending: false, isError: false, refetch: vi.fn() }),
+    // *El botón de añadir del resultado: se comprueba que llama a la mutación con el grupo
+    // y el nombre de la fila, que es lo que hace que el buscador sirva para apuntar sin
+    // pasar por el desplegable de la lista.*
+    useAnadeALaCesta: () => ({
+      mutate: dobles.anade,
+      isPending: false,
+      isSuccess: false,
+      isError: false,
+    }),
+  }
+})
+
+vi.mock('../api/cesta', async (importOriginal) => {
+  const real = await importOriginal<Record<string, unknown>>()
+  return {
+    ...real,
+    // *El botón de añadir solo se pinta con sesión. En la prueba hay una, como en la demo.*
+    yo: async () => ({
+      usuario: { id: '1', usuario: 'medicion', nombre: 'Medición' },
+      preferencias: {},
+    }),
   }
 })
 
@@ -158,6 +180,7 @@ function pantallaEstrecha() {
 
 beforeEach(() => {
   pantallaEstrecha()
+  dobles.anade.mockClear()
 })
 
 function monta() {
@@ -174,6 +197,21 @@ function monta() {
 }
 
 describe('el listado a 390 px', () => {
+  it('añade a la lista desde el resultado, sin pasar por el desplegable', async () => {
+    dobles.resultados = [fila()]
+    monta()
+
+    // *El buscador no es solo para mirar: la fila trae su «Añadir», que apunta al grupo y
+    // al nombre que se está viendo. Es el mismo camino que el typeahead de la lista, pero
+    // desde los resultados.*
+    const boton = await screen.findByRole('button', { name: 'Añadir' })
+    await userEvent.click(boton)
+    expect(dobles.anade).toHaveBeenCalledWith({
+      grupoId: 77,
+      nombre: 'Leche entera Hacendado',
+    })
+  })
+
   it('las cadenas y «Guardar estos filtros» no están a la vista; aparecen al abrir Filtros', async () => {
     dobles.resultados = [fila()]
     dobles.grupo = grupo()

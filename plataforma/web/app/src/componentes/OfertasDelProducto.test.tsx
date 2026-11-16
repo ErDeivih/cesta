@@ -47,7 +47,14 @@ describe('la comparación de un mismo producto entre cadenas', () => {
     expect(filas[4]).toHaveTextContent('Alcampo')
     expect(filas[4]).toHaveTextContent('2,09 €/l')
 
-    // *Y la distancia entre la más barata y la más cara, en la misma unidad.*
+    // *Y la distancia entre la más barata y la más cara, en euros **y en porcentaje**: un
+    // euro y medio dice cuanto, el porcentaje dice cuanto pesa sobre el precio caro.*
     expect(screen.getByText(/1,15 €\/l de diferencia/)).toBeInTheDocument()
+    // *El porcentaje y el ahorro por fila pueden quedar partidos en varios nodos, y el
+    // formateador de euros usa espacio duro; se normaliza y se mira el texto del panel
+    // entero, que es lo que lee una persona.*
+    const texto = (screen.getByRole('region').textContent ?? '').replace(/\u00a0/g, ' ')
+    expect(texto).toContain('ahorras 1,15 €/l (55 %)')
+    expect(texto).toContain('(55 %)')
   })
 })
