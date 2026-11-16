@@ -90,6 +90,10 @@ describe('Typeahead: el campo y la sugerencia', () => {
     const opcion = await screen.findByRole('option', { name: /Leche entera/ })
     // *El €/kg en la sugerencia: es la decision de compra, no un adorno.*
     expect(opcion).toHaveTextContent('0,66')
+    // *Y el precio de venta y la cadena, que son lo que hace falta para decidir sin abrir
+    // la ficha: «DIA» y «0,99 €» junto al €/l.*
+    expect(opcion).toHaveTextContent('DIA')
+    expect(opcion).toHaveTextContent('0,99 €')
     expect(pedidas.some((u) => /\/api\/buscar/.test(u) && /q=leche/.test(u))).toBe(true)
   })
 

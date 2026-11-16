@@ -25,7 +25,7 @@ import {
 import { useAsyncOptions } from '@ui-sdk/react/async-options'
 
 import { buscarProductos } from '../../api/buscar'
-import { eurosUnidad } from '../../api/formato'
+import { euros, eurosUnidad, nombreCadena } from '../../api/formato'
 import { useSinConexion } from '../../estado/conexion'
 import type { ResultadoBusqueda } from '../../tipos'
 
@@ -207,6 +207,15 @@ export function Typeahead({
                   </span>
                   {producto.marca && (
                     <span className="block text-etiqueta text-tinta-suave">{producto.marca}</span>
+                  )}
+                  {/* *** LA CADENA Y EL PRECIO DE VENTA, EN LA SUGERENCIA. *** *
+                   *Con solo el €/unidad hay que abrir la ficha para saber dónde y cuánto: la
+                   *sugerencia dice «DIA · 0,99 €» y el €/l al lado. Es lo que permite añadir
+                   *sin salir de la lista sabiendo lo que se apunta.* */}
+                  {producto.cadena_mas_barata && (
+                    <span className="block text-etiqueta text-tinta-suave">
+                      {nombreCadena(producto.cadena_mas_barata)} · {euros(producto.precio_cent)}
+                    </span>
                   )}
                 </span>
                 <span className="cifra shrink-0 text-etiqueta font-medium text-tinta-fuerte">

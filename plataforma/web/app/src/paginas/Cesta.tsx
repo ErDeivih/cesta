@@ -460,6 +460,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   // con una mano y en el pasillo, una peticion por letra es una cola de escrituras por una
   // nota que quiza no se termina.
   const [escribiendo, setEscribiendo] = useState(false)
+  const [menuAbierto, setMenuAbierto] = useState(false)
   const [borrador, setBorrador] = useState(linea.nota ?? '')
   const idCasilla = `linea-${linea.id}`
   // **Una linea sin destino es legitima** desde la migracion 014 (paquete G02): se apunta lo
@@ -570,38 +571,80 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-1 pb-3 pl-[50px] pr-4 pt-1">
-        {/* La cantidad que acepta la API es 1..99: fuera de ahi contesta 422, y un 422 por
-            pulsar de mas no es una forma de enterarse. */}
-        <Boton
-          compacto
-          disabled={guardando || linea.cantidad <= 1}
-          aria-label={`Menos ${linea.nombre_visto}`}
-          onClick={() => cambiar(linea.id, { cantidad: linea.cantidad - 1 })}
+      {/* *** DOS ACCIONES A LA VISTA Y EL RESTO EN «⋯». *** *
+       *
+       * *La fila tenía seis controles —casilla, −, +, Quitar y nota— y en 390 px eran más
+       * botones que producto. Quedan **la casilla de tachar** (el gesto del pasillo) y el
+       * menú; dentro viven la cantidad, quitar y la nota, que se usan menos y caben sin
+       * ensanchar la tarjeta.* */}
+      <div className="relative flex items-center justify-end pb-3 pl-[50px] pr-4 pt-1">
+        <button
+          type="button"
+          aria-label={`Más opciones de ${linea.nombre_visto}`}
+          aria-expanded={menuAbierto}
+          aria-controls={`acciones-${linea.id}`}
+          onClick={() => setMenuAbierto(!menuAbierto)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setMenuAbierto(false)
+          }}
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-campo border border-borde bg-papel px-3 text-cuerpo text-tinta-suave"
         >
-          −
-        </Boton>
-        <span className="cifra w-8 text-center text-cuerpo font-semibold">{linea.cantidad}</span>
-        <Boton
-          compacto
-          disabled={guardando || linea.cantidad >= 99}
-          aria-label={`Más ${linea.nombre_visto}`}
-          onClick={() => cambiar(linea.id, { cantidad: linea.cantidad + 1 })}
-        >
-          +
-        </Boton>
-        <Boton
-          compacto
-          variante="peligro"
-          disabled={guardando}
-          aria-label={`Quitar ${linea.nombre_visto} de la lista`}
-          onClick={() => cambiar(linea.id, { borrado: true })}
-        >
-          Quitar
-        </Boton>
-        <Boton compacto variante="sutil" disabled={guardando} onClick={() => setEscribiendo(true)}>
-          {linea.nota ? 'Cambiar la nota' : 'Añadir una nota'}
-        </Boton>
+          <span aria-hidden="true">⋯</span>
+        </button>
+
+        {menuAbierto && (
+          <div
+            id={`acciones-${linea.id}`}
+            role="group"
+            aria-label={`Acciones de ${linea.nombre_visto}`}
+            className="absolute right-4 top-full z-20 mt-1 w-60 rounded-tarjeta border border-borde bg-papel p-2 shadow-hoja"
+          >
+            <div className="flex items-center justify-center gap-1 border-b border-borde pb-2">
+              {/* La cantidad que acepta la API es 1..99: fuera de ahi contesta 422, y un 422
+                  por pulsar de mas no es una forma de enterarse. */}
+              <Boton
+                compacto
+                disabled={guardando || linea.cantidad <= 1}
+                aria-label={`Menos ${linea.nombre_visto}`}
+                onClick={() => cambiar(linea.id, { cantidad: linea.cantidad - 1 })}
+              >
+                −
+              </Boton>
+              <span className="cifra w-8 text-center text-cuerpo font-semibold">{linea.cantidad}</span>
+              <Boton
+                compacto
+                disabled={guardando || linea.cantidad >= 99}
+                aria-label={`Más ${linea.nombre_visto}`}
+                onClick={() => cambiar(linea.id, { cantidad: linea.cantidad + 1 })}
+              >
+                +
+              </Boton>
+            </div>
+            <button
+              type="button"
+              disabled={guardando}
+              aria-label={`Quitar ${linea.nombre_visto} de la lista`}
+              onClick={() => {
+                setMenuAbierto(false)
+                cambiar(linea.id, { borrado: true })
+              }}
+              className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo text-error disabled:opacity-50"
+            >
+              Quitar de la lista
+            </button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => {
+                setMenuAbierto(false)
+                setEscribiendo(true)
+              }}
+              className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo disabled:opacity-50"
+            >
+              {linea.nota ? 'Cambiar la nota' : 'Añadir una nota'}
+            </button>
+          </div>
+        )}
       </div>
 
       {escribiendo && (

@@ -47,6 +47,9 @@ describe('la comparación de un mismo producto entre cadenas', () => {
     expect(filas[4]).toHaveTextContent('Alcampo')
     expect(filas[4]).toHaveTextContent('2,09 €/l')
 
+    // *La más barata va marcada: no hay que comparar cinco cifras para saber cuál es.*
+    expect(filas[0]).toHaveTextContent('más barata')
+
     // *Y la distancia entre la más barata y la más cara, en euros **y en porcentaje**: un
     // euro y medio dice cuanto, el porcentaje dice cuanto pesa sobre el precio caro.*
     expect(screen.getByText(/1,15 €\/l de diferencia/)).toBeInTheDocument()

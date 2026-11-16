@@ -14,6 +14,7 @@
 import { useGrupo } from '../api/consultas'
 import { euros, eurosUnidad, nombreCadena, porcentaje } from '../api/formato'
 import type { Producto } from '../tipos'
+import { Etiqueta } from './ui'
 
 /** Los precios por supermercado de un grupo, ordenados por precio por unidad. */
 export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombre: string }) {
@@ -85,6 +86,13 @@ export function OfertasDelProducto({ grupoId, nombre }: { grupoId: number; nombr
             <span className="min-w-0">
               <span className="block text-cuerpo font-medium text-tinta-fuerte">
                 {nombreCadena(producto.fuente)}
+                {/* *La más barata, marcada. Con cinco cifras al lado, la marca ahorra la
+                    comparación mental y dice cuál es la respuesta.* */}
+                {producto.precio_unidad_cent === productos[0].precio_unidad_cent && (
+                  <span className="ml-1 inline-block align-middle">
+                    <Etiqueta tono="bien">más barata</Etiqueta>
+                  </span>
+                )}
               </span>
               <span className="block truncate text-etiqueta text-tinta-suave">
                 {producto.nombre}

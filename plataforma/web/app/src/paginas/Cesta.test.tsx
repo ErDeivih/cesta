@@ -402,9 +402,14 @@ describe('las filas de producto', () => {
     expect(within(filaCebolla).getByText('sin precio')).toBeInTheDocument()
   })
 
-  it('mantiene cambiar la cantidad y quitar la linea, con su nombre', async () => {
+  it('mantiene cambiar la cantidad y quitar la linea, en el menú de la fila', async () => {
     monta()
     await loQueFalta()
+    // *La fila enseña dos acciones: la casilla de tachar y el menú «⋯». Lo demás
+    // (cantidad, quitar, nota) vive dentro, que era la petición de simplificar la tarjeta.*
+    const masOpciones = screen.getByRole('button', { name: 'Más opciones de Alubia blanca 1 kg' })
+    expect(screen.queryByRole('button', { name: 'Menos Alubia blanca 1 kg' })).not.toBeInTheDocument()
+    await userEvent.click(masOpciones)
     expect(screen.getByRole('button', { name: 'Menos Alubia blanca 1 kg' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Más Alubia blanca 1 kg' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Quitar Alubia blanca 1 kg de la lista' }))
