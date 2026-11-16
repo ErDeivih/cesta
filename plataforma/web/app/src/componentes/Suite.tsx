@@ -562,6 +562,16 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
     <div className="flex min-h-screen bg-marfil">
       <a
         href="#contenido"
+        onClick={(evento) => {
+          // *En una SPA con las rutas en el hash, dejar que el navegador cambie a
+          // `#contenido` se lleva por delante la ruta. Se enfoca el `main` a mano y no se
+          // toca el hash: el enlace sigue funcionando y la pantalla no cambia.*
+          const principal = document.getElementById('contenido')
+          if (!principal) return
+          evento.preventDefault()
+          principal.focus()
+          principal.scrollIntoView({ block: 'start' })
+        }}
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:rounded-campo focus:bg-bosque focus:px-3 focus:py-2 focus:text-papel"
       >
         Saltar al contenido
@@ -584,6 +594,7 @@ export function LayoutSuite({ app, children }: { app: ClaveApp | null; children:
         <main
           key={ruta}
           id="contenido"
+          tabIndex={-1}
           className="entra-pantalla mx-auto flex w-full max-w-app flex-1 flex-col px-4 pt-5 pb-24 lg:px-8 lg:pb-5"
         >
           {children}
