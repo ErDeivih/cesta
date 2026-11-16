@@ -214,7 +214,7 @@ export function TablaResultados({ filas }: { filas: ResultadoBusqueda[] }) {
             `th`: sin ella, «0,95 €» y «0,95 €/L» son dos números sin nombre. */}
         <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 border-b border-borde px-1 pb-1 text-etiqueta uppercase tracking-wide text-tinta-suave ">
           <span>Producto</span>
-          <span className="text-right">PVP</span>
+          <span className="text-right">Precio</span>
           <span className="text-right">Por unidad</span>
         </div>
         <ul
@@ -285,13 +285,13 @@ function BarraDeOrden({ orden, onOrden }: {
   const cual = orden[0]?.id ?? 'orden_servidor'
   const arriba = orden[0]?.desc === false
   const botones: [string, string][] = [
-    ['orden_servidor', 'Lo de siempre'],
+    ['orden_servidor', 'Relevancia'],
     ['precio', 'Precio'],
     ['unidad', 'Precio por unidad'],
     ['ahorro', 'Diferencia del grupo'],
     ['cadenas', 'Dónde'],
   ]
-  const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Lo de siempre'
+  const puesto = botones.find(([id]) => id === cual)?.[1] ?? 'Relevancia'
   // *Plegado de verdad, con estado y render condicional: el `<details>` dejaba su contenido
   // pintado fuera de la caja cerrada y se comía una fila de resultados.*
   const [abierto, setAbierto] = useState(false)

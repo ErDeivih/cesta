@@ -143,6 +143,7 @@ const MEDIR = () => {
     filasVisibles: visibles.length,
     lineasLista: lineasLista.length,
     lineasListaVisibles: lineasListaVisibles.length,
+    listaId: document.querySelector('main select[aria-label="Lista"]')?.value ?? null,
     primerosProductos: filas.slice(0, 6).map((f) => (f.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 90)),
     conPrecioPorUnidad: conUnidad.length,
     ejemplosPrecioUnidad: conUnidad.slice(0, 4).map((el) => (el.textContent || '').trim().slice(0, 30)),

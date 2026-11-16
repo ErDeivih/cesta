@@ -502,7 +502,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
 
   return (
     <li className="border-t border-borde first:border-t-0">
-      <div className="flex items-start gap-3 px-4 pt-3">
+      <div ref={menuRef} className="relative flex items-start gap-2 px-4 pt-3">
         <label
           htmlFor={idCasilla}
           className="flex min-h-[44px] min-w-0 flex-1 cursor-pointer items-start gap-3"
@@ -516,7 +516,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
             // tacha a la vez (`almacen.py:324`), asi que no son dos cosas que puedan
             // separarse.
             onChange={(e) => cambiar(linea.id, { tachado: e.target.checked })}
-            className="mt-0.5 h-[22px] w-[22px] shrink-0 accent-verde"
+            className="mt-0.5 h-[24px] w-[24px] shrink-0 accent-verde"
           />
           <span className="min-w-0 flex-1">
             <span
@@ -528,9 +528,23 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
               {linea.nombre_visto}
             </span>
             <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-etiqueta text-tinta-tenue">
-              {linea.cantidad > 1 && <span className="cifra">{linea.cantidad} ×</span>}
-              {precio?.cadena && <span>en {nombreCadena(precio.cadena)}</span>}
-              {!precio && !tachada && !linea.producto_movido && <span>sin precio</span>}
+              {/* *** CANTIDAD, PRECIO UNITARIO Y CADENA, EN UNA RELACIÓN LEGIBLE. *** *
+               *«2 × en Carrefour» no decía cuánto cuesta cada una; «2 × 0,94 € · en Carrefour»
+               *sí, y el subtotal de la derecha cuadra con la multiplicación.* */}
+              {precio ? (
+                <span>
+                  {linea.cantidad > 1 && (
+                    <span className="cifra">
+                      {linea.cantidad} × {euros(Math.round(precio.coste_cent / linea.cantidad))}
+                    </span>
+                  )}
+                  {precio.cadena && (
+                    <span>{linea.cantidad > 1 ? ' · ' : ''}en {nombreCadena(precio.cadena)}</span>
+                  )}
+                </span>
+              ) : (
+                !tachada && !linea.producto_movido && <span>sin precio</span>
+              )}
               {sinCatalogo && (
                 <span className="rounded-nota border border-borde px-1.5">
                   Sin producto del catálogo
@@ -561,56 +575,36 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
             )}
           </span>
         </label>
-        {precio && (
-          <span className="cifra mt-0.5 shrink-0 text-precio-fila font-semibold text-tinta">
-            {euros(precio.coste_cent)}
-          </span>
-        )}
-      </div>
 
-      {/* **La linea que apunta a otro producto, dicha.** El `grupo_id` es un numero que el
-          emparejador renumera en cada pasada, asi que esta linea puede estar apuntando a un
-          pintalabios cuando dice «leche entera»: medido el 28 de septiembre de 2026, la lista
-          ponia esa linea en el pasillo de higiene y belleza y le ponia el precio del pintalabios.
-          La API ya no la cuenta ni la reparte (`catalogo.lineas_movidas`), y aqui se dice por que
-          y se da la salida: buscarla y volver a anadirla. */}
-      {linea.producto_movido && (
-        <p className="mt-1 px-4 text-etiqueta text-aviso">
-          Este producto ha cambiado en el catálogo.{' '}
-          <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
-            Búscalo y vuelve a añadirlo
-          </Link>
-          .
-        </p>
-      )}
-
-      {/* *** DOS ACCIONES A LA VISTA Y EL RESTO EN «⋯». *** *
-       *
-       * *La fila tenía seis controles —casilla, −, +, Quitar y nota— y en 390 px eran más
-       * botones que producto. Quedan **la casilla de tachar** (el gesto del pasillo) y el
-       * menú; dentro viven la cantidad, quitar y la nota, que se usan menos y caben sin
-       * ensanchar la tarjeta.* */}
-      <div ref={menuRef} className="relative flex items-center justify-end pb-3 pl-[50px] pr-4 pt-1">
-        <button
-          type="button"
-          aria-label={`Más opciones de ${linea.nombre_visto}`}
-          aria-expanded={menuAbierto}
-          aria-controls={`acciones-${linea.id}`}
-          onClick={() => setMenuAbierto(!menuAbierto)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setMenuAbierto(false)
-          }}
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-campo border border-borde bg-papel px-3 text-cuerpo text-tinta-suave"
-        >
-          <span aria-hidden="true">⋯</span>
-        </button>
+        {/* *El precio y el ⋯ en la misma línea que el nombre: sin una fila extra de botones,
+            la fila baja de ~115 px a ~66 y caben más productos en el primer pantallazo.* */}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {precio && (
+            <span className="cifra text-precio-fila font-semibold text-tinta">
+              {euros(precio.coste_cent)}
+            </span>
+          )}
+          <button
+            type="button"
+            aria-label={`Más opciones de ${linea.nombre_visto}`}
+            aria-expanded={menuAbierto}
+            aria-controls={`acciones-${linea.id}`}
+            onClick={() => setMenuAbierto(!menuAbierto)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setMenuAbierto(false)
+            }}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-campo border border-borde bg-papel px-2 text-cuerpo text-tinta-suave"
+          >
+            <span aria-hidden="true">⋯</span>
+          </button>
+        </div>
 
         {menuAbierto && (
           <div
             id={`acciones-${linea.id}`}
             role="group"
             aria-label={`Acciones de ${linea.nombre_visto}`}
-            className="absolute right-4 top-full z-20 mt-1 w-60 rounded-tarjeta border border-borde bg-papel p-2 shadow-hoja"
+            className="absolute right-4 top-14 z-20 w-60 rounded-tarjeta border border-borde bg-papel p-2 shadow-hoja"
           >
             <div className="flex items-center justify-center gap-1 border-b border-borde pb-2">
               {/* La cantidad que acepta la API es 1..99: fuera de ahi contesta 422, y un 422
@@ -659,6 +653,22 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
           </div>
         )}
       </div>
+
+      {/* **La linea que apunta a otro producto, dicha.** El `grupo_id` es un numero que el
+          emparejador renumera en cada pasada, asi que esta linea puede estar apuntando a un
+          pintalabios cuando dice «leche entera»: medido el 28 de septiembre de 2026, la lista
+          ponia esa linea en el pasillo de higiene y belleza y le ponia el precio del pintalabios.
+          La API ya no la cuenta ni la reparte (`catalogo.lineas_movidas`), y aqui se dice por que
+          y se da la salida: buscarla y volver a anadirla. */}
+      {linea.producto_movido && (
+        <p className="mt-1 px-4 text-etiqueta text-aviso">
+          Este producto ha cambiado en el catálogo.{' '}
+          <Link to={`/buscar?q=${encodeURIComponent(linea.nombre_visto)}`} className="underline">
+            Búscalo y vuelve a añadirlo
+          </Link>
+          .
+        </p>
+      )}
 
       {escribiendo && (
         <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
@@ -830,7 +840,9 @@ function CabeceraDeLaLista({ nombre, deCasa, opciones, alAlternar }: {
         </svg>
       </Link>
       <div className="min-w-0 flex-1">
-        <p className="text-micro uppercase text-tinta-tenue">
+        {/* *La marca y el área ya las dice la cabecera del armazón; aquí se quedan solo para
+            lectores de pantalla, sin repetir «Avío · Compra» encima de «La semana».* */}
+        <p className="sr-only">
           {MARCA} · Compra{deCasa ? ' · de casa' : ''}
         </p>
         <h2 className="truncate font-serif text-titulo font-semibold text-tinta">{nombre}</h2>
@@ -911,25 +923,33 @@ function PrecioEstimado({ totalCent, productos, sinPrecio, cadena, fechaDatos }:
   // cupon no esta en esta cifra. Y cuando falta el precio de alguna linea, eso manda: es lo que
   // explica por que el total no incluye todo.*
   const detalle = sinPrecio === 0
-    ? `${cuantos} · no incluye ofertas condicionadas`
+    ? 'no incluye ofertas condicionadas'
     : conPrecio === 0
-      ? `${cuantos} · no tengo precio de ninguno`
-      : `${cuantos} · no tengo precio de ${sinPrecio}`
+      ? 'no tengo precio de ninguno'
+      : `no tengo precio de ${sinPrecio}`
 
   return (
     <section
       aria-labelledby="precio-estimado"
-      className="rounded-tarjeta bg-bosque p-4 text-sobre-bosque shadow-alzado"
+      className="rounded-tarjeta bg-bosque px-4 py-2 text-sobre-bosque shadow-alzado"
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 id="precio-estimado" className="text-micro uppercase">Precio estimado</h2>
-        {cadena && <span className="text-etiqueta opacity-80">en {nombreCadena(cadena)}</span>}
+      {/* *** EL TOTAL, EN UNA FRANJA, NO EN UN BLOQUE. *** *
+       *La tarjeta de 132 px competía con la lista: el precio se mira, pero lo que se usa en el
+       *pasillo son los productos. La cifra sigue grande, y la letra pequeña queda al lado.* */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="precio-estimado" className="text-micro uppercase">Precio estimado</h2>
+          <p className="cifra text-precio-grande font-semibold leading-none">
+            {conPrecio > 0 && totalCent != null ? euros(totalCent) : 'Todavía sin precio'}
+          </p>
+        </div>
+        <div className="text-right text-etiqueta opacity-80">
+          <p>{cuantos}</p>
+          <p>Precios del {fechaTexto(fechaDatos)}</p>
+          {cadena && <p>en {nombreCadena(cadena)}</p>}
+        </div>
       </div>
-      <p className="cifra mt-2 text-precio-grande font-semibold">
-        {conPrecio > 0 && totalCent != null ? euros(totalCent) : 'Todavía sin precio'}
-      </p>
       <p className="mt-1 text-etiqueta opacity-80">{detalle}</p>
-      <p className="mt-0.5 text-etiqueta opacity-80">Precios del {fechaTexto(fechaDatos)}</p>
     </section>
   )
 }
@@ -984,46 +1004,56 @@ function AccionesDelNombre({ lista, alHecho }: {
   }
 
   return (
-    <span className="mt-1 flex w-full flex-wrap items-center gap-x-3 gap-y-1 sm:mt-0 sm:w-auto">
-      <button
-        type="button"
-        onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}
-        className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
+    <details className="relative">
+      {/* *Renombrar y quitar no son la compra: se usan una vez y no en el pasillo. Viven en un
+          «⋯» junto al selector, no en una línea fija encima de los productos.* */}
+      <summary
+        aria-label="Opciones de la lista"
+        className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer list-none items-center justify-center rounded-campo border border-borde bg-papel px-2 text-cuerpo text-tinta-suave [&::-webkit-details-marker]:hidden"
       >
-        Cambiar el nombre
-      </button>
-      {confirmando ? (
-        <>
-          <button
-            type="button"
-            disabled={borrar.isPending}
-            onClick={() => borrar.mutate()}
-            className="inline-flex min-h-[44px] items-center text-etiqueta text-error underline underline-offset-2"
-          >
-            Sí, quitar esta lista
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmando(false)}
-            className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
-          >
-            No
-          </button>
-          <p className="w-full text-etiqueta text-tinta-suave">
-            Desaparece de tu pantalla y de la de quien la comparta. No se borra de
-            verdad: se puede recuperar.
-          </p>
-        </>
-      ) : (
+        <span aria-hidden="true">⋯</span>
+      </summary>
+      <div className="absolute left-0 top-full z-20 mt-1 w-60 rounded-tarjeta border border-borde bg-papel p-2 shadow-hoja">
         <button
           type="button"
-          onClick={() => setConfirmando(true)}
-          className="inline-flex min-h-[44px] items-center text-etiqueta text-tinta-suave underline underline-offset-2"
+          onClick={() => { setNombre(lista.nombre); setRenombrando(true) }}
+          className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo text-tinta-suave"
         >
-          Quitar la lista
+          Cambiar el nombre
         </button>
-      )}
-    </span>
+        {confirmando ? (
+          <>
+            <button
+              type="button"
+              disabled={borrar.isPending}
+              onClick={() => borrar.mutate()}
+              className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo text-error"
+            >
+              Sí, quitar esta lista
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmando(false)}
+              className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo text-tinta-suave"
+            >
+              No
+            </button>
+            <p className="px-3 pb-1 text-etiqueta text-tinta-suave">
+              Desaparece de tu pantalla y de la de quien la comparta. No se borra de
+              verdad: se puede recuperar.
+            </p>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmando(true)}
+            className="flex min-h-[44px] w-full items-center rounded-campo px-3 text-left text-cuerpo text-tinta-suave"
+          >
+            Quitar la lista
+          </button>
+        )}
+      </div>
+    </details>
   )
 }
 
@@ -1952,8 +1982,7 @@ export function Cesta() {
         <SinConexion />
         <Vacio titulo="No tienes ninguna lista" className="grow">
           <p>
-            Todavía no hay listas guardadas. Busca un producto o toca uno de abajo: se
-            apunta en la lista de casa, que se crea sola, y la cantidad se cambia aquí.
+            Todavía no hay listas guardadas. Busca un producto o toca uno de abajo.
           </p>
         </Vacio>
         <Mosaico limite={6} enUnaLista />

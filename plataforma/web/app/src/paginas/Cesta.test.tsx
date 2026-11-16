@@ -414,8 +414,8 @@ describe('las filas de producto', () => {
     expect(screen.getByRole('button', { name: 'Más Alubia blanca 1 kg' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Quitar Alubia blanca 1 kg de la lista' }))
       .toBeInTheDocument()
-    // *La cantidad tambien se lee, y la de dos unidades se dice.*
-    expect(screen.getByText('2 ×')).toBeInTheDocument()
+    // *La cantidad tambien se lee, y la de dos unidades se dice junto a su precio unitario.*
+    expect(screen.getAllByText(/2 ×/).length).toBeGreaterThan(0)
   })
 
   it('el menú de la fila se cierra con Escape', async () => {
@@ -558,7 +558,7 @@ describe('el mínimo de un producto', () => {
     expect(within(fila1).getByText('2,45 €')).toBeInTheDocument()
     // *Y la cantidad de dos unidades se sigue diciendo, aunque la línea no tenga mínimo.*
     const fila2 = (await dentro.findByText('Leche entera 1,5 l')).closest('li') as HTMLElement
-    expect(within(fila2).getByText('2 ×')).toBeInTheDocument()
+    expect(within(fila2).getByText(/2 ×/)).toBeInTheDocument()
     expect(within(fila2).queryByText(/En su mínimo|Mínimo nuevo/)).not.toBeInTheDocument()
   })
 })
