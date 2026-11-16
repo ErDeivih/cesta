@@ -13,11 +13,20 @@ import { readFileSync, existsSync } from 'node:fs'
 const LEER = new URL('../public/', import.meta.url)
 const man = JSON.parse(readFileSync(new URL('site.webmanifest', LEER), 'utf8'))
 
+/** *Una ruta del manifiesto, sin el prefijo que la hace absoluta.* *
+ *
+ * *El manifiesto pasó a rutas **relativas** el 16/11/2026: la misma compilación se sirve en la
+ * raíz de Caddy y bajo `/cesta-demo/` en GitHub Pages, y un `/icono.svg` absoluto en Pages
+ * pedía `https://erdeivih.github.io/icono.svg` -- 404, medido. Relativo al manifiesto, cada
+ * sitio encuentra el suyo. Para comprobar el fichero, `.` y `/` son la misma carpeta.*
+ */
+const relativa = (src) => src.replace(/^\.?\//, '')
+
 test('*** el manifiesto dice como se llama y como se abre ***', () => {
   assert.equal(man.name, 'Cesta')
   assert.equal(man.short_name, 'Cesta')
-  // *`/` y no una ruta profunda: la app arranca en la portada.*
-  assert.equal(man.start_url, '/')
+  // *`.` (o `/`) y no una ruta profunda: la app arranca en la portada, también bajo `/cesta-demo/`.*
+  assert.match(man.start_url, /^(\.|\/)$/, 'la app no arranca en la portada')
   // *`standalone` y no `browser`: instalada, sin barra de direcciones.*
   assert.equal(man.display, 'standalone')
 })
@@ -30,12 +39,12 @@ test('*** los dos colores, porque son los que pintan el arranque ***', () => {
 })
 
 test('*** los cuatro iconos, y cada uno existe ***', () => {
-  const srcs = man.icons.map((i) => i.src)
-  for (const s of ['/icono-192.png', '/icono-512.png', '/icono-maskable-512.png', '/icono.svg']) {
+  const srcs = man.icons.map((i) => relativa(i.src))
+  for (const s of ['icono-192.png', 'icono-512.png', 'icono-maskable-512.png', 'icono.svg']) {
     assert.ok(srcs.includes(s), 'el manifiesto no declara ' + s)
   }
   for (const i of man.icons) {
-    const f = new URL('.' + i.src, LEER)
+    const f = new URL(relativa(i.src), LEER)
     assert.ok(existsSync(f), 'el manifiesto declara ' + i.src + ' y no existe')
     assert.ok(i.type, i.src + ' sin `type`: algunos navegadores lo exigen')
   }
@@ -56,7 +65,7 @@ test('*** el tamano declarado es el tamano real ***', () => {
   // *Se lee la cabecera PNG: bytes 16..24 son ancho y alto en big-endian.* *Un 192x192 declarado y 512x512 de
   // verdad no rompe nada visible, pero descoloca la eleccion del sistema.*
   const anchoAlto = (f) => {
-    const b = readFileSync(new URL('.' + f, LEER))
+    const b = readFileSync(new URL(relativa(f), LEER))
     return { ancho: b.readUInt32BE(16), alto: b.readUInt32BE(20) }
   }
   for (const i of man.icons) {
