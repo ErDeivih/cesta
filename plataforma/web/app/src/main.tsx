@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 
 import { App } from './App'
-import { instalaApiDemo } from './demo/api'
 import { VigilaCuenta } from './api/cuenta'
 import { ErrorApi } from './api/cliente'
 // *** Las fuentes van PRIMERO, y el orden importa. *** *
@@ -68,6 +67,16 @@ if (!DEMO && import.meta.env.PROD && 'serviceWorker' in navigator) {
     })
   })
 }
+// *La demo también se guarda para abrirse sin cobertura, con su propio trabajador y su propio
+// ámbito (`/cesta-demo/`). Es lo que la hace instalable y lo que deja la lista disponible en el
+// súper, que es donde no hay red.*
+if (DEMO && import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw-demo.js`).catch(() => {
+      // *Sin SW la demo funciona igual; solo pierde el modo sin conexión.*
+    })
+  })
+}
 
 
 function arranca() {
@@ -88,9 +97,14 @@ function arranca() {
 }
 
 if (DEMO) {
-  // *La demo espera a leer lo guardado en el dispositivo antes de pintar: son milisegundos y así
-  // no se enseña la muestra recién sembrada y luego se cambia por lo que había guardado.*
-  void instalaApiDemo().then(arranca, arranca)
+  // *** LA API DE MENTIRA, EN SU PROPIO TROZO. *** *
+  // *El catálogo de 120 productos y la muestra pesan más que el armazón; cargarlos en el
+  // bundle principal hacía que la primera pantalla dependiera de descargar todo el catálogo
+  // antes de pintar. Con `import()` solo se descarga en la demo y el bundle principal baja
+  // por debajo de los 500 KB.*
+  void import('./demo/api')
+    .then(({ instalaApiDemo }) => instalaApiDemo())
+    .then(arranca, arranca)
 } else {
   arranca()
 }
