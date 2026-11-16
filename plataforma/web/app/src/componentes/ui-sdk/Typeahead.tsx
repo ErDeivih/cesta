@@ -198,7 +198,18 @@ export function Typeahead({
               <ComboboxItem
                 key={producto.grupo_id}
                 value={String(producto.grupo_id)}
-                label={producto.nombre}
+                label={[
+                  producto.nombre,
+                  producto.cadena_mas_barata ? nombreCadena(producto.cadena_mas_barata) : null,
+                  euros(producto.precio_cent),
+                  precioDe(producto),
+                ].filter(Boolean).join(' · ')}
+                aria-label={[
+                  producto.nombre,
+                  producto.cadena_mas_barata ? nombreCadena(producto.cadena_mas_barata) : null,
+                  euros(producto.precio_cent),
+                  precioDe(producto),
+                ].filter(Boolean).join(' · ')}
                 className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 rounded-campo px-3 py-1 data-[highlighted]:bg-marfil"
               >
                 <span className="min-w-0">

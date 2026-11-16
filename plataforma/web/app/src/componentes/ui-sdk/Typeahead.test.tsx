@@ -94,6 +94,10 @@ describe('Typeahead: el campo y la sugerencia', () => {
     // la ficha: «DIA» y «0,99 €» junto al €/l.*
     expect(opcion).toHaveTextContent('DIA')
     expect(opcion).toHaveTextContent('0,99 €')
+    // *El nombre accesible también los dice: quien no ve la pantalla no puede quedarse con
+    // «Leche entera 1 l» a secas y tener que abrir la ficha para saber dónde y cuánto.*
+    expect(opcion).toHaveAccessibleName(/DIA/)
+    expect(opcion).toHaveAccessibleName(/0,99\s*€/)
     expect(pedidas.some((u) => /\/api\/buscar/.test(u) && /q=leche/.test(u))).toBe(true)
   })
 
