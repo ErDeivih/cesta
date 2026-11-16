@@ -48,23 +48,23 @@ RAIZ = Path(__file__).resolve().parents[4]
 GOLD = RAIZ / "data" / "gold" / "v20261115-184138" / "grupos.parquet"
 SALIDA = Path(__file__).resolve().parents[1] / "src" / "demo" / "catalogo.json"
 FECHA = "2026-11-15"
-MAXIMO = 100
+MAXIMO = 120
 
 # *Los pasillos que entran, y cuántos productos aporta cada uno al surtido. La suma de
-# cupos es mayor que MAXIMO a propósito: los términos de uso diario ya cubren parte, y
-# el relleno para cuando se acaban los candidatos de un pasillo.*
+# cupos queda por debajo de MAXIMO a propósito: el relleno final reparte lo que sobre entre
+# los pasillos que aún tengan candidatos, sin repetir nombres.*
 CUPOS = {
-    "despensa": 24,
-    "lacteos-huevos": 16,
-    "carniceria": 9,
-    "pescaderia": 7,
-    "frutas-verduras": 11,
-    "panaderia": 9,
-    "desayuno-dulces": 8,
-    "bebidas": 5,
-    "droguería-limpieza": 6,
-    "congelados": 3,
-    "aperitivos": 2,
+    "despensa": 28,
+    "lacteos-huevos": 18,
+    "carniceria": 11,
+    "pescaderia": 8,
+    "frutas-verduras": 13,
+    "panaderia": 10,
+    "desayuno-dulces": 9,
+    "bebidas": 6,
+    "droguería-limpieza": 8,
+    "congelados": 4,
+    "aperitivos": 3,
 }
 ORDEN_SECCIONES = list(CUPOS)
 
@@ -260,9 +260,22 @@ def main() -> None:
         for gid in posibles[:faltan]:
             elige([gid])
 
+    # 3) Relleno final: si los cupos no llegan a MAXIMO, se reparte lo que quede entre los
+    # pasillos que aún tengan candidatos. Así el catálogo no se queda en 118 por aritmética.
+    if len(elegidos) < MAXIMO:
+        restantes = [
+            gid for gid in candidatos - usados
+            if len(str(meta.at[gid, "nombre"])) <= 110
+        ]
+        restantes.sort(key=lambda gid: (ORDEN_SECCIONES.index(meta.at[gid, "seccion"]), puntua(gid)))
+        for gid in restantes:
+            if len(elegidos) >= MAXIMO:
+                break
+            elige([gid])
+
     elegidos = elegidos[:MAXIMO]
-    if not 80 <= len(elegidos) <= 120:
-        raise SystemExit(f"Salieron {len(elegidos)} productos; tienen que ser entre 80 y 120")
+    if not 100 <= len(elegidos) <= 150:
+        raise SystemExit(f"Salieron {len(elegidos)} productos; tienen que ser entre 100 y 150")
 
     productos = []
     for gid in sorted(elegidos, key=lambda g: (ORDEN_SECCIONES.index(meta.at[g, "seccion"]),

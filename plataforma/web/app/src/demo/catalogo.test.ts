@@ -21,9 +21,9 @@ import {
 const NORMAL = ['arroz', 'pollo', 'huevos', 'leche', 'pan', 'tomate', 'aceite', 'pasta', 'atun', 'yogur']
 
 describe('el catálogo de la demo', () => {
-  it('tiene entre 80 y 120 productos', () => {
-    expect(CATALOGO.length).toBeGreaterThanOrEqual(80)
-    expect(CATALOGO.length).toBeLessThanOrEqual(120)
+  it('tiene entre 100 y 150 productos', () => {
+    expect(CATALOGO.length).toBeGreaterThanOrEqual(100)
+    expect(CATALOGO.length).toBeLessThanOrEqual(150)
   })
 
   it('declara la fecha de los datos, que es la de la captura real', () => {
