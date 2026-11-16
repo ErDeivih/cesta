@@ -444,6 +444,16 @@ describe('las filas de producto', () => {
       .not.toBeInTheDocument()
   })
 
+  it('deslizar a la izquierda abre las acciones de la fila', async () => {
+    monta()
+    await loQueFalta()
+    const fila = (await screen.findAllByText('Alubia blanca 1 kg'))[0].closest('li') as HTMLElement
+    fireEvent.touchStart(fila, { touches: [{ clientX: 220 }] })
+    fireEvent.touchEnd(fila, { changedTouches: [{ clientX: 120 }] })
+    expect(screen.getByRole('button', { name: 'Quitar Alubia blanca 1 kg de la lista' }))
+      .toBeInTheDocument()
+  })
+
   it('lo tachado va a «En el carro» y no se cuenta como lo que falta', async () => {
     dobles.detalle = {
       ...(dobles.detalle as Record<string, unknown>),

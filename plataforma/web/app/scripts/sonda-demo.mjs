@@ -34,6 +34,7 @@ const ALTO = Number(arg('alto', '844'))
 const ESPERA = Number(arg('espera', '1200'))
 const SELECTOR = arg('espera-selector', '')
 const CLIC = arg('clic', '')
+const CLIC_ARIA = arg('clic-aria', '')
 const PANEL = arg('panel', '')
 const TECLEAR = arg('teclear', '')
 const ENTER = process.argv.includes('--enter')
@@ -263,14 +264,27 @@ try {
       })()`)
     }
   }
-  if (CLIC) {
+  if (CLIC || CLIC_ARIA) {
     accion = await evalJs(enviar, `(() => {
-      const boton = [...document.querySelectorAll('main button')]
-        .find((b) => (b.textContent || '').includes(${JSON.stringify(CLIC)}))
+      const boton = ${CLIC_ARIA
+        ? `document.querySelector('[aria-label=${JSON.stringify(CLIC_ARIA)}]')`
+        : `[...document.querySelectorAll('main button, main summary, main a')]
+            .find((b) => (b.textContent || '').includes(${JSON.stringify(CLIC)}))`}
       if (!boton) return { pulsado: false }
       boton.click()
       return { pulsado: true, texto: (boton.textContent || '').trim() }
     })()`)
+    if (CLIC_ARIA && CLIC && accion.pulsado) {
+      await espera(400)
+      accion.segundo = await evalJs(enviar, `(() => {
+        const boton = [...document.querySelectorAll('main button, main summary, main a')]
+          .find((b) => (b.textContent || '').includes(${JSON.stringify(CLIC)}))
+        if (!boton) return { pulsado: false }
+        boton.click()
+        return { pulsado: true, texto: (boton.textContent || '').trim() }
+      })()`)
+      await espera(600)
+    }
     if (accion.pulsado && PANEL) {
       await hasta(enviar, `!!document.querySelector(${JSON.stringify(PANEL)})`, 20, 250)
       await espera(600)
@@ -294,6 +308,7 @@ try {
           texto: (document.querySelector('main')?.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 600),
           botones: [...document.querySelectorAll('main button')].map((b) =>
             (b.innerText || '').replace(/\\s+/g, ' ').trim()).filter(Boolean).slice(0, 12),
+          enlaceCompartir: document.querySelector('#enlace-compartir')?.value ?? null,
         }))()`),
       }
     }

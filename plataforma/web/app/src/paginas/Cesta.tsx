@@ -29,7 +29,7 @@ import { useEffect, useRef, useState } from 'react'
 import { listaDelDiario } from '../logica/listaDelDiario'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 
 import {
   anadirLinea, borrarLista, cambiarLinea, cerrarCompra, compartirCon, crearInvitacion,
@@ -58,6 +58,8 @@ import {
 } from '../componentes/ui'
 import { PegarEnLaLista } from '../componentes/PegarEnLaLista'
 import { ExportarLista } from '../componentes/ExportarLista'
+import { CompartirLista } from '../componentes/CompartirLista'
+import { decodificaLista } from '../logica/compartirLista'
 import { SinConexion } from '../componentes/SinConexion'
 import { Dialogo } from '../componentes/ui-sdk/Foco'
 import { SeleccionMultiple } from '../componentes/ui-sdk/SeleccionMultiple'
@@ -461,6 +463,7 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   // nota que quiza no se termina.
   const [escribiendo, setEscribiendo] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const [inicioToque, setInicioToque] = useState<number | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const [borrador, setBorrador] = useState(linea.nota ?? '')
   // *Un menú que se queda abierto mientras se sigue comprando tapa la lista. Se cierra al
@@ -501,7 +504,18 @@ function UnaLinea({ linea, precio, guardando, cambiar }: {
   const hayFechaDelMinimo = fechaDelMinimo !== NO_LO_SE
 
   return (
-    <li className="border-t border-borde first:border-t-0">
+    <li
+      className="border-t border-borde first:border-t-0"
+      // *Deslizar a la izquierda abre las acciones de la línea, donde está «Quitar». El gesto
+      // no borra solo: un roce en el pasillo no puede quitar la compra de nadie.*
+      onTouchStart={(e) => setInicioToque(e.touches[0]?.clientX ?? null)}
+      onTouchEnd={(e) => {
+        if (inicioToque === null) return
+        const fin = e.changedTouches[0]?.clientX ?? inicioToque
+        if (fin - inicioToque < -60) setMenuAbierto(true)
+        setInicioToque(null)
+      }}
+    >
       <div ref={menuRef} className="relative flex items-start gap-2 px-4 pt-3">
         <label
           htmlFor={idCasilla}
@@ -965,8 +979,9 @@ function PrecioEstimado({ totalCent, productos, sinPrecio, cadena, fechaDatos }:
  *  puerta de funciones pulsa «Cambiar el nombre» y «Quitar la lista» sin abrir nada. Lo que se
  *  guarda detras del boton son los enlaces de la cuenta.*
  */
-function AccionesDelNombre({ lista, alHecho }: {
+function AccionesDelNombre({ lista, lineas, alHecho }: {
   lista: { id: string; nombre: string }
+  lineas: Linea[]
   alHecho: (id: string | null) => void
 }) {
   const [renombrando, setRenombrando] = useState(false)
@@ -1052,6 +1067,7 @@ function AccionesDelNombre({ lista, alHecho }: {
             Quitar la lista
           </button>
         )}
+        <CompartirLista nombre={lista.nombre} lineas={lineas} />
       </div>
     </details>
   )
@@ -1726,6 +1742,40 @@ export function Cesta() {
   // Quitar varias lineas de una vez: la lista se vuelve un listbox de seleccion.
   const [modoSeleccion, setModoSeleccion] = useState(false)
 
+  // *** UNA LISTA COMPARTIDA POR ENLACE. *** *
+  // *El enlace trae la lista dentro; al abrirlo se crea una lista local con esas líneas y se
+  // quita el parámetro para que recargar no la duplique. Solo en la demo: la app de casa tiene
+  // servidor y este camino no existe.*
+  const [parametros, setParametros] = useSearchParams()
+  const codigoCompartido = parametros.get('compartir')
+  useEffect(() => {
+    if (!codigoCompartido || !import.meta.env.VITE_DEMO) return
+    const datos = decodificaLista(codigoCompartido)
+    if (!datos) {
+      setParametros({}, { replace: true })
+      return
+    }
+    let vivo = true
+    void fetch('/api/listas/importar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(datos),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((r: { lista?: { id?: string } } | null) => {
+        if (!vivo || !r?.lista?.id) return
+        setElegida(r.lista.id)
+        setParametros({}, { replace: true })
+        cliente.invalidateQueries({ queryKey: ['listas'] })
+      })
+      .catch(() => {
+        if (vivo) setParametros({}, { replace: true })
+      })
+    return () => {
+      vivo = false
+    }
+  }, [codigoCompartido, setParametros, cliente])
+
   const sesion = useQuery({ queryKey: ['yo'], queryFn: yo })
   const listas = useQuery({
     queryKey: ['listas'],
@@ -2044,6 +2094,7 @@ export function Cesta() {
         {puedeCambiarla && (
           <AccionesDelNombre
             lista={{ id: listaId as string, nombre: nombreDeLaLista }}
+            lineas={lineas}
             alHecho={(id) => {
               cliente.invalidateQueries({ queryKey: ['listas'] })
               if (id === null) {
