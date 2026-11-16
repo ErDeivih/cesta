@@ -129,8 +129,13 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   // --- listas
   if (ruta === '/listas/importar' && metodo === 'POST') {
     const nombre = typeof cuerpo.nombre === 'string' ? cuerpo.nombre : 'Lista compartida'
+    const nombreCompartida = `${nombre} (compartida)`
+    // *Abrir el mismo enlace dos veces no crea dos listas: se devuelve la que ya está. Un
+    // enlace compartido se reabre, y duplicar la compra no es «importar», es ensuciar.*
+    const existente = estado.listas.find((l) => l.nombre === nombreCompartida)
+    if (existente) return ok({ lista: existente, ya_estaba: true })
     const lineas = Array.isArray(cuerpo.lineas) ? cuerpo.lineas : []
-    const nueva = creaLista(estado, `${nombre} (compartida)`, false)
+    const nueva = creaLista(estado, nombreCompartida, false)
     for (const linea of lineas) {
       if (typeof linea !== 'object' || linea === null) continue
       const l = linea as Record<string, unknown>
