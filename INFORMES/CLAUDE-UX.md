@@ -110,3 +110,20 @@ claude -p "$(cat .tmp-demo/prompt-claude.txt)" --permission-mode plan \
 codex exec -s read-only -i capturas/avio-completa-390x844.png \
   -o .tmp-demo/codex-ux.txt "$(cat .tmp-demo/prompt-codex.txt)"
 ```
+
+## Cierre de los pendientes (16/11/2026)
+
+- **Error en rojo:** el rojo queda en el borde; el texto del aviso pasa a tinta neutra.
+- **Imágenes de reserva:** las tarjetas sin foto, o con la foto rota, muestran la inicial del
+  producto en vez de un hueco.
+- **Deslizar para borrar:** deslizar a la izquierda en una fila abre sus acciones (cantidad,
+  quitar, nota); no borra de un roce.
+- **Comparar a medio confirmar:** si ninguna cadena tiene la lista entera, la pantalla lo dice
+  antes de los subtotales.
+- **Lista persistente y compartible:** IndexedDB y enlace con la lista dentro; al abrirlo se
+  crea una lista local «(compartida)».
+- **Recetas:** 10 recetas con ingredientes del catálogo y kcal por ración calculadas.
+- **Instalable y offline:** manifiesto, iconos y service worker de demo; la lista se abre sin red.
+- **Rendimiento:** el bundle principal pasa de **634.122 a 340.833 bytes**; el catálogo y la API
+  de demo van en un trozo aparte que solo se descarga en la demo.
+

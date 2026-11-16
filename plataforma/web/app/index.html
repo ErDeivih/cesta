@@ -23,7 +23,13 @@
          se ejecutaria. Vite saca el JS y el CSS a /assets, que si entran. -->
   </head>
   <body class="bg-marfil text-tinta">
-    <div id="raiz"></div>
+    <!-- *Mientras llega el trozo de la API de demo, algo que leer. React sustituye este
+         contenido al montar; sin él, la primera pantalla es un hueco blanco.* -->
+    <div id="raiz">
+      <div class="flex min-h-screen items-center justify-center bg-marfil px-6 text-center">
+        <p class="text-cuerpo text-secundaria">Abriendo Avío…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
