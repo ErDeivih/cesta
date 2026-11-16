@@ -124,6 +124,9 @@ codex exec -s read-only -i capturas/avio-completa-390x844.png \
   crea una lista local «(compartida)».
 - **Recetas:** 10 recetas con ingredientes del catálogo y kcal por ración calculadas.
 - **Instalable y offline:** manifiesto, iconos y service worker de demo; la lista se abre sin red.
-- **Rendimiento:** el bundle principal pasa de **634.122 a 340.833 bytes**; el catálogo y la API
-  de demo van en un trozo aparte que solo se descarga en la demo.
+- **Rendimiento:** el bundle principal pasa de **634.122 a 340.971 bytes**; el catálogo y la API
+  de demo van en un trozo aparte de **302.995 bytes** que solo se descarga en la demo.
+- **Accesibilidad:** «Saltar al contenido» enfoca el `main` sin cambiar el hash de la ruta; el
+  main tiene `tabIndex=-1`; la prueba comprueba foco visible, regla `:focus-visible`, alt de las
+  imágenes y nombres accesibles.
 
