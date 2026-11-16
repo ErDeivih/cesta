@@ -275,11 +275,18 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
         return { estado: 404, valor: { detail: 'Esa receta o esa lista no existe' } }
       }
       for (const ingrediente of receta.ingredientes) {
+        const cantidad = ingrediente.cantidad
+        const nota = cantidad != null
+          ? `${cantidad}${ingrediente.unidad ? ` ${ingrediente.unidad}` : ''}`
+          : null
         anadeLinea(estado, listaId, {
           nombre: ingrediente.texto,
           grupoId: ingrediente.grupo_id ?? null,
           productoId: ingrediente.producto_id ?? null,
           cantidad: 1,
+          // *La cantidad de la receta se guarda como nota: 80 g de arroz no es «1 arroz», y la
+          // lista tiene que decir cuánto hay que comprar.*
+          nota,
         })
       }
       return ok({ anadidos: receta.ingredientes.length })
