@@ -18,6 +18,14 @@
  *  la compilación de la demo (`VITE_DEMO=1`).*
  */
 import datos from './datos.json'
+import {
+  buscaCatalogo,
+  cadenasDelCatalogo,
+  grupoDelCatalogo,
+  habitualesDelCatalogo,
+  productoDelCatalogo,
+  seccionesDelCatalogo,
+} from './catalogo'
 import { borra, guarda, lee } from './almacen'
 
 type Cuerpo = Record<string, unknown>
@@ -27,7 +35,7 @@ const ok = (valor: unknown): Respuesta => ({ estado: 200, valor })
 
 const DEMO = datos as unknown as Record<string, any>
 /** *Sube cuando cambia la muestra: lo guardado de una versión anterior no se mezcla.* */
-const VERSION_MUESTRA = 1
+const VERSION_MUESTRA = 2
 let estado: Record<string, any>
 
 const espera = (ms: number) => new Promise((listo) => setTimeout(listo, ms))
@@ -39,20 +47,26 @@ function estadoForzado(): string {
   return new URLSearchParams(consulta).get('demo') ?? ''
 }
 
-function normaliza(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
+/** *Los parámetros de la búsqueda, tal como los manda `useBuscar`.*
 
-/** Busca en la muestra con las mismas reglas de andar por casa que la demo necesita. */
-function busca(texto: string, limite: number) {
-  const agujas = normaliza(texto).split(/\s+/).filter(Boolean)
-  if (agujas.length === 0) return []
-  return (estado.busquedas as Record<string, any>[])
-    .filter((r) => {
-      const heno = normaliza(`${r.nombre ?? ''} ${r.marca ?? ''}`)
-      return agujas.every((a) => heno.includes(a))
-    })
-    .slice(0, limite)
+ *  *Se leen aquí y no en la pantalla porque el catálogo es de la demo: la app de verdad
+ *  los manda a su API y no tiene por qué saber que existe este camino.* */
+function filtrosDe(params: URLSearchParams) {
+  const si = (clave: string) => params.get(clave) === 'true'
+  return {
+    q: params.get('q') ?? '',
+    cadenas: (params.get('cadenas') ?? '').split(',').map((c) => c.trim()).filter(Boolean),
+    seccion: params.get('seccion') ?? '',
+    comparables: si('comparables'),
+    conNutricion: si('con_nutricion'),
+    ofertas: si('ofertas'),
+    marcaPropia: si('marca_propia'),
+    sinAlcohol: si('sin_alcohol'),
+    sellos: (params.get('sellos') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    conservacion: params.get('conservacion') ?? '',
+    limite: Number(params.get('limite') ?? 40),
+    desplazamiento: Number(params.get('desplazamiento') ?? 0),
+  }
 }
 
 function listaPorId(id: string) {
@@ -79,18 +93,22 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
   // --- sesión y datos de la casa
   if (ruta === '/yo') return ok(estado.yo)
   if (ruta === '/entrar' || ruta === '/registrarse') return ok(estado.yo)
-  if (ruta === '/estado') return ok(estado.estado)
-  if (ruta === '/secciones') return ok(estado.secciones)
-  if (ruta === '/habituales') return ok(estado.habituales)
-  if (ruta === '/avisos/sin-ver') return ok({ sin_ver: 0 })
-  if (ruta === '/alertas') return ok({ alertas: [] })
-  if (ruta === '/buscar') {
-    const limite = Number(params.get('limite') ?? 40)
+  if (ruta === '/estado') {
+    // *Las cadenas del catálogo mandan: si una cadena no tiene ni una oferta, no puede
+    // salir en el filtro como si la tuviera.*
+    const cadenas = cadenasDelCatalogo()
     return ok({
-      fecha_datos: estado.estado?.fecha_datos ?? '2026-11-13',
-      resultados: busca(params.get('q') ?? '', Number.isFinite(limite) ? limite : 40),
+      ...estado.estado,
+      cadenas: (estado.estado?.cadenas ?? []).filter((c: any) => cadenas.includes(c.cadena)),
     })
   }
+  if (ruta === '/secciones') return ok(seccionesDelCatalogo())
+  if (ruta === '/habituales') {
+    return ok(habitualesDelCatalogo(Number(params.get('limite') ?? 12)))
+  }
+  if (ruta === '/avisos/sin-ver') return ok({ sin_ver: 0 })
+  if (ruta === '/alertas') return ok({ alertas: [] })
+  if (ruta === '/buscar') return ok(buscaCatalogo(filtrosDe(params)))
 
   // --- listas
   if (ruta === '/listas') {
@@ -189,11 +207,23 @@ function respuesta(ruta: string, params: URLSearchParams, metodo: string, cuerpo
     return ok({})
   }
 
-  if (ruta.startsWith('/grupo/')) {
-    const grupo = estado.grupos[ruta.slice('/grupo/'.length)]
-    return grupo ? ok(grupo) : { estado: 404, valor: { detail: 'Sin grupo' } }
+  const deGrupo = ruta.match(/^\/grupo\/(\d+)$/)
+  if (deGrupo) {
+    const grupo = grupoDelCatalogo(Number(deGrupo[1]))
+    return grupo
+      ? ok(grupo)
+      : { estado: 404, valor: { detail: 'Ese producto no está en la muestra' } }
   }
-  if (ruta.startsWith('/producto/')) return ok({})
+  const deProducto = ruta.match(/^\/producto\/([^/]+)\/([^/]+)$/)
+  if (deProducto) {
+    const ficha = productoDelCatalogo(
+      decodeURIComponent(deProducto[1]),
+      decodeURIComponent(deProducto[2]),
+    )
+    return ficha
+      ? ok(ficha)
+      : { estado: 404, valor: { detail: 'Ese producto no está en la muestra' } }
+  }
 
   // *Lo que la demo no trae (panel, avisos, recetas) no puede tumbar la app: se contesta vacío
   // y cada pantalla enseña su propio estado vacío.*

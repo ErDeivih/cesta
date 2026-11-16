@@ -33,6 +33,8 @@ const ANCHO = Number(arg('ancho', '390'))
 const ALTO = Number(arg('alto', '844'))
 const ESPERA = Number(arg('espera', '1200'))
 const SELECTOR = arg('espera-selector', '')
+const CLIC = arg('clic', '')
+const PANEL = arg('panel', '')
 const SALIDA = arg('salida', '')
 const CAPTURA = arg('captura', '')
 const PUERTO = Number(arg('puerto', '9334'))
@@ -180,6 +182,35 @@ try {
   await espera(ESPERA)
 
   const medida = await evalJs(enviar, `(${MEDIR.toString()})()`)
+
+  // *Una acción de verdad, si se pide: pulsar lo que contenga `--clic` y leer el panel
+  // que abra. Es lo que convierte «la fila tiene un botón» en «el botón enseña los precios
+  // de cada cadena».*
+  let accion = null
+  if (CLIC) {
+    accion = await evalJs(enviar, `(() => {
+      const boton = [...document.querySelectorAll('main button')]
+        .find((b) => (b.textContent || '').includes(${JSON.stringify(CLIC)}))
+      if (!boton) return { pulsado: false }
+      boton.click()
+      return { pulsado: true, texto: (boton.textContent || '').trim() }
+    })()`)
+    if (accion.pulsado && PANEL) {
+      await hasta(enviar, `!!document.querySelector(${JSON.stringify(PANEL)})`, 20, 250)
+      await espera(600)
+      const panel = await evalJs(enviar, `(() => {
+        const el = document.querySelector(${JSON.stringify(PANEL)})
+        return el ? {
+          existe: true,
+          texto: (el.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 900),
+          filas: [...el.querySelectorAll('li')].map((li) =>
+            (li.innerText || '').replace(/\\s+/g, ' ').trim()).slice(0, 12),
+        } : { existe: false }
+      })()`)
+      accion = { ...accion, panel }
+    }
+  }
+
   const noOk = eventos
     .filter((e) => e.method === 'Network.responseReceived')
     .map((e) => e.params.response)
@@ -201,6 +232,7 @@ try {
     viewport: { ancho: ANCHO, alto: ALTO },
     milisegundos: Date.now() - inicio,
     ...medida,
+    accion,
     api: { llamadas: api.length, rutas: api.slice(0, 20) },
     noOk,
     erroresConsola: errores,
